@@ -17,4 +17,5 @@ Then read [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) and [docs/ARCHITECTUR
 - PHP ≥ 8.2, WP ≥ 6.7, namespace `CCMerch\` → `src/`, prefix `ccmerch_`, text domain `ccmerch-dashboard`, REST `ccmerch/v1`.
 - No third-party PHP runtime dependencies (ADR-004).
 - Creator-facing code resolves the creator only via `CreatorContext`; creator API is `/me`-scoped (ADR-007).
+- No external services beyond GitHub unless approved via ADR. **Dinero and Google Drive are out of scope**: never use, read, write, back up to, or enable their connectors (ADR-016).
 - Docs in Danish; code, comments and commits in English (Conventional Commits). Small commits, push after validation, never force-push.

@@ -12,7 +12,8 @@
 - [x] npm + `@wordpress/scripts` 35 (ESLint, Prettier, stylelint; build fra fase 13).
 - [x] Lokal WordPress via WordPress Playground (`npm run wp:start`), WooCommerce via blueprint. Verificeret: WP 7.1.2, PHP 8.2, WooCommerce og CC Merch Dashboard er aktive.
 - [x] GitHub Actions CI: PHP-syntaks 8.2, PHPCS, PHPStan og ESLint.
-- [x] Dokumentation: arkitektur, moduler, database, API, frontend/design system, admin, WooCommerce, security, roller, test, udvikling, ADR 001-015, roadmap, feature-specs og AI-guidelines.
+- [x] Dokumentation: arkitektur, moduler, database, API, frontend/design system, admin, WooCommerce, security, roller, test, udvikling, ADR 001-016, roadmap, feature-specs og AI-guidelines.
+- [x] Project Isolation udvidet til eksterne services og connectors. **Dinero og Google Drive er ikke en del af projektets nuværende eller planlagte integrationsarkitektur** og må ikke bruges (ADR-016).
 
 ## In progress
 
@@ -38,6 +39,17 @@ Ingen (der er ingen funktionalitet endnu).
 | PHPStan-paths | `phpstan.neon.dist` analyserer kun hovedfilen, fordi `src/` ikke findes endnu | Tilføj `src/` og `uninstall.php` i fase 2 |
 | Lokal MySQL | Playground bruger SQLite. Ingen lokal MySQL-verifikation. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter første push. Overvej at installere `gh`. |
+
+## Godkendte eksterne services
+
+Kun disse eksterne services er en del af projektet. Alt andet kræver eksplicit godkendelse og en ADR (ADR-016).
+
+| Service | Formål |
+| --- | --- |
+| GitHub (`CaileanTV/CCMerchDashboard`) | Versionsstyring, backup og CI (GitHub Actions) |
+| wordpress.org / Composer / npm registries | Download af WordPress, WooCommerce (kun i Playground) og dev-dependencies |
+
+**Eksplicit fravalgt:** Dinero og Google Drive. Ingen integration, ingen data ind eller ud, ingen backup, og connectors må ikke aktiveres på projektets vegne.
 
 ## Åbne spørgsmål
 

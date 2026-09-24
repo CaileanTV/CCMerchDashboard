@@ -47,6 +47,8 @@ Permission: specifik capability pr. route (fx `ccmerch_manage_creators`). Bruges
 
 Offentlige endpoints til eksterne tjenester. Permission består af **HMAC-signaturverifikation** med en secret fra `wp-config.php`, tidsstempel-/replay-check og streng payload-validering. Behandlingen er asynkron (Action Scheduler), og svaret kommer hurtigt.
 
+Ingen konkrete integrationer er godkendt. Hver tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016).
+
 ## Respons-konventioner
 
 - JSON-objekter med `snake_case`-nøgler (som WordPress core).

@@ -131,7 +131,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 | --- | --- |
 | Payouts | Afregningsperioder, beregning fra ledger, status, eksport og evt. integration med betalingsudbyder |
 | Notifications | E-mail (via `wp_mail`) og in-app. Fx "nyt salg" og "udbetaling klar" |
-| Integrations | Framework for eksterne tjenester (fx print-on-demand, streaming-platforme) med webhooks og HMAC |
+| Integrations | Framework for eksterne tjenester med webhooks og HMAC. Hver konkret tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016). |
 | Campaigns | Tidsbegrænsede kampagner/drops pr. creator |
 | Support | Henvendelser fra creators til virksomheden |
 | Reporting | Admin-rapporter på tværs af creators og CSV-eksport |

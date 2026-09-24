@@ -6,13 +6,27 @@ Regler for AI-agenter (Claude Code m.fl.), der arbejder på dette projekt. Regle
 
 **Permanent regel.** Dette repository er et fuldstændig isoleret projekt.
 
-Arbejdsområdet er **kun**:
+Projektet må **kun** bruge:
 
-- det repository, der er åbnet i editoren (`CCMerchDashboard`), og filer inde i det
-- dependencies installeret specifikt til dette projekt (`vendor/`, `node_modules/`, `.tools/`)
-- det GitHub-repository, projektet allerede er forbundet til (`origin` → `github.com/CaileanTV/CCMerchDashboard`)
+1. det GitHub-repository, projektet er forbundet til (`origin` → `github.com/CaileanTV/CCMerchDashboard`)
+2. projektets egne filer (det repository, der er åbnet i editoren: `CCMerchDashboard`)
+3. projektets egne lokale dependencies (`vendor/`, `node_modules/`, `.tools/`)
+4. det WordPress-miljø, der eksplicit tilhører projektet (Playground via `npm run wp:start`, eller et LocalWP-site, som projektejeren eksplicit har udpeget)
+5. eksterne services, som senere bliver eksplicit godkendt som en del af projektets arkitektur (registreret som ADR i [DECISIONS.md](DECISIONS.md))
 
-Alt uden for projektet er **off-limits**. Det omfatter andre WordPress-projekter, LocalWP-sites, WooCommerce-sites, Git-repositories, tidligere projekter, testprojekter, plugins, themes, kundeprojekter, lokale databaser og udviklingsmiljøer.
+Alt andet er **off-limits**. Det omfatter andre WordPress-projekter, LocalWP-sites, WooCommerce-sites, Git-repositories, tidligere projekter, testprojekter, plugins, themes, kundeprojekter, lokale databaser, udviklingsmiljøer, cloud storage, connectors og eksterne konti. Intet af dette må bruges som datakilde eller inspirationskilde uden projektejerens eksplicitte tilladelse.
+
+### Eksterne services og connectors
+
+At en connector eller integration er *tilgængelig* i udviklingsmiljøet (fx MCP-/claude.ai-connectors), betyder **ikke**, at projektet må bruge den. Connectors må hverken bruges, aktiveres eller godkendes på projektets vegne. En ekstern service bliver først en del af projektet, når projektejeren eksplicit har godkendt en konkret integration, og beslutningen er registreret som ADR.
+
+**Dinero og Google Drive er ikke en del af projektets nuværende eller planlagte integrationsarkitektur** (ADR-016). Derfor må der ikke:
+
+- oprettes integration til Dinero, læses data fra eller sendes data til Dinero, eller bruges Dinero som datakilde
+- oprettes integration til Google Drive, læses filer eller data fra Google Drive, gemmes projektdata i Google Drive, eller bruges Google Drive som backup eller ekstern projektkilde
+- aktiveres eller godkendes connectors til Dinero eller Google Drive på projektets vegne
+
+Projektets backup og versionshistorik er GitHub-repository'et. Dinero og Google Drive betragtes som irrelevante for projektet, medmindre projektejeren senere eksplicit beder om en konkret integration.
 
 Du må **ikke**:
 
