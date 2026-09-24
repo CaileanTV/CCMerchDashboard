@@ -18,16 +18,38 @@
 
 **TypeScript:** Åben beslutning (se [PROJECT-STATUS.md](PROJECT-STATUS.md#åbne-spørgsmål)). Default er JavaScript med JSDoc-typer. Skal afgøres før fase 13, så der ikke skal migreres senere.
 
-## Serving: dedikeret route og standalone shell
+## Serving: dedikeret route og standalone shell ✅ (fase 12)
 
-- Rewrite rule: `^creator-dashboard(/.*)?$` → query var `merchboard_dashboard`. Slug'en kan ændres i settings, og rewrite rules flushes ved ændring.
-- På `template_redirect`:
-  1. Ikke logget ind → `wp_safe_redirect( wp_login_url( <nuværende dashboard-URL> ) )`.
-  2. Logget ind uden creator-adgang → 403-side i dashboard-design med link til log ud. Vi sender ikke brugeren videre til wp-admin.
-  3. OK → render `templates/dashboard/shell.php` og `exit`.
+- Rewrite rule (`Modules/Dashboard/DashboardRoute`, lagt øverst): `^creator-dashboard(?:/(.*?))?/?# Frontend – Creator Dashboard
+
+> Status: **Design.** Route og shell kommer i fase 12, frontend-fundament i fase 13.
+
+## Teknologivalg
+
+**Anbefaling: React via WordPress' egen `@wordpress/element`, bygget med `@wordpress/scripts`.** (ADR-010)
+
+| Alternativ | Vurdering |
+| --- | --- |
+| PHP/HTML + lidt vanilla JS | Simpelt i starten, men dashboardet skal have navigation uden reload, grafer, tabeller med filtrering, modaler, formularer med validering og loading/empty/error-states for mange moduler. Det bliver hurtigt til hjemmelavet state-håndtering og DOM-kode, som er svær at vedligeholde. |
+| WordPress Interactivity API | God til progressive enhancement af server-renderede blocks, men ikke designet til en app med client-side routing og mange datavisninger. Økosystemet til tabeller og grafer er tyndt. |
+| React (via `@wordpress/element`) | **Valgt.** WordPress leverer React selv (script handle `react`/`wp-element`), så vi bundler den ikke. `@wordpress/scripts` giver build, dependency extraction, i18n, lint og test uden ekstra konfiguration. Stort økosystem, og mange udviklere kender det. |
+| Vue/Svelte/andet | Kræver eget bundled runtime og egen toolchain og står uden for WordPress' økosystem (i18n, api-fetch). Ingen gevinst, der opvejer det. |
+| Vite i stedet for wp-scripts | Hurtigere dev-server, men mangler WordPress' dependency extraction og `*.asset.php`-versionering og kræver manuel opsætning af lint og i18n. wp-scripts vinder på integration. |
+
+**Hvorfor ikke `@wordpress/components`?** De ligner wp-admin/Gutenberg, og kravet er et dashboard, der *ikke* ligner WordPress. Vi bygger et lille eget komponentsæt. `@wordpress/components` må gerne bruges i admin-skærme, hvis de nogensinde bliver React-baserede.
+
+**TypeScript:** Åben beslutning (se [PROJECT-STATUS.md](PROJECT-STATUS.md#åbne-spørgsmål)). Default er JavaScript med JSDoc-typer. Skal afgøres før fase 13, så der ikke skal migreres senere.
+
+ → `index.php?merchboard_dashboard=1&merchboard_dashboard_path=$matches[1]`. Slug'en (default `creator-dashboard`) kan ændres under Merch Dashboard → Settings. Uden pretty permalinks er URL'en `/?merchboard_dashboard=1`.
+- Rewrite rules: De gemte regler slettes ved aktivering, deaktivering (`Deactivator`) og slug-ændring, og WordPress genopbygger dem ved næste request. Vi bruger ikke `flush_rewrite_rules()`, som ville genopbygge med den aktuelle requests regler (den gamle slug). På `init` tjekkes desuden, om de gemte regler indeholder den aktuelle regel (fx efter en plugin-opdatering). Hvis ikke, slettes de.
+- På `template_redirect` (prioritet 0, før `redirect_canonical`) i `ShellController`:
+  1. Ikke logget ind → `wp_safe_redirect( wp_login_url( <dashboard-URL inkl. deep link> ) )`.
+  2. Logget ind uden creator-adgang (`CreatorContext::current()` er null: ingen capability, ingen record, inaktiv, frakoblet eller databasefejl) → HTTP 403 med `templates/dashboard/no-access.php` ("Your access is not active", kun et log ud-link). Siden siger ikke hvorfor og linker aldrig til wp-admin.
+  3. OK → HTTP 200 med `templates/dashboard/shell.php` og `exit`.
+- Deep-link-stien normaliseres (små bogstaver, cifre og bindestreger pr. segment). Alt andet behandles som startsiden. Fase 12-shellen er en placeholder uden JavaScript, som hilser creator'en velkommen og viser "not available yet" for undersider.
 - Shellen er **en komplet HTML-side uden theme**: ingen `get_header()`, og ingen fuld `wp_head()`, som ville trække theme- og plugin-CSS/JS ind. Kun vores registrerede handles og deres WP-dependencies udskrives (`wp_print_styles`/`wp_print_scripts` med eksplicitte handles). Det giver fuld kontrol over design, performance og CSP.
-- Headers: `nocache_headers()`, `X-Robots-Tag: noindex`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `frame-ancestors 'self'`. En stram CSP planlægges (se [SECURITY.md](SECURITY.md)).
-- Admin bar skjules for creators på alle frontend-sider.
+- Headers (✅ fase 12, alle dashboard-svar inkl. redirect og 403): `nocache_headers()`, `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN` og `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'`. Fase 13 udvider CSP'en med `script-src` for vores egne handles (se [SECURITY.md](SECURITY.md)).
+- Admin bar skjules for rene creators på alle frontend-sider (✅ fase 12, ADR-026).
 - Client-side routes (fx `/creator-dashboard/profile`) rammer samme rewrite, så deep links og refresh virker.
 
 **Hvorfor ikke en WordPress-side med shortcode/block?** Theme'et ville omslutte dashboardet (header, footer og CSS-konflikter), redaktører kunne slette eller ændre siden, og layoutet ville ikke kunne ligne en selvstændig SaaS-app.

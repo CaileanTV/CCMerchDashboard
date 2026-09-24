@@ -1,6 +1,6 @@
 # WordPress Admin
 
-> Status: **Admin komplet til og med fase 11:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9) og Audit log (`merchboard_view_logs`, fase 11).
+> Status: **Admin komplet til og med fase 12:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9, dashboard-slug fra fase 12) og Audit log (`merchboard_view_logs`, fase 11).
 
 ## Principper
 
@@ -15,7 +15,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Overview                   ✅ fase 10: creator-tal, dinglende links og systemstatus; ✅ fase 11: seneste aktivitet (kun med merchboard_view_logs)
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   └── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger
-├── Settings                   ✅ fase 9: kun "Data on uninstall" (opt-in for permanent sletning). Tabs General · Access · Advanced kommer, når de får indhold
+├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug). Tabs General · Access · Advanced kommer, når de får indhold
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
@@ -92,6 +92,13 @@ Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), 
 - Hver ændring skriver en `settings_updated`-audit-record (actor = administratoren). Audit og option skrives i én transaktion.
 - Kun `merchboard_manage_settings` (administratorer). Creators, subscribers og brugere med kun `merchboard_manage_creators` eller WordPress' `manage_options` får 403.
 
+**"Creator dashboard"** (✅ fase 12, egen formular `admin-post.php?action=merchboard_save_dashboard_slug` og egen nonce, så den aldrig rører sletnings-opt-in'en):
+
+- Viser dashboardets aktuelle adresse og et felt til slug'en (default `creator-dashboard`). Ved plain permalinks vises en note om, at slug'en ikke bruges.
+- Validering i `SettingsService::set_dashboard_slug()`: 3-50 tegn, små bogstaver, cifre og enkelte bindestreger. Ikke en reserveret sti (fx `wp-admin`, `wp-json`, `login`, `feed`, `shop`, `cart`, `checkout`, `my-account`, `product`). Ikke brugt af indhold (post, side eller produkt i alle statusser undtagen papirkurv) eller af en rewrite-base (offentlige post types, arkiver, taksonomier, kategori- og tag-base). Notices: `invalid_slug` og `slug_in_use`.
+- En ændring skriver `settings_updated` med `setting`, `previous_value` og `value` (i samme transaktion som option'en) og sletter de gemte rewrite rules. Den gamle URL giver derefter 404, og login-redirect og wp-admin-redirect følger den nye.
+- Kun `merchboard_manage_settings`.
+
 ```text
 Deaktivering
 → data bevares (tabeller, options, rolle og capabilities uændrede)
@@ -108,8 +115,8 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 | Tab | Indstillinger |
 | --- | --- |
-| General | Dashboard-slug (default `creator-dashboard`), branding (logo, primærfarve, navn vist i dashboard) |
-| Access | Login-redirect for creators (til), blokér wp-admin for creators (til), hvilke roller ud over administrator der får admin-caps (fx `shop_manager`) |
+| General | Branding (logo, primærfarve, navn vist i dashboard). Dashboard-slug er implementeret (fase 12). |
+| Access | Hvilke roller ud over administrator der får admin-caps (fx `shop_manager`). Login-redirect og wp-admin-blokering for rene creators er altid slået til (ADR-026). Til/fra-knapper tilføjes kun ved et konkret behov. |
 | Advanced | Audit-retention (dage), "Slet alle data ved afinstallation" (fra). Teknisk log-niveau styres af `WP_DEBUG`/filteret `merchboard_log_level` (ADR-021). |
 
 Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Settings\Settings::sanitize()` (whitelist af nøgler og typer), så en forfalsket eller korrupt værdi aldrig giver en uventet indstilling.

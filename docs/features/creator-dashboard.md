@@ -4,7 +4,7 @@
 Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser og vedligeholder sine egne oplysninger og senere sine produkter, ordrer og salg.
 
 ## Current status
-Planlagt. Route/shell i fase 12, frontend-fundament i fase 13, `/me` + Profile i fase 14 og Overview i fase 15 (MVP).
+Route og sikker shell ✅ (fase 12): `/creator-dashboard/` svarer med login-redirect, 403 eller en placeholder-shell uden JavaScript. Frontend-fundament i fase 13, `/me` + Profile i fase 14 og Overview i fase 15 (MVP).
 
 ## User-facing functionality (MVP)
 - Adgang via `/creator-dashboard/` (slug kan konfigureres) efter login.
@@ -16,17 +16,18 @@ Planlagt. Route/shell i fase 12, frontend-fundament i fase 13, `/me` + Profile i
 Senere sektioner: Products, Orders, Sales, Payouts og Settings. Se [FRONTEND.md](../FRONTEND.md#sektioner-informationsarkitektur).
 
 ## Admin functionality
-- Settings → General: dashboard-slug og branding (logo, primærfarve, navn).
+- ✅ Settings: dashboard-slug (fase 12, validering og audit, se [ADMIN.md](../ADMIN.md#settings)).
+- Planlagt: branding (logo, primærfarve, navn).
 
 ## Technical implementation
-- **Route:** `Modules/Dashboard/Route` registrerer rewrite rule og query var. `ShellController` på `template_redirect` håndterer auth-gate og renderer `templates/dashboard/shell.php` uden theme. Se [FRONTEND.md](../FRONTEND.md#serving-dedikeret-route-og-standalone-shell).
+- **Route ✅:** `Modules/Dashboard/DashboardRoute` registrerer rewrite rule og query vars og ugyldiggør gemte rewrite rules ved behov. `ShellController` (`template_redirect`, prioritet 0) håndterer auth-gate via `CreatorContext` og renderer `templates/dashboard/shell.php` eller `no-access.php` uden theme. Se [FRONTEND.md](../FRONTEND.md#serving-dedikeret-route-og-standalone-shell--fase-12).
 - **Assets:** `build/dashboard.js` og `.css` registreres med dependencies og version fra `build/dashboard.asset.php`. Kun disse handles udskrives i shellen.
 - **Bootstrap-data:** `window.merchboardDashboard` (REST-root, nonce, base path, logout-URL, locale og sektioner).
 - **Sektioner:** `DashboardSections`-registry (filter `merchboard_dashboard_sections`). Hver sektion har `id`, `label`, `icon`, `path` og `capability`. Serveren filtrerer på capability, og klienten lazy-loader.
 - **Data:** `GET /merchboard/v1/me` og `PATCH /merchboard/v1/me/profile`.
 
 ## Relevant files
-Planlagt: `src/Modules/Dashboard/*`, `templates/dashboard/shell.php`, `assets/src/dashboard/**` og `tests/Integration/Dashboard/*`.
+✅ `src/Modules/Dashboard/{DashboardModule,DashboardRoute,ShellController,ShellResponse}.php`, `src/Core/Lifecycle/Deactivator.php`, `templates/dashboard/{shell,no-access}.php`, `tests/Unit/Modules/Dashboard/*` og `tests/Integration/Access/DashboardAccessTest.php`. Planlagt: `assets/src/dashboard/**`.
 
 ## Database/data used
 `merchboard_creators`, `merchboard_creatormeta` (profilfelter: `bio`, `social_links`, `avatar_id`) og `merchboard_settings` (slug og branding).
@@ -48,7 +49,7 @@ Planlagt: `src/Modules/Dashboard/*`, `templates/dashboard/shell.php`, `assets/sr
 Access (CreatorContext), Creators (repository/service), Core (Settings, Assets) og `@wordpress/element`/`api-fetch`/`i18n` (leveret af WordPress).
 
 ## Tests
-- Integration: route-adgang (logget ud → login-redirect, ikke-creator → 403, inaktiv → 403, creator → 200), `/me` og `/me/profile` (alle security-cases i [API.md](../API.md#test-krav)).
+- ✅ Integration (fase 12): route-adgang (logget ud → login-redirect, ikke-creator → 403, inaktiv → 403, creator → 200, deaktivering/frakobling/rolle fjernet virker straks, slettet bruger, databasefejl), rewrite rules og deep links, slug-ændring. Planlagt: `/me` og `/me/profile` (alle security-cases i [API.md](../API.md#test-krav)).
 - JS unit: `useApi`, router og formularvalidering.
 - Manuel: mobil (375px), tablet og desktop samt tastaturnavigation.
 

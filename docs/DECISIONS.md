@@ -735,3 +735,44 @@ Permanent sletning bliver et bevidst, sporbart og autoriseret valg, som kun ramm
 - Uden opt-in er uninstall uændret (intet slettes).
 - Tekniske log-poster i WooCommerce-log eller `debug.log` slettes ikke, fordi de ejes af WooCommerce/serveren.
 - Nye plugin-tabeller og -capabilities er automatisk omfattet via `Tables::all()` og `Capabilities::all()`. Nye options skal tilføjes i `Uninstaller`.
+
+---
+
+# ADR-026: Creator-dashboardets indgang og restriktioner for rene creators
+
+## Date
+2026-09-24
+
+## Status
+Accepteret (fase 12). Projektejeren har besluttet URL, slug og blokeringens omfang.
+
+## Context
+Fase 12 skal give creators en indgang (`/creator-dashboard/`), sende dem dertil efter login og holde dem ude af wp-admin, admin bar og Application Passwords. Den oprindelige formulering ("creators uden `merchboard_manage`") ville også ramme editors og shop managers, der samtidig er creators, og tage wp-admin fra dem, selvom de har brug for det i deres arbejde. Samtidig skal inaktive creators og brugere, der kun har creator-rollen uden record, også holdes ude af wp-admin, selvom de ikke har dashboard-adgang. Dashboard-URL'en var et åbent spørgsmål (8).
+
+## Decision
+- **URL:** `/creator-dashboard/` (åbent spørgsmål 8). Slug'en kan ændres **nu** under Merch Dashboard → Settings (`merchboard_settings['dashboard_slug']`, `merchboard_manage_settings`, egen nonce). Den valideres (format, reserverede WordPress/WooCommerce-stier, eksisterende indhold og rewrite-baser) og audit-logges (`settings_updated` med gammel og ny værdi).
+- **Rewrite rules:** De gemte regler slettes (`delete_option( 'rewrite_rules' )`) ved aktivering, deaktivering (`Deactivator`) og slug-ændring, og når de gemte regler mangler den aktuelle regel. WordPress genopbygger dem ved næste request.
+- **Dashboard-adgang** afgøres uændret og alene af `CreatorContext` (fire betingelser, fail closed).
+- **Ren creator** (`CreatorRestrictions::applies_to()`): `merchboard_access_dashboard` **og ingen** af `merchboard_manage`, `edit_posts` eller `manage_woocommerce`. Det omfatter alle med creator-rollen, også inaktive creators og rollen uden record. For rene creators, og kun for dem:
+  - login-redirect til dashboardet (WordPress og WooCommerce). Kun validerede dashboard-deep-links på samme site respekteres;
+  - wp-admin redirectes til dashboardet (`admin_init` og `admin_page_access_denied`, prioritet 0). AJAX, `admin-post.php`, `async-upload.php`, cron, REST og CLI undtages;
+  - admin bar skjules;
+  - Application Passwords er slået fra (oprettelse og brug).
+- Restriktionerne er altid slået til. Der er ingen til/fra-knapper, før der er et konkret behov.
+- `edit_posts` og `manage_woocommerce` er fremmede capabilities. De tjekkes kun og tildeles aldrig. De står som konstanter i `Capabilities`, så der ikke er capability-strenge andre steder.
+
+## Alternatives considered
+- **Alle creators uden `merchboard_manage`** (oprindelig tekst): ville fjerne wp-admin fra editors og shop managers, der også er creators. Fravalgt af projektejeren.
+- **Kun brugere med aktiv creator-adgang:** inaktive creators og rollen uden record ville beholde wp-admin (profil) og Application Passwords. Fravalgt.
+- **Fast slug (kun konstant/filter):** enklere, men projektejeren ønskede den konfigurerbar nu.
+- **`flush_rewrite_rules()` ved ændring:** genopbygger med den aktuelle requests regler, altså den gamle slug eller et plugin, der er ved at blive deaktiveret. Fravalgt til fordel for at slette de gemte regler.
+- **Overstyre WooCommerce' egen wp-admin-regel generelt:** unødvendigt indgreb. Vores guard kører før og gælder kun rene creators.
+
+## Reason
+Rene creators får én forudsigelig indgang og ingen adgang til WordPress' egne flader. Personale, der også er creators, mister intet. Reglen er et rent capability-tjek uden databaseopslag, så den kan ikke fejle åben.
+
+## Consequences
+- En ren creator, der også har `merchboard_view_logs` uden `merchboard_manage`, kan ikke nå Audit log. Giv også `merchboard_manage`.
+- En deaktiveret creator forbliver logget ind, men dashboardet giver 403 fra næste request.
+- Findes en side med standard-slug'en allerede ved aktivering, vinder dashboardet. Vælg en anden slug i Settings.
+- Fase 13 skal udvide dashboardets CSP med `script-src` for egne handles.

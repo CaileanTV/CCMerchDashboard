@@ -18,7 +18,7 @@
 
 ### Authentication
 
-WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application Passwords slås fra for creators. Brute-force-beskyttelse og 2FA håndteres af etablerede plugins eller hosting, ikke af os.
+WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application Passwords slås fra for rene creators, både ved oprettelse og ved brug (✅ fase 12, ADR-026). Brute-force-beskyttelse og 2FA håndteres af etablerede plugins eller hosting, ikke af os.
 
 ### Authorization
 
@@ -101,6 +101,8 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 `wp_safe_redirect()` (aldrig `wp_redirect()` med input) og `wp_validate_redirect()` for `redirect_to`. Efterfulgt af `exit`.
 
+**Login-redirect for rene creators (✅ fase 12):** `DashboardRoute::dashboard_url_for()` accepterer kun en `redirect_to`, der er på samme site (`wp_validate_redirect`, samme host, kun `http`/`https`) og hvis sti er præcis dashboardet eller ligger under det (ikke `/creator-dashboard-evil/`). `..`, `\` og `@` afvises også efter URL-decoding. URL'en genopbygges ud fra den normaliserede sti, så query, fragment og credentials fra input aldrig overlever. Alt andet (wp-admin, andre sider, eksterne hosts, `//evil`, `javascript:`) giver dashboardets startside.
+
 ### Filuploads (fremtid: avatar, produktbilleder)
 
 - Via `media_handle_upload()` / `wp_handle_upload()` med `mimes`-whitelist (kun jpeg/png/webp), `wp_check_filetype_and_ext()`, størrelsesgrænse og capability-/ejerskabs-tjek.
@@ -110,7 +112,9 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 ### Security headers (dashboard-shell)
 
-`X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Content-Security-Policy: frame-ancestors 'self'` (senere fuld CSP med nonces via `wp_inline_script_attributes`), `X-Robots-Tag: noindex, nofollow`, `nocache_headers()`.
+✅ Fase 12 (`ShellController::security_headers()`, på alle dashboard-svar inkl. redirect og 403): `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, `X-Robots-Tag: noindex, nofollow`, `nocache_headers()` og `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'`. Siderne har ingen JavaScript, så CSP'en tillader ingen scripts. Fase 13 tilføjer `script-src` for vores egne handles (evt. nonces via `wp_inline_script_attributes`).
+
+**wp-admin for rene creators (✅ fase 12, ADR-026):** `AdminAreaGuard` redirecter til dashboardet på `admin_init` (prioritet 0) og på `admin_page_access_denied` (skærme, WordPress afviser før `admin_init`). AJAX, `admin-post.php`, `async-upload.php`, cron, REST og CLI undtages. Admin bar skjules (`show_admin_bar`).
 
 ### Secrets og credentials
 

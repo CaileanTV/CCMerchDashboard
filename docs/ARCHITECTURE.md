@@ -66,7 +66,7 @@ merchboard/
 │   │   ├── Requirements.php     # PHP-/WP-versionstjek + admin notice (PHP 7.2-syntaks) [fase 2]
 │   │   ├── Container.php        # minimal lazy service container                    [fase 2]
 │   │   ├── Module.php           # interface for moduler                             [fase 2]
-│   │   ├── Lifecycle/           # Installer (aktivering + versionstjek) [fase 3], Deactivator [fase 4]
+│   │   ├── Lifecycle/           # Installer (aktivering + versionstjek) [fase 3], Deactivator (rewrite rules) [fase 12]
 │   │   ├── Database/            # Tables, Schema, Migration, Migrator, DatabaseException,
 │   │   │                        # Migrations/CreateCreatorsTable [fase 3], CreateAuditLogTable, Transaction [fase 6],
 │   │   │                        # TransactionSupport (engine-tjek, fail closed) [fase 7]
@@ -81,9 +81,9 @@ merchboard/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
 │       │                        # CreatorService, CreatorException, UserAccounts, Admin/ (page, list table, actions) [fase 6]
 │       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]; AuditLogPage, AuditLogListTable, AuditLogFormatter [fase 11]
-│       ├── Access/              # AccessModule, CreatorContext [fase 8]; LoginRedirect, AdminAreaGuard [fase 12]
+│       ├── Access/              # AccessModule, CreatorContext [fase 8]; CreatorRestrictions, LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
-│       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*
+│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardSections-registry, Rest/Me* [fase 13-15]
 │       └── WooCommerce/         # kun indlæst når WooCommerce er aktiv
 ├── templates/                   # PHP-templates (dashboard-shell, admin-partials)
 ├── assets/src/
@@ -143,7 +143,6 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 
 | Del | Fase | Begrundelse |
 | --- | --- | --- |
-| `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu. Deaktivering rører aldrig data. |
 | `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |
 | Øvrige core-services (Settings, Capabilities, Audit …) | 5 → | Registreres af de faser, der bygger dem. `Logger` findes fra fase 4. |
 

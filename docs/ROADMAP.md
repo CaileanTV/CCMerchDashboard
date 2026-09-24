@@ -89,10 +89,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope (udført):** Capability `merchboard_view_logs` (administrator, `RoleManager::VERSION` 2), read-only audit-log-side med `WP_List_Table` (20 pr. side, pagineret i databasen), filtre (hændelse, creator, periode), læsbar context (ingen rå JSON), håndtering af slettede actors og creators, link til WooCommerce → Status → Logs for tekniske logs og seneste aktivitet på Overview. Se [features/admin-audit-log.md](features/admin-audit-log.md).
 - **Done:** Kræver `merchboard_view_logs`. Output er escaped. Unit- og integrationstests (MariaDB), og Playground med og uden WooCommerce over HTTP.
 
-## Fase 12 – Creator dashboard: route og sikker shell
+## Fase 12 – Creator dashboard: route og sikker shell ✅
 
-- **Scope:** rewrite rule og query var (slug fra settings, flush ved ændring, ved aktivering og i `Deactivator`), `ShellController` (auth-gate via `CreatorContext`: login-redirect / 403-side / shell), `templates/dashboard/shell.php` uden theme, security headers og en placeholder-side uden JS. Desuden (flyttet fra fase 8): `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar og application passwords slået fra for creators.
-- **Done:** Integrationstests for adgang. Deep links virker.
+- **Scope (udført):** `Modules/Dashboard`: rewrite rule og query vars (slug fra settings, default `/creator-dashboard/`, deep links), rewrite rules ugyldiggøres ved aktivering, i `Deactivator`, ved slug-ændring og når de gemte regler mangler ruten. `ShellController` (auth-gate via `CreatorContext`: login-redirect / 403-side "access not active" / shell), `templates/dashboard/shell.php` og `no-access.php` uden theme og uden JS, security headers inkl. CSP. Dashboard-slug i Settings (validering, audit). Fra fase 8: `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar og Application Passwords slået fra for **rene creators** (ADR-026).
+- **Done:** Unit- og integrationstests (MariaDB) for adgang, login, wp-admin, admin bar, Application Passwords og slug. Deep links virker. Playground med og uden WooCommerce over HTTP.
 
 ## Fase 13 – Dashboard frontend-fundament
 

@@ -14,7 +14,7 @@
 ## Authentication
 
 - **Creator dashboard og admin-scripts:** cookie-authentication og `X-WP-Nonce` (`wp_rest`). Nonce og root-URL leveres af `@wordpress/api-fetch`-middleware, som dashboard-shellen initialiserer.
-- **Application Passwords** deaktiveres for creator-brugere (`wp_is_application_passwords_available_for_user`) for at reducere angrebsfladen. Admins bevarer dem.
+- **Application Passwords** er deaktiveret for rene creators (✅ fase 12, `wp_is_application_passwords_available_for_user`, ADR-026) for at reducere angrebsfladen. WordPress tjekker filteret både ved oprettelse (REST svarer `application_passwords_disabled_for_user`) og ved login med et eksisterende password, så også passwords oprettet før brugeren blev ren creator afvises. Administratorer, editors og shop managers, der også er creators, bevarer dem.
 - Uautentificerede requests til beskyttede routes giver `401 rest_forbidden`.
 
 ## Route-familier

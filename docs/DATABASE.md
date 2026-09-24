@@ -11,7 +11,7 @@
 | Brugerpræferencer uden domæneværdi (fx dashboard-tema) | `wp_usermeta` (`merchboard_*`) | Hører til login-kontoen, ikke til creator'en |
 | **Creator** (identitet, status, visningsnavn) | `merchboard_creators` (custom) ✅ | Domæneobjekt adskilt fra login-kontoen. Se ADR-005 og ADR-020. |
 | Fleksible creator-felter (bio, sociale links, avatar-ID …) | `merchboard_creatormeta` (custom, WP metadata API), **fase 14** | Oprettes, når profilfelterne bygges (ingen tabel "for en sikkerheds skyld") |
-| Plugin-settings | `wp_options`: `merchboard_settings` (ét array, autoload) ✅ fase 9. Indtil videre kun `delete_data_on_uninstall` (bool, default `false`, tæller kun som præcis `true`) | Lille og læses på de fleste requests |
+| Plugin-settings | `wp_options`: `merchboard_settings` (ét array, autoload) ✅ fase 9. Nøgler: `delete_data_on_uninstall` (bool, default `false`, tæller kun som præcis `true`) og `dashboard_slug` (✅ fase 12, streng, default `creator-dashboard`, ugyldig værdi giver default) | Lille og læses på de fleste requests |
 | Schemaversion | `wp_options`: `merchboard_db_version` ✅ | Styrer migrationer (ADR-019) |
 | Migrationslås | `wp_options`: `merchboard_db_migration_lock` ✅ (midlertidig, ikke autoload) | Forhindrer samtidige migrationer |
 | Migrationsfejl | transient `merchboard_db_migration_failed` ✅ (5 min) | Pause mellem automatiske forsøg og admin notice |
@@ -256,7 +256,7 @@ Integrationstestene (`npm run test:integration`, fase 7) kører en rigtig WordPr
 
 | Handling | Effekt på data |
 | --- | --- |
-| **Deaktivering** | Ingen. Data, tabeller og options bevares. (Fase 4 og 12 tilføjer oprydning af cron og rewrite rules, men aldrig data.) |
+| **Deaktivering** | Ingen data slettes. Data, tabeller og options bevares. `Deactivator` (✅ fase 12) sletter kun WordPress' gemte `rewrite_rules`, så dashboard-routen forsvinder. De genopbygges ved næste request. |
 | **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** Alle tabeller, options, rollen og capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
 | **Permanent sletning** ✅ fase 9 | Kun med eksplicit opt-in under Merch Dashboard → Settings (se [ADMIN.md](ADMIN.md#settings)). Så sletter `Core\Lifecycle\Uninstaller` pluginets egne data for det aktuelle site, se inventory nedenfor (ADR-025). |
 | **Creator "slettes"** | Status `inactive` (soft). Admin-UI'et har bevidst **ingen** "Delete"-funktion (fase 6). Hard delete er ikke understøttet, fordi audit trail og fremtidig salgshistorik refererer til creator-ID'et. Permanent sletning af alle data er opt-in (✅ fase 9, ADR-025). |

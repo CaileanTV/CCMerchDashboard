@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 11 (Admin audit-log viewer) · **Næste fase:** 12 (Creator dashboard: route og sikker shell) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 12 (Creator dashboard: route og sikker shell) · **Næste fase:** 13 (Dashboard frontend-fundament) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -166,6 +166,29 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 **Bevidst ikke i fase 11:** retention/sletning af records (åbent spørgsmål 10), eksport, tekniske logs i admin og alt fra fase 12+.
 
+### Fase 12 – Creator dashboard: route og sikker shell ✅
+
+- [x] Dashboard-URL `/creator-dashboard/` (åbent spørgsmål 8 lukket). Slug'en kan ændres under Merch Dashboard → Settings.
+- [x] `Modules/Dashboard`: `DashboardRoute` (rewrite rule øverst, query vars `merchboard_dashboard` og `merchboard_dashboard_path`, deep links, `/?merchboard_dashboard=1` uden pretty permalinks), `ShellController` på `template_redirect` (prioritet 0) og `ShellResponse`.
+- [x] Auth-gate kun via `CreatorContext`: logget ud → login med `redirect_to` til siden, uden creator-adgang → 403 "Your access is not active" med log ud-link (aldrig link til wp-admin, afslører ikke hvorfor), creator → shell. Creator'en tages aldrig fra URL'en.
+- [x] `templates/dashboard/shell.php` og `no-access.php`: komplette HTML-sider uden theme, `wp_head()` og JavaScript. Alt escaped.
+- [x] Headers: `nocache_headers()`, `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy`, `nosniff`, `X-Frame-Options: SAMEORIGIN` og CSP `default-src 'none'` (ingen scripts), `frame-ancestors 'self'`.
+- [x] Rewrite rules: gemte regler slettes ved aktivering, deaktivering (ny `Deactivator`) og slug-ændring, så WordPress genopbygger dem ved næste request. Mangler den aktuelle regel (fx efter en plugin-opdatering), sker det samme automatisk.
+- [x] Dashboard-slug i Settings: egen formular og nonce, `merchboard_manage_settings`, validering (format, reserverede WordPress/WooCommerce-stier, eksisterende indhold og rewrite-baser), audit `settings_updated` med gammel og ny værdi.
+- [x] **Rene creators** (ADR-026: `merchboard_access_dashboard` uden `merchboard_manage`, `edit_posts` og `manage_woocommerce`, også inaktive): `LoginRedirect` (`login_redirect` og `woocommerce_login_redirect`, kun validerede dashboard-deep-links respekteres), `AdminAreaGuard` (`admin_init` prioritet 0 og `admin_page_access_denied`; AJAX, `admin-post.php`, `async-upload.php`, cron, REST og CLI undtaget), skjult admin bar og Application Passwords slået fra (både oprettelse og brug).
+- [x] Fundet og rettet: `CreatorRepository::find_by_user_id()` behandlede en fejlet forespørgsel som "ingen creator". Adgangen blev nægtet, men fejlen blev ikke logget. Nu kastes `DatabaseException`, og `CreatorContext` logger den (stadig fail closed).
+- [x] 510 unit-tests (1419 assertions) og 91 integrationstests mod MariaDB 10.11.19. Lint (PHPCS, PHPStan level 8 inkl. `templates/`, ESLint) er grøn.
+- [x] Playground over HTTP, med og uden WooCommerce:
+  - Logget ud: login-redirect med deep link. En ondsindet deep link giver startsiden.
+  - Ren creator: login lander på dashboardet (også med `redirect_to` til wp-admin, en ekstern host eller `//evil`), gyldigt deep link respekteres, 200 med escaped navn, ingen script, ingen admin bar, alle headers. wp-admin, `profile.php`, `options-general.php`, `plugins.php` og pluginets Settings → dashboardet. AJAX og admin-post undtaget. Log ud virker.
+  - Application Passwords: oprettelse via REST afvist (501 `application_passwords_disabled_for_user`), eksisterende password afvist (401), editor + creator accepteret (200).
+  - Inaktiv creator og rolle uden record: 403-side, wp-admin → dashboardet. Subscriber og administrator uden creator: 403 på dashboardet, wp-admin uændret. Editor og shop manager, der er creators: dashboard 200, wp-admin 200 og admin bar.
+  - WooCommerce "Min konto"-login sender rene creators til dashboardet og andre til "Min konto".
+  - Slug: reserveret, eksisterende side og ugyldig afvist uden audit, forfalsket nonce og creator 403, gyldig ændring audit-logget, ny URL 200, gammel 404, redirects følger med.
+  - Ingen notices og ingen secrets i logs.
+
+**Bevidst ikke i fase 12:** frontend-build og React (fase 13), `/me`-API (14), branding, Access-settings (til/fra-knapper), rewrite-status på Overview, meta-capabilities og at logge sessioner ud ved deaktivering.
+
 ## In progress
 
 Intet.
@@ -174,9 +197,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 12:** Creator dashboard: route og sikker shell.
-2. **Fase 13:** Dashboard frontend-fundament.
-3. **Fase 14:** REST-fundament, `/me` og Profile.
+1. **Fase 13:** Dashboard frontend-fundament (kræver svar på åbent spørgsmål 3, TypeScript).
+2. **Fase 14:** REST-fundament, `/me` og Profile.
+3. **Fase 15:** Dashboard overview → MVP.
 
 ## Known bugs
 
@@ -202,7 +225,10 @@ Ingen (der er ingen funktionalitet endnu).
 | Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes senere (ikke gjort i fase 10). |
 | Persistent object cache og migrationslås | Låsen arbejder direkte på databasen og rydder kun sin cache-nøgle. Samspil med fx Redis er ikke testet. | Staging (fase 16), hvis produktionen bruger object cache |
 | Audit-retention | Ubegrænset opbevaring. Ingen politik for automatisk sletning. | Afklares (åbent spørgsmål 10) |
-| Creator-rollen har `read` | Creators kan indtil fase 12 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). | Blokering af wp-admin for creators i fase 12 (flyttet fra fase 8) |
+| Creator med kun `merchboard_view_logs` | En ren creator, der også har fået `merchboard_view_logs` (men ikke `merchboard_manage`), sendes væk fra wp-admin og kan ikke se Audit log (ADR-026). | Giv også `merchboard_manage`, eller revurder reglen, hvis behovet opstår |
+| Sessioner ved deaktivering | En deaktiveret creator er stadig logget ind i WordPress. Dashboardet giver 403 fra næste request, men sessionen afsluttes ikke. | Accepteret. Valgfri "log alle sessioner ud" er en fremtidig forbedring. |
+| Standard-slug og eksisterende side | Slug-valideringen gælder kun ændringer i Settings. Findes en side med slug `creator-dashboard` allerede ved aktivering, vinder dashboardet (reglen ligger øverst), og siden kan ikke nås på sin URL. | Vælg en anden slug i Settings. Overvej en advarsel på Overview. |
+| Hosting-cache | Dashboardet sender `no-cache`-headers. En aggressiv side-cache (CDN, Varnish) skal stadig bypasse `/creator-dashboard/*` og indloggede brugere. | Tjek ved staging (fase 16) |
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller kommer med Access-settings (fase 12). |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
@@ -230,7 +256,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
 7. **UI-sprog:** Dansk, engelsk eller begge i creator-dashboardet? (fase 15)
-8. **Dashboard-URL:** `/creator-dashboard/` eller andet (fx `/studio/`)? (fase 12)
+8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
 9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). Fase 7 løste behovet for en rigtig database med integrationstestene, så spørgsmålet haster ikke længere. (fase 16)
 10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. Fase 11 viser records, men sletter ingen. (før produktion, senest fase 16)
 
@@ -239,4 +265,5 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 12 (Creator dashboard: route og sikker shell) jf. docs/ROADMAP.md.
+4. Besvar åbent spørgsmål 3 (TypeScript) før fase 13.
+5. Kør fase 13 (Dashboard frontend-fundament) jf. docs/ROADMAP.md.

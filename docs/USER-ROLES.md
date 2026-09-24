@@ -132,9 +132,13 @@ Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md
 ## Login-flow
 
 - Creators logger ind via den normale WordPress-login (`wp-login.php`) eller WooCommerce "Min konto". Der bygges **intet** eget auth-system. Password-reset, rate-limit-plugins og 2FA-plugins virker dermed uændret.
-- `login_redirect`-filter: Brugere med creator-adgang og **uden** `merchboard_manage` sendes til `/creator-dashboard/`. En eksplicit, valideret `redirect_to` til dashboardet respekteres.
-- Creators uden admin-caps, der tilgår `/wp-admin/`, redirectes til dashboardet. `admin-ajax.php`, `admin-post.php` og `async-upload.php` undtages, fordi de kan bruges legitimt af frontend.
-- Admin bar skjules for creators (`show_admin_bar` filter).
+✅ Implementeret i fase 12 (`Modules/Access`, ADR-026). Reglerne gælder **rene creators**: brugere med `merchboard_access_dashboard` og **uden** `merchboard_manage`, `edit_posts` og `manage_woocommerce` (`CreatorRestrictions::applies_to()`). Det omfatter alle med creator-rollen, også inaktive creators og rollen uden record. Administratorer, editors og shop managers, der også er creators, beholder wp-admin, admin bar og Application Passwords.
+
+- `login_redirect` og WooCommerce' `woocommerce_login_redirect` (`LoginRedirect`): Rene creators sendes til dashboardet. En `redirect_to` respekteres kun, hvis den er et valideret deep link til dashboardet på samme site (se [SECURITY.md](SECURITY.md#redirects)). Alt andet giver startsiden. Andre brugere får WordPress' og WooCommerce' normale redirect.
+- `AdminAreaGuard`: Rene creators, der åbner en wp-admin-side (også `profile.php`), redirectes til dashboardet. Inaktive creators ser dér "access not active". Undtaget: `admin-ajax.php`, `admin-post.php`, `async-upload.php`, cron, REST og CLI. Login og log ud (`wp-login.php`) kører ikke `admin_init` og berøres ikke.
+- Admin bar skjules for rene creators (`show_admin_bar`), og Application Passwords er slået fra (`wp_is_application_passwords_available_for_user`).
+- **WooCommerce:** WooCommerce sender selv brugere uden `edit_posts`/`manage_woocommerce`/`view_admin_dashboard` fra wp-admin til "Min konto" og skjuler deres admin bar. Vores guard kører før (prioritet 0), så rene creators havner på dashboardet. For alle andre brugere overstyres WooCommerce ikke.
+- **Konsekvens:** En ren creator med kun `merchboard_view_logs` (uden `merchboard_manage`) kan ikke nå Audit log. Giv også `merchboard_manage`.
 - Login-siden kan senere brandes via `login_enqueue_scripts`/`login_headerurl`. Det er styling og ikke et nyt system.
 
 ## Administratorer, der også er creators
