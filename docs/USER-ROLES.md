@@ -1,46 +1,79 @@
 # Roller, capabilities og adgangsmodel
 
-> Status: **Design.** Roller og capabilities implementeres i fase 5, adgangsflow i fase 8.
+> Status: **Roller og capabilities implementeret (fase 5, ADR-022).** Adgangsflowet (kombinationen af capability og aktiv creator-record, meta-capabilities, login-redirect) kommer i fase 8.
 
 ## Brugertyper
 
 | Brugertype | Hvordan | Adgang |
 | --- | --- | --- |
-| **Administrator** | WP-rollen `administrator` får plugin-capabilities ved aktivering | Hele Merch Dashboard-admin |
+| **Administrator** | WP-rollen `administrator` får pluginets admin-capabilities ved aktivering/opdatering (fase 5) | Hele Merch Dashboard-admin |
 | **Shop manager** (valgfri) | Kan tildeles plugin-caps via Settings → Access | Konfigurerbart, default ingen |
 | **Creator** | WP-bruger med rollen `merchboard_creator` **og** en aktiv creator-record | Kun Creator Dashboard, kun egne data |
 | Øvrige (customer, subscriber …) | – | Ingen adgang til Merch Dashboard |
 
-## Capabilities
+## Tre forskellige ting
 
-Få og meningsfulde. Nye capabilities tilføjes, når et modul har et reelt behov for at adskille rettigheder.
+| Begreb | Ejes af | Hvad det er | Hvad det **ikke** er |
+| --- | --- | --- | --- |
+| **WordPress-bruger** (`wp_users`) | WordPress | Login-identitet og konto | Ikke en creator |
+| **Rolle/capability** (`merchboard_creator`, `merchboard_*`) | WordPress' role-system, defineret af pluginet | *Hvad en bruger må* | Giver ikke alene adgang til creator-data |
+| **Creator-record** (`merchboard_creators`) | Merch Dashboard | Forretningsenheden med status `active`/`inactive` (ADR-020) | Ikke en login-konto |
 
-| Capability | Tildeles | Giver |
+Faktisk creator-adgang (fase 8) kræver **både** capability **og** en aktiv creator-record koblet til brugeren. Se adgangsreglen nedenfor.
+
+## Capabilities (implementeret, fase 5)
+
+Definitionerne findes ét sted: `MerchBoard\Core\Security\Capabilities` (konstanter, ingen string literals i øvrig kode). Pluginet ejer alle capabilities med prefix `merchboard_`.
+
+| Capability | Konstant | Tildeles | Giver |
+| --- | --- | --- | --- |
+| `merchboard_access_dashboard` | `Capabilities::ACCESS_DASHBOARD` | rollen `merchboard_creator` | Forudsætning (ikke tilstrækkelig) for Creator Dashboard |
+| `merchboard_manage` | `Capabilities::MANAGE` | `administrator` | Se Merch Dashboard-menuen og Overview (fase 9) |
+| `merchboard_manage_creators` | `Capabilities::MANAGE_CREATORS` | `administrator` | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra (fase 6/10) |
+| `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9) |
+
+Ingen kode bruger dem endnu. De er fundamentet for fase 6-10. Checks skal altid være positive capability-checks: `current_user_can( Capabilities::MANAGE_CREATORS )` / `user_can( $user, … )`. Aldrig "er logget ind", rolle- eller display-navne eller hardcodede user-ID'er.
+
+Administratorer beholder alle deres WordPress-capabilities uændret. Pluginet tilføjer kun sine egne. Pluginets admin-funktioner kræver pluginets capabilities, ikke `manage_options`, så de senere kan gives til fx en shop manager uden fulde admin-rettigheder (fase 9).
+
+### Udskudt (dokumenteret ændring i forhold til den oprindelige fase 5-plan)
+
+| Planlagt i fase 5 | Flyttet til | Begrundelse |
 | --- | --- | --- |
-| `merchboard_manage` | administrator | Se Merch Dashboard-menuen og Overview |
-| `merchboard_manage_creators` | administrator | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra |
-| `merchboard_manage_settings` | administrator | Ændre plugin-settings |
-| `merchboard_view_logs` | administrator | Se audit log (tekniske logs ses via WooCommerce/serveren) |
-| `merchboard_access_dashboard` | rollen `merchboard_creator` | Forudsætning for at bruge Creator Dashboard (se adgangsregel nedenfor) |
+| `merchboard_view_logs` | Fase 11 (audit-log viewer) | Audit-visning er ikke en del af fase 5. Capabilities oprettes med den funktion, der bruger dem. |
+| Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` (`map_meta_cap`) | Fase 8 (sammen med `CreatorContext`) | Ejerskabsdelen kræver creator-record og status. Kombinationen af permission og aktiv record hører til adgangsflowet. |
+| Fjernelse af rolle/caps ved uninstall | Fase 9 (opt-in "Slet alle data") | Uninstall bevarer data (DATABASE.md). Brugere, der har rollen, må ikke miste den implicit. |
 
-**Meta-capabilities** (via `map_meta_cap`, fase 5):
+Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11), `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`.
 
-| Meta-cap | Kaldes som | Mappes til |
-| --- | --- | --- |
-| `merchboard_view_creator` | `current_user_can( 'merchboard_view_creator', $creator_id )` | `merchboard_manage_creators` **eller** (brugeren ejer creator'en, creator'en er aktiv og brugeren har `merchboard_access_dashboard`) |
-| `merchboard_edit_creator` | `current_user_can( 'merchboard_edit_creator', $creator_id )` | `merchboard_manage_creators` **eller** (ejer og aktiv) for de profilfelter creator'en selv må redigere |
+## Rollen `merchboard_creator` (implementeret, fase 5)
 
-Meta-caps er defense-in-depth og gør det muligt senere at tilføje ID-baserede ressourcer uden at genopfinde ejerskabs-tjek.
+- Display name: **"Merch Dashboard Creator"** (`Capabilities::CREATOR_ROLE_NAME`).
+- Capabilities: **præcis** `read` og `merchboard_access_dashboard`.
+  - `read` er WordPress' baseline for indloggede brugere (Subscriber har kun `read`). Den giver adgang til egen profil i wp-admin som en Subscriber. Blokering af wp-admin for creators kommer i fase 8.
+- Rollen **må ikke** have: `manage_options`, `activate_plugins`, `edit_users`, `delete_users`, `create_users`, `list_users`, `promote_users`, `edit_posts`, `upload_files`, `unfiltered_html`, `manage_woocommerce` eller andre brede capabilities, og heller ingen af pluginets admin-capabilities. Det håndhæves ved hver synkronisering (se nedenfor).
+- Tildeles som **ekstra rolle** (`$user->add_role()`, fase 6/10), så en eksisterende rolle (fx WooCommerce `customer`) bevares.
 
-Fremtidige capabilities (tilføjes med deres modul): `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`.
+## Installation og synkronisering (ADR-022)
 
-## Rollen `merchboard_creator`
+`MerchBoard\Core\Security\RoleManager` bringer WordPress' lagrede roller i overensstemmelse med `Capabilities` og bruger kun role-API'et (`get_role`, `add_role`, `add_cap`, `remove_cap`):
 
-- Label: "Creator".
-- Capabilities: `read` og `merchboard_access_dashboard`. **Intet andet.** Ingen `upload_files`, `edit_posts` osv.
-- Tildeles som **ekstra rolle** (`$user->add_role()`), så en eksisterende rolle (fx WooCommerce `customer`) bevares.
-- Rolle og caps synkroniseres ved aktivering og når plugin-versionen ændres (`Upgrader`), så nye caps rulles ud ved opdatering.
-- Fjernes ved afinstallation, kun hvis "slet data" er slået til.
+| Rolle | Adfærd |
+| --- | --- |
+| `merchboard_creator` | Oprettes, hvis den mangler. Holdes derefter på **præcis** de definerede capabilities: manglende tilføjes, og alt andet (fx tilføjet med en rolle-editor) fjernes og logges som `warning`. |
+| `administrator` | Pluginets admin-capabilities tilføjes. Forældede `merchboard_*`-capabilities fjernes. WordPress' og andre plugins' capabilities røres aldrig. Mangler rollen, logges en `warning`, og creator-rollen synkroniseres alligevel. |
+| Alle andre roller | Røres aldrig. |
+| Brugere | Ændres aldrig. |
+
+- **Hvornår:** ved aktivering (altid) og ved normal request, når `merchboard_roles_version` < `RoleManager::VERSION` (plugin-opdateringer udløser ikke aktivering). Koster én autoloaded option-læsning. Synkroniseringen er idempotent.
+- **Ændring af definitionerne:** Opdatér `Capabilities` og hæv `RoleManager::VERSION`.
+- **Fejl:** Kan creator-rollen ikke oprettes, logges `error`, og versionen registreres ikke (forsøges igen næste request).
+- **Deaktivering:** Rolle og capabilities bevares. Uden pluginet er de inaktive, fordi intet tjekker dem, og brugere bevarer deres roller.
+- **Uninstall:** Rolle og capabilities bevares (data-retention). Fjernelse sker kun med opt-in-sletning i fase 9 og kun for plugin-ejede roller/capabilities.
+
+## Grænsen for fase 5
+
+Fase 5 leverer **kun** permission-grundlaget: rolle, capabilities, synkronisering og konstanter. Den leverer **ikke** adgangskontrol til creator-data, frontend, REST, `/me`, dashboard-routing, login-redirect eller admin-UI. Senere kode kan spørge "har brugeren capability X?", men "er brugeren en aktiv creator?" besvares først af `CreatorContext` i fase 8.
 
 ## Adgangsregel for Creator Dashboard
 

@@ -10,7 +10,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | --- | --- | --- |
 | Foundation | 1-2 | Tooling, docs og plugin-bootstrap |
 | Data & core services | 3-4 | Migrationer og creator-tabel (✅ fase 3), logging og fejlhåndtering (✅ fase 4) |
-| Authentication & permissions | 5-8 | Roller, creator-domæne, testinfrastruktur, adgangsflow |
+| Authentication & permissions | 5-8 | Roller og capabilities (✅ fase 5), creator-domæne, testinfrastruktur, adgangsflow |
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
 | Deployment | 16 | Release-pipeline og staging |
@@ -43,10 +43,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Leveret:** `Logger`-interface (debug/info/warning/error), `PluginLogger` (tærskel fra `WP_DEBUG` + filter `merchboard_log_level`), `LogContext` (maskering af følsomme nøgler, sikre exceptions og fjernelse af kontroltegn), backends `WooCommerceLogWriter` (efter `woocommerce_init`) og `ErrorLogWriter` (fallback), `DatabaseException::context()`, og at `Migrator`/`Installer` logger migrationsfejl én gang i stedet for via `error_log()`. 165 unit-tests. Playground med og uden WooCommerce. ADR-021.
 - **Ændret i forhold til den oprindelige plan (ADR-021 erstatter ADR-012):** ingen `merchboard_logs`-tabel, ingen channels og ingen retention-cron. Audit trail flyttes til fase 6 som egen tabel, deactivation hook til fase 12 (der er ingen cron at rydde op).
 
-## Fase 5 – Roller og capabilities
+## Fase 5 – Roller og capabilities ✅
 
-- **Scope:** `Capabilities`: rollen `merchboard_creator`, admin-caps på `administrator`, sync ved aktivering og versionsskift, `map_meta_cap` for `merchboard_view_creator`/`merchboard_edit_creator` og oprydning ved uninstall.
-- **Done:** Caps er synlige i Playground. Unit-tests for meta-cap-mapping.
+- **Leveret:** `Capabilities` (konstanter og definitioner), rollen `merchboard_creator` (præcis `read` + `merchboard_access_dashboard`), admin-caps `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings` på `administrator`, `RoleManager` (deklarativ, idempotent sync, eskaleringsværn, egen version `merchboard_roles_version`) integreret i `Installer` (aktivering og versionstjek). 204 unit-tests. Playground med og uden WooCommerce (rigtig `user_can()`). ADR-022.
+- **Ændret i forhold til den oprindelige plan:** `merchboard_view_logs` → fase 11. `map_meta_cap` for `merchboard_view_creator`/`merchboard_edit_creator` → fase 8 (kræver creator-record/status). Oprydning ved uninstall → fase 9 (opt-in). Se [USER-ROLES.md](USER-ROLES.md#udskudt-dokumenteret-ændring-i-forhold-til-den-oprindelige-fase-5-plan).
 
 ## Fase 6 – Creator-domæne
 
@@ -60,12 +60,12 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 8 – Creator access og login-flow
 
-- **Scope:** `CreatorContext`, `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar, application passwords slået fra for creators. Se [features/creator-access.md](features/creator-access.md).
+- **Scope:** `CreatorContext` (capability **og** aktiv, koblet creator-record), meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` via `map_meta_cap` (flyttet fra fase 5), `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar, application passwords slået fra for creators. Se [features/creator-access.md](features/creator-access.md).
 - **Done:** Integrationstests for alle adgangskombinationer og manuel test i Playground.
 
 ## Fase 9 – Admin shell: menu, overview og settings
 
-- **Scope:** Topmenu "Merch Dashboard", Overview (systemstatus: WooCommerce, migrationer/schemaversion, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization), opt-in-setting "Slet alle data ved afinstallation" (default fra) og den tilhørende sletterutine i `uninstall.php` (bruger `Tables::all()`).
+- **Scope:** Topmenu "Merch Dashboard", Overview (systemstatus: WooCommerce, migrationer/schemaversion, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization), opt-in-setting "Slet alle data ved afinstallation" (default fra) og den tilhørende sletterutine i `uninstall.php` (bruger `Tables::all()`; fjerner også rollen `merchboard_creator` og pluginets `merchboard_*`-capabilities, flyttet fra fase 5).
 - **Done:** Settings gemmes, valideres og audit-logges. Capability-tests.
 
 ## Fase 10 – Admin creator management
@@ -75,7 +75,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 11 – Admin audit-log viewer
 
-- **Scope:** Audit-log-side med `WP_List_Table`, filtre (hændelse, creator, periode) og visning af context. Link til WooCommerce → Status → Logs (source `merchboard`) for tekniske logs, når WooCommerce er aktivt.
+- **Scope:** Capability `merchboard_view_logs` (flyttet fra fase 5), audit-log-side med `WP_List_Table`, filtre (hændelse, creator, periode) og visning af context. Link til WooCommerce → Status → Logs (source `merchboard`) for tekniske logs, når WooCommerce er aktivt.
 - **Done:** Kræver `merchboard_view_logs`. Output er escaped.
 
 ## Fase 12 – Creator dashboard: route og sikker shell

@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 4 (Logging og fejlhåndtering) · **Næste fase:** 5 (Roller og capabilities) · **Schemaversion:** 1 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 5 (Roller og capabilities) · **Næste fase:** 6 (Creator-service og audit trail) · **Schemaversion:** 1 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -58,6 +58,18 @@
 
 **Ændret plan:** ingen log-tabel, channels eller retention-cron (ADR-021 erstatter ADR-012). Audit trail → fase 6, audit-visning → fase 11, deactivation hook → fase 12.
 
+### Fase 5 – Roller og capabilities ✅
+
+- [x] `Capabilities`: konstanter og definitioner (single source of truth). Pluginet ejer `merchboard_*`.
+- [x] Rolle `merchboard_creator` ("Merch Dashboard Creator") med **præcis** `read` + `merchboard_access_dashboard`.
+- [x] Admin-capabilities `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings` på `administrator`. Administratorens øvrige capabilities er uændrede.
+- [x] `RoleManager`: deklarativ, idempotent sync via role-API. Creator-rollen holdes på præcis sit sæt (eskalering fjernes og logges), andre roller og brugere røres aldrig, og der er egen version `merchboard_roles_version` (ADR-022).
+- [x] Integreret i `Installer`: aktivering og versionstjek på `plugins_loaded`. Deaktivering og uninstall bevarer rolle og caps.
+- [x] 204 unit-tests (391 assertions). Lint og PHPStan level 8 er grønne.
+- [x] Playground med **og** uden WooCommerce (identiske resultater): rolle og caps oprettet, administratoren fik kun de 3 plugin-caps (intet fjernet eller ændret), andre roller uændrede, rigtig `user_can()` (admin: plugin-admin ja og dashboard nej; creator og customer+creator: kun dashboard; subscriber: intet; ikke-definerede caps: ingen), eskaleringsforsøg fjernet og logget, anden sync ændrer intet, deaktivering/genaktivering bevarer rolle og caps, ingen fatals/notices, og forside, wp-admin og REST svarer 200.
+
+**Bevidst ikke i fase 5:** creator-adgang (capability + aktiv record), meta-caps og wp-admin-blokering (fase 8), `merchboard_view_logs` (11), rolle-oprydning ved uninstall (9), admin-UI, REST, frontend og `/me`.
+
 ## In progress
 
 Intet.
@@ -66,9 +78,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 5:** Roller og capabilities.
-2. **Fase 6:** Creator-service og audit trail.
-3. **Fase 7:** Integrationstest-infrastruktur (MySQL i CI).
+1. **Fase 6:** Creator-service og audit trail.
+2. **Fase 7:** Integrationstest-infrastruktur (MySQL i CI).
+3. **Fase 8:** Creator access og login-flow.
 
 ## Known bugs
 
@@ -83,6 +95,8 @@ Ingen (der er ingen funktionalitet endnu).
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
 | MySQL-verifikation | Schema og repository er kun kørt mod SQLite (Playground) og unit-tests. `dbDelta()`-adfærd, strict mode, charset og låsens atomicitet på MySQL/MariaDB er ikke verificeret. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
+| Creator-rollen har `read` | Creators kan indtil fase 8 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). Der findes ingen creators endnu (intet UI). | Blokering af wp-admin for creators i fase 8 |
+| Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller i fase 9. |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter første push. Overvej at installere `gh`. |
 
@@ -115,4 +129,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så CI-integrationstests i fase 7 kan køre mod samme version.
-3. Kør fase 5 med prompten: *"Implementér roadmap-fase 5 (Roller og capabilities) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
+3. Kør fase 6 med prompten: *"Implementér roadmap-fase 6 (Creator-domæne og audit trail) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*

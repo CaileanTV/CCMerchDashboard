@@ -42,7 +42,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - **Creator/user-adskillelse:** Creator-ID tildeles af databasen og er uafhængigt af user-ID. `UNIQUE(user_id)` håndhæver højst én creator pr. bruger i databasen (ADR-020).
 - **Data leakage:** Kolonner vælges eksplicit (ingen `SELECT *`). Databasefejl bliver til `DatabaseException` med generiske beskeder uden SQL, `last_error` eller værdier. Migrationsfejl vises kun som generisk admin notice for `activate_plugins`-brugere.
 - **Integritet ved læsning:** Ukendte statusværdier og ugyldige tidsstempler i databasen afvises (`DatabaseException`) i stedet for at blive gættet.
-- **Privilege escalation:** Fase 3 opretter ingen roller eller capabilities og ændrer ingen brugere.
+- **Privilege escalation:** Datalaget opretter ingen roller eller capabilities og ændrer ingen brugere (roller: se nedenfor, fase 5).
 
 ### IDOR
 
@@ -53,7 +53,10 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 ### Privilege escalation
 
-- Creator-rollen har kun `read` og `merchboard_access_dashboard`.
+- Creator-rollen har **præcis** `read` og `merchboard_access_dashboard` (`Capabilities`, fase 5). `RoleManager` håndhæver det ved hver synkronisering: capabilities tilføjet til rollen udefra (fx med en rolle-editor) fjernes og logges. Verificeret i Playground: `manage_options` og `merchboard_manage_creators` tilføjet til rollen blev fjernet ved næste sync.
+- Pluginets kode tildeler aldrig capabilities ud fra input. Rolle/caps defineres kun i kode (`Capabilities`), og synkroniseringen rører kun `merchboard_creator`, pluginets egne `merchboard_*`-capabilities på `administrator`, og aldrig brugere.
+- Permission-checks er positive capability-checks via konstanter (`current_user_can( Capabilities::… )`). Aldrig "logget ind", rolle-/display-navne eller hardcodede ID'er.
+- En capability alene giver ikke creator-adgang. Aktiv creator-record kræves også (fase 8).
 - Creator-redigerbare felter er en **eksplicit whitelist** (fx `display_name`, `bio`, `social_links`). `status`, `user_id`, `slug` og rolle kan aldrig sættes fra creator-endpoints.
 - Admin-handlinger, der opretter brugere, kan kun tildele `merchboard_creator`. Aldrig vilkårlige roller fra input.
 - Ingen `update_user_meta` med nøgler fra input.

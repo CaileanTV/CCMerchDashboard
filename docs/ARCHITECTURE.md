@@ -69,7 +69,7 @@ merchboard/
 │   │   ├── Lifecycle/           # Installer (aktivering + versionstjek) [fase 3], Deactivator [fase 4]
 │   │   ├── Database/            # Tables, Schema, Migration, Migrator, DatabaseException,
 │   │   │                        # Migrations/CreateCreatorsTable                     [fase 3]
-│   │   ├── Security/            # Capabilities (roller/caps/map_meta_cap), Nonce/Request-helpers
+│   │   ├── Security/            # Capabilities, RoleManager [fase 5]; map_meta_cap [fase 8]
 │   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
 │   │   ├── Logging/             # Logger, LogLevel, LogContext, PluginLogger, LogWriter,
@@ -132,14 +132,14 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 **Implementeret i fase 3:**
 
 - `register_activation_hook` registreres i `Plugin::register_hooks()`, mens hovedfilen indlæses (ikke på `plugins_loaded`), og kalder `Plugin::activate()` → `Installer::install()`. Det er idempotent og kan køres flere gange.
-- Core-services i containeren, registreret i `Plugin`-konstruktøren (lazy): `wpdb` (global `$wpdb`), `Migrator` (med `Schema::migrations()`) og `Installer`.
+- Core-services i containeren, registreret i `Plugin`-konstruktøren (lazy): `wpdb` (global `$wpdb`), `Migrator` (med `Schema::migrations()`), `Logger` (fase 4), `RoleManager` (fase 5) og `Installer`.
+- **(fase 5)** `Installer::install()` (aktivering) og `maybe_upgrade()` (versionstjek på `plugins_loaded`) synkroniserer også roller og capabilities via `RoleManager` (egen version `merchboard_roles_version`, ADR-022). Uafhængigt af migrationer. Se [USER-ROLES.md](USER-ROLES.md#installation-og-synkronisering-adr-022).
 - Detaljer om schemaversion, migrationer, lås og fejlhåndtering: [DATABASE.md](DATABASE.md#schemaversion-og-migrationer--adr-019).
 
 **Endnu ikke implementeret** (tilføjes i den fase, hvor de får en funktion):
 
 | Del | Fase | Begrundelse |
 | --- | --- | --- |
-| Rolle-/capability-sync ved versionsskift | 5 | Ingen roller endnu |
 | `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu. Deaktivering rører aldrig data. |
 | Slet-data-rutine i `uninstall.php` | 9 | Kræver opt-in-settingen. Uninstall bevarer data indtil da. |
 | `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |

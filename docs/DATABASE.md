@@ -15,6 +15,8 @@
 | Schemaversion | `wp_options`: `merchboard_db_version` ✅ | Styrer migrationer (ADR-019) |
 | Migrationslås | `wp_options`: `merchboard_db_migration_lock` ✅ (midlertidig, ikke autoload) | Forhindrer samtidige migrationer |
 | Migrationsfejl | transient `merchboard_db_migration_failed` ✅ (5 min) | Pause mellem automatiske forsøg og admin notice |
+| Rolle `merchboard_creator` og pluginets capabilities | WordPress' `wp_user_roles`-option via role-API ✅ (fase 5) | WordPress-nativt. Aldrig direkte manipuleret. |
+| Synkroniseret rolle-version | `wp_options`: `merchboard_roles_version` ✅ (autoload) | Styrer rolle-sync ved opdateringer (ADR-022) |
 | Secrets (API-nøgler til integrationer) | `wp-config.php`-konstanter (foretrukket) eller option med `autoload = no` | Aldrig i repo, aldrig autoloaded, aldrig sendt til frontend |
 | Produkter, varianter, ordrer, refunds og kunder | **WooCommerce** (HPOS) | Source of truth. Ingen kopi af masterdata. |
 | Produkt → creator | WooCommerce product meta `_merchboard_creator_id` (fase 17) | Én creator pr. produkt i v1 |
@@ -210,7 +212,7 @@ Produktionsschemaet er skrevet til **MySQL/MariaDB via `$wpdb`**. Playground bru
 | Handling | Effekt på data |
 | --- | --- |
 | **Deaktivering** | Ingen. Data, tabeller og options bevares. (Fase 4 og 12 tilføjer oprydning af cron og rewrite rules, men aldrig data.) |
-| **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** `merchboard_creators`, `merchboard_db_version` m.m. bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
+| **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** `merchboard_creators`, `merchboard_db_version`, `merchboard_roles_version`, rollen `merchboard_creator` og administratorens `merchboard_*`-capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
 | **Permanent sletning** | Bliver en eksplicit opt-in (setting "Slet alle data ved afinstallation", default fra) i **fase 9**. Selve sletterutinen implementeres sammen med settingen, ikke før. `Tables::all()` giver den komplette liste over plugin-tabeller til den rutine. |
 | **Creator "slettes"** | Status `inactive` (soft). Hard delete af en creator er ikke understøttet, fordi fremtidig salgshistorik refererer til creator-ID'et. |
 | **WordPress-bruger slettes** | Se relationen ovenfor (fase 6). Creator-data bevares. |

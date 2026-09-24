@@ -582,3 +582,40 @@ WordPress-nativt, ingen schema og ingen cron. Administratorer får logs i WooCom
 - Med WooCommerce-backenden gælder også WooCommerce' egen log-tærskel og retention.
 - Poster logget før `woocommerce_init` (fx migrationer lige efter en plugin-opdatering) går til `error_log()`.
 - Roadmap: fase 4 leverer logging uden tabel og cron. Audit-tabellen flyttes til fase 6, audit-visning til fase 11, og deactivation hook til fase 12 (rewrite rules).
+
+---
+
+# ADR-022: Deklarativ rolle- og capability-synkronisering med egen version
+
+## Date
+2026-09-24
+
+## Status
+Accepteret (fase 5)
+
+## Context
+Roller og capabilities lagres af WordPress i `wp_user_roles` og overlever deaktivering, opdatering og (efter datapolitikken) uninstall. Definitionerne vil ændre sig i senere faser (nye capabilities, forældede fjernes), og plugin-opdateringer udløser ikke activation-hooken. Samtidig må pluginet ikke nulstille administratorers rettigheder, ikke røre andre plugins' capabilities, og creator-rollen må aldrig kunne bære administrative rettigheder.
+
+## Decision
+- **Single source of truth:** `Capabilities` (konstanter og definitioner). Pluginet ejer alle capabilities med prefix `merchboard_`.
+- **Deklarativ sync** (`RoleManager`) via role-API'et, aldrig direkte option-manipulation:
+  - `merchboard_creator` holdes på **præcis** det definerede sæt. Uventede capabilities fjernes og logges (`warning`).
+  - `administrator` får pluginets admin-capabilities tilføjet, og forældede `merchboard_*` fjernes. Øvrige capabilities røres aldrig.
+  - Andre roller og brugere røres aldrig.
+- **Egen version** `merchboard_roles_version` (heltal, `RoleManager::VERSION`) i stedet for en database-migration. Sync køres ved aktivering (altid) og når versionen er bagud (`Installer::maybe_upgrade()`, én autoloaded option-læsning). Uafhængig af schema-migrationer.
+- **Deaktivering og uninstall** bevarer rolle og capabilities. Fjernelse kun med opt-in-sletning i fase 9.
+- Meta-capabilities (`map_meta_cap`) kommer i fase 8 sammen med `CreatorContext`.
+
+## Alternatives considered
+- **Rolle-ændringer som database-migrationer (ADR-019):** migrationer er imperative og beregnet til schema. Roller er deklarativ konfiguration, hvor den ønskede slut-tilstand er det interessante. En migration pr. capability-ændring giver mange små trin og ingen løbende håndhævelse.
+- **Kun `add_role()` ved aktivering:** `add_role()` gør intet, hvis rollen findes, så nye capabilities rulles ikke ud ved opdatering, og manuelle eskaleringer bliver aldrig rettet.
+- **Kun additiv sync af creator-rollen (respektér manuelle tilføjelser):** fleksibelt for administratorer, men åbner for utilsigtet privilege escalation via rolle-editorer. Security prioriteres. Har et site brug for andre rettigheder, bruges en anden rolle.
+- **`manage_options` som admin-check:** kan ikke gives til fx en shop manager uden fulde admin-rettigheder.
+
+## Reason
+Forudsigelig slut-tilstand, idempotens, sikker håndtering af opdateringer og et indbygget værn mod eskalering. Brug af WordPress' egne APIs.
+
+## Consequences
+- Ændringer i `Capabilities` kræver, at `RoleManager::VERSION` hæves.
+- Manuelle ændringer af `merchboard_creator` overskrives ved næste sync (dokumenteret).
+- Sites uden rollen `administrator` skal tildele plugin-capabilities manuelt (warning logges). Settings-baseret tildeling til andre roller kommer i fase 9.

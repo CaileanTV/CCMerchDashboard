@@ -13,6 +13,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - PHPUnit 11 + Brain Monkey med 38 unit-tests. CI kører PHPUnit og et PHP 7.2-syntakstjek.
 - **Databasefundament (fase 3):** tabel `merchboard_creators`, versionerede migrationer (`merchboard_db_version`, ADR-019), `Installer` (activation hook og versionstjek ved opdateringer), `Creator`/`CreatorStatus`/`CreatorRepository` og `CreatorsModule` (ADR-020). 113 unit-tests.
 - **Logging og fejlhåndtering (fase 4):** `Logger`-abstraktion med WooCommerce-logger (source `merchboard`) og `error_log()`-fallback, tærskel fra `WP_DEBUG`/filter `merchboard_log_level`, sanitization af context (`LogContext`) og `DatabaseException::context()`. Migrationsfejl logges via Logger. ADR-021.
+- **Roller og capabilities (fase 5):** rolle `merchboard_creator` (`read` + `merchboard_access_dashboard`), admin-capabilities `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings`, samt `Capabilities` og `RoleManager` med idempotent sync ved aktivering og opdatering (ADR-022).
 
 ### Changed
 - **Navngivning (ADR-018):** Den midlertidige konvention `ccmerch` / `CCMerch\` / `ccmerch-dashboard` / "CC Merch Dashboard" er erstattet af `merchboard` / `MerchBoard\` / `merchboard` / "Merch Dashboard" i al kode, konfiguration og dokumentation. Hovedfilen hedder nu `merchboard.php`. Ingen datamigration, fordi der ikke fandtes persistent data. Punkterne ovenfor bruger allerede de nye navne.
@@ -29,5 +30,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - ADR-021 erstatter ADR-012: ingen `merchboard_logs`-tabel. Audit trail planlagt som `merchboard_audit_log` i fase 6.
 - Migrationsfejl skrives ikke længere direkte med `error_log()`, men via Logger med renset diagnostik. Admin-noticen henviser til loggen uden detaljer.
 
+### Changed (fase 5)
+- Udskudt fra den oprindelige fase 5-plan: `merchboard_view_logs` → fase 11, meta-capabilities via `map_meta_cap` → fase 8, rolle-oprydning ved uninstall → fase 9.
+- Creator-rollens display name er "Merch Dashboard Creator" (tidligere planlagt "Creator").
+
 ### Database
 - **Schema-version 1:** ny tabel `{prefix}merchboard_creators` (`id`, `user_id` nullable UNIQUE, `display_name`, `status`, `created_at`, `updated_at`; UTC). Nye options `merchboard_db_version` (autoload) og `merchboard_db_migration_lock` (midlertidig). Transient `merchboard_db_migration_failed`.
+- **Roller (fase 5):** rolle `merchboard_creator` og administrator-capabilities i WordPress' `wp_user_roles`. Ny option `merchboard_roles_version` (autoload). Ingen schemaændring.

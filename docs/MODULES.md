@@ -73,7 +73,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 
 | Modul | Status | Ansvar | Fase |
 | --- | --- | --- | --- |
-| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3), Logger, PluginLogger, LogContext, LogWriter-backends (fase 4). **Planlagt:** Capabilities (5), Settings (9), Assets (13) | 2-4 ✅, 5+ |
+| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3), Logger, PluginLogger, LogContext, LogWriter-backends (fase 4), Capabilities, RoleManager (fase 5). **Planlagt:** Settings (9), Assets (13) | 2-5 ✅, 6+ |
 | Creators | Delvist | **Færdig (fase 3):** `CreatorsModule`, `Creator` (entity), `CreatorStatus` (enum), `CreatorRepository` (find, find_by_user_id, create). **Planlagt:** `CreatorService` og øvrige repository-operationer (6), admin-administration (10) | 3 ✅, 6, 10 |
 | Access | Planlagt | `CreatorContext`, login-redirect, blokering af wp-admin for creators | 8 |
 | Admin | Planlagt | Topmenu, Overview, Settings og Audit log | 9, 11 |

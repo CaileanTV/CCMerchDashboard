@@ -40,6 +40,16 @@ Test-doubles: `tests/Unit/Support/RecordingWpdb` (optager prepare/insert i stede
 
 `tests/Unit/Support/RecordingLogger` optager, hvad services beder om at logge, og `RecordingLogWriter` optager, hvad der når backenden.
 
+**Unit-tests fra fase 5 (roller og capabilities):**
+
+- `Capabilities`: creator-rollen har præcis `read` + `merchboard_access_dashboard`, ingen af 14 administrative WordPress-/WooCommerce-capabilities, ingen plugin-admin-caps. Admin-sættet og det samlede sæt er præcis de dokumenterede. Prefix-ejerskab.
+- `RoleManager`: oprettelse med præcise caps og display name, administrator beholder alle eksisterende caps og får kun pluginets, idempotens (rollen oprettes én gang, ingen ændringer ved gentagelse), andre roller urørte, eskaleret creator-rolle reduceres og logges, nægtet cap gen-tildeles, forældede `merchboard_*` fjernes fra admin, men fremmede bevares, manglende administrator-rolle, fejl ved oprettelse, versionstjek, samt positive/negative rettigheder for admin, creator, customer+creator og subscriber (inkl. ikke-definerede caps).
+- `Installer`/`Plugin`: aktivering synkroniserer roller (også når en migration fejler), `maybe_upgrade` synkroniserer kun ved forældet version, plugin reload rører ikke aktuelle roller.
+
+Test-doubles: `tests/Fixtures/wp-role.php` (minimal `WP_Role`, ekskluderet fra PHPStan) og `tests/Unit/Support/InMemoryRoles` (`get_role`/`add_role`/`remove_role` med WordPress-semantik og en rolle-baseret capability-check).
+
+**Hvad unit-tests ikke kan bevise:** WordPress' faktiske `user_can()`-opløsning. Den er verificeret i Playground med rigtige brugere (se PROJECT-STATUS).
+
 **Legacy-syntaks:** CI-jobbet `php-legacy-syntax` kører `php -l` på PHP 7.2 for hovedfilen, `src/Core/Requirements.php` og `uninstall.php`, så versionstjekket kan vise en notice i stedet for en parse error.
 
 ## Security-tests er obligatoriske
