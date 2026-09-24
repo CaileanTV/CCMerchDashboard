@@ -1,0 +1,35 @@
+# Dependencies (installed via composer/npm, never committed)
+/vendor/
+/node_modules/
+
+# Build output (produced by `npm run build`, shipped only in release zips)
+/build/
+/dist/
+
+# Project-local tooling (e.g. composer.phar, see docs/DEVELOPMENT.md)
+/.tools/
+
+# Local WordPress Playground site data
+/.wp-playground/
+
+# Tool caches
+/.phpcs-cache
+/.phpunit.cache/
+/.phpunit.result.cache
+/.eslintcache
+/.stylelintcache
+/coverage/
+
+# Environment and secrets — never commit credentials
+.env
+.env.*
+!.env.example
+auth.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+/.idea/
+*.swp
+*.log
