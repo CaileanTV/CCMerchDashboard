@@ -121,9 +121,28 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - Ingen runtime-dependencies fra tredjepart (ADR-004). Det minimerer supply chain-risiko i produktion.
 - Dev-dependencies: `npm audit` og `composer audit` gennemgås ved opdateringer. Status i [DEVELOPMENT.md](DEVELOPMENT.md#kendte-advisories).
 
-### Audit og logging
+### Logging
 
-Alle adgangs- og rettighedsændringer, creator-statusændringer og settings-ændringer logges i channel `audit` med actor og target. Fejlede autorisationsforsøg på creator-endpoints logges i channel `access` på `warning`-niveau (rate-begrænset for at undgå log-flooding).
+Tekniske logs (fase 4, ADR-021, [ARCHITECTURE.md §11](ARCHITECTURE.md#11-logging-arkitektur)) må aldrig blive en kanal for datalæk.
+
+**Må aldrig logges:** passwords, auth-tokens, API-nøgler, cookies, sessionsdata, WordPress-credentials og salts, database-credentials, secrets fra miljøvariabler eller `wp-config.php`, betalingsoplysninger, kundedata (navn, e-mail, telefon, adresse) og creator-private data (medmindre en senere feature eksplicit definerer og begrunder det). Brug ID'er i stedet.
+
+**Kaldernes ansvar (første forsvarslinje):** Beskeder er konstante sætninger. Context indeholder kun diagnostiske værdier (ID'er, versioner, klassenavne). Hele request-, bruger- eller ordreobjekter sendes aldrig.
+
+**`LogContext` (sidste forsvarslinje), anvendt på alt, før det skrives:**
+
+- Værdier under nøgler, der matcher `pass|pwd|secret|token|api[_-]?key|private[_-]?key|auth|cookie|session|nonce|salt|credential|card|cvv|iban|email|phone|address` (case-insensitive, hvor som helst i nøglen og også i indlejrede arrays), erstattes med `[redacted]`. Mønsteret er bevidst bredt, så falske positiver accepteres.
+- **Exceptions** bliver til `{exception: klasse, code}`. Beskeden medtages kun for pluginets egne exceptions (`MerchBoard\…`), hvis beskeder er generiske pr. kontrakt. Beskeder fra WordPress/PHP/tredjeparter kan indeholde SQL, stier eller værdier og droppes. Stack traces og filstier logges aldrig.
+- Andre objekter bliver til deres klassenavn, og resources droppes.
+- Kontroltegn (linjeskift, null-bytes, escape-sekvenser) fjernes fra beskeden og alle strengværdier (forhindrer log-forfalskning). Strenge afkortes til 500 tegn, og dybden er højst 3.
+
+**Databasefejl:** Brugere og UI ser aldrig SQL, `last_error`, stack traces, stier eller forbindelsesdetaljer. Migrationsfejl vises kun som generisk admin notice (for `activate_plugins`). Loggen får en **renset** DDL-fejl: HTML fjernet, whitespace normaliseret, en eventuel driver-backtrace fjernet og afkortet til 200 tegn. Fejl fra DML (inserts/selects) logges ikke med `last_error`, fordi de kan indeholde brugerdata (fx værdien i en duplicate-key-fejl).
+
+**Production:** Standardtærsklen er `warning`, og debug-output kræver `WP_DEBUG` (som pluginet aldrig ændrer). Der sker ingen output til browseren.
+
+### Audit trail (planlagt, fase 6)
+
+Adgangs- og rettighedsændringer, creator-statusændringer og settings-ændringer registreres i en separat audit-tabel med actor og target (ADR-021). Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding) fra fase 8.
 
 ## Tjekliste pr. ændring
 

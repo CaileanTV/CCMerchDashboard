@@ -64,6 +64,8 @@ node bin/composer.mjs install
 - **Sitet er flygtigt**: WordPress og data bygges forfra ved hver start. Det er reproducerbart og isoleret. Testdata skal derfor oprettes via blueprinten (eller senere seed-scripts), ikke manuelt.
 - Kodeændringer i repo'et slår igennem med det samme, fordi mappen er mountet.
 
+**Logs:** Med WooCommerce ligger pluginets tekniske logs under WooCommerce → Status → Logs (source `merchboard`). Uden WooCommerce ligger de i `wp-content/debug.log` (Playground sætter `WP_DEBUG_LOG`). Debug-poster skrives kun, når `WP_DEBUG` er slået til (se [ARCHITECTURE.md §11](ARCHITECTURE.md#11-logging-arkitektur)).
+
 **Kendte begrænsninger**
 
 - SQLite i stedet for MySQL. Custom tables oprettet med `dbDelta()` virker via SQLite-integrationen, men SQL skal testes mod MySQL/MariaDB før release (CI/staging).

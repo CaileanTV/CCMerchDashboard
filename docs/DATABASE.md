@@ -19,7 +19,8 @@
 | Produkter, varianter, ordrer, refunds og kunder | **WooCommerce** (HPOS) | Source of truth. Ingen kopi af masterdata. |
 | Produkt → creator | WooCommerce product meta `_merchboard_creator_id` (fase 17) | Én creator pr. produkt i v1 |
 | Salg pr. creator (historik) | `merchboard_sales` (custom ledger, fase 18) | Hurtige aggregeringer og uforanderlig attribution. Se [WOOCOMMERCE.md](WOOCOMMERCE.md). |
-| Applikations- og audit-log | `merchboard_logs` (custom, fase 4) | Volumen, filtrering og retention |
+| Tekniske logs | **Ingen tabel.** WooCommerce-logger eller `error_log()` (fase 4, ADR-021) | Tekniske logs er drift, ikke forretningsdata |
+| Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom, planlagt fase 6) | Forretningsdata: søgbar i wp-admin, lang opbevaring |
 | Cache af aggregeringer | Transients/object cache | Afledte data, må forsvinde |
 
 **Tommelfingerregel:** WordPress' datamodel bruges, hvor data er *konfiguration* eller *tilhører en eksisterende WP-entitet*. Custom tables bruges, hvor data er *domæneentiteter med relationer, volumen eller behov for effektive queries*.
@@ -106,20 +107,20 @@ Ingen `NULL`, `0`/`1` eller andre magic strings. Ukendte værdier i databasen af
 
 Standard WordPress meta-tabel (`meta_id`, `merchboard_creator_id`, `meta_key`, `meta_value`), så `add_metadata( 'merchboard_creator', … )`, `get_metadata()` og meta-cachen virker. Registreres som `$wpdb->merchboard_creatormeta`. Meta-keys whitelistes i `CreatorService`. Flyttet fra fase 3 til fase 14, hvor profilfelterne bygges.
 
-### `merchboard_logs` (fase 4)
+### `merchboard_audit_log` (planlagt, fase 6)
+
+> Erstatter den tidligere planlagte `merchboard_logs` (ADR-012 → ADR-021). Tekniske logs gemmes ikke i databasen. Tabellen er kun til audit-hændelser, og det endelige design fastlægges i fase 6. Udkast:
 
 | Kolonne | Type | Noter |
 | --- | --- | --- |
 | `id` | `BIGINT UNSIGNED AUTO_INCREMENT` PK | |
 | `created_at` | `DATETIME NOT NULL` | UTC |
-| `level` | `VARCHAR(10) NOT NULL` | debug…critical |
-| `channel` | `VARCHAR(50) NOT NULL` | fx `audit`, `access`, `woocommerce`, `rest` |
-| `message` | `VARCHAR(255) NOT NULL` | Kort, uden PII |
-| `context` | `LONGTEXT NULL` | JSON. Aldrig secrets. |
+| `event` | `VARCHAR(50) NOT NULL` | fx `creator.created`, `creator.status_changed`, `settings.updated` |
+| `context` | `LONGTEXT NULL` | JSON (renset som tekniske logs). Aldrig secrets. |
 | `user_id` | `BIGINT UNSIGNED NULL` | Actor |
 | `creator_id` | `BIGINT UNSIGNED NULL` | Target (hvis relevant) |
 
-Indexes: `KEY(created_at)`, `KEY(channel, level)`, `KEY(creator_id)`. IP-adresser logges **ikke** som standard (GDPR/dataminimering).
+Indexes: `KEY(created_at)`, `KEY(event)`, `KEY(creator_id)`. IP-adresser logges **ikke** som standard (GDPR/dataminimering).
 
 ### `merchboard_sales` (fase 18)
 
@@ -171,7 +172,7 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 | --- | --- | --- |
 | Aktivering (også gentagen) | `register_activation_hook` → `Plugin::activate()` → `Installer::install()` | Kører altid Migrator. Idempotent. |
 | Plugin-opdatering (ingen aktivering) | `plugins_loaded` → `Plugin::boot()` → `Installer::maybe_upgrade()`, **før** modulerne registreres | Koster én autoloaded option-læsning, når schemaet er aktuelt |
-| Efter en fejl | `maybe_upgrade()` springer over i 5 minutter (transient) for ikke at gentage en fejlende schemaændring på hver request. Aktivering forsøger altid. | Administratorer (`activate_plugins`) ser en admin notice uden databasedetaljer. Fejlen skrives til serverens error log (Logger kommer i fase 4). |
+| Efter en fejl | `maybe_upgrade()` springer over i 5 minutter (transient) for ikke at gentage en fejlende schemaændring på hver request. Aktivering forsøger altid. | Administratorer (`activate_plugins`) ser en admin notice uden databasedetaljer. Fejlen logges én gang som `error` via `Logger` (fase 4) med schemaversion, migrationsklasse, generisk årsag og en renset, afkortet DDL-fejl. |
 | Multisite | Netværksaktivering installerer kun det aktuelle site. Øvrige sites installeres dovent ved første request (`maybe_upgrade`), fordi tabellerne bruger det enkelte sites `$wpdb->prefix`. Multisite er ikke officielt understøttet. | |
 
 ## Databaseadgang (repositories)

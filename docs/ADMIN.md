@@ -16,7 +16,7 @@ Merch Dashboard                       (capability: merchboard_manage)
 ├── Creators                   liste (WP_List_Table: søg, filtrér på status, paginering)
 │   └── (Add/Edit creator)     skjult side: vælg/opret WP-bruger, visningsnavn, slug, status, profilfelter
 ├── Settings                   tabs: General · Access · Advanced (senere: Integrations, WooCommerce)
-└── Logs                       filtrér på level, channel og periode; kræver merchboard_view_logs
+└── Audit log                  filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
 ### Kritik af det oprindelige forslag og ændringer
@@ -52,13 +52,13 @@ En lille informationsboks: "Denne bruger er creator: <link>" eller "Gør til cre
 | --- | --- |
 | General | Dashboard-slug (default `creator-dashboard`), branding (logo, primærfarve, navn vist i dashboard) |
 | Access | Login-redirect for creators (til), blokér wp-admin for creators (til), hvilke roller ud over administrator der får admin-caps (fx `shop_manager`) |
-| Advanced | Log-niveau, log-retention (dage), "Slet alle data ved afinstallation" (fra) |
+| Advanced | Audit-retention (dage), "Slet alle data ved afinstallation" (fra). Teknisk log-niveau styres af `WP_DEBUG`/filteret `merchboard_log_level` (ADR-021). |
 
 Settings gemmes i én option `merchboard_settings` via Settings API med `sanitize_callback` for hele arrayet (whitelist af nøgler og typer).
 
-### Logs
+### Audit log
 
-`WP_List_Table` over `merchboard_logs`: tidspunkt (lokal tid), level-badge, channel, besked, actor (bruger-link) og creator. Filtrering på level, channel og periode. Detaljevisning af context-JSON (escaped). Ingen redigering. Sletning kun via retention.
+`WP_List_Table` over `merchboard_audit_log` (fase 6/11): tidspunkt (lokal tid), level-badge, channel, besked, actor (bruger-link) og creator. Filtrering på level, channel og periode. Detaljevisning af context-JSON (escaped). Ingen redigering. Sletning kun via retention.
 
 ## WooCommerce-skærme (fase 17)
 

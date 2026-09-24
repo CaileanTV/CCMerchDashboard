@@ -295,7 +295,7 @@ Ledgeren skal holdes korrekt (idempotens, reversals, backfill og reconciliation)
 2026-09-24
 
 ## Status
-Accepteret
+Erstattet af ADR-021 (tekniske logs uden tabel; audit trail som separat tabel)
 
 ## Decision
 `merchboard_logs` og en `Logger`-service. Channel `audit` logges altid. Retention via WP-Cron.
@@ -545,3 +545,40 @@ Databasegaranteret integritet, klar adskillelse mellem login-konto og forretning
 - Adgangsreglen (fase 8) kræver `status = active` **og** en koblet bruger.
 - USER-ROLES, ADMIN og feature-dokumenter bruger `active`/`inactive` og "frakobl bruger" i stedet for "suspendér"/"arkivér".
 - En members-tabel (teams) kan senere erstatte `user_id` via en migration uden at ændre creator-ID'er.
+
+---
+
+# ADR-021: Tekniske logs via Logger-abstraktion med WooCommerce/error_log-backend; audit trail adskilt
+
+## Date
+2026-09-24
+
+## Status
+Accepteret (fase 4). Erstatter ADR-012.
+
+## Context
+ADR-012 planlagde én egen tabel (`merchboard_logs`) til både tekniske logs og audit, med retention-cron. Fase 4 skal etablere et konsekvent og sikkert logging-fundament uden schemaændringer og uden at gøre WooCommerce til en afhængighed. WordPress core har ingen struktureret logger, kun `error_log()`. WooCommerce har en moden logger med admin-visning (WooCommerce → Status → Logs), fil- og database-handlers og egen tærskel.
+
+## Decision
+- **Abstraktion:** interface `Logger` (`debug`, `info`, `warning`, `error`) med struktureret `context`. Standardimplementering `PluginLogger` (tærskel, sanitization via `LogContext`) og `LogWriter`-backends. Registreret i containeren og injected. Ingen statiske kald og ingen singleton.
+- **Backend:** `WooCommerceLogWriter` bruger `wc_get_logger()` (source `merchboard`), når WooCommerce er aktivt og `woocommerce_init` har kørt. Ellers, eller hvis WooCommerce' logger fejler, bruges `ErrorLogWriter` (`error_log()`), som WordPress dirigerer til `debug.log` ved `WP_DEBUG_LOG` eller til serverens log.
+- **Niveauer:** kun de fire nævnte. Værdierne mapper 1:1 til WooCommerce/PSR-3.
+- **Tærskel:** `debug` ved `WP_DEBUG`, ellers `warning`. Filteret `merchboard_log_level` kan tilsidesætte. Pluginet ændrer aldrig WordPress' debug-indstillinger.
+- **Sikkerhed:** nøglebaseret maskering, exceptions reduceret til klasse og kode (besked kun fra egne exceptions), ingen stack traces, kontroltegn fjernet og længde- og dybdegrænser.
+- **Audit trail** er ikke teknisk logging. Den bliver en separat tabel og service, når de første audit-hændelser opstår (fase 6), med admin-visning i fase 11.
+
+## Alternatives considered
+- **Egen log-tabel (ADR-012):** kræver schema, retention-cron og admin-UI. Den blander drift-logs med forretningsdata og giver risiko for databasevækst ved fejl-loops.
+- **Kun `error_log()`:** ingen admin-visning, når WooCommerce findes, men acceptabelt som fallback.
+- **Kun WooCommerce' logger:** gør WooCommerce til en afhængighed. Uacceptabelt.
+- **Eksterne logging-biblioteker (Monolog m.fl.):** runtime-dependency (ADR-004).
+- **Flere niveauer (notice/critical/…):** ingen konkret brug. Kan tilføjes, hvis der opstår behov.
+
+## Reason
+WordPress-nativt, ingen schema og ingen cron. Administratorer får logs i WooCommerce' velkendte UI, når shoppen kører, og pluginet virker fuldt uden WooCommerce.
+
+## Consequences
+- Tekniske logs er ikke søgbare i wp-admin uden WooCommerce. Uden WooCommerce skal serverens log eller `debug.log` bruges.
+- Med WooCommerce-backenden gælder også WooCommerce' egen log-tærskel og retention.
+- Poster logget før `woocommerce_init` (fx migrationer lige efter en plugin-opdatering) går til `error_log()`.
+- Roadmap: fase 4 leverer logging uden tabel og cron. Audit-tabellen flyttes til fase 6, audit-visning til fase 11, og deactivation hook til fase 12 (rewrite rules).

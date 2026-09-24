@@ -29,6 +29,17 @@ Test-doubles: `tests/Unit/Support/RecordingWpdb` (optager prepare/insert i stede
 
 **Hvad unit-tests ikke kan bevise:** at SQL faktisk virker mod en database. Det dækkes midlertidigt af en Playground-runtime-kontrol (SQLite) og autoritativt af integrationstests mod MySQL i fase 7. Se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite).
 
+**Unit-tests fra fase 4 (logging og fejlhåndtering):**
+
+- `PluginLogger`/`LogLevel`: alle fire niveauer, tærskel (dropper under), `WP_DEBUG`-default, filter og ugyldigt filter, niveau-navne = WooCommerce/PSR-3.
+- `LogContext`: maskering af 21 følsomme nøgletyper (også indlejret), bevarelse af diagnostiske skalarer, fremmed exception uden besked, egen exception med besked uden stier, objekter, afkortning, dybde, kontroltegn og log-forfalskning.
+- Backends: `ErrorLogWriter`-format; `WooCommerceLogWriter` uden WooCommerce (fallback), WooCommerce indlæst men ikke initialiseret (fallback), WooCommerce initialiseret (source `merchboard`), og en WooCommerce-logger der kaster (fallback uden tab). WooCommerce-scenarierne kører i isolerede processer med `tests/Fixtures/woocommerce-logger.php`.
+- `Migrator`: fejl-context (version, klasse, årsag, `db_error`), `db_error` afkortet og HTML/backtrace fjernet.
+- `Installer`: migrationsfejl logges præcis én gang som `error`, 5-minutters pause bevares, version gemmes ikke, succes logges som `info`, aktuel schema logger intet, holdt lås er kun `debug`, og noticen indeholder ingen databasedetaljer.
+- `Plugin`: loggerservice virker uden WooCommerce og bruger WooCommerce' logger, når den findes.
+
+`tests/Unit/Support/RecordingLogger` optager, hvad services beder om at logge, og `RecordingLogWriter` optager, hvad der når backenden.
+
 **Legacy-syntaks:** CI-jobbet `php-legacy-syntax` kører `php -l` på PHP 7.2 for hovedfilen, `src/Core/Requirements.php` og `uninstall.php`, så versionstjekket kan vise en notice i stedet for en parse error.
 
 ## Security-tests er obligatoriske

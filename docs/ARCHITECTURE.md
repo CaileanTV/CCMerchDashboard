@@ -72,13 +72,14 @@ merchboard/
 │   │   ├── Security/            # Capabilities (roller/caps/map_meta_cap), Nonce/Request-helpers
 │   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
-│   │   ├── Logging/             # Logger, LogLevel, LogRepository
+│   │   ├── Logging/             # Logger, LogLevel, LogContext, PluginLogger, LogWriter,
+│   │   │                        # WooCommerceLogWriter, ErrorLogWriter              [fase 4]
 │   │   └── Support/             # Assets (læser build/*.asset.php), Template-renderer
 │   └── Modules/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
 │       │                        # CreatorService [fase 6], Admin/ [fase 10], Rest/ (admin-endpoints)
 │       ├── Access/              # CreatorContext, LoginRedirect, AdminAreaGuard
-│       ├── Admin/               # Topmenu, Overview-side, Settings-side, Logs-side
+│       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
 │       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*
 │       └── WooCommerce/         # kun indlæst når WooCommerce er aktiv
 ├── templates/                   # PHP-templates (dashboard-shell, admin-partials)
@@ -142,7 +143,7 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 | `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu. Deaktivering rører aldrig data. |
 | Slet-data-rutine i `uninstall.php` | 9 | Kræver opt-in-settingen. Uninstall bevarer data indtil da. |
 | `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |
-| Øvrige core-services (Settings, Logger …) | 4 → | Registreres af de faser, der bygger dem |
+| Øvrige core-services (Settings, Capabilities, Audit …) | 5 → | Registreres af de faser, der bygger dem. `Logger` findes fra fase 4. |
 
 Hovedfilen forbliver uændret, når hooks tilføjes. De registreres i `Plugin`, og logikken placeres i `src/Core/Lifecycle/`.
 
@@ -158,7 +159,8 @@ Se [DATABASE.md](DATABASE.md). Kort:
 - **`merchboard_creators`** (✅ fase 3) = creator-domæneobjektet, adskilt fra login-kontoen. Creator-ID er den primære reference for al domænedata, og `user_id` er kun en nullable, unik relation til login-laget (ADR-020). `merchboard_creatormeta` kommer i fase 14.
 - **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta.
 - **`merchboard_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
-- **`merchboard_logs`** = applikations- og audit-log.
+- **Tekniske logs** = WooCommerce-logger eller `error_log()` (fase 4, ADR-021). Ingen tabel.
+- **`merchboard_audit_log`** (planlagt, fase 6) = audit trail.
 - **Options** = settings og schemaversion (`merchboard_db_version`).
 
 Schemaændringer sker kun via versionerede migrationer (`src/Core/Database/Migrations/`, registreret i `Schema::migrations()`) og dokumenteres i DATABASE.md og CHANGELOG.md (ADR-019). Databaseadgang sker kun via repositories, som ikke udfører authorization. Det sker i laget over (fase 6+).
@@ -190,13 +192,50 @@ Se [SECURITY.md](SECURITY.md) og [USER-ROLES.md](USER-ROLES.md). Kernen er:
 
 ## 11. Logging-arkitektur
 
-- `Logger`-service (PSR-3-lignende API: `debug()`, `info()`, `warning()`, `error()`, `critical()` med `channel` og `context`). Den implementerer ikke `psr/log` for at undgå vendor-konflikter (ADR-004).
-- Skriver til `merchboard_logs`. Minimumsniveau styres i settings (default `warning` i production og `debug` når `wp_get_environment_type() === 'local'`).
-- Channel `audit` skrives **altid** uanset niveau: adgang givet/fjernet, creator oprettet/ændret/deaktiveret, settings ændret. Hver post har actor (`user_id`) og target.
-- Retention: daglig WP-Cron-job sletter logs ældre end N dage (setting, default 90; audit 365).
-- Aldrig secrets, passwords, tokens eller fuld PII i context. Brug IDs.
-- Kritiske fejl skrives desuden til `error_log()` som fallback, hvis databasen fejler.
-- Admin-visning: Merch Dashboard → Logs (`WP_List_Table` med filtre).
+> Status: **Implementeret (fase 4, ADR-021).** Tekniske logs. Audit trail er et separat, planlagt emne (se nederst).
+
+### Abstraktion
+
+| Del | Rolle |
+| --- | --- |
+| `MerchBoard\Core\Logging\Logger` (interface) | `debug()`, `info()`, `warning()`, `error()` med `( string $message, array $context = [] )`. PSR-3-*lignende*, men implementerer ikke `psr/log` (ADR-004). |
+| `LogLevel` (enum) | `debug` < `info` < `warning` < `error`. Værdierne er identiske med WooCommerce/PSR-3-navnene, så mappingen er 1:1. Ingen `notice`/`critical`/`emergency`, fordi der ikke er brug for dem. |
+| `PluginLogger` | Filtrerer på tærskel, renser besked og context (`LogContext`) og sender til en `LogWriter`. Fanger ingen exceptions. |
+| `LogContext` | Sanitization (se [SECURITY.md](SECURITY.md#logging)) |
+| `LogWriter` (interface) | Backend-kontrakt |
+| `WooCommerceLogWriter` | Primær backend, når WooCommerce er klar. Ellers fallback. |
+| `ErrorLogWriter` | Fallback: én linje pr. post via `error_log()` |
+
+Loggeren registreres i containeren som `Logger::class` (`PluginLogger::for_wordpress()`) og **injectes** i de services, der skal logge (fase 4: `Installer`). Der er ingen statiske kald, ingen singleton og ingen global state.
+
+### Backend og fallback
+
+| Situation | Backend | Hvor ses posterne |
+| --- | --- | --- |
+| WooCommerce aktivt **og** `woocommerce_init` har kørt | `wc_get_logger()->log( level, message, context + [ 'source' => 'merchboard' ] )` | WooCommerce → Status → Logs, source `merchboard` (fil- eller database-handler efter WooCommerce' indstilling) |
+| WooCommerce ikke aktivt, eller før `woocommerce_init` (fx migration på `plugins_loaded` efter en opdatering) | `error_log( '[merchboard] LEVEL: message {json}' )` | `wp-content/debug.log` når `WP_DEBUG_LOG` er slået til, ellers serverens PHP error log |
+| WooCommerce' logger kaster en exception | Posten skrives til fallback med `log_backend_failure` (exception-klassen) i context | Som ovenfor |
+
+Tilgængeligheden tjekkes ved **hver** skrivning, ikke ved boot, så valget altid er korrekt. WooCommerce er aldrig et krav. WooCommerce' logger bruges først efter `woocommerce_init`, fordi et tidligere kald kan få WooCommerce til at indlæse sine oversættelser for tidligt (verificeret i Playground: det gav en `_load_textdomain_just_in_time`-notice).
+
+### Niveauer og debug
+
+- **Tærskel:** `debug`, når `WP_DEBUG` er `true`, ellers `warning`. Production-logs indeholder dermed kun problemer. `info` (fx "Database schema migrated.") skrives kun ved debug eller opt-in.
+- **Opt-in/override:** filteret `merchboard_log_level` (`'debug'|'info'|'warning'|'error'`). Ugyldige værdier ignoreres.
+- Pluginet **læser** kun `WP_DEBUG` og ændrer aldrig `WP_DEBUG`, `WP_DEBUG_LOG` eller andre debug-indstillinger. Hvor `error_log()` skriver hen, styres af WordPress (`WP_DEBUG_LOG`) eller serveren.
+- Med WooCommerce-backenden gælder WooCommerce' egen log-tærskel desuden (WooCommerce → Indstillinger → Avanceret → Logs). Debug-poster kan derfor blive filtreret fra af WooCommerce, selv om pluginet sender dem.
+- Intet skrives til browseren: ingen `echo`, `var_dump`, `print_r` eller stack traces.
+
+### Konventioner for kaldere
+
+- Beskeden er en kort, **konstant** engelsk sætning. Variable data hører til i `context` (ID'er, versioner, klassenavne).
+- Log der, hvor fejlen **håndteres**, eller hvor unik diagnostik findes, og kun én gang. Log ikke og kast videre i flere lag. Eksempel: `Migrator` lægger diagnostik i `DatabaseException::context()` (schemaversion, migrationsklasse, generisk årsag og en renset, afkortet DDL-fejl), og `Installer`, som håndterer fejlen, logger den én gang.
+- Catch kun exceptions, som koden faktisk kan håndtere. Der er tre catch-blokke i pluginet: `Migrator` beriger og kaster videre, `Installer` håndterer (backoff, notice og log), og `WooCommerceLogWriter` bruger fallback. Øvrige exceptions propagerer (WordPress' fatal error handler/recovery mode).
+- Admin-meddelelser er **menneskelige og generiske**, mens tekniske detaljer kun står i loggen.
+
+### Audit trail (ikke teknisk logging)
+
+"Hvem ændrede hvad" (creator oprettet/deaktiveret, adgang ændret, settings ændret) er forretningsdata med andre krav (søgbar i wp-admin, lang opbevaring og altid registreret uanset log-niveau). Det implementeres som en egen tabel og service, når de første audit-hændelser opstår (roadmap-fase 6), og vises i admin (fase 11). Se ADR-021.
 
 ## 12. Hooks (udvidelsespunkter)
 

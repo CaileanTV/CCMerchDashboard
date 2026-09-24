@@ -9,7 +9,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Område | Faser | Milepæl |
 | --- | --- | --- |
 | Foundation | 1-2 | Tooling, docs og plugin-bootstrap |
-| Data & core services | 3-4 | Migrationer og creator-tabel (✅ fase 3), logging |
+| Data & core services | 3-4 | Migrationer og creator-tabel (✅ fase 3), logging og fejlhåndtering (✅ fase 4) |
 | Authentication & permissions | 5-8 | Roller, creator-domæne, testinfrastruktur, adgangsflow |
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
@@ -38,10 +38,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Ændret i forhold til den oprindelige plan:** `merchboard_creatormeta` er flyttet til fase 14 (profilfelter). Entity, enum og et minimalt repository er rykket frem fra fase 6. `slug` og `created_by` er udeladt, indtil der er et behov. Statusmodellen er `active`/`inactive` i stedet for `active`/`suspended`/`archived`. Et separat `Activator`/`Upgrader` er samlet i `Installer`.
 - **Ikke verificeret:** MySQL/MariaDB (se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite)). Sker i fase 7 (CI) og fase 16 (staging).
 
-## Fase 4 – Logging og audit trail
+## Fase 4 – Logging og fejlhåndtering ✅
 
-- **Scope:** migration for `merchboard_logs`, `Logger` (levels, channels, audit altid), `LogRepository`, retention-cron, `register_deactivation_hook` + `Deactivator` (fjerner cron), log-niveau fra settings/miljø.
-- **Done:** Logger kan bruges fra services. Retention er testet.
+- **Leveret:** `Logger`-interface (debug/info/warning/error), `PluginLogger` (tærskel fra `WP_DEBUG` + filter `merchboard_log_level`), `LogContext` (maskering af følsomme nøgler, sikre exceptions og fjernelse af kontroltegn), backends `WooCommerceLogWriter` (efter `woocommerce_init`) og `ErrorLogWriter` (fallback), `DatabaseException::context()`, og at `Migrator`/`Installer` logger migrationsfejl én gang i stedet for via `error_log()`. 165 unit-tests. Playground med og uden WooCommerce. ADR-021.
+- **Ændret i forhold til den oprindelige plan (ADR-021 erstatter ADR-012):** ingen `merchboard_logs`-tabel, ingen channels og ingen retention-cron. Audit trail flyttes til fase 6 som egen tabel, deactivation hook til fase 12 (der er ingen cron at rydde op).
 
 ## Fase 5 – Roller og capabilities
 
@@ -50,7 +50,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 6 – Creator-domæne
 
-- **Scope:** Udvid `CreatorRepository` (update med `updated_at`, statusskift, frakobling af user, paginerede lister med whitelisted sortering), `CreatorService` (forretningsvalidering, rolle-tildeling, statusskift, events og audit-log) og `deleted_user`-håndtering (user_id → NULL, status → inactive, data bevares). Entity, enum og grundlæggende repository findes fra fase 3.
+- **Scope:** Audit trail (`merchboard_audit_log`-migration og `AuditLog`-service, ADR-021), udvid `CreatorRepository` (update med `updated_at`, statusskift, frakobling af user, paginerede lister med whitelisted sortering), `CreatorService` (forretningsvalidering, rolle-tildeling, statusskift, events og audit-log) og `deleted_user`-håndtering (user_id → NULL, status → inactive, data bevares). Entity, enum og grundlæggende repository findes fra fase 3.
 - **Done:** Unit-tests af service-regler. Ingen UI endnu.
 
 ## Fase 7 – Integrationstest-infrastruktur
@@ -73,9 +73,9 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope:** `CreatorsListTable`, opret/rediger/statusskift via `admin-post`, link på `user-edit.php`. Se [features/admin-creator-management.md](features/admin-creator-management.md).
 - **Done:** Integrationstests for nonce, capability og validering. Manuel UX-test.
 
-## Fase 11 – Admin logs viewer
+## Fase 11 – Admin audit-log viewer
 
-- **Scope:** Logs-side med `WP_List_Table`, filtre (level, channel, periode) og visning af context.
+- **Scope:** Audit-log-side med `WP_List_Table`, filtre (hændelse, creator, periode) og visning af context. Link til WooCommerce → Status → Logs (source `merchboard`) for tekniske logs, når WooCommerce er aktivt.
 - **Done:** Kræver `merchboard_view_logs`. Output er escaped.
 
 ## Fase 12 – Creator dashboard: route og sikker shell

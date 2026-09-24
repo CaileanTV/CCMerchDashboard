@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 3 (Database-fundament og creator-tabel) · **Næste fase:** 4 (Logging og audit trail) · **Schemaversion:** 1 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 4 (Logging og fejlhåndtering) · **Næste fase:** 5 (Roller og capabilities) · **Schemaversion:** 1 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -44,6 +44,20 @@
 
 **Ikke verificeret på MySQL/MariaDB:** se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite). CI (fase 7) og staging (fase 16) er autoritative.
 
+### Fase 4 – Logging og fejlhåndtering ✅
+
+- [x] `Logger`-interface + `PluginLogger` i containeren (injected, ingen singleton/statiske kald). Niveauer: debug, info, warning, error (1:1 WooCommerce/PSR-3).
+- [x] Backend: WooCommerce' logger (source `merchboard`) når WooCommerce er aktivt **og** initialiseret, ellers `error_log()`. WooCommerce er ikke et krav, og en fejlende WooCommerce-logger falder tilbage uden tab (ADR-021).
+- [x] Tærskel: `debug` ved `WP_DEBUG`, ellers `warning`. Filter `merchboard_log_level`. Pluginet ændrer aldrig debug-indstillinger.
+- [x] `LogContext`: maskering af følsomme nøgler, exceptions uden fremmede beskeder/traces, kontroltegn fjernet, længde- og dybdegrænser.
+- [x] Migrationsfejl: `Migrator` lægger renset diagnostik i `DatabaseException::context()`, og `Installer` logger én gang som `error`. Semantikken er uændret (version gemmes ikke, 5-minutters pause, generisk admin notice).
+- [x] Den eneste `error_log()`-forekomst i `Installer` er erstattet. `error_log()` findes nu kun i `ErrorLogWriter` (backenden).
+- [x] 165 unit-tests (294 assertions). Lint og PHPStan level 8 er grønne.
+- [x] Playground med **og** uden WooCommerce: logger virker, følsomme værdier er maskeret, fremtvunget migrationsfejl er logget, versionen er ikke opdateret, pausen er sat, låsen er frigivet, admin notice er generisk (kun for admins), ingen PHP-notices, deaktivering/genaktivering er OK, og REST og wp-admin svarer 200.
+- [x] Fundet og rettet via Playground: WooCommerce-loggeren kaldt før `woocommerce_init` udløste en `_load_textdomain_just_in_time`-notice, og SQLite-driverens `last_error` indeholdt HTML/backtrace.
+
+**Ændret plan:** ingen log-tabel, channels eller retention-cron (ADR-021 erstatter ADR-012). Audit trail → fase 6, audit-visning → fase 11, deactivation hook → fase 12.
+
 ## In progress
 
 Intet.
@@ -52,9 +66,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 4:** Logging, audit og deactivation hook.
-2. **Fase 5:** Roller og capabilities.
-3. **Fase 6:** Creator-service (forretningsregler, statusskift, frakobling, `deleted_user`).
+1. **Fase 5:** Roller og capabilities.
+2. **Fase 6:** Creator-service og audit trail.
+3. **Fase 7:** Integrationstest-infrastruktur (MySQL i CI).
 
 ## Known bugs
 
@@ -68,7 +82,8 @@ Ingen (der er ingen funktionalitet endnu).
 | Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
 | MySQL-verifikation | Schema og repository er kun kørt mod SQLite (Playground) og unit-tests. `dbDelta()`-adfærd, strict mode, charset og låsens atomicitet på MySQL/MariaDB er ikke verificeret. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
-| Migrationsfejl logges med `error_log()` | Midlertidigt, indtil Logger findes | Skift til Logger i fase 4 |
+| Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
+| Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter første push. Overvej at installere `gh`. |
 
 ## Godkendte eksterne services
@@ -100,4 +115,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så CI-integrationstests i fase 7 kan køre mod samme version.
-3. Kør fase 4 med prompten: *"Implementér roadmap-fase 4 (Logging og audit trail) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
+3. Kør fase 5 med prompten: *"Implementér roadmap-fase 5 (Roller og capabilities) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*

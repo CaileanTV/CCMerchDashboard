@@ -20,7 +20,7 @@ Få og meningsfulde. Nye capabilities tilføjes, når et modul har et reelt beho
 | `merchboard_manage` | administrator | Se Merch Dashboard-menuen og Overview |
 | `merchboard_manage_creators` | administrator | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra |
 | `merchboard_manage_settings` | administrator | Ændre plugin-settings |
-| `merchboard_view_logs` | administrator | Se logs |
+| `merchboard_view_logs` | administrator | Se audit log (tekniske logs ses via WooCommerce/serveren) |
 | `merchboard_access_dashboard` | rollen `merchboard_creator` | Forudsætning for at bruge Creator Dashboard (se adgangsregel nedenfor) |
 
 **Meta-capabilities** (via `map_meta_cap`, fase 5):
