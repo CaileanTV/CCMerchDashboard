@@ -9,13 +9,15 @@ Then read [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) and [docs/ARCHITECTUR
 ## Commands
 
 - `npm run lint`: ESLint + PHPCS (WPCS) + PHPStan (level 8). Must pass before committing.
+- `npm test`: PHPUnit unit tests (Brain Monkey). Must pass before committing.
 - `node bin/composer.mjs <args>`: Composer (works without php.ini; uses `.tools/composer.phar` if no global composer).
 - `npm run wp:start`: ephemeral WordPress + WooCommerce at http://127.0.0.1:9400 (admin / password). Run via npm/PowerShell, not raw Git Bash (path mangling).
 
 ## Essentials
 
 - PHP ≥ 8.2, WP ≥ 6.7, namespace `CCMerch\` → `src/`, prefix `ccmerch_`, text domain `ccmerch-dashboard`, REST `ccmerch/v1`.
-- No third-party PHP runtime dependencies (ADR-004).
+- No third-party PHP runtime dependencies (ADR-004). Runtime uses the plugin's own autoloader, never `vendor/autoload.php` (ADR-017).
+- New modules: implement `CCMerch\Core\Module` in `src/Modules/<Name>/` and add them to `Plugin::default_modules()` (see docs/MODULES.md).
 - Creator-facing code resolves the creator only via `CreatorContext`; creator API is `/me`-scoped (ADR-007).
 - No external services beyond GitHub unless approved via ADR. **Dinero and Google Drive are out of scope**: never use, read, write, back up to, or enable their connectors (ADR-016).
 - Docs in Danish; code, comments and commits in English (Conventional Commits). Small commits, push after validation, never force-push.

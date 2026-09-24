@@ -100,7 +100,7 @@ Minimum hæves til 8.3, når 8.2 når EOL (ultimo 2026), efter bekræftelse af h
 2026-09-24
 
 ## Status
-Accepteret
+Accepteret. Delvist erstattet af ADR-017: Sætningen om, at distribueret `vendor/` indeholder Composers autoloader, gælder ikke længere. Pluginet bruger sin egen autoloader og distribueres uden `vendor/`.
 
 ## Context
 WordPress har ingen dependency-isolation. To plugins, der loader forskellige versioner af samme Composer-pakke (fx `psr/log`), giver fatale fejl eller subtile bugs.
@@ -402,3 +402,33 @@ Security og dataminimering: Projektdata forbliver i repository'et og det projekt
 
 ## Consequences
 GitHub er projektets eneste backup og versionshistorik. Hvis Dinero (fx til bogføring af payouts) eller en anden tjeneste senere ønskes, skal det besluttes eksplicit og registreres i en ny ADR, der erstatter denne del.
+
+---
+
+# ADR-017: Egen PSR-4-autoloader ved runtime; Composer kun til udvikling
+
+## Date
+2026-09-24
+
+## Status
+Accepteret. Erstatter den del af ADR-004, der siger, at distribueret `vendor/` indeholder Composers autoloader.
+
+## Context
+Fase 2 skulle indføre autoloading. Composers `vendor/autoload.php` indlæser **alle** installerede pakkers `files`-autoloads. I et udviklingsmiljø med dev-dependencies betyder det, at fx Mockerys globale hjælpefunktioner (`mock()`, `spy()`) og Brain Monkeys API indlæses i WordPress, når pluginet kører. Desuden ville pluginet fatale eller kræve et ekstra tjek, hvis `vendor/` mangler (fx ved installation direkte fra git uden `composer install`), og release-builds ville kræve `composer install --no-dev`.
+
+## Decision
+- Pluginet registrerer sin egen lille PSR-4-autoloader (`src/Core/Autoloader.php`, `CCMerch\` → `src/`) i hovedfilen og bruger **ikke** `vendor/autoload.php` ved runtime.
+- Autoloaderen afviser klassenavne, der ikke er rene namespace-segmenter (fx `..`, `/`, `:` og null-bytes), fordi klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode.
+- Composer bruges fortsat til dev-værktøjer (PHPCS, PHPStan, PHPUnit, Brain Monkey) og til autoloading i tests (`autoload` + `autoload-dev`).
+- Den distribuerede plugin-zip indeholder ikke `vendor/` (se `.distignore`).
+
+## Alternatives considered
+- Composers autoloader ved runtime (oprindelig plan i ADR-004): dev-pakker lækker ind i WordPress lokalt, `vendor/` kræves, og der skal håndteres "vendor mangler".
+- Klassemap/manuelle `require`-kald: skalerer dårligt med mange moduler.
+
+## Reason
+Nul runtime-afhængighed af `vendor/`, ingen dev-kode i WordPress-runtime, enklere release og en eksplicit sikkerhedsvalidering af klassenavne. Autoloaderen er ~20 linjer og fuldt unit-testet.
+
+## Consequences
+- Hvis en tredjeparts runtime-pakke nogensinde tillades (kræver ny ADR, jf. ADR-004), skal den prefixes (Strauss/PHP-Scoper) og indlæses eksplicit. Den kommer ikke automatisk med via Composer.
+- Klasser i `src/` skal følge PSR-4 nøjagtigt (filnavn = klassenavn), da der ikke er et classmap-fallback.

@@ -26,6 +26,12 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - **Creator:** `CreatorContext::current()` (se [USER-ROLES.md](USER-ROLES.md#adgangsregel-for-creator-dashboard)) i hver controller og REST-permission callback. Services, der modtager et ressource-ID, tjekker ejerskab mod den aktuelle creator.
 - **Direkte filadgang:** Hver PHP-fil i `src/` og `templates/` starter med `defined( 'ABSPATH' ) || exit;`, bortset fra rene klassefiler, der ikke eksekverer kode ved include. Dem kræver PHPCS ikke guard for, men vi tilføjer den for konsistens.
 
+### Bootstrap (fase 2)
+
+- Autoloaderen håndterer kun `CCMerch\`-klasser og afviser klassenavne, der ikke er rene namespace-segmenter (`..`, `/`, `:`, null-bytes). Klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode (ADR-017).
+- Versionstjekkets admin notice vises kun for brugere med `activate_plugins` (den afslører serverversioner), og alt output er escaped.
+- Pluginet skriver intet til databasen og læser intet brugerinput i fase 2. `uninstall.php` sletter intet endnu.
+
 ### IDOR
 
 1. Creator-API'et har **ingen creator-ID-parametre** (`/me/...`).

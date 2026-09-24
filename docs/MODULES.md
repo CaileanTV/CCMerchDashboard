@@ -1,6 +1,6 @@
 # Moduler
 
-> Status: **Design.** Implementeres fra roadmap-fase 2.
+> Status: **Fundament implementeret (fase 2):** `Module`, `Container` og boot i `Plugin`. Der findes endnu ingen moduler.
 
 ## Formål
 
@@ -24,26 +24,30 @@ Det er bevidst minimalt. Valgfrie evner tilføjes som små separate interfaces, 
 
 ## Registrering
 
-`Plugin::boot()` bygger listen:
+`Plugin::boot()` (på `plugins_loaded`) sender `Plugin::default_modules()` gennem filteret `ccmerch_modules` og kalder `register( $container )` på hvert modul. Til sidst fyres `ccmerch_loaded` med containeren. Elementer, der ikke implementerer `Module`, og dublet-ID'er springes over med `_doing_it_wrong()`.
+
+**Sådan kobles et nyt modul på:** Opret `src/Modules/<Navn>/<Navn>Module.php`, som implementerer `CCMerch\Core\Module`, og tilføj en instans i `Plugin::default_modules()`. Moduler, der afhænger af et andet plugin, tilføjes betinget:
 
 ```php
-$modules = [
-	new Modules\Creators\CreatorsModule(),
-	new Modules\Access\AccessModule(),
-	new Modules\Admin\AdminModule(),
-	new Modules\Dashboard\DashboardModule(),
-];
-if ( class_exists( 'WooCommerce' ) ) {
-	$modules[] = new Modules\WooCommerce\WooCommerceModule();
+private function default_modules(): array {
+	$modules = array(
+		new Modules\Creators\CreatorsModule(),
+		// …
+	);
+	if ( class_exists( 'WooCommerce' ) ) {
+		$modules[] = new Modules\WooCommerce\WooCommerceModule();
+	}
+	return $modules;
 }
-$modules = apply_filters( 'ccmerch_modules', $modules );
 ```
+
+Hovedfilen og boot-logikken ændres ikke, når moduler tilføjes.
 
 Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses ved at registrere services lazy i containeren (factory-closures), så opslag først sker ved brug.
 
 ## Container
 
-`CCMerch\Core\Container` er en minimal lazy service locator med `set( string $id, callable $factory )` og `get( string $id )`. Singletons pr. request. Den eksisterer for at samle wiring ét sted og gøre services udskiftelige i tests, ikke for at være et DI-framework. Service-IDs er klassenavne (`CreatorRepository::class`).
+`CCMerch\Core\Container` er en minimal lazy service locator med `set( string $id, callable $factory )`, `has()` og `get( string $id )`. Singletons pr. request. `get()` er typesikker for PHPStan (`class-string<T>` → `T`). Den kaster `LogicException` ved ukendt service, cirkulær afhængighed, forkert returtype fra en factory og ved erstatning af en allerede oprettet service. Den eksisterer for at samle wiring ét sted og gøre services udskiftelige i tests, ikke for at være et DI-framework. Service-IDs er klassenavne (`CreatorRepository::class`).
 
 ## Hvad et modul typisk registrerer
 
@@ -69,7 +73,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 
 | Modul | Status | Ansvar | Fase |
 | --- | --- | --- | --- |
-| Core (ikke et modul) | Planlagt | Plugin, Container, Migrator, Capabilities, Settings, Logger, Assets | 2-5 |
+| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module. **Planlagt:** Migrator, Capabilities, Settings, Logger, Assets | 2 ✅, 3-5 |
 | Creators | Planlagt | Creator-entity, repository, service og admin-administration | 6, 10 |
 | Access | Planlagt | `CreatorContext`, login-redirect, blokering af wp-admin for creators | 8 |
 | Admin | Planlagt | Topmenu, Overview, Settings og Logs | 9, 11 |

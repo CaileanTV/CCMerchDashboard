@@ -1,6 +1,6 @@
 # Arkitektur
 
-> Status: **Design.** Intet af nedenstående er implementeret endnu, bortset fra plugin-headeren og tooling. Afvigelser fra dette dokument kræver en ADR i [DECISIONS.md](DECISIONS.md).
+> Status: **Delvist implementeret.** Bootstrap, autoloader, container og modulkontrakt er implementeret (fase 2, se §5). Resten er design. Afvigelser fra dette dokument kræver en ADR i [DECISIONS.md](DECISIONS.md).
 
 ## 1. Overblik
 
@@ -42,7 +42,7 @@ Grundprincipper, i prioriteret rækkefølge: **security → maintainability → 
 | PHP-namespace (rod) | `CCMerch\` → `src/` (PSR-4 via Composer) |
 | Prefix: funktioner, options, hooks og capabilities | `ccmerch_` |
 | Meta-keys (skjulte) | `_ccmerch_` |
-| Konstanter | `CCMERCH_` (fx `CCMERCH_VERSION`, `CCMERCH_FILE`, `CCMERCH_PATH`, `CCMERCH_URL`) |
+| Konstanter | `CCMERCH_`. Kun `CCMERCH_VERSION` findes nu. Flere (fx `CCMERCH_URL` til assets) defineres først, når de bruges. Hovedfilens sti gives til `Plugin` som argument i stedet for en global konstant. |
 | Custom tables | `{$wpdb->prefix}ccmerch_*` |
 | Text domain | `ccmerch-dashboard` |
 | REST-namespace | `ccmerch/v1` |
@@ -59,8 +59,10 @@ ccmerch-dashboard/
 ├── src/
 │   ├── Plugin.php               # composition root: opretter container og registrerer moduler
 │   ├── Core/
-│   │   ├── Container.php        # minimal lazy service container (~50 linjer)
-│   │   ├── Module.php           # interface for moduler
+│   │   ├── Autoloader.php       # PSR-4-autoloader for CCMerch\ (ADR-017)           [fase 2]
+│   │   ├── Requirements.php     # PHP-/WP-versionstjek + admin notice (PHP 7.2-syntaks) [fase 2]
+│   │   ├── Container.php        # minimal lazy service container                    [fase 2]
+│   │   ├── Module.php           # interface for moduler                             [fase 2]
 │   │   ├── Lifecycle/           # Activator, Deactivator, Upgrader (version-bump → migrationer)
 │   │   ├── Database/            # Migrator + Migrations/NNNN_Name.php + Table-navne
 │   │   ├── Security/            # Capabilities (roller/caps/map_meta_cap), Nonce/Request-helpers
@@ -104,15 +106,34 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 
 ## 5. Boot-flow
 
-1. `ccmerch-dashboard.php` definerer konstanter og tjekker PHP- og WP-version. Ved for lav version vises en admin-notice, og pluginet stopper uden fatal error. Derefter `require vendor/autoload.php`.
-2. `register_activation_hook` → `Activator`: kør migrationer, opret rolle/caps, flush rewrite rules (én gang).
-3. `before_woocommerce_init` → erklær HPOS-kompatibilitet (skal ske tidligt, derfor i hovedfilen/bootstrap).
-4. `plugins_loaded` → `Plugin::boot()`:
-   - opretter `Container` med core-services (Settings, Logger, Capabilities, Migrator …)
-   - `Upgrader` sammenligner `ccmerch_db_version` med kodeversionen og kører nye migrationer (dækker opdateringer uden reaktivering)
-   - bygger modullisten (filter `ccmerch_modules`). WooCommerce-modulet medtages kun, hvis `class_exists( 'WooCommerce' )`
-   - kalder `register()` på hvert modul, som *kun* registrerer hooks (ingen tunge operationer ved load)
-5. `init` → rewrite rules, rolle-sync og tekstdomæne.
+**Implementeret i fase 2:**
+
+1. `ccmerch-dashboard.php` (`defined( 'ABSPATH' ) || exit;`):
+   - stopper stille, hvis `CCMERCH_VERSION` allerede er defineret (en anden kopi af pluginet er indlæst)
+   - definerer `CCMERCH_VERSION`
+   - kræver `src/Core/Requirements.php` manuelt og kalder `Requirements::check()`. Er PHP < 8.2 eller WordPress < 6.7, registreres en admin notice (kun synlig for brugere med `activate_plugins`, output escaped), og pluginet stopper **uden fatal error**. Hovedfilen og `Requirements.php` skrives derfor i PHP 7.2-syntaks, og CI tjekker dem med `php -l` på PHP 7.2.
+   - registrerer projektets egen PSR-4-autoloader (`CCMerch\` → `src/`, ADR-017). Pluginet bruger ikke `vendor/` ved runtime.
+   - opretter `new Plugin( __FILE__ )` og kalder `register_hooks()`. Der er ingen singleton og ingen global variabel.
+2. `before_woocommerce_init` → `Plugin::declare_woocommerce_compatibility()` erklærer HPOS-kompatibilitet, hvis WooCommerce' `FeaturesUtil` findes. Ellers sker intet.
+3. `plugins_loaded` → `Plugin::boot()` (idempotent):
+   - modullisten = `default_modules()` (tom i fase 2) gennem filteret `ccmerch_modules`
+   - ugyldige elementer (ikke `Module`, dublet-ID eller filter der ikke returnerer et array) springes over med `_doing_it_wrong()`, så et fejlbehæftet tredjeparts-filter ikke vælter boot
+   - `register( $container )` kaldes på hvert modul
+   - action `ccmerch_loaded` (med containeren) fyres til sidst
+
+**Fejlhåndtering:** Bootstrappen fanger ikke exceptions fra moduler. En fejl i `register()` er en programmeringsfejl og skal være synlig. WordPress' fatal error handler/recovery mode beskytter sitet.
+
+**Bevidst ikke i fase 2** (tilføjes i den fase, hvor de får en funktion):
+
+| Del | Fase | Begrundelse |
+| --- | --- | --- |
+| `register_activation_hook` → `Activator` (migrationer) | 3 | Intet at oprette endnu. Tomme hooks tilføjer ingen værdi. |
+| `Upgrader` (versionsskift → migrationer, rolle-sync) | 3 / 5 | Ingen schema eller roller endnu |
+| `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu |
+| `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |
+| Core-services i containeren (Settings, Logger …) | 3 → | Registreres af de faser, der bygger dem |
+
+Activation/deactivation-hooks registreres i `Plugin::register_hooks()` (de skal registreres, mens hovedfilen indlæses, ikke på `plugins_loaded`), og deres logik placeres i `src/Core/Lifecycle/`. Hovedfilen forbliver uændret.
 
 ## 6. Modulsystem
 

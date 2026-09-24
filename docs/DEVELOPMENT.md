@@ -14,7 +14,7 @@ Docker er **ikke** påkrævet.
 
 ### PHP uden php.ini (Windows/WinGet)
 
-PHP installeret via WinGet har ingen `php.ini`, så `openssl` m.fl. er ikke indlæst. Projektets Composer-wrapper [`bin/composer.mjs`](../bin/composer.mjs) aktiverer de manglende extensions pr. kørsel, så den globale PHP-installation ikke skal ændres.
+PHP installeret via WinGet har ingen `php.ini`, så `openssl` m.fl. er ikke indlæst. Projektets Composer-wrapper [`bin/composer.mjs`](../bin/composer.mjs) aktiverer de manglende extensions uden at ændre den globale PHP-installation. Den skriver en projekt-lokal ini (`.tools/php-ini/ccmerch-dev.ini`, gitignored) og sætter `PHP_INI_SCAN_DIR`, så også de PHP-processer, Composer-scripts starter (PHPUnit, PHPCS, PHPStan), får extensions.
 
 Permanent løsning (valgfri, uden for projektet og foretages af udvikleren selv): kopiér `php.ini-development` til `php.ini` i PHP-mappen, og aktivér `extension_dir = "ext"` samt `openssl`, `mbstring`, `curl`, `zip` og `fileinfo`.
 
@@ -47,11 +47,13 @@ node bin/composer.mjs install
 | `npm run lint:css` | stylelint (bruges, når der er CSS/SCSS) |
 | `npm run lint:php` | PHPCS med WordPress Coding Standards |
 | `npm run analyse:php` | PHPStan level 8 med WordPress-stubs |
+| `npm test` / `npm run test:php` | PHPUnit unit-tests (Brain Monkey) |
+| `node bin/composer.mjs check` | PHPCS + PHPStan + PHPUnit |
 | `npm run format` | Prettier-formattering af JS/JSON/Markdown m.m. |
 | `node bin/composer.mjs lint:fix` | Autofix af PHPCS-fejl (phpcbf) |
 | `npm run wp:start` | Starter lokal WordPress på <http://127.0.0.1:9400> |
 
-`build`/`start` (JS-build) tilføjes i roadmap-fase 13, når dashboardets første JS-entry findes. PHPUnit tilføjes i fase 2.
+`build`/`start` (JS-build) tilføjes i roadmap-fase 13, når dashboardets første JS-entry findes.
 
 ## Lokal WordPress (WordPress Playground)
 
@@ -82,6 +84,9 @@ Kun udviklingsværktøjer. Pluginet har **ingen** tredjeparts runtime-dependenci
 | ↳ `squizlabs/php_codesniffer` | 3.13.6 | PHPCS-motoren (transitiv) | |
 | ↳ `phpcsstandards/phpcsutils`, `phpcsextra` | 1.2.3 / 1.5.1 | Kræves af WPCS (transitiv) | |
 | ↳ `dealerdirect/phpcodesniffer-composer-installer` | 1.2.1 | Registrerer standards i PHPCS automatisk (transitiv) | |
+| `phpunit/phpunit` | 11.5.56 | Unit-tests. 11.x er den nyeste serie, der understøtter PHP 8.2 (platform-låsen). | `phpunit.xml.dist`, `composer test` |
+| `brain/monkey` | 2.7.0 | Mocker WordPress-funktioner og -hooks, så unit-tests kører uden WordPress | `tests/Unit/TestCase.php` |
+| ↳ `mockery/mockery` | 1.6.15 | Mock-bibliotek bag Brain Monkey (transitiv) | |
 | `phpstan/phpstan` | 2.2.15 | Statisk analyse, som fanger typefejl og null-fejl før runtime | `phpstan.neon.dist`, `composer analyse` |
 | `szepeviktor/phpstan-wordpress` | 2.0.4 | WordPress-stubs og -regler til PHPStan (inkl. `php-stubs/wordpress-stubs` 7.1.0) | automatisk via extension-installer |
 | `phpstan/extension-installer` | 1.4.3 | Indlæser PHPStan-extensions automatisk | |
@@ -110,7 +115,9 @@ Runtime-JS-pakker som `@wordpress/element`, `@wordpress/api-fetch` og `@wordpres
 | `.gitignore` | vendor, node_modules, build, `.tools`, caches og secrets (`.env*`, `auth.json`) |
 | `.nvmrc` | Node 24 |
 | `phpcs.xml.dist` | WordPress-standarden; prefixes `ccmerch`/`CCMerch`; text domain `ccmerch-dashboard`; PSR-4-filnavne tilladt i `src/` og `tests/` |
-| `phpstan.neon.dist` | Level 8 og PHP 8.2. **`src/` tilføjes til `paths` i fase 2.** |
+| `phpstan.neon.dist` | Level 8 og PHP 8.2. Analyserer hovedfilen, `uninstall.php`, `src/` og `tests/`. |
+| `phpunit.xml.dist` | Unit-testsuite (`tests/Unit`), tilfældig rækkefølge, fejler på warnings, deprecations og notices |
+| `.distignore` | Filer udelukket fra release-zip (alt undtagen runtime-filer) |
 | `eslint.config.cjs` | WordPress ESLint flat config + projekt-overrides |
 | `.prettierignore` | Udelukker genererede filer og lockfiles |
 | `blueprint.json` | Playground-opsætning |
@@ -120,8 +127,8 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 
 ## Build og deploy (plan)
 
-- **Build:** `npm run build` genererer `build/` (JS/CSS + `*.asset.php` med dependencies og versionshash). `composer install --no-dev --optimize-autoloader` genererer den autoloader, der sendes med.
-- **Distribution:** En release-zip bygges i CI ud fra et git-tag (`v*`). Den indeholder kun runtime-filer: `ccmerch-dashboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, `build/` og `vendor/` (kun autoloader). `.distignore` definerer udelukkelser. Planlagt i roadmap-fase 16.
+- **Build:** `npm run build` genererer `build/` (JS/CSS + `*.asset.php` med dependencies og versionshash). PHP kræver intet build-trin.
+- **Distribution:** En release-zip bygges i CI ud fra et git-tag (`v*`). Den indeholder kun runtime-filer: `ccmerch-dashboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, og `build/`. **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release. `.distignore` definerer udelukkelser. Planlagt i roadmap-fase 16.
 - **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `CCMERCH_VERSION` og `package.json`.
 - **Miljøer:** local (Playground), staging (MySQL og en kopi af WooCommerce **uden** kunde-PII) og production.
 

@@ -24,22 +24,22 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 
 Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/ESLint/Prettier), Playground-miljø og CI.
 
-## Fase 2 – Plugin bootstrap
+## Fase 2 – Plugin bootstrap ✅
 
 - **Mål:** Pluginet booter via et modulsystem uden funktionalitet.
-- **Scope:** konstanter i hovedfil, PHP-/WP-versionstjek med admin notice, Composer-autoload, `Plugin`, `Container`, `Module`-interface, activation/deactivation-hooks (tomme stubs), load af text domain, HPOS-kompatibilitetserklæring, `uninstall.php`-skelet (respekterer "slet data"-setting), `.distignore`. PHPUnit + Brain Monkey med de første unit-tests (Container, Plugin-boot). PHPStan `paths` udvides med `src/`, og `composer test`/`npm run test:php` tilføjes, også i CI.
-- **Ikke i scope:** tabeller, roller og UI.
-- **Done:** Pluginet aktiveres uden notices i Playground (WP_DEBUG), og tests og CI er grønne.
+- **Leveret:** `CCMERCH_VERSION` og dobbelt-load-guard i hovedfilen, PHP-/WP-versionstjek med admin notice (PHP 7.2-syntaks, CI-tjekket), egen PSR-4-autoloader (ADR-017, erstatter den planlagte Composer-autoload ved runtime), `Plugin`, `Container`, `Module`-interface, HPOS-kompatibilitetserklæring, `uninstall.php`-skelet, `.distignore`, PHPUnit + Brain Monkey (38 unit-tests), PHPStan på `src/`, `uninstall.php` og `tests/`, samt `npm test`/`composer test` i CI.
+- **Flyttet til senere faser**, fordi de ikke har en funktion endnu: activation hook (→ fase 3), deactivation hook (→ fase 4), load af text domain (→ fase 15). Se [ARCHITECTURE.md §5](ARCHITECTURE.md#5-boot-flow).
+- **Done:** Pluginet aktiveres, deaktiveres og genaktiveres uden notices eller fatals i Playground (WP_DEBUG). Tests og lint er grønne.
 
 ## Fase 3 – Database-fundament og creator-tabeller
 
 - **Mål:** Versionerede migrationer og creator-schema.
-- **Scope:** `Tables`, `Migrator` (lås, versions-option), `Upgrader` (kører ved versionsskift), migration `0001` for `ccmerch_creators` + `ccmerch_creatormeta`, registrering af meta-type. Unit-tests af Migrator-logik.
+- **Scope:** `register_activation_hook` + `Activator` (i `Plugin::register_hooks()`), `Tables`, `Migrator` (lås, versions-option), `Upgrader` (kører ved versionsskift), migration `0001` for `ccmerch_creators` + `ccmerch_creatormeta`, registrering af meta-type. Unit-tests af Migrator-logik.
 - **Done:** Tabeller oprettes ved aktivering og ved opgradering. [DATABASE.md](DATABASE.md) og CHANGELOG er opdateret.
 
 ## Fase 4 – Logging og audit trail
 
-- **Scope:** migration for `ccmerch_logs`, `Logger` (levels, channels, audit altid), `LogRepository`, retention-cron (ryddes ved deaktivering), log-niveau fra settings/miljø.
+- **Scope:** migration for `ccmerch_logs`, `Logger` (levels, channels, audit altid), `LogRepository`, retention-cron, `register_deactivation_hook` + `Deactivator` (fjerner cron), log-niveau fra settings/miljø.
 - **Done:** Logger kan bruges fra services. Retention er testet.
 
 ## Fase 5 – Roller og capabilities
@@ -79,7 +79,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 12 – Creator dashboard: route og sikker shell
 
-- **Scope:** rewrite rule og query var (slug fra settings, flush ved ændring), `ShellController` (auth-gate: login-redirect / 403-side / shell), `templates/dashboard/shell.php` uden theme, security headers og en placeholder-side uden JS.
+- **Scope:** rewrite rule og query var (slug fra settings, flush ved ændring, ved aktivering og i `Deactivator`), `ShellController` (auth-gate: login-redirect / 403-side / shell), `templates/dashboard/shell.php` uden theme, security headers og en placeholder-side uden JS.
 - **Done:** Integrationstests for adgang. Deep links virker.
 
 ## Fase 13 – Dashboard frontend-fundament
@@ -95,7 +95,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 15 – Dashboard overview → **MVP**
 
-- **Scope:** Overview-sektion (velkomst, creator-info, KPI-kort med empty state "Salgsdata kommer snart"), sektion-registry fuldt koblet, dansk oversættelse af UI-strenge.
+- **Scope:** Overview-sektion (velkomst, creator-info, KPI-kort med empty state "Salgsdata kommer snart"), sektion-registry fuldt koblet, dansk oversættelse af UI-strenge (`languages/`, `load_plugin_textdomain()` på `init`, `wp_set_script_translations()`).
 - **Done:** MVP: admin kan oprette en creator, creator kan logge ind, se overview og redigere sin profil, og intet andet.
 
 ## Fase 16 – Release-pipeline og staging

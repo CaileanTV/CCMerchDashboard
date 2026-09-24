@@ -1,8 +1,10 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Nuværende fase:** 1 (Project foundation) er færdig · **Næste fase:** 2 (Plugin bootstrap) · **Version:** 0.1.0 (ikke released)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 2 (Plugin bootstrap) · **Næste fase:** 3 (Database-fundament og creator-tabeller) · **Version:** 0.1.0 (ikke released)
 
 ## Completed
+
+### Fase 1 – Project foundation ✅
 
 - [x] Analyse af udgangspunkt (tomt repo). Se [reports/2026-09-24-initial-analysis.md](reports/2026-09-24-initial-analysis.md).
 - [x] Repo-grundfiler: `.gitignore`, `.gitattributes` (LF), `.editorconfig`, `.nvmrc`.
@@ -12,8 +14,21 @@
 - [x] npm + `@wordpress/scripts` 35 (ESLint, Prettier, stylelint; build fra fase 13).
 - [x] Lokal WordPress via WordPress Playground (`npm run wp:start`), WooCommerce via blueprint. Verificeret: WP 7.1.2, PHP 8.2, WooCommerce og CC Merch Dashboard er aktive.
 - [x] GitHub Actions CI: PHP-syntaks 8.2, PHPCS, PHPStan og ESLint.
-- [x] Dokumentation: arkitektur, moduler, database, API, frontend/design system, admin, WooCommerce, security, roller, test, udvikling, ADR 001-016, roadmap, feature-specs og AI-guidelines.
+- [x] Dokumentation: arkitektur, moduler, database, API, frontend/design system, admin, WooCommerce, security, roller, test, udvikling, ADR 001-016 (ADR-017 tilføjet i fase 2), roadmap, feature-specs og AI-guidelines.
 - [x] Project Isolation udvidet til eksterne services og connectors. **Dinero og Google Drive er ikke en del af projektets nuværende eller planlagte integrationsarkitektur** og må ikke bruges (ADR-016).
+
+### Fase 2 – Plugin bootstrap ✅
+
+- [x] Hovedfil: ABSPATH-guard, dobbelt-load-guard, `CCMERCH_VERSION`, versionstjek, autoloader og `Plugin`. Ingen logik i øvrigt.
+- [x] `CCMerch\Core\Requirements`: PHP ≥ 8.2 og WP ≥ 6.7. Ellers en escaped admin notice (kun for `activate_plugins`) og ingen fatal error. PHP 7.2-syntaks, tjekket med PHP 7.4 lokalt og 7.2 i CI.
+- [x] `CCMerch\Core\Autoloader`: egen PSR-4-autoloader med validering af klassenavne (ADR-017). `vendor/` bruges ikke ved runtime.
+- [x] `CCMerch\Plugin`: `plugins_loaded` → modul-boot via `ccmerch_modules` (validering, idempotens) → `ccmerch_loaded`. HPOS-erklæring på `before_woocommerce_init`.
+- [x] `CCMerch\Core\Container` (lazy, typesikker, cirkel-detektion) og `CCMerch\Core\Module`.
+- [x] `uninstall.php`-skelet (sletter intet, der er ingen data) og `.distignore`.
+- [x] PHPUnit 11 + Brain Monkey: 38 unit-tests. `npm test` / `composer test`. CI: PHPUnit og PHP 7.2-syntaksjob.
+- [x] Smoke test i Playground (WP 7.1.2, PHP 8.2, WooCommerce 11.1.2): aktiveret, deaktiveret og genaktiveret uden fatals, notices eller `debug.log`. Forside, wp-admin og REST svarer 200. WooCommerce markerer ikke pluginet som HPOS-inkompatibelt.
+
+**Bevidst ikke i fase 2** (se [ARCHITECTURE.md §5](ARCHITECTURE.md#5-boot-flow)): activation hook (fase 3), deactivation hook (fase 4), text domain-loading (fase 15), roller/capabilities (fase 5), database (fase 3), admin-menuer og frontend (fase 9 og 12).
 
 ## In progress
 
@@ -23,9 +38,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 2:** Plugin bootstrap + PHPUnit.
-2. **Fase 3:** Migrationer + creator-tabeller.
-3. **Fase 4:** Logging og audit.
+1. **Fase 3:** Activation hook, migrationer og creator-tabeller.
+2. **Fase 4:** Logging, audit og deactivation hook.
+3. **Fase 5:** Roller og capabilities.
 
 ## Known bugs
 
@@ -36,7 +51,8 @@ Ingen (der er ingen funktionalitet endnu).
 | Emne | Beskrivelse | Handling |
 | --- | --- | --- |
 | npm audit | 11 advisories (5 moderate, 6 high) i transitive dev-dependencies af `@wordpress/scripts`. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts` |
-| PHPStan-paths | `phpstan.neon.dist` analyserer kun hovedfilen, fordi `src/` ikke findes endnu | Tilføj `src/` og `uninstall.php` i fase 2 |
+| Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
+| Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
 | Lokal MySQL | Playground bruger SQLite. Ingen lokal MySQL-verifikation. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter første push. Overvej at installere `gh`. |
 
@@ -55,7 +71,7 @@ Kun disse eksterne services er en del af projektet. Alt andet kræver eksplicit 
 
 Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står i parentes.
 
-1. **Navn/branding:** Er "CC Merch Dashboard" / prefix `ccmerch` det rigtige produktnavn? Et navneskift er billigt nu og dyrt senere. (fase 2)
+1. **Navn/branding:** Er "CC Merch Dashboard" / prefix `ccmerch` det rigtige produktnavn? Fase 2 bruger den dokumenterede konvention (`ccmerch`, `CCMerch\`, `ccmerch-dashboard`). Et navneskift er stadig billigt (ingen data, roller eller options er gemt), men bliver dyrt fra fase 3, hvor tabelnavne og options oprettes. (**senest før fase 3**)
 2. **Hosting:** Hvilken PHP- og MySQL/MariaDB-version kører produktionen? Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 2 / 16)
 3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
 4. **Teams:** Kan en creator have flere brugere (fx manager)? (fase 6. Påvirker kun, om vi bygger det nu.)
@@ -67,6 +83,6 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 ## Next recommended steps
 
-1. Tjek at første CI-kørsel er grøn under GitHub → Actions.
-2. Besvar åbent spørgsmål 1 og 2 (navn og hosting) før fase 2.
-3. Kør fase 2 med prompten: *"Implementér roadmap-fase 2 (Plugin bootstrap) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
+1. Tjek at CI er grøn under GitHub → Actions, inkl. de nye jobs `PHPUnit` og `PHP 7.2 syntax`.
+2. Besvar åbent spørgsmål 1 (navn/prefix) **før fase 3**, fordi tabel- og option-navne låses der. Besvar spørgsmål 2 (hosting).
+3. Kør fase 3 med prompten: *"Implementér roadmap-fase 3 (Database-fundament og creator-tabeller) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
