@@ -23,6 +23,7 @@ use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
+use MerchBoard\Modules\Settings\SettingsModule;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -209,6 +210,7 @@ final class Plugin {
 		return array(
 			new CreatorsModule(),
 			new AccessModule(),
+			new SettingsModule(),
 		);
 	}
 

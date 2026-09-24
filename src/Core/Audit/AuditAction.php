@@ -48,4 +48,10 @@ enum AuditAction: string {
 	 * WordPress user unlinked from a creator (context: previous user id).
 	 */
 	case CreatorUserUnlinked = 'creator_user_unlinked';
+
+	/**
+	 * A plugin setting changed (creator id NULL; context: setting name and the
+	 * new value, which is never personal data).
+	 */
+	case SettingsUpdated = 'settings_updated';
 }

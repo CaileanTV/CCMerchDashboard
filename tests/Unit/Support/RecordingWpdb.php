@@ -252,6 +252,10 @@ final class RecordingWpdb extends wpdb {
 		$this->raw_queries[] = $query;
 		$prepared            = $this->prepared_for( (string) $query );
 
+		if ( null !== $prepared && 'DROP TABLE IF EXISTS %i' === $prepared['query'] ) {
+			return $this->query_results[ $query ] ?? true;
+		}
+
 		if ( null !== $prepared ) {
 			return $this->option_statement( $prepared['query'], $prepared['args'] );
 		}
@@ -323,6 +327,16 @@ final class RecordingWpdb extends wpdb {
 		);
 
 		return $this->insert_result;
+	}
+
+	/**
+	 * Site prefix (single site).
+	 *
+	 * @param int|null $blog_id Blog id.
+	 * @return string
+	 */
+	public function get_blog_prefix( $blog_id = null ) {
+		return $this->prefix;
 	}
 
 	/**

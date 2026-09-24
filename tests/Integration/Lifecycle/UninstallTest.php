@@ -1,0 +1,329 @@
+<?php
+/**
+ * Deactivation and uninstall with real WordPress, roles and database.
+ *
+ * @package MerchBoard
+ */
+
+declare( strict_types=1 );
+
+namespace MerchBoard\Tests\Integration\Lifecycle;
+
+use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\RoleManager;
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Creators\CreatorService;
+use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Settings\SettingsService;
+use MerchBoard\Tests\Integration\IntegrationTestCase;
+use WP_User;
+
+final class UninstallTest extends IntegrationTestCase {
+
+	/**
+	 * Unrelated table that looks like another site's plugin table.
+	 */
+	private const OTHER_SITE_TABLE = 'mbtest_2_merchboard_creators';
+
+	private int $creator_user;
+
+	private int $multi_role_user;
+
+	private int $plain_user;
+
+	private int $post_id;
+
+	protected function setUp(): void {
+		parent::setUp();
+		$this->install();
+		$this->seed();
+	}
+
+	protected function tearDown(): void {
+		$this->execute( 'DROP TABLE IF EXISTS %i', self::OTHER_SITE_TABLE );
+		remove_role( 'merchboard_test_custom' );
+		wp_delete_post( $this->post_id, true );
+		delete_option( 'merchboard_test_unrelated' );
+		delete_option( Settings::OPTION );
+		// Restore schema, roles and capabilities before the base class deletes the
+		// test users (the plugin stays loaded here; in production it is deleted).
+		$this->install();
+		parent::tearDown();
+	}
+
+	public function test_deactivation_changes_nothing(): void {
+		$before = $this->snapshot();
+
+		do_action( 'deactivate_' . plugin_basename( dirname( __DIR__, 3 ) . '/merchboard.php' ) );
+
+		self::assertSame( $before, $this->snapshot() );
+	}
+
+	public function test_uninstall_without_opt_in_keeps_everything(): void {
+		$before = $this->snapshot();
+
+		$this->run_uninstall();
+
+		self::assertSame( $before, $this->snapshot() );
+	}
+
+	public function test_forged_opt_in_value_keeps_everything(): void {
+		update_option( Settings::OPTION, array( Settings::DELETE_DATA_ON_UNINSTALL => '1' ) );
+		$before = $this->snapshot();
+
+		$this->run_uninstall();
+
+		self::assertSame( $before, $this->snapshot() );
+	}
+
+	public function test_uninstall_with_opt_in_removes_only_merch_dashboard_data(): void {
+		$this->enable_deletion();
+
+		$this->run_uninstall();
+
+		// Plugin data gone.
+		foreach ( Tables::all() as $table ) {
+			self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( $table ) ) ) ), $table );
+		}
+
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION ) as $option ) {
+			self::assertNull( $this->raw_option( $option ), $option );
+		}
+
+		self::assertNull( get_role( Capabilities::CREATOR_ROLE ) );
+		self::assertSame( array(), $this->plugin_caps_on_roles() );
+		self::assertSame( array(), $this->plugin_caps_on_users() );
+
+		// Everything else kept.
+		self::assertInstanceOf( WP_User::class, get_userdata( $this->creator_user ), 'Linked WordPress user survives.' );
+		self::assertSame( array( 'subscriber' ), array_values( $this->user( $this->creator_user )->roles ) );
+		self::assertSame( array( 'subscriber', 'merchboard_test_custom' ), array_values( $this->user( $this->multi_role_user )->roles ) );
+		self::assertTrue( user_can( $this->multi_role_user, 'merchboard_test_foreign_cap' ), 'Other capabilities of the user survive.' ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- Capability of the test's custom role.
+		self::assertTrue( user_can( $this->multi_role_user, 'edit_posts' ), 'Direct non-plugin capability survives.' );
+		self::assertInstanceOf( WP_User::class, get_userdata( $this->plain_user ) );
+
+		$admin = get_role( 'administrator' );
+		self::assertNotNull( $admin );
+		self::assertTrue( $admin->has_cap( 'manage_options' ) );
+		self::assertTrue( $admin->has_cap( 'delete_plugins' ) );
+		self::assertTrue( get_role( 'merchboard_test_custom' )?->has_cap( 'merchboard_test_foreign_cap' ) ?? false, 'Custom role keeps its own capabilities.' );
+		self::assertNotNull( get_role( 'editor' ) );
+
+		self::assertSame( 'kept', get_option( 'merchboard_test_unrelated' ) );
+		self::assertSame( 'publish', get_post_status( $this->post_id ) );
+		self::assertSame( 'meta', get_post_meta( $this->post_id, '_merchboard_test_meta', true ) );
+		self::assertSame( self::OTHER_SITE_TABLE, $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( self::OTHER_SITE_TABLE ) ) ), "Another site's table with a similar name survives." );
+
+		self::assertStringContainsString( 'Merch Dashboard data deleted on uninstall.', (string) file_get_contents( MERCHBOARD_TEST_LOG ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+	}
+
+	public function test_uninstall_writes_no_audit_records(): void {
+		$this->enable_deletion();
+		$audit_rows = array();
+		add_filter(
+			'query',
+			static function ( string $query ) use ( &$audit_rows ): string {
+				if ( str_contains( $query, 'INSERT INTO' ) && str_contains( $query, 'merchboard_audit_log' ) ) {
+					$audit_rows[] = $query;
+				}
+				return $query;
+			}
+		);
+
+		$this->run_uninstall();
+
+		self::assertSame( array(), $audit_rows );
+	}
+
+	public function test_repeated_uninstall_is_safe(): void {
+		$this->enable_deletion();
+		$this->run_uninstall();
+		$after_first = $this->foreign_snapshot();
+
+		// A second run (opt-in gone) and a third with the opt-in set again
+		// against an already empty installation.
+		$this->run_uninstall();
+		update_option( Settings::OPTION, array( Settings::DELETE_DATA_ON_UNINSTALL => true ) );
+		$this->run_uninstall();
+
+		self::assertSame( $after_first, $this->foreign_snapshot() );
+		self::assertNull( $this->raw_option( Settings::OPTION ) );
+	}
+
+	public function test_failed_table_drop_keeps_the_opt_in_so_uninstall_can_be_retried(): void {
+		$this->enable_deletion();
+		$this->wpdb->suppress_errors( true );
+		$fail = static fn( string $query ): string => str_starts_with( $query, 'DROP TABLE IF EXISTS `mbtest_merchboard_audit_log`' ) ? 'DROP TABLE mbtest_this_table_does_not_exist' : $query;
+		add_filter( 'query', $fail );
+
+		$this->run_uninstall();
+
+		remove_filter( 'query', $fail );
+		self::assertTrue( Settings::delete_data_on_uninstall(), 'Opt-in kept for the retry.' );
+		self::assertSame( '2', $this->raw_option( Migrator::VERSION_OPTION ) );
+
+		$this->run_uninstall();
+
+		self::assertNull( $this->raw_option( Settings::OPTION ) );
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( Tables::AUDIT_LOG ) ) ) ) );
+	}
+
+	/**
+	 * Creators, audit, users with several roles, unrelated data.
+	 */
+	private function seed(): void {
+		$creators = $this->service( CreatorService::class );
+
+		$this->creator_user = $this->create_user( 'uninstall_creator' );
+		$creators->create( 'Uninstall Creator', CreatorStatus::Active, $this->creator_user );
+		$creators->create( 'Unlinked', CreatorStatus::Inactive, null );
+
+		add_role( 'merchboard_test_custom', 'Custom', array( 'read' => true, 'merchboard_test_foreign_cap' => true, Capabilities::MANAGE => true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->multi_role_user = $this->create_user( 'uninstall_multi' );
+		$multi                 = $this->user( $this->multi_role_user );
+		$multi->add_role( 'merchboard_test_custom' );
+		$creators->create( 'Multi', CreatorStatus::Active, $this->multi_role_user );
+		$multi = $this->user( $this->multi_role_user );
+		$multi->add_cap( Capabilities::MANAGE_SETTINGS );
+		$multi->add_cap( 'edit_posts' );
+
+		$this->plain_user = $this->create_user( 'uninstall_plain' );
+
+		update_option( 'merchboard_test_unrelated', 'kept' );
+		$this->post_id = (int) wp_insert_post(
+			array(
+				'post_title'  => 'Unrelated',
+				'post_status' => 'publish',
+				'post_type'   => 'post',
+			)
+		);
+		update_post_meta( $this->post_id, '_merchboard_test_meta', 'meta' );
+		$this->execute( 'CREATE TABLE %i (id int)', self::OTHER_SITE_TABLE );
+	}
+
+	private function enable_deletion(): void {
+		self::assertTrue( $this->service( SettingsService::class )->set_delete_data_on_uninstall( true, 'DELETE' ) );
+	}
+
+	/**
+	 * Runs the real uninstall.php as WordPress' uninstall_plugin() does.
+	 */
+	private function run_uninstall(): void {
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			define( 'WP_UNINSTALL_PLUGIN', plugin_basename( dirname( __DIR__, 3 ) . '/merchboard.php' ) );
+		}
+
+		file_put_contents( MERCHBOARD_TEST_LOG, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test log.
+		include dirname( __DIR__, 3 ) . '/uninstall.php';
+		wp_cache_flush();
+		$this->forget_table_metadata();
+	}
+
+	/**
+	 * Everything uninstall may touch.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function snapshot(): array {
+		return array(
+			'creators' => $this->rows( Tables::CREATORS ),
+			'audit'    => $this->rows( Tables::AUDIT_LOG ),
+			'options'  => array_map( array( $this, 'raw_option' ), array( Migrator::VERSION_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION ) ),
+			'role'     => get_role( Capabilities::CREATOR_ROLE )?->capabilities,
+			'roles'    => $this->plugin_caps_on_roles(),
+			'users'    => $this->plugin_caps_on_users(),
+		) + $this->foreign_snapshot();
+	}
+
+	/**
+	 * Data uninstall must never touch.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function foreign_snapshot(): array {
+		$admin = get_role( 'administrator' );
+
+		return array(
+			'user_ids'      => array_map( 'intval', get_users( array( 'fields' => 'ID' ) ) ),
+			'admin_caps'    => array_filter( $admin->capabilities ?? array(), static fn( string $cap ): bool => ! self::is_owned( $cap ), ARRAY_FILTER_USE_KEY ),
+			'custom_caps'   => get_role( 'merchboard_test_custom' )?->capabilities,
+			'multi_roles'   => array_values( array_diff( $this->user( $this->multi_role_user )->roles, array( Capabilities::CREATOR_ROLE ) ) ),
+			'post'          => get_post_status( $this->post_id ),
+			'unrelated'     => get_option( 'merchboard_test_unrelated' ),
+			'foreign_table' => $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( self::OTHER_SITE_TABLE ) ) ),
+		);
+	}
+
+	/**
+	 * Plugin capabilities per role.
+	 *
+	 * @return array<string, array<int, string>>
+	 */
+	private function plugin_caps_on_roles(): array {
+		$found = array();
+
+		foreach ( wp_roles()->roles as $name => $role ) {
+			$caps = array_values( array_filter( array_map( 'strval', array_keys( $role['capabilities'] ) ), array( self::class, 'is_owned' ) ) );
+
+			if ( array() !== $caps ) {
+				$found[ (string) $name ] = $caps;
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Plugin roles/capabilities stored on users.
+	 *
+	 * @return array<int, array<int, string>>
+	 */
+	private function plugin_caps_on_users(): array {
+		$found = array();
+
+		foreach ( array( $this->creator_user, $this->multi_role_user, $this->plain_user, 1 ) as $user_id ) {
+			$caps = array_values( array_filter( array_map( 'strval', array_keys( $this->user( $user_id )->caps ) ), array( self::class, 'is_owned' ) ) );
+
+			if ( array() !== $caps ) {
+				$found[ $user_id ] = $caps;
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Whether a role/capability name is owned by the plugin (exact names).
+	 *
+	 * @param string $name Role or capability.
+	 */
+	public static function is_owned( string $name ): bool {
+		return Capabilities::CREATOR_ROLE === $name || in_array( $name, Capabilities::all(), true );
+	}
+
+	/**
+	 * Option value straight from the database.
+	 *
+	 * @param string $name Option name.
+	 */
+	private function raw_option( string $name ): ?string {
+		$value = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $this->wpdb->options, $name ) );
+
+		return null === $value ? null : (string) $value;
+	}
+
+	/**
+	 * A fresh user object (roles/caps reloaded from the database).
+	 *
+	 * @param int $user_id User id.
+	 */
+	private function user( int $user_id ): WP_User {
+		clean_user_cache( $user_id );
+		$user = get_userdata( $user_id );
+		self::assertInstanceOf( WP_User::class, $user );
+
+		return $user;
+	}
+}
