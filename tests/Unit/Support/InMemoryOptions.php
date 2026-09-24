@@ -32,6 +32,13 @@ final class InMemoryOptions {
 	public array $transients = array();
 
 	/**
+	 * Expiration (seconds) passed to set_transient(), per transient.
+	 *
+	 * @var array<string, int>
+	 */
+	public array $transient_expiration = array();
+
+	/**
 	 * Option names passed to update_option(), in order.
 	 *
 	 * @var list<string>
@@ -76,8 +83,9 @@ final class InMemoryOptions {
 			static fn( string $name ): mixed => $store->transients[ $name ] ?? false
 		);
 		Functions\when( 'set_transient' )->alias(
-			static function ( string $name, mixed $value ) use ( $store ): bool {
-				$store->transients[ $name ] = $value;
+			static function ( string $name, mixed $value, int $expiration = 0 ) use ( $store ): bool {
+				$store->transients[ $name ]           = $value;
+				$store->transient_expiration[ $name ] = $expiration;
 				return true;
 			}
 		);

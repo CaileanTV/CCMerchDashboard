@@ -16,6 +16,8 @@ use Brain\Monkey\Functions;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Plugin;
@@ -63,6 +65,31 @@ final class PluginTest extends TestCase {
 		self::assertTrue( $container->has( wpdb::class ) );
 		self::assertInstanceOf( Installer::class, $container->get( Installer::class ) );
 		self::assertInstanceOf( Migrator::class, $container->get( Migrator::class ) );
+	}
+
+	public function test_logger_service_works_without_woocommerce(): void {
+		self::assertFalse( function_exists( 'wc_get_logger' ) );
+		$container = new Container();
+		$this->plugin( $container );
+
+		$logger = $container->get( Logger::class );
+		$logger->error( 'Test entry without WooCommerce.' );
+
+		self::assertInstanceOf( PluginLogger::class, $logger );
+	}
+
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_logger_service_uses_woocommerce_logger_when_available(): void {
+		require_once dirname( __DIR__ ) . '/Fixtures/woocommerce-logger.php';
+		do_action( 'woocommerce_init' );
+		$container = new Container();
+		$this->plugin( $container );
+
+		$container->get( Logger::class )->error( 'Test entry with WooCommerce.', array( 'schema_version' => 1 ) );
+
+		self::assertSame( 'error', \MerchBoardTestWcLogger::$entries[0]['level'] );
+		self::assertSame( 'merchboard', \MerchBoardTestWcLogger::$entries[0]['context']['source'] );
 	}
 
 	public function test_activation_installs_the_schema(): void {

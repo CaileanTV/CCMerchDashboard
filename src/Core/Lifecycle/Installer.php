@@ -11,6 +11,7 @@ namespace MerchBoard\Core\Lifecycle;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Logging\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -36,8 +37,12 @@ final class Installer {
 	 * Constructor.
 	 *
 	 * @param Migrator $migrator Schema migrator.
+	 * @param Logger   $logger   Technical log.
 	 */
-	public function __construct( private Migrator $migrator ) {
+	public function __construct(
+		private Migrator $migrator,
+		private Logger $logger
+	) {
 	}
 
 	/**
@@ -73,7 +78,7 @@ final class Installer {
 		}
 
 		echo '<div class="notice notice-error"><p>';
-		echo esc_html__( 'Merch Dashboard could not update its database tables. Details are in the server error log. The update is retried automatically.', 'merchboard' );
+		echo esc_html__( 'Merch Dashboard could not update its database tables. The update is retried automatically. Technical details are in the log (WooCommerce → Status → Logs, source "merchboard", or the server error log).', 'merchboard' );
 		echo '</p></div>';
 	}
 
@@ -81,14 +86,38 @@ final class Installer {
 	 * Runs the migrator and records failures.
 	 */
 	private function run(): void {
+		$from = $this->migrator->installed_version();
+
 		try {
-			$this->migrator->migrate();
-			delete_transient( self::FAILURE_TRANSIENT );
+			$completed = $this->migrator->migrate();
 		} catch ( DatabaseException $e ) {
+			// Handled here: pause automatic retries, show the generic admin notice and
+			// log the technical detail once. The schema version was not advanced.
 			set_transient( self::FAILURE_TRANSIENT, time(), self::RETRY_DELAY );
-			// The Logger arrives in roadmap phase 4. Until then, failures must at least
-			// reach the server log. The message is generic and contains no SQL or data.
-			error_log( 'Merch Dashboard: database migration failed: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			$this->logger->error(
+				'Database migration failed.',
+				array_merge( $e->context(), array( 'retry_in_seconds' => self::RETRY_DELAY ) )
+			);
+			return;
+		}
+
+		if ( ! $completed ) {
+			$this->logger->debug( 'Database migration skipped: another request holds the lock.' );
+			return;
+		}
+
+		delete_transient( self::FAILURE_TRANSIENT );
+
+		$to = $this->migrator->installed_version();
+
+		if ( $to !== $from ) {
+			$this->logger->info(
+				'Database schema migrated.',
+				array(
+					'from_version' => $from,
+					'to_version'   => $to,
+				)
+			);
 		}
 	}
 }

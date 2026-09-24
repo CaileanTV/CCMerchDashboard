@@ -41,6 +41,11 @@ final class Migrator {
 	private const LOCK_TIMEOUT = 300;
 
 	/**
+	 * Maximum length of the database error kept for the log.
+	 */
+	private const DB_ERROR_MAX_LENGTH = 200;
+
+	/**
 	 * Migrations keyed by the schema version they produce, ascending.
 	 *
 	 * @var array<int, Migration>
@@ -93,8 +98,9 @@ final class Migrator {
 	 *
 	 * @return bool True when the schema is up to date afterwards, false when
 	 *              another request holds the migration lock.
-	 * @throws DatabaseException When a migration fails. Earlier migrations in the
-	 *                           same run stay applied and recorded.
+	 * @throws DatabaseException When a migration fails, with log context (version,
+	 *                           migration class, reason, bounded DDL error). Earlier
+	 *                           migrations in the same run stay applied and recorded.
 	 */
 	public function migrate(): bool {
 		if ( ! $this->needs_migration() ) {
@@ -114,14 +120,52 @@ final class Migrator {
 					continue;
 				}
 
-				$migration->up( $this->wpdb );
+				try {
+					$migration->up( $this->wpdb );
+				} catch ( DatabaseException $e ) {
+					// Add the diagnostic data only the migrator has; the version option
+					// is deliberately not updated.
+					throw new DatabaseException(
+						'Database migration failed.',
+						array(
+							'schema_version'    => $version,
+							'installed_version' => $installed,
+							'migration'         => get_class( $migration ),
+							'reason'            => $e->getMessage(),
+							'db_error'          => $this->db_error(),
+						),
+						$e
+					);
+				}
+
 				update_option( self::VERSION_OPTION, $version, true );
+				$installed = $version;
 			}
 		} finally {
 			delete_option( self::LOCK_OPTION );
 		}
 
 		return true;
+	}
+
+	/**
+	 * The last database error as plain, bounded text for the log.
+	 *
+	 * Schema (DDL) errors contain no user data, but some database drivers (e.g.
+	 * WordPress' SQLite integration) put HTML with the query and file paths into
+	 * `last_error`, so markup is stripped and the length is capped.
+	 */
+	private function db_error(): string {
+		// Space before each tag so text from adjacent elements does not run together.
+		$error = wp_strip_all_tags( str_replace( '<', ' <', (string) $this->wpdb->last_error ) );
+		$error = html_entity_decode( $error, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		// Collapse all whitespace, including non-breaking spaces from &nbsp;.
+		$error = trim( (string) preg_replace( '/[\s\x{00A0}]+/u', ' ', $error ) );
+		// Some drivers append a PHP backtrace (internal file paths); it is not needed
+		// to diagnose a schema error.
+		$error = trim( (string) preg_replace( '/\s*Backtrace:.*$/s', '', $error ) );
+
+		return mb_substr( $error, 0, self::DB_ERROR_MAX_LENGTH );
 	}
 
 	/**

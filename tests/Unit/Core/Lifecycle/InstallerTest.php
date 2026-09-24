@@ -14,6 +14,7 @@ use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\RecordingMigration;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
 use MerchBoard\Tests\Unit\TestCase;
@@ -29,9 +30,98 @@ final class InstallerTest extends TestCase {
 	 */
 	private ArrayObject $log;
 
+	private RecordingLogger $logger;
+
 	protected function setUp(): void {
 		parent::setUp();
-		$this->log = new ArrayObject();
+		$this->log    = new ArrayObject();
+		$this->logger = new RecordingLogger();
+	}
+
+	public function test_migration_failure_is_logged_once_as_error_with_diagnostics(): void {
+		InMemoryOptions::install();
+
+		$this->installer( true )->install();
+
+		self::assertCount( 1, $this->logger->entries );
+		self::assertSame( 'error', $this->logger->entries[0]['level'] );
+		self::assertSame( 'Database migration failed.', $this->logger->entries[0]['message'] );
+		self::assertSame(
+			array(
+				'schema_version'    => 1,
+				'installed_version' => 0,
+				'migration'         => RecordingMigration::class,
+				'reason'            => 'Migration failed.',
+				'db_error'          => "Can't create table",
+				'retry_in_seconds'  => 300,
+			),
+			$this->logger->entries[0]['context']
+		);
+	}
+
+	public function test_failure_keeps_the_five_minute_retry_pause(): void {
+		$options = InMemoryOptions::install();
+
+		$this->installer( true )->install();
+
+		self::assertArrayHasKey( Installer::FAILURE_TRANSIENT, $options->transients );
+		self::assertSame( 300, $options->transient_expiration[ Installer::FAILURE_TRANSIENT ] );
+	}
+
+	public function test_successful_migration_is_logged_as_info(): void {
+		InMemoryOptions::install();
+
+		$this->installer()->install();
+
+		self::assertSame(
+			array(
+				array(
+					'level'   => 'info',
+					'message' => 'Database schema migrated.',
+					'context' => array(
+						'from_version' => 0,
+						'to_version'   => 1,
+					),
+				),
+			),
+			$this->logger->entries
+		);
+	}
+
+	public function test_current_schema_logs_nothing(): void {
+		InMemoryOptions::install( array( Migrator::VERSION_OPTION => 1 ) );
+
+		$this->installer()->maybe_upgrade();
+		$this->installer()->install();
+
+		self::assertSame( array(), $this->logger->entries );
+	}
+
+	public function test_held_lock_is_logged_as_debug_only(): void {
+		InMemoryOptions::install( array( Migrator::LOCK_OPTION => (string) time() ) );
+
+		$this->installer()->install();
+
+		self::assertSame( array( 'debug' ), array_column( $this->logger->entries, 'level' ) );
+	}
+
+	public function test_failure_notice_never_contains_database_details(): void {
+		InMemoryOptions::install();
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\stubTranslationFunctions();
+		Functions\stubEscapeFunctions();
+
+		$installer = $this->installer( true );
+		$installer->install();
+
+		ob_start();
+		$installer->render_failure_notice();
+		$html = (string) ob_get_clean();
+
+		self::assertStringContainsString( 'could not update its database tables', $html );
+		foreach ( array( "Can't create table", 'RecordingMigration', 'schema_version', 'SELECT', 'CREATE', '.php' ) as $detail ) {
+			self::assertStringNotContainsString( $detail, $html );
+		}
 	}
 
 	public function test_install_creates_the_schema_on_activation(): void {
@@ -135,8 +225,12 @@ final class InstallerTest extends TestCase {
 	 * @param bool $failing Whether the migration fails.
 	 */
 	private function installer( bool $failing = false ): Installer {
+		$wpdb             = new RecordingWpdb();
+		$wpdb->last_error = $failing ? "Can't create table" : '';
+
 		return new Installer(
-			new Migrator( new RecordingWpdb(), array( 1 => new RecordingMigration( 'm1', $this->log, $failing ) ) )
+			new Migrator( $wpdb, array( 1 => new RecordingMigration( 'm1', $this->log, $failing ) ) ),
+			$this->logger
 		);
 	}
 }

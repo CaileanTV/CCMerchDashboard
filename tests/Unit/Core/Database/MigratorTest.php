@@ -95,9 +95,11 @@ final class MigratorTest extends TestCase {
 	}
 
 	public function test_failure_keeps_last_successful_version_and_releases_lock(): void {
-		$options  = InMemoryOptions::install();
-		$migrator = new Migrator(
-			new RecordingWpdb(),
+		$options          = InMemoryOptions::install();
+		$wpdb             = new RecordingWpdb();
+		$wpdb->last_error = "Can't create table 'wp_x' (errno: 13 \"Permission denied\")";
+		$migrator         = new Migrator(
+			$wpdb,
 			array(
 				1 => new RecordingMigration( 'm1', $this->log ),
 				2 => new RecordingMigration( 'm2', $this->log, true ),
@@ -109,12 +111,55 @@ final class MigratorTest extends TestCase {
 			$migrator->migrate();
 			self::fail( 'Expected DatabaseException.' );
 		} catch ( DatabaseException $e ) {
-			self::assertSame( 'Migration failed.', $e->getMessage() );
+			self::assertSame( 'Database migration failed.', $e->getMessage() );
+			self::assertSame(
+				array(
+					'schema_version'    => 2,
+					'installed_version' => 1,
+					'migration'         => RecordingMigration::class,
+					'reason'            => 'Migration failed.',
+					'db_error'          => "Can't create table 'wp_x' (errno: 13 \"Permission denied\")",
+				),
+				$e->context()
+			);
+			self::assertInstanceOf( DatabaseException::class, $e->getPrevious() );
 		}
 
 		self::assertSame( array( 'm1', 'm2' ), $this->log->getArrayCopy() );
 		self::assertSame( 1, $options->options[ Migrator::VERSION_OPTION ] );
 		self::assertArrayNotHasKey( Migrator::LOCK_OPTION, $options->options );
+	}
+
+	public function test_database_error_in_context_is_bounded(): void {
+		InMemoryOptions::install();
+		$wpdb             = new RecordingWpdb();
+		$wpdb->last_error = str_repeat( 'x', 1000 );
+		$migrator         = new Migrator( $wpdb, array( 1 => new RecordingMigration( 'm1', $this->log, true ) ) );
+
+		try {
+			$migrator->migrate();
+			self::fail( 'Expected DatabaseException.' );
+		} catch ( DatabaseException $e ) {
+			self::assertIsString( $e->context()['db_error'] );
+			self::assertSame( 200, strlen( $e->context()['db_error'] ) );
+		}
+	}
+
+	public function test_html_in_database_error_is_reduced_to_plain_text(): void {
+		InMemoryOptions::install();
+		$wpdb             = new RecordingWpdb();
+		$wpdb->last_error = "<div style=\"clear:both\">&nbsp;</div>\n<p>MySQL query:</p><p>CREATE TABLE x (</p><p>Backtrace:</p><pre>#0 /var/www/wp-includes/class-wpdb.php(123)</pre>";
+		$migrator         = new Migrator( $wpdb, array( 1 => new RecordingMigration( 'm1', $this->log, true ) ) );
+
+		try {
+			$migrator->migrate();
+			self::fail( 'Expected DatabaseException.' );
+		} catch ( DatabaseException $e ) {
+			self::assertIsString( $e->context()['db_error'] );
+			self::assertStringNotContainsString( '<', $e->context()['db_error'] );
+			self::assertStringNotContainsString( "\n", $e->context()['db_error'] );
+			self::assertSame( 'MySQL query: CREATE TABLE x (', $e->context()['db_error'] );
+		}
 	}
 
 	public function test_does_not_migrate_while_another_request_holds_the_lock(): void {

@@ -13,6 +13,8 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use wpdb;
@@ -152,8 +154,13 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			Logger::class,
+			static fn(): Logger => PluginLogger::for_wordpress()
+		);
+
+		$this->container->set(
 			Installer::class,
-			static fn( Container $c ): Installer => new Installer( $c->get( Migrator::class ) )
+			static fn( Container $c ): Installer => new Installer( $c->get( Migrator::class ), $c->get( Logger::class ) )
 		);
 	}
 
