@@ -20,8 +20,9 @@ use MerchBoard\Modules\Settings\Admin\SettingsPage;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * "Merch Dashboard → Settings" (phase 9): the opt-in for permanent data
- * deletion on uninstall. The page is a submenu of the Creators menu.
+ * "Merch Dashboard → Settings": the opt-in for permanent data deletion on
+ * uninstall (phase 9) and the creator dashboard slug (phase 12). The page is
+ * a submenu of the Merch Dashboard menu.
  */
 final class SettingsModule implements Module {
 
@@ -42,7 +43,8 @@ final class SettingsModule implements Module {
 			SettingsService::class,
 			static fn( Container $c ): SettingsService => new SettingsService(
 				$c->get( AuditTrail::class ),
-				$c->get( Transaction::class )
+				$c->get( Transaction::class ),
+				new SlugAvailability()
 			)
 		);
 

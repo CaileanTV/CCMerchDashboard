@@ -7,6 +7,7 @@ parameters:
         - merchboard.php
         - uninstall.php
         - src
+        - templates
         - tests
     excludePaths:
         # Unit-test stand-in for WordPress' wpdb; PHPStan uses the real stubs.

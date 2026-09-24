@@ -16,6 +16,7 @@ use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Core\Lifecycle\Deactivator;
 use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
@@ -24,6 +25,8 @@ use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Admin\AdminModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
+use MerchBoard\Modules\Dashboard\DashboardModule;
+use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Settings\SettingsModule;
 use wpdb;
 
@@ -74,10 +77,11 @@ final class Plugin {
 
 	/**
 	 * Registers the plugin's entry hooks. Called while the main file is loaded,
-	 * which is also when the activation hook must be registered.
+	 * which is also when the activation and deactivation hooks must be registered.
 	 */
 	public function register_hooks(): void {
 		register_activation_hook( $this->file, array( $this, 'activate' ) );
+		register_deactivation_hook( $this->file, array( $this, 'deactivate' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declare_woocommerce_compatibility' ) );
 		add_action( 'plugins_loaded', array( $this, 'boot' ) );
 	}
@@ -92,6 +96,16 @@ final class Plugin {
 	 */
 	public function activate(): void {
 		$this->container->get( Installer::class )->install();
+
+		// WordPress rebuilds the rules, with the dashboard route, on the next request.
+		DashboardRoute::invalidate_rewrite_rules();
+	}
+
+	/**
+	 * Deactivation: removes the dashboard route; never deletes data.
+	 */
+	public function deactivate(): void {
+		( new Deactivator() )->deactivate();
 	}
 
 	/**
@@ -211,6 +225,7 @@ final class Plugin {
 		return array(
 			new CreatorsModule(),
 			new AccessModule(),
+			new DashboardModule(),
 			new SettingsModule(),
 			new AdminModule(),
 		);

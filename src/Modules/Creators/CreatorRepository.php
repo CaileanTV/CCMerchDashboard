@@ -86,7 +86,7 @@ final class CreatorRepository {
 	 *
 	 * @param int $user_id WordPress user id.
 	 * @throws InvalidArgumentException When the id is not positive.
-	 * @throws DatabaseException When the stored row is invalid.
+	 * @throws DatabaseException When the query fails or the stored row is invalid.
 	 */
 	public function find_by_user_id( int $user_id ): ?Creator {
 		self::assert_positive_id( $user_id, 'User id' );
@@ -96,6 +96,11 @@ final class CreatorRepository {
 			$wpdb->prepare( 'SELECT id, user_id, display_name, status, created_at, updated_at FROM %i WHERE user_id = %d', $this->table(), $user_id ),
 			ARRAY_A
 		);
+
+		// A failed query is not "no creator": the access check logs it (phase 12).
+		if ( ! is_array( $row ) ) {
+			$this->assert_read_succeeded();
+		}
 
 		return is_array( $row ) ? $this->hydrate( $row ) : null;
 	}
@@ -372,6 +377,18 @@ final class CreatorRepository {
 	 */
 	private function table(): string {
 		return Tables::name( $this->wpdb, Tables::CREATORS );
+	}
+
+	/**
+	 * Requires the last read query to have succeeded (wpdb resets last_error
+	 * on every query).
+	 *
+	 * @throws DatabaseException When it failed.
+	 */
+	private function assert_read_succeeded(): void {
+		if ( '' !== $this->wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read creator.' );
+		}
 	}
 
 	/**

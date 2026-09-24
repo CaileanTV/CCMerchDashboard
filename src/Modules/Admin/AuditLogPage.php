@@ -279,7 +279,7 @@ final class AuditLogPage {
 	private function render_technical_log_note(): void {
 		echo '<p class="description">' . esc_html__( 'Technical logs (errors and diagnostics) are not part of the audit log.', 'merchboard' ) . ' ';
 
-		if ( defined( 'WC_VERSION' ) && current_user_can( 'manage_woocommerce' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- WooCommerce's capability for its own log screen.
+		if ( defined( 'WC_VERSION' ) && current_user_can( Capabilities::MANAGE_WOOCOMMERCE ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- WooCommerce's capability for its own log screen.
 			echo '<a href="' . esc_url(
 				add_query_arg(
 					array(

@@ -19,11 +19,13 @@ use MerchBoard\Core\Settings\Settings;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Changes plugin settings (ADR-025).
+ * Changes plugin settings (ADR-025, ADR-026).
  *
  * - Authorization: `merchboard_manage_settings`, independent of the UI.
  * - Enabling permanent deletion additionally requires the typed confirmation
  *   word, checked server-side; disabling never needs it (always safe).
+ * - The dashboard slug is validated server-side (format, reserved paths,
+ *   conflicts with existing content).
  * - Every change writes a `settings_updated` audit record. The record is
  *   written first and the option last in one transaction: if the option
  *   cannot be saved, the audit record is rolled back (fail closed without a
@@ -39,10 +41,61 @@ final class SettingsService {
 	/**
 	 * Constructor.
 	 *
-	 * @param AuditTrail  $audit       Audit trail.
-	 * @param Transaction $transaction Database transaction.
+	 * @param AuditTrail       $audit       Audit trail.
+	 * @param Transaction      $transaction Database transaction.
+	 * @param SlugAvailability $slugs       Dashboard slug conflict check.
 	 */
-	public function __construct( private AuditTrail $audit, private Transaction $transaction ) {
+	public function __construct( private AuditTrail $audit, private Transaction $transaction, private SlugAvailability $slugs ) {
+	}
+
+	/**
+	 * Changes the URL slug of the creator dashboard. The slug must be
+	 * well-formed, not reserved (Settings::valid_slug()) and not used by the
+	 * site's content or rewrite bases (SlugAvailability). After the change the
+	 * stored rewrite rules are invalidated (`merchboard_dashboard_slug_changed`),
+	 * so the new URL works and the old one stops working from the next request.
+	 *
+	 * @param string $slug New slug (surrounding spaces and slashes are ignored; case-insensitive).
+	 * @return bool Whether the setting changed.
+	 * @throws SettingsException When not authorized or the slug is invalid or in use.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	public function set_dashboard_slug( string $slug ): bool {
+		$this->authorize();
+
+		$slug     = strtolower( trim( $slug, " \t\n\r\0\x0B/" ) );
+		$settings = Settings::all();
+		$previous = $settings[ Settings::DASHBOARD_SLUG ];
+
+		$this->assert_valid_slug( $slug );
+
+		if ( $previous === $slug ) {
+			return false;
+		}
+
+		$this->assert_slug_available( $slug );
+
+		$settings[ Settings::DASHBOARD_SLUG ] = $slug;
+
+		$this->save(
+			$settings,
+			array(
+				'setting'        => Settings::DASHBOARD_SLUG,
+				'previous_value' => $previous,
+				'value'          => $slug,
+			)
+		);
+
+		/**
+		 * Fires after the dashboard slug changed (the Dashboard module then
+		 * invalidates the stored rewrite rules).
+		 *
+		 * @param string $slug     New slug.
+		 * @param string $previous Previous slug.
+		 */
+		do_action( 'merchboard_dashboard_slug_changed', $slug, $previous );
+
+		return true;
 	}
 
 	/**
@@ -69,24 +122,34 @@ final class SettingsService {
 
 		$settings[ Settings::DELETE_DATA_ON_UNINSTALL ] = $enabled;
 
+		$this->save(
+			$settings,
+			array(
+				'setting' => Settings::DELETE_DATA_ON_UNINSTALL,
+				'enabled' => $enabled,
+			)
+		);
+
+		return true;
+	}
+
+	/**
+	 * Writes the audit record first and the option last in one transaction.
+	 *
+	 * @param array<string, mixed> $settings New settings.
+	 * @param array<string, mixed> $context  Audit context.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	private function save( array $settings, array $context ): void {
 		$this->transaction->run(
-			function () use ( $settings, $enabled ): void {
-				$this->audit->record(
-					AuditAction::SettingsUpdated,
-					null,
-					array(
-						'setting' => Settings::DELETE_DATA_ON_UNINSTALL,
-						'enabled' => $enabled,
-					)
-				);
+			function () use ( $settings, $context ): void {
+				$this->audit->record( AuditAction::SettingsUpdated, null, $context );
 
 				if ( ! Settings::save( $settings ) ) {
 					throw new DatabaseException( 'Could not save settings.' );
 				}
 			}
 		);
-
-		return true;
 	}
 
 	/**
@@ -97,6 +160,30 @@ final class SettingsService {
 	private function authorize(): void {
 		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			throw new SettingsException( SettingsException::NOT_AUTHORIZED );
+		}
+	}
+
+	/**
+	 * Requires a well-formed, non-reserved slug.
+	 *
+	 * @param string $slug Normalized slug.
+	 * @throws SettingsException When it is not.
+	 */
+	private function assert_valid_slug( string $slug ): void {
+		if ( ! Settings::valid_slug( $slug ) ) {
+			throw new SettingsException( SettingsException::INVALID_SLUG );
+		}
+	}
+
+	/**
+	 * Requires a slug the site does not use yet.
+	 *
+	 * @param string $slug Normalized slug.
+	 * @throws SettingsException When it is in use.
+	 */
+	private function assert_slug_available( string $slug ): void {
+		if ( ! $this->slugs->is_available( $slug ) ) {
+			throw new SettingsException( SettingsException::SLUG_IN_USE );
 		}
 	}
 

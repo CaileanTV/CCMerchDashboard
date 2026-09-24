@@ -105,10 +105,18 @@ final class AuditLogFormatter {
 					/* translators: %s: reason code. */
 					: sprintf( __( 'Reason: %s', 'merchboard' ), self::scalar( $value ) );
 			case 'setting':
-				return 'delete_data_on_uninstall' === $value
-					? __( 'Setting: delete all data when the plugin is deleted', 'merchboard' )
+				return match ( $value ) {
+					'delete_data_on_uninstall' => __( 'Setting: delete all data when the plugin is deleted', 'merchboard' ),
+					'dashboard_slug'           => __( 'Setting: creator dashboard URL slug', 'merchboard' ),
 					/* translators: %s: setting name. */
-					: sprintf( __( 'Setting: %s', 'merchboard' ), self::scalar( $value ) );
+					default                    => sprintf( __( 'Setting: %s', 'merchboard' ), self::scalar( $value ) ),
+				};
+			case 'previous_value':
+				/* translators: %s: previous setting value. */
+				return sprintf( __( 'Previous value: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'value':
+				/* translators: %s: new setting value. */
+				return sprintf( __( 'New value: %s', 'merchboard' ), self::scalar( $value ) );
 			case 'enabled':
 				return true === $value ? __( 'New value: enabled', 'merchboard' ) : __( 'New value: disabled', 'merchboard' );
 		}

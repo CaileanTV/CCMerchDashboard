@@ -74,6 +74,20 @@ final class Capabilities {
 	public const VIEW_LOGS = 'merchboard_view_logs';
 
 	/**
+	 * WordPress' capability for editorial work. Not owned by the plugin and never
+	 * granted by it; only checked to tell editors apart from pure creators
+	 * (ADR-026).
+	 */
+	public const EDIT_POSTS = 'edit_posts';
+
+	/**
+	 * WooCommerce's shop-manager capability. Not owned by the plugin and never
+	 * granted by it; only checked to tell shop staff apart from pure creators
+	 * (ADR-026).
+	 */
+	public const MANAGE_WOOCOMMERCE = 'manage_woocommerce';
+
+	/**
 	 * Exact capability set of the creator role. `read` is WordPress' baseline
 	 * for authenticated users (the Subscriber role has only `read`); nothing
 	 * else from WordPress is granted.

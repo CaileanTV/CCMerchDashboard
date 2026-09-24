@@ -155,6 +155,17 @@ final class CreatorContextTest extends TestCase {
 		self::assertSame( 5, $this->logger->entries[0]['context']['user_id'] );
 	}
 
+	public function test_failed_read_query_is_logged_and_denies_access(): void {
+		$this->user_caps[5] = array( Capabilities::ACCESS_DASHBOARD );
+		$this->creators->create( 'Nova', CreatorStatus::Active, 5 );
+		$this->db->fail_reads_from = array( 'merchboard_creators' );
+
+		self::assertFalse( $this->context()->user_has_access( 5 ) );
+		self::assertSame( array( 'error' ), array_column( $this->logger->entries, 'level' ) );
+		self::assertSame( 'Could not read creator.', $this->logger->entries[0]['context']['reason'] );
+		self::assertStringNotContainsString( "doesn't exist", implode( ' ', array_map( 'strval', $this->logger->entries[0]['context'] ) ), 'No raw database error text.' );
+	}
+
 	public function test_module_registers_the_policy(): void {
 		$container = new Container();
 		$container->set( CreatorRepository::class, fn(): CreatorRepository => $this->creators );

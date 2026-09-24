@@ -18,13 +18,14 @@ use MerchBoard\Modules\Settings\SettingsService;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Handles the settings form. Order of checks, as for creator administration:
+ * Handles the settings forms (deletion opt-in, dashboard slug), each with its
+ * own admin-post action and nonce. Order of checks, as for creator administration:
  *
  * 1. capability (`merchboard_manage_settings`) → 403 otherwise;
  * 2. nonce → 403 otherwise;
  * 3. input: only the whitelisted fields, sanitized;
  * 4. SettingsService (checks the capability again, requires the typed
- *    confirmation to enable deletion, audits the change).
+ *    confirmation to enable deletion, validates the slug, audits the change).
  *
  * Post/Redirect/Get with whitelisted notice codes.
  */
@@ -34,6 +35,11 @@ final class SettingsActions {
 	 * The admin-post action and nonce action.
 	 */
 	public const SAVE_ACTION = 'merchboard_save_settings';
+
+	/**
+	 * The admin-post action and nonce action of the dashboard slug form.
+	 */
+	public const SAVE_SLUG_ACTION = 'merchboard_save_dashboard_slug';
 
 	/**
 	 * Constructor.
@@ -49,6 +55,74 @@ final class SettingsActions {
 	 */
 	public function register(): void {
 		add_action( 'admin_post_' . self::SAVE_ACTION, array( $this, 'handle_save_request' ) );
+		add_action( 'admin_post_' . self::SAVE_SLUG_ACTION, array( $this, 'handle_save_slug_request' ) );
+	}
+
+	/**
+	 * WordPress entry point of the dashboard slug form.
+	 */
+	public function handle_save_slug_request(): void {
+		// The nonce is verified in save_slug() before any input is used.
+		wp_safe_redirect( $this->save_slug( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and the field sanitized in save_slug().
+		exit;
+	}
+
+	/**
+	 * Processes the dashboard slug form (same order of checks as save()).
+	 *
+	 * @param array<mixed> $input Unslashed request data.
+	 * @return string Redirect URL.
+	 */
+	public function save_slug( array $input ): string {
+		$this->verify( $input, self::SAVE_SLUG_ACTION );
+
+		$slug = sanitize_text_field( is_scalar( $input[ SettingsPage::FIELD_SLUG ] ?? null ) ? (string) $input[ SettingsPage::FIELD_SLUG ] : '' );
+
+		return $this->run( fn(): bool => $this->service->set_dashboard_slug( $slug ) );
+	}
+
+	/**
+	 * Capability, then nonce; dies with 403 otherwise.
+	 *
+	 * @param array<mixed> $input  Unslashed request data.
+	 * @param string       $action Nonce action.
+	 */
+	private function verify( array $input, string $action ): void {
+		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage Merch Dashboard settings.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		$nonce = is_scalar( $input['_wpnonce'] ?? null ) ? (string) $input['_wpnonce'] : '';
+
+		if ( 1 !== wp_verify_nonce( $nonce, $action ) ) {
+			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+	}
+
+	/**
+	 * Runs a settings change and maps the outcome to a notice URL.
+	 *
+	 * @param callable(): bool $change The change; true when something changed.
+	 * @return string Redirect URL.
+	 */
+	private function run( callable $change ): string {
+		try {
+			$changed = $change();
+		} catch ( SettingsException $e ) {
+			return SettingsPage::url( $e->reason() );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error(
+				'Saving Merch Dashboard settings failed.',
+				array_merge(
+					$e->context(),
+					array( 'reason' => $e->getMessage() )
+				)
+			);
+
+			return SettingsPage::url( 'error' );
+		}
+
+		return SettingsPage::url( $changed ? 'saved' : 'no_changes' );
 	}
 
 	/**
@@ -67,35 +141,11 @@ final class SettingsActions {
 	 * @return string Redirect URL.
 	 */
 	public function save( array $input ): string {
-		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to manage Merch Dashboard settings.', 'merchboard' ), '', array( 'response' => 403 ) );
-		}
-
-		$nonce = is_scalar( $input['_wpnonce'] ?? null ) ? (string) $input['_wpnonce'] : '';
-
-		if ( 1 !== wp_verify_nonce( $nonce, self::SAVE_ACTION ) ) {
-			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
-		}
+		$this->verify( $input, self::SAVE_ACTION );
 
 		$enabled      = '1' === ( is_scalar( $input[ SettingsPage::FIELD_DELETE ] ?? null ) ? (string) $input[ SettingsPage::FIELD_DELETE ] : '' );
 		$confirmation = sanitize_text_field( is_scalar( $input[ SettingsPage::FIELD_CONFIRM ] ?? null ) ? (string) $input[ SettingsPage::FIELD_CONFIRM ] : '' );
 
-		try {
-			$changed = $this->service->set_delete_data_on_uninstall( $enabled, $confirmation );
-		} catch ( SettingsException $e ) {
-			return SettingsPage::url( $e->reason() );
-		} catch ( DatabaseException $e ) {
-			$this->logger->error(
-				'Saving Merch Dashboard settings failed.',
-				array_merge(
-					$e->context(),
-					array( 'reason' => $e->getMessage() )
-				)
-			);
-
-			return SettingsPage::url( 'error' );
-		}
-
-		return SettingsPage::url( $changed ? 'saved' : 'no_changes' );
+		return $this->run( fn(): bool => $this->service->set_delete_data_on_uninstall( $enabled, $confirmation ) );
 	}
 }

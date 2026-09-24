@@ -24,6 +24,7 @@ use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Admin\AdminModule;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorsModule;
+use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Plugin;
 use MerchBoard\Core\Security\RoleManager;
@@ -76,6 +77,18 @@ final class PluginTest extends TestCase {
 		self::assertTrue( $this->roles->capabilities( 'administrator' )['merchboard_manage_creators'] );
 	}
 
+	public function test_activation_and_deactivation_invalidate_the_rewrite_rules(): void {
+		$this->options->options['rewrite_rules'] = array( 'old' => 'index.php' );
+		$this->plugin()->activate();
+		self::assertArrayNotHasKey( 'rewrite_rules', $this->options->options, 'Rebuilt with the dashboard route on the next request.' );
+
+		$this->options->options['rewrite_rules']       = array( '^creator-dashboard(?:/(.*?))?/?$' => 'index.php' );
+		$this->options->options['merchboard_settings'] = array( 'delete_data_on_uninstall' => true );
+		$this->plugin()->deactivate();
+		self::assertArrayNotHasKey( 'rewrite_rules', $this->options->options, 'Rebuilt without the dashboard route.' );
+		self::assertSame( array( 'delete_data_on_uninstall' => true ), $this->options->options['merchboard_settings'], 'Deactivation deletes no data.' );
+	}
+
 	public function test_plugin_reload_with_current_roles_does_not_touch_roles(): void {
 		$this->plugin()->boot();
 
@@ -94,6 +107,7 @@ final class PluginTest extends TestCase {
 		$plugin = $this->plugin();
 
 		Functions\expect( 'register_activation_hook' )->once()->with( self::FILE, array( $plugin, 'activate' ) );
+		Functions\expect( 'register_deactivation_hook' )->once()->with( self::FILE, array( $plugin, 'deactivate' ) );
 
 		$plugin->register_hooks();
 
@@ -189,7 +203,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 4 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule && $modules[2] instanceof SettingsModule && $modules[3] instanceof AdminModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 5 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule && $modules[2] instanceof DashboardModule && $modules[3] instanceof SettingsModule && $modules[4] instanceof AdminModule ) )
 			->andReturnFirstArg();
 
 		$this->plugin( $container )->boot();

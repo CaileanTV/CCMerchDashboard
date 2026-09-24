@@ -57,6 +57,13 @@ final class FakeDatabase extends wpdb {
 	public array $fail_writes_to = array();
 
 	/**
+	 * Tables (unprefixed) whose single-row reads fail, like a missing table.
+	 *
+	 * @var list<string>
+	 */
+	public array $fail_reads_from = array();
+
+	/**
 	 * Storage engine per unprefixed table (default InnoDB); anything but InnoDB
 	 * is reported as non-transactional.
 	 *
@@ -127,6 +134,14 @@ final class FakeDatabase extends wpdb {
 
 		if ( 1 !== preg_match( '/ FROM %i WHERE (id|user_id) = %d$/', $sql, $m ) ) {
 			throw new RuntimeException( 'Unsupported get_row: ' . $sql );
+		}
+
+		// Like wpdb::flush() at the start of every query.
+		$this->last_error = '';
+
+		if ( in_array( substr( (string) $args[0], strlen( $this->prefix ) ), $this->fail_reads_from, true ) ) {
+			$this->last_error = "Table '" . $args[0] . "' doesn't exist";
+			return null;
 		}
 
 		foreach ( $this->data[ (string) $args[0] ] ?? array() as $row ) {

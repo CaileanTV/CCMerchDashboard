@@ -23,6 +23,7 @@ use MerchBoard\Modules\Settings\Admin\SettingsPage;
 use MerchBoard\Modules\Settings\SettingsException;
 use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Modules\Settings\SettingsService;
+use MerchBoard\Modules\Settings\SlugAvailability;
 use MerchBoard\Tests\Unit\Support\FakeDatabase;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
@@ -61,7 +62,8 @@ final class SettingsTest extends TestCase {
 		$this->logger  = new RecordingLogger();
 		$this->service = new SettingsService(
 			new AuditTrail( new AuditRepository( $this->db ) ),
-			new Transaction( $this->db, new TransactionSupport( $this->db ) )
+			new Transaction( $this->db, new TransactionSupport( $this->db ) ),
+			new SlugAvailability()
 		);
 
 		Functions\when( 'current_user_can' )->alias( fn( string $cap ): bool => in_array( $cap, $this->caps, true ) );
@@ -80,6 +82,9 @@ final class SettingsTest extends TestCase {
 		Functions\when( 'sanitize_key' )->alias( static fn( string $s ): string => (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $s ) ) );
 		Functions\when( 'wp_unslash' )->returnArg();
 		Functions\when( 'admin_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/wp-admin/' . $path );
+		Functions\when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test' . $path );
+		Functions\when( 'trailingslashit' )->alias( static fn( string $s ): string => rtrim( $s, '/' ) . '/' );
+		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'add_query_arg' )->alias( static fn( array $args, string $url ): string => $url . '?' . http_build_query( $args ) );
 	}
 
@@ -115,7 +120,13 @@ final class SettingsTest extends TestCase {
 			Settings::DELETE_DATA_ON_UNINSTALL => true,
 			'unknown'                          => 'x',
 		);
-		self::assertSame( array( Settings::DELETE_DATA_ON_UNINSTALL => true ), Settings::all() );
+		self::assertSame(
+			array(
+				Settings::DELETE_DATA_ON_UNINSTALL => true,
+				Settings::DASHBOARD_SLUG           => Settings::DEFAULT_DASHBOARD_SLUG,
+			),
+			Settings::all()
+		);
 	}
 
 	public function test_enabling_requires_the_typed_confirmation(): void {

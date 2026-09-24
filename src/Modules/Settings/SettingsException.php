@@ -21,6 +21,8 @@ final class SettingsException extends DomainException {
 
 	public const NOT_AUTHORIZED        = 'not_authorized';
 	public const CONFIRMATION_REQUIRED = 'confirmation_required';
+	public const INVALID_SLUG          = 'invalid_slug';
+	public const SLUG_IN_USE           = 'slug_in_use';
 
 	/**
 	 * Constructor.
