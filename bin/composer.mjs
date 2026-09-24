@@ -10,7 +10,7 @@
  * Usage: node bin/composer.mjs <composer arguments>
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -67,16 +67,23 @@ const loaded = modules.stdout.toLowerCase().split( /\r?\n/ );
 const missing = REQUIRED_EXTENSIONS.filter(
 	( ext ) => ! loaded.includes( ext )
 );
-const phpArgs = [];
-
 if ( missing.length > 0 ) {
+	// Composer scripts (phpunit, phpcs, phpstan) start new PHP processes, which
+	// would not inherit `-d` flags. A project-local ini picked up through
+	// PHP_INI_SCAN_DIR is inherited by every child process instead.
 	const binary = spawnSync( 'php', [ '-r', 'echo PHP_BINARY;' ], {
 		encoding: 'utf8',
 	} ).stdout;
-	phpArgs.push( '-d', `extension_dir=${ join( dirname( binary ), 'ext' ) }` );
-	for ( const ext of missing ) {
-		phpArgs.push( '-d', `extension=${ ext }` );
-	}
+	const iniDir = join( root, '.tools', 'php-ini' );
+	const ini = [
+		`extension_dir="${ join( dirname( binary ), 'ext' ) }"`,
+		...missing.map( ( ext ) => `extension=${ ext }` ),
+		'',
+	].join( '\n' );
+
+	mkdirSync( iniDir, { recursive: true } );
+	writeFileSync( join( iniDir, 'ccmerch-dev.ini' ), ini );
+	process.env.PHP_INI_SCAN_DIR = iniDir;
 }
 
-run( 'php', [ ...phpArgs, phar, ...args ] );
+run( 'php', [ phar, ...args ] );

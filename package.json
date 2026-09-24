@@ -14,9 +14,11 @@
     "lint:css": "wp-scripts lint-style",
     "lint:php": "node bin/composer.mjs lint",
     "analyse:php": "node bin/composer.mjs analyse",
+    "test:php": "node bin/composer.mjs test",
     "format": "wp-scripts format",
     "lint": "npm run lint:js && npm run lint:php && npm run analyse:php",
-    "wp:start": "wp-playground-cli server --php=8.2 --port=9400 --login --mount-dir . /wordpress/wp-content/plugins/ccmerch-dashboard --blueprint=./blueprint.json"
+    "wp:start": "wp-playground-cli server --php=8.2 --port=9400 --login --mount-dir . /wordpress/wp-content/plugins/ccmerch-dashboard --blueprint=./blueprint.json",
+    "test": "npm run test:php"
   },
   "devDependencies": {
     "@wordpress/scripts": "35.0.0",

@@ -35,7 +35,17 @@
 		</properties>
 	</rule>
 
+	<!-- Tests: descriptive test method names replace doc comments. -->
+	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.ClassComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<!-- Tests define WordPress constants (ABSPATH) and mimic third-party namespaces (WooCommerce). -->
+		<exclude-pattern>/tests/*</exclude-pattern>
 		<properties>
 			<property name="prefixes" type="array">
 				<element value="ccmerch"/>
