@@ -16,7 +16,13 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve( dirname( fileURLToPath( import.meta.url ) ), '..' );
 const args = process.argv.slice( 2 );
-const REQUIRED_EXTENSIONS = [ 'openssl', 'mbstring', 'curl', 'zip', 'fileinfo' ];
+const REQUIRED_EXTENSIONS = [
+	'openssl',
+	'mbstring',
+	'curl',
+	'zip',
+	'fileinfo',
+];
 
 function run( command, commandArgs ) {
 	const result = spawnSync( command, commandArgs, {
@@ -58,7 +64,9 @@ if ( modules.status !== 0 ) {
 }
 
 const loaded = modules.stdout.toLowerCase().split( /\r?\n/ );
-const missing = REQUIRED_EXTENSIONS.filter( ( ext ) => ! loaded.includes( ext ) );
+const missing = REQUIRED_EXTENSIONS.filter(
+	( ext ) => ! loaded.includes( ext )
+);
 const phpArgs = [];
 
 if ( missing.length > 0 ) {
