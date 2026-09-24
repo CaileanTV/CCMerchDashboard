@@ -1,0 +1,130 @@
+# Udviklingsmiljø
+
+## Forudsætninger
+
+| Værktøj | Version | Bemærkning |
+| --- | --- | --- |
+| PHP CLI | ≥ 8.2 (lokalt: 8.5) | Bruges til Composer, PHPCS og PHPStan. Skal have `openssl`, `mbstring`, `curl`, `zip` og `fileinfo`. Se nedenfor. |
+| Composer | 2.x | Global installation, **eller** projekt-lokalt i `.tools/composer.phar` (gitignored) |
+| Node.js | 24 (se `.nvmrc`) | |
+| npm | ≥ 11 | Projektet bruger npm (ikke yarn/pnpm) |
+| Git | 2.x | |
+
+Docker er **ikke** påkrævet.
+
+### PHP uden php.ini (Windows/WinGet)
+
+PHP installeret via WinGet har ingen `php.ini`, så `openssl` m.fl. er ikke indlæst. Projektets Composer-wrapper [`bin/composer.mjs`](../bin/composer.mjs) aktiverer de manglende extensions pr. kørsel, så den globale PHP-installation ikke skal ændres.
+
+Permanent løsning (valgfri, uden for projektet og foretages af udvikleren selv): kopiér `php.ini-development` til `php.ini` i PHP-mappen, og aktivér `extension_dir = "ext"` samt `openssl`, `mbstring`, `curl`, `zip` og `fileinfo`.
+
+### Projekt-lokal Composer
+
+Hvis Composer ikke er installeret globalt, hentes den med verificeret signatur ind i `.tools/`:
+
+```bash
+mkdir -p .tools && cd .tools
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+# Verificér SHA-384 mod https://composer.github.io/installer.sig før næste trin
+php composer-setup.php && rm composer-setup.php
+```
+
+Kør derefter altid Composer gennem wrapperen: `node bin/composer.mjs <args>` eller `npm run composer -- <args>`. Wrapperen bruger global `composer`, hvis `.tools/composer.phar` ikke findes.
+
+## Første opsætning
+
+```bash
+npm ci
+node bin/composer.mjs install
+```
+
+## Kommandoer
+
+| Kommando | Formål |
+| --- | --- |
+| `npm run lint` | Alle checks: ESLint, PHPCS og PHPStan |
+| `npm run lint:js` | ESLint (WordPress-regler + Prettier) |
+| `npm run lint:css` | stylelint (bruges, når der er CSS/SCSS) |
+| `npm run lint:php` | PHPCS med WordPress Coding Standards |
+| `npm run analyse:php` | PHPStan level 8 med WordPress-stubs |
+| `npm run format` | Prettier-formattering af JS/JSON/Markdown m.m. |
+| `node bin/composer.mjs lint:fix` | Autofix af PHPCS-fejl (phpcbf) |
+| `npm run wp:start` | Starter lokal WordPress på <http://127.0.0.1:9400> |
+
+`build`/`start` (JS-build) tilføjes i roadmap-fase 13, når dashboardets første JS-entry findes. PHPUnit tilføjes i fase 2.
+
+## Lokal WordPress (WordPress Playground)
+
+`npm run wp:start` starter WordPress via [`@wp-playground/cli`](https://wordpress.github.io/wordpress-playground/) (PHP-WASM + SQLite) og mounter repo'et som pluginet `wp-content/plugins/ccmerch-dashboard`. [`blueprint.json`](../blueprint.json) installerer og aktiverer WooCommerce og aktiverer vores plugin. `WP_DEBUG` og `WP_DEBUG_LOG` er slået til, og `WP_ENVIRONMENT_TYPE` er sat til `local`.
+
+- Login: `admin` / `password`. Brugeren logges automatisk ind i browseren.
+- PHP 8.2 bruges bevidst, fordi det er pluginets minimumsversion.
+- **Sitet er flygtigt**: WordPress og data bygges forfra ved hver start. Det er reproducerbart og isoleret. Testdata skal derfor oprettes via blueprinten (eller senere seed-scripts), ikke manuelt.
+- Kodeændringer i repo'et slår igennem med det samme, fordi mappen er mountet.
+
+**Kendte begrænsninger**
+
+- SQLite i stedet for MySQL. Custom tables oprettet med `dbDelta()` virker via SQLite-integrationen, men SQL skal testes mod MySQL/MariaDB før release (CI/staging).
+- Persistent site-data på Windows-hosts virker ikke pålideligt: WooCommerce-installationen fejler med "Operation not permitted" ved mappe-rename på en host-mount. Derfor bruges et flygtigt site.
+- Første start downloader WordPress og WooCommerce (kræver netværk og tager 1-3 minutter).
+
+**LocalWP (valgfrit):** Et persistent MySQL-site kan bruges ved at lægge et symlink/junction fra et **dedikeret** LocalWP-sites `wp-content/plugins/ccmerch-dashboard` til dette repo. Det skal besluttes eksplicit af projektejeren; se Project Isolation i [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md).
+
+## Installerede dependencies
+
+Kun udviklingsværktøjer. Pluginet har **ingen** tredjeparts runtime-dependencies (se ADR-004 i [DECISIONS.md](DECISIONS.md)).
+
+### Composer (`require-dev`)
+
+| Pakke | Version | Hvorfor | Hvor |
+| --- | --- | --- | --- |
+| `wp-coding-standards/wpcs` | 3.4.1 | WordPress Coding Standards: formattering samt security-sniffs for escaping, nonce, sanitization og prepared SQL | `phpcs.xml.dist`, `composer lint` |
+| ↳ `squizlabs/php_codesniffer` | 3.13.6 | PHPCS-motoren (transitiv) | |
+| ↳ `phpcsstandards/phpcsutils`, `phpcsextra` | 1.2.3 / 1.5.1 | Kræves af WPCS (transitiv) | |
+| ↳ `dealerdirect/phpcodesniffer-composer-installer` | 1.2.1 | Registrerer standards i PHPCS automatisk (transitiv) | |
+| `phpstan/phpstan` | 2.2.15 | Statisk analyse, som fanger typefejl og null-fejl før runtime | `phpstan.neon.dist`, `composer analyse` |
+| `szepeviktor/phpstan-wordpress` | 2.0.4 | WordPress-stubs og -regler til PHPStan (inkl. `php-stubs/wordpress-stubs` 7.1.0) | automatisk via extension-installer |
+| `phpstan/extension-installer` | 1.4.3 | Indlæser PHPStan-extensions automatisk | |
+
+**Bevidst fravalgt:** `phpcompatibility/phpcompatibility-wp`. Den eneste stabile version (PHPCompatibility 9.3.5 fra 2019) kender ikke PHP 8.x, og 10.x er stadig alpha. PHPStan (`phpVersion: 80200`) og CI (`php -l` på PHP 8.2) dækker behovet. Kan genovervejes, når PHPCompatibility 10 er stabil. `composer.json` har `config.platform.php = 8.2.0`, så der aldrig låses dependencies, der kræver nyere PHP end minimum.
+
+### npm (`devDependencies`)
+
+| Pakke | Version | Hvorfor | Hvor |
+| --- | --- | --- | --- |
+| `@wordpress/scripts` | 35.0.0 | Samlet WordPress-toolchain: webpack-build med dependency extraction (bruger WordPress' egen React), ESLint, Prettier, stylelint og Jest. Erstatter en separat Vite/ESLint/Prettier-opsætning. | `eslint.config.cjs`, npm scripts |
+| `@wp-playground/cli` | 3.1.55 | Isoleret lokal WordPress uden Docker eller LocalWP | `npm run wp:start`, `blueprint.json` |
+
+Runtime-JS-pakker som `@wordpress/element`, `@wordpress/api-fetch` og `@wordpress/i18n` leveres af WordPress selv og bliver externals ved build. De installeres som dev-dependencies (til editor-support og tests) i fase 13.
+
+### Kendte advisories
+
+`npm audit` rapporterer 11 advisories (5 moderate, 6 high) i transitive dependencies af `@wordpress/scripts` (markdownlint-cli, webpack-dev-server, copy-webpack-plugin m.fl.). De bruges kun lokalt/i CI og indgår aldrig i det distribuerede plugin. `npm audit fix --force` ville nedgradere `@wordpress/scripts` og er derfor ikke kørt. Følges op ved opdateringer af `@wordpress/scripts` (se teknisk gæld i [PROJECT-STATUS.md](PROJECT-STATUS.md)).
+
+## Konfigurationsfiler
+
+| Fil | Formål |
+| --- | --- |
+| `.editorconfig` | Tabs, LF og UTF-8 (WordPress-standard); spaces i JSON/YAML |
+| `.gitattributes` | LF-normalisering; `export-ignore` for dev-filer |
+| `.gitignore` | vendor, node_modules, build, `.tools`, caches og secrets (`.env*`, `auth.json`) |
+| `.nvmrc` | Node 24 |
+| `phpcs.xml.dist` | WordPress-standarden; prefixes `ccmerch`/`CCMerch`; text domain `ccmerch-dashboard`; PSR-4-filnavne tilladt i `src/` og `tests/` |
+| `phpstan.neon.dist` | Level 8 og PHP 8.2. **`src/` tilføjes til `paths` i fase 2.** |
+| `eslint.config.cjs` | WordPress ESLint flat config + projekt-overrides |
+| `.prettierignore` | Udelukker genererede filer og lockfiles |
+| `blueprint.json` | Playground-opsætning |
+| `.github/workflows/ci.yml` | CI: PHP-syntaks (8.2), PHPCS, PHPStan og ESLint ved push og PR |
+
+Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes uden at blive committed, hvis de tilføjes i `.gitignore`.
+
+## Build og deploy (plan)
+
+- **Build:** `npm run build` genererer `build/` (JS/CSS + `*.asset.php` med dependencies og versionshash). `composer install --no-dev --optimize-autoloader` genererer den autoloader, der sendes med.
+- **Distribution:** En release-zip bygges i CI ud fra et git-tag (`v*`). Den indeholder kun runtime-filer: `ccmerch-dashboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, `build/` og `vendor/` (kun autoloader). `.distignore` definerer udelukkelser. Planlagt i roadmap-fase 16.
+- **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `CCMERCH_VERSION` og `package.json`.
+- **Miljøer:** local (Playground), staging (MySQL og en kopi af WooCommerce **uden** kunde-PII) og production.
+
+## Git-workflow
+
+Se [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md#git-og-github). Kort fortalt: små commits i Conventional Commits-format (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`), push efter validering, og aldrig force-push eller omskrivning af historik.
