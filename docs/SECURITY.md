@@ -185,6 +185,14 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Multisite:** Kun det aktuelle sites data (se [DATABASE.md](DATABASE.md#afinstallation-og-datalivscyklus)).
 - **Ingen output:** Fejl logges via `Logger` (tabelnavn) og vises aldrig.
 
+### Audit log (fase 11)
+
+- **Adgang:** `merchboard_view_logs` (kun administrator som standard). Den tjekkes af menuen, af WordPress ved direkte URL og igen i `render()` (fail closed med 403). Creator-adgang, `merchboard_manage*` og `manage_options` alene giver ikke adgang. Verificeret over HTTP.
+- **Read-only:** `AuditRepository` har stadig kun `append`, `for_creator` og nu `paginate` (læsning). Siden har ingen POST-formular, bulk actions eller row actions. Antallet af rækker er uændret efter visning (testet).
+- **SQL:** Filtre valideres (enum, positivt heltal, eksakt `Y-m-d`) og bruges kun som `prepare()`-argumenter i faste SQL-fragmenter. Tabelnavnet kommer fra `Tables`. Wildcards og SQL i filterværdier ignoreres (testet mod MariaDB).
+- **Data:** Context vises via en whitelist (ingen rå JSON). Brugere vises som "Display Name (login)", aldrig e-mail, og profil-link kræver `edit_user`. Slettede brugere og creators vises som "#ID". Alt output escapes.
+- **Adskillelse:** Tekniske logs vises ikke (ADR-021). Der er ingen ny log-tabel.
+
 ## Tjekliste pr. ændring
 
 - [ ] Hvert nyt endpoint/handler har capability- eller `CreatorContext`-tjek **server-side**.

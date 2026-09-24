@@ -82,12 +82,12 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 - **Scope (udført):** Topmenu "Merch Dashboard" med `merchboard_manage` og Overview som første punkt (creator-tal, dinglende links og systemstatus: schema, engine, roller, WooCommerce, sletning ved uninstall). Creators og Settings er submenuer med deres egne capabilities. Søgbart brugervalg (login-felt med AJAX-forslag, ingen e-mail), profil-link i formularen og infoboks på `user-edit.php`. Se [features/admin-creator-management.md](features/admin-creator-management.md).
 - **Done:** Unit- og integrationstests (MariaDB) for capability, nonce og validering, og Playground med og uden WooCommerce over HTTP.
-- **Ikke gjort:** bulk actions (valgfrit, intet konkret behov). Seneste audit-hændelser på Overview kommer med fase 11, og rewrite-status med fase 12.
+- **Ikke gjort:** bulk actions (valgfrit, intet konkret behov). Seneste audit-hændelser på Overview kom med fase 11, og rewrite-status kommer med fase 12.
 
-## Fase 11 – Admin audit-log viewer
+## Fase 11 – Admin audit-log viewer ✅
 
-- **Scope:** Capability `merchboard_view_logs` (flyttet fra fase 5), audit-log-side med `WP_List_Table`, filtre (hændelse, creator, periode) og visning af context. Link til WooCommerce → Status → Logs (source `merchboard`) for tekniske logs, når WooCommerce er aktivt.
-- **Done:** Kræver `merchboard_view_logs`. Output er escaped.
+- **Scope (udført):** Capability `merchboard_view_logs` (administrator, `RoleManager::VERSION` 2), read-only audit-log-side med `WP_List_Table` (20 pr. side, pagineret i databasen), filtre (hændelse, creator, periode), læsbar context (ingen rå JSON), håndtering af slettede actors og creators, link til WooCommerce → Status → Logs for tekniske logs og seneste aktivitet på Overview. Se [features/admin-audit-log.md](features/admin-audit-log.md).
+- **Done:** Kræver `merchboard_view_logs`. Output er escaped. Unit- og integrationstests (MariaDB), og Playground med og uden WooCommerce over HTTP.
 
 ## Fase 12 – Creator dashboard: route og sikker shell
 

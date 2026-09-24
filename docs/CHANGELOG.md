@@ -15,6 +15,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Logging og fejlhåndtering (fase 4):** `Logger`-abstraktion med WooCommerce-logger (source `merchboard`) og `error_log()`-fallback, tærskel fra `WP_DEBUG`/filter `merchboard_log_level`, sanitization af context (`LogContext`) og `DatabaseException::context()`. Migrationsfejl logges via Logger. ADR-021.
 - **Roller og capabilities (fase 5):** rolle `merchboard_creator` (`read` + `merchboard_access_dashboard`), admin-capabilities `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings`, samt `Capabilities` og `RoleManager` med idempotent sync ved aktivering og opdatering (ADR-022).
 - **Creator-administration og audit trail (fase 6):** admin-side "Merch Dashboard → Creators" (liste, opret/rediger, aktivér/deaktivér, tilknyt/frakobl WordPress-bruger), `CreatorService`, `Transaction`, `AuditTrail`/`AuditRepository`/`AuditAction` (ADR-023).
+- **Audit log (fase 11):** Merch Dashboard → Audit log (read-only, `WP_List_Table`, filtre på hændelse, creator og periode, læsbar context, slettede brugere og creators håndteres, link til WooCommerce' tekniske logs), `AuditRepository::paginate()` med `AuditFilter`, ny capability `merchboard_view_logs` til administrator og seneste aktivitet på Overview.
 - **Admin-shell, Overview og brugervalg (fase 10):** topmenu "Merch Dashboard" med `merchboard_manage` og Overview (creator-tal og systemstatus), søgbart brugervalg (login-felt, AJAX-forslag via `admin-ajax.php`, ingen e-mail), profil-link i creator-formularen og infoboks på brugerprofilen. Første JavaScript-fil `assets/js/creator-user-search.js` (vanilla, ingen build).
 - **Lifecycle og permanent sletning (fase 9):** Merch Dashboard → Settings med opt-in "Delete all Merch Dashboard data when the plugin is deleted" (default fra, `merchboard_manage_settings`, nonce, skrevet bekræftelse `DELETE`, audit `settings_updated`). `uninstall.php` sletter kun ved opt-in og kun pluginets egne tabeller, options, rolle og capabilities for det aktuelle site (`Uninstaller`, `SchemaEraser`, ADR-025).
 - **Creator access og brugerrelation (fase 8):** `Modules/Access` med `CreatorContext` (adgang = capability `merchboard_access_dashboard` + aktiv, koblet creator-record), reaktion på `deleted_user` (creator bevares, frakobles og deaktiveres, systemaudit med actor NULL, én transaktion), `AuditTrail::record_system()` og `CreatorRepository::release_user()`.
@@ -43,6 +44,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - Creator-admin-UI flyttet frem fra fase 10. `deleted_user`-hook flyttet fra fase 6 til fase 8.
 - Tilknytning af en bruger giver rollen `merchboard_creator` som ekstra rolle, og frakobling fjerner den.
 - PHPCS: `EscapeOutput.ExceptionNotEscaped` er slået fra projekt-bredt (exception-beskeder renderes aldrig; dokumenteret i regelsættet).
+
+### Changed (fase 11)
+- `RoleManager::VERSION` 1 → 2: administratorer får `merchboard_view_logs` ved næste request. Uninstall fjerner den også (via `Capabilities::all()`).
 
 ### Changed (fase 10)
 - Topmenuens slug er nu `merchboard` (Overview), og menu-capability er `merchboard_manage` (før `merchboard_manage_creators`). Creators (`merchboard-creators`) og Settings (`merchboard-settings`) er uændrede URL'er som submenuer.

@@ -31,6 +31,7 @@ Definitionerne findes ét sted: `MerchBoard\Core\Security\Capabilities` (konstan
 | `merchboard_manage` | `Capabilities::MANAGE` | `administrator` | Se Merch Dashboard-menuen og Overview (✅ fase 10) |
 | `merchboard_manage_creators` | `Capabilities::MANAGE_CREATORS` | `administrator` | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra (fase 6/10) |
 | `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9) |
+| `merchboard_view_logs` | `Capabilities::VIEW_LOGS` | `administrator` | Læse business audit trail (Audit log, Overview-aktivitet) (✅ fase 11). Giver ingen adgang til tekniske logs og ingen skriveadgang. Creator-adgang giver den aldrig. |
 
 `merchboard_manage_creators` bruges fra fase 6 (creator-administration: admin-side, handlers og `CreatorService`). De øvrige er fundamentet for fase 8-10. Checks skal altid være positive capability-checks: `current_user_can( Capabilities::MANAGE_CREATORS )` / `user_can( $user, … )`. Aldrig "er logget ind", rolle- eller display-navne eller hardcodede user-ID'er.
 
@@ -40,11 +41,11 @@ Administratorer beholder alle deres WordPress-capabilities uændret. Pluginet ti
 
 | Planlagt i fase 5 | Flyttet til | Begrundelse |
 | --- | --- | --- |
-| `merchboard_view_logs` | Fase 11 (audit-log viewer) | Audit-visning er ikke en del af fase 5. Capabilities oprettes med den funktion, der bruger dem. |
+| `merchboard_view_logs` | ✅ Fase 11 (audit-log viewer) | Audit-visning er ikke en del af fase 5. Capabilities oprettes med den funktion, der bruger dem. |
 | Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` (`map_meta_cap`) | Fase 14 (REST `/me`), udskudt igen fra fase 8 | Ejerskabsdelen kræver creator-record og status. `CreatorContext` (fase 8) leverer grundlaget, og meta-capabilities tilføjes, når de første ressourcer (`/me`) skal beskyttes. |
 | Fjernelse af rolle/caps ved uninstall | ✅ Fase 9 (opt-in "Slet alle data", ADR-025) | Uninstall bevarer data (DATABASE.md). Brugere, der har rollen, må ikke miste den implicit. |
 
-Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11), `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`.
+Fremtidige capabilities (tilføjes med deres modul): `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`. `merchboard_view_logs` kom i fase 11 med `RoleManager::VERSION` 2, så eksisterende sites får den ved næste request.
 
 ## Rollen `merchboard_creator` (implementeret, fase 5)
 

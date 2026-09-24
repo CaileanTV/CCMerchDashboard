@@ -1,6 +1,6 @@
 # WordPress Admin
 
-> Status: **Admin-shell komplet (fase 10):** topmenu med Overview (`merchboard_manage`), Creators (fase 6, søgbart brugervalg fra fase 10) og Settings (fase 9). Audit-visning kommer i fase 11.
+> Status: **Admin komplet til og med fase 11:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9) og Audit log (`merchboard_view_logs`, fase 11).
 
 ## Principper
 
@@ -12,11 +12,11 @@
 
 ```text
 Merch Dashboard                       ✅ fase 10: menu-capability merchboard_manage (slug `merchboard`, Modules/Admin/AdminMenu)
-├── Overview                   ✅ fase 10: creator-tal, dinglende links og systemstatus (seneste audit-hændelser: fase 11)
+├── Overview                   ✅ fase 10: creator-tal, dinglende links og systemstatus; ✅ fase 11: seneste aktivitet (kun med merchboard_view_logs)
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   └── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger
 ├── Settings                   ✅ fase 9: kun "Data on uninstall" (opt-in for permanent sletning). Tabs General · Access · Advanced kommer, når de får indhold
-└── Audit log  [fase 11]                 filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
+└── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
 ### Kritik af det oprindelige forslag og ændringer
@@ -67,7 +67,8 @@ Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), 
 
 - **Creators:** antal aktive, inaktive og i alt, antal koblet til en WordPress-bruger og en advarsel, hvis creators er koblet til brugere, der ikke længere findes. Der linkes til Creators, hvis brugeren har `merchboard_manage_creators`.
 - **Systemstatus:** pluginversion, databaseschema (aktuelt, afventer eller fejlet), transaktionsunderstøttelse (engine-tjek, ADR-024), roller og capabilities (synkroniseret eller afventer), WooCommerce (aktiv med version eller ikke aktiv) og om data slettes ved afinstallation. Der linkes til Settings, hvis brugeren har `merchboard_manage_settings`.
-- Der vises ingen salgstal eller statistik, fordi de ikke findes endnu. Seneste audit-hændelser kommer med audit-visningen i fase 11 (`merchboard_view_logs`). Rewrite-status kommer, når dashboard-routen findes (fase 12).
+- **Seneste aktivitet (✅ fase 11):** de 5 nyeste audit-records (tid og hændelse, ingen navne) med link til Audit log. Vises kun for brugere med `merchboard_view_logs`.
+- Der vises ingen salgstal eller statistik, fordi de ikke findes endnu. Rewrite-status kommer, når dashboard-routen findes (fase 12).
 
 ### Navigation og adgang ✅ (fase 10)
 
@@ -113,9 +114,23 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Settings\Settings::sanitize()` (whitelist af nøgler og typer), så en forfalsket eller korrupt værdi aldrig giver en uventet indstilling.
 
-### Audit log
+### Audit log ✅ (fase 11)
 
-`WP_List_Table` over `merchboard_audit_log` (fase 6/11): tidspunkt (lokal tid), level-badge, channel, besked, actor (bruger-link) og creator. Filtrering på level, channel og periode. Detaljevisning af context-JSON (escaped). Ingen redigering. Sletning kun via retention.
+`Modules/Admin/AuditLogPage` og `AuditLogListTable` (`WP_List_Table`), capability `merchboard_view_logs`. Den tjekkes i menuen, af WordPress ved direkte adgang og igen i `render()`. Siden er **read-only**: der er ingen formularer, der ændrer noget, ingen bulk- eller row actions, ingen sletning og ingen oprettelse. Se [features/admin-audit-log.md](features/admin-audit-log.md).
+
+- **Kolonner:** tid (sitets tidszone), hændelse (link, der filtrerer på den), creator (navn med redigeringslink for `merchboard_manage_creators` og et filterlink; "Creator #ID (not found)" hvis recorden ikke findes; "—" uden creator), actor ("System" ved NULL; "Display Name (login)" med profil-link kun med `edit_user`; "User #ID (no longer exists)" for slettede brugere) og detaljer.
+- **Detaljer** vises ikke som rå JSON. `AuditLogFormatter` gør de kendte context-nøgler læsbare (bruger, status, tidligere status, ændrede felter, årsag, setting og ny værdi). Ukendte nøgler vises kun som renset nøgle og kort skalar værdi, og indlejrede data som "…". Alt escapes.
+- **Filtre (dokumenteret scope):** hændelse (`AuditAction`-select), creator (via filterlinks) og periode (fra/til, dage i sitets tidszone, omregnet til UTC-grænser). Filtrene er GET-parametre på en read-only side og har derfor ingen nonce. Ugyldige værdier ignoreres med en notice og når aldrig SQL. Gyldige værdier går kun som `prepare()`-argumenter (`AuditRepository::paginate`).
+- **Paginering:** 20 pr. side i databasen (`LIMIT/OFFSET` og `COUNT(*)`), så hele tabellen hentes aldrig.
+- **Tekniske logs** vises ikke her. Med WooCommerce linkes til WooCommerce → Status → Logs (source `merchboard`) for brugere med `manage_woocommerce`. Uden WooCommerce står der, at de ligger i PHP's fejllog.
+- **Sletning:** Records slettes kun ved opt-in-uninstall (ADR-025). Der er ingen retention endnu (åbent spørgsmål 10).
+
+| | **Business audit trail** | **Teknisk logging** |
+| --- | --- | --- |
+| Formål | Hvem ændrede hvad, hvornår (creators, brugerrelationer, settings) | Fejl og diagnostik til drift |
+| Lager | Tabellen `merchboard_audit_log` (ADR-023), append-only | WooCommerce-logger (source `merchboard`) eller PHP `error_log` (ADR-021). Ingen tabel. |
+| Visning | Merch Dashboard → Audit log (`merchboard_view_logs`, fase 11) | WooCommerce → Status → Logs (WooCommerce' egen adgang) eller serverens `debug.log` |
+| Indhold | Handling, actor, creator og minimal context. Ingen stack traces, ingen tekniske fejl. | Tekniske beskeder og renset context. Aldrig forretningshistorik. |
 
 ## WooCommerce-skærme (fase 17)
 

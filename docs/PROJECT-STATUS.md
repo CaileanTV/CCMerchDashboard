@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 10 (Admin creator management (rest) og Overview) · **Næste fase:** 11 (Admin audit-log viewer) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 11 (Admin audit-log viewer) · **Næste fase:** 12 (Creator dashboard: route og sikker shell) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -150,6 +150,22 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 **Bevidst ikke i fase 10:** bulk actions (valgfrit), seneste audit-hændelser (fase 11), dashboard, REST, login-redirect og WooCommerce-logik.
 
+### Fase 11 – Admin audit-log viewer ✅
+
+- [x] Capability `merchboard_view_logs` (administrator, `RoleManager::VERSION` 2, eksisterende sites synkroniseres, fjernes ved opt-in-uninstall).
+- [x] Merch Dashboard → Audit log: read-only `WP_List_Table`, 20 pr. side (`COUNT` og `LIMIT/OFFSET` i databasen), nyeste først. Filtre: hændelse, creator og periode (sitets tidszone → UTC). Ugyldige værdier ignoreres.
+- [x] Context vises læsbart via whitelist (ingen rå JSON, ingen e-mail). "System" for NULL-actor, "#ID (no longer exists)"/"(not found)" for slettede brugere og creators. Profil- og redigeringslinks kun med de rette capabilities.
+- [x] Tekniske logs vises ikke. Link til WooCommerce → Status → Logs eller note om PHP's fejllog. Ingen ny tabel (ADR-021).
+- [x] Overview: seneste 5 hændelser kun med `merchboard_view_logs`.
+- [x] 397 unit-tests (1056 assertions) og 81 integrationstests mod MariaDB 10.11.19. Lint (PHPCS, PHPStan level 8, ESLint) er grøn.
+- [x] Playground over HTTP, med og uden WooCommerce:
+  - 27 records, 2 sider, og alle tre filtre virker. Ugyldige filtre ignoreres med notice.
+  - Escaping, ingen e-mail, ingen rå JSON, ingen POST-formularer eller bulk actions. Rækker er uændrede efter visning.
+  - Subscriber, creator og creator-manager får 403. En rolle med kun `read` + `merchboard_view_logs` får 200 på Audit log og 403 på Overview og Creators (uden WooCommerce; med WooCommerce blokerer WooCommerce' egen wp-admin-regel roller uden `edit_posts`).
+  - Ingen notices.
+
+**Bevidst ikke i fase 11:** retention/sletning af records (åbent spørgsmål 10), eksport, tekniske logs i admin og alt fra fase 12+.
+
 ## In progress
 
 Intet.
@@ -158,9 +174,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 11:** Admin audit-log viewer.
-2. **Fase 12:** Creator dashboard: route og sikker shell.
-3. **Fase 13:** Dashboard frontend-fundament.
+1. **Fase 12:** Creator dashboard: route og sikker shell.
+2. **Fase 13:** Dashboard frontend-fundament.
+3. **Fase 14:** REST-fundament, `/me` og Profile.
 
 ## Known bugs
 
@@ -216,11 +232,11 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 7. **UI-sprog:** Dansk, engelsk eller begge i creator-dashboardet? (fase 15)
 8. **Dashboard-URL:** `/creator-dashboard/` eller andet (fx `/studio/`)? (fase 12)
 9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). Fase 7 løste behovet for en rigtig database med integrationstestene, så spørgsmålet haster ikke længere. (fase 16)
-10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. (fase 11)
+10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. Fase 11 viser records, men sletter ingen. (før produktion, senest fase 16)
 
 ## Next recommended steps
 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 11 (Admin audit-log viewer) jf. docs/ROADMAP.md.
+4. Kør fase 12 (Creator dashboard: route og sikker shell) jf. docs/ROADMAP.md.

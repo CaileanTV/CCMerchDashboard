@@ -22,7 +22,7 @@
 | Produkt → creator | WooCommerce product meta `_merchboard_creator_id` (fase 17) | Én creator pr. produkt i v1 |
 | Salg pr. creator (historik) | `merchboard_sales` (custom ledger, fase 18) | Hurtige aggregeringer og uforanderlig attribution. Se [WOOCOMMERCE.md](WOOCOMMERCE.md). |
 | Tekniske logs | **Ingen tabel.** WooCommerce-logger eller `error_log()` (fase 4, ADR-021) | Tekniske logs er drift, ikke forretningsdata |
-| Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom) ✅ fase 6 | Forretningsdata, append-only (ADR-023). Visning i fase 11. |
+| Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom) ✅ fase 6 | Forretningsdata, append-only (ADR-023). Read-only visning ✅ fase 11 (Merch Dashboard → Audit log). |
 | Cache af aggregeringer | Transients/object cache | Afledte data, må forsvinde |
 
 **Tommelfingerregel:** WordPress' datamodel bruges, hvor data er *konfiguration* eller *tilhører en eksisterende WP-entitet*. Custom tables bruges, hvor data er *domæneentiteter med relationer, volumen eller behov for effektive queries*.
@@ -199,7 +199,7 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 ## Databaseadgang (repositories)
 
 - `MerchBoard\Modules\Creators\CreatorRepository`: `find`, `find_by_user_id` og `create` (fase 3), samt `rename`, `set_status`, `link_user`, `unlink_user`, `paginate` (whitelisted sortering, max 100 pr. side) og `linked_user_ids` (fase 6). Hver skriveoperation opdaterer `updated_at`. Der er ingen delete.
-- `MerchBoard\Core\Audit\AuditRepository` (fase 6): kun `append` og `for_creator`.
+- `MerchBoard\Core\Audit\AuditRepository` (fase 6): kun `append` og `for_creator`. Fase 11 tilføjer `paginate( AuditFilter, page, per_page )`: nyeste først, filtre (action, creator, periode som UTC `[from, until)`) i faste, prepared SQL-fragmenter, `COUNT(*)` og `LIMIT/OFFSET` (maks. 100 pr. side). Stadig ingen update eller delete.
 - **Transaktioner** (`MerchBoard\Core\Database\Transaction`, fase 6): `START TRANSACTION` / `COMMIT` / `ROLLBACK` via `$wpdb`, ikke re-entrant. Bruges af `CreatorService`, så creator-ændring og audit-record committes sammen eller slet ikke (ADR-023). **Fail closed (fase 7, ADR-024):** Før hver transaktion tjekker `TransactionSupport` via `information_schema` (`ENGINES.TRANSACTIONS`), at alle plugin-tabeller ligger på en transaktionel engine. Er en tabel fx MyISAM, skrives intet, og en `DatabaseException` med tabel og engine logges. Et positivt resultat caches pr. request. SQLite (`DB_ENGINE = sqlite`) er altid transaktionel. Rollback er **verificeret på MariaDB 10.11.19 og SQLite**. DDL (`CREATE`/`ALTER TABLE`) må aldrig køre inde i en transaktion (implicit commit på MySQL/MariaDB).
 - Audit-context gemmes som **ASCII-JSON** (`\uXXXX` for ikke-ASCII, fase 7). Skrivningen kan derfor ikke fejle på en tabel uden 4-byte-UTF-8 (legacy `utf8mb3`) og dermed rulle en forretningsændring tilbage. Ugyldig UTF-8 og ikke-endelige tal erstattes i stedet for at fejle. Ved læsning giver ugyldig JSON en tom context.
 - Al SQL går gennem repositories og `$wpdb->prepare()`. Tabelnavne kommer fra `Tables` og indsættes med `%i` (WP ≥ 6.2). Inserts bruger `$wpdb->insert()` med eksplicitte formater.

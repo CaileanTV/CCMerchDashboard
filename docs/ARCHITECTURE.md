@@ -80,7 +80,7 @@ merchboard/
 │   └── Modules/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
 │       │                        # CreatorService, CreatorException, UserAccounts, Admin/ (page, list table, actions) [fase 6]
-│       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]
+│       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]; AuditLogPage, AuditLogListTable, AuditLogFormatter [fase 11]
 │       ├── Access/              # AccessModule, CreatorContext [fase 8]; LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
 │       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*
@@ -210,7 +210,7 @@ Se [SECURITY.md](SECURITY.md) og [USER-ROLES.md](USER-ROLES.md). Kernen er:
 
 ## 11. Logging-arkitektur
 
-> Status: **Implementeret (fase 4, ADR-021).** Tekniske logs. Audit trail er et separat, planlagt emne (se nederst).
+> Status: **Implementeret (fase 4, ADR-021).** Tekniske logs. Audit trail er et separat system (fase 6, vist i admin fra fase 11, se nederst).
 
 ### Abstraktion
 
@@ -253,7 +253,14 @@ Tilgængeligheden tjekkes ved **hver** skrivning, ikke ved boot, så valget alti
 
 ### Audit trail (ikke teknisk logging)
 
-"Hvem ændrede hvad" (creator oprettet/deaktiveret, adgang ændret, settings ændret) er forretningsdata med andre krav (søgbar i wp-admin, lang opbevaring og altid registreret uanset log-niveau). Implementeret i fase 6 som egen tabel og service (`merchboard_audit_log`, ADR-023). Vises i admin i fase 11. Se [DATABASE.md](DATABASE.md#merchboard_audit_log--schema-version-2-adr-023).
+"Hvem ændrede hvad" (creator oprettet/deaktiveret, adgang ændret, settings ændret) er forretningsdata med andre krav (søgbar i wp-admin, lang opbevaring og altid registreret uanset log-niveau). Implementeret i fase 6 som egen tabel og service (`merchboard_audit_log`, ADR-023). Vises read-only i admin fra fase 11 (Merch Dashboard → Audit log, `merchboard_view_logs`). Se [DATABASE.md](DATABASE.md#merchboard_audit_log--schema-version-2-adr-023).
+
+| | **Business audit trail** | **Teknisk logging** |
+| --- | --- | --- |
+| Formål | Hvem ændrede hvad, hvornår (creators, brugerrelationer, settings) | Fejl og diagnostik til drift |
+| Lager | Tabellen `merchboard_audit_log` (ADR-023), append-only | WooCommerce-logger (source `merchboard`) eller PHP `error_log` (ADR-021). Ingen tabel. |
+| Visning | Merch Dashboard → Audit log (`merchboard_view_logs`, fase 11) | WooCommerce → Status → Logs (WooCommerce' egen adgang) eller serverens `debug.log` |
+| Indhold | Handling, actor, creator og minimal context. Ingen stack traces, ingen tekniske fejl. | Tekniske beskeder og renset context. Aldrig forretningshistorik. |
 
 ## 12. Hooks (udvidelsespunkter)
 
