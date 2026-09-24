@@ -27,7 +27,7 @@ $GLOBALS['wp_filter'] = array( // phpcs:ignore WordPress.WP.GlobalVariablesOverr
 		10 => array(
 			array(
 				'function'      => static function (): void {
-					require MERCHBOARD_TEST_ROOT . '/merchboard.php';
+					require dirname( __DIR__, 2 ) . '/merchboard.php';
 				},
 				'accepted_args' => 0,
 			),

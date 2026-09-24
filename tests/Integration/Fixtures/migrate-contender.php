@@ -13,9 +13,9 @@ declare( strict_types=1 );
 
 require dirname( __DIR__ ) . '/config.php';
 require ABSPATH . 'wp-settings.php';
-require_once MERCHBOARD_TEST_ROOT . '/src/Core/Autoloader.php';
+require_once dirname( __DIR__, 3 ) . '/src/Core/Autoloader.php';
 
-MerchBoard\Core\Autoloader::register( 'MerchBoard\\', MERCHBOARD_TEST_ROOT . '/src/' );
+MerchBoard\Core\Autoloader::register( 'MerchBoard\\', dirname( __DIR__, 3 ) . '/src/' );
 
 $merchboard_start = (float) ( $argv[1] ?? 0 );
 
