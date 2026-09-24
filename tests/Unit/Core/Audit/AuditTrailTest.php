@@ -64,6 +64,15 @@ final class AuditTrailTest extends TestCase {
 		);
 	}
 
+	public function test_record_system_has_no_actor_even_with_a_logged_in_user(): void {
+		( new AuditTrail( $this->repository ) )->record_system( AuditAction::CreatorUserUnlinked, 3, array( 'reason' => 'user_deleted' ) );
+
+		$row = $this->db->rows( 'merchboard_audit_log' )[0];
+		self::assertNull( $row['actor_user_id'], 'get_current_user_id() returns 7 in this test.' );
+		self::assertSame( '2026-09-24 12:00:00', $row['created_at'] );
+		self::assertSame( '{"reason":"user_deleted"}', $row['context'] );
+	}
+
 	public function test_system_actions_have_no_actor(): void {
 		Functions\when( 'get_current_user_id' )->justReturn( 0 );
 

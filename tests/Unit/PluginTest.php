@@ -20,6 +20,8 @@ use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Access\AccessModule;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Plugin;
 use MerchBoard\Core\Security\RoleManager;
@@ -180,17 +182,18 @@ final class PluginTest extends TestCase {
 		self::assertSame( 10, has_action( 'admin_notices', array( $container->get( Installer::class ), 'render_failure_notice' ) ) );
 	}
 
-	public function test_creators_module_is_booted_by_default(): void {
+	public function test_creators_and_access_modules_are_booted_by_default(): void {
 		$container = new Container();
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 1 === count( $modules ) && $modules[0] instanceof CreatorsModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 2 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule ) )
 			->andReturnFirstArg();
 
 		$this->plugin( $container )->boot();
 
 		self::assertTrue( $container->has( CreatorRepository::class ) );
+		self::assertTrue( $container->has( CreatorContext::class ) );
 	}
 
 	public function test_boot_registers_filtered_modules_with_the_container(): void {

@@ -274,6 +274,13 @@ final class FakeDatabase extends wpdb {
 			return 0;
 		}
 
+		// Every WHERE column must match, like "id = %d AND user_id = %d".
+		foreach ( self::stringify( $where ) as $column => $value ) {
+			if ( ( $this->data[ $table ][ $id ][ $column ] ?? null ) !== $value ) {
+				return 0;
+			}
+		}
+
 		$this->data[ $table ][ $id ] = array_merge( $this->data[ $table ][ $id ], self::stringify( $data ) );
 
 		return 1;

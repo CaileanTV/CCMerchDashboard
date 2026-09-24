@@ -45,9 +45,38 @@ final class AuditTrail {
 	public function record( AuditAction $action, ?int $creator_id, array $context = array() ): int {
 		$actor = get_current_user_id();
 
+		return $this->append( $action, $actor > 0 ? $actor : null, $creator_id, $context );
+	}
+
+	/**
+	 * Appends a record for a system action: the actor is always NULL, even if
+	 * a user is logged in (e.g. WordPress deleting a user fires a hook in the
+	 * deleting admin's request, but the change is WordPress' consequence, not
+	 * that admin's creator decision).
+	 *
+	 * @param AuditAction          $action     What happened.
+	 * @param int|null             $creator_id Affected creator.
+	 * @param array<string, mixed> $context    Minimal context (no personal data).
+	 * @return int Record id.
+	 * @throws DatabaseException When the record cannot be written.
+	 */
+	public function record_system( AuditAction $action, ?int $creator_id, array $context = array() ): int {
+		return $this->append( $action, null, $creator_id, $context );
+	}
+
+	/**
+	 * Writes the record with server-side time and sanitized context.
+	 *
+	 * @param AuditAction          $action     What happened.
+	 * @param int|null             $actor      Actor or null.
+	 * @param int|null             $creator_id Affected creator.
+	 * @param array<string, mixed> $context    Context.
+	 * @throws DatabaseException When the record cannot be written.
+	 */
+	private function append( AuditAction $action, ?int $actor, ?int $creator_id, array $context ): int {
 		return $this->repository->append(
 			$action,
-			$actor > 0 ? $actor : null,
+			$actor,
 			$creator_id,
 			LogContext::sanitize( $context ),
 			current_time( 'mysql', true )

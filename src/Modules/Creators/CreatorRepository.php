@@ -31,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  *   instead of querying with 0 or a negative id.
  * - There is deliberately no arbitrary filter or "update anything" method:
  *   each write is an explicit operation (rename, set_status, link_user,
- *   unlink_user) and the only list is paginate() with whitelisted sorting.
+ *   unlink_user, release_user) and the only list is paginate() with
+ *   whitelisted sorting.
  *   There is no delete (creators are deactivated; see docs/DATABASE.md).
  * - Database errors surface as DatabaseException with a generic message.
  */
@@ -193,6 +194,43 @@ final class CreatorRepository {
 	 */
 	public function unlink_user( int $id ): Creator {
 		return $this->update( $id, array( 'user_id' => null ), array( '%d' ) );
+	}
+
+	/**
+	 * Removes the user link and deactivates the creator in one statement, but
+	 * only while the creator is still linked to that user. Used when the
+	 * WordPress user was deleted: if an administrator re-linked the creator in
+	 * the meantime, nothing changes.
+	 *
+	 * @param int $id      Creator id.
+	 * @param int $user_id User id the creator must still be linked to.
+	 * @return bool Whether the creator was released.
+	 * @throws InvalidArgumentException|DatabaseException When an id is invalid or the update fails.
+	 */
+	public function release_user( int $id, int $user_id ): bool {
+		self::assert_positive_id( $id, 'Creator id' );
+		self::assert_positive_id( $user_id, 'User id' );
+
+		$updated = $this->wpdb->update(
+			$this->table(),
+			array(
+				'user_id'    => null,
+				'status'     => CreatorStatus::Inactive->value,
+				'updated_at' => current_time( 'mysql', true ),
+			),
+			array(
+				'id'      => $id,
+				'user_id' => $user_id,
+			),
+			array( '%d', '%s', '%s' ),
+			array( '%d', '%d' )
+		);
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not release creator user.' );
+		}
+
+		return 1 === $updated;
 	}
 
 	/**

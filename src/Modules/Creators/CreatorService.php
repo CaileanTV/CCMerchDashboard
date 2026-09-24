@@ -21,8 +21,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Business rules for creating and changing creators (ADR-023).
  *
- * - Authorization: every operation requires `merchboard_manage_creators` for
- *   the current user, independent of any check in the calling UI.
+ * - Authorization: every administrative operation requires
+ *   `merchboard_manage_creators` for the current user, independent of any
+ *   check in the calling UI. The only exception is the system reaction to a
+ *   deleted WordPress user (release_deleted_user()), which acts only for users
+ *   that no longer exist.
  * - Validation: the creator must exist, the display name must be valid, a user
  *   to link must exist and must not be linked to another creator (the UNIQUE
  *   index is the last safety net).
@@ -182,6 +185,62 @@ final class CreatorService {
 	}
 
 	/**
+	 * System consequence of a deleted WordPress user (hook `deleted_user`):
+	 * the linked creator keeps its record and history, loses the link and is
+	 * deactivated, with audit records written by the system (actor NULL), all
+	 * in one transaction (fail closed without a transactional engine).
+	 *
+	 * Not a user operation, so there is no capability check: WordPress already
+	 * authorized the deletion, which may also come from WP-CLI or another
+	 * plugin. Instead it only acts for a user that no longer exists, so it can
+	 * never be used to unlink or deactivate the creator of a living user.
+	 *
+	 * @param int $user_id Id of the deleted WordPress user.
+	 * @return list<AuditAction> The changes made (empty when nothing was linked).
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	public function release_deleted_user( int $user_id ): array {
+		if ( $user_id < 1 || $this->users->exists( $user_id ) ) {
+			return array();
+		}
+
+		return $this->transaction->run(
+			function () use ( $user_id ): array {
+				$creator = $this->creators->find_by_user_id( $user_id );
+
+				// Only while still linked to that user (a concurrent re-link wins).
+				if ( null === $creator || ! $this->creators->release_user( $creator->id, $user_id ) ) {
+					return array();
+				}
+
+				$changes = array(
+					$this->record_system(
+						AuditAction::CreatorUserUnlinked,
+						$creator->id,
+						array(
+							'user_id' => $user_id,
+							'reason'  => 'user_deleted',
+						)
+					),
+				);
+
+				if ( CreatorStatus::Active === $creator->status ) {
+					$changes[] = $this->record_system(
+						AuditAction::CreatorDeactivated,
+						$creator->id,
+						array(
+							'previous_status' => CreatorStatus::Active->value,
+							'reason'          => 'user_deleted',
+						)
+					);
+				}
+
+				return $changes;
+			}
+		);
+	}
+
+	/**
 	 * Requires the creator-management capability.
 	 *
 	 * @throws CreatorException When the current user lacks it.
@@ -250,6 +309,19 @@ final class CreatorService {
 	 */
 	private function record( AuditAction $action, int $creator_id, array $context ): AuditAction {
 		$this->audit->record( $action, $creator_id, $context );
+
+		return $action;
+	}
+
+	/**
+	 * Records a system audit event (actor NULL) and returns its action.
+	 *
+	 * @param AuditAction          $action     Action.
+	 * @param int                  $creator_id Creator id.
+	 * @param array<string, mixed> $context    Context.
+	 */
+	private function record_system( AuditAction $action, int $creator_id, array $context ): AuditAction {
+		$this->audit->record_system( $action, $creator_id, $context );
 
 		return $action;
 	}

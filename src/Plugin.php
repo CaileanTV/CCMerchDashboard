@@ -21,6 +21,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\RoleManager;
+use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use wpdb;
 
@@ -207,6 +208,7 @@ final class Plugin {
 	private function default_modules(): array {
 		return array(
 			new CreatorsModule(),
+			new AccessModule(),
 		);
 	}
 

@@ -30,4 +30,10 @@ final class CreatorsModuleTest extends TestCase {
 		self::assertTrue( $container->has( CreatorRepository::class ) );
 		self::assertInstanceOf( CreatorRepository::class, $container->get( CreatorRepository::class ) );
 	}
+
+	public function test_listens_to_deleted_user(): void {
+		( new CreatorsModule() )->register( new Container() );
+
+		self::assertNotFalse( has_action( 'deleted_user' ) );
+	}
 }

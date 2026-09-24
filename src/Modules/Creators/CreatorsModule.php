@@ -22,9 +22,10 @@ use wpdb;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Creator domain: data layer (phase 3) and administration with audit trail
- * (phase 6). Creator access, the dashboard and the REST API follow in later
- * roadmap phases (see docs/ROADMAP.md).
+ * Creator domain: data layer (phase 3), administration with audit trail
+ * (phase 6) and the reaction to deleted WordPress users (phase 8). Creator
+ * access is decided by the Access module (CreatorContext); the dashboard and
+ * the REST API follow in later roadmap phases (see docs/ROADMAP.md).
  */
 final class CreatorsModule implements Module {
 
@@ -90,6 +91,22 @@ final class CreatorsModule implements Module {
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( CreatorAdminActions::class )->register();
+			}
+		);
+
+		$container->set(
+			DeletedUserHandler::class,
+			static fn( Container $c ): DeletedUserHandler => new DeletedUserHandler(
+				$c->get( CreatorService::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		// Fires after WordPress deleted a user, whatever triggered the deletion.
+		add_action(
+			'deleted_user',
+			static function ( mixed $user_id ) use ( $container ): void {
+				$container->get( DeletedUserHandler::class )->handle( $user_id );
 			}
 		);
 	}
