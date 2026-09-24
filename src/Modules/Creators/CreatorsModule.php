@@ -9,15 +9,21 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators;
 
+use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
+use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\Creators\Admin\CreatorAdminActions;
+use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Creator domain. Phase 3 provides the data layer only; service, admin UI and
- * access follow in later roadmap phases (see docs/ROADMAP.md).
+ * Creator domain: data layer (phase 3) and administration with audit trail
+ * (phase 6). Creator access, the dashboard and the REST API follow in later
+ * roadmap phases (see docs/ROADMAP.md).
  */
 final class CreatorsModule implements Module {
 
@@ -29,7 +35,8 @@ final class CreatorsModule implements Module {
 	}
 
 	/**
-	 * Registers the creator repository.
+	 * Registers services and admin hooks. Services are created lazily when a
+	 * hook fires.
 	 *
 	 * @param Container $container Shared service container.
 	 */
@@ -37,6 +44,51 @@ final class CreatorsModule implements Module {
 		$container->set(
 			CreatorRepository::class,
 			static fn( Container $c ): CreatorRepository => new CreatorRepository( $c->get( wpdb::class ) )
+		);
+
+		$container->set(
+			UserAccounts::class,
+			static fn(): UserAccounts => new WordPressUserAccounts()
+		);
+
+		$container->set(
+			CreatorService::class,
+			static fn( Container $c ): CreatorService => new CreatorService(
+				$c->get( CreatorRepository::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( UserAccounts::class )
+			)
+		);
+
+		$container->set(
+			CreatorAdminActions::class,
+			static fn( Container $c ): CreatorAdminActions => new CreatorAdminActions(
+				$c->get( CreatorService::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$container->set(
+			CreatorsAdminPage::class,
+			static fn( Container $c ): CreatorsAdminPage => new CreatorsAdminPage(
+				$c->get( CreatorRepository::class ),
+				$c->get( UserAccounts::class )
+			)
+		);
+
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( CreatorsAdminPage::class )->add_menu();
+			}
+		);
+
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$container->get( CreatorAdminActions::class )->register();
+			}
 		);
 	}
 }

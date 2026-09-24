@@ -9,9 +9,12 @@ declare( strict_types=1 );
 
 namespace MerchBoard;
 
+use MerchBoard\Core\Audit\AuditRepository;
+use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
+use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
@@ -158,6 +161,21 @@ final class Plugin {
 		$this->container->set(
 			Logger::class,
 			static fn(): Logger => PluginLogger::for_wordpress()
+		);
+
+		$this->container->set(
+			Transaction::class,
+			static fn( Container $c ): Transaction => new Transaction( $c->get( wpdb::class ) )
+		);
+
+		$this->container->set(
+			AuditRepository::class,
+			static fn( Container $c ): AuditRepository => new AuditRepository( $c->get( wpdb::class ) )
+		);
+
+		$this->container->set(
+			AuditTrail::class,
+			static fn( Container $c ): AuditTrail => new AuditTrail( $c->get( AuditRepository::class ) )
 		);
 
 		$this->container->set(

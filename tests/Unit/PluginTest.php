@@ -15,6 +15,7 @@ use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Database\Schema;
 use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
@@ -45,12 +46,12 @@ final class PluginTest extends TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		$this->wpdb      = new RecordingWpdb();
-		$this->wpdb->var = 'wp_merchboard_creators';
+		$this->wpdb               = new RecordingWpdb();
+		$this->wpdb->tables_exist = true;
 		// Schema is current unless a test says otherwise.
 		$this->options = InMemoryOptions::install(
 			array(
-				Migrator::VERSION_OPTION    => '1',
+				Migrator::VERSION_OPTION    => (string) self::latest_schema_version(),
 				RoleManager::VERSION_OPTION => (string) RoleManager::VERSION,
 			)
 		);
@@ -132,20 +133,36 @@ final class PluginTest extends TestCase {
 
 	public function test_activation_installs_the_schema(): void {
 		unset( $this->options->options[ Migrator::VERSION_OPTION ] );
-		Functions\expect( 'dbDelta' )->once();
+		Functions\expect( 'dbDelta' )->times( self::latest_schema_version() );
 
 		$this->plugin()->activate();
 
-		self::assertSame( 1, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( self::latest_schema_version(), $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_boot_upgrades_an_outdated_schema_before_modules_register(): void {
 		$this->options->options[ Migrator::VERSION_OPTION ] = '0';
-		Functions\expect( 'dbDelta' )->once();
+		Functions\expect( 'dbDelta' )->times( self::latest_schema_version() );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 1, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( self::latest_schema_version(), $this->options->options[ Migrator::VERSION_OPTION ] );
+	}
+
+	public function test_upgrade_from_version_1_adds_only_the_audit_table(): void {
+		$this->options->options[ Migrator::VERSION_OPTION ] = '1';
+		Functions\expect( 'dbDelta' )->once()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_audit_log \(/' ) );
+
+		$this->plugin()->boot();
+
+		self::assertSame( 2, $this->options->options[ Migrator::VERSION_OPTION ] );
+	}
+
+	public function test_creators_module_registers_admin_hooks(): void {
+		$this->plugin()->boot();
+
+		self::assertNotFalse( has_action( 'admin_menu' ) );
+		self::assertNotFalse( has_action( 'admin_init' ) );
 	}
 
 	public function test_boot_does_not_touch_a_current_schema(): void {
@@ -259,6 +276,13 @@ final class PluginTest extends TestCase {
 		$this->plugin()->declare_woocommerce_compatibility();
 
 		self::assertSame( array( array( 'custom_order_tables', self::FILE, true ) ), FeaturesUtil::$calls );
+	}
+
+	/**
+	 * Schema version the code expects.
+	 */
+	private static function latest_schema_version(): int {
+		return (int) max( array_merge( array( 0 ), array_keys( Schema::migrations() ) ) );
 	}
 
 	/**

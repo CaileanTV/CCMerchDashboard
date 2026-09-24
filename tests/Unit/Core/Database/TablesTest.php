@@ -52,7 +52,8 @@ final class TablesTest extends TestCase {
 	}
 
 	public function test_all_lists_every_plugin_table_with_prefix_convention(): void {
-		self::assertSame( array( 'merchboard_creators' ), Tables::all() );
+		self::assertSame( array( 'merchboard_creators', 'merchboard_audit_log' ), Tables::all() );
+		self::assertSame( 'wp_merchboard_audit_log', Tables::name( new RecordingWpdb(), Tables::AUDIT_LOG ) );
 
 		foreach ( Tables::all() as $table ) {
 			self::assertStringStartsWith( 'merchboard_', $table );

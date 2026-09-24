@@ -22,7 +22,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Container {
 
-	// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Messages contain only service ids (class names from code) and are never rendered to users.
 
 	/**
 	 * Registered factories keyed by service id.
@@ -116,6 +115,4 @@ final class Container {
 
 		return $service;
 	}
-
-	// phpcs:enable
 }

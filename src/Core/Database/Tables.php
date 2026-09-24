@@ -28,10 +28,16 @@ final class Tables {
 	public const CREATORS = 'merchboard_creators';
 
 	/**
+	 * Audit trail of business changes (see docs/DATABASE.md, ADR-023).
+	 */
+	public const AUDIT_LOG = 'merchboard_audit_log';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
 		self::CREATORS,
+		self::AUDIT_LOG,
 	);
 
 	/**

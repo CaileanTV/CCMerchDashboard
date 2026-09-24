@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Core\Database;
 
+use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,6 +30,7 @@ final class Schema {
 	public static function migrations(): array {
 		return array(
 			1 => new CreateCreatorsTable(),
+			2 => new CreateAuditLogTable(),
 		);
 	}
 }

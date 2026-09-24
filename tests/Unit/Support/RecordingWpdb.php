@@ -63,6 +63,62 @@ final class RecordingWpdb extends wpdb {
 	public $insert_result = 1;
 
 	/**
+	 * When true, "SHOW TABLES LIKE %s" answers with the requested table.
+	 *
+	 * @var bool
+	 */
+	public bool $tables_exist = false;
+
+	/**
+	 * Results of get_var() by prepared marker (overrides $var).
+	 *
+	 * @var array<string, mixed>
+	 */
+	public array $vars = array();
+
+	/**
+	 * Result of get_results().
+	 *
+	 * @var list<array<string, mixed>>
+	 */
+	public array $results = array();
+
+	/**
+	 * Result of get_col().
+	 *
+	 * @var list<mixed>
+	 */
+	public array $col = array();
+
+	/**
+	 * Calls to update().
+	 *
+	 * @var list<array{table: string, data: array<string, mixed>, where: array<string, mixed>, format: mixed, where_format: mixed}>
+	 */
+	public array $updates = array();
+
+	/**
+	 * Return value of update().
+	 *
+	 * @var int|false
+	 */
+	public $update_result = 1;
+
+	/**
+	 * Raw queries passed to query().
+	 *
+	 * @var list<string>
+	 */
+	public array $raw_queries = array();
+
+	/**
+	 * Return values of query() by query text (default true).
+	 *
+	 * @var array<string, int|bool>
+	 */
+	public array $query_results = array();
+
+	/**
 	 * No database connection (the real constructor connects to MySQL).
 	 */
 	public function __construct() {
@@ -110,7 +166,87 @@ final class RecordingWpdb extends wpdb {
 	public function get_var( $query = null, $x = 0, $y = 0 ) {
 		$this->executed[] = (string) $query;
 
-		return $this->var;
+		$prepared = $this->prepared_for( (string) $query );
+
+		if ( $this->tables_exist && null !== $prepared && 'SHOW TABLES LIKE %s' === $prepared['query'] ) {
+			return stripslashes( (string) $prepared['args'][0] );
+		}
+
+		return array_key_exists( (string) $query, $this->vars ) ? $this->vars[ (string) $query ] : $this->var;
+	}
+
+	/**
+	 * Returns the configured result set.
+	 *
+	 * @param string|null $query  Prepared marker.
+	 * @param string      $output Output type.
+	 * @return list<array<string, mixed>>
+	 */
+	public function get_results( $query = null, $output = OBJECT ) {
+		$this->executed[] = (string) $query;
+
+		return $this->results;
+	}
+
+	/**
+	 * Returns the configured column.
+	 *
+	 * @param string|null $query Prepared marker.
+	 * @param int         $x     Column offset.
+	 * @return list<mixed>
+	 */
+	public function get_col( $query = null, $x = 0 ) {
+		$this->executed[] = (string) $query;
+
+		return $this->col;
+	}
+
+	/**
+	 * Records an update.
+	 *
+	 * @param string               $table        Table.
+	 * @param array<string, mixed> $data         Values.
+	 * @param array<string, mixed> $where        Where.
+	 * @param mixed                $format       Formats.
+	 * @param mixed                $where_format Where formats.
+	 * @return int|false
+	 */
+	public function update( $table, $data, $where, $format = null, $where_format = null ) {
+		$this->updates[] = array(
+			'table'        => $table,
+			'data'         => $data,
+			'where'        => $where,
+			'format'       => $format,
+			'where_format' => $where_format,
+		);
+
+		return $this->update_result;
+	}
+
+	/**
+	 * Records a raw query (transactions).
+	 *
+	 * @param string $query Query.
+	 * @return int|bool
+	 */
+	public function query( $query ) {
+		$this->raw_queries[] = $query;
+
+		return $this->query_results[ $query ] ?? true;
+	}
+
+	/**
+	 * The prepare() record behind a marker.
+	 *
+	 * @param string $marker Marker returned by prepare().
+	 * @return array{query: string, args: list<mixed>}|null
+	 */
+	private function prepared_for( string $marker ): ?array {
+		if ( ! str_starts_with( $marker, 'PREPARED#' ) ) {
+			return null;
+		}
+
+		return $this->prepared[ (int) substr( $marker, 9 ) ] ?? null;
 	}
 
 	/**

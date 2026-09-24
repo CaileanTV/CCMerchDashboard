@@ -26,8 +26,9 @@ final class CreateCreatorsTableTest extends TestCase {
 	public function test_schema_version_1_creates_the_creators_table(): void {
 		$migrations = Schema::migrations();
 
-		self::assertSame( array( 1 ), array_keys( $migrations ) );
+		self::assertSame( array( 1, 2 ), array_keys( $migrations ) );
 		self::assertInstanceOf( CreateCreatorsTable::class, $migrations[1] );
+		self::assertInstanceOf( \MerchBoard\Core\Database\Migrations\CreateAuditLogTable::class, $migrations[2] );
 	}
 
 	public function test_schema_defines_the_expected_columns_and_keys(): void {

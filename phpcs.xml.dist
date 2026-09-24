@@ -46,11 +46,23 @@
 		<exclude-pattern>/src/*Repository.php</exclude-pattern>
 	</rule>
 
+	<!--
+		Exception messages are never rendered to users (docs/SECURITY.md: DatabaseException and
+		CreatorException carry generic messages or fixed reason codes; the UI maps codes to escaped
+		text). Escaping them would corrupt log output, so this sniff is disabled project-wide.
+	-->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+	</rule>
+
 	<!-- Tests: descriptive test method and property names replace doc comments. -->
 	<rule ref="Squiz.Commenting.FunctionComment.Missing">
 		<exclude-pattern>/tests/*</exclude-pattern>
 	</rule>
 	<rule ref="Squiz.Commenting.VariableComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.FunctionCommentThrowTag">
 		<exclude-pattern>/tests/*</exclude-pattern>
 	</rule>
 	<rule ref="Squiz.Commenting.ClassComment.Missing">
