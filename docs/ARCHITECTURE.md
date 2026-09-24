@@ -8,18 +8,18 @@
                      ┌─────────────────────────── WordPress ────────────────────────────┐
                      │                                                                  │
  Administrator ──►   │  wp-admin (PHP, WP-mønstre)          Creator Dashboard (React)   │ ◄── Creator
-                     │  CC Merch-menu, WooCommerce-          /creator-dashboard/*        │
+                     │  Merch Dashboard-menu, WooCommerce-          /creator-dashboard/*        │
                      │  kolonner/felter                      standalone HTML-shell       │
                      │        │ admin-post.php + nonces             │ REST (cookie + nonce)
                      │        ▼                                     ▼                    │
-                     │  ┌───────────────────── ccmerch-dashboard plugin ─────────────┐  │
+                     │  ┌───────────────────── merchboard plugin ─────────────┐  │
                      │  │  Modules: Creators · Access · Admin · Dashboard · Rest ·    │  │
                      │  │           Logging · WooCommerce (valgfri) · …               │  │
                      │  │  Core:    Plugin · Container · Migrator · Capabilities ·    │  │
                      │  │           Settings · Assets                                 │  │
                      │  └──────┬──────────────────┬─────────────────────┬─────────────┘  │
                      │         ▼                  ▼                     ▼                │
-                     │  wp_users/usermeta   ccmerch_* tables    WooCommerce (HPOS)       │
+                     │  wp_users/usermeta   merchboard_* tables    WooCommerce (HPOS)       │
                      │  roles/caps/options  (creators, logs,    products, orders         │
                      │                       sales ledger …)                             │
                      └──────────────────────────────────────────────────────────────────┘
@@ -35,31 +35,34 @@ Grundprincipper, i prioriteret rækkefølge: **security → maintainability → 
 
 ## 2. Navngivning
 
+Konventionen er låst i ADR-018 (før fase 3). Den tidligere midlertidige konvention `ccmerch`/`CCMerch\` må ikke bruges.
+
 | Element | Værdi |
 | --- | --- |
-| Plugin-slug / mappe | `ccmerch-dashboard` |
-| Hovedfil | `ccmerch-dashboard.php` |
-| PHP-namespace (rod) | `CCMerch\` → `src/` (PSR-4 via Composer) |
-| Prefix: funktioner, options, hooks og capabilities | `ccmerch_` |
-| Meta-keys (skjulte) | `_ccmerch_` |
-| Konstanter | `CCMERCH_`. Kun `CCMERCH_VERSION` findes nu. Flere (fx `CCMERCH_URL` til assets) defineres først, når de bruges. Hovedfilens sti gives til `Plugin` som argument i stedet for en global konstant. |
-| Custom tables | `{$wpdb->prefix}ccmerch_*` |
-| Text domain | `ccmerch-dashboard` |
-| REST-namespace | `ccmerch/v1` |
-| Script-/style-handles | `ccmerch-*` |
-| CSS-klasser (dashboard) | `ccm-` (fx `ccm-card`, `ccm-card__title`, `ccm-card--muted`) |
-| JS-global til bootstrap-data | `window.ccmerchDashboard` |
+| Produktnavn (UI, plugin-header) | `Merch Dashboard` |
+| Plugin-slug / installationsmappe | `merchboard` (git-repo'et hedder `CCMerchDashboard`, men mountes/installeres som `wp-content/plugins/merchboard/`) |
+| Hovedfil | `merchboard.php` |
+| PHP-namespace (rod) | `MerchBoard\` → `src/` (PSR-4: egen autoloader ved runtime, Composer i tests) |
+| Prefix: funktioner, options, hooks og capabilities | `merchboard_` |
+| Meta-keys (skjulte) | `_merchboard_` |
+| Konstanter | `MERCHBOARD_`. Kun `MERCHBOARD_VERSION` findes nu. Flere (fx `MERCHBOARD_URL` til assets) defineres først, når de bruges. Hovedfilens sti gives til `Plugin` som argument i stedet for en global konstant. |
+| Custom tables | `{$wpdb->prefix}merchboard_*` |
+| Text domain | `merchboard` |
+| REST-namespace | `merchboard/v1` |
+| Script-/style-handles | `merchboard-*` |
+| CSS-klasser (dashboard) | `merchboard-` (fx `merchboard-card`, `merchboard-card__title`, `merchboard-card--muted`) |
+| JS-global til bootstrap-data | `window.merchboardDashboard` |
 
 ## 3. Mappestruktur (mål)
 
 ```text
-ccmerch-dashboard/
-├── ccmerch-dashboard.php        # header, konstanter, krav-check, autoload, boot. Ingen logik.
+merchboard/
+├── merchboard.php        # header, konstanter, krav-check, autoload, boot. Ingen logik.
 ├── uninstall.php                # sletter kun data, hvis "delete data on uninstall" er slået til
 ├── src/
 │   ├── Plugin.php               # composition root: opretter container og registrerer moduler
 │   ├── Core/
-│   │   ├── Autoloader.php       # PSR-4-autoloader for CCMerch\ (ADR-017)           [fase 2]
+│   │   ├── Autoloader.php       # PSR-4-autoloader for MerchBoard\ (ADR-017)           [fase 2]
 │   │   ├── Requirements.php     # PHP-/WP-versionstjek + admin notice (PHP 7.2-syntaks) [fase 2]
 │   │   ├── Container.php        # minimal lazy service container                    [fase 2]
 │   │   ├── Module.php           # interface for moduler                             [fase 2]
@@ -108,18 +111,18 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 
 **Implementeret i fase 2:**
 
-1. `ccmerch-dashboard.php` (`defined( 'ABSPATH' ) || exit;`):
-   - stopper stille, hvis `CCMERCH_VERSION` allerede er defineret (en anden kopi af pluginet er indlæst)
-   - definerer `CCMERCH_VERSION`
+1. `merchboard.php` (`defined( 'ABSPATH' ) || exit;`):
+   - stopper stille, hvis `MERCHBOARD_VERSION` allerede er defineret (en anden kopi af pluginet er indlæst)
+   - definerer `MERCHBOARD_VERSION`
    - kræver `src/Core/Requirements.php` manuelt og kalder `Requirements::check()`. Er PHP < 8.2 eller WordPress < 6.7, registreres en admin notice (kun synlig for brugere med `activate_plugins`, output escaped), og pluginet stopper **uden fatal error**. Hovedfilen og `Requirements.php` skrives derfor i PHP 7.2-syntaks, og CI tjekker dem med `php -l` på PHP 7.2.
-   - registrerer projektets egen PSR-4-autoloader (`CCMerch\` → `src/`, ADR-017). Pluginet bruger ikke `vendor/` ved runtime.
+   - registrerer projektets egen PSR-4-autoloader (`MerchBoard\` → `src/`, ADR-017). Pluginet bruger ikke `vendor/` ved runtime.
    - opretter `new Plugin( __FILE__ )` og kalder `register_hooks()`. Der er ingen singleton og ingen global variabel.
 2. `before_woocommerce_init` → `Plugin::declare_woocommerce_compatibility()` erklærer HPOS-kompatibilitet, hvis WooCommerce' `FeaturesUtil` findes. Ellers sker intet.
 3. `plugins_loaded` → `Plugin::boot()` (idempotent):
-   - modullisten = `default_modules()` (tom i fase 2) gennem filteret `ccmerch_modules`
+   - modullisten = `default_modules()` (tom i fase 2) gennem filteret `merchboard_modules`
    - ugyldige elementer (ikke `Module`, dublet-ID eller filter der ikke returnerer et array) springes over med `_doing_it_wrong()`, så et fejlbehæftet tredjeparts-filter ikke vælter boot
    - `register( $container )` kaldes på hvert modul
-   - action `ccmerch_loaded` (med containeren) fyres til sidst
+   - action `merchboard_loaded` (med containeren) fyres til sidst
 
 **Fejlhåndtering:** Bootstrappen fanger ikke exceptions fra moduler. En fejl i `register()` er en programmeringsfejl og skal være synlig. WordPress' fatal error handler/recovery mode beskytter sitet.
 
@@ -137,17 +140,17 @@ Activation/deactivation-hooks registreres i `Plugin::register_hooks()` (de skal 
 
 ## 6. Modulsystem
 
-Se [MODULES.md](MODULES.md). Kort: et modul implementerer `CCMerch\Core\Module` (`id()`, `register( Container $c )`), registrerer sine egne hooks, admin-undermenuer, REST-routes og dashboard-sektioner, og kommunikerer med andre moduler via services i containeren eller WordPress-hooks.
+Se [MODULES.md](MODULES.md). Kort: et modul implementerer `MerchBoard\Core\Module` (`id()`, `register( Container $c )`), registrerer sine egne hooks, admin-undermenuer, REST-routes og dashboard-sektioner, og kommunikerer med andre moduler via services i containeren eller WordPress-hooks.
 
 ## 7. Datalag
 
 Se [DATABASE.md](DATABASE.md). Kort:
 
 - **WordPress users/roles** = identitet og login.
-- **`ccmerch_creators` + `ccmerch_creatormeta`** = creator-domæneobjektet (adskilt fra login-kontoen).
+- **`merchboard_creators` + `merchboard_creatormeta`** = creator-domæneobjektet (adskilt fra login-kontoen).
 - **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta.
-- **`ccmerch_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
-- **`ccmerch_logs`** = applikations- og audit-log.
+- **`merchboard_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
+- **`merchboard_logs`** = applikations- og audit-log.
 - **Options** = settings og schemaversion.
 
 Schemaændringer sker kun via versionerede migrationer (`src/Core/Database/Migrations/`) og dokumenteres i DATABASE.md og CHANGELOG.md.
@@ -156,7 +159,7 @@ Schemaændringer sker kun via versionerede migrationer (`src/Core/Database/Migra
 
 Se [API.md](API.md). Kort:
 
-- Kun REST (`ccmerch/v1`). **Ingen admin-ajax.** Klassiske admin-formularer poster til `admin-post.php` med nonce og capability-check.
+- Kun REST (`merchboard/v1`). **Ingen admin-ajax.** Klassiske admin-formularer poster til `admin-post.php` med nonce og capability-check.
 - Creator-endpoints ligger under `/me/...` og tager **aldrig** et creator-ID fra klienten. Creator'en udledes server-side af den indloggede bruger, hvilket fjerner IDOR på creator-niveau.
 - Admin-endpoints (`/admin/...`) kræver admin-capabilities.
 - Alle routes har eksplicit `permission_callback` og argument-schema.
@@ -180,23 +183,23 @@ Se [SECURITY.md](SECURITY.md) og [USER-ROLES.md](USER-ROLES.md). Kernen er:
 ## 11. Logging-arkitektur
 
 - `Logger`-service (PSR-3-lignende API: `debug()`, `info()`, `warning()`, `error()`, `critical()` med `channel` og `context`). Den implementerer ikke `psr/log` for at undgå vendor-konflikter (ADR-004).
-- Skriver til `ccmerch_logs`. Minimumsniveau styres i settings (default `warning` i production og `debug` når `wp_get_environment_type() === 'local'`).
+- Skriver til `merchboard_logs`. Minimumsniveau styres i settings (default `warning` i production og `debug` når `wp_get_environment_type() === 'local'`).
 - Channel `audit` skrives **altid** uanset niveau: adgang givet/fjernet, creator oprettet/ændret/suspenderet, settings ændret. Hver post har actor (`user_id`) og target.
 - Retention: daglig WP-Cron-job sletter logs ældre end N dage (setting, default 90; audit 365).
 - Aldrig secrets, passwords, tokens eller fuld PII i context. Brug IDs.
 - Kritiske fejl skrives desuden til `error_log()` som fallback, hvis databasen fejler.
-- Admin-visning: CC Merch → Logs (`WP_List_Table` med filtre).
+- Admin-visning: Merch Dashboard → Logs (`WP_List_Table` med filtre).
 
 ## 12. Hooks (udvidelsespunkter)
 
-Egne actions og filters prefixes med `ccmerch_` og dokumenteres i det modul, der udløser dem. Eksempler (planlagt):
+Egne actions og filters prefixes med `merchboard_` og dokumenteres i det modul, der udløser dem. Eksempler (planlagt):
 
 | Hook | Type | Formål |
 | --- | --- | --- |
-| `ccmerch_modules` | filter | Tilføj/fjern moduler |
-| `ccmerch_creator_created` / `_updated` / `_status_changed` | action | Domæne-events |
-| `ccmerch_dashboard_sections` | filter | Sektioner/navigation i creator dashboard |
-| `ccmerch_sale_recorded` | action | Ny linje i sales ledger |
+| `merchboard_modules` | filter | Tilføj/fjern moduler |
+| `merchboard_creator_created` / `_updated` / `_status_changed` | action | Domæne-events |
+| `merchboard_dashboard_sections` | filter | Sektioner/navigation i creator dashboard |
+| `merchboard_sale_recorded` | action | Ny linje i sales ledger |
 
 Hooks bruges som event-mekanisme. Der bygges ingen separat event-bus.
 

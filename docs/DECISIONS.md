@@ -2,6 +2,8 @@
 
 Vigtige beslutninger registreres her i kronologisk rækkefølge. En beslutning ændres ikke med tilbagevirkende kraft. En ny ADR markeres i stedet som "Erstatter ADR-NNN", og den gamle får status *Erstattet*.
 
+> **Note om navngivning:** ADR-001 til ADR-017 blev skrevet med den tidligere midlertidige konvention `ccmerch` / `CCMerch\` / `ccmerch-dashboard`. Deres tekniske identifiers er opdateret til den nuværende konvention (`merchboard` / `MerchBoard\`) ved rename-migrationen i ADR-018, så dokumenterne ikke beskriver forældede navne. Beslutningernes indhold er uændret.
+
 Skabelon:
 
 ```markdown
@@ -29,11 +31,11 @@ Accepteret
 Repo'et var tomt. Enten indeholder repo'et en hel WordPress-installation, eller også er repo'et selve pluginet.
 
 ## Decision
-Repo'ets rod er pluginmappen `ccmerch-dashboard/`. WordPress kører udenfor (Playground/LocalWP/hosting) og mounter/symlinker repo'et.
+Repo'ets rod er pluginmappen `merchboard/`. WordPress kører udenfor (Playground/LocalWP/hosting) og mounter/symlinker repo'et.
 
 ## Alternatives considered
 - Hele WordPress (core, themes, andre plugins) i repo'et: Det giver støj, core-opdateringer i git-historikken og risiko for at committe `wp-config.php` med credentials.
-- Monorepo med `plugins/ccmerch-dashboard/`: Det er ikke nødvendigt, så længe der kun er ét plugin.
+- Monorepo med `plugins/merchboard/`: Det er ikke nødvendigt, så længe der kun er ét plugin.
 
 ## Reason
 WordPress-standard for plugin-udvikling. Enkel CI og release-zip, og ingen secrets i nærheden.
@@ -55,7 +57,7 @@ Accepteret
 Systemet skal kunne udvides med mange moduler (Payouts, Campaigns …).
 
 ## Decision
-Ét plugin. Modularitet opnås med interne moduler (`src/Modules/<Navn>/`), der implementerer et minimalt `Module`-interface, og som kan til-/fravælges via filteret `ccmerch_modules`.
+Ét plugin. Modularitet opnås med interne moduler (`src/Modules/<Navn>/`), der implementerer et minimalt `Module`-interface, og som kan til-/fravælges via filteret `merchboard_modules`.
 
 ## Alternatives considered
 Separate plugins pr. modul (add-on-arkitektur): fleksibel distribution, men versionskobling, aktiveringsrækkefølge og delt kode giver kompleksitet uden gevinst for en intern løsning.
@@ -131,7 +133,7 @@ Accepteret
 En creator skal kobles til en WordPress-bruger (login), men salg, produkter og payouts hænger på creator'en som forretningsenhed.
 
 ## Decision
-Tabellen `ccmerch_creators` (med `user_id UNIQUE`) samt `ccmerch_creatormeta` via WordPress metadata API. Adgang til "nuværende creator" sker kun via `CreatorContext`.
+Tabellen `merchboard_creators` (med `user_id UNIQUE`) samt `merchboard_creatormeta` via WordPress metadata API. Adgang til "nuværende creator" sker kun via `CreatorContext`.
 
 ## Alternatives considered
 - Kun rolle + user meta: simpelt, men blander login-konto og forretningsenhed. Historik knækker ved kontoskift, og teams er umulige uden omskrivning.
@@ -157,7 +159,7 @@ Accepteret
 Creators skal logge ind og kun tilgå dashboardet. Security er prioritet 1.
 
 ## Decision
-WordPress' login og sessions genbruges fuldt ud. Adgang kræver `ccmerch_access_dashboard` (via rollen `ccmerch_creator`) **og** en aktiv creator-record. Application Passwords slås fra for creators, og wp-admin blokeres for creators.
+WordPress' login og sessions genbruges fuldt ud. Adgang kræver `merchboard_access_dashboard` (via rollen `merchboard_creator`) **og** en aktiv creator-record. Application Passwords slås fra for creators, og wp-admin blokeres for creators.
 
 ## Alternatives considered
 - Eget login/token-system (JWT osv.): stor angrebsflade og genopfinder password-reset, rate limiting og 2FA.
@@ -183,7 +185,7 @@ Accepteret
 IDOR (Creator A ændrer ID'et i URL'en og ser B's data) er den mest sandsynlige alvorlige fejl i et multi-tenant-dashboard.
 
 ## Decision
-Creator-endpoints ligger under `/ccmerch/v1/me/...` og udleder creator'en server-side. Underressourcer slås op med creator-filter i selve queryen. Manglende ejerskab giver 404.
+Creator-endpoints ligger under `/merchboard/v1/me/...` og udleder creator'en server-side. Underressourcer slås op med creator-filter i selve queryen. Manglende ejerskab giver 404.
 
 ## Alternatives considered
 `/creators/{id}/...` med ejerskabs-tjek. Det virker, men ét glemt tjek er et datalæk.
@@ -205,7 +207,7 @@ Admin-endpoints, der tager ID'er, ligger i et separat `/admin/`-namespace med ca
 Accepteret
 
 ## Decision
-Al JS→server-kommunikation går via REST (`ccmerch/v1`). Klassiske admin-formularer bruger `admin-post.php` med nonce.
+Al JS→server-kommunikation går via REST (`merchboard/v1`). Klassiske admin-formularer bruger `admin-post.php` med nonce.
 
 ## Alternatives considered
 `admin-ajax.php`: ingen schema og ingen permission callbacks. Det er ældre og langsommere mønstre.
@@ -274,7 +276,7 @@ Et JS-build er nødvendigt (`build/` genereres i CI til releases). React-version
 Accepteret
 
 ## Decision
-WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `ccmerch_sales`-ledger fodret af ordre- og refund-hooks.
+WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `merchboard_sales`-ledger fodret af ordre- og refund-hooks.
 
 ## Alternatives considered
 Live-queries mod WooCommerce ved hver dashboard-visning: langsomt og uden historisk attribution.
@@ -296,7 +298,7 @@ Ledgeren skal holdes korrekt (idempotens, reversals, backfill og reconciliation)
 Accepteret
 
 ## Decision
-`ccmerch_logs` og en `Logger`-service. Channel `audit` logges altid. Retention via WP-Cron.
+`merchboard_logs` og en `Logger`-service. Channel `audit` logges altid. Retention via WP-Cron.
 
 ## Alternatives considered
 WooCommerce' logger (skaber afhængighed af WooCommerce), `error_log` (ikke søgbart for admins) og et eksternt log-plugin (ekstern afhængighed).
@@ -417,7 +419,7 @@ Accepteret. Erstatter den del af ADR-004, der siger, at distribueret `vendor/` i
 Fase 2 skulle indføre autoloading. Composers `vendor/autoload.php` indlæser **alle** installerede pakkers `files`-autoloads. I et udviklingsmiljø med dev-dependencies betyder det, at fx Mockerys globale hjælpefunktioner (`mock()`, `spy()`) og Brain Monkeys API indlæses i WordPress, når pluginet kører. Desuden ville pluginet fatale eller kræve et ekstra tjek, hvis `vendor/` mangler (fx ved installation direkte fra git uden `composer install`), og release-builds ville kræve `composer install --no-dev`.
 
 ## Decision
-- Pluginet registrerer sin egen lille PSR-4-autoloader (`src/Core/Autoloader.php`, `CCMerch\` → `src/`) i hovedfilen og bruger **ikke** `vendor/autoload.php` ved runtime.
+- Pluginet registrerer sin egen lille PSR-4-autoloader (`src/Core/Autoloader.php`, `MerchBoard\` → `src/`) i hovedfilen og bruger **ikke** `vendor/autoload.php` ved runtime.
 - Autoloaderen afviser klassenavne, der ikke er rene namespace-segmenter (fx `..`, `/`, `:` og null-bytes), fordi klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode.
 - Composer bruges fortsat til dev-værktøjer (PHPCS, PHPStan, PHPUnit, Brain Monkey) og til autoloading i tests (`autoload` + `autoload-dev`).
 - Den distribuerede plugin-zip indeholder ikke `vendor/` (se `.distignore`).
@@ -432,3 +434,43 @@ Nul runtime-afhængighed af `vendor/`, ingen dev-kode i WordPress-runtime, enkle
 ## Consequences
 - Hvis en tredjeparts runtime-pakke nogensinde tillades (kræver ny ADR, jf. ADR-004), skal den prefixes (Strauss/PHP-Scoper) og indlæses eksplicit. Den kommer ikke automatisk med via Composer.
 - Klasser i `src/` skal følge PSR-4 nøjagtigt (filnavn = klassenavn), da der ikke er et classmap-fallback.
+
+---
+
+# ADR-018: Permanent naming convention – Merch Dashboard / merchboard / MerchBoard\
+
+## Date
+2026-09-24
+
+## Status
+Accepteret. Låst før roadmap-fase 3.
+
+## Context
+Fase 1 og 2 brugte en **midlertidig** konvention (`CC Merch Dashboard`, prefix `ccmerch`, namespace `CCMerch\`, slug og text domain `ccmerch-dashboard`), mens navnet stod som åbent spørgsmål. Fra fase 3 bliver prefixet en del af persistente identifiers (tabelnavne, options, meta-keys, roller og capabilities), hvorefter et navneskift kræver datamigration. Der findes endnu ingen persistent plugin-data, så skiftet er gratis nu.
+
+## Decision
+| Element | Værdi |
+| --- | --- |
+| Produktnavn | `Merch Dashboard` |
+| Teknisk prefix (funktioner, hooks, options, capabilities, cron, tabeller) | `merchboard_` (skjulte meta-keys: `_merchboard_`) |
+| PHP-namespace | `MerchBoard\` |
+| Konstanter | `MERCHBOARD_` |
+| Plugin-slug, installationsmappe, text domain og hovedfil | `merchboard` / `merchboard.php` |
+| REST-namespace | `merchboard/v1` |
+| Script-/style-handles og CSS-klasser | `merchboard-` |
+| Composer-/npm-pakkenavn | `merchboard/merchboard` / `merchboard` |
+
+Den tidligere konvention `ccmerch` er migreret i hele repo'et og må ikke bruges i ny kode, konfiguration eller dokumentation. Undtagelser: GitHub-repo'et og den lokale mappe hedder fortsat `CCMerchDashboard` (repo-navn, ikke et plugin-identifier), `Author`-feltet i plugin-headeren er firmanavnet og ikke produktnavnet, og den fastfrosne analyserapport i `docs/reports/` bevarer sin oprindelige ordlyd.
+
+## Alternatives considered
+- Beholde `ccmerch`: afvist af projektejeren.
+- Kort CSS-prefix (fx `mb-`): kolliderer med udbredte utility-klasser (Bootstrap `mb-*` = margin-bottom). Det fulde prefix er entydigt.
+- Slug `merch-dashboard`: afviger fra prefixet og giver to navne at huske. Ét token (`merchboard`) overalt er enklest.
+
+## Reason
+Ét entydigt token på tværs af PHP, WordPress, REST, CSS og pakker. Låst, før data gør et skift dyrt.
+
+## Consequences
+- Ingen datamigration var nødvendig (ingen persistent data før fase 3).
+- Plugin-basename er nu `merchboard/merchboard.php`. Et eventuelt tidligere aktiveret `ccmerch-dashboard` i et lokalt miljø skal aktiveres på ny (Playground bygges alligevel forfra ved hver start).
+- Et fremtidigt navneskift efter fase 3 kræver en ny ADR og en datamigration.

@@ -14,7 +14,7 @@ Docker er **ikke** påkrævet.
 
 ### PHP uden php.ini (Windows/WinGet)
 
-PHP installeret via WinGet har ingen `php.ini`, så `openssl` m.fl. er ikke indlæst. Projektets Composer-wrapper [`bin/composer.mjs`](../bin/composer.mjs) aktiverer de manglende extensions uden at ændre den globale PHP-installation. Den skriver en projekt-lokal ini (`.tools/php-ini/ccmerch-dev.ini`, gitignored) og sætter `PHP_INI_SCAN_DIR`, så også de PHP-processer, Composer-scripts starter (PHPUnit, PHPCS, PHPStan), får extensions.
+PHP installeret via WinGet har ingen `php.ini`, så `openssl` m.fl. er ikke indlæst. Projektets Composer-wrapper [`bin/composer.mjs`](../bin/composer.mjs) aktiverer de manglende extensions uden at ændre den globale PHP-installation. Den skriver en projekt-lokal ini (`.tools/php-ini/merchboard-dev.ini`, gitignored) og sætter `PHP_INI_SCAN_DIR`, så også de PHP-processer, Composer-scripts starter (PHPUnit, PHPCS, PHPStan), får extensions.
 
 Permanent løsning (valgfri, uden for projektet og foretages af udvikleren selv): kopiér `php.ini-development` til `php.ini` i PHP-mappen, og aktivér `extension_dir = "ext"` samt `openssl`, `mbstring`, `curl`, `zip` og `fileinfo`.
 
@@ -57,7 +57,7 @@ node bin/composer.mjs install
 
 ## Lokal WordPress (WordPress Playground)
 
-`npm run wp:start` starter WordPress via [`@wp-playground/cli`](https://wordpress.github.io/wordpress-playground/) (PHP-WASM + SQLite) og mounter repo'et som pluginet `wp-content/plugins/ccmerch-dashboard`. [`blueprint.json`](../blueprint.json) installerer og aktiverer WooCommerce og aktiverer vores plugin. `WP_DEBUG` og `WP_DEBUG_LOG` er slået til, og `WP_ENVIRONMENT_TYPE` er sat til `local`.
+`npm run wp:start` starter WordPress via [`@wp-playground/cli`](https://wordpress.github.io/wordpress-playground/) (PHP-WASM + SQLite) og mounter repo'et som pluginet `wp-content/plugins/merchboard`. [`blueprint.json`](../blueprint.json) installerer og aktiverer WooCommerce og aktiverer vores plugin. `WP_DEBUG` og `WP_DEBUG_LOG` er slået til, og `WP_ENVIRONMENT_TYPE` er sat til `local`.
 
 - Login: `admin` / `password`. Brugeren logges automatisk ind i browseren.
 - PHP 8.2 bruges bevidst, fordi det er pluginets minimumsversion.
@@ -70,7 +70,7 @@ node bin/composer.mjs install
 - Persistent site-data på Windows-hosts virker ikke pålideligt: WooCommerce-installationen fejler med "Operation not permitted" ved mappe-rename på en host-mount. Derfor bruges et flygtigt site.
 - Første start downloader WordPress og WooCommerce (kræver netværk og tager 1-3 minutter).
 
-**LocalWP (valgfrit):** Et persistent MySQL-site kan bruges ved at lægge et symlink/junction fra et **dedikeret** LocalWP-sites `wp-content/plugins/ccmerch-dashboard` til dette repo. Det skal besluttes eksplicit af projektejeren; se Project Isolation i [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md).
+**LocalWP (valgfrit):** Et persistent MySQL-site kan bruges ved at lægge et symlink/junction fra et **dedikeret** LocalWP-sites `wp-content/plugins/merchboard` til dette repo. Det skal besluttes eksplicit af projektejeren; se Project Isolation i [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md).
 
 ## Installerede dependencies
 
@@ -114,7 +114,7 @@ Runtime-JS-pakker som `@wordpress/element`, `@wordpress/api-fetch` og `@wordpres
 | `.gitattributes` | LF-normalisering; `export-ignore` for dev-filer |
 | `.gitignore` | vendor, node_modules, build, `.tools`, caches og secrets (`.env*`, `auth.json`) |
 | `.nvmrc` | Node 24 |
-| `phpcs.xml.dist` | WordPress-standarden; prefixes `ccmerch`/`CCMerch`; text domain `ccmerch-dashboard`; PSR-4-filnavne tilladt i `src/` og `tests/` |
+| `phpcs.xml.dist` | WordPress-standarden; prefixes `merchboard`/`MerchBoard`; text domain `merchboard`; PSR-4-filnavne tilladt i `src/` og `tests/` |
 | `phpstan.neon.dist` | Level 8 og PHP 8.2. Analyserer hovedfilen, `uninstall.php`, `src/` og `tests/`. |
 | `phpunit.xml.dist` | Unit-testsuite (`tests/Unit`), tilfældig rækkefølge, fejler på warnings, deprecations og notices |
 | `.distignore` | Filer udelukket fra release-zip (alt undtagen runtime-filer) |
@@ -128,8 +128,8 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 ## Build og deploy (plan)
 
 - **Build:** `npm run build` genererer `build/` (JS/CSS + `*.asset.php` med dependencies og versionshash). PHP kræver intet build-trin.
-- **Distribution:** En release-zip bygges i CI ud fra et git-tag (`v*`). Den indeholder kun runtime-filer: `ccmerch-dashboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, og `build/`. **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release. `.distignore` definerer udelukkelser. Planlagt i roadmap-fase 16.
-- **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `CCMERCH_VERSION` og `package.json`.
+- **Distribution:** En release-zip bygges i CI ud fra et git-tag (`v*`). Den indeholder kun runtime-filer: `merchboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, og `build/`. **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release. `.distignore` definerer udelukkelser. Planlagt i roadmap-fase 16.
+- **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `MERCHBOARD_VERSION` og `package.json`.
 - **Miljøer:** local (Playground), staging (MySQL og en kopi af WooCommerce **uden** kunde-PII) og production.
 
 ## Git-workflow

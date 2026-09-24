@@ -21,15 +21,15 @@ Senere sektioner: Products, Orders, Sales, Payouts og Settings. Se [FRONTEND.md]
 ## Technical implementation
 - **Route:** `Modules/Dashboard/Route` registrerer rewrite rule og query var. `ShellController` på `template_redirect` håndterer auth-gate og renderer `templates/dashboard/shell.php` uden theme. Se [FRONTEND.md](../FRONTEND.md#serving-dedikeret-route-og-standalone-shell).
 - **Assets:** `build/dashboard.js` og `.css` registreres med dependencies og version fra `build/dashboard.asset.php`. Kun disse handles udskrives i shellen.
-- **Bootstrap-data:** `window.ccmerchDashboard` (REST-root, nonce, base path, logout-URL, locale og sektioner).
-- **Sektioner:** `DashboardSections`-registry (filter `ccmerch_dashboard_sections`). Hver sektion har `id`, `label`, `icon`, `path` og `capability`. Serveren filtrerer på capability, og klienten lazy-loader.
-- **Data:** `GET /ccmerch/v1/me` og `PATCH /ccmerch/v1/me/profile`.
+- **Bootstrap-data:** `window.merchboardDashboard` (REST-root, nonce, base path, logout-URL, locale og sektioner).
+- **Sektioner:** `DashboardSections`-registry (filter `merchboard_dashboard_sections`). Hver sektion har `id`, `label`, `icon`, `path` og `capability`. Serveren filtrerer på capability, og klienten lazy-loader.
+- **Data:** `GET /merchboard/v1/me` og `PATCH /merchboard/v1/me/profile`.
 
 ## Relevant files
 Planlagt: `src/Modules/Dashboard/*`, `templates/dashboard/shell.php`, `assets/src/dashboard/**` og `tests/Integration/Dashboard/*`.
 
 ## Database/data used
-`ccmerch_creators`, `ccmerch_creatormeta` (profilfelter: `bio`, `social_links`, `avatar_id`) og `ccmerch_settings` (slug og branding).
+`merchboard_creators`, `merchboard_creatormeta` (profilfelter: `bio`, `social_links`, `avatar_id`) og `merchboard_settings` (slug og branding).
 
 ## Permissions
 - Route og alle endpoints: `CreatorContext::current()` ≠ null.
@@ -38,11 +38,11 @@ Planlagt: `src/Modules/Dashboard/*`, `templates/dashboard/shell.php`, `assets/sr
 ## API endpoints
 | Metode | Route | Beskrivelse |
 | --- | --- | --- |
-| `GET` | `/ccmerch/v1/me` | Profil, rettigheder og sektioner |
-| `PATCH` | `/ccmerch/v1/me/profile` | Opdater whitelistede profilfelter |
+| `GET` | `/merchboard/v1/me` | Profil, rettigheder og sektioner |
+| `PATCH` | `/merchboard/v1/me/profile` | Opdater whitelistede profilfelter |
 
 ## Hooks
-`ccmerch_dashboard_sections` (filter) og `ccmerch_creator_updated` (action ved profilændring).
+`merchboard_dashboard_sections` (filter) og `merchboard_creator_updated` (action ved profilændring).
 
 ## Dependencies
 Access (CreatorContext), Creators (repository/service), Core (Settings, Assets) og `@wordpress/element`/`api-fetch`/`i18n` (leveret af WordPress).

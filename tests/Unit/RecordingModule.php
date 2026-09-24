@@ -2,15 +2,15 @@
 /**
  * Module test double.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Tests\Unit;
+namespace MerchBoard\Tests\Unit;
 
-use CCMerch\Core\Container;
-use CCMerch\Core\Module;
+use MerchBoard\Core\Container;
+use MerchBoard\Core\Module;
 
 /**
  * Records register() calls.

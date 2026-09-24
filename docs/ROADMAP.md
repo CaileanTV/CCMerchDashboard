@@ -27,24 +27,24 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 ## Fase 2 – Plugin bootstrap ✅
 
 - **Mål:** Pluginet booter via et modulsystem uden funktionalitet.
-- **Leveret:** `CCMERCH_VERSION` og dobbelt-load-guard i hovedfilen, PHP-/WP-versionstjek med admin notice (PHP 7.2-syntaks, CI-tjekket), egen PSR-4-autoloader (ADR-017, erstatter den planlagte Composer-autoload ved runtime), `Plugin`, `Container`, `Module`-interface, HPOS-kompatibilitetserklæring, `uninstall.php`-skelet, `.distignore`, PHPUnit + Brain Monkey (38 unit-tests), PHPStan på `src/`, `uninstall.php` og `tests/`, samt `npm test`/`composer test` i CI.
+- **Leveret:** `MERCHBOARD_VERSION` og dobbelt-load-guard i hovedfilen, PHP-/WP-versionstjek med admin notice (PHP 7.2-syntaks, CI-tjekket), egen PSR-4-autoloader (ADR-017, erstatter den planlagte Composer-autoload ved runtime), `Plugin`, `Container`, `Module`-interface, HPOS-kompatibilitetserklæring, `uninstall.php`-skelet, `.distignore`, PHPUnit + Brain Monkey (38 unit-tests), PHPStan på `src/`, `uninstall.php` og `tests/`, samt `npm test`/`composer test` i CI.
 - **Flyttet til senere faser**, fordi de ikke har en funktion endnu: activation hook (→ fase 3), deactivation hook (→ fase 4), load af text domain (→ fase 15). Se [ARCHITECTURE.md §5](ARCHITECTURE.md#5-boot-flow).
 - **Done:** Pluginet aktiveres, deaktiveres og genaktiveres uden notices eller fatals i Playground (WP_DEBUG). Tests og lint er grønne.
 
 ## Fase 3 – Database-fundament og creator-tabeller
 
 - **Mål:** Versionerede migrationer og creator-schema.
-- **Scope:** `register_activation_hook` + `Activator` (i `Plugin::register_hooks()`), `Tables`, `Migrator` (lås, versions-option), `Upgrader` (kører ved versionsskift), migration `0001` for `ccmerch_creators` + `ccmerch_creatormeta`, registrering af meta-type. Unit-tests af Migrator-logik.
+- **Scope:** `register_activation_hook` + `Activator` (i `Plugin::register_hooks()`), `Tables`, `Migrator` (lås, versions-option), `Upgrader` (kører ved versionsskift), migration `0001` for `merchboard_creators` + `merchboard_creatormeta`, registrering af meta-type. Unit-tests af Migrator-logik.
 - **Done:** Tabeller oprettes ved aktivering og ved opgradering. [DATABASE.md](DATABASE.md) og CHANGELOG er opdateret.
 
 ## Fase 4 – Logging og audit trail
 
-- **Scope:** migration for `ccmerch_logs`, `Logger` (levels, channels, audit altid), `LogRepository`, retention-cron, `register_deactivation_hook` + `Deactivator` (fjerner cron), log-niveau fra settings/miljø.
+- **Scope:** migration for `merchboard_logs`, `Logger` (levels, channels, audit altid), `LogRepository`, retention-cron, `register_deactivation_hook` + `Deactivator` (fjerner cron), log-niveau fra settings/miljø.
 - **Done:** Logger kan bruges fra services. Retention er testet.
 
 ## Fase 5 – Roller og capabilities
 
-- **Scope:** `Capabilities`: rollen `ccmerch_creator`, admin-caps på `administrator`, sync ved aktivering og versionsskift, `map_meta_cap` for `ccmerch_view_creator`/`ccmerch_edit_creator` og oprydning ved uninstall.
+- **Scope:** `Capabilities`: rollen `merchboard_creator`, admin-caps på `administrator`, sync ved aktivering og versionsskift, `map_meta_cap` for `merchboard_view_creator`/`merchboard_edit_creator` og oprydning ved uninstall.
 - **Done:** Caps er synlige i Playground. Unit-tests for meta-cap-mapping.
 
 ## Fase 6 – Creator-domæne
@@ -64,7 +64,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 9 – Admin shell: menu, overview og settings
 
-- **Scope:** Topmenu "CC Merch", Overview (systemstatus: WooCommerce, migrationer, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization).
+- **Scope:** Topmenu "Merch Dashboard", Overview (systemstatus: WooCommerce, migrationer, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization).
 - **Done:** Settings gemmes, valideres og audit-logges. Capability-tests.
 
 ## Fase 10 – Admin creator management
@@ -75,7 +75,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 ## Fase 11 – Admin logs viewer
 
 - **Scope:** Logs-side med `WP_List_Table`, filtre (level, channel, periode) og visning af context.
-- **Done:** Kræver `ccmerch_view_logs`. Output er escaped.
+- **Done:** Kræver `merchboard_view_logs`. Output er escaped.
 
 ## Fase 12 – Creator dashboard: route og sikker shell
 
@@ -110,7 +110,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 18 – Sales ledger
 
-- **Scope:** migration for `ccmerch_sales`, `SalesRecorder` (status-, refund- og delete-hooks), idempotens, reversals, konfigurerbare tællende statusser, backfill via Action Scheduler + WP-CLI-kommando.
+- **Scope:** migration for `merchboard_sales`, `SalesRecorder` (status-, refund- og delete-hooks), idempotens, reversals, konfigurerbare tællende statusser, backfill via Action Scheduler + WP-CLI-kommando.
 - **Done:** Integrationstests for sale, refund (hel og delvis), cancel efter complete og gentagne hooks.
 
 ## Fase 19 – Products og Orders i dashboard

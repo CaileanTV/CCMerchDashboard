@@ -89,8 +89,8 @@ Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper,
 ## Kodekonventioner (kort)
 
 - **PHP:** WordPress Coding Standards: tabs, `snake_case` for funktioner, metoder og variabler. Klassenavne i PascalCase med PSR-4-filnavne (`CreatorService` i `src/Modules/Creators/CreatorService.php`). `declare( strict_types=1 );` i alle filer i `src/`. Typed properties, parametre og return types overalt. Readonly entities. Enums for faste værdisæt.
-- **Prefix:** `ccmerch_` på alt globalt (hooks, options, caps, meta, cron, handles). Namespace `CCMerch\`.
-- **i18n:** Alle UI-strenge med text domain `ccmerch-dashboard`. Kildesprog er engelsk.
+- **Prefix:** `merchboard_` på alt globalt (hooks, options, caps, meta, cron, handles). Namespace `MerchBoard\`.
+- **i18n:** Alle UI-strenge med text domain `merchboard`. Kildesprog er engelsk.
 - **JS:** WordPress ESLint-regler + Prettier. Funktionelle React-komponenter og hooks.
 - **Kommentarer:** forklar *hvorfor*, ikke *hvad*. DocBlocks på offentlige metoder.
 - **Ingen** `phpcs:ignore` eller `@phpstan-ignore` uden en kommentar med begrundelse.

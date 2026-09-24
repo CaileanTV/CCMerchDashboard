@@ -57,7 +57,7 @@ jobs:
 
       - name: PHP 7.2 syntax check
         run: |
-          php -l ccmerch-dashboard.php
+          php -l merchboard.php
           php -l src/Core/Requirements.php
           php -l uninstall.php
 

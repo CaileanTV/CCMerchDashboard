@@ -7,7 +7,7 @@
  * happen when the "Delete all data on uninstall" setting is enabled
  * (see docs/DATABASE.md). This file runs without the plugin being loaded.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;

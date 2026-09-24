@@ -3,7 +3,7 @@
  * PHPUnit bootstrap for unit tests (no WordPress loaded; WordPress functions are
  * mocked per test with Brain Monkey).
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );

@@ -2,19 +2,19 @@
 /**
  * Tests for the plugin composition root.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Tests\Unit;
+namespace MerchBoard\Tests\Unit;
 
 use Automattic\WooCommerce\Utilities\FeaturesUtil;
 use Brain\Monkey\Actions;
 use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
-use CCMerch\Core\Container;
-use CCMerch\Plugin;
+use MerchBoard\Core\Container;
+use MerchBoard\Plugin;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -23,7 +23,7 @@ use stdClass;
 #[CoversClass( Plugin::class )]
 final class PluginTest extends TestCase {
 
-	private const FILE = '/plugins/ccmerch-dashboard/ccmerch-dashboard.php';
+	private const FILE = '/plugins/merchboard/merchboard.php';
 
 	public function test_register_hooks_adds_entry_hooks(): void {
 		$plugin = new Plugin( self::FILE );
@@ -38,7 +38,7 @@ final class PluginTest extends TestCase {
 		$first     = $this->module( 'first' );
 		$second    = $this->module( 'second' );
 
-		Filters\expectApplied( 'ccmerch_modules' )->once()->with( array() )->andReturn( array( $first, $second ) );
+		Filters\expectApplied( 'merchboard_modules' )->once()->with( array() )->andReturn( array( $first, $second ) );
 
 		( new Plugin( self::FILE, $container ) )->boot();
 
@@ -49,7 +49,7 @@ final class PluginTest extends TestCase {
 	public function test_boot_fires_loaded_action_with_container(): void {
 		$container = new Container();
 
-		Actions\expectDone( 'ccmerch_loaded' )->once()->with( $container );
+		Actions\expectDone( 'merchboard_loaded' )->once()->with( $container );
 
 		( new Plugin( self::FILE, $container ) )->boot();
 	}
@@ -57,8 +57,8 @@ final class PluginTest extends TestCase {
 	public function test_boot_runs_only_once(): void {
 		$module = $this->module( 'only' );
 
-		Filters\expectApplied( 'ccmerch_modules' )->once()->andReturn( array( $module ) );
-		Actions\expectDone( 'ccmerch_loaded' )->once();
+		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array( $module ) );
+		Actions\expectDone( 'merchboard_loaded' )->once();
 
 		$plugin = new Plugin( self::FILE );
 		$plugin->boot();
@@ -70,7 +70,7 @@ final class PluginTest extends TestCase {
 	public function test_boot_skips_items_that_are_not_modules(): void {
 		$module = $this->module( 'valid' );
 
-		Filters\expectApplied( 'ccmerch_modules' )->once()->andReturn( array( new stdClass(), 'creators', $module ) );
+		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array( new stdClass(), 'creators', $module ) );
 		Functions\expect( '_doing_it_wrong' )->twice();
 
 		( new Plugin( self::FILE ) )->boot();
@@ -82,7 +82,7 @@ final class PluginTest extends TestCase {
 		$first     = $this->module( 'same' );
 		$duplicate = $this->module( 'same' );
 
-		Filters\expectApplied( 'ccmerch_modules' )->once()->andReturn( array( $first, $duplicate ) );
+		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array( $first, $duplicate ) );
 		Functions\expect( '_doing_it_wrong' )->once();
 		Functions\stubEscapeFunctions();
 
@@ -93,9 +93,9 @@ final class PluginTest extends TestCase {
 	}
 
 	public function test_boot_survives_a_filter_that_returns_a_non_array(): void {
-		Filters\expectApplied( 'ccmerch_modules' )->once()->andReturn( 'not-an-array' );
+		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( 'not-an-array' );
 		Functions\expect( '_doing_it_wrong' )->once();
-		Actions\expectDone( 'ccmerch_loaded' )->once();
+		Actions\expectDone( 'merchboard_loaded' )->once();
 
 		( new Plugin( self::FILE ) )->boot();
 	}

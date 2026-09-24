@@ -5,18 +5,18 @@
 ## Principper
 
 - Følger WordPress' admin-mønstre: `add_menu_page`/`add_submenu_page`, Settings API, `WP_List_Table`, admin notices og standard-CSS-klasser (`wrap`, `form-table`, `button-primary`). Administratorer kender dem, de er tilgængelige, og de kræver ingen build.
-- Server-renderet PHP. Formularer poster til `admin-post.php?action=ccmerch_*` med `check_admin_referer()` og `current_user_can()` og følger Post/Redirect/Get med admin notice.
+- Server-renderet PHP. Formularer poster til `admin-post.php?action=merchboard_*` med `check_admin_referer()` og `current_user_can()` og følger Post/Redirect/Get med admin notice.
 - React bruges kun på en admin-skærm, hvis der er et konkret behov for rig interaktivitet (fx grafer), og da gerne med `@wordpress/components`.
 
 ## Menustruktur
 
 ```text
-CC Merch                       (capability: ccmerch_manage)
+Merch Dashboard                       (capability: merchboard_manage)
 ├── Overview                   nøgletal, seneste audit-hændelser, systemstatus (WooCommerce aktiv? rewrite OK? migrationer OK?)
 ├── Creators                   liste (WP_List_Table: søg, filtrér på status, paginering)
 │   └── (Add/Edit creator)     skjult side: vælg/opret WP-bruger, visningsnavn, slug, status, profilfelter
 ├── Settings                   tabs: General · Access · Advanced (senere: Integrations, WooCommerce)
-└── Logs                       filtrér på level, channel og periode; kræver ccmerch_view_logs
+└── Logs                       filtrér på level, channel og periode; kræver merchboard_view_logs
 ```
 
 ### Kritik af det oprindelige forslag og ændringer
@@ -38,7 +38,7 @@ Kolonner: Visningsnavn (link til redigering), WP-bruger (link til `user-edit.php
 ### Opret/rediger creator
 
 - **Opret:** vælg eksisterende WP-bruger (søgbar dropdown, kun brugere uden creator-record) **eller** opret ny bruger (brugernavn og e-mail; WordPress sender "set password"-mail, og vi opretter aldrig passwords).
-- Oprettelse af creator giver automatisk rollen `ccmerch_creator` (tilføjet som *ekstra* rolle, så eksisterende roller, fx `customer`, bevares).
+- Oprettelse af creator giver automatisk rollen `merchboard_creator` (tilføjet som *ekstra* rolle, så eksisterende roller, fx `customer`, bevares).
 - Ændring af status til suspenderet/arkiveret fjerner adgang øjeblikkeligt: `CreatorContext` kræver `active`.
 - Sikkerhed: En admin kan ikke tildele en rolle højere end sin egen. Creator-rollen giver ingen admin-caps.
 
@@ -54,14 +54,14 @@ En lille informationsboks: "Denne bruger er creator: <link>" eller "Gør til cre
 | Access | Login-redirect for creators (til), blokér wp-admin for creators (til), hvilke roller ud over administrator der får admin-caps (fx `shop_manager`) |
 | Advanced | Log-niveau, log-retention (dage), "Slet alle data ved afinstallation" (fra) |
 
-Settings gemmes i én option `ccmerch_settings` via Settings API med `sanitize_callback` for hele arrayet (whitelist af nøgler og typer).
+Settings gemmes i én option `merchboard_settings` via Settings API med `sanitize_callback` for hele arrayet (whitelist af nøgler og typer).
 
 ### Logs
 
-`WP_List_Table` over `ccmerch_logs`: tidspunkt (lokal tid), level-badge, channel, besked, actor (bruger-link) og creator. Filtrering på level, channel og periode. Detaljevisning af context-JSON (escaped). Ingen redigering. Sletning kun via retention.
+`WP_List_Table` over `merchboard_logs`: tidspunkt (lokal tid), level-badge, channel, besked, actor (bruger-link) og creator. Filtrering på level, channel og periode. Detaljevisning af context-JSON (escaped). Ingen redigering. Sletning kun via retention.
 
 ## WooCommerce-skærme (fase 17)
 
 - Produktliste: kolonne "Creator" og dropdown-filter.
-- Produkt-redigering: felt "Creator" i *General*-tabben (select over aktive creators). Gemmes via `$product->update_meta_data( '_ccmerch_creator_id', … )` med capability-check (`edit_product`) og WooCommerce' egen nonce.
+- Produkt-redigering: felt "Creator" i *General*-tabben (select over aktive creators). Gemmes via `$product->update_meta_data( '_merchboard_creator_id', … )` med capability-check (`edit_product`) og WooCommerce' egen nonce.
 - Ordreliste (HPOS og legacy): valgfri kolonne "Creators" (afledt fra ordrelinjer).

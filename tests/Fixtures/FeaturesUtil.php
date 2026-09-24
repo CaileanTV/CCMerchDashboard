@@ -2,7 +2,7 @@
 /**
  * Stand-in for WooCommerce's FeaturesUtil, loaded only in an isolated test process.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );

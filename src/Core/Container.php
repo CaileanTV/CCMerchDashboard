@@ -2,12 +2,12 @@
 /**
  * Minimal lazy service container.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Core;
+namespace MerchBoard\Core;
 
 use LogicException;
 

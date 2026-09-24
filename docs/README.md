@@ -1,4 +1,4 @@
-# CC Merch Dashboard – dokumentation
+# Merch Dashboard – dokumentation
 
 Denne mappe er projektets tekniske hukommelse. Den er skrevet til både udviklere og AI-agenter og skal holdes opdateret sammen med koden.
 
@@ -6,7 +6,7 @@ Denne mappe er projektets tekniske hukommelse. Den er skrevet til både udvikler
 
 ## Hvad er projektet?
 
-Et selvstændigt WordPress-plugin (`ccmerch-dashboard`), som lader virksomheden administrere content creators/streamere og deres merchandise. Det har to brugerflader:
+Et selvstændigt WordPress-plugin (`merchboard`), som lader virksomheden administrere content creators/streamere og deres merchandise. Det har to brugerflader:
 
 1. **WordPress Admin**: virksomhedens administratorer styrer creators, adgang, indstillinger og logs.
 2. **Creator Dashboard** (`/creator-dashboard/`): et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator kun ser sine egne data.

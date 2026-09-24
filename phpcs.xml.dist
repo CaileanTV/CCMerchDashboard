@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="CCMerch">
-	<description>WordPress Coding Standards for the CC Merch Dashboard plugin.</description>
+<ruleset name="MerchBoard">
+	<description>WordPress Coding Standards for the Merch Dashboard plugin.</description>
 
 	<file>.</file>
 
@@ -30,7 +30,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="ccmerch-dashboard"/>
+				<element value="merchboard"/>
 			</property>
 		</properties>
 	</rule>
@@ -48,8 +48,8 @@
 		<exclude-pattern>/tests/*</exclude-pattern>
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="ccmerch"/>
-				<element value="CCMerch"/>
+				<element value="merchboard"/>
+				<element value="MerchBoard"/>
 			</property>
 		</properties>
 	</rule>

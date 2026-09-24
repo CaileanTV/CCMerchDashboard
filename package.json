@@ -1,5 +1,5 @@
 {
-  "name": "ccmerch-dashboard",
+  "name": "merchboard",
   "version": "0.1.0",
   "private": true,
   "description": "Creator and merchandise management plugin for WordPress.",
@@ -17,7 +17,7 @@
     "test:php": "node bin/composer.mjs test",
     "format": "wp-scripts format",
     "lint": "npm run lint:js && npm run lint:php && npm run analyse:php",
-    "wp:start": "wp-playground-cli server --php=8.2 --port=9400 --login --mount-dir . /wordpress/wp-content/plugins/ccmerch-dashboard --blueprint=./blueprint.json",
+    "wp:start": "wp-playground-cli server --php=8.2 --port=9400 --login --mount-dir . /wordpress/wp-content/plugins/merchboard --blueprint=./blueprint.json",
     "test": "npm run test:php"
   },
   "devDependencies": {

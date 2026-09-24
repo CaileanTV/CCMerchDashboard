@@ -1,5 +1,5 @@
 {
-  "name": "ccmerch/ccmerch-dashboard",
+  "name": "merchboard/merchboard",
   "description": "Creator and merchandise management plugin for WordPress.",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
@@ -16,12 +16,12 @@
   },
   "autoload": {
     "psr-4": {
-      "CCMerch\\": "src/"
+      "MerchBoard\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "CCMerch\\Tests\\Unit\\": "tests/Unit/"
+      "MerchBoard\\Tests\\Unit\\": "tests/Unit/"
     }
   },
   "config": {

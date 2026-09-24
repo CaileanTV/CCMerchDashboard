@@ -2,17 +2,17 @@
 /**
  * Tests for the runtime requirement checks.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Tests\Unit\Core;
+namespace MerchBoard\Tests\Unit\Core;
 
 use Brain\Monkey\Actions;
 use Brain\Monkey\Functions;
-use CCMerch\Core\Requirements;
-use CCMerch\Tests\Unit\TestCase;
+use MerchBoard\Core\Requirements;
+use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass( Requirements::class )]

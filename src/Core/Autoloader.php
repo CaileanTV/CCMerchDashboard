@@ -6,24 +6,24 @@
  * no vendor/ directory and never loads development packages into WordPress
  * (see ADR-017).
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Core;
+namespace MerchBoard\Core;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Maps `CCMerch\Foo\Bar` to `<base_dir>/Foo/Bar.php`.
+ * Maps `MerchBoard\Foo\Bar` to `<base_dir>/Foo/Bar.php`.
  */
 final class Autoloader {
 
 	/**
 	 * Registers the autoloader.
 	 *
-	 * @param string $prefix   Namespace prefix including trailing backslash, e.g. 'CCMerch\\'.
+	 * @param string $prefix   Namespace prefix including trailing backslash, e.g. 'MerchBoard\\'.
 	 * @param string $base_dir Directory that holds the prefix's classes.
 	 */
 	public static function register( string $prefix, string $base_dir ): void {

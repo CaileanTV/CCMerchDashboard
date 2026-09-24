@@ -1,4 +1,4 @@
-# CC Merch Dashboard
+# Merch Dashboard
 
 WordPress plugin for creator and merchandise management: admin tooling in WordPress Admin and a secure, standalone dashboard for content creators.
 

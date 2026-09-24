@@ -7,12 +7,12 @@
  * only (no typed properties, arrow functions, union types, match, enums, etc.).
  * CI lints it with PHP 7.2.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Core;
+namespace MerchBoard\Core;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -98,7 +98,7 @@ final class Requirements {
 		);
 
 		echo '<div class="notice notice-error"><p><strong>';
-		echo esc_html__( 'CC Merch Dashboard is not running.', 'ccmerch-dashboard' );
+		echo esc_html__( 'Merch Dashboard is not running.', 'merchboard' );
 		echo '</strong></p><ul>';
 
 		foreach ( $errors as $key => $error ) {
@@ -106,7 +106,7 @@ final class Requirements {
 			echo esc_html(
 				sprintf(
 					/* translators: 1: software name (PHP or WordPress), 2: required version, 3: current version. */
-					__( '%1$s %2$s or later is required. Current version: %3$s.', 'ccmerch-dashboard' ),
+					__( '%1$s %2$s or later is required. Current version: %3$s.', 'merchboard' ),
 					isset( $labels[ $key ] ) ? $labels[ $key ] : $key,
 					$error['required'],
 					$error['current']

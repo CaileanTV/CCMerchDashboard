@@ -22,7 +22,7 @@
     },
     {
       "step": "activatePlugin",
-      "pluginPath": "ccmerch-dashboard/ccmerch-dashboard.php"
+      "pluginPath": "merchboard/merchboard.php"
     }
   ]
 }

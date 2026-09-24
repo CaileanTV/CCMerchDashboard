@@ -2,15 +2,15 @@
 /**
  * Plugin composition root.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch;
+namespace MerchBoard;
 
-use CCMerch\Core\Container;
-use CCMerch\Core\Module;
+use MerchBoard\Core\Container;
+use MerchBoard\Core\Module;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Created once by the main plugin file. There is intentionally no static
  * instance accessor; code that needs services receives the container via
- * Module::register() or the `ccmerch_loaded` action.
+ * Module::register() or the `merchboard_loaded` action.
  */
 final class Plugin {
 
@@ -94,7 +94,7 @@ final class Plugin {
 		 *
 		 * @param Module[] $modules Module instances.
 		 */
-		$modules = apply_filters( 'ccmerch_modules', $this->default_modules() );
+		$modules = apply_filters( 'merchboard_modules', $this->default_modules() );
 
 		foreach ( $this->valid_modules( $modules ) as $module ) {
 			$module->register( $this->container );
@@ -105,7 +105,7 @@ final class Plugin {
 		 *
 		 * @param Container $container Shared service container.
 		 */
-		do_action( 'ccmerch_loaded', $this->container );
+		do_action( 'merchboard_loaded', $this->container );
 	}
 
 	/**
@@ -126,7 +126,7 @@ final class Plugin {
 	 */
 	private function valid_modules( $modules ): array {
 		if ( ! is_array( $modules ) ) {
-			_doing_it_wrong( __METHOD__, 'The ccmerch_modules filter must return an array.', '0.1.0' );
+			_doing_it_wrong( __METHOD__, 'The merchboard_modules filter must return an array.', '0.1.0' );
 			return array();
 		}
 
@@ -134,7 +134,7 @@ final class Plugin {
 
 		foreach ( $modules as $module ) {
 			if ( ! $module instanceof Module ) {
-				_doing_it_wrong( __METHOD__, 'Items returned by the ccmerch_modules filter must implement CCMerch\Core\Module.', '0.1.0' );
+				_doing_it_wrong( __METHOD__, 'Items returned by the merchboard_modules filter must implement MerchBoard\Core\Module.', '0.1.0' );
 				continue;
 			}
 

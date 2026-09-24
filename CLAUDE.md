@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-WordPress plugin `ccmerch-dashboard` (creator & merchandise management). Repo root = plugin root.
+WordPress plugin `merchboard` (creator & merchandise management). Repo root = plugin root.
 
 **Before any work, read and follow [docs/AI-DEVELOPMENT.md](docs/AI-DEVELOPMENT.md)**, including the permanent **Project Isolation** rule: only this repository is in scope; never read, copy from, or modify other local projects or LocalWP sites.
 
@@ -15,9 +15,10 @@ Then read [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) and [docs/ARCHITECTUR
 
 ## Essentials
 
-- PHP ≥ 8.2, WP ≥ 6.7, namespace `CCMerch\` → `src/`, prefix `ccmerch_`, text domain `ccmerch-dashboard`, REST `ccmerch/v1`.
+- PHP ≥ 8.2, WP ≥ 6.7, namespace `MerchBoard\` → `src/`, prefix `merchboard_`, text domain `merchboard`, REST `merchboard/v1`.
+- Naming is locked (ADR-018): product `Merch Dashboard`, prefix `merchboard`, namespace `MerchBoard\`. Never use the former temporary `ccmerch` / `CCMerch\` convention. (`CCMerchDashboard` is only the Git repository name.)
 - No third-party PHP runtime dependencies (ADR-004). Runtime uses the plugin's own autoloader, never `vendor/autoload.php` (ADR-017).
-- New modules: implement `CCMerch\Core\Module` in `src/Modules/<Name>/` and add them to `Plugin::default_modules()` (see docs/MODULES.md).
+- New modules: implement `MerchBoard\Core\Module` in `src/Modules/<Name>/` and add them to `Plugin::default_modules()` (see docs/MODULES.md).
 - Creator-facing code resolves the creator only via `CreatorContext`; creator API is `/me`-scoped (ADR-007).
 - No external services beyond GitHub unless approved via ADR. **Dinero and Google Drive are out of scope**: never use, read, write, back up to, or enable their connectors (ADR-016).
 - Docs in Danish; code, comments and commits in English (Conventional Commits). Small commits, push after validation, never force-push.

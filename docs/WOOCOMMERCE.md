@@ -6,16 +6,16 @@
 
 1. **WooCommerce er source of truth** for produkter, varianter, ordrer, refunds og kunder. Vi kopierer ikke masterdata.
 2. **Valgfrit modul:** `Modules/WooCommerce` indlæses kun, hvis WooCommerce er aktivt. Resten af pluginet (creators, adgang og dashboard-shell) virker uden.
-3. **HPOS-kompatibel fra dag ét:** kun CRUD-API'er (`wc_get_order()`, `wc_get_orders()`, `$order->get_items()`, `wc_get_product()`, `$product->get_meta()`). **Aldrig** direkte SQL mod `wp_posts`/`wp_postmeta` for ordrer. Kompatibilitet erklæres via `FeaturesUtil::declare_compatibility( 'custom_order_tables', CCMERCH_FILE, true )`.
+3. **HPOS-kompatibel fra dag ét:** kun CRUD-API'er (`wc_get_order()`, `wc_get_orders()`, `$order->get_items()`, `wc_get_product()`, `$product->get_meta()`). **Aldrig** direkte SQL mod `wp_posts`/`wp_postmeta` for ordrer. Kompatibilitet erklæres via `FeaturesUtil::declare_compatibility( 'custom_order_tables', MERCHBOARD_FILE, true )`.
 4. Tungt arbejde (backfill og genberegning) køres asynkront via **Action Scheduler**, som følger med WooCommerce.
 5. Minimumsversion af WooCommerce fastlægges i fase 17 (header `WC requires at least`).
 
 ## Kobling: produkt → creator
 
-- Product meta **`_ccmerch_creator_id`** på parent-produktet. Varianter arver fra parent.
+- Product meta **`_merchboard_creator_id`** på parent-produktet. Varianter arver fra parent.
 - Sættes af admin i produktets data-panel (se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Ændringer audit-logges.
 - Kun **aktive** creators kan vælges. Hvis en creator suspenderes, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
-- **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `ccmerch_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
+- **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `merchboard_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
 
 ## Sales ledger
 
@@ -41,9 +41,9 @@
 
 ## Dashboard-data og privacy
 
-- `/me/products`: læses fra WooCommerce (`wc_get_products( [ 'meta_key' => '_ccmerch_creator_id', 'meta_value' => $creator_id ] )`) med paginering.
+- `/me/products`: læses fra WooCommerce (`wc_get_products( [ 'meta_key' => '_merchboard_creator_id', 'meta_value' => $creator_id ] )`) med paginering.
 - `/me/orders`: bygges fra ledger og ordrelinjer. Creators ser **ikke** kundens navn, e-mail, telefon eller adresse (GDPR: creator'en er ikke databehandler for virksomhedens kunder). Højst ordrenummer, dato, status, produkt, antal og evt. land. Beslutningen skal bekræftes af virksomheden.
-- `/me/sales`: aggregeret fra `ccmerch_sales` med caching.
+- `/me/sales`: aggregeret fra `merchboard_sales` med caching.
 
 ## Øvrige hensyn
 

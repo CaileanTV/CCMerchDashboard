@@ -6,10 +6,10 @@
 
 | Brugertype | Hvordan | Adgang |
 | --- | --- | --- |
-| **Administrator** | WP-rollen `administrator` får plugin-capabilities ved aktivering | Hele CC Merch-admin |
+| **Administrator** | WP-rollen `administrator` får plugin-capabilities ved aktivering | Hele Merch Dashboard-admin |
 | **Shop manager** (valgfri) | Kan tildeles plugin-caps via Settings → Access | Konfigurerbart, default ingen |
-| **Creator** | WP-bruger med rollen `ccmerch_creator` **og** en aktiv creator-record | Kun Creator Dashboard, kun egne data |
-| Øvrige (customer, subscriber …) | – | Ingen adgang til CC Merch |
+| **Creator** | WP-bruger med rollen `merchboard_creator` **og** en aktiv creator-record | Kun Creator Dashboard, kun egne data |
+| Øvrige (customer, subscriber …) | – | Ingen adgang til Merch Dashboard |
 
 ## Capabilities
 
@@ -17,27 +17,27 @@ Få og meningsfulde. Nye capabilities tilføjes, når et modul har et reelt beho
 
 | Capability | Tildeles | Giver |
 | --- | --- | --- |
-| `ccmerch_manage` | administrator | Se CC Merch-menuen og Overview |
-| `ccmerch_manage_creators` | administrator | Oprette, redigere, suspendere og arkivere creators og give/fjerne adgang |
-| `ccmerch_manage_settings` | administrator | Ændre plugin-settings |
-| `ccmerch_view_logs` | administrator | Se logs |
-| `ccmerch_access_dashboard` | rollen `ccmerch_creator` | Forudsætning for at bruge Creator Dashboard (se adgangsregel nedenfor) |
+| `merchboard_manage` | administrator | Se Merch Dashboard-menuen og Overview |
+| `merchboard_manage_creators` | administrator | Oprette, redigere, suspendere og arkivere creators og give/fjerne adgang |
+| `merchboard_manage_settings` | administrator | Ændre plugin-settings |
+| `merchboard_view_logs` | administrator | Se logs |
+| `merchboard_access_dashboard` | rollen `merchboard_creator` | Forudsætning for at bruge Creator Dashboard (se adgangsregel nedenfor) |
 
 **Meta-capabilities** (via `map_meta_cap`, fase 5):
 
 | Meta-cap | Kaldes som | Mappes til |
 | --- | --- | --- |
-| `ccmerch_view_creator` | `current_user_can( 'ccmerch_view_creator', $creator_id )` | `ccmerch_manage_creators` **eller** (brugeren ejer creator'en, creator'en er aktiv og brugeren har `ccmerch_access_dashboard`) |
-| `ccmerch_edit_creator` | `current_user_can( 'ccmerch_edit_creator', $creator_id )` | `ccmerch_manage_creators` **eller** (ejer og aktiv) for de profilfelter creator'en selv må redigere |
+| `merchboard_view_creator` | `current_user_can( 'merchboard_view_creator', $creator_id )` | `merchboard_manage_creators` **eller** (brugeren ejer creator'en, creator'en er aktiv og brugeren har `merchboard_access_dashboard`) |
+| `merchboard_edit_creator` | `current_user_can( 'merchboard_edit_creator', $creator_id )` | `merchboard_manage_creators` **eller** (ejer og aktiv) for de profilfelter creator'en selv må redigere |
 
 Meta-caps er defense-in-depth og gør det muligt senere at tilføje ID-baserede ressourcer uden at genopfinde ejerskabs-tjek.
 
-Fremtidige capabilities (tilføjes med deres modul): `ccmerch_manage_payouts`, `ccmerch_view_reports` og `ccmerch_manage_integrations`.
+Fremtidige capabilities (tilføjes med deres modul): `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`.
 
-## Rollen `ccmerch_creator`
+## Rollen `merchboard_creator`
 
 - Label: "Creator".
-- Capabilities: `read` og `ccmerch_access_dashboard`. **Intet andet.** Ingen `upload_files`, `edit_posts` osv.
+- Capabilities: `read` og `merchboard_access_dashboard`. **Intet andet.** Ingen `upload_files`, `edit_posts` osv.
 - Tildeles som **ekstra rolle** (`$user->add_role()`), så en eksisterende rolle (fx WooCommerce `customer`) bevares.
 - Rolle og caps synkroniseres ved aktivering og når plugin-versionen ændres (`Upgrader`), så nye caps rulles ud ved opdatering.
 - Fjernes ved afinstallation, kun hvis "slet data" er slået til.
@@ -47,7 +47,7 @@ Fremtidige capabilities (tilføjes med deres modul): `ccmerch_manage_payouts`, `
 En request får creator-adgang, **kun hvis alle** fire er opfyldt:
 
 1. Brugeren er logget ind (WordPress-session).
-2. `current_user_can( 'ccmerch_access_dashboard' )`.
+2. `current_user_can( 'merchboard_access_dashboard' )`.
 3. Der findes en creator-record med `user_id = get_current_user_id()`.
 4. Creator-recorden har `status = active`.
 
@@ -59,7 +59,7 @@ Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med 
 
 | Handling (admin) | Effekt |
 | --- | --- |
-| Opret creator for bruger | Record (`active`) oprettes og rolle `ccmerch_creator` tilføjes. Audit-log. |
+| Opret creator for bruger | Record (`active`) oprettes og rolle `merchboard_creator` tilføjes. Audit-log. |
 | Suspendér | `status = suspended`. Rollen **bevares**, så genaktivering er nem, men adgangen forsvinder øjeblikkeligt pga. regel 4. Aktive sessioner afvises på næste request. Valgfrit: `WP_Session_Tokens::destroy_all()` for brugeren. Audit-log. |
 | Genaktivér | `status = active`. Audit-log. |
 | Arkivér | `status = archived` og rollen fjernes. Historik bevares. Audit-log. |
@@ -68,7 +68,7 @@ Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med 
 ## Login-flow
 
 - Creators logger ind via den normale WordPress-login (`wp-login.php`) eller WooCommerce "Min konto". Der bygges **intet** eget auth-system. Password-reset, rate-limit-plugins og 2FA-plugins virker dermed uændret.
-- `login_redirect`-filter: Brugere med creator-adgang og **uden** `ccmerch_manage` sendes til `/creator-dashboard/`. En eksplicit, valideret `redirect_to` til dashboardet respekteres.
+- `login_redirect`-filter: Brugere med creator-adgang og **uden** `merchboard_manage` sendes til `/creator-dashboard/`. En eksplicit, valideret `redirect_to` til dashboardet respekteres.
 - Creators uden admin-caps, der tilgår `/wp-admin/`, redirectes til dashboardet. `admin-ajax.php`, `admin-post.php` og `async-upload.php` undtages, fordi de kan bruges legitimt af frontend.
 - Admin bar skjules for creators (`show_admin_bar` filter).
 - Login-siden kan senere brandes via `login_enqueue_scripts`/`login_headerurl`. Det er styling og ikke et nyt system.

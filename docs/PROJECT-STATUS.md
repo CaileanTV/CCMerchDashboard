@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 2 (Plugin bootstrap) · **Næste fase:** 3 (Database-fundament og creator-tabeller) · **Version:** 0.1.0 (ikke released)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 2 (Plugin bootstrap) · **Næste fase:** 3 (Database-fundament og creator-tabeller) · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -8,22 +8,22 @@
 
 - [x] Analyse af udgangspunkt (tomt repo). Se [reports/2026-09-24-initial-analysis.md](reports/2026-09-24-initial-analysis.md).
 - [x] Repo-grundfiler: `.gitignore`, `.gitattributes` (LF), `.editorconfig`, `.nvmrc`.
-- [x] Plugin-entry `ccmerch-dashboard.php` (kun header og ABSPATH-guard).
-- [x] Composer (projekt-lokalt via `bin/composer.mjs`), PSR-4-autoload `CCMerch\` → `src/`.
+- [x] Plugin-entry `merchboard.php` (kun header og ABSPATH-guard).
+- [x] Composer (projekt-lokalt via `bin/composer.mjs`), PSR-4-autoload `MerchBoard\` → `src/`.
 - [x] PHPCS + WordPress Coding Standards 3.4, PHPStan 2.2 level 8 med WordPress-stubs.
 - [x] npm + `@wordpress/scripts` 35 (ESLint, Prettier, stylelint; build fra fase 13).
-- [x] Lokal WordPress via WordPress Playground (`npm run wp:start`), WooCommerce via blueprint. Verificeret: WP 7.1.2, PHP 8.2, WooCommerce og CC Merch Dashboard er aktive.
+- [x] Lokal WordPress via WordPress Playground (`npm run wp:start`), WooCommerce via blueprint. Verificeret: WP 7.1.2, PHP 8.2, WooCommerce og Merch Dashboard er aktive.
 - [x] GitHub Actions CI: PHP-syntaks 8.2, PHPCS, PHPStan og ESLint.
 - [x] Dokumentation: arkitektur, moduler, database, API, frontend/design system, admin, WooCommerce, security, roller, test, udvikling, ADR 001-016 (ADR-017 tilføjet i fase 2), roadmap, feature-specs og AI-guidelines.
 - [x] Project Isolation udvidet til eksterne services og connectors. **Dinero og Google Drive er ikke en del af projektets nuværende eller planlagte integrationsarkitektur** og må ikke bruges (ADR-016).
 
 ### Fase 2 – Plugin bootstrap ✅
 
-- [x] Hovedfil: ABSPATH-guard, dobbelt-load-guard, `CCMERCH_VERSION`, versionstjek, autoloader og `Plugin`. Ingen logik i øvrigt.
-- [x] `CCMerch\Core\Requirements`: PHP ≥ 8.2 og WP ≥ 6.7. Ellers en escaped admin notice (kun for `activate_plugins`) og ingen fatal error. PHP 7.2-syntaks, tjekket med PHP 7.4 lokalt og 7.2 i CI.
-- [x] `CCMerch\Core\Autoloader`: egen PSR-4-autoloader med validering af klassenavne (ADR-017). `vendor/` bruges ikke ved runtime.
-- [x] `CCMerch\Plugin`: `plugins_loaded` → modul-boot via `ccmerch_modules` (validering, idempotens) → `ccmerch_loaded`. HPOS-erklæring på `before_woocommerce_init`.
-- [x] `CCMerch\Core\Container` (lazy, typesikker, cirkel-detektion) og `CCMerch\Core\Module`.
+- [x] Hovedfil: ABSPATH-guard, dobbelt-load-guard, `MERCHBOARD_VERSION`, versionstjek, autoloader og `Plugin`. Ingen logik i øvrigt.
+- [x] `MerchBoard\Core\Requirements`: PHP ≥ 8.2 og WP ≥ 6.7. Ellers en escaped admin notice (kun for `activate_plugins`) og ingen fatal error. PHP 7.2-syntaks, tjekket med PHP 7.4 lokalt og 7.2 i CI.
+- [x] `MerchBoard\Core\Autoloader`: egen PSR-4-autoloader med validering af klassenavne (ADR-017). `vendor/` bruges ikke ved runtime.
+- [x] `MerchBoard\Plugin`: `plugins_loaded` → modul-boot via `merchboard_modules` (validering, idempotens) → `merchboard_loaded`. HPOS-erklæring på `before_woocommerce_init`.
+- [x] `MerchBoard\Core\Container` (lazy, typesikker, cirkel-detektion) og `MerchBoard\Core\Module`.
 - [x] `uninstall.php`-skelet (sletter intet, der er ingen data) og `.distignore`.
 - [x] PHPUnit 11 + Brain Monkey: 38 unit-tests. `npm test` / `composer test`. CI: PHPUnit og PHP 7.2-syntaksjob.
 - [x] Smoke test i Playground (WP 7.1.2, PHP 8.2, WooCommerce 11.1.2): aktiveret, deaktiveret og genaktiveret uden fatals, notices eller `debug.log`. Forside, wp-admin og REST svarer 200. WooCommerce markerer ikke pluginet som HPOS-inkompatibelt.
@@ -71,7 +71,7 @@ Kun disse eksterne services er en del af projektet. Alt andet kræver eksplicit 
 
 Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står i parentes.
 
-1. **Navn/branding:** Er "CC Merch Dashboard" / prefix `ccmerch` det rigtige produktnavn? Fase 2 bruger den dokumenterede konvention (`ccmerch`, `CCMerch\`, `ccmerch-dashboard`). Et navneskift er stadig billigt (ingen data, roller eller options er gemt), men bliver dyrt fra fase 3, hvor tabelnavne og options oprettes. (**senest før fase 3**)
+1. ✅ **Navn/prefix – lukket (ADR-018):** Produktnavn `Merch Dashboard`, teknisk prefix `merchboard`, PHP-namespace `MerchBoard\`. Låst før fase 3. Den tidligere midlertidige konvention `ccmerch` er migreret i hele repo'et.
 2. **Hosting:** Hvilken PHP- og MySQL/MariaDB-version kører produktionen? Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 2 / 16)
 3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
 4. **Teams:** Kan en creator have flere brugere (fx manager)? (fase 6. Påvirker kun, om vi bygger det nu.)
@@ -84,5 +84,5 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 ## Next recommended steps
 
 1. Tjek at CI er grøn under GitHub → Actions, inkl. de nye jobs `PHPUnit` og `PHP 7.2 syntax`.
-2. Besvar åbent spørgsmål 1 (navn/prefix) **før fase 3**, fordi tabel- og option-navne låses der. Besvar spørgsmål 2 (hosting).
+2. Besvar åbent spørgsmål 2 (hosting). Navn/prefix er besluttet (ADR-018), så fase 3 kan oprette tabeller og options med `merchboard_`-prefix.
 3. Kør fase 3 med prompten: *"Implementér roadmap-fase 3 (Database-fundament og creator-tabeller) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*

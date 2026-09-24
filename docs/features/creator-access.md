@@ -14,22 +14,22 @@ Planlagt. Roller og capabilities i fase 5, domæne i fase 6 og adgangsflow i fas
 - Ikke-creator, der åbner dashboardet: samme besked (uden at afsløre, om brugeren "næsten" er creator).
 
 ## Admin functionality
-- Oprette en creator for en eksisterende eller ny WP-bruger (tildeler rollen `ccmerch_creator`).
+- Oprette en creator for en eksisterende eller ny WP-bruger (tildeler rollen `merchboard_creator`).
 - Suspendere, genaktivere og arkivere. Se [admin-creator-management.md](admin-creator-management.md).
 - Settings → Access: login-redirect til/fra, blokering af wp-admin til/fra, ekstra roller med admin-caps.
 
 ## Technical implementation
-- `CCMerch\Modules\Access\CreatorContext`: `current(): ?Creator`. Evalueres pr. request og memoiseres kun inden for requesten. Regler i [USER-ROLES.md](../USER-ROLES.md#adgangsregel-for-creator-dashboard).
+- `MerchBoard\Modules\Access\CreatorContext`: `current(): ?Creator`. Evalueres pr. request og memoiseres kun inden for requesten. Regler i [USER-ROLES.md](../USER-ROLES.md#adgangsregel-for-creator-dashboard).
 - `LoginRedirect`: filter `login_redirect` (+ WooCommerce `woocommerce_login_redirect`).
-- `AdminAreaGuard`: `admin_init`. Redirecter creators uden `ccmerch_manage` væk fra wp-admin og undtager `admin-ajax.php`, `admin-post.php` og `async-upload.php`. Brug `wp_doing_ajax()` og tjek `$pagenow`.
+- `AdminAreaGuard`: `admin_init`. Redirecter creators uden `merchboard_manage` væk fra wp-admin og undtager `admin-ajax.php`, `admin-post.php` og `async-upload.php`. Brug `wp_doing_ajax()` og tjek `$pagenow`.
 - `show_admin_bar`-filter og `wp_is_application_passwords_available_for_user`-filter.
-- `Core\Security\Capabilities`: opretter rolle/caps ved aktivering og versionsskift samt `map_meta_cap` for `ccmerch_view_creator`/`ccmerch_edit_creator`.
+- `Core\Security\Capabilities`: opretter rolle/caps ved aktivering og versionsskift samt `map_meta_cap` for `merchboard_view_creator`/`merchboard_edit_creator`.
 
 ## Relevant files
 Planlagt: `src/Core/Security/Capabilities.php`, `src/Modules/Access/*`, `tests/Unit/Access/*` og `tests/Integration/Access/*`.
 
 ## Database/data used
-`ccmerch_creators` (`user_id`, `status`) og WordPress roles (`wp_user_roles`-option og `wp_capabilities`-user meta).
+`merchboard_creators` (`user_id`, `status`) og WordPress roles (`wp_user_roles`-option og `wp_capabilities`-user meta).
 
 ## Permissions
 Se [USER-ROLES.md](../USER-ROLES.md).
@@ -39,7 +39,7 @@ Ingen egne. Alle `/me`-endpoints bruger `CreatorContext` i deres permission call
 
 ## Hooks
 - Lytter: `login_redirect`, `woocommerce_login_redirect`, `admin_init`, `show_admin_bar`, `map_meta_cap`, `wp_is_application_passwords_available_for_user` og `delete_user`.
-- Udløser (planlagt): `ccmerch_creator_access_denied` (til logging/monitorering).
+- Udløser (planlagt): `merchboard_creator_access_denied` (til logging/monitorering).
 
 ## Dependencies
 Creators-modulet (repository) og Core (Capabilities, Logger).

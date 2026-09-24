@@ -82,7 +82,7 @@ if ( missing.length > 0 ) {
 	].join( '\n' );
 
 	mkdirSync( iniDir, { recursive: true } );
-	writeFileSync( join( iniDir, 'ccmerch-dev.ini' ), ini );
+	writeFileSync( join( iniDir, 'merchboard-dev.ini' ), ini );
 	process.env.PHP_INI_SCAN_DIR = iniDir;
 }
 

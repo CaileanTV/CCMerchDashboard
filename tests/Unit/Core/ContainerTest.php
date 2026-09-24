@@ -2,16 +2,16 @@
 /**
  * Tests for the service container.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Tests\Unit\Core;
+namespace MerchBoard\Tests\Unit\Core;
 
 use ArrayObject;
-use CCMerch\Core\Container;
-use CCMerch\Tests\Unit\TestCase;
+use MerchBoard\Core\Container;
+use MerchBoard\Tests\Unit\TestCase;
 use Countable;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;

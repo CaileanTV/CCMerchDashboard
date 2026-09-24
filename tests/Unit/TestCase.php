@@ -2,12 +2,12 @@
 /**
  * Base class for unit tests.
  *
- * @package CCMerch
+ * @package MerchBoard
  */
 
 declare( strict_types=1 );
 
-namespace CCMerch\Tests\Unit;
+namespace MerchBoard\Tests\Unit;
 
 use Brain\Monkey;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;

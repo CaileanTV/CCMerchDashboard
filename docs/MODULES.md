@@ -4,12 +4,12 @@
 
 ## Formål
 
-Systemet skal kunne vokse med nye moduler (Payouts, Campaigns, Notifications …) uden at eksisterende kode skal omskrives. Et modul er en mappe under `src/Modules/<Navn>/` med én indgangsklasse, der implementerer `CCMerch\Core\Module`.
+Systemet skal kunne vokse med nye moduler (Payouts, Campaigns, Notifications …) uden at eksisterende kode skal omskrives. Et modul er en mappe under `src/Modules/<Navn>/` med én indgangsklasse, der implementerer `MerchBoard\Core\Module`.
 
 ## Kontrakt
 
 ```php
-namespace CCMerch\Core;
+namespace MerchBoard\Core;
 
 interface Module {
 	/** Stable, unique id, e.g. 'creators'. Used in filters, settings and logs. */
@@ -24,9 +24,9 @@ Det er bevidst minimalt. Valgfrie evner tilføjes som små separate interfaces, 
 
 ## Registrering
 
-`Plugin::boot()` (på `plugins_loaded`) sender `Plugin::default_modules()` gennem filteret `ccmerch_modules` og kalder `register( $container )` på hvert modul. Til sidst fyres `ccmerch_loaded` med containeren. Elementer, der ikke implementerer `Module`, og dublet-ID'er springes over med `_doing_it_wrong()`.
+`Plugin::boot()` (på `plugins_loaded`) sender `Plugin::default_modules()` gennem filteret `merchboard_modules` og kalder `register( $container )` på hvert modul. Til sidst fyres `merchboard_loaded` med containeren. Elementer, der ikke implementerer `Module`, og dublet-ID'er springes over med `_doing_it_wrong()`.
 
-**Sådan kobles et nyt modul på:** Opret `src/Modules/<Navn>/<Navn>Module.php`, som implementerer `CCMerch\Core\Module`, og tilføj en instans i `Plugin::default_modules()`. Moduler, der afhænger af et andet plugin, tilføjes betinget:
+**Sådan kobles et nyt modul på:** Opret `src/Modules/<Navn>/<Navn>Module.php`, som implementerer `MerchBoard\Core\Module`, og tilføj en instans i `Plugin::default_modules()`. Moduler, der afhænger af et andet plugin, tilføjes betinget:
 
 ```php
 private function default_modules(): array {
@@ -47,19 +47,19 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 
 ## Container
 
-`CCMerch\Core\Container` er en minimal lazy service locator med `set( string $id, callable $factory )`, `has()` og `get( string $id )`. Singletons pr. request. `get()` er typesikker for PHPStan (`class-string<T>` → `T`). Den kaster `LogicException` ved ukendt service, cirkulær afhængighed, forkert returtype fra en factory og ved erstatning af en allerede oprettet service. Den eksisterer for at samle wiring ét sted og gøre services udskiftelige i tests, ikke for at være et DI-framework. Service-IDs er klassenavne (`CreatorRepository::class`).
+`MerchBoard\Core\Container` er en minimal lazy service locator med `set( string $id, callable $factory )`, `has()` og `get( string $id )`. Singletons pr. request. `get()` er typesikker for PHPStan (`class-string<T>` → `T`). Den kaster `LogicException` ved ukendt service, cirkulær afhængighed, forkert returtype fra en factory og ved erstatning af en allerede oprettet service. Den eksisterer for at samle wiring ét sted og gøre services udskiftelige i tests, ikke for at være et DI-framework. Service-IDs er klassenavne (`CreatorRepository::class`).
 
 ## Hvad et modul typisk registrerer
 
 | Område | Mekanisme |
 | --- | --- |
 | Services | `$container->set( FooService::class, fn( $c ) => new FooService( $c->get( FooRepository::class ) ) )` |
-| Admin-undermenu | `admin_menu` → `add_submenu_page( 'ccmerch', … )` under CC Merch-menuen |
-| REST-routes | `rest_api_init` → controller-klasse, der arver `CCMerch\Core\Http\RestController` |
-| Dashboard-sektion | filter `ccmerch_dashboard_sections` (id, label, ikon, capability og JS-chunk). Se [FRONTEND.md](FRONTEND.md) |
+| Admin-undermenu | `admin_menu` → `add_submenu_page( 'merchboard', … )` under Merch Dashboard-menuen |
+| REST-routes | `rest_api_init` → controller-klasse, der arver `MerchBoard\Core\Http\RestController` |
+| Dashboard-sektion | filter `merchboard_dashboard_sections` (id, label, ikon, capability og JS-chunk). Se [FRONTEND.md](FRONTEND.md) |
 | Settings | egen sektion/tab i Settings-siden via Settings API |
-| Domæne-events | `do_action( 'ccmerch_<modul>_<event>', … )` |
-| Cron | `ccmerch_<modul>_<job>`, scheduleres ved aktivering og fjernes ved deaktivering |
+| Domæne-events | `do_action( 'merchboard_<modul>_<event>', … )` |
+| Cron | `merchboard_<modul>_<job>`, scheduleres ved aktivering og fjernes ved deaktivering |
 
 ## Regler
 

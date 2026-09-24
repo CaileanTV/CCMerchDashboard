@@ -28,7 +28,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 ### Bootstrap (fase 2)
 
-- Autoloaderen håndterer kun `CCMerch\`-klasser og afviser klassenavne, der ikke er rene namespace-segmenter (`..`, `/`, `:`, null-bytes). Klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode (ADR-017).
+- Autoloaderen håndterer kun `MerchBoard\`-klasser og afviser klassenavne, der ikke er rene namespace-segmenter (`..`, `/`, `:`, null-bytes). Klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode (ADR-017).
 - Versionstjekkets admin notice vises kun for brugere med `activate_plugins` (den afslører serverversioner), og alt output er escaped.
 - Pluginet skriver intet til databasen og læser intet brugerinput i fase 2. `uninstall.php` sletter intet endnu.
 
@@ -41,15 +41,15 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 ### Privilege escalation
 
-- Creator-rollen har kun `read` og `ccmerch_access_dashboard`.
+- Creator-rollen har kun `read` og `merchboard_access_dashboard`.
 - Creator-redigerbare felter er en **eksplicit whitelist** (fx `display_name`, `bio`, `social_links`). `status`, `user_id`, `slug` og rolle kan aldrig sættes fra creator-endpoints.
-- Admin-handlinger, der opretter brugere, kan kun tildele `ccmerch_creator`. Aldrig vilkårlige roller fra input.
+- Admin-handlinger, der opretter brugere, kan kun tildele `merchboard_creator`. Aldrig vilkårlige roller fra input.
 - Ingen `update_user_meta` med nøgler fra input.
 
 ### CSRF
 
 - REST: cookie-auth **kræver** `X-WP-Nonce` (WordPress afviser ellers som uautentificeret). Leveres af `api-fetch`.
-- Admin-formularer: `wp_nonce_field( 'ccmerch_<handling>' )` + `check_admin_referer( 'ccmerch_<handling>' )`.
+- Admin-formularer: `wp_nonce_field( 'merchboard_<handling>' )` + `check_admin_referer( 'merchboard_<handling>' )`.
 - Row actions/links med sideeffekter: `wp_nonce_url()` + `check_admin_referer()`.
 - Ingen state-ændringer på `GET`.
 
@@ -80,7 +80,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - Creators ser **aldrig** kunders PII (se [WOOCOMMERCE.md](WOOCOMMERCE.md#dashboard-data-og-privacy)).
 - Fejlbeskeder til klienten er generiske. Detaljer går i log (uden secrets).
 - Custom tables og meta vises aldrig i generiske WordPress-queries eller -søgning. Ingen public CPT'er.
-- Dashboard-sider sendes med `nocache_headers()`, så delte caches ikke gemmer personlige sider. Kontrollér at hosting/CDN-cache bypasses for indloggede brugere og for `/creator-dashboard/*` og `/wp-json/ccmerch/*`.
+- Dashboard-sider sendes med `nocache_headers()`, så delte caches ikke gemmer personlige sider. Kontrollér at hosting/CDN-cache bypasses for indloggede brugere og for `/creator-dashboard/*` og `/wp-json/merchboard/*`.
 
 ### Redirects
 
@@ -99,7 +99,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 ### Secrets og credentials
 
-- Aldrig i repo'et: `.env*`, `auth.json` og nøgler er gitignored. Secrets placeres i `wp-config.php` som konstanter (`CCMERCH_<PROVIDER>_SECRET`) eller i options med `autoload = no`.
+- Aldrig i repo'et: `.env*`, `auth.json` og nøgler er gitignored. Secrets placeres i `wp-config.php` som konstanter (`MERCHBOARD_<PROVIDER>_SECRET`) eller i options med `autoload = no`.
 - Aldrig sendt til frontend. Aldrig logget.
 - Webhooks verificeres med HMAC (`hash_equals()`), og der er tidsstempel-tolerance.
 - Hvis følsomme creator-data (fx bankoplysninger til payouts) nogensinde skal gemmes: foretræk at payout-udbyderen opbevarer dem. Ellers krypteres med `sodium_crypto_secretbox` og en nøgle fra `wp-config.php` (kræver ADR).

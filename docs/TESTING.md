@@ -27,7 +27,7 @@ For admin-handlers: manglende capability og manglende/ugyldig nonce.
 
 ## Konventioner
 
-- `tests/Unit/<Modul>/…Test.php` spejler `src/`. Namespace: `CCMerch\Tests\Unit\…`. Arv fra `CCMerch\Tests\Unit\TestCase` (Brain Monkey setup/teardown). Fixtures uden for autoload ligger i `tests/Fixtures/`.
+- `tests/Unit/<Modul>/…Test.php` spejler `src/`. Namespace: `MerchBoard\Tests\Unit\…`. Arv fra `MerchBoard\Tests\Unit\TestCase` (Brain Monkey setup/teardown). Fixtures uden for autoload ligger i `tests/Fixtures/`.
 - PHPCS gælder også tests, men uden krav om docblocks på testklasser/-metoder (beskrivende navne i stedet) og uden prefix-krav (tests definerer `ABSPATH` og efterligner WooCommerce-namespaces).
 - Én adfærd pr. test og beskrivende navne (`test_suspended_creator_cannot_access_dashboard`).
 - Ingen tests mod eksterne tjenester. Brug fakes.

@@ -20,7 +20,7 @@
 
 ## Serving: dedikeret route og standalone shell
 
-- Rewrite rule: `^creator-dashboard(/.*)?$` → query var `ccmerch_dashboard`. Slug'en kan ændres i settings, og rewrite rules flushes ved ændring.
+- Rewrite rule: `^creator-dashboard(/.*)?$` → query var `merchboard_dashboard`. Slug'en kan ændres i settings, og rewrite rules flushes ved ændring.
 - På `template_redirect`:
   1. Ikke logget ind → `wp_safe_redirect( wp_login_url( <nuværende dashboard-URL> ) )`.
   2. Logget ind uden creator-adgang → 403-side i dashboard-design med link til log ud. Vi sender ikke brugeren videre til wp-admin.
@@ -34,7 +34,7 @@
 
 ## Bootstrap-data
 
-Shellen udskriver et JSON-objekt via `wp_add_inline_script( 'ccmerch-dashboard', 'window.ccmerchDashboard = …', 'before' )` med `wp_json_encode()`:
+Shellen udskriver et JSON-objekt via `wp_add_inline_script( 'merchboard', 'window.merchboardDashboard = …', 'before' )` med `wp_json_encode()`:
 
 ```json
 {
@@ -64,9 +64,9 @@ assets/src/dashboard/
 
 - **Routing:** en lille egen router baseret på History API, afgrænset til `base_path`. Revurderes, hvis behovene vokser (fx nested routes).
 - **Data:** `@wordpress/api-fetch` samt en lille `useApi`-hook. Ingen Redux eller `@wordpress/data`. Hvis caching og refetch bliver komplekst, overvejes TanStack Query (ADR påkrævet).
-- **Sektioner:** Serveren bestemmer hvilke sektioner creator'en må se (filter `ccmerch_dashboard_sections` + capability pr. sektion). Klienten viser kun dem og lazy-loader deres chunk (`React.lazy`). Et nyt modul tilføjer én PHP-registrering og én mappe i `sections/`.
+- **Sektioner:** Serveren bestemmer hvilke sektioner creator'en må se (filter `merchboard_dashboard_sections` + capability pr. sektion). Klienten viser kun dem og lazy-loader deres chunk (`React.lazy`). Et nyt modul tilføjer én PHP-registrering og én mappe i `sections/`.
 - **Grafer:** vælges i fase 20. Krav: lille bundle, tilgængelighed og tree-shaking. Kandidat: Chart.js eller en letvægts-SVG-løsning.
-- **i18n:** `@wordpress/i18n` (`__( 'Overview', 'ccmerch-dashboard' )`) og `wp_set_script_translations()`. Kildestrenge er på engelsk og oversættes til dansk (`da_DK`).
+- **i18n:** `@wordpress/i18n` (`__( 'Overview', 'merchboard' )`) og `wp_set_script_translations()`. Kildestrenge er på engelsk og oversættes til dansk (`da_DK`).
 - **Sikkerhed:** `dangerouslySetInnerHTML` er forbudt (ESLint-regel `react/no-danger` tilføjes i fase 13). Eksterne links bruger `rel="noopener noreferrer"`.
 
 ## Sektioner (informationsarkitektur)
@@ -85,19 +85,19 @@ assets/src/dashboard/
 
 ## Design system
 
-Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle værdier er CSS custom properties på `.ccm-app`, så dark mode senere kan tilføjes ved at skifte tokens.
+Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle værdier er CSS custom properties på `.merchboard-app`, så dark mode senere kan tilføjes ved at skifte tokens.
 
 ### Tokens
 
 | Gruppe | Tokens |
 | --- | --- |
-| Farver | Neutral skala `--ccm-gray-50…900`; `--ccm-primary-{50,100,500,600,700}`; semantiske `--ccm-success`, `--ccm-warning`, `--ccm-danger`, `--ccm-info` (+ `-bg`-varianter); overflader `--ccm-surface`, `--ccm-surface-muted`, `--ccm-border`; tekst `--ccm-text`, `--ccm-text-muted` |
+| Farver | Neutral skala `--merchboard-gray-50…900`; `--merchboard-primary-{50,100,500,600,700}`; semantiske `--merchboard-success`, `--merchboard-warning`, `--merchboard-danger`, `--merchboard-info` (+ `-bg`-varianter); overflader `--merchboard-surface`, `--merchboard-surface-muted`, `--merchboard-border`; tekst `--merchboard-text`, `--merchboard-text-muted` |
 | Typografi | System font stack (`system-ui, -apple-system, "Segoe UI", Roboto, …`) i v1. Skal der bruges en brand-font, **self-hostes** den. Ingen Google Fonts-CDN (GDPR, jf. dansk/EU-praksis). Skala: 12 / 14 (body) / 16 / 20 / 24 / 30 px, line-height 1.5, vægte 400/500/600. |
-| Spacing | 4px-grid: `--ccm-space-1` (4) … `--ccm-space-12` (48) |
-| Radius | `--ccm-radius-sm` 6px, `--ccm-radius` 10px, `--ccm-radius-lg` 16px, `--ccm-radius-full` |
-| Skygge | `--ccm-shadow-sm`, `--ccm-shadow`, `--ccm-shadow-lg` (dæmpede) |
+| Spacing | 4px-grid: `--merchboard-space-1` (4) … `--merchboard-space-12` (48) |
+| Radius | `--merchboard-radius-sm` 6px, `--merchboard-radius` 10px, `--merchboard-radius-lg` 16px, `--merchboard-radius-full` |
+| Skygge | `--merchboard-shadow-sm`, `--merchboard-shadow`, `--merchboard-shadow-lg` (dæmpede) |
 | Breakpoints | `sm` 640, `md` 768, `lg` 1024, `xl` 1280 (mobile-first `min-width`-queries) |
-| Z-index | `--ccm-z-nav` 100, `--ccm-z-dropdown` 200, `--ccm-z-modal` 300, `--ccm-z-toast` 400 |
+| Z-index | `--merchboard-z-nav` 100, `--merchboard-z-dropdown` 200, `--merchboard-z-modal` 300, `--merchboard-z-toast` 400 |
 | Motion | 150-200ms ease-out. Respekter `prefers-reduced-motion`. |
 
 ### Komponenter (v1)
