@@ -80,6 +80,7 @@ merchboard/
 │   └── Modules/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
 │       │                        # CreatorService, CreatorException, UserAccounts, Admin/ (page, list table, actions) [fase 6]
+│       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]
 │       ├── Access/              # AccessModule, CreatorContext [fase 8]; LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
 │       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*

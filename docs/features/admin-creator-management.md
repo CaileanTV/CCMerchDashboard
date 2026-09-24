@@ -4,7 +4,7 @@
 Lade administratorer vælge, hvilke WordPress-brugere der er creators, og vedligeholde creator-oplysninger og adgang.
 
 ## Current status
-Implementeret i fase 6 (flyttet frem fra fase 10). Resterende i fase 10: link på `user-edit.php` og søgbart brugervalg (AJAX) til store sites.
+Implementeret i fase 6 (flyttet frem fra fase 10). Fase 10: søgbart brugervalg (login-felt med AJAX-forslag), profil-link i formularen og infoboks på `user-edit.php`. Se [ADMIN.md](../ADMIN.md).
 
 ## User-facing functionality
 Ingen direkte. Effekten er, at creators får eller mister adgang til dashboardet.
@@ -49,7 +49,7 @@ Se [TESTING.md](../TESTING.md). Service, handlers, rendering, audit, transaktion
 
 ## Known limitations
 - Ingen import/eksport af creators.
-- Brugervalget er en select med op til 500 brugere (søgbart valg i fase 10).
+- Brugervalget er et login-felt med forslag (fase 10). Der er ingen grænse på antallet af brugere på sitet. Bulk actions er ikke implementeret (valgfrit, intet konkret behov).
 - Ved validering går indtastede værdier tabt ved redirect (PRG). Brugeren ser fejlmeddelelsen og indtaster igen.
 - Sletning af en tilknyttet WordPress-bruger frakobler og deaktiverer creator'en automatisk (fase 8). Kun hvis det fejler (logges), står der et dinglende `user_id` ("Unknown user #ID"), som administratoren kan frakoble manuelt.
 

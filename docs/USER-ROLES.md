@@ -28,7 +28,7 @@ Definitionerne findes ét sted: `MerchBoard\Core\Security\Capabilities` (konstan
 | Capability | Konstant | Tildeles | Giver |
 | --- | --- | --- | --- |
 | `merchboard_access_dashboard` | `Capabilities::ACCESS_DASHBOARD` | rollen `merchboard_creator` | Forudsætning (ikke tilstrækkelig) for Creator Dashboard |
-| `merchboard_manage` | `Capabilities::MANAGE` | `administrator` | Se Merch Dashboard-menuen og Overview (fase 9) |
+| `merchboard_manage` | `Capabilities::MANAGE` | `administrator` | Se Merch Dashboard-menuen og Overview (✅ fase 10) |
 | `merchboard_manage_creators` | `Capabilities::MANAGE_CREATORS` | `administrator` | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra (fase 6/10) |
 | `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9) |
 

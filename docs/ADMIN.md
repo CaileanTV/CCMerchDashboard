@@ -1,6 +1,6 @@
 # WordPress Admin
 
-> Status: **Creator-administration implementeret (fase 6).** Overview og Settings kommer i fase 9, audit-visning i fase 11.
+> Status: **Admin-shell komplet (fase 10):** topmenu med Overview (`merchboard_manage`), Creators (fase 6, søgbart brugervalg fra fase 10) og Settings (fase 9). Audit-visning kommer i fase 11.
 
 ## Principper
 
@@ -11,8 +11,8 @@
 ## Menustruktur
 
 ```text
-Merch Dashboard                       (fase 6: menu-capability merchboard_manage_creators; fase 9: merchboard_manage)
-├── Overview                   [fase 10, flyttet fra 9]   nøgletal, seneste audit-hændelser, systemstatus (WooCommerce aktiv? rewrite OK? migrationer OK?)
+Merch Dashboard                       ✅ fase 10: menu-capability merchboard_manage (slug `merchboard`, Modules/Admin/AdminMenu)
+├── Overview                   ✅ fase 10: creator-tal, dinglende links og systemstatus (seneste audit-hændelser: fase 11)
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   └── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger
 ├── Settings                   ✅ fase 9: kun "Data on uninstall" (opt-in for permanent sletning). Tabs General · Access · Advanced kommer, når de får indhold
@@ -40,7 +40,9 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 ### Opret/rediger creator ✅ (fase 6)
 
 - Felter: **visningsnavn** (1-191 tegn, `sanitize_text_field`), **status** (`active`/`inactive`; **default `inactive`** for nye creators, som sikker default) og **WordPress-bruger** (valgfri select).
-- Brugervalget viser kun ID, display name og login, aldrig e-mail. Det tilbyder op til 500 brugere, som ikke allerede er koblet til en anden creator. Den aktuelle bruger forbliver valgbar. Serveren validerer altid (bruger findes, ikke koblet andetsteds), og UNIQUE-indexet er sidste sikkerhedsnet.
+- **Brugervalg (✅ fase 10, skalerbart):** et tekstfelt `user` med brugerens **login**. Feltet skal være tomt for "ingen bruger". `#<id>` bevarer uændret et link til en bruger, der ikke længere findes, så linket ikke frakobles stille. Serveren slår login op (`UserAccounts::find_by_login`), og `CreatorService` validerer som før, at brugeren findes og ikke er koblet andetsteds. UNIQUE-indexet er sidste sikkerhedsnet. Der hentes ingen brugerliste til siden.
+- **Forslag (progressive enhancement):** `assets/js/creator-user-search.js` (vanilla JS, ingen build, kun på Creators-skærmen) henter forslag fra `admin-ajax.php?action=merchboard_search_users` (`CreatorUserSearch`: `merchboard_manage_creators` + nonce, ingen `nopriv`-handler) og viser dem i en `<datalist>` med `textContent` (aldrig HTML). Der søges i **login og display name, aldrig e-mail**, også når søgeordet indeholder `@`. Der kræves mindst 2 tegn og returneres højst 20 resultater. Brugere, der allerede er koblet til en creator, udelades. Svaret indeholder kun login og "Display Name (login)". Uden JavaScript skrives login direkte.
+- **Profil-link:** Redigeringsformularen viser "Open WordPress user profile" (`get_edit_user_link()`), kun når brugeren findes og den aktuelle administrator har `edit_user` for den. Et link til en slettet bruger vises som "Linked to user #ID, which no longer exists".
 - **Tilknyt bruger** giver brugeren rollen `merchboard_creator` som *ekstra* rolle (eksisterende roller bevares). **Frakobl** fjerner kun den rolle. Hverken brugeren eller creator'en slettes. Rolleændringen sker efter commit (ADR-023).
 - **Deaktivering** bevarer rollen. Adgang (fase 8) kræver `active`.
 - Vi opretter ikke nye WordPress-brugere fra denne side (fase 6). Brugere oprettes via WordPress' egen "Users → Add New".
@@ -59,9 +61,23 @@ Admin-siden selv er beskyttet af menu-capability'en og tjekker capability igen i
 
 Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), viser siden en fejl-notice om, at creator-ændringer er slået fra, indtil tabellerne er konverteret til InnoDB. Ændringer afvises så med den neutrale tekniske fejl (ADR-024). Noticen nævner ingen tabelnavne.
 
-### Bruger-profil (`user-edit.php`)
+### Overview ✅ (fase 10)
 
-En lille informationsboks: "Denne bruger er creator: <link>" eller "Gør til creator" (link til opret-siden med forvalgt bruger).
+`Modules/Admin/OverviewPage` (capability `merchboard_manage`, tjekkes igen i `render()`). Siden viser kun data, der findes i dag, og ingen personoplysninger:
+
+- **Creators:** antal aktive, inaktive og i alt, antal koblet til en WordPress-bruger og en advarsel, hvis creators er koblet til brugere, der ikke længere findes. Der linkes til Creators, hvis brugeren har `merchboard_manage_creators`.
+- **Systemstatus:** pluginversion, databaseschema (aktuelt, afventer eller fejlet), transaktionsunderstøttelse (engine-tjek, ADR-024), roller og capabilities (synkroniseret eller afventer), WooCommerce (aktiv med version eller ikke aktiv) og om data slettes ved afinstallation. Der linkes til Settings, hvis brugeren har `merchboard_manage_settings`.
+- Der vises ingen salgstal eller statistik, fordi de ikke findes endnu. Seneste audit-hændelser kommer med audit-visningen i fase 11 (`merchboard_view_logs`). Rewrite-status kommer, når dashboard-routen findes (fase 12).
+
+### Navigation og adgang ✅ (fase 10)
+
+`Modules/Admin/AdminMenu` ejer topmenuen (`merchboard`, `merchboard_manage`) og tilføjer den på `admin_menu` med prioritet 9. Feature-moduler tilføjer derefter deres submenuer med egen, mere specifik capability: Creators `merchboard_manage_creators` og Settings `merchboard_manage_settings`. En skjult menu er aldrig den eneste beskyttelse: WordPress afviser direkte adgang til en side uden sidens capability, og hver side og handler tjekker capability igen. Verificeret over HTTP: subscriber og creator får 403 overalt. En bruger med kun `merchboard_manage_creators` kan åbne Creators, men ikke Overview eller Settings.
+
+**WooCommerce-note:** Med WooCommerce aktiv sender WooCommerce brugere uden `edit_posts`, `manage_woocommerce` eller `view_admin_dashboard` fra wp-admin til "Min konto". En rolle, der kun har `merchboard_manage_creators`, skal derfor også have en af dem for at nå wp-admin.
+
+### Bruger-profil (`user-edit.php`) ✅ (fase 10)
+
+`Modules/Creators/Admin/UserProfileSection` (hooks `edit_user_profile` og `show_user_profile`) vises kun for brugere med `merchboard_manage_creators`. Er brugeren koblet, vises "Linked to <creator> (status)" med link til redigering. Ellers vises "This user is not linked to a creator" med link til opret-siden med brugeren forvalgt (`user_id`, bruges kun hvis brugeren findes, og valideres igen ved gem). Kun creator'ens navn og status vises. Der ændres intet herfra.
 
 ### Settings
 

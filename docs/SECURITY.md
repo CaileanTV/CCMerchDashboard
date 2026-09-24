@@ -151,7 +151,8 @@ Tekniske logs (fase 4, ADR-021, [ARCHITECTURE.md §11](ARCHITECTURE.md#11-loggin
 - **Input/output:** Kun whitelistede felter læses. Status er enum, ID'er `absint`, navn `sanitize_text_field`. Al output escapes (`esc_html`, `esc_attr`, `esc_url`). Notices bruger whitelistede koder.
 - **Privilege escalation:** Tilknytning giver kun rollen `merchboard_creator` (`read` + `merchboard_access_dashboard`). Ingen andre roller kan tildeles herfra.
 - **Ingen permanent sletning** fra UI'et.
-- **Brugerdata:** Brugervalg viser display name og login, aldrig e-mail.
+- **Brugerdata:** Brugervalg viser display name og login, aldrig e-mail. Fra fase 10 søges der kun i login og display name med eksplicitte `search_columns`. Uden dem søger WordPress også i e-mail, når søgeordet indeholder `@`, og så kunne man afsløre, om en e-mail tilhører en bruger. Søge-endpointet kræver `merchboard_manage_creators` og nonce, og der findes ingen `nopriv`-variant. Forslag er kun en bekvemmelighed, fordi den gemte værdi valideres igen server-side.
+- **Navigation (fase 10):** Topmenuen kræver `merchboard_manage`. Creators og Settings beholder deres egne capabilities, og alle sider og handlere tjekker capability selv (verificeret med direkte URL'er).
 
 ### Audit trail (fase 6, ADR-023)
 

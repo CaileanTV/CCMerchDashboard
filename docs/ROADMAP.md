@@ -78,10 +78,11 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Done:** Unit- og integrationstests (MariaDB), og Playground med og uden WooCommerce (scenarier A-E og settings-UI over HTTP).
 - **Flyttet:** Overview (systemstatus) og menu-capability `merchboard_manage` for topmenuen → fase 10. Settings-tabs (General/Access/Advanced) kommer, når de får indhold (Access i fase 12, General i fase 12/15). Omdøbt fra "Admin shell: menu, overview og settings".
 
-## Fase 10 – Admin creator management (rest) og Overview
+## Fase 10 – Admin creator management (rest) og Overview ✅
 
-- **Scope:** Overview som første menupunkt med menu-capability `merchboard_manage` (systemstatus: WooCommerce, migrationer/schemaversion, engine-tjek, evt. dinglende creator-links; flyttet fra fase 9). Kernen (liste, opret/rediger, statusskift, tilknytning) blev leveret i fase 6. Tilbage: link/infoboks på `user-edit.php`, søgbart brugervalg (AJAX) til sites med mange brugere og evt. bulk actions. Se [features/admin-creator-management.md](features/admin-creator-management.md).
-- **Done:** Integrationstests for nonce, capability og validering. Manuel UX-test.
+- **Scope (udført):** Topmenu "Merch Dashboard" med `merchboard_manage` og Overview som første punkt (creator-tal, dinglende links og systemstatus: schema, engine, roller, WooCommerce, sletning ved uninstall). Creators og Settings er submenuer med deres egne capabilities. Søgbart brugervalg (login-felt med AJAX-forslag, ingen e-mail), profil-link i formularen og infoboks på `user-edit.php`. Se [features/admin-creator-management.md](features/admin-creator-management.md).
+- **Done:** Unit- og integrationstests (MariaDB) for capability, nonce og validering, og Playground med og uden WooCommerce over HTTP.
+- **Ikke gjort:** bulk actions (valgfrit, intet konkret behov). Seneste audit-hændelser på Overview kommer med fase 11, og rewrite-status med fase 12.
 
 ## Fase 11 – Admin audit-log viewer
 

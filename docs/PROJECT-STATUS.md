@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 9 (Lifecycle, settings og permanent sletning) · **Næste fase:** 10 (Admin creator management (rest) og Overview) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 10 (Admin creator management (rest) og Overview) · **Næste fase:** 11 (Admin audit-log viewer) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -139,6 +139,17 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 **Bevidst ikke i fase 9:** Overview (fase 10), settings-tabs uden indhold, multisite-oprydning på tværs af sites, dashboard, REST, login-redirect og WooCommerce-logik.
 
+### Fase 10 – Admin creator management (rest) og Overview ✅
+
+- [x] Topmenu "Merch Dashboard" (`merchboard`, `merchboard_manage`) i `Modules/Admin`. Creators og Settings er submenuer med egne capabilities. Hver side og handler tjekker selv.
+- [x] Overview: creator-tal, dinglende links, schema, migrationsfejl, engine, rolle-sync, WooCommerce og sletning ved uninstall. Ingen opfundne tal, ingen personoplysninger.
+- [x] Søgbart brugervalg: login-felt (server-side opslag) og AJAX-forslag (`merchboard_manage_creators` + nonce, kun login og display name, aldrig e-mail, maks. 20, koblede brugere udelades). 500-brugers-grænsen er fjernet.
+- [x] Profil-link i formularen (`edit_user`) og infoboks på `user-edit.php`/`profile.php` (`merchboard_manage_creators`).
+- [x] 374 unit-tests (961 assertions) og 76 integrationstests mod MariaDB 10.11.19. Lint (PHPCS, PHPStan level 8, ESLint) er grøn.
+- [x] Playground over HTTP, med og uden WooCommerce: menu, Overview, direkte adgang (subscriber og creator får 403 overalt, kun-`manage_creators` får Creators 200 og Overview/Settings 403), søgning (nonce, 403 uden, ingen e-mail), gem via login, profilboks og forudfyldning, uændret settings-bekræftelse, ingen notices.
+
+**Bevidst ikke i fase 10:** bulk actions (valgfrit), seneste audit-hændelser (fase 11), dashboard, REST, login-redirect og WooCommerce-logik.
+
 ## In progress
 
 Intet.
@@ -147,9 +158,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 10:** Admin creator management (rest) og Overview.
-2. **Fase 11:** Admin audit-log viewer.
-3. **Fase 12:** Creator dashboard: route og sikker shell.
+1. **Fase 11:** Admin audit-log viewer.
+2. **Fase 12:** Creator dashboard: route og sikker shell.
+3. **Fase 13:** Dashboard frontend-fundament.
 
 ## Known bugs
 
@@ -165,15 +176,15 @@ Ingen (der er ingen funktionalitet endnu).
 | MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7). **MySQL** er ikke verificeret: CI-jobbet findes, men resultatet er ikke set. Andre MariaDB-versioner og produktionens version er ukendte. | Tjek CI-jobbet `PHP integration (MySQL)` under GitHub → Actions, og staging (fase 16) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
 | Dinglende `user_id` efter fejlet frigivelse | Løst i fase 8 for normal sletning. Kun hvis frigivelsen fejler (databasefejl, MyISAM), peger creator'en på en slettet bruger. Fejlen logges, linket giver ingen adgang, og admin kan frakoble manuelt. Der er intet automatisk genforsøg. | Accepteret. Overvej et oprydnings-tjek i Overview (fase 9). |
+| WooCommerce og roller uden `edit_posts` | Med WooCommerce aktiv sendes brugere uden `edit_posts`, `manage_woocommerce` eller `view_admin_dashboard` fra wp-admin til "Min konto" (WooCommerce' egen regel). En rolle med kun `merchboard_manage_creators` kan dermed ikke nå siden. | Dokumenteret. Rolle-tildeling via settings i fase 12. |
 | Multisite: uninstall | Afinstallation sletter kun det aktuelle sites data (også ved opt-in). Andre sites i et netværk beholder deres tabeller, options og roller. Ingen risiko for fremmede data, men heller ingen fuld oprydning. | Multisite er ikke understøttet. Kræver en beslutning, hvis det bliver relevant. |
 | Udgåede capabilities | Uninstall fjerner kun de præcise navne i `Capabilities::all()`. Udgår en capability senere, skal den fortsat stå på oprydningslisten. | Husk ved ændring af `Capabilities` (ADR-025) |
 | Multisite: bruger fjernet fra et site | WordPress fyrer `deleted_user` også, når en bruger kun fjernes fra et site. Brugeren findes stadig, så linket bevares. Uden rolle på sitet er der ingen adgang. | Multisite er ikke understøttet. Revurder ved behov. |
 | Samtidig kobling og sletning | Kobles en bruger i samme øjeblik, som den slettes, kan linket pege på en slettet bruger. Det giver ingen adgang. | Accepteret (meget sjældent) |
 | Transaktioner uden InnoDB | Fail closed (ADR-024): creator-ændringer afvises på MyISAM. Rollback verificeret på MariaDB og SQLite. | Accepteret krav. Dokumenteret i DATABASE.md. |
 | Genforbindelse midt i en transaktion | Mister `wpdb` forbindelsen midt i en transaktion, genforbinder den og fortsætter uden transaktion. Meget sjældent. | Accepteret. Revurder ved problemer på staging. |
-| Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes i fase 10. |
+| Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes senere (ikke gjort i fase 10). |
 | Persistent object cache og migrationslås | Låsen arbejder direkte på databasen og rydder kun sin cache-nøgle. Samspil med fx Redis er ikke testet. | Staging (fase 16), hvis produktionen bruger object cache |
-| Brugervalg | Select med max 500 brugere | Søgbart valg i fase 10 |
 | Audit-retention | Ubegrænset opbevaring. Ingen politik for automatisk sletning. | Afklares (åbent spørgsmål 10) |
 | Creator-rollen har `read` | Creators kan indtil fase 12 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). | Blokering af wp-admin for creators i fase 12 (flyttet fra fase 8) |
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller kommer med Access-settings (fase 12). |
@@ -212,4 +223,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 10 (Admin creator management (rest) og Overview) jf. docs/ROADMAP.md.
+4. Kør fase 11 (Admin audit-log viewer) jf. docs/ROADMAP.md.
