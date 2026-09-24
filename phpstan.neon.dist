@@ -5,5 +5,7 @@ parameters:
     phpVersion: 80200
     paths:
         - ccmerch-dashboard.php
-        # Add src/ (and uninstall.php) here when the plugin bootstrap lands (roadmap phase 2).
+        - uninstall.php
+        - src
+        - tests
     tmpDir: .tools/phpstan-cache

@@ -1,0 +1,29 @@
+# Files excluded from the distributed plugin zip (roadmap phase 16).
+# The plugin needs no vendor/ at runtime (own autoloader, ADR-017).
+/.git
+/.github
+/.tools
+/.phpunit.cache
+/bin
+/docs
+/node_modules
+/tests
+/vendor
+/.distignore
+/.editorconfig
+/.gitattributes
+/.gitignore
+/.nvmrc
+/.prettierignore
+/.phpcs-cache
+/blueprint.json
+/CLAUDE.md
+/composer.json
+/composer.lock
+/eslint.config.cjs
+/package.json
+/package-lock.json
+/phpcs.xml.dist
+/phpstan.neon.dist
+/phpunit.xml.dist
+/README.md

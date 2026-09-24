@@ -14,6 +14,25 @@
  * @package CCMerch
  */
 
+// This file must stay parseable on old PHP versions (PHP 7.2 syntax) so the
+// requirement check can show a notice instead of a fatal error.
+
 defined( 'ABSPATH' ) || exit;
 
-// The plugin bootstrap is added in roadmap phase 2 (see docs/ROADMAP.md).
+// Another copy of the plugin is already loaded.
+if ( defined( 'CCMERCH_VERSION' ) ) {
+	return;
+}
+
+define( 'CCMERCH_VERSION', '0.1.0' );
+
+require_once __DIR__ . '/src/Core/Requirements.php';
+
+if ( ! \CCMerch\Core\Requirements::check() ) {
+	return;
+}
+
+require_once __DIR__ . '/src/Core/Autoloader.php';
+\CCMerch\Core\Autoloader::register( 'CCMerch\\', __DIR__ . '/src/' );
+
+( new \CCMerch\Plugin( __FILE__ ) )->register_hooks();
