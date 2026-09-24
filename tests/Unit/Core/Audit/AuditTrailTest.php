@@ -194,6 +194,7 @@ final class AuditTrailTest extends TestCase {
 			( new ReflectionClass( AuditRepository::class ) )->getMethods( ReflectionMethod::IS_PUBLIC )
 		);
 
-		self::assertSame( array( '__construct', 'append', 'for_creator' ), $public );
+		// Only appending and reading; no update, delete or truncate (phase 11 adds a read).
+		self::assertSame( array( '__construct', 'append', 'for_creator', 'paginate' ), $public );
 	}
 }

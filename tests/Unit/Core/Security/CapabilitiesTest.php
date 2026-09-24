@@ -58,7 +58,7 @@ final class CapabilitiesTest extends TestCase {
 
 	public function test_admin_capabilities_are_the_documented_set(): void {
 		self::assertSame(
-			array( 'merchboard_manage', 'merchboard_manage_creators', 'merchboard_manage_settings' ),
+			array( 'merchboard_manage', 'merchboard_manage_creators', 'merchboard_manage_settings', 'merchboard_view_logs' ),
 			Capabilities::admin_capabilities()
 		);
 	}
@@ -66,7 +66,7 @@ final class CapabilitiesTest extends TestCase {
 	public function test_all_lists_only_the_capabilities_needed_now(): void {
 		// Later phases add their own capabilities (audit view, payouts, reports …).
 		self::assertSame(
-			array( 'merchboard_access_dashboard', 'merchboard_manage', 'merchboard_manage_creators', 'merchboard_manage_settings' ),
+			array( 'merchboard_access_dashboard', 'merchboard_manage', 'merchboard_manage_creators', 'merchboard_manage_settings', 'merchboard_view_logs' ),
 			Capabilities::all()
 		);
 	}

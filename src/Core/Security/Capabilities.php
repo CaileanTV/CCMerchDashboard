@@ -68,6 +68,12 @@ final class Capabilities {
 	public const MANAGE_SETTINGS = 'merchboard_manage_settings';
 
 	/**
+	 * May view the business audit trail (read-only). Not the technical logs,
+	 * which live in WooCommerce/PHP logs with their own access rules (ADR-021).
+	 */
+	public const VIEW_LOGS = 'merchboard_view_logs';
+
+	/**
 	 * Exact capability set of the creator role. `read` is WordPress' baseline
 	 * for authenticated users (the Subscriber role has only `read`); nothing
 	 * else from WordPress is granted.
@@ -91,6 +97,7 @@ final class Capabilities {
 			self::MANAGE,
 			self::MANAGE_CREATORS,
 			self::MANAGE_SETTINGS,
+			self::VIEW_LOGS,
 		);
 	}
 

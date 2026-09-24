@@ -34,6 +34,11 @@ final class AuditRepository {
 	private const MAX_LIMIT = 200;
 
 	/**
+	 * Maximum page size of paginate().
+	 */
+	public const MAX_PER_PAGE = 100;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb $wpdb WordPress database object.
@@ -112,6 +117,62 @@ final class AuditRepository {
 		);
 
 		return array_map( array( $this, 'hydrate' ), is_array( $rows ) ? $rows : array() );
+	}
+
+	/**
+	 * One page of records, newest first, for the read-only audit log screen.
+	 *
+	 * Every condition is a fixed SQL fragment with a placeholder; values only
+	 * ever travel as prepare() arguments. Two queries: COUNT(*) and the page
+	 * (LIMIT/OFFSET), so the table is never loaded as a whole.
+	 *
+	 * @param AuditFilter $filter   Validated filter.
+	 * @param int         $page     Page number (1-based).
+	 * @param int         $per_page Records per page (1-100).
+	 * @return array{items: list<AuditEntry>, total: int}
+	 * @throws DatabaseException When a stored row is invalid.
+	 */
+	public function paginate( AuditFilter $filter, int $page, int $per_page ): array {
+		$page     = max( 1, $page );
+		$per_page = max( 1, min( self::MAX_PER_PAGE, $per_page ) );
+		$wpdb     = $this->wpdb;
+		$where    = '';
+		$args     = array( Tables::name( $wpdb, Tables::AUDIT_LOG ) );
+
+		if ( null !== $filter->action ) {
+			$where .= ' AND action = %s';
+			$args[] = $filter->action->value;
+		}
+
+		if ( null !== $filter->creator_id ) {
+			$where .= ' AND creator_id = %d';
+			$args[] = $filter->creator_id;
+		}
+
+		if ( null !== $filter->from ) {
+			$where .= ' AND created_at >= %s';
+			$args[] = $filter->from;
+		}
+
+		if ( null !== $filter->until ) {
+			$where .= ' AND created_at < %s';
+			$args[] = $filter->until;
+		}
+
+		// $where only ever contains the literal fragments above.
+		$total = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE 1=1{$where}", ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Fixed fragments; values are placeholders passed with the spread operator.
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Values are passed with the spread operator.
+				"SELECT id, created_at, action, actor_user_id, creator_id, context FROM %i WHERE 1=1{$where} ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Fixed fragments; values are placeholders.
+				...array_merge( $args, array( $per_page, ( $page - 1 ) * $per_page ) )
+			),
+			ARRAY_A
+		);
+
+		return array(
+			'items' => array_map( array( $this, 'hydrate' ), is_array( $rows ) ? $rows : array() ),
+			'total' => is_numeric( $total ) ? (int) $total : 0,
+		);
 	}
 
 	/**

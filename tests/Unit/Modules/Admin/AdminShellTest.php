@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\Admin;
 
 use Brain\Monkey\Functions;
+use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
@@ -168,13 +169,29 @@ final class AdminShellTest extends TestCase {
 		self::assertStringContainsString( 'Update failed; retried automatically.', $this->render() );
 	}
 
+	public function test_recent_activity_only_for_users_who_may_view_logs(): void {
+		Functions\when( 'wp_date' )->alias( static fn( string $format, int $ts ): string => gmdate( 'Y-m-d H:i', $ts ) );
+		$this->service->create( 'Nova', CreatorStatus::Active, 42 );
+
+		$this->caps = array( Capabilities::MANAGE );
+		self::assertStringNotContainsString( 'Recent activity', $this->render() );
+
+		$this->caps = array( Capabilities::MANAGE, Capabilities::VIEW_LOGS );
+		$html       = $this->render();
+		self::assertStringContainsString( 'Recent activity', $html );
+		self::assertStringContainsString( '<td>Creator created</td>', $html );
+		self::assertStringContainsString( 'page=merchboard-audit-log', $html );
+		self::assertStringNotContainsString( 'Nova', $html, 'Event and time only.' );
+	}
+
 	private function overview(): OverviewPage {
 		return new OverviewPage(
 			new CreatorRepository( $this->db ),
 			$this->users,
 			new Migrator( $this->db, Schema::migrations() ),
 			new TransactionSupport( $this->db ),
-			new RoleManager( new RecordingLogger() )
+			new RoleManager( new RecordingLogger() ),
+			new AuditRepository( $this->db )
 		);
 	}
 

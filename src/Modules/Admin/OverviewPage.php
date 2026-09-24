@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Admin;
 
+use MerchBoard\Core\Audit\AuditFilter;
+use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\TransactionSupport;
@@ -33,6 +35,11 @@ defined( 'ABSPATH' ) || exit;
 final class OverviewPage {
 
 	/**
+	 * Number of records under "Recent activity".
+	 */
+	private const RECENT_ACTIVITY = 5;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CreatorRepository  $creators     Creator storage (reads only).
@@ -40,13 +47,15 @@ final class OverviewPage {
 	 * @param Migrator           $migrator     Schema versions.
 	 * @param TransactionSupport $transactions Storage engine check.
 	 * @param RoleManager        $roles        Role sync state.
+	 * @param AuditRepository    $audit        Recent activity (reads only).
 	 */
 	public function __construct(
 		private CreatorRepository $creators,
 		private UserAccounts $users,
 		private Migrator $migrator,
 		private TransactionSupport $transactions,
-		private RoleManager $roles
+		private RoleManager $roles,
+		private AuditRepository $audit
 	) {
 	}
 
@@ -69,9 +78,40 @@ final class OverviewPage {
 		echo '<h1>' . esc_html__( 'Merch Dashboard', 'merchboard' ) . '</h1>';
 
 		$this->render_creators();
+
+		if ( current_user_can( Capabilities::VIEW_LOGS ) ) {
+			$this->render_recent_activity();
+		}
+
 		$this->render_status();
 
 		echo '</div>';
+	}
+
+	/**
+	 * The latest audit records (users with `merchboard_view_logs` only).
+	 */
+	private function render_recent_activity(): void {
+		echo '<h2>' . esc_html__( 'Recent activity', 'merchboard' ) . '</h2>';
+
+		try {
+			$entries = $this->audit->paginate( new AuditFilter(), 1, self::RECENT_ACTIVITY )['items'];
+		} catch ( DatabaseException ) {
+			echo '<p>' . esc_html__( 'The audit log could not be read. See the technical log.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		if ( array() === $entries ) {
+			echo '<p>' . esc_html__( 'No audit records yet.', 'merchboard' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped merchboard-overview-activity"><tbody>';
+			foreach ( $entries as $entry ) {
+				echo '<tr><td>' . esc_html( CreatorsAdminPage::local_time( $entry->created_at ) ) . '</td><td>' . esc_html( AuditLogFormatter::action_label( $entry->action ) ) . '</td></tr>';
+			}
+			echo '</tbody></table>';
+		}
+
+		echo '<p><a href="' . esc_url( AuditLogPage::url() ) . '">' . esc_html__( 'View audit log', 'merchboard' ) . '</a></p>';
 	}
 
 	/**

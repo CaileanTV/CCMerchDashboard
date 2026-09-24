@@ -153,6 +153,10 @@ final class FakeDatabase extends wpdb {
 			return stripslashes( (string) $args[0] );
 		}
 
+		if ( str_starts_with( $sql, 'SELECT COUNT(*) FROM %i WHERE 1=1' ) ) {
+			return (string) count( $this->audit_filter( $sql, $args ) );
+		}
+
 		if ( 'SELECT COUNT(*) FROM %i' === $sql ) {
 			return (string) count( $this->data[ (string) $args[0] ] ?? array() );
 		}
@@ -173,6 +177,13 @@ final class FakeDatabase extends wpdb {
 	 */
 	public function get_results( $query = null, $output = OBJECT ) {
 		[ $sql, $args ] = $this->statement( $query );
+
+		if ( str_starts_with( $sql, 'SELECT id, created_at, action, actor_user_id, creator_id, context FROM %i WHERE 1=1' ) ) {
+			$rows               = array_reverse( $this->audit_filter( $sql, $args ) );
+			[ $limit, $offset ] = array_slice( $args, -2 );
+
+			return array_slice( $rows, (int) $offset, (int) $limit );
+		}
 
 		if ( 'SELECT status, COUNT(*) AS total FROM %i GROUP BY status' === $sql ) {
 			$totals = array();
@@ -382,6 +393,51 @@ final class FakeDatabase extends wpdb {
 		ksort( $rows );
 
 		return array_values( array_filter( $rows, static fn( array $row ): bool => null === $column || $value === $row[ $column ] ) );
+	}
+
+	/**
+	 * Audit rows matching the "WHERE 1=1 AND …" conditions of AuditRepository::paginate().
+	 * Throws on any condition it does not know, like the rest of this double.
+	 *
+	 * @param string            $sql  Template.
+	 * @param array<int, mixed> $args Arguments (table first).
+	 * @return list<array<string, string|null>>
+	 */
+	private function audit_filter( string $sql, array $args ): array {
+		preg_match_all( '/ AND (action = %s|creator_id = %d|created_at >= %s|created_at < %s)/', $sql, $matches );
+		$tests = array();
+		$index = 1;
+
+		foreach ( $matches[1] as $condition ) {
+			$value   = (string) $args[ $index++ ];
+			$tests[] = match ( $condition ) {
+				'action = %s'        => static fn( array $row ): bool => $row['action'] === $value,
+				'creator_id = %d'    => static fn( array $row ): bool => $row['creator_id'] === $value,
+				'created_at >= %s'   => static fn( array $row ): bool => (string) $row['created_at'] >= $value,
+				'created_at < %s'    => static fn( array $row ): bool => (string) $row['created_at'] < $value,
+			};
+		}
+
+		$rest = (string) preg_replace( '/ AND (action = %s|creator_id = %d|created_at >= %s|created_at < %s)/', '', $sql );
+
+		if ( 1 !== preg_match( '/WHERE 1=1( ORDER BY id DESC LIMIT %d OFFSET %d)?$/', $rest ) ) {
+			throw new RuntimeException( 'Unsupported audit query: ' . $sql );
+		}
+
+		return array_values(
+			array_filter(
+				$this->filter( (string) $args[0] ),
+				static function ( array $row ) use ( $tests ): bool {
+					foreach ( $tests as $test ) {
+						if ( ! $test( $row ) ) {
+							return false;
+						}
+					}
+
+					return true;
+				}
+			)
+		);
 	}
 
 	/**

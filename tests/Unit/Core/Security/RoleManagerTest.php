@@ -65,6 +65,7 @@ final class RoleManagerTest extends TestCase {
 				'merchboard_manage'          => true,
 				'merchboard_manage_creators' => true,
 				'merchboard_manage_settings' => true,
+				'merchboard_view_logs'       => true,
 			),
 			$roles->capabilities( 'administrator' )
 		);
@@ -229,8 +230,13 @@ final class RoleManagerTest extends TestCase {
 		// Capabilities the plugin does not (yet) define are granted to nobody.
 		foreach ( array( $admin, $creator, $subscriber ) as $user_roles ) {
 			self::assertFalse( $roles->user_with_roles_can( $user_roles, 'merchboard_manage_payouts' ) );
-			self::assertFalse( $roles->user_with_roles_can( $user_roles, 'merchboard_view_logs' ) );
+			self::assertFalse( $roles->user_with_roles_can( $user_roles, 'merchboard_view_reports' ) );
 		}
+
+		// Audit logs: administrators only; dashboard access never implies it.
+		self::assertTrue( $roles->user_with_roles_can( $admin, Capabilities::VIEW_LOGS ) );
+		self::assertFalse( $roles->user_with_roles_can( $creator, Capabilities::VIEW_LOGS ) );
+		self::assertFalse( $roles->user_with_roles_can( $customer, Capabilities::VIEW_LOGS ) );
 	}
 
 	/**
