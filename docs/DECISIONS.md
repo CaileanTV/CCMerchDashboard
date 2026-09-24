@@ -619,3 +619,40 @@ Forudsigelig slut-tilstand, idempotens, sikker håndtering af opdateringer og et
 - Ændringer i `Capabilities` kræver, at `RoleManager::VERSION` hæves.
 - Manuelle ændringer af `merchboard_creator` overskrives ved næste sync (dokumenteret).
 - Sites uden rollen `administrator` skal tildele plugin-capabilities manuelt (warning logges). Settings-baseret tildeling til andre roller kommer i fase 9.
+
+---
+
+# ADR-023: Audit trail som append-only forretningsdata med transaktionel skrivning
+
+## Date
+2026-09-24
+
+## Status
+Accepteret (fase 6)
+
+## Context
+Creator-administration skal registrere hvem der ændrede hvad (ADR-021 udskilte audit fra tekniske logs). Registreringen skal være konsistent med ændringen, respektere privacy og ikke kunne manipuleres fra requesten.
+
+## Decision
+- **Tabel** `merchboard_audit_log` (`action`, `actor_user_id` nullable, `creator_id` nullable, `context` JSON, `created_at` UTC) via migration 2.
+- **Lukket action-sæt** (`AuditAction`-enum), **én record pr. semantisk ændring**: `creator_created`, `creator_updated` (kun feltnavne), `creator_activated`/`creator_deactivated` (tidligere status) og `creator_user_linked`/`creator_user_unlinked` (bruger-ID).
+- **Actor og tid bestemmes server-side** i `AuditTrail` (`get_current_user_id()`, `current_time( 'mysql', true )`). **NULL-actor** for systemhandlinger, så der aldrig opfindes et bruger-ID.
+- **Privacy:** ingen display names eller andre værdier i context, kun feltnavne, statusser og ID'er. Context renses desuden af `LogContext`. Ingen IP/user agent.
+- **Append-only:** repositoriet har kun append og læsning. Sletning sker kun via opt-in "slet alle data" (fase 9).
+- **Konsistens:** `CreatorService` skriver creator-ændring og audit-record(s) i én **rigtig databasetransaktion** (`Transaction`: `START TRANSACTION`/`COMMIT`/`ROLLBACK` via `$wpdb`). Fejler audit-skrivningen, rulles ændringen tilbage, og fejlen propagerer og logges af handleren. Rolleændringer (`wp_usermeta`) sker **efter** commit, så en rollback aldrig efterlader en rolle-cache ude af sync. Fejler rolleændringen, fejler adgangen sikkert, fordi adgang kræver både rolle og aktiv record.
+
+## Alternatives considered
+- **Audit via Logger/WooCommerce-log:** tekniske logs har anden retention og tærskel og er ikke forretningsdata (ADR-021).
+- **Én `creator_changed`-action med diff:** kompakt, men sværere at filtrere og fristende at gemme værdier. Én action pr. semantisk ændring er tydeligere.
+- **Gemme gamle/nye display names:** nyttigt for historik, men personnavne i en uforanderlig log komplicerer GDPR (sletning). Kan tilføjes senere med en ny ADR.
+- **Audit først, ændring bagefter (uden transaktion) eller "best effort":** kan efterlade audit for ændringer, der aldrig skete, eller omvendt. En pseudo-transaktion ville give falsk sikkerhed.
+- **WordPress hooks som event-bus til audit:** løsere kobling, men gør konsistens med transaktionen svær. Kan tilføjes senere ovenpå.
+
+## Reason
+Pålidelig, manipulationssikker og privacy-venlig historik med en ærlig konsistensgaranti. Rollback er verificeret i SQLite/Playground.
+
+## Consequences
+- Transaktionsgarantien forudsætter en transaktionel storage engine (InnoDB på MySQL/MariaDB, som er WordPress' default). MyISAM ville ikke rulle tilbage. Fejlen logges så, men ændringen består. MySQL-verifikation sker i fase 7/16.
+- `Transaction` er ikke re-entrant. Fremtidige use cases må ikke indlejre transaktioner.
+- Nye auditerbare hændelser kræver nye `AuditAction`-cases (ingen fri tekst).
+- Audit-retention er et åbent spørgsmål.

@@ -50,6 +50,18 @@ Test-doubles: `tests/Fixtures/wp-role.php` (minimal `WP_Role`, ekskluderet fra P
 
 **Hvad unit-tests ikke kan bevise:** WordPress' faktiske `user_can()`-opløsning. Den er verificeret i Playground med rigtige brugere (se PROJECT-STATUS).
 
+**Unit-tests fra fase 6 (creator-administration og audit):**
+
+- `CreatorService`: create/update/status/link/unlink/relink, audit pr. semantisk ændring med minimal context (display names aldrig i audit), capability-krav for alle operationer (creator, subscriber, plugin-admin uden capability og WP-admin uden capability afvises), ukendt/ugyldig creator, ukendt bruger, bruger koblet andetsteds, ugyldige navne, uændret redigering skriver intet, **fejlet audit-skrivning ruller creator-ændringen tilbage** (ingen rolleændring), fejlet creator-skrivning skriver ingen audit, actor fra serveren (NULL uden bruger), timestamps.
+- `CreatorAdminActions`: gyldige flows, 403 for uautoriserede (selv med gyldig nonce), manglende/forfalsket nonce, **nonce bundet til creator-ID** (ID-bytte afvises), ugyldig status/bruger/navn, ikke-skalært input, sanitization, requesten kan ikke sætte actor/tid/ID, teknisk fejl logges én gang og vises neutralt, whitelistede notices.
+- `CreatorsAdminPage`: formularer renderes (regression: enum i `selected()` gav fatal i Playground), sikker default `inactive`, nonce bundet til ID, brugere koblet andetsteds tilbydes ikke, escaping af display name, whitelistede notices, 403 uden capability.
+- `AuditTrail`/`AuditRepository`: lukket action-sæt, server-side actor/UTC, NULL-actor for system, følsomme nøgler gemmes aldrig, ugyldige ID'er, generisk fejl, `for_creator`, append-only (kun `append`/`for_creator` er offentlige).
+- `Transaction`: commit, rollback og videre-kast, start- og commit-fejl, nested afvises.
+- `CreatorRepository`: rename/status/link/unlink opdaterer `updated_at`, UNIQUE som sidste net, manglende creator, ugyldige ID'er/navne, `paginate` (filter, sortering, sider, whitelist, max 100), `linked_user_ids`.
+- Migration 2 (`CreateAuditLogTable`) og opgradering 1 → 2.
+
+Test-doubles: `FakeDatabase` (in-memory `wpdb`, der udfører pluginets prepared queries med UNIQUE, auto-increment og transaktion med snapshot/rollback, og som kaster på ukendte query-former), `FakeUserAccounts` og `WpDie`. Service, repositories, audit og transaktion testes med deres rigtige implementeringer.
+
 **Legacy-syntaks:** CI-jobbet `php-legacy-syntax` kører `php -l` på PHP 7.2 for hovedfilen, `src/Core/Requirements.php` og `uninstall.php`, så versionstjekket kan vise en notice i stedet for en parse error.
 
 ## Security-tests er obligatoriske

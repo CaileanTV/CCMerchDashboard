@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 5 (Roller og capabilities) · **Næste fase:** 6 (Creator-service og audit trail) · **Schemaversion:** 1 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 6 (Creator-administration og audit trail) · **Næste fase:** 7 (Integrationstest-infrastruktur) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -70,6 +70,20 @@
 
 **Bevidst ikke i fase 5:** creator-adgang (capability + aktiv record), meta-caps og wp-admin-blokering (fase 8), `merchboard_view_logs` (11), rolle-oprydning ved uninstall (9), admin-UI, REST, frontend og `/me`.
 
+### Fase 6 – Creator-administration og audit trail ✅
+
+- [x] Migration 2: `merchboard_audit_log` (append-only, actor nullable, UTC, minimal JSON-context). Schemaversion 2.
+- [x] `AuditAction` (6 actions, lukket sæt), `AuditTrail` (server-side actor/tid, renset context) og `AuditRepository` (kun append/for_creator).
+- [x] `Transaction`: ægte databasetransaktion. Creator-ændring og audit committes sammen eller slet ikke (ADR-023).
+- [x] `CreatorRepository`: rename, set_status, link_user, unlink_user, paginate og linked_user_ids. Ingen delete.
+- [x] `CreatorService`: capability-tjek, validering (navn, bruger findes, ikke koblet andetsteds), én audit-record pr. semantisk ændring, rolle `merchboard_creator` tildeles/fjernes efter commit.
+- [x] Admin: "Merch Dashboard → Creators" (`WP_List_Table`, statusfilter, sortering), opret/rediger (default inaktiv), aktivér/deaktivér-links, tilknyt/frakobl bruger. `admin-post.php` med capability → nonce (bundet til ID) → input → PRG med whitelistede notices.
+- [x] 278 unit-tests (661 assertions). Lint og PHPStan level 8 er grønne.
+- [x] Playground via **det rigtige admin-UI**, med og uden WooCommerce: fuldt flow (opret, tilknyt, omdøb, deaktivér, aktivér, frakobl), 6 audit-records med actor 1 og UTC-tid, følsom testmarkør ikke i audit, rolle tildelt som ekstra rolle og fjernet igen, ugyldig/forfalsket/fremmed nonce → 403, subscriber og tilknyttet creator-bruger → 403, ukendt bruger/status/tomt navn → pæne fejl, deaktivering/genaktivering bevarer data, **ægte rollback i SQLite** (probe), ingen fatals/notices, og REST og wp-admin svarer 200.
+- [x] Fundet og rettet via Playground: enum i `selected()` gav fatal på formularen (regressionstest tilføjet).
+
+**Bevidst ikke i fase 6:** audit-visning og `merchboard_view_logs` (11), meta-capabilities, creator-adgang og `deleted_user`-hook (8), permanent sletning (9), dashboard, REST, `/me`, WooCommerce-data.
+
 ## In progress
 
 Intet.
@@ -78,9 +92,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 6:** Creator-service og audit trail.
-2. **Fase 7:** Integrationstest-infrastruktur (MySQL i CI).
-3. **Fase 8:** Creator access og login-flow.
+1. **Fase 7:** Integrationstest-infrastruktur (MySQL i CI).
+2. **Fase 8:** Creator access og login-flow (inkl. `deleted_user`-hook).
+3. **Fase 9:** Admin shell: overview og settings.
 
 ## Known bugs
 
@@ -95,6 +109,10 @@ Ingen (der er ingen funktionalitet endnu).
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
 | MySQL-verifikation | Schema og repository er kun kørt mod SQLite (Playground) og unit-tests. `dbDelta()`-adfærd, strict mode, charset og låsens atomicitet på MySQL/MariaDB er ikke verificeret. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
+| Dinglende `user_id` ved brugersletning | Indtil `deleted_user`-hooken (fase 8) peger en creator på en slettet bruger ("Unknown user #ID" i listen). Creator-data påvirkes ikke. | Fase 8 |
+| Transaktioner på MySQL | Kun verificeret i SQLite. Kræver InnoDB. MyISAM ville ikke rulle tilbage (fejlen logges dog). | Fase 7 (CI/MySQL) og fase 16 (staging) |
+| Brugervalg | Select med max 500 brugere | Søgbart valg i fase 10 |
+| Audit-retention | Ubegrænset opbevaring. Ingen politik for automatisk sletning. | Afklares (åbent spørgsmål 10) |
 | Creator-rollen har `read` | Creators kan indtil fase 8 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). Der findes ingen creators endnu (intet UI). | Blokering af wp-admin for creators i fase 8 |
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller i fase 9. |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
@@ -118,15 +136,16 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. ✅ **Navn/prefix – lukket (ADR-018):** Produktnavn `Merch Dashboard`, teknisk prefix `merchboard`, PHP-namespace `MerchBoard\`. Låst før fase 3. Den tidligere midlertidige konvention `ccmerch` er migreret i hele repo'et.
 2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
 3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
-4. **Teams:** Kan en creator have flere brugere (fx manager)? (fase 6. Påvirker kun, om vi bygger det nu.)
+4. **Teams:** Kan en creator have flere brugere (fx manager)? (senest før fase 8: adgangsmodellen antager én bruger pr. creator)
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
 7. **UI-sprog:** Dansk, engelsk eller begge i creator-dashboardet? (fase 15)
 8. **Dashboard-URL:** `/creator-dashboard/` eller andet (fx `/studio/`)? (fase 12)
 9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). (fase 7)
+10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. (fase 9/11)
 
 ## Next recommended steps
 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så CI-integrationstests i fase 7 kan køre mod samme version.
-3. Kør fase 6 med prompten: *"Implementér roadmap-fase 6 (Creator-domæne og audit trail) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
+3. Kør fase 7 med prompten: *"Implementér roadmap-fase 7 (Integrationstest-infrastruktur) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*

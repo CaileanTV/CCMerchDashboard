@@ -68,7 +68,8 @@ merchboard/
 │   │   ├── Module.php           # interface for moduler                             [fase 2]
 │   │   ├── Lifecycle/           # Installer (aktivering + versionstjek) [fase 3], Deactivator [fase 4]
 │   │   ├── Database/            # Tables, Schema, Migration, Migrator, DatabaseException,
-│   │   │                        # Migrations/CreateCreatorsTable                     [fase 3]
+│   │   │                        # Migrations/CreateCreatorsTable [fase 3], CreateAuditLogTable, Transaction [fase 6]
+│   │   ├── Audit/               # AuditAction, AuditTrail, AuditRepository, AuditEntry [fase 6]
 │   │   ├── Security/            # Capabilities, RoleManager [fase 5]; map_meta_cap [fase 8]
 │   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
@@ -77,7 +78,7 @@ merchboard/
 │   │   └── Support/             # Assets (læser build/*.asset.php), Template-renderer
 │   └── Modules/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
-│       │                        # CreatorService [fase 6], Admin/ [fase 10], Rest/ (admin-endpoints)
+│       │                        # CreatorService, CreatorException, UserAccounts, Admin/ (page, list table, actions) [fase 6]
 │       ├── Access/              # CreatorContext, LoginRedirect, AdminAreaGuard
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
 │       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*
@@ -160,7 +161,7 @@ Se [DATABASE.md](DATABASE.md). Kort:
 - **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta.
 - **`merchboard_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
 - **Tekniske logs** = WooCommerce-logger eller `error_log()` (fase 4, ADR-021). Ingen tabel.
-- **`merchboard_audit_log`** (planlagt, fase 6) = audit trail.
+- **`merchboard_audit_log`** (✅ fase 6, ADR-023) = append-only audit trail (`Core/Audit`: `AuditAction`, `AuditTrail`, `AuditRepository`). Creator-ændringer og audit skrives i én databasetransaktion (`Core/Database/Transaction`).
 - **Options** = settings og schemaversion (`merchboard_db_version`).
 
 Schemaændringer sker kun via versionerede migrationer (`src/Core/Database/Migrations/`, registreret i `Schema::migrations()`) og dokumenteres i DATABASE.md og CHANGELOG.md (ADR-019). Databaseadgang sker kun via repositories, som ikke udfører authorization. Det sker i laget over (fase 6+).
@@ -235,7 +236,7 @@ Tilgængeligheden tjekkes ved **hver** skrivning, ikke ved boot, så valget alti
 
 ### Audit trail (ikke teknisk logging)
 
-"Hvem ændrede hvad" (creator oprettet/deaktiveret, adgang ændret, settings ændret) er forretningsdata med andre krav (søgbar i wp-admin, lang opbevaring og altid registreret uanset log-niveau). Det implementeres som en egen tabel og service, når de første audit-hændelser opstår (roadmap-fase 6), og vises i admin (fase 11). Se ADR-021.
+"Hvem ændrede hvad" (creator oprettet/deaktiveret, adgang ændret, settings ændret) er forretningsdata med andre krav (søgbar i wp-admin, lang opbevaring og altid registreret uanset log-niveau). Implementeret i fase 6 som egen tabel og service (`merchboard_audit_log`, ADR-023). Vises i admin i fase 11. Se [DATABASE.md](DATABASE.md#merchboard_audit_log--schema-version-2-adr-023).
 
 ## 12. Hooks (udvidelsespunkter)
 

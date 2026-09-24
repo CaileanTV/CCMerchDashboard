@@ -1,6 +1,6 @@
 # WordPress Admin
 
-> Status: **Design.** Admin-shell kommer i fase 9, creator-administration i fase 10, logs i fase 11.
+> Status: **Creator-administration implementeret (fase 6).** Overview og Settings kommer i fase 9, audit-visning i fase 11.
 
 ## Principper
 
@@ -11,12 +11,12 @@
 ## Menustruktur
 
 ```text
-Merch Dashboard                       (capability: merchboard_manage)
-├── Overview                   nøgletal, seneste audit-hændelser, systemstatus (WooCommerce aktiv? rewrite OK? migrationer OK?)
-├── Creators                   liste (WP_List_Table: søg, filtrér på status, paginering)
-│   └── (Add/Edit creator)     skjult side: vælg/opret WP-bruger, visningsnavn, slug, status, profilfelter
-├── Settings                   tabs: General · Access · Advanced (senere: Integrations, WooCommerce)
-└── Audit log                  filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
+Merch Dashboard                       (fase 6: menu-capability merchboard_manage_creators; fase 9: merchboard_manage)
+├── Overview                   [fase 9]                   nøgletal, seneste audit-hændelser, systemstatus (WooCommerce aktiv? rewrite OK? migrationer OK?)
+├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
+│   └── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger
+├── Settings                   [fase 9] tabs: General · Access · Advanced (senere: Integrations, WooCommerce)
+└── Audit log  [fase 11]                 filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
 ### Kritik af det oprindelige forslag og ændringer
@@ -31,16 +31,31 @@ Merch Dashboard                       (capability: merchboard_manage)
 
 ## Skærme
 
-### Creators-liste
+### Creators-liste ✅ (fase 6)
 
-Kolonner: Visningsnavn (link til redigering), WP-bruger (link til `user-edit.php`), status-badge, antal produkter (fra fase 17) og oprettet. Row actions: Rediger, Deaktivér/Aktivér. Bulk actions: Deaktivér, Aktivér. Alle actions er nonce-beskyttede og audit-logges.
+`Modules/Creators/Admin/CreatorsListTable` (`WP_List_Table`). Kolonner: visningsnavn (link til redigering), WordPress-bruger ("Display Name (login)"; link til `user-edit.php` kun hvis den aktuelle bruger må redigere brugeren), status, oprettet og sidst opdateret (sitets tidszone). Views: Alle / Aktive / Inaktive. Sortering på visningsnavn, status, oprettet og opdateret (whitelisted igen i repositoriet). 20 pr. side.
 
-### Opret/rediger creator
+Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.php` med nonce, der er bundet til creator-ID'et). Ingen bulk actions og **ingen Delete** (se DATABASE.md). E-mails, passwords og andre brugerdata vises aldrig.
 
-- **Opret:** vælg eksisterende WP-bruger (søgbar dropdown, kun brugere uden creator-record) **eller** opret ny bruger (brugernavn og e-mail; WordPress sender "set password"-mail, og vi opretter aldrig passwords).
-- Oprettelse af creator giver automatisk rollen `merchboard_creator` (tilføjet som *ekstra* rolle, så eksisterende roller, fx `customer`, bevares).
-- Ændring af status til inaktiv fjerner adgang øjeblikkeligt: `CreatorContext` kræver `active`.
-- Sikkerhed: En admin kan ikke tildele en rolle højere end sin egen. Creator-rollen giver ingen admin-caps.
+### Opret/rediger creator ✅ (fase 6)
+
+- Felter: **visningsnavn** (1-191 tegn, `sanitize_text_field`), **status** (`active`/`inactive`; **default `inactive`** for nye creators, som sikker default) og **WordPress-bruger** (valgfri select).
+- Brugervalget viser kun ID, display name og login, aldrig e-mail. Det tilbyder op til 500 brugere, som ikke allerede er koblet til en anden creator. Den aktuelle bruger forbliver valgbar. Serveren validerer altid (bruger findes, ikke koblet andetsteds), og UNIQUE-indexet er sidste sikkerhedsnet.
+- **Tilknyt bruger** giver brugeren rollen `merchboard_creator` som *ekstra* rolle (eksisterende roller bevares). **Frakobl** fjerner kun den rolle. Hverken brugeren eller creator'en slettes. Rolleændringen sker efter commit (ADR-023).
+- **Deaktivering** bevarer rollen. Adgang (fase 8) kræver `active`.
+- Vi opretter ikke nye WordPress-brugere fra denne side (fase 6). Brugere oprettes via WordPress' egen "Users → Add New".
+
+### Request-flow (sikkerhed)
+
+Alle ændringer går via `Modules/Creators/Admin/CreatorAdminActions` på `admin-post.php` (`merchboard_save_creator`, `merchboard_set_creator_status`):
+
+1. `current_user_can( Capabilities::MANAGE_CREATORS )`, ellers `wp_die` 403.
+2. Nonce via `wp_verify_nonce()`, bundet til handling **og** creator-ID (`merchboard_save_creator_{id}`, `merchboard_set_creator_status_{id}`), ellers 403. Et gyldigt link til creator 1 kan ikke genbruges på creator 2.
+3. Input: `absint` for ID'er, `CreatorStatus::tryFrom` for status, `sanitize_text_field` for navn. Ikke-skalære felter behandles som tomme. Actor, tidsstempler og ID'er kan ikke sættes fra requesten.
+4. `CreatorService` tjekker capability igen, validerer forretningsregler og skriver ændring og audit i én transaktion.
+5. Post/Redirect/Get med en **whitelistet notice-kode** (`merchboard_notice`). Der er ingen fri tekst i URL'en, og ukendte koder vises ikke. Tekniske fejl logges (Logger) og vises neutralt uden SQL, stier eller exception-tekst.
+
+Admin-siden selv er beskyttet af menu-capability'en og tjekker capability igen i `render()`.
 
 ### Bruger-profil (`user-edit.php`)
 

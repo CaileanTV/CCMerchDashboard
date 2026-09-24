@@ -32,7 +32,7 @@ Definitionerne findes ét sted: `MerchBoard\Core\Security\Capabilities` (konstan
 | `merchboard_manage_creators` | `Capabilities::MANAGE_CREATORS` | `administrator` | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra (fase 6/10) |
 | `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9) |
 
-Ingen kode bruger dem endnu. De er fundamentet for fase 6-10. Checks skal altid være positive capability-checks: `current_user_can( Capabilities::MANAGE_CREATORS )` / `user_can( $user, … )`. Aldrig "er logget ind", rolle- eller display-navne eller hardcodede user-ID'er.
+`merchboard_manage_creators` bruges fra fase 6 (creator-administration: admin-side, handlers og `CreatorService`). De øvrige er fundamentet for fase 8-10. Checks skal altid være positive capability-checks: `current_user_can( Capabilities::MANAGE_CREATORS )` / `user_can( $user, … )`. Aldrig "er logget ind", rolle- eller display-navne eller hardcodede user-ID'er.
 
 Administratorer beholder alle deres WordPress-capabilities uændret. Pluginet tilføjer kun sine egne. Pluginets admin-funktioner kræver pluginets capabilities, ikke `manage_options`, så de senere kan gives til fx en shop manager uden fulde admin-rettigheder (fase 9).
 
@@ -52,7 +52,7 @@ Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11)
 - Capabilities: **præcis** `read` og `merchboard_access_dashboard`.
   - `read` er WordPress' baseline for indloggede brugere (Subscriber har kun `read`). Den giver adgang til egen profil i wp-admin som en Subscriber. Blokering af wp-admin for creators kommer i fase 8.
 - Rollen **må ikke** have: `manage_options`, `activate_plugins`, `edit_users`, `delete_users`, `create_users`, `list_users`, `promote_users`, `edit_posts`, `upload_files`, `unfiltered_html`, `manage_woocommerce` eller andre brede capabilities, og heller ingen af pluginets admin-capabilities. Det håndhæves ved hver synkronisering (se nedenfor).
-- Tildeles som **ekstra rolle** (`$user->add_role()`, fase 6/10), så en eksisterende rolle (fx WooCommerce `customer`) bevares.
+- Tildeles som **ekstra rolle**, når en bruger tilknyttes en creator i admin (fase 6, `WordPressUserAccounts::grant_creator_role()`), så en eksisterende rolle (fx WooCommerce `customer`) bevares. Fjernes igen ved frakobling. Verificeret i Playground.
 
 ## Installation og synkronisering (ADR-022)
 
@@ -92,11 +92,11 @@ Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med 
 
 | Handling (admin) | Effekt |
 | --- | --- |
-| Opret creator for bruger | Record (`active`) oprettes og rolle `merchboard_creator` tilføjes. Audit-log. |
-| Deaktivér | `status = inactive`. Rollen **bevares**, så genaktivering er nem, men adgangen forsvinder øjeblikkeligt pga. regel 4. Aktive sessioner afvises på næste request. Valgfrit: `WP_Session_Tokens::destroy_all()` for brugeren. Audit-log. |
-| Genaktivér | `status = active`. Audit-log. |
-| Frakobl bruger | `user_id = NULL`, og rollen fjernes. Creator-recorden og historikken bevares på creator-ID'et. Audit-log. |
-| WP-bruger slettes | Hook `deleted_user` (fase 6): creator'ens `user_id = NULL` og `status = inactive`. Creator-data bevares. Audit-log. |
+| Opret creator (med eller uden bruger) | Record oprettes (default `inactive`). Med bruger tilføjes rollen `merchboard_creator` som ekstra rolle. Audit: `creator_created`. ✅ fase 6 |
+| Deaktivér ✅ fase 6 | `status = inactive`. Rollen **bevares**, så genaktivering er nem, men adgangen forsvinder øjeblikkeligt pga. regel 4. Aktive sessioner afvises på næste request. Valgfrit: `WP_Session_Tokens::destroy_all()` for brugeren. Audit-log. |
+| Genaktivér ✅ fase 6 | `status = active`. Audit: `creator_activated`. |
+| Frakobl bruger ✅ fase 6 | `user_id = NULL`, og rollen fjernes (brugeren slettes ikke). Creator-recorden og historikken bevares på creator-ID'et. Audit-log. |
+| WP-bruger slettes | Hook `deleted_user` (**fase 8**, flyttet fra fase 6): creator'ens `user_id = NULL` og `status = inactive`. Creator-data bevares. Audit-log. |
 
 Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md](DATABASE.md#statusmodel)). Et separat "arkiveret"-tilstand tilføjes kun, hvis en fase får et konkret behov.
 

@@ -143,9 +143,19 @@ Tekniske logs (fase 4, ADR-021, [ARCHITECTURE.md §11](ARCHITECTURE.md#11-loggin
 
 **Production:** Standardtærsklen er `warning`, og debug-output kræver `WP_DEBUG` (som pluginet aldrig ændrer). Der sker ingen output til browseren.
 
-### Audit trail (planlagt, fase 6)
+### Creator-administration (fase 6)
 
-Adgangs- og rettighedsændringer, creator-statusændringer og settings-ændringer registreres i en separat audit-tabel med actor og target (ADR-021). Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding) fra fase 8.
+- **Authorization:** `merchboard_manage_creators` tjekkes i admin-sidens `render()`, i hver admin-post-handler (før input læses) og igen i `CreatorService`. Ikke `manage_options`, `is_admin()` eller rollenavne. Creator-brugere og subscribers får 403 (verificeret i Playground).
+- **CSRF/IDOR:** Nonces er bundet til creator-ID'et, så en gyldig nonce for én creator ikke virker på en anden (test og Playground). Creator-ID valideres server-side (`absint` og eksistens). Statuslinks er nonce-beskyttede GET-links (WordPress' row-action-mønster).
+- **Ingen klientstyret tilstand:** actor (`get_current_user_id()`), tidsstempler (`current_time( …, true )`) og ID'er bestemmes server-side. Ekstra POST-felter som `actor_user_id` og `created_at` ignoreres (test).
+- **Input/output:** Kun whitelistede felter læses. Status er enum, ID'er `absint`, navn `sanitize_text_field`. Al output escapes (`esc_html`, `esc_attr`, `esc_url`). Notices bruger whitelistede koder.
+- **Privilege escalation:** Tilknytning giver kun rollen `merchboard_creator` (`read` + `merchboard_access_dashboard`). Ingen andre roller kan tildeles herfra.
+- **Ingen permanent sletning** fra UI'et.
+- **Brugerdata:** Brugervalg viser display name og login, aldrig e-mail.
+
+### Audit trail (fase 6, ADR-023)
+
+Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, UTC-tid og minimal context (feltnavne, statusser og bruger-ID'er, **ingen display names eller andre værdier**). Context renses desuden via `LogContext`. Records er append-only. Ændring og audit-record skrives i én transaktion. Settings-ændringer registreres fra fase 9. Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding) fra fase 8.
 
 ## Tjekliste pr. ændring
 

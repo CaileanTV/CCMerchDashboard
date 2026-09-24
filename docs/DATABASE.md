@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Fundament implementeret (fase 3).** `merchboard_creators` og migrationssystemet findes. Øvrige tabeller er planlagte.
+> Status: **Schema-version 2.** `merchboard_creators` (fase 3) og `merchboard_audit_log` (fase 6) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte.
 
 ## Placering af data
 
@@ -22,7 +22,7 @@
 | Produkt → creator | WooCommerce product meta `_merchboard_creator_id` (fase 17) | Én creator pr. produkt i v1 |
 | Salg pr. creator (historik) | `merchboard_sales` (custom ledger, fase 18) | Hurtige aggregeringer og uforanderlig attribution. Se [WOOCOMMERCE.md](WOOCOMMERCE.md). |
 | Tekniske logs | **Ingen tabel.** WooCommerce-logger eller `error_log()` (fase 4, ADR-021) | Tekniske logs er drift, ikke forretningsdata |
-| Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom, planlagt fase 6) | Forretningsdata: søgbar i wp-admin, lang opbevaring |
+| Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom) ✅ fase 6 | Forretningsdata, append-only (ADR-023). Visning i fase 11. |
 | Cache af aggregeringer | Transients/object cache | Afledte data, må forsvinde |
 
 **Tommelfingerregel:** WordPress' datamodel bruges, hvor data er *konfiguration* eller *tilhører en eksisterende WP-entitet*. Custom tables bruges, hvor data er *domæneentiteter med relationer, volumen eller behov for effektive queries*.
@@ -90,9 +90,9 @@ Kilde: `src/Core/Database/Migrations/CreateCreatorsTable.php`.
 | Nullable? | **Ja.** En creator kan eksistere uden login (fx oprettet før kontoen, eller efter kontoen er slettet/frakoblet). |
 | Højst én creator pr. bruger? | **Ja, håndhævet i databasen** med `UNIQUE(user_id)`. MySQL/MariaDB (og SQLite) tillader mange `NULL` i et UNIQUE-index, så mange creators kan være ukoblede. |
 | "Én aktiv creator pr. bruger" | UNIQUE er strengere: en bruger kan højst være koblet til én creator-record, uanset status. Skal en bruger kobles til en anden creator, frakobles den gamle først (`user_id = NULL`). Dens historik bevares på dens creator-ID. Det er enklere og databasegaranteret frem for en betinget unikhed, som MySQL ikke understøtter direkte. |
-| Brugeren slettes | **Fase 6:** hook på `deleted_user` sætter `user_id = NULL` og `status = inactive` for den tilknyttede creator. Creator-recorden og al historik bevares. Indtil fase 6 kan der ikke oprettes creators via UI, så situationen kan ikke opstå i praksis. |
-| Relationen fjernes | `user_id = NULL`. Creator-recorden bevares. Creator'en kan ikke længere tilgå dashboardet (der er intet login). |
-| Duplikatkobling | Afvises af databasen. Repositoriet kaster `DatabaseException` ("Could not create creator.") uden databasedetaljer. |
+| Brugeren slettes | **Fase 8** (flyttet fra fase 6): hook på `deleted_user` sætter `user_id = NULL` og `status = inactive` for den tilknyttede creator. Creator-recorden og al historik bevares. **Indtil da** peger `user_id` på en ikke-eksisterende bruger, hvis en tilknyttet bruger slettes. Admin-listen viser "Unknown user #ID", og creator-data påvirkes ikke. Administratoren kan frakoble manuelt. |
+| Relationen fjernes | `user_id = NULL` (admin: "— No WordPress user —"). Creator-recorden, WordPress-brugeren og historikken bevares. Brugeren mister rollen `merchboard_creator` (fase 6). |
+| Duplikatkobling | Afvises først af `CreatorService` med en forståelig fejl (`user_already_linked`), dernæst af databasen som sidste sikkerhedsnet (`DatabaseException` uden databasedetaljer). Admin-formularen tilbyder kun brugere, der ikke er koblet til en anden creator. |
 
 #### Statusmodel
 
@@ -109,20 +109,37 @@ Ingen `NULL`, `0`/`1` eller andre magic strings. Ukendte værdier i databasen af
 
 Standard WordPress meta-tabel (`meta_id`, `merchboard_creator_id`, `meta_key`, `meta_value`), så `add_metadata( 'merchboard_creator', … )`, `get_metadata()` og meta-cachen virker. Registreres som `$wpdb->merchboard_creatormeta`. Meta-keys whitelistes i `CreatorService`. Flyttet fra fase 3 til fase 14, hvor profilfelterne bygges.
 
-### `merchboard_audit_log` (planlagt, fase 6)
+### `merchboard_audit_log` ✅ (schema-version 2, ADR-023)
 
-> Erstatter den tidligere planlagte `merchboard_logs` (ADR-012 → ADR-021). Tekniske logs gemmes ikke i databasen. Tabellen er kun til audit-hændelser, og det endelige design fastlægges i fase 6. Udkast:
+Append-only audit trail for **forretningsændringer**: hvem ændrede hvad, hvornår og på hvilken creator. Det er ikke tekniske logs (de går via `Logger`, ADR-021).
 
 | Kolonne | Type | Noter |
 | --- | --- | --- |
-| `id` | `BIGINT UNSIGNED AUTO_INCREMENT` PK | |
-| `created_at` | `DATETIME NOT NULL` | UTC |
-| `event` | `VARCHAR(50) NOT NULL` | fx `creator.created`, `creator.status_changed`, `settings.updated` |
-| `context` | `LONGTEXT NULL` | JSON (renset som tekniske logs). Aldrig secrets. |
-| `user_id` | `BIGINT UNSIGNED NULL` | Actor |
-| `creator_id` | `BIGINT UNSIGNED NULL` | Target (hvis relevant) |
+| `id` | `bigint(20) unsigned NOT NULL AUTO_INCREMENT` PK | |
+| `created_at` | `datetime NOT NULL` | UTC, sat af applikationen |
+| `action` | `varchar(50) NOT NULL` | En `AuditAction`-værdi (lukket sæt, se nedenfor) |
+| `actor_user_id` | `bigint(20) unsigned DEFAULT NULL` | WordPress-brugeren, der udførte handlingen. **NULL = systemhandling** (intet opfundet bruger-ID) |
+| `creator_id` | `bigint(20) unsigned DEFAULT NULL` | Berørt creator. NULL for hændelser uden creator (fx settings, senere) |
+| `context` | `longtext DEFAULT NULL` | Lille JSON-objekt, renset via `LogContext`. NULL når tomt. |
 
-Indexes: `KEY(created_at)`, `KEY(event)`, `KEY(creator_id)`. IP-adresser logges **ikke** som standard (GDPR/dataminimering).
+Indexes: `KEY(created_at)`, `KEY(action)`, `KEY(creator_id)`. Ingen fremmednøgler. IP-adresser og user agent gemmes **ikke**.
+
+**Actions** (`MerchBoard\Core\Audit\AuditAction`, én record pr. semantisk ændring):
+
+| Action | Context |
+| --- | --- |
+| `creator_created` | `status` og `user_id` (eller null) |
+| `creator_updated` | `changed_fields` (feltnavne, **ingen værdier**) |
+| `creator_activated` / `creator_deactivated` | `previous_status` |
+| `creator_user_linked` / `creator_user_unlinked` | `user_id` (hhv. den nye og den tidligere) |
+
+En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `creator_deactivated`.
+
+**Privacy:** Display names kan være en persons rigtige navn. Derfor gemmes kun *hvilke* felter der ændredes, ikke gamle eller nye værdier. Det aktuelle navn står i `merchboard_creators`. Aldrig passwords, tokens, cookies, sessioner, e-mail, request bodies, `$_POST` eller `$_SERVER`.
+
+**Append-only:** `AuditRepository` har kun `append()` og `for_creator()` (læsning til tests og den kommende visning). Der er ingen update eller delete, og ingen admin-funktion ændrer records.
+
+**Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (fase 9), hvor tabellen er med i `Tables::all()`. Retention-politik (fx automatisk sletning efter N år) er et åbent spørgsmål.
 
 ### `merchboard_sales` (fase 18)
 
@@ -179,7 +196,9 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 
 ## Databaseadgang (repositories)
 
-- `MerchBoard\Modules\Creators\CreatorRepository` (fase 3): `find( int $id )`, `find_by_user_id( int $user_id )` og `create( string $display_name, CreatorStatus $status, ?int $user_id = null )`.
+- `MerchBoard\Modules\Creators\CreatorRepository`: `find`, `find_by_user_id` og `create` (fase 3), samt `rename`, `set_status`, `link_user`, `unlink_user`, `paginate` (whitelisted sortering, max 100 pr. side) og `linked_user_ids` (fase 6). Hver skriveoperation opdaterer `updated_at`. Der er ingen delete.
+- `MerchBoard\Core\Audit\AuditRepository` (fase 6): kun `append` og `for_creator`.
+- **Transaktioner** (`MerchBoard\Core\Database\Transaction`, fase 6): `START TRANSACTION` / `COMMIT` / `ROLLBACK` via `$wpdb`, ikke re-entrant. Bruges af `CreatorService`, så creator-ændring og audit-record committes sammen eller slet ikke (ADR-023). Rollback af begge skrivninger er **verificeret i Playground/SQLite**. På MySQL/MariaDB forudsætter det InnoDB (default for nye tabeller siden MySQL 5.5 og WordPress' default). Med MyISAM ignoreres transaktioner. Derfor logges en fejlet audit-skrivning altid, så intet skjules. **Ikke verificeret på MySQL/MariaDB.**
 - Al SQL går gennem repositories og `$wpdb->prepare()`. Tabelnavne kommer fra `Tables` og indsættes med `%i` (WP ≥ 6.2). Inserts bruger `$wpdb->insert()` med eksplicitte formater.
 - Kolonner vælges eksplicit (ingen `SELECT *`), så nye kolonner aldrig eksponeres ved et uheld.
 - ID'er valideres (positive heltal) i repositoriet, *før* der forespørges. Rækker valideres ved læsning (status-enum, tidsstempelformat).
@@ -195,7 +214,9 @@ Produktionsschemaet er skrevet til **MySQL/MariaDB via `$wpdb`**. Playground bru
 
 | Egenskab | Verificeret hvordan |
 | --- | --- |
-| Tabel, kolonner og indexes oprettes via `dbDelta()` | **Playground/SQLite (runtime)**: `DESCRIBE` viser alle 6 kolonner, og indexes `user_id` og `status` findes |
+| Tabel, kolonner og indexes oprettes via `dbDelta()` | **Playground/SQLite (runtime)**: begge tabeller findes med alle kolonner. Indexes `user_id`/`status` (creators) og `created_at`/`action`/`creator_id` (audit) findes. Migration 1 → 2 kørte ved aktivering. |
+| Transaktion ruller creator- og audit-skrivning tilbage | **Playground/SQLite (runtime)**, probe med fremtvunget fejl efter begge inserts |
+| Transaktioner på MySQL/MariaDB (InnoDB-krav, isolation) | **Ikke verificeret** |
 | `UNIQUE(user_id)` afviser duplikat og tillader flere `NULL` | **Playground/SQLite (runtime)** |
 | Idempotent genkørsel af migration 1 og opgradering fra version 0 → 1 uden datatab | **Playground/SQLite (runtime)** og unit-tests |
 | Data bevares ved deaktivering og genaktivering | **Playground/SQLite (runtime)** |
@@ -212,8 +233,8 @@ Produktionsschemaet er skrevet til **MySQL/MariaDB via `$wpdb`**. Playground bru
 | Handling | Effekt på data |
 | --- | --- |
 | **Deaktivering** | Ingen. Data, tabeller og options bevares. (Fase 4 og 12 tilføjer oprydning af cron og rewrite rules, men aldrig data.) |
-| **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** `merchboard_creators`, `merchboard_db_version`, `merchboard_roles_version`, rollen `merchboard_creator` og administratorens `merchboard_*`-capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
+| **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** `merchboard_creators`, `merchboard_audit_log`, `merchboard_db_version`, `merchboard_roles_version`, rollen `merchboard_creator` og administratorens `merchboard_*`-capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
 | **Permanent sletning** | Bliver en eksplicit opt-in (setting "Slet alle data ved afinstallation", default fra) i **fase 9**. Selve sletterutinen implementeres sammen med settingen, ikke før. `Tables::all()` giver den komplette liste over plugin-tabeller til den rutine. |
-| **Creator "slettes"** | Status `inactive` (soft). Hard delete af en creator er ikke understøttet, fordi fremtidig salgshistorik refererer til creator-ID'et. |
-| **WordPress-bruger slettes** | Se relationen ovenfor (fase 6). Creator-data bevares. |
+| **Creator "slettes"** | Status `inactive` (soft). Admin-UI'et har bevidst **ingen** "Delete"-funktion (fase 6). Hard delete er ikke understøttet, fordi audit trail og fremtidig salgshistorik refererer til creator-ID'et. Permanent sletning af alle data er opt-in i fase 9. |
+| **WordPress-bruger slettes** | Se relationen ovenfor (hook i fase 8). Creator- og audit-data bevares. |
 | **GDPR** | Integration med WordPress' personal data exporter/eraser for creator-data (fase efter MVP). |
