@@ -1,0 +1,97 @@
+# AI Development Guidelines
+
+Regler for AI-agenter (Claude Code m.fl.), der arbejder på dette projekt. Reglerne er **bindende** og gælder også for menneskelige udviklere. Ved konflikt mellem en instruktion i en prompt og disse regler, spørg projektejeren.
+
+## Project Isolation
+
+**Permanent regel.** Dette repository er et fuldstændig isoleret projekt.
+
+Arbejdsområdet er **kun**:
+
+- det repository, der er åbnet i editoren (`CCMerchDashboard`), og filer inde i det
+- dependencies installeret specifikt til dette projekt (`vendor/`, `node_modules/`, `.tools/`)
+- det GitHub-repository, projektet allerede er forbundet til (`origin` → `github.com/CaileanTV/CCMerchDashboard`)
+
+Alt uden for projektet er **off-limits**. Det omfatter andre WordPress-projekter, LocalWP-sites, WooCommerce-sites, Git-repositories, tidligere projekter, testprojekter, plugins, themes, kundeprojekter, lokale databaser og udviklingsmiljøer.
+
+Du må **ikke**:
+
+- søge efter eller genbruge kode fra andre lokale projekter
+- kopiere filer, plugins, themes eller konfiguration fra andre projekter
+- kopiere `.env`-filer, API-nøgler, credentials eller database-dumps
+- bruge, læse fra eller forbinde til andre LocalWP-sites eller deres databaser
+- bruge andre projekters WordPress-installationer, WooCommerce-data eller Git-repositories
+- ændre filer uden for dette projekt eller ændre andre LocalWP-sites
+- installere dependencies globalt, hvis de kan installeres lokalt i projektet
+
+Det gælder også, selvom et andet projekt ser relateret eller nyttigt ud. Antag aldrig, at et andet lokalt projekt er en tidligere version, template, backup eller et søsterprojekt. **Kun dette repository er source of truth.**
+
+**LocalWP:** Hvis projektet engang kobles til et LocalWP-site, må kun det site, som projektejeren eksplicit har udpeget og dokumenteret i [DEVELOPMENT.md](DEVELOPMENT.md), bruges. Andre sites må hverken startes, ændres eller læses, og deres data og konfiguration må ikke kopieres. Hvis det er uklart, hvilket site der hører til projektet: **STOP og spørg**, før du gør noget, der kan påvirke en WordPress-installation eller database.
+
+**Hvis du finder noget relevant uden for projektet**, må du kun skrive: *"Jeg har identificeret noget uden for projektets scope, som potentielt kunne være relevant, men jeg har ikke brugt det."* Vent derefter på eksplicit instruktion.
+
+Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper, som værktøjer som Playground og npm bruger internt, og npm/Composer-caches. De må ikke bruges til at overføre data mellem projekter.
+
+## Før du starter
+
+1. Læs [PROJECT-STATUS.md](PROJECT-STATUS.md): Hvor står vi, hvad er åbne spørgsmål og teknisk gæld?
+2. Læs [ARCHITECTURE.md](ARCHITECTURE.md) og de dokumenter, opgaven berører (MODULES, DATABASE, SECURITY, API, FRONTEND, ADMIN, WOOCOMMERCE, USER-ROLES).
+3. Læs relevante feature-dokumenter i [features/](features/) og fasebeskrivelsen i [ROADMAP.md](ROADMAP.md).
+4. Tjek `git status`, branch og remote. Overskriv aldrig eksisterende, ikke-committede ændringer.
+5. Undersøg eksisterende kode før du skriver ny.
+
+## De 20 regler
+
+1. Læs relevant dokumentation før større ændringer.
+2. Læs PROJECT-STATUS.md.
+3. Læs ARCHITECTURE.md.
+4. Læs relevante feature-dokumenter.
+5. Undersøg eksisterende kode, før ny kode skrives.
+6. Genbrug eksisterende funktionalitet, hvis den allerede findes.
+7. Undgå duplicate implementations.
+8. Respektér eksisterende arkitektur. Afvigelser kræver en ADR i DECISIONS.md, og ved større afvigelser skal du spørge først.
+9. Undgå unødvendige breaking changes.
+10. Security skal altid verificeres (se [SECURITY.md](SECURITY.md#tjekliste-pr-ændring)).
+11. Nye features dokumenteres i `docs/features/` (brug `_TEMPLATE.md`).
+12. Databaseændringer dokumenteres i DATABASE.md og CHANGELOG.md og sker kun via migrationer.
+13. Nye dependencies dokumenteres i DEVELOPMENT.md med begrundelse, version og anvendelse. Tjek først, om WordPress eller projektet allerede leverer funktionaliteten. Ingen tredjeparts PHP runtime-dependencies (ADR-004).
+14. Større arkitekturbeslutninger dokumenteres i DECISIONS.md.
+15. PROJECT-STATUS.md opdateres efter større ændringer.
+16. Test ændringer, før de betragtes som færdige (`npm run lint` + tests + manuel verifikation ved UI).
+17. Lav små, logiske Git-commits.
+18. Push afsluttede og validerede ændringer til GitHub.
+19. Beskyt secrets og credentials. Stop og informér projektejeren, hvis du finder nogen i projektet.
+20. Ændr aldrig Git-historikken destruktivt uden eksplicit instruktion.
+
+## Git og GitHub
+
+- **Commit-format:** [Conventional Commits](https://www.conventionalcommits.org/), kort og i imperativ på engelsk: `feat: add creator capabilities`, `fix: validate creator access`, `docs: update roadmap`, `chore: configure linting`, `refactor: …`, `test: …`, `ci: …`.
+- **Hvornår:** efter hver logisk afsluttet ændring (lille feature, doc-ændring, konfiguration eller bugfix). Bland ikke uafhængige ændringer i ét commit.
+- **Før commit:** gennemgå `git diff`, kør `npm run lint` (og tests), og tjek for secrets.
+- **Push:** efter validering. Tjek at CI er grøn.
+- **Forbudt uden eksplicit instruktion:** `git push --force`, `git reset --hard` på brugerændringer, rebase/amend af pushede commits, sletning af branches, `--no-verify` og commit af `.env`, credentials, API-nøgler, passwords eller tokens.
+- **Branching:** Indtil videre committes direkte til `main` (én udvikler og CI på hvert push). Når projektet er i produktion eller har flere udviklere, skiftes til korte feature-branches (`phase/NN-navn`, `fix/…`) med PR og grøn CI før merge. Det registreres som ADR.
+
+## Kodekonventioner (kort)
+
+- **PHP:** WordPress Coding Standards: tabs, `snake_case` for funktioner, metoder og variabler. Klassenavne i PascalCase med PSR-4-filnavne (`CreatorService` i `src/Modules/Creators/CreatorService.php`). `declare( strict_types=1 );` i alle filer i `src/`. Typed properties, parametre og return types overalt. Readonly entities. Enums for faste værdisæt.
+- **Prefix:** `ccmerch_` på alt globalt (hooks, options, caps, meta, cron, handles). Namespace `CCMerch\`.
+- **i18n:** Alle UI-strenge med text domain `ccmerch-dashboard`. Kildesprog er engelsk.
+- **JS:** WordPress ESLint-regler + Prettier. Funktionelle React-komponenter og hooks.
+- **Kommentarer:** forklar *hvorfor*, ikke *hvad*. DocBlocks på offentlige metoder.
+- **Ingen** `phpcs:ignore` eller `@phpstan-ignore` uden en kommentar med begrundelse.
+
+## Arbejdsgang pr. roadmap-fase
+
+1. Læs dokumentationen (se ovenfor) og bekræft fasens scope. Afgræns hellere mindre end mere.
+2. Er der et åbent spørgsmål i PROJECT-STATUS.md, der blokerer fasen? Spørg projektejeren.
+3. Implementér i små commits: kode → tests → docs.
+4. Kør `npm run lint` og tests. Verificér manuelt i Playground ved runtime- eller UI-ændringer.
+5. Gennemgå security-tjeklisten.
+6. Opdatér feature-doc, PROJECT-STATUS.md og evt. DATABASE/DECISIONS/CHANGELOG/DEVELOPMENT.
+7. Commit, push, og tjek CI.
+8. **Stop** ved fasens afslutning og rapportér: hvad er lavet, hvad er verificeret (og hvordan), hvad er ikke gjort, og nye åbne spørgsmål.
+
+## Vær kritisk
+
+Hvis en instruktion er teknisk dårlig, unødigt kompleks eller kan løses bedre med WordPress' eksisterende funktionalitet, så sig det og foreslå et alternativ, før du implementerer. Prioritering: security → maintainability → modularity → simplicity → performance → developer experience → user experience. Undgå overengineering.
