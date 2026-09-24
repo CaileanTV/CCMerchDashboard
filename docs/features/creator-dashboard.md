@@ -48,7 +48,7 @@ Planlagt: `src/Modules/Dashboard/*`, `templates/dashboard/shell.php`, `assets/sr
 Access (CreatorContext), Creators (repository/service), Core (Settings, Assets) og `@wordpress/element`/`api-fetch`/`i18n` (leveret af WordPress).
 
 ## Tests
-- Integration: route-adgang (logget ud → login-redirect, ikke-creator → 403, suspenderet → 403, creator → 200), `/me` og `/me/profile` (alle security-cases i [API.md](../API.md#test-krav)).
+- Integration: route-adgang (logget ud → login-redirect, ikke-creator → 403, inaktiv → 403, creator → 200), `/me` og `/me/profile` (alle security-cases i [API.md](../API.md#test-krav)).
 - JS unit: `useApi`, router og formularvalidering.
 - Manuel: mobil (375px), tablet og desktop samt tastaturnavigation.
 

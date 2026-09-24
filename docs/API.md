@@ -72,6 +72,6 @@ Hvert creator-endpoint skal have integrationstests for mindst:
 
 1. uautentificeret → 401
 2. bruger uden creator-adgang → 403
-3. suspenderet creator → 403
+3. inaktiv creator → 403
 4. Creator A kan ikke se eller ændre Creator B's ressourcer (IDOR) → 404
 5. ugyldigt input → 400 med ændringer ikke gemt

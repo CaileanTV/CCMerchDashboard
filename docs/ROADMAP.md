@@ -9,7 +9,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Område | Faser | Milepæl |
 | --- | --- | --- |
 | Foundation | 1-2 | Tooling, docs og plugin-bootstrap |
-| Data & core services | 3-4 | Migrationer, creator-tabeller, logging |
+| Data & core services | 3-4 | Migrationer og creator-tabel (✅ fase 3), logging |
 | Authentication & permissions | 5-8 | Roller, creator-domæne, testinfrastruktur, adgangsflow |
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
@@ -31,11 +31,12 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Flyttet til senere faser**, fordi de ikke har en funktion endnu: activation hook (→ fase 3), deactivation hook (→ fase 4), load af text domain (→ fase 15). Se [ARCHITECTURE.md §5](ARCHITECTURE.md#5-boot-flow).
 - **Done:** Pluginet aktiveres, deaktiveres og genaktiveres uden notices eller fatals i Playground (WP_DEBUG). Tests og lint er grønne.
 
-## Fase 3 – Database-fundament og creator-tabeller
+## Fase 3 – Database-fundament og creator-tabel ✅
 
-- **Mål:** Versionerede migrationer og creator-schema.
-- **Scope:** `register_activation_hook` + `Activator` (i `Plugin::register_hooks()`), `Tables`, `Migrator` (lås, versions-option), `Upgrader` (kører ved versionsskift), migration `0001` for `merchboard_creators` + `merchboard_creatormeta`, registrering af meta-type. Unit-tests af Migrator-logik.
-- **Done:** Tabeller oprettes ved aktivering og ved opgradering. [DATABASE.md](DATABASE.md) og CHANGELOG er opdateret.
+- **Mål:** Versionerede migrationer, creator-schema og et sikkert creator-datalag.
+- **Leveret:** activation hook → `Installer`, versionstjek på `plugins_loaded` (før moduler), `Tables` (whitelist), `Schema`/`Migration`/`Migrator` (heltalsversion `merchboard_db_version`, lås og version gemt efter hver succes), migration 1 `merchboard_creators`, `Creator`, `CreatorStatus` (`active`/`inactive`), `CreatorRepository` (find, find_by_user_id, create), `CreatorsModule` og uninstall-politik (bevar data). 113 unit-tests. Runtime-verifikation i Playground/SQLite. ADR-019 og ADR-020.
+- **Ændret i forhold til den oprindelige plan:** `merchboard_creatormeta` er flyttet til fase 14 (profilfelter). Entity, enum og et minimalt repository er rykket frem fra fase 6. `slug` og `created_by` er udeladt, indtil der er et behov. Statusmodellen er `active`/`inactive` i stedet for `active`/`suspended`/`archived`. Et separat `Activator`/`Upgrader` er samlet i `Installer`.
+- **Ikke verificeret:** MySQL/MariaDB (se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite)). Sker i fase 7 (CI) og fase 16 (staging).
 
 ## Fase 4 – Logging og audit trail
 
@@ -49,7 +50,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 6 – Creator-domæne
 
-- **Scope:** `Creator` (readonly entity), `CreatorStatus` (enum), `CreatorRepository` (CRUD, find_by_user, paginering), `CreatorService` (validering, rolle-tildeling, statusskift, events og audit-log), `delete_user`-håndtering.
+- **Scope:** Udvid `CreatorRepository` (update med `updated_at`, statusskift, frakobling af user, paginerede lister med whitelisted sortering), `CreatorService` (forretningsvalidering, rolle-tildeling, statusskift, events og audit-log) og `deleted_user`-håndtering (user_id → NULL, status → inactive, data bevares). Entity, enum og grundlæggende repository findes fra fase 3.
 - **Done:** Unit-tests af service-regler. Ingen UI endnu.
 
 ## Fase 7 – Integrationstest-infrastruktur
@@ -64,7 +65,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 9 – Admin shell: menu, overview og settings
 
-- **Scope:** Topmenu "Merch Dashboard", Overview (systemstatus: WooCommerce, migrationer, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization).
+- **Scope:** Topmenu "Merch Dashboard", Overview (systemstatus: WooCommerce, migrationer/schemaversion, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization), opt-in-setting "Slet alle data ved afinstallation" (default fra) og den tilhørende sletterutine i `uninstall.php` (bruger `Tables::all()`).
 - **Done:** Settings gemmes, valideres og audit-logges. Capability-tests.
 
 ## Fase 10 – Admin creator management
@@ -90,7 +91,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 14 – REST-fundament, `/me` og Profile
 
-- **Scope:** `RestController`-basisklasse, `GET /me`, `PATCH /me/profile` (whitelist), Profile-sektion med formular, validering og toast. Alle security-tests fra [API.md](API.md#test-krav).
+- **Scope:** `RestController`-basisklasse, migration for `merchboard_creatormeta` (profilfelter), `GET /me`, `PATCH /me/profile` (whitelist), Profile-sektion med formular, validering og toast. Alle security-tests fra [API.md](API.md#test-krav).
 - **Done:** IDOR- og permission-tests er grønne.
 
 ## Fase 15 – Dashboard overview → **MVP**

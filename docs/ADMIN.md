@@ -26,20 +26,20 @@ Merch Dashboard                       (capability: merchboard_manage)
 | **Products** og **Orders** som egne menupunkter | **Integrér i WooCommerce' egne skærme** i stedet: "Creator"-kolonne og -filter på produkt- og ordrelisterne samt et "Creator"-felt i produktets data-panel | At duplikere WooCommerce' produkt- og ordre-UI giver to steder at redigere, synk-fejl og meget kode. Administratorer arbejder allerede i WooCommerce. |
 | **Statistics** som eget menupunkt | Pr. creator: en "Sales"-tab på creator-redigeringssiden. Global oversigt: på Overview. Et separat "Reports"-punkt tilføjes først, når der er rapporter nok til at retfærdiggøre det. | Undgår en tom side i månedsvis |
 | **Integrations** som eget menupunkt | Tab under Settings, indtil der er flere integrationer med egen status/log-UI | Samme grund |
-| **Creator access** som egen side | En del af creator-redigeringen (status: aktiv/suspenderet) | Adgang er en egenskab ved creator'en, ikke en separat entitet |
+| **Creator access** som egen side | En del af creator-redigeringen (status: aktiv/inaktiv) | Adgang er en egenskab ved creator'en, ikke en separat entitet |
 | **Dashboard** | Kaldes **Overview** i admin | Undgår forveksling med WordPress' eget "Dashboard" og med Creator Dashboard |
 
 ## Skærme
 
 ### Creators-liste
 
-Kolonner: Visningsnavn (link til redigering), WP-bruger (link til `user-edit.php`), status-badge, antal produkter (fra fase 17) og oprettet. Row actions: Rediger, Suspendér/Aktivér, Arkivér. Bulk actions: Suspendér, Aktivér. Alle actions er nonce-beskyttede og audit-logges.
+Kolonner: Visningsnavn (link til redigering), WP-bruger (link til `user-edit.php`), status-badge, antal produkter (fra fase 17) og oprettet. Row actions: Rediger, Deaktivér/Aktivér. Bulk actions: Deaktivér, Aktivér. Alle actions er nonce-beskyttede og audit-logges.
 
 ### Opret/rediger creator
 
 - **Opret:** vælg eksisterende WP-bruger (søgbar dropdown, kun brugere uden creator-record) **eller** opret ny bruger (brugernavn og e-mail; WordPress sender "set password"-mail, og vi opretter aldrig passwords).
 - Oprettelse af creator giver automatisk rollen `merchboard_creator` (tilføjet som *ekstra* rolle, så eksisterende roller, fx `customer`, bevares).
-- Ændring af status til suspenderet/arkiveret fjerner adgang øjeblikkeligt: `CreatorContext` kræver `active`.
+- Ændring af status til inaktiv fjerner adgang øjeblikkeligt: `CreatorContext` kræver `active`.
 - Sikkerhed: En admin kan ikke tildele en rolle højere end sin egen. Creator-rollen giver ingen admin-caps.
 
 ### Bruger-profil (`user-edit.php`)

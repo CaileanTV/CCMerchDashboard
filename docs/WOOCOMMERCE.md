@@ -14,7 +14,7 @@
 
 - Product meta **`_merchboard_creator_id`** på parent-produktet. Varianter arver fra parent.
 - Sættes af admin i produktets data-panel (se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Ændringer audit-logges.
-- Kun **aktive** creators kan vælges. Hvis en creator suspenderes, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
+- Kun **aktive** creators kan vælges. Hvis en creator bliver inaktiv, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
 - **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `merchboard_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
 
 ## Sales ledger

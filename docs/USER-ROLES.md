@@ -18,7 +18,7 @@ Få og meningsfulde. Nye capabilities tilføjes, når et modul har et reelt beho
 | Capability | Tildeles | Giver |
 | --- | --- | --- |
 | `merchboard_manage` | administrator | Se Merch Dashboard-menuen og Overview |
-| `merchboard_manage_creators` | administrator | Oprette, redigere, suspendere og arkivere creators og give/fjerne adgang |
+| `merchboard_manage_creators` | administrator | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra |
 | `merchboard_manage_settings` | administrator | Ændre plugin-settings |
 | `merchboard_view_logs` | administrator | Se logs |
 | `merchboard_access_dashboard` | rollen `merchboard_creator` | Forudsætning for at bruge Creator Dashboard (se adgangsregel nedenfor) |
@@ -60,10 +60,12 @@ Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med 
 | Handling (admin) | Effekt |
 | --- | --- |
 | Opret creator for bruger | Record (`active`) oprettes og rolle `merchboard_creator` tilføjes. Audit-log. |
-| Suspendér | `status = suspended`. Rollen **bevares**, så genaktivering er nem, men adgangen forsvinder øjeblikkeligt pga. regel 4. Aktive sessioner afvises på næste request. Valgfrit: `WP_Session_Tokens::destroy_all()` for brugeren. Audit-log. |
+| Deaktivér | `status = inactive`. Rollen **bevares**, så genaktivering er nem, men adgangen forsvinder øjeblikkeligt pga. regel 4. Aktive sessioner afvises på næste request. Valgfrit: `WP_Session_Tokens::destroy_all()` for brugeren. Audit-log. |
 | Genaktivér | `status = active`. Audit-log. |
-| Arkivér | `status = archived` og rollen fjernes. Historik bevares. Audit-log. |
-| WP-bruger slettes | Creator → `archived` (hook `delete_user`). Audit-log. |
+| Frakobl bruger | `user_id = NULL`, og rollen fjernes. Creator-recorden og historikken bevares på creator-ID'et. Audit-log. |
+| WP-bruger slettes | Hook `deleted_user` (fase 6): creator'ens `user_id = NULL` og `status = inactive`. Creator-data bevares. Audit-log. |
+
+Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md](DATABASE.md#statusmodel)). Et separat "arkiveret"-tilstand tilføjes kun, hvis en fase får et konkret behov.
 
 ## Login-flow
 

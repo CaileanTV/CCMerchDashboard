@@ -1,6 +1,6 @@
 # Moduler
 
-> Status: **Fundament implementeret (fase 2):** `Module`, `Container` og boot i `Plugin`. Der findes endnu ingen moduler.
+> Status: **Fundament implementeret (fase 2).** Første modul `CreatorsModule` (fase 3) registrerer `CreatorRepository` i containeren.
 
 ## Formål
 
@@ -73,8 +73,8 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 
 | Modul | Status | Ansvar | Fase |
 | --- | --- | --- | --- |
-| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module. **Planlagt:** Migrator, Capabilities, Settings, Logger, Assets | 2 ✅, 3-5 |
-| Creators | Planlagt | Creator-entity, repository, service og admin-administration | 6, 10 |
+| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3). **Planlagt:** Capabilities, Settings, Logger, Assets | 2-3 ✅, 4-5 |
+| Creators | Delvist | **Færdig (fase 3):** `CreatorsModule`, `Creator` (entity), `CreatorStatus` (enum), `CreatorRepository` (find, find_by_user_id, create). **Planlagt:** `CreatorService` og øvrige repository-operationer (6), admin-administration (10) | 3 ✅, 6, 10 |
 | Access | Planlagt | `CreatorContext`, login-redirect, blokering af wp-admin for creators | 8 |
 | Admin | Planlagt | Topmenu, Overview, Settings og Logs | 9, 11 |
 | Dashboard | Planlagt | Route, shell, sektion-registry og `/me`-endpoints | 12-15 |

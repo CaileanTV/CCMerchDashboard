@@ -1,6 +1,6 @@
 # Arkitektur
 
-> Status: **Delvist implementeret.** Bootstrap, autoloader, container og modulkontrakt er implementeret (fase 2, se §5). Resten er design. Afvigelser fra dette dokument kræver en ADR i [DECISIONS.md](DECISIONS.md).
+> Status: **Delvist implementeret.** Bootstrap, autoloader, container og modulkontrakt (fase 2) samt databasefundament, migrationer og creator-datalag (fase 3) er implementeret. Se §5 og §7. Resten er design. Afvigelser fra dette dokument kræver en ADR i [DECISIONS.md](DECISIONS.md).
 
 ## 1. Overblik
 
@@ -66,16 +66,17 @@ merchboard/
 │   │   ├── Requirements.php     # PHP-/WP-versionstjek + admin notice (PHP 7.2-syntaks) [fase 2]
 │   │   ├── Container.php        # minimal lazy service container                    [fase 2]
 │   │   ├── Module.php           # interface for moduler                             [fase 2]
-│   │   ├── Lifecycle/           # Activator, Deactivator, Upgrader (version-bump → migrationer)
-│   │   ├── Database/            # Migrator + Migrations/NNNN_Name.php + Table-navne
+│   │   ├── Lifecycle/           # Installer (aktivering + versionstjek) [fase 3], Deactivator [fase 4]
+│   │   ├── Database/            # Tables, Schema, Migration, Migrator, DatabaseException,
+│   │   │                        # Migrations/CreateCreatorsTable                     [fase 3]
 │   │   ├── Security/            # Capabilities (roller/caps/map_meta_cap), Nonce/Request-helpers
 │   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
 │   │   ├── Logging/             # Logger, LogLevel, LogRepository
 │   │   └── Support/             # Assets (læser build/*.asset.php), Template-renderer
 │   └── Modules/
-│       ├── Creators/            # Creator (entity), CreatorStatus (enum), CreatorRepository,
-│       │                        # CreatorService, Admin/ (sider, list table), Rest/ (admin-endpoints)
+│       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
+│       │                        # CreatorService [fase 6], Admin/ [fase 10], Rest/ (admin-endpoints)
 │       ├── Access/              # CreatorContext, LoginRedirect, AdminAreaGuard
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Logs-side
 │       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*
@@ -119,24 +120,31 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
    - opretter `new Plugin( __FILE__ )` og kalder `register_hooks()`. Der er ingen singleton og ingen global variabel.
 2. `before_woocommerce_init` → `Plugin::declare_woocommerce_compatibility()` erklærer HPOS-kompatibilitet, hvis WooCommerce' `FeaturesUtil` findes. Ellers sker intet.
 3. `plugins_loaded` → `Plugin::boot()` (idempotent):
-   - modullisten = `default_modules()` (tom i fase 2) gennem filteret `merchboard_modules`
+   - **(fase 3)** `Installer::maybe_upgrade()` kører manglende database-migrationer, *før* modulerne registreres, så moduler altid ser det aktuelle schema. Koster én autoloaded option-læsning, når intet mangler. Registrerer også admin notice ved migrationsfejl.
+   - modullisten = `default_modules()` (fra fase 3: `CreatorsModule`) gennem filteret `merchboard_modules`
    - ugyldige elementer (ikke `Module`, dublet-ID eller filter der ikke returnerer et array) springes over med `_doing_it_wrong()`, så et fejlbehæftet tredjeparts-filter ikke vælter boot
    - `register( $container )` kaldes på hvert modul
    - action `merchboard_loaded` (med containeren) fyres til sidst
 
 **Fejlhåndtering:** Bootstrappen fanger ikke exceptions fra moduler. En fejl i `register()` er en programmeringsfejl og skal være synlig. WordPress' fatal error handler/recovery mode beskytter sitet.
 
-**Bevidst ikke i fase 2** (tilføjes i den fase, hvor de får en funktion):
+**Implementeret i fase 3:**
+
+- `register_activation_hook` registreres i `Plugin::register_hooks()`, mens hovedfilen indlæses (ikke på `plugins_loaded`), og kalder `Plugin::activate()` → `Installer::install()`. Det er idempotent og kan køres flere gange.
+- Core-services i containeren, registreret i `Plugin`-konstruktøren (lazy): `wpdb` (global `$wpdb`), `Migrator` (med `Schema::migrations()`) og `Installer`.
+- Detaljer om schemaversion, migrationer, lås og fejlhåndtering: [DATABASE.md](DATABASE.md#schemaversion-og-migrationer--adr-019).
+
+**Endnu ikke implementeret** (tilføjes i den fase, hvor de får en funktion):
 
 | Del | Fase | Begrundelse |
 | --- | --- | --- |
-| `register_activation_hook` → `Activator` (migrationer) | 3 | Intet at oprette endnu. Tomme hooks tilføjer ingen værdi. |
-| `Upgrader` (versionsskift → migrationer, rolle-sync) | 3 / 5 | Ingen schema eller roller endnu |
-| `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu |
+| Rolle-/capability-sync ved versionsskift | 5 | Ingen roller endnu |
+| `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu. Deaktivering rører aldrig data. |
+| Slet-data-rutine i `uninstall.php` | 9 | Kræver opt-in-settingen. Uninstall bevarer data indtil da. |
 | `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |
-| Core-services i containeren (Settings, Logger …) | 3 → | Registreres af de faser, der bygger dem |
+| Øvrige core-services (Settings, Logger …) | 4 → | Registreres af de faser, der bygger dem |
 
-Activation/deactivation-hooks registreres i `Plugin::register_hooks()` (de skal registreres, mens hovedfilen indlæses, ikke på `plugins_loaded`), og deres logik placeres i `src/Core/Lifecycle/`. Hovedfilen forbliver uændret.
+Hovedfilen forbliver uændret, når hooks tilføjes. De registreres i `Plugin`, og logikken placeres i `src/Core/Lifecycle/`.
 
 ## 6. Modulsystem
 
@@ -147,13 +155,13 @@ Se [MODULES.md](MODULES.md). Kort: et modul implementerer `MerchBoard\Core\Modul
 Se [DATABASE.md](DATABASE.md). Kort:
 
 - **WordPress users/roles** = identitet og login.
-- **`merchboard_creators` + `merchboard_creatormeta`** = creator-domæneobjektet (adskilt fra login-kontoen).
+- **`merchboard_creators`** (✅ fase 3) = creator-domæneobjektet, adskilt fra login-kontoen. Creator-ID er den primære reference for al domænedata, og `user_id` er kun en nullable, unik relation til login-laget (ADR-020). `merchboard_creatormeta` kommer i fase 14.
 - **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta.
 - **`merchboard_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
 - **`merchboard_logs`** = applikations- og audit-log.
-- **Options** = settings og schemaversion.
+- **Options** = settings og schemaversion (`merchboard_db_version`).
 
-Schemaændringer sker kun via versionerede migrationer (`src/Core/Database/Migrations/`) og dokumenteres i DATABASE.md og CHANGELOG.md.
+Schemaændringer sker kun via versionerede migrationer (`src/Core/Database/Migrations/`, registreret i `Schema::migrations()`) og dokumenteres i DATABASE.md og CHANGELOG.md (ADR-019). Databaseadgang sker kun via repositories, som ikke udfører authorization. Det sker i laget over (fase 6+).
 
 ## 8. API-arkitektur
 
@@ -184,7 +192,7 @@ Se [SECURITY.md](SECURITY.md) og [USER-ROLES.md](USER-ROLES.md). Kernen er:
 
 - `Logger`-service (PSR-3-lignende API: `debug()`, `info()`, `warning()`, `error()`, `critical()` med `channel` og `context`). Den implementerer ikke `psr/log` for at undgå vendor-konflikter (ADR-004).
 - Skriver til `merchboard_logs`. Minimumsniveau styres i settings (default `warning` i production og `debug` når `wp_get_environment_type() === 'local'`).
-- Channel `audit` skrives **altid** uanset niveau: adgang givet/fjernet, creator oprettet/ændret/suspenderet, settings ændret. Hver post har actor (`user_id`) og target.
+- Channel `audit` skrives **altid** uanset niveau: adgang givet/fjernet, creator oprettet/ændret/deaktiveret, settings ændret. Hver post har actor (`user_id`) og target.
 - Retention: daglig WP-Cron-job sletter logs ældre end N dage (setting, default 90; audit 365).
 - Aldrig secrets, passwords, tokens eller fuld PII i context. Brug IDs.
 - Kritiske fejl skrives desuden til `error_log()` som fallback, hvis databasen fejler.

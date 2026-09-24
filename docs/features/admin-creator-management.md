@@ -13,7 +13,7 @@ Ingen direkte. Effekten er, at creators får eller mister adgang til dashboardet
 - **Merch Dashboard → Creators:** liste med søgning, statusfilter, paginering, row actions og bulk actions.
 - **Tilføj creator:** vælg eksisterende bruger (uden creator-record) eller opret ny bruger (brugernavn og e-mail; WordPress sender set-password-mail).
 - **Rediger:** visningsnavn, slug, status og profilfelter.
-- **Statusskift:** Suspendér, Genaktivér og Arkivér med bekræftelse.
+- **Statusskift:** Deaktivér og Genaktivér med bekræftelse. Frakobl WordPress-bruger (creator-data bevares).
 - Link fra brugerprofil (`user-edit.php`) til creator og omvendt.
 - Alle ændringer audit-logges.
 

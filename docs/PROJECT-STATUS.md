@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 2 (Plugin bootstrap) · **Næste fase:** 3 (Database-fundament og creator-tabeller) · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 3 (Database-fundament og creator-tabel) · **Næste fase:** 4 (Logging og audit trail) · **Schemaversion:** 1 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -30,6 +30,20 @@
 
 **Bevidst ikke i fase 2** (se [ARCHITECTURE.md §5](ARCHITECTURE.md#5-boot-flow)): activation hook (fase 3), deactivation hook (fase 4), text domain-loading (fase 15), roller/capabilities (fase 5), database (fase 3), admin-menuer og frontend (fase 9 og 12).
 
+### Fase 3 – Database-fundament og creator-tabel ✅
+
+- [x] Tabel `{prefix}merchboard_creators` (schema-version 1): `id`, `user_id` (nullable, UNIQUE), `display_name`, `status`, `created_at`, `updated_at` (UTC). Ingen kundedata. Ingen FK.
+- [x] Migrationssystem (ADR-019): `Tables` (whitelist), `Schema::migrations()`, `Migration`, `Migrator` (option `merchboard_db_version`, gemt efter hver succes, `add_option`-lås).
+- [x] `Installer`: activation hook (idempotent) og versionstjek på `plugins_loaded` før moduler. Fejl-backoff (5 min) og admin notice.
+- [x] Creator-domænemodel (ADR-020): `Creator` (readonly), `CreatorStatus` (`active`/`inactive`), `CreatorRepository` (`find`, `find_by_user_id`, `create`; prepared queries, ID-validering, generiske fejl), `CreatorsModule`.
+- [x] Uninstall-politik: data bevares. Sletning bliver opt-in i fase 9. Deaktivering rører aldrig data.
+- [x] 113 unit-tests (209 assertions). Lint og PHPStan level 8 er grønne.
+- [x] Playground-runtime (SQLite, WP 7.1.2, PHP 8.2, WooCommerce): schema installeret ved aktivering, repository create/find, UNIQUE afviser duplikat og tillader flere NULL, UTC-tidsstempler, idempotent genkørsel, opgradering 0 → 1, data bevaret ved deaktivering/genaktivering, ingen fatals/notices, REST og wp-admin svarer normalt.
+
+**Bevidst ikke i fase 3:** creator-rolle/capabilities (5), CreatorService, update og lister (6), adgang/login (8), admin-UI (10), `/me`-API (14), `merchboard_creatormeta` (14), WooCommerce-data og ledger (17-18), slet-data-rutine (9).
+
+**Ikke verificeret på MySQL/MariaDB:** se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite). CI (fase 7) og staging (fase 16) er autoritative.
+
 ## In progress
 
 Intet.
@@ -38,9 +52,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 3:** Activation hook, migrationer og creator-tabeller.
-2. **Fase 4:** Logging, audit og deactivation hook.
-3. **Fase 5:** Roller og capabilities.
+1. **Fase 4:** Logging, audit og deactivation hook.
+2. **Fase 5:** Roller og capabilities.
+3. **Fase 6:** Creator-service (forretningsregler, statusskift, frakobling, `deleted_user`).
 
 ## Known bugs
 
@@ -53,7 +67,8 @@ Ingen (der er ingen funktionalitet endnu).
 | npm audit | 11 advisories (5 moderate, 6 high) i transitive dev-dependencies af `@wordpress/scripts`. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts` |
 | Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
-| Lokal MySQL | Playground bruger SQLite. Ingen lokal MySQL-verifikation. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
+| MySQL-verifikation | Schema og repository er kun kørt mod SQLite (Playground) og unit-tests. `dbDelta()`-adfærd, strict mode, charset og låsens atomicitet på MySQL/MariaDB er ikke verificeret. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
+| Migrationsfejl logges med `error_log()` | Midlertidigt, indtil Logger findes | Skift til Logger i fase 4 |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter første push. Overvej at installere `gh`. |
 
 ## Godkendte eksterne services
@@ -72,7 +87,7 @@ Kun disse eksterne services er en del af projektet. Alt andet kræver eksplicit 
 Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står i parentes.
 
 1. ✅ **Navn/prefix – lukket (ADR-018):** Produktnavn `Merch Dashboard`, teknisk prefix `merchboard`, PHP-namespace `MerchBoard\`. Låst før fase 3. Den tidligere midlertidige konvention `ccmerch` er migreret i hele repo'et.
-2. **Hosting:** Hvilken PHP- og MySQL/MariaDB-version kører produktionen? Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 2 / 16)
+2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
 3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
 4. **Teams:** Kan en creator have flere brugere (fx manager)? (fase 6. Påvirker kun, om vi bygger det nu.)
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
@@ -83,6 +98,6 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 ## Next recommended steps
 
-1. Tjek at CI er grøn under GitHub → Actions, inkl. de nye jobs `PHPUnit` og `PHP 7.2 syntax`.
-2. Besvar åbent spørgsmål 2 (hosting). Navn/prefix er besluttet (ADR-018), så fase 3 kan oprette tabeller og options med `merchboard_`-prefix.
-3. Kør fase 3 med prompten: *"Implementér roadmap-fase 3 (Database-fundament og creator-tabeller) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
+1. Tjek at CI er grøn under GitHub → Actions.
+2. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så CI-integrationstests i fase 7 kan køre mod samme version.
+3. Kør fase 4 med prompten: *"Implementér roadmap-fase 4 (Logging og audit trail) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*

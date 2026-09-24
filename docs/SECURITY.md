@@ -9,7 +9,7 @@
 | Anonym besøgende | Tilgå dashboard/API, enumerere creators | Login-krav, permission callbacks, 401/404, ingen offentlige endpoints |
 | Creator A | Se/ændre Creator B's data (IDOR) | `/me`-API uden ID'er, `CreatorContext`, ejerskabs-tjek i services, 404 |
 | Creator | Eskalere til admin-rettigheder | Minimal rolle, ingen rolle-/meta-skrivning fra creator-input, felt-whitelist |
-| Suspenderet creator med aktiv session | Fortsætte adgang | Status tjekkes på **hver** request (ingen caching af adgang i sessionen) |
+| Inaktiv creator med aktiv session | Fortsætte adgang | Status tjekkes på **hver** request (ingen caching af adgang i sessionen) |
 | Tredjeparts-site (CSRF) | Få en indlogget bruger til at udføre handlinger | Nonces på alle state-ændrende requests, SameSite-cookies (WP-standard) |
 | Ondsindet input | XSS, SQL injection | Sanitization ved input, escaping ved output, `prepare()` |
 | Kompromitteret admin-konto | Alt | Uden for pluginets kontrol. Anbefal 2FA for admins (plugin), audit-log gør misbrug synligt. |
@@ -31,6 +31,18 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - Autoloaderen håndterer kun `MerchBoard\`-klasser og afviser klassenavne, der ikke er rene namespace-segmenter (`..`, `/`, `:`, null-bytes). Klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode (ADR-017).
 - Versionstjekkets admin notice vises kun for brugere med `activate_plugins` (den afslører serverversioner), og alt output er escaped.
 - Pluginet skriver intet til databasen og læser intet brugerinput i fase 2. `uninstall.php` sletter intet endnu.
+
+### Datalaget (fase 3)
+
+- **Ingen offentlige endpoints til creator-data.** Fase 3 tilføjer ingen REST-routes, AJAX-handlers eller admin-handlers (verificeret: `/wp-json/merchboard/v1` giver 404).
+- **Repositories udfører ingen authorization** og antager ikke, at kalderen er autoriseret. Kontrakten står i `CreatorRepository`s docblock: kaldere skal tjekke capabilities eller bruge `CreatorContext` (fase 8), før de videregiver noget, der stammer fra en request. Authorization-laget holdes adskilt fra datalaget.
+- **SQL injection:** Alle queries går gennem `$wpdb->prepare()` (`%i` for tabelnavn, `%d`/`%s` for værdier) eller `$wpdb->insert()` med eksplicitte formater. PHPCS' `PreparedSQL`-sniffs gælder også i repositories (verificeret med en negativ kontrol). Kun `DirectDatabaseQuery`-sniffene er slået fra for datalaget, fordi custom tables ikke har et WordPress-API-alternativ.
+- **Dynamiske tabelnavne:** `Tables::name()` accepterer kun registrerede konstanter. Et repository har ingen tabel-parameter og kan ikke bringes til at læse vilkårlige tabeller.
+- **ID-validering:** Creator- og user-ID'er skal være positive heltal (`int`-typet). 0/negative afvises *før* der forespørges. Der er bevidst ingen "hent alle"-metode uden scope.
+- **Creator/user-adskillelse:** Creator-ID tildeles af databasen og er uafhængigt af user-ID. `UNIQUE(user_id)` håndhæver højst én creator pr. bruger i databasen (ADR-020).
+- **Data leakage:** Kolonner vælges eksplicit (ingen `SELECT *`). Databasefejl bliver til `DatabaseException` med generiske beskeder uden SQL, `last_error` eller værdier. Migrationsfejl vises kun som generisk admin notice for `activate_plugins`-brugere.
+- **Integritet ved læsning:** Ukendte statusværdier og ugyldige tidsstempler i databasen afvises (`DatabaseException`) i stedet for at blive gættet.
+- **Privilege escalation:** Fase 3 opretter ingen roller eller capabilities og ændrer ingen brugere.
 
 ### IDOR
 
@@ -124,5 +136,5 @@ Alle adgangs- og rettighedsændringer, creator-statusændringer og settings-ænd
 - [ ] Svar indeholder kun whitelistede felter. Ingen kunde-PII til creators.
 - [ ] Redirects bruger `wp_safe_redirect()`.
 - [ ] Ingen secrets i kode, logs eller frontend.
-- [ ] Tests for uautentificeret, uautoriseret, suspenderet, IDOR og ugyldigt input.
+- [ ] Tests for uautentificeret, uautoriseret, inaktiv creator, IDOR og ugyldigt input.
 - [ ] `npm run lint` er grøn, og ingen nye `phpcs:ignore` uden begrundelse.

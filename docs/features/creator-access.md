@@ -10,12 +10,12 @@ Planlagt. Roller og capabilities i fase 5, domæne i fase 6 og adgangsflow i fas
 - Creator logger ind via den normale WordPress-login og lander på `/creator-dashboard/`.
 - Creator, der åbner `/wp-admin/`, sendes til dashboardet.
 - Ingen admin bar for creators.
-- Suspenderet/arkiveret creator: Dashboardet viser "Din adgang er ikke aktiv. Kontakt <virksomhed>" og et log ud-link. API'et svarer 403.
+- Inaktiv creator: Dashboardet viser "Din adgang er ikke aktiv. Kontakt <virksomhed>" og et log ud-link. API'et svarer 403.
 - Ikke-creator, der åbner dashboardet: samme besked (uden at afsløre, om brugeren "næsten" er creator).
 
 ## Admin functionality
 - Oprette en creator for en eksisterende eller ny WP-bruger (tildeler rollen `merchboard_creator`).
-- Suspendere, genaktivere og arkivere. Se [admin-creator-management.md](admin-creator-management.md).
+- Deaktivere, genaktivere og frakoble brugeren. Se [admin-creator-management.md](admin-creator-management.md).
 - Settings → Access: login-redirect til/fra, blokering af wp-admin til/fra, ekstra roller med admin-caps.
 
 ## Technical implementation
