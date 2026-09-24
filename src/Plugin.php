@@ -16,6 +16,7 @@ use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Core\Module;
+use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use wpdb;
 
@@ -75,7 +76,8 @@ final class Plugin {
 	}
 
 	/**
-	 * Activation: installs or upgrades the database schema (idempotent).
+	 * Activation: installs or upgrades the database schema and synchronises
+	 * roles/capabilities (idempotent).
 	 *
 	 * On multisite, network activation only installs the current site; other
 	 * sites install lazily on their first request via boot(). Multisite is not
@@ -111,8 +113,8 @@ final class Plugin {
 
 		$this->booted = true;
 
-		// Plugin updates do not run the activation hook, so detect a schema
-		// version change on normal requests (one autoloaded option read).
+		// Plugin updates do not run the activation hook, so detect schema and role
+		// version changes on normal requests (two autoloaded option reads).
 		$installer = $this->container->get( Installer::class );
 		$installer->maybe_upgrade();
 		add_action( 'admin_notices', array( $installer, 'render_failure_notice' ) );
@@ -159,8 +161,17 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			RoleManager::class,
+			static fn( Container $c ): RoleManager => new RoleManager( $c->get( Logger::class ) )
+		);
+
+		$this->container->set(
 			Installer::class,
-			static fn( Container $c ): Installer => new Installer( $c->get( Migrator::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): Installer => new Installer(
+				$c->get( Migrator::class ),
+				$c->get( RoleManager::class ),
+				$c->get( Logger::class )
+			)
 		);
 	}
 

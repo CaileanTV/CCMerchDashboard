@@ -21,7 +21,9 @@ use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Plugin;
+use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
+use MerchBoard\Tests\Unit\Support\InMemoryRoles;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
 use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -39,12 +41,48 @@ final class PluginTest extends TestCase {
 
 	private InMemoryOptions $options;
 
+	private InMemoryRoles $roles;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->wpdb      = new RecordingWpdb();
 		$this->wpdb->var = 'wp_merchboard_creators';
 		// Schema is current unless a test says otherwise.
-		$this->options = InMemoryOptions::install( array( Migrator::VERSION_OPTION => '1' ) );
+		$this->options = InMemoryOptions::install(
+			array(
+				Migrator::VERSION_OPTION    => '1',
+				RoleManager::VERSION_OPTION => (string) RoleManager::VERSION,
+			)
+		);
+		$this->roles   = InMemoryRoles::install( array( 'administrator' => array( 'manage_options' => true ) ) );
+	}
+
+	public function test_activation_creates_roles_and_capabilities(): void {
+		$this->plugin()->activate();
+
+		self::assertSame(
+			array(
+				'read'                        => true,
+				'merchboard_access_dashboard' => true,
+			),
+			$this->roles->capabilities( 'merchboard_creator' )
+		);
+		self::assertTrue( $this->roles->capabilities( 'administrator' )['manage_options'] );
+		self::assertTrue( $this->roles->capabilities( 'administrator' )['merchboard_manage_creators'] );
+	}
+
+	public function test_plugin_reload_with_current_roles_does_not_touch_roles(): void {
+		$this->plugin()->boot();
+
+		self::assertSame( 0, $this->roles->add_role_calls );
+		self::assertSame( array( 'manage_options' => true ), $this->roles->capabilities( 'administrator' ) );
+	}
+
+	public function test_role_manager_service_is_registered(): void {
+		$container = new Container();
+		$this->plugin( $container );
+
+		self::assertInstanceOf( RoleManager::class, $container->get( RoleManager::class ) );
 	}
 
 	public function test_register_hooks_adds_entry_hooks(): void {
@@ -102,7 +140,7 @@ final class PluginTest extends TestCase {
 	}
 
 	public function test_boot_upgrades_an_outdated_schema_before_modules_register(): void {
-		$this->options->options = array( Migrator::VERSION_OPTION => '0' );
+		$this->options->options[ Migrator::VERSION_OPTION ] = '0';
 		Functions\expect( 'dbDelta' )->once();
 
 		$this->plugin()->boot();

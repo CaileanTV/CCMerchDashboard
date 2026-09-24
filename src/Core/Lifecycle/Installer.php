@@ -12,12 +12,16 @@ namespace MerchBoard\Core\Lifecycle;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Security\RoleManager;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Connects the Migrator to WordPress: plugin activation and version detection
- * on normal requests (plugin updates do not fire the activation hook).
+ * Installs and upgrades the plugin's persistent state: the database schema
+ * (Migrator) and roles/capabilities (RoleManager). Runs on plugin activation
+ * and on normal requests when a stored version is behind (plugin updates do
+ * not fire the activation hook). Both are independent: a failing migration
+ * does not block the role sync, and vice versa.
  */
 final class Installer {
 
@@ -36,27 +40,34 @@ final class Installer {
 	/**
 	 * Constructor.
 	 *
-	 * @param Migrator $migrator Schema migrator.
-	 * @param Logger   $logger   Technical log.
+	 * @param Migrator    $migrator Schema migrator.
+	 * @param RoleManager $roles    Role/capability synchronisation.
+	 * @param Logger      $logger   Technical log.
 	 */
 	public function __construct(
 		private Migrator $migrator,
+		private RoleManager $roles,
 		private Logger $logger
 	) {
 	}
 
 	/**
-	 * Activation: install or upgrade the schema. Safe to run repeatedly.
+	 * Activation: install or upgrade schema and roles. Safe to run repeatedly.
 	 */
 	public function install(): void {
 		$this->run();
+		$this->roles->sync();
 	}
 
 	/**
-	 * Normal request: upgrade only when the stored schema version is behind.
-	 * Costs one autoloaded option read when nothing is pending.
+	 * Normal request: upgrade only what is behind. Costs two autoloaded option
+	 * reads when nothing is pending.
 	 */
 	public function maybe_upgrade(): void {
+		if ( $this->roles->needs_sync() ) {
+			$this->roles->sync();
+		}
+
 		if ( ! $this->migrator->needs_migration() ) {
 			return;
 		}

@@ -13,7 +13,9 @@ use ArrayObject;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
+use MerchBoard\Tests\Unit\Support\InMemoryRoles;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\RecordingMigration;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
@@ -32,10 +34,54 @@ final class InstallerTest extends TestCase {
 
 	private RecordingLogger $logger;
 
+	private InMemoryRoles $roles;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->log    = new ArrayObject();
 		$this->logger = new RecordingLogger();
+		$this->roles  = InMemoryRoles::install( array( 'administrator' => array( 'manage_options' => true ) ) );
+	}
+
+	public function test_install_synchronises_roles(): void {
+		$options = InMemoryOptions::install();
+
+		$this->installer()->install();
+
+		self::assertArrayHasKey( 'merchboard_creator', $this->roles->roles );
+		self::assertTrue( $this->roles->capabilities( 'administrator' )['merchboard_manage'] );
+		self::assertSame( RoleManager::VERSION, $options->options[ RoleManager::VERSION_OPTION ] );
+	}
+
+	public function test_roles_are_synchronised_even_when_a_migration_fails(): void {
+		InMemoryOptions::install();
+
+		$this->installer( true )->install();
+
+		self::assertArrayHasKey( 'merchboard_creator', $this->roles->roles );
+	}
+
+	public function test_maybe_upgrade_synchronises_outdated_roles(): void {
+		$options = InMemoryOptions::install( array( Migrator::VERSION_OPTION => 1 ) );
+
+		$this->installer()->maybe_upgrade();
+
+		self::assertArrayHasKey( 'merchboard_creator', $this->roles->roles );
+		self::assertSame( array( RoleManager::VERSION_OPTION ), $options->updates );
+	}
+
+	public function test_maybe_upgrade_leaves_current_roles_alone(): void {
+		InMemoryOptions::install(
+			array(
+				Migrator::VERSION_OPTION    => 1,
+				RoleManager::VERSION_OPTION => RoleManager::VERSION,
+			)
+		);
+
+		$this->installer()->maybe_upgrade();
+
+		self::assertSame( 0, $this->roles->add_role_calls );
+		self::assertArrayNotHasKey( 'merchboard_creator', $this->roles->roles );
 	}
 
 	public function test_migration_failure_is_logged_once_as_error_with_diagnostics(): void {
@@ -89,7 +135,12 @@ final class InstallerTest extends TestCase {
 	}
 
 	public function test_current_schema_logs_nothing(): void {
-		InMemoryOptions::install( array( Migrator::VERSION_OPTION => 1 ) );
+		InMemoryOptions::install(
+			array(
+				Migrator::VERSION_OPTION    => 1,
+				RoleManager::VERSION_OPTION => RoleManager::VERSION,
+			)
+		);
 
 		$this->installer()->maybe_upgrade();
 		$this->installer()->install();
@@ -144,7 +195,12 @@ final class InstallerTest extends TestCase {
 	}
 
 	public function test_maybe_upgrade_is_a_no_op_when_schema_is_current(): void {
-		$options = InMemoryOptions::install( array( Migrator::VERSION_OPTION => 1 ) );
+		$options = InMemoryOptions::install(
+			array(
+				Migrator::VERSION_OPTION    => 1,
+				RoleManager::VERSION_OPTION => RoleManager::VERSION,
+			)
+		);
 
 		$this->installer()->maybe_upgrade();
 
@@ -153,7 +209,12 @@ final class InstallerTest extends TestCase {
 	}
 
 	public function test_maybe_upgrade_migrates_an_outdated_schema(): void {
-		$options = InMemoryOptions::install( array( Migrator::VERSION_OPTION => 0 ) );
+		$options = InMemoryOptions::install(
+			array(
+				Migrator::VERSION_OPTION    => 0,
+				RoleManager::VERSION_OPTION => RoleManager::VERSION,
+			)
+		);
 
 		$this->installer()->maybe_upgrade();
 
@@ -230,6 +291,7 @@ final class InstallerTest extends TestCase {
 
 		return new Installer(
 			new Migrator( $wpdb, array( 1 => new RecordingMigration( 'm1', $this->log, $failing ) ) ),
+			new RoleManager( $this->logger ),
 			$this->logger
 		);
 	}
