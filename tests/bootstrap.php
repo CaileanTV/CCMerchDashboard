@@ -14,3 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
+require_once __DIR__ . '/Fixtures/wpdb.php';
+
+// Code under test reports failures with error_log(); keep test output clean.
+ini_set( 'error_log', 'Windows' === PHP_OS_FAMILY ? 'NUL' : '/dev/null' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- Test process only.

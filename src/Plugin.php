@@ -10,7 +10,12 @@ declare( strict_types=1 );
 namespace MerchBoard;
 
 use MerchBoard\Core\Container;
+use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Database\Schema;
+use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\Creators\CreatorsModule;
+use wpdb;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -53,14 +58,29 @@ final class Plugin {
 	public function __construct( string $file, ?Container $container = null ) {
 		$this->file      = $file;
 		$this->container = $container ?? new Container();
+
+		$this->register_core_services();
 	}
 
 	/**
-	 * Registers the plugin's entry hooks. Called while the main file is loaded.
+	 * Registers the plugin's entry hooks. Called while the main file is loaded,
+	 * which is also when the activation hook must be registered.
 	 */
 	public function register_hooks(): void {
+		register_activation_hook( $this->file, array( $this, 'activate' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declare_woocommerce_compatibility' ) );
 		add_action( 'plugins_loaded', array( $this, 'boot' ) );
+	}
+
+	/**
+	 * Activation: installs or upgrades the database schema (idempotent).
+	 *
+	 * On multisite, network activation only installs the current site; other
+	 * sites install lazily on their first request via boot(). Multisite is not
+	 * officially supported (docs/ARCHITECTURE.md).
+	 */
+	public function activate(): void {
+		$this->container->get( Installer::class )->install();
 	}
 
 	/**
@@ -89,6 +109,12 @@ final class Plugin {
 
 		$this->booted = true;
 
+		// Plugin updates do not run the activation hook, so detect a schema
+		// version change on normal requests (one autoloaded option read).
+		$installer = $this->container->get( Installer::class );
+		$installer->maybe_upgrade();
+		add_action( 'admin_notices', array( $installer, 'render_failure_notice' ) );
+
 		/**
 		 * Filters the modules to boot.
 		 *
@@ -109,12 +135,37 @@ final class Plugin {
 	}
 
 	/**
-	 * Built-in modules. Empty until the first module lands (roadmap phase 3+).
+	 * Core services every module may use.
+	 */
+	private function register_core_services(): void {
+		$this->container->set(
+			wpdb::class,
+			static function (): wpdb {
+				global $wpdb;
+				return $wpdb;
+			}
+		);
+
+		$this->container->set(
+			Migrator::class,
+			static fn( Container $c ): Migrator => new Migrator( $c->get( wpdb::class ), Schema::migrations() )
+		);
+
+		$this->container->set(
+			Installer::class,
+			static fn( Container $c ): Installer => new Installer( $c->get( Migrator::class ) )
+		);
+	}
+
+	/**
+	 * Built-in modules.
 	 *
 	 * @return Module[]
 	 */
 	private function default_modules(): array {
-		return array();
+		return array(
+			new CreatorsModule(),
+		);
 	}
 
 	/**

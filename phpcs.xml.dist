@@ -35,8 +35,22 @@
 		</properties>
 	</rule>
 
-	<!-- Tests: descriptive test method names replace doc comments. -->
+	<!--
+		Custom tables have no WordPress API alternative, so direct $wpdb calls are expected
+		in the data layer: repositories and schema code only. Caching is decided per
+		repository. Everywhere else these sniffs still apply, and the PreparedSQL sniffs
+		apply everywhere, including here.
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>/src/Core/Database/*</exclude-pattern>
+		<exclude-pattern>/src/*Repository.php</exclude-pattern>
+	</rule>
+
+	<!-- Tests: descriptive test method and property names replace doc comments. -->
 	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.VariableComment.Missing">
 		<exclude-pattern>/tests/*</exclude-pattern>
 	</rule>
 	<rule ref="Squiz.Commenting.ClassComment.Missing">

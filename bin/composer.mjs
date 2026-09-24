@@ -10,7 +10,13 @@
  * Usage: node bin/composer.mjs <composer arguments>
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -82,6 +88,13 @@ if ( missing.length > 0 ) {
 	].join( '\n' );
 
 	mkdirSync( iniDir, { recursive: true } );
+	// The directory is owned by this script: drop any other ini file so no
+	// extension is loaded twice (PHP warns "Module already loaded").
+	for ( const file of readdirSync( iniDir ) ) {
+		if ( file.endsWith( '.ini' ) && file !== 'merchboard-dev.ini' ) {
+			rmSync( join( iniDir, file ) );
+		}
+	}
 	writeFileSync( join( iniDir, 'merchboard-dev.ini' ), ini );
 	process.env.PHP_INI_SCAN_DIR = iniDir;
 }

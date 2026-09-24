@@ -14,23 +14,101 @@ use Brain\Monkey\Actions;
 use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Container;
+use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Plugin;
+use MerchBoard\Tests\Unit\Support\InMemoryOptions;
+use MerchBoard\Tests\Unit\Support\RecordingWpdb;
+use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use stdClass;
+use wpdb;
 
 #[CoversClass( Plugin::class )]
 final class PluginTest extends TestCase {
 
 	private const FILE = '/plugins/merchboard/merchboard.php';
 
+	private RecordingWpdb $wpdb;
+
+	private InMemoryOptions $options;
+
+	protected function setUp(): void {
+		parent::setUp();
+		$this->wpdb      = new RecordingWpdb();
+		$this->wpdb->var = 'wp_merchboard_creators';
+		// Schema is current unless a test says otherwise.
+		$this->options = InMemoryOptions::install( array( Migrator::VERSION_OPTION => '1' ) );
+	}
+
 	public function test_register_hooks_adds_entry_hooks(): void {
-		$plugin = new Plugin( self::FILE );
+		$plugin = $this->plugin();
+
+		Functions\expect( 'register_activation_hook' )->once()->with( self::FILE, array( $plugin, 'activate' ) );
+
 		$plugin->register_hooks();
 
 		self::assertSame( 10, has_action( 'plugins_loaded', array( $plugin, 'boot' ) ) );
 		self::assertSame( 10, has_action( 'before_woocommerce_init', array( $plugin, 'declare_woocommerce_compatibility' ) ) );
+	}
+
+	public function test_core_services_are_registered(): void {
+		$container = new Container();
+		$this->plugin( $container );
+
+		self::assertTrue( $container->has( wpdb::class ) );
+		self::assertInstanceOf( Installer::class, $container->get( Installer::class ) );
+		self::assertInstanceOf( Migrator::class, $container->get( Migrator::class ) );
+	}
+
+	public function test_activation_installs_the_schema(): void {
+		unset( $this->options->options[ Migrator::VERSION_OPTION ] );
+		Functions\expect( 'dbDelta' )->once();
+
+		$this->plugin()->activate();
+
+		self::assertSame( 1, $this->options->options[ Migrator::VERSION_OPTION ] );
+	}
+
+	public function test_boot_upgrades_an_outdated_schema_before_modules_register(): void {
+		$this->options->options = array( Migrator::VERSION_OPTION => '0' );
+		Functions\expect( 'dbDelta' )->once();
+
+		$this->plugin()->boot();
+
+		self::assertSame( 1, $this->options->options[ Migrator::VERSION_OPTION ] );
+	}
+
+	public function test_boot_does_not_touch_a_current_schema(): void {
+		Functions\expect( 'dbDelta' )->never();
+
+		$this->plugin()->boot();
+
+		self::assertSame( array(), $this->options->updates );
+	}
+
+	public function test_boot_registers_the_migration_failure_notice(): void {
+		$container = new Container();
+		$this->plugin( $container )->boot();
+
+		self::assertSame( 10, has_action( 'admin_notices', array( $container->get( Installer::class ), 'render_failure_notice' ) ) );
+	}
+
+	public function test_creators_module_is_booted_by_default(): void {
+		$container = new Container();
+
+		Filters\expectApplied( 'merchboard_modules' )
+			->once()
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 1 === count( $modules ) && $modules[0] instanceof CreatorsModule ) )
+			->andReturnFirstArg();
+
+		$this->plugin( $container )->boot();
+
+		self::assertTrue( $container->has( CreatorRepository::class ) );
 	}
 
 	public function test_boot_registers_filtered_modules_with_the_container(): void {
@@ -38,9 +116,9 @@ final class PluginTest extends TestCase {
 		$first     = $this->module( 'first' );
 		$second    = $this->module( 'second' );
 
-		Filters\expectApplied( 'merchboard_modules' )->once()->with( array() )->andReturn( array( $first, $second ) );
+		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array( $first, $second ) );
 
-		( new Plugin( self::FILE, $container ) )->boot();
+		$this->plugin( $container )->boot();
 
 		self::assertSame( array( $container ), $first->registered_with );
 		self::assertSame( array( $container ), $second->registered_with );
@@ -51,7 +129,7 @@ final class PluginTest extends TestCase {
 
 		Actions\expectDone( 'merchboard_loaded' )->once()->with( $container );
 
-		( new Plugin( self::FILE, $container ) )->boot();
+		$this->plugin( $container )->boot();
 	}
 
 	public function test_boot_runs_only_once(): void {
@@ -60,7 +138,7 @@ final class PluginTest extends TestCase {
 		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array( $module ) );
 		Actions\expectDone( 'merchboard_loaded' )->once();
 
-		$plugin = new Plugin( self::FILE );
+		$plugin = $this->plugin();
 		$plugin->boot();
 		$plugin->boot();
 
@@ -73,7 +151,7 @@ final class PluginTest extends TestCase {
 		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array( new stdClass(), 'creators', $module ) );
 		Functions\expect( '_doing_it_wrong' )->twice();
 
-		( new Plugin( self::FILE ) )->boot();
+		$this->plugin()->boot();
 
 		self::assertCount( 1, $module->registered_with );
 	}
@@ -86,7 +164,7 @@ final class PluginTest extends TestCase {
 		Functions\expect( '_doing_it_wrong' )->once();
 		Functions\stubEscapeFunctions();
 
-		( new Plugin( self::FILE ) )->boot();
+		$this->plugin()->boot();
 
 		self::assertCount( 1, $first->registered_with );
 		self::assertCount( 0, $duplicate->registered_with );
@@ -97,13 +175,13 @@ final class PluginTest extends TestCase {
 		Functions\expect( '_doing_it_wrong' )->once();
 		Actions\expectDone( 'merchboard_loaded' )->once();
 
-		( new Plugin( self::FILE ) )->boot();
+		$this->plugin()->boot();
 	}
 
 	public function test_woocommerce_declaration_is_skipped_without_woocommerce(): void {
 		self::assertFalse( class_exists( FeaturesUtil::class, false ) );
 
-		( new Plugin( self::FILE ) )->declare_woocommerce_compatibility();
+		$this->plugin()->declare_woocommerce_compatibility();
 
 		$this->addToAssertionCount( 1 );
 	}
@@ -113,9 +191,24 @@ final class PluginTest extends TestCase {
 	public function test_declares_hpos_compatibility_when_woocommerce_is_loaded(): void {
 		require_once dirname( __DIR__ ) . '/Fixtures/FeaturesUtil.php';
 
-		( new Plugin( self::FILE ) )->declare_woocommerce_compatibility();
+		$this->plugin()->declare_woocommerce_compatibility();
 
 		self::assertSame( array( array( 'custom_order_tables', self::FILE, true ) ), FeaturesUtil::$calls );
+	}
+
+	/**
+	 * Creates the plugin with the recording database instead of global $wpdb.
+	 *
+	 * @param Container|null $container Container to use.
+	 */
+	private function plugin( ?Container $container = null ): Plugin {
+		$container ??= new Container();
+		$plugin      = new Plugin( self::FILE, $container );
+		$wpdb        = $this->wpdb;
+
+		$container->set( wpdb::class, static fn(): wpdb => $wpdb );
+
+		return $plugin;
 	}
 
 	/**

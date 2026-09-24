@@ -8,4 +8,7 @@ parameters:
         - uninstall.php
         - src
         - tests
+    excludePaths:
+        # Unit-test stand-in for WordPress' wpdb; PHPStan uses the real stubs.
+        - tests/Fixtures/wpdb.php
     tmpDir: .tools/phpstan-cache
