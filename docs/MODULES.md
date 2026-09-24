@@ -73,7 +73,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 
 | Modul | Status | Ansvar | Fase |
 | --- | --- | --- | --- |
-| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3), Logger, PluginLogger, LogContext, LogWriter-backends (fase 4), Capabilities, RoleManager (fase 5), AuditTrail/AuditRepository/AuditAction, Transaction, migration 2 (fase 6). **Planlagt:** Settings (9), Assets (13) | 2-6 ✅, 7+ |
+| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3), Logger, PluginLogger, LogContext, LogWriter-backends (fase 4), Capabilities, RoleManager (fase 5), AuditTrail/AuditRepository/AuditAction, Transaction, migration 2 (fase 6), TransactionSupport og atomisk migrationslås (fase 7). **Planlagt:** Settings (9), Assets (13) | 2-6 ✅, 7+ |
 | Creators | Delvist | **Færdig:** datalag (3), `CreatorService`, repository-skriveoperationer og liste, `UserAccounts`, admin-side, list table og admin-post-handlers (6). **Planlagt:** `deleted_user`-hook (8), `user-edit.php`-link og søgbart brugervalg (10) | 3 ✅, 6 ✅, 8, 10 |
 | Access | Planlagt | `CreatorContext`, login-redirect, blokering af wp-admin for creators | 8 |
 | Admin | Planlagt | Overview, Settings og Audit log (topmenuen "Merch Dashboard" oprettes indtil videre af Creators-modulet, fase 6) | 9, 11 |

@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 6 (Creator-administration og audit trail) · **Næste fase:** 7 (Integrationstest-infrastruktur) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 7 (Database-hardening og MySQL/MariaDB-verifikation) · **Næste fase:** 8 (Creator access og login-flow) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -42,7 +42,7 @@
 
 **Bevidst ikke i fase 3:** creator-rolle/capabilities (5), CreatorService, update og lister (6), adgang/login (8), admin-UI (10), `/me`-API (14), `merchboard_creatormeta` (14), WooCommerce-data og ledger (17-18), slet-data-rutine (9).
 
-**Ikke verificeret på MySQL/MariaDB:** se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite). CI (fase 7) og staging (fase 16) er autoritative.
+**MySQL/MariaDB:** MariaDB 10.11.19 verificeret i fase 7. MySQL afventer CI-resultatet. Se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite).
 
 ### Fase 4 – Logging og fejlhåndtering ✅
 
@@ -84,6 +84,19 @@
 
 **Bevidst ikke i fase 6:** audit-visning og `merchboard_view_logs` (11), meta-capabilities, creator-adgang og `deleted_user`-hook (8), permanent sletning (9), dashboard, REST, `/me`, WooCommerce-data.
 
+### Fase 7 – Database-hardening og MySQL/MariaDB-verifikation ✅
+
+- [x] Revision af migrationer, `Migrator`, `Installer`, repositories, audit og `Transaction` mod MySQL/MariaDB-semantik. Schemaet var korrekt og uændret: ingen ny migration, schemaversion stadig 2.
+- [x] **Migrationslås** omskrevet: `add_option()` var ikke en lås på MySQL/MariaDB (demonstreret). Nu atomisk `INSERT IGNORE`, compare-and-swap ved overtagelse og ejer-token ved frigivelse.
+- [x] **Fail closed** uden transaktionel engine: `TransactionSupport` (`information_schema`) plus admin-notice (valgt af projektejeren, ADR-024).
+- [x] **Audit-context** som ASCII-JSON. Malformed context fejler ikke længere skrivningen.
+- [x] **Integrationstests** (`npm run test:integration`): rigtig WordPress 7.1.2 og **MariaDB 10.11.19** (portabel, SHA-256-verificeret, kun under testkørslen). 53 tests grønne. CI-job `PHP integration (MySQL)` tilføjet.
+- [x] 299 unit-tests (715 assertions). Lint og PHPStan level 8 er grønne.
+- [x] Playground (SQLite) med **og** uden WooCommerce: fuldt admin-flow uændret, 6 audit-records, 403 for uautoriserede og forkerte nonces, rollback-probe, engine-tjek (`sqlite` → tilgængelig), låsens SQL-semantik, migration 1 → 2 med ny lås, deaktivering/genaktivering bevarer data, og forside, wp-admin og REST svarer 200. Ingen notices fra pluginet. Én WooCommerce-textdomain-notice opstod i blueprintens WooCommerce-installationstrin, før Merch Dashboard blev aktiveret.
+- [x] Verificeret med og uden rettelserne: de nye audit-integrationstests fejler med den gamle JSON-kodning.
+
+**Bevidst ikke i fase 7:** REST, dashboard, nye admin-sider, sletning, audit-visning, `deleted_user`-hook og WooCommerce-logik.
+
 ## In progress
 
 Intet.
@@ -92,9 +105,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 7:** Integrationstest-infrastruktur (MySQL i CI).
-2. **Fase 8:** Creator access og login-flow (inkl. `deleted_user`-hook).
-3. **Fase 9:** Admin shell: overview og settings.
+1. **Fase 8:** Creator access og login-flow (inkl. `deleted_user`-hook).
+2. **Fase 9:** Admin shell: overview og settings.
+3. **Fase 10:** Admin creator management (rest).
 
 ## Known bugs
 
@@ -107,16 +120,19 @@ Ingen (der er ingen funktionalitet endnu).
 | npm audit | 11 advisories (5 moderate, 6 high) i transitive dev-dependencies af `@wordpress/scripts`. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts` |
 | Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
-| MySQL-verifikation | Schema og repository er kun kørt mod SQLite (Playground) og unit-tests. `dbDelta()`-adfærd, strict mode, charset og låsens atomicitet på MySQL/MariaDB er ikke verificeret. | CI-integrationstests med MySQL (fase 7) og staging (fase 16) |
+| MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7). **MySQL** er ikke verificeret: CI-jobbet findes, men resultatet er ikke set. Andre MariaDB-versioner og produktionens version er ukendte. | Tjek CI-jobbet `PHP integration (MySQL)` under GitHub → Actions, og staging (fase 16) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
 | Dinglende `user_id` ved brugersletning | Indtil `deleted_user`-hooken (fase 8) peger en creator på en slettet bruger ("Unknown user #ID" i listen). Creator-data påvirkes ikke. | Fase 8 |
-| Transaktioner på MySQL | Kun verificeret i SQLite. Kræver InnoDB. MyISAM ville ikke rulle tilbage (fejlen logges dog). | Fase 7 (CI/MySQL) og fase 16 (staging) |
+| Transaktioner uden InnoDB | Fail closed (ADR-024): creator-ændringer afvises på MyISAM. Rollback verificeret på MariaDB og SQLite. | Accepteret krav. Dokumenteret i DATABASE.md. |
+| Genforbindelse midt i en transaktion | Mister `wpdb` forbindelsen midt i en transaktion, genforbinder den og fortsætter uden transaktion. Meget sjældent. | Accepteret. Revurder ved problemer på staging. |
+| Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes i fase 10. |
+| Persistent object cache og migrationslås | Låsen arbejder direkte på databasen og rydder kun sin cache-nøgle. Samspil med fx Redis er ikke testet. | Staging (fase 16), hvis produktionen bruger object cache |
 | Brugervalg | Select med max 500 brugere | Søgbart valg i fase 10 |
 | Audit-retention | Ubegrænset opbevaring. Ingen politik for automatisk sletning. | Afklares (åbent spørgsmål 10) |
 | Creator-rollen har `read` | Creators kan indtil fase 8 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). Der findes ingen creators endnu (intet UI). | Blokering af wp-admin for creators i fase 8 |
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller i fase 9. |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
-| CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter første push. Overvej at installere `gh`. |
+| CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
 
 ## Godkendte eksterne services
 
@@ -125,7 +141,8 @@ Kun disse eksterne services er en del af projektet. Alt andet kræver eksplicit 
 | Service | Formål |
 | --- | --- |
 | GitHub (`CaileanTV/CCMerchDashboard`) | Versionsstyring, backup og CI (GitHub Actions) |
-| wordpress.org / Composer / npm registries | Download af WordPress, WooCommerce (kun i Playground) og dev-dependencies |
+| wordpress.org / Composer / npm registries | Download af WordPress, WooCommerce (kun i Playground), WordPress core til integrationstests og dev-dependencies |
+| archive.mariadb.org | Download af den portable MariaDB til lokale integrationstests (fastlåst version og SHA-256, kun dev). Godkendt af projektejeren 2026-09-24 (ADR-024). |
 
 **Eksplicit fravalgt:** Dinero og Google Drive. Ingen integration, ingen data ind eller ud, ingen backup, og connectors må ikke aktiveres på projektets vegne.
 
@@ -134,18 +151,19 @@ Kun disse eksterne services er en del af projektet. Alt andet kræver eksplicit 
 Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står i parentes.
 
 1. ✅ **Navn/prefix – lukket (ADR-018):** Produktnavn `Merch Dashboard`, teknisk prefix `merchboard`, PHP-namespace `MerchBoard\`. Låst før fase 3. Den tidligere midlertidige konvention `ccmerch` er migreret i hele repo'et.
-2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
+2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? (Fase 7 verificerede MariaDB 10.11.19 lokalt. Den lokale version bør matche produktionen, når den kendes.) Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
 3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
 4. **Teams:** Kan en creator have flere brugere (fx manager)? (senest før fase 8: adgangsmodellen antager én bruger pr. creator)
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
 7. **UI-sprog:** Dansk, engelsk eller begge i creator-dashboardet? (fase 15)
 8. **Dashboard-URL:** `/creator-dashboard/` eller andet (fx `/studio/`)? (fase 12)
-9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). (fase 7)
+9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). Fase 7 løste behovet for en rigtig database med integrationstestene, så spørgsmålet haster ikke længere. (fase 16)
 10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. (fase 9/11)
 
 ## Next recommended steps
 
 1. Tjek at CI er grøn under GitHub → Actions.
-2. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så CI-integrationstests i fase 7 kan køre mod samme version.
-3. Kør fase 7 med prompten: *"Implementér roadmap-fase 7 (Integrationstest-infrastruktur) jf. docs/ROADMAP.md. Følg docs/AI-DEVELOPMENT.md."*
+2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
+3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
+4. Kør fase 8 (Creator access og login-flow) jf. docs/ROADMAP.md.

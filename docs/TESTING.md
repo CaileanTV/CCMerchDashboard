@@ -1,6 +1,6 @@
 # Teststrategi
 
-> Status: Statisk analyse, lint og **PHP unit-tests** kører lokalt og i CI (fra fase 2). Øvrige niveauer er planlagt.
+> Status: Statisk analyse, lint og **PHP unit-tests** kører lokalt og i CI (fra fase 2). **PHP-integrationstests** mod en rigtig database kører lokalt mod MariaDB og i CI mod MySQL (fra fase 7). Øvrige niveauer er planlagt.
 
 ## Niveauer
 
@@ -8,7 +8,7 @@
 | --- | --- | --- | --- | --- |
 | Statisk | PHPCS (WPCS), PHPStan level 8, ESLint, `php -l` (8.2) | Standarder, security-sniffs (escaping, nonce, prepared SQL), typefejl | Nu | Lokalt og i CI |
 | PHP unit | PHPUnit + [Brain Monkey](https://github.com/Brain-WP/BrainMonkey) | Domænelogik, services, entities og validering uden WordPress | Fase 2 → | Lokalt og i CI |
-| PHP integration | PHPUnit + WordPress test suite (`wp-phpunit/wp-phpunit`, `yoast/phpunit-polyfills`) | Repositories mod rigtig database, migrationer, capabilities, REST-permissions og **IDOR-tests** | Fase 7 → | CI (MySQL-service). Lokalt kun med tilgængelig MySQL. |
+| PHP integration | PHPUnit 11 + rigtig WordPress (`roots/wordpress-no-content`) + rigtig MySQL/MariaDB | Migrationer, lås, transaktioner, repositories, charset og services mod rigtig database. Senere capabilities, REST-permissions og **IDOR-tests** | Fase 7 → | Lokalt (portabel MariaDB) og i CI (runnerens MySQL) |
 | JS unit | Jest via `wp-scripts test-unit-js` + Testing Library | Hooks, utils og komponenter med logik | Fase 13 → | Lokalt og i CI |
 | E2E | Playwright via `wp-scripts test-e2e` mod Playground | Login-flow, adgangskontrol og kritiske dashboard-flows | Efter MVP | CI |
 | Manuel | Tjekliste i PR/fase-afslutning | UX, responsivitet og tilgængelighed | Hver fase | Lokalt (`npm run wp:start`) |
@@ -27,7 +27,7 @@
 
 Test-doubles: `tests/Unit/Support/RecordingWpdb` (optager prepare/insert i stedet for at køre SQL, så testene viser *hvordan* databasen kaldes), `InMemoryOptions` (options/transients med `add_option`-semantik) og `RecordingMigration`. `tests/Fixtures/wpdb.php` er en tom `wpdb`-stub, så typehints virker uden WordPress (ekskluderet fra PHPStan).
 
-**Hvad unit-tests ikke kan bevise:** at SQL faktisk virker mod en database. Det dækkes midlertidigt af en Playground-runtime-kontrol (SQLite) og autoritativt af integrationstests mod MySQL i fase 7. Se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite).
+**Hvad unit-tests ikke kan bevise:** at SQL faktisk virker mod en database. Det dækkes af integrationstestene fra fase 7 (se nedenfor) og af Playground-runtime-kontroller (SQLite). Se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite).
 
 **Unit-tests fra fase 4 (logging og fejlhåndtering):**
 
@@ -61,6 +61,26 @@ Test-doubles: `tests/Fixtures/wp-role.php` (minimal `WP_Role`, ekskluderet fra P
 - Migration 2 (`CreateAuditLogTable`) og opgradering 1 → 2.
 
 Test-doubles: `FakeDatabase` (in-memory `wpdb`, der udfører pluginets prepared queries med UNIQUE, auto-increment og transaktion med snapshot/rollback, og som kaster på ukendte query-former), `FakeUserAccounts` og `WpDie`. Service, repositories, audit og transaktion testes med deres rigtige implementeringer.
+
+**Unit-tests fra fase 7:** `Migrator`-låsen (atomisk insert i stedet for `add_option`, token i værdien, ikke autoload, fremmed lås respekteres, forladt/ulæselig/ældre lås overtages, compare-and-swap på den forældede værdi, tabt kapløb migrerer ikke, frigivelse sletter aldrig en overtaget lås), `TransactionSupport` (spørger kun `information_schema` om egne tabeller, rapporterer ikke-transaktionelle og manglende tabeller, ukendt engine og fejlet query fejler lukket, små bogstaver i tabelnavne, positivt resultat caches, SQLite spørges ikke), `Transaction` afviser at starte uden transaktionel engine, admin-noticen, samt audit-context som ASCII-JSON, malformed context og manipulerede rækker. Test-doubles: `RecordingWpdb` emulerer lås-rækken med MySQL's affected-rows-semantik, `FakeDatabase` rapporterer storage engines, og `CallbackMigration` lader en test handle midt i en migration.
+
+## Integrationstests (fase 7)
+
+```bash
+npm run test:integration          # alle
+npm run test:integration -- --filter TransactionTest
+```
+
+- **Harness** (`tests/Integration/`): `bootstrap.php` installerer en frisk WordPress 7.1.2 (`roots/wordpress-no-content`, Composer dev-dependency) i en separat proces og indlæser derefter WordPress med pluginet, som et must-use-plugin ville blive det. Hver test starter uden pluginets tabeller og schema-options, så hver test beviser sin egen vej fra et tomt schema. Pluginets tekniske log skrives til `.tools/wp-content/debug.log`. Den første linje i output viser databaseversion, default engine, charset, collation og WordPress-sessionens `sql_mode`.
+- **Database lokalt (Windows):** `bin/integration.mjs` henter én gang den officielle portable MariaDB-ZIP (fastlåst version og SHA-256) fra archive.mariadb.org til `.tools/mariadb/`, initialiserer en tom datamappe i `.tools/mariadb-data/` og starter serveren kun under kørslen på 127.0.0.1:3316 (`MERCHBOARD_MARIADB_PORT`). Der installeres ingen Windows-service, og kørslen afbrydes, hvis porten er optaget.
+- **Database i CI / egen database:** Sæt `MERCHBOARD_TEST_DB_HOST` (og `_PORT`, `_NAME`, `_USER`, `_PASSWORD`). Databasen oprettes, hvis den mangler, og alle tabeller med prefix `mbtest_` droppes. Brug derfor kun en database, der udelukkende findes til testene. CI-jobbet `PHP integration (MySQL)` bruger den MySQL-server, som GitHubs Ubuntu-runner leverer.
+- **Hvad der testes:** schema (kolonner, typer, indexes, charset/collation og engine via `information_schema`) og `dbDelta()`-idempotens, migrationer (0 → 2, 1 → 2 med data, aktuel, gentagen, fejl med rigtig serverfejl, Installer-pause), lås (holdt, forladt, atomisk insert, `add_option`-problemet og 6 samtidige processer), transaktioner (commit, rollback ved audit-fejl via database-trigger, ingen audit ved creator-fejl via UNIQUE-brud/trigger, MyISAM afvises og ignorerer faktisk rollback, neutral admin-fejl med log), repository (typer, duplikat, flere `NULL`, status, manipuleret status, UTC under fremmed tidszone, Unicode byte-præcist, `utf8mb3`-tabel, SQL injection-strenge, sortering, ugyldige ID'er), audit (actor, NULL i stedet for 0, ASCII-JSON på `utf8mb3`, malformed og manipuleret context) og `CreatorService` end-to-end med rigtige brugere og roller (livscyklus, uautoriserede brugere, én bruger pr. creator).
+
+| Engine | Status |
+| --- | --- |
+| SQLite (Playground) | Runtime-kontroller via det rigtige admin-UI og probes (fase 3-7) |
+| MariaDB 10.11.19 | **Verificeret:** alle integrationstests grønne lokalt (fase 7) |
+| MySQL | CI-job findes. Resultatet er **ikke set**, og MySQL er derfor ikke verificeret |
 
 **Legacy-syntaks:** CI-jobbet `php-legacy-syntax` kører `php -l` på PHP 7.2 for hovedfilen, `src/Core/Requirements.php` og `uninstall.php`, så versionstjekket kan vise en notice i stedet for en parse error.
 

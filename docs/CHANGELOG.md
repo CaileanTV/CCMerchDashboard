@@ -15,6 +15,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Logging og fejlhåndtering (fase 4):** `Logger`-abstraktion med WooCommerce-logger (source `merchboard`) og `error_log()`-fallback, tærskel fra `WP_DEBUG`/filter `merchboard_log_level`, sanitization af context (`LogContext`) og `DatabaseException::context()`. Migrationsfejl logges via Logger. ADR-021.
 - **Roller og capabilities (fase 5):** rolle `merchboard_creator` (`read` + `merchboard_access_dashboard`), admin-capabilities `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings`, samt `Capabilities` og `RoleManager` med idempotent sync ved aktivering og opdatering (ADR-022).
 - **Creator-administration og audit trail (fase 6):** admin-side "Merch Dashboard → Creators" (liste, opret/rediger, aktivér/deaktivér, tilknyt/frakobl WordPress-bruger), `CreatorService`, `Transaction`, `AuditTrail`/`AuditRepository`/`AuditAction` (ADR-023).
+- **Database-hardening og MySQL/MariaDB-verifikation (fase 7):** integrationstests mod rigtig WordPress og database (`npm run test:integration`, portabel MariaDB 10.11.19 lokalt, CI-job mod runnerens MySQL), `TransactionSupport` (engine-tjek) og admin-notice ved ikke-transaktionelle tabeller (ADR-024).
 
 ### Changed
 - **Navngivning (ADR-018):** Den midlertidige konvention `ccmerch` / `CCMerch\` / `ccmerch-dashboard` / "CC Merch Dashboard" er erstattet af `merchboard` / `MerchBoard\` / `merchboard` / "Merch Dashboard" i al kode, konfiguration og dokumentation. Hovedfilen hedder nu `merchboard.php`. Ingen datamigration, fordi der ikke fandtes persistent data. Punkterne ovenfor bruger allerede de nye navne.
@@ -39,6 +40,12 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - Creator-admin-UI flyttet frem fra fase 10. `deleted_user`-hook flyttet fra fase 6 til fase 8.
 - Tilknytning af en bruger giver rollen `merchboard_creator` som ekstra rolle, og frakobling fjerner den.
 - PHPCS: `EscapeOutput.ExceptionNotEscaped` er slået fra projekt-bredt (exception-beskeder renderes aldrig; dokumenteret i regelsættet).
+
+### Changed (fase 7)
+- **Migrationslås:** atomisk `INSERT IGNORE` i stedet for `add_option()` (som ikke er en lås på MySQL/MariaDB), compare-and-swap ved overtagelse af forladte låse og ejer-token ved frigivelse. Låsens værdi er nu `<tid>:<token>`. Ældre værdier (kun tid) læses stadig.
+- **Fail closed:** `Transaction` skriver intet, hvis en plugin-tabel ligger på en engine uden transaktioner. Tidligere ville ændringen bestå uden audit-record (ADR-023's konsekvens er ændret af ADR-024).
+- **Audit-context** gemmes som ASCII-JSON, og ugyldig UTF-8 eller ikke-endelige tal erstattes i stedet for at gemme en tom context.
+- Roadmap-fase 7 er omdøbt fra "Integrationstest-infrastruktur" til "Database-hardening og MySQL/MariaDB-verifikation". Integrationstestene bruger en egen let bootstrap i stedet for `wp-phpunit`.
 
 ### Database
 - **Schema-version 1:** ny tabel `{prefix}merchboard_creators` (`id`, `user_id` nullable UNIQUE, `display_name`, `status`, `created_at`, `updated_at`; UTC). Nye options `merchboard_db_version` (autoload) og `merchboard_db_migration_lock` (midlertidig). Transient `merchboard_db_migration_failed`.

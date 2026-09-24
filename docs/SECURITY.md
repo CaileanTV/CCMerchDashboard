@@ -157,6 +157,15 @@ Tekniske logs (fase 4, ADR-021, [ARCHITECTURE.md §11](ARCHITECTURE.md#11-loggin
 
 Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, UTC-tid og minimal context (feltnavne, statusser og bruger-ID'er, **ingen display names eller andre værdier**). Context renses desuden via `LogContext`. Records er append-only. Ændring og audit-record skrives i én transaktion. Settings-ændringer registreres fra fase 9. Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding) fra fase 8.
 
+### Database-hardening (fase 7, ADR-024)
+
+- **Migrationslås:** atomisk (`INSERT IGNORE`), overtagelse af forladte låse med compare-and-swap og ejer-token ved frigivelse. To requests kan ikke migrere samtidig, og en langsom request kan ikke slette en andens lås. Verificeret med 6 parallelle processer mod MariaDB 10.11.19.
+- **Fail closed uden transaktioner:** Ligger en plugin-tabel på en ikke-transaktionel engine (fx MyISAM), skriver pluginet intet, i stedet for at efterlade en creator-ændring uden audit-record (eller omvendt). Noticen i admin nævner ingen tabelnavne. Detaljerne står kun i loggen.
+- **Audit-context kan ikke vælte en ændring:** Context gemmes som ASCII-JSON, og ugyldig UTF-8 eller ikke-endelige tal erstattes. En defekt context kan hverken bryde audit-skrivningen eller, via tabellens charset, få forretningsændringen rullet tilbage.
+- **Manipulerede rækker:** Ukendte audit-actions og creator-statusser i databasen afvises ved læsning (`DatabaseException`). Ugyldig JSON-context læses som tom (verificeret mod MariaDB).
+- **SQL injection mod rigtig database:** Strenge med quotes, backslashes og `%`-placeholders gemmes bogstaveligt, og injicerede sorteringsparametre ignoreres (integrationstests).
+- **Testisolation:** Integrationstestene bruger en separat testdatabase (tabelprefix `mbtest_`). Lokalt kører den på en midlertidig MariaDB-server, som kun lever under testkørslen og kun lytter på 127.0.0.1. Kørslen afbrydes, hvis porten er optaget, i stedet for at forbinde til en anden database.
+
 ## Tjekliste pr. ændring
 
 - [ ] Hvert nyt endpoint/handler har capability- eller `CreatorContext`-tjek **server-side**.

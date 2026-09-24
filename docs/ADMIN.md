@@ -57,6 +57,8 @@ Alle ændringer går via `Modules/Creators/Admin/CreatorAdminActions` på `admin
 
 Admin-siden selv er beskyttet af menu-capability'en og tjekker capability igen i `render()`.
 
+Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), viser siden en fejl-notice om, at creator-ændringer er slået fra, indtil tabellerne er konverteret til InnoDB. Ændringer afvises så med den neutrale tekniske fejl (ADR-024). Noticen nævner ingen tabelnavne.
+
 ### Bruger-profil (`user-edit.php`)
 
 En lille informationsboks: "Denne bruger er creator: <link>" eller "Gør til creator" (link til opret-siden med forvalgt bruger).

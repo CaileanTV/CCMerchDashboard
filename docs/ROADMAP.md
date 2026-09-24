@@ -10,7 +10,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | --- | --- | --- |
 | Foundation | 1-2 | Tooling, docs og plugin-bootstrap |
 | Data & core services | 3-4 | Migrationer og creator-tabel (✅ fase 3), logging og fejlhåndtering (✅ fase 4) |
-| Authentication & permissions | 5-8 | Roller og capabilities (✅ fase 5), creator-domæne, testinfrastruktur, adgangsflow |
+| Authentication & permissions | 5-8 | Roller og capabilities (✅ fase 5), creator-administration (✅ fase 6), database-hardening og integrationstests (✅ fase 7), adgangsflow |
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
 | Deployment | 16 | Release-pipeline og staging |
@@ -36,7 +36,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Mål:** Versionerede migrationer, creator-schema og et sikkert creator-datalag.
 - **Leveret:** activation hook → `Installer`, versionstjek på `plugins_loaded` (før moduler), `Tables` (whitelist), `Schema`/`Migration`/`Migrator` (heltalsversion `merchboard_db_version`, lås og version gemt efter hver succes), migration 1 `merchboard_creators`, `Creator`, `CreatorStatus` (`active`/`inactive`), `CreatorRepository` (find, find_by_user_id, create), `CreatorsModule` og uninstall-politik (bevar data). 113 unit-tests. Runtime-verifikation i Playground/SQLite. ADR-019 og ADR-020.
 - **Ændret i forhold til den oprindelige plan:** `merchboard_creatormeta` er flyttet til fase 14 (profilfelter). Entity, enum og et minimalt repository er rykket frem fra fase 6. `slug` og `created_by` er udeladt, indtil der er et behov. Statusmodellen er `active`/`inactive` i stedet for `active`/`suspended`/`archived`. Et separat `Activator`/`Upgrader` er samlet i `Installer`.
-- **Ikke verificeret:** MySQL/MariaDB (se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite)). Sker i fase 7 (CI) og fase 16 (staging).
+- **MySQL/MariaDB:** MariaDB 10.11.19 verificeret i fase 7. MySQL afventer CI-resultatet, og staging kommer i fase 16 (se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite)).
 
 ## Fase 4 – Logging og fejlhåndtering ✅
 
@@ -61,10 +61,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 </details>
 
-## Fase 7 – Integrationstest-infrastruktur
+## Fase 7 – Database-hardening og MySQL/MariaDB-verifikation ✅
 
-- **Scope:** WordPress test suite (`wp-phpunit`, `yoast/phpunit-polyfills`), `tests/Integration`-bootstrap, CI-job med MySQL-service og de første integrationstests for repository og migrationer.
-- **Done:** Integrationstests kører grønt i CI. Lokal kørsel er dokumenteret (kræver MySQL).
+- **Scope (udført):** revision af databasefundamentet mod MySQL/MariaDB-semantik. Atomisk migrationslås, fail closed uden transaktionel engine, audit-context som ASCII-JSON, integrationstests mod rigtig WordPress og database (portabel MariaDB lokalt, CI-job mod runnerens MySQL) og dokumentation af forudsætninger (ADR-024). Omdøbt fra "Integrationstest-infrastruktur". `wp-phpunit` er erstattet af en egen let bootstrap.
+- **Done:** Integrationstests grønne mod MariaDB 10.11.19 lokalt. CI-jobbets MySQL-resultat er ikke set fra udviklingsmiljøet.
 
 ## Fase 8 – Creator access og login-flow
 

@@ -652,7 +652,49 @@ Creator-administration skal registrere hvem der ændrede hvad (ADR-021 udskilte 
 Pålidelig, manipulationssikker og privacy-venlig historik med en ærlig konsistensgaranti. Rollback er verificeret i SQLite/Playground.
 
 ## Consequences
-- Transaktionsgarantien forudsætter en transaktionel storage engine (InnoDB på MySQL/MariaDB, som er WordPress' default). MyISAM ville ikke rulle tilbage. Fejlen logges så, men ændringen består. MySQL-verifikation sker i fase 7/16.
+- Transaktionsgarantien forudsætter en transaktionel storage engine (InnoDB på MySQL/MariaDB, som er WordPress' default). MyISAM ville ikke rulle tilbage. Fejlen logges så, men ændringen består. MySQL-verifikation sker i fase 7/16. *(Ændret af ADR-024: uden transaktionel engine skrives intet.)*
 - `Transaction` er ikke re-entrant. Fremtidige use cases må ikke indlejre transaktioner.
 - Nye auditerbare hændelser kræver nye `AuditAction`-cases (ingen fri tekst).
 - Audit-retention er et åbent spørgsmål.
+
+---
+
+# ADR-024: Database-hardening: fail closed uden transaktioner, atomisk migrationslås og integrationstests mod rigtig database
+
+## Date
+2026-09-24
+
+## Status
+Accepteret (fase 7). Ændrer konsekvensen om MyISAM i ADR-023.
+
+## Context
+Fase 3 og 6 var kun kørt mod SQLite (Playground) og unit-test-doubles. En gennemgang mod MySQL/MariaDB-semantik viste tre reelle huller:
+
+1. **Migrationslåsen** brugte `add_option()`. På MySQL/MariaDB kører den `INSERT … ON DUPLICATE KEY UPDATE`. En request med forældet options-cache overskriver derfor en andens lås og får "succes", så to requests kan migrere samtidig. Overtagelse af en forladt lås (`delete_option` + `add_option`) havde samme kapløb, og frigivelsen slettede låsen uanset ejer.
+2. **Transaktioner** virker kun på transaktionelle engines. Med MyISAM ville en creator-ændring bestå, mens audit-recorden fejlede (eller omvendt).
+3. **Audit-context** blev gemt som UTF-8-JSON. På en legacy `utf8mb3`-tabel ville 4-byte-tegn få audit-skrivningen og dermed forretningsændringen til at fejle. Ukodbar context blev gemt som tom.
+
+Desuden fandtes ingen reproducerbar måde at køre koden mod en rigtig database på. Der er ingen Docker, MySQL eller MariaDB på udviklingsmaskinen.
+
+## Decision
+- **Migrationslås** på options-rækken direkte: `INSERT IGNORE` (atomisk), compare-and-swap-`UPDATE` på den forældede værdi ved overtagelse, og `DELETE` kun med egen token. Samme mønster som WordPress' `WP_Upgrader::create_lock()`, plus ejer-token.
+- **Fail closed:** `TransactionSupport` spørger `information_schema` (`TABLES` join `ENGINES.TRANSACTIONS`), om alle plugin-tabeller er transaktionelle. Er de ikke det, afviser `Transaction::run()` at starte, og intet skrives. Fejlen logges med tabel og engine, og admin-siden viser en notice. Der angives **ingen** engine i `CREATE TABLE` (som WordPress core). Server-default er InnoDB. SQLite er altid transaktionel. Valgt af projektejeren 2026-09-24.
+- **Audit-context** gemmes som ASCII-JSON med erstatning af ugyldig UTF-8 og ikke-endelige tal.
+- **Integrationstests** mod rigtig WordPress og database med en egen let PHPUnit 11-bootstrap (`tests/Integration`) og `roots/wordpress-no-content` (Composer, wordpress.org). Lokalt en **portabel MariaDB** (officiel ZIP fra archive.mariadb.org, fastlåst version og SHA-256, kun dev, kun under testkørslen, ingen service). I CI den MySQL-server, som GitHubs Ubuntu-runner leverer. Begge dele er valgt af projektejeren 2026-09-24. archive.mariadb.org er dermed en godkendt downloadkilde for dev-værktøj.
+
+## Alternatives considered
+- **Hardcode `ENGINE=InnoDB`:** dækker kun nye tabeller, ikke eksisterende eller konverterede. Tjekket er nødvendigt alligevel. Fravalgt af projektejeren.
+- **Kun advarsel ved MyISAM (best effort):** tillader ændringer uden audit-record, som ADR-023 netop skal forhindre. Fravalgt.
+- **`wp-phpunit` + `yoast/phpunit-polyfills`** (oprindelig roadmap-plan): vi har ikke brug for `WP_UnitTestCase`-factories endnu, projektet kører allerede PHPUnit 11, og harnessen er lille og uden ekstra dependencies. Kan genovervejes, når REST-tests (fase 14) har brug for factories.
+- **Docker/LocalWP:** ikke til stede, og et LocalWP-site kræver eksplicit udpegning (Project Isolation).
+- **`GET_LOCK()`:** MySQL-specifikt, ikke i SQLite-oversættelsen, og låsen følger forbindelsen, ikke requesten.
+
+## Reason
+Konsistensgarantien i ADR-023 bliver ægte på alle engines, i stedet for at afhænge af serverkonfigurationen. Migrationer kan ikke længere køre dobbelt. Databaseadfærden er bevist mod en rigtig server (MariaDB 10.11.19) med reproducerbare tests, som alle kan køre.
+
+## Consequences
+- Et site med MyISAM-tabeller kan ikke ændre creators, før tabellerne konverteres til InnoDB. Det er et bevidst krav og dokumenteret i DATABASE.md.
+- Hver creator-skrivning koster én `information_schema`-forespørgsel pr. request, indtil et positivt resultat er cachet.
+- MySQL er først verificeret, når CI-jobbet er set grønt. Staging (fase 16) er stadig autoritativt for produktionsmiljøet.
+- Nye plugin-tabeller er automatisk omfattet af engine-tjekket (`Tables::all()`).
+- MariaDB-versionen i `bin/integration.mjs` skal holdes ajour og helst matche produktionen, når versionen kendes (åbent spørgsmål 2).

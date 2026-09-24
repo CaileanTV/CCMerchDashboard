@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 2.** `merchboard_creators` (fase 3) og `merchboard_audit_log` (fase 6) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte.
+> Status: **Schema-version 2.** `merchboard_creators` (fase 3) og `merchboard_audit_log` (fase 6) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19** og SQLite (Playground). MySQL er ikke verificeret endnu (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
 
 ## Placering af data
 
@@ -52,6 +52,7 @@ Regler:
 ## Fælles konventioner for tabeller
 
 - Oprettes med `dbDelta()`. Charset/collation fra `$wpdb->get_charset_collate()` (samme som resten af WordPress-databasen, typisk `utf8mb4`). Intet hardcodet.
+- **Storage engine angives ikke** (som i WordPress core). Nye tabeller får serverens default, som er InnoDB på alle understøttede MySQL/MariaDB-versioner. Pluginet kræver en transaktionel engine og nægter at skrive uden (se [Forudsætninger](#forudsætninger-for-mysqlmariadb), ADR-024).
 - Navn: `{$wpdb->prefix}merchboard_<navn>`. Prefix fra `$wpdb->prefix`, aldrig `wp_` hardcodet. Navne bygges **kun** af `MerchBoard\Core\Database\Tables::name()`, som afviser alt andet end registrerede tabeller.
 - `VARCHAR(191)` for strenge, der kan blive indekseret (utf8mb4-indexgrænse i ældre MySQL).
 - **Ingen fremmednøgler** (WordPress-konvention; `dbDelta` understøtter dem dårligt; sletning af WP-data må aldrig kaskadere ind i domænedata). Integritet håndhæves i PHP.
@@ -175,11 +176,11 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 
 | Del | Implementering |
 | --- | --- |
-| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **1**. |
+| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **2**. |
 | Migrationsliste | `MerchBoard\Core\Database\Schema::migrations()`: `array<int, Migration>` nøglet på den schema-version, migrationen giver. Højeste nøgle = forventet version. |
 | Migration | Klasse, der implementerer `MerchBoard\Core\Database\Migration::up( wpdb )`. Kaster `DatabaseException`, hvis ændringen ikke kan verificeres. **Skal være idempotent.** |
 | Runner | `MerchBoard\Core\Database\Migrator`: kører manglende migrationer i stigende rækkefølge og gemmer versionen **efter hver succesfuld migration**. Fejler en migration, stopper kørslen, og versionen forbliver på sidste succes. |
-| Lås | Option `merchboard_db_migration_lock` oprettes atomisk med `add_option()` (fejler, hvis den findes). Låse ældre end 5 minutter anses for forladte og overtages. Låsen frigives altid (`finally`). |
+| Lås | Række `merchboard_db_migration_lock` i options-tabellen med værdien `<unix-tid>:<token>` (ikke autoload). Oprettes atomisk med `INSERT IGNORE`, så kun én request kan få den. `add_option()` bruges **ikke**: den kører `INSERT … ON DUPLICATE KEY UPDATE`, som overskriver en eksisterende lås og melder succes, når requestens cache er forældet (demonstreret mod MariaDB). Låse ældre end 5 minutter anses for forladte og overtages med en compare-and-swap-`UPDATE` på den forældede værdi, så kun én af flere samtidige requests vinder. Låsen frigives altid (`finally`), men kun hvis værdien stadig er requestens egen token, så en langsom request aldrig sletter en lås, som en anden har overtaget. Ældre låse (kun tidsstempel) læses stadig. (ADR-024) |
 | `dbDelta()` | Bruges *inde i* migrationer til at oprette og ændre tabeller. Migrationssystemet tilføjer kun rækkefølge, versionering og lås, fordi `dbDelta()` ikke kan omdøbe eller droppe kolonner, flytte data eller køre engangsopgaver. |
 | Ingen `down()` | Migrationer er fremadrettede. Rollback sker via database-backup. |
 
@@ -198,7 +199,8 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 
 - `MerchBoard\Modules\Creators\CreatorRepository`: `find`, `find_by_user_id` og `create` (fase 3), samt `rename`, `set_status`, `link_user`, `unlink_user`, `paginate` (whitelisted sortering, max 100 pr. side) og `linked_user_ids` (fase 6). Hver skriveoperation opdaterer `updated_at`. Der er ingen delete.
 - `MerchBoard\Core\Audit\AuditRepository` (fase 6): kun `append` og `for_creator`.
-- **Transaktioner** (`MerchBoard\Core\Database\Transaction`, fase 6): `START TRANSACTION` / `COMMIT` / `ROLLBACK` via `$wpdb`, ikke re-entrant. Bruges af `CreatorService`, så creator-ændring og audit-record committes sammen eller slet ikke (ADR-023). Rollback af begge skrivninger er **verificeret i Playground/SQLite**. På MySQL/MariaDB forudsætter det InnoDB (default for nye tabeller siden MySQL 5.5 og WordPress' default). Med MyISAM ignoreres transaktioner. Derfor logges en fejlet audit-skrivning altid, så intet skjules. **Ikke verificeret på MySQL/MariaDB.**
+- **Transaktioner** (`MerchBoard\Core\Database\Transaction`, fase 6): `START TRANSACTION` / `COMMIT` / `ROLLBACK` via `$wpdb`, ikke re-entrant. Bruges af `CreatorService`, så creator-ændring og audit-record committes sammen eller slet ikke (ADR-023). **Fail closed (fase 7, ADR-024):** Før hver transaktion tjekker `TransactionSupport` via `information_schema` (`ENGINES.TRANSACTIONS`), at alle plugin-tabeller ligger på en transaktionel engine. Er en tabel fx MyISAM, skrives intet, og en `DatabaseException` med tabel og engine logges. Et positivt resultat caches pr. request. SQLite (`DB_ENGINE = sqlite`) er altid transaktionel. Rollback er **verificeret på MariaDB 10.11.19 og SQLite**. DDL (`CREATE`/`ALTER TABLE`) må aldrig køre inde i en transaktion (implicit commit på MySQL/MariaDB).
+- Audit-context gemmes som **ASCII-JSON** (`\uXXXX` for ikke-ASCII, fase 7). Skrivningen kan derfor ikke fejle på en tabel uden 4-byte-UTF-8 (legacy `utf8mb3`) og dermed rulle en forretningsændring tilbage. Ugyldig UTF-8 og ikke-endelige tal erstattes i stedet for at fejle. Ved læsning giver ugyldig JSON en tom context.
 - Al SQL går gennem repositories og `$wpdb->prepare()`. Tabelnavne kommer fra `Tables` og indsættes med `%i` (WP ≥ 6.2). Inserts bruger `$wpdb->insert()` med eksplicitte formater.
 - Kolonner vælges eksplicit (ingen `SELECT *`), så nye kolonner aldrig eksponeres ved et uheld.
 - ID'er valideres (positive heltal) i repositoriet, *før* der forespørges. Rækker valideres ved læsning (status-enum, tidsstempelformat).
@@ -210,23 +212,44 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 
 ## MySQL/MariaDB vs. Playground (SQLite)
 
-Produktionsschemaet er skrevet til **MySQL/MariaDB via `$wpdb`**. Playground bruger SQLite via WordPress' SQLite-integration, som oversætter MySQL-SQL. Der er ingen SQLite-specifikke tilpasninger i schemaet.
+Produktionsschemaet er skrevet til **MySQL/MariaDB via `$wpdb`**. Playground bruger SQLite via WordPress' SQLite-integration, som oversætter MySQL-SQL. Der er ingen SQLite-specifikke tilpasninger i schemaet. Eneste SQLite-gren i koden er engine-tjekket (`TransactionSupport`), fordi SQLite ikke har storage engines.
 
-| Egenskab | Verificeret hvordan |
-| --- | --- |
-| Tabel, kolonner og indexes oprettes via `dbDelta()` | **Playground/SQLite (runtime)**: begge tabeller findes med alle kolonner. Indexes `user_id`/`status` (creators) og `created_at`/`action`/`creator_id` (audit) findes. Migration 1 → 2 kørte ved aktivering. |
-| Transaktion ruller creator- og audit-skrivning tilbage | **Playground/SQLite (runtime)**, probe med fremtvunget fejl efter begge inserts |
-| Transaktioner på MySQL/MariaDB (InnoDB-krav, isolation) | **Ikke verificeret** |
-| `UNIQUE(user_id)` afviser duplikat og tillader flere `NULL` | **Playground/SQLite (runtime)** |
-| Idempotent genkørsel af migration 1 og opgradering fra version 0 → 1 uden datatab | **Playground/SQLite (runtime)** og unit-tests |
-| Data bevares ved deaktivering og genaktivering | **Playground/SQLite (runtime)** |
-| Prepared queries (`%i`, `%d`, `%s`) og UTC-tidsstempler | Unit-tests og Playground |
-| `dbDelta()`-adfærd på MySQL/MariaDB (typer, `bigint(20)`-displaybredde på MySQL 8, index-sammenligning ved fremtidige ændringer) | **Ikke verificeret.** Kun statisk (schemaet følger WordPress core-konventioner). |
-| MySQL strict mode (`NOT NULL` uden default på `datetime`) | **Ikke verificeret.** Repositoriet sætter altid værdierne. |
-| Charset/collation fra en rigtig MySQL-installation | **Ikke verificeret.** |
-| Samtidige migrationer (låsens atomicitet under reel samtidighed) | **Ikke verificeret.** Kun unit-testet. |
+Integrationstestene (`npm run test:integration`, fase 7) kører en rigtig WordPress 7.1.2 med pluginet mod en rigtig database. Se [TESTING.md](TESTING.md#integrationstests-fase-7).
 
-**Autoritativ MySQL-verifikation** sker i CI (integrationstests med MySQL-service, fase 7) og på staging (fase 16). Indtil da må MySQL-kompatibilitet ikke betragtes som bevist.
+| Egenskab | SQLite (Playground) | MariaDB 10.11.19 (lokalt) | MySQL (CI) |
+| --- | --- | --- | --- |
+| Kolonner, typer, nullability og indexes præcis som dokumenteret | ✅ runtime | ✅ `information_schema` | ❓ |
+| Gentaget `dbDelta()` finder ingen ændringer | – | ✅ | ❓ |
+| Tabeller og tekstkolonner bruger WordPress' charset/collation (`utf8mb4_unicode_520_ci`), intet hardcodet | – | ✅ | ❓ |
+| Tabeller oprettes på en transaktionel engine (server-default InnoDB) | – | ✅ | ❓ |
+| Creator-ændring og audit committes sammen | ✅ | ✅ | ❓ |
+| Audit-fejl (rigtig databasefejl via trigger) ruller creator-ændringen tilbage, også ved flerfeltsopdatering | ✅ (fremtvunget exception) | ✅ | ❓ |
+| Creator-fejl (rigtigt UNIQUE-brud/trigger) efterlader ingen audit-record | unit | ✅ | ❓ |
+| MyISAM ignorerer faktisk `ROLLBACK`, og pluginet afviser derfor at skrive (fail closed) | – | ✅ | ❓ |
+| `UNIQUE(user_id)` afviser duplikat og tillader flere `NULL` | ✅ | ✅ | ❓ |
+| Unicode (dansk, emoji, CJK, kombinerende tegn, 191 tegn à 4 byte) gemmes byte-præcist | – | ✅ | ❓ |
+| 4-byte-tegn på en legacy `utf8mb3`-tabel afvises rent (ingen `?` eller trunkering), og ASCII-JSON-context virker | – | ✅ | ❓ |
+| UTC uafhængigt af sitets tidszone og databasesessionens `time_zone` | ✅ | ✅ | ❓ |
+| Migration 0 → 2, 1 → 2 med data, aktuel schema (0 queries), gentagen kørsel uden datatab | ✅ (0 → 2, 1 → 2) | ✅ | ❓ |
+| Fejlet migration: version gemmes ikke, lås frigives, rigtig serverfejl i log-context, Installer pauser og logger | unit | ✅ | ❓ |
+| Lås: atomisk `INSERT IGNORE`, compare-and-swap, ejer-baseret sletning | ✅ (SQL-semantik) | ✅ | ❓ |
+| 6 samtidige processer: migrationen kører præcis én gang | – | ✅ | ❓ |
+| SQL injection-strenge gemmes bogstaveligt, injiceret sortering ignoreres | unit | ✅ | ❓ |
+
+❓ = CI-jobbet `PHP integration (MySQL)` kører de samme tests mod den MySQL-server, som GitHubs Ubuntu-runner leverer. Resultatet kan ikke læses fra udviklingsmiljøet (privat repo, ingen `gh`), så MySQL er **ikke verificeret**, før nogen har set jobbet grønt under GitHub → Actions. Jobbet udskriver den præcise serverversion.
+
+**Observeret på MariaDB 10.11.19:** WordPress fjerner strict mode fra sin databasesession (`sql_mode` = `ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION`). Uden WordPress' egen charset-kontrol ville serveren derfor gemme `?` i stedet for at afvise ugyldige tegn. Pluginet går altid gennem `$wpdb->insert()`/`update()`, som afviser værdien, og sætter altid alle `NOT NULL`-kolonner selv.
+
+**Ikke verificeret:** MySQL (se ovenfor), andre MariaDB-versioner end 10.11.19, versionen på dev/staging/produktion (åbent spørgsmål 2), persistent object cache (fx Redis) sammen med låsen, replikering/Galera og en databaseforbindelse, der genoprettes midt i en transaktion (`wpdb` genforbinder og fortsætter så uden transaktion). Autoritativ verifikation af produktionsmiljøet sker på staging (fase 16).
+
+### Forudsætninger for MySQL/MariaDB
+
+| Emne | Forudsætning | Hvis den ikke er opfyldt |
+| --- | --- | --- |
+| Storage engine | Alle plugin-tabeller på en transaktionel engine (InnoDB). Det er serverens default, og pluginet angiver ingen engine selv. | **Fail closed** (ADR-024): creator-ændringer afvises med en neutral fejl, admin-siden viser en fejl-notice (uden tabelnavne), og hvert afvist forsøg logges som `error` med tabel og engine. Løsning: `ALTER TABLE … ENGINE=InnoDB`. |
+| Charset/collation | WordPress' egen (`DB_CHARSET`/`DB_COLLATE` via `$wpdb`). `utf8mb4` anbefales (WordPress' default siden 4.2). | På en legacy `utf8mb3`-tabel afviser `wpdb` display names med 4-byte-tegn (emoji). Admin ser en teknisk fejl, og intet gemmes forkert. Audit-context påvirkes ikke (ASCII-JSON). |
+| Rettigheder | Som WordPress i øvrigt: `CREATE`/`ALTER` til `dbDelta()` og læseadgang til `information_schema` for egne tabeller (standard). | Migrationen fejler, versionen gemmes ikke, og der vises en admin notice (fase 3/4). |
+| Transaktioner | Ingen DDL inde i `Transaction::run()`, ingen indlejrede transaktioner. | Implicit commit ville bryde garantien. Indlejring afvises af `Transaction`. |
 
 ## Afinstallation og datalivscyklus
 

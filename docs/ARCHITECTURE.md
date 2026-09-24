@@ -68,7 +68,8 @@ merchboard/
 │   │   ├── Module.php           # interface for moduler                             [fase 2]
 │   │   ├── Lifecycle/           # Installer (aktivering + versionstjek) [fase 3], Deactivator [fase 4]
 │   │   ├── Database/            # Tables, Schema, Migration, Migrator, DatabaseException,
-│   │   │                        # Migrations/CreateCreatorsTable [fase 3], CreateAuditLogTable, Transaction [fase 6]
+│   │   │                        # Migrations/CreateCreatorsTable [fase 3], CreateAuditLogTable, Transaction [fase 6],
+│   │   │                        # TransactionSupport (engine-tjek, fail closed) [fase 7]
 │   │   ├── Audit/               # AuditAction, AuditTrail, AuditRepository, AuditEntry [fase 6]
 │   │   ├── Security/            # Capabilities, RoleManager [fase 5]; map_meta_cap [fase 8]
 │   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers

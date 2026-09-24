@@ -48,6 +48,7 @@ node bin/composer.mjs install
 | `npm run lint:php` | PHPCS med WordPress Coding Standards |
 | `npm run analyse:php` | PHPStan level 8 med WordPress-stubs |
 | `npm test` / `npm run test:php` | PHPUnit unit-tests (Brain Monkey) |
+| `npm run test:integration` | Integrationstests mod rigtig WordPress og MariaDB/MySQL (se [TESTING.md](TESTING.md#integrationstests-fase-7)) |
 | `node bin/composer.mjs check` | PHPCS + PHPStan + PHPUnit |
 | `npm run format` | Prettier-formattering af JS/JSON/Markdown m.m. |
 | `node bin/composer.mjs lint:fix` | Autofix af PHPCS-fejl (phpcbf) |
@@ -68,7 +69,7 @@ node bin/composer.mjs install
 
 **Kendte begrænsninger**
 
-- SQLite i stedet for MySQL. Custom tables oprettet med `dbDelta()` virker via SQLite-integrationen, men SQL skal testes mod MySQL/MariaDB før release (CI/staging).
+- SQLite i stedet for MySQL. Custom tables oprettet med `dbDelta()` virker via SQLite-integrationen. SQL testes mod en rigtig database med `npm run test:integration` (MariaDB lokalt, MySQL i CI) og endeligt på staging.
 - Persistent site-data på Windows-hosts virker ikke pålideligt: WooCommerce-installationen fejler med "Operation not permitted" ved mappe-rename på en host-mount. Derfor bruges et flygtigt site.
 - Første start downloader WordPress og WooCommerce (kræver netværk og tager 1-3 minutter).
 
@@ -92,8 +93,13 @@ Kun udviklingsværktøjer. Pluginet har **ingen** tredjeparts runtime-dependenci
 | `phpstan/phpstan` | 2.2.15 | Statisk analyse, som fanger typefejl og null-fejl før runtime | `phpstan.neon.dist`, `composer analyse` |
 | `szepeviktor/phpstan-wordpress` | 2.0.4 | WordPress-stubs og -regler til PHPStan (inkl. `php-stubs/wordpress-stubs` 7.1.0) | automatisk via extension-installer |
 | `phpstan/extension-installer` | 1.4.3 | Indlæser PHPStan-extensions automatisk | |
+| `roots/wordpress-no-content` | 7.1.2 (fastlåst) | WordPress core til integrationstestene. Hentes fra downloads.wordpress.org. Kun dev, aldrig i det distribuerede plugin. | `tests/Integration/config.php` |
 
 **Bevidst fravalgt:** `phpcompatibility/phpcompatibility-wp`. Den eneste stabile version (PHPCompatibility 9.3.5 fra 2019) kender ikke PHP 8.x, og 10.x er stadig alpha. PHPStan (`phpVersion: 80200`) og CI (`php -l` på PHP 8.2) dækker behovet. Kan genovervejes, når PHPCompatibility 10 er stabil. `composer.json` har `config.platform.php = 8.2.0`, så der aldrig låses dependencies, der kræver nyere PHP end minimum.
+
+### MariaDB til integrationstests (ikke en pakke)
+
+`bin/integration.mjs` henter den officielle portable Windows-ZIP af **MariaDB 10.11.19** (LTS) fra archive.mariadb.org, verificerer SHA-256 og pakker den ud i `.tools/mariadb/` (gitignored). Serveren startes kun under `npm run test:integration` med en frisk, midlertidig datamappe. Downloadkilden er godkendt af projektejeren til dette formål (ADR-024). Versionen hæves ved at ændre version og checksum i scriptet. På andre platforme end Windows, og i CI, angives en dedikeret testdatabase med `MERCHBOARD_TEST_DB_*`.
 
 ### npm (`devDependencies`)
 
