@@ -55,6 +55,25 @@
 		<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
 	</rule>
 
+	<!--
+		Integration tests inspect and manipulate a throwaway test database directly (schema,
+		engines, triggers, information_schema) and start helper processes; that is their purpose.
+		Their queries use $this->wpdb->prepare(), which the PreparedSQL sniff cannot follow.
+		None of this code ships (.distignore) or runs outside `npm run test:integration`.
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>/tests/Integration/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.DB.PreparedSQL.NotPrepared">
+		<exclude-pattern>/tests/Integration/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.DB.RestrictedFunctions">
+		<exclude-pattern>/tests/Integration/install.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions">
+		<exclude-pattern>/tests/Integration/*</exclude-pattern>
+	</rule>
+
 	<!-- Tests: descriptive test method and property names replace doc comments. -->
 	<rule ref="Squiz.Commenting.FunctionComment.Missing">
 		<exclude-pattern>/tests/*</exclude-pattern>

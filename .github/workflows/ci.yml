@@ -41,6 +41,39 @@ jobs:
       - name: PHPUnit
         run: composer test
 
+  integration:
+    name: PHP integration (MySQL)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+          extensions: mysqli
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      # The Ubuntu runner image ships a MySQL server (documented default login
+      # root/root, not a secret). It exists only for this job; the test run
+      # prints the exact server version.
+      - name: Start MySQL
+        run: |
+          sudo systemctl start mysql.service
+          mysql -h 127.0.0.1 -uroot -proot -e 'SELECT VERSION()'
+
+      - name: Integration tests (real WordPress + MySQL)
+        run: node bin/integration.mjs
+        env:
+          MERCHBOARD_TEST_DB_HOST: 127.0.0.1
+          MERCHBOARD_TEST_DB_PORT: '3306'
+          MERCHBOARD_TEST_DB_NAME: merchboard_tests
+          MERCHBOARD_TEST_DB_USER: root
+          MERCHBOARD_TEST_DB_PASSWORD: root
+
   php-legacy-syntax:
     name: PHP 7.2 syntax (requirement check)
     runs-on: ubuntu-latest

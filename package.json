@@ -18,7 +18,8 @@
     "format": "wp-scripts format",
     "lint": "npm run lint:js && npm run lint:php && npm run analyse:php",
     "wp:start": "wp-playground-cli server --php=8.2 --port=9400 --login --mount-dir . /wordpress/wp-content/plugins/merchboard --blueprint=./blueprint.json",
-    "test": "npm run test:php"
+    "test": "npm run test:php",
+    "test:integration": "node bin/integration.mjs"
   },
   "devDependencies": {
     "@wordpress/scripts": "35.0.0",

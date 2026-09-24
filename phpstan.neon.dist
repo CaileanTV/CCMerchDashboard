@@ -12,4 +12,7 @@ parameters:
         # Unit-test stand-in for WordPress' wpdb; PHPStan uses the real stubs.
         - tests/Fixtures/wpdb.php
         - tests/Fixtures/wp-role.php
+    # Runtime constants of the integration test harness (tests/Integration/config.php).
+    bootstrapFiles:
+        - tests/phpstan-bootstrap.php
     tmpDir: .tools/phpstan-cache

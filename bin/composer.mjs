@@ -28,6 +28,8 @@ const REQUIRED_EXTENSIONS = [
 	'curl',
 	'zip',
 	'fileinfo',
+	// Integration tests connect to MySQL/MariaDB through WordPress' wpdb.
+	'mysqli',
 ];
 
 function run( command, commandArgs ) {

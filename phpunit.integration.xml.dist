@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Integration tests against a real MySQL/MariaDB. Run with `npm run test:integration` (docs/TESTING.md). -->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+	bootstrap="tests/Integration/bootstrap.php"
+	cacheDirectory=".phpunit.cache/integration"
+	colors="true"
+	executionOrder="random"
+	failOnWarning="true"
+	failOnRisky="true"
+	failOnDeprecation="true"
+	failOnNotice="true"
+	beStrictAboutOutputDuringTests="true">
+	<testsuites>
+		<testsuite name="integration">
+			<directory>tests/Integration</directory>
+		</testsuite>
+	</testsuites>
+	<source>
+		<include>
+			<directory>src</directory>
+		</include>
+	</source>
+</phpunit>

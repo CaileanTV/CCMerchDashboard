@@ -11,6 +11,7 @@
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.2",
     "phpunit/phpunit": "^11.5",
+    "roots/wordpress-no-content": "7.1.2",
     "szepeviktor/phpstan-wordpress": "^2.0",
     "wp-coding-standards/wpcs": "^3.4"
   },
@@ -21,7 +22,8 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "MerchBoard\\Tests\\Unit\\": "tests/Unit/"
+      "MerchBoard\\Tests\\Unit\\": "tests/Unit/",
+      "MerchBoard\\Tests\\Integration\\": "tests/Integration/"
     }
   },
   "config": {
@@ -44,13 +46,15 @@
       "@analyse",
       "@test"
     ],
-    "test": "phpunit"
+    "test": "phpunit",
+    "test:integration": "phpunit -c phpunit.integration.xml.dist"
   },
   "scripts-descriptions": {
     "lint": "Check PHP against WordPress Coding Standards.",
     "lint:fix": "Auto-fix fixable coding standard violations.",
     "analyse": "Run PHPStan static analysis with WordPress stubs.",
     "check": "Run all PHP quality checks.",
-    "test": "Run PHPUnit tests."
+    "test": "Run PHPUnit tests.",
+    "test:integration": "Run integration tests against a real MySQL/MariaDB (normally via npm run test:integration)."
   }
 }
