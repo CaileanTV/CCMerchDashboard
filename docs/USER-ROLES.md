@@ -1,6 +1,6 @@
 # Roller, capabilities og adgangsmodel
 
-> Status: **Roller og capabilities implementeret (fase 5, ADR-022).** Adgangsflowet (kombinationen af capability og aktiv creator-record, meta-capabilities, login-redirect) kommer i fase 8.
+> Status: **Roller og capabilities implementeret (fase 5, ADR-022).** **Adgangspolitikken `CreatorContext` (capability + aktiv creator-record) er implementeret i fase 8.** Login-redirect og wp-admin-blokering kommer i fase 12, meta-capabilities i fase 14.
 
 ## Brugertyper
 
@@ -41,7 +41,7 @@ Administratorer beholder alle deres WordPress-capabilities uændret. Pluginet ti
 | Planlagt i fase 5 | Flyttet til | Begrundelse |
 | --- | --- | --- |
 | `merchboard_view_logs` | Fase 11 (audit-log viewer) | Audit-visning er ikke en del af fase 5. Capabilities oprettes med den funktion, der bruger dem. |
-| Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` (`map_meta_cap`) | Fase 8 (sammen med `CreatorContext`) | Ejerskabsdelen kræver creator-record og status. Kombinationen af permission og aktiv record hører til adgangsflowet. |
+| Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` (`map_meta_cap`) | Fase 14 (REST `/me`), udskudt igen fra fase 8 | Ejerskabsdelen kræver creator-record og status. `CreatorContext` (fase 8) leverer grundlaget, og meta-capabilities tilføjes, når de første ressourcer (`/me`) skal beskyttes. |
 | Fjernelse af rolle/caps ved uninstall | Fase 9 (opt-in "Slet alle data") | Uninstall bevarer data (DATABASE.md). Brugere, der har rollen, må ikke miste den implicit. |
 
 Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11), `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`.
@@ -50,7 +50,7 @@ Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11)
 
 - Display name: **"Merch Dashboard Creator"** (`Capabilities::CREATOR_ROLE_NAME`).
 - Capabilities: **præcis** `read` og `merchboard_access_dashboard`.
-  - `read` er WordPress' baseline for indloggede brugere (Subscriber har kun `read`). Den giver adgang til egen profil i wp-admin som en Subscriber. Blokering af wp-admin for creators kommer i fase 8.
+  - `read` er WordPress' baseline for indloggede brugere (Subscriber har kun `read`). Den giver adgang til egen profil i wp-admin som en Subscriber. Blokering af wp-admin for creators kommer i fase 12.
 - Rollen **må ikke** have: `manage_options`, `activate_plugins`, `edit_users`, `delete_users`, `create_users`, `list_users`, `promote_users`, `edit_posts`, `upload_files`, `unfiltered_html`, `manage_woocommerce` eller andre brede capabilities, og heller ingen af pluginets admin-capabilities. Det håndhæves ved hver synkronisering (se nedenfor).
 - Tildeles som **ekstra rolle**, når en bruger tilknyttes en creator i admin (fase 6, `WordPressUserAccounts::grant_creator_role()`), så en eksisterende rolle (fx WooCommerce `customer`) bevares. Fjernes igen ved frakobling. Verificeret i Playground.
 
@@ -84,7 +84,35 @@ En request får creator-adgang, **kun hvis alle** fire er opfyldt:
 3. Der findes en creator-record med `user_id = get_current_user_id()`.
 4. Creator-recorden har `status = active`.
 
-Det implementeres **ét sted**: `CreatorContext::current(): ?Creator`. Alle creator-facing controllers, REST-routes og services bruger den. Ingen kode må selv slå "nuværende creator" op.
+Det implementeres **ét sted**: `MerchBoard\Modules\Access\CreatorContext` (✅ fase 8). Alle creator-facing controllers, REST-routes og services bruger den. Ingen kode må selv kombinere `current_user_can()`, et repository-opslag og et statustjek.
+
+```text
+creator-adgang = WP-capability merchboard_access_dashboard
+               + creator-record med user_id = brugerens ID
+               + status = active
+```
+
+| Metode | Svar |
+| --- | --- |
+| `current(): ?Creator` | Den aktive creator for den indloggede bruger, ellers `null` |
+| `current_user_has_access(): bool` | Om den indloggede bruger har creator-adgang |
+| `for_user( int $user_id ): ?Creator` / `user_has_access( int $user_id ): bool` | Samme regel for et kendt bruger-ID, fx server-side opgaver. Aldrig med et ID fra en request. |
+
+- Creator'en findes **altid** server-side ud fra WordPress-brugerens ID (`merchboard_creators.user_id`), aldrig ud fra et creator-ID fra klienten (`?creator_id=`, `/me?creator_id=` osv.). Services, der modtager et creator-ID, skal stadig selv autorisere det mod `current()`.
+- Capability-tjekket bruger WordPress' egen `user_can()` og dermed rolle-modellen. Brugere, der ikke findes, har ingen adgang.
+- Almindelig "ingen adgang" giver `null`/`false`, aldrig en exception. En databasefejl logges som `error` og betyder "ingen adgang" (fail closed).
+- Ikke memoiseret: hvert kald afspejler den aktuelle record, så en deaktivering virker på næste kald.
+- Creator-adgang giver **ingen** administrative rettigheder. Creator-rollen har kun `read` + `merchboard_access_dashboard`. Administration kræver fortsat `merchboard_manage_creators`, og en administrator har ikke creator-adgang, medmindre vedkommende også har capability'en og en aktiv record.
+
+Adgangsmatrix (testet med WordPress' rigtige rolle-model og MariaDB):
+
+| WP-capability | Creator-record | Status | Adgang |
+| --- | --- | --- | --- |
+| nej | ingen | – | nej |
+| ja | ingen | – | nej |
+| nej | findes | active | nej |
+| ja | findes | inactive | nej |
+| ja | findes | active | **ja** |
 
 Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med standard-WP-værktøjer, fx brugerlisten. Recorden er domænet og bærer status. Kravet om begge betyder, at en fejlagtigt tildelt rolle alene ikke giver adgang, og at suspension virker øjeblikkeligt uden at ændre roller.
 
@@ -96,7 +124,7 @@ Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med 
 | Deaktivér ✅ fase 6 | `status = inactive`. Rollen **bevares**, så genaktivering er nem, men adgangen forsvinder øjeblikkeligt pga. regel 4. Aktive sessioner afvises på næste request. Valgfrit: `WP_Session_Tokens::destroy_all()` for brugeren. Audit-log. |
 | Genaktivér ✅ fase 6 | `status = active`. Audit: `creator_activated`. |
 | Frakobl bruger ✅ fase 6 | `user_id = NULL`, og rollen fjernes (brugeren slettes ikke). Creator-recorden og historikken bevares på creator-ID'et. Audit-log. |
-| WP-bruger slettes | Hook `deleted_user` (**fase 8**, flyttet fra fase 6): creator'ens `user_id = NULL` og `status = inactive`. Creator-data bevares. Audit-log. |
+| WP-bruger slettes ✅ fase 8 | WP-bruger slettes → creator bevares → `user_id = NULL` → `status = inactive` → audit-records (systemhandling, actor NULL). Uanset hvorfra brugeren slettes (wp-admin, WP-CLI, REST, andre plugins). Detaljer i [DATABASE.md](DATABASE.md#relationen-til-wordpress-brugeren). |
 
 Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md](DATABASE.md#statusmodel)). Et separat "arkiveret"-tilstand tilføjes kun, hvis en fase får et konkret behov.
 

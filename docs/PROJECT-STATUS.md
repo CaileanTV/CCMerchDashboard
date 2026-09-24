@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 7 (Database-hardening og MySQL/MariaDB-verifikation) · **Næste fase:** 8 (Creator access og login-flow) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 8 (Creator access og brugerrelation) · **Næste fase:** 9 (Admin shell: menu, overview og settings) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -97,6 +97,16 @@
 
 **Bevidst ikke i fase 7:** REST, dashboard, nye admin-sider, sletning, audit-visning, `deleted_user`-hook og WooCommerce-logik.
 
+### Fase 8 – Creator access og brugerrelation ✅
+
+- [x] `Modules/Access/CreatorContext`: den eneste adgangspolitik. **Adgang = capability `merchboard_access_dashboard` + creator-record koblet til brugeren + `status = active`.** `current()`, `current_user_has_access()`, `for_user()` og `user_has_access()`. Creator'en findes altid ud fra brugerens ID, aldrig ud fra klient-data. Databasefejl logges og giver "ingen adgang".
+- [x] `deleted_user`: WP-bruger slettes → creator bevares → `user_id = NULL` → `status = inactive` → audit-records (systemhandling, actor NULL). Én transaktion (fail closed), betinget frigivelse (race mod gen-kobling), kun for brugere der ikke længere findes. Fejl afbryder ikke WordPress' sletning, men logges.
+- [x] `AuditTrail::record_system()` (actor NULL). Eksisterende actions genbruges med `reason: user_deleted`. Ingen ny action og ingen schemaændring.
+- [x] 327 unit-tests (800 assertions) og 62 integrationstests mod MariaDB 10.11.19 (tre kørsler med forskellige seeds). Lint og PHPStan level 8 er grønne.
+- [x] Playground med **og** uden WooCommerce, alle 15 trin: opret bruger og creator, kobl, rolle, capability, adgang, deaktivér (ingen adgang, rolle bevaret), aktivér, frakobl (ingen adgang, kun creator-rollen fjernet), kobl igen og `wp_delete_user()`. Derefter findes creator'en, er `inactive` med `user_id = NULL`, og der er to audit-records med actor NULL. Administrator har ikke creator-adgang, og creator har ingen admin-caps. Fase 6-UI-flowet er uændret, og forside, wp-admin og REST svarer 200. Ingen PHP-notices.
+
+**Bevidst ikke i fase 8:** dashboard, REST, `/me`, login-redirect, wp-admin-blokering, admin bar, application passwords (fase 12), meta-capabilities (fase 14), WooCommerce, audit-visning og sletning.
+
 ## In progress
 
 Intet.
@@ -105,9 +115,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 8:** Creator access og login-flow (inkl. `deleted_user`-hook).
-2. **Fase 9:** Admin shell: overview og settings.
-3. **Fase 10:** Admin creator management (rest).
+1. **Fase 9:** Admin shell: overview og settings.
+2. **Fase 10:** Admin creator management (rest).
+3. **Fase 11:** Admin audit-log viewer.
 
 ## Known bugs
 
@@ -122,14 +132,16 @@ Ingen (der er ingen funktionalitet endnu).
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
 | MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7). **MySQL** er ikke verificeret: CI-jobbet findes, men resultatet er ikke set. Andre MariaDB-versioner og produktionens version er ukendte. | Tjek CI-jobbet `PHP integration (MySQL)` under GitHub → Actions, og staging (fase 16) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
-| Dinglende `user_id` ved brugersletning | Indtil `deleted_user`-hooken (fase 8) peger en creator på en slettet bruger ("Unknown user #ID" i listen). Creator-data påvirkes ikke. | Fase 8 |
+| Dinglende `user_id` efter fejlet frigivelse | Løst i fase 8 for normal sletning. Kun hvis frigivelsen fejler (databasefejl, MyISAM), peger creator'en på en slettet bruger. Fejlen logges, linket giver ingen adgang, og admin kan frakoble manuelt. Der er intet automatisk genforsøg. | Accepteret. Overvej et oprydnings-tjek i Overview (fase 9). |
+| Multisite: bruger fjernet fra et site | WordPress fyrer `deleted_user` også, når en bruger kun fjernes fra et site. Brugeren findes stadig, så linket bevares. Uden rolle på sitet er der ingen adgang. | Multisite er ikke understøttet. Revurder ved behov. |
+| Samtidig kobling og sletning | Kobles en bruger i samme øjeblik, som den slettes, kan linket pege på en slettet bruger. Det giver ingen adgang. | Accepteret (meget sjældent) |
 | Transaktioner uden InnoDB | Fail closed (ADR-024): creator-ændringer afvises på MyISAM. Rollback verificeret på MariaDB og SQLite. | Accepteret krav. Dokumenteret i DATABASE.md. |
 | Genforbindelse midt i en transaktion | Mister `wpdb` forbindelsen midt i en transaktion, genforbinder den og fortsætter uden transaktion. Meget sjældent. | Accepteret. Revurder ved problemer på staging. |
 | Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes i fase 10. |
 | Persistent object cache og migrationslås | Låsen arbejder direkte på databasen og rydder kun sin cache-nøgle. Samspil med fx Redis er ikke testet. | Staging (fase 16), hvis produktionen bruger object cache |
 | Brugervalg | Select med max 500 brugere | Søgbart valg i fase 10 |
 | Audit-retention | Ubegrænset opbevaring. Ingen politik for automatisk sletning. | Afklares (åbent spørgsmål 10) |
-| Creator-rollen har `read` | Creators kan indtil fase 8 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). Der findes ingen creators endnu (intet UI). | Blokering af wp-admin for creators i fase 8 |
+| Creator-rollen har `read` | Creators kan indtil fase 12 se egen profil i wp-admin som en Subscriber (ingen andre rettigheder). | Blokering af wp-admin for creators i fase 12 (flyttet fra fase 8) |
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller i fase 9. |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
@@ -153,7 +165,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. ✅ **Navn/prefix – lukket (ADR-018):** Produktnavn `Merch Dashboard`, teknisk prefix `merchboard`, PHP-namespace `MerchBoard\`. Låst før fase 3. Den tidligere midlertidige konvention `ccmerch` er migreret i hele repo'et.
 2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? (Fase 7 verificerede MariaDB 10.11.19 lokalt. Den lokale version bør matche produktionen, når den kendes.) Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
 3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
-4. **Teams:** Kan en creator have flere brugere (fx manager)? (senest før fase 8: adgangsmodellen antager én bruger pr. creator)
+4. **Teams:** Kan en creator have flere brugere (fx manager)? Fase 8 er bygget med én bruger pr. creator (ADR-020). Teams vil kræve `merchboard_creator_members`, og ændringen bliver lokal til `CreatorContext` og repositoriet. (før fase 14)
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
 7. **UI-sprog:** Dansk, engelsk eller begge i creator-dashboardet? (fase 15)
@@ -166,4 +178,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 8 (Creator access og login-flow) jf. docs/ROADMAP.md.
+4. Kør fase 9 (Admin shell: menu, overview og settings) jf. docs/ROADMAP.md.

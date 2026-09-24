@@ -91,7 +91,7 @@ Kilde: `src/Core/Database/Migrations/CreateCreatorsTable.php`.
 | Nullable? | **Ja.** En creator kan eksistere uden login (fx oprettet før kontoen, eller efter kontoen er slettet/frakoblet). |
 | Højst én creator pr. bruger? | **Ja, håndhævet i databasen** med `UNIQUE(user_id)`. MySQL/MariaDB (og SQLite) tillader mange `NULL` i et UNIQUE-index, så mange creators kan være ukoblede. |
 | "Én aktiv creator pr. bruger" | UNIQUE er strengere: en bruger kan højst være koblet til én creator-record, uanset status. Skal en bruger kobles til en anden creator, frakobles den gamle først (`user_id = NULL`). Dens historik bevares på dens creator-ID. Det er enklere og databasegaranteret frem for en betinget unikhed, som MySQL ikke understøtter direkte. |
-| Brugeren slettes | **Fase 8** (flyttet fra fase 6): hook på `deleted_user` sætter `user_id = NULL` og `status = inactive` for den tilknyttede creator. Creator-recorden og al historik bevares. **Indtil da** peger `user_id` på en ikke-eksisterende bruger, hvis en tilknyttet bruger slettes. Admin-listen viser "Unknown user #ID", og creator-data påvirkes ikke. Administratoren kan frakoble manuelt. |
+| Brugeren slettes | ✅ **Fase 8:** WP-bruger slettes → creator bevares → `user_id = NULL` → `status = inactive` → audit-records (systemhandling, actor NULL). Hook `deleted_user` (efter WordPress har slettet brugeren, uanset kilde). `CreatorService::release_deleted_user()` virker kun for brugere, der ikke længere findes, og frigiver med én betinget `UPDATE … WHERE id = … AND user_id = …`. En samtidig gen-kobling til en anden bruger vinder derfor. Frigivelse og audit (`creator_user_unlinked` og, hvis aktiv, `creator_deactivated`, begge med `reason: user_deleted`) sker i én transaktion (fail closed uden transaktionel engine, ADR-024). Fejler den, bliver WordPress' sletning ikke afbrudt: fejlen logges som `error`, og creator'en beholder et `user_id`, der ikke findes. Det giver ingen adgang og vises som "Unknown user #ID". Roller røres ikke. |
 | Relationen fjernes | `user_id = NULL` (admin: "— No WordPress user —"). Creator-recorden, WordPress-brugeren og historikken bevares. Brugeren mister rollen `merchboard_creator` (fase 6). |
 | Duplikatkobling | Afvises først af `CreatorService` med en forståelig fejl (`user_already_linked`), dernæst af databasen som sidste sikkerhedsnet (`DatabaseException` uden databasedetaljer). Admin-formularen tilbyder kun brugere, der ikke er koblet til en anden creator. |
 
@@ -131,8 +131,8 @@ Indexes: `KEY(created_at)`, `KEY(action)`, `KEY(creator_id)`. Ingen fremmednøgl
 | --- | --- |
 | `creator_created` | `status` og `user_id` (eller null) |
 | `creator_updated` | `changed_fields` (feltnavne, **ingen værdier**) |
-| `creator_activated` / `creator_deactivated` | `previous_status` |
-| `creator_user_linked` / `creator_user_unlinked` | `user_id` (hhv. den nye og den tidligere) |
+| `creator_activated` / `creator_deactivated` | `previous_status`. Ved slettet bruger desuden `reason: user_deleted` (fase 8) |
+| `creator_user_linked` / `creator_user_unlinked` | `user_id` (hhv. den nye og den tidligere). Ved slettet bruger desuden `reason: user_deleted` (fase 8) |
 
 En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `creator_deactivated`.
 
@@ -259,5 +259,5 @@ Integrationstestene (`npm run test:integration`, fase 7) kører en rigtig WordPr
 | **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** `merchboard_creators`, `merchboard_audit_log`, `merchboard_db_version`, `merchboard_roles_version`, rollen `merchboard_creator` og administratorens `merchboard_*`-capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
 | **Permanent sletning** | Bliver en eksplicit opt-in (setting "Slet alle data ved afinstallation", default fra) i **fase 9**. Selve sletterutinen implementeres sammen med settingen, ikke før. `Tables::all()` giver den komplette liste over plugin-tabeller til den rutine. |
 | **Creator "slettes"** | Status `inactive` (soft). Admin-UI'et har bevidst **ingen** "Delete"-funktion (fase 6). Hard delete er ikke understøttet, fordi audit trail og fremtidig salgshistorik refererer til creator-ID'et. Permanent sletning af alle data er opt-in i fase 9. |
-| **WordPress-bruger slettes** | Se relationen ovenfor (hook i fase 8). Creator- og audit-data bevares. |
+| **WordPress-bruger slettes** | Se relationen ovenfor (✅ fase 8). Creator-record, creator-data og audit bevares. Creator'en frakobles og deaktiveres. |
 | **GDPR** | Integration med WordPress' personal data exporter/eraser for creator-data (fase efter MVP). |

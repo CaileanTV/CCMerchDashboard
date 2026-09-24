@@ -82,6 +82,11 @@ npm run test:integration -- --filter TransactionTest
 | MariaDB 10.11.19 | **Verificeret:** alle integrationstests grønne lokalt (fase 7) |
 | MySQL | CI-job findes. Resultatet er **ikke set**, og MySQL er derfor ikke verificeret |
 
+**Fase 8 (creator access og brugersletning):**
+
+- Unit: `CreatorContext`-matrix (subscriber, administrator med og uden record, capability uden record, record uden capability, inaktiv, aktiv), udlogget, ukendt/slettet bruger, deaktivering/frakobling virker straks, request-data ignoreres, databasefejl logges og nægter adgang. `release_deleted_user` (frigivelse og deaktivering, record og data bevares, systemaudit uden persondata, kun frakobling for inaktiv, intet for levende, ukoblede og ugyldige brugere, ingen rolleændringer, rollback ved audit-fejl, ingen audit ved skrivefejl, fail closed på MyISAM, betinget frigivelse ved gen-kobling), `DeletedUserHandler` (logger i stedet for at kaste, ignorerer ugyldige argumenter) og `AuditTrail::record_system`.
+- Integration (MariaDB, rigtig WordPress): adgangsmatrix med rigtige roller og `user_can()`, fuld livscyklus til og med `wp_delete_user()`, sletning af bruger uden creator, audit-fejl via trigger (rollback, WordPress-sletningen gennemføres, fejlen logges), frigivelsesfejl uden audit, fail closed på MyISAM, frakobling bevarer andre roller, ingen privilege escalation og et genbrugt bruger-ID med dinglende link giver ingen adgang.
+
 **Legacy-syntaks:** CI-jobbet `php-legacy-syntax` kører `php -l` på PHP 7.2 for hovedfilen, `src/Core/Requirements.php` og `uninstall.php`, så versionstjekket kan vise en notice i stedet for en parse error.
 
 ## Security-tests er obligatoriske

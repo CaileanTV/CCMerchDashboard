@@ -71,7 +71,7 @@ merchboard/
 │   │   │                        # Migrations/CreateCreatorsTable [fase 3], CreateAuditLogTable, Transaction [fase 6],
 │   │   │                        # TransactionSupport (engine-tjek, fail closed) [fase 7]
 │   │   ├── Audit/               # AuditAction, AuditTrail, AuditRepository, AuditEntry [fase 6]
-│   │   ├── Security/            # Capabilities, RoleManager [fase 5]; map_meta_cap [fase 8]
+│   │   ├── Security/            # Capabilities, RoleManager [fase 5]; map_meta_cap [fase 14]
 │   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
 │   │   ├── Logging/             # Logger, LogLevel, LogContext, PluginLogger, LogWriter,
@@ -80,7 +80,7 @@ merchboard/
 │   └── Modules/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
 │       │                        # CreatorService, CreatorException, UserAccounts, Admin/ (page, list table, actions) [fase 6]
-│       ├── Access/              # CreatorContext, LoginRedirect, AdminAreaGuard
+│       ├── Access/              # AccessModule, CreatorContext [fase 8]; LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
 │       ├── Dashboard/           # Route (rewrite), ShellController, DashboardSections-registry, Rest/Me*
 │       └── WooCommerce/         # kun indlæst når WooCommerce er aktiv

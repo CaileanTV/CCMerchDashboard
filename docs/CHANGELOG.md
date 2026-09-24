@@ -15,6 +15,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Logging og fejlhåndtering (fase 4):** `Logger`-abstraktion med WooCommerce-logger (source `merchboard`) og `error_log()`-fallback, tærskel fra `WP_DEBUG`/filter `merchboard_log_level`, sanitization af context (`LogContext`) og `DatabaseException::context()`. Migrationsfejl logges via Logger. ADR-021.
 - **Roller og capabilities (fase 5):** rolle `merchboard_creator` (`read` + `merchboard_access_dashboard`), admin-capabilities `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings`, samt `Capabilities` og `RoleManager` med idempotent sync ved aktivering og opdatering (ADR-022).
 - **Creator-administration og audit trail (fase 6):** admin-side "Merch Dashboard → Creators" (liste, opret/rediger, aktivér/deaktivér, tilknyt/frakobl WordPress-bruger), `CreatorService`, `Transaction`, `AuditTrail`/`AuditRepository`/`AuditAction` (ADR-023).
+- **Creator access og brugerrelation (fase 8):** `Modules/Access` med `CreatorContext` (adgang = capability `merchboard_access_dashboard` + aktiv, koblet creator-record), reaktion på `deleted_user` (creator bevares, frakobles og deaktiveres, systemaudit med actor NULL, én transaktion), `AuditTrail::record_system()` og `CreatorRepository::release_user()`.
 - **Database-hardening og MySQL/MariaDB-verifikation (fase 7):** integrationstests mod rigtig WordPress og database (`npm run test:integration`, portabel MariaDB 10.11.19 lokalt, CI-job mod runnerens MySQL), `TransactionSupport` (engine-tjek) og admin-notice ved ikke-transaktionelle tabeller (ADR-024).
 
 ### Changed
@@ -40,6 +41,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - Creator-admin-UI flyttet frem fra fase 10. `deleted_user`-hook flyttet fra fase 6 til fase 8.
 - Tilknytning af en bruger giver rollen `merchboard_creator` som ekstra rolle, og frakobling fjerner den.
 - PHPCS: `EscapeOutput.ExceptionNotEscaped` er slået fra projekt-bredt (exception-beskeder renderes aldrig; dokumenteret i regelsættet).
+
+### Changed (fase 8)
+- Roadmap-fase 8 er omdøbt til "Creator access og brugerrelation". Login-redirect, wp-admin-blokering, admin bar og application passwords er flyttet til fase 12, og meta-capabilities til fase 14.
+- Audit-context for `creator_user_unlinked`/`creator_deactivated` kan nu indeholde `reason: user_deleted`. Ingen ny action og ingen schemaændring.
 
 ### Changed (fase 7)
 - **Migrationslås:** atomisk `INSERT IGNORE` i stedet for `add_option()` (som ikke er en lås på MySQL/MariaDB), compare-and-swap ved overtagelse af forladte låse og ejer-token ved frigivelse. Låsens værdi er nu `<tid>:<token>`. Ældre værdier (kun tid) læses stadig.

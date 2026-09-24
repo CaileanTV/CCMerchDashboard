@@ -21,7 +21,7 @@
 
 ### Creator-scope: `/merchboard/v1/me/...`
 
-Permission: `CreatorContext::current()` skal returnere en **aktiv** creator for den indloggede bruger, og brugeren skal have `merchboard_access_dashboard`.
+Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. Den håndhæver hele reglen: brugeren skal have `merchboard_access_dashboard` **og** en **aktiv** creator-record koblet til sig. Permission callbacks bruger `CreatorContext::current_user_has_access()` og gentager ikke reglen selv.
 
 | Metode | Route | Formål | Fase |
 | --- | --- | --- | --- |

@@ -10,7 +10,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | --- | --- | --- |
 | Foundation | 1-2 | Tooling, docs og plugin-bootstrap |
 | Data & core services | 3-4 | Migrationer og creator-tabel (✅ fase 3), logging og fejlhåndtering (✅ fase 4) |
-| Authentication & permissions | 5-8 | Roller og capabilities (✅ fase 5), creator-administration (✅ fase 6), database-hardening og integrationstests (✅ fase 7), adgangsflow |
+| Authentication & permissions | 5-8 | Roller og capabilities (✅ fase 5), creator-administration (✅ fase 6), database-hardening og integrationstests (✅ fase 7), creator access (✅ fase 8) |
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
 | Deployment | 16 | Release-pipeline og staging |
@@ -66,10 +66,11 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope (udført):** revision af databasefundamentet mod MySQL/MariaDB-semantik. Atomisk migrationslås, fail closed uden transaktionel engine, audit-context som ASCII-JSON, integrationstests mod rigtig WordPress og database (portabel MariaDB lokalt, CI-job mod runnerens MySQL) og dokumentation af forudsætninger (ADR-024). Omdøbt fra "Integrationstest-infrastruktur". `wp-phpunit` er erstattet af en egen let bootstrap.
 - **Done:** Integrationstests grønne mod MariaDB 10.11.19 lokalt. CI-jobbets MySQL-resultat er ikke set fra udviklingsmiljøet.
 
-## Fase 8 – Creator access og login-flow
+## Fase 8 – Creator access og brugerrelation ✅
 
-- **Scope:** `CreatorContext` (capability **og** aktiv, koblet creator-record), `deleted_user`-hook (user_id → NULL, status → inactive, audit som systemhandling; flyttet fra fase 6), meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` via `map_meta_cap` (flyttet fra fase 5), `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar, application passwords slået fra for creators. Se [features/creator-access.md](features/creator-access.md).
-- **Done:** Integrationstests for alle adgangskombinationer og manuel test i Playground.
+- **Scope (udført):** `CreatorContext` (capability **og** aktiv, koblet creator-record) som eneste adgangspolitik og `deleted_user`-reaktion (user_id → NULL, status → inactive, audit som systemhandling, i én transaktion). Se [features/creator-access.md](features/creator-access.md).
+- **Done:** Unit- og integrationstests (MariaDB) for adgangsmatrix og brugersletning, og Playground med og uden WooCommerce.
+- **Flyttet:** `LoginRedirect`, `AdminAreaGuard`, skjult admin bar og application passwords fra for creators → fase 12 (de har først et mål, når dashboard-routen findes). Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` → fase 14 (første ressourcer). Omdøbt fra "Creator access og login-flow".
 
 ## Fase 9 – Admin shell: menu, overview og settings
 
@@ -88,7 +89,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 12 – Creator dashboard: route og sikker shell
 
-- **Scope:** rewrite rule og query var (slug fra settings, flush ved ændring, ved aktivering og i `Deactivator`), `ShellController` (auth-gate: login-redirect / 403-side / shell), `templates/dashboard/shell.php` uden theme, security headers og en placeholder-side uden JS.
+- **Scope:** rewrite rule og query var (slug fra settings, flush ved ændring, ved aktivering og i `Deactivator`), `ShellController` (auth-gate via `CreatorContext`: login-redirect / 403-side / shell), `templates/dashboard/shell.php` uden theme, security headers og en placeholder-side uden JS. Desuden (flyttet fra fase 8): `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar og application passwords slået fra for creators.
 - **Done:** Integrationstests for adgang. Deep links virker.
 
 ## Fase 13 – Dashboard frontend-fundament

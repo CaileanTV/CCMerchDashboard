@@ -23,7 +23,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 ### Authorization
 
 - **Admin:** `current_user_can( '<specifik cap>' )` i *hver* handler og page-callback, ikke kun i menuregistreringen.
-- **Creator:** `CreatorContext::current()` (se [USER-ROLES.md](USER-ROLES.md#adgangsregel-for-creator-dashboard)) i hver controller og REST-permission callback. Services, der modtager et ressource-ID, tjekker ejerskab mod den aktuelle creator.
+- **Creator:** `CreatorContext::current()` (✅ fase 8, se [USER-ROLES.md](USER-ROLES.md#adgangsregel-for-creator-dashboard)) i hver controller og REST-permission callback. Adgang = capability `merchboard_access_dashboard` **og** en aktiv creator-record, der er koblet til brugeren. Rollen alene giver aldrig adgang. Services, der modtager et ressource-ID, tjekker ejerskab mod den aktuelle creator.
 - **Direkte filadgang:** Hver PHP-fil i `src/` og `templates/` starter med `defined( 'ABSPATH' ) || exit;`, bortset fra rene klassefiler, der ikke eksekverer kode ved include. Dem kræver PHPCS ikke guard for, men vi tilføjer den for konsistens.
 
 ### Bootstrap (fase 2)
@@ -155,7 +155,7 @@ Tekniske logs (fase 4, ADR-021, [ARCHITECTURE.md §11](ARCHITECTURE.md#11-loggin
 
 ### Audit trail (fase 6, ADR-023)
 
-Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, UTC-tid og minimal context (feltnavne, statusser og bruger-ID'er, **ingen display names eller andre værdier**). Context renses desuden via `LogContext`. Records er append-only. Ændring og audit-record skrives i én transaktion. Settings-ændringer registreres fra fase 9. Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding) fra fase 8.
+Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, UTC-tid og minimal context (feltnavne, statusser og bruger-ID'er, **ingen display names eller andre værdier**). Context renses desuden via `LogContext`. Records er append-only. Ændring og audit-record skrives i én transaktion. Settings-ændringer registreres fra fase 9. Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding), når de første creator-endpoints findes (fase 12/14).
 
 ### Database-hardening (fase 7, ADR-024)
 
@@ -165,6 +165,14 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Manipulerede rækker:** Ukendte audit-actions og creator-statusser i databasen afvises ved læsning (`DatabaseException`). Ugyldig JSON-context læses som tom (verificeret mod MariaDB).
 - **SQL injection mod rigtig database:** Strenge med quotes, backslashes og `%`-placeholders gemmes bogstaveligt, og injicerede sorteringsparametre ignoreres (integrationstests).
 - **Testisolation:** Integrationstestene bruger en separat testdatabase (tabelprefix `mbtest_`). Lokalt kører den på en midlertidig MariaDB-server, som kun lever under testkørslen og kun lytter på 127.0.0.1. Kørslen afbrydes, hvis porten er optaget, i stedet for at forbinde til en anden database.
+
+### Creator access og brugersletning (fase 8)
+
+- **Én politik:** `CreatorContext` er den eneste implementering af creator-adgang. Den kombinerer `user_can()` (rolle-modellen) med den aktive record og løser creator'en ud fra brugerens ID, aldrig ud fra klient-data (IDOR). Testet med request-data, der peger på en anden creator.
+- **Ingen privilege escalation:** Creator-adgang giver ingen admin-capabilities (verificeret mod rigtig WordPress: `merchboard_manage*`, `manage_options`, `edit_posts`, `list_users` og `manage_woocommerce` er alle falske). En administrator har ikke automatisk creator-adgang.
+- **Fail closed:** En databasefejl under adgangstjekket logges og giver "ingen adgang".
+- **Brugersletning:** `deleted_user` udløser en systemhandling uden capability-tjek, men kun for brugere, der ikke længere findes. Den kan derfor ikke misbruges til at frakoble eller deaktivere en levende brugers creator. Frigivelsen er betinget af, at creator'en stadig er koblet til netop den bruger (race mod gen-kobling). Audit-actor er NULL (systemhandling), også når en administrator udløste sletningen. Context indeholder kun bruger-ID og `reason` (ingen e-mail, login eller navn).
+- **Dinglende link efter fejl:** Fejler frigivelsen (fx databasefejl), logges det, og linket peger på et ID, der ikke findes. Selv hvis et bruger-ID senere genbruges, kræver adgang capability'en, som kun gives ved kobling i admin (integrationstest).
 
 ## Tjekliste pr. ændring
 

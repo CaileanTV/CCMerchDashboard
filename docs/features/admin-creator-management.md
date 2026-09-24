@@ -51,7 +51,7 @@ Se [TESTING.md](../TESTING.md). Service, handlers, rendering, audit, transaktion
 - Ingen import/eksport af creators.
 - Brugervalget er en select med op til 500 brugere (søgbart valg i fase 10).
 - Ved validering går indtastede værdier tabt ved redirect (PRG). Brugeren ser fejlmeddelelsen og indtaster igen.
-- Sletning af en tilknyttet WordPress-bruger efterlader et dinglende `user_id` indtil `deleted_user`-hooken (fase 8).
+- Sletning af en tilknyttet WordPress-bruger frakobler og deaktiverer creator'en automatisk (fase 8). Kun hvis det fejler (logges), står der et dinglende `user_id` ("Unknown user #ID"), som administratoren kan frakoble manuelt.
 
 ## Future improvements
 Sales-tab pr. creator, CSV-eksport og invitations-flow med branded e-mail.
