@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Creators;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\Admin\CreatorAdminActions;
@@ -73,7 +74,8 @@ final class CreatorsModule implements Module {
 			CreatorsAdminPage::class,
 			static fn( Container $c ): CreatorsAdminPage => new CreatorsAdminPage(
 				$c->get( CreatorRepository::class ),
-				$c->get( UserAccounts::class )
+				$c->get( UserAccounts::class ),
+				$c->get( TransactionSupport::class )
 			)
 		);
 

@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Unit\Core\Database;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -22,7 +23,7 @@ final class TransactionTest extends TestCase {
 	public function test_commits_and_returns_the_result(): void {
 		$wpdb = new RecordingWpdb();
 
-		self::assertSame( 'done', ( new Transaction( $wpdb ) )->run( static fn(): string => 'done' ) );
+		self::assertSame( 'done', ( self::transaction( $wpdb ) )->run( static fn(): string => 'done' ) );
 		self::assertSame( array( 'START TRANSACTION', 'COMMIT' ), $wpdb->raw_queries );
 	}
 
@@ -33,7 +34,7 @@ final class TransactionTest extends TestCase {
 		$this->expectExceptionObject( $error );
 
 		try {
-			( new Transaction( $wpdb ) )->run(
+			( self::transaction( $wpdb ) )->run(
 				static function () use ( $error ): void {
 					throw $error;
 				}
@@ -49,7 +50,7 @@ final class TransactionTest extends TestCase {
 		$ran                                      = false;
 
 		try {
-			( new Transaction( $wpdb ) )->run(
+			( self::transaction( $wpdb ) )->run(
 				static function () use ( &$ran ): void {
 					$ran = true;
 				}
@@ -67,7 +68,7 @@ final class TransactionTest extends TestCase {
 		$this->expectException( DatabaseException::class );
 
 		try {
-			( new Transaction( $wpdb ) )->run( static fn(): int => 1 );
+			( self::transaction( $wpdb ) )->run( static fn(): int => 1 );
 		} finally {
 			self::assertSame( array( 'START TRANSACTION', 'COMMIT', 'ROLLBACK' ), $wpdb->raw_queries );
 		}
@@ -75,7 +76,7 @@ final class TransactionTest extends TestCase {
 
 	public function test_nested_transactions_are_rejected(): void {
 		$wpdb        = new RecordingWpdb();
-		$transaction = new Transaction( $wpdb );
+		$transaction = self::transaction( $wpdb );
 
 		try {
 			$transaction->run( static fn() => $transaction->run( static fn(): int => 1 ) );
@@ -86,5 +87,54 @@ final class TransactionTest extends TestCase {
 
 		self::assertSame( array( 'START TRANSACTION', 'ROLLBACK' ), $wpdb->raw_queries );
 		self::assertSame( 2, $transaction->run( static fn(): int => 2 ), 'Usable again after a rollback.' );
+	}
+
+	public function test_refuses_to_start_when_a_table_cannot_roll_back(): void {
+		$wpdb = new RecordingWpdb();
+		$ran  = false;
+
+		$transaction      = self::transaction( $wpdb );
+		$wpdb->results[1] = array(
+			'name'         => 'wp_merchboard_audit_log',
+			'engine'       => 'MyISAM',
+			'transactions' => 'NO',
+		);
+
+		try {
+			$transaction->run(
+				static function () use ( &$ran ): void {
+					$ran = true;
+				}
+			);
+			self::fail( 'Expected DatabaseException.' );
+		} catch ( DatabaseException $e ) {
+			self::assertSame( 'Database tables do not support transactions; write refused.', $e->getMessage() );
+			self::assertSame( array( 'tables' => 'wp_merchboard_audit_log (MyISAM)' ), $e->context() );
+		}
+
+		self::assertFalse( $ran, 'Nothing may be written without rollback protection.' );
+		self::assertSame( array(), $wpdb->raw_queries, 'No transaction is started.' );
+	}
+
+	/**
+	 * Transaction whose tables report InnoDB.
+	 *
+	 * @param RecordingWpdb $wpdb Database double.
+	 */
+	private static function transaction( RecordingWpdb $wpdb ): Transaction {
+		$wpdb->results = array(
+			array(
+				'name'         => 'wp_merchboard_creators',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_audit_log',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+		);
+
+		return new Transaction( $wpdb, new TransactionSupport( $wpdb ) );
 	}
 }

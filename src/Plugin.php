@@ -15,6 +15,7 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
@@ -164,8 +165,13 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			TransactionSupport::class,
+			static fn( Container $c ): TransactionSupport => new TransactionSupport( $c->get( wpdb::class ) )
+		);
+
+		$this->container->set(
 			Transaction::class,
-			static fn( Container $c ): Transaction => new Transaction( $c->get( wpdb::class ) )
+			static fn( Container $c ): Transaction => new Transaction( $c->get( wpdb::class ), $c->get( TransactionSupport::class ) )
 		);
 
 		$this->container->set(

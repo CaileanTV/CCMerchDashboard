@@ -94,6 +94,54 @@ final class AuditTrailTest extends TestCase {
 		self::assertStringContainsString( 'display_name', $stored );
 	}
 
+	public function test_context_is_stored_as_ascii_json_and_decodes_to_the_original_unicode(): void {
+		$context = array( 'changed_fields' => array( 'display_name' ), 'note' => 'Æble, øl & å 🎸 “quote” 日本' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$this->repository->append( AuditAction::CreatorUpdated, 1, 1, $context, '2026-09-24 12:00:00' );
+
+		$stored = (string) $this->db->rows( 'merchboard_audit_log' )[0]['context'];
+		self::assertMatchesRegularExpression( '/^[\x20-\x7E]+$/', $stored, 'Plain ASCII: cannot fail on a table charset without 4-byte UTF-8.' );
+		self::assertSame( $context, $this->repository->for_creator( 1 )[0]->context );
+	}
+
+	public function test_malformed_context_does_not_fail_the_audit_write(): void {
+		$id = $this->repository->append(
+			AuditAction::CreatorUpdated,
+			1,
+			1,
+			array(
+				'bad_utf8' => "ok\xB1\x31",
+				'number'   => INF,
+			),
+			'2026-09-24 12:00:00'
+		);
+
+		self::assertSame( 1, $id );
+		self::assertSame(
+			array(
+				'bad_utf8' => "ok\u{FFFD}1",
+				'number'   => 0,
+			),
+			$this->repository->for_creator( 1 )[0]->context
+		);
+	}
+
+	public function test_malformed_stored_context_reads_as_empty(): void {
+		$this->repository->append( AuditAction::CreatorUpdated, 1, 1, array( 'a' => 1 ), '2026-09-24 12:00:00' );
+		$this->db->data['wp_merchboard_audit_log'][1]['context'] = '{"broken';
+
+		self::assertSame( array(), $this->repository->for_creator( 1 )[0]->context );
+	}
+
+	public function test_stored_row_with_unknown_action_is_rejected_on_read(): void {
+		$this->repository->append( AuditAction::CreatorUpdated, 1, 1, array(), '2026-09-24 12:00:00' );
+		$this->db->data['wp_merchboard_audit_log'][1]['action'] = "creator_deleted'; DROP TABLE x; --";
+
+		$this->expectException( DatabaseException::class );
+
+		$this->repository->for_creator( 1 );
+	}
+
 	public function test_append_rejects_invalid_ids_before_writing(): void {
 		foreach ( array( array( 0, 1 ), array( 1, -1 ) ) as [ $actor, $creator ] ) {
 			try {

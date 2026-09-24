@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators\Admin;
 
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorException;
@@ -43,12 +44,14 @@ final class CreatorsAdminPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorRepository $creators Creator storage (reads only).
-	 * @param UserAccounts      $users    User labels.
+	 * @param CreatorRepository  $creators     Creator storage (reads only).
+	 * @param UserAccounts       $users        User labels.
+	 * @param TransactionSupport $transactions Whether changes can be saved at all.
 	 */
 	public function __construct(
 		private CreatorRepository $creators,
-		private UserAccounts $users
+		private UserAccounts $users,
+		private TransactionSupport $transactions
 	) {
 	}
 
@@ -117,6 +120,11 @@ final class CreatorsAdminPage {
 
 		echo '<div class="wrap">';
 		$this->render_notice( $notice );
+
+		// Changes are refused while a table cannot roll back (ADR-024); say why up front.
+		if ( ! $this->transactions->available() ) {
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'Creator changes are disabled: the Merch Dashboard database tables use a storage engine without transaction support (for example MyISAM), so a change and its audit record could not be saved together. Convert the tables to InnoDB. Details are in the log.', 'merchboard' ) . '</p></div>';
+		}
 
 		if ( 'new' === $action ) {
 			$this->render_form( null );

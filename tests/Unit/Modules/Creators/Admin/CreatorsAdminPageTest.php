@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\Creators\Admin;
 
 use Brain\Monkey\Functions;
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Modules\Creators\Admin\CreatorAdminActions;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -37,7 +38,7 @@ final class CreatorsAdminPageTest extends TestCase {
 		parent::setUp();
 		$this->set_up_creator_admin();
 		$this->saved_get = $_GET; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Test fixture.
-		$this->page      = new CreatorsAdminPage( new CreatorRepository( $this->db ), $this->users );
+		$this->page      = new CreatorsAdminPage( new CreatorRepository( $this->db ), $this->users, new TransactionSupport( $this->db ) );
 
 		Functions\stubTranslationFunctions();
 		Functions\stubEscapeFunctions();
@@ -118,6 +119,21 @@ final class CreatorsAdminPageTest extends TestCase {
 	public function test_only_whitelisted_notices_are_rendered_and_escaped(): void {
 		self::assertStringContainsString( 'notice-success', $this->render( array( 'action' => 'new', 'merchboard_notice' => 'created' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertStringNotContainsString( 'notice', $this->render( array( 'action' => 'new', 'merchboard_notice' => '<script>alert(1)</script>' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	public function test_no_engine_notice_when_the_tables_support_transactions(): void {
+		self::assertStringNotContainsString( 'storage engine', $this->render( array( 'action' => 'new' ) ) );
+	}
+
+	public function test_explains_that_changes_are_disabled_on_a_non_transactional_engine(): void {
+		$this->db->engines['merchboard_audit_log'] = 'MyISAM';
+
+		$html = $this->render( array( 'action' => 'new' ) );
+
+		self::assertStringContainsString( 'notice-error', $html );
+		self::assertStringContainsString( 'Creator changes are disabled', $html );
+		self::assertStringContainsString( 'InnoDB', $html );
+		self::assertStringNotContainsString( 'wp_merchboard_audit_log', $html, 'No table names in the UI.' );
 	}
 
 	public function test_page_refuses_users_without_the_capability(): void {

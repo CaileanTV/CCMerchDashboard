@@ -36,8 +36,11 @@ final class InstallerTest extends TestCase {
 
 	private InMemoryRoles $roles;
 
+	private RecordingWpdb $wpdb;
+
 	protected function setUp(): void {
 		parent::setUp();
+		$this->wpdb   = new RecordingWpdb();
 		$this->log    = new ArrayObject();
 		$this->logger = new RecordingLogger();
 		$this->roles  = InMemoryRoles::install( array( 'administrator' => array( 'manage_options' => true ) ) );
@@ -149,7 +152,8 @@ final class InstallerTest extends TestCase {
 	}
 
 	public function test_held_lock_is_logged_as_debug_only(): void {
-		InMemoryOptions::install( array( Migrator::LOCK_OPTION => (string) time() ) );
+		InMemoryOptions::install();
+		$this->wpdb->option_rows[ Migrator::LOCK_OPTION ] = time() . ':other-request';
 
 		$this->installer()->install();
 
@@ -286,7 +290,7 @@ final class InstallerTest extends TestCase {
 	 * @param bool $failing Whether the migration fails.
 	 */
 	private function installer( bool $failing = false ): Installer {
-		$wpdb             = new RecordingWpdb();
+		$wpdb             = $this->wpdb;
 		$wpdb->last_error = $failing ? "Can't create table" : '';
 
 		return new Installer(

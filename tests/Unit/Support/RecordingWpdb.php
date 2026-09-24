@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Support;
 
+use RuntimeException;
 use wpdb;
 
 /**
@@ -119,10 +120,19 @@ final class RecordingWpdb extends wpdb {
 	public array $query_results = array();
 
 	/**
+	 * Rows of the options table touched by prepared statements (the migration
+	 * lock), option_name => option_value, with MySQL's affected-rows semantics.
+	 *
+	 * @var array<string, string>
+	 */
+	public array $option_rows = array();
+
+	/**
 	 * No database connection (the real constructor connects to MySQL).
 	 */
 	public function __construct() {
-		$this->prefix = 'wp_';
+		$this->prefix  = 'wp_';
+		$this->options = 'wp_options';
 	}
 
 	/**
@@ -172,7 +182,15 @@ final class RecordingWpdb extends wpdb {
 			return stripslashes( (string) $prepared['args'][0] );
 		}
 
-		return array_key_exists( (string) $query, $this->vars ) ? $this->vars[ (string) $query ] : $this->var;
+		if ( array_key_exists( (string) $query, $this->vars ) ) {
+			return $this->vars[ (string) $query ];
+		}
+
+		if ( null !== $prepared && 'SELECT option_value FROM %i WHERE option_name = %s' === $prepared['query'] ) {
+			return $this->option_rows[ (string) $prepared['args'][1] ] ?? null;
+		}
+
+		return $this->var;
 	}
 
 	/**
@@ -224,15 +242,55 @@ final class RecordingWpdb extends wpdb {
 	}
 
 	/**
-	 * Records a raw query (transactions).
+	 * Records a raw query (transactions); executes the prepared statements of
+	 * the migration lock against $option_rows.
 	 *
-	 * @param string $query Query.
+	 * @param string $query Query or prepared marker.
 	 * @return int|bool
 	 */
 	public function query( $query ) {
 		$this->raw_queries[] = $query;
+		$prepared            = $this->prepared_for( (string) $query );
+
+		if ( null !== $prepared ) {
+			return $this->option_statement( $prepared['query'], $prepared['args'] );
+		}
 
 		return $this->query_results[ $query ] ?? true;
+	}
+
+	/**
+	 * Executes a lock statement; returns the number of affected rows.
+	 *
+	 * @param string            $sql  Template.
+	 * @param array<int, mixed> $args Values (the first is the options table).
+	 * @throws RuntimeException On any other statement.
+	 */
+	private function option_statement( string $sql, array $args ): int {
+		$args = array_map( 'strval', $args );
+
+		switch ( $sql ) {
+			case 'INSERT IGNORE INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s)':
+				if ( array_key_exists( $args[1], $this->option_rows ) ) {
+					return 0;
+				}
+				$this->option_rows[ $args[1] ] = $args[2];
+				return 1;
+			case 'UPDATE %i SET option_value = %s WHERE option_name = %s AND option_value = %s':
+				if ( ( $this->option_rows[ $args[2] ] ?? null ) !== $args[3] ) {
+					return 0;
+				}
+				$this->option_rows[ $args[2] ] = $args[1];
+				return 1;
+			case 'DELETE FROM %i WHERE option_name = %s AND option_value = %s':
+				if ( ( $this->option_rows[ $args[1] ] ?? null ) !== $args[2] ) {
+					return 0;
+				}
+				unset( $this->option_rows[ $args[1] ] );
+				return 1;
+		}
+
+		throw new RuntimeException( 'Unsupported prepared query: ' . $sql );
 	}
 
 	/**

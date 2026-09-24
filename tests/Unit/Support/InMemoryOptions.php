@@ -79,6 +79,8 @@ final class InMemoryOptions {
 				return true;
 			}
 		);
+		// The migration lock bypasses the option cache and only clears it.
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
 		Functions\when( 'get_transient' )->alias(
 			static fn( string $name ): mixed => $store->transients[ $name ] ?? false
 		);

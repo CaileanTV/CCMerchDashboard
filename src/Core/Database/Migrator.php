@@ -19,9 +19,9 @@ defined( 'ABSPATH' ) || exit;
  * missing migrations in ascending order.
  *
  * The version option is updated after each successful migration, so a failure
- * leaves the schema at the last version that completed. A short-lived lock
- * (an option, created atomically with add_option()) stops concurrent requests
- * from migrating at the same time.
+ * leaves the schema at the last version that completed. A short-lived lock row
+ * in the options table stops concurrent requests from migrating at the same
+ * time (see acquire_lock()).
  */
 final class Migrator {
 
@@ -31,7 +31,8 @@ final class Migrator {
 	public const VERSION_OPTION = 'merchboard_db_version';
 
 	/**
-	 * Option used as migration lock; holds the Unix time the lock was taken.
+	 * Option used as migration lock; holds "<Unix time>:<random token>" of the
+	 * request that owns it.
 	 */
 	public const LOCK_OPTION = 'merchboard_db_migration_lock';
 
@@ -51,6 +52,13 @@ final class Migrator {
 	 * @var array<int, Migration>
 	 */
 	private array $migrations;
+
+	/**
+	 * Value of the lock row while this instance holds the lock.
+	 *
+	 * @var string|null
+	 */
+	private ?string $lock = null;
 
 	/**
 	 * Constructor.
@@ -142,7 +150,7 @@ final class Migrator {
 				$installed = $version;
 			}
 		} finally {
-			delete_option( self::LOCK_OPTION );
+			$this->release_lock();
 		}
 
 		return true;
@@ -170,20 +178,100 @@ final class Migrator {
 
 	/**
 	 * Takes the lock, replacing it when it is older than LOCK_TIMEOUT.
+	 *
+	 * Works on the options row directly because add_option() is not a lock on
+	 * MySQL/MariaDB: it uses INSERT … ON DUPLICATE KEY UPDATE, which overwrites
+	 * an existing row and still reports success. Instead (like WordPress'
+	 * WP_Upgrader::create_lock()):
+	 *
+	 * - INSERT IGNORE creates the row atomically; only one request can succeed.
+	 * - An abandoned lock is taken over with a compare-and-swap UPDATE on the
+	 *   stale value, so of several requests that saw the same stale lock only one
+	 *   wins (a delete-then-insert would let two requests both "take over").
+	 * - The value carries a random token, so release_lock() deletes only this
+	 *   request's lock, never one another request took over in the meantime.
+	 *
+	 * The row bypasses the options cache on purpose; the cache entry is cleared.
 	 */
 	private function acquire_lock(): bool {
-		if ( add_option( self::LOCK_OPTION, (string) time(), '', false ) ) {
-			return true;
+		$wpdb    = $this->wpdb;
+		$now     = time();
+		$token   = $now . ':' . bin2hex( random_bytes( 8 ) );
+		$options = $wpdb->options;
+
+		$inserted = $this->write(
+			$wpdb->prepare( 'INSERT IGNORE INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s)', $options, self::LOCK_OPTION, $token, 'off' )
+		);
+
+		if ( 1 === $inserted ) {
+			return $this->hold_lock( $token );
 		}
 
-		$locked_at = get_option( self::LOCK_OPTION, 0 );
+		$current = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $options, self::LOCK_OPTION ) );
 
-		if ( is_numeric( $locked_at ) && time() - (int) $locked_at < self::LOCK_TIMEOUT ) {
+		// Released in the meantime: the next request migrates (no retry loop).
+		if ( ! is_string( $current ) ) {
 			return false;
 		}
 
-		delete_option( self::LOCK_OPTION );
+		if ( $now - self::locked_at( $current ) < self::LOCK_TIMEOUT ) {
+			return false;
+		}
 
-		return add_option( self::LOCK_OPTION, (string) time(), '', false );
+		$swapped = $this->write(
+			$wpdb->prepare( 'UPDATE %i SET option_value = %s WHERE option_name = %s AND option_value = %s', $options, $token, self::LOCK_OPTION, $current )
+		);
+
+		return 1 === $swapped && $this->hold_lock( $token );
+	}
+
+	/**
+	 * Runs a lock statement; false when it could not run.
+	 *
+	 * @param string|null $sql Result of $wpdb->prepare() (null when the placeholders do not match).
+	 * @return int|bool Affected rows, or false.
+	 */
+	private function write( ?string $sql ): int|bool {
+		return null === $sql ? false : $this->wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Callers pass the result of $wpdb->prepare().
+	}
+
+	/**
+	 * Records the lock as held by this instance.
+	 *
+	 * @param string $token Lock value.
+	 */
+	private function hold_lock( string $token ): bool {
+		$this->lock = $token;
+		wp_cache_delete( self::LOCK_OPTION, 'options' );
+
+		return true;
+	}
+
+	/**
+	 * Deletes the lock row if it is still this instance's lock.
+	 */
+	private function release_lock(): void {
+		if ( null === $this->lock ) {
+			return;
+		}
+
+		$wpdb = $this->wpdb;
+		$this->write(
+			$wpdb->prepare( 'DELETE FROM %i WHERE option_name = %s AND option_value = %s', $wpdb->options, self::LOCK_OPTION, $this->lock )
+		);
+		$this->lock = null;
+		wp_cache_delete( self::LOCK_OPTION, 'options' );
+	}
+
+	/**
+	 * Unix time a lock value was taken; 0 (abandoned) when unreadable. Also
+	 * reads the plain timestamp that earlier builds wrote.
+	 *
+	 * @param string $value Lock value.
+	 */
+	private static function locked_at( string $value ): int {
+		$time = explode( ':', $value, 2 )[0];
+
+		return ctype_digit( $time ) ? (int) $time : 0;
 	}
 }

@@ -28,6 +28,13 @@ if ( ! class_exists( 'wpdb', false ) ) {
 		public $prefix = 'wp_';
 
 		/**
+		 * Options table.
+		 *
+		 * @var string
+		 */
+		public $options = 'wp_options';
+
+		/**
 		 * Last error.
 		 *
 		 * @var string

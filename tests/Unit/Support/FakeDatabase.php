@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Support;
 
+use MerchBoard\Core\Database\Tables;
 use RuntimeException;
 use wpdb;
 
@@ -54,6 +55,14 @@ final class FakeDatabase extends wpdb {
 	 * @var list<string>
 	 */
 	public array $fail_writes_to = array();
+
+	/**
+	 * Storage engine per unprefixed table (default InnoDB); anything but InnoDB
+	 * is reported as non-transactional.
+	 *
+	 * @var array<string, string>
+	 */
+	public array $engines = array();
 
 	/**
 	 * Transaction statements executed, in order.
@@ -164,6 +173,17 @@ final class FakeDatabase extends wpdb {
 	 */
 	public function get_results( $query = null, $output = OBJECT ) {
 		[ $sql, $args ] = $this->statement( $query );
+
+		if ( str_contains( $sql, 'FROM information_schema.TABLES' ) ) {
+			return array_map(
+				fn( string $table ): array => array(
+					'name'         => $this->prefix . $table,
+					'engine'       => $this->engines[ $table ] ?? 'InnoDB',
+					'transactions' => 'InnoDB' === ( $this->engines[ $table ] ?? 'InnoDB' ) ? 'YES' : 'NO',
+				),
+				Tables::all()
+			);
+		}
 
 		if ( str_ends_with( $sql, 'FROM %i WHERE creator_id = %d ORDER BY id DESC LIMIT %d' ) ) {
 			$rows = array_reverse( $this->filter( (string) $args[0], 'creator_id', (string) $args[1] ) );

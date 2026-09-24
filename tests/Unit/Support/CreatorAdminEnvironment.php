@@ -13,6 +13,7 @@ use Brain\Monkey\Functions;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
@@ -74,7 +75,7 @@ trait CreatorAdminEnvironment {
 		$this->service = new CreatorService(
 			new CreatorRepository( $this->db ),
 			new AuditTrail( new AuditRepository( $this->db ) ),
-			new Transaction( $this->db ),
+			new Transaction( $this->db, new TransactionSupport( $this->db ) ),
 			$this->users
 		);
 	}

@@ -60,7 +60,11 @@ final class AuditRepository {
 			}
 		}
 
-		$json = array() === $context ? null : wp_json_encode( $context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		// Non-ASCII is escaped (\uXXXX), so the stored JSON is plain ASCII and the
+		// insert cannot fail on a table charset without 4-byte UTF-8 (e.g. legacy
+		// utf8mb3), which would roll back the business change with it. Invalid
+		// UTF-8 or non-finite numbers are substituted instead of failing the write.
+		$json = array() === $context ? null : wp_json_encode( $context, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR );
 
 		$inserted = $this->wpdb->insert(
 			Tables::name( $this->wpdb, Tables::AUDIT_LOG ),
