@@ -3,6 +3,5 @@ dist/
 vendor/
 node_modules/
 .tools/
-.wp-playground/
 composer.lock
 package-lock.json

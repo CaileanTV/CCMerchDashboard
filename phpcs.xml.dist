@@ -9,7 +9,6 @@
 	<exclude-pattern>/build/*</exclude-pattern>
 	<exclude-pattern>/dist/*</exclude-pattern>
 	<exclude-pattern>/.tools/*</exclude-pattern>
-	<exclude-pattern>/.wp-playground/*</exclude-pattern>
 
 	<arg name="extensions" value="php"/>
 	<arg name="basepath" value="."/>

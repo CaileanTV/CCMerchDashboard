@@ -9,9 +9,6 @@
 # Project-local tooling (e.g. composer.phar, see docs/DEVELOPMENT.md)
 /.tools/
 
-# Local WordPress Playground site data
-/.wp-playground/
-
 # Tool caches
 /.phpcs-cache
 /.phpunit.cache/

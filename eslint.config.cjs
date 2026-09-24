@@ -5,13 +5,7 @@ const wordpressConfig = require( '@wordpress/scripts/config/eslint.config.cjs' )
 
 module.exports = [
 	{
-		ignores: [
-			'build/**',
-			'dist/**',
-			'vendor/**',
-			'.tools/**',
-			'.wp-playground/**',
-		],
+		ignores: [ 'build/**', 'dist/**', 'vendor/**', '.tools/**' ],
 	},
 	...wordpressConfig,
 	{
