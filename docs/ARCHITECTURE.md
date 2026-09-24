@@ -58,7 +58,7 @@ Konventionen er låst i ADR-018 (før fase 3). Den tidligere midlertidige konven
 ```text
 merchboard/
 ├── merchboard.php        # header, konstanter, krav-check, autoload, boot. Ingen logik.
-├── uninstall.php                # sletter kun data, hvis "delete data on uninstall" er slået til
+├── uninstall.php                # ✅ fase 9: sletter kun egne data, hvis opt-in "delete data on uninstall" er præcis true (Core/Lifecycle/Uninstaller)
 ├── src/
 │   ├── Plugin.php               # composition root: opretter container og registrerer moduler
 │   ├── Core/
@@ -143,11 +143,26 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 | Del | Fase | Begrundelse |
 | --- | --- | --- |
 | `register_deactivation_hook` → `Deactivator` (cron, rewrite flush) | 4 / 12 | Ingen cron eller rewrite rules endnu. Deaktivering rører aldrig data. |
-| Slet-data-rutine i `uninstall.php` | 9 | Kræver opt-in-settingen. Uninstall bevarer data indtil da. |
 | `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |
 | Øvrige core-services (Settings, Capabilities, Audit …) | 5 → | Registreres af de faser, der bygger dem. `Logger` findes fra fase 4. |
 
 Hovedfilen forbliver uændret, når hooks tilføjes. De registreres i `Plugin`, og logikken placeres i `src/Core/Lifecycle/`.
+
+**Lifecycle (✅ fase 9, ADR-025):**
+
+```text
+Deaktivering
+→ data bevares (tabeller, options, rolle og capabilities uændrede)
+
+Afinstallation (slet plugin) uden eksplicit opt-in
+→ data bevares
+
+Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
+→ Merch Dashboards egne data slettes
+→ WordPress- og WooCommerce-data bevares
+```
+
+`uninstall.php` (PHP 7.2-parsebar) → `Requirements` → autoloader → `Core\Lifecycle\Uninstaller` (+ `Core\Database\SchemaEraser`). Settings ligger i `Core\Settings\Settings` (option-adgang uden hooks) og ændres via `Modules\Settings\SettingsService`.
 
 ## 6. Modulsystem
 

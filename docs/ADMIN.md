@@ -12,10 +12,10 @@
 
 ```text
 Merch Dashboard                       (fase 6: menu-capability merchboard_manage_creators; fase 9: merchboard_manage)
-├── Overview                   [fase 9]                   nøgletal, seneste audit-hændelser, systemstatus (WooCommerce aktiv? rewrite OK? migrationer OK?)
+├── Overview                   [fase 10, flyttet fra 9]   nøgletal, seneste audit-hændelser, systemstatus (WooCommerce aktiv? rewrite OK? migrationer OK?)
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   └── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger
-├── Settings                   [fase 9] tabs: General · Access · Advanced (senere: Integrations, WooCommerce)
+├── Settings                   ✅ fase 9: kun "Data on uninstall" (opt-in for permanent sletning). Tabs General · Access · Advanced kommer, når de får indhold
 └── Audit log  [fase 11]                 filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
@@ -65,13 +65,37 @@ En lille informationsboks: "Denne bruger er creator: <link>" eller "Gør til cre
 
 ### Settings
 
+✅ **Fase 9:** `Modules/Settings`: `SettingsPage` (submenu "Settings", capability `merchboard_manage_settings`), `SettingsActions` (`admin-post.php?action=merchboard_save_settings`) og `SettingsService`. Samme mønster som creator-administrationen: capability → nonce → whitelistede felter → service (tjekker capability igen) → Post/Redirect/Get med whitelistede notice-koder. WordPress' Settings API (`options.php`) bruges bevidst ikke, fordi den som standard kræver `manage_options`. Pluginet autoriserer med sin egen `merchboard_manage_settings`.
+
+**"Delete all Merch Dashboard data when the plugin is deleted"** (default fra):
+
+- Siden viser tydeligt, om permanent sletning er slået til (rød advarsel) eller fra, hvad der slettes, og hvad der aldrig slettes.
+- **Slå til:** afkryds **og** skriv `DELETE` i bekræftelsesfeltet. Det tjekkes server-side i `SettingsService`, ikke kun i formularen.
+- **Slå fra:** kræver ingen bekræftelse, fordi det altid er sikkert.
+- Hver ændring skriver en `settings_updated`-audit-record (actor = administratoren). Audit og option skrives i én transaktion.
+- Kun `merchboard_manage_settings` (administratorer). Creators, subscribers og brugere med kun `merchboard_manage_creators` eller WordPress' `manage_options` får 403.
+
+```text
+Deaktivering
+→ data bevares (tabeller, options, rolle og capabilities uændrede)
+
+Afinstallation (slet plugin) uden eksplicit opt-in
+→ data bevares
+
+Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
+→ Merch Dashboards egne data slettes
+→ WordPress- og WooCommerce-data bevares
+```
+
+**Planlagte settings** (når de får indhold):
+
 | Tab | Indstillinger |
 | --- | --- |
 | General | Dashboard-slug (default `creator-dashboard`), branding (logo, primærfarve, navn vist i dashboard) |
 | Access | Login-redirect for creators (til), blokér wp-admin for creators (til), hvilke roller ud over administrator der får admin-caps (fx `shop_manager`) |
 | Advanced | Audit-retention (dage), "Slet alle data ved afinstallation" (fra). Teknisk log-niveau styres af `WP_DEBUG`/filteret `merchboard_log_level` (ADR-021). |
 
-Settings gemmes i én option `merchboard_settings` via Settings API med `sanitize_callback` for hele arrayet (whitelist af nøgler og typer).
+Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Settings\Settings::sanitize()` (whitelist af nøgler og typer), så en forfalsket eller korrupt værdi aldrig giver en uventet indstilling.
 
 ### Audit log
 

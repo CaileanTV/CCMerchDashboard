@@ -30,7 +30,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 - Autoloaderen håndterer kun `MerchBoard\`-klasser og afviser klassenavne, der ikke er rene namespace-segmenter (`..`, `/`, `:`, null-bytes). Klassenavne kan nå autoloadere fra utroværdigt input via `class_exists()` i anden kode (ADR-017).
 - Versionstjekkets admin notice vises kun for brugere med `activate_plugins` (den afslører serverversioner), og alt output er escaped.
-- Pluginet skriver intet til databasen og læser intet brugerinput i fase 2. `uninstall.php` sletter intet endnu.
+- Pluginet skriver intet til databasen og læser intet brugerinput i fase 2. (Fra fase 9 sletter `uninstall.php` kun data ved eksplicit opt-in, se nedenfor.)
 
 ### Datalaget (fase 3)
 
@@ -155,7 +155,7 @@ Tekniske logs (fase 4, ADR-021, [ARCHITECTURE.md §11](ARCHITECTURE.md#11-loggin
 
 ### Audit trail (fase 6, ADR-023)
 
-Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, UTC-tid og minimal context (feltnavne, statusser og bruger-ID'er, **ingen display names eller andre værdier**). Context renses desuden via `LogContext`. Records er append-only. Ændring og audit-record skrives i én transaktion. Settings-ændringer registreres fra fase 9. Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding), når de første creator-endpoints findes (fase 12/14).
+Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, UTC-tid og minimal context (feltnavne, statusser og bruger-ID'er, **ingen display names eller andre værdier**). Context renses desuden via `LogContext`. Records er append-only. Ændring og audit-record skrives i én transaktion. Settings-ændringer registreres som `settings_updated` (✅ fase 9). Fejlede autorisationsforsøg på creator-endpoints logges som tekniske `warning`-poster (rate-begrænset for at undgå log-flooding), når de første creator-endpoints findes (fase 12/14).
 
 ### Database-hardening (fase 7, ADR-024)
 
@@ -173,6 +173,16 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Fail closed:** En databasefejl under adgangstjekket logges og giver "ingen adgang".
 - **Brugersletning:** `deleted_user` udløser en systemhandling uden capability-tjek, men kun for brugere, der ikke længere findes. Den kan derfor ikke misbruges til at frakoble eller deaktivere en levende brugers creator. Frigivelsen er betinget af, at creator'en stadig er koblet til netop den bruger (race mod gen-kobling). Audit-actor er NULL (systemhandling), også når en administrator udløste sletningen. Context indeholder kun bruger-ID og `reason` (ingen e-mail, login eller navn).
 - **Dinglende link efter fejl:** Fejler frigivelsen (fx databasefejl), logges det, og linket peger på et ID, der ikke findes. Selv hvis et bruger-ID senere genbruges, kræver adgang capability'en, som kun gives ved kobling i admin (integrationstest).
+
+### Permanent sletning og uninstall (fase 9, ADR-025)
+
+- **Opt-in er svær at aktivere ved et uheld:** Den kræver `merchboard_manage_settings`, en gyldig nonce og det skrevne ord `DELETE`, og det hele tjekkes server-side. Default er fra. Kun præcis `true` i optionen tæller, så `"1"`, `"yes"` eller `1` (fx skrevet af anden kode) aktiverer ikke sletning. Ændringer audit-logges.
+- **Ingen privilege escalation:** Creator-adgang, `merchboard_manage_creators`, `manage_options` og `delete_plugins` alene kan ikke ændre settingen (unit-, integrations- og HTTP-tests). Admin-siden og handleren tjekker capability før input.
+- **Direkte kald:** `uninstall.php` afslutter uden `WP_UNINSTALL_PLUGIN`, som WordPress kun definerer i `uninstall_plugin()` efter sit eget `delete_plugins`-tjek. Filen kører kun, når netop dette plugin afinstalleres (`plugin_basename`-tjek), og ikke på en PHP/WordPress-version, som pluginet ikke understøtter. Uden opt-in slettes intet.
+- **Kun egne data:** Tabeller slettes efter præcist navn fra `Tables` med `%i` (ingen mønstre, ingen input). Roller og capabilities fjernes efter de præcise definerede navne (`Capabilities::all()` og `merchboard_creator`), ikke efter prefix. En fremmed rolle eller capability, der tilfældigvis starter med `merchboard_`, bevares (fundet og rettet via integrationstest). Brugere slettes aldrig.
+- **Delvis sletning:** Rækkefølgen og det, at opt-in'en slettes sidst, gør et afbrudt forløb genoptageligt. Der er ingen farlig mellemtilstand: pluginet er deaktiveret under uninstall.
+- **Multisite:** Kun det aktuelle sites data (se [DATABASE.md](DATABASE.md#afinstallation-og-datalivscyklus)).
+- **Ingen output:** Fejl logges via `Logger` (tabelnavn) og vises aldrig.
 
 ## Tjekliste pr. ændring
 

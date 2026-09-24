@@ -73,8 +73,9 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 
 | Modul | Status | Ansvar | Fase |
 | --- | --- | --- | --- |
-| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3), Logger, PluginLogger, LogContext, LogWriter-backends (fase 4), Capabilities, RoleManager (fase 5), AuditTrail/AuditRepository/AuditAction, Transaction, migration 2 (fase 6), TransactionSupport og atomisk migrationslås (fase 7). **Planlagt:** Settings (9), Assets (13) | 2-6 ✅, 7+ |
+| Core (ikke et modul) | Delvist | **Færdig:** Plugin, Autoloader, Requirements, Container, Module (fase 2), Tables, Schema, Migration, Migrator, Installer (fase 3), Logger, PluginLogger, LogContext, LogWriter-backends (fase 4), Capabilities, RoleManager (fase 5), AuditTrail/AuditRepository/AuditAction, Transaction, migration 2 (fase 6), TransactionSupport og atomisk migrationslås (fase 7), `Core\Settings\Settings`, `Uninstaller` og `SchemaEraser` (fase 9). **Planlagt:** Settings (9), Assets (13) | 2-6 ✅, 7+ |
 | Creators | Delvist | **Færdig:** datalag (3), `CreatorService`, repository-skriveoperationer og liste, `UserAccounts`, admin-side, list table og admin-post-handlers (6). `deleted_user`-reaktion (`DeletedUserHandler`, `CreatorService::release_deleted_user`) (8). **Planlagt:** `user-edit.php`-link og søgbart brugervalg (10) | 3 ✅, 6 ✅, 8 ✅, 10 |
+| Settings | Delvist | **Færdig:** `SettingsModule`, `SettingsService`, `SettingsPage`, `SettingsActions` med opt-in for permanent sletning (9). **Planlagt:** øvrige settings (General/Access/Advanced), når de får indhold | 9 ✅ |
 | Access | Delvist | **Færdig:** `AccessModule`, `CreatorContext` (adgangspolitik) (8). **Planlagt:** login-redirect, blokering af wp-admin, skjult admin bar og application passwords fra for creators (12), meta-capabilities (14) | 8 ✅, 12, 14 |
 | Admin | Planlagt | Overview, Settings og Audit log (topmenuen "Merch Dashboard" oprettes indtil videre af Creators-modulet, fase 6) | 9, 11 |
 | Dashboard | Planlagt | Route, shell, sektion-registry og `/me`-endpoints | 12-15 |

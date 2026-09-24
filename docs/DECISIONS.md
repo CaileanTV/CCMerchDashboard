@@ -698,3 +698,40 @@ Konsistensgarantien i ADR-023 bliver ægte på alle engines, i stedet for at afh
 - MySQL er først verificeret, når CI-jobbet er set grønt. Staging (fase 16) er stadig autoritativt for produktionsmiljøet.
 - Nye plugin-tabeller er automatisk omfattet af engine-tjekket (`Tables::all()`).
 - MariaDB-versionen i `bin/integration.mjs` skal holdes ajour og helst matche produktionen, når versionen kendes (åbent spørgsmål 2).
+
+---
+
+# ADR-025: Permanent sletning ved uninstall kræver eksplicit opt-in og sletter kun præcist plugin-ejede data
+
+## Date
+2026-09-24
+
+## Status
+Accepteret (fase 9).
+
+## Context
+Uninstall bevarede indtil nu alle data (fase 3-8), fordi creators og audit er forretningsdata. Pluginet skal kunne fjernes helt, men permanent datatab må aldrig ske ved et uheld. Det må heller ikke ramme WordPress-, WooCommerce- eller andre plugins' data, eller andre sites i et multisite-netværk. `DROP TABLE` kan ikke indgå i en transaktion.
+
+## Decision
+- **Opt-in:** Settingen `merchboard_settings['delete_data_on_uninstall']` er default fra og tæller kun som præcis `true`. Den ændres kun via `SettingsService`, som kræver `merchboard_manage_settings` og, for at slå den til, det skrevne ord `DELETE` (server-side). Ændringen audit-logges (`settings_updated`, nyt action i det lukkede sæt), og audit og option skrives i én transaktion (audit først, option sidst). Formularen går via `admin-post.php` som creator-administrationen, ikke via Settings API (som kræver `manage_options`).
+- **Uninstall:** `uninstall.php` → `Uninstaller` gør intet uden opt-in. Med opt-in, for det aktuelle site: fjern `merchboard_creator` og direkte plugin-capabilities fra brugere (brugere og deres øvrige roller bevares) → fjern plugin-capabilities fra alle roller og derefter rollen → drop tabellerne i `Tables::all()` efter præcist navn → slet plugin-options og transient → slet `merchboard_settings` **sidst**.
+- **Ejerskab ved oprydning = præcise navne**, ikke prefix: `merchboard_creator` og `Capabilities::all()`. ADR-022's prefix-regel bruges fortsat ved sync af pluginets egne roller, men uninstall må ikke fjerne en fremmed `merchboard_*`-rolle eller -capability. En capability, der udgår af `Capabilities`, skal fortsat listes til oprydning.
+- **Konsistens uden falsk transaktion:** Hvert trin er idempotent. Fejler et tabel-drop, stopper forløbet før options slettes, så opt-in'en bevares og en senere uninstall fortsætter. Uninstall skriver ingen audit-records.
+- **Multisite:** kun det aktuelle site (WordPress kører uninstall én gang uden `switch_to_blog`). Ingen netværks-oprydning.
+
+## Alternatives considered
+- **Slet altid ved uninstall** (WordPress-konvention for mange plugins): uacceptabelt for forretningsdata.
+- **Kun afkrydsningsfelt uden skrevet bekræftelse:** for let at aktivere ved et uheld.
+- **Prefix-baseret oprydning** (`merchboard_*`): fjerner også fremmede roller og capabilities med samme prefix (reproduceret i en integrationstest). Fravalgt.
+- **Transaktion om hele sletningen:** DDL committer implicit, så garantien ville være falsk.
+- **Iterere alle sites på multisite:** kræver netværks-UI og -opt-in og er ikke understøttet endnu.
+- **Settings API:** kræver `manage_options` (eller filter), og pluginet har sin egen capability.
+
+## Reason
+Permanent sletning bliver et bevidst, sporbart og autoriseret valg, som kun rammer pluginets egne data, er sikkert at gentage og kan genoptages efter en fejl.
+
+## Consequences
+- Et site kan fjerne Merch Dashboard helt uden efterladte tabeller, options, roller eller capabilities.
+- Uden opt-in er uninstall uændret (intet slettes).
+- Tekniske log-poster i WooCommerce-log eller `debug.log` slettes ikke, fordi de ejes af WooCommerce/serveren.
+- Nye plugin-tabeller og -capabilities er automatisk omfattet via `Tables::all()` og `Capabilities::all()`. Nye options skal tilføjes i `Uninstaller`.

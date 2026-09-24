@@ -11,7 +11,7 @@
 | Brugerpræferencer uden domæneværdi (fx dashboard-tema) | `wp_usermeta` (`merchboard_*`) | Hører til login-kontoen, ikke til creator'en |
 | **Creator** (identitet, status, visningsnavn) | `merchboard_creators` (custom) ✅ | Domæneobjekt adskilt fra login-kontoen. Se ADR-005 og ADR-020. |
 | Fleksible creator-felter (bio, sociale links, avatar-ID …) | `merchboard_creatormeta` (custom, WP metadata API), **fase 14** | Oprettes, når profilfelterne bygges (ingen tabel "for en sikkerheds skyld") |
-| Plugin-settings | `wp_options`: `merchboard_settings` (ét array, autoload), fase 9 | Lille og læses på de fleste requests |
+| Plugin-settings | `wp_options`: `merchboard_settings` (ét array, autoload) ✅ fase 9. Indtil videre kun `delete_data_on_uninstall` (bool, default `false`, tæller kun som præcis `true`) | Lille og læses på de fleste requests |
 | Schemaversion | `wp_options`: `merchboard_db_version` ✅ | Styrer migrationer (ADR-019) |
 | Migrationslås | `wp_options`: `merchboard_db_migration_lock` ✅ (midlertidig, ikke autoload) | Forhindrer samtidige migrationer |
 | Migrationsfejl | transient `merchboard_db_migration_failed` ✅ (5 min) | Pause mellem automatiske forsøg og admin notice |
@@ -133,6 +133,7 @@ Indexes: `KEY(created_at)`, `KEY(action)`, `KEY(creator_id)`. Ingen fremmednøgl
 | `creator_updated` | `changed_fields` (feltnavne, **ingen værdier**) |
 | `creator_activated` / `creator_deactivated` | `previous_status`. Ved slettet bruger desuden `reason: user_deleted` (fase 8) |
 | `creator_user_linked` / `creator_user_unlinked` | `user_id` (hhv. den nye og den tidligere). Ved slettet bruger desuden `reason: user_deleted` (fase 8) |
+| `settings_updated` (fase 9) | `setting` (navn) og den nye værdi (fx `enabled: true`). `creator_id` er NULL. |
 
 En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `creator_deactivated`.
 
@@ -140,7 +141,7 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 **Append-only:** `AuditRepository` har kun `append()` og `for_creator()` (læsning til tests og den kommende visning). Der er ingen update eller delete, og ingen admin-funktion ændrer records.
 
-**Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (fase 9), hvor tabellen er med i `Tables::all()`. Retention-politik (fx automatisk sletning efter N år) er et åbent spørgsmål.
+**Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (✅ fase 9, ADR-025), hvor tabellen er med i `Tables::all()`. Uninstall skriver ingen audit-records. Retention-politik (fx automatisk sletning efter N år) er et åbent spørgsmål.
 
 ### `merchboard_sales` (fase 18)
 
@@ -256,8 +257,35 @@ Integrationstestene (`npm run test:integration`, fase 7) kører en rigtig WordPr
 | Handling | Effekt på data |
 | --- | --- |
 | **Deaktivering** | Ingen. Data, tabeller og options bevares. (Fase 4 og 12 tilføjer oprydning af cron og rewrite rules, men aldrig data.) |
-| **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** `merchboard_creators`, `merchboard_audit_log`, `merchboard_db_version`, `merchboard_roles_version`, rollen `merchboard_creator` og administratorens `merchboard_*`-capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
-| **Permanent sletning** | Bliver en eksplicit opt-in (setting "Slet alle data ved afinstallation", default fra) i **fase 9**. Selve sletterutinen implementeres sammen med settingen, ikke før. `Tables::all()` giver den komplette liste over plugin-tabeller til den rutine. |
-| **Creator "slettes"** | Status `inactive` (soft). Admin-UI'et har bevidst **ingen** "Delete"-funktion (fase 6). Hard delete er ikke understøttet, fordi audit trail og fremtidig salgshistorik refererer til creator-ID'et. Permanent sletning af alle data er opt-in i fase 9. |
+| **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** Alle tabeller, options, rollen og capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
+| **Permanent sletning** ✅ fase 9 | Kun med eksplicit opt-in under Merch Dashboard → Settings (se [ADMIN.md](ADMIN.md#settings)). Så sletter `Core\Lifecycle\Uninstaller` pluginets egne data for det aktuelle site, se inventory nedenfor (ADR-025). |
+| **Creator "slettes"** | Status `inactive` (soft). Admin-UI'et har bevidst **ingen** "Delete"-funktion (fase 6). Hard delete er ikke understøttet, fordi audit trail og fremtidig salgshistorik refererer til creator-ID'et. Permanent sletning af alle data er opt-in (✅ fase 9, ADR-025). |
 | **WordPress-bruger slettes** | Se relationen ovenfor (✅ fase 8). Creator-record, creator-data og audit bevares. Creator'en frakobles og deaktiveres. |
+
+```text
+Deaktivering
+→ data bevares (tabeller, options, rolle og capabilities uændrede)
+
+Afinstallation (slet plugin) uden eksplicit opt-in
+→ data bevares
+
+Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
+→ Merch Dashboards egne data slettes
+→ WordPress- og WooCommerce-data bevares
+```
+
+| Plugin-ejet state (fuld inventory, fase 9) | Slettes ved opt-in-uninstall |
+| --- | --- |
+| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja |
+| Transient `merchboard_db_migration_failed` | Ja |
+| Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |
+| Rollen `merchboard_creator` | Ja: fjernes fra brugere (andre roller bevares) og derefter som rolle |
+| Capabilities `merchboard_access_dashboard`, `merchboard_manage`, `merchboard_manage_creators`, `merchboard_manage_settings` (`Capabilities::all()`) | Ja: fra alle roller og fra brugere, der har fået dem direkte. Kun disse præcise navne, ikke alt med prefix `merchboard_`. |
+| Tekniske log-poster (WooCommerce-log, source `merchboard`, eller `debug.log`) | Nej: ejes af WooCommerce/serveren og ryddes af deres retention |
+| WordPress-brugere, andre roller/capabilities, posts, sider, media, WooCommerce-produkter/-ordrer/-kunder/-meta, andre plugins' data, themes | **Aldrig** |
+
+**Strategi (ADR-025):** `DROP TABLE` committer implicit og kan ikke indgå i en transaktion, så der er ingen falsk atomicitet. Rækkefølgen er i stedet: brugere → roller → tabeller → options → `merchboard_settings` **sidst**. Hvert trin er idempotent (`IF EXISTS`, manglende roller og options ignoreres). Fejler et tabel-drop, logges det, og der slettes ingen options. Opt-in'en bevares derfor, og den næste afinstallation fortsætter. Gentagen afinstallation er sikker. Uninstall skriver ingen audit-records.
+
+**Multisite (verificeret i WordPress 7.1.2's kildekode, ikke officielt understøttet):** `delete_plugins()` kalder `uninstall_plugin()` én gang uden `switch_to_blog()`. Tabelnavne bygges med det aktuelle sites `$wpdb->prefix`, roller ligger i det aktuelle sites `{prefix}user_roles`, og options og brugernes capabilities er pr. site. Afinstallation kan derfor kun slette det aktuelle sites data, og kun hvis opt-in'en er sat på det site. Andre sites' tabeller, roller og options røres ikke (testet med en tabel med lignende navn for et andet site). Data på andre sites i netværket bliver dermed liggende, selv hvis opt-in er sat der. Multisite-oprydning kræver en senere beslutning.
 | **GDPR** | Integration med WordPress' personal data exporter/eraser for creator-data (fase efter MVP). |

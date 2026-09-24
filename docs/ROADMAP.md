@@ -72,14 +72,15 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Done:** Unit- og integrationstests (MariaDB) for adgangsmatrix og brugersletning, og Playground med og uden WooCommerce.
 - **Flyttet:** `LoginRedirect`, `AdminAreaGuard`, skjult admin bar og application passwords fra for creators → fase 12 (de har først et mål, når dashboard-routen findes). Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` → fase 14 (første ressourcer). Omdøbt fra "Creator access og login-flow".
 
-## Fase 9 – Admin shell: menu, overview og settings
+## Fase 9 – Lifecycle, settings og permanent sletning ✅
 
-- **Scope:** Topmenu "Merch Dashboard" (findes fra fase 6 med Creators; Overview bliver første punkt og menu-capability `merchboard_manage`), Overview (systemstatus: WooCommerce, migrationer/schemaversion, rewrite), Settings-side (Settings API, tabs General/Access/Advanced, én option med whitelist-sanitization), opt-in-setting "Slet alle data ved afinstallation" (default fra) og den tilhørende sletterutine i `uninstall.php` (bruger `Tables::all()`; fjerner også rollen `merchboard_creator` og pluginets `merchboard_*`-capabilities, flyttet fra fase 5).
-- **Done:** Settings gemmes, valideres og audit-logges. Capability-tests.
+- **Scope (udført):** Settings-side (Merch Dashboard → Settings, `merchboard_manage_settings`) med opt-in "Delete all Merch Dashboard data when the plugin is deleted" (default fra, skrevet bekræftelse, audit-logget) og sletterutinen i `uninstall.php` (`Uninstaller`: egne tabeller, options, rollen `merchboard_creator` og de præcise plugin-capabilities; aldrig brugere eller WordPress/WooCommerce-data). Lifecycle-regressionstests for deaktivering. ADR-025.
+- **Done:** Unit- og integrationstests (MariaDB), og Playground med og uden WooCommerce (scenarier A-E og settings-UI over HTTP).
+- **Flyttet:** Overview (systemstatus) og menu-capability `merchboard_manage` for topmenuen → fase 10. Settings-tabs (General/Access/Advanced) kommer, når de får indhold (Access i fase 12, General i fase 12/15). Omdøbt fra "Admin shell: menu, overview og settings".
 
-## Fase 10 – Admin creator management (rest)
+## Fase 10 – Admin creator management (rest) og Overview
 
-- **Scope:** Kernen (liste, opret/rediger, statusskift, tilknytning) blev leveret i fase 6. Tilbage: link/infoboks på `user-edit.php`, søgbart brugervalg (AJAX) til sites med mange brugere og evt. bulk actions. Se [features/admin-creator-management.md](features/admin-creator-management.md).
+- **Scope:** Overview som første menupunkt med menu-capability `merchboard_manage` (systemstatus: WooCommerce, migrationer/schemaversion, engine-tjek, evt. dinglende creator-links; flyttet fra fase 9). Kernen (liste, opret/rediger, statusskift, tilknytning) blev leveret i fase 6. Tilbage: link/infoboks på `user-edit.php`, søgbart brugervalg (AJAX) til sites med mange brugere og evt. bulk actions. Se [features/admin-creator-management.md](features/admin-creator-management.md).
 - **Done:** Integrationstests for nonce, capability og validering. Manuel UX-test.
 
 ## Fase 11 – Admin audit-log viewer

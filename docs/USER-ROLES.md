@@ -42,7 +42,7 @@ Administratorer beholder alle deres WordPress-capabilities uændret. Pluginet ti
 | --- | --- | --- |
 | `merchboard_view_logs` | Fase 11 (audit-log viewer) | Audit-visning er ikke en del af fase 5. Capabilities oprettes med den funktion, der bruger dem. |
 | Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` (`map_meta_cap`) | Fase 14 (REST `/me`), udskudt igen fra fase 8 | Ejerskabsdelen kræver creator-record og status. `CreatorContext` (fase 8) leverer grundlaget, og meta-capabilities tilføjes, når de første ressourcer (`/me`) skal beskyttes. |
-| Fjernelse af rolle/caps ved uninstall | Fase 9 (opt-in "Slet alle data") | Uninstall bevarer data (DATABASE.md). Brugere, der har rollen, må ikke miste den implicit. |
+| Fjernelse af rolle/caps ved uninstall | ✅ Fase 9 (opt-in "Slet alle data", ADR-025) | Uninstall bevarer data (DATABASE.md). Brugere, der har rollen, må ikke miste den implicit. |
 
 Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11), `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`.
 
@@ -69,7 +69,7 @@ Fremtidige capabilities (tilføjes med deres modul): `merchboard_view_logs` (11)
 - **Ændring af definitionerne:** Opdatér `Capabilities` og hæv `RoleManager::VERSION`.
 - **Fejl:** Kan creator-rollen ikke oprettes, logges `error`, og versionen registreres ikke (forsøges igen næste request).
 - **Deaktivering:** Rolle og capabilities bevares. Uden pluginet er de inaktive, fordi intet tjekker dem, og brugere bevarer deres roller.
-- **Uninstall:** Rolle og capabilities bevares (data-retention). Fjernelse sker kun med opt-in-sletning i fase 9 og kun for plugin-ejede roller/capabilities.
+- **Uninstall:** Rolle og capabilities bevares (data-retention). Kun med opt-in-sletning (✅ fase 9) fjernes `merchboard_creator` fra brugere (deres øvrige roller bevares) og som rolle, og de fire plugin-capabilities (`Capabilities::all()`) fjernes fra alle roller og fra brugere, der har fået dem direkte. Kun de præcise navne fjernes. Administratoren beholder alle andre capabilities. En capability, der engang udgår af `Capabilities`, skal fortsat stå på oprydningslisten (ADR-025).
 
 ## Grænsen for fase 5
 
