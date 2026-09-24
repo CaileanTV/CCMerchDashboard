@@ -1,0 +1,9 @@
+# PHPStan configuration. WordPress stubs are loaded automatically via
+# szepeviktor/phpstan-wordpress + phpstan/extension-installer.
+parameters:
+    level: 8
+    phpVersion: 80200
+    paths:
+        - ccmerch-dashboard.php
+        # Add src/ (and uninstall.php) here when the plugin bootstrap lands (roadmap phase 2).
+    tmpDir: .tools/phpstan-cache

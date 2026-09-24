@@ -1,0 +1,46 @@
+{
+  "name": "ccmerch/ccmerch-dashboard",
+  "description": "Creator and merchandise management plugin for WordPress.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "CCMerch\\": "src/"
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "8.2.0"
+    },
+    "optimize-autoloader": true,
+    "sort-packages": true,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": true
+    }
+  },
+  "scripts": {
+    "lint": "phpcs",
+    "lint:fix": "phpcbf",
+    "analyse": "phpstan analyse --memory-limit=1G",
+    "check": [
+      "@lint",
+      "@analyse"
+    ]
+  },
+  "scripts-descriptions": {
+    "lint": "Check PHP against WordPress Coding Standards and PHP compatibility.",
+    "lint:fix": "Auto-fix fixable coding standard violations.",
+    "analyse": "Run PHPStan static analysis with WordPress stubs.",
+    "check": "Run all PHP quality checks."
+  },
+  "require-dev": {
+    "phpstan/extension-installer": "^1.4",
+    "phpstan/phpstan": "^2.2",
+    "szepeviktor/phpstan-wordpress": "^2.0",
+    "wp-coding-standards/wpcs": "^3.4"
+  }
+}
