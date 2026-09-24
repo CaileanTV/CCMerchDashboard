@@ -78,12 +78,57 @@ final class FakeUserAccounts implements UserAccounts {
 	}
 
 	/**
-	 * Choices.
+	 * Login: the part in parentheses of the label ("Nova (nova)" → "nova").
 	 *
-	 * @param int $limit Limit.
-	 * @return array<int, string>
+	 * @param int $user_id User id.
 	 */
-	public function choices( int $limit ): array {
-		return array_slice( $this->users, 0, $limit, true );
+	public function login( int $user_id ): ?string {
+		if ( ! isset( $this->users[ $user_id ] ) ) {
+			return null;
+		}
+
+		return 1 === preg_match( '/\(([^)]+)\)$/', $this->users[ $user_id ], $m ) ? $m[1] : null;
+	}
+
+	/**
+	 * Id by exact login.
+	 *
+	 * @param string $login Login.
+	 */
+	public function find_by_login( string $login ): ?int {
+		foreach ( array_keys( $this->users ) as $user_id ) {
+			if ( $this->login( $user_id ) === $login ) {
+				return $user_id;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Substring search in labels (login and display name).
+	 *
+	 * @param string $term  Term.
+	 * @param int    $limit Limit.
+	 * @return list<array{id: int, login: string, label: string}>
+	 */
+	public function search( string $term, int $limit ): array {
+		if ( mb_strlen( trim( $term ) ) < 2 ) {
+			return array();
+		}
+
+		$found = array();
+
+		foreach ( $this->users as $user_id => $label ) {
+			if ( str_contains( strtolower( $label ), strtolower( trim( $term ) ) ) ) {
+				$found[] = array(
+					'id'    => $user_id,
+					'login' => (string) $this->login( $user_id ),
+					'label' => $label,
+				);
+			}
+		}
+
+		return array_slice( $found, 0, $limit );
 	}
 }

@@ -174,6 +174,23 @@ final class FakeDatabase extends wpdb {
 	public function get_results( $query = null, $output = OBJECT ) {
 		[ $sql, $args ] = $this->statement( $query );
 
+		if ( 'SELECT status, COUNT(*) AS total FROM %i GROUP BY status' === $sql ) {
+			$totals = array();
+
+			foreach ( $this->filter( (string) $args[0] ) as $row ) {
+				$totals[ (string) $row['status'] ] = ( $totals[ (string) $row['status'] ] ?? 0 ) + 1;
+			}
+
+			return array_map(
+				static fn( string $status, int $total ): array => array(
+					'status' => $status,
+					'total'  => (string) $total,
+				),
+				array_keys( $totals ),
+				$totals
+			);
+		}
+
 		if ( str_contains( $sql, 'FROM information_schema.TABLES' ) ) {
 			return array_map(
 				fn( string $table ): array => array(

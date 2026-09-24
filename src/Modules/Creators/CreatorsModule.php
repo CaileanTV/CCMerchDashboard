@@ -17,6 +17,8 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\Admin\CreatorAdminActions;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
+use MerchBoard\Modules\Creators\Admin\CreatorUserSearch;
+use MerchBoard\Modules\Creators\Admin\UserProfileSection;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -67,8 +69,22 @@ final class CreatorsModule implements Module {
 			CreatorAdminActions::class,
 			static fn( Container $c ): CreatorAdminActions => new CreatorAdminActions(
 				$c->get( CreatorService::class ),
+				$c->get( UserAccounts::class ),
 				$c->get( Logger::class )
 			)
+		);
+
+		$container->set(
+			CreatorUserSearch::class,
+			static fn( Container $c ): CreatorUserSearch => new CreatorUserSearch(
+				$c->get( UserAccounts::class ),
+				$c->get( CreatorRepository::class )
+			)
+		);
+
+		$container->set(
+			UserProfileSection::class,
+			static fn( Container $c ): UserProfileSection => new UserProfileSection( $c->get( CreatorRepository::class ) )
 		);
 
 		$container->set(
@@ -91,6 +107,8 @@ final class CreatorsModule implements Module {
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( CreatorAdminActions::class )->register();
+				$container->get( CreatorUserSearch::class )->register();
+				$container->get( UserProfileSection::class )->register();
 			}
 		);
 

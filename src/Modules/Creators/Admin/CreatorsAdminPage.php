@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Creators\Admin;
 
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorException;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -35,11 +36,6 @@ final class CreatorsAdminPage {
 	 * Query argument carrying a whitelisted notice code after a redirect.
 	 */
 	public const NOTICE_ARG = 'merchboard_notice';
-
-	/**
-	 * Maximum number of users offered in the user select.
-	 */
-	private const USER_CHOICES_LIMIT = 500;
 
 	/**
 	 * Constructor.
@@ -79,27 +75,54 @@ final class CreatorsAdminPage {
 	}
 
 	/**
-	 * Adds the "Merch Dashboard" menu with "Creators" as its first item. The
-	 * roadmap's admin shell (phase 9) adds Overview and Settings.
+	 * Adds "Creators" to the Merch Dashboard menu (owned by the Admin module)
+	 * and loads the user search script on this screen only.
 	 */
 	public function add_menu(): void {
-		add_menu_page(
-			__( 'Merch Dashboard', 'merchboard' ),
-			__( 'Merch Dashboard', 'merchboard' ),
-			Capabilities::MANAGE_CREATORS,
-			self::SLUG,
-			array( $this, 'render' ),
-			'dashicons-store',
-			56
-		);
-
-		add_submenu_page(
-			self::SLUG,
+		$hook = add_submenu_page(
+			AdminMenu::PARENT_SLUG,
 			__( 'Creators', 'merchboard' ),
 			__( 'Creators', 'merchboard' ),
 			Capabilities::MANAGE_CREATORS,
 			self::SLUG,
 			array( $this, 'render' )
+		);
+
+		if ( is_string( $hook ) ) {
+			add_action( 'load-' . $hook, array( $this, 'enqueue_assets_on_load' ) );
+		}
+	}
+
+	/**
+	 * Hooks the asset loading for this screen.
+	 */
+	public function enqueue_assets_on_load(): void {
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Progressive enhancement for the user field: suggestions from
+	 * CreatorUserSearch. The form works without it (type the login).
+	 */
+	public function enqueue_assets(): void {
+		// src/Modules/Creators/Admin → plugin root.
+		wp_enqueue_script(
+			'merchboard-creator-user-search',
+			plugins_url( 'assets/js/creator-user-search.js', dirname( __DIR__, 4 ) . '/merchboard.php' ),
+			array(),
+			defined( 'MERCHBOARD_VERSION' ) ? (string) constant( 'MERCHBOARD_VERSION' ) : false,
+			true
+		);
+		wp_add_inline_script(
+			'merchboard-creator-user-search',
+			'window.merchboardUserSearch = ' . (string) wp_json_encode(
+				array(
+					'url'    => admin_url( 'admin-ajax.php' ),
+					'action' => CreatorUserSearch::ACTION,
+					'nonce'  => wp_create_nonce( CreatorUserSearch::ACTION ),
+				)
+			) . ';',
+			'before'
 		);
 	}
 
@@ -215,8 +238,8 @@ final class CreatorsAdminPage {
 	private function render_form( ?Creator $creator ): void {
 		$creator_id = null === $creator ? 0 : $creator->id;
 		// Safe default: a new creator is inactive until an administrator activates it.
-		$status  = null === $creator ? CreatorStatus::Inactive : $creator->status;
-		$choices = $this->user_choices( $creator );
+		$status     = null === $creator ? CreatorStatus::Inactive : $creator->status;
+		$user_value = $this->user_field_value( $creator );
 
 		echo '<h1>' . esc_html( null === $creator ? __( 'Add New Creator', 'merchboard' ) : __( 'Edit Creator', 'merchboard' ) ) . '</h1>';
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← Back to creators', 'merchboard' ) . '</a></p>';
@@ -241,13 +264,21 @@ final class CreatorsAdminPage {
 		echo '</td></tr>';
 
 		echo '<tr><th scope="row"><label for="merchboard-user">' . esc_html__( 'WordPress user', 'merchboard' ) . '</label></th><td>';
-		echo '<select id="merchboard-user" name="user_id">';
-		echo '<option value="">' . esc_html__( '— No WordPress user —', 'merchboard' ) . '</option>';
-		foreach ( $choices as $user_id => $label ) {
-			printf( '<option value="%1$s"%2$s>%3$s</option>', esc_attr( (string) $user_id ), selected( (string) $creator?->user_id, (string) $user_id, false ), esc_html( $label ) );
+		printf(
+			'<input type="text" id="merchboard-user" name="%1$s" class="regular-text" list="merchboard-user-options" autocomplete="off" value="%2$s">',
+			esc_attr( CreatorAdminActions::USER_FIELD ),
+			esc_attr( $user_value )
+		);
+		echo '<datalist id="merchboard-user-options"></datalist>';
+
+		if ( null !== $creator?->user_id && null === $this->users->login( $creator->user_id ) ) {
+			/* translators: %d: WordPress user id. */
+			echo '<p class="description"><strong>' . esc_html( sprintf( __( 'Linked to user #%d, which no longer exists. Clear the field to unlink.', 'merchboard' ), $creator->user_id ) ) . '</strong></p>';
+		} elseif ( null !== $creator?->user_id && current_user_can( 'edit_user', $creator->user_id ) ) {
+			echo '<p><a href="' . esc_url( get_edit_user_link( $creator->user_id ) ) . '">' . esc_html__( 'Open WordPress user profile', 'merchboard' ) . '</a></p>';
 		}
-		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'The login account that may use this creator. Linking adds the "Merch Dashboard Creator" role; unlinking removes it. Neither deletes the user.', 'merchboard' ) . '</p>';
+
+		echo '<p class="description">' . esc_html__( 'Type the login of the account that may use this creator (suggestions appear after two characters), or leave the field empty for no WordPress user. Linking adds the "Merch Dashboard Creator" role; unlinking removes it. Neither deletes the user.', 'merchboard' ) . '</p>';
 		echo '</td></tr>';
 
 		if ( null !== $creator ) {
@@ -261,21 +292,26 @@ final class CreatorsAdminPage {
 	}
 
 	/**
-	 * Users offered in the select: all selectable users except those linked to
-	 * another creator (the current creator's user stays selectable).
+	 * Initial value of the user field: the linked user's login, "#id" for a
+	 * link to a user that no longer exists (saving unchanged keeps it), or for a
+	 * new creator the login of a user preselected from the profile screen
+	 * (`user_id` query argument; only an existing user is used).
 	 *
 	 * @param Creator|null $creator Creator being edited.
-	 * @return array<int, string>
 	 */
-	private function user_choices( ?Creator $creator ): array {
-		$taken   = array_diff( $this->creators->linked_user_ids(), array( $creator?->user_id ) );
-		$choices = array_diff_key( $this->users->choices( self::USER_CHOICES_LIMIT ), array_flip( $taken ) );
+	private function user_field_value( ?Creator $creator ): string {
+		if ( null !== $creator ) {
+			if ( null === $creator->user_id ) {
+				return '';
+			}
 
-		if ( null !== $creator?->user_id && ! isset( $choices[ $creator->user_id ] ) ) {
-			$choices = $this->users->labels( array( $creator->user_id ) ) + $choices;
+			return $this->users->login( $creator->user_id ) ?? '#' . $creator->user_id;
 		}
 
-		return $choices;
+		// Read-only prefill; the choice is validated again when the form is saved.
+		$preselected = isset( $_GET['user_id'] ) ? absint( $_GET['user_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+
+		return $preselected > 0 ? (string) $this->users->login( $preselected ) : '';
 	}
 
 	/**

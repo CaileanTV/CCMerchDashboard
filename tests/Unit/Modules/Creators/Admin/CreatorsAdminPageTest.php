@@ -64,6 +64,7 @@ final class CreatorsAdminPageTest extends TestCase {
 			}
 		);
 		Functions\when( 'get_option' )->justReturn( 'Y-m-d' );
+		Functions\when( 'get_edit_user_link' )->alias( static fn( int $id ): string => 'https://shop.test/wp-admin/user-edit.php?user_id=' . $id );
 		Functions\when( 'wp_date' )->alias( static fn( string $format, int $ts ): string => gmdate( 'Y-m-d H:i', $ts ) );
 		Functions\when( 'wp_die' )->alias(
 			static function ( string $message, string $title = '', array $args = array() ): void {
@@ -83,10 +84,39 @@ final class CreatorsAdminPageTest extends TestCase {
 		self::assertStringContainsString( 'value="' . CreatorAdminActions::SAVE_ACTION . '"', $html );
 		self::assertStringContainsString( 'nonce:' . CreatorAdminActions::save_nonce_action( 0 ), $html );
 		self::assertStringContainsString( "<option value=\"inactive\" selected='selected'>", $html, 'New creators default to inactive.' );
-		self::assertStringContainsString( 'Nova (nova)', $html );
+		self::assertStringContainsString( 'name="user" class="regular-text" list="merchboard-user-options" autocomplete="off" value=""', $html );
+		self::assertStringContainsString( '<datalist id="merchboard-user-options"></datalist>', $html, 'Suggestions are loaded on demand, not all users.' );
+		self::assertStringNotContainsString( 'Nova (nova)', $html, 'No user list is rendered.' );
+		self::assertStringNotContainsString( '@', $html, 'No e-mail addresses.' );
 	}
 
-	public function test_edit_form_selects_current_values_and_hides_users_linked_elsewhere(): void {
+	public function test_new_form_prefills_a_preselected_existing_user_only(): void {
+		self::assertStringContainsString( 'name="user" class="regular-text" list="merchboard-user-options" autocomplete="off" value="nova"', $this->render( array( 'action' => 'new', 'user_id' => '42' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( 'autocomplete="off" value=""', $this->render( array( 'action' => 'new', 'user_id' => '999' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( 'autocomplete="off" value=""', $this->render( array( 'action' => 'new', 'user_id' => '"><script>' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	public function test_profile_link_only_for_existing_users_the_admin_may_edit(): void {
+		$this->service->create( 'Nova', CreatorStatus::Active, 42 );
+		$edit = array(
+			'action'  => 'edit',
+			'creator' => '1',
+		);
+
+		self::assertStringNotContainsString( 'Open WordPress user profile', $this->render( $edit ), 'Without edit_user no link.' );
+
+		$this->caps[] = 'edit_user';
+		$html         = $this->render( $edit );
+		self::assertStringContainsString( '<a href="https://shop.test/wp-admin/user-edit.php?user_id=42">Open WordPress user profile</a>', $html );
+
+		unset( $this->users->users[42] );
+		$html = $this->render( $edit );
+		self::assertStringNotContainsString( 'Open WordPress user profile', $html );
+		self::assertStringContainsString( 'value="#42"', $html, 'Saving unchanged keeps the dangling link.' );
+		self::assertStringContainsString( 'Linked to user #42, which no longer exists.', $html );
+	}
+
+	public function test_edit_form_shows_current_values(): void {
 		$this->service->create( 'Studio <b>Nova</b>', CreatorStatus::Active, 42 );
 		$this->service->create( 'Other', CreatorStatus::Active, 43 );
 
@@ -99,8 +129,8 @@ final class CreatorsAdminPageTest extends TestCase {
 
 		self::assertStringContainsString( 'nonce:' . CreatorAdminActions::save_nonce_action( 1 ), $html );
 		self::assertStringContainsString( "<option value=\"active\" selected='selected'>", $html );
-		self::assertStringContainsString( "<option value=\"42\" selected='selected'>", $html );
-		self::assertStringNotContainsString( 'Other (other)', $html, 'A user linked to another creator is not offered.' );
+		self::assertStringContainsString( 'autocomplete="off" value="nova"', $html );
+		self::assertStringNotContainsString( 'Other (other)', $html );
 		self::assertStringNotContainsString( '<b>Nova</b>', $html, 'Display name is escaped.' );
 		self::assertStringContainsString( 'Studio &lt;b&gt;Nova&lt;/b&gt;', $html );
 	}

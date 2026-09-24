@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Settings\Admin;
 
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Settings\SettingsException;
 use MerchBoard\Modules\Settings\SettingsService;
@@ -59,7 +60,7 @@ final class SettingsPage {
 	 */
 	public function add_menu(): void {
 		add_submenu_page(
-			CreatorsAdminPage::SLUG,
+			AdminMenu::PARENT_SLUG,
 			__( 'Merch Dashboard Settings', 'merchboard' ),
 			__( 'Settings', 'merchboard' ),
 			Capabilities::MANAGE_SETTINGS,

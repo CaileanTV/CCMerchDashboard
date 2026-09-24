@@ -48,10 +48,28 @@ interface UserAccounts {
 	public function labels( array $user_ids ): array;
 
 	/**
-	 * Users that can be selected in the admin form, by label.
+	 * Login name of a user (shown in the admin form, as in labels()).
 	 *
-	 * @param int $limit Maximum number of users.
-	 * @return array<int, string> Label by user id.
+	 * @param int $user_id User id.
+	 * @return string|null Null when the user does not exist.
 	 */
-	public function choices( int $limit ): array;
+	public function login( int $user_id ): ?string;
+
+	/**
+	 * Id of the user with exactly this login name.
+	 *
+	 * @param string $login Login name.
+	 * @return int|null Null when no such user exists.
+	 */
+	public function find_by_login( string $login ): ?int;
+
+	/**
+	 * Users whose login or display name contains the term (never searched by
+	 * e-mail and never returning it), for the admin user selector.
+	 *
+	 * @param string $term  Search term (at least 2 characters, else no results).
+	 * @param int    $limit Maximum number of results (1-50).
+	 * @return list<array{id: int, login: string, label: string}>
+	 */
+	public function search( string $term, int $limit ): array;
 }

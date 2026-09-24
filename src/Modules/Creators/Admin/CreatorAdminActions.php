@@ -15,6 +15,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorException;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Creators\UserAccounts;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -45,13 +46,22 @@ final class CreatorAdminActions {
 	public const STATUS_ACTION = 'merchboard_set_creator_status';
 
 	/**
+	 * Form field for the WordPress user: a login, "#<user id>", or empty for
+	 * no user. Resolved to a user id server-side; the service then checks that
+	 * the user exists and is not linked elsewhere.
+	 */
+	public const USER_FIELD = 'user';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CreatorService $service Use cases.
+	 * @param UserAccounts   $users   User lookups (login → id).
 	 * @param Logger         $logger  Technical log.
 	 */
 	public function __construct(
 		private CreatorService $service,
+		private UserAccounts $users,
 		private Logger $logger
 	) {
 	}
@@ -114,8 +124,7 @@ final class CreatorAdminActions {
 
 		$display_name = sanitize_text_field( self::scalar( $input, 'display_name' ) );
 		$status       = CreatorStatus::tryFrom( sanitize_key( self::scalar( $input, 'status' ) ) );
-		$raw_user     = self::scalar( $input, 'user_id' );
-		$user_id      = '' === $raw_user || '0' === $raw_user ? null : absint( $raw_user );
+		$user_id      = $this->user_id( self::scalar( $input, self::USER_FIELD ) );
 		$back         = 0 === $creator_id ? CreatorsAdminPage::url( array( 'action' => 'new' ) ) : CreatorsAdminPage::edit_url( $creator_id );
 
 		if ( null === $status ) {
@@ -141,6 +150,26 @@ final class CreatorAdminActions {
 		} catch ( DatabaseException $e ) {
 			return $this->technical_failure( $e, 'save', $creator_id, $back );
 		}
+	}
+
+	/**
+	 * Resolves the user field to a user id.
+	 *
+	 * @param string $value Raw field value.
+	 * @return int|null Null for "no user", 0 for an unknown user.
+	 */
+	private function user_id( string $value ): ?int {
+		$value = trim( $value );
+
+		if ( '' === $value ) {
+			return null;
+		}
+
+		if ( 1 === preg_match( '/^#(\d+)$/', $value, $matches ) ) {
+			return absint( $matches[1] );
+		}
+
+		return $this->users->find_by_login( sanitize_user( $value ) ) ?? 0;
 	}
 
 	/**

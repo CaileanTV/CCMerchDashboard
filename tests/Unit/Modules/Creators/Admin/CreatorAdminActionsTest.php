@@ -35,7 +35,7 @@ final class CreatorAdminActionsTest extends TestCase {
 		parent::setUp();
 		$this->set_up_creator_admin();
 		$this->logger  = new RecordingLogger();
-		$this->actions = new CreatorAdminActions( $this->service, $this->logger );
+		$this->actions = new CreatorAdminActions( $this->service, $this->users, $this->logger );
 
 		Functions\stubTranslationFunctions();
 		Functions\stubEscapeFunctions();
@@ -46,6 +46,8 @@ final class CreatorAdminActionsTest extends TestCase {
 			}
 		);
 		Functions\when( 'sanitize_text_field' )->alias( static fn( string $s ): string => trim( strip_tags( $s ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- Test stand-in.
+		// Like WordPress (non-strict): drops tags and characters not allowed in logins.
+		Functions\when( 'sanitize_user' )->alias( static fn( string $s ): string => trim( (string) preg_replace( '|[^a-z0-9 _.\-@]|i', '', strip_tags( $s ) ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- Test stand-in.
 		Functions\when( 'sanitize_key' )->alias( static fn( string $s ): string => (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $s ) ) );
 		Functions\when( 'absint' )->alias( static fn( mixed $v ): int => abs( (int) $v ) );
 		Functions\when( 'admin_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/wp-admin/' . $path );
@@ -64,7 +66,7 @@ final class CreatorAdminActionsTest extends TestCase {
 
 
 	public function test_valid_create_request_creates_creator_and_redirects_to_edit(): void {
-		$url = $this->actions->save( $this->form( 0, array( 'user_id' => '42' ) ) );
+		$url = $this->actions->save( $this->form( 0, array( 'user' => 'nova' ) ) );
 
 		self::assertStringContainsString( 'action=edit&creator=1&merchboard_notice=created', $url );
 		self::assertSame( 'Studio Nova', $this->db->rows( 'merchboard_creators' )[0]['display_name'] );
@@ -157,14 +159,33 @@ final class CreatorAdminActionsTest extends TestCase {
 		self::assertSame( array(), $this->db->rows( 'merchboard_creators' ) );
 	}
 
-	public function test_invalid_user_ids_are_rejected(): void {
-		self::assertStringContainsString( 'merchboard_notice=user_not_found', $this->actions->save( $this->form( 0, array( 'user_id' => 'abc' ) ) ) );
-		self::assertStringContainsString( 'merchboard_notice=user_not_found', $this->actions->save( $this->form( 0, array( 'user_id' => '999' ) ) ) );
+	public function test_unknown_or_invalid_users_are_rejected(): void {
+		foreach ( array( 'nobody', '#999', '#0', '#abc', '42', 'Nova (nova)', 'nova@example.test' ) as $value ) {
+			self::assertStringContainsString( 'merchboard_notice=user_not_found', $this->actions->save( $this->form( 0, array( 'user' => $value ) ) ), $value );
+		}
+
 		self::assertSame( array(), $this->db->rows( 'merchboard_creators' ) );
 	}
 
+	public function test_user_can_be_given_by_login_or_hash_id(): void {
+		$this->actions->save( $this->form( 0, array( 'user' => ' nova ' ) ) );
+		$this->actions->save( $this->form( 0, array( 'user' => '#43' ) ) );
+
+		self::assertSame( array( '42', '43' ), array_column( $this->db->rows( 'merchboard_creators' ), 'user_id' ) );
+	}
+
+	public function test_unchanged_link_to_a_deleted_user_can_be_saved_as_hash_id(): void {
+		$this->actions->save( $this->form( 0, array( 'user' => 'nova' ) ) );
+		unset( $this->users->users[42] );
+
+		$url = $this->actions->save( $this->form( 1, array( 'user' => '#42', 'display_name' => 'Renamed' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertStringContainsString( 'merchboard_notice=updated', $url );
+		self::assertSame( '42', $this->db->rows( 'merchboard_creators' )[0]['user_id'], 'Kept, not silently unlinked.' );
+	}
+
 	public function test_empty_user_means_no_user(): void {
-		$this->actions->save( $this->form( 0, array( 'user_id' => '' ) ) );
+		$this->actions->save( $this->form( 0, array( 'user' => '' ) ) );
 
 		self::assertNull( $this->db->rows( 'merchboard_creators' )[0]['user_id'] );
 	}
@@ -251,7 +272,7 @@ final class CreatorAdminActionsTest extends TestCase {
 				'creator_id'   => (string) $creator_id,
 				'display_name' => 'Studio Nova',
 				'status'       => CreatorStatus::Inactive->value,
-				'user_id'      => '',
+				'user'         => '',
 			),
 			$overrides
 		);

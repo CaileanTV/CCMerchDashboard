@@ -80,22 +80,72 @@ final class WordPressUserAccounts implements UserAccounts {
 	}
 
 	/**
-	 * Users selectable in the admin form.
+	 * Login name of a user.
 	 *
-	 * @param int $limit Maximum number of users.
-	 * @return array<int, string>
+	 * @param int $user_id User id.
 	 */
-	public function choices( int $limit ): array {
-		return $this->label_map(
-			get_users(
-				array(
-					'number'  => max( 1, $limit ),
-					'orderby' => 'display_name',
-					'order'   => 'ASC',
-					'fields'  => array( 'ID', 'display_name', 'user_login' ),
-				)
+	public function login( int $user_id ): ?string {
+		$user = $user_id > 0 ? get_userdata( $user_id ) : false;
+
+		return $user instanceof WP_User ? $user->user_login : null;
+	}
+
+	/**
+	 * Id of the user with exactly this login name.
+	 *
+	 * @param string $login Login name.
+	 */
+	public function find_by_login( string $login ): ?int {
+		$user = '' === $login ? false : get_user_by( 'login', $login );
+
+		return $user instanceof WP_User ? $user->ID : null;
+	}
+
+	/**
+	 * Users whose login or display name contains the term.
+	 *
+	 * The search columns are set explicitly: without them WP_User_Query also
+	 * searches e-mail addresses when the term contains "@", which would let the
+	 * selector reveal whether an e-mail address belongs to a user. WP_User_Query
+	 * escapes the term (esc_like + prepare).
+	 *
+	 * @param string $term  Search term.
+	 * @param int    $limit Maximum number of results (1-50).
+	 * @return list<array{id: int, login: string, label: string}>
+	 */
+	public function search( string $term, int $limit ): array {
+		$term = trim( $term );
+
+		if ( mb_strlen( $term ) < 2 ) {
+			return array();
+		}
+
+		$users = get_users(
+			array(
+				'search'         => '*' . $term . '*',
+				'search_columns' => array( 'user_login', 'display_name' ),
+				'number'         => max( 1, min( 50, $limit ) ),
+				'orderby'        => 'display_name',
+				'order'          => 'ASC',
+				'count_total'    => false,
+				'fields'         => array( 'ID', 'display_name', 'user_login' ),
 			)
 		);
+		$found = array();
+
+		foreach ( $users as $user ) {
+			if ( ! is_object( $user ) || ! isset( $user->ID, $user->display_name, $user->user_login ) ) {
+				continue;
+			}
+
+			$found[] = array(
+				'id'    => (int) $user->ID,
+				'login' => (string) $user->user_login,
+				'label' => sprintf( '%s (%s)', (string) $user->display_name, (string) $user->user_login ),
+			);
+		}
+
+		return $found;
 	}
 
 	/**

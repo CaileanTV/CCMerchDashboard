@@ -290,6 +290,27 @@ final class CreatorRepository {
 	}
 
 	/**
+	 * Number of creators per status (every status is present, 0 when none).
+	 *
+	 * @return array<string, int> Keyed by CreatorStatus value.
+	 */
+	public function status_counts(): array {
+		$wpdb   = $this->wpdb;
+		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS total FROM %i GROUP BY status', $this->table() ), ARRAY_A );
+		$counts = array_fill_keys( array_map( static fn( CreatorStatus $s ): string => $s->value, CreatorStatus::cases() ), 0 );
+
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			$status = is_string( $row['status'] ?? null ) ? $row['status'] : '';
+
+			if ( isset( $counts[ $status ] ) && is_numeric( $row['total'] ?? null ) ) {
+				$counts[ $status ] = (int) $row['total'];
+			}
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * WordPress user ids that are linked to any creator.
 	 *
 	 * @return list<int>

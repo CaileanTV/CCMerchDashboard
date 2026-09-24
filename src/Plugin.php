@@ -22,6 +22,7 @@ use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
+use MerchBoard\Modules\Admin\AdminModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Settings\SettingsModule;
 use wpdb;
@@ -211,6 +212,7 @@ final class Plugin {
 			new CreatorsModule(),
 			new AccessModule(),
 			new SettingsModule(),
+			new AdminModule(),
 		);
 	}
 

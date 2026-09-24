@@ -21,6 +21,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Access\AccessModule;
+use MerchBoard\Modules\Admin\AdminModule;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Settings\SettingsModule;
@@ -188,7 +189,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 3 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule && $modules[2] instanceof SettingsModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 4 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule && $modules[2] instanceof SettingsModule && $modules[3] instanceof AdminModule ) )
 			->andReturnFirstArg();
 
 		$this->plugin( $container )->boot();
