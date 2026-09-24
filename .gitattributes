@@ -23,3 +23,9 @@
 /phpcs.xml.dist export-ignore
 /phpstan.neon.dist export-ignore
 /blueprint.json export-ignore
+/CLAUDE.md export-ignore
+/eslint.config.cjs export-ignore
+/.prettierignore export-ignore
+/package.json export-ignore
+/package-lock.json export-ignore
+/composer.lock export-ignore
