@@ -21,6 +21,7 @@ import { isRecord } from './validate';
 export const NAMESPACE = '/merchboard/v1/';
 
 export type ApiErrorKind =
+	| 'invalid_request'
 	| 'unauthenticated'
 	| 'forbidden'
 	| 'not_found'
@@ -35,6 +36,11 @@ export interface ApiError {
 	readonly status: number;
 	/** WordPress error code (e.g. `rest_forbidden`), for programmatic checks only. */
 	readonly code: string | null;
+	/**
+	 * Per-field error codes of a 400 response (e.g. `bio` → `too_long`). Only
+	 * keys and codes of the form `[a-z_.]`; never messages or values.
+	 */
+	readonly fields: Readonly< Record< string, string > >;
 }
 
 export type ApiResult< T > =
@@ -70,12 +76,50 @@ function isResponseLike( value: unknown ): value is ResponseLike {
 function failure(
 	kind: ApiErrorKind,
 	status = 0,
-	code: string | null = null
+	code: string | null = null,
+	fields: Readonly< Record< string, string > > = {}
 ): ApiResult< never > {
-	return { ok: false, error: { kind, status, code } };
+	return { ok: false, error: { kind, status, code, fields } };
+}
+
+const SAFE_CODE = /^[a-z_]{1,50}$/;
+const SAFE_FIELD = /^[a-z_]{1,50}(?:\.[a-z_]{1,50})?$/;
+
+/**
+ * Field error codes from `data.fields` of a WP_Error body. Anything that is
+ * not a plain code is dropped, so no server text can reach the UI.
+ *
+ * @param body Parsed error body.
+ */
+function fieldErrors( body: unknown ): Record< string, string > {
+	const fields: Record< string, string > = {};
+
+	if (
+		! isRecord( body ) ||
+		! isRecord( body.data ) ||
+		! isRecord( body.data.fields )
+	) {
+		return fields;
+	}
+
+	for ( const [ field, code ] of Object.entries( body.data.fields ) ) {
+		if (
+			SAFE_FIELD.test( field ) &&
+			typeof code === 'string' &&
+			SAFE_CODE.test( code )
+		) {
+			fields[ field ] = code;
+		}
+	}
+
+	return fields;
 }
 
 function kindForStatus( status: number ): ApiErrorKind {
+	if ( status === 400 ) {
+		return 'invalid_request';
+	}
+
 	if ( status === 401 ) {
 		return 'unauthenticated';
 	}
@@ -112,7 +156,17 @@ async function errorFromResponse(
 			? parsed.body.code
 			: null;
 
-	return failure( kindForStatus( response.status ), response.status, code );
+	return failure(
+		// WordPress rejects a nonce that no longer matches the session (logged
+		// out in another tab, expired login) with 403; for the user that is an
+		// expired session, not missing access.
+		code === 'rest_cookie_invalid_nonce'
+			? 'unauthenticated'
+			: kindForStatus( response.status ),
+		response.status,
+		code !== null && SAFE_CODE.test( code ) ? code : null,
+		parsed.ok ? fieldErrors( parsed.body ) : {}
+	);
 }
 
 function isAbort( error: unknown ): boolean {

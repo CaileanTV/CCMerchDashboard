@@ -47,5 +47,32 @@ if ( ! class_exists( 'wpdb', false ) ) {
 		 * @var int
 		 */
 		public $insert_id = 0;
+
+		/**
+		 * Table-name properties set at runtime (e.g. meta tables), as in WordPress.
+		 *
+		 * @var array<string, mixed>
+		 */
+		public $dynamic = array();
+
+		/**
+		 * Stores a dynamic property, like wpdb::__set().
+		 *
+		 * @param string $name  Property.
+		 * @param mixed  $value Value.
+		 */
+		public function __set( $name, $value ) {
+			$this->dynamic[ $name ] = $value;
+		}
+
+		/**
+		 * Reads a dynamic property, like wpdb::__get().
+		 *
+		 * @param string $name Property.
+		 * @return mixed
+		 */
+		public function __get( $name ) {
+			return $this->dynamic[ $name ] ?? null;
+		}
 	}
 }

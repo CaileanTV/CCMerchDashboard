@@ -32,7 +32,7 @@ function show( ui: Parameters< typeof render >[ 0 ] ): HTMLElement {
 }
 
 function error( kind: ApiError[ 'kind' ], status: number ): ApiError {
-	return { kind, status, code: 'rest_forbidden' };
+	return { kind, status, code: 'rest_forbidden', fields: {} };
 }
 
 describe( 'ApiErrorState', () => {
@@ -95,6 +95,7 @@ describe( 'ApiErrorState', () => {
 					kind: 'server',
 					status: 500,
 					code: '<b>db_error</b>',
+					fields: {},
 				} }
 			/>
 		);

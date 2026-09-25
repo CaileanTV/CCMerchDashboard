@@ -90,6 +90,9 @@ abstract class IntegrationTestCase extends TestCase {
 		delete_option( Migrator::LOCK_OPTION );
 		delete_transient( Installer::FAILURE_TRANSIENT );
 		$this->forget_table_metadata();
+
+		// Recreated tables reuse ids; cached creator meta of a dropped table must not survive.
+		wp_cache_flush();
 	}
 
 	/**

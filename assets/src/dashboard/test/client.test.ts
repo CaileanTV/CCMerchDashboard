@@ -111,13 +111,37 @@ describe( 'API client', () => {
 
 			expect( result ).toEqual( {
 				ok: false,
-				error: { kind, status, code: 'rest_forbidden' },
+				error: { kind, status, code: 'rest_forbidden', fields: {} },
 			} );
 			expect( JSON.stringify( result ) ).not.toContain(
 				'internal detail'
 			);
 		}
 	);
+
+	it( 'treats a stale nonce (403 rest_cookie_invalid_nonce) as an expired session', async () => {
+		mockedFetch.mockRejectedValue(
+			response( 403, {
+				code: 'rest_cookie_invalid_nonce',
+				message: 'Cookie check failed',
+			} )
+		);
+
+		const result = await request(
+			{ path: '/merchboard/v1/thing' },
+			validateThing
+		);
+
+		expect( result ).toEqual( {
+			ok: false,
+			error: {
+				kind: 'unauthenticated',
+				status: 403,
+				code: 'rest_cookie_invalid_nonce',
+				fields: {},
+			},
+		} );
+	} );
 
 	it( 'handles error responses without a JSON body', async () => {
 		mockedFetch.mockRejectedValue( response( 500, null, true ) );
@@ -126,7 +150,7 @@ describe( 'API client', () => {
 			await request( { path: '/merchboard/v1/thing' }, validateThing )
 		).toEqual( {
 			ok: false,
-			error: { kind: 'server', status: 500, code: null },
+			error: { kind: 'server', status: 500, code: null, fields: {} },
 		} );
 	} );
 
@@ -161,7 +185,7 @@ describe( 'API client', () => {
 			await request( { path: '/merchboard/v1/thing' }, validateThing )
 		).toEqual( {
 			ok: false,
-			error: { kind: 'network', status: 0, code: null },
+			error: { kind: 'network', status: 0, code: null, fields: {} },
 		} );
 
 		mockedFetch.mockRejectedValue( { name: 'AbortError' } );
@@ -169,7 +193,7 @@ describe( 'API client', () => {
 			await request( { path: '/merchboard/v1/thing' }, validateThing )
 		).toEqual( {
 			ok: false,
-			error: { kind: 'aborted', status: 0, code: null },
+			error: { kind: 'aborted', status: 0, code: null, fields: {} },
 		} );
 	} );
 

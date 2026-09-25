@@ -166,7 +166,18 @@ final class AuditLogFormatter {
 
 		$names = array_map( static fn( mixed $field ): string => is_string( $field ) ? sanitize_key( $field ) : '…', $value );
 
-		return implode( ', ', array_map( static fn( string $field ): string => 'display_name' === $field ? __( 'display name', 'merchboard' ) : $field, $names ) );
+		return implode(
+			', ',
+			array_map(
+				static fn( string $field ): string => match ( $field ) {
+					'display_name' => __( 'display name', 'merchboard' ),
+					'bio'          => __( 'bio', 'merchboard' ),
+					'social_links' => __( 'social links', 'merchboard' ),
+					default        => $field,
+				},
+				$names
+			)
+		);
 	}
 
 	/**

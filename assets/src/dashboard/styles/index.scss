@@ -324,3 +324,69 @@
 	max-width: 32rem;
 	margin: var(--merchboard-space-12) auto;
 }
+
+// Phase 14: creator name, forms and toast ------------------------------------
+
+.merchboard-topbar__creator {
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-form {
+	display: grid;
+	gap: var(--merchboard-space-6);
+	max-width: 40rem;
+}
+
+.merchboard-form__actions {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.merchboard-input {
+	width: 100%;
+	min-height: 40px;
+	padding: var(--merchboard-space-2) var(--merchboard-space-3);
+	font: inherit;
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-gray-300);
+	border-radius: var(--merchboard-radius-sm);
+
+	&[aria-invalid="true"] {
+		border-color: var(--merchboard-danger);
+	}
+}
+
+.merchboard-input--textarea {
+	min-height: 8rem;
+	resize: vertical;
+}
+
+.merchboard-toast-region {
+	position: fixed;
+	right: var(--merchboard-space-4);
+	bottom: var(--merchboard-space-4);
+	z-index: calc(var(--merchboard-z-nav) + 100);
+}
+
+.merchboard-toast {
+	display: flex;
+	gap: var(--merchboard-space-4);
+	align-items: center;
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	color: #fff;
+	background: var(--merchboard-gray-900);
+	border-radius: var(--merchboard-radius);
+	box-shadow: var(--merchboard-shadow);
+}
+
+.merchboard-toast__dismiss {
+	font: inherit;
+	color: #fff;
+	text-decoration: underline;
+	cursor: pointer;
+	background: transparent;
+	border: 0;
+}

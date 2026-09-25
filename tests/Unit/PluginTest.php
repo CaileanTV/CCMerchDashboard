@@ -167,13 +167,14 @@ final class PluginTest extends TestCase {
 		self::assertSame( self::latest_schema_version(), $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
-	public function test_upgrade_from_version_1_adds_only_the_audit_table(): void {
+	public function test_upgrade_from_version_1_adds_only_the_missing_tables(): void {
 		$this->options->options[ Migrator::VERSION_OPTION ] = '1';
-		Functions\expect( 'dbDelta' )->once()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_audit_log \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_audit_log \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creatormeta \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 2, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 3, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

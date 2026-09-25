@@ -92,6 +92,7 @@ final class ShellControllerTest extends TestCase {
 		Functions\when( 'wp_logout_url' )->alias( static fn( string $redirect = '' ): string => 'https://shop.test/wp-login.php?action=logout&amp;_wpnonce=abc&amp;redirect_to=' . rawurlencode( $redirect ) );
 		Functions\when( 'get_bloginfo' )->alias( static fn( string $show ): string => 'charset' === $show ? 'UTF-8' : 'Shop <b>&</b> Co' );
 		Functions\when( 'determine_locale' )->justReturn( 'da_DK' );
+		Functions\when( 'wp_lostpassword_url' )->justReturn( 'https://shop.test/wp-login.php?action=lostpassword' );
 		Functions\when( 'language_attributes' )->alias(
 			static function (): void {
 				echo 'lang="en-US"';
@@ -261,7 +262,8 @@ final class ShellControllerTest extends TestCase {
 
 		$data = json_decode( substr( $inline, strlen( 'window.merchboardDashboard = ' ), -1 ), true );
 		self::assertIsArray( $data );
-		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'locale', 'sections' ), array_keys( $data ) );
+		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections' ), array_keys( $data ) );
+		self::assertSame( 'https://shop.test/wp-login.php?action=lostpassword', $data['password_url'] );
 		self::assertSame( 'Shop <b>&</b> Co', $data['site_name'] );
 		self::assertSame( 'https://shop.test/creator-dashboard/', $data['dashboard_url'] );
 		self::assertSame( 'path', $data['routing'] );
@@ -274,6 +276,11 @@ final class ShellControllerTest extends TestCase {
 					'id'    => 'overview',
 					'label' => 'Overview',
 					'path'  => '',
+				),
+				array(
+					'id'    => 'profile',
+					'label' => 'Profile',
+					'path'  => 'profile',
 				),
 			),
 			$data['sections']

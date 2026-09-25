@@ -25,20 +25,21 @@ use wpdb;
 
 final class MigrationTest extends IntegrationTestCase {
 
-	public function test_fresh_install_creates_schema_version_2(): void {
+	public function test_fresh_install_creates_schema_version_3(): void {
 		self::assertSame( 0, $this->migrator()->installed_version() );
 
 		$this->install();
 
-		self::assertSame( 2, $this->migrator()->installed_version() );
-		self::assertSame( '2', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( 3, $this->migrator()->installed_version() );
+		self::assertSame( '3', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
+		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ), 'Lock released.' );
 		self::assertFalse( get_transient( Installer::FAILURE_TRANSIENT ) );
 	}
 
-	public function test_upgrade_from_1_to_2_adds_the_audit_table_and_keeps_creator_data(): void {
+	public function test_upgrade_from_1_adds_the_later_tables_and_keeps_creator_data(): void {
 		( new Migrator( $this->wpdb, array( 1 => new CreateCreatorsTable() ) ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før opgradering 🎸', CreatorStatus::Active );
 		$before  = $this->rows( Tables::CREATORS );
@@ -48,7 +49,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 2, $this->migrator()->installed_version() );
+		self::assertSame( 3, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 		self::assertSame( 'Før opgradering 🎸', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
@@ -74,7 +75,7 @@ final class MigrationTest extends IntegrationTestCase {
 		$this->install();
 		$this->install();
 
-		self::assertSame( 2, $this->migrator()->installed_version() );
+		self::assertSame( 3, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 	}
 
@@ -158,7 +159,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		self::assertTrue( $this->migrator()->migrate() );
 
-		self::assertSame( 2, $this->migrator()->installed_version() );
+		self::assertSame( 3, $this->migrator()->installed_version() );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ) );
 	}
 

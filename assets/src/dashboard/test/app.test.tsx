@@ -8,6 +8,8 @@ import {
 } from '@jest/globals';
 import { act } from 'react';
 
+import { ME, mockApi, response } from '../testing/api';
+
 import { App } from '../app/App';
 import { mountDashboard } from '../mount';
 import type { DashboardConfig } from '../types/config';
@@ -16,16 +18,23 @@ import {
 	ORIGIN,
 	RAW_CONFIG,
 	click,
+	flush,
 	render,
 	setUrl,
 } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
+
+jest.mock( '@wordpress/api-fetch', () => ( {
+	__esModule: true,
+	default: jest.fn(),
+} ) );
 
 describe( 'dashboard app', () => {
 	let rendered: Rendered | null = null;
 
 	beforeEach( () => {
 		setUrl( '/creator-dashboard/' );
+		mockApi( { 'GET /merchboard/v1/me': () => response( 200, ME ) } );
 	} );
 
 	afterEach( () => {
@@ -34,14 +43,17 @@ describe( 'dashboard app', () => {
 		jest.restoreAllMocks();
 	} );
 
-	function renderApp( config: DashboardConfig = CONFIG ): HTMLElement {
+	async function renderApp(
+		config: DashboardConfig = CONFIG
+	): Promise< HTMLElement > {
 		rendered = render( <App config={ config } /> );
+		await flush();
 
 		return rendered.container;
 	}
 
-	it( 'renders the shell with landmarks, one h1 and the overview', () => {
-		const container = renderApp();
+	it( 'renders the shell with landmarks, one h1 and the overview', async () => {
+		const container = await renderApp();
 
 		expect( container.querySelectorAll( 'header' ) ).toHaveLength( 1 );
 		expect( container.querySelectorAll( 'main' ) ).toHaveLength( 1 );
@@ -64,8 +76,8 @@ describe( 'dashboard app', () => {
 		expect( document.title ).toBe( 'Overview · Merch Shop' );
 	} );
 
-	it( 'marks the current section and links with real URLs', () => {
-		const container = renderApp();
+	it( 'marks the current section and links with real URLs', async () => {
+		const container = await renderApp();
 		const link = container.querySelector( '.merchboard-sidebar a' );
 
 		expect( link?.getAttribute( 'href' ) ).toBe(
@@ -74,9 +86,9 @@ describe( 'dashboard app', () => {
 		expect( link?.getAttribute( 'aria-current' ) ).toBe( 'page' );
 	} );
 
-	it( 'shows "not found" for an unknown deep link and navigates back client-side', () => {
+	it( 'shows "not found" for an unknown deep link and navigates back client-side', async () => {
 		setUrl( '/creator-dashboard/sales/2026/' );
-		const container = renderApp();
+		const container = await renderApp();
 
 		expect( container.querySelector( 'h1' )?.textContent ).toBe(
 			'Page not found'
@@ -100,8 +112,8 @@ describe( 'dashboard app', () => {
 		);
 	} );
 
-	it( 'follows the browser back button', () => {
-		const container = renderApp();
+	it( 'follows the browser back button', async () => {
+		const container = await renderApp();
 
 		act( () => {
 			setUrl( '/creator-dashboard/other/' );
@@ -113,9 +125,9 @@ describe( 'dashboard app', () => {
 		);
 	} );
 
-	it( 'works with the query-string fallback', () => {
+	it( 'works with the query-string fallback', async () => {
 		setUrl( '/?merchboard_dashboard=1&merchboard_dashboard_path=sales' );
-		const container = renderApp( {
+		const container = await renderApp( {
 			...CONFIG,
 			routing: 'query',
 			dashboardUrl: `${ ORIGIN }/?merchboard_dashboard=1`,
@@ -131,26 +143,26 @@ describe( 'dashboard app', () => {
 		).toBe( `${ ORIGIN }/?merchboard_dashboard=1` );
 	} );
 
-	it( 'shows a known section the server allows but this build does not have yet', () => {
-		setUrl( '/creator-dashboard/profile/' );
-		const container = renderApp( {
+	it( 'shows a known section the server allows but this build does not have yet', async () => {
+		setUrl( '/creator-dashboard/payouts/' );
+		const container = await renderApp( {
 			...CONFIG,
 			sections: [
 				...CONFIG.sections,
-				{ id: 'profile', label: 'Profile', path: 'profile' },
+				{ id: 'payouts', label: 'Payouts', path: 'payouts' },
 			],
 		} );
 
 		expect( container.querySelector( 'h1' )?.textContent ).toBe(
-			'Profile'
+			'Payouts'
 		);
 		expect( container.textContent ).toContain(
 			'This section is not available yet.'
 		);
 	} );
 
-	it( 'opens and closes the mobile navigation with the button and Escape', () => {
-		const container = renderApp();
+	it( 'opens and closes the mobile navigation with the button and Escape', async () => {
+		const container = await renderApp();
 		const button = container.querySelector< HTMLButtonElement >(
 			'.merchboard-topbar__menu-button'
 		);
@@ -179,8 +191,8 @@ describe( 'dashboard app', () => {
 		expect( button?.getAttribute( 'aria-expanded' ) ).toBe( 'false' );
 	} );
 
-	it( 'renders server values as text, never as HTML', () => {
-		const container = renderApp( {
+	it( 'renders server values as text, never as HTML', async () => {
+		const container = await renderApp( {
 			...CONFIG,
 			siteName: '<img src=x onerror="window.pwned=1">',
 		} );
@@ -191,8 +203,8 @@ describe( 'dashboard app', () => {
 		).toBe( '<img src=x onerror="window.pwned=1">' );
 	} );
 
-	it( 'links to the server-provided logout URL', () => {
-		const container = renderApp();
+	it( 'links to the server-provided logout URL', async () => {
+		const container = await renderApp();
 
 		expect(
 			container
@@ -201,9 +213,9 @@ describe( 'dashboard app', () => {
 		).toBe( CONFIG.logoutUrl );
 	} );
 
-	it( 'stores nothing in browser storage', () => {
+	it( 'stores nothing in browser storage', async () => {
 		const setItem = jest.spyOn( Storage.prototype, 'setItem' );
-		const container = renderApp();
+		const container = await renderApp();
 		click( container.querySelector( '.merchboard-topbar__menu-button' ) );
 
 		expect( setItem ).not.toHaveBeenCalled();
@@ -214,6 +226,10 @@ describe( 'dashboard app', () => {
 } );
 
 describe( 'mountDashboard', () => {
+	beforeEach( () => {
+		mockApi( { 'GET /merchboard/v1/me': () => response( 200, ME ) } );
+	} );
+
 	it( 'mounts the app into the root element and unmounts it', () => {
 		setUrl( '/creator-dashboard/' );
 		const root = document.createElement( 'div' );

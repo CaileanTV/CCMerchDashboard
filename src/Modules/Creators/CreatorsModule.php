@@ -25,9 +25,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Creator domain: data layer (phase 3), administration with audit trail
- * (phase 6) and the reaction to deleted WordPress users (phase 8). Creator
- * access is decided by the Access module (CreatorContext); the dashboard and
- * the REST API follow in later roadmap phases (see docs/ROADMAP.md).
+ * (phase 6), the reaction to deleted WordPress users (phase 8) and the
+ * creator's own profile with creator meta (phase 14, CreatorProfileService).
+ * Creator access is decided by the Access module (CreatorContext); the REST
+ * endpoints live in the Dashboard module.
  */
 final class CreatorsModule implements Module {
 
@@ -117,6 +118,21 @@ final class CreatorsModule implements Module {
 			static fn( Container $c ): DeletedUserHandler => new DeletedUserHandler(
 				$c->get( CreatorService::class ),
 				$c->get( Logger::class )
+			)
+		);
+
+		$container->set(
+			CreatorMetaStore::class,
+			static fn( Container $c ): CreatorMetaStore => new CreatorMetaStore( $c->get( wpdb::class ) )
+		);
+
+		$container->set(
+			CreatorProfileService::class,
+			static fn( Container $c ): CreatorProfileService => new CreatorProfileService(
+				$c->get( CreatorRepository::class ),
+				$c->get( CreatorMetaStore::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class )
 			)
 		);
 

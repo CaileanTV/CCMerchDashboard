@@ -16,6 +16,7 @@ export const RAW_CONFIG = {
 	routing: 'path',
 	logout_url: `${ ORIGIN }/wp-login.php?action=logout&_wpnonce=abc&redirect_to=x`,
 	login_url: `${ ORIGIN }/wp-login.php?redirect_to=x`,
+	password_url: `${ ORIGIN }/wp-login.php?action=lostpassword`,
 	locale: 'da_DK',
 	sections: [ { id: 'overview', label: 'Overview', path: '' } ],
 } as const;
@@ -26,6 +27,7 @@ export const CONFIG: DashboardConfig = {
 	routing: 'path',
 	logoutUrl: `${ ORIGIN }/wp-login.php?action=logout&_wpnonce=abc&redirect_to=x`,
 	loginUrl: `${ ORIGIN }/wp-login.php?redirect_to=x`,
+	passwordUrl: `${ ORIGIN }/wp-login.php?action=lostpassword`,
 	locale: 'da_DK',
 	sections: [ { id: 'overview', label: 'Overview', path: '' } ],
 };

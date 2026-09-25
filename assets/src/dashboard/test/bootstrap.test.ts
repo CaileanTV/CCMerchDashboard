@@ -25,6 +25,7 @@ describe( 'parseConfig', () => {
 		'routing',
 		'logout_url',
 		'login_url',
+		'password_url',
 		'locale',
 		'sections',
 	] )( 'rejects data without %s', ( key ) => {
@@ -97,6 +98,7 @@ describe( 'parseConfig', () => {
 			'routing',
 			'logoutUrl',
 			'loginUrl',
+			'passwordUrl',
 			'locale',
 			'sections',
 		] );

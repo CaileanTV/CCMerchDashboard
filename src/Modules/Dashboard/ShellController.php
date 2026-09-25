@@ -98,8 +98,8 @@ final class ShellController {
 	/**
 	 * Bootstrap data for the frontend (docs/FRONTEND.md#bootstrap-data): only
 	 * non-sensitive values. Nothing identifies the creator; that comes from
-	 * the REST API (phase 14). The REST root and nonce are configured by
-	 * WordPress' own `wp-api-fetch` script.
+	 * the REST API (`GET /merchboard/v1/me`). The REST root and nonce are
+	 * configured by WordPress' own `wp-api-fetch` script.
 	 *
 	 * @return array<string, mixed>
 	 */
@@ -110,12 +110,18 @@ final class ShellController {
 			'routing'       => '' === (string) get_option( 'permalink_structure' ) ? 'query' : 'path',
 			'logout_url'    => $this->logout_url(),
 			'login_url'     => wp_login_url( $this->route->url() ),
+			'password_url'  => wp_lostpassword_url(),
 			'locale'        => determine_locale(),
 			'sections'      => array(
 				array(
 					'id'    => 'overview',
 					'label' => __( 'Overview', 'merchboard' ),
 					'path'  => '',
+				),
+				array(
+					'id'    => 'profile',
+					'label' => __( 'Profile', 'merchboard' ),
+					'path'  => 'profile',
 				),
 			),
 		);

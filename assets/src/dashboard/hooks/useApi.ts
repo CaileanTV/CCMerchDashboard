@@ -48,7 +48,12 @@ export function useApi< T >(
 				if ( ! controller.signal.aborted ) {
 					setState( {
 						status: 'error',
-						error: { kind: 'server', status: 0, code: null },
+						error: {
+							kind: 'server',
+							status: 0,
+							code: null,
+							fields: {},
+						},
 					} );
 				}
 			}

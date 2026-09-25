@@ -8,6 +8,8 @@ import { Navigation } from './Navigation';
 export interface LayoutProps {
 	/** Page title, rendered as the page's only h1. */
 	readonly title: string;
+	/** The creator's display name from `GET /me`, once known. */
+	readonly creatorName?: string;
 	readonly children: ReactNode;
 }
 
@@ -15,10 +17,10 @@ const MOBILE_NAV_ID = 'merchboard-mobile-nav';
 const MAIN_ID = 'merchboard-main';
 
 /**
- * App frame: skip link, top bar (site name, menu button below lg, log out),
+ * App frame: skip link, top bar (site name, creator name, menu button below lg, log out),
  * sidebar (lg and up), off-canvas navigation (below lg) and the main region.
  */
-export function Layout( { title, children }: LayoutProps ) {
+export function Layout( { title, creatorName, children }: LayoutProps ) {
 	const config = useConfig();
 	const [ menuOpen, setMenuOpen ] = useState( false );
 	const menuButton = useRef< HTMLButtonElement >( null );
@@ -60,6 +62,11 @@ export function Layout( { title, children }: LayoutProps ) {
 						: __( 'Menu', 'merchboard' ) }
 				</button>
 				<p className="merchboard-topbar__site">{ config.siteName }</p>
+				{ creatorName !== undefined && (
+					<p className="merchboard-topbar__creator">
+						{ creatorName }
+					</p>
+				) }
 				<a
 					className="merchboard-topbar__logout"
 					href={ config.logoutUrl }

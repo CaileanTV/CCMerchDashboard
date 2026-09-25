@@ -25,6 +25,8 @@ export interface DashboardConfig {
 	readonly routing: RoutingMode;
 	readonly logoutUrl: string;
 	readonly loginUrl: string;
+	/** WordPress' own password reset page. */
+	readonly passwordUrl: string;
 	readonly locale: string;
 	readonly sections: readonly DashboardSection[];
 }

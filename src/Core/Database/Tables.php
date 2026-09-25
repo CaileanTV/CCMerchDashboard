@@ -33,11 +33,17 @@ final class Tables {
 	public const AUDIT_LOG = 'merchboard_audit_log';
 
 	/**
+	 * Creator meta (profile fields), schema version 3. WordPress meta layout.
+	 */
+	public const CREATOR_META = 'merchboard_creatormeta';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
 		self::CREATORS,
 		self::AUDIT_LOG,
+		self::CREATOR_META,
 	);
 
 	/**

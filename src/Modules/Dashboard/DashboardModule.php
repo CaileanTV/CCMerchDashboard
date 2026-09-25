@@ -13,14 +13,17 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\CreatorProfileService;
+use MerchBoard\Modules\Dashboard\Rest\MeController;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The creator dashboard's entry point (phase 12, docs/FRONTEND.md): its own
  * route and a standalone shell outside the theme that loads the React app
- * (phase 13, DashboardAssets). Depends on the Access module for
- * CreatorContext.
+ * (phase 13, DashboardAssets), and the creator-scope REST routes (phase 14,
+ * Rest\MeController). Depends on the Access module for CreatorContext and on
+ * the Creators module for CreatorProfileService.
  */
 final class DashboardModule implements Module {
 
@@ -81,5 +84,22 @@ final class DashboardModule implements Module {
 		);
 
 		add_action( 'merchboard_dashboard_slug_changed', array( DashboardRoute::class, 'invalidate_rewrite_rules' ) );
+
+		$container->set(
+			MeController::class,
+			static fn( Container $c ): MeController => new MeController(
+				$c->get( CreatorContext::class ),
+				$c->get( CreatorProfileService::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		// REST API (phase 14): creator-scope routes of merchboard/v1.
+		add_action(
+			'rest_api_init',
+			static function () use ( $container ): void {
+				$container->get( MeController::class )->register_routes();
+			}
+		);
 	}
 }

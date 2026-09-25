@@ -55,6 +55,7 @@ export function parseConfig(
 	const dashboardUrl = readSameOriginUrl( raw.dashboard_url, origin );
 	const logoutUrl = readSameOriginUrl( raw.logout_url, origin );
 	const loginUrl = readSameOriginUrl( raw.login_url, origin );
+	const passwordUrl = readSameOriginUrl( raw.password_url, origin );
 	const locale = readString( raw, 'locale' );
 	const routing: RoutingMode | null =
 		raw.routing === 'path' || raw.routing === 'query' ? raw.routing : null;
@@ -65,6 +66,7 @@ export function parseConfig(
 		dashboardUrl === null ||
 		logoutUrl === null ||
 		loginUrl === null ||
+		passwordUrl === null ||
 		locale === null ||
 		routing === null ||
 		sections === null
@@ -78,6 +80,7 @@ export function parseConfig(
 		routing,
 		logoutUrl,
 		loginUrl,
+		passwordUrl,
 		locale,
 		sections,
 	};
