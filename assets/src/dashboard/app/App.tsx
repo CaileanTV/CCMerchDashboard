@@ -23,7 +23,8 @@ function CurrentPage() {
 	const page = resolvePage( path, sections );
 
 	useEffect( () => {
-		document.title = `${ page.title } · ${ siteName }`;
+		document.title =
+			siteName === '' ? page.title : `${ page.title } · ${ siteName }`;
 	}, [ page.title, siteName ] );
 
 	let content = page.content;

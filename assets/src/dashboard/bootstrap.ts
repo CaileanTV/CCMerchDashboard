@@ -51,7 +51,8 @@ export function parseConfig(
 		return null;
 	}
 
-	const siteName = readString( raw, 'site_name' );
+	// Display only, and WordPress allows an empty site title.
+	const siteName = typeof raw.site_name === 'string' ? raw.site_name : null;
 	const dashboardUrl = readSameOriginUrl( raw.dashboard_url, origin );
 	const logoutUrl = readSameOriginUrl( raw.logout_url, origin );
 	const loginUrl = readSameOriginUrl( raw.login_url, origin );

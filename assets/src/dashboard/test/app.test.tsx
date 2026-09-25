@@ -79,6 +79,12 @@ describe( 'dashboard app', () => {
 		expect( document.title ).toBe( 'Overview · Merch Shop' );
 	} );
 
+	it( 'leaves the site name out of the document title when it is empty', async () => {
+		await renderApp( { ...CONFIG, siteName: '' } );
+
+		expect( document.title ).toBe( 'Overview' );
+	} );
+
 	it( 'marks the current section and links with real URLs', async () => {
 		const container = await renderApp();
 		const link = container.querySelector( '.merchboard-sidebar a' );

@@ -14,9 +14,16 @@ describe( 'parseConfig', () => {
 		'x',
 		42,
 		[],
-		{ ...RAW_CONFIG, site_name: '' },
+		{ ...RAW_CONFIG, site_name: null },
+		{ ...RAW_CONFIG, site_name: 42 },
 	] )( 'rejects %p', ( raw ) => {
 		expect( parseConfig( raw, ORIGIN ) ).toBeNull();
+	} );
+
+	it( 'accepts an empty site name (WordPress allows an empty site title)', () => {
+		expect(
+			parseConfig( { ...RAW_CONFIG, site_name: '' }, ORIGIN )
+		).toEqual( { ...CONFIG, siteName: '' } );
 	} );
 
 	it.each( [
