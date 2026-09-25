@@ -13,12 +13,15 @@ namespace MerchBoard\Tests\Integration\Access;
 
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Lifecycle\Deactivator;
+use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\AdminAreaGuard;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Access\CreatorRestrictions;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Dashboard\ShellController;
 use MerchBoard\Modules\Dashboard\ShellResponse;
@@ -41,6 +44,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->request_uri = $_SERVER['REQUEST_URI'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Saved only to restore it after the test.
+		$this->reset_script_registry();
 		$this->install();
 		$this->creators = $this->service( CreatorService::class );
 		delete_option( Settings::OPTION );
@@ -48,6 +52,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 	}
 
 	protected function tearDown(): void {
+		$this->reset_script_registry();
 		$_SERVER['REQUEST_URI']          = $this->request_uri;
 		$GLOBALS['wp_query']->query_vars = array();
 		remove_all_filters( 'application_password_is_api_request' );
@@ -90,17 +95,72 @@ final class DashboardAccessTest extends IntegrationTestCase {
 			self::assertSame( $status, $this->controller()->respond()->status, $case );
 		}
 
-		wp_set_current_user( $active );
-		$html = $this->controller()->render( $this->controller()->respond() );
-		self::assertStringContainsString( 'Welcome, Nova &lt;b&gt;Studio&lt;/b&gt;', $html );
-		self::assertStringNotContainsString( '<script', $html );
-		self::assertStringNotContainsString( 'wp-admin', $html );
-
 		wp_set_current_user( $inactive );
-		$html = $this->controller()->render( $this->controller()->respond() );
+		$this->reset_script_registry();
+		$response = $this->controller()->respond();
+		$html     = $this->controller()->render( $response );
+		self::assertNull( $response->script_nonce );
 		self::assertStringContainsString( 'Your access is not active', $html );
 		self::assertStringContainsString( 'action=logout', $html );
+		self::assertStringNotContainsString( '<script', $html );
 		self::assertStringNotContainsString( 'Inactive', $html, 'Reveals nothing about the record.' );
+		self::assertFalse( wp_script_is( 'merchboard-dashboard', 'registered' ), 'No bundle without access.' );
+	}
+
+	public function test_react_shell_prints_only_the_bundle_with_nonces_and_safe_bootstrap(): void {
+		$active = $this->create_user( 'active_creator' );
+		$this->creators->create( 'Nova <b>Studio</b>', CreatorStatus::Active, $active );
+		wp_set_current_user( $active );
+		$this->request( '/creator-dashboard/sales/' );
+		wp_enqueue_script( 'mb-test-foreign', 'http://merchboard.test/foreign.js', array(), '1', true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NotInFooter -- A theme/plugin script that must not reach the shell.
+
+		$filters  = $this->callback_counts();
+		$response = $this->controller()->respond();
+		$html     = $this->controller()->render( $response );
+		$nonce    = (string) $response->script_nonce;
+
+		self::assertSame( 200, $response->status );
+		self::assertNotSame( '', $nonce );
+		self::assertStringContainsString( '<div id="merchboard-dashboard-root" class="merchboard-app">', $html );
+		self::assertStringContainsString( 'build/dashboard.js?ver=test-build', $html );
+		self::assertStringContainsString( 'build/dashboard.css?ver=test-build', $html );
+		self::assertStringContainsString( 'wp-includes/js/dist/element', $html, 'WordPress provides React and wp-element.' );
+		self::assertStringNotContainsString( 'foreign.js', $html, 'Other enqueued scripts are not printed.' );
+		self::assertSame( substr_count( $html, '<script' ), substr_count( $html, 'nonce="' . $nonce . '"' ), 'Every script tag carries the nonce.' );
+		self::assertStringContainsString( 'window.merchboardDashboard = {', $html );
+		self::assertStringNotContainsString( 'Nova', $html, 'No creator data in the page (REST, phase 14).' );
+		self::assertStringNotContainsString( '&amp;_wpnonce', $html, 'Logout URL in the bootstrap is not HTML-escaped.' );
+		self::assertSame( $filters, $this->callback_counts(), 'The nonce filters are removed after rendering.' );
+
+		wp_dequeue_script( 'mb-test-foreign' );
+	}
+
+	/**
+	 * Number of callbacks on the script attribute filters.
+	 *
+	 * @return array<string, int>
+	 */
+	private function callback_counts(): array {
+		$counts = array();
+
+		foreach ( array( 'wp_script_attributes', 'wp_inline_script_attributes' ) as $hook ) {
+			$counts[ $hook ] = isset( $GLOBALS['wp_filter'][ $hook ] ) ? count( $GLOBALS['wp_filter'][ $hook ]->callbacks, COUNT_RECURSIVE ) : 0;
+		}
+
+		return $counts;
+	}
+
+	public function test_missing_build_gives_503(): void {
+		$active = $this->create_user( 'active_creator' );
+		$this->creators->create( 'Nova', CreatorStatus::Active, $active );
+		wp_set_current_user( $active );
+		$this->request( '/creator-dashboard/' );
+
+		$controller = new ShellController( new DashboardRoute(), $this->service( CreatorContext::class ), new DashboardAssets( sys_get_temp_dir() . '/merchboard-no-build/', 'http://merchboard.test/', $this->service( Logger::class ) ) );
+		$response   = $controller->respond();
+
+		self::assertSame( 503, $response->status );
+		self::assertStringContainsString( 'temporarily unavailable', $controller->render( $response ) );
 	}
 
 	public function test_logged_out_visitors_are_redirected_to_login_with_the_deep_link(): void {
@@ -360,8 +420,33 @@ final class DashboardAccessTest extends IntegrationTestCase {
 		}
 	}
 
+	/**
+	 * The controller with a fixture build, so the test does not depend on
+	 * `npm run build` having run.
+	 */
 	private function controller(): ShellController {
-		return $this->service( ShellController::class );
+		$dir = sys_get_temp_dir() . '/merchboard-it-build/';
+
+		if ( ! is_dir( $dir . 'build' ) ) {
+			mkdir( $dir . 'build', 0777, true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Test fixture.
+		}
+
+		file_put_contents( $dir . 'build/dashboard.asset.php', "<?php return array( 'dependencies' => array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ), 'version' => 'test-build' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		file_put_contents( $dir . 'build/dashboard.js', '/* bundle */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+
+		return new ShellController(
+			new DashboardRoute(),
+			$this->service( CreatorContext::class ),
+			new DashboardAssets( $dir, 'http://merchboard.test/wp-content/plugins/merchboard/', $this->service( Logger::class ) )
+		);
+	}
+
+	/**
+	 * A fresh script/style registry, as every request starts with one.
+	 */
+	private function reset_script_registry(): void {
+		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Simulates a new request.
+		$GLOBALS['wp_styles']  = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Simulates a new request.
 	}
 
 	/**

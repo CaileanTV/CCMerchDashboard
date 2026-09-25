@@ -1,0 +1,326 @@
+// Creator dashboard styles. Every selector is scoped to a merchboard- class;
+// the shell loads no theme or admin CSS, and nothing here styles elements
+// outside the app.
+@use "tokens" as *;
+
+.merchboard-body {
+	margin: 0;
+	background: #f8fafc;
+}
+
+.merchboard-app {
+	min-height: 100vh;
+	font-family: var(--merchboard-font);
+	font-size: var(--merchboard-text-md);
+	line-height: 1.5;
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface-muted);
+
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	:focus-visible {
+		outline: 3px solid var(--merchboard-focus);
+		outline-offset: 2px;
+	}
+
+	a {
+		color: var(--merchboard-primary-700);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+
+		*,
+		*::before,
+		*::after {
+			transition: none !important;
+			animation: none !important;
+		}
+	}
+}
+
+.merchboard-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+// Layout ------------------------------------------------------------------
+
+.merchboard-skip-link {
+	position: absolute;
+	top: var(--merchboard-space-2);
+	left: var(--merchboard-space-2);
+	z-index: calc(var(--merchboard-z-nav) + 1);
+	padding: var(--merchboard-space-2) var(--merchboard-space-4);
+	background: var(--merchboard-surface);
+	border-radius: var(--merchboard-radius-sm);
+	transform: translateY(-200%);
+
+	&:focus {
+		transform: none;
+	}
+}
+
+.merchboard-topbar {
+	position: sticky;
+	top: 0;
+	z-index: var(--merchboard-z-nav);
+	display: flex;
+	gap: var(--merchboard-space-4);
+	align-items: center;
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	background: var(--merchboard-surface);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
+.merchboard-topbar__site {
+	flex: 1;
+	margin: 0;
+	font-weight: 600;
+}
+
+.merchboard-topbar__menu-button {
+	min-height: 40px;
+	padding: 0 var(--merchboard-space-3);
+	font: inherit;
+	color: var(--merchboard-text);
+	cursor: pointer;
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+}
+
+.merchboard-mobile-nav {
+	padding: var(--merchboard-space-2) var(--merchboard-space-4);
+	background: var(--merchboard-surface);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
+.merchboard-sidebar {
+	display: none;
+}
+
+.merchboard-layout__body {
+	display: flex;
+}
+
+.merchboard-main {
+	flex: 1;
+	min-width: 0;
+	max-width: 72rem;
+	padding: var(--merchboard-space-6) var(--merchboard-space-4);
+
+	&:focus {
+		outline: none;
+	}
+}
+
+.merchboard-main__title {
+	margin: 0 0 var(--merchboard-space-6);
+	font-size: var(--merchboard-text-xl);
+	line-height: 1.25;
+}
+
+.merchboard-nav__list {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.merchboard-nav__link {
+	display: block;
+	padding: var(--merchboard-space-2) var(--merchboard-space-3);
+	color: var(--merchboard-text);
+	text-decoration: none;
+	border-radius: var(--merchboard-radius-sm);
+
+	&:hover {
+		background: var(--merchboard-gray-100);
+	}
+
+	&[aria-current="page"] {
+		font-weight: 600;
+		color: var(--merchboard-primary-700);
+		background: var(--merchboard-primary-50);
+	}
+}
+
+@media (min-width: $merchboard-lg) {
+
+	.merchboard-topbar__menu-button,
+	.merchboard-mobile-nav {
+		display: none !important;
+	}
+
+	.merchboard-sidebar {
+		display: block;
+		flex: 0 0 15rem;
+		min-height: calc(100vh - 65px);
+		padding: var(--merchboard-space-4);
+		background: var(--merchboard-surface);
+		border-right: 1px solid var(--merchboard-border);
+	}
+
+	.merchboard-main {
+		padding: var(--merchboard-space-8);
+	}
+}
+
+// Components --------------------------------------------------------------
+
+.merchboard-button {
+	display: inline-flex;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	justify-content: center;
+	font: inherit;
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-radius: var(--merchboard-radius-sm);
+	transition: background-color var(--merchboard-motion);
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+}
+
+.merchboard-button--md {
+	min-height: 40px;
+	padding: 0 var(--merchboard-space-4);
+}
+
+.merchboard-button--sm {
+	min-height: 32px;
+	padding: 0 var(--merchboard-space-3);
+	font-size: var(--merchboard-text-sm);
+}
+
+.merchboard-app .merchboard-button--primary {
+	color: #fff;
+	background: var(--merchboard-primary-600);
+
+	&:hover:not(:disabled) {
+		background: var(--merchboard-primary-700);
+	}
+}
+
+.merchboard-app .merchboard-button--secondary {
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface);
+	border-color: var(--merchboard-gray-300);
+}
+
+.merchboard-app .merchboard-button--ghost {
+	color: var(--merchboard-text);
+	background: transparent;
+}
+
+.merchboard-app .merchboard-button--danger {
+	color: #fff;
+	background: var(--merchboard-danger);
+}
+
+.merchboard-card {
+	padding: var(--merchboard-space-6);
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+	box-shadow: var(--merchboard-shadow-sm);
+}
+
+.merchboard-card__title {
+	margin: 0 0 var(--merchboard-space-4);
+	font-size: var(--merchboard-text-lg);
+}
+
+.merchboard-alert {
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	border: 1px solid currentcolor;
+	border-left-width: 4px;
+	border-radius: var(--merchboard-radius-sm);
+}
+
+@each $tone in info, success, warning, danger {
+	.merchboard-alert--#{$tone} {
+		color: var(--merchboard-#{$tone});
+		background: var(--merchboard-#{$tone}-bg);
+	}
+}
+
+.merchboard-skeleton {
+	display: grid;
+	gap: var(--merchboard-space-2);
+}
+
+.merchboard-skeleton__line {
+	display: block;
+	height: 0.875rem;
+	background: var(--merchboard-gray-200);
+	border-radius: var(--merchboard-radius-sm);
+
+	&:last-child {
+		width: 60%;
+	}
+}
+
+.merchboard-empty-state,
+.merchboard-error-state {
+	padding: var(--merchboard-space-8) var(--merchboard-space-4);
+	text-align: center;
+}
+
+.merchboard-empty-state__title,
+.merchboard-error-state__title {
+	margin: 0 0 var(--merchboard-space-2);
+	font-weight: 600;
+}
+
+.merchboard-empty-state__description,
+.merchboard-error-state__description {
+	margin: 0 0 var(--merchboard-space-4);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-error-state__label {
+	color: var(--merchboard-danger);
+}
+
+.merchboard-field {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	margin-bottom: var(--merchboard-space-4);
+}
+
+.merchboard-field__label {
+	font-weight: 500;
+}
+
+.merchboard-field__help {
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-field__error {
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-danger);
+}
+
+.merchboard-fatal {
+	max-width: 32rem;
+	margin: var(--merchboard-space-12) auto;
+}

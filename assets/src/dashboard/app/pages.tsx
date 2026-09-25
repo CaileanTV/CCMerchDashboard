@@ -1,0 +1,68 @@
+import { __ } from '@wordpress/i18n';
+import type { ReactNode } from 'react';
+
+import { EmptyState } from '../components/EmptyState';
+import { OverviewSection } from '../sections/overview/OverviewSection';
+import type { DashboardSection } from '../types/config';
+import { Link } from './router';
+
+export interface Page {
+	readonly title: string;
+	readonly content: ReactNode;
+}
+
+/** Section components known to this build, by section id. */
+const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
+	overview: () => <OverviewSection />,
+};
+
+/**
+ * The page for a path: a section the server allows, or "not found".
+ * Unknown paths never reveal anything; the server has already checked
+ * access for the whole dashboard.
+ *
+ * @param path     Current path.
+ * @param sections Sections from the server.
+ */
+export function resolvePage(
+	path: string,
+	sections: readonly DashboardSection[]
+): Page {
+	const section = sections.find( ( candidate ) => candidate.path === path );
+
+	if ( section !== undefined ) {
+		const render = SECTION_COMPONENTS[ section.id ];
+
+		return {
+			title: section.label,
+			content:
+				render === undefined ? (
+					<EmptyState
+						title={ __(
+							'This section is not available yet.',
+							'merchboard'
+						) }
+					/>
+				) : (
+					render()
+				),
+		};
+	}
+
+	return {
+		title: __( 'Page not found', 'merchboard' ),
+		content: (
+			<EmptyState
+				title={ __( 'This page does not exist.', 'merchboard' ) }
+				action={
+					<Link
+						to=""
+						className="merchboard-button merchboard-button--secondary merchboard-button--md"
+					>
+						{ __( 'Go to the start page', 'merchboard' ) }
+					</Link>
+				}
+			/>
+		),
+	};
+}

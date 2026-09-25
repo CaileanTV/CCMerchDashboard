@@ -22,20 +22,24 @@ defined( 'ABSPATH' ) || exit;
  * 2. logged in without creator access (no capability, no linked creator,
  *    inactive creator, stale or deleted link, database error) → 403 page
  *    with a logout link, never a link into wp-admin;
- * 3. creator access → the standalone shell (no theme, no wp_head(), no JS).
+ * 3. creator access → the standalone React shell (no theme, no wp_head();
+ *    only the dashboard bundle and its WordPress dependencies), or 503 when
+ *    the bundle has not been built.
  *
  * Access is decided by CreatorContext alone, on every request. The creator is
- * never taken from the URL.
+ * never taken from the URL, and the frontend gets no authority: it only
+ * renders what the server allows.
  */
 final class ShellController {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param DashboardRoute $route   Route.
-	 * @param CreatorContext $context Creator access policy.
+	 * @param DashboardRoute  $route   Route.
+	 * @param CreatorContext  $context Creator access policy.
+	 * @param DashboardAssets $assets  Built frontend assets.
 	 */
-	public function __construct( private DashboardRoute $route, private CreatorContext $context ) {
+	public function __construct( private DashboardRoute $route, private CreatorContext $context, private DashboardAssets $assets ) {
 	}
 
 	/**
@@ -48,7 +52,7 @@ final class ShellController {
 
 		$response = $this->respond();
 
-		foreach ( self::security_headers() as $name => $value ) {
+		foreach ( self::security_headers( $response->script_nonce ) as $name => $value ) {
 			header( $name . ': ' . $value );
 		}
 
@@ -77,31 +81,50 @@ final class ShellController {
 
 		$common = array(
 			'site_name'  => get_bloginfo( 'name' ),
-			'logout_url' => wp_logout_url( $this->route->url() ),
+			'logout_url' => $this->logout_url(),
 		);
 
-		$creator = $this->context->current();
-
-		if ( null === $creator ) {
+		if ( null === $this->context->current() ) {
 			return ShellResponse::page( 403, ShellResponse::TEMPLATE_NO_ACCESS, $common );
 		}
 
-		return ShellResponse::page(
-			200,
-			ShellResponse::TEMPLATE_SHELL,
-			array_merge(
-				$common,
+		if ( ! $this->assets->register( $this->bootstrap() ) ) {
+			return ShellResponse::page( 503, ShellResponse::TEMPLATE_SHELL, array_merge( $common, array( 'assets_ready' => false ) ) );
+		}
+
+		return ShellResponse::page( 200, ShellResponse::TEMPLATE_SHELL, array_merge( $common, array( 'assets_ready' => true ) ), self::nonce() );
+	}
+
+	/**
+	 * Bootstrap data for the frontend (docs/FRONTEND.md#bootstrap-data): only
+	 * non-sensitive values. Nothing identifies the creator; that comes from
+	 * the REST API (phase 14). The REST root and nonce are configured by
+	 * WordPress' own `wp-api-fetch` script.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function bootstrap(): array {
+		return array(
+			'site_name'     => get_bloginfo( 'name' ),
+			'dashboard_url' => $this->route->url(),
+			'routing'       => '' === (string) get_option( 'permalink_structure' ) ? 'query' : 'path',
+			'logout_url'    => $this->logout_url(),
+			'login_url'     => wp_login_url( $this->route->url() ),
+			'locale'        => determine_locale(),
+			'sections'      => array(
 				array(
-					'creator_name'  => $creator->display_name,
-					'dashboard_url' => $this->route->url(),
-					'path'          => $path,
-				)
-			)
+					'id'    => 'overview',
+					'label' => __( 'Overview', 'merchboard' ),
+					'path'  => '',
+				),
+			),
 		);
 	}
 
 	/**
-	 * Renders a page response.
+	 * Renders a page response. While rendering, every script tag WordPress
+	 * prints (the bundle, its dependencies and their inline scripts) carries
+	 * the response's CSP nonce.
 	 *
 	 * @param ShellResponse $response Page response.
 	 * @throws RuntimeException When the response has no known template.
@@ -114,26 +137,70 @@ final class ShellController {
 		};
 
 		$merchboard_view = $response->view;
+		$add_nonce       = null;
+
+		if ( null !== $response->script_nonce ) {
+			$nonce     = $response->script_nonce;
+			$add_nonce = static function ( mixed $attributes ) use ( $nonce ): mixed {
+				if ( is_array( $attributes ) ) {
+					$attributes['nonce'] = $nonce;
+				}
+
+				return $attributes;
+			};
+			add_filter( 'wp_script_attributes', $add_nonce );
+			add_filter( 'wp_inline_script_attributes', $add_nonce );
+		}
 
 		ob_start();
-		require dirname( __DIR__, 3 ) . '/templates/dashboard/' . $file;
+
+		try {
+			require dirname( __DIR__, 3 ) . '/templates/dashboard/' . $file;
+		} finally {
+			if ( null !== $add_nonce ) {
+				remove_filter( 'wp_script_attributes', $add_nonce );
+				remove_filter( 'wp_inline_script_attributes', $add_nonce );
+			}
+		}
 
 		return (string) ob_get_clean();
 	}
 
 	/**
-	 * Security headers of every dashboard response (docs/SECURITY.md). The
-	 * pages load no scripts, so the policy forbids them entirely.
+	 * Security headers of every dashboard response (docs/SECURITY.md).
+	 * Without a nonce the page may run no script at all; with one, only
+	 * same-origin scripts and inline scripts carrying the nonce.
 	 *
+	 * @param string|null $script_nonce CSP nonce of the React shell.
 	 * @return array<string, string>
 	 */
-	public static function security_headers(): array {
+	public static function security_headers( ?string $script_nonce = null ): array {
+		$policy = null === $script_nonce
+			? "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'"
+			: "default-src 'none'; script-src 'self' 'nonce-" . $script_nonce . "'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'";
+
 		return array(
 			'X-Robots-Tag'            => 'noindex, nofollow',
 			'Referrer-Policy'         => 'strict-origin-when-cross-origin',
 			'X-Content-Type-Options'  => 'nosniff',
 			'X-Frame-Options'         => 'SAMEORIGIN',
-			'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'",
+			'Content-Security-Policy' => $policy,
 		);
+	}
+
+	/**
+	 * A fresh CSP nonce (128 bits, base64).
+	 */
+	private static function nonce(): string {
+		return base64_encode( random_bytes( 16 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- CSP nonces are base64 by specification.
+	}
+
+	/**
+	 * Logout URL back to the dashboard, as a plain URL: wp_logout_url()
+	 * returns it HTML-escaped (`&amp;`), which must not end up in JSON or in
+	 * attributes that are escaped again.
+	 */
+	private function logout_url(): string {
+		return html_entity_decode( wp_logout_url( $this->route->url() ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 }

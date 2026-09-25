@@ -95,7 +95,7 @@ jobs:
           php -l uninstall.php
 
   js:
-    name: JS (lint)
+    name: JS (lint, types, tests, build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -110,3 +110,15 @@ jobs:
 
       - name: ESLint
         run: npm run lint:js
+
+      - name: Stylelint
+        run: npm run lint:css
+
+      - name: TypeScript (strict)
+        run: npm run typecheck
+
+      - name: Jest
+        run: npm run test:js
+
+      - name: Build
+        run: npm run build

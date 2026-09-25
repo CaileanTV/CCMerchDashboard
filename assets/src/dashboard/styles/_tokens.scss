@@ -1,0 +1,63 @@
+// Design tokens (docs/FRONTEND.md#tokens). Custom properties on the app root,
+// so a dark theme can later swap them without touching components.
+.merchboard-app {
+	--merchboard-gray-50: #f8fafc;
+	--merchboard-gray-100: #f1f5f9;
+	--merchboard-gray-200: #e2e8f0;
+	--merchboard-gray-300: #cbd5e1;
+	--merchboard-gray-500: #64748b;
+	--merchboard-gray-600: #475569;
+	--merchboard-gray-700: #334155;
+	--merchboard-gray-900: #0f172a;
+
+	--merchboard-primary-50: #eef2ff;
+	--merchboard-primary-100: #e0e7ff;
+	--merchboard-primary-500: #6366f1;
+	--merchboard-primary-600: #4f46e5;
+	--merchboard-primary-700: #4338ca;
+
+	--merchboard-success: #15803d;
+	--merchboard-success-bg: #f0fdf4;
+	--merchboard-warning: #a16207;
+	--merchboard-warning-bg: #fefce8;
+	--merchboard-danger: #b91c1c;
+	--merchboard-danger-bg: #fef2f2;
+	--merchboard-info: #1d4ed8;
+	--merchboard-info-bg: #eff6ff;
+
+	--merchboard-surface: #fff;
+	--merchboard-surface-muted: var(--merchboard-gray-50);
+	--merchboard-border: var(--merchboard-gray-200);
+	--merchboard-text: var(--merchboard-gray-900);
+	--merchboard-text-muted: var(--merchboard-gray-600);
+	--merchboard-focus: var(--merchboard-primary-600);
+
+	--merchboard-font: system-ui, -apple-system, "Segoe UI", roboto, "Helvetica Neue", arial, sans-serif;
+	--merchboard-text-xs: 0.75rem;
+	--merchboard-text-sm: 0.875rem;
+	--merchboard-text-md: 1rem;
+	--merchboard-text-lg: 1.25rem;
+	--merchboard-text-xl: 1.5rem;
+
+	--merchboard-space-1: 4px;
+	--merchboard-space-2: 8px;
+	--merchboard-space-3: 12px;
+	--merchboard-space-4: 16px;
+	--merchboard-space-6: 24px;
+	--merchboard-space-8: 32px;
+	--merchboard-space-12: 48px;
+
+	--merchboard-radius-sm: 6px;
+	--merchboard-radius: 10px;
+	--merchboard-radius-lg: 16px;
+	--merchboard-radius-full: 9999px;
+
+	--merchboard-shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
+	--merchboard-shadow: 0 1px 3px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 4%);
+
+	--merchboard-z-nav: 100;
+	--merchboard-motion: 150ms ease-out;
+}
+
+// Breakpoints (mobile-first min-width queries).
+$merchboard-lg: 1024px;

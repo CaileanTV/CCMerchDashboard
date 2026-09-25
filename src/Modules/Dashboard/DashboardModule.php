@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Dashboard;
 
 use MerchBoard\Core\Container;
+use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
 
@@ -17,8 +18,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The creator dashboard's entry point (phase 12, docs/FRONTEND.md): its own
- * route and a standalone shell outside the theme. Depends on the Access
- * module for CreatorContext.
+ * route and a standalone shell outside the theme that loads the React app
+ * (phase 13, DashboardAssets). Depends on the Access module for
+ * CreatorContext.
  */
 final class DashboardModule implements Module {
 
@@ -38,10 +40,20 @@ final class DashboardModule implements Module {
 		$container->set( DashboardRoute::class, static fn(): DashboardRoute => new DashboardRoute() );
 
 		$container->set(
+			DashboardAssets::class,
+			static function ( Container $c ): DashboardAssets {
+				$root = dirname( __DIR__, 3 ) . '/';
+
+				return new DashboardAssets( $root, plugin_dir_url( $root . 'merchboard.php' ), $c->get( Logger::class ) );
+			}
+		);
+
+		$container->set(
 			ShellController::class,
 			static fn( Container $c ): ShellController => new ShellController(
 				$c->get( DashboardRoute::class ),
-				$c->get( CreatorContext::class )
+				$c->get( CreatorContext::class ),
+				$c->get( DashboardAssets::class )
 			)
 		);
 
