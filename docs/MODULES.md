@@ -56,7 +56,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 | Services | `$container->set( FooService::class, fn( $c ) => new FooService( $c->get( FooRepository::class ) ) )` |
 | Admin-undermenu | `admin_menu` → `add_submenu_page( 'merchboard', … )` under Merch Dashboard-menuen |
 | REST-routes | `rest_api_init` → controller-klasse, der arver `MerchBoard\Core\Http\RestController` |
-| Dashboard-sektion | filter `merchboard_dashboard_sections` (id, label, ikon, capability og JS-chunk). Se [FRONTEND.md](FRONTEND.md) |
+| Dashboard-sektion | ✅ filter `merchboard_dashboard_sections` (`id`, `label`, `path`, `capability`) i `DashboardSections` og en komponent i `assets/src/dashboard/sections/` registreret i `app/pages.tsx`. Se [FRONTEND.md](FRONTEND.md) |
 | Settings | egen sektion/tab i Settings-siden via Settings API |
 | Domæne-events | `do_action( 'merchboard_<modul>_<event>', … )` |
 | Cron | `merchboard_<modul>_<job>`, scheduleres ved aktivering og fjernes ved deaktivering |
@@ -78,7 +78,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 | Admin | Færdig | `AdminModule`, `AdminMenu` (topmenu, `merchboard_manage`), `OverviewPage` (10), `AuditLogPage`/`AuditLogListTable`/`AuditLogFormatter` (read-only audit log, `merchboard_view_logs`) (11) | 10 ✅, 11 ✅ |
 | Settings | Delvist | **Færdig:** `SettingsModule`, `SettingsService`, `SettingsPage`, `SettingsActions` med opt-in for permanent sletning (9). Dashboard-slug og `SlugAvailability` (12). **Planlagt:** øvrige settings (General/Access/Advanced), når de får indhold | 9 ✅, 12 ✅ |
 | Access | Delvist | **Færdig:** `AccessModule`, `CreatorContext` (adgangspolitik) (8). `CreatorRestrictions`, `LoginRedirect`, `AdminAreaGuard`: login-redirect, blokering af wp-admin, skjult admin bar og Application Passwords fra for rene creators (12, ADR-026). **Planlagt:** meta-capabilities (14) | 8 ✅, 12 ✅, 14 |
-| Dashboard | Delvist | **Færdig:** `DashboardModule`, `DashboardRoute` (rewrite, konfigurerbar slug), `ShellController`/`ShellResponse` og templates (12). `DashboardAssets` og React/TypeScript-appen i `assets/src/dashboard` (13). `Rest/MeController` (`/me`, `/me/profile`) og Profile-sektionen (14). **Planlagt:** sektion-registry (15) | 12 ✅, 13 ✅, 14 ✅, 15 |
+| Dashboard | Færdig (MVP) | `DashboardModule`, `DashboardRoute` (rewrite, konfigurerbar slug), `ShellController`/`ShellResponse` og templates (12). `DashboardAssets` og React/TypeScript-appen i `assets/src/dashboard` (13). `Rest/MeController` (`/me`, `/me/profile`) og Profile-sektionen (14). `DashboardSections` (registry), Overview og oversættelser (15) | 12 ✅, 13 ✅, 14 ✅, 15 ✅ |
 | WooCommerce | Planlagt | Produkt↔creator, sales ledger, produkter/ordrer i dashboard | 17-19 |
 | Statistics | Fremtid | Aggregeringer og grafer | 20 |
 | Payouts | Fremtid | Afregning til creators | – |

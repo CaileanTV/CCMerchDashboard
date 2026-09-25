@@ -29,7 +29,7 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `GET` | `/me` | ✅ Den aktuelle creator: `display_name`, `status`. Rettigheder og sektioner kommer fortsat fra bootstrap-data (sektion-registry i fase 15). | 14 |
 | `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
 | `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
-| `GET` | `/me/overview` | Nøgletal til Overview | 15 / 20 |
+| `GET` | `/me/overview` | Nøgletal til Overview (fase 15 bruger `/me` og `/me/profile`; KPI-kortene er empty states uden API) | 20 |
 | `GET` | `/me/products` | Creator'ens produkter (pagineret) | 19 |
 | `GET` | `/me/orders` | Ordrelinjer med creator'ens produkter **uden kunde-PII** | 19 |
 | `GET` | `/me/sales?from=&to=&interval=` | Salgsaggregeringer | 20 |

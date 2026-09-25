@@ -83,14 +83,14 @@ merchboard/
 │       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]; AuditLogPage, AuditLogListTable, AuditLogFormatter [fase 11]
 │       ├── Access/              # AccessModule, CreatorContext [fase 8]; CreatorRestrictions, LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
-│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardAssets (build/dashboard.asset.php) [fase 13]; Rest/MeController (/me, /me/profile) [fase 14]; DashboardSections-registry [fase 15]
+│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardAssets (build/dashboard.asset.php) [fase 13]; Rest/MeController (/me, /me/profile) [fase 14]; DashboardSections (registry, filter merchboard_dashboard_sections) [fase 15]
 │       └── WooCommerce/         # kun indlæst når WooCommerce er aktiv
 ├── templates/                   # PHP-templates (dashboard-shell, admin-partials)
 ├── assets/src/
 │   ├── dashboard/               # React + TypeScript-app til creator dashboard [fase 13, se FRONTEND.md#struktur--fase-13]
 │   └── (assets/js/)             # små admin-scripts uden build (vanilla JS, fase 10)
 ├── build/                       # genereret af wp-scripts (gitignored)
-├── languages/
+├── languages/                   # merchboard.pot, merchboard-da_DK.po/.mo og JS-JSON (fase 15, npm run i18n)
 ├── tests/
 │   ├── Unit/                    # PHPUnit + Brain Monkey (uden WordPress)
 │   └── Integration/             # WP test suite (med database)
@@ -143,7 +143,7 @@ Ingen ORM. Repositories skriver eksplicit SQL med `$wpdb->prepare()`, hvilket er
 
 | Del | Fase | Begrundelse |
 | --- | --- | --- |
-| `load_plugin_textdomain()` på `init` | 15 | Ingen oversættelsesfiler endnu. `Text Domain` og `Domain Path` står allerede i headeren. |
+| ~~`load_plugin_textdomain()` på `init`~~ | ✅ 15 | `Plugin::load_textdomain()` på `init` (prioritet 0), filer i `languages/`. |
 | Øvrige core-services (Settings, Capabilities, Audit …) | 5 → | Registreres af de faser, der bygger dem. `Logger` findes fra fase 4. |
 
 Hovedfilen forbliver uændret, når hooks tilføjes. De registreres i `Plugin`, og logikken placeres i `src/Core/Lifecycle/`.

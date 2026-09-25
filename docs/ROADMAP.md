@@ -105,10 +105,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope (udført):** `Core\Http\RestController`-basisklasse, migration 3 for `merchboard_creatormeta` (bio, sociale links), `GET /me` (`display_name`, `status`), `GET /me/profile` og `PATCH /me/profile` (whitelist: `display_name`, `bio`, `social_links` med faste platforme), audit `creator_updated`, Profile-sektion med formular, klient- og servervalidering og toast. Creator-navnet i topbaren kommer fra `GET /me`. Alle security-tests fra [API.md](API.md#test-krav). `GET /me/profile` og skemaerne er besluttet af projektejeren i fase 14.
 - **Done:** IDOR-, permission- og valideringstests er grønne (unit, integration mod MariaDB og Jest). Playground med og uden WooCommerce over HTTP (cookie + nonce) og i browser.
 
-## Fase 15 – Dashboard overview → **MVP**
+## Fase 15 – Dashboard overview → **MVP** ✅
 
-- **Scope:** Overview-sektion (velkomst, creator-info, KPI-kort med empty state "Salgsdata kommer snart"), sektion-registry fuldt koblet, dansk oversættelse af UI-strenge (`languages/`, `load_plugin_textdomain()` på `init`, `wp_set_script_translations()`).
-- **Done:** MVP: admin kan oprette en creator, creator kan logge ind, se overview og redigere sin profil, og intet andet.
+- **Scope (udført):** Overview-sektion (velkomst, creator-info fra `GET /me` og `GET /me/profile`, KPI-kort med empty state "Salgsdata kommer snart" uden API-kald), sektion-registry fuldt koblet (`DashboardSections`, filter `merchboard_dashboard_sections`, capability pr. sektion), dansk oversættelse af UI-strenge (`languages/`, `load_plugin_textdomain()` på `init`, `wp_set_script_translations()`, `npm run i18n` med `wp-cli/i18n-command`). Intet `/me/overview`-endpoint (flyttet til fase 20, besluttet af projektejeren).
+- **Done:** MVP: admin kan oprette en creator, creator kan logge ind, se overview og redigere sin profil, og intet andet. Verificeret over HTTP og i Chrome i Playground, både på engelsk (med WooCommerce) og på dansk (uden WooCommerce).
 
 ## Fase 16 – Release-pipeline og staging
 

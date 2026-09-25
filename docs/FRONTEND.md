@@ -1,6 +1,6 @@
 # Frontend – Creator Dashboard
 
-> Status: **Profile ✅ (fase 14).** Route og sikker shell (fase 12), React/TypeScript-fundament (fase 13), creator-data via `GET /me` og Profile-sektion via `GET`/`PATCH /me/profile` (fase 14).
+> Status: **MVP ✅ (fase 15).** Route og sikker shell (fase 12), React/TypeScript-fundament (fase 13), `GET /me` og Profile (fase 14), Overview, sektion-registry og dansk oversættelse (fase 15).
 
 ## Teknologivalg
 
@@ -64,7 +64,7 @@
 - `routing` er `path` (pretty permalinks) eller `query` (`?merchboard_dashboard=1`).
 - REST-root og `X-WP-Nonce` konfigureres af WordPress' eget `wp-api-fetch`-script (inline middleware). De ligger derfor ikke i bootstrap-data.
 - Klienten validerer alt i `bootstrap.ts` (`parseConfig`): alle felter skal findes, alle URL'er skal være absolutte `http(s)`-URL'er på sidens egen origin uden credentials, og sektionsstier skal være gyldige dashboard-stier. Ukendte felter ignoreres. Er data ugyldige, vises en generisk fejl uden links.
-- Sektionslisten er i fase 13 fast (`overview`). Registry og filter `merchboard_dashboard_sections` kommer i fase 15.
+- Sektionerne kommer fra registry'et `DashboardSections` (✅ fase 15): kun sektioner, hvis capability brugeren har, og uden selve capability'en. Labels er oversat på serveren.
 
 ## Struktur (✅ fase 13)
 
@@ -80,8 +80,8 @@ assets/src/dashboard/
 │   │                        # pages.tsx (sti → side), ErrorBoundary
 │   └── layout/              # Layout (skip link, topbar, sidebar, mobil-nav, main), Navigation
 ├── components/              # Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field, Toast
-├── sections/overview/       # OverviewSection (placeholder med empty state; creator-info i fase 15)
-├── sections/profile/        # ProfileSection (formular), validation.ts (klientregler og fejltekster)
+├── sections/overview/       # OverviewSection: velkomst, status, profil-resumé (GET /me/profile), KPI-kort med empty state
+├── sections/profile/        # ProfileSection (formular), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
 ├── styles/                  # _tokens.scss, index.scss (kun .merchboard-*-selektorer)
 ├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures), api.ts (apiFetch-dobbelt: mockApi, response)
 └── test/                    # Jest-tests (*.test.ts/tsx)
@@ -93,16 +93,16 @@ assets/src/dashboard/
 - **Creator (✅ fase 14):** `CreatorProvider` henter `GET /me` én gang pr. sideindlæsning. Sideindhold vises først, når svaret er kommet: under indlæsning vises en skeleton, og ved fejl (401, 403, netværk, ugyldigt svar) erstatter `ApiErrorState` med "Try again" indholdet. Navigationen bliver stående. Navnet vises i topbaren. Efter et gemt profilnavn opdateres det uden ny request. Adgang afgøres stadig af serveren (shellen gennemfører `CreatorContext` før appen overhovedet indlæses).
 - **Profile (✅ fase 14):** `GET /me/profile` → formular (display name, bio med tegntæller og seks links) og link til WordPress' password-reset (`password_url`). Klientvalidering bruger samme regler og fejlkoder som serveren og kun til hurtig feedback. Kun ændrede felter sendes (`PATCH`). Serverens feltkoder (400) vises som faste tekster ved felterne (`aria-invalid`, `aria-describedby`). Andre fejl vises som `ApiErrorState` over formularen, og input bevares. Succes → `Toast` "Profile saved." (live region, kan lukkes, forsvinder efter 6 s). `apiFetch` sender `PATCH` som `POST` med `X-HTTP-Method-Override`.
 - **401/403 i UI'et (`ApiErrorState`):** 401 → "Your session has expired" og et link til login. 403 → "You do not have access to this" og et log ud-link. Øvrige fejl → generisk besked og "Try again". Der redirectes aldrig automatisk (ingen redirect-loops). Links er server-leverede URL'er på samme origin. Adgang afgøres altid af serveren. UI-state bestemmer aldrig adgang.
-- **Sektioner:** Serveren bestemmer, hvilke sektioner der vises (fra fase 15 via filter `merchboard_dashboard_sections` og capability pr. sektion). Klienten viser kun dem. En sektion, som serveren tillader, men som bygget endnu ikke kender, viser "not available yet". Ukendte stier viser "Page not found" med link til startsiden. Lazy-loading (`React.lazy`) indføres, når der er flere sektioner.
+- **Sektioner (✅ fase 15):** `Modules/Dashboard/DashboardSections` er registry'et. Hver sektion er `{ id, label, path, capability }` i visningsrækkefølge. Standard: `overview` (`''`) og `profile` (`profile`), begge med `merchboard_access_dashboard`. Moduler tilføjer sektioner med filteret `merchboard_dashboard_sections`. Poster valideres (id `[a-z][a-z0-9_-]`, label som ren tekst, sti som dashboard-sti, capability som streng). Ugyldige og dubletter (id eller sti) droppes og logges, og startsiden findes altid. Kun sektioner, hvis capability brugeren har, sendes i bootstrap-data (uden capability). Klienten viser kun dem. En sektion uden komponent i bygget viser "not available yet", og ukendte stier viser "Page not found". Ikoner og lazy-loading (`React.lazy`) tilføjes, når der er flere sektioner.
 - **Grafer:** vælges i fase 20. Krav: lille bundle, tilgængelighed og tree-shaking. Kandidat: Chart.js eller en letvægts-SVG-løsning.
-- **i18n:** `@wordpress/i18n` (`__( 'Overview', 'merchboard' )`). Kildestrenge er engelske. Oversættelser (`wp_set_script_translations()`, dansk) kommer i fase 15.
+- **i18n (✅ fase 15):** Kildestrenge er engelske (`__( 'Overview', 'merchboard' )`, `sprintf` med translators-kommentarer). `DashboardAssets` kalder `wp_set_script_translations( 'merchboard-dashboard', 'merchboard', <plugin>/languages )`, og WordPress udskriver oversættelserne som inline-script (med CSP-noncen) før bundlen. Dansk ligger i `languages/merchboard-da_DK-<md5(build/dashboard.js)>.json`. Dashboardet vises på **sitets sprog** (`determine_locale()` på frontend). Sektion-labels og shell-/403-tekster oversættes i PHP (`load_plugin_textdomain()` på `init`). Nye strenge: `npm run i18n` og oversæt i `merchboard-da_DK.po` (se [DEVELOPMENT.md](DEVELOPMENT.md#oversættelser)).
 - **Sikkerhed:** `dangerouslySetInnerHTML` er forbudt (ESLint `react/no-danger`). Serverværdier renderes altid som tekst. `any` er forbudt (`@typescript-eslint/no-explicit-any`). `localStorage`, `sessionStorage`, `indexedDB` og `document.cookie` er forbudt i dashboard-koden (ESLint). Eksterne links skal bruge `rel="noopener noreferrer"`.
 
 ## Sektioner (informationsarkitektur)
 
 | Sektion | Indhold | Fase |
 | --- | --- | --- |
-| **Overview** | Velkomst, creator-info, nøgletal (salg i perioden, antal ordrer og top-produkter), senere aktivitet. Fase 13: placeholder med empty state | 13 (placeholder) → 15 → 20 |
+| **Overview** | ✅ Fase 15: velkomst, status, profil-resumé og KPI-kort (omsætning, ordrer, solgte produkter) med "Salgsdata kommer snart". Rigtige nøgletal og aktivitet i fase 20 | 15 → 20 |
 | **Products** | Creator'ens merch (read-only i v1): billede, navn, pris, lager og status | 19 |
 | **Orders** | Ordrelinjer med creator'ens produkter: dato, ordrenr., produkt, antal, status og evt. land. **Ingen kundens navn, e-mail eller adresse.** | 19 |
 | **Sales** | Omsætning og antal over tid, pr. produkt og refunds. Samler "Sales" og "Statistics" i én sektion. | 20 |
@@ -147,3 +147,9 @@ Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle v
 ### Tilgængelighed
 
 Mål: WCAG 2.1 AA. Kontrast ≥ 4.5:1, synlig fokusmarkering (`:focus-visible`-outline), fuld tastaturnavigation, semantisk HTML (`header`, `nav`, `main`, `button`, `a`), `aria-current="page"` i navigationen, og `aria-live`/roller for loading- og fejltilstande, så de forstås uden farve.
+
+## Overview (✅ fase 15)
+
+- **Velkomst:** `Card` med "Welcome, <navn>" (fra `GET /me` via `CreatorProvider`, altid som tekst) og kontostatus som badge med tekst ("Active"), ikke kun farve.
+- **Din profil:** egen `useApi( getProfile )` med skeleton, `ApiErrorState` og retry. Resten af Overview vises uanset. Bio vises med bevarede linjeskift (`white-space: pre-line`). Links vises kun, hvis de består samme https-tjek som formularen, med `target="_blank"`, `rel="noopener noreferrer"` og en skjult "(opens in a new tab)". Er profilen tom, vises en empty state med "Edit profile" (client-side link til `profile`).
+- **Nøgletal:** `<section>` med h2 "Key figures" og tre kort (`<h3>` + "Sales data coming soon"). Ingen tal og intet API-kald, før salgsdata findes (fase 18-20, `GET /me/overview` i fase 20). Kortene er et responsivt grid (én kolonne på mobil).

@@ -4,12 +4,12 @@
 Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser og vedligeholder sine egne oplysninger og senere sine produkter, ordrer og salg.
 
 ## Current status
-Route og sikker shell ✅ (fase 12). Frontend-fundament ✅ (fase 13). `/me` og Profile ✅ (fase 14): creator-navnet i topbaren og Profile-sektionen med redigering af visningsnavn, bio og sociale links. Overview i fase 15 (MVP).
+**MVP ✅ (fase 15).** Route og sikker shell (12), frontend-fundament (13), `/me` og Profile (14), Overview, sektion-registry og dansk oversættelse (15).
 
 ## User-facing functionality (MVP)
 - Adgang via `/creator-dashboard/` (slug kan konfigureres) efter login.
 - Layout: sidebar (desktop) / off-canvas (mobil), topbar med navn/avatar og log ud.
-- **Overview:** velkomst, creator-info og plads til nøgletal (fyldes med data i fase 20).
+- **Overview ✅ (fase 15):** velkomst med navn og status, profil-resumé (bio og links, ellers link til Profile) og nøgletal som empty state "Salgsdata kommer snart" (rigtige tal i fase 20).
 - **Profile ✅ (fase 14):** se og redigere visningsnavn, bio (maks. 1000 tegn) og sociale links (website, Instagram, TikTok, YouTube, X, Facebook; https). Link til WordPress' password-reset. Bekræftelse med toast.
 - Loading-, empty- og error-states overalt.
 

@@ -51,6 +51,7 @@ node bin/composer.mjs install
 | `npm run test:php` / `npm run test:js` | Kun PHPUnit / kun Jest (dashboardet) |
 | `npm run typecheck` | TypeScript strict-typetjek af `assets/src` (`tsc --noEmit`) |
 | `npm run build` / `npm run start` | Bygger dashboardet til `build/` (produktion) / bygger og overvåger (udvikling) |
+| `npm run i18n` | Bygger dashboardet og regenererer `languages/`: POT (PHP, templates og `build/`), opdaterer PO, kompilerer MO og JS-JSON (`wp-cli/i18n-command`) |
 | `npm run test:integration` | Integrationstests mod rigtig WordPress og MariaDB/MySQL (se [TESTING.md](TESTING.md#integrationstests-fase-7)) |
 | `node bin/composer.mjs check` | PHPCS + PHPStan + PHPUnit |
 | `npm run format` | Prettier-formattering af JS/JSON/Markdown m.m. |
@@ -97,6 +98,7 @@ Kun udviklingsværktøjer. Pluginet har **ingen** tredjeparts runtime-dependenci
 | `szepeviktor/phpstan-wordpress` | 2.0.4 | WordPress-stubs og -regler til PHPStan (inkl. `php-stubs/wordpress-stubs` 7.1.0) | automatisk via extension-installer |
 | `phpstan/extension-installer` | 1.4.3 | Indlæser PHPStan-extensions automatisk | |
 | `roots/wordpress-no-content` | 7.1.2 (fastlåst) | WordPress core til integrationstestene. Hentes fra downloads.wordpress.org. Kun dev, aldrig i det distribuerede plugin. | `tests/Integration/config.php` |
+| `wp-cli/wp-cli` + `wp-cli/i18n-command` | v2.12.0 / v2.7.0 | Oversættelser (fase 15): `wp i18n make-pot`, `update-po`, `make-mo` og `make-json`. WordPress' officielle i18n-værktøj. Indgår ikke i pluginet | `composer i18n`, `npm run i18n` |
 
 **Bevidst fravalgt:** `phpcompatibility/phpcompatibility-wp`. Den eneste stabile version (PHPCompatibility 9.3.5 fra 2019) kender ikke PHP 8.x, og 10.x er stadig alpha. PHPStan (`phpVersion: 80200`) og CI (`php -l` på PHP 8.2) dækker behovet. Kan genovervejes, når PHPCompatibility 10 er stabil. `composer.json` har `config.platform.php = 8.2.0`, så der aldrig låses dependencies, der kræver nyere PHP end minimum.
 
@@ -151,3 +153,14 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 ## Git-workflow
 
 Se [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md#git-og-github). Kort fortalt: små commits i Conventional Commits-format (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`), push efter validering, og aldrig force-push eller omskrivning af historik.
+
+## Oversættelser
+
+Kildestrenge er engelske med text domain `merchboard`. Dansk (`da_DK`) følger med i `languages/` (✅ fase 15).
+
+1. Ret eller tilføj strenge i koden (`__()`, `_n()`, `sprintf` med `/* translators: */`-kommentar).
+2. `npm run i18n`: bygger dashboardet, genererer `merchboard.pot` (fra `merchboard.php`, `uninstall.php`, `src/`, `templates/` og `build/`), opdaterer `merchboard-da_DK.po`, kompilerer `.mo` og skriver `merchboard-da_DK-<md5(build/dashboard.js)>.json` til JavaScript.
+3. Oversæt nye strenge i `merchboard-da_DK.po`, og kør `npm run i18n` igen (eller `node bin/composer.mjs i18n:mo i18n:json`).
+4. `npm test` kører `TranslationsTest`: alle strenge oversat, pladsholdere bevaret, ingen markup tilføjet, og JSON'en matcher bundlen.
+
+Værktøj: Composer dev-dependencies `wp-cli/wp-cli` og `wp-cli/i18n-command` (via `node bin/composer.mjs`). De indgår ikke i det distribuerede plugin. Med PHP 8.5 lokalt viser `gettext` en harmløs deprecation-besked.

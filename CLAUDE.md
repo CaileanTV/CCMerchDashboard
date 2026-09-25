@@ -11,6 +11,7 @@ Then read [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) and [docs/ARCHITECTUR
 - `npm run lint`: ESLint + stylelint + TypeScript (strict, `tsc`) + PHPCS (WPCS) + PHPStan (level 8). Must pass before committing.
 - `npm test`: PHPUnit unit tests (Brain Monkey) + Jest (dashboard). Must pass before committing.
 - `npm run build`: builds the creator dashboard (React + TypeScript via `@wordpress/scripts`) into `build/` (gitignored). Needed before Playground shows the dashboard.
+- `npm run i18n`: rebuilds and regenerates `languages/` (POT, Danish PO/MO, JS JSON) via `wp-cli/i18n-command`; run after changing UI strings, then translate new strings in `languages/merchboard-da_DK.po`.
 - `node bin/composer.mjs <args>`: Composer (works without php.ini; uses `.tools/composer.phar` if no global composer).
 - `npm run wp:start`: ephemeral WordPress + WooCommerce at http://127.0.0.1:9400 (admin / password). Run via npm/PowerShell, not raw Git Bash (path mangling).
 

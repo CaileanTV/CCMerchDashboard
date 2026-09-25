@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 14 (REST-fundament, `/me` og Profile) · **Næste fase:** 15 (Dashboard overview → MVP) · **Schemaversion:** 3 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 15 (Dashboard overview → **MVP**) · **Næste fase:** 16 (Release-pipeline og staging) · **Schemaversion:** 3 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -230,6 +230,21 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 **Bevidst ikke i fase 14:** avatar-upload, Overview med creator-info (fase 15), sektion-registry og oversættelser (15), lazy-loading og admin-scope REST-endpoints.
 
+### Fase 15 – Dashboard overview → MVP ✅
+
+- [x] Beslutninger før implementering (projektejeren): engelske kildestrenge + dansk oversættelse (åbent spørgsmål 7 lukket), `wp-cli/i18n-command` som værktøj, intet `/me/overview`-endpoint (Overview bruger `/me` og `/me/profile`; `/me/overview` flyttet til fase 20).
+- [x] Overview: velkomst med creator-navn og status (badge med tekst), "Din profil" fra `GET /me/profile` (bio, links med `rel="noopener noreferrer"`, åbner i ny fane med skjult tekst, eller empty state med link til Profile) med egne loading/fejl/retry-tilstande, og tre KPI-kort (omsætning, ordrer, solgte produkter) med "Salgsdata kommer snart" uden tal og uden API-kald.
+- [x] Sektion-registry: `Modules/Dashboard/DashboardSections` (standard `overview` og `profile`, filter `merchboard_dashboard_sections`, validering af id/label/sti/capability, dubletter og ugyldige poster droppes og logges, startsiden findes altid, capability tjekkes server-side og sendes ikke til browseren). Bootstrap-sektionerne kommer derfra.
+- [x] i18n: `Plugin::load_textdomain()` på `init` (prioritet 0), `wp_set_script_translations()` for `merchboard-dashboard`. `languages/`: `merchboard.pot` (221 strenge), `merchboard-da_DK.po`/`.mo` og `merchboard-da_DK-<md5(build/dashboard.js)>.json` (57 JS-strenge). `npm run i18n` (build → make-pot → update-po → make-mo → make-json). Dev-dependencies `wp-cli/wp-cli` ^2.12 og `wp-cli/i18n-command` ^2.6 (indgår ikke i pluginet).
+- [x] Dashboardet følger **sitets sprog** (`determine_locale()` på frontend = sitets sprog). Creators kan ikke vælge personligt sprog, fordi wp-admin er blokeret for dem (ADR-026). Admin følger brugerens sprog som normalt i WordPress.
+- [x] 564 PHP unit-tests (2351 assertions, inkl. `DashboardSectionsTest` og `TranslationsTest`: alt oversat, pladsholdere bevaret, ingen markup, MO/JSON gyldige og matcher bundlen), 133 Jest-tests (inkl. `overview.test.tsx`) og 111 integrationstests mod MariaDB 10.11.19 (inkl. registry med rigtige capabilities, danske PHP-strenge og plural, danske script-oversættelser i shellen med CSP-nonce). ESLint, stylelint, `tsc`, PHPCS og PHPStan level 8 er grønne.
+- [x] Playground (HTTP + Chrome):
+  - **Engelsk site med WooCommerce og pretty permalinks:** MVP-flowet: admin opretter creator via admin-formularen, creatoren logger ind og lander på Overview, ser velkomst, status og tom profil med link, redigerer profilen, og bio/links vises på Overview efter refresh. Mobil, 0 konsolfejl, 0 CSP-brud, 0 fremmede requests, tom storage.
+  - **Dansk site uden WooCommerce og plain permalinks:** samme flow helt på dansk ("Overblik", "Velkommen, …", "Salgsdata kommer snart", "Profilen er gemt."), 403-siden ("Din adgang er ikke aktiv"), admin-skærme og REST-fejlbeskeder på dansk. Phase 14-regression (REST og profilflow) grøn.
+  - Dansk site simuleres ved at skrive `WPLANG` direkte, fordi `sanitize_option()` kun accepterer installerede core-sprogpakker, og Playground ikke har den danske. Ingen PHP-notices og ingen secrets i logs.
+
+**Bevidst ikke i fase 15:** `/me/overview` og rigtige nøgletal (fase 20), ikoner i navigationen (intet ikonsæt endnu), lazy-loading af sektioner, oversættelse af WordPress' egne strenge (core-sprogpakke) og alt fra fase 16.
+
 ## In progress
 
 Intet.
@@ -238,9 +253,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 15:** Dashboard overview → MVP.
-2. **Fase 16:** Release-pipeline og staging.
-3. **Fase 17:** se [ROADMAP.md](ROADMAP.md).
+1. **Fase 16:** Release-pipeline og staging.
+2. **Fase 17:** se [ROADMAP.md](ROADMAP.md).
+3. **Fase 18:** se [ROADMAP.md](ROADMAP.md).
 
 ## Known bugs
 
@@ -274,6 +289,8 @@ Ingen (der er ingen funktionalitet endnu).
 | React-version | WordPress 6.7 leverer React 18.3, nyere WordPress React 19, og typerne og Jest bruger React 19. Koden bruger kun fælles API'er. | Test på WordPress 6.7 ved staging (fase 16) eller hæv minimumsversionen |
 | Sporadisk WooCommerce-notice i Playground | Én `_load_textdomain_just_in_time`-notice for `woocommerce` blev set én gang ved opstart af et frisk Playground-site. Den kunne ikke genskabes ved en ny kørsel. Pluginet kalder ingen WooCommerce-oversættelser. | Hold øje ved næste fase |
 | Profilfelter ved permanent sletning af creator | Der findes ingen hard delete af creators. Opt-in-uninstall dropper `merchboard_creatormeta` sammen med de øvrige tabeller. | Revurder, hvis hard delete indføres |
+| Oversættelser skal holdes ajour | `merchboard-da_DK.po` skal opdateres, når UI-strenge ændres (`npm run i18n`, derefter oversæt nye strenge). `TranslationsTest` fejler, hvis en streng mangler. JSON-filnavnet afhænger af stien `build/dashboard.js`. | Kør `npm run i18n` ved strengændringer |
+| Creators uden personligt sprog | Dashboardet følger sitets sprog. En creator på et engelsk site kan ikke vælge dansk (wp-admin er blokeret). | Revurder, hvis et flersproget behov opstår (fx sprogvalg i Profile) |
 | Metadata-læsefejl | `get_metadata()` giver ingen fejlinformation. En fejlet læsning af bio/links vises som tomme felter. Skrivninger verificeres og fejler lukket. | Accepteret (profilfelter er ikke adgangsstyrende) |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
@@ -300,7 +317,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 4. **Teams:** Kan en creator have flere brugere (fx manager)? Fase 8 er bygget med én bruger pr. creator (ADR-020). Teams vil kræve `merchboard_creator_members`, og ændringen bliver lokal til `CreatorContext` og repositoriet. (før fase 14)
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
-7. **UI-sprog:** Dansk, engelsk eller begge i creator-dashboardet? (fase 15)
+7. ✅ **UI-sprog – lukket (fase 15):** Engelske kildestrenge og dansk oversættelse via WordPress i18n. Dashboardet vises på sitets sprog, admin på brugerens.
 8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
 9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). Fase 7 løste behovet for en rigtig database med integrationstestene, så spørgsmålet haster ikke længere. (fase 16)
 10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. Fase 11 viser records, men sletter ingen. (før produktion, senest fase 16)
@@ -310,4 +327,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 15 (Dashboard overview → MVP) jf. docs/ROADMAP.md.
+4. Kør fase 16 (Release-pipeline og staging) jf. docs/ROADMAP.md. `languages/` skal med i release-zip'en, og `npm run i18n` skal køres, når UI-strenge ændres.
