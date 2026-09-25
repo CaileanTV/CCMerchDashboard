@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 13 (Dashboard frontend-fundament) · **Næste fase:** 14 (REST-fundament, `/me` og Profile) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 14 (REST-fundament, `/me` og Profile) · **Næste fase:** 15 (Dashboard overview → MVP) · **Schemaversion:** 3 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -204,7 +204,31 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
   - Admin-skærmene (Overview, Creators, Settings, Audit log) svarer 200. Ingen PHP-notices og ingen secrets i logs.
 - [x] Fundet og rettet: Fase 12's docs-script havde ødelagt FRONTEND.md (`$` + backtick i en `String.replace`-erstatning indsatte filens start midt i rewrite-afsnittet). FRONTEND.md er skrevet om, og doc-scripts bruger nu `split/join`.
 
-**Bevidst ikke i fase 13:** `/me`-endpoint og `RestController` (fase 14, projektejerens beslutning), endpoint-funktioner i `api/`, sektion-registry og filter, oversættelser (fase 15), lazy-loading af sektioner, Table/Modal/Toast m.fl. og alle forretningsmoduler.
+**Bevidst ikke i fase 13 (se fase 14 for REST):** `/me`-endpoint og `RestController` (fase 14, projektejerens beslutning), endpoint-funktioner i `api/`, sektion-registry og filter, oversættelser (fase 15), lazy-loading af sektioner, Table/Modal/Toast m.fl. og alle forretningsmoduler.
+
+### Fase 14 – REST-fundament, `/me` og Profile ✅
+
+- [x] Scope-konflikt afklaret med projektejeren før implementering: hele roadmap-fase 14. Skemaer: `GET /me` = `{ display_name, status }`, `GET`/`PATCH /me/profile` = `{ display_name, bio, social_links }` (nyt read-endpoint på samme ressource). Sociale links er faste platforme (website, instagram, tiktok, youtube, x, facebook) med https-URL'er (maks. 200 tegn). Bio er ren tekst (maks. 1000 tegn), og profilændringer audit-logges.
+- [x] `Core\Http\RestController` (namespace `merchboard/v1`, `require_creator()` via `CreatorContext`: 401 `merchboard_unauthenticated` og 403 `merchboard_forbidden`, `require_capability()`, `run()`: uventede fejl logges og giver en generisk 500 `merchboard_internal_error`).
+- [x] `Modules/Dashboard/Rest/MeController` på `rest_api_init`: tre endpoints, alle med permission callback. Creator'en genopslås i endpointet (ikke memoiseret). Ingen creator-ID i routes eller parametre. Kun whitelistede body-felter læses, aldrig query-parametre.
+- [x] Migration 3 (schemaversion 3): `merchboard_creatormeta` i WordPress' meta-layout, `CreatorMetaStore` (metadata API, whitelistede nøgler `bio` og `social_links`, skrivninger verificeres, `wp_slash`), `SocialLinks`, `CreatorProfile`, `CreatorProfileException` (feltkoder) og `CreatorProfileService` (genkontrollerer aktiv creator for nuværende bruger, validerer alt før skrivning, ét `creator_updated` med `changed_fields` i samme transaktion). Tabellen er med i `Tables::all()` og dermed i engine-tjek og opt-in-uninstall.
+- [x] Display name følger den eksisterende regel (1-191 tegn, `CreatorRepository::normalize_display_name`). Spørgsmålet i fase 14 sagde fejlagtigt 1-100.
+- [x] Frontend: `api/creator.ts` (`getMe`, `getProfile`, `updateProfile` og runtime-validatorer), `types/creator.ts`, `app/creator-context.tsx` (`GET /me` én gang, indhold vises først efter svar, fejl erstatter indholdet, navnet i topbaren), `sections/profile` (formular, klientvalidering med serverens fejlkoder, kun ændrede felter sendes, toast, password-link), `components/Toast`. API-klienten har fået `invalid_request` (400) med sikre feltkoder, og `rest_cookie_invalid_nonce` behandles som udløbet session.
+- [x] Bootstrap: sektionen `profile` og `password_url` (`wp_lostpassword_url()`, valideret som samme origin).
+- [x] 544 PHP unit-tests (1574 assertions), 124 Jest-tests og 108 integrationstests mod MariaDB 10.11.19. ESLint, stylelint, `tsc`, PHPCS og PHPStan level 8 er grønne.
+- [x] Playground over HTTP (cookie + `X-WP-Nonce`) og i Chrome, med WooCommerce (pretty permalinks) og uden WooCommerce (plain permalinks, `?rest_route=`):
+  - Routes: kun `/me` og `/me/profile`. Logget ud og uden nonce: 401. Aktiv creator: 200 med præcis de tilladte felter.
+  - PATCH gyldig: 200 og audit. Ugyldig: 400 med feltkoder, intet gemt. Ukendt platform: 400 (argument-skema). ID'er og `status` i query eller body ignoreres. POST: 404.
+  - Inaktiv creator, aktiv record uden capability, rolle uden record, subscriber og administrator uden creator: 403.
+  - Editorens creator er uændret. Audit log viser "Changed: display name, bio, social links".
+  - Browser: navn i topbaren, Profile via navigation, klientvalidering, gem → toast og nyt navn, refresh bevarer værdier, mobil, mistet session under redigering → "Your session has expired" med login-link (ingen redirect-loop). 0 konsolfejl, 0 CSP-brud, 0 fremmede requests, tom storage. Inaktiv og subscriber: 403-side uden scripts.
+  - Ingen PHP-notices fra pluginet og ingen secrets i logs. WooCommerce-noticen `_load_textdomain_just_in_time` blev set igen, men tidsstemplet ligger før Playground melder "Ready", dvs. under blueprint-opsætningen (WooCommerce-installation og setup-scripts), ikke under vores requests.
+- [x] Fundet og rettet undervejs:
+  - `update_metadata()` fjerner backslashes. Værdier slashes nu først.
+  - WordPress' meta-cache overlevede mellem integrationstests, fordi ID'er genbruges efter drop af tabeller. Testbasen tømmer nu cachen.
+  - En udløbet nonce gav "ingen adgang" i UI'et. Den behandles nu som en udløbet session.
+
+**Bevidst ikke i fase 14:** avatar-upload, Overview med creator-info (fase 15), sektion-registry og oversættelser (15), lazy-loading og admin-scope REST-endpoints.
 
 ## In progress
 
@@ -214,9 +238,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 14:** REST-fundament, `/me` og Profile.
-2. **Fase 15:** Dashboard overview → MVP.
-3. **Fase 16:** Release-pipeline og staging.
+1. **Fase 15:** Dashboard overview → MVP.
+2. **Fase 16:** Release-pipeline og staging.
+3. **Fase 17:** se [ROADMAP.md](ROADMAP.md).
 
 ## Known bugs
 
@@ -249,6 +273,8 @@ Ingen (der er ingen funktionalitet endnu).
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller kommer med Access-settings (fase 12). |
 | React-version | WordPress 6.7 leverer React 18.3, nyere WordPress React 19, og typerne og Jest bruger React 19. Koden bruger kun fælles API'er. | Test på WordPress 6.7 ved staging (fase 16) eller hæv minimumsversionen |
 | Sporadisk WooCommerce-notice i Playground | Én `_load_textdomain_just_in_time`-notice for `woocommerce` blev set én gang ved opstart af et frisk Playground-site. Den kunne ikke genskabes ved en ny kørsel. Pluginet kalder ingen WooCommerce-oversættelser. | Hold øje ved næste fase |
+| Profilfelter ved permanent sletning af creator | Der findes ingen hard delete af creators. Opt-in-uninstall dropper `merchboard_creatormeta` sammen med de øvrige tabeller. | Revurder, hvis hard delete indføres |
+| Metadata-læsefejl | `get_metadata()` giver ingen fejlinformation. En fejlet læsning af bio/links vises som tomme felter. Skrivninger verificeres og fejler lukket. | Accepteret (profilfelter er ikke adgangsstyrende) |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
 
@@ -284,4 +310,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 14 (REST-fundament, `/me` og Profile) jf. docs/ROADMAP.md.
+4. Kør fase 15 (Dashboard overview → MVP) jf. docs/ROADMAP.md.

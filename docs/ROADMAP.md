@@ -100,10 +100,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope (udført):** `npm run build`/`start`/`typecheck`/`test:js`, entry `assets/src/dashboard/index.tsx` (React + TypeScript strict), `@wordpress/element`/`api-fetch`/`i18n` og typer som dev-deps, `DashboardAssets` (asset.php), bootstrap-data med runtime-validering, design tokens, layout (topbar, sidebar, mobil-nav, skip link), router (History API, pretty og query-fallback), API-klient (`merchboard/v1`, typed `ApiResult`, validering), `useApi`, kernekomponenter (Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field), CSP med nonce, ESLint `react/no-danger` og `no-explicit-any`, Jest-setup, typetjek, stylelint og build i CI. Intet `/me`-endpoint (fase 14, besluttet af projektejeren).
 - **Done:** Shellen viser et responsivt layout med navigation og empty state. JS-tests, typetjek, lint, PHP-tests og integrationstests er grønne. Playground med og uden WooCommerce (pretty permalinks og fallback) i en rigtig browser uden konsolfejl eller CSP-brud.
 
-## Fase 14 – REST-fundament, `/me` og Profile
+## Fase 14 – REST-fundament, `/me` og Profile ✅
 
-- **Scope:** `RestController`-basisklasse, migration for `merchboard_creatormeta` (profilfelter), `GET /me`, `PATCH /me/profile` (whitelist), Profile-sektion med formular, validering og toast. Alle security-tests fra [API.md](API.md#test-krav).
-- **Done:** IDOR- og permission-tests er grønne.
+- **Scope (udført):** `Core\Http\RestController`-basisklasse, migration 3 for `merchboard_creatormeta` (bio, sociale links), `GET /me` (`display_name`, `status`), `GET /me/profile` og `PATCH /me/profile` (whitelist: `display_name`, `bio`, `social_links` med faste platforme), audit `creator_updated`, Profile-sektion med formular, klient- og servervalidering og toast. Creator-navnet i topbaren kommer fra `GET /me`. Alle security-tests fra [API.md](API.md#test-krav). `GET /me/profile` og skemaerne er besluttet af projektejeren i fase 14.
+- **Done:** IDOR-, permission- og valideringstests er grønne (unit, integration mod MariaDB og Jest). Playground med og uden WooCommerce over HTTP (cookie + nonce) og i browser.
 
 ## Fase 15 – Dashboard overview → **MVP**
 

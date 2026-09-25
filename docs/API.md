@@ -16,7 +16,7 @@
 - **Creator dashboard og admin-scripts:** cookie-authentication og `X-WP-Nonce` (`wp_rest`). Nonce og root-URL sættes af WordPress' eget `wp-api-fetch`-script (inline middleware). Dashboardet gemmer intet i browseren.
 - **Frontend-boundary (✅ fase 13):** `assets/src/dashboard/api/client.ts` er den eneste vej til REST. Den tillader kun `/merchboard/v1/`, bruger `apiFetch( { parse: false } )`, validerer hvert svar med en endpoint-specifik validator (svaret er `unknown` indtil da) og returnerer `ApiResult<T>`. Fejl reduceres til en fast type (`unauthenticated`, `forbidden`, `not_found`, `server`, `network`, `invalid_response`, `aborted`) og WordPress' fejlkode. Serverens fejlbesked vises aldrig. Ved 401/403 redirectes der ikke automatisk. UI'et viser et login- eller log ud-link. TypeScript-typerne for svar skal matche backendens kontrakt og må ikke opfinde felter. Endpoints og deres typer kommer fra fase 14.
 - **Application Passwords** er deaktiveret for rene creators (✅ fase 12, `wp_is_application_passwords_available_for_user`, ADR-026) for at reducere angrebsfladen. WordPress tjekker filteret både ved oprettelse (REST svarer `application_passwords_disabled_for_user`) og ved login med et eksisterende password, så også passwords oprettet før brugeren blev ren creator afvises. Administratorer, editors og shop managers, der også er creators, bevarer dem.
-- Uautentificerede requests til beskyttede routes giver `401 rest_forbidden`.
+- Uautentificerede requests (også cookie uden gyldig `X-WP-Nonce`) til `/me`-routes giver `401 merchboard_unauthenticated`. Uden creator-adgang: `403 merchboard_forbidden`. En nonce, der ikke længere passer til sessionen, afviser WordPress selv med `403 rest_cookie_invalid_nonce`, og frontend viser det som udløbet session.
 
 ## Route-familier
 
@@ -26,8 +26,9 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 
 | Metode | Route | Formål | Fase |
 | --- | --- | --- | --- |
-| `GET` | `/me` | Creator-profil (whitelistede felter), brugerens rettigheder og tilgængelige dashboard-sektioner | 14 |
-| `PATCH` | `/me/profile` | Opdater redigerbare profilfelter (whitelist) | 14 |
+| `GET` | `/me` | ✅ Den aktuelle creator: `display_name`, `status`. Rettigheder og sektioner kommer fortsat fra bootstrap-data (sektion-registry i fase 15). | 14 |
+| `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
+| `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
 | `GET` | `/me/overview` | Nøgletal til Overview | 15 / 20 |
 | `GET` | `/me/products` | Creator'ens produkter (pagineret) | 19 |
 | `GET` | `/me/orders` | Ordrelinjer med creator'ens produkter **uden kunde-PII** | 19 |
@@ -58,14 +59,49 @@ Ingen konkrete integrationer er godkendt. Hver tjeneste kræver projektejerens e
 - Lister: `?page=&per_page=` (max 100). Headers `X-WP-Total` og `X-WP-TotalPages`.
 - Fejl: `WP_Error` med koder prefixet `merchboard_` (fx `merchboard_creator_inactive`), passende HTTP-status og **ingen interne detaljer** (SQL, stack traces, stier) i beskeden.
 
-## Controller-basisklasse (plan)
+## Controller-basisklasse ✅ (fase 14)
 
-`MerchBoard\Core\Http\RestController` leverer:
+`MerchBoard\Core\Http\RestController` (abstrakt, `NAMESPACE = 'merchboard/v1'`). Controllere ligger i modulerne (`Modules/<Navn>/Rest/`) og registreres af modulet på `rest_api_init`:
 
-- `require_creator(): Creator|WP_Error`, som bruges i permission callbacks for `/me`
-- `require_capability( string $cap )`
-- paginerings-helpers og `rest_ensure_response`-wrapping
-- ensartet fejlformat og logning af uventede exceptions (channel `rest`)
+- `register_routes()`: hver route har en eksplicit `permission_callback` (aldrig `__return_true` for private data) og `args` med typer.
+- `require_creator( CreatorContext ): Creator|WP_Error`: 401 `merchboard_unauthenticated` uden login, 403 `merchboard_forbidden` uden creator-adgang (også inaktiv creator og fejlet adgangstjek). Bruges både i permission callback og igen i endpointet, fordi `CreatorContext` ikke memoiserer.
+- `require_capability( string )` til fremtidige admin-routes.
+- `run( route, callback )`: `DatabaseException` og uventede exceptions logges via `Logger` (route og årsag, ingen request-data) og giver en generisk `500 merchboard_internal_error`.
+- `error( code, message, status, data )`: `WP_Error` med `merchboard_`-kode, oversat generisk besked og `status`.
+
+Paginerings-helpers tilføjes med den første liste-route.
+
+## Endpoints ✅ (fase 14)
+
+Alle kræver en aktiv creator for den indloggede bruger (`CreatorContext`). Creator'en vælges aldrig ud fra URL, query, body eller bootstrap-data.
+
+**`GET /merchboard/v1/me`** → 200
+
+```json
+{ "display_name": "Nova", "status": "active" }
+```
+
+**`GET /merchboard/v1/me/profile`** → 200 (alle platforme er altid med, `""` når ikke sat)
+
+```json
+{
+  "display_name": "Nova",
+  "bio": "Merch & music",
+  "social_links": { "website": "https://nova.example", "instagram": "", "tiktok": "", "youtube": "", "x": "", "facebook": "" }
+}
+```
+
+**`PATCH /merchboard/v1/me/profile`** (JSON-body, delvis opdatering) → 200 med samme form som `GET /me/profile`.
+
+| Felt | Regel |
+| --- | --- |
+| `display_name` | Streng, trimmes, 1-191 tegn (samme regel som admin) |
+| `bio` | Streng, ren tekst (tags fjernes med `sanitize_textarea_field`, linjeskift bevares), trimmes, maks. 1000 tegn. `""` sletter |
+| `social_links` | Objekt med kun platformene `website`, `instagram`, `tiktok`, `youtube`, `x`, `facebook`. Hver værdi er `""` (slet) eller en `https`-URL med host, uden credentials, whitespace, kontroltegn eller `<>"'\`, maks. 200 tegn. Platforme, der ikke sendes, bevares |
+
+- Andre felter (`status`, `user_id`, `id`, `creator_id` …) og query-parametre ignoreres.
+- Ugyldige typer eller ukendte platforme giver 400 `rest_invalid_param` (argument-skema). Regelbrud giver 400 `merchboard_invalid_profile` med `data.fields` = felt → kode (`required`, `invalid`, `too_long`, `invalid_url`, fx `"social_links.x": "invalid_url"`). Input ekkoes aldrig. Ét ugyldigt felt afviser hele opdateringen, og intet gemmes.
+- Uden reelle ændringer skrives intet. Ved ændringer skrives navn (creators-tabellen), bio og links (`merchboard_creatormeta`) og én audit-record `creator_updated` med `changed_fields` (actor = creatorens bruger) i én transaktion.
 
 ## Test-krav
 
@@ -76,3 +112,5 @@ Hvert creator-endpoint skal have integrationstests for mindst:
 3. inaktiv creator → 403
 4. Creator A kan ikke se eller ændre Creator B's ressourcer (IDOR) → 404
 5. ugyldigt input → 400 med ændringer ikke gemt
+
+✅ Fase 14: `tests/Integration/Rest/MeEndpointTest.php` dækker punkt 1-5 for `/me` og `/me/profile` (IDOR: ID'er i query og body ignoreres, og en anden creator er uændret), plus route-registrering med permission callbacks, præcise svarfelter, deaktivering på næste request, databasefejl (403 uden detaljer, logget) og fejlet skrivning (500, rollback).

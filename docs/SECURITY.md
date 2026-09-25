@@ -57,7 +57,8 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - Pluginets kode tildeler aldrig capabilities ud fra input. Rolle/caps defineres kun i kode (`Capabilities`), og synkroniseringen rører kun `merchboard_creator`, pluginets egne `merchboard_*`-capabilities på `administrator`, og aldrig brugere.
 - Permission-checks er positive capability-checks via konstanter (`current_user_can( Capabilities::… )`). Aldrig "logget ind", rolle-/display-navne eller hardcodede ID'er.
 - En capability alene giver ikke creator-adgang. Aktiv creator-record kræves også (fase 8).
-- Creator-redigerbare felter er en **eksplicit whitelist** (fx `display_name`, `bio`, `social_links`). `status`, `user_id`, `slug` og rolle kan aldrig sættes fra creator-endpoints.
+- Creator-redigerbare felter er en **eksplicit whitelist** (✅ fase 14: `display_name`, `bio`, `social_links` i `MeController` og igen i `CreatorProfileService`). `status`, `user_id`, `slug` og rolle kan aldrig sættes fra creator-endpoints (testet over HTTP). Body læses kun som JSON/form-body, aldrig fra query-parametre.
+- **REST (✅ fase 14):** Alle routes har permission callback via `CreatorContext`. Creator'en genopslås i endpointet og i servicen (aktiv, koblet til nuværende bruger). Svar bygges af `to_array()` med kun de dokumenterede felter (ingen e-mail, intet bruger- eller creator-ID). Fejl har faste koder og generiske beskeder. Input ekkoes ikke i fejl. Uventede fejl logges og giver en generisk 500. Sociale links accepteres kun som https-URL'er uden credentials og farlige tegn, og React renderer dem som tekst i felter (ingen links i fase 14).
 - Admin-handlinger, der opretter brugere, kan kun tildele `merchboard_creator`. Aldrig vilkårlige roller fra input.
 - Ingen `update_user_meta` med nøgler fra input.
 

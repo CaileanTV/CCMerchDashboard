@@ -10,7 +10,7 @@
 | Rolle/capabilities | `wp_usermeta` (`wp_capabilities`) via roles API | Standard |
 | Brugerpræferencer uden domæneværdi (fx dashboard-tema) | `wp_usermeta` (`merchboard_*`) | Hører til login-kontoen, ikke til creator'en |
 | **Creator** (identitet, status, visningsnavn) | `merchboard_creators` (custom) ✅ | Domæneobjekt adskilt fra login-kontoen. Se ADR-005 og ADR-020. |
-| Fleksible creator-felter (bio, sociale links, avatar-ID …) | `merchboard_creatormeta` (custom, WP metadata API), **fase 14** | Oprettes, når profilfelterne bygges (ingen tabel "for en sikkerheds skyld") |
+| Fleksible creator-felter (bio, sociale links; senere avatar-ID) | `merchboard_creatormeta` (custom, WP metadata API) ✅ fase 14, schemaversion 3 | Én række pr. nøgle. Kun whitelistede nøgler (`CreatorMetaStore`) |
 | Plugin-settings | `wp_options`: `merchboard_settings` (ét array, autoload) ✅ fase 9. Nøgler: `delete_data_on_uninstall` (bool, default `false`, tæller kun som præcis `true`) og `dashboard_slug` (✅ fase 12, streng, default `creator-dashboard`, ugyldig værdi giver default) | Lille og læses på de fleste requests |
 | Schemaversion | `wp_options`: `merchboard_db_version` ✅ | Styrer migrationer (ADR-019) |
 | Migrationslås | `wp_options`: `merchboard_db_migration_lock` ✅ (midlertidig, ikke autoload) | Forhindrer samtidige migrationer |
@@ -106,9 +106,16 @@ Kilde: `src/Core/Database/Migrations/CreateCreatorsTable.php`.
 
 Ingen `NULL`, `0`/`1` eller andre magic strings. Ukendte værdier i databasen afvises ved læsning (`DatabaseException`). Nye tilstande tilføjes som nye enum-cases, når en fase har brug for dem. Kolonnen er `VARCHAR`, så det kræver ingen schemaændring. Adgangsreglen (fase 8) kræver `active`.
 
-### `merchboard_creatormeta` (fase 14)
+### `merchboard_creatormeta` ✅ (schema-version 3, fase 14)
 
-Standard WordPress meta-tabel (`meta_id`, `merchboard_creator_id`, `meta_key`, `meta_value`), så `add_metadata( 'merchboard_creator', … )`, `get_metadata()` og meta-cachen virker. Registreres som `$wpdb->merchboard_creatormeta`. Meta-keys whitelistes i `CreatorService`. Flyttet fra fase 3 til fase 14, hvor profilfelterne bygges.
+Standard WordPress meta-tabel (`meta_id`, `merchboard_creator_id`, `meta_key` (indeks 191), `meta_value` longtext), så `*_metadata( 'merchboard_creator', … )` og meta-cachen (gruppe `merchboard_creator_meta`) virker. `CreatorMetaStore` registrerer `$wpdb->merchboard_creatormeta` og whitelister nøglerne:
+
+| Nøgle | Værdi |
+| --- | --- |
+| `bio` | Ren tekst, maks. 1000 tegn. Slettes ved tom værdi |
+| `social_links` | Array platform → https-URL, kun satte platforme. Slettes, når alle er tomme. Læses gennem `SocialLinks::from_stored()`, så korrupte værdier ignoreres |
+
+Skrivninger går gennem `CreatorProfileService` i samme transaktion som eventuel omdøbning og audit (InnoDB, ADR-024) og verificeres ved genlæsning (`update_metadata()` returnerer `false` både ved fejl og ved uændret værdi). Værdier slashes før `update_metadata()`, som ellers ville fjerne backslashes. Tabellen er med i `Tables::all()` (engine-tjek og opt-in-uninstall). Ingen FK.
 
 ### `merchboard_audit_log` ✅ (schema-version 2, ADR-023)
 

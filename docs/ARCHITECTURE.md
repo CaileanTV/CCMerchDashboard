@@ -72,7 +72,7 @@ merchboard/
 │   │   │                        # TransactionSupport (engine-tjek, fail closed) [fase 7]
 │   │   ├── Audit/               # AuditAction, AuditTrail, AuditRepository, AuditEntry [fase 6]
 │   │   ├── Security/            # Capabilities, RoleManager [fase 5]; map_meta_cap [fase 14]
-│   │   ├── Http/                # RestController-basisklasse, response-/fejl-helpers
+│   │   ├── Http/                # RestController-basisklasse (merchboard/v1, require_creator, run, error) [fase 14]
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
 │   │   ├── Logging/             # Logger, LogLevel, LogContext, PluginLogger, LogWriter,
 │   │   │                        # WooCommerceLogWriter, ErrorLogWriter              [fase 4]
@@ -83,7 +83,7 @@ merchboard/
 │       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]; AuditLogPage, AuditLogListTable, AuditLogFormatter [fase 11]
 │       ├── Access/              # AccessModule, CreatorContext [fase 8]; CreatorRestrictions, LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
-│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardAssets (build/dashboard.asset.php) [fase 13]; DashboardSections-registry, Rest/Me* [fase 14-15]
+│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardAssets (build/dashboard.asset.php) [fase 13]; Rest/MeController (/me, /me/profile) [fase 14]; DashboardSections-registry [fase 15]
 │       └── WooCommerce/         # kun indlæst når WooCommerce er aktiv
 ├── templates/                   # PHP-templates (dashboard-shell, admin-partials)
 ├── assets/src/

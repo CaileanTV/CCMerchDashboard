@@ -1,6 +1,6 @@
 # Frontend – Creator Dashboard
 
-> Status: **Frontend-fundament ✅ (fase 13).** Route og sikker shell (fase 12), React/TypeScript-app med layout, navigation, router, API-klient, `useApi` og kernekomponenter (fase 13). Creator-data via REST (`/me`) kommer i fase 14.
+> Status: **Profile ✅ (fase 14).** Route og sikker shell (fase 12), React/TypeScript-fundament (fase 13), creator-data via `GET /me` og Profile-sektion via `GET`/`PATCH /me/profile` (fase 14).
 
 ## Teknologivalg
 
@@ -54,8 +54,9 @@
   "routing": "path",
   "logout_url": "https://…/wp-login.php?action=logout&_wpnonce=…&redirect_to=…",
   "login_url": "https://…/wp-login.php?redirect_to=…",
+  "password_url": "https://…/wp-login.php?action=lostpassword",
   "locale": "da_DK",
-  "sections": [ { "id": "overview", "label": "Overview", "path": "" } ]
+  "sections": [ { "id": "overview", "label": "Overview", "path": "" }, { "id": "profile", "label": "Profile", "path": "profile" } ]
 }
 ```
 
@@ -72,22 +73,25 @@ assets/src/dashboard/
 ├── index.tsx                # entry: finder #merchboard-dashboard-root og kalder mountDashboard()
 ├── mount.tsx                # parseConfig() → <App> eller generisk fejl
 ├── bootstrap.ts             # runtime-validering af window.merchboardDashboard
-├── types/                   # config.ts (DashboardConfig, DashboardSection), assets.d.ts (*.scss, Window)
-├── api/                     # client.ts (eneste sted med apiFetch), validate.ts (runtime-checks)
+├── types/                   # config.ts (DashboardConfig, DashboardSection), creator.ts (Me, Profile, SocialLinks, grænser), assets.d.ts
+├── api/                     # client.ts (eneste sted med apiFetch), creator.ts (getMe, getProfile, updateProfile + validatorer), validate.ts
 ├── hooks/                   # useApi.ts (loading/success/error, retry, abort)
-├── app/                     # App, config-context, router (RouterProvider, useRouter, Link), routes.ts (ren URL-logik),
+├── app/                     # App, config-context, creator-context (GET /me), router (RouterProvider, useRouter, Link), routes.ts,
 │   │                        # pages.tsx (sti → side), ErrorBoundary
 │   └── layout/              # Layout (skip link, topbar, sidebar, mobil-nav, main), Navigation
-├── components/              # Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field
-├── sections/overview/       # OverviewSection (fase 13: placeholder med empty state)
+├── components/              # Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field, Toast
+├── sections/overview/       # OverviewSection (placeholder med empty state; creator-info i fase 15)
+├── sections/profile/        # ProfileSection (formular), validation.ts (klientregler og fejltekster)
 ├── styles/                  # _tokens.scss, index.scss (kun .merchboard-*-selektorer)
-├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures)
+├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures), api.ts (apiFetch-dobbelt: mockApi, response)
 └── test/                    # Jest-tests (*.test.ts/tsx)
 ```
 
 - **Routing:** en lille egen router baseret på History API (`app/router.tsx`, `app/routes.ts`). Stier er `''` eller segmenter af `[a-z0-9-]` (samme regel som serverens `DashboardRoute`), så navigation aldrig kan pege på et andet site eller en `javascript:`-URL. `Link` er et rigtigt `<a href>`, der navigerer client-side ved almindeligt venstreklik. Tilbage-knap og refresh virker. Revurderes, hvis behovene vokser (fx nested routes).
-- **API-boundary (`api/client.ts`):** `request( { path, method, data, signal }, validate )` er den eneste vej til REST. Den kalder `apiFetch( { …, parse: false } )`, afviser stier uden for `/merchboard/v1/`, validerer svaret med en endpoint-specifik validator og returnerer `ApiResult<T>` = `{ ok: true, data }` eller `{ ok: false, error: { kind, status, code } }`. Fejltyper: `unauthenticated` (401), `forbidden` (403), `not_found` (404), `server`, `network`, `invalid_response` og `aborted`. Serverens fejlbeskeder bruges aldrig i UI'et. Komponenter kalder aldrig `fetch()`/`apiFetch()` direkte. Endpoint-funktioner (fx `api/me.ts`) kommer med endpoints i fase 14.
+- **API-boundary (`api/client.ts`):** `request( { path, method, data, signal }, validate )` er den eneste vej til REST. Den kalder `apiFetch( { …, parse: false } )`, afviser stier uden for `/merchboard/v1/`, validerer svaret med en endpoint-specifik validator og returnerer `ApiResult<T>` = `{ ok: true, data }` eller `{ ok: false, error: { kind, status, code } }`. Fejltyper: `invalid_request` (400, med sikre feltkoder i `fields`), `unauthenticated` (401, samt 403 `rest_cookie_invalid_nonce`), `forbidden` (403), `not_found` (404), `server`, `network`, `invalid_response` og `aborted`. Serverens fejlbeskeder bruges aldrig i UI'et. Komponenter kalder aldrig `fetch()`/`apiFetch()` direkte. Endpoint-funktioner (fx `api/me.ts`) kommer med endpoints i fase 14.
 - **Data og state:** `useApi( load )` giver `loading`/`success`/`error`, `retry()` og afbryder requesten ved unmount. Ingen global store.
+- **Creator (✅ fase 14):** `CreatorProvider` henter `GET /me` én gang pr. sideindlæsning. Sideindhold vises først, når svaret er kommet: under indlæsning vises en skeleton, og ved fejl (401, 403, netværk, ugyldigt svar) erstatter `ApiErrorState` med "Try again" indholdet. Navigationen bliver stående. Navnet vises i topbaren. Efter et gemt profilnavn opdateres det uden ny request. Adgang afgøres stadig af serveren (shellen gennemfører `CreatorContext` før appen overhovedet indlæses).
+- **Profile (✅ fase 14):** `GET /me/profile` → formular (display name, bio med tegntæller og seks links) og link til WordPress' password-reset (`password_url`). Klientvalidering bruger samme regler og fejlkoder som serveren og kun til hurtig feedback. Kun ændrede felter sendes (`PATCH`). Serverens feltkoder (400) vises som faste tekster ved felterne (`aria-invalid`, `aria-describedby`). Andre fejl vises som `ApiErrorState` over formularen, og input bevares. Succes → `Toast` "Profile saved." (live region, kan lukkes, forsvinder efter 6 s). `apiFetch` sender `PATCH` som `POST` med `X-HTTP-Method-Override`.
 - **401/403 i UI'et (`ApiErrorState`):** 401 → "Your session has expired" og et link til login. 403 → "You do not have access to this" og et log ud-link. Øvrige fejl → generisk besked og "Try again". Der redirectes aldrig automatisk (ingen redirect-loops). Links er server-leverede URL'er på samme origin. Adgang afgøres altid af serveren. UI-state bestemmer aldrig adgang.
 - **Sektioner:** Serveren bestemmer, hvilke sektioner der vises (fra fase 15 via filter `merchboard_dashboard_sections` og capability pr. sektion). Klienten viser kun dem. En sektion, som serveren tillader, men som bygget endnu ikke kender, viser "not available yet". Ukendte stier viser "Page not found" med link til startsiden. Lazy-loading (`React.lazy`) indføres, når der er flere sektioner.
 - **Grafer:** vælges i fase 20. Krav: lille bundle, tilgængelighed og tree-shaking. Kandidat: Chart.js eller en letvægts-SVG-løsning.
