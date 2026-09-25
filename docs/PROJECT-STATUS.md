@@ -266,7 +266,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ## In progress
 
-- **Fase 17 – WooCommerce foundation:** Beslutningerne D1-D6 er lukket i ADR-030 (trin 0, kun dokumentation). Implementeringen er ikke startet. Næste trin er at undersøge WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit, duplicate) og kravene i WooCommerce 10.4 uden at skrive kode.
+- **Fase 17 – WooCommerce foundation:** Beslutningerne D1-D6 er lukket i ADR-030 (trin 0, kun dokumentation). Implementeringen er ikke startet. Næste trin er at undersøge WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit, duplicate) mod WooCommerce 10.3.x (laveste understøttede version) uden at skrive kode. D1 er rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8.
 
 ## Planned
 

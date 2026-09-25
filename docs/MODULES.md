@@ -41,7 +41,7 @@ private function default_modules(): array {
 }
 ```
 
-Eksemplet viser kun princippet. For WooCommerce kræves desuden minimum 10.4 (ADR-030). Med en ældre version indlæses modulet ikke, og admin ser en requirements-notice. Den præcise implementering fastlægges i fase 17.
+Eksemplet viser kun princippet. For WooCommerce kræves desuden minimum 10.3 (ADR-030). Med en ældre version indlæses modulet ikke, og admin ser en requirements-notice. Den præcise implementering fastlægges i fase 17.
 
 Hovedfilen og boot-logikken ændres ikke, når moduler tilføjes.
 
@@ -81,7 +81,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 | Settings | Delvist | **Færdig:** `SettingsModule`, `SettingsService`, `SettingsPage`, `SettingsActions` med opt-in for permanent sletning (9). Dashboard-slug og `SlugAvailability` (12). **Planlagt:** øvrige settings (General/Access/Advanced), når de får indhold | 9 ✅, 12 ✅ |
 | Access | Delvist | **Færdig:** `AccessModule`, `CreatorContext` (adgangspolitik) (8). `CreatorRestrictions`, `LoginRedirect`, `AdminAreaGuard`: login-redirect, blokering af wp-admin, skjult admin bar og Application Passwords fra for rene creators (12, ADR-026). **Planlagt:** meta-capabilities (14) | 8 ✅, 12 ✅, 14 |
 | Dashboard | Færdig (MVP) | `DashboardModule`, `DashboardRoute` (rewrite, konfigurerbar slug), `ShellController`/`ShellResponse` og templates (12). `DashboardAssets` og React/TypeScript-appen i `assets/src/dashboard` (13). `Rest/MeController` (`/me`, `/me/profile`) og Profile-sektionen (14). `DashboardSections` (registry), Overview og oversættelser (15) | 12 ✅, 13 ✅, 14 ✅, 15 ✅ |
-| WooCommerce | Planlagt | Produkt↔creator (fase 17, ADR-030: WooCommerce ≥ 10.4, én skrivevej), sales ledger, produkter/ordrer i dashboard | 17-19 |
+| WooCommerce | Planlagt | Produkt↔creator (fase 17, ADR-030: WooCommerce ≥ 10.3, én skrivevej), sales ledger, produkter/ordrer i dashboard | 17-19 |
 | Statistics | Fremtid | Aggregeringer og grafer | 20 |
 | Payouts | Fremtid | Afregning til creators | – |
 | Notifications | Fremtid | E-mail/in-app-notifikationer | – |

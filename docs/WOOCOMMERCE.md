@@ -8,7 +8,7 @@
 2. **Valgfrit modul:** `Modules/WooCommerce` indlæses kun, hvis WooCommerce er aktivt. Resten af pluginet (creators, adgang og dashboard-shell) virker uden.
 3. **HPOS-kompatibel fra dag ét:** kun CRUD-API'er (`wc_get_order()`, `wc_get_orders()`, `$order->get_items()`, `wc_get_product()`, `$product->get_meta()`). **Aldrig** direkte SQL mod `wp_posts`/`wp_postmeta` for ordrer. Kompatibilitet erklæres via `FeaturesUtil::declare_compatibility( 'custom_order_tables', MERCHBOARD_FILE, true )`.
 4. Tungt arbejde (backfill og genberegning) køres asynkront via **Action Scheduler**, som følger med WooCommerce.
-5. **Minimum WooCommerce 10.4** (header `WC requires at least: 10.4`, ADR-030). WooCommerce 10.4 kræver WordPress 6.7, som er pluginets eget minimum. Er WooCommerce aktivt, men ældre, indlæses modulet ikke. Admin ser en neutral requirements-notice, og der er ingen fatal eller delvis integration.
+5. **Minimum WooCommerce 10.3** (header `WC requires at least: 10.3`, ADR-030). WooCommerce 10.3.x er den seneste linje, der kræver WordPress 6.7, som er pluginets generelle minimum. 10.4 og senere kræver WordPress 6.8. Er WooCommerce aktivt, men ældre, indlæses modulet ikke. Admin ser en neutral requirements-notice, og der er ingen fatal eller delvis integration.
 
 ## Kobling: produkt → creator
 

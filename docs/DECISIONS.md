@@ -273,7 +273,7 @@ Et JS-build er nødvendigt (`build/` genereres i CI til releases). React-version
 2026-09-24
 
 ## Status
-Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.4, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall).
+Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall).
 
 ## Decision
 WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `merchboard_sales`-ledger fodret af ordre- og refund-hooks.
@@ -885,13 +885,13 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 
 ---
 
-# ADR-030: WooCommerce-modulet: minimum 10.4, én autoritativ skrivevej for produkt→creator og oprydning ved opt-in-uninstall
+# ADR-030: WooCommerce-modulet: minimum 10.3, én autoritativ skrivevej for produkt→creator og oprydning ved opt-in-uninstall
 
 ## Date
 2026-09-25
 
 ## Status
-Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall).
+Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
 
 ## Context
 Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_creator_id` (ADR-011). Før implementeringen skulle det afklares:
@@ -902,8 +902,8 @@ Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_
 - hvordan WooCommerce' mange skriveveje (produktskærm, REST, CSV-import, quick/bulk edit, duplicate) holdes under samme validering og audit.
 
 ## Decision
-- **D1 – minimum:** `WC requires at least: 10.4` i plugin-headeren. Det er Merch Dashboards eget minimum for WooCommerce-modulet. WooCommerce 10.4 kræver WordPress 6.7, som er pluginets eget WordPress-minimum (ADR-003). Runtime-tjekket og headeren bruger samme værdi.
-- **D2 – under minimum:** Er WooCommerce aktivt, men ældre end 10.4, indlæses `WooCommerceModule` ikke. Admin får en neutral requirements-notice efter det eksisterende `Requirements`-mønster. Der er ingen fatal og ingen delvis integration. Resten af pluginet virker. Uden WooCommerce vises ingen notice.
+- **D1 – minimum:** `WC requires at least: 10.3` i plugin-headeren. Det er Merch Dashboards eget minimum for WooCommerce-modulet. WooCommerce 10.3.x er den seneste linje, der kræver WordPress 6.7, som er pluginets generelle minimum (ADR-003, uændret). Verificeret mod WooCommerce's egne plugin-headers og `readme.txt` på wordpress.org: 9.9.0-10.3.8 kræver WordPress 6.7, og 10.4.0 og senere kræver 6.8. Runtime-tjekket og headeren bruger samme værdi.
+- **D2 – under minimum:** Er WooCommerce aktivt, men ældre end 10.3, indlæses `WooCommerceModule` ikke. Admin får en neutral requirements-notice efter det eksisterende `Requirements`-mønster. Der er ingen fatal og ingen delvis integration. Resten af pluginet virker. Uden WooCommerce vises ingen notice.
 - **D3 – ordreliste:** Kolonnen "Creators" i ordrelisten er udskudt. Fase 17 indeholder ingen logik for ordrer eller ordrelisten.
 - **D4 – livscyklus for koblingen:** Koblingen bevares ved deaktivering af pluginet, deaktivering af WooCommerce og opdateringer. Ved **opt-in-uninstall** (ADR-025) slettes `_merchboard_creator_id` fra de produkter og varianter, hvor nøglen findes, på det aktuelle site. Kun den præcise nøgle slettes, via WordPress' meta-API (virker også uden WooCommerce), idempotent og før tabellerne droppes. Anden WooCommerce- og produkt-meta røres aldrig.
 - **D5 – test:** Ingen nye runtime- eller dev-dependencies. Testene bruger den eksisterende infrastruktur (Brain Monkey, WooCommerce-fixtures, integrationstests og Playground med WooCommerce fra wordpress.org). Viser implementeringen, at en dependency er nødvendig, stoppes der, og behovet forelægges projektejeren.
@@ -917,6 +917,7 @@ Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_
 
 ## Alternatives considered
 - **Ingen minimumsversion eller kun `class_exists`:** ukendt API-adfærd på gamle versioner. Fravalgt.
+- **Minimum 10.4 (første udgave af D1):** WooCommerce 10.4 kræver WordPress 6.8 og ville give modulet et højere, implicit WordPress-krav end pluginets generelle minimum 6.7. Det kunne kun løses ved at hæve ADR-003. Fravalgt.
 - **Indlæse modulet på en for gammel WooCommerce med advarsel:** risiko for delvis funktion. Fravalgt.
 - **Bevare meta ved uninstall (DATABASE.md før ADR-030):** efterlader plugin-ejede data i produkterne, selv om ejeren har valgt fuld sletning. Fravalgt.
 - **Slette meta med SQL eller prefix-match:** i strid med ADR-025's præcise ejerskab og WordPress' meta-cache. Fravalgt.

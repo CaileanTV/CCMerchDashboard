@@ -141,7 +141,7 @@ Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Sett
 
 ## WooCommerce-skærme (fase 17)
 
-Kræver WooCommerce ≥ 10.4. Med en ældre version vises kun en requirements-notice og ingen af skærmene nedenfor (ADR-030).
+Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-notice og ingen af skærmene nedenfor (ADR-030).
 
 - Produktliste: kolonne "Creator" og dropdown-filter.
 - Produkt-redigering (klassisk produktskærm): feltet "Creator" i fanen *General* (select over aktive creators). Det er den **eneste understøttede skrivevej** i fase 17. Gemmes via pluginets domæneservice (validering, capability-tjek `edit_product`, WooCommerce' egen nonce og audit), ikke direkte med `update_meta_data()` (ADR-030).
