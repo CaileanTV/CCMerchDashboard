@@ -8,7 +8,7 @@ import {
 } from '@jest/globals';
 import { act } from 'react';
 
-import { ME, mockApi, response } from '../testing/api';
+import { ME, PROFILE, mockApi, response } from '../testing/api';
 
 import { App } from '../app/App';
 import { mountDashboard } from '../mount';
@@ -34,7 +34,10 @@ describe( 'dashboard app', () => {
 
 	beforeEach( () => {
 		setUrl( '/creator-dashboard/' );
-		mockApi( { 'GET /merchboard/v1/me': () => response( 200, ME ) } );
+		mockApi( {
+			'GET /merchboard/v1/me': () => response( 200, ME ),
+			'GET /merchboard/v1/me/profile': () => response( 200, PROFILE ),
+		} );
 	} );
 
 	afterEach( () => {
@@ -65,9 +68,9 @@ describe( 'dashboard app', () => {
 			'Overview'
 		);
 		expect( container.querySelector( 'h2' )?.textContent ).toBe(
-			'Welcome'
+			'Welcome, Nova'
 		);
-		expect( container.textContent ).toContain( 'Nothing to show yet.' );
+		expect( container.textContent ).toContain( 'Sales data coming soon' );
 		expect(
 			container
 				.querySelector( '.merchboard-skip-link' )
@@ -101,6 +104,7 @@ describe( 'dashboard app', () => {
 
 		const pushState = jest.spyOn( window.history, 'pushState' );
 		click( container.querySelector( 'main a' ) );
+		await flush();
 
 		expect( pushState ).toHaveBeenCalledWith(
 			null,
@@ -227,7 +231,10 @@ describe( 'dashboard app', () => {
 
 describe( 'mountDashboard', () => {
 	beforeEach( () => {
-		mockApi( { 'GET /merchboard/v1/me': () => response( 200, ME ) } );
+		mockApi( {
+			'GET /merchboard/v1/me': () => response( 200, ME ),
+			'GET /merchboard/v1/me/profile': () => response( 200, PROFILE ),
+		} );
 	} );
 
 	it( 'mounts the app into the root element and unmounts it', () => {

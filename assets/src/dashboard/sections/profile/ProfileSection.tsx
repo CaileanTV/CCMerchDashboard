@@ -16,25 +16,9 @@ import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 import { PROFILE_LIMITS, SOCIAL_PLATFORMS } from '../../types/creator';
 import type { Profile, SocialLinks, SocialPlatform } from '../../types/creator';
+import { platformLabel } from './platforms';
 import { errorMessage, validateProfile } from './validation';
 import type { FieldErrors } from './validation';
-
-function platformLabel( platform: SocialPlatform ): string {
-	switch ( platform ) {
-		case 'website':
-			return __( 'Website', 'merchboard' );
-		case 'instagram':
-			return 'Instagram';
-		case 'tiktok':
-			return 'TikTok';
-		case 'youtube':
-			return 'YouTube';
-		case 'x':
-			return 'X';
-		default:
-			return 'Facebook';
-	}
-}
 
 /**
  * Only the fields that differ from the saved profile.

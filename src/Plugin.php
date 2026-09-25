@@ -84,6 +84,17 @@ final class Plugin {
 		register_deactivation_hook( $this->file, array( $this, 'deactivate' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declare_woocommerce_compatibility' ) );
 		add_action( 'plugins_loaded', array( $this, 'boot' ) );
+		// Translations must be loaded on `init` or later (WordPress 6.7+).
+		add_action( 'init', array( $this, 'load_textdomain' ), 0 );
+	}
+
+	/**
+	 * Loads the plugin's own translations from `languages/` (English source
+	 * strings, Danish translation). Script translations are registered with
+	 * the dashboard bundle (DashboardAssets).
+	 */
+	public function load_textdomain(): void {
+		load_plugin_textdomain( 'merchboard', false, dirname( plugin_basename( $this->file ) ) . '/languages' );
 	}
 
 	/**

@@ -23,6 +23,7 @@ use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
+use MerchBoard\Modules\Dashboard\DashboardSections;
 use MerchBoard\Modules\Dashboard\ShellController;
 use MerchBoard\Modules\Dashboard\ShellResponse;
 use MerchBoard\Modules\Settings\SettingsException;
@@ -156,7 +157,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 		wp_set_current_user( $active );
 		$this->request( '/creator-dashboard/' );
 
-		$controller = new ShellController( new DashboardRoute(), $this->service( CreatorContext::class ), new DashboardAssets( sys_get_temp_dir() . '/merchboard-no-build/', 'http://merchboard.test/', $this->service( Logger::class ) ) );
+		$controller = new ShellController( new DashboardRoute(), $this->service( CreatorContext::class ), new DashboardAssets( sys_get_temp_dir() . '/merchboard-no-build/', 'http://merchboard.test/', $this->service( Logger::class ) ), $this->service( DashboardSections::class ) );
 		$response   = $controller->respond();
 
 		self::assertSame( 503, $response->status );
@@ -437,7 +438,8 @@ final class DashboardAccessTest extends IntegrationTestCase {
 		return new ShellController(
 			new DashboardRoute(),
 			$this->service( CreatorContext::class ),
-			new DashboardAssets( $dir, 'http://merchboard.test/wp-content/plugins/merchboard/', $this->service( Logger::class ) )
+			new DashboardAssets( $dir, 'http://merchboard.test/wp-content/plugins/merchboard/', $this->service( Logger::class ) ),
+			$this->service( DashboardSections::class )
 		);
 	}
 

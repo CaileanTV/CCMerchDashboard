@@ -51,12 +51,15 @@ final class DashboardModule implements Module {
 			}
 		);
 
+		$container->set( DashboardSections::class, static fn( Container $c ): DashboardSections => new DashboardSections( $c->get( Logger::class ) ) );
+
 		$container->set(
 			ShellController::class,
 			static fn( Container $c ): ShellController => new ShellController(
 				$c->get( DashboardRoute::class ),
 				$c->get( CreatorContext::class ),
-				$c->get( DashboardAssets::class )
+				$c->get( DashboardAssets::class ),
+				$c->get( DashboardSections::class )
 			)
 		);
 

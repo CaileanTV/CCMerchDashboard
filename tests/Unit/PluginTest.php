@@ -77,6 +77,13 @@ final class PluginTest extends TestCase {
 		self::assertTrue( $this->roles->capabilities( 'administrator' )['merchboard_manage_creators'] );
 	}
 
+	public function test_textdomain_is_loaded_from_the_plugins_languages_folder(): void {
+		Functions\expect( 'plugin_basename' )->once()->with( self::FILE )->andReturn( 'merchboard/merchboard.php' );
+		Functions\expect( 'load_plugin_textdomain' )->once()->with( 'merchboard', false, 'merchboard/languages' );
+
+		$this->plugin()->load_textdomain();
+	}
+
 	public function test_activation_and_deactivation_invalidate_the_rewrite_rules(): void {
 		$this->options->options['rewrite_rules'] = array( 'old' => 'index.php' );
 		$this->plugin()->activate();
@@ -113,6 +120,7 @@ final class PluginTest extends TestCase {
 
 		self::assertSame( 10, has_action( 'plugins_loaded', array( $plugin, 'boot' ) ) );
 		self::assertSame( 10, has_action( 'before_woocommerce_init', array( $plugin, 'declare_woocommerce_compatibility' ) ) );
+		self::assertSame( 0, has_action( 'init', array( $plugin, 'load_textdomain' ) ), 'Translations load on init, not earlier.' );
 	}
 
 	public function test_core_services_are_registered(): void {

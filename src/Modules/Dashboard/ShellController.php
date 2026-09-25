@@ -35,11 +35,12 @@ final class ShellController {
 	/**
 	 * Constructor.
 	 *
-	 * @param DashboardRoute  $route   Route.
-	 * @param CreatorContext  $context Creator access policy.
-	 * @param DashboardAssets $assets  Built frontend assets.
+	 * @param DashboardRoute    $route    Route.
+	 * @param CreatorContext    $context  Creator access policy.
+	 * @param DashboardAssets   $assets   Built frontend assets.
+	 * @param DashboardSections $sections Section registry.
 	 */
-	public function __construct( private DashboardRoute $route, private CreatorContext $context, private DashboardAssets $assets ) {
+	public function __construct( private DashboardRoute $route, private CreatorContext $context, private DashboardAssets $assets, private DashboardSections $sections ) {
 	}
 
 	/**
@@ -112,18 +113,7 @@ final class ShellController {
 			'login_url'     => wp_login_url( $this->route->url() ),
 			'password_url'  => wp_lostpassword_url(),
 			'locale'        => determine_locale(),
-			'sections'      => array(
-				array(
-					'id'    => 'overview',
-					'label' => __( 'Overview', 'merchboard' ),
-					'path'  => '',
-				),
-				array(
-					'id'    => 'profile',
-					'label' => __( 'Profile', 'merchboard' ),
-					'path'  => 'profile',
-				),
-			),
+			'sections'      => $this->sections->for_current_user(),
 		);
 	}
 

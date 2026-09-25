@@ -10,6 +10,7 @@ declare( strict_types=1 );
 
 foreach ( array(
 	'MERCHBOARD_TEST_LOG'     => '',
+	'MERCHBOARD_TEST_ROOT'    => '',
 	'MERCHBOARD_TEST_DB_PORT' => 3306,
 	'DB_NAME'                 => '',
 	'DB_USER'                 => '',

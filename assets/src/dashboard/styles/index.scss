@@ -390,3 +390,61 @@
 	background: transparent;
 	border: 0;
 }
+
+// Phase 15: overview ----------------------------------------------------------
+
+.merchboard-overview {
+	display: grid;
+	gap: var(--merchboard-space-6);
+}
+
+.merchboard-badge {
+	display: inline-block;
+	padding: 0 var(--merchboard-space-2);
+	font-size: var(--merchboard-text-sm);
+	font-weight: 600;
+	border: 1px solid currentcolor;
+	border-radius: var(--merchboard-radius-full);
+}
+
+.merchboard-badge--active {
+	color: var(--merchboard-success);
+	background: var(--merchboard-success-bg);
+}
+
+.merchboard-badge--inactive {
+	color: var(--merchboard-text-muted);
+	background: var(--merchboard-surface-muted);
+}
+
+.merchboard-profile-summary__bio {
+	white-space: pre-line;
+}
+
+.merchboard-profile-summary__links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2) var(--merchboard-space-4);
+	padding: 0;
+	list-style: none;
+}
+
+.merchboard-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: var(--merchboard-space-4);
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.merchboard-kpi__label {
+	margin: 0 0 var(--merchboard-space-2);
+	font-size: var(--merchboard-text-md);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-kpi__empty {
+	margin: 0;
+	font-weight: 500;
+}

@@ -70,6 +70,9 @@ final class DashboardAssets {
 
 		wp_add_inline_script( self::HANDLE, 'window.' . self::BOOTSTRAP_GLOBAL . ' = ' . $json . ';', 'before' );
 
+		// Danish (and future) UI strings from languages/merchboard-{locale}-{md5}.json.
+		wp_set_script_translations( self::HANDLE, 'merchboard', $this->plugin_dir . 'languages' );
+
 		return true;
 	}
 

@@ -19,6 +19,7 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
+use MerchBoard\Modules\Dashboard\DashboardSections;
 use MerchBoard\Modules\Dashboard\ShellController;
 use MerchBoard\Modules\Dashboard\ShellResponse;
 use MerchBoard\Tests\Unit\Support\FakeDatabase;
@@ -93,6 +94,14 @@ final class ShellControllerTest extends TestCase {
 		Functions\when( 'get_bloginfo' )->alias( static fn( string $show ): string => 'charset' === $show ? 'UTF-8' : 'Shop <b>&</b> Co' );
 		Functions\when( 'determine_locale' )->justReturn( 'da_DK' );
 		Functions\when( 'wp_lostpassword_url' )->justReturn( 'https://shop.test/wp-login.php?action=lostpassword' );
+		Functions\when( 'current_user_can' )->alias( fn( string $capability ): bool => in_array( $capability, $this->user_caps[ $this->current_user_id ] ?? array(), true ) );
+		Functions\when( 'wp_strip_all_tags' )->alias( static fn( string $text ): string => strip_tags( $text ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- Test stand-in.
+		Functions\when( 'wp_set_script_translations' )->alias(
+			function ( string $handle, string $domain, string $path ): bool {
+				$this->wp_assets['translations'] = array( $handle, $domain, $path );
+				return true;
+			}
+		);
 		Functions\when( 'language_attributes' )->alias(
 			static function (): void {
 				echo 'lang="en-US"';
@@ -236,6 +245,7 @@ final class ShellControllerTest extends TestCase {
 		self::assertSame( array( 'merchboard-dashboard', $this->plugin_url() . 'build/dashboard.js', array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ), 'abc123', true ), $this->wp_assets['script'] );
 		self::assertSame( array( 'merchboard-dashboard', $this->plugin_url() . 'build/dashboard.css', array(), 'abc123' ), $this->wp_assets['style'] );
 		self::assertSame( array( 'merchboard-dashboard', 'rtl', 'replace' ), $this->wp_assets['style_data'] );
+		self::assertSame( array( 'merchboard-dashboard', 'merchboard', $this->plugin_dir . 'languages' ), $this->wp_assets['translations'], 'Script translations from languages/.' );
 		self::assertSame( 'merchboard-dashboard', $this->wp_assets['inline'][0] );
 		self::assertSame( 'before', $this->wp_assets['inline'][2] );
 
@@ -448,6 +458,6 @@ final class ShellControllerTest extends TestCase {
 	}
 
 	private function controller(): ShellController {
-		return new ShellController( new DashboardRoute(), new CreatorContext( $this->creators, $this->logger ), $this->assets() );
+		return new ShellController( new DashboardRoute(), new CreatorContext( $this->creators, $this->logger ), $this->assets(), new DashboardSections( $this->logger ) );
 	}
 }
