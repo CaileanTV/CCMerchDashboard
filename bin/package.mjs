@@ -17,6 +17,11 @@
  * reading it back.
  *
  * No dependencies: ZIP is written with node:zlib (deflate + crc32).
+ *
+ * Release builds pass the git tag: `npm run package -- --tag v1.2.3`. The tag
+ * must be `v` + the plugin version and point at HEAD, so a release asset can
+ * never carry a different version or commit than its tag
+ * (docs/DEVELOPMENT.md#release).
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -95,8 +100,13 @@ function git( ...args ) {
 	return execFileSync( 'git', args, { cwd: ROOT, encoding: 'utf8' } ).trim();
 }
 
+/** SemVer 2.0 without build metadata, e.g. 1.2.3 or 1.2.3-rc.1. */
+const SEMVER =
+	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?$/;
+
 /**
- * The plugin version; the header and MERCHBOARD_VERSION must agree.
+ * The plugin version. The plugin header, MERCHBOARD_VERSION and package.json
+ * must agree, and the version must be SemVer.
  */
 function version() {
 	const source = readFileSync( join( ROOT, 'merchboard.php' ), 'utf8' );
@@ -104,14 +114,79 @@ function version() {
 	const constant = source.match(
 		/define\(\s*'MERCHBOARD_VERSION',\s*'([^']+)'\s*\)/
 	)?.[ 1 ];
+	const npm = JSON.parse(
+		readFileSync( join( ROOT, 'package.json' ), 'utf8' )
+	).version;
 
-	if ( ! header || header !== constant ) {
+	if ( ! header || header !== constant || header !== npm ) {
 		fail(
-			`plugin header version (${ header }) and MERCHBOARD_VERSION (${ constant }) must match.`
+			`plugin header (${ header }), MERCHBOARD_VERSION (${ constant }) and package.json (${ npm }) must have the same version.`
 		);
 	}
 
+	if ( ! SEMVER.test( header ) ) {
+		fail( `version ${ header } is not SemVer (MAJOR.MINOR.PATCH).` );
+	}
+
 	return header;
+}
+
+/**
+ * The release tag from `--tag <tag>`, or null for a local build.
+ * @param {string[]} args Command line arguments.
+ */
+function releaseTag( args ) {
+	const index = args.indexOf( '--tag' );
+
+	if ( index === -1 ) {
+		return null;
+	}
+
+	const tag = args[ index + 1 ];
+
+	if ( ! tag ) {
+		fail( '--tag needs a value, e.g. --tag v1.2.3.' );
+	}
+
+	return tag;
+}
+
+/**
+ * A release tag must be `v<version>` and point at the commit being packaged.
+ * @param {string} tag           Release tag.
+ * @param {string} pluginVersion Plugin version.
+ */
+function assertTag( tag, pluginVersion ) {
+	if ( tag !== `v${ pluginVersion }` ) {
+		fail(
+			`tag ${ tag } does not match the plugin version (expected v${ pluginVersion }).`
+		);
+	}
+
+	let tagged;
+
+	try {
+		tagged = execFileSync(
+			'git',
+			[
+				'rev-parse',
+				'--verify',
+				'--quiet',
+				`refs/tags/${ tag }^{commit}`,
+			],
+			{
+				cwd: ROOT,
+				encoding: 'utf8',
+				stdio: [ 'ignore', 'pipe', 'ignore' ],
+			}
+		).trim();
+	} catch {
+		fail( `tag ${ tag } does not exist.` );
+	}
+
+	if ( tagged !== git( 'rev-parse', 'HEAD' ) ) {
+		fail( `tag ${ tag } does not point at HEAD.` );
+	}
 }
 
 /**
@@ -316,6 +391,12 @@ function unzip( buffer ) {
 
 function main() {
 	const pluginVersion = version();
+	const tag = releaseTag( process.argv.slice( 2 ) );
+
+	if ( tag !== null ) {
+		assertTag( tag, pluginVersion );
+	}
+
 	assertCleanTree();
 
 	const files = packageFiles();
@@ -380,7 +461,11 @@ function main() {
 	console.log(
 		`package: ${ relative( ROOT, outFile ).replace( /\\/g, '/' ) }`
 	);
-	console.log( `  version:   ${ pluginVersion } (HEAD ${ head })` );
+	console.log(
+		`  version:   ${ pluginVersion } (HEAD ${ head }${
+			tag === null ? '' : `, tag ${ tag }`
+		})`
+	);
 	console.log( `  root:      ${ PLUGIN_DIR }/` );
 	console.log( `  contents:  ${ topLevel.join( ', ' ) }` );
 	console.log(
