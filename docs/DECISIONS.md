@@ -655,7 +655,7 @@ Pålidelig, manipulationssikker og privacy-venlig historik med en ærlig konsist
 - Transaktionsgarantien forudsætter en transaktionel storage engine (InnoDB på MySQL/MariaDB, som er WordPress' default). MyISAM ville ikke rulle tilbage. Fejlen logges så, men ændringen består. MySQL-verifikation sker i fase 7/16. *(Ændret af ADR-024: uden transaktionel engine skrives intet.)*
 - `Transaction` er ikke re-entrant. Fremtidige use cases må ikke indlejre transaktioner.
 - Nye auditerbare hændelser kræver nye `AuditAction`-cases (ingen fri tekst).
-- Audit-retention er et åbent spørgsmål.
+- Audit-retention er et åbent spørgsmål. *(Afklaret for v0.1.0 af ADR-029: ubegrænset opbevaring. En produktionspolitik besluttes før produktion.)*
 
 ---
 
@@ -850,3 +850,35 @@ Roadmap-fase 16 planlagde et workflow på tag `v*` med `composer --no-dev`, `npm
 - ZIP-navnet er fortsat `merchboard-mvp-<version>.zip`. Rodmappen er `merchboard/`, så WordPress opdaterer det installerede plugin uanset filnavnet.
 - Et fejlet workflow opretter ingen release. Et pushet tag flyttes ikke. Rettelser udgives som ny patch-version.
 - Workflowet kan kun verificeres på GitHub. Den første kørsel skal kontrolleres under Actions.
+
+---
+
+# ADR-029: Ubegrænset audit-retention i v0.1.0; produktionspolitik besluttes før produktion
+
+## Date
+2026-09-25
+
+## Status
+Accepteret (fase 16). Besluttet af projektejeren. Supplerer ADR-023 og lukker åbent spørgsmål 10 for v0.1.0. Gælder v0.1.0 og staging. Det er **ikke** en permanent beslutning om retention i produktion.
+
+## Context
+ADR-023 gjorde audit trail til append-only forretningsdata og lod retention stå åben. Åbent spørgsmål 10 (hvor længe skal audit-records bevares, fx ubegrænset, 5 eller 10 år) skulle afklares senest i fase 16, før den første release (`v0.1.0`). Den første release installeres på staging, ikke i produktion. Valget påvirker GDPR-dokumentationen.
+
+## Decision
+> Audit records are retained indefinitely in v0.1.0. No automatic retention/deletion policy is implemented. A production retention policy must be decided before production use.
+
+- I v0.1.0 bevares audit-records ubegrænset. Der er ingen automatisk sletning, ingen WP-Cron og ingen retention-indstilling.
+- Audit-loggens adfærd er uændret. Records slettes kun ved opt-in "slet alle data ved afinstallation" (ADR-025).
+- Før pluginet tages i brug i produktion, skal en retention-politik besluttes (periode, evt. indstilling, GDPR-begrundelse) og registreres i en ny ADR. Implementeringen er en separat opgave.
+
+## Alternatives considered
+- **Fast periode nu (fx 5 eller 10 år) med automatisk sletning:** kræver WP-Cron, en indstilling og tests, og en produktbeslutning om perioden. Ikke nødvendigt for staging. Udskudt til før produktion.
+- **Retention-indstilling i dage (planlagt i ADMIN.md, Settings → Advanced):** samme som ovenfor. Udskudt.
+
+## Reason
+v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstrækkelig dertil, og den mister ingen data. Produktionspolitikken træffes bedst, når kravene til produktion og GDPR kendes.
+
+## Consequences
+- Audit-tabellen vokser uden grænse i v0.1.0. Det er acceptabelt på staging (få records).
+- Produktionsbrug er blokeret, indtil der er besluttet en retention-politik. Beslutningen står under "Next recommended steps" i PROJECT-STATUS.md.
+- Indføres automatisk sletning senere, skal den respektere append-only-princippet (ADR-023). Sletning sker kun efter politikken og aldrig via admin-UI for enkelte records.

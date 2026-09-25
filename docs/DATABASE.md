@@ -148,7 +148,7 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 **Append-only:** `AuditRepository` har kun `append()` og `for_creator()` (læsning til tests og den kommende visning). Der er ingen update eller delete, og ingen admin-funktion ændrer records.
 
-**Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (✅ fase 9, ADR-025), hvor tabellen er med i `Tables::all()`. Uninstall skriver ingen audit-records. Retention-politik (fx automatisk sletning efter N år) er et åbent spørgsmål.
+**Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (✅ fase 9, ADR-025), hvor tabellen er med i `Tables::all()`. Uninstall skriver ingen audit-records. **v0.1.0 har bevidst ingen automatisk retention** (ADR-029): ingen cron og ingen sletning efter N år. En retention-politik for produktion skal besluttes før produktionsbrug.
 
 ### `merchboard_sales` (fase 18)
 

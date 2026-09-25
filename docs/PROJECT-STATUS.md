@@ -164,7 +164,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
   - Subscriber, creator og creator-manager får 403. En rolle med kun `read` + `merchboard_view_logs` får 200 på Audit log og 403 på Overview og Creators (uden WooCommerce; med WooCommerce blokerer WooCommerce' egen wp-admin-regel roller uden `edit_posts`).
   - Ingen notices.
 
-**Bevidst ikke i fase 11:** retention/sletning af records (åbent spørgsmål 10), eksport, tekniske logs i admin og alt fra fase 12+.
+**Bevidst ikke i fase 11:** retention/sletning af records (åbent spørgsmål 10, senere lukket for v0.1.0 af ADR-029), eksport, tekniske logs i admin og alt fra fase 12+.
 
 ### Fase 12 – Creator dashboard: route og sikker shell ✅
 
@@ -296,7 +296,6 @@ Ingen (der er ingen funktionalitet endnu).
 | Genforbindelse midt i en transaktion | Mister `wpdb` forbindelsen midt i en transaktion, genforbinder den og fortsætter uden transaktion. Meget sjældent. | Accepteret. Revurder ved problemer på staging. |
 | Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes senere (ikke gjort i fase 10). |
 | Persistent object cache og migrationslås | Låsen arbejder direkte på databasen og rydder kun sin cache-nøgle. Samspil med fx Redis er ikke testet. | Staging (fase 16), hvis produktionen bruger object cache |
-| Audit-retention | Ubegrænset opbevaring. Ingen politik for automatisk sletning. | Afklares (åbent spørgsmål 10) |
 | Creator med kun `merchboard_view_logs` | En ren creator, der også har fået `merchboard_view_logs` (men ikke `merchboard_manage`), sendes væk fra wp-admin og kan ikke se Audit log (ADR-026). | Giv også `merchboard_manage`, eller revurder reglen, hvis behovet opstår |
 | Sessioner ved deaktivering | En deaktiveret creator er stadig logget ind i WordPress. Dashboardet giver 403 fra næste request, men sessionen afsluttes ikke. | Accepteret. Valgfri "log alle sessioner ud" er en fremtidig forbedring. |
 | Standard-slug og eksisterende side | Slug-valideringen gælder kun ændringer i Settings. Findes en side med slug `creator-dashboard` allerede ved aktivering, vinder dashboardet (reglen ligger øverst), og siden kan ikke nås på sin URL. | Vælg en anden slug i Settings. Overvej en advarsel på Overview. |
@@ -336,7 +335,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 7. ✅ **UI-sprog – lukket (fase 15):** Engelske kildestrenge og dansk oversættelse via WordPress i18n. Dashboardet vises på sitets sprog, admin på brugerens.
 8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
 9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). Fase 7 løste behovet for en rigtig database med integrationstestene, så spørgsmålet haster ikke længere. (fase 16)
-10. **Audit-retention:** Hvor længe skal audit-records bevares (fx ubegrænset, 5 år, 10 år)? Påvirker GDPR-dokumentation. Fase 11 viser records, men sletter ingen. (før produktion, senest fase 16)
+10. ✅ **Audit-retention – lukket for v0.1.0 (ADR-029):** Audit-records bevares ubegrænset i v0.1.0, uden automatisk retention eller sletning. Det er ikke en produktionsbeslutning: en retention-politik for produktion (periode og GDPR-begrundelse) skal besluttes før produktionsbrug og registreres i en ny ADR.
 
 ## Next recommended steps
 
@@ -344,5 +343,5 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 2. ✅ CHANGELOG.md har sektionen `## [0.1.0] - 2026-09-25` (release notes til `v0.1.0`). Push, og vent på grøn CI.
 3. Tag `v0.1.0` på `main`, og tjek release-workflowet under Actions. Resultatet skal være en draft-release med ZIP og `.sha256`.
 4. Installér draft-ZIP'en på staging (`devpage.ccmerch.dk`) efter [tjeklisten](DEVELOPMENT.md#staging). Notér MySQL/MariaDB-version og charset (åbent spørgsmål 2), og udgiv releasen.
-5. Afklar audit-retention (åbent spørgsmål 10) før produktion.
+5. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
 6. Fase 17 (WooCommerce foundation) jf. docs/ROADMAP.md.

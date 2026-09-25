@@ -45,9 +45,10 @@ Admin-modulet (menu), Creators-modulet (`CreatorRepository`, `UserAccounts`) og 
 Se [TESTING.md](../TESTING.md) under "Fase 11".
 
 ## Known limitations
-- Ingen retention: records bevares, indtil opt-in-uninstall sletter alt (åbent spørgsmål 10).
+- Ingen automatisk retention i v0.1.0 (ADR-029): records bevares ubegrænset, indtil opt-in-uninstall sletter alt.
 - Creator-filteret sættes via links i listen (ingen creator-select), og der er ingen fritekstsøgning.
 - En ugyldig række i tabellen (fx ukendt action fra en fremtidig version) stopper visningen med en neutral fejl og logges (fail closed).
 
 ## Future improvements
-- Retention-politik og evt. CSV-eksport, hvis der opstår et konkret behov.
+- Retention-politik for produktion (skal besluttes før produktionsbrug, ADR-029).
+- Evt. CSV-eksport, hvis der opstår et konkret behov.

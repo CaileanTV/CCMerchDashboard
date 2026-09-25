@@ -117,7 +117,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 | --- | --- |
 | General | Branding (logo, primærfarve, navn vist i dashboard). Dashboard-slug er implementeret (fase 12). |
 | Access | Hvilke roller ud over administrator der får admin-caps (fx `shop_manager`). Login-redirect og wp-admin-blokering for rene creators er altid slået til (ADR-026). Til/fra-knapper tilføjes kun ved et konkret behov. |
-| Advanced | Audit-retention (dage), "Slet alle data ved afinstallation" (fra). Teknisk log-niveau styres af `WP_DEBUG`/filteret `merchboard_log_level` (ADR-021). |
+| Advanced | "Slet alle data ved afinstallation" (fra). En indstilling for audit-retention (dage) findes ikke i v0.1.0 (ADR-029) og afhænger af den retention-politik, der skal besluttes før produktion. Teknisk log-niveau styres af `WP_DEBUG`/filteret `merchboard_log_level` (ADR-021). |
 
 Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Settings\Settings::sanitize()` (whitelist af nøgler og typer), så en forfalsket eller korrupt værdi aldrig giver en uventet indstilling.
 
@@ -130,7 +130,7 @@ Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Sett
 - **Filtre (dokumenteret scope):** hændelse (`AuditAction`-select), creator (via filterlinks) og periode (fra/til, dage i sitets tidszone, omregnet til UTC-grænser). Filtrene er GET-parametre på en read-only side og har derfor ingen nonce. Ugyldige værdier ignoreres med en notice og når aldrig SQL. Gyldige værdier går kun som `prepare()`-argumenter (`AuditRepository::paginate`).
 - **Paginering:** 20 pr. side i databasen (`LIMIT/OFFSET` og `COUNT(*)`), så hele tabellen hentes aldrig.
 - **Tekniske logs** vises ikke her. Med WooCommerce linkes til WooCommerce → Status → Logs (source `merchboard`) for brugere med `manage_woocommerce`. Uden WooCommerce står der, at de ligger i PHP's fejllog.
-- **Sletning:** Records slettes kun ved opt-in-uninstall (ADR-025). Der er ingen retention endnu (åbent spørgsmål 10).
+- **Sletning:** Records slettes kun ved opt-in-uninstall (ADR-025). I v0.1.0 bevares records ubegrænset uden automatisk sletning (ADR-029). En retention-politik for produktion besluttes før produktionsbrug.
 
 | | **Business audit trail** | **Teknisk logging** |
 | --- | --- | --- |
