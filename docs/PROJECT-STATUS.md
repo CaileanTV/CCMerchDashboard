@@ -266,6 +266,8 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ## In progress
 
+- **Lokalt testmiljø (2026-09-26):** LocalWP-sitet Merch Dashboard Local er oprettet, verificeret og udpeget som projektets lokale WordPress/WooCommerce-testmiljø (åbent spørgsmål 9 er lukket). Der er endnu ingen testdata.
+
 - **Fase 17 – WooCommerce foundation:** Beslutningerne D1-D6 er lukket i ADR-030 (trin 0, kun dokumentation). Implementeringen er ikke startet. Næste trin er at undersøge WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit, duplicate) mod WooCommerce 10.3.x (laveste understøttede version) uden at skrive kode. D1 er rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8.
 
 ## Planned
@@ -336,7 +338,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
 7. ✅ **UI-sprog – lukket (fase 15):** Engelske kildestrenge og dansk oversættelse via WordPress i18n. Dashboardet vises på sitets sprog, admin på brugerens.
 8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
-9. **Lokal persistent WordPress:** Er Playground (flygtigt) tilstrækkeligt, eller ønskes et dedikeret LocalWP-site? Det skal i så fald udpeges eksplicit (Project Isolation). Fase 7 løste behovet for en rigtig database med integrationstestene, så spørgsmålet haster ikke længere. (fase 16)
+9. ✅ **Lokal persistent WordPress – lukket (2026-09-26):** Projektejeren har udpeget LocalWP-sitet **Merch Dashboard Local** (`http://merchboard.local`: WordPress 7.1.2, PHP 8.2.29, MariaDB 10.11.18, WooCommerce 10.3.8, pluginet via junction til repoet) som projektets officielle lokale WordPress/WooCommerce-testmiljø. Playground bruges fortsat til flygtige smoke-tests. Andre LocalWP-sites er uden for scope, og staging og produktion må ikke bruges af AI-agenter. Se [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local).
 10. ✅ **Audit-retention – lukket for v0.1.0 (ADR-029):** Audit-records bevares ubegrænset i v0.1.0, uden automatisk retention eller sletning. Det er ikke en produktionsbeslutning: en retention-politik for produktion (periode og GDPR-begrundelse) skal besluttes før produktionsbrug og registreres i en ny ADR.
 
 ## Next recommended steps

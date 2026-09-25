@@ -78,7 +78,25 @@ Dashboardet skal bygges (`npm run build`), før Playground kan vise det. Ellers 
 - Persistent site-data på Windows-hosts virker ikke pålideligt: WooCommerce-installationen fejler med "Operation not permitted" ved mappe-rename på en host-mount. Derfor bruges et flygtigt site.
 - Første start downloader WordPress og WooCommerce (kræver netværk og tager 1-3 minutter).
 
-**LocalWP (valgfrit):** Et persistent MySQL-site kan bruges ved at lægge et symlink/junction fra et **dedikeret** LocalWP-sites `wp-content/plugins/merchboard` til dette repo. Det skal besluttes eksplicit af projektejeren; se Project Isolation i [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md).
+## Lokal WordPress (LocalWP): Merch Dashboard Local
+
+Projektets **officielle, persistente lokale WordPress/WooCommerce-testmiljø** (udpeget af projektejeren 2026-09-26, lukker åbent spørgsmål 9). Det bruges til WooCommerce-integrationen (fase 17 og frem): produkter, kategorier, varianter, produktmeta, WooCommerce-admin, REST, CSV-import og duplicate mod en rigtig MariaDB. Playground bruges fortsat til hurtige, flygtige smoke-tests med en reproducerbar blueprint.
+
+| | |
+| --- | --- |
+| Site-navn (LocalWP) | `Merch Dashboard Local` |
+| URL | `http://merchboard.local` |
+| Site-mappe | `%USERPROFILE%\Local Sites\merch-dashboard-local` (WordPress i `app\public`) |
+| Miljø | LocalWP 10.1.2, "Custom": PHP 8.2.29, nginx 1.26.1, MariaDB 10.11.18 (utf8mb4, InnoDB) |
+| WordPress | 7.1.2 (LocalWP's aktuelle version, over pluginets minimum 6.7) |
+| WooCommerce | 10.3.8 (installeret med WP-CLI fra wordpress.org, ADR-030's referenceversion) |
+| Plugin | Junction `app\public\wp-content\plugins\merchboard` → dette repo. Ingen kopi af koden, og ændringer slår igennem med det samme. `npm run build` er nødvendig for dashboardet |
+
+- **Opsætning (allerede gjort, 2026-09-26):** Sitet blev oprettet fra bunden i LocalWP's brugerflade. Der blev ikke importeret data eller kopieret noget fra andre sites. WooCommerce 10.3.8 og junctionen blev lagt ind via sitets WP-CLI, og begge plugins blev aktiveret. Verificeret: schema 3, rolleversion 2, de tre plugin-tabeller (InnoDB), creator-rollen med præcis `read` + `merchboard_access_dashboard` (ingen produktrettigheder), og `WooCommerceModule` bootet med WooCommerce 10.3.8 uden notice. Ingen fatal errors.
+- **WP-CLI:** Brug LocalWP's "Open site shell" for sitet. Den sætter sitets eget miljø (`app\.envrc`, genereret af LocalWP: `PHPRC`/`MYSQL_HOME` for netop dette site, sitets PHP og LocalWP's WP-CLI). Kør kun WP-CLI med `--path` til dette sites `app\public`.
+- **Admin-login:** Oprettet af projektejeren ved sitets oprettelse. Credentials ligger aldrig i repoet.
+- **Testdata:** Sitet er tomt (ingen creators, produkter, kategorier eller ordrer). Testdata til fase 17 oprettes først, når projektejeren beder om det.
+- **Isolation:** Kun dette site hører til projektet. Andre LocalWP-sites og deres databaser, uploads, plugins, themes og credentials er uden for scope og må hverken åbnes, listes, kopieres eller ændres (Project Isolation i [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md)). Staging (`devpage.ccmerch.dk`) og produktion må ikke bruges af AI-agenter, heller ikke som erstatning for dette miljø.
 
 ## Installerede dependencies
 

@@ -11,7 +11,7 @@ Projektet må **kun** bruge:
 1. det GitHub-repository, projektet er forbundet til (`origin` → `github.com/CaileanTV/CCMerchDashboard`)
 2. projektets egne filer (det repository, der er åbnet i editoren: `CCMerchDashboard`)
 3. projektets egne lokale dependencies (`vendor/`, `node_modules/`, `.tools/`)
-4. det WordPress-miljø, der eksplicit tilhører projektet (Playground via `npm run wp:start`, eller et LocalWP-site, som projektejeren eksplicit har udpeget)
+4. de WordPress-miljøer, der eksplicit tilhører projektet: Playground via `npm run wp:start` og LocalWP-sitet **Merch Dashboard Local** (`http://merchboard.local`), som projektejeren har udpeget 2026-09-26 (se [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local))
 5. eksterne services, som senere bliver eksplicit godkendt som en del af projektets arkitektur (registreret som ADR i [DECISIONS.md](DECISIONS.md))
 
 Alt andet er **off-limits**. Det omfatter andre WordPress-projekter, LocalWP-sites, WooCommerce-sites, Git-repositories, tidligere projekter, testprojekter, plugins, themes, kundeprojekter, lokale databaser, udviklingsmiljøer, cloud storage, connectors og eksterne konti. Intet af dette må bruges som datakilde eller inspirationskilde uden projektejerens eksplicitte tilladelse.
@@ -40,7 +40,9 @@ Du må **ikke**:
 
 Det gælder også, selvom et andet projekt ser relateret eller nyttigt ud. Antag aldrig, at et andet lokalt projekt er en tidligere version, template, backup eller et søsterprojekt. **Kun dette repository er source of truth.**
 
-**LocalWP:** Hvis projektet engang kobles til et LocalWP-site, må kun det site, som projektejeren eksplicit har udpeget og dokumenteret i [DEVELOPMENT.md](DEVELOPMENT.md), bruges. Andre sites må hverken startes, ændres eller læses, og deres data og konfiguration må ikke kopieres. Hvis det er uklart, hvilket site der hører til projektet: **STOP og spørg**, før du gør noget, der kan påvirke en WordPress-installation eller database.
+**LocalWP:** Projektets eneste LocalWP-site er **Merch Dashboard Local** (`http://merchboard.local`, mappen `Local Sites\merch-dashboard-local`), udpeget af projektejeren og dokumenteret i [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local). Kun det site må bruges. Find det ud fra dets egen mappe og konfiguration (`app\.envrc`), aldrig ved at liste LocalWP's sites. Andre sites må hverken startes, ændres, listes eller læses, og deres data og konfiguration må ikke kopieres. Hvis det er uklart, om noget hører til Merch Dashboard Local: **STOP og spørg**, før du gør noget, der kan påvirke en WordPress-installation eller database.
+
+**Staging og produktion:** AI-agenter må ikke tilgå staging (`devpage.ccmerch.dk`) eller produktion (ingen login, credentials, SSH, fjern-WP-CLI eller databaseadgang), heller ikke som erstatning for det lokale testmiljø. Test på staging udføres af projektejeren.
 
 **Hvis du finder noget relevant uden for projektet**, må du kun skrive: *"Jeg har identificeret noget uden for projektets scope, som potentielt kunne være relevant, men jeg har ikke brugt det."* Vent derefter på eksplicit instruktion.
 
