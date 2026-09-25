@@ -30,3 +30,8 @@
 /package-lock.json export-ignore
 /composer.lock export-ignore
 /phpunit.xml.dist export-ignore
+/phpunit.integration.xml.dist export-ignore
+/assets/src export-ignore
+/tsconfig.json export-ignore
+/jest.config.js export-ignore
+/composer.json export-ignore

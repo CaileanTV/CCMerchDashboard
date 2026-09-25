@@ -1,30 +1,43 @@
-# Files excluded from the distributed plugin zip (roadmap phase 16).
-# The plugin needs no vendor/ at runtime (own autoloader, ADR-017).
+# Files excluded from the distributed plugin ZIP.
+#
+# The package itself is built from an allowlist by bin/package.mjs
+# (`npm run package`): merchboard.php, uninstall.php, src/, templates/,
+# languages/, assets/js/ and build/. Keep this list in sync with it for tools
+# that read .distignore (e.g. `wp dist-archive`). The plugin needs no vendor/
+# at runtime (own autoloader, ADR-017).
 /.git
 /.github
 /.tools
 /.phpunit.cache
+/.phpunit.result.cache
+/.phpcs-cache
+/.eslintcache
+/.stylelintcache
+/coverage
+/dist
 /bin
 /docs
 /node_modules
 /tests
 /vendor
+/assets/src
 /.distignore
 /.editorconfig
 /.gitattributes
 /.gitignore
 /.nvmrc
 /.prettierignore
-/.phpcs-cache
 /blueprint.json
 /CLAUDE.md
 /composer.json
 /composer.lock
 /eslint.config.cjs
+/jest.config.js
 /package.json
 /package-lock.json
 /phpcs.xml.dist
 /phpstan.neon.dist
 /phpunit.xml.dist
 /phpunit.integration.xml.dist
+/tsconfig.json
 /README.md

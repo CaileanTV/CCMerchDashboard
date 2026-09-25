@@ -12,6 +12,7 @@
     "composer": "node bin/composer.mjs",
     "build": "wp-scripts build dashboard=./assets/src/dashboard/index.tsx --output-path=build",
     "i18n": "npm run build && node bin/composer.mjs i18n",
+    "package": "npm run build && node bin/package.mjs",
     "start": "wp-scripts start dashboard=./assets/src/dashboard/index.tsx --output-path=build",
     "typecheck": "tsc -p tsconfig.json",
     "lint:js": "wp-scripts lint-js",
