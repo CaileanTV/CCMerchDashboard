@@ -52,6 +52,7 @@ node bin/composer.mjs install
 | `npm run typecheck` | TypeScript strict-typetjek af `assets/src` (`tsc --noEmit`) |
 | `npm run build` / `npm run start` | Bygger dashboardet til `build/` (produktion) / bygger og overvåger (udvikling) |
 | `npm run i18n` | Bygger dashboardet og regenererer `languages/`: POT (PHP, templates og `build/`), opdaterer PO, kompilerer MO og JS-JSON (`wp-cli/i18n-command`) |
+| `npm run package` | Bygger dashboardet og den installérbare plugin-ZIP `dist/merchboard-<udgave>-<version>.zip` (se [Distributionspakke](#distributionspakke)) |
 | `npm run test:integration` | Integrationstests mod rigtig WordPress og MariaDB/MySQL (se [TESTING.md](TESTING.md#integrationstests-fase-7)) |
 | `node bin/composer.mjs check` | PHPCS + PHPStan + PHPUnit |
 | `npm run format` | Prettier-formattering af JS/JSON/Markdown m.m. |
@@ -146,9 +147,34 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 ## Build og deploy (plan)
 
 - **Build:** `npm run build` genererer `build/` (JS/CSS + `*.asset.php` med dependencies og versionshash). PHP kræver intet build-trin.
-- **Distribution:** En release-zip bygges i CI ud fra et git-tag (`v*`). Den indeholder kun runtime-filer: `merchboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, og `build/`. **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release. `.distignore` definerer udelukkelser. Planlagt i roadmap-fase 16.
+- **Distribution:** Den installérbare ZIP bygges med `npm run package` (✅ MVP-checkpoint, se [Distributionspakke](#distributionspakke)). En automatisk release på git-tag (`v*`) i CI er planlagt i roadmap-fase 16 og skal genbruge `bin/package.mjs`. **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release.
 - **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `MERCHBOARD_VERSION` og `package.json`.
 - **Miljøer:** local (Playground), staging (MySQL og en kopi af WooCommerce **uden** kunde-PII) og production.
+
+## Distributionspakke
+
+**Byg:** `npm run package` → `dist/merchboard-mvp-<version>.zip` (`dist/` er gitignored). Versionen læses fra plugin-headeren, som skal stemme med `MERCHBOARD_VERSION`. Kommandoen kører `npm run build` og derefter `bin/package.mjs` (Node, ingen dependencies).
+
+**Indhold (allowlist), i én rodmappe `merchboard/`:**
+
+| Sti | Hvorfor |
+| --- | --- |
+| `merchboard.php`, `uninstall.php` | Plugin-entry og opt-in-afinstallation |
+| `src/` | Al PHP-kode inkl. egen autoloader (ADR-017) |
+| `templates/` | Dashboard-shell og 403-side |
+| `assets/js/` | Admin-scripts uden build (brugersøgning i creator-formularen) |
+| `build/` | Dashboardets bundle: `dashboard.js`, `dashboard.css`, `dashboard-rtl.css` og `dashboard.asset.php`. Uden source maps |
+| `languages/` | `merchboard.pot`, `merchboard-da_DK.po`/`.mo` og JS-oversættelsen (`merchboard-da_DK-<md5(build/dashboard.js)>.json`) |
+
+**Aldrig med:** `vendor/` (ingen runtime-dependencies), `node_modules/`, `assets/src/` (TypeScript-kilder og Jest-tests), `tests/`, `docs/`, `bin/`, `.git*`, `.github/`, `.tools/`, konfiguration (`composer.*`, `package*.json`, `tsconfig.json`, `jest.config.js`, lint/test-konfiguration), caches, logs, databaser, `.env` og credentials. `.distignore` og `export-ignore` i `.gitattributes` er holdt i sync med allowlisten.
+
+**Sikkerhedsnet i scriptet:** Det afbryder, hvis runtime-filerne afviger fra `HEAD` (ændrede eller utrackede filer i `src/`, `templates/`, `languages/`, `assets/js/` eller hovedfilerne), hvis en påkrævet runtime-fil mangler (fx bundle, MO eller JS-oversættelse), eller hvis en forbudt fil slipper med (fx `.map`, `.ts`, `vendor/`, `tests/`, `.env`, `composer.json`).
+
+**Reproducerbar:** Samme `HEAD` og samme build giver byte-identisk ZIP (sorterede entries, tidsstempel fra `HEAD`-committen, faste rettigheder). Scriptet udskriver sti, version, filantal, størrelse og SHA-256.
+
+**Validering:** Scriptet læser ZIP'en tilbage (CRC og indhold pr. fil, alt under `merchboard/`, gyldig plugin-header). Ved MVP-checkpointet blev pakken desuden åbnet med PHP `ZipArchive` (`CHECKCONS`) og pakket ud med .NET `Expand-Archive`, alle filer var byte-identiske med kilden, og den udpakkede mappe blev kørt i Playground som eneste plugin-kopi (MVP-flow uden fejl).
+
+**Manuel installation:** WordPress → Plugins → Tilføj nyt → Upload plugin → vælg ZIP'en → Installér → Aktivér. Kræver PHP ≥ 8.2 og WordPress ≥ 6.7. WooCommerce er valgfrit. Efter aktivering: Merch Dashboard i admin-menuen. Creator-dashboardet ligger på `/creator-dashboard/` (eller `/?merchboard_dashboard=1` uden pretty permalinks).
 
 ## Git-workflow
 

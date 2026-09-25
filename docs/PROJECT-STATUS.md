@@ -245,6 +245,12 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 **Bevidst ikke i fase 15:** `/me/overview` og rigtige nøgletal (fase 20), ikoner i navigationen (intet ikonsæt endnu), lazy-loading af sektioner, oversættelse af WordPress' egne strenge (core-sprogpakke) og alt fra fase 16.
 
+### MVP-checkpoint – distributionspakke ✅
+
+- [x] `npm run package` → `dist/merchboard-mvp-0.1.0.zip` via `bin/package.mjs` (allowlist, deterministisk, fejler ved manglende eller forbudte filer og ved afvigelse fra `HEAD`). Se [DEVELOPMENT.md](DEVELOPMENT.md#distributionspakke).
+- [x] Konflikt løst (projektejerens valg: allowlist): DEVELOPMENT.md manglede `assets/js/`, som bruges ved runtime, og `.distignore` udelukkede ikke fase 13's `assets/src/`, `tsconfig.json` og `jest.config.js`. Begge er nu i sync med allowlisten, ligesom `export-ignore` i `.gitattributes`. `vendor/` er bekræftet unødvendig (ADR-017).
+- [x] Pakken er valideret: 91 filer i `merchboard/`, ingen forbudte filer, ingen secrets eller source maps, `php -l` af alle PHP-filer, PHP `ZipArchive` `CHECKCONS`, .NET-udpakning byte-identisk og Playground med den udpakkede pakke som plugin (MVP-flowet på dansk uden fejl). Manuel WordPress-installation udføres af projektejeren.
+
 ## In progress
 
 Intet.
