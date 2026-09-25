@@ -1,0 +1,989 @@
+# Copyright (C) 2026 CC Merch
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Merch Dashboard 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/CaileanTV/CCMerchDashboard/issues\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-09-25T19:14:06+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: merchboard\n"
+
+#. Plugin Name of the plugin
+#: merchboard.php:3
+#: src/Modules/Admin/AdminMenu.php:48
+#: src/Modules/Admin/AdminMenu.php:49
+#: src/Modules/Admin/OverviewPage.php:78
+#: src/Modules/Creators/Admin/UserProfileSection.php:61
+msgid "Merch Dashboard"
+msgstr ""
+
+#. Description of the plugin
+#: merchboard.php:4
+msgid "Creator and merchandise management: WordPress admin tools and a secure creator dashboard."
+msgstr ""
+
+#. Author of the plugin
+#: merchboard.php:8
+msgid "CC Merch"
+msgstr ""
+
+#: src/Core/Http/RestController.php:62
+#: src/Core/Http/RestController.php:76
+msgid "You must be logged in."
+msgstr ""
+
+#: src/Core/Http/RestController.php:65
+#: src/Core/Http/RestController.php:79
+#: src/Modules/Dashboard/Rest/MeController.php:176
+msgid "You do not have access to this resource."
+msgstr ""
+
+#: src/Core/Http/RestController.php:114
+msgid "Something went wrong. Please try again later."
+msgstr ""
+
+#: src/Core/Lifecycle/Installer.php:92
+msgid "Merch Dashboard could not update its database tables. The update is retried automatically. Technical details are in the log (WooCommerce → Status → Logs, source \"merchboard\", or the server error log)."
+msgstr ""
+
+#: src/Core/Requirements.php:101
+msgid "Merch Dashboard is not running."
+msgstr ""
+
+#. translators: 1: software name (PHP or WordPress), 2: required version, 3: current version.
+#: src/Core/Requirements.php:109
+#, php-format
+msgid "%1$s %2$s or later is required. Current version: %3$s."
+msgstr ""
+
+#: src/Modules/Admin/AdminMenu.php:59
+msgid "Merch Dashboard Overview"
+msgstr ""
+
+#: src/Modules/Admin/AdminMenu.php:60
+#: src/Modules/Dashboard/DashboardSections.php:54
+msgid "Overview"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:40
+msgid "Creator created"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:41
+msgid "Creator updated"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:42
+msgid "Creator activated"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:43
+msgid "Creator deactivated"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:44
+msgid "WordPress user linked"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:45
+msgid "WordPress user unlinked"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:46
+msgid "Settings changed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:90
+msgid "WordPress user: none"
+msgstr ""
+
+#. translators: %s: user label or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:92
+#, php-format
+msgid "WordPress user: %s"
+msgstr ""
+
+#. translators: %s: creator status.
+#: src/Modules/Admin/AuditLogFormatter.php:95
+#, php-format
+msgid "Status: %s"
+msgstr ""
+
+#. translators: %s: creator status.
+#: src/Modules/Admin/AuditLogFormatter.php:98
+#, php-format
+msgid "Previous status: %s"
+msgstr ""
+
+#. translators: %s: comma-separated field names.
+#: src/Modules/Admin/AuditLogFormatter.php:101
+#, php-format
+msgid "Changed: %s"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:104
+msgid "Reason: the WordPress user was deleted"
+msgstr ""
+
+#. translators: %s: reason code.
+#: src/Modules/Admin/AuditLogFormatter.php:106
+#, php-format
+msgid "Reason: %s"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:109
+msgid "Setting: delete all data when the plugin is deleted"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:110
+msgid "Setting: creator dashboard URL slug"
+msgstr ""
+
+#. translators: %s: setting name.
+#: src/Modules/Admin/AuditLogFormatter.php:112
+#, php-format
+msgid "Setting: %s"
+msgstr ""
+
+#. translators: %s: previous setting value.
+#: src/Modules/Admin/AuditLogFormatter.php:116
+#, php-format
+msgid "Previous value: %s"
+msgstr ""
+
+#. translators: %s: new setting value.
+#: src/Modules/Admin/AuditLogFormatter.php:119
+#, php-format
+msgid "New value: %s"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:121
+msgid "New value: enabled"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:121
+msgid "New value: disabled"
+msgstr ""
+
+#. translators: %d: user id.
+#: src/Modules/Admin/AuditLogFormatter.php:139
+#, php-format
+msgid "#%d (no longer exists)"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:154
+#: src/Modules/Admin/OverviewPage.php:136
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
+#: build/dashboard.js:2
+msgid "Active"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:154
+#: src/Modules/Admin/OverviewPage.php:137
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
+#: build/dashboard.js:2
+msgid "Inactive"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:173
+msgid "display name"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:174
+msgid "bio"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:175
+msgid "social links"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:83
+msgid "Time"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:84
+#: src/Modules/Admin/AuditLogPage.php:235
+msgid "Event"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:85
+#: src/Modules/Creators/Admin/UserProfileSection.php:62
+msgid "Creator"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:86
+msgid "By"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:87
+msgid "Details"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:134
+#: src/Modules/Admin/OverviewPage.php:105
+msgid "No audit records yet."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:135
+msgid "No audit records match the filter."
+msgstr ""
+
+#. translators: %d: creator id.
+#: src/Modules/Admin/AuditLogListTable.php:176
+#, php-format
+msgid "Creator #%d (not found)"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:186
+msgid "(filter)"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogListTable.php:198
+msgid "System"
+msgstr ""
+
+#. translators: %d: user id.
+#: src/Modules/Admin/AuditLogListTable.php:205
+#, php-format
+msgid "User #%d (no longer exists)"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:100
+msgid "Merch Dashboard Audit Log"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:101
+#: src/Modules/Admin/AuditLogPage.php:191
+msgid "Audit log"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:184
+msgid "Sorry, you are not allowed to view the Merch Dashboard audit log."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:192
+msgid "Business changes to creators and settings: who changed what, and when. Records cannot be changed or deleted here."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:195
+msgid "Some filter values were invalid and have been ignored."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:210
+msgid "The audit log could not be read. Details are in the technical log."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:237
+msgid "All events"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:250
+msgid "From"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:256
+msgid "To"
+msgstr ""
+
+#. translators: %s: creator id.
+#: src/Modules/Admin/AuditLogPage.php:264
+#, php-format
+msgid "Creator #%s"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:267
+msgid "Filter"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:270
+msgid "Clear filters"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:280
+msgid "Technical logs (errors and diagnostics) are not part of the audit log."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:292
+msgid "View them under WooCommerce → Status → Logs (source \"merchboard\")."
+msgstr ""
+
+#: src/Modules/Admin/AuditLogPage.php:294
+msgid "Without WooCommerce they are written to the PHP error log (debug.log)."
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:74
+msgid "Sorry, you are not allowed to access Merch Dashboard."
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:95
+msgid "Recent activity"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:100
+msgid "The audit log could not be read. See the technical log."
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:114
+msgid "View audit log"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:121
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:84
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:224
+msgid "Creators"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:128
+msgid "Creator data could not be read. See the technical log."
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:138
+msgid "Total"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:139
+msgid "Linked to a WordPress user"
+msgstr ""
+
+#. translators: %d: number of creators.
+#: src/Modules/Admin/OverviewPage.php:146
+#, php-format
+msgid "%d creator is linked to a WordPress user that no longer exists. It grants no access; unlink it on the creator's edit screen."
+msgid_plural "%d creators are linked to a WordPress user that no longer exists. They grant no access; unlink them on the creators' edit screens."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Modules/Admin/OverviewPage.php:158
+msgid "Manage creators"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:171
+msgid "Update failed; retried automatically. See the technical log."
+msgstr ""
+
+#. translators: 1: installed schema version, 2: expected schema version.
+#: src/Modules/Admin/OverviewPage.php:174
+#, php-format
+msgid "Update pending (version %1$d of %2$d)"
+msgstr ""
+
+#. translators: %d: schema version.
+#: src/Modules/Admin/OverviewPage.php:177
+#, php-format
+msgid "Up to date (version %d)"
+msgstr ""
+
+#. translators: %s: WooCommerce version.
+#: src/Modules/Admin/OverviewPage.php:182
+#, php-format
+msgid "Active (%s)"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:183
+msgid "Not active (optional for now)"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:185
+msgid "System status"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:187
+msgid "Plugin version"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:188
+msgid "Database schema"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:190
+msgid "Transaction support"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:192
+msgid "Available"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:193
+msgid "Not available: creator changes are disabled until the tables use InnoDB."
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:195
+msgid "Roles and capabilities"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:195
+msgid "Update pending"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:195
+msgid "Up to date"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:196
+msgid "WooCommerce"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:198
+#: src/Modules/Settings/Admin/SettingsPage.php:119
+msgid "Data on uninstall"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:200
+msgid "DELETED when the plugin is deleted"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:201
+msgid "Kept when the plugin is deleted"
+msgstr ""
+
+#: src/Modules/Admin/OverviewPage.php:206
+#: src/Modules/Settings/Admin/SettingsPage.php:71
+msgid "Settings"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorAdminActions.php:212
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:134
+msgid "Sorry, you are not allowed to manage creators."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorAdminActions.php:226
+#: src/Modules/Settings/Admin/SettingsActions.php:98
+msgid "The link you followed has expired. Please try again."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:149
+msgid "Creator changes are disabled: the Merch Dashboard database tables use a storage engine without transaction support (for example MyISAM), so a change and its audit record could not be saved together. Convert the tables to InnoDB. Details are in the log."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:158
+msgid "Creator not found"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:159
+msgid "Back to creators"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:178
+msgid "Creator created."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:179
+msgid "Creator updated."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:180
+msgid "Creator activated."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:181
+msgid "Creator deactivated."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:182
+#: src/Modules/Settings/Admin/SettingsPage.php:87
+msgid "No changes were made."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:183
+msgid "The creator does not exist."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:184
+msgid "You are not allowed to manage creators."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:185
+msgid "Enter a display name of 1 to 191 characters."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:186
+msgid "Choose a valid status."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:187
+msgid "The selected WordPress user does not exist."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:188
+msgid "The selected WordPress user is already linked to another creator."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:189
+msgid "A technical error occurred. Please check the creator and try again later."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:225
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:244
+msgid "Add New Creator"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:244
+msgid "Edit Creator"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:245
+msgid "← Back to creators"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:253
+#: src/Modules/Creators/Admin/CreatorsListTable.php:67
+#: build/dashboard.js:3
+msgid "Display name"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:257
+#: src/Modules/Creators/Admin/CreatorsListTable.php:69
+msgid "Status"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:263
+msgid "Inactive creators keep their data but will not get dashboard access."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:266
+#: src/Modules/Creators/Admin/CreatorsListTable.php:68
+msgid "WordPress user"
+msgstr ""
+
+#. translators: %d: WordPress user id.
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:276
+#, php-format
+msgid "Linked to user #%d, which no longer exists. Clear the field to unlink."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:278
+msgid "Open WordPress user profile"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:281
+msgid "Type the login of the account that may use this creator (suggestions appear after two characters), or leave the field empty for no WordPress user. Linking adds the \"Merch Dashboard Creator\" role; unlinking removes it. Neither deletes the user."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:285
+#: src/Modules/Creators/Admin/CreatorsListTable.php:70
+msgid "Created"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:286
+#: src/Modules/Creators/Admin/CreatorsListTable.php:71
+msgid "Last updated"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
+msgid "Create creator"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
+msgid "Save changes"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:108
+msgid "All"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:153
+msgid "No creators found."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:176
+msgid "Edit"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:180
+msgid "Activate"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:180
+msgid "Deactivate"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:195
+msgid "No WordPress user"
+msgstr ""
+
+#. translators: %d: WordPress user id.
+#: src/Modules/Creators/Admin/CreatorsListTable.php:200
+#, php-format
+msgid "Unknown user #%d"
+msgstr ""
+
+#: src/Modules/Creators/Admin/UserProfileSection.php:65
+msgid "This user is not linked to a creator."
+msgstr ""
+
+#: src/Modules/Creators/Admin/UserProfileSection.php:66
+msgid "Create a creator for this user"
+msgstr ""
+
+#. translators: 1: creator name (link), 2: status.
+#: src/Modules/Creators/Admin/UserProfileSection.php:71
+#, php-format
+msgid "Linked to %1$s (%2$s)."
+msgstr ""
+
+#: src/Modules/Dashboard/DashboardSections.php:60
+msgid "Profile"
+msgstr ""
+
+#: src/Modules/Dashboard/Rest/MeController.php:174
+msgid "Some profile fields are invalid."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsActions.php:92
+#: src/Modules/Settings/Admin/SettingsPage.php:102
+msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:70
+#: src/Modules/Settings/Admin/SettingsPage.php:111
+msgid "Merch Dashboard Settings"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:86
+msgid "Settings saved."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:88
+msgid "You are not allowed to change these settings."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:89
+msgid "Permanent deletion was not enabled: type DELETE in the confirmation field to enable it."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:90
+msgid "The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:91
+msgid "The dashboard slug was not changed: a page, post, product or archive already uses it."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:92
+msgid "A technical error occurred. The settings were not changed."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:120
+msgid "Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:123
+msgid "Permanent deletion is ENABLED."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:124
+msgid "When the plugin is deleted from the Plugins screen, all Merch Dashboard data is permanently removed."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:126
+msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:129
+msgid "If enabled, deleting the plugin permanently removes: all creators, the audit log, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:130
+msgid "Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:136
+msgid "Permanent deletion"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:138
+msgid "Delete all Merch Dashboard data when the plugin is deleted"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:142
+msgid "Confirmation"
+msgstr ""
+
+#. translators: %s: the word to type, "DELETE".
+#: src/Modules/Settings/Admin/SettingsPage.php:145
+#, php-format
+msgid "To enable permanent deletion, also type %s here."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:150
+msgid "Save settings"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:162
+#: templates/dashboard/shell.php:31
+msgid "Creator dashboard"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:163
+msgid "Creators log in and use their dashboard at this address:"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:166
+msgid "Plain permalinks are active, so the slug is not used; the dashboard address above works regardless."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:173
+msgid "Dashboard URL slug"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:175
+msgid "Lowercase letters, digits and hyphens. Changing it moves the dashboard: the old address stops working and bookmarks must be updated. Pages, posts, products and archives that already use a slug cannot be chosen."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:177
+msgid "Save dashboard URL"
+msgstr ""
+
+#: templates/dashboard/no-access.php:28
+msgid "Access not active"
+msgstr ""
+
+#: templates/dashboard/no-access.php:39
+msgid "Your access is not active"
+msgstr ""
+
+#. translators: %s: site name.
+#: templates/dashboard/no-access.php:41
+#, php-format
+msgid "Your creator dashboard access is not active. Please contact %s."
+msgstr ""
+
+#: templates/dashboard/no-access.php:42
+#: templates/dashboard/shell.php:47
+#: build/dashboard.js:1
+msgid "Log out"
+msgstr ""
+
+#: templates/dashboard/shell.php:41
+#: build/dashboard.js:3
+msgid "Loading your dashboard…"
+msgstr ""
+
+#: templates/dashboard/shell.php:42
+msgid "The creator dashboard needs JavaScript. Please enable it in your browser."
+msgstr ""
+
+#: templates/dashboard/shell.php:45
+msgid "The dashboard is temporarily unavailable."
+msgstr ""
+
+#: templates/dashboard/shell.php:46
+msgid "Please try again later."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Error:"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Your session has expired."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Please log in again to continue."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Log in"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "You do not have access to this."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "If you think this is a mistake, please contact us."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "This could not be found."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Something went wrong."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Please try again in a moment."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Try again"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "This page could not be displayed."
+msgstr ""
+
+#: build/dashboard.js:1
+#: build/dashboard.js:3
+msgid "Please reload the page."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Skip to content"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Close menu"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Menu"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Dashboard"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "Website"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "This field is required."
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "This text is too long."
+msgstr ""
+
+#. translators: %d: maximum number of characters.
+#: build/dashboard.js:2
+#, js-format
+msgid "Use at most %d characters."
+msgstr ""
+
+#: build/dashboard.js:2
+msgid "Enter a full address starting with https://"
+msgstr ""
+
+#: build/dashboard.js:2
+msgid "This value is not valid."
+msgstr ""
+
+#: build/dashboard.js:2
+msgid "Your profile is still empty."
+msgstr ""
+
+#: build/dashboard.js:2
+msgid "Add a short bio and links to your channels."
+msgstr ""
+
+#: build/dashboard.js:2
+msgid "Edit profile"
+msgstr ""
+
+#: build/dashboard.js:2
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: build/dashboard.js:2
+#: build/dashboard.js:3
+msgid "Loading your profile…"
+msgstr ""
+
+#. translators: %s: creator display name.
+#: build/dashboard.js:3
+#, js-format
+msgid "Welcome, %s"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "This is your creator dashboard. Here you will follow your merch and keep your profile up to date."
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Account status:"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Your profile"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Key figures"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Revenue"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Orders"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Products sold"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Sales data coming soon"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Dismiss"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "No changes to save."
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Profile saved."
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "About you"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Bio"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Links"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Password"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Change your password"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Saving…"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Save profile"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "This section is not available yet."
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Page not found"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "This page does not exist."
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Go to the start page"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "The dashboard could not be started."
+msgstr ""

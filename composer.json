@@ -13,6 +13,8 @@
     "phpunit/phpunit": "^11.5",
     "roots/wordpress-no-content": "7.1.2",
     "szepeviktor/phpstan-wordpress": "^2.0",
+    "wp-cli/i18n-command": "^2.6",
+    "wp-cli/wp-cli": "^2.12",
     "wp-coding-standards/wpcs": "^3.4"
   },
   "autoload": {
@@ -47,7 +49,17 @@
       "@test"
     ],
     "test": "phpunit",
-    "test:integration": "phpunit -c phpunit.integration.xml.dist"
+    "test:integration": "phpunit -c phpunit.integration.xml.dist",
+    "i18n:pot": "wp i18n make-pot . languages/merchboard.pot --domain=merchboard --include=merchboard.php,uninstall.php,src,templates,build --skip-audit --headers=\"{\\\"Report-Msgid-Bugs-To\\\":\\\"https://github.com/CaileanTV/CCMerchDashboard/issues\\\"}\"",
+    "i18n:po": "wp i18n update-po languages/merchboard.pot languages/",
+    "i18n:mo": "wp i18n make-mo languages/",
+    "i18n:json": "wp i18n make-json languages/",
+    "i18n": [
+      "@i18n:pot",
+      "@i18n:po",
+      "@i18n:mo",
+      "@i18n:json"
+    ]
   },
   "scripts-descriptions": {
     "lint": "Check PHP against WordPress Coding Standards.",
@@ -55,6 +67,7 @@
     "analyse": "Run PHPStan static analysis with WordPress stubs.",
     "check": "Run all PHP quality checks.",
     "test": "Run PHPUnit tests.",
-    "test:integration": "Run integration tests against a real MySQL/MariaDB (normally via npm run test:integration)."
+    "test:integration": "Run integration tests against a real MySQL/MariaDB (normally via npm run test:integration).",
+    "i18n": "Regenerate languages/ (POT from src, templates and build/, update PO, compile MO and JS JSON). Run npm run build first."
   }
 }
