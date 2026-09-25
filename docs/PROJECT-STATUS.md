@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 15 (Dashboard overview → **MVP**) · **Næste fase:** 16 (Release-pipeline og staging) · **Schemaversion:** 3 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-25 · **Seneste færdige fase:** 16 (Release-pipeline ✅, staging-verifikation afventer projektejeren) · **Næste fase:** 17 (WooCommerce foundation) · **Schemaversion:** 3 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -251,17 +251,27 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] Konflikt løst (projektejerens valg: allowlist): DEVELOPMENT.md manglede `assets/js/`, som bruges ved runtime, og `.distignore` udelukkede ikke fase 13's `assets/src/`, `tsconfig.json` og `jest.config.js`. Begge er nu i sync med allowlisten, ligesom `export-ignore` i `.gitattributes`. `vendor/` er bekræftet unødvendig (ADR-017).
 - [x] Pakken er valideret: 91 filer i `merchboard/`, ingen forbudte filer, ingen secrets eller source maps, `php -l` af alle PHP-filer, PHP `ZipArchive` `CHECKCONS`, .NET-udpakning byte-identisk og Playground med den udpakkede pakke som plugin (MVP-flowet på dansk uden fejl). Manuel WordPress-installation udføres af projektejeren.
 
+### Fase 16 – Release-pipeline og staging (pipeline ✅, staging afventer)
+
+- [x] `.github/workflows/release.yml` på tag `v*`: alle CI-jobs genbrugt via `workflow_call` (`ci.yml` er kun udvidet med triggeren), tagget commit skal ligge på `main`, `npm run package -- --tag`, uafhængig `unzip -t`-kontrol, `.sha256`, release notes fra CHANGELOG og **draft-release** via `gh release create --draft --verify-tag` (projektejerens valg). Permissions: `{}` som standard, `contents: write` kun i release-jobbet. Ingen tredjeparts actions og ingen secrets.
+- [x] `bin/package.mjs`: `--tag vX.Y.Z` skal matche versionen og pege på `HEAD`, og header, `MERCHBOARD_VERSION` og `package.json` skal have samme SemVer-version. Uden `--tag` virker lokal pakning som før.
+- [x] Procedurer for versions-bump, release og staging-deploy med MySQL-verifikation i [DEVELOPMENT.md](DEVELOPMENT.md#release). ADR-028.
+- [x] Staging er `https://devpage.ccmerch.dk` med manuel upload (projektejerens valg). SFTP er fravalgt.
+- [x] Afvigelser fra roadmap-planen: ingen `composer --no-dev` (ingen `vendor/`, ADR-017) og ingen zip efter `.distignore`. `bin/package.mjs` genbruges.
+- [x] Verificeret lokalt: versions- og tag-regler i en midlertidig klon (gyldigt annoteret og letvægts-tag, forkert version, manglende tag, tag på anden commit, tag uden værdi, afvigende `package.json`, ikke-SemVer, ændret runtime-fil), workflowets shell-trin (ZIP-kontrol, udtræk af release notes inkl. `0.1.1` ≠ `0.1.10` og manglende eller tom sektion, main-kontrol) og YAML-parsing af begge workflows.
+- [ ] **Ikke verificeret (kræver GitHub og staging):** første kørsel af release-workflowet, oprettelse af draft-releasen, installation af release-ZIP'en på staging og MySQL-verifikationen.
+
 ## In progress
 
-Intet.
+- **Fase 16, verifikation (projektejeren):** Første release (`v0.1.0`) efter [DEVELOPMENT.md](DEVELOPMENT.md#release). Tjek workflowet under Actions, og installér draft-ZIP'en på staging efter [tjeklisten](DEVELOPMENT.md#staging), inkl. MySQL-versionen.
 
 ## Planned
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 16:** Release-pipeline og staging.
-2. **Fase 17:** se [ROADMAP.md](ROADMAP.md).
-3. **Fase 18:** se [ROADMAP.md](ROADMAP.md).
+1. **Fase 17:** WooCommerce foundation.
+2. **Fase 18:** Sales ledger.
+3. **Fase 19:** Products og Orders i dashboard.
 
 ## Known bugs
 
@@ -330,7 +340,9 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 ## Next recommended steps
 
-1. Tjek at CI er grøn under GitHub → Actions.
-2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
-3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Kør fase 16 (Release-pipeline og staging) jf. docs/ROADMAP.md. `languages/` skal med i release-zip'en, og `npm run i18n` skal køres, når UI-strenge ændres.
+1. Tjek at CI er grøn under GitHub → Actions, især `PHP integration (MySQL)`. Den første linje i test-output viser serverversionen.
+2. Før `v0.1.0`: flyt `## [Unreleased]` i CHANGELOG.md til `## [0.1.0] - <dato>` i en release-commit, push og vent på grøn CI.
+3. Tag `v0.1.0` på `main`, og tjek release-workflowet under Actions. Resultatet skal være en draft-release med ZIP og `.sha256`.
+4. Installér draft-ZIP'en på staging (`devpage.ccmerch.dk`) efter [tjeklisten](DEVELOPMENT.md#staging). Notér MySQL/MariaDB-version og charset (åbent spørgsmål 2), og udgiv releasen.
+5. Afklar audit-retention (åbent spørgsmål 10) før produktion.
+6. Fase 17 (WooCommerce foundation) jf. docs/ROADMAP.md.

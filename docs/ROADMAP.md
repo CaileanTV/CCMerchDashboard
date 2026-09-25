@@ -13,7 +13,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Authentication & permissions | 5-8 | Roller og capabilities (✅ fase 5), creator-administration (✅ fase 6), database-hardening og integrationstests (✅ fase 7), creator access (✅ fase 8) |
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
-| Deployment | 16 | Release-pipeline og staging |
+| Deployment | 16 | Release-pipeline (✅ fase 16) og staging (afventer verifikation) |
 | WooCommerce | 17-19 | Produkt↔creator, sales ledger, produkter/ordrer i dashboard |
 | Statistics | 20 | Salgsanalyse og grafer |
 | Senere | – | Payouts, notifications, integrations, campaigns, support, reporting, hardening og E2E |
@@ -110,10 +110,12 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope (udført):** Overview-sektion (velkomst, creator-info fra `GET /me` og `GET /me/profile`, KPI-kort med empty state "Salgsdata kommer snart" uden API-kald), sektion-registry fuldt koblet (`DashboardSections`, filter `merchboard_dashboard_sections`, capability pr. sektion), dansk oversættelse af UI-strenge (`languages/`, `load_plugin_textdomain()` på `init`, `wp_set_script_translations()`, `npm run i18n` med `wp-cli/i18n-command`). Intet `/me/overview`-endpoint (flyttet til fase 20, besluttet af projektejeren).
 - **Done:** MVP: admin kan oprette en creator, creator kan logge ind, se overview og redigere sin profil, og intet andet. Verificeret over HTTP og i Chrome i Playground, både på engelsk (med WooCommerce) og på dansk (uden WooCommerce).
 
-## Fase 16 – Release-pipeline og staging
+## Fase 16 – Release-pipeline og staging (pipeline ✅, staging afventer projektejeren)
 
 - **Scope:** GitHub Actions-workflow på tag `v*`: composer `--no-dev`, `npm run build` og zip efter `.distignore`, med zip som release-asset. Versions-bump-procedure. Staging-deploy-procedure (manuel upload eller SFTP, afhængigt af hosting). MySQL-verifikation på staging.
-- **Done:** v0.x-zip installeres på staging.
+- **Leveret:** `.github/workflows/release.yml` (tag `v*`, alle CI-jobs genbrugt via `workflow_call`, tagget commit skal ligge på `main`, draft-release med ZIP og `.sha256` via `gh`, release notes fra CHANGELOG). `bin/package.mjs --tag` (tag = `v<version>` på `HEAD`, samme version i header, konstant og `package.json`, SemVer). Versions-bump-, release- og staging-procedure i [DEVELOPMENT.md](DEVELOPMENT.md#release). ADR-028.
+- **Ændret i forhold til planen:** Ingen `composer --no-dev` (pluginet har ingen `vendor/`, ADR-017) og ingen zip efter `.distignore`: workflowet genbruger `bin/package.mjs` (allowlist). Staging er `devpage.ccmerch.dk` med manuel upload. SFTP er fravalgt. Releasen er en draft, som projektejeren udgiver.
+- **Done:** v0.x-zip installeres på staging. Afventer: første tag-kørsel på GitHub og installation og MySQL-verifikation på staging (projektejeren).
 
 ## Fase 17 – WooCommerce foundation
 

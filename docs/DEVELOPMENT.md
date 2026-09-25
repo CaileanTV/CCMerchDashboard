@@ -144,16 +144,16 @@ Runtime-JS-pakker som `@wordpress/element`, `@wordpress/api-fetch` og `@wordpres
 
 Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes uden at blive committed, hvis de tilføjes i `.gitignore`.
 
-## Build og deploy (plan)
+## Build og deploy
 
 - **Build:** `npm run build` genererer `build/` (JS/CSS + `*.asset.php` med dependencies og versionshash). PHP kræver intet build-trin.
-- **Distribution:** Den installérbare ZIP bygges med `npm run package` (✅ MVP-checkpoint, se [Distributionspakke](#distributionspakke)). En automatisk release på git-tag (`v*`) i CI er planlagt i roadmap-fase 16 og skal genbruge `bin/package.mjs`. **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release.
-- **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `MERCHBOARD_VERSION` og `package.json`.
-- **Miljøer:** local (Playground), staging (MySQL og en kopi af WooCommerce **uden** kunde-PII) og production.
+- **Distribution:** Den installérbare ZIP bygges med `npm run package` (se [Distributionspakke](#distributionspakke)). Et tag `vX.Y.Z` bygger den samme ZIP i GitHub Actions og lægger den på en draft-release (✅ fase 16, se [Release](#release)). **Ingen `vendor/`**: pluginet har sin egen autoloader (ADR-017), så der skal ikke køres `composer install` til en release.
+- **Versionering:** SemVer. Versionen står tre steder og holdes synkron: plugin-headeren, konstanten `MERCHBOARD_VERSION` og `package.json`. `bin/package.mjs` afviser pakken, hvis de afviger.
+- **Miljøer:** local (Playground), staging og production. **Staging er `https://devpage.ccmerch.dk`** (udpeget af projektejeren 2026-09-25). Deploy dertil sker ved manuel upload af release-ZIP'en (se [Staging](#staging)). Andre sites er off-limits (Project Isolation).
 
 ## Distributionspakke
 
-**Byg:** `npm run package` → `dist/merchboard-mvp-<version>.zip` (`dist/` er gitignored). Versionen læses fra plugin-headeren, som skal stemme med `MERCHBOARD_VERSION`. Kommandoen kører `npm run build` og derefter `bin/package.mjs` (Node, ingen dependencies).
+**Byg:** `npm run package` → `dist/merchboard-mvp-<version>.zip` (`dist/` er gitignored). Versionen læses fra plugin-headeren, som skal stemme med `MERCHBOARD_VERSION` og `package.json` og være SemVer. Med `npm run package -- --tag vX.Y.Z` (release) skal tagget desuden være `v` + versionen og pege på `HEAD`. Kommandoen kører `npm run build` og derefter `bin/package.mjs` (Node, ingen dependencies).
 
 **Indhold (allowlist), i én rodmappe `merchboard/`:**
 
@@ -175,6 +175,58 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 **Validering:** Scriptet læser ZIP'en tilbage (CRC og indhold pr. fil, alt under `merchboard/`, gyldig plugin-header). Ved MVP-checkpointet blev pakken desuden åbnet med PHP `ZipArchive` (`CHECKCONS`) og pakket ud med .NET `Expand-Archive`, alle filer var byte-identiske med kilden, og den udpakkede mappe blev kørt i Playground som eneste plugin-kopi (MVP-flow uden fejl).
 
 **Manuel installation:** WordPress → Plugins → Tilføj nyt → Upload plugin → vælg ZIP'en → Installér → Aktivér. Kræver PHP ≥ 8.2 og WordPress ≥ 6.7. WooCommerce er valgfrit. Efter aktivering: Merch Dashboard i admin-menuen. Creator-dashboardet ligger på `/creator-dashboard/` (eller `/?merchboard_dashboard=1` uden pretty permalinks).
+
+## Release
+
+Workflow: [.github/workflows/release.yml](../.github/workflows/release.yml) (✅ fase 16, ADR-028). Et tag giver en **draft-release**. Projektejeren udgiver den selv efter test på staging.
+
+### 1. Versions-bump (commit på `main`)
+
+1. Vælg version efter SemVer: patch for rettelser, minor for nye features. Så længe versionen er `0.x`, kan en minor også indeholde breaking changes.
+2. Sæt versionen tre steder: `Version:` i headeren i `merchboard.php`, `MERCHBOARD_VERSION` i samme fil og `version` i `package.json` og `package-lock.json` (`npm version X.Y.Z --no-git-tag-version`).
+3. Kør `npm run i18n`, så `Project-Id-Version` i `languages/` får den nye version.
+4. Flyt punkterne under `## [Unreleased]` i [CHANGELOG.md](CHANGELOG.md) til en ny sektion `## [X.Y.Z] - ÅÅÅÅ-MM-DD`. Workflowet bruger sektionen som release notes og fejler, hvis den mangler eller er tom.
+5. `npm run lint`, `npm test` og `npm run package` lokalt. Commit som `chore(release): vX.Y.Z`, push, og vent på grøn CI.
+
+### 2. Tag
+
+```sh
+git tag -a vX.Y.Z -m "Merch Dashboard X.Y.Z"
+git push origin vX.Y.Z
+```
+
+Tagget skal være `v` + præcis pluginversionen og sættes på en commit, der ligger på `main`.
+
+### 3. Hvad workflowet gør
+
+| Trin | Fejler, hvis |
+| --- | --- |
+| Alle CI-jobs (`ci.yml` genbruges via `workflow_call`): PHP-lint, PHPCS, PHPStan, PHPUnit, integration mod MySQL, PHP 7.2-syntaks, ESLint, stylelint, `tsc`, Jest og build | Et hvilket som helst tjek fejler. Så køres pakketrinnet slet ikke |
+| Tagget commit ligger på `main` | Tagget peger på en commit uden for `main` |
+| `npm ci` og `npm run package -- --tag vX.Y.Z` | Tag ≠ `v<version>`, tagget peger ikke på den byggede commit, versionerne i header, konstant og `package.json` afviger eller er ikke SemVer, runtime-filer afviger fra commit'en, påkrævede filer mangler, forbudte filer er med, eller ZIP'en læses forkert tilbage |
+| Uafhængig kontrol med `unzip -t`: alt under `merchboard/`, centrale runtime-filer findes, `.sha256` skrives | ZIP'en er korrupt eller forkert struktureret |
+| Release notes fra `CHANGELOG.md` | Sektionen `## [X.Y.Z]` mangler eller er tom |
+| `gh release create --draft --verify-tag` med ZIP og `.sha256` | En release med samme tag findes allerede. Intet overskrives |
+
+Permissions: `{}` som standard, `contents: read` til tjek-jobbene og `contents: write` kun til det sidste job, som opretter releasen. Der bruges kun GitHubs egne actions og `gh` CLI. Der er ingen secrets ud over den automatiske `GITHUB_TOKEN`.
+
+**Fejler workflowet**, oprettes ingen release. Ret fejlen på `main`, og lav en ny patch-version. Et pushet tag flyttes ikke. Det slettes kun, hvis projektejeren beslutter det.
+
+### 4. Udgiv
+
+Hent ZIP'en fra draft-releasen, og tjek SHA-256 mod `.sha256`. Installér den på staging efter tjeklisten nedenfor. Er alt i orden, trykker projektejeren **Publish release** på GitHub.
+
+## Staging
+
+Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manuelt. Der er ingen SFTP eller automatisk deploy, fordi det ville kræve hosting-credentials i GitHub og en ADR. AI-agenter har ingen adgang til sitet. Tjeklisten udføres af projektejeren.
+
+1. **Før:** Tag backup via hostingen (filer + database). Notér den installerede version af Merch Dashboard.
+2. **Deploy:** Plugins → Tilføj nyt → Upload plugin → vælg release-ZIP'en → Installér → "Erstat nuværende med uploadet". Aktivér, hvis pluginet ikke var aktivt.
+3. **Aktivering:** Ingen fejl eller notices. Merch Dashboard → Overview viser systemstatus uden advarsler, og der er ingen admin-notice om ikke-transaktionelle tabeller. Med WooCommerce: aktiveringen er logget under WooCommerce → Status → Logs (source `merchboard`).
+4. **MySQL-verifikation:** Værktøjer → Webstedets tilstand → Info → Database: notér servertype og -version samt charset/collation i [PROJECT-STATUS.md](PROJECT-STATUS.md) (åbent spørgsmål 2). Pluginets tabeller skal bruge InnoDB (ADR-024). Ellers vises en admin-notice.
+5. **MVP-flow:** Opret eller redigér en creator som admin. Log ind som creator. `/creator-dashboard/` viser Overview og Profile på sitets sprog, profilen kan gemmes, og audit-loggen viser ændringen.
+6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
+7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
 ## Git-workflow
 

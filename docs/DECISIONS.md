@@ -813,3 +813,40 @@ Typesikre kontrakter og sikker refaktorering over mange faser, uden at forlade W
 - `npm run lint` omfatter typetjek. CI kører ESLint, stylelint, `tsc`, Jest og build.
 - WordPress' React-version afgør runtime (React 18.3 på WordPress 6.7). Koden bruger kun API'er, der findes i React 18 og 19.
 - Typerne for REST-svar skal matche backendens faktiske kontrakt og må ikke opfinde felter.
+
+---
+
+# ADR-028: Release via tag, genbrug af bin/package.mjs og draft-release; staging med manuel upload
+
+## Date
+2026-09-25
+
+## Status
+Accepteret (fase 16). Draft-release og staging (`devpage.ccmerch.dk`, manuel upload) er besluttet af projektejeren.
+
+## Context
+Roadmap-fase 16 planlagde et workflow på tag `v*` med `composer --no-dev`, `npm run build` og zip efter `.distignore`. Siden er to ting ændret. Pluginet distribueres uden `vendor/` (ADR-017), så Composer er overflødigt i en release. MVP-checkpointet indførte `bin/package.mjs` som den autoritative, deterministiske pakke fra en allowlist, med sikkerhedsnet mod forbudte og manglende filer. En release må ikke kunne udgives med en anden version eller commit end tagget, og en fejl må ikke nå ud til brugere automatisk.
+
+## Decision
+- `.github/workflows/release.yml` kører på tags `v*`. Det genbruger alle CI-jobs fra `ci.yml` (`workflow_call`) og pakker kun, hvis de er grønne.
+- Pakken bygges med `npm run package -- --tag vX.Y.Z`, altså samme script som lokalt. Ingen `composer install` og ingen zip efter `.distignore`. Scriptet kræver, at tagget er `v` + pluginversionen og peger på den byggede commit. Header, `MERCHBOARD_VERSION` og `package.json` skal have samme version, og versionen skal være SemVer.
+- Tagget commit skal ligge på `main`. ZIP'en kontrolleres uafhængigt med `unzip -t`, og der publiceres en `.sha256` sammen med den.
+- Release notes er sektionen `## [X.Y.Z]` i `CHANGELOG.md`. Mangler den, fejler workflowet.
+- Releasen oprettes som **draft** med `gh release create --draft --verify-tag` (GitHub CLI på runneren). Projektejeren udgiver den efter test på staging.
+- Permissions er `{}` som standard, `contents: read` til tjek og `contents: write` kun til release-jobbet. Kun GitHubs egne actions, ingen secrets ud over `GITHUB_TOKEN`.
+- Staging er `https://devpage.ccmerch.dk`. Deploy sker ved manuel upload efter tjeklisten i DEVELOPMENT.md, inkl. MySQL-verifikation.
+
+## Alternatives considered
+- **Zip efter `.distignore` i workflowet (roadmap-planen):** en parallel pakkeløsning, der kan glide fra den validerede allowlist. Fravalgt.
+- **Tredjeparts release-actions (fx softprops/action-gh-release):** ekstra supply chain med skriveadgang til repo'et. `gh` er forinstalleret og vedligeholdt af GitHub. Fravalgt.
+- **Udgiv releasen straks:** en pakke, der er grøn i CI men fejler på et rigtigt site, ville nå ud. Fravalgt af projektejeren.
+- **SFTP-deploy fra CI:** kræver hosting-credentials i GitHub og en ny ekstern integration (ADR-016). Fravalgt for nu.
+
+## Reason
+Én pakkeproces, samme sikkerhedsnet lokalt og i CI, mindst mulige rettigheder og et menneskeligt godkendelsestrin før udgivelse.
+
+## Consequences
+- En release kræver en release-commit (versions-bump, `npm run i18n`, CHANGELOG-sektion) og et tag på `main`. Proceduren står i DEVELOPMENT.md.
+- ZIP-navnet er fortsat `merchboard-mvp-<version>.zip`. Rodmappen er `merchboard/`, så WordPress opdaterer det installerede plugin uanset filnavnet.
+- Et fejlet workflow opretter ingen release. Et pushet tag flyttes ikke. Rettelser udgives som ny patch-version.
+- Workflowet kan kun verificeres på GitHub. Den første kørsel skal kontrolleres under Actions.
