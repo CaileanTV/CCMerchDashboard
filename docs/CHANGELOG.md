@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-25
+
+Første udgave (MVP): admin opretter og administrerer creators, og en creator logger ind, ser sit overview og redigerer sin profil i creator-dashboardet. Dansk oversættelse følger med. Kræver PHP ≥ 8.2 og WordPress ≥ 6.7. WooCommerce er valgfrit. Punkterne nedenfor er samlet over faserne 1-16 og MVP-checkpointet.
+
 ### Added
 - Projektfundament: Composer (PSR-4 `MerchBoard\`), PHPCS/WPCS, PHPStan level 8, `@wordpress/scripts` (ESLint/Prettier), WordPress Playground-dev-miljø med WooCommerce og GitHub Actions CI.
 - Plugin-entry `merchboard.php` (kun header).
@@ -16,6 +20,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Roller og capabilities (fase 5):** rolle `merchboard_creator` (`read` + `merchboard_access_dashboard`), admin-capabilities `merchboard_manage`, `merchboard_manage_creators` og `merchboard_manage_settings`, samt `Capabilities` og `RoleManager` med idempotent sync ved aktivering og opdatering (ADR-022).
 - **Creator-administration og audit trail (fase 6):** admin-side "Merch Dashboard → Creators" (liste, opret/rediger, aktivér/deaktivér, tilknyt/frakobl WordPress-bruger), `CreatorService`, `Transaction`, `AuditTrail`/`AuditRepository`/`AuditAction` (ADR-023).
 - **Release-pipeline (fase 16):** Et tag `vX.Y.Z` kører alle CI-tjek og bygger derefter plugin-ZIP'en med `bin/package.mjs`. Resultatet er en draft-release på GitHub med ZIP, SHA-256 og release notes fra CHANGELOG. `npm run package -- --tag` afviser tags, der ikke matcher versionen eller `HEAD`, og pakken afvises også, hvis header, `MERCHBOARD_VERSION` og `package.json` ikke har samme SemVer-version. Procedure for versions-bump, release og staging (`devpage.ccmerch.dk`, manuel upload). ADR-028.
+- **Distributionspakke (MVP-checkpoint):** `npm run package` bygger den installérbare `dist/merchboard-mvp-<version>.zip` med `bin/package.mjs`. Pakken bygges fra en allowlist med rodmappen `merchboard/` (`merchboard.php`, `uninstall.php`, `src/`, `templates/`, `languages/`, `assets/js/`, `build/`) og uden `vendor/`, kilder, tests eller konfiguration. Den er deterministisk og fejler ved manglende eller forbudte filer og ved runtime-filer, der afviger fra `HEAD`. `.distignore` og `export-ignore` er bragt i sync med allowlisten.
 - **Dashboard overview → MVP (fase 15):** Overview-sektion (velkomst, status, profil-resumé og KPI-kort med "Salgsdata kommer snart"), sektion-registry `DashboardSections` med filter `merchboard_dashboard_sections` og capability pr. sektion, samt dansk oversættelse af alle UI-strenge (`languages/`, `load_plugin_textdomain()`, `wp_set_script_translations()`, `npm run i18n` med `wp-cli/i18n-command`).
 - **REST-fundament, `/me` og Profile (fase 14):** `Core\Http\RestController`, `GET /merchboard/v1/me` (`display_name`, `status`), `GET`/`PATCH /merchboard/v1/me/profile` (display name, bio, sociale links med faste platforme), migration 3 `merchboard_creatormeta`, `CreatorProfileService` med validering, whitelist og audit `creator_updated`, samt Profile-sektion i dashboardet (formular, validering og toast). Creator-navnet i topbaren kommer fra `GET /me`.
 - **Dashboard frontend-fundament (fase 13):** Creator-dashboardet er en React-app i TypeScript (strict, ADR-027), bygget med `@wordpress/scripts` (`npm run build`/`start`/`typecheck`/`test:js`). Den har layout (topbar, sidebar, mobil-nav, skip link), en router med deep links og query-fallback, bootstrap-data med runtime-validering, API-klient til `merchboard/v1` med typed resultat, `useApi`, kernekomponenter og design tokens. `DashboardAssets` registrerer bygget, og shellen udskriver kun bundlen og dens WordPress-dependencies med CSP-nonce. Jest-, typetjek-, stylelint- og build-trin i CI.
@@ -31,6 +36,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Arkitektur:** Runtime bruger pluginets egen autoloader i stedet for Composers `vendor/autoload.php`. Den distribuerede plugin indeholder ikke `vendor/` (ADR-017, erstatter en del af ADR-004).
 - Activation/deactivation-hooks og text domain-loading er flyttet fra fase 2 til fase 3, 4 og 15, hvor de får en funktion.
 - `bin/composer.mjs` aktiverer manglende PHP-extensions via en projekt-lokal ini (`PHP_INI_SCAN_DIR`), så de også gælder for Composer-scripts.
+
+### Fixed (MVP-checkpoint)
+- Creator-dashboardet startede ikke ("The dashboard could not be started."), når webstedets titel var tom. En tom `site_name` i bootstrap-data accepteres nu, fordi den kun bruges til visning. Feltet skal stadig findes og være en streng, og sidetitlen udelader ` · ` uden titel.
 
 ### Fixed (fase 14)
 - En udløbet nonce (`rest_cookie_invalid_nonce`) vises nu som udløbet session i stedet for "ingen adgang".
@@ -86,3 +94,4 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Schema-version 1:** ny tabel `{prefix}merchboard_creators` (`id`, `user_id` nullable UNIQUE, `display_name`, `status`, `created_at`, `updated_at`; UTC). Nye options `merchboard_db_version` (autoload) og `merchboard_db_migration_lock` (midlertidig). Transient `merchboard_db_migration_failed`.
 - **Roller (fase 5):** rolle `merchboard_creator` og administrator-capabilities i WordPress' `wp_user_roles`. Ny option `merchboard_roles_version` (autoload). Ingen schemaændring.
 - **Schema-version 2 (fase 6):** ny tabel `{prefix}merchboard_audit_log` (`id`, `created_at`, `action`, `actor_user_id` nullable, `creator_id` nullable, `context` JSON). Migration 1 → 2 kører automatisk ved aktivering eller opdatering.
+- **Schema-version 3 (fase 14):** ny tabel `{prefix}merchboard_creatormeta` (standard WordPress meta-tabel: `meta_id`, `merchboard_creator_id`, `meta_key`, `meta_value`) til whitelistede profilfelter (bio, sociale links).

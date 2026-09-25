@@ -341,7 +341,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 ## Next recommended steps
 
 1. Tjek at CI er grøn under GitHub → Actions, især `PHP integration (MySQL)`. Den første linje i test-output viser serverversionen.
-2. Før `v0.1.0`: flyt `## [Unreleased]` i CHANGELOG.md til `## [0.1.0] - <dato>` i en release-commit, push og vent på grøn CI.
+2. ✅ CHANGELOG.md har sektionen `## [0.1.0] - 2026-09-25` (release notes til `v0.1.0`). Push, og vent på grøn CI.
 3. Tag `v0.1.0` på `main`, og tjek release-workflowet under Actions. Resultatet skal være en draft-release med ZIP og `.sha256`.
 4. Installér draft-ZIP'en på staging (`devpage.ccmerch.dk`) efter [tjeklisten](DEVELOPMENT.md#staging). Notér MySQL/MariaDB-version og charset (åbent spørgsmål 2), og udgiv releasen.
 5. Afklar audit-retention (åbent spørgsmål 10) før produktion.
