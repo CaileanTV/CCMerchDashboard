@@ -273,7 +273,7 @@ Et JS-build er nødvendigt (`build/` genereres i CI til releases). React-version
 2026-09-24
 
 ## Status
-Accepteret
+Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.4, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall).
 
 ## Decision
 WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `merchboard_sales`-ledger fodret af ordre- og refund-hooks.
@@ -707,7 +707,7 @@ Konsistensgarantien i ADR-023 bliver ægte på alle engines, i stedet for at afh
 2026-09-24
 
 ## Status
-Accepteret (fase 9).
+Accepteret (fase 9). Suppleret af ADR-030: pluginets egen product meta `_merchboard_creator_id` slettes også ved opt-in-uninstall. Anden WooCommerce-data røres fortsat ikke.
 
 ## Context
 Uninstall bevarede indtil nu alle data (fase 3-8), fordi creators og audit er forretningsdata. Pluginet skal kunne fjernes helt, men permanent datatab må aldrig ske ved et uheld. Det må heller ikke ramme WordPress-, WooCommerce- eller andre plugins' data, eller andre sites i et multisite-netværk. `DROP TABLE` kan ikke indgå i en transaktion.
@@ -882,3 +882,52 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 - Audit-tabellen vokser uden grænse i v0.1.0. Det er acceptabelt på staging (få records).
 - Produktionsbrug er blokeret, indtil der er besluttet en retention-politik. Beslutningen står under "Next recommended steps" i PROJECT-STATUS.md.
 - Indføres automatisk sletning senere, skal den respektere append-only-princippet (ADR-023). Sletning sker kun efter politikken og aldrig via admin-UI for enkelte records.
+
+---
+
+# ADR-030: WooCommerce-modulet: minimum 10.4, én autoritativ skrivevej for produkt→creator og oprydning ved opt-in-uninstall
+
+## Date
+2026-09-25
+
+## Status
+Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall).
+
+## Context
+Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_creator_id` (ADR-011). Før implementeringen skulle det afklares:
+- hvilken WooCommerce-version modulet kræver (WOOCOMMERCE.md udskød det til fase 17),
+- hvad der sker med en for gammel WooCommerce,
+- om kolonnen "Creators" i ordrelisten (ADMIN.md) hører til fasen,
+- om koblingen slettes ved opt-in-uninstall. ADR-025 og DATABASE.md sagde, at WooCommerce-meta aldrig slettes, men meta-nøglen ejes af pluginet,
+- hvordan WooCommerce' mange skriveveje (produktskærm, REST, CSV-import, quick/bulk edit, duplicate) holdes under samme validering og audit.
+
+## Decision
+- **D1 – minimum:** `WC requires at least: 10.4` i plugin-headeren. Det er Merch Dashboards eget minimum for WooCommerce-modulet. WooCommerce 10.4 kræver WordPress 6.7, som er pluginets eget WordPress-minimum (ADR-003). Runtime-tjekket og headeren bruger samme værdi.
+- **D2 – under minimum:** Er WooCommerce aktivt, men ældre end 10.4, indlæses `WooCommerceModule` ikke. Admin får en neutral requirements-notice efter det eksisterende `Requirements`-mønster. Der er ingen fatal og ingen delvis integration. Resten af pluginet virker. Uden WooCommerce vises ingen notice.
+- **D3 – ordreliste:** Kolonnen "Creators" i ordrelisten er udskudt. Fase 17 indeholder ingen logik for ordrer eller ordrelisten.
+- **D4 – livscyklus for koblingen:** Koblingen bevares ved deaktivering af pluginet, deaktivering af WooCommerce og opdateringer. Ved **opt-in-uninstall** (ADR-025) slettes `_merchboard_creator_id` fra de produkter og varianter, hvor nøglen findes, på det aktuelle site. Kun den præcise nøgle slettes, via WordPress' meta-API (virker også uden WooCommerce), idempotent og før tabellerne droppes. Anden WooCommerce- og produkt-meta røres aldrig.
+- **D5 – test:** Ingen nye runtime- eller dev-dependencies. Testene bruger den eksisterende infrastruktur (Brain Monkey, WooCommerce-fixtures, integrationstests og Playground med WooCommerce fra wordpress.org). Viser implementeringen, at en dependency er nødvendig, stoppes der, og behovet forelægges projektejeren.
+- **D6 – skriveveje:**
+  - Koblingen har **én autoritativ domæneservice**. Alle understøttede ændringer bruger dens validering (creator findes og er aktiv, variant → parent), capability-tjek og audit i samme transaktion (ADR-023/024).
+  - I fase 17 er **kun den almindelige WooCommerce-produktskærm** en understøttet skrivevej.
+  - WooCommerce REST og CSV-import må ikke kunne ændre nøglen. Ændringer afvises tydeligt via de hooks, som undersøgelsen i fase 17 fastslår i den faktiske WooCommerce-version.
+  - Quick/bulk edit får intet Creator-felt.
+  - **Duplicate product** starter uden `_merchboard_creator_id`.
+  - Der oprettes ingen nye offentlige REST-endpoints.
+
+## Alternatives considered
+- **Ingen minimumsversion eller kun `class_exists`:** ukendt API-adfærd på gamle versioner. Fravalgt.
+- **Indlæse modulet på en for gammel WooCommerce med advarsel:** risiko for delvis funktion. Fravalgt.
+- **Bevare meta ved uninstall (DATABASE.md før ADR-030):** efterlader plugin-ejede data i produkterne, selv om ejeren har valgt fuld sletning. Fravalgt.
+- **Slette meta med SQL eller prefix-match:** i strid med ADR-025's præcise ejerskab og WordPress' meta-cache. Fravalgt.
+- **REST og CSV-import som understøttede skriveveje gennem servicen:** mere at sikre og teste nu. Kan genovervejes senere med en ny beslutning.
+- **Duplicate beholder koblingen:** en kopi ville få en creator uden et eksplicit, auditeret valg. Fravalgt.
+
+## Reason
+Forudsigelig kompatibilitet, ingen halvt fungerende integration og en kobling, der altid er valideret, autoriseret og auditeret, fordi den har én skrivevej. Fuld oprydning ved opt-in, uden at røre data, som pluginet ikke ejer.
+
+## Consequences
+- ADR-025's grænse "WooCommerce-data røres ikke" har nu én præcis undtagelse: pluginets egen meta-nøgle `_merchboard_creator_id`. Inventory'et i DATABASE.md er opdateret.
+- `Uninstaller` skal have et trin til meta-nøglen, og nye plugin-ejede meta-nøgler skal fremover tilføjes eksplicit.
+- WooCommerce' nye blok-baserede produkteditor bruger ikke de klassiske hooks til produktfelter. Understøttet skrivevej er den klassiske produktskærm.
+- Koblinger lavet før uninstall med opt-in er væk efter geninstallation. Audit-tabellen er også væk.

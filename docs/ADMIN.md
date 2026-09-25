@@ -23,7 +23,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 
 | Oprindeligt | Anbefaling | Hvorfor |
 | --- | --- | --- |
-| **Products** og **Orders** som egne menupunkter | **Integrér i WooCommerce' egne skærme** i stedet: "Creator"-kolonne og -filter på produkt- og ordrelisterne samt et "Creator"-felt i produktets data-panel | At duplikere WooCommerce' produkt- og ordre-UI giver to steder at redigere, synk-fejl og meget kode. Administratorer arbejder allerede i WooCommerce. |
+| **Products** og **Orders** som egne menupunkter | **Integrér i WooCommerce' egne skærme** i stedet: "Creator"-kolonne og -filter på produktlisten (fase 17), en kolonne i ordrelisten (udskudt, ADR-030) samt et "Creator"-felt i produktets data-panel | At duplikere WooCommerce' produkt- og ordre-UI giver to steder at redigere, synk-fejl og meget kode. Administratorer arbejder allerede i WooCommerce. |
 | **Statistics** som eget menupunkt | Pr. creator: en "Sales"-tab på creator-redigeringssiden. Global oversigt: på Overview. Et separat "Reports"-punkt tilføjes først, når der er rapporter nok til at retfærdiggøre det. | Undgår en tom side i månedsvis |
 | **Integrations** som eget menupunkt | Tab under Settings, indtil der er flere integrationer med egen status/log-UI | Samme grund |
 | **Creator access** som egen side | En del af creator-redigeringen (status: aktiv/inaktiv) | Adgang er en egenskab ved creator'en, ikke en separat entitet |
@@ -107,8 +107,8 @@ Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
 Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes
-→ WordPress- og WooCommerce-data bevares
+→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030)
+→ alle andre WordPress- og WooCommerce-data bevares
 ```
 
 **Planlagte settings** (når de får indhold):
@@ -141,6 +141,9 @@ Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Sett
 
 ## WooCommerce-skærme (fase 17)
 
+Kræver WooCommerce ≥ 10.4. Med en ældre version vises kun en requirements-notice og ingen af skærmene nedenfor (ADR-030).
+
 - Produktliste: kolonne "Creator" og dropdown-filter.
-- Produkt-redigering: felt "Creator" i *General*-tabben (select over aktive creators). Gemmes via `$product->update_meta_data( '_merchboard_creator_id', … )` med capability-check (`edit_product`) og WooCommerce' egen nonce.
-- Ordreliste (HPOS og legacy): valgfri kolonne "Creators" (afledt fra ordrelinjer).
+- Produkt-redigering (klassisk produktskærm): feltet "Creator" i fanen *General* (select over aktive creators). Det er den **eneste understøttede skrivevej** i fase 17. Gemmes via pluginets domæneservice (validering, capability-tjek `edit_product`, WooCommerce' egen nonce og audit), ikke direkte med `update_meta_data()` (ADR-030).
+- Ingen Creator-felt i quick/bulk edit. WooCommerce REST og CSV-import kan ikke ændre koblingen, og "Duplicate" giver et produkt uden creator (ADR-030).
+- Ordreliste: kolonnen "Creators" (afledt af ordrelinjer) er **udskudt** til en senere fase (ADR-030 D3).

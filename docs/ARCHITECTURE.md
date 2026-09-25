@@ -158,8 +158,8 @@ Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
 Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes
-→ WordPress- og WooCommerce-data bevares
+→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030)
+→ alle andre WordPress- og WooCommerce-data bevares
 ```
 
 `uninstall.php` (PHP 7.2-parsebar) → `Requirements` → autoloader → `Core\Lifecycle\Uninstaller` (+ `Core\Database\SchemaEraser`). Settings ligger i `Core\Settings\Settings` (option-adgang uden hooks) og ændres via `Modules\Settings\SettingsService`.

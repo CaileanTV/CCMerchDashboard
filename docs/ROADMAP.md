@@ -120,6 +120,13 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 ## Fase 17 – WooCommerce foundation
 
 - **Scope:** `WooCommerceModule` (betinget indlæsning), `WC requires at least`, creator-felt på produkt, "Creator"-kolonne og -filter i produktlisten og audit-log af koblinger.
+- **Præciseret før implementering (ADR-030, projektejerens beslutninger D1-D6):**
+  - WooCommerce ≥ 10.4. Under minimum indlæses modulet ikke, og admin ser en notice.
+  - Kolonnen "Creators" i ordrelisten er udskudt, og fasen har ingen ordrelogik.
+  - `_merchboard_creator_id` slettes kun ved opt-in-uninstall.
+  - Ingen nye dependencies.
+  - Én autoritativ skrivevej (kun den klassiske produktskærm). REST og CSV-import kan ikke ændre koblingen, quick/bulk edit har intet felt, og duplicate starter uden kobling.
+  - Ingen nye REST-endpoints og ingen migration.
 - **Done:** Produkter kan kobles til creators. Pluginet virker stadig uden WooCommerce.
 
 ## Fase 18 – Sales ledger

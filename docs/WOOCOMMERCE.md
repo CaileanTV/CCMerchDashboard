@@ -1,6 +1,6 @@
 # WooCommerce-integration
 
-> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser.
+> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030. Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
 
 ## Principper
 
@@ -8,13 +8,19 @@
 2. **Valgfrit modul:** `Modules/WooCommerce` indlæses kun, hvis WooCommerce er aktivt. Resten af pluginet (creators, adgang og dashboard-shell) virker uden.
 3. **HPOS-kompatibel fra dag ét:** kun CRUD-API'er (`wc_get_order()`, `wc_get_orders()`, `$order->get_items()`, `wc_get_product()`, `$product->get_meta()`). **Aldrig** direkte SQL mod `wp_posts`/`wp_postmeta` for ordrer. Kompatibilitet erklæres via `FeaturesUtil::declare_compatibility( 'custom_order_tables', MERCHBOARD_FILE, true )`.
 4. Tungt arbejde (backfill og genberegning) køres asynkront via **Action Scheduler**, som følger med WooCommerce.
-5. Minimumsversion af WooCommerce fastlægges i fase 17 (header `WC requires at least`).
+5. **Minimum WooCommerce 10.4** (header `WC requires at least: 10.4`, ADR-030). WooCommerce 10.4 kræver WordPress 6.7, som er pluginets eget minimum. Er WooCommerce aktivt, men ældre, indlæses modulet ikke. Admin ser en neutral requirements-notice, og der er ingen fatal eller delvis integration.
 
 ## Kobling: produkt → creator
 
 - Product meta **`_merchboard_creator_id`** på parent-produktet. Varianter arver fra parent.
 - Sættes af admin i produktets data-panel (se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Ændringer audit-logges.
 - Kun **aktive** creators kan vælges. Hvis en creator bliver inaktiv, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
+- **Én autoritativ skrivevej (ADR-030):** Alle ændringer går gennem pluginets domæneservice: creator findes og er aktiv, variant → parent, capability-tjek og audit i samme transaktion. I fase 17 er kun den klassiske produktskærm understøttet:
+  - WooCommerce REST og CSV-import kan ikke ændre nøglen (tydelig afvisning via de hooks, som fase 17 verificerer i den faktiske WooCommerce-version).
+  - Quick/bulk edit har intet Creator-felt.
+  - "Duplicate product" starter uden koblingen.
+  - Der er ingen nye offentlige REST-endpoints.
+- **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglen (og kun den).
 - **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `merchboard_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
 
 ## Sales ledger
