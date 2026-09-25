@@ -20,6 +20,8 @@
   - Quick/bulk edit har intet Creator-felt.
   - "Duplicate product" starter uden koblingen.
   - Der er ingen nye offentlige REST-endpoints.
+  - **Grænse:** WordPress' rå meta-API fra vilkårlig PHP-kode og `wp post meta update` (WP-CLI) er ikke-understøttede bypasses, der kræver kode- eller shell-adgang. De blokeres ikke (ADR-030).
+- **Ingen produktrettigheder til creators (ADR-030):** Creator-rollen får ingen WooCommerce-produktcapabilities og ingen produktadgang i fase 17. `Capabilities::EDIT_PRODUCT` tildeles aldrig og bruges kun til at autorisere brugere, der i forvejen må redigere produktet.
 - **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglen (og kun den).
 - **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `merchboard_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
 

@@ -134,6 +134,31 @@ final class RoleManagerTest extends TestCase {
 		);
 	}
 
+	public function test_product_capabilities_on_the_creator_role_are_removed(): void {
+		$roles = $this->wordpress_roles(
+			array(
+				'merchboard_creator' => array(
+					'read'                        => true,
+					'merchboard_access_dashboard' => true,
+					'edit_product'                => true,
+					'edit_products'               => true,
+					'publish_products'            => true,
+					'delete_products'             => true,
+				),
+			)
+		);
+
+		$this->manager()->sync();
+
+		self::assertSame(
+			array(
+				'read'                        => true,
+				'merchboard_access_dashboard' => true,
+			),
+			$roles->capabilities( 'merchboard_creator' )
+		);
+	}
+
 	public function test_denied_creator_capability_is_granted_again(): void {
 		$roles = $this->wordpress_roles(
 			array(

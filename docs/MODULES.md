@@ -41,7 +41,7 @@ private function default_modules(): array {
 }
 ```
 
-Eksemplet viser kun princippet. For WooCommerce kræves desuden minimum 10.3 (ADR-030). Med en ældre version indlæses modulet ikke, og admin ser en requirements-notice. Den præcise implementering fastlægges i fase 17.
+Eksemplet viser kun princippet. **Faktisk implementering (fase 17):** `Plugin::default_modules()` spørger `Modules\WooCommerce\WooCommerceSupport::from_environment()`. `WooCommerceModule` tilføjes kun, når WooCommerce er aktivt og mindst `Requirements::MIN_WOOCOMMERCE` (10.3, samme værdi som headeren `WC requires at least`, ADR-030). Med en ældre version indlæses modulet ikke, og brugere med `activate_plugins` ser en neutral notice. Uden WooCommerce sker intet.
 
 Hovedfilen og boot-logikken ændres ikke, når moduler tilføjes.
 

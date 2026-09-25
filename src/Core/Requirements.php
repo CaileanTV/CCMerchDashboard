@@ -32,6 +32,14 @@ final class Requirements {
 	const MIN_WP = '6.7';
 
 	/**
+	 * Minimum WooCommerce version for the optional WooCommerce module. Keep in sync
+	 * with "WC requires at least" in the plugin header. WooCommerce 10.3.x is the
+	 * latest line that runs on MIN_WP (ADR-030). An older WooCommerce does not stop
+	 * the plugin; only the WooCommerce module stays off (WooCommerceSupport).
+	 */
+	const MIN_WOOCOMMERCE = '10.3';
+
+	/**
 	 * Checks the current environment and registers an admin notice on failure.
 	 *
 	 * @return bool True when all requirements are met.

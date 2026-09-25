@@ -213,7 +213,7 @@ final class CreatorAccessTest extends IntegrationTestCase {
 		$this->creators->create( 'Plain', CreatorStatus::Active, $user_id );
 		self::assertTrue( $this->access->user_has_access( $user_id ) );
 
-		foreach ( array( Capabilities::MANAGE, Capabilities::MANAGE_CREATORS, Capabilities::MANAGE_SETTINGS, 'manage_options', 'edit_posts', 'list_users', 'manage_woocommerce' ) as $capability ) {
+		foreach ( array( Capabilities::MANAGE, Capabilities::MANAGE_CREATORS, Capabilities::MANAGE_SETTINGS, 'manage_options', 'edit_posts', 'list_users', 'manage_woocommerce', Capabilities::EDIT_PRODUCT, 'edit_products', 'publish_products', 'delete_products' ) as $capability ) {
 			self::assertFalse( user_can( $user_id, $capability ), $capability );
 		}
 

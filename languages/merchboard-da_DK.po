@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-25T19:14:06+00:00\n"
+"PO-Revision-Date: 2026-09-25T22:10:57+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -29,7 +29,7 @@ msgid "Creator and merchandise management: WordPress admin tools and a secure cr
 msgstr "Administration af creators og merchandise: værktøjer i WordPress-admin og et sikkert creator-dashboard."
 
 #. Author of the plugin
-#: merchboard.php:8
+#: merchboard.php:9
 msgid "CC Merch"
 msgstr "CC Merch"
 
@@ -52,12 +52,12 @@ msgstr "Noget gik galt. Prøv igen senere."
 msgid "Merch Dashboard could not update its database tables. The update is retried automatically. Technical details are in the log (WooCommerce → Status → Logs, source \"merchboard\", or the server error log)."
 msgstr "Merch Dashboard kunne ikke opdatere sine databasetabeller. Opdateringen forsøges igen automatisk. Tekniske detaljer står i loggen (WooCommerce → Status → Logs, kilde \"merchboard\", eller serverens fejllog)."
 
-#: src/Core/Requirements.php:101
+#: src/Core/Requirements.php:109
 msgid "Merch Dashboard is not running."
 msgstr "Merch Dashboard kører ikke."
 
 #. translators: 1: software name (PHP or WordPress), 2: required version, 3: current version.
-#: src/Core/Requirements.php:109
+#: src/Core/Requirements.php:117
 #, php-format
 msgid "%1$s %2$s or later is required. Current version: %3$s."
 msgstr "%1$s %2$s eller nyere er påkrævet. Nuværende version: %3$s."
@@ -740,6 +740,16 @@ msgstr "Små bogstaver, cifre og bindestreger. En ændring flytter dashboardet: 
 #: src/Modules/Settings/Admin/SettingsPage.php:177
 msgid "Save dashboard URL"
 msgstr "Gem dashboardadresse"
+
+#: src/Modules/WooCommerce/WooCommerceSupport.php:90
+msgid "unknown"
+msgstr "ukendt"
+
+#. translators: 1: required WooCommerce version, 2: current WooCommerce version.
+#: src/Modules/WooCommerce/WooCommerceSupport.php:96
+#, php-format
+msgid "The Merch Dashboard WooCommerce integration is not active: WooCommerce %1$s or later is required. Current version: %2$s. The rest of Merch Dashboard works normally."
+msgstr "Merch Dashboards WooCommerce-integration er ikke aktiv: WooCommerce %1$s eller nyere kræves. Nuværende version: %2$s. Resten af Merch Dashboard virker normalt."
 
 #: templates/dashboard/no-access.php:28
 msgid "Access not active"

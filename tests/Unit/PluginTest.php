@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit;
 
+use ArrayObject;
 use Automattic\WooCommerce\Utilities\FeaturesUtil;
 use Brain\Monkey\Actions;
 use Brain\Monkey\Filters;
@@ -26,6 +27,8 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Settings\SettingsModule;
+use MerchBoard\Modules\WooCommerce\WooCommerceModule;
+use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
 use MerchBoard\Plugin;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
@@ -304,6 +307,82 @@ final class PluginTest extends TestCase {
 		$this->plugin()->declare_woocommerce_compatibility();
 
 		self::assertSame( array( array( 'custom_order_tables', self::FILE, true ) ), FeaturesUtil::$calls );
+	}
+
+	public function test_without_woocommerce_no_woocommerce_module_or_notice(): void {
+		self::assertFalse( class_exists( 'WooCommerce', false ) );
+
+		Filters\expectApplied( 'merchboard_modules' )
+			->once()
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule ) ) )
+			->andReturnFirstArg();
+		$notices = $this->capture_admin_notices();
+
+		$this->plugin()->boot();
+
+		self::assertSame( array(), array_filter( $notices->getArrayCopy(), self::is_woocommerce_notice( ... ) ) );
+	}
+
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_supported_woocommerce_boots_the_woocommerce_module_without_notice(): void {
+		$merchboard_test_wc_version = '10.3.8';
+		require_once dirname( __DIR__ ) . '/Fixtures/woocommerce-active.php';
+
+		Filters\expectApplied( 'merchboard_modules' )
+			->once()
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 6 === count( $modules ) && $modules[5] instanceof WooCommerceModule ) )
+			->andReturnFirstArg();
+		$notices = $this->capture_admin_notices();
+
+		$this->plugin()->boot();
+
+		self::assertSame( array(), array_filter( $notices->getArrayCopy(), self::is_woocommerce_notice( ... ) ) );
+	}
+
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_too_old_woocommerce_keeps_the_module_off_and_registers_the_notice(): void {
+		$merchboard_test_wc_version = '10.2.2';
+		require_once dirname( __DIR__ ) . '/Fixtures/woocommerce-active.php';
+
+		Filters\expectApplied( 'merchboard_modules' )
+			->once()
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 5 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule ) ) )
+			->andReturnFirstArg();
+		$notices = $this->capture_admin_notices();
+
+		$this->plugin()->boot();
+
+		self::assertCount( 1, array_filter( $notices->getArrayCopy(), self::is_woocommerce_notice( ... ) ) );
+	}
+
+	/**
+	 * Records every callback added to admin_notices.
+	 *
+	 * @return ArrayObject<int, mixed>
+	 */
+	private function capture_admin_notices(): ArrayObject {
+		$callbacks = new ArrayObject();
+
+		Actions\expectAdded( 'admin_notices' )
+			->zeroOrMoreTimes()
+			->whenHappen(
+				static function ( $callback ) use ( $callbacks ): void {
+					$callbacks[] = $callback;
+				}
+			);
+
+		return $callbacks;
+	}
+
+	/**
+	 * Whether a hook callback is the WooCommerce version notice.
+	 *
+	 * @param mixed $callback Hook callback.
+	 */
+	private static function is_woocommerce_notice( $callback ): bool {
+		return is_array( $callback ) && ( $callback[0] ?? null ) instanceof WooCommerceSupport && 'render_notice' === ( $callback[1] ?? null );
 	}
 
 	/**

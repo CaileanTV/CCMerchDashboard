@@ -914,6 +914,8 @@ Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_
   - Quick/bulk edit får intet Creator-felt.
   - **Duplicate product** starter uden `_merchboard_creator_id`.
   - Der oprettes ingen nye offentlige REST-endpoints.
+  - **Grænse for sikkerhedsmodellen (besluttet efter undersøgelsen i trin 1):** WordPress' rå meta-API (`update_post_meta()`/`add_post_meta()` fra vilkårlig PHP-kode) og `wp post meta update` via WP-CLI kræver kode- eller shell-adgang. De er **ikke-understøttede** bypasses på kode- eller administrationsniveau og blokeres ikke. Der laves ingen globale meta-hooks for at forsøge.
+- **Ingen produktrettigheder til creators:** Fase 17 giver ikke `merchboard_creator` nogen WooCommerce-produktcapabilities (`edit_product`, `edit_products`, `publish_products`, `delete_products` m.fl.) og åbner ingen produktadgang i wp-admin eller dashboardet. `Capabilities::EDIT_PRODUCT` er kun en reference til at autorisere en bruger, der i forvejen må redigere produktet. Creators' egen produktadministration er udskudt til en senere fase og skal designes som en separat, begrænset funktion.
 
 ## Alternatives considered
 - **Ingen minimumsversion eller kun `class_exists`:** ukendt API-adfærd på gamle versioner. Fravalgt.

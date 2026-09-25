@@ -14,6 +14,10 @@ parameters:
         - tests/Fixtures/wpdb.php
         - tests/Fixtures/wp-role.php
         - tests/Fixtures/wp-user.php
+        # Stand-in for an active WooCommerce (global WooCommerce class and
+        # WC_VERSION, loaded only in isolated test processes). Analysing it
+        # makes the full run exhaust its memory limit.
+        - tests/Fixtures/woocommerce-active.php
     # Runtime constants of the integration test harness (tests/Integration/config.php).
     bootstrapFiles:
         - tests/phpstan-bootstrap.php

@@ -88,6 +88,15 @@ final class Capabilities {
 	public const MANAGE_WOOCOMMERCE = 'manage_woocommerce';
 
 	/**
+	 * WooCommerce's capability for editing one product. Check it with the
+	 * product id; WordPress maps it to edit_products, edit_others_products or
+	 * edit_published_products. Not owned by the plugin and never granted by it,
+	 * in particular never to the creator role: it only authorises a user who can
+	 * already edit the (parent) product to change its creator link (ADR-030).
+	 */
+	public const EDIT_PRODUCT = 'edit_product';
+
+	/**
 	 * Exact capability set of the creator role. `read` is WordPress' baseline
 	 * for authenticated users (the Subscriber role has only `read`); nothing
 	 * else from WordPress is granted.

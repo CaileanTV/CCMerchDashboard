@@ -38,6 +38,15 @@ final class CapabilitiesTest extends TestCase {
 			'unfiltered_html',
 			'edit_theme_options',
 			'manage_woocommerce',
+			// WooCommerce product capabilities: creators get no product rights (ADR-030).
+			'edit_product',
+			'edit_products',
+			'edit_others_products',
+			'edit_published_products',
+			'publish_products',
+			'delete_product',
+			'delete_products',
+			'delete_published_products',
 		);
 
 		return array_combine( $caps, array_map( static fn( string $c ): array => array( $c ), $caps ) );
@@ -85,6 +94,14 @@ final class CapabilitiesTest extends TestCase {
 		self::assertFalse( Capabilities::is_plugin_capability( 'manage_woocommerce' ) );
 		self::assertFalse( Capabilities::is_plugin_capability( 'read' ) );
 		self::assertFalse( Capabilities::is_plugin_capability( 'xmerchboard_manage' ) );
+	}
+
+	public function test_edit_product_is_a_foreign_capability_that_is_never_granted(): void {
+		self::assertSame( 'edit_product', Capabilities::EDIT_PRODUCT );
+		self::assertFalse( Capabilities::is_plugin_capability( Capabilities::EDIT_PRODUCT ) );
+		self::assertNotContains( Capabilities::EDIT_PRODUCT, Capabilities::creator_capabilities() );
+		self::assertNotContains( Capabilities::EDIT_PRODUCT, Capabilities::admin_capabilities() );
+		self::assertNotContains( Capabilities::EDIT_PRODUCT, Capabilities::all() );
 	}
 
 	public function test_creator_role_display_name(): void {

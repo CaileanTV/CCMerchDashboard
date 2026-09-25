@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-25T19:14:06+00:00\n"
+"POT-Creation-Date: 2026-09-25T22:10:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -29,7 +29,7 @@ msgid "Creator and merchandise management: WordPress admin tools and a secure cr
 msgstr ""
 
 #. Author of the plugin
-#: merchboard.php:8
+#: merchboard.php:9
 msgid "CC Merch"
 msgstr ""
 
@@ -52,12 +52,12 @@ msgstr ""
 msgid "Merch Dashboard could not update its database tables. The update is retried automatically. Technical details are in the log (WooCommerce → Status → Logs, source \"merchboard\", or the server error log)."
 msgstr ""
 
-#: src/Core/Requirements.php:101
+#: src/Core/Requirements.php:109
 msgid "Merch Dashboard is not running."
 msgstr ""
 
 #. translators: 1: software name (PHP or WordPress), 2: required version, 3: current version.
-#: src/Core/Requirements.php:109
+#: src/Core/Requirements.php:117
 #, php-format
 msgid "%1$s %2$s or later is required. Current version: %3$s."
 msgstr ""
@@ -739,6 +739,16 @@ msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:177
 msgid "Save dashboard URL"
+msgstr ""
+
+#: src/Modules/WooCommerce/WooCommerceSupport.php:90
+msgid "unknown"
+msgstr ""
+
+#. translators: 1: required WooCommerce version, 2: current WooCommerce version.
+#: src/Modules/WooCommerce/WooCommerceSupport.php:96
+#, php-format
+msgid "The Merch Dashboard WooCommerce integration is not active: WooCommerce %1$s or later is required. Current version: %2$s. The rest of Merch Dashboard works normally."
 msgstr ""
 
 #: templates/dashboard/no-access.php:28

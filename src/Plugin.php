@@ -28,6 +28,8 @@ use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Settings\SettingsModule;
+use MerchBoard\Modules\WooCommerce\WooCommerceModule;
+use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -228,18 +230,29 @@ final class Plugin {
 	}
 
 	/**
-	 * Built-in modules.
+	 * Built-in modules. The WooCommerce module is only included with a
+	 * supported WooCommerce; an older one gets a notice instead (ADR-030).
 	 *
 	 * @return Module[]
 	 */
 	private function default_modules(): array {
-		return array(
+		$modules = array(
 			new CreatorsModule(),
 			new AccessModule(),
 			new DashboardModule(),
 			new SettingsModule(),
 			new AdminModule(),
 		);
+
+		$woocommerce = WooCommerceSupport::from_environment();
+
+		if ( $woocommerce->is_supported() ) {
+			$modules[] = new WooCommerceModule();
+		}
+
+		$woocommerce->register_notice();
+
+		return $modules;
 	}
 
 	/**
