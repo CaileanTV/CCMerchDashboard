@@ -9,7 +9,8 @@
 | Statisk | PHPCS (WPCS), PHPStan level 8, ESLint, `php -l` (8.2) | Standarder, security-sniffs (escaping, nonce, prepared SQL), typefejl | Nu | Lokalt og i CI |
 | PHP unit | PHPUnit + [Brain Monkey](https://github.com/Brain-WP/BrainMonkey) | Domænelogik, services, entities og validering uden WordPress | Fase 2 → | Lokalt og i CI |
 | PHP integration | PHPUnit 11 + rigtig WordPress (`roots/wordpress-no-content`) + rigtig MySQL/MariaDB | Migrationer, lås, transaktioner, repositories, charset og services mod rigtig database. Senere capabilities, REST-permissions og **IDOR-tests** | Fase 7 → | Lokalt (portabel MariaDB) og i CI (runnerens MySQL) |
-| JS unit | Jest via `wp-scripts test-unit-js` + Testing Library | Hooks, utils og komponenter med logik | Fase 13 → | Lokalt og i CI |
+| Typer | `tsc` (strict, `npm run typecheck`) | Hele dashboard-koden inkl. tests. `any` forbudt (ESLint) | Fase 13 → | Lokalt og i CI |
+| JS unit | Jest via `wp-scripts test-unit-js` (jsdom), React via `createRoot` + `act` (intet Testing Library) | Bootstrap-validering, router, API-klient, hooks, komponenter og app | Fase 13 → | Lokalt og i CI |
 | E2E | Playwright via `wp-scripts test-e2e` mod Playground | Login-flow, adgangskontrol og kritiske dashboard-flows | Efter MVP | CI |
 | Manuel | Tjekliste i PR/fase-afslutning | UX, responsivitet og tilgængelighed | Hver fase | Lokalt (`npm run wp:start`) |
 
@@ -126,3 +127,19 @@ For admin-handlers: manglende capability og manglende/ugyldig nonce.
 - Relevante unit-/integrationstests er skrevet og grønne.
 - Manuel verifikation i Playground for UI-ændringer (desktop og mobilbredde).
 - CI er grøn efter push.
+
+## Frontend-tests (fase 13)
+
+Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgår i `npm run lint`). Konfiguration: `jest.config.js` (wp-scripts-preset, kun `assets/src`) og `tsconfig.json`. Tests ligger i `assets/src/dashboard/test/`, og helpers i `testing/` (`render`/`act`, fixtures).
+
+- **Bootstrap (`parseConfig`):** gyldig config, manglende felter, fremmede hosts, `//`, `javascript:`, `data:`, relative URL'er og credentials i URL'er afvises, ugyldig routing og ugyldige sektioner, og ukendte felter (fx `creator_id`) ignoreres.
+- **Routes:** normalisering (traversal, `//`, schemes, `<script>`, encoding og længde afvises), stier og URL'er med pretty permalinks og query-fallback.
+- **API-klient:** korrekt `apiFetch`-kald (`parse: false`, method, data, signal), 401/403/404/5xx → fejltype med kun WordPress' fejlkode (ingen beskeder), fejlsvar uden JSON, malformed succes-svar (ugyldig JSON, forkert form, array, ikke et svar) → `invalid_response`, netværksfejl og abort, og kald uden for `merchboard/v1` afvises uden request.
+- **`useApi`:** loading → success, fejl og retry, kastet fejl → generisk fejl, abort ved unmount og sene svar ignoreres.
+- **`ApiErrorState`:** 401 med login-link og uden redirect, 403 med log ud-link, øvrige fejl med retry, ingen serverdetaljer.
+- **Komponenter:** Button (type, busy), Alert (tone som tekst, roller), Card (labelled section), Skeleton (status, skjulte søjler), EmptyState og Field (label, hjælpetekst og fejl via `aria-describedby`/`aria-invalid`).
+- **App og mount:** landmarks, ét h1, aktivt menupunkt med rigtige URL'er, deep link → "Page not found" → client-side navigation, tilbage-knap (`popstate`), query-fallback, sektion uden komponent, mobil-nav (`aria-expanded`, `Esc`, fokus), serverværdier som tekst (ingen HTML-injektion), log ud-link, intet i storage eller cookies, mount/unmount og ugyldig bootstrap → generisk fejl uden links.
+
+**PHP (fase 13):** `ShellControllerTest` dækker React-shellen (registrering med manifest-dependencies, RTL, inline bootstrap med hex-escaping og uden creator-data, nonce-filtre kun under rendering, 503 og logning uden build, ugyldige manifester, 403 uden bundle og CSP uden `script-src`). `DashboardAccessTest` (integration) renderer shellen med rigtige WordPress-scripts: kun bundlen og dens dependencies (ikke andre enqueued scripts), nonce på alle `<script>`-tags, filtrene fjernes igen, og 503 uden build. Testene bruger et fixture-build, så de ikke afhænger af `npm run build`.
+
+**Browser (Playground):** Et scratchpad-script kører den lokale Chrome headless via `playwright-core`, som følger med `@wordpress/scripts` (ingen browser-download). Det tjekker rendering, navigation, refresh, mobil-menu, tastatur, CSP-brud, konsolfejl, fejlede og fremmede requests og browser-storage. Playwright-E2E i repo'et er stadig planlagt efter MVP.

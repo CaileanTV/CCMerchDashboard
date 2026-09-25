@@ -112,7 +112,18 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 ### Security headers (dashboard-shell)
 
-✅ Fase 12 (`ShellController::security_headers()`, på alle dashboard-svar inkl. redirect og 403): `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, `X-Robots-Tag: noindex, nofollow`, `nocache_headers()` og `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'`. Siderne har ingen JavaScript, så CSP'en tillader ingen scripts. Fase 13 tilføjer `script-src` for vores egne handles (evt. nonces via `wp_inline_script_attributes`).
+✅ Fase 12 (`ShellController::security_headers()`, på alle dashboard-svar inkl. redirect og 403): `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, `X-Robots-Tag: noindex, nofollow`, `nocache_headers()` og `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'`. Redirect, 403-siden og 503-siden har ingen JavaScript, så deres CSP tillader ingen scripts.
+
+✅ **Fase 13 (React-shellen):** `Content-Security-Policy: default-src 'none'; script-src 'self' 'nonce-<ny pr. request>'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'`. Noncen (128 bit) sættes på alle `<script>`-tags, som WordPress udskriver for bundlen og dens dependencies, via `wp_script_attributes`/`wp_inline_script_attributes`. Filtrene er kun aktive, mens shellen renderes. Ingen `unsafe-eval` og ingen `unsafe-inline` for scripts. Verificeret i Chrome: 0 CSP-brud.
+
+**Frontend-sikkerhed (fase 13):**
+
+- **XSS:** Serverværdier renderes som tekst af React. `dangerouslySetInnerHTML` er forbudt (ESLint `react/no-danger`). Bootstrap-JSON'en hex-escapes (`JSON_HEX_TAG` m.fl.), så den ikke kan lukke `<script>`.
+- **Open redirect / `javascript:`:** Alle URL'er fra bootstrap-data valideres som absolutte `http(s)`-URL'er på sidens egen origin uden credentials. Routeren accepterer kun dashboard-stier (`[a-z0-9-]`-segmenter).
+- **Identitet:** Bootstrap-data indeholder intet creator-ID eller creator-navn. API-klienten sender aldrig et creator-ID for at vælge creator'en, og den kan kun kalde `merchboard/v1`. Adgang afgøres af serveren (`CreatorContext`), aldrig af UI-state.
+- **Fejl:** Svar fra 401/403/5xx reduceres til en fast fejltype. Serverens fejlbeskeder og -data vises aldrig.
+- **Storage:** Ingen credentials, nonces eller data i `localStorage`, `sessionStorage`, IndexedDB eller cookies fra dashboard-koden (håndhævet af ESLint og testet). Application Passwords bruges aldrig af frontend.
+- **TypeScript er ikke sikkerhed:** Typer tjekkes kun ved build. Data fra serveren er `unknown`, indtil de er valideret.
 
 **wp-admin for rene creators (✅ fase 12, ADR-026):** `AdminAreaGuard` redirecter til dashboardet på `admin_init` (prioritet 0) og på `admin_page_access_denied` (skærme, WordPress afviser før `admin_init`). AJAX, `admin-post.php`, `async-upload.php`, cron, REST og CLI undtages. Admin bar skjules (`show_admin_bar`).
 

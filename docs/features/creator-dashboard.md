@@ -4,7 +4,7 @@
 Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser og vedligeholder sine egne oplysninger og senere sine produkter, ordrer og salg.
 
 ## Current status
-Route og sikker shell ✅ (fase 12): `/creator-dashboard/` svarer med login-redirect, 403 eller en placeholder-shell uden JavaScript. Frontend-fundament i fase 13, `/me` + Profile i fase 14 og Overview i fase 15 (MVP).
+Route og sikker shell ✅ (fase 12). Frontend-fundament ✅ (fase 13): React/TypeScript-appen med layout, navigation, router, API-klient og kernekomponenter. Start-siden er en placeholder med empty state. `/me` + Profile i fase 14 og Overview i fase 15 (MVP).
 
 ## User-facing functionality (MVP)
 - Adgang via `/creator-dashboard/` (slug kan konfigureres) efter login.
@@ -21,13 +21,13 @@ Senere sektioner: Products, Orders, Sales, Payouts og Settings. Se [FRONTEND.md]
 
 ## Technical implementation
 - **Route ✅:** `Modules/Dashboard/DashboardRoute` registrerer rewrite rule og query vars og ugyldiggør gemte rewrite rules ved behov. `ShellController` (`template_redirect`, prioritet 0) håndterer auth-gate via `CreatorContext` og renderer `templates/dashboard/shell.php` eller `no-access.php` uden theme. Se [FRONTEND.md](../FRONTEND.md#serving-dedikeret-route-og-standalone-shell--fase-12).
-- **Assets:** `build/dashboard.js` og `.css` registreres med dependencies og version fra `build/dashboard.asset.php`. Kun disse handles udskrives i shellen.
-- **Bootstrap-data:** `window.merchboardDashboard` (REST-root, nonce, base path, logout-URL, locale og sektioner).
+- **Assets ✅ (fase 13):** `DashboardAssets` registrerer `build/dashboard.js` og `.css` (+ RTL) med dependencies og version fra `build/dashboard.asset.php`. Kun dette handle og dets WordPress-dependencies udskrives i shellen, alle med CSP-nonce.
+- **Bootstrap-data ✅ (fase 13):** `window.merchboardDashboard` (sitenavn, dashboard-URL, routing, logout- og login-URL, locale og sektioner; ingen creator-data). REST-root og nonce sættes af WordPress' `wp-api-fetch`. Se [FRONTEND.md](../FRONTEND.md#bootstrap-data).
 - **Sektioner:** `DashboardSections`-registry (filter `merchboard_dashboard_sections`). Hver sektion har `id`, `label`, `icon`, `path` og `capability`. Serveren filtrerer på capability, og klienten lazy-loader.
 - **Data:** `GET /merchboard/v1/me` og `PATCH /merchboard/v1/me/profile`.
 
 ## Relevant files
-✅ `src/Modules/Dashboard/{DashboardModule,DashboardRoute,ShellController,ShellResponse}.php`, `src/Core/Lifecycle/Deactivator.php`, `templates/dashboard/{shell,no-access}.php`, `tests/Unit/Modules/Dashboard/*` og `tests/Integration/Access/DashboardAccessTest.php`. Planlagt: `assets/src/dashboard/**`.
+✅ `src/Modules/Dashboard/{DashboardModule,DashboardRoute,ShellController,ShellResponse}.php`, `src/Core/Lifecycle/Deactivator.php`, `templates/dashboard/{shell,no-access}.php`, `tests/Unit/Modules/Dashboard/*` og `tests/Integration/Access/DashboardAccessTest.php`. ✅ `src/Modules/Dashboard/DashboardAssets.php`, `assets/src/dashboard/**` (fase 13, struktur i [FRONTEND.md](../FRONTEND.md#struktur--fase-13)), `tsconfig.json` og `jest.config.js`.
 
 ## Database/data used
 `merchboard_creators`, `merchboard_creatormeta` (profilfelter: `bio`, `social_links`, `avatar_id`) og `merchboard_settings` (slug og branding).
@@ -50,7 +50,7 @@ Access (CreatorContext), Creators (repository/service), Core (Settings, Assets) 
 
 ## Tests
 - ✅ Integration (fase 12): route-adgang (logget ud → login-redirect, ikke-creator → 403, inaktiv → 403, creator → 200, deaktivering/frakobling/rolle fjernet virker straks, slettet bruger, databasefejl), rewrite rules og deep links, slug-ændring. Planlagt: `/me` og `/me/profile` (alle security-cases i [API.md](../API.md#test-krav)).
-- JS unit: `useApi`, router og formularvalidering.
+- ✅ JS unit (fase 13): bootstrap-validering, router, API-klient, `useApi`, `ApiErrorState`, komponenter og app (se [TESTING.md](../TESTING.md#frontend-tests-fase-13)). Senere: formularvalidering (fase 14).
 - Manuel: mobil (375px), tablet og desktop samt tastaturnavigation.
 
 ## Known limitations

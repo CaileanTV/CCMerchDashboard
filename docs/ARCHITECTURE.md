@@ -76,19 +76,19 @@ merchboard/
 │   │   ├── Settings/            # Settings-service (én option, typed getters, defaults)
 │   │   ├── Logging/             # Logger, LogLevel, LogContext, PluginLogger, LogWriter,
 │   │   │                        # WooCommerceLogWriter, ErrorLogWriter              [fase 4]
-│   │   └── Support/             # Assets (læser build/*.asset.php), Template-renderer
+│   │   └── Support/             # Template-renderer (planlagt)
 │   └── Modules/
 │       ├── Creators/            # CreatorsModule, Creator (entity), CreatorStatus (enum), CreatorRepository [fase 3]
 │       │                        # CreatorService, CreatorException, UserAccounts, Admin/ (page, list table, actions) [fase 6]
 │       ├── Admin/               # AdminModule, AdminMenu (topmenu), OverviewPage [fase 10]; AuditLogPage, AuditLogListTable, AuditLogFormatter [fase 11]
 │       ├── Access/              # AccessModule, CreatorContext [fase 8]; CreatorRestrictions, LoginRedirect, AdminAreaGuard [fase 12]
 │       ├── Admin/               # Topmenu, Overview-side, Settings-side, Audit-log-side
-│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardSections-registry, Rest/Me* [fase 13-15]
+│       ├── Dashboard/           # DashboardRoute, ShellController [fase 12]; DashboardAssets (build/dashboard.asset.php) [fase 13]; DashboardSections-registry, Rest/Me* [fase 14-15]
 │       └── WooCommerce/         # kun indlæst når WooCommerce er aktiv
 ├── templates/                   # PHP-templates (dashboard-shell, admin-partials)
 ├── assets/src/
-│   ├── dashboard/               # React-app til creator dashboard
-│   └── admin/                   # evt. små admin-scripts/styles
+│   ├── dashboard/               # React + TypeScript-app til creator dashboard [fase 13, se FRONTEND.md#struktur--fase-13]
+│   └── (assets/js/)             # små admin-scripts uden build (vanilla JS, fase 10)
 ├── build/                       # genereret af wp-scripts (gitignored)
 ├── languages/
 ├── tests/

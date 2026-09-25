@@ -78,7 +78,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 | Admin | Færdig | `AdminModule`, `AdminMenu` (topmenu, `merchboard_manage`), `OverviewPage` (10), `AuditLogPage`/`AuditLogListTable`/`AuditLogFormatter` (read-only audit log, `merchboard_view_logs`) (11) | 10 ✅, 11 ✅ |
 | Settings | Delvist | **Færdig:** `SettingsModule`, `SettingsService`, `SettingsPage`, `SettingsActions` med opt-in for permanent sletning (9). Dashboard-slug og `SlugAvailability` (12). **Planlagt:** øvrige settings (General/Access/Advanced), når de får indhold | 9 ✅, 12 ✅ |
 | Access | Delvist | **Færdig:** `AccessModule`, `CreatorContext` (adgangspolitik) (8). `CreatorRestrictions`, `LoginRedirect`, `AdminAreaGuard`: login-redirect, blokering af wp-admin, skjult admin bar og Application Passwords fra for rene creators (12, ADR-026). **Planlagt:** meta-capabilities (14) | 8 ✅, 12 ✅, 14 |
-| Dashboard | Delvist | **Færdig:** `DashboardModule`, `DashboardRoute` (rewrite, konfigurerbar slug), `ShellController`/`ShellResponse` og templates (12). **Planlagt:** sektion-registry og `/me`-endpoints | 12 ✅, 13-15 |
+| Dashboard | Delvist | **Færdig:** `DashboardModule`, `DashboardRoute` (rewrite, konfigurerbar slug), `ShellController`/`ShellResponse` og templates (12). `DashboardAssets` og React/TypeScript-appen i `assets/src/dashboard` (13). **Planlagt:** `/me`-endpoints (14) og sektion-registry (15) | 12 ✅, 13 ✅, 14-15 |
 | WooCommerce | Planlagt | Produkt↔creator, sales ledger, produkter/ordrer i dashboard | 17-19 |
 | Statistics | Fremtid | Aggregeringer og grafer | 20 |
 | Payouts | Fremtid | Afregning til creators | – |

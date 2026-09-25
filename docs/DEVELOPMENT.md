@@ -42,19 +42,22 @@ node bin/composer.mjs install
 
 | Kommando | Formål |
 | --- | --- |
-| `npm run lint` | Alle checks: ESLint, PHPCS og PHPStan |
+| `npm run lint` | Alle checks: ESLint, stylelint, TypeScript (`tsc`), PHPCS og PHPStan |
 | `npm run lint:js` | ESLint (WordPress-regler + Prettier) |
 | `npm run lint:css` | stylelint (bruges, når der er CSS/SCSS) |
 | `npm run lint:php` | PHPCS med WordPress Coding Standards |
 | `npm run analyse:php` | PHPStan level 8 med WordPress-stubs |
-| `npm test` / `npm run test:php` | PHPUnit unit-tests (Brain Monkey) |
+| `npm test` | PHPUnit unit-tests (Brain Monkey) og Jest |
+| `npm run test:php` / `npm run test:js` | Kun PHPUnit / kun Jest (dashboardet) |
+| `npm run typecheck` | TypeScript strict-typetjek af `assets/src` (`tsc --noEmit`) |
+| `npm run build` / `npm run start` | Bygger dashboardet til `build/` (produktion) / bygger og overvåger (udvikling) |
 | `npm run test:integration` | Integrationstests mod rigtig WordPress og MariaDB/MySQL (se [TESTING.md](TESTING.md#integrationstests-fase-7)) |
 | `node bin/composer.mjs check` | PHPCS + PHPStan + PHPUnit |
 | `npm run format` | Prettier-formattering af JS/JSON/Markdown m.m. |
 | `node bin/composer.mjs lint:fix` | Autofix af PHPCS-fejl (phpcbf) |
 | `npm run wp:start` | Starter lokal WordPress på <http://127.0.0.1:9400> |
 
-`build`/`start` (JS-build) tilføjes i roadmap-fase 13, når dashboardets første JS-entry findes.
+Dashboardet skal bygges (`npm run build`), før Playground kan vise det. Ellers svarer `/creator-dashboard/` med 503.
 
 ## Lokal WordPress (WordPress Playground)
 
@@ -107,12 +110,17 @@ Kun udviklingsværktøjer. Pluginet har **ingen** tredjeparts runtime-dependenci
 | --- | --- | --- | --- |
 | `@wordpress/scripts` | 35.0.0 | Samlet WordPress-toolchain: webpack-build med dependency extraction (bruger WordPress' egen React), ESLint, Prettier, stylelint og Jest. Erstatter en separat Vite/ESLint/Prettier-opsætning. | `eslint.config.cjs`, npm scripts |
 | `@wp-playground/cli` | 3.1.55 | Isoleret lokal WordPress uden Docker eller LocalWP | `npm run wp:start`, `blueprint.json` |
+| `typescript` | 6.0.3 | Typetjek af dashboardet (ADR-027). Samme version som `typescript-eslint` i `@wordpress/scripts` | `tsconfig.json`, `npm run typecheck` |
+| `@types/react`, `@types/react-dom` | 19.3.0 | React-typer (peer af `@wordpress/element`) | TypeScript |
+| `@wordpress/element` | 8.8.0 | React-API til dashboardet. Runtime leveres af WordPress (external) | `assets/src/dashboard` |
+| `@wordpress/api-fetch` | 7.56.0 | REST-klient (cookie + nonce). Runtime leveres af WordPress | `api/client.ts` |
+| `@wordpress/i18n` | 6.29.0 | Oversættelige strenge. Runtime leveres af WordPress | Komponenter |
 
-Runtime-JS-pakker som `@wordpress/element`, `@wordpress/api-fetch` og `@wordpress/i18n` leveres af WordPress selv og bliver externals ved build. De installeres som dev-dependencies (til editor-support og tests) i fase 13.
+Runtime-JS-pakker som `@wordpress/element`, `@wordpress/api-fetch` og `@wordpress/i18n` leveres af WordPress selv og bliver externals ved build. De er dev-dependencies (typer, editor-support og tests) fra fase 13.
 
 ### Kendte advisories
 
-`npm audit` rapporterer 11 advisories (5 moderate, 6 high) i transitive dependencies af `@wordpress/scripts` (markdownlint-cli, webpack-dev-server, copy-webpack-plugin m.fl.). De bruges kun lokalt/i CI og indgår aldrig i det distribuerede plugin. `npm audit fix --force` ville nedgradere `@wordpress/scripts` og er derfor ikke kørt. Følges op ved opdateringer af `@wordpress/scripts` (se teknisk gæld i [PROJECT-STATUS.md](PROJECT-STATUS.md)).
+`npm audit` rapporterer 14 advisories (8 moderate, 6 high) i `@wordpress/scripts`, `@wp-playground/cli` og deres transitive dependencies (markdownlint-cli, webpack-dev-server, copy-webpack-plugin, express m.fl.). Ingen i fase 13's nye pakker. De bruges kun lokalt/i CI og indgår aldrig i det distribuerede plugin. `npm audit fix --force` ville nedgradere `@wordpress/scripts` og er derfor ikke kørt. Følges op ved opdateringer af `@wordpress/scripts` (se teknisk gæld i [PROJECT-STATUS.md](PROJECT-STATUS.md)).
 
 ## Konfigurationsfiler
 

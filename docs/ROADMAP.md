@@ -94,11 +94,11 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Scope (udført):** `Modules/Dashboard`: rewrite rule og query vars (slug fra settings, default `/creator-dashboard/`, deep links), rewrite rules ugyldiggøres ved aktivering, i `Deactivator`, ved slug-ændring og når de gemte regler mangler ruten. `ShellController` (auth-gate via `CreatorContext`: login-redirect / 403-side "access not active" / shell), `templates/dashboard/shell.php` og `no-access.php` uden theme og uden JS, security headers inkl. CSP. Dashboard-slug i Settings (validering, audit). Fra fase 8: `LoginRedirect` (inkl. WooCommerce), `AdminAreaGuard`, skjult admin bar og Application Passwords slået fra for **rene creators** (ADR-026).
 - **Done:** Unit- og integrationstests (MariaDB) for adgang, login, wp-admin, admin bar, Application Passwords og slug. Deep links virker. Playground med og uden WooCommerce over HTTP.
 
-## Fase 13 – Dashboard frontend-fundament
+## Fase 13 – Dashboard frontend-fundament ✅
 
-- **Forudsætning:** TypeScript-beslutning truffet (åbent spørgsmål).
-- **Scope:** `npm run build`/`start`, entry `assets/src/dashboard`, `@wordpress/element`/`api-fetch`/`i18n` som dev-deps, `Assets`-service (asset.php), bootstrap-data, design tokens, layout (sidebar/topbar/mobil-nav), router, `useApi`, kernekomponenter (Button, Card, Alert, Skeleton, EmptyState, ErrorState, Field), ESLint `react/no-danger`, Jest-setup, `build` i CI.
-- **Done:** Shellen viser et responsivt tomt layout med navigation. JS-tests og lint er grønne.
+- **Forudsætning (opfyldt):** TypeScript besluttet (ADR-027).
+- **Scope (udført):** `npm run build`/`start`/`typecheck`/`test:js`, entry `assets/src/dashboard/index.tsx` (React + TypeScript strict), `@wordpress/element`/`api-fetch`/`i18n` og typer som dev-deps, `DashboardAssets` (asset.php), bootstrap-data med runtime-validering, design tokens, layout (topbar, sidebar, mobil-nav, skip link), router (History API, pretty og query-fallback), API-klient (`merchboard/v1`, typed `ApiResult`, validering), `useApi`, kernekomponenter (Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field), CSP med nonce, ESLint `react/no-danger` og `no-explicit-any`, Jest-setup, typetjek, stylelint og build i CI. Intet `/me`-endpoint (fase 14, besluttet af projektejeren).
+- **Done:** Shellen viser et responsivt layout med navigation og empty state. JS-tests, typetjek, lint, PHP-tests og integrationstests er grønne. Playground med og uden WooCommerce (pretty permalinks og fallback) i en rigtig browser uden konsolfejl eller CSP-brud.
 
 ## Fase 14 – REST-fundament, `/me` og Profile
 

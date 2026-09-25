@@ -248,7 +248,7 @@ Theme- og plugin-scripts (fx analytics eller cookie-banner) indlæses ikke autom
 2026-09-24
 
 ## Status
-Accepteret (TypeScript er åbent spørgsmål)
+Accepteret. TypeScript besluttet i ADR-027.
 
 ## Context
 Dashboardet skal understøtte navigation, grafer, tabeller, formularer, modaler og mange fremtidige moduler.
@@ -776,3 +776,40 @@ Rene creators får én forudsigelig indgang og ingen adgang til WordPress' egne 
 - En deaktiveret creator forbliver logget ind, men dashboardet giver 403 fra næste request.
 - Findes en side med standard-slug'en allerede ved aktivering, vinder dashboardet. Vælg en anden slug i Settings.
 - Fase 13 skal udvide dashboardets CSP med `script-src` for egne handles.
+
+---
+
+# ADR-027: Creator-dashboardet skrives i TypeScript (strict) med React og @wordpress/scripts
+
+## Date
+2026-09-25
+
+## Status
+Accepteret (fase 13). Besluttet af projektejeren (lukker åbent spørgsmål 3). Supplerer ADR-010.
+
+## Context
+Dashboardet vokser over mange faser (profil, produkter, ordrer, salg) og er bygget på REST-kontrakter. JavaScript med JSDoc giver svag kontrol med kontrakter og refaktorering. Beslutningen skulle træffes før den første frontend-kode (fase 13), så der ikke skal migreres senere.
+
+## Decision
+- Al creator-dashboard-kode er TypeScript (`.ts`/`.tsx`) med React via `@wordpress/element`.
+- Build, lint og test via den eksisterende `@wordpress/scripts` (Babel transpilerer TypeScript). Ingen Vite, Next.js, separat bundler, dev-server eller egen webpack-konfiguration.
+- `tsc` kun til typetjek (`npm run typecheck`, `noEmit`) med `strict`, `noImplicitAny`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` m.fl. `any` er forbudt (ESLint).
+- Data over en trust-grænse (bootstrap-data, REST-svar) er `unknown` og valideres med små lokale runtime-checks. Intet schema-bibliotek.
+- Ingen global state-library. Almindelig React-state og egne hooks. Et bibliotek kræver en ny ADR.
+- TypeScript er compile-time typesikkerhed, **ikke** sikkerhed. Backend er autoritativ for login, creator-identitet, status, capabilities og data.
+- Nye dev-dependencies: `typescript`, `@types/react`, `@types/react-dom`, `@wordpress/element`, `@wordpress/api-fetch` og `@wordpress/i18n`. Pakkerne leveres ved runtime af WordPress (externals). Der er ingen runtime-dependencies og intet testbibliotek ud over Jest fra `@wordpress/scripts`.
+- Admin-JavaScript fra tidligere faser (`assets/js/creator-user-search.js`, vanilla uden build) forbliver JavaScript.
+
+## Alternatives considered
+- **JavaScript + JSDoc:** ingen build-ændring, men svag håndhævelse. Fravalgt.
+- **Vite/Next.js eller egen webpack-konfiguration:** mister WordPress' dependency extraction og `*.asset.php`, og kræver mere vedligehold. Fravalgt (jf. ADR-010).
+- **Runtime schema-bibliotek (fx Zod):** ekstra bundle og dependency for få, simple kontrakter. Revurderes, hvis kontrakterne vokser.
+- **Testing Library:** fravalgt indtil videre. `createRoot` + `act` fra React dækker behovet uden ny dependency.
+
+## Reason
+Typesikre kontrakter og sikker refaktorering over mange faser, uden at forlade WordPress' toolchain eller tilføje runtime-vægt.
+
+## Consequences
+- `npm run lint` omfatter typetjek. CI kører ESLint, stylelint, `tsc`, Jest og build.
+- WordPress' React-version afgør runtime (React 18.3 på WordPress 6.7). Koden bruger kun API'er, der findes i React 18 og 19.
+- Typerne for REST-svar skal matche backendens faktiske kontrakt og må ikke opfinde felter.

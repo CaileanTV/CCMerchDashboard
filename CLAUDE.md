@@ -8,8 +8,9 @@ Then read [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md) and [docs/ARCHITECTUR
 
 ## Commands
 
-- `npm run lint`: ESLint + PHPCS (WPCS) + PHPStan (level 8). Must pass before committing.
-- `npm test`: PHPUnit unit tests (Brain Monkey). Must pass before committing.
+- `npm run lint`: ESLint + stylelint + TypeScript (strict, `tsc`) + PHPCS (WPCS) + PHPStan (level 8). Must pass before committing.
+- `npm test`: PHPUnit unit tests (Brain Monkey) + Jest (dashboard). Must pass before committing.
+- `npm run build`: builds the creator dashboard (React + TypeScript via `@wordpress/scripts`) into `build/` (gitignored). Needed before Playground shows the dashboard.
 - `node bin/composer.mjs <args>`: Composer (works without php.ini; uses `.tools/composer.phar` if no global composer).
 - `npm run wp:start`: ephemeral WordPress + WooCommerce at http://127.0.0.1:9400 (admin / password). Run via npm/PowerShell, not raw Git Bash (path mangling).
 

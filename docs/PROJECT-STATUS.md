@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 12 (Creator dashboard: route og sikker shell) · **Næste fase:** 13 (Dashboard frontend-fundament) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-24 · **Seneste færdige fase:** 13 (Dashboard frontend-fundament) · **Næste fase:** 14 (REST-fundament, `/me` og Profile) · **Schemaversion:** 2 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -189,6 +189,23 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 **Bevidst ikke i fase 12:** frontend-build og React (fase 13), `/me`-API (14), branding, Access-settings (til/fra-knapper), rewrite-status på Overview, meta-capabilities og at logge sessioner ud ved deaktivering.
 
+### Fase 13 – Dashboard frontend-fundament ✅
+
+- [x] TypeScript besluttet (åbent spørgsmål 3 lukket, ADR-027): React via `@wordpress/element`, TypeScript strict, `@wordpress/scripts`, REST i `merchboard/v1`, ingen global state-library. Backend er autoritativ for adgang.
+- [x] `tsconfig.json` (strict, `noImplicitAny`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noUnused*`, `verbatimModuleSyntax`, `noEmit`), `jest.config.js` (kun `assets/src`), npm scripts `build`, `start`, `typecheck` og `test:js`. `npm run lint` omfatter nu stylelint og `tsc`, og `npm test` omfatter Jest.
+- [x] `assets/src/dashboard`: entry og mount, bootstrap-validering, router (pretty og query-fallback, deep links, tilbage og refresh), layout (skip link, topbar, sidebar ≥ lg, mobil-nav med `Esc`), `OverviewSection` (placeholder), "Page not found", ErrorBoundary, API-klient med typed resultat og runtime-validering, `useApi`, komponenter og design tokens. Kun `.merchboard-*`-CSS.
+- [x] PHP: `DashboardAssets` (validerer `build/dashboard.asset.php`, registrerer script og style med RTL, bootstrap inline med hex-escaping), `ShellController` renderer React-shellen, 503 uden build, CSP-nonce på alle scripts, 403-siden uden JavaScript. Bootstrap indeholder ingen creator-data.
+- [x] Dev-dependencies: `typescript` 6.0.3, `@types/react`/`@types/react-dom` 19.3.0, `@wordpress/element` 8.8.0, `@wordpress/api-fetch` 7.56.0 og `@wordpress/i18n` 6.29.0. Ingen runtime-dependencies og intet ekstra testbibliotek.
+- [x] 516 PHP unit-tests (1474 assertions), 90 Jest-tests og 93 integrationstests mod MariaDB 10.11.19. ESLint, stylelint, `tsc`, PHPCS og PHPStan level 8 er grønne. CI kører stylelint, typetjek, Jest og build.
+- [x] Playground over HTTP og i en rigtig browser (lokal Chrome via `playwright-core` fra `@wordpress/scripts`, headless), med WooCommerce (pretty permalinks) og uden WooCommerce (plain permalinks, `?merchboard_dashboard=1`):
+  - Logget ud: login med deep link. Aktiv creator: 200, React renderer "Overview", sidebar og aktivt menupunkt, deep link → "Page not found" → client-side tilbage til startsiden, tilbage-knap og refresh virker, mobil-menu (`aria-expanded`, `Esc`, fokus), skip link er første tab-stop, log ud virker.
+  - Alle 12 script-tags har CSP-noncen. 0 CSP-brud, 0 konsolfejl, 0 JS-fejl, 0 fejlede requests, 0 requests til andre hosts, tom localStorage/sessionStorage. Bootstrap uden creator-navn og uden HTML-escaping. Bundle 7,5 KB, ingen source map.
+  - Inaktiv creator, aktiv record uden capability, rolle uden record, subscriber og administrator uden creator: 403 uden scripts.
+  - Admin-skærmene (Overview, Creators, Settings, Audit log) svarer 200. Ingen PHP-notices og ingen secrets i logs.
+- [x] Fundet og rettet: Fase 12's docs-script havde ødelagt FRONTEND.md (`$` + backtick i en `String.replace`-erstatning indsatte filens start midt i rewrite-afsnittet). FRONTEND.md er skrevet om, og doc-scripts bruger nu `split/join`.
+
+**Bevidst ikke i fase 13:** `/me`-endpoint og `RestController` (fase 14, projektejerens beslutning), endpoint-funktioner i `api/`, sektion-registry og filter, oversættelser (fase 15), lazy-loading af sektioner, Table/Modal/Toast m.fl. og alle forretningsmoduler.
+
 ## In progress
 
 Intet.
@@ -197,9 +214,9 @@ Intet.
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 13:** Dashboard frontend-fundament (kræver svar på åbent spørgsmål 3, TypeScript).
-2. **Fase 14:** REST-fundament, `/me` og Profile.
-3. **Fase 15:** Dashboard overview → MVP.
+1. **Fase 14:** REST-fundament, `/me` og Profile.
+2. **Fase 15:** Dashboard overview → MVP.
+3. **Fase 16:** Release-pipeline og staging.
 
 ## Known bugs
 
@@ -209,7 +226,7 @@ Ingen (der er ingen funktionalitet endnu).
 
 | Emne | Beskrivelse | Handling |
 | --- | --- | --- |
-| npm audit | 11 advisories (5 moderate, 6 high) i transitive dev-dependencies af `@wordpress/scripts`. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts` |
+| npm audit | 14 advisories (8 moderate, 6 high) i dev-dependencies (`@wordpress/scripts`, `@wp-playground/cli` og deres transitive pakker). Ingen i fase 13's nye pakker. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts`/`@wp-playground/cli` |
 | Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
 | MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7). **MySQL** er ikke verificeret: CI-jobbet findes, men resultatet er ikke set. Andre MariaDB-versioner og produktionens version er ukendte. | Tjek CI-jobbet `PHP integration (MySQL)` under GitHub → Actions, og staging (fase 16) |
@@ -230,6 +247,8 @@ Ingen (der er ingen funktionalitet endnu).
 | Standard-slug og eksisterende side | Slug-valideringen gælder kun ændringer i Settings. Findes en side med slug `creator-dashboard` allerede ved aktivering, vinder dashboardet (reglen ligger øverst), og siden kan ikke nås på sin URL. | Vælg en anden slug i Settings. Overvej en advarsel på Overview. |
 | Hosting-cache | Dashboardet sender `no-cache`-headers. En aggressiv side-cache (CDN, Varnish) skal stadig bypasse `/creator-dashboard/*` og indloggede brugere. | Tjek ved staging (fase 16) |
 | Administratorer uden `administrator`-rolle | Sites uden standardrollen får ikke plugin-admin-caps automatisk (warning logges) | Tildel manuelt. Settings-baseret tildeling til andre roller kommer med Access-settings (fase 12). |
+| React-version | WordPress 6.7 leverer React 18.3, nyere WordPress React 19, og typerne og Jest bruger React 19. Koden bruger kun fælles API'er. | Test på WordPress 6.7 ved staging (fase 16) eller hæv minimumsversionen |
+| Sporadisk WooCommerce-notice i Playground | Én `_load_textdomain_just_in_time`-notice for `woocommerce` blev set én gang ved opstart af et frisk Playground-site. Den kunne ikke genskabes ved en ny kørsel. Pluginet kalder ingen WooCommerce-oversættelser. | Hold øje ved næste fase |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 | CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
 
@@ -251,7 +270,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 1. ✅ **Navn/prefix – lukket (ADR-018):** Produktnavn `Merch Dashboard`, teknisk prefix `merchboard`, PHP-namespace `MerchBoard\`. Låst før fase 3. Den tidligere midlertidige konvention `ccmerch` er migreret i hele repo'et.
 2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? (Fase 7 verificerede MariaDB 10.11.19 lokalt. Den lokale version bør matche produktionen, når den kendes.) Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
-3. **TypeScript** til dashboardet: ja/nej? Anbefaling: ja, hvis teamet kender det, fordi API-kontrakter og refaktorering over flere år vinder på det. Ellers JS + JSDoc. (fase 13)
+3. ✅ **TypeScript – lukket (fase 13, ADR-027):** Ja. Dashboardet skrives i TypeScript (strict) med React og `@wordpress/scripts`.
 4. **Teams:** Kan en creator have flere brugere (fx manager)? Fase 8 er bygget med én bruger pr. creator (ADR-020). Teams vil kræve `merchboard_creator_members`, og ændringen bliver lokal til `CreatorContext` og repositoriet. (før fase 14)
 5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
@@ -265,5 +284,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Tjek at CI er grøn under GitHub → Actions.
 2. Tjek især jobbet `PHP integration (MySQL)`. Først når det er grønt, er MySQL verificeret. Den første linje i test-output viser serverversionen.
 3. Oplys MySQL/MariaDB-versionen på dev/produktion (åbent spørgsmål 2), så `bin/integration.mjs` kan køre samme version.
-4. Besvar åbent spørgsmål 3 (TypeScript) før fase 13.
-5. Kør fase 13 (Dashboard frontend-fundament) jf. docs/ROADMAP.md.
+4. Kør fase 14 (REST-fundament, `/me` og Profile) jf. docs/ROADMAP.md.
