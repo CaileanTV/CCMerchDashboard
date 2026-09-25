@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-25 · **Seneste færdige fase:** 16 (Release-pipeline ✅, staging-verifikation afventer projektejeren) · **Næste fase:** 17 (WooCommerce foundation) · **Schemaversion:** 3 · **Version:** 0.1.0 (ikke released) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-25 · **Seneste færdige fase:** 16 (Release-pipeline og staging ✅) · **Næste fase:** 17 (WooCommerce foundation) · **Schemaversion:** 3 · **Version:** 0.1.0 (tagget `v0.1.0`, draft-release, ikke udgivet) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -251,7 +251,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] Konflikt løst (projektejerens valg: allowlist): DEVELOPMENT.md manglede `assets/js/`, som bruges ved runtime, og `.distignore` udelukkede ikke fase 13's `assets/src/`, `tsconfig.json` og `jest.config.js`. Begge er nu i sync med allowlisten, ligesom `export-ignore` i `.gitattributes`. `vendor/` er bekræftet unødvendig (ADR-017).
 - [x] Pakken er valideret: 91 filer i `merchboard/`, ingen forbudte filer, ingen secrets eller source maps, `php -l` af alle PHP-filer, PHP `ZipArchive` `CHECKCONS`, .NET-udpakning byte-identisk og Playground med den udpakkede pakke som plugin (MVP-flowet på dansk uden fejl). Manuel WordPress-installation udføres af projektejeren.
 
-### Fase 16 – Release-pipeline og staging (pipeline ✅, staging afventer)
+### Fase 16 – Release-pipeline og staging ✅ (2026-09-25)
 
 - [x] `.github/workflows/release.yml` på tag `v*`: alle CI-jobs genbrugt via `workflow_call` (`ci.yml` er kun udvidet med triggeren), tagget commit skal ligge på `main`, `npm run package -- --tag`, uafhængig `unzip -t`-kontrol, `.sha256`, release notes fra CHANGELOG og **draft-release** via `gh release create --draft --verify-tag` (projektejerens valg). Permissions: `{}` som standard, `contents: write` kun i release-jobbet. Ingen tredjeparts actions og ingen secrets.
 - [x] `bin/package.mjs`: `--tag vX.Y.Z` skal matche versionen og pege på `HEAD`, og header, `MERCHBOARD_VERSION` og `package.json` skal have samme SemVer-version. Uden `--tag` virker lokal pakning som før.
@@ -259,11 +259,14 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] Staging er `https://devpage.ccmerch.dk` med manuel upload (projektejerens valg). SFTP er fravalgt.
 - [x] Afvigelser fra roadmap-planen: ingen `composer --no-dev` (ingen `vendor/`, ADR-017) og ingen zip efter `.distignore`. `bin/package.mjs` genbruges.
 - [x] Verificeret lokalt: versions- og tag-regler i en midlertidig klon (gyldigt annoteret og letvægts-tag, forkert version, manglende tag, tag på anden commit, tag uden værdi, afvigende `package.json`, ikke-SemVer, ændret runtime-fil), workflowets shell-trin (ZIP-kontrol, udtræk af release notes inkl. `0.1.1` ≠ `0.1.10` og manglende eller tom sektion, main-kontrol) og YAML-parsing af begge workflows.
-- [ ] **Ikke verificeret (kræver GitHub og staging):** første kørsel af release-workflowet, oprettelse af draft-releasen, installation af release-ZIP'en på staging og MySQL-verifikationen.
+- [x] **GitHub:** CI #22 på `main` (`b4d04f2`) er grøn i alle jobs, inkl. `PHP integration (MySQL)` mod MySQL 8.0.46 (111 tests). Annoteret tag `v0.1.0` → `b4d04f2`. Release-workflowet (første kørsel) er grønt: alle genbrugte CI-jobs og "Package and draft release".
+- [x] **Draft-release** "Merch Dashboard 0.1.0" med `merchboard-mvp-0.1.0.zip` (160801 bytes) og `merchboard-mvp-0.1.0.zip.sha256`. Hash verificeret med `sha256sum -c` (`bf540a86…0676`). ZIP'en er byte-identisk med den lokalt byggede pakke fra tagget (rodmappe `merchboard/`, 91 filer, version 0.1.0). Releasen er stadig en draft, og udgivelse sker ved projektejeren.
+- [x] **Staging:** Release-ZIP'en er manuelt installeret og testet på `devpage.ccmerch.dk` af projektejeren. Testen er bestået. MySQL/MariaDB-versionen på staging er ikke noteret (åbent spørgsmål 2).
+- [x] Audit-retention for v0.1.0 er afklaret: ubegrænset (ADR-029).
 
 ## In progress
 
-- **Fase 16, verifikation (projektejeren):** Første release (`v0.1.0`) efter [DEVELOPMENT.md](DEVELOPMENT.md#release). Tjek workflowet under Actions, og installér draft-ZIP'en på staging efter [tjeklisten](DEVELOPMENT.md#staging), inkl. MySQL-versionen.
+Intet.
 
 ## Planned
 
@@ -284,7 +287,7 @@ Ingen (der er ingen funktionalitet endnu).
 | npm audit | 14 advisories (8 moderate, 6 high) i dev-dependencies (`@wordpress/scripts`, `@wp-playground/cli` og deres transitive pakker). Ingen i fase 13's nye pakker. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts`/`@wp-playground/cli` |
 | Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
-| MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7). **MySQL** er ikke verificeret: CI-jobbet findes, men resultatet er ikke set. Andre MariaDB-versioner og produktionens version er ukendte. | Tjek CI-jobbet `PHP integration (MySQL)` under GitHub → Actions, og staging (fase 16) |
+| MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7), og **MySQL 8.0.46** i CI (`PHP integration (MySQL)`, 111 tests, grøn i CI #22 og i release-workflowet for `v0.1.0`). Staging- og produktionsversionen er ikke noteret. | Notér versionen fra staging/produktion (åbent spørgsmål 2) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
 | Dinglende `user_id` efter fejlet frigivelse | Løst i fase 8 for normal sletning. Kun hvis frigivelsen fejler (databasefejl, MyISAM), peger creator'en på en slettet bruger. Fejlen logges, linket giver ingen adgang, og admin kan frakoble manuelt. Der er intet automatisk genforsøg. | Accepteret. Overvej et oprydnings-tjek i Overview (fase 9). |
 | WooCommerce og roller uden `edit_posts` | Med WooCommerce aktiv sendes brugere uden `edit_posts`, `manage_woocommerce` eller `view_admin_dashboard` fra wp-admin til "Min konto" (WooCommerce' egen regel). En rolle med kun `merchboard_manage_creators` kan dermed ikke nå siden. | Dokumenteret. Rolle-tildeling via settings i fase 12. |
@@ -308,7 +311,6 @@ Ingen (der er ingen funktionalitet endnu).
 | Creators uden personligt sprog | Dashboardet følger sitets sprog. En creator på et engelsk site kan ikke vælge dansk (wp-admin er blokeret). | Revurder, hvis et flersproget behov opstår (fx sprogvalg i Profile) |
 | Metadata-læsefejl | `get_metadata()` giver ingen fejlinformation. En fejlet læsning af bio/links vises som tomme felter. Skrivninger verificeres og fejler lukket. | Accepteret (profilfelter er ikke adgangsstyrende) |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
-| CI-resultat ikke verificeret lokalt | Repo'et er privat, og `gh` er ikke installeret, så CI-status (inkl. det nye MySQL-integrationsjob) kan ikke læses fra terminalen | Tjek Actions-fanen på GitHub efter push. Overvej at installere `gh`. |
 
 ## Godkendte eksterne services
 
@@ -339,9 +341,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 ## Next recommended steps
 
-1. Tjek at CI er grøn under GitHub → Actions, især `PHP integration (MySQL)`. Den første linje i test-output viser serverversionen.
-2. ✅ CHANGELOG.md har sektionen `## [0.1.0] - 2026-09-25` (release notes til `v0.1.0`). Push, og vent på grøn CI.
-3. Tag `v0.1.0` på `main`, og tjek release-workflowet under Actions. Resultatet skal være en draft-release med ZIP og `.sha256`.
-4. Installér draft-ZIP'en på staging (`devpage.ccmerch.dk`) efter [tjeklisten](DEVELOPMENT.md#staging). Notér MySQL/MariaDB-version og charset (åbent spørgsmål 2), og udgiv releasen.
-5. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-6. Fase 17 (WooCommerce foundation) jf. docs/ROADMAP.md.
+1. Udgiv draft-releasen "Merch Dashboard 0.1.0" på GitHub, når projektejeren er klar (ikke gjort).
+2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
+3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
+4. Fase 17 (WooCommerce foundation) jf. docs/ROADMAP.md.
