@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace MerchBoard\Modules\WooCommerce;
+namespace MerchBoard\Core\Security;
 
 use LogicException;
 use MerchBoard\Core\Logging\Logger;
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * Keeps `_merchboard_creator_id` and `_merchboard_creator_link_source` from
  * being added, changed, renamed or deleted through any generic write path.
  *
- * Why: the product → creator link is ownership (ADR-030/033). It may only
+ * Why: the product → creator link is ownership (ADR-030/033/034). It may only
  * change through Merch Dashboard's approved paths, which validate, authorize
  * and audit: the manual path through ProductCreatorLink and, later, ADR-033's
  * system category reconciliation, which will use this same mechanism.
@@ -36,15 +36,31 @@ defined( 'ABSPATH' ) || exit;
  *   run() (scoped to the call, one product, one use, no nesting), or
  * - WordPress is permanently deleting that post (its meta goes with it).
  *
- * Direct SQL is outside the metadata API and not covered (ADR-030 D6).
+ * A core service (ADR-035): Plugin creates the one instance and registers it
+ * in register_hooks(), when merchboard.php loads, independent of WooCommerce
+ * and of the `merchboard_modules` filter. Core owns the keys; the WooCommerce
+ * module reuses this instance and never registers it again.
+ *
+ * Direct SQL, code that removes these hooks and code that runs before
+ * merchboard.php loads are outside the guard (ADR-034, ADR-035).
  * Reads are never affected.
  */
 final class ProtectedProductMeta {
 
 	/**
+	 * Product meta key of the product → creator link (parent products only).
+	 */
+	public const LINK_KEY = '_merchboard_creator_id';
+
+	/**
+	 * Product meta key of the link's origin (ADR-033).
+	 */
+	public const SOURCE_KEY = '_merchboard_creator_link_source';
+
+	/**
 	 * Protected keys (lower case).
 	 */
-	public const KEYS = array( ProductCreatorLink::META_KEY, ProductCreatorLink::SOURCE_META_KEY );
+	public const KEYS = array( self::LINK_KEY, self::SOURCE_KEY );
 
 	/**
 	 * Runs after other plugins' pre-hooks, so a protected write is denied
@@ -74,6 +90,13 @@ final class ProtectedProductMeta {
 	private array $deleting = array();
 
 	/**
+	 * Whether the hooks are registered.
+	 *
+	 * @var bool
+	 */
+	private bool $registered = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Logger $logger Technical log for denied writes.
@@ -92,9 +115,15 @@ final class ProtectedProductMeta {
 	}
 
 	/**
-	 * Hooks the guard into the metadata API and post deletion.
+	 * Hooks the guard into the metadata API and post deletion, once.
 	 */
 	public function register(): void {
+		if ( $this->registered ) {
+			return;
+		}
+
+		$this->registered = true;
+
 		add_filter( 'add_post_metadata', array( $this, 'filter_add' ), self::PRIORITY, 3 );
 		add_filter( 'update_post_metadata', array( $this, 'filter_update' ), self::PRIORITY, 3 );
 		add_filter( 'delete_post_metadata', array( $this, 'filter_delete' ), self::PRIORITY, 5 );

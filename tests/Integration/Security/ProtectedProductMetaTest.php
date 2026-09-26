@@ -7,29 +7,27 @@
 
 declare( strict_types=1 );
 
-namespace MerchBoard\Tests\Integration\WooCommerce;
+namespace MerchBoard\Tests\Integration\Security;
 
 use LogicException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Security\ProtectedMetaWrite;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
-use MerchBoard\Modules\WooCommerce\ProtectedMetaWrite;
-use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
-use MerchBoard\Tests\Unit\Support\RecordingLogger;
 
 /**
- * WooCommerce is not loaded here, so the module does not register the guard;
- * the test registers its own instance on the real hooks. Everything else is
- * real: metadata API, object cache, post deletion and MariaDB.
+ * Runs against the guard the booted plugin registered in
+ * Plugin::register_hooks() (ADR-035). WooCommerce is not installed here, so
+ * this proves the core registration without WooCommerce. Everything is real:
+ * plugin boot, metadata API, object cache, post deletion and MariaDB.
  */
 final class ProtectedProductMetaTest extends IntegrationTestCase {
 
-	private const LINK   = ProductCreatorLink::META_KEY;
-	private const SOURCE = ProductCreatorLink::SOURCE_META_KEY;
+	private const LINK   = ProtectedProductMeta::LINK_KEY;
+	private const SOURCE = ProtectedProductMeta::SOURCE_KEY;
 
 	private ProtectedProductMeta $guard;
-
-	private RecordingLogger $logger;
 
 	private int $product;
 
@@ -49,20 +47,10 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 		$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $this->product, self::LINK, '3' );
 		wp_cache_delete( $this->product, 'post_meta' );
 
-		$this->logger = new RecordingLogger();
-		$this->guard  = new ProtectedProductMeta( $this->logger );
-		$this->guard->register();
+		$this->guard = $this->service( ProtectedProductMeta::class );
 	}
 
 	protected function tearDown(): void {
-		remove_filter( 'add_post_metadata', array( $this->guard, 'filter_add' ), 1000 );
-		remove_filter( 'update_post_metadata', array( $this->guard, 'filter_update' ), 1000 );
-		remove_filter( 'delete_post_metadata', array( $this->guard, 'filter_delete' ), 1000 );
-		remove_filter( 'update_post_metadata_by_mid', array( $this->guard, 'filter_update_by_mid' ), 1000 );
-		remove_filter( 'delete_post_metadata_by_mid', array( $this->guard, 'filter_delete_by_mid' ), 1000 );
-		remove_action( 'before_delete_post', array( $this->guard, 'deleting_post' ), 0 );
-		remove_action( 'after_delete_post', array( $this->guard, 'deleted_post' ), PHP_INT_MAX );
-
 		foreach ( array( $this->product, $this->variation, $this->other ) as $id ) {
 			$this->execute( 'DELETE FROM %i WHERE post_id = %d', $this->wpdb->postmeta, $id );
 			$this->execute( 'DELETE FROM %i WHERE ID = %d', $this->wpdb->posts, $id );
@@ -70,6 +58,18 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 
 		wp_cache_flush();
 		parent::tearDown();
+	}
+
+	public function test_the_booted_plugin_registers_the_guard_in_core_without_woocommerce(): void {
+		self::assertFalse( class_exists( 'WooCommerce', false ), 'No WooCommerce in this environment.' );
+		self::assertFalse( self::$container?->has( ProductCreatorLink::class ) ?? true, 'The WooCommerce module did not boot.' );
+
+		foreach ( array( 'add_post_metadata' => 'filter_add', 'update_post_metadata' => 'filter_update', 'delete_post_metadata' => 'filter_delete', 'update_post_metadata_by_mid' => 'filter_update_by_mid', 'delete_post_metadata_by_mid' => 'filter_delete_by_mid' ) as $hook => $method ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			self::assertSame( 1000, has_filter( $hook, array( $this->guard, $method ) ), $hook );
+		}
+
+		self::assertFalse( update_post_meta( $this->other, self::LINK, '4' ), 'Denied by the booted core guard alone.' );
+		self::assertSame( '', get_post_meta( $this->other, self::LINK, true ) );
 	}
 
 	public function test_generic_writes_of_both_keys_are_denied_on_products_and_variations(): void {
@@ -91,7 +91,6 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 		self::assertSame( $before, $this->stored(), 'Nothing reached the database.' );
 		self::assertSame( '3', get_post_meta( $this->product, self::LINK, true ), 'Reads are unaffected.' );
 		self::assertCount( $audit, $this->rows( Tables::AUDIT_LOG ), 'Denied writes create no audit records.' );
-		self::assertCount( 11, $this->logger->at( 'warning' ) );
 	}
 
 	public function test_writes_by_meta_id_cannot_change_rename_or_delete_a_link(): void {
@@ -114,7 +113,6 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 		self::assertIsInt( add_post_meta( $this->variation, '_regular_price', '7' ) );
 		self::assertTrue( delete_post_meta( $this->product, '_price' ) );
 		self::assertSame( '7', get_post_meta( $this->variation, '_regular_price', true ) );
-		self::assertSame( array(), $this->logger->entries );
 	}
 
 	public function test_an_authorized_write_changes_exactly_its_product_while_it_runs(): void {

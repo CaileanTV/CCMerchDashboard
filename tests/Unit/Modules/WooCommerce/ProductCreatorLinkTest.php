@@ -20,7 +20,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
-use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLinkException;
 use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Tests\Unit\Support\CreatorAdminEnvironment;

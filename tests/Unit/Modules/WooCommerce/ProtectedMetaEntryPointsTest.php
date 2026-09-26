@@ -13,7 +13,7 @@ use Brain\Monkey\Functions;
 use Exception;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProtectedMetaEntryPoints;
-use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Tests\Unit\Support\WcProductStorage;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;

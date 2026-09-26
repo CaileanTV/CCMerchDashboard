@@ -1266,7 +1266,7 @@ Kategorien er shoppens eksisterende arbejdsgang for, hvilken creator et produkt 
 2026-09-26
 
 ## Status
-Accepteret (fase 17, trin 6, implementeret). Besluttet af projektejeren i specifikationen af trin 6. **Ændrer ADR-030 D6** (grænsen for sikkerhedsmodellen). Supplerer ADR-033 (den fremtidige kategori-afstemning skal bruge denne mekanisme) og ADR-025/ADR-030 D4 (uninstall, se pkt. 6). To punkter er **uafklarede** og kræver særskilte beslutninger: beskyttelse uden et indlæst WooCommerce-modul (pkt. 5) og uninstall-mekanismen (pkt. 6). **Uafklaret A er besluttet i ADR-035 (2026-09-26):** vagten bliver en core-service, der registreres i `Plugin::register_hooks()` uden om `merchboard_modules` (ikke implementeret endnu). **Uafklaret B er besluttet i ADR-036 (2026-09-26):** uninstall-vindue i vagten (ikke implementeret endnu). Pkt. 3 er dermed præciseret: `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst** (tilføje, ændre, omdøbe). Den eneste anden tilladte operation er ADR-036's **sletning** af de to nøgler, og kun når operationen er en sletning, `WP_UNINSTALL_PLUGIN` er Merch Dashboards eget basename, og opt-in til sletning af data er aktivt.
+Accepteret (fase 17, trin 6, implementeret). Besluttet af projektejeren i specifikationen af trin 6. **Ændrer ADR-030 D6** (grænsen for sikkerhedsmodellen). Supplerer ADR-033 (den fremtidige kategori-afstemning skal bruge denne mekanisme) og ADR-025/ADR-030 D4 (uninstall, se pkt. 6). To punkter er **uafklarede** og kræver særskilte beslutninger: beskyttelse uden et indlæst WooCommerce-modul (pkt. 5) og uninstall-mekanismen (pkt. 6). **Uafklaret A er besluttet i ADR-035 (2026-09-26):** vagten er en core-service, der registreres i `Plugin::register_hooks()` uden om `merchboard_modules` (implementeret 2026-09-26). **Uafklaret B er besluttet i ADR-036 (2026-09-26):** uninstall-vindue i vagten (ikke implementeret endnu). Pkt. 3 er dermed præciseret: `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst** (tilføje, ændre, omdøbe). Den eneste anden tilladte operation er ADR-036's **sletning** af de to nøgler, og kun når operationen er en sletning, `WP_UNINSTALL_PLUGIN` er Merch Dashboards eget basename, og opt-in til sletning af data er aktivt.
 
 ## Context
 ADR-030 D6 lukkede WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit og duplicate) for produktkoblingen, men fastslog som grænse, at WordPress' rå meta-API (`update_post_meta()` m.fl. fra vilkårlig PHP-kode) og `wp post meta` via WP-CLI var ikke-understøttede bypasses. Der skulle ikke laves globale meta-hooks.
@@ -1326,7 +1326,7 @@ Undersøgt i WordPress 7.1.2 og WooCommerce 10.3.8:
   - Koblingen bevares (ADR-030 D4), men er ikke beskyttet mod ændringer via kode eller WP-CLI i den periode.
 - **Mulig løsning (ikke besluttet, ikke implementeret):** registrere metadata-vagten (pkt. 2-4) uafhængigt af WooCommerce, fx i pluginets core eller i et modul, der altid indlæses. Den afhænger kun af WordPress' metadata-API. Indgangs-vagterne (pkt. 5) bliver i WooCommerce-modulet.
 - **Afvejninger:** det kræver en beslutning om modulgrænsen (ADR-011: WooCommerce-koden bor i det valgfrie modul; MODULES.md), og om `merchboard_modules`-filteret fortsat må kunne fjerne beskyttelsen.
-- **Status:** besluttet i ADR-035 (mulighed B: core-service, registreret i `Plugin::register_hooks()`, uden om `merchboard_modules`). Implementeringen er ikke startet; indtil da gælder begrænsningen.
+- **Status:** besluttet i ADR-035 (mulighed B: core-service, registreret i `Plugin::register_hooks()`, uden om `merchboard_modules`) og implementeret 2026-09-26. Begrænsningen "perioder uden indlæst WooCommerce-modul" gælder ikke længere.
 
 ### Uafklaret B: uninstall-mekanismen (før trin 13)
 - **Krav:** opt-in-uninstall skal slette `_merchboard_creator_id` og `_merchboard_creator_link_source` fra alle produkter og varianter (ADR-030 D4, ADR-033), idempotent og før tabellerne droppes (ADR-025).
@@ -1369,7 +1369,7 @@ Ejerskab af et produkt er forretningsdata med audit (ADR-023/030). Når nøglern
 2026-09-26
 
 ## Status
-**Accepteret (2026-09-26): mulighed B, registreret i `Plugin::register_hooks()`.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret A (beslutningen; implementeringen er ikke startet). Supplerer ADR-011 og ADR-034 (statusnoter med krydsreference). Uninstall (ADR-034, Uafklaret B) er **ikke** løst af denne beslutning. Vurderingen af mulighederne nedenfor er bevaret som beslutningsgrundlag.
+**Accepteret (2026-09-26): mulighed B, registreret i `Plugin::register_hooks()`.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret A. **Implementeret 2026-09-26** (se Consequences). Supplerer ADR-011 og ADR-034 (statusnoter med krydsreference). Uninstall (ADR-034, Uafklaret B) er **ikke** løst af denne beslutning. Vurderingen af mulighederne nedenfor er bevaret som beslutningsgrundlag.
 
 ## Context
 ADR-034 beskytter `_merchboard_creator_id` og `_merchboard_creator_link_source` med `ProtectedProductMeta` på WordPress' metadata-lag. Vagten registreres i `WooCommerceModule::register()`.
@@ -1444,7 +1444,7 @@ B og D giver samme sikkerhed. De adskiller sig i, hvor begrebet bor: core-servic
 3. **Uden om modulfilteret:** `merchboard_modules` kan ikke deaktivere beskyttelsen. Filteret styrer fortsat modulerne, inkl. WooCommerce-integrationen.
 4. **Ikke et modul:** der indføres ikke et særligt eller påkrævet modul, som omgår modulmønstret.
 5. **Én instans:** core opretter og registrerer præcis én instans. `WooCommerceModule` genbruger samme instans (fra containeren) til `ProductCreatorLink` og registrerer ingen hooks for vagten. Hooks må ikke registreres dobbelt.
-6. **Klasser og nøgler:** `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` flyttes til core. Nøglerne defineres dér, og `ProductCreatorLink` henviser til dem, så vagten ikke afhænger af WooCommerce-modulet. Det præcise namespace fastlægges ved implementeringen.
+6. **Klasser og nøgler:** `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` flyttes til core. Nøglerne defineres dér, og `ProductCreatorLink` henviser til dem, så vagten ikke afhænger af WooCommerce-modulet. *(Implementeret i `MerchBoard\Core\Security`; nøglerne er `ProtectedProductMeta::LINK_KEY` og `::SOURCE_KEY`.)*
 7. **Indgangs-vagter:** `ProtectedMetaEntryPoints` forbliver i `WooCommerceModule`, fordi REST, `variations/generate`, CSV-import og duplicate afhænger af WooCommerce.
 8. **Logging:** afviste skrivninger logges fortsat via `Logger`. Uden WooCommerce-loggen bruges den eksisterende fallback til PHP's fejllog (ADR-021).
 9. **Uændret:**
@@ -1452,8 +1452,12 @@ B og D giver samme sikkerhed. De adskiller sig i, hvor begrebet bor: core-servic
    - Direkte SQL og bevidst fjernelse af vagtens hooks er fortsat dokumenterede begrænsninger (ADR-034 pkt. 6).
 
 ## Consequences
-- **Implementering:** en særskilt opgave, der ikke er startet. Kode og tests følger beslutningen ovenfor og de fælles konsekvenser for dependency injection, logging og tests ovenfor. Rækkefølgen i fase 17 fastlægges af projektejeren (ROADMAP.md).
-- **Indtil implementeringen:** vagten ligger stadig i `WooCommerceModule`, og begrænsningen fra ADR-034, Uafklaret A, gælder i praksis.
+- **Implementering (2026-09-26):**
+  - `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` ligger i `MerchBoard\Core\Security`.
+  - `Plugin::register_core_services()` opretter den ene instans. `Plugin::register_hooks()` registrerer den, før andre hooks, og `register()` er idempotent.
+  - `WooCommerceModule` henter samme instans fra containeren til `ProductCreatorLink` og registrerer kun `ProtectedMetaEntryPoints`.
+  - Vagten får loggeren som `Core\Logging\LazyLogger`, der først slår den delte `Logger` op ved første log-kald. Grunden er, at `PluginLogger` læser filteret `merchboard_log_level`, når den oprettes. Oprettet mens `merchboard.php` indlæses, ville tærsklen blive låst for alle services, før temaer og senere plugins kan filtrere den.
+  - **Tests:** unit-tests af registrering uden WooCommerce, med for gammel WooCommerce og med en tom `merchboard_modules`. En test viser, at modulet genbruger instansen og hooks registreres én gang. En integrationstest mod det bootede plugin uden WooCommerce.
 - **ADR-011:** statusnote. Beskyttelsen af plugin-ejet produktmeta er core-ansvar. WooCommerce-integrationen forbliver i det valgfrie modul.
 - **ADR-034:** Uafklaret A er besluttet her. Begrænsningen "perioder uden indlæst WooCommerce-modul" udgår, når beslutningen er implementeret.
 - **Uninstall (ADR-034, Uafklaret B):** fortsat uafklaret. Skal besluttes særskilt før trin 13 (se afsnittet om uninstall ovenfor, inkl. spørgsmålet om hvordan `Uninstaller` når den registrerede instans). *(Senere besluttet i ADR-036: uninstall-vindue i vagten uden adgang til instansen.)*

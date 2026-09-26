@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace MerchBoard\Modules\WooCommerce;
+namespace MerchBoard\Core\Security;
 
 defined( 'ABSPATH' ) || exit;
 

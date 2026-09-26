@@ -23,7 +23,7 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
-use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceProductStore;
 use MerchBoard\Tests\Unit\Support\FakeDatabase;
@@ -32,6 +32,7 @@ use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use ReflectionProperty;
 use wpdb;
 
 #[CoversClass( WooCommerceModule::class )]
@@ -62,17 +63,31 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorProductsSection::class ), 'render' ) ) );
 	}
 
-	public function test_the_protected_meta_guards_are_hooked_for_every_request(): void {
+	public function test_the_module_reuses_the_core_guard_and_never_registers_it(): void {
 		$container = self::core_container();
+		$guard     = $container->get( ProtectedProductMeta::class );
 
 		( new WooCommerceModule() )->register( $container );
+		$link = $container->get( ProductCreatorLink::class );
 
-		$guard = $container->get( ProtectedProductMeta::class );
-		self::assertSame( 1000, has_filter( 'update_post_metadata', array( $guard, 'filter_update' ) ), 'Not waiting for admin_init: REST, cron and WP-CLI are covered too.' );
-		self::assertSame( 1000, has_filter( 'delete_post_metadata_by_mid', array( $guard, 'filter_delete_by_mid' ) ) );
-		self::assertNotFalse( has_filter( 'woocommerce_product_import_process_item_data' ) );
+		self::assertSame( $guard, $container->get( ProtectedProductMeta::class ), 'The core instance is not replaced.' );
+		self::assertSame( $guard, ( new ReflectionProperty( ProductCreatorLink::class, 'guard' ) )->getValue( $link ), 'ProductCreatorLink writes through the core instance.' );
+		self::assertFalse( has_filter( 'update_post_metadata' ), 'Registering the guard is core\'s job (ADR-035).' );
+		self::assertFalse( has_filter( 'delete_post_metadata_by_mid' ) );
+		self::assertFalse( has_action( 'before_delete_post' ) );
+	}
+
+	public function test_the_woocommerce_entry_point_checks_are_hooked_for_every_request(): void {
+		( new WooCommerceModule() )->register( self::core_container() );
+
+		self::assertNotFalse( has_filter( 'woocommerce_product_import_process_item_data' ), 'Not waiting for admin_init: REST, cron and WP-CLI are covered too.' );
 		self::assertNotFalse( has_filter( 'woocommerce_rest_pre_insert_product_object' ) );
 		self::assertNotFalse( has_filter( 'woocommerce_duplicate_product_exclude_meta' ) );
+	}
+
+	public function test_product_creator_link_uses_the_core_owned_keys(): void {
+		self::assertSame( ProtectedProductMeta::LINK_KEY, ProductCreatorLink::META_KEY );
+		self::assertSame( ProtectedProductMeta::SOURCE_KEY, ProductCreatorLink::SOURCE_META_KEY );
 	}
 
 	public function test_the_product_list_column_and_filter_wait_for_the_product_list_screen(): void {
@@ -142,6 +157,8 @@ final class WooCommerceModuleTest extends TestCase {
 		$container->set( CreatorRepository::class, static fn(): CreatorRepository => new CreatorRepository( $db ) );
 		$container->set( AuditTrail::class, static fn(): AuditTrail => new AuditTrail( new AuditRepository( $db ) ) );
 		$container->set( Transaction::class, static fn(): Transaction => new Transaction( $db, new TransactionSupport( $db ) ) );
+		// Core service (ADR-035); Plugin registers it, not the module.
+		$container->set( ProtectedProductMeta::class, static fn(): ProtectedProductMeta => new ProtectedProductMeta( new RecordingLogger() ) );
 
 		return $container;
 	}

@@ -14,6 +14,8 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\ProtectedMetaWrite;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -55,15 +57,16 @@ defined( 'ABSPATH' ) || exit;
 final class ProductCreatorLink {
 
 	/**
-	 * Product meta key of the link (parent products only).
+	 * Product meta key of the link (parent products only). Owned by core
+	 * (ProtectedProductMeta, ADR-035).
 	 */
-	public const META_KEY = '_merchboard_creator_id';
+	public const META_KEY = ProtectedProductMeta::LINK_KEY;
 
 	/**
-	 * Product meta key of the link's origin (ADR-033). Protected like
-	 * META_KEY; written from a later step on.
+	 * Product meta key of the link's origin (ADR-033). Owned by core and
+	 * protected like META_KEY; written from a later step on.
 	 */
-	public const SOURCE_META_KEY = '_merchboard_creator_link_source';
+	public const SOURCE_META_KEY = ProtectedProductMeta::SOURCE_KEY;
 
 	/**
 	 * Post statuses of products that cannot be linked.

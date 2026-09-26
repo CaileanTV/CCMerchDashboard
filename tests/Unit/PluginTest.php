@@ -30,11 +30,15 @@ use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
 use MerchBoard\Plugin;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
+use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\InMemoryRoles;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
 use Mockery;
+use ReflectionProperty;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -124,6 +128,97 @@ final class PluginTest extends TestCase {
 		self::assertSame( 10, has_action( 'plugins_loaded', array( $plugin, 'boot' ) ) );
 		self::assertSame( 10, has_action( 'before_woocommerce_init', array( $plugin, 'declare_woocommerce_compatibility' ) ) );
 		self::assertSame( 0, has_action( 'init', array( $plugin, 'load_textdomain' ) ), 'Translations load on init, not earlier.' );
+	}
+
+	public function test_register_hooks_registers_the_core_protected_meta_guard_without_resolving_the_logger(): void {
+		$container = new Container();
+		$plugin    = $this->plugin( $container );
+		$resolved  = 0;
+		$container->set(
+			Logger::class,
+			static function () use ( &$resolved ): Logger {
+				++$resolved;
+				return new RecordingLogger();
+			}
+		);
+		Functions\when( 'register_activation_hook' )->justReturn( null );
+		Functions\when( 'register_deactivation_hook' )->justReturn( null );
+
+		$plugin->register_hooks();
+
+		$guard = $container->get( ProtectedProductMeta::class );
+		self::assertSame( 1000, has_filter( 'update_post_metadata', array( $guard, 'filter_update' ) ), 'Hooked while merchboard.php loads, before plugins_loaded.' );
+		self::assertSame( 1000, has_filter( 'delete_post_metadata', array( $guard, 'filter_delete' ) ) );
+		self::assertSame( 1000, has_filter( 'update_post_metadata_by_mid', array( $guard, 'filter_update_by_mid' ) ) );
+		self::assertSame( 0, $resolved, 'The shared logger (and its threshold filter) is not created this early.' );
+
+		$guard->filter_update( null, 10, ProtectedProductMeta::LINK_KEY );
+		self::assertSame( 1, $resolved, 'It is resolved when something is logged.' );
+	}
+
+	public function test_the_guard_stays_active_when_the_module_filter_returns_no_modules(): void {
+		$container = new Container();
+		$plugin    = $this->plugin( $container );
+		Functions\when( 'register_activation_hook' )->justReturn( null );
+		Functions\when( 'register_deactivation_hook' )->justReturn( null );
+		Filters\expectApplied( 'merchboard_modules' )->once()->andReturn( array() );
+
+		$plugin->register_hooks();
+		$plugin->boot();
+
+		$guard = $container->get( ProtectedProductMeta::class );
+		self::assertFalse( class_exists( 'WooCommerce', false ), 'No WooCommerce in this process.' );
+		self::assertSame( 1000, has_filter( 'add_post_metadata', array( $guard, 'filter_add' ) ) );
+		self::assertFalse( $guard->filter_update( null, 10, ProtectedProductMeta::LINK_KEY ), 'Generic writes are still denied.' );
+	}
+
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_the_guard_is_active_with_a_too_old_woocommerce(): void {
+		$merchboard_test_wc_version = '10.2.2';
+		require_once dirname( __DIR__ ) . '/Fixtures/woocommerce-active.php';
+
+		$container = new Container();
+		$plugin    = $this->plugin( $container );
+		Functions\when( 'register_activation_hook' )->justReturn( null );
+		Functions\when( 'register_deactivation_hook' )->justReturn( null );
+		$this->capture_admin_notices();
+
+		$plugin->register_hooks();
+		$plugin->boot();
+
+		$guard = $container->get( ProtectedProductMeta::class );
+		self::assertFalse( $container->has( ProductCreatorLink::class ), 'The WooCommerce module is off.' );
+		self::assertSame( 1000, has_filter( 'update_post_metadata', array( $guard, 'filter_update' ) ) );
+		self::assertFalse( $guard->filter_delete( null, 10, ProtectedProductMeta::SOURCE_KEY ) );
+	}
+
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_with_a_supported_woocommerce_the_module_reuses_the_one_core_guard(): void {
+		$merchboard_test_wc_version = '10.3.8';
+		require_once dirname( __DIR__ ) . '/Fixtures/woocommerce-active.php';
+
+		$container = new Container();
+		$plugin    = $this->plugin( $container );
+		Functions\when( 'register_activation_hook' )->justReturn( null );
+		Functions\when( 'register_deactivation_hook' )->justReturn( null );
+		$added = 0;
+		Filters\expectAdded( 'update_post_metadata' )
+			->zeroOrMoreTimes()
+			->whenHappen(
+				static function () use ( &$added ): void {
+					++$added;
+				}
+			);
+
+		$plugin->register_hooks();
+		$plugin->boot();
+
+		$guard = $container->get( ProtectedProductMeta::class );
+		self::assertTrue( $container->has( ProductCreatorLink::class ), 'The WooCommerce module is on.' );
+		self::assertSame( 1, $added, 'The guard is hooked once, by core.' );
+		self::assertSame( $guard, ( new ReflectionProperty( ProductCreatorLink::class, 'guard' ) )->getValue( $container->get( ProductCreatorLink::class ) ) );
 	}
 
 	public function test_core_services_are_registered(): void {

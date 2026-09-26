@@ -18,9 +18,11 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Lifecycle\Deactivator;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Logging\LazyLogger;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Core\Module;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Admin\AdminModule;
@@ -82,6 +84,11 @@ final class Plugin {
 	 * which is also when the activation and deactivation hooks must be registered.
 	 */
 	public function register_hooks(): void {
+		// Protected product meta (ADR-034/035): hooked now, while merchboard.php
+		// loads, so it is active without WooCommerce and cannot be filtered
+		// away with `merchboard_modules`, which only runs in boot().
+		$this->container->get( ProtectedProductMeta::class )->register();
+
 		register_activation_hook( $this->file, array( $this, 'activate' ) );
 		register_deactivation_hook( $this->file, array( $this, 'deactivate' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declare_woocommerce_compatibility' ) );
@@ -192,6 +199,15 @@ final class Plugin {
 		$this->container->set(
 			Logger::class,
 			static fn(): Logger => PluginLogger::for_wordpress()
+		);
+
+		// The one instance of the protected meta guard; the logger is resolved
+		// on first use (LazyLogger), not while merchboard.php loads.
+		$this->container->set(
+			ProtectedProductMeta::class,
+			static fn( Container $c ): ProtectedProductMeta => new ProtectedProductMeta(
+				new LazyLogger( static fn(): Logger => $c->get( Logger::class ) )
+			)
 		);
 
 		$this->container->set(

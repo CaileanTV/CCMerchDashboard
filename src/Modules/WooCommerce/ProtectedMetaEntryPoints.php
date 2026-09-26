@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\WooCommerce;
 
 use Exception;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use WC_Data;
 use WP_Error;
 use WP_REST_Request;

@@ -14,6 +14,7 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
@@ -55,11 +56,6 @@ final class WooCommerceModule implements Module {
 		);
 
 		$container->set(
-			ProtectedProductMeta::class,
-			static fn( Container $c ): ProtectedProductMeta => new ProtectedProductMeta( $c->get( Logger::class ) )
-		);
-
-		$container->set(
 			ProductCreatorLink::class,
 			static fn( Container $c ): ProductCreatorLink => new ProductCreatorLink(
 				$c->get( ProductStore::class ),
@@ -70,9 +66,11 @@ final class WooCommerceModule implements Module {
 			)
 		);
 
-		// The guards of the protected product meta apply to every request
-		// (wp-admin, REST, cron, WP-CLI), so they are hooked right away.
-		$container->get( ProtectedProductMeta::class )->register();
+		// The protected meta guard itself is a core service (ADR-035): Plugin
+		// registers its one instance in register_hooks(), and ProductCreatorLink
+		// gets that instance above; the module never registers it. The
+		// WooCommerce entry-point checks apply to every request (wp-admin, REST,
+		// cron, WP-CLI), so they are hooked right away.
 		( new ProtectedMetaEntryPoints() )->register();
 
 		$container->set(

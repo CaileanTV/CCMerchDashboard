@@ -7,15 +7,16 @@
 
 declare( strict_types=1 );
 
-namespace MerchBoard\Tests\Unit\Modules\WooCommerce;
+namespace MerchBoard\Tests\Unit\Core\Security;
 
+use Brain\Monkey\Actions;
+use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use InvalidArgumentException;
 use LogicException;
-use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
-use MerchBoard\Modules\WooCommerce\ProtectedMetaPurpose;
-use MerchBoard\Modules\WooCommerce\ProtectedMetaWrite;
-use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
+use MerchBoard\Core\Security\ProtectedMetaPurpose;
+use MerchBoard\Core\Security\ProtectedMetaWrite;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -26,8 +27,8 @@ use RuntimeException;
 #[CoversClass( ProtectedMetaWrite::class )]
 final class ProtectedProductMetaTest extends TestCase {
 
-	private const LINK   = ProductCreatorLink::META_KEY;
-	private const SOURCE = ProductCreatorLink::SOURCE_META_KEY;
+	private const LINK   = ProtectedProductMeta::LINK_KEY;
+	private const SOURCE = ProtectedProductMeta::SOURCE_KEY;
 
 	private RecordingLogger $logger;
 
@@ -214,5 +215,19 @@ final class ProtectedProductMetaTest extends TestCase {
 		self::assertSame( 1000, has_filter( 'delete_post_metadata_by_mid', array( $this->guard, 'filter_delete_by_mid' ) ) );
 		self::assertSame( 0, has_action( 'before_delete_post', array( $this->guard, 'deleting_post' ) ) );
 		self::assertSame( PHP_INT_MAX, has_action( 'after_delete_post', array( $this->guard, 'deleted_post' ) ) );
+	}
+
+	public function test_registering_twice_adds_each_hook_once(): void {
+		Filters\expectAdded( 'update_post_metadata' )->once();
+		Actions\expectAdded( 'before_delete_post' )->once();
+
+		$this->guard->register();
+		$this->guard->register();
+	}
+
+	public function test_core_owns_the_unchanged_key_names(): void {
+		self::assertSame( '_merchboard_creator_id', ProtectedProductMeta::LINK_KEY );
+		self::assertSame( '_merchboard_creator_link_source', ProtectedProductMeta::SOURCE_KEY );
+		self::assertSame( array( ProtectedProductMeta::LINK_KEY, ProtectedProductMeta::SOURCE_KEY ), ProtectedProductMeta::KEYS );
 	}
 }

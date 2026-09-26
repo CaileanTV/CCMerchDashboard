@@ -19,7 +19,7 @@ use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
-use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Tests\Unit\Support\CreatorAdminEnvironment;
 use MerchBoard\Tests\Unit\Support\FakeProductStore;

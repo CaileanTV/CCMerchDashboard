@@ -1,6 +1,6 @@
 # WooCommerce-integration
 
-> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032, ADR-033 (kategori-mapping som vedvarende automatisk kobling; ikke implementeret endnu) ADR-034 (beskyttelse af koblingens meta) og ADR-035 (vagten som core-service; ikke implementeret endnu). Uninstall-mekanismen for de beskyttede nøgler er besluttet i ADR-036 (ikke implementeret endnu). Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
+> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032, ADR-033 (kategori-mapping som vedvarende automatisk kobling; ikke implementeret endnu) ADR-034 (beskyttelse af koblingens meta) og ADR-035 (vagten som core-service; implementeret). Uninstall-mekanismen for de beskyttede nøgler er besluttet i ADR-036 (ikke implementeret endnu). Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
 
 ## Principper
 
@@ -31,7 +31,12 @@
     - **Tydelige afvisninger ved indgangene (`ProtectedMetaEntryPoints`):** REST create/update/batch af produkter og varianter giver 400 (`merchboard_protected_product_meta`), når de beskyttede felter ville ændres (også omdøbning via meta-ID og sletning); `…/variations/generate` giver 400 ved beskyttet `meta_data`; en CSV-række med en beskyttet `Meta:`-kolonne fejler med en besked; duplicate kopierer ikke felterne.
   - **Begrænsninger (ADR-034):**
     - Direkte SQL og kode, der fjerner eller omgår pluginets hooks (fx `remove_filter()` eller `merchboard_modules`-filteret), er uden for vagterne. Der er ingen garanti for fuld databaseintegritet.
-    - Vagterne registreres i `WooCommerceModule`. Er WooCommerce deaktiveret eller ældre end 10.3, er de **ikke aktive**, og nøglerne kan ændres via metadata-API'et fra kode eller WP-CLI. **Besluttet i ADR-035:** metadata-vagten bliver en core-service, der registreres i `Plugin::register_hooks()` uden om `merchboard_modules`, og er derefter aktiv uanset WooCommerce. `ProtectedMetaEntryPoints` bliver i WooCommerce-modulet. Implementeringen er ikke startet; indtil da gælder begrænsningen.
+    - **Registrering (ADR-035, implementeret):**
+      - Metadata-vagten (`MerchBoard\Core\Security\ProtectedProductMeta`) er en core-service. `Plugin::register_hooks()` registrerer den, når `merchboard.php` indlæses, uden om `merchboard_modules`.
+      - Den er aktiv uanset om WooCommerce er installeret, aktiveret eller opfylder minimumsversionen.
+      - Kode, der kører før `merchboard.php` indlæses, er uden for den.
+      - `ProtectedMetaEntryPoints` bliver i WooCommerce-modulet og kører kun med et understøttet WooCommerce.
+      - Uden WooCommerce logges afviste forsøg i PHP's fejllog i stedet for WooCommerce-loggen.
     - **Uninstall (besluttet i ADR-036, implementeres i trin 13):** vagten har et uninstall-vindue, som kun tillader **sletning** af de to nøgler, og kun når `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename og opt-in til sletning af data er aktivt. Oprettelse, ændring og omdøbning er fortsat blokeret. `Uninstaller` sletter via WordPress' meta-API uden direkte SQL, uden global adgang til vagten og uden at fjerne hooks. Tilladte sletninger logges uden værdier, og der skrives ingen audit. WordPress definerer `WP_UNINSTALL_PLUGIN` kun én gang pr. request; ved uninstall af flere plugins i samme request, hvor Merch Dashboard ikke er det første, sletter uninstall intet (accepteret begrænsning).
 - **Ingen produktrettigheder til creators (ADR-030):** Creator-rollen får ingen WooCommerce-produktcapabilities og ingen produktadgang i fase 17. `Capabilities::EDIT_PRODUCT` tildeles aldrig og bruges kun til at autorisere brugere, der i forvejen må redigere produktet.
 - **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglerne (`_merchboard_creator_id` og `_merchboard_creator_link_source`, og kun dem); i forhold til vagten sker det gennem ADR-036's uninstall-vindue, som kun tillader sletning.
