@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Unit\Core\Lifecycle;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Lifecycle\Uninstaller;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
@@ -43,6 +44,7 @@ final class UninstallerTest extends TestCase {
 		Functions\expect( 'get_users' )->never();
 		Functions\expect( 'wp_roles' )->never();
 		Functions\expect( 'remove_role' )->never();
+		Functions\expect( 'delete_post_meta_by_key' )->never();
 
 		self::assertFalse( $this->uninstaller()->run() );
 
@@ -103,12 +105,54 @@ final class UninstallerTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
 		$this->wpdb->query_results['PREPARED#0'] = false;
 
 		self::assertFalse( $this->uninstaller()->run() );
 
 		self::assertArrayHasKey( Settings::OPTION, $options->options );
 		self::assertArrayHasKey( 'merchboard_db_version', $options->options );
+	}
+
+	public function test_with_opt_in_the_protected_product_meta_is_deleted_by_key_before_tables_and_settings(): void {
+		$options = InMemoryOptions::install( array( Settings::OPTION => array( Settings::DELETE_DATA_ON_UNINSTALL => true ) ) );
+		Functions\when( 'get_users' )->justReturn( array() );
+		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
+		Functions\when( 'remove_role' )->justReturn( null );
+		$deleted = array();
+		Functions\when( 'delete_post_meta_by_key' )->alias(
+			function ( string $key ) use ( &$deleted, $options ): bool {
+				$deleted[] = array(
+					'key'          => $key,
+					'opt_in_still' => Settings::delete_data_on_uninstall(),
+					'tables_left'  => array() === $this->wpdb->prepared,
+					'settings'     => array_key_exists( Settings::OPTION, $options->options ),
+				);
+				return false;
+			}
+		);
+
+		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
+
+		self::assertSame(
+			array(
+				array(
+					'key'          => ProtectedProductMeta::LINK_KEY,
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+				array(
+					'key'          => ProtectedProductMeta::SOURCE_KEY,
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+			),
+			$deleted,
+			'Both keys, through the meta API, while the opt-in is on and before the tables are dropped.'
+		);
+		self::assertArrayNotHasKey( Settings::OPTION, $options->options, 'The opt-in is removed last.' );
 	}
 
 	private function uninstaller(): Uninstaller {

@@ -299,8 +299,12 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
     - `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` ligger nu i `MerchBoard\Core\Security`. Core ejer nøglerne (`LINK_KEY`, `SOURCE_KEY`), og `ProductCreatorLink` henviser til dem.
     - `Plugin::register_hooks()` registrerer den ene instans uden om `merchboard_modules`. Loggeren slås først op ved brug (`LazyLogger`). `WooCommerceModule` genbruger instansen og registrerer kun `ProtectedMetaEntryPoints`.
     - Aktiv uden WooCommerce, med for gammel WooCommerce og med en tom `merchboard_modules`. Det er verificeret med unit-tests, integrationstest mod det bootede plugin og en skrivebeskyttet kontrol i Merch Dashboard Local (WooCommerce 10.3.8, én registrering pr. hook).
-    - Uninstall (B) blev besluttet særskilt i ADR-036 (ikke implementeret). ADR-035 tilføjede, at `uninstall.php` ikke kender den registrerede vagt-instans.
-  - **ADR-036 (2026-09-26, accepteret):** Uninstall (B) er besluttet: mulighed D, et uninstall-vindue i vagten. Kun sletning af de to nøgler, kun når `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename, og kun med opt-in; oprettelse, ændring og omdøbning afvises altid. Ingen adgang til den registrerede instans, ingen fjernelse af hooks, ingen direkte SQL; `Uninstaller` bruger WordPress' meta-API. Logges uden værdier, ingen audit. **Ikke implementeret endnu** (trin 13).
+    - Uninstall (B) blev besluttet særskilt i ADR-036 og er implementeret. ADR-035 tilføjede, at `uninstall.php` ikke kender den registrerede vagt-instans.
+  - **ADR-036 (2026-09-26, accepteret):** Uninstall (B) er besluttet: mulighed D, et uninstall-vindue i vagten. Kun sletning af de to nøgler, kun når `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename, og kun med opt-in; oprettelse, ændring og omdøbning afvises altid. Ingen adgang til den registrerede instans, ingen fjernelse af hooks, ingen direkte SQL; `Uninstaller` bruger WordPress' meta-API. Logges uden værdier, ingen audit. **Implementeret 2026-09-26:**
+    - `Uninstaller` sletter nøglerne med `delete_post_meta_by_key()` før tabeller og opt-in.
+    - Vagten tillader kun sletningen i vinduet og logger den på `info` uden værdier.
+    - Verificeret med unit-tests og integrationstests: med pluginet indlæst, uden pluginet (separat proces) og under et andet plugins uninstall (separat proces).
+    - `uninstall.php` er uændret.
   - **Næste:** Trin 7 (migration 4 og mapping-service).
 
 ## Planned

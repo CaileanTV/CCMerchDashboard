@@ -202,11 +202,15 @@ final class Plugin {
 		);
 
 		// The one instance of the protected meta guard; the logger is resolved
-		// on first use (LazyLogger), not while merchboard.php loads.
+		// on first use (LazyLogger), not while merchboard.php loads. The plugin
+		// file gives the guard this plugin's basename for ADR-036's uninstall
+		// window.
+		$file = $this->file;
 		$this->container->set(
 			ProtectedProductMeta::class,
 			static fn( Container $c ): ProtectedProductMeta => new ProtectedProductMeta(
-				new LazyLogger( static fn(): Logger => $c->get( Logger::class ) )
+				new LazyLogger( static fn(): Logger => $c->get( Logger::class ) ),
+				$file
 			)
 		);
 

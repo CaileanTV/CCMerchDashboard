@@ -9,8 +9,10 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Core\Security;
 
+use Closure;
 use LogicException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\Settings;
 use WeakMap;
 
 defined( 'ABSPATH' ) || exit;
@@ -34,7 +36,12 @@ defined( 'ABSPATH' ) || exit;
  * short-circuited as failed and logged, unless:
  * - an explicit ProtectedMetaWrite for that very product is running inside
  *   run() (scoped to the call, one product, one use, no nesting), or
- * - WordPress is permanently deleting that post (its meta goes with it).
+ * - WordPress is permanently deleting that post (its meta goes with it), or
+ * - ADR-036's uninstall window: a **deletion** of a protected key (by post,
+ *   by meta id or of every row by key) while WordPress uninstalls this very
+ *   plugin (`WP_UNINSTALL_PLUGIN` is merchboard.php's basename) and the opt-in
+ *   to delete data is on. Logged at info without values. Add, update and
+ *   rename stay denied; this is a deletion permission, not a write context.
  *
  * A core service (ADR-035): Plugin creates the one instance and registers it
  * in register_hooks(), when merchboard.php loads, independent of WooCommerce
@@ -97,12 +104,34 @@ final class ProtectedProductMeta {
 	private bool $registered = false;
 
 	/**
+	 * Basename WordPress is uninstalling right now, or null (reads
+	 * `WP_UNINSTALL_PLUGIN`; replaceable in tests only through the constructor).
+	 *
+	 * @var Closure(): ?string
+	 */
+	private Closure $uninstalling;
+
+	/**
+	 * Whether the opt-in to delete data on uninstall is on.
+	 *
+	 * @var Closure(): bool
+	 */
+	private Closure $opted_in;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Logger $logger Technical log for denied writes.
+	 * @param Logger       $logger       Technical log for denied writes and uninstall deletions.
+	 * @param string       $plugin_file  Path of merchboard.php, for its basename ('' disables the uninstall window).
+	 * @param Closure|null $uninstalling Returns the basename being uninstalled (`Closure(): ?string`); defaults to `WP_UNINSTALL_PLUGIN`.
+	 * @param Closure|null $opted_in     Returns whether the delete-data opt-in is on (`Closure(): bool`); defaults to Settings.
+	 * @phpstan-param (Closure(): ?string)|null $uninstalling
+	 * @phpstan-param (Closure(): bool)|null $opted_in
 	 */
-	public function __construct( private Logger $logger ) {
-		$this->used = new WeakMap();
+	public function __construct( private Logger $logger, private string $plugin_file = '', ?Closure $uninstalling = null, ?Closure $opted_in = null ) {
+		$this->used         = new WeakMap();
+		$this->uninstalling = $uninstalling ?? static fn(): ?string => defined( 'WP_UNINSTALL_PLUGIN' ) ? WP_UNINSTALL_PLUGIN : null;
+		$this->opted_in     = $opted_in ?? static fn(): bool => Settings::delete_data_on_uninstall();
 	}
 
 	/**
@@ -199,7 +228,7 @@ final class ProtectedProductMeta {
 	 * @return mixed
 	 */
 	public function filter_delete( mixed $check, mixed $object_id, mixed $meta_key, mixed $meta_value = '', mixed $delete_all = false ): mixed {
-		return $this->decide( $check, 'delete', $meta_key, null, true === $delete_all ? 0 : $this->id( $object_id ) );
+		return $this->decide( $check, 'delete', $meta_key, null, true === $delete_all ? 0 : $this->id( $object_id ), true );
 	}
 
 	/**
@@ -233,7 +262,7 @@ final class ProtectedProductMeta {
 			return $check;
 		}
 
-		return $this->decide( $check, 'delete_by_mid', $row['key'] ?? null, null, $post_id );
+		return $this->decide( $check, 'delete_by_mid', $row['key'] ?? null, null, $post_id, true );
 	}
 
 	/**
@@ -260,16 +289,18 @@ final class ProtectedProductMeta {
 
 	/**
 	 * Lets the write through unless it touches a protected key without an
-	 * authorized write for that post; then it fails and is logged.
+	 * authorized write for that post, or, for a deletion, outside ADR-036's
+	 * uninstall window; then it fails and is logged.
 	 *
 	 * @param mixed  $check     Short-circuit value so far.
 	 * @param string $operation Operation name for the log.
 	 * @param mixed  $key       Key the write touches.
 	 * @param mixed  $new_key   New key of a rename, if any.
 	 * @param int    $post_id   Post id (0: every post or unknown).
+	 * @param bool   $deletion  Whether the operation only deletes (ADR-036).
 	 * @return mixed
 	 */
-	private function decide( mixed $check, string $operation, mixed $key, mixed $new_key, int $post_id ): mixed {
+	private function decide( mixed $check, string $operation, mixed $key, mixed $new_key, int $post_id, bool $deletion = false ): mixed {
 		if ( ! self::is_protected_key( $key ) && ! self::is_protected_key( $new_key ) ) {
 			return $check;
 		}
@@ -278,16 +309,43 @@ final class ProtectedProductMeta {
 			return $check;
 		}
 
-		$this->logger->warning(
-			'Blocked a write to protected product meta outside Merch Dashboard.',
-			array(
-				'operation' => $operation,
-				'post_id'   => $post_id,
-				'key'       => self::is_protected_key( $key ) ? strtolower( trim( (string) $key ) ) : strtolower( trim( (string) $new_key ) ),
-			)
+		$context = array(
+			'operation' => $operation,
+			'post_id'   => $post_id,
+			'key'       => self::is_protected_key( $key ) ? strtolower( trim( (string) $key ) ) : strtolower( trim( (string) $new_key ) ),
 		);
 
+		// ADR-036: deletion only, never add, update or rename.
+		if ( $deletion && $this->in_uninstall_window() ) {
+			$this->logger->info( 'Deleted protected product meta during the Merch Dashboard uninstall.', $context );
+
+			return $check;
+		}
+
+		$this->logger->warning( 'Blocked a write to protected product meta outside Merch Dashboard.', $context );
+
 		return false;
+	}
+
+	/**
+	 * ADR-036's uninstall window: WordPress is uninstalling this very plugin
+	 * (`WP_UNINSTALL_PLUGIN`, which WordPress defines in uninstall_plugin()
+	 * and only once per request, is this plugin's basename) and the opt-in to
+	 * delete data is still on. Only consulted for a deletion of a protected
+	 * key that no ProtectedMetaWrite covers.
+	 */
+	private function in_uninstall_window(): bool {
+		if ( '' === $this->plugin_file ) {
+			return false;
+		}
+
+		$uninstalling = ( $this->uninstalling )();
+
+		if ( null === $uninstalling || '' === $uninstalling || plugin_basename( $this->plugin_file ) !== $uninstalling ) {
+			return false;
+		}
+
+		return true === ( $this->opted_in )();
 	}
 
 	/**

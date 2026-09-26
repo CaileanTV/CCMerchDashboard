@@ -13,6 +13,7 @@ use LogicException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\ProtectedMetaWrite;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 
@@ -38,6 +39,9 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
+		// ADR-036's uninstall window stays closed here: UninstallTest may have
+		// defined WP_UNINSTALL_PLUGIN in this process, so the opt-in is off.
+		delete_option( Settings::OPTION );
 
 		$this->product   = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Guarded tee' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$this->variation = (int) wp_insert_post( array( 'post_type' => 'product_variation', 'post_status' => 'publish', 'post_parent' => $this->product, 'post_title' => 'Guarded tee - S' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound

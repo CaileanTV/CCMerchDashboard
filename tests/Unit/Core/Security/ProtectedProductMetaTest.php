@@ -17,10 +17,14 @@ use LogicException;
 use MerchBoard\Core\Security\ProtectedMetaPurpose;
 use MerchBoard\Core\Security\ProtectedMetaWrite;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use RuntimeException;
 
 #[CoversClass( ProtectedProductMeta::class )]
@@ -60,6 +64,7 @@ final class ProtectedProductMetaTest extends TestCase {
 			),
 		);
 
+		Functions\when( 'plugin_basename' )->alias( static fn( string $file ): string => ltrim( str_replace( '/plugins/', '', $file ), '/' ) );
 		Functions\when( 'get_metadata_by_mid' )->alias( fn( string $type, int $id ): object|false => 'post' === $type ? ( $this->rows[ $id ] ?? false ) : false );
 	}
 
@@ -225,9 +230,131 @@ final class ProtectedProductMetaTest extends TestCase {
 		$this->guard->register();
 	}
 
+	public function test_the_uninstall_window_allows_only_deletions_of_the_protected_keys(): void {
+		$guard = $this->window_guard( 'merchboard/merchboard.php', true );
+
+		self::assertNull( $guard->filter_delete( null, 10, self::LINK ), 'One post.' );
+		self::assertNull( $guard->filter_delete( null, 0, '_Merchboard_Creator_ID', '', true ), 'Every row by key, any spelling.' );
+		self::assertNull( $guard->filter_delete( null, 0, self::SOURCE, '', true ) );
+		self::assertNull( $guard->filter_delete_by_mid( null, 100 ), 'By meta id.' );
+		self::assertNull( $guard->filter_delete_by_mid( null, 102 ) );
+		self::assertTrue( $guard->filter_delete( true, 10, self::LINK ), 'Another plugin\'s short-circuit is kept.' );
+
+		$infos = $this->logger->at( 'info' );
+		self::assertCount( 6, $infos );
+		self::assertSame( 'Deleted protected product meta during the Merch Dashboard uninstall.', $infos[0]['message'] );
+		self::assertSame(
+			array(
+				'operation' => 'delete',
+				'post_id'   => 0,
+				'key'       => self::LINK,
+			),
+			$infos[1]['context'],
+			'Operation, post and key; never a value.'
+		);
+		self::assertSame( array(), $this->logger->at( 'warning' ) );
+	}
+
+	public function test_the_uninstall_window_never_allows_adding_changing_or_renaming(): void {
+		$guard = $this->window_guard( 'merchboard/merchboard.php', true );
+
+		self::assertFalse( $guard->filter_add( null, 10, self::LINK ) );
+		self::assertFalse( $guard->filter_add( null, 10, self::SOURCE ) );
+		self::assertFalse( $guard->filter_update( null, 10, self::LINK ) );
+		self::assertFalse( $guard->filter_update_by_mid( null, 100, '5' ), 'Changing a value by meta id.' );
+		self::assertFalse( $guard->filter_update_by_mid( null, 100, '3', '_other' ), 'Renaming a link away.' );
+		self::assertFalse( $guard->filter_update_by_mid( null, 101, '3', self::LINK ), 'Renaming other meta into a link.' );
+		self::assertSame( array(), $this->logger->at( 'info' ) );
+		self::assertCount( 6, $this->logger->at( 'warning' ) );
+	}
+
+	/**
+	 * Windows that must stay closed.
+	 *
+	 * @return array<string, array{?string, bool, string}>
+	 */
+	public static function closed_windows(): array {
+		return array(
+			'no uninstall running'        => array( null, true, '/plugins/merchboard/merchboard.php' ),
+			'another plugin uninstalling' => array( 'other-plugin/other-plugin.php', true, '/plugins/merchboard/merchboard.php' ),
+			'empty basename'              => array( '', true, '/plugins/merchboard/merchboard.php' ),
+			'opt-in off'                  => array( 'merchboard/merchboard.php', false, '/plugins/merchboard/merchboard.php' ),
+			'guard without its own file'  => array( 'merchboard/merchboard.php', true, '' ),
+		);
+	}
+
+	#[DataProvider( 'closed_windows' )]
+	public function test_a_closed_window_still_denies_every_protected_deletion( ?string $uninstalling, bool $opted_in, string $file ): void {
+		$guard = $this->window_guard( $uninstalling, $opted_in, $file );
+
+		self::assertFalse( $guard->filter_delete( null, 10, self::LINK ) );
+		self::assertFalse( $guard->filter_delete( null, 0, self::SOURCE, '', true ) );
+		self::assertFalse( $guard->filter_delete_by_mid( null, 100 ) );
+		self::assertSame( array(), $this->logger->at( 'info' ) );
+	}
+
+	public function test_the_window_does_not_touch_other_meta_and_does_not_check_it(): void {
+		$checks = 0;
+		$guard  = new ProtectedProductMeta(
+			$this->logger,
+			'/plugins/merchboard/merchboard.php',
+			static function () use ( &$checks ): string {
+				++$checks;
+				return 'merchboard/merchboard.php';
+			},
+			static fn(): bool => true
+		);
+
+		self::assertNull( $guard->filter_delete( null, 10, '_price' ) );
+		self::assertNull( $guard->filter_delete( null, 0, '_price', '', true ) );
+		self::assertNull( $guard->filter_delete_by_mid( null, 101 ) );
+		self::assertSame( 0, $checks, 'The window is only consulted for a protected deletion.' );
+		self::assertSame( array(), $this->logger->entries );
+	}
+
+	public function test_a_write_context_is_still_needed_for_writes_outside_the_window(): void {
+		$guard = $this->window_guard( null, true );
+
+		self::assertFalse( $guard->filter_update( null, 10, self::LINK ) );
+		self::assertNull( $guard->run( ProtectedMetaWrite::for_manual_link( 10 ), fn(): mixed => $guard->filter_add( null, 10, self::LINK ) ), 'Only a ProtectedMetaWrite authorizes writes.' );
+	}
+
 	public function test_core_owns_the_unchanged_key_names(): void {
 		self::assertSame( '_merchboard_creator_id', ProtectedProductMeta::LINK_KEY );
 		self::assertSame( '_merchboard_creator_link_source', ProtectedProductMeta::SOURCE_KEY );
 		self::assertSame( array( ProtectedProductMeta::LINK_KEY, ProtectedProductMeta::SOURCE_KEY ), ProtectedProductMeta::KEYS );
+	}
+
+	/**
+	 * The production signals: `WP_UNINSTALL_PLUGIN` and the Settings opt-in.
+	 * A separate process, because the constant cannot be undefined.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_the_default_signals_read_the_constant_and_the_opt_in(): void {
+		$guard   = new ProtectedProductMeta( $this->logger, '/plugins/merchboard/merchboard.php' );
+		$options = InMemoryOptions::install( array( Settings::OPTION => array( Settings::DELETE_DATA_ON_UNINSTALL => true ) ) );
+
+		self::assertFalse( $guard->filter_delete( null, 0, self::LINK, '', true ), 'No uninstall running yet.' );
+
+		define( 'WP_UNINSTALL_PLUGIN', 'merchboard/merchboard.php' );
+
+		self::assertNull( $guard->filter_delete( null, 0, self::LINK, '', true ), 'This plugin is being uninstalled with the opt-in on.' );
+		self::assertFalse( $guard->filter_update( null, 10, self::LINK ), 'Still no writes.' );
+
+		$options->options[ Settings::OPTION ] = array( Settings::DELETE_DATA_ON_UNINSTALL => false );
+
+		self::assertFalse( $guard->filter_delete( null, 0, self::LINK, '', true ), 'Opt-in off closes the window.' );
+	}
+
+	/**
+	 * A guard with a fixed uninstall signal and opt-in.
+	 *
+	 * @param string|null $uninstalling Basename being uninstalled.
+	 * @param bool        $opted_in     Opt-in.
+	 * @param string      $file         Plugin file.
+	 */
+	private function window_guard( ?string $uninstalling, bool $opted_in, string $file = '/plugins/merchboard/merchboard.php' ): ProtectedProductMeta {
+		return new ProtectedProductMeta( $this->logger, $file, static fn(): ?string => $uninstalling, static fn(): bool => $opted_in );
 	}
 }

@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
 use WP_User;
@@ -36,8 +37,17 @@ defined( 'ABSPATH' ) || exit;
  * `merchboard_`: a role or capability another plugin or a site owner happens
  * to name with that prefix is not ours to delete. A capability that is ever
  * retired from Capabilities must stay listed for this cleanup (ADR-025).
- * 3. the plugin tables (SchemaEraser, by exact name);
- * 4. the plugin options and transient, and the settings option LAST.
+ * 3. the product meta `_merchboard_creator_id` and
+ *    `_merchboard_creator_link_source` from every post (ADR-030 D4), through
+ *    WordPress' meta API with `delete_post_meta_by_key()`, which matches every
+ *    key spelling under MySQL's case-insensitive collation. Never direct SQL.
+ *    When the plugin is loaded in this request (e.g. WP-CLI
+ *    `wp plugin uninstall --deactivate`), the protected meta guard allows only
+ *    this deletion, through ADR-036's uninstall window, which needs the
+ *    opt-in still on: hence before the settings are deleted. Products and all
+ *    other meta stay;
+ * 4. the plugin tables (SchemaEraser, by exact name);
+ * 5. the plugin options and transient, and the settings option LAST.
  *
  * DROP TABLE cannot be part of a transaction, so there is no pretend
  * atomicity. Every step is idempotent, and the opt-in is removed last: if a
@@ -69,6 +79,7 @@ final class Uninstaller {
 
 		$this->remove_from_users();
 		$this->remove_from_roles();
+		$this->remove_product_meta();
 
 		if ( ! $this->schema->erase() ) {
 			// Keep the options (including the opt-in) so a later uninstall can finish.
@@ -84,6 +95,16 @@ final class Uninstaller {
 		$this->logger->info( 'Merch Dashboard data deleted on uninstall.' );
 
 		return true;
+	}
+
+	/**
+	 * Deletes the plugin's product meta keys from every post through the meta
+	 * API. Idempotent: WordPress reports false when there was nothing to delete.
+	 */
+	private function remove_product_meta(): void {
+		foreach ( ProtectedProductMeta::KEYS as $key ) {
+			delete_post_meta_by_key( $key );
+		}
 	}
 
 	/**

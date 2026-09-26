@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\Lifecycle;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\CreatorService;
@@ -35,6 +36,12 @@ final class UninstallTest extends IntegrationTestCase {
 
 	private int $post_id;
 
+	private int $product;
+
+	private int $other_product;
+
+	private int $variation;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
@@ -45,6 +52,12 @@ final class UninstallTest extends IntegrationTestCase {
 		$this->execute( 'DROP TABLE IF EXISTS %i', self::OTHER_SITE_TABLE );
 		remove_role( 'merchboard_test_custom' );
 		wp_delete_post( $this->post_id, true );
+
+		foreach ( array( $this->product, $this->other_product, $this->variation ) as $id ) {
+			$this->execute( 'DELETE FROM %i WHERE post_id = %d', $this->wpdb->postmeta, $id );
+			$this->execute( 'DELETE FROM %i WHERE ID = %d', $this->wpdb->posts, $id );
+		}
+
 		delete_option( 'merchboard_test_unrelated' );
 		delete_option( Settings::OPTION );
 		// Restore schema, roles and capabilities before the base class deletes the
@@ -117,6 +130,90 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( self::OTHER_SITE_TABLE, $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( self::OTHER_SITE_TABLE ) ) ), "Another site's table with a similar name survives." );
 
 		self::assertStringContainsString( 'Merch Dashboard data deleted on uninstall.', (string) file_get_contents( MERCHBOARD_TEST_LOG ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+	}
+
+	public function test_uninstall_with_the_plugin_loaded_deletes_only_the_protected_meta_through_the_window(): void {
+		// The WP-CLI `wp plugin uninstall --deactivate` flow: the booted plugin's
+		// core guard is registered in this process while uninstall.php runs.
+		$guard = $this->service( ProtectedProductMeta::class );
+		self::assertSame( 1000, has_filter( 'delete_post_metadata', array( $guard, 'filter_delete' ) ) );
+		$this->enable_deletion();
+
+		$this->run_uninstall();
+
+		self::assertSame( array(), $this->protected_rows(), 'Every protected row, in every spelling, on products and variations.' );
+		self::assertSame( '10', get_post_meta( $this->product, '_price', true ), 'Other product meta stays.' );
+		self::assertSame( 'publish', get_post_status( $this->product ), 'Products stay.' );
+		self::assertSame( 'publish', get_post_status( $this->variation ) );
+
+		$log = (string) file_get_contents( MERCHBOARD_TEST_LOG ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+		self::assertStringContainsString( 'Deleted protected product meta during the Merch Dashboard uninstall.', $log );
+		self::assertStringNotContainsString( '424242', $log, 'Values are never logged.' );
+		self::assertStringNotContainsString( 'Blocked a write to protected product meta', $log );
+	}
+
+	public function test_uninstall_without_opt_in_keeps_the_protected_meta(): void {
+		$before = $this->protected_rows();
+
+		$this->run_uninstall();
+
+		self::assertCount( 4, $before );
+		self::assertSame( $before, $this->protected_rows() );
+	}
+
+	public function test_during_the_window_the_booted_guard_still_denies_writes_and_other_posts_writes(): void {
+		$this->enable_deletion();
+		$this->define_uninstall_constant();
+
+		self::assertFalse( add_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, '7' ), 'No new link.' );
+		self::assertFalse( update_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, '7' ), 'No change.' );
+		self::assertFalse( update_metadata_by_mid( 'post', $this->meta_id( $this->product, ProtectedProductMeta::LINK_KEY ), '3', '_renamed' ), 'No rename.' );
+		self::assertTrue( update_post_meta( $this->product, '_price', '11' ), 'Other meta is unaffected.' );
+		self::assertTrue( delete_metadata_by_mid( 'post', $this->meta_id( $this->other_product, '_Merchboard_Creator_ID' ) ), 'Deletion by meta id is allowed.' );
+		self::assertTrue( delete_post_meta( $this->product, ProtectedProductMeta::SOURCE_KEY ), 'Deletion of one post\'s key is allowed.' );
+
+		delete_option( Settings::OPTION );
+
+		self::assertFalse( delete_post_meta( $this->product, ProtectedProductMeta::LINK_KEY ), 'Without the opt-in the window is closed.' );
+		self::assertSame( '424242', get_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, true ) );
+	}
+
+	public function test_the_wp_admin_flow_without_the_loaded_plugin_uninstalls_normally(): void {
+		$this->enable_deletion();
+
+		$result = $this->run_process( 'unloaded' );
+
+		self::assertSame(
+			array(
+				'guard'       => false,
+				'uninstalled' => true,
+			),
+			$result,
+			'No guard is registered when the plugin is not loaded; uninstall.php runs.'
+		);
+		wp_cache_flush();
+		$this->forget_table_metadata();
+		self::assertSame( array(), $this->protected_rows() );
+		self::assertSame( '10', get_post_meta( $this->product, '_price', true ) );
+		self::assertNull( $this->raw_option( Settings::OPTION ), 'The whole uninstall ran.' );
+	}
+
+	public function test_another_plugins_uninstall_does_not_open_the_window(): void {
+		$this->enable_deletion();
+		$before = $this->protected_rows();
+
+		$result = $this->run_process( 'loaded-other' );
+
+		self::assertSame(
+			array(
+				'guard'          => true,
+				'deleted_link'   => false,
+				'deleted_source' => false,
+			),
+			$result
+		);
+		wp_cache_flush();
+		self::assertSame( $before, $this->protected_rows() );
 	}
 
 	public function test_uninstall_writes_no_audit_records(): void {
@@ -201,6 +298,88 @@ final class UninstallTest extends IntegrationTestCase {
 		);
 		update_post_meta( $this->post_id, '_merchboard_test_meta', 'meta' );
 		$this->execute( 'CREATE TABLE %i (id int)', self::OTHER_SITE_TABLE );
+
+		// Products with protected meta, stored directly: the guard would refuse
+		// any generic write (ADR-034). No WooCommerce is loaded here.
+		$this->product       = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Linked tee' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->other_product = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Oddly spelled' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->variation     = (int) wp_insert_post( array( 'post_type' => 'product_variation', 'post_status' => 'publish', 'post_parent' => $this->product, 'post_title' => 'Linked tee - S' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		update_post_meta( $this->product, '_price', '10' );
+
+		foreach (
+			array(
+				array( $this->product, ProtectedProductMeta::LINK_KEY, '424242' ),
+				array( $this->product, ProtectedProductMeta::SOURCE_KEY, 'admin' ),
+				array( $this->other_product, '_Merchboard_Creator_ID', '5' ),
+				array( $this->variation, ProtectedProductMeta::LINK_KEY, '424242' ),
+			) as $row
+		) {
+			$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, ...$row );
+		}
+
+		wp_cache_flush();
+	}
+
+	/**
+	 * Protected meta rows of the test products, straight from the database.
+	 *
+	 * @return list<array<string, string>>
+	 */
+	private function protected_rows(): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT post_id, meta_key, meta_value FROM %i WHERE post_id IN (%d, %d, %d) AND LOWER(TRIM(meta_key)) IN (%s, %s) ORDER BY meta_id', $wpdb->postmeta, $this->product, $this->other_product, $this->variation, ProtectedProductMeta::LINK_KEY, ProtectedProductMeta::SOURCE_KEY ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion on stored rows.
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Meta id of a post's row.
+	 *
+	 * @param int    $post_id Post id.
+	 * @param string $key     Meta key (exact).
+	 */
+	private function meta_id( int $post_id, string $key ): int {
+		$wpdb = $this->wpdb;
+
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT meta_id FROM %i WHERE post_id = %d AND meta_key = %s', $wpdb->postmeta, $post_id, $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture lookup.
+	}
+
+	/**
+	 * Defines WordPress' uninstall constant for this plugin, as
+	 * uninstall_plugin() does. It stays defined for the rest of this process;
+	 * tests that need the window closed turn the opt-in off.
+	 */
+	private function define_uninstall_constant(): void {
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			define( 'WP_UNINSTALL_PLUGIN', plugin_basename( dirname( __DIR__, 3 ) . '/merchboard.php' ) );
+		}
+	}
+
+	/**
+	 * Runs tests/Integration/Fixtures/uninstall-process.php in its own PHP
+	 * process (own WordPress, own constants) against the same database.
+	 *
+	 * @param string $mode 'unloaded' or 'loaded-other'.
+	 * @return array<string, mixed>
+	 */
+	private function run_process( string $mode ): array {
+		$process = proc_open(
+			array( PHP_BINARY, dirname( __DIR__ ) . '/Fixtures/uninstall-process.php', $mode ),
+			array(
+				1 => array( 'pipe', 'w' ),
+				2 => array( 'pipe', 'w' ),
+			),
+			$pipes
+		);
+		self::assertIsResource( $process, 'Uninstall process could not be started.' );
+		$output = (string) stream_get_contents( $pipes[1] );
+		$errors = (string) stream_get_contents( $pipes[2] );
+		proc_close( $process );
+
+		$result = json_decode( $output, true );
+		self::assertIsArray( $result, 'Process output: ' . $output . $errors );
+
+		return $result;
 	}
 
 	private function enable_deletion(): void {
@@ -211,9 +390,7 @@ final class UninstallTest extends IntegrationTestCase {
 	 * Runs the real uninstall.php as WordPress' uninstall_plugin() does.
 	 */
 	private function run_uninstall(): void {
-		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-			define( 'WP_UNINSTALL_PLUGIN', plugin_basename( dirname( __DIR__, 3 ) . '/merchboard.php' ) );
-		}
+		$this->define_uninstall_constant();
 
 		file_put_contents( MERCHBOARD_TEST_LOG, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test log.
 		include dirname( __DIR__, 3 ) . '/uninstall.php';

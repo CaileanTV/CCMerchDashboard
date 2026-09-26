@@ -1266,7 +1266,7 @@ Kategorien er shoppens eksisterende arbejdsgang for, hvilken creator et produkt 
 2026-09-26
 
 ## Status
-Accepteret (fase 17, trin 6, implementeret). Besluttet af projektejeren i specifikationen af trin 6. **Ændrer ADR-030 D6** (grænsen for sikkerhedsmodellen). Supplerer ADR-033 (den fremtidige kategori-afstemning skal bruge denne mekanisme) og ADR-025/ADR-030 D4 (uninstall, se pkt. 6). To punkter er **uafklarede** og kræver særskilte beslutninger: beskyttelse uden et indlæst WooCommerce-modul (pkt. 5) og uninstall-mekanismen (pkt. 6). **Uafklaret A er besluttet i ADR-035 (2026-09-26):** vagten er en core-service, der registreres i `Plugin::register_hooks()` uden om `merchboard_modules` (implementeret 2026-09-26). **Uafklaret B er besluttet i ADR-036 (2026-09-26):** uninstall-vindue i vagten (ikke implementeret endnu). Pkt. 3 er dermed præciseret: `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst** (tilføje, ændre, omdøbe). Den eneste anden tilladte operation er ADR-036's **sletning** af de to nøgler, og kun når operationen er en sletning, `WP_UNINSTALL_PLUGIN` er Merch Dashboards eget basename, og opt-in til sletning af data er aktivt.
+Accepteret (fase 17, trin 6, implementeret). Besluttet af projektejeren i specifikationen af trin 6. **Ændrer ADR-030 D6** (grænsen for sikkerhedsmodellen). Supplerer ADR-033 (den fremtidige kategori-afstemning skal bruge denne mekanisme) og ADR-025/ADR-030 D4 (uninstall, se pkt. 6). To punkter er **uafklarede** og kræver særskilte beslutninger: beskyttelse uden et indlæst WooCommerce-modul (pkt. 5) og uninstall-mekanismen (pkt. 6). **Uafklaret A er besluttet i ADR-035 (2026-09-26):** vagten er en core-service, der registreres i `Plugin::register_hooks()` uden om `merchboard_modules` (implementeret 2026-09-26). **Uafklaret B er besluttet i ADR-036 (2026-09-26):** uninstall-vindue i vagten (implementeret 2026-09-26). Pkt. 3 er dermed præciseret: `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst** (tilføje, ændre, omdøbe). Den eneste anden tilladte operation er ADR-036's **sletning** af de to nøgler, og kun når operationen er en sletning, `WP_UNINSTALL_PLUGIN` er Merch Dashboards eget basename, og opt-in til sletning af data er aktivt.
 
 ## Context
 ADR-030 D6 lukkede WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit og duplicate) for produktkoblingen, men fastslog som grænse, at WordPress' rå meta-API (`update_post_meta()` m.fl. fra vilkårlig PHP-kode) og `wp post meta` via WP-CLI var ikke-understøttede bypasses. Der skulle ikke laves globale meta-hooks.
@@ -1339,7 +1339,7 @@ Undersøgt i WordPress 7.1.2 og WooCommerce 10.3.8:
   - (b) at `Uninstaller` sletter pr. produkt med én kontekst pr. produkt;
   - (c) at `Uninstaller` fjerner vagtens hooks før sletningen. (c) svarer til en global bypass i den proces og bør vurderes kritisk.
   - Direkte SQL-sletning er fravalgt af ADR-030 (Alternatives considered).
-- **Status:** besluttet i ADR-036 (mulighed D): et uninstall-vindue i vagten, som kun tillader sletning af de to nøgler under dette plugins opt-in-uninstall. Oprettelse, ændring og omdøbning er fortsat blokeret. Implementeres i trin 13.
+- **Status:** besluttet i ADR-036 (mulighed D): et uninstall-vindue i vagten, som kun tillader sletning af de to nøgler under dette plugins opt-in-uninstall. Oprettelse, ændring og omdøbning er fortsat blokeret. Implementeret 2026-09-26.
 
 ## Ændringer af tidligere ADR'er
 - **ADR-030 D6:** Grænsen "WordPress' rå meta-API … og `wp post meta update` via WP-CLI … er ikke-understøttede bypasses … Der laves ingen globale meta-hooks" gælder ikke længere. Disse veje afvises nu af metadata-vagten (pkt. 2). Uden for grænsen er kun direkte SQL og kode, der fjerner eller omgår pluginets hooks (pkt. 6), samt perioder uden indlæst WooCommerce-modul (Uafklaret A). D6's øvrige regler er uændrede.
@@ -1470,7 +1470,7 @@ B og D giver samme sikkerhed. De adskiller sig i, hvor begrebet bor: core-servic
 2026-09-26
 
 ## Status
-**Accepteret (2026-09-26): mulighed D.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret B, under ADR-035's core-service-model. **Ændrer ADR-034 pkt. 3** med én afgrænset undtagelse, der kun tillader **sletning**. `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst**. Krydsreference fra ADR-030 D4. Implementeringen er ikke startet; den sker sammen med eller efter ADR-035's flytning til core og i fase 17, trin 13. Vurderingen af de fravalgte muligheder A, B og C er bevaret som beslutningsgrundlag.
+**Accepteret (2026-09-26): mulighed D.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret B, under ADR-035's core-service-model. **Ændrer ADR-034 pkt. 3** med én afgrænset undtagelse, der kun tillader **sletning**. `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst**. Krydsreference fra ADR-030 D4. **Implementeret 2026-09-26** oven på ADR-035's core-vagt (se Consequences). Vurderingen af de fravalgte muligheder A, B og C er bevaret som beslutningsgrundlag.
 
 ## Context
 - **Krav:** opt-in-uninstall skal slette `_merchboard_creator_id` og `_merchboard_creator_link_source` fra alle produkter og varianter på det aktuelle site via WordPress' meta-API, idempotent og før tabellerne droppes (ADR-025, ADR-030 D4, ADR-033). Direkte SQL er fravalgt (ADR-030, Alternatives considered). Uninstall skriver ingen audit-records (ADR-025); audit-tabellen droppes i samme kørsel.
@@ -1549,7 +1549,16 @@ Vagten genkender selv WordPress' eget uninstall-signal for netop dette plugin og
 A, B og C ovenfor. Desuden sletning pr. produkt med én kontekst pr. produkt; den kræver ligesom A adgang til instansen (B) og giver en kontekst pr. produkt uden sikkerhedsgevinst. Direkte SQL er udelukket (ADR-030).
 
 ## Consequences
-- **Implementeres sammen med eller efter ADR-035's flytning til core og i trin 13:**
+- **Implementering (2026-09-26):**
+  - `ProtectedProductMeta` får pluginfilen fra `Plugin` og bruger to signaler: `WP_UNINSTALL_PLUGIN` og `Settings::delete_data_on_uninstall()`. Kun i tests kan de erstattes, og kun via constructoren.
+  - Vinduet tjekkes kun for en **sletning** af en beskyttet nøgle, som ingen `ProtectedMetaWrite` dækker: `filter_delete` (én post eller alle rækker) og `filter_delete_by_mid`. `filter_add`, `filter_update` og `filter_update_by_mid` spørger aldrig vinduet. En tilladt sletning logges på `info` (operation, post og nøgle, aldrig værdien).
+  - `Uninstaller` sletter nøglerne med `delete_post_meta_by_key()` efter roller og før tabeller. `uninstall.php` er uændret.
+  - **Tests:**
+    - Unit: vinduet med injicerede og med rigtige signaler (i en separat proces).
+    - Integration mod det bootede plugin (WP-CLI-forløbet).
+    - En separat PHP-proces uden pluginet (wp-admin-forløbet).
+    - En separat PHP-proces med pluginet indlæst, mens et andet plugin afinstalleres.
+- **Oprindelig plan:**
   - Vagten får basename og et uninstall-signal ind ved oprettelsen.
   - `filter_delete` og `filter_delete_by_mid` får undtagelsen.
   - `Uninstaller` får trinnet med `delete_post_meta_by_key()` for de to nøgler.
