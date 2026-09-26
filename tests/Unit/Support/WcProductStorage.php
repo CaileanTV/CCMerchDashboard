@@ -17,9 +17,23 @@ final class WcProductStorage {
 	/**
 	 * Products by id.
 	 *
-	 * @var array<int, array{type: string, parent_id: int, status: string}>
+	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string}>
 	 */
 	public static array $products = array();
+
+	/**
+	 * Arguments of every wc_get_products() call.
+	 *
+	 * @var list<array<string, mixed>>
+	 */
+	public static array $queries = array();
+
+	/**
+	 * Arguments of every search_products() call.
+	 *
+	 * @var list<array<int, mixed>>
+	 */
+	public static array $searches = array();
 
 	/**
 	 * Meta rows by product id.
@@ -56,12 +70,17 @@ final class WcProductStorage {
 	 * @param array<string, string> $meta      Meta key => value (one row each).
 	 * @param string                $type      Product type.
 	 * @param int                   $parent_id Parent id.
+	 * @param string                $name      Product name.
+	 * @param string                $sku       SKU.
+	 * @param string                $status    Post status.
 	 */
-	public static function add( int $id, array $meta = array(), string $type = 'simple', int $parent_id = 0 ): void {
+	public static function add( int $id, array $meta = array(), string $type = 'simple', int $parent_id = 0, string $name = '', string $sku = '', string $status = 'publish' ): void {
 		self::$products[ $id ] = array(
 			'type'      => $type,
 			'parent_id' => $parent_id,
-			'status'    => 'publish',
+			'status'    => $status,
+			'name'      => '' === $name ? 'Product ' . $id : $name,
+			'sku'       => $sku,
 		);
 		self::$meta[ $id ]     = array();
 

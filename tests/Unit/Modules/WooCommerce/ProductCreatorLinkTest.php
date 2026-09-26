@@ -94,7 +94,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	}
 
 	public function test_link_stores_the_creator_and_one_audit_record_atomically(): void {
-		$changes = $this->link->link( 10, $this->alpha, ProductLinkSource::ProductScreen );
+		$changes = $this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
 
 		self::assertSame( array( AuditAction::ProductCreatorLinked ), $changes );
 		self::assertSame( array( '10:' . $this->alpha ), $this->products->writes );
@@ -108,7 +108,7 @@ final class ProductCreatorLinkTest extends TestCase {
 					'context'       => array(
 						'product_id'          => 10,
 						'previous_creator_id' => null,
-						'source'              => 'product_screen',
+						'source'              => 'admin',
 					),
 				),
 			),
@@ -136,8 +136,8 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_saving_a_product_linked_to_a_now_inactive_creator_changes_nothing(): void {
 		$this->products->add_linked( 10, $this->inactive );
 
-		self::assertSame( array(), $this->link->link( 10, $this->inactive, ProductLinkSource::ProductScreen ) );
-		self::assertSame( array(), $this->link->link( 10, $this->inactive, ProductLinkSource::ProductScreen, true ) );
+		self::assertSame( array(), $this->link->link( 10, $this->inactive, ProductLinkSource::Admin ) );
+		self::assertSame( array(), $this->link->link( 10, $this->inactive, ProductLinkSource::Admin, true ) );
 		self::assertSame( array(), $this->products->writes );
 		self::assertSame( array(), $this->product_audit() );
 		self::assertSame( $this->inactive, $this->link->creator_id( 10 ) );
@@ -147,7 +147,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_replacing_with_an_inactive_creator_is_rejected(): void {
 		$this->products->add_linked( 10, $this->alpha );
 
-		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->link( 10, $this->inactive, ProductLinkSource::ProductScreen, true ) );
+		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->link( 10, $this->inactive, ProductLinkSource::Admin, true ) );
 		self::assertSame( $this->alpha, $this->link->creator_id( 10 ) );
 	}
 
@@ -163,7 +163,7 @@ final class ProductCreatorLinkTest extends TestCase {
 		);
 
 		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Backfill ) );
-		self::assertSame( array( AuditAction::ProductCreatorUnlinked, AuditAction::ProductCreatorLinked ), $this->link->link( 10, $this->alpha, ProductLinkSource::ProductScreen, true ) );
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked, AuditAction::ProductCreatorLinked ), $this->link->link( 10, $this->alpha, ProductLinkSource::Admin, true ) );
 	}
 
 	public function test_an_existing_link_is_never_replaced_implicitly(): void {
@@ -176,7 +176,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_an_explicit_replacement_records_both_sides(): void {
 		$this->products->add_linked( 10, $this->alpha );
 
-		$changes = $this->link->link( 10, $this->beta, ProductLinkSource::ProductScreen, true );
+		$changes = $this->link->link( 10, $this->beta, ProductLinkSource::Admin, true );
 
 		self::assertSame( array( AuditAction::ProductCreatorUnlinked, AuditAction::ProductCreatorLinked ), $changes );
 		self::assertSame( $this->beta, $this->link->creator_id( 10 ) );
@@ -186,7 +186,7 @@ final class ProductCreatorLinkTest extends TestCase {
 		self::assertSame(
 			array(
 				'product_id' => 10,
-				'source'     => 'product_screen',
+				'source'     => 'admin',
 			),
 			$rows[0]['context']
 		);
@@ -234,7 +234,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_an_explicit_replacement_repairs_an_invalid_link( array $entries ): void {
 		$this->products->add( 10, $entries );
 
-		$this->link->link( 10, $this->alpha, ProductLinkSource::ProductScreen, true );
+		$this->link->link( 10, $this->alpha, ProductLinkSource::Admin, true );
 
 		self::assertSame( $this->alpha, $this->link->creator_id( 10 ) );
 		$rows = $this->product_audit();
@@ -247,14 +247,14 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_unlink_removes_the_link_with_audit(): void {
 		$this->products->add_linked( 10, $this->alpha );
 
-		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 10, ProductLinkSource::ProductScreen ) );
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 10, ProductLinkSource::Admin ) );
 		self::assertSame( array(), $this->products->entries( 10 ) );
 		self::assertSame( array( '10:null' ), $this->products->writes );
 		self::assertSame( (string) $this->alpha, $this->product_audit()[0]['creator_id'] );
 	}
 
 	public function test_unlink_without_a_link_changes_nothing(): void {
-		self::assertSame( array(), $this->link->unlink( 10, ProductLinkSource::ProductScreen ) );
+		self::assertSame( array(), $this->link->unlink( 10, ProductLinkSource::Admin ) );
 		self::assertSame( array(), $this->products->writes );
 		self::assertSame( array(), $this->product_audit() );
 	}
@@ -262,7 +262,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_unlink_removes_an_invalid_link(): void {
 		$this->products->add( 10, array( array( 'key' => '_MERCHBOARD_CREATOR_ID', 'value' => 'x' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
-		$this->link->unlink( 10, ProductLinkSource::ProductScreen );
+		$this->link->unlink( 10, ProductLinkSource::Admin );
 
 		self::assertSame( array(), $this->products->entries( 10 ) );
 		self::assertNull( $this->product_audit()[0]['creator_id'] );
@@ -272,16 +272,16 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_a_link_to_a_creator_who_became_inactive_can_be_removed(): void {
 		$this->products->add_linked( 10, $this->inactive );
 
-		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 10, ProductLinkSource::ProductScreen ) );
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 10, ProductLinkSource::Admin ) );
 	}
 
 	public function test_without_edit_product_nothing_is_written(): void {
 		$this->products->add( 11 );
 		$this->editable = array();
 
-		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->link( 11, $this->alpha, ProductLinkSource::ProductScreen ) );
+		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->link( 11, $this->alpha, ProductLinkSource::Admin ) );
 		$this->products->add_linked( 11, $this->alpha );
-		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->unlink( 11, ProductLinkSource::ProductScreen ) );
+		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->unlink( 11, ProductLinkSource::Admin ) );
 		self::assertSame( array( 11, 11 ), $this->product_checks );
 	}
 
@@ -292,14 +292,14 @@ final class ProductCreatorLinkTest extends TestCase {
 	}
 
 	public function test_unknown_products_are_rejected(): void {
-		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->link( 999, $this->alpha, ProductLinkSource::ProductScreen ) );
-		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->link( 0, $this->alpha, ProductLinkSource::ProductScreen ) );
-		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->unlink( -1, ProductLinkSource::ProductScreen ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->link( 999, $this->alpha, ProductLinkSource::Admin ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->link( 0, $this->alpha, ProductLinkSource::Admin ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->unlink( -1, ProductLinkSource::Admin ) );
 	}
 
 	public function test_variations_are_not_ownership_objects(): void {
-		$this->expect_rejection( ProductCreatorLinkException::VARIATION, fn() => $this->link->link( 21, $this->alpha, ProductLinkSource::ProductScreen ) );
-		$this->expect_rejection( ProductCreatorLinkException::VARIATION, fn() => $this->link->unlink( 21, ProductLinkSource::ProductScreen ) );
+		$this->expect_rejection( ProductCreatorLinkException::VARIATION, fn() => $this->link->link( 21, $this->alpha, ProductLinkSource::Admin ) );
+		$this->expect_rejection( ProductCreatorLinkException::VARIATION, fn() => $this->link->unlink( 21, ProductLinkSource::Admin ) );
 	}
 
 	public function test_a_variation_belongs_to_its_parents_creator(): void {
@@ -311,13 +311,13 @@ final class ProductCreatorLinkTest extends TestCase {
 	}
 
 	public function test_trashed_and_auto_draft_products_are_not_supported(): void {
-		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED, fn() => $this->link->link( 30, $this->alpha, ProductLinkSource::ProductScreen ) );
-		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED, fn() => $this->link->link( 31, $this->alpha, ProductLinkSource::ProductScreen ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED, fn() => $this->link->link( 30, $this->alpha, ProductLinkSource::Admin ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED, fn() => $this->link->link( 31, $this->alpha, ProductLinkSource::Admin ) );
 	}
 
 	public function test_the_creator_must_exist_and_be_active(): void {
-		$this->expect_rejection( ProductCreatorLinkException::CREATOR_NOT_FOUND, fn() => $this->link->link( 10, 999, ProductLinkSource::ProductScreen ) );
-		$this->expect_rejection( ProductCreatorLinkException::CREATOR_NOT_FOUND, fn() => $this->link->link( 10, 0, ProductLinkSource::ProductScreen ) );
+		$this->expect_rejection( ProductCreatorLinkException::CREATOR_NOT_FOUND, fn() => $this->link->link( 10, 999, ProductLinkSource::Admin ) );
+		$this->expect_rejection( ProductCreatorLinkException::CREATOR_NOT_FOUND, fn() => $this->link->link( 10, 0, ProductLinkSource::Admin ) );
 		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->link( 10, $this->inactive, ProductLinkSource::Backfill ) );
 	}
 
@@ -325,7 +325,7 @@ final class ProductCreatorLinkTest extends TestCase {
 		$this->db->fail_writes_to = array( 'merchboard_audit_log' );
 
 		try {
-			$this->link->link( 10, $this->alpha, ProductLinkSource::ProductScreen );
+			$this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
 			self::fail( 'Expected DatabaseException.' );
 		} catch ( DatabaseException ) {
 			self::assertSame( array(), $this->products->writes, 'The product is written after the audit record.' );
@@ -340,7 +340,7 @@ final class ProductCreatorLinkTest extends TestCase {
 		$this->products->fail_write = true;
 
 		try {
-			$this->link->link( 10, $this->alpha, ProductLinkSource::ProductScreen );
+			$this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
 			self::fail( 'Expected DatabaseException.' );
 		} catch ( DatabaseException ) {
 			self::assertSame( array(), $this->product_audit() );

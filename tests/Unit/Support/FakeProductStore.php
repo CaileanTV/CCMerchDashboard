@@ -49,15 +49,24 @@ final class FakeProductStore implements ProductStore {
 	public bool $fail_write = false;
 
 	/**
+	 * Search terms asked for.
+	 *
+	 * @var list<string>
+	 */
+	public array $searches = array();
+
+	/**
 	 * Adds a product.
 	 *
 	 * @param int                                     $id           Product id.
 	 * @param list<array{key: string, value: string}> $entries      Stored link entries.
 	 * @param string                                  $status       Post status.
 	 * @param int                                     $parent_id    Parent id (variations).
+	 * @param string                                  $name         Product name.
+	 * @param string                                  $sku          SKU.
 	 */
-	public function add( int $id, array $entries = array(), string $status = 'publish', int $parent_id = 0 ): void {
-		$this->products[ $id ] = new ProductRecord( $id, $parent_id, $parent_id > 0, $status, $entries );
+	public function add( int $id, array $entries = array(), string $status = 'publish', int $parent_id = 0, string $name = '', string $sku = '' ): void {
+		$this->products[ $id ] = new ProductRecord( $id, $parent_id, $parent_id > 0, $status, $entries, '' === $name ? 'Product ' . $id : $name, $sku );
 	}
 
 	/**
@@ -98,6 +107,39 @@ final class FakeProductStore implements ProductStore {
 	}
 
 	/**
+	 * Parent products with a link entry (any key spelling) for the creator.
+	 *
+	 * @param int $creator_id Creator id.
+	 * @param int $limit      Maximum number of products.
+	 * @return list<ProductRecord>
+	 */
+	public function linked_to( int $creator_id, int $limit ): array {
+		$linked = array_filter(
+			$this->products,
+			static fn( ProductRecord $p ): bool => ! $p->is_variation && in_array( (string) $creator_id, array_column( $p->link_entries, 'value' ), true )
+		);
+
+		return array_slice( array_values( $linked ), 0, $limit );
+	}
+
+	/**
+	 * Parent products whose name contains the term or whose SKU equals it.
+	 *
+	 * @param string $term  Search term.
+	 * @param int    $limit Maximum number of products.
+	 * @return list<ProductRecord>
+	 */
+	public function search( string $term, int $limit ): array {
+		$this->searches[] = $term;
+		$found            = array_filter(
+			$this->products,
+			static fn( ProductRecord $p ): bool => ! $p->is_variation && '' !== $term && ( false !== stripos( $p->name, $term ) || $p->sku === $term )
+		);
+
+		return array_slice( array_values( $found ), 0, $limit );
+	}
+
+	/**
 	 * Replaces the product's link entries.
 	 *
 	 * @param int      $product_id Product id.
@@ -120,7 +162,9 @@ final class FakeProductStore implements ProductStore {
 					'key'   => ProductCreatorLink::META_KEY,
 					'value' => (string) $creator_id,
 				),
-			)
+			),
+			$current->name,
+			$current->sku
 		);
 		$this->writes[]                = $product_id . ':' . ( null === $creator_id ? 'null' : $creator_id );
 	}

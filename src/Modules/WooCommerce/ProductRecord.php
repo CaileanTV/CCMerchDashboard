@@ -27,13 +27,17 @@ final readonly class ProductRecord {
 	 * @param bool                                    $is_variation Whether this is a variation.
 	 * @param string                                  $status       Post status.
 	 * @param list<array{key: string, value: string}> $link_entries Stored creator link entries.
+	 * @param string                                  $name         Product name (for display).
+	 * @param string                                  $sku          SKU, '' when none (for display).
 	 */
 	public function __construct(
 		public int $id,
 		public int $parent_id,
 		public bool $is_variation,
 		public string $status,
-		public array $link_entries
+		public array $link_entries,
+		public string $name = '',
+		public string $sku = ''
 	) {
 	}
 

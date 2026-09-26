@@ -27,6 +27,27 @@ interface ProductStore {
 	public function find( int $product_id ): ?ProductRecord;
 
 	/**
+	 * Parent products whose stored link entries point at the creator (also
+	 * invalid spellings of the key, so they can be seen and repaired), in any
+	 * status except auto-draft. At most $limit products.
+	 *
+	 * @param int $creator_id Creator id.
+	 * @param int $limit      Maximum number of products.
+	 * @return list<ProductRecord>
+	 */
+	public function linked_to( int $creator_id, int $limit ): array;
+
+	/**
+	 * Parent products matching a search term in name, description or SKU,
+	 * in any status. At most $limit products.
+	 *
+	 * @param string $term  Search term.
+	 * @param int    $limit Maximum number of products.
+	 * @return list<ProductRecord>
+	 */
+	public function search( string $term, int $limit ): array;
+
+	/**
 	 * Replaces every stored creator link entry of the product (any key
 	 * spelling) with one entry for the creator, or removes them all for null.
 	 * Writes through WooCommerce CRUD and verifies the result.

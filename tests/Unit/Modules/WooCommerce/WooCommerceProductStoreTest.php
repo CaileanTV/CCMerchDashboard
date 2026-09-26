@@ -42,6 +42,8 @@ final class WooCommerceProductStoreTest extends TestCase {
 		WcProductStorage::$drop_writes        = false;
 		WcProductStorage::$next_meta_id       = 100;
 		WcProductStorage::$invalidated_groups = array();
+		WcProductStorage::$queries            = array();
+		WcProductStorage::$searches           = array();
 
 		$this->store = new WooCommerceProductStore( self::database() );
 	}
@@ -81,6 +83,39 @@ final class WooCommerceProductStoreTest extends TestCase {
 		self::assertNotNull( $variation );
 		self::assertTrue( $variation->is_variation );
 		self::assertSame( 10, $variation->parent_id );
+	}
+
+	public function test_linked_to_lists_parent_products_of_the_creator_in_every_status_but_auto_draft(): void {
+		WcProductStorage::add( 10, array( self::KEY => '3' ), 'simple', 0, 'Tee', 'T-1' );
+		WcProductStorage::add( 11, array( '_Merchboard_Creator_ID' => '3' ), 'simple', 0, 'Mug', '', 'trash' );
+		WcProductStorage::add( 12, array( self::KEY => '4' ) );
+		WcProductStorage::add( 13, array( self::KEY => '3' ), 'variation', 10 );
+		WcProductStorage::add( 14, array( self::KEY => '3' ), 'simple', 0, '', '', 'auto-draft' );
+
+		$linked = $this->store->linked_to( 3, 50 );
+
+		self::assertSame( array( 10, 11 ), array_map( static fn( $p ): int => $p->id, $linked ) );
+		self::assertSame( array( 'Tee', 'T-1' ), array( $linked[0]->name, $linked[0]->sku ) );
+		self::assertTrue( $linked[1]->has_invalid_link(), 'An invalid spelling is listed so it can be repaired.' );
+		self::assertSame( self::KEY, WcProductStorage::$queries[0]['meta_key'] );
+		self::assertSame( '3', WcProductStorage::$queries[0]['meta_value'] );
+		self::assertSame( 'ids', WcProductStorage::$queries[0]['return'] );
+		self::assertSame( 50, WcProductStorage::$queries[0]['limit'] );
+		self::assertNotContains( 'auto-draft', WcProductStorage::$queries[0]['status'] );
+		self::assertSame( array(), $this->store->linked_to( 0, 50 ) );
+	}
+
+	public function test_search_uses_woocommerce_product_search_for_parents_in_all_statuses(): void {
+		WcProductStorage::add( 10, array(), 'simple', 0, 'Alpha Tee', 'AT-1' );
+		WcProductStorage::add( 11, array(), 'simple', 0, 'Beta Mug', 'TEE-SKU', 'draft' );
+		WcProductStorage::add( 12, array(), 'variation', 10, 'Alpha Tee - S' );
+
+		$found = $this->store->search( ' tee ', 20 );
+
+		self::assertSame( array( 10, 11 ), array_map( static fn( $p ): int => $p->id, $found ) );
+		self::assertSame( array( 'tee', '', false, true, 20 ), WcProductStorage::$searches[0] );
+		self::assertSame( array(), $this->store->search( '   ', 20 ), 'An empty term does not search.' );
+		self::assertCount( 1, WcProductStorage::$searches );
 	}
 
 	public function test_find_returns_null_for_unknown_products(): void {

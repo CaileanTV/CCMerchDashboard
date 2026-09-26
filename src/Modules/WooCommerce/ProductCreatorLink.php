@@ -23,14 +23,16 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The only write path for `_merchboard_creator_id`, the product ownership
- * relation (ADR-030, ADR-031). Both supported callers, the product edit
- * screen and the one-time backfill, go through this service.
+ * relation (ADR-030, ADR-031, ADR-032). Both supported callers, the product
+ * links on the creator's edit page in Merch Dashboard (wp-admin) and the
+ * one-time backfill, go through this service. The WooCommerce product editor
+ * is not a caller.
  *
  * - The link lives on the parent product only. Variations are rejected;
  *   they belong to their parent's creator.
  * - Authorization: `edit_product` for the concrete parent product, checked
- *   here independent of the caller. Callers add their own checks (the
- *   backfill also requires `merchboard_manage_creators`).
+ *   here independent of the caller. Both callers additionally require
+ *   `merchboard_manage_creators`, so that capability alone never suffices.
  * - A new link needs an existing, active creator. Removing a link does not.
  * - An existing link is kept unless the caller explicitly asks to replace it;
  *   the backfill never does.
@@ -106,8 +108,8 @@ final class ProductCreatorLink {
 	 * Links a parent product to an active creator.
 	 *
 	 * A product that already holds a valid link to exactly this creator is
-	 * left unchanged, even when the creator has become inactive since, so the
-	 * product can be saved again. Otherwise the creator must be active, and
+	 * left unchanged, even when the creator has become inactive since, so an
+	 * unchanged request never fails. Otherwise the creator must be active, and
 	 * without $replace_existing a product that already holds a link (to
 	 * another creator, or an invalid one) is rejected; with it, the old link
 	 * is replaced.

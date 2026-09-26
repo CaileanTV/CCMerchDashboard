@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-26T11:10:41+00:00\n"
+"PO-Revision-Date: 2026-09-26T12:20:17+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -187,14 +187,14 @@ msgstr "#%d (findes ikke længere)"
 
 #: src/Modules/Admin/AuditLogFormatter.php:156
 #: src/Modules/Admin/OverviewPage.php:136
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
 #: build/dashboard.js:2
 msgid "Active"
 msgstr "Aktiv"
 
 #: src/Modules/Admin/AuditLogFormatter.php:156
 #: src/Modules/Admin/OverviewPage.php:137
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr "Inaktiv"
@@ -458,11 +458,13 @@ msgstr "Indstillinger"
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:134
+#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:257
 msgid "Sorry, you are not allowed to manage creators."
 msgstr "Du har desværre ikke adgang til at administrere creators."
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:98
+#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:271
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
@@ -500,6 +502,7 @@ msgid "No changes were made."
 msgstr "Der blev ikke foretaget nogen ændringer."
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:183
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:90
 msgid "The creator does not exist."
 msgstr "Creatoren findes ikke."
 
@@ -548,6 +551,8 @@ msgstr "Visningsnavn"
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:257
 #: src/Modules/Creators/Admin/CreatorsListTable.php:69
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:169
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:237
 msgid "Status"
 msgstr "Status"
 
@@ -748,6 +753,184 @@ msgstr "Små bogstaver, cifre og bindestreger. En ændring flytter dashboardet: 
 #: src/Modules/Settings/Admin/SettingsPage.php:177
 msgid "Save dashboard URL"
 msgstr "Gem dashboardadresse"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:79
+msgid "Linked to this creator."
+msgstr "Tilknyttet denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:80
+msgid "Taken over from the previous creator and linked to this creator."
+msgstr "Overtaget fra den tidligere creator og tilknyttet denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:81
+msgid "Link removed."
+msgstr "Tilknytning fjernet."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:82
+msgid "Nothing changed."
+msgstr "Intet blev ændret."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:83
+msgid "Select at least one product."
+msgstr "Vælg mindst ét produkt."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:84
+msgid "The product is linked to another creator, so it was not removed here."
+msgstr "Produktet er tilknyttet en anden creator, så det blev ikke fjernet her."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:85
+msgid "Not changed: the product is linked to another creator or holds an invalid link. Tick \"Take over\" for this product to move it."
+msgstr "Ikke ændret: Produktet er tilknyttet en anden creator eller har en ugyldig tilknytning. Sæt flueben i \"Overtag\" for dette produkt for at flytte det."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:86
+msgid "You are not allowed to edit this product."
+msgstr "Du har ikke tilladelse til at redigere dette produkt."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:87
+msgid "The product does not exist."
+msgstr "Produktet findes ikke."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:88
+msgid "Variations cannot be linked on their own; they belong to the creator of their parent product."
+msgstr "Varianter kan ikke tilknyttes alene; de tilhører creatoren af deres overordnede produkt."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:89
+msgid "Products in the trash or not yet saved cannot be linked."
+msgstr "Produkter i papirkurven eller som endnu ikke er gemt, kan ikke tilknyttes."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:91
+msgid "Inactive creators cannot get new products. Activate the creator first."
+msgstr "Inaktive creators kan ikke få nye produkter. Aktivér creatoren først."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:92
+msgid "A technical error occurred. The product may not have been changed; check it and try again later."
+msgstr "Der opstod en teknisk fejl. Produktet er muligvis ikke ændret; kontrollér det, og prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:107
+msgid "Products"
+msgstr "Produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:110
+msgid "You need permission to edit WooCommerce products to see and change the products of this creator."
+msgstr "Du skal have tilladelse til at redigere WooCommerce-produkter for at se og ændre denne creators produkter."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:114
+msgid "WooCommerce products that belong to this creator. Links are managed only here; the WooCommerce product screen does not show or change them. Variations belong to the creator of their parent product."
+msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger administreres kun her; WooCommerce-produktskærmen hverken viser eller ændrer dem. Varianter tilhører creatoren af deres overordnede produkt."
+
+#. translators: 1: product label, 2: outcome message.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:144
+#, php-format
+msgid "%1$s: %2$s"
+msgstr "%1$s: %2$s"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
+msgid "Linked products"
+msgstr "Tilknyttede produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:162
+msgid "No products are linked to this creator yet."
+msgstr "Der er endnu ingen produkter tilknyttet denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:167
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:235
+msgid "Product"
+msgstr "Produkt"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:168
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:236
+msgid "SKU"
+msgstr "Varenummer"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:170
+msgid "Actions"
+msgstr "Handlinger"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:177
+msgid "The stored link is invalid. Link the product again (with \"Take over\") to repair it, or remove it."
+msgstr "Den gemte tilknytning er ugyldig. Tilknyt produktet igen (med \"Overtag\") for at rette den, eller fjern den."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:187
+msgid "Remove"
+msgstr "Fjern"
+
+#. translators: %d: number of products shown.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:195
+#, php-format
+msgid "Only the first %d products are shown."
+msgstr "Kun de første %d produkter vises."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:206
+msgid "Add products"
+msgstr "Tilføj produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:211
+msgid "Search products by name or SKU"
+msgstr "Søg efter produkter på navn eller varenummer"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:213
+msgid "Search products"
+msgstr "Søg produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:223
+msgid "No products found."
+msgstr "Ingen produkter fundet."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:234
+msgid "Select"
+msgstr "Vælg"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:238
+msgid "Current creator"
+msgstr "Nuværende creator"
+
+#. translators: %d: number of results shown.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:249
+#, php-format
+msgid "Only the first %d results are shown. Refine the search to find other products."
+msgstr "Kun de første %d resultater vises. Præcisér søgningen for at finde andre produkter."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:252
+msgid "Link selected products"
+msgstr "Tilknyt valgte produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:276
+msgid "Already linked to this creator"
+msgstr "Allerede tilknyttet denne creator"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:281
+msgid "Invalid link"
+msgstr "Ugyldig tilknytning"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:282
+msgid "Take over: replace the invalid link"
+msgstr "Overtag: erstat den ugyldige tilknytning"
+
+#. translators: %s: creator name.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:285
+#, php-format
+msgid "Linked to %s"
+msgstr "Tilknyttet %s"
+
+#. translators: %s: creator name.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:287
+#, php-format
+msgid "Take over the product from %s"
+msgstr "Overtag produktet fra %s"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:292
+msgid "None"
+msgstr "Ingen"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:328
+msgid "(no name)"
+msgstr "(intet navn)"
+
+#. translators: 1: product name, 2: product id.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:331
+#, php-format
+msgid "%1$s (#%2$d)"
+msgstr "%1$s (#%2$d)"
 
 #: src/Modules/WooCommerce/WooCommerceSupport.php:90
 msgid "unknown"

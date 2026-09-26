@@ -8,7 +8,7 @@
  * @package MerchBoard
  */
 
-// phpcs:disable Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Files.OneObjectStructurePerFile.MultipleFound, WordPress.NamingConventions.PrefixAllGlobals -- Mirrors WooCommerce's global classes and functions.
+// phpcs:disable Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Files.OneObjectStructurePerFile.MultipleFound, WordPress.NamingConventions.PrefixAllGlobals, Generic.CodeAnalysis.UnusedFunctionParameter -- Mirrors WooCommerce's global classes and functions.
 
 use MerchBoard\Tests\Unit\Support\WcProductStorage;
 
@@ -215,6 +215,98 @@ class WC_Product extends WC_Data {
 	public function is_type( $type ) {
 		return WcProductStorage::$products[ $this->id ]['type'] === $type;
 	}
+
+	/**
+	 * Name.
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 */
+	public function get_name( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['name'];
+	}
+
+	/**
+	 * SKU.
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 */
+	public function get_sku( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['sku'];
+	}
+}
+
+/**
+ * Data store loader; for 'product' the search of WC_Product_Data_Store_CPT.
+ */
+class WC_Data_Store {
+
+	/**
+	 * Mirrors WC_Data_Store::load().
+	 *
+	 * @param string $object_type Object type.
+	 * @return WC_Data_Store
+	 */
+	public static function load( $object_type ) {
+		return new self();
+	}
+
+	/**
+	 * Mirrors search_products(): name or SKU contains the term; variations
+	 * only when asked for; all statuses when $all_statuses.
+	 *
+	 * @param string   $term               Term.
+	 * @param string   $type               Type.
+	 * @param bool     $include_variations Include variations.
+	 * @param bool     $all_statuses       All statuses.
+	 * @param int|null $limit              Limit.
+	 * @return list<int>
+	 */
+	public function search_products( $term, $type = '', $include_variations = false, $all_statuses = false, $limit = null ) {
+		WcProductStorage::$searches[] = array( $term, $type, $include_variations, $all_statuses, $limit );
+		$ids                          = array();
+
+		foreach ( WcProductStorage::$products as $id => $product ) {
+			$matches  = false !== stripos( $product['name'], $term ) || ( '' !== $product['sku'] && false !== stripos( $product['sku'], $term ) );
+			$variant  = 'variation' === $product['type'];
+			$statuses = $all_statuses || 'publish' === $product['status'];
+
+			if ( $matches && $statuses && ( $include_variations || ! $variant ) ) {
+				$ids[] = $id;
+			}
+		}
+
+		return null === $limit ? $ids : array_slice( $ids, 0, $limit );
+	}
+}
+
+/**
+ * Mirrors wc_get_products() for the arguments the store uses: status,
+ * limit, return ids, and meta_key/meta_value compared like MySQL
+ * (case-insensitive key). Variations are not a queried product type.
+ *
+ * @param array<string, mixed> $args Arguments.
+ * @return list<int>
+ */
+function wc_get_products( $args ) {
+	WcProductStorage::$queries[] = $args;
+	$ids                         = array();
+
+	foreach ( WcProductStorage::$products as $id => $product ) {
+		if ( 'variation' === $product['type'] || ! in_array( $product['status'], $args['status'], true ) ) {
+			continue;
+		}
+
+		foreach ( WcProductStorage::$meta[ $id ] ?? array() as $row ) {
+			if ( strtolower( trim( $row['key'] ) ) === strtolower( $args['meta_key'] ) && $row['value'] === $args['meta_value'] ) {
+				$ids[] = $id;
+				break;
+			}
+		}
+	}
+
+	return array_slice( $ids, 0, $args['limit'] );
 }
 
 /**

@@ -289,6 +289,18 @@ final class CreatorsAdminPage {
 		echo '</tbody></table>';
 		submit_button( null === $creator ? __( 'Create creator', 'merchboard' ) : __( 'Save changes', 'merchboard' ) );
 		echo '</form>';
+
+		if ( null !== $creator ) {
+			/**
+			 * Fires below the edit form of an existing creator, outside the form,
+			 * so other modules can add their own sections with their own forms
+			 * (e.g. the WooCommerce module's product links, ADR-032). Sections
+			 * check their own capabilities and escape their own output.
+			 *
+			 * @param Creator $creator Creator being edited.
+			 */
+			do_action( 'merchboard_creators_edit_sections', $creator );
+		}
 	}
 
 	/**

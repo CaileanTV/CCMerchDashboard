@@ -97,6 +97,14 @@ final class Capabilities {
 	public const EDIT_PRODUCT = 'edit_product';
 
 	/**
+	 * WooCommerce's capability to work with products at all. Not owned by the
+	 * plugin and never granted by it; only checked before product names are
+	 * listed or searched on the creator edit page (ADR-032). Each product
+	 * change is still authorised per product with EDIT_PRODUCT.
+	 */
+	public const EDIT_PRODUCTS = 'edit_products';
+
+	/**
 	 * Exact capability set of the creator role. `read` is WordPress' baseline
 	 * for authenticated users (the Subscriber role has only `read`); nothing
 	 * else from WordPress is granted.

@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\WooCommerce;
 
 use MerchBoard\Core\Database\DatabaseException;
 use WC_Cache_Helper;
+use WC_Data_Store;
 use WC_Product;
 use wpdb;
 
@@ -66,8 +67,79 @@ final class WooCommerceProductStore implements ProductStore {
 			$product->get_parent_id( 'edit' ),
 			$product->is_type( 'variation' ),
 			$product->get_status( 'edit' ),
-			$entries
+			$entries,
+			$product->get_name( 'edit' ),
+			$product->get_sku( 'edit' )
 		);
+	}
+
+	/**
+	 * Parent products linked to the creator, via `wc_get_products()` (the
+	 * query compares the key like MySQL, i.e. case-insensitively). Variations
+	 * are not product types of this query, so only parents are returned.
+	 *
+	 * @param int $creator_id Creator id.
+	 * @param int $limit      Maximum number of products.
+	 * @return list<ProductRecord>
+	 */
+	public function linked_to( int $creator_id, int $limit ): array {
+		if ( $creator_id < 1 ) {
+			return array();
+		}
+
+		$ids = wc_get_products(
+			array(
+				'status'     => array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' ),
+				'limit'      => $limit,
+				'orderby'    => 'title',
+				'order'      => 'ASC',
+				'return'     => 'ids',
+				'meta_key'   => ProductCreatorLink::META_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- The link lookup; one creator's products.
+				'meta_value' => (string) $creator_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- The link lookup; one creator's products.
+			)
+		);
+
+		return $this->records( is_array( $ids ) ? $ids : array() );
+	}
+
+	/**
+	 * Parent products matching the term, via WooCommerce's own product search
+	 * (name, excerpt, description and SKU; the same search as WooCommerce's
+	 * admin product selector). All statuses are included; which products can
+	 * be linked is decided by ProductCreatorLink, not here.
+	 *
+	 * @param string $term  Search term.
+	 * @param int    $limit Maximum number of products.
+	 * @return list<ProductRecord>
+	 */
+	public function search( string $term, int $limit ): array {
+		$term = trim( $term );
+
+		if ( '' === $term ) {
+			return array();
+		}
+
+		return $this->records( WC_Data_Store::load( 'product' )->search_products( $term, '', false, true, $limit ) );
+	}
+
+	/**
+	 * Loads records for product ids, skipping unknown ids and variations.
+	 *
+	 * @param array<mixed> $ids Product ids.
+	 * @return list<ProductRecord>
+	 */
+	private function records( array $ids ): array {
+		$records = array();
+
+		foreach ( $ids as $id ) {
+			$record = is_numeric( $id ) ? $this->find( (int) $id ) : null;
+
+			if ( null !== $record && ! $record->is_variation ) {
+				$records[] = $record;
+			}
+		}
+
+		return $records;
 	}
 
 	/**

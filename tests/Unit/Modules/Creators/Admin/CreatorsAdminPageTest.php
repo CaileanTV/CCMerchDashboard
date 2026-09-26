@@ -9,8 +9,11 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\Creators\Admin;
 
+use Brain\Monkey\Actions;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Modules\Creators\Creator;
+use Mockery;
 use MerchBoard\Modules\Creators\Admin\CreatorAdminActions;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -133,6 +136,24 @@ final class CreatorsAdminPageTest extends TestCase {
 		self::assertStringNotContainsString( 'Other (other)', $html );
 		self::assertStringNotContainsString( '<b>Nova</b>', $html, 'Display name is escaped.' );
 		self::assertStringContainsString( 'Studio &lt;b&gt;Nova&lt;/b&gt;', $html );
+	}
+
+	public function test_other_modules_can_add_sections_below_an_existing_creator_only(): void {
+		$this->service->create( 'Studio Nova', CreatorStatus::Active, null );
+
+		Actions\expectDone( 'merchboard_creators_edit_sections' )
+			->once()
+			->with( Mockery::on( static fn( $creator ): bool => $creator instanceof Creator && 1 === $creator->id ) );
+
+		$html = $this->render(
+			array(
+				'action'  => 'edit',
+				'creator' => '1',
+			)
+		);
+		$this->render( array( 'action' => 'new' ) );
+
+		self::assertStringContainsString( '</form>', $html, 'Sections are added after the creator form, never inside it.' );
 	}
 
 	public function test_unknown_creator_shows_not_found(): void {

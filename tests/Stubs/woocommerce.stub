@@ -66,7 +66,52 @@ class WC_Product extends WC_Data {
 	 * @return bool
 	 */
 	public function is_type( $type ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_name( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_sku( $context = 'view' ) {}
 }
+
+/**
+ * WooCommerce data store loader (class-wc-data-store.php). For 'product' it
+ * wraps WC_Product_Data_Store_CPT.
+ */
+class WC_Data_Store {
+
+	/**
+	 * @param string $object_type Object type, e.g. 'product'.
+	 * @return WC_Data_Store
+	 */
+	public static function load( $object_type ) {}
+
+	/**
+	 * Proxied to WC_Product_Data_Store_CPT::search_products().
+	 *
+	 * @param string          $term               Search term.
+	 * @param string          $type               Product type.
+	 * @param bool            $include_variations Include variations.
+	 * @param bool            $all_statuses       All statuses instead of published.
+	 * @param int|null        $limit              Maximum results.
+	 * @param array<int>|null $include            Keep only these ids.
+	 * @param array<int>|null $exclude            Drop these ids.
+	 * @return array<int|string>
+	 */
+	public function search_products( $term, $type = '', $include_variations = false, $all_statuses = false, $limit = null, $include = null, $exclude = null ) {}
+}
+
+/**
+ * @param array<string, mixed> $args Query arguments.
+ * @return array<mixed>|object
+ */
+function wc_get_products( $args ) {}
 
 /**
  * One meta entry of a data object (class-wc-meta-data.php).

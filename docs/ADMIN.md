@@ -146,7 +146,15 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
 - **Produktkoblinger (ADR-032):**
   - Creatorens redigeringsside (Merch Dashboard → Creators → rediger) får afsnittet "Products". Det viser creatorens koblede produkter og lader admin tilknytte og fjerne produkter. Det er den eneste understøttede skrivevej for enkeltprodukter i fase 17. Den anden er den administrative engangs-backfill (ADR-031).
   - Formularerne går via `admin-post.php` med egen nonce og kræver `merchboard_manage_creators` og `edit_product` for hvert produkt. Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`), aldrig med `update_meta_data()`.
-  - Et produkt, der er koblet til en anden creator, overtages kun ved eksplicit admin-valg (detaljer i trin 4).
+  - Et produkt, der er koblet til en anden creator, overtages kun ved eksplicit admin-valg.
+  - **Implementeret (fase 17, trin 4):**
+    - Afsnittet vises under creator-formularen via hooken `merchboard_creators_edit_sections` (WooCommerce-modulet; Creators-modulet kender ikke WooCommerce).
+    - Produktnavne vises kun for brugere med `edit_products`.
+    - **Tilknyttede produkter:** højst 200, med navn (#ID), varenummer, status og en knap "Remove". Den afviser et produkt, der tilhører en anden creator, med `linked_elsewhere`.
+    - **"Add products":** søgning på navn, beskrivelse eller varenummer via WooCommerce' egen produktsøgning (højst 20 resultater, kun parent-produkter, alle statusser). Hvert resultat kan vælges, og flere kan tilknyttes på én gang.
+    - **Overtagelse:** Produkter, der er koblet til en anden creator, vises med "Linked to <navn>" og et separat afkrydsningsfelt "Take over the product from <navn>". Det er aldrig valgt på forhånd og sendes som `replace_existing` for netop det produkt. Uden det afvises produktet (`already_linked`) uden ændring.
+    - En ugyldig kobling kan erstattes eller fjernes på samme måde.
+    - Hvilke produkter der kan kobles (varianter, papirkurv, inaktive creators, `edit_product`), afgøres af `ProductCreatorLink`. Resultatet vises pr. produkt efter Post/Redirect/Get, så fejl ikke skjules.
 - **Produktliste:** skrivebeskyttet kolonne "Creator" og et creator-filter (ADR-032). De viser og filtrerer, men ændrer aldrig koblingen.
 - **WooCommerce-produktskærmen** (klassisk og blok-baseret) viser **ikke** creator-relationen og har intet creator-felt, ingen meta box og intet save-hook (ADR-032).
 - Ingen Creator-felt i quick/bulk edit. WooCommerce REST og CSV-import kan ikke ændre koblingen, og "Duplicate" giver et produkt uden creator (ADR-030).

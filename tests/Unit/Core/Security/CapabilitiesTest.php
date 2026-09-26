@@ -104,6 +104,13 @@ final class CapabilitiesTest extends TestCase {
 		self::assertNotContains( Capabilities::EDIT_PRODUCT, Capabilities::all() );
 	}
 
+	public function test_edit_products_is_a_foreign_capability_that_is_never_granted(): void {
+		self::assertSame( 'edit_products', Capabilities::EDIT_PRODUCTS );
+		self::assertFalse( Capabilities::is_plugin_capability( Capabilities::EDIT_PRODUCTS ) );
+		self::assertNotContains( Capabilities::EDIT_PRODUCTS, Capabilities::creator_capabilities() );
+		self::assertNotContains( Capabilities::EDIT_PRODUCTS, Capabilities::all() );
+	}
+
 	public function test_creator_role_display_name(): void {
 		self::assertSame( 'Merch Dashboard Creator', Capabilities::CREATOR_ROLE_NAME );
 	}

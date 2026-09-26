@@ -12,8 +12,11 @@ namespace MerchBoard\Modules\WooCommerce;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,9 +27,9 @@ defined( 'ABSPATH' ) || exit;
  * supported WooCommerce, so nothing here may be registered for an older or
  * missing WooCommerce.
  *
- * Phase 17 builds the product→creator link step by step. So far the module
- * only registers the domain service (ProductCreatorLink); it adds no hooks,
- * screens or other write paths yet.
+ * Phase 17 builds the product→creator link step by step: the domain service
+ * (ProductCreatorLink) and the product links on the creator's edit page in
+ * wp-admin (ADR-032). The WooCommerce product editor gets no creator UI.
  */
 final class WooCommerceModule implements Module {
 
@@ -56,6 +59,32 @@ final class WooCommerceModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class )
 			)
+		);
+
+		$container->set(
+			CreatorProductsActions::class,
+			static fn( Container $c ): CreatorProductsActions => new CreatorProductsActions(
+				$c->get( ProductCreatorLink::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$container->set(
+			CreatorProductsSection::class,
+			static fn( Container $c ): CreatorProductsSection => new CreatorProductsSection(
+				$c->get( ProductStore::class ),
+				$c->get( CreatorRepository::class )
+			)
+		);
+
+		// Only wp-admin: the product links on the creator's edit page. Nothing is
+		// hooked into WooCommerce's product editor (ADR-032).
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$container->get( CreatorProductsActions::class )->register();
+				$container->get( CreatorProductsSection::class )->register();
+			}
 		);
 	}
 }

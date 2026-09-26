@@ -131,7 +131,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - Kategori-mapping pr. creator (creator-meta `product_category_id`, 1:1, kun eksplicit admin-valg på creatorens redigeringsside). Den er aldrig bevis for ejerskab eller adgang.
   - Engangs-backfill fra mappingen: tørkørsel, bekræftelse, idempotent, overskriver aldrig, springer `ambiguous`, `unassigned` og inaktive creators over, og auditeres.
 - **Ændret før trin 4 (ADR-032):** Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php` + nonce, `merchboard_manage_creators` + `edit_product` pr. produkt, `ProductLinkSource::Admin`), ikke på WooCommerce-produktskærmen. Produktlistens kolonne og filter er skrivebeskyttede. `product_screen` er forældet og fjernes i trin 4. Der er intet admin-REST-API, og creator-dashboardet bruges ikke.
-- **Rækkefølge:** 1-3 ✅ (undersøgelse, modul-skelet, `ProductCreatorLink`), 4 produktkoblinger på creatorens redigeringsside, 5 skrivebeskyttet kolonne og filter i produktlisten, 6 vagter for skriveveje, 7 kategori-mapping, 8 backfill, 9 uninstall, 10 audit-log-labels, 11 i18n, docs og verifikation.
+- **Rækkefølge:** 1-4 ✅ (undersøgelse, modul-skelet, `ProductCreatorLink`, produktkoblinger på creatorens redigeringsside), 5 skrivebeskyttet kolonne og filter i produktlisten, 6 vagter for skriveveje, 7 kategori-mapping, 8 backfill, 9 uninstall, 10 audit-log-labels, 11 i18n, docs og verifikation.
 - **Done:** Produkter kan kobles til creators. Pluginet virker stadig uden WooCommerce. Backfill giver de forventede klasser på fixture-datasættet i Merch Dashboard Local, og en ny kørsel skriver intet.
 
 ## Fase 18 – Sales ledger

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-26T11:10:39+00:00\n"
+"POT-Creation-Date: 2026-09-26T12:20:15+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -187,14 +187,14 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:156
 #: src/Modules/Admin/OverviewPage.php:136
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
 #: build/dashboard.js:2
 msgid "Active"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:156
 #: src/Modules/Admin/OverviewPage.php:137
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr ""
@@ -458,11 +458,13 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:134
+#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:257
 msgid "Sorry, you are not allowed to manage creators."
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:98
+#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:271
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
@@ -500,6 +502,7 @@ msgid "No changes were made."
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:183
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:90
 msgid "The creator does not exist."
 msgstr ""
 
@@ -548,6 +551,8 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:257
 #: src/Modules/Creators/Admin/CreatorsListTable.php:69
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:169
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:237
 msgid "Status"
 msgstr ""
 
@@ -747,6 +752,184 @@ msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:177
 msgid "Save dashboard URL"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:79
+msgid "Linked to this creator."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:80
+msgid "Taken over from the previous creator and linked to this creator."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:81
+msgid "Link removed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:82
+msgid "Nothing changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:83
+msgid "Select at least one product."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:84
+msgid "The product is linked to another creator, so it was not removed here."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:85
+msgid "Not changed: the product is linked to another creator or holds an invalid link. Tick \"Take over\" for this product to move it."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:86
+msgid "You are not allowed to edit this product."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:87
+msgid "The product does not exist."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:88
+msgid "Variations cannot be linked on their own; they belong to the creator of their parent product."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:89
+msgid "Products in the trash or not yet saved cannot be linked."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:91
+msgid "Inactive creators cannot get new products. Activate the creator first."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:92
+msgid "A technical error occurred. The product may not have been changed; check it and try again later."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:107
+msgid "Products"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:110
+msgid "You need permission to edit WooCommerce products to see and change the products of this creator."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:114
+msgid "WooCommerce products that belong to this creator. Links are managed only here; the WooCommerce product screen does not show or change them. Variations belong to the creator of their parent product."
+msgstr ""
+
+#. translators: 1: product label, 2: outcome message.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:144
+#, php-format
+msgid "%1$s: %2$s"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
+msgid "Linked products"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:162
+msgid "No products are linked to this creator yet."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:167
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:235
+msgid "Product"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:168
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:236
+msgid "SKU"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:170
+msgid "Actions"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:177
+msgid "The stored link is invalid. Link the product again (with \"Take over\") to repair it, or remove it."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:187
+msgid "Remove"
+msgstr ""
+
+#. translators: %d: number of products shown.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:195
+#, php-format
+msgid "Only the first %d products are shown."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:206
+msgid "Add products"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:211
+msgid "Search products by name or SKU"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:213
+msgid "Search products"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:223
+msgid "No products found."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:234
+msgid "Select"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:238
+msgid "Current creator"
+msgstr ""
+
+#. translators: %d: number of results shown.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:249
+#, php-format
+msgid "Only the first %d results are shown. Refine the search to find other products."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:252
+msgid "Link selected products"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:276
+msgid "Already linked to this creator"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:281
+msgid "Invalid link"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:282
+msgid "Take over: replace the invalid link"
+msgstr ""
+
+#. translators: %s: creator name.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:285
+#, php-format
+msgid "Linked to %s"
+msgstr ""
+
+#. translators: %s: creator name.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:287
+#, php-format
+msgid "Take over the product from %s"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:292
+msgid "None"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:328
+msgid "(no name)"
+msgstr ""
+
+#. translators: 1: product name, 2: product id.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:331
+#, php-format
+msgid "%1$s (#%2$d)"
 msgstr ""
 
 #: src/Modules/WooCommerce/WooCommerceSupport.php:90
