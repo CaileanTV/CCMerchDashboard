@@ -891,7 +891,7 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 2026-09-25
 
 ## Status
-Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
+Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **D6 er ændret af ADR-032:** produktskærmen er ikke længere en skrivevej og viser ikke relationen. Den første skrivevej er Merch Dashboard (wp-admin) → creatorens redigeringsside (`ProductLinkSource::Admin`), og produktlisten får en skrivebeskyttet kolonne og et filter. **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
 
 ## Context
 Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_creator_id` (ADR-011). Før implementeringen skulle det afklares:
@@ -943,7 +943,7 @@ Forudsigelig kompatibilitet, ingen halvt fungerende integration og en kobling, d
 2026-09-26
 
 ## Status
-Accepteret (fase 17, før implementeringen af `ProductCreatorLink`). Besluttet af projektejeren. Supplerer ADR-011 og ADR-030 og **præciserer ADR-030 D6** (skriveveje).
+Accepteret (fase 17, før implementeringen af `ProductCreatorLink`). Besluttet af projektejeren. Supplerer ADR-011 og ADR-030 og **præciserer ADR-030 D6** (skriveveje). **Ændret af ADR-032:** den første skrivevej i præciseringen nedenfor ("den klassiske WooCommerce-produktskærm") er erstattet af Merch Dashboard (wp-admin) → creatorens redigeringsside. Tvetydige produkter (punkt 7) rettes dér. Backfill og alle øvrige regler er uændrede.
 
 ## Context
 Den eksisterende shop har én WooCommerce-produktkategori (`product_cat`) pr. creator. Produkter tilhører i praksis en creator via den kategori. Reglen findes kun i shoppens data og arbejdsgange, ikke i pluginet. Pluginet har ingen relation mellem creator og kategori (ingen kolonne, creator-meta eller term-meta).
@@ -997,3 +997,62 @@ Backfill skriver udelukkende gennem `ProductCreatorLink` med samme validering, c
 - Uninstall: mappingen forsvinder med `merchboard_creatormeta` (ADR-025). `_merchboard_creator_id` behandles efter ADR-030, og kategorierne bevares.
 - Uoverensstemmelser mellem kategori og ejerskab gøres synlige i tørkørslen, men rettes aldrig automatisk.
 - Fase 17 får to nye trin: mapping (trin 7) og backfill (trin 8).
+
+---
+
+# ADR-032: Produkt-creator-koblingen administreres i Merch Dashboard (wp-admin), ikke på WooCommerce-produktskærmen
+
+## Date
+2026-09-26
+
+## Status
+Accepteret (fase 17, før trin 4). Besluttet af projektejeren. **Ændrer ADR-030 D6 og ADR-031's præcisering af D6** (skriveveje). Supplerer ADR-011. ADR-030 og ADR-031 gælder i øvrigt uændret.
+
+## Context
+ADR-030 D6, præciseret af ADR-031, gjorde den klassiske WooCommerce-produktskærm til den første af to understøttede skriveveje. Planen var et felt "Creator" i fanen *General* og et save-hook. `ProductLinkSource::ProductScreen` (trin 3) blev indført til den vej.
+
+Projektejeren har besluttet, at creator-relationen er en administrativ Merch Dashboard-funktion. Den skal ikke være en del af WooCommerce-produktets synlige redigerings-UI. WooCommerce-produktet skal forblive et almindeligt WooCommerce-produkt.
+
+Projektet har to "dashboards". Kun det ene egner sig til funktionen:
+- **Creator-dashboardet** (React, `/creator-dashboard/`) er kun for creators (ADR-026). Dets API er `/me`-scoped uden creator-ID'er (ADR-007). Creators har ingen produktrettigheder (ADR-030), og `ProductCreatorLink` kræver `edit_product`.
+  - Admins ville kræve et nyt admin-REST-API og en ny React-adminapp, som arkitekturen ikke har.
+  - Creators selv ville være selvbetjening, som er udskudt (ADR-031 punkt 12).
+- **Merch Dashboard i wp-admin** har allerede creatorens redigeringsside og mønstret `admin-post.php` + nonce for admin-formularer (ADR-008).
+
+## Decision
+1. **Understøttede skriveveje (erstatter listen i ADR-030 D6/ADR-031):** Fase 17 har præcis to:
+   1. **Merch Dashboard (wp-admin) → creatorens redigeringsside → produktkoblinger.** Admin ser creatorens koblede produkter og kan tilknytte og fjerne produkter.
+      - Formularerne går via `admin-post.php` med nonce.
+      - De kræver `merchboard_manage_creators` og `edit_product` for hvert konkret parent-produkt. Det sidste håndhæves af `ProductCreatorLink`.
+      - Skrivning sker udelukkende gennem `ProductCreatorLink` med `ProductLinkSource::Admin` (`admin`).
+      - Et produkt, der allerede er koblet til en anden creator, overtages ikke implicit. En erstatning kræver et eksplicit admin-valg; detaljerne fastlægges i trin 4.
+   2. **Eksplicit administrativ engangs-backfill** (ADR-031, uændret, `source: backfill`).
+2. **WooCommerce-produkteditoren er ikke en skrivevej.** Den viser ikke creator-relationen. Der tilføjes intet creator-felt, ingen meta box og intet save-hook for creator-relationen til produktskærmen (hverken den klassiske eller den blok-baserede editor).
+3. **`ProductLinkSource`:**
+   - `admin` er den nye kilde for admin-vejen.
+   - `product_screen` er **forældet og ikke en understøttet skrivevej**. Den må blive i enum'en midlertidigt af hensyn til trin 3's kode og tests, men ingen ny kode må bruge den. Den fjernes i trin 4.
+4. **Produktlisten (skrivebeskyttet):** WooCommerce' produktliste får kolonnen "Creator" og et creator-filter.
+   - Begge viser og filtrerer efter den aktuelle `_merchboard_creator_id` via den centrale læselogik.
+   - De ændrer aldrig relationen og er ingen skrivevej (ingen inline-redigering og ingen bulk-handling).
+5. **Uændret:**
+   - WooCommerce REST, CSV-import, XML-RPC, quick edit, bulk edit og duplicate kan ikke ændre relationen (ADR-030 D6).
+   - Der er ingen nye offentlige REST-endpoints og intet nyt admin-REST-API. Creator-dashboardet og dets `/me`-API bruges ikke til produktadministration.
+   - Creators får ingen produktrettigheder, og selvbetjening for creators er uden for fase 17.
+   - `_merchboard_creator_id` på parent-produktet er den eneste ejerskabsrelation. `product_category_id` er aldrig bevis for ejerskab (ADR-031).
+   - Varianter har ingen egen relation.
+   - Tvetydige produkter fra backfill rettes manuelt via admin-vejen (i stedet for "på produktskærmen" i ADR-031 punkt 7).
+
+## Alternatives considered
+- **Felt på WooCommerce-produktskærmen (ADR-030/031):** blander Merch Dashboard-data ind i WooCommerce' produkt-UI, kræver et save-hook i produktgemningen og er fravalgt af projektejeren.
+- **Admin via creator-dashboardet (nyt admin-REST-API og React-adminapp):** bryder med ADR-007/026 (creator-only, `/me`-scoped) og kræver en ny API- og UI-arkitektur. Fravalgt.
+- **Creators kobler selv:** selvbetjening, der kræver produktrettigheder og et separat design (ADR-030/031). Fravalgt i fase 17.
+- **Ingen visning i produktlisten:** admins mister overblikket i WooCommerce. En skrivebeskyttet kolonne og et filter giver overblik uden en ny skrivevej. Fravalgt.
+
+## Reason
+Relationen er Merch Dashboards forretningsdata. Den administreres dér, hvor creatoren administreres, med den eksisterende admin-arkitektur og uden ny API- eller UI-infrastruktur. WooCommerce-produktet forbliver uændret, og ejerskab har stadig én auditeret domæneservice.
+
+## Consequences
+- Trin 4 bygger produktkoblingerne på creatorens redigeringsside, indfører `ProductLinkSource::Admin` og fjerner `product_screen`. Trin 3's kode har ingen hooks på produktskærmen; dens kommentarer, der nævner produktskærmen som kalder, opdateres i trin 4.
+- Creatorens redigeringsside får to Merch Dashboard-afsnit i fase 17: produktkoblinger (ADR-032) og kategori-mapping (ADR-031).
+- Den skrivebeskyttede kolonne og filteret i produktlisten er en ren læsevej.
+- ROADMAP, ADMIN.md og WOOCOMMERCE.md beskriver ikke længere et creator-felt på produktskærmen.

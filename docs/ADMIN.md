@@ -23,7 +23,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 
 | Oprindeligt | Anbefaling | Hvorfor |
 | --- | --- | --- |
-| **Products** og **Orders** som egne menupunkter | **Integrér i WooCommerce' egne skærme** i stedet: "Creator"-kolonne og -filter på produktlisten (fase 17), en kolonne i ordrelisten (udskudt, ADR-030) samt et "Creator"-felt i produktets data-panel | At duplikere WooCommerce' produkt- og ordre-UI giver to steder at redigere, synk-fejl og meget kode. Administratorer arbejder allerede i WooCommerce. |
+| **Products** og **Orders** som egne menupunkter | **Integrér i WooCommerce' egne skærme** i stedet: "Creator"-kolonne og -filter på produktlisten (fase 17), en kolonne i ordrelisten (udskudt, ADR-030). Selve koblingen administreres på creatorens redigeringsside i Merch Dashboard, ikke i produktets data-panel (ADR-032) | At duplikere WooCommerce' produkt- og ordre-UI giver to steder at redigere, synk-fejl og meget kode. Administratorer arbejder allerede i WooCommerce. |
 | **Statistics** som eget menupunkt | Pr. creator: en "Sales"-tab på creator-redigeringssiden. Global oversigt: på Overview. Et separat "Reports"-punkt tilføjes først, når der er rapporter nok til at retfærdiggøre det. | Undgår en tom side i månedsvis |
 | **Integrations** som eget menupunkt | Tab under Settings, indtil der er flere integrationer med egen status/log-UI | Samme grund |
 | **Creator access** som egen side | En del af creator-redigeringen (status: aktiv/inaktiv) | Adgang er en egenskab ved creator'en, ikke en separat entitet |
@@ -143,8 +143,12 @@ Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Sett
 
 Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-notice og ingen af skærmene nedenfor (ADR-030).
 
-- Produktliste: kolonne "Creator" og dropdown-filter.
-- Produkt-redigering (klassisk produktskærm): feltet "Creator" i fanen *General* (select over aktive creators). Det er den eneste understøttede skrivevej for enkeltprodukter i fase 17. Den anden understøttede vej er den administrative engangs-backfill fra Creators (ADR-031). Gemmes via pluginets domæneservice (validering, capability-tjek `edit_product`, WooCommerce' egen nonce og audit), ikke direkte med `update_meta_data()` (ADR-030).
+- **Produktkoblinger (ADR-032):**
+  - Creatorens redigeringsside (Merch Dashboard → Creators → rediger) får afsnittet "Products". Det viser creatorens koblede produkter og lader admin tilknytte og fjerne produkter. Det er den eneste understøttede skrivevej for enkeltprodukter i fase 17. Den anden er den administrative engangs-backfill (ADR-031).
+  - Formularerne går via `admin-post.php` med egen nonce og kræver `merchboard_manage_creators` og `edit_product` for hvert produkt. Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`), aldrig med `update_meta_data()`.
+  - Et produkt, der er koblet til en anden creator, overtages kun ved eksplicit admin-valg (detaljer i trin 4).
+- **Produktliste:** skrivebeskyttet kolonne "Creator" og et creator-filter (ADR-032). De viser og filtrerer, men ændrer aldrig koblingen.
+- **WooCommerce-produktskærmen** (klassisk og blok-baseret) viser **ikke** creator-relationen og har intet creator-felt, ingen meta box og intet save-hook (ADR-032).
 - Ingen Creator-felt i quick/bulk edit. WooCommerce REST og CSV-import kan ikke ændre koblingen, og "Duplicate" giver et produkt uden creator (ADR-030).
 - Ordreliste: kolonnen "Creators" (afledt af ordrelinjer) er **udskudt** til en senere fase (ADR-030 D3).
 - **Kategori-mapping (ADR-031):**

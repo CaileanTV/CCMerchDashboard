@@ -270,14 +270,19 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 - **Fase 17 – WooCommerce foundation:**
   - **Beslutninger:** D1-D6 er lukket i ADR-030 (D1 rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8).
-  - **Udført:** Trin 1 (undersøgelse af skriveveje i WooCommerce 10.3.8) og trin 2 (modul-skelet, WooCommerce ≥ 10.3) er færdige.
+  - **Udført:** Trin 1 (undersøgelse af skriveveje i WooCommerce 10.3.8), trin 2 (modul-skelet, WooCommerce ≥ 10.3) og trin 3 (`ProductCreatorLink`, den autoritative domæneservice) er færdige.
   - **ADR-031 (2026-09-26):**
     - `_merchboard_creator_id` er den eneste ejerskabsrelation.
     - Kategori-mapping pr. creator (creator-meta `product_category_id`, 1:1, eksplicit admin-valg).
     - Engangs-backfill med tørkørsel.
     - D6 er præciseret med backfill som anden understøttet skrivevej gennem `ProductCreatorLink`.
   - **Testdata:** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen er verificeret med en tørkørsel, der intet skrev.
-  - **Næste:** Trin 3 (`ProductCreatorLink`).
+  - **ADR-032 (2026-09-26):**
+    - Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php`, `merchboard_manage_creators` + `edit_product`, `source: admin`).
+    - WooCommerce-produktskærmen er ikke en skrivevej og viser ikke relationen.
+    - Produktlistens kolonne og filter er skrivebeskyttede.
+    - `product_screen` er forældet og fjernes i trin 4.
+  - **Næste:** Trin 4 (produktkoblinger på creatorens redigeringsside).
 
 ## Planned
 

@@ -13,10 +13,14 @@
 ## Kobling: produkt → creator
 
 - Product meta **`_merchboard_creator_id`** på parent-produktet. Varianter arver fra parent.
-- Sættes af admin i produktets data-panel (se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Ændringer audit-logges.
+- Sættes af admin i Merch Dashboard på creatorens redigeringsside, ikke på WooCommerce-produktskærmen, som hverken viser eller redigerer relationen (ADR-032, se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Produktlisten har en skrivebeskyttet kolonne og et filter. Ændringer audit-logges.
 - Kun **aktive** creators kan vælges. Hvis en creator bliver inaktiv, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
-- **Én autoritativ skrivevej (ADR-030):** Alle ændringer går gennem pluginets domæneservice: creator findes og er aktiv, variant → parent, capability-tjek og audit i samme transaktion. I fase 17 er der præcis to understøttede skriveveje: den klassiske produktskærm og den eksplicitte administrative engangs-backfill (ADR-031, kræver `merchboard_manage_creators` og `edit_product` på hvert parent-produkt). Alt andet er lukket:
-  - WooCommerce REST og CSV-import kan ikke ændre nøglen (tydelig afvisning via de hooks, som fase 17 verificerer i den faktiske WooCommerce-version).
+- **Én autoritativ skrivevej (ADR-030):** Alle ændringer går gennem pluginets domæneservice: creator findes og er aktiv, variant → parent, capability-tjek og audit i samme transaktion. I fase 17 er der præcis to understøttede skriveveje (ADR-032):
+  - Merch Dashboard (wp-admin) → creatorens redigeringsside (`source: admin`).
+  - Den eksplicitte administrative engangs-backfill (ADR-031).
+
+  Begge kræver `merchboard_manage_creators` og `edit_product` på hvert parent-produkt. Alt andet er lukket, også WooCommerce-produktskærmen:
+  - WooCommerce REST, CSV-import og XML-RPC kan ikke ændre nøglen (tydelig afvisning via de hooks, som fase 17 verificerer i den faktiske WooCommerce-version).
   - Quick/bulk edit har intet Creator-felt.
   - "Duplicate product" starter uden koblingen.
   - Der er ingen nye offentlige REST-endpoints.
