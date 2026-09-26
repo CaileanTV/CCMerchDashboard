@@ -17,9 +17,16 @@ final class WcProductStorage {
 	/**
 	 * Products by id.
 	 *
-	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string}>
+	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[]}>
 	 */
 	public static array $products = array();
+
+	/**
+	 * Product categories (product_cat terms) by term id.
+	 *
+	 * @var array<int, array{name: string, parent: int}>
+	 */
+	public static array $categories = array();
 
 	/**
 	 * Arguments of every wc_get_products() call.
@@ -73,14 +80,16 @@ final class WcProductStorage {
 	 * @param string                $name      Product name.
 	 * @param string                $sku       SKU.
 	 * @param string                $status    Post status.
+	 * @param int[]                 $categories Directly assigned product_cat term ids.
 	 */
-	public static function add( int $id, array $meta = array(), string $type = 'simple', int $parent_id = 0, string $name = '', string $sku = '', string $status = 'publish' ): void {
+	public static function add( int $id, array $meta = array(), string $type = 'simple', int $parent_id = 0, string $name = '', string $sku = '', string $status = 'publish', array $categories = array() ): void {
 		self::$products[ $id ] = array(
-			'type'      => $type,
-			'parent_id' => $parent_id,
-			'status'    => $status,
-			'name'      => '' === $name ? 'Product ' . $id : $name,
-			'sku'       => $sku,
+			'type'       => $type,
+			'parent_id'  => $parent_id,
+			'status'     => $status,
+			'name'       => '' === $name ? 'Product ' . $id : $name,
+			'sku'        => $sku,
+			'categories' => $categories,
 		);
 		self::$meta[ $id ]     = array();
 
@@ -91,5 +100,42 @@ final class WcProductStorage {
 				'value' => $value,
 			);
 		}
+	}
+
+	/**
+	 * Mirrors get_terms() for product_cat with name__like and fields ids:
+	 * term ids whose name contains the text, case-insensitively.
+	 *
+	 * @param array<string, mixed> $args Arguments.
+	 * @return list<int>
+	 */
+	public static function category_ids_like( array $args ): array {
+		$ids = array();
+
+		foreach ( self::$categories as $id => $category ) {
+			if ( 'product_cat' === $args['taxonomy'] && false !== stripos( $category['name'], (string) $args['name__like'] ) ) {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * The category and, recursively, its children.
+	 *
+	 * @param int $id Term id.
+	 * @return list<int>
+	 */
+	public static function category_with_children( int $id ): array {
+		$ids = array( $id );
+
+		foreach ( self::$categories as $child => $category ) {
+			if ( $category['parent'] === $id ) {
+				$ids = array_merge( $ids, self::category_with_children( $child ) );
+			}
+		}
+
+		return $ids;
 	}
 }

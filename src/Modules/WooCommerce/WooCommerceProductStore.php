@@ -29,6 +29,12 @@ defined( 'ABSPATH' ) || exit;
 final class WooCommerceProductStore implements ProductStore {
 
 	/**
+	 * Post statuses listed and searched by category: every status but
+	 * auto-draft.
+	 */
+	private const STATUSES = array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' );
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb $wpdb WordPress database object (verification reads only).
@@ -89,7 +95,7 @@ final class WooCommerceProductStore implements ProductStore {
 
 		$ids = wc_get_products(
 			array(
-				'status'     => array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' ),
+				'status'     => self::STATUSES,
 				'limit'      => $limit,
 				'orderby'    => 'title',
 				'order'      => 'ASC',
@@ -103,10 +109,12 @@ final class WooCommerceProductStore implements ProductStore {
 	}
 
 	/**
-	 * Parent products matching the term, via WooCommerce's own product search
-	 * (name, excerpt, description and SKU; the same search as WooCommerce's
-	 * admin product selector). All statuses are included; which products can
-	 * be linked is decided by ProductCreatorLink, not here.
+	 * Parent products matching the term: first WooCommerce's own product
+	 * search (name, excerpt, description and SKU; the same search as
+	 * WooCommerce's admin product selector), then the products directly
+	 * assigned to a product category whose name contains the term, merged
+	 * without duplicates. All statuses are included; which products can be
+	 * linked is decided by ProductCreatorLink, not here.
 	 *
 	 * @param string $term  Search term.
 	 * @param int    $limit Maximum number of products.
@@ -115,11 +123,62 @@ final class WooCommerceProductStore implements ProductStore {
 	public function search( string $term, int $limit ): array {
 		$term = trim( $term );
 
-		if ( '' === $term ) {
+		if ( '' === $term || $limit < 1 ) {
 			return array();
 		}
 
-		return $this->records( WC_Data_Store::load( 'product' )->search_products( $term, '', false, true, $limit ) );
+		$ids = array_merge(
+			WC_Data_Store::load( 'product' )->search_products( $term, '', false, true, $limit ),
+			$this->category_product_ids( $term, $limit )
+		);
+		$ids = array_unique( array_map( 'intval', array_filter( $ids, 'is_numeric' ) ) );
+
+		return array_slice( $this->records( $ids ), 0, $limit );
+	}
+
+	/**
+	 * Products directly assigned to a `product_cat` term whose name contains
+	 * the term, via `wc_get_products()`. `include_children` is off, so a
+	 * product only in a child category is not found by the parent's name.
+	 * Variations have no categories and are not product types of this query.
+	 *
+	 * @param string $term  Search term.
+	 * @param int    $limit Maximum number of products.
+	 * @return array<mixed>
+	 */
+	private function category_product_ids( string $term, int $limit ): array {
+		$categories = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'name__like' => $term,
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			)
+		);
+
+		if ( ! is_array( $categories ) || array() === $categories ) {
+			return array();
+		}
+
+		$ids = wc_get_products(
+			array(
+				'status'    => self::STATUSES,
+				'limit'     => $limit,
+				'orderby'   => 'title',
+				'order'     => 'ASC',
+				'return'    => 'ids',
+				'tax_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Admin category search; limited.
+					array(
+						'taxonomy'         => 'product_cat',
+						'field'            => 'term_id',
+						'terms'            => array_map( 'intval', $categories ),
+						'include_children' => false,
+					),
+				),
+			)
+		);
+
+		return is_array( $ids ) ? $ids : array();
 	}
 
 	/**

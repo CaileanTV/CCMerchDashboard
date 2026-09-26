@@ -283,8 +283,10 @@ class WC_Data_Store {
 
 /**
  * Mirrors wc_get_products() for the arguments the store uses: status,
- * limit, return ids, and meta_key/meta_value compared like MySQL
- * (case-insensitive key). Variations are not a queried product type.
+ * limit, return ids, meta_key/meta_value compared like MySQL
+ * (case-insensitive key) and a product_cat tax_query by term id, which like
+ * WP_Tax_Query includes child categories unless include_children is false.
+ * Variations are not a queried product type.
  *
  * @param array<string, mixed> $args Arguments.
  * @return list<int>
@@ -295,6 +297,23 @@ function wc_get_products( $args ) {
 
 	foreach ( WcProductStorage::$products as $id => $product ) {
 		if ( 'variation' === $product['type'] || ! in_array( $product['status'], $args['status'], true ) ) {
+			continue;
+		}
+
+		if ( isset( $args['tax_query'] ) ) {
+			$clause = $args['tax_query'][0];
+			$terms  = array();
+
+			$children = $clause['include_children'] ?? true;
+
+			foreach ( $clause['terms'] as $term ) {
+				$terms = array_merge( $terms, $children ? WcProductStorage::category_with_children( $term ) : array( $term ) );
+			}
+
+			if ( 'product_cat' === $clause['taxonomy'] && 'term_id' === $clause['field'] && array() !== array_intersect( $product['categories'], $terms ) ) {
+				$ids[] = $id;
+			}
+
 			continue;
 		}
 

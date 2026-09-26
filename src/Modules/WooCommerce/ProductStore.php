@@ -38,8 +38,10 @@ interface ProductStore {
 	public function linked_to( int $creator_id, int $limit ): array;
 
 	/**
-	 * Parent products matching a search term in name, description or SKU,
-	 * in any status. At most $limit products.
+	 * Parent products matching a search term in name, description or SKU, or
+	 * directly assigned to a product category (`product_cat`) whose name
+	 * contains the term, in any status. Without duplicates; at most $limit
+	 * products.
 	 *
 	 * @param string $term  Search term.
 	 * @param int    $limit Maximum number of products.

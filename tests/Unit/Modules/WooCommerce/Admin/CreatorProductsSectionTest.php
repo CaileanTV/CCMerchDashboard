@@ -114,6 +114,7 @@ final class CreatorProductsSectionTest extends TestCase {
 		self::assertStringContainsString( 'Tee &lt;b&gt;bold&lt;/b&gt; (#11)', $html, 'Product names are escaped.' );
 		self::assertStringNotContainsString( '<b>bold</b>', $html );
 		self::assertStringContainsString( 'name="product_search" value="Tee"', $html );
+		self::assertStringContainsString( 'Search by product name, SKU or category', $html, 'The field says it also accepts a category.' );
 	}
 
 	public function test_products_of_another_creator_need_an_explicit_take_over(): void {

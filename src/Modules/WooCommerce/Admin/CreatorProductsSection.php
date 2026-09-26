@@ -21,8 +21,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Shows the creator's linked WooCommerce products and lets an administrator
- * search products (name, description or SKU) and link or remove them
- * (ADR-032). Read-only rendering: every change goes through
+ * search products (name, description, SKU or product category) and link
+ * or remove them (ADR-032). Read-only rendering: every change goes through
  * CreatorProductsActions and ProductCreatorLink, which decide what may be
  * linked. This is the only product-link UI; the WooCommerce product editor
  * has none.
@@ -208,7 +208,7 @@ final class CreatorProductsSection {
 		echo '<input type="hidden" name="page" value="' . esc_attr( CreatorsAdminPage::SLUG ) . '">';
 		echo '<input type="hidden" name="action" value="edit">';
 		echo '<input type="hidden" name="creator" value="' . esc_attr( (string) $creator->id ) . '">';
-		echo '<label for="merchboard-product-search">' . esc_html__( 'Search products by name or SKU', 'merchboard' ) . '</label> ';
+		echo '<label for="merchboard-product-search">' . esc_html__( 'Search by product name, SKU or category', 'merchboard' ) . '</label> ';
 		echo '<input type="search" id="merchboard-product-search" name="' . esc_attr( CreatorProductsActions::SEARCH_ARG ) . '" value="' . esc_attr( $search ) . '" class="regular-text"> ';
 		echo '<button type="submit" class="button">' . esc_html__( 'Search products', 'merchboard' ) . '</button>';
 		echo '</form>';
