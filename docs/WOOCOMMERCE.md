@@ -1,6 +1,6 @@
 # WooCommerce-integration
 
-> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032 og ADR-033 (kategori-mapping som vedvarende automatisk kobling; ADR-033 er ikke implementeret endnu). Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
+> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032, ADR-033 (kategori-mapping som vedvarende automatisk kobling; ikke implementeret endnu) og ADR-034 (beskyttelse af koblingens meta; to punkter uafklarede). Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
 
 ## Principper
 
@@ -24,14 +24,17 @@
   - Quick/bulk edit har intet Creator-felt.
   - "Duplicate product" kopierer ikke koblingen. Kopien arver kategorierne og kan derfor få en `category`-kobling via afstemningen (ADR-033).
   - Der er ingen nye offentlige REST-endpoints.
-  - **Vagter (implementeret i fase 17, trin 6):**
+  - **Vagter (ADR-034, implementeret i fase 17, trin 6):**
     - **`ProtectedProductMeta` (deny-by-default på metadata-laget):** WordPress' pre-hooks `add_`, `update_` og `delete_post_metadata` samt `update_`/`delete_post_metadata_by_mid` afviser enhver skrivning, omdøbning eller sletning af `_merchboard_creator_id` og `_merchboard_creator_link_source` (sammenlignet trimmet og uden hensyn til store og små bogstaver; ved `_by_mid` også den gemte nøgle). Det dækker WooCommerce CRUD, REST, CSV-import, quick/bulk edit, XML-RPC, `update_post_meta()` fra vilkårlig kode og `wp post meta` (WP-CLI), for produkter og varianter. Afviste forsøg fejler, logges som advarsel (teknisk log, ingen værdier) og skriver ingen audit. Læsning påvirkes ikke, og anden meta skrives normalt.
     - **Eneste undtagelse:** en eksplicit `ProtectedMetaWrite` (formål `manual_link` eller, fra ADR-033's afstemning, `category_reconciliation`) for præcis ét produkt, som kun gælder under `ProtectedProductMeta::run()`. Den kan kun bruges én gang, kan ikke indlejres, bærer ingen bruger (virker også uden logget-ind bruger) og ryddes også ved fejl. `ProductCreatorLink` opretter den først efter sine egne tjek (capability, creator, produkt) og kun om selve lagerskrivningen i sin transaktion.
     - WordPress må slette et produkts beskyttede meta, når produktet slettes permanent (`before_delete_post` → `after_delete_post`), så der ikke efterlades forældreløse rækker.
     - **Tydelige afvisninger ved indgangene (`ProtectedMetaEntryPoints`):** REST create/update/batch af produkter og varianter giver 400 (`merchboard_protected_product_meta`), når de beskyttede felter ville ændres (også omdøbning via meta-ID og sletning); `…/variations/generate` giver 400 ved beskyttet `meta_data`; en CSV-række med en beskyttet `Meta:`-kolonne fejler med en besked; duplicate kopierer ikke felterne.
-  - **Grænse:** Direkte SQL og kode, der fjerner pluginets hooks, er uden for vagterne (ADR-030, strammet i trin 6).
+  - **Begrænsninger (ADR-034):**
+    - Direkte SQL og kode, der fjerner eller omgår pluginets hooks (fx `remove_filter()` eller `merchboard_modules`-filteret), er uden for vagterne. Der er ingen garanti for fuld databaseintegritet.
+    - Vagterne registreres i `WooCommerceModule`. Er WooCommerce deaktiveret eller ældre end 10.3, er de **ikke aktive**, og nøglerne kan ændres via metadata-API'et fra kode eller WP-CLI. En flytning af metadata-vagten ud af WooCommerce-modulet er en særskilt, uafklaret opgave (ADR-034, Uafklaret A).
+    - Uninstall skal have en eksplicit, afgrænset oprydningsmekanisme for de to nøgler, som ikke åbner en generel bypass. Den er ikke besluttet endnu og skal afklares før trin 13 (ADR-034, Uafklaret B).
 - **Ingen produktrettigheder til creators (ADR-030):** Creator-rollen får ingen WooCommerce-produktcapabilities og ingen produktadgang i fase 17. `Capabilities::EDIT_PRODUCT` tildeles aldrig og bruges kun til at autorisere brugere, der i forvejen må redigere produktet.
-- **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglerne (`_merchboard_creator_id` og `_merchboard_creator_link_source`, og kun dem).
+- **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglerne (`_merchboard_creator_id` og `_merchboard_creator_link_source`, og kun dem); mekanismen i forhold til vagten afklares før trin 13 (ADR-034).
 - **Oprindelse (ADR-033, ikke implementeret endnu):** product meta `_merchboard_creator_link_source` = `admin` (manuel) eller `category` (aktuelt afledt af en kategori-mapping). Den skrives og verificeres sammen med `_merchboard_creator_id`. Mangler den, er koblingen manuel. Den er ikke en ejerskabsrelation. Kilden `backfill` udfases.
 - **Kategori-mapping som vedvarende automatisk kobling (ADR-033, erstatter ADR-031's engangs-backfill, ikke implementeret endnu):**
   - En administrator mapper eksplicit en `product_cat` til en creator i tabellen `merchboard_creator_categories` (én creator pr. kategori; teknisk flere kategorier pr. creator, men fase 17's UI tillader én; ikke standardkategorien; ingen match på navn eller slug). Mappingen er aldrig selv bevis for ejerskab eller adgang.

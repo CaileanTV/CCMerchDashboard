@@ -138,14 +138,15 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Rækkefølge:**
   - 1-4 ✅: undersøgelse, modul-skelet, `ProductCreatorLink`, produktkoblinger på creatorens redigeringsside.
   - 5 ✅: skrivebeskyttet kolonne og filter i produktlisten.
-  - 6 ✅: vagter for skriveveje (REST, CSV-import, duplicate m.fl.) for `_merchboard_creator_id` og `_merchboard_creator_link_source`.
+  - 6 ✅: vagter for skriveveje (REST, CSV-import, duplicate m.fl.) for `_merchboard_creator_id` og `_merchboard_creator_link_source`. Deny-by-default på metadata-laget med en eksplicit, engangs-`ProtectedMetaWrite` (ADR-034).
   - 7: migration 4 (`merchboard_creator_categories`) og mapping-service (oprettelse/fjernelse, én kategori pr. creator i fase 17, ikke standardkategorien, kun aktive creators, audit `creator_category_linked`/`creator_category_unlinked`).
   - 8: kategori-afstemning: oprindelsesmeta i `ProductStore`/`ProductRecord`, `ProductLinkSource::Category` (`Backfill` fjernes), intern afstemningsmetode i `ProductCreatorLink`, tilstandsbaseret reconciler, kørsler i batches med `category_sync_completed` og et værktøj til fuld afstemning med tørkørsel.
   - 9: hooks og Action Scheduler (`set_object_terms`, `deleted_term_relationships`, statusovergange for produkter, `pre_delete_term`, mapping-handlinger og domæne-event ved genaktivering af creators).
   - 10: admin-UI for mapping på creatorens redigeringsside og kolonnen "Category" i Creators-listen, med tørkørsel ved oprettelse og valget "Remove category-managed links" / "Keep as manual links" ved fjernelse.
   - 11: creatorens produktafsnit viser oprindelsen, afviser Remove for kategori-styrede produkter og tilbyder "Keep as manual".
   - 12: integrationstests og verifikation af hele kæden i Merch Dashboard Local (wp-admin, bulk edit, CSV-import, REST, duplicate og kategorisletning).
-  - 13: uninstall (begge meta-nøgler; tabellen via `Tables::all()`).
+  - 13: uninstall (begge meta-nøgler; tabellen via `Tables::all()`). **Kræver først en beslutning** om en eksplicit, afgrænset oprydningsmekanisme i forhold til metadata-vagten (ADR-034, Uafklaret B).
+  - **Uafklaret, ikke planlagt som trin (ADR-034, Uafklaret A):** om metadata-vagten skal registreres uafhængigt af WooCommerce-modulet, så nøglerne også er beskyttet, når WooCommerce er deaktiveret eller for gammelt. Kræver projektejerens beslutning.
   - 14: audit-log-labels.
   - 15: i18n, docs og slutverifikation.
   - Trin 8-9 kommer før mapping-UI'et (10), fordi tørkørslen ved oprettelse bruger afstemningens klassifikation.
