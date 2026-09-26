@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-25T22:10:57+00:00\n"
+"PO-Revision-Date: 2026-09-26T11:10:41+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -99,107 +99,115 @@ msgstr "WordPress-bruger frakoblet"
 msgid "Settings changed"
 msgstr "Indstillinger ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:90
+#: src/Modules/Admin/AuditLogFormatter.php:47
+msgid "Product linked"
+msgstr "Produkt tilknyttet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:48
+msgid "Product unlinked"
+msgstr "Produkt frakoblet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:92
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:92
+#: src/Modules/Admin/AuditLogFormatter.php:94
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:95
+#: src/Modules/Admin/AuditLogFormatter.php:97
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:98
+#: src/Modules/Admin/AuditLogFormatter.php:100
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:101
+#: src/Modules/Admin/AuditLogFormatter.php:103
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:104
+#: src/Modules/Admin/AuditLogFormatter.php:106
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason code.
-#: src/Modules/Admin/AuditLogFormatter.php:106
+#: src/Modules/Admin/AuditLogFormatter.php:108
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:109
+#: src/Modules/Admin/AuditLogFormatter.php:111
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:110
+#: src/Modules/Admin/AuditLogFormatter.php:112
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:112
+#: src/Modules/Admin/AuditLogFormatter.php:114
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:116
+#: src/Modules/Admin/AuditLogFormatter.php:118
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:119
+#: src/Modules/Admin/AuditLogFormatter.php:121
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:121
+#: src/Modules/Admin/AuditLogFormatter.php:123
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:121
+#: src/Modules/Admin/AuditLogFormatter.php:123
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:139
+#: src/Modules/Admin/AuditLogFormatter.php:141
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:154
+#: src/Modules/Admin/AuditLogFormatter.php:156
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
 #: build/dashboard.js:2
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:154
+#: src/Modules/Admin/AuditLogFormatter.php:156
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:323
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:173
+#: src/Modules/Admin/AuditLogFormatter.php:175
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:174
+#: src/Modules/Admin/AuditLogFormatter.php:176
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:175
+#: src/Modules/Admin/AuditLogFormatter.php:177
 msgid "social links"
 msgstr "sociale links"
 

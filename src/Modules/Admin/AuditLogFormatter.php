@@ -44,6 +44,8 @@ final class AuditLogFormatter {
 			AuditAction::CreatorUserLinked   => __( 'WordPress user linked', 'merchboard' ),
 			AuditAction::CreatorUserUnlinked => __( 'WordPress user unlinked', 'merchboard' ),
 			AuditAction::SettingsUpdated     => __( 'Settings changed', 'merchboard' ),
+			AuditAction::ProductCreatorLinked   => __( 'Product linked', 'merchboard' ),
+			AuditAction::ProductCreatorUnlinked => __( 'Product unlinked', 'merchboard' ),
 		};
 	}
 

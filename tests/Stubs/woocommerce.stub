@@ -1,0 +1,105 @@
+<?php
+/**
+ * PHPStan stubs: only the WooCommerce API the plugin uses, with signatures
+ * taken from WooCommerce 10.3.8 (the minimum, ADR-030). Never loaded at
+ * runtime; WooCommerce itself provides these. Extend when new calls are
+ * added. A local stub file instead of a stubs package keeps the project free
+ * of new dependencies (ADR-030 D5).
+ *
+ * @package MerchBoard
+ */
+
+/**
+ * WooCommerce data object (abstract-wc-data.php).
+ */
+abstract class WC_Data {
+
+	/**
+	 * @return int
+	 */
+	public function get_id() {}
+
+	/**
+	 * @return list<WC_Meta_Data>
+	 */
+	public function get_meta_data() {}
+
+	/**
+	 * @param string $key    Meta key.
+	 * @param mixed  $value  Meta value.
+	 * @param bool   $unique Replace existing entries with the same key.
+	 * @return void
+	 */
+	public function add_meta_data( $key, $value, $unique = false ) {}
+
+	/**
+	 * @param int $mid Meta id.
+	 * @return void
+	 */
+	public function delete_meta_data_by_mid( $mid ) {}
+
+	/**
+	 * @return void
+	 */
+	public function save_meta_data() {}
+}
+
+/**
+ * WooCommerce product (abstract-wc-product.php).
+ */
+class WC_Product extends WC_Data {
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return int
+	 */
+	public function get_parent_id( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_status( $context = 'view' ) {}
+
+	/**
+	 * @param string|list<string> $type Product type(s).
+	 * @return bool
+	 */
+	public function is_type( $type ) {}
+}
+
+/**
+ * One meta entry of a data object (class-wc-meta-data.php).
+ */
+class WC_Meta_Data {
+
+	/**
+	 * @return array{id?: mixed, key?: mixed, value?: mixed}
+	 */
+	public function get_data() {}
+}
+
+/**
+ * WooCommerce cache helper (class-wc-cache-helper.php, CacheNameSpaceTrait).
+ */
+class WC_Cache_Helper {
+
+	/**
+	 * @param string $group Cache group, e.g. "object_<id>".
+	 * @return void
+	 */
+	public static function invalidate_cache_group( $group ) {}
+}
+
+/**
+ * @param mixed        $the_product Post object or post ID of the product.
+ * @param array<mixed> $deprecated  Unused.
+ * @return WC_Product|null|false
+ */
+function wc_get_product( $the_product = false, $deprecated = array() ) {}
+
+/**
+ * @param int $post_id Product id.
+ * @return void
+ */
+function wc_delete_product_transients( $post_id = 0 ) {}

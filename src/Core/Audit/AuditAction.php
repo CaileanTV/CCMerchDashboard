@@ -54,4 +54,17 @@ enum AuditAction: string {
 	 * new value, which is never personal data).
 	 */
 	case SettingsUpdated = 'settings_updated';
+
+	/**
+	 * A WooCommerce product was linked to the creator (context: product id, the
+	 * previous creator id or null, and the write path; ADR-030/031).
+	 */
+	case ProductCreatorLinked = 'product_creator_linked';
+
+	/**
+	 * A WooCommerce product's link to the creator was removed or moved to another
+	 * creator (context: product id and the write path). The creator id is NULL
+	 * when the removed link was not a valid creator reference.
+	 */
+	case ProductCreatorUnlinked = 'product_creator_unlinked';
 }
