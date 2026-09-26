@@ -31,8 +31,8 @@ defined( 'ABSPATH' ) || exit;
  *   instead of querying with 0 or a negative id.
  * - There is deliberately no arbitrary filter or "update anything" method:
  *   each write is an explicit operation (rename, set_status, link_user,
- *   unlink_user, release_user) and the only list is paginate() with
- *   whitelisted sorting.
+ *   unlink_user, release_user) and the only lists are paginate() with
+ *   whitelisted sorting and all(), which reads through paginate().
  *   There is no delete (creators are deactivated; see docs/DATABASE.md).
  * - Database errors surface as DatabaseException with a generic message.
  */
@@ -236,6 +236,28 @@ final class CreatorRepository {
 		}
 
 		return 1 === $updated;
+	}
+
+	/**
+	 * Every creator (any status), ordered by display name, read page by page
+	 * through paginate(). For admin choices over all creators, such as the
+	 * creator filter of the WooCommerce product list.
+	 *
+	 * @return list<Creator>
+	 * @throws DatabaseException When a stored row is invalid.
+	 */
+	public function all(): array {
+		$creators = array();
+		$page     = 1;
+
+		do {
+			$items    = $this->paginate( $page, self::MAX_PER_PAGE, null, 'display_name', 'asc' )['items'];
+			$creators = array_merge( $creators, $items );
+			$full     = self::MAX_PER_PAGE === count( $items );
+			++$page;
+		} while ( $full );
+
+		return $creators;
 	}
 
 	/**

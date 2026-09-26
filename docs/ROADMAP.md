@@ -137,7 +137,7 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - Engangs-backfillen erstattes af den første afstemning, når en kategori mappes (tørkørsel → bekræftelse).
 - **Rækkefølge:**
   - 1-4 ✅: undersøgelse, modul-skelet, `ProductCreatorLink`, produktkoblinger på creatorens redigeringsside.
-  - 5: skrivebeskyttet kolonne og filter i produktlisten.
+  - 5 ✅: skrivebeskyttet kolonne og filter i produktlisten.
   - 6: vagter for skriveveje (REST, CSV-import, duplicate m.fl.) for `_merchboard_creator_id` og `_merchboard_creator_link_source`.
   - 7: migration 4 (`merchboard_creator_categories`) og mapping-service (oprettelse/fjernelse, én kategori pr. creator i fase 17, ikke standardkategorien, kun aktive creators, audit `creator_category_linked`/`creator_category_unlinked`).
   - 8: kategori-afstemning: oprindelsesmeta i `ProductStore`/`ProductRecord`, `ProductLinkSource::Category` (`Backfill` fjernes), intern afstemningsmetode i `ProductCreatorLink`, tilstandsbaseret reconciler, kørsler i batches med `category_sync_completed` og et værktøj til fuld afstemning med tørkørsel.

@@ -20,6 +20,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
+use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
@@ -63,6 +64,16 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorProductsActions::LINK_ACTION, array( $container->get( CreatorProductsActions::class ), 'handle_link_request' ) ) );
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorProductsActions::UNLINK_ACTION, array( $container->get( CreatorProductsActions::class ), 'handle_unlink_request' ) ) );
 		self::assertSame( 10, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorProductsSection::class ), 'render' ) ) );
+	}
+
+	public function test_the_product_list_column_and_filter_wait_for_the_product_list_screen(): void {
+		$container = self::core_container();
+		self::run_admin_init();
+		( new WooCommerceModule() )->register( $container );
+
+		self::assertSame( 10, has_action( 'current_screen', array( $container->get( ProductListCreators::class ), 'on_screen' ) ) );
+		self::assertFalse( has_filter( 'manage_product_posts_columns' ), 'Nothing is added before the product list screen is known.' );
+		self::assertFalse( has_filter( 'request' ) );
 	}
 
 	/**

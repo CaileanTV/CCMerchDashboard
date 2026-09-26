@@ -17,6 +17,7 @@ use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
+use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,7 +30,9 @@ defined( 'ABSPATH' ) || exit;
  *
  * Phase 17 builds the product→creator link step by step: the domain service
  * (ProductCreatorLink) and the product links on the creator's edit page in
- * wp-admin (ADR-032). The WooCommerce product editor gets no creator UI.
+ * wp-admin (ADR-032), and a read-only creator column and filter in
+ * WooCommerce's product list. The WooCommerce product editor gets no creator
+ * UI.
  */
 final class WooCommerceModule implements Module {
 
@@ -77,13 +80,23 @@ final class WooCommerceModule implements Module {
 			)
 		);
 
-		// Only wp-admin: the product links on the creator's edit page. Nothing is
-		// hooked into WooCommerce's product editor (ADR-032).
+		$container->set(
+			ProductListCreators::class,
+			static fn( Container $c ): ProductListCreators => new ProductListCreators(
+				$c->get( ProductStore::class ),
+				$c->get( CreatorRepository::class )
+			)
+		);
+
+		// Only wp-admin: the product links on the creator's edit page and the
+		// read-only column and filter in the product list. Nothing is hooked
+		// into WooCommerce's product editor (ADR-032).
 		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( CreatorProductsActions::class )->register();
 				$container->get( CreatorProductsSection::class )->register();
+				$container->get( ProductListCreators::class )->register();
 			}
 		);
 	}
