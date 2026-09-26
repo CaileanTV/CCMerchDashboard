@@ -49,6 +49,14 @@ final class FakeProductStore implements ProductStore {
 	public bool $fail_write = false;
 
 	/**
+	 * Called with the product id at the start of every write (to observe the
+	 * state the write runs in).
+	 *
+	 * @var (callable(int): void)|null
+	 */
+	public $on_write = null;
+
+	/**
 	 * Search terms asked for.
 	 *
 	 * @var list<string>
@@ -147,6 +155,10 @@ final class FakeProductStore implements ProductStore {
 	 * @throws DatabaseException When told to fail.
 	 */
 	public function write_creator( int $product_id, ?int $creator_id ): void {
+		if ( null !== $this->on_write ) {
+			( $this->on_write )( $product_id );
+		}
+
 		if ( $this->fail_write ) {
 			throw new DatabaseException( 'Simulated product write failure.' );
 		}

@@ -55,14 +55,25 @@ final class WooCommerceModule implements Module {
 		);
 
 		$container->set(
+			ProtectedProductMeta::class,
+			static fn( Container $c ): ProtectedProductMeta => new ProtectedProductMeta( $c->get( Logger::class ) )
+		);
+
+		$container->set(
 			ProductCreatorLink::class,
 			static fn( Container $c ): ProductCreatorLink => new ProductCreatorLink(
 				$c->get( ProductStore::class ),
 				$c->get( CreatorRepository::class ),
 				$c->get( AuditTrail::class ),
-				$c->get( Transaction::class )
+				$c->get( Transaction::class ),
+				$c->get( ProtectedProductMeta::class )
 			)
 		);
+
+		// The guards of the protected product meta apply to every request
+		// (wp-admin, REST, cron, WP-CLI), so they are hooked right away.
+		$container->get( ProtectedProductMeta::class )->register();
+		( new ProtectedMetaEntryPoints() )->register();
 
 		$container->set(
 			CreatorProductsActions::class,

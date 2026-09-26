@@ -19,6 +19,7 @@ use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Tests\Unit\Support\CreatorAdminEnvironment;
 use MerchBoard\Tests\Unit\Support\FakeProductStore;
@@ -85,7 +86,8 @@ final class CreatorProductsActionsTest extends TestCase {
 				$this->products,
 				new CreatorRepository( $this->db ),
 				new AuditTrail( new AuditRepository( $this->db ) ),
-				new Transaction( $this->db, new TransactionSupport( $this->db ) )
+				new Transaction( $this->db, new TransactionSupport( $this->db ) ),
+				new ProtectedProductMeta( new RecordingLogger() )
 			),
 			$this->logger
 		);
@@ -141,7 +143,7 @@ final class CreatorProductsActionsTest extends TestCase {
 		$url = $this->actions->link( $this->link_form( array( 13 ) ) );
 
 		self::assertSame( array( '13' => 'already_linked' ), self::results( $url ) );
-		self::assertSame( $this->beta, ( new ProductCreatorLink( $this->products, new CreatorRepository( $this->db ), new AuditTrail( new AuditRepository( $this->db ) ), new Transaction( $this->db, new TransactionSupport( $this->db ) ) ) )->creator_id( 13 ) );
+		self::assertSame( $this->beta, ( new ProductCreatorLink( $this->products, new CreatorRepository( $this->db ), new AuditTrail( new AuditRepository( $this->db ) ), new Transaction( $this->db, new TransactionSupport( $this->db ) ), new ProtectedProductMeta( new RecordingLogger() ) ) )->creator_id( 13 ) );
 		self::assertSame( array(), $this->products->writes );
 	}
 

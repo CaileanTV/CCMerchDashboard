@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-26T13:40:21+00:00\n"
+"PO-Revision-Date: 2026-09-26T17:58:41+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -953,6 +953,11 @@ msgstr "%s (inaktiv)"
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
+
+#: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:108
+#: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:181
+msgid "The creator of a product can only be changed in Merch Dashboard."
+msgstr "Et produkts creator kan kun ændres i Merch Dashboard."
 
 #: src/Modules/WooCommerce/WooCommerceSupport.php:90
 msgid "unknown"

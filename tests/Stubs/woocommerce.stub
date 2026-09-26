@@ -50,6 +50,11 @@ abstract class WC_Data {
 class WC_Product extends WC_Data {
 
 	/**
+	 * @param int|WC_Product|object $product Product id or object.
+	 */
+	public function __construct( $product = 0 ) {}
+
+	/**
 	 * @param string $context 'view' or 'edit'.
 	 * @return int
 	 */
@@ -114,7 +119,12 @@ class WC_Data_Store {
 function wc_get_products( $args ) {}
 
 /**
- * One meta entry of a data object (class-wc-meta-data.php).
+ * One meta entry of a data object (class-wc-meta-data.php). WooCommerce
+ * exposes its data through magic properties.
+ *
+ * @property mixed $id
+ * @property mixed $key
+ * @property mixed $value
  */
 class WC_Meta_Data {
 
@@ -122,6 +132,19 @@ class WC_Meta_Data {
 	 * @return array{id?: mixed, key?: mixed, value?: mixed}
 	 */
 	public function get_data() {}
+
+	/**
+	 * @param string $key Property.
+	 * @return mixed
+	 */
+	public function __get( $key ) {}
+
+	/**
+	 * @param string $key   Property.
+	 * @param mixed  $value Value.
+	 * @return void
+	 */
+	public function __set( $key, $value ) {}
 }
 
 /**

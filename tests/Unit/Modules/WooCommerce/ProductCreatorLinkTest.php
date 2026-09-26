@@ -20,10 +20,12 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLinkException;
 use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Tests\Unit\Support\CreatorAdminEnvironment;
 use MerchBoard\Tests\Unit\Support\FakeProductStore;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,6 +38,8 @@ final class ProductCreatorLinkTest extends TestCase {
 	private FakeProductStore $products;
 
 	private ProductCreatorLink $link;
+
+	private ProtectedProductMeta $guard;
 
 	/**
 	 * Product ids the current user may edit.
@@ -85,11 +89,13 @@ final class ProductCreatorLinkTest extends TestCase {
 		$this->products->add( 30, array(), 'trash' );
 		$this->products->add( 31, array(), 'auto-draft' );
 
-		$this->link = new ProductCreatorLink(
+		$this->guard = new ProtectedProductMeta( new RecordingLogger() );
+		$this->link  = new ProductCreatorLink(
 			$this->products,
 			new CreatorRepository( $this->db ),
 			new AuditTrail( new AuditRepository( $this->db ) ),
-			new Transaction( $this->db, new TransactionSupport( $this->db ) )
+			new Transaction( $this->db, new TransactionSupport( $this->db ) ),
+			$this->guard
 		);
 	}
 
@@ -117,6 +123,78 @@ final class ProductCreatorLinkTest extends TestCase {
 		self::assertSame( array( 'START TRANSACTION', 'COMMIT' ), array_slice( $this->db->transaction_log, -2 ) );
 		self::assertSame( array( 10 ), $this->product_checks, 'edit_product is checked for the concrete product.' );
 		self::assertSame( $this->alpha, $this->link->creator_id( 10 ) );
+	}
+
+	/**
+	 * Link, take over and unlink: the store write runs inside a manual grant
+	 * for exactly that product, and nothing is authorized before or after.
+	 *
+	 * @return array<string, array{callable(ProductCreatorLink, int): mixed, int}>
+	 */
+	public static function writes(): array {
+		return array(
+			'link'      => array( static fn( ProductCreatorLink $l, int $alpha ): mixed => $l->link( 10, $alpha, ProductLinkSource::Admin ), 10 ),
+			'take over' => array( static fn( ProductCreatorLink $l, int $alpha ): mixed => $l->link( 12, $alpha, ProductLinkSource::Admin, true ), 12 ),
+			'unlink'    => array( static fn( ProductCreatorLink $l ): mixed => $l->unlink( 12, ProductLinkSource::Admin ), 12 ),
+		);
+	}
+
+	/**
+	 * The guard's answers to a protected write while the store writes.
+	 *
+	 * @param callable(ProductCreatorLink, int): mixed $operation  Service call.
+	 * @param int                                      $product_id Product it writes.
+	 */
+	#[DataProvider( 'writes' )]
+	public function test_the_store_write_runs_inside_a_grant_for_exactly_that_product( callable $operation, int $product_id ): void {
+		$this->products->add_linked( 12, $this->beta );
+		$seen                     = array();
+		$this->products->on_write = function ( int $id ) use ( &$seen ): void {
+			$seen = array(
+				'this product, link key'   => $this->guard->filter_update( null, $id, ProductCreatorLink::META_KEY ),
+				'this product, source key' => $this->guard->filter_add( null, $id, ProductCreatorLink::SOURCE_META_KEY ),
+				'another product'          => $this->guard->filter_update( null, 11, ProductCreatorLink::META_KEY ),
+				'its variation'            => $this->guard->filter_update( null, 21, ProductCreatorLink::META_KEY ),
+				'every product'            => $this->guard->filter_delete( null, 0, ProductCreatorLink::META_KEY, '', true ),
+			);
+		};
+
+		self::assertFalse( $this->guard->filter_update( null, $product_id, ProductCreatorLink::META_KEY ), 'Denied before.' );
+
+		$operation( $this->link, $this->alpha );
+
+		self::assertSame(
+			array(
+				'this product, link key'   => null,
+				'this product, source key' => null,
+				'another product'          => false,
+				'its variation'            => false,
+				'every product'            => false,
+			),
+			$seen
+		);
+		self::assertFalse( $this->guard->filter_update( null, $product_id, ProductCreatorLink::META_KEY ), 'Denied again after.' );
+	}
+
+	public function test_a_failed_store_write_leaves_nothing_authorized(): void {
+		$this->products->fail_write = true;
+
+		try {
+			$this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
+			self::fail( 'The write should fail.' );
+		} catch ( DatabaseException ) {
+			self::assertFalse( $this->guard->filter_update( null, 10, ProductCreatorLink::META_KEY ) );
+		}
+	}
+
+	public function test_a_rejected_link_never_opens_the_guard(): void {
+		$this->products->on_write = static function (): void {
+			self::fail( 'No write for a rejected link.' );
+		};
+		$this->editable           = array();
+
+		$this->expectException( ProductCreatorLinkException::class );
+		$this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
 	}
 
 	public function test_the_write_path_is_recorded(): void {

@@ -23,6 +23,7 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use MerchBoard\Modules\WooCommerce\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceProductStore;
 use MerchBoard\Tests\Unit\Support\FakeDatabase;
@@ -41,12 +42,7 @@ final class WooCommerceModuleTest extends TestCase {
 	}
 
 	public function test_registers_the_product_link_service_with_the_woocommerce_store(): void {
-		$db        = new FakeDatabase();
-		$container = new Container();
-		$container->set( wpdb::class, static fn(): wpdb => $db );
-		$container->set( CreatorRepository::class, static fn(): CreatorRepository => new CreatorRepository( $db ) );
-		$container->set( AuditTrail::class, static fn(): AuditTrail => new AuditTrail( new AuditRepository( $db ) ) );
-		$container->set( Transaction::class, static fn(): Transaction => new Transaction( $db, new TransactionSupport( $db ) ) );
+		$container = self::core_container();
 
 		( new WooCommerceModule() )->register( $container );
 
@@ -64,6 +60,19 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorProductsActions::LINK_ACTION, array( $container->get( CreatorProductsActions::class ), 'handle_link_request' ) ) );
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorProductsActions::UNLINK_ACTION, array( $container->get( CreatorProductsActions::class ), 'handle_unlink_request' ) ) );
 		self::assertSame( 10, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorProductsSection::class ), 'render' ) ) );
+	}
+
+	public function test_the_protected_meta_guards_are_hooked_for_every_request(): void {
+		$container = self::core_container();
+
+		( new WooCommerceModule() )->register( $container );
+
+		$guard = $container->get( ProtectedProductMeta::class );
+		self::assertSame( 1000, has_filter( 'update_post_metadata', array( $guard, 'filter_update' ) ), 'Not waiting for admin_init: REST, cron and WP-CLI are covered too.' );
+		self::assertSame( 1000, has_filter( 'delete_post_metadata_by_mid', array( $guard, 'filter_delete_by_mid' ) ) );
+		self::assertNotFalse( has_filter( 'woocommerce_product_import_process_item_data' ) );
+		self::assertNotFalse( has_filter( 'woocommerce_rest_pre_insert_product_object' ) );
+		self::assertNotFalse( has_filter( 'woocommerce_duplicate_product_exclude_meta' ) );
 	}
 
 	public function test_the_product_list_column_and_filter_wait_for_the_product_list_screen(): void {

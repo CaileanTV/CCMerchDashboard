@@ -292,7 +292,8 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
     - Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3. Roadmappen er omlagt til trin 5-15.
     - **Kode, der endnu afspejler den gamle model:** `ProductLinkSource::Backfill` og kommentarerne i `ProductLinkSource`, `ProductCreatorLink` og `WooCommerceModule` (engangs-backfill, `product_category_id`) opdateres i trin 8.
   - **Trin 5 (2026-09-26):** Skrivebeskyttet kolonne "Creator" og creator-filter i WooCommerce' produktliste (`ProductListCreators`, kun for `merchboard_manage_creators`; læser kun `_merchboard_creator_id`; ingen kategorier, ingen skrivning, ingen audit). `CreatorRepository::all()` er tilføjet til filterets creator-liste. Verificeret skrivebeskyttet mod WooCommerce 10.3.8 i Merch Dashboard Local (kolonne, filter, kombination med kategorifilter og paginering, varianter og uden capability); data var uændret bagefter.
-  - **Næste:** Trin 6 (vagter for skriveveje).
+  - **Trin 6 (2026-09-26):** Vagter for skriveveje: `ProtectedProductMeta` afviser deny-by-default alle generiske skrivninger af `_merchboard_creator_id` og `_merchboard_creator_link_source` via metadata-API'ets pre-hooks; kun en eksplicit, scoped, engangs-`ProtectedMetaWrite` for ét produkt (brugt af `ProductCreatorLink`, senere af ADR-033's afstemning) slipper igennem. `ProtectedMetaEntryPoints` giver tydelige afvisninger i REST, `variations/generate` og CSV-import og holder felterne ude af duplicate. Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local i en transaktion, der blev rullet tilbage; data var identiske bagefter.
+  - **Næste:** Trin 7 (migration 4 og mapping-service).
 
 ## Planned
 

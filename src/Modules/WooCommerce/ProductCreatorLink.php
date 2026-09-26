@@ -46,6 +46,9 @@ defined( 'ABSPATH' ) || exit;
  *   failure after the meta write can therefore leave the meta changed while
  *   the audit record is rolled back. The product's cached data is dropped on
  *   every failure.
+ * - Generic writes of the link meta are denied by ProtectedProductMeta; this
+ *   service writes only inside an explicit ProtectedMetaWrite for the
+ *   product, after the checks above.
  * - The category mapping (`product_category_id`) is never read here: it is
  *   input for the backfill, not proof of ownership.
  */
@@ -57,6 +60,12 @@ final class ProductCreatorLink {
 	public const META_KEY = '_merchboard_creator_id';
 
 	/**
+	 * Product meta key of the link's origin (ADR-033). Protected like
+	 * META_KEY; written from a later step on.
+	 */
+	public const SOURCE_META_KEY = '_merchboard_creator_link_source';
+
+	/**
 	 * Post statuses of products that cannot be linked.
 	 */
 	private const UNSUPPORTED_STATUSES = array( 'trash', 'auto-draft' );
@@ -64,16 +73,18 @@ final class ProductCreatorLink {
 	/**
 	 * Constructor.
 	 *
-	 * @param ProductStore      $products    Product storage.
-	 * @param CreatorRepository $creators    Creator storage.
-	 * @param AuditTrail        $audit       Audit trail.
-	 * @param Transaction       $transaction Database transaction.
+	 * @param ProductStore         $products    Product storage.
+	 * @param CreatorRepository    $creators    Creator storage.
+	 * @param AuditTrail           $audit       Audit trail.
+	 * @param Transaction          $transaction Database transaction.
+	 * @param ProtectedProductMeta $guard       Guard of the protected product meta.
 	 */
 	public function __construct(
 		private ProductStore $products,
 		private CreatorRepository $creators,
 		private AuditTrail $audit,
-		private Transaction $transaction
+		private Transaction $transaction,
+		private ProtectedProductMeta $guard
 	) {
 	}
 
@@ -265,7 +276,13 @@ final class ProductCreatorLink {
 			return $this->transaction->run(
 				function () use ( $product, $creator_id, $audit ): array {
 					$changes = $audit();
-					$this->products->write_creator( $product->id, $creator_id );
+
+					// Everything above authorized this product; the guard lets
+					// exactly this write through (ProtectedProductMeta).
+					$this->guard->run(
+						ProtectedMetaWrite::for_manual_link( $product->id ),
+						fn() => $this->products->write_creator( $product->id, $creator_id )
+					);
 
 					return $changes;
 				}
