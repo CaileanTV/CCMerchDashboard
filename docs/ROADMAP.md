@@ -125,9 +125,13 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - Kolonnen "Creators" i ordrelisten er udskudt, og fasen har ingen ordrelogik.
   - `_merchboard_creator_id` slettes kun ved opt-in-uninstall.
   - Ingen nye dependencies.
-  - Én autoritativ skrivevej (kun den klassiske produktskærm). REST og CSV-import kan ikke ændre koblingen, quick/bulk edit har intet felt, og duplicate starter uden kobling.
+  - Én autoritativ domæneservice (`ProductCreatorLink`) med to understøttede skriveveje: den klassiske produktskærm og en eksplicit administrativ engangs-backfill (ADR-031 præciserer ADR-030 D6). REST og CSV-import kan ikke ændre koblingen, quick/bulk edit har intet felt, og duplicate starter uden kobling.
   - Ingen nye REST-endpoints og ingen migration.
-- **Done:** Produkter kan kobles til creators. Pluginet virker stadig uden WooCommerce.
+- **Udvidet før implementering (ADR-031):**
+  - Kategori-mapping pr. creator (creator-meta `product_category_id`, 1:1, kun eksplicit admin-valg på creatorens redigeringsside). Den er aldrig bevis for ejerskab eller adgang.
+  - Engangs-backfill fra mappingen: tørkørsel, bekræftelse, idempotent, overskriver aldrig, springer `ambiguous`, `unassigned` og inaktive creators over, og auditeres.
+  - Rækkefølge: 1-2 ✅ (undersøgelse, modul-skelet), 3 `ProductCreatorLink`, 4 produktfelt, 5 produktliste, 6 vagter for skriveveje, 7 kategori-mapping, 8 backfill, 9 uninstall, 10 audit-log-labels, 11 i18n, docs og verifikation.
+- **Done:** Produkter kan kobles til creators. Pluginet virker stadig uden WooCommerce. Backfill giver de forventede klasser på fixture-datasættet i Merch Dashboard Local, og en ny kørsel skriver intet.
 
 ## Fase 18 – Sales ledger
 

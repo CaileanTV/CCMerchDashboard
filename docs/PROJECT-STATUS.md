@@ -268,7 +268,16 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 - **Lokalt testmiljø (2026-09-26):** LocalWP-sitet Merch Dashboard Local er oprettet, verificeret og udpeget som projektets lokale WordPress/WooCommerce-testmiljø (åbent spørgsmål 9 er lukket). Der er endnu ingen testdata.
 
-- **Fase 17 – WooCommerce foundation:** Beslutningerne D1-D6 er lukket i ADR-030 (trin 0, kun dokumentation). Implementeringen er ikke startet. Næste trin er at undersøge WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit, duplicate) mod WooCommerce 10.3.x (laveste understøttede version) uden at skrive kode. D1 er rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8.
+- **Fase 17 – WooCommerce foundation:**
+  - **Beslutninger:** D1-D6 er lukket i ADR-030 (D1 rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8).
+  - **Udført:** Trin 1 (undersøgelse af skriveveje i WooCommerce 10.3.8) og trin 2 (modul-skelet, WooCommerce ≥ 10.3) er færdige.
+  - **ADR-031 (2026-09-26):**
+    - `_merchboard_creator_id` er den eneste ejerskabsrelation.
+    - Kategori-mapping pr. creator (creator-meta `product_category_id`, 1:1, eksplicit admin-valg).
+    - Engangs-backfill med tørkørsel.
+    - D6 er præciseret med backfill som anden understøttet skrivevej gennem `ProductCreatorLink`.
+  - **Testdata:** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen er verificeret med en tørkørsel, der intet skrev.
+  - **Næste:** Trin 3 (`ProductCreatorLink`).
 
 ## Planned
 

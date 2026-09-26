@@ -144,6 +144,12 @@ Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Sett
 Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-notice og ingen af skærmene nedenfor (ADR-030).
 
 - Produktliste: kolonne "Creator" og dropdown-filter.
-- Produkt-redigering (klassisk produktskærm): feltet "Creator" i fanen *General* (select over aktive creators). Det er den **eneste understøttede skrivevej** i fase 17. Gemmes via pluginets domæneservice (validering, capability-tjek `edit_product`, WooCommerce' egen nonce og audit), ikke direkte med `update_meta_data()` (ADR-030).
+- Produkt-redigering (klassisk produktskærm): feltet "Creator" i fanen *General* (select over aktive creators). Det er den eneste understøttede skrivevej for enkeltprodukter i fase 17. Den anden understøttede vej er den administrative engangs-backfill fra Creators (ADR-031). Gemmes via pluginets domæneservice (validering, capability-tjek `edit_product`, WooCommerce' egen nonce og audit), ikke direkte med `update_meta_data()` (ADR-030).
 - Ingen Creator-felt i quick/bulk edit. WooCommerce REST og CSV-import kan ikke ændre koblingen, og "Duplicate" giver et produkt uden creator (ADR-030).
 - Ordreliste: kolonnen "Creators" (afledt af ordrelinjer) er **udskudt** til en senere fase (ADR-030 D3).
+- **Kategori-mapping (ADR-031):**
+  - Creatorens redigeringsside får afsnittet "WooCommerce product category", med select over `product_cat` og "No category". Standardkategorien vises ikke, og kategorier, der er mappet til en anden creator, er deaktiverede med creatorens navn.
+  - Afsnittet gemmes med sin egen nonce og handling og kræver `merchboard_manage_creators`. Nye mappings kan kun gives til aktive creators.
+  - En tekst ved feltet siger, at produkterne ikke ændres.
+  - Creators-listen får en kolonne "Category".
+- **Backfill (ADR-031):** Handlingen "Link products from categories" på Creators-listen (`page=merchboard-creators&action=product-backfill`, intet nyt menupunkt). Den viser mappings, derefter en tørkørsel pr. klasse med produkt-ID'er, bekræftelse, skrivning i batches gennem `ProductCreatorLink` og til sidst et resumé.

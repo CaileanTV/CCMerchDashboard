@@ -273,7 +273,7 @@ Et JS-build er nødvendigt (`build/` genereres i CI til releases). React-version
 2026-09-24
 
 ## Status
-Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall).
+Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall) og ADR-031 (kategori-mapping pr. creator og engangs-backfill).
 
 ## Decision
 WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `merchboard_sales`-ledger fodret af ordre- og refund-hooks.
@@ -891,7 +891,7 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 2026-09-25
 
 ## Status
-Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
+Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
 
 ## Context
 Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_creator_id` (ADR-011). Før implementeringen skulle det afklares:
@@ -934,3 +934,66 @@ Forudsigelig kompatibilitet, ingen halvt fungerende integration og en kobling, d
 - `Uninstaller` skal have et trin til meta-nøglen, og nye plugin-ejede meta-nøgler skal fremover tilføjes eksplicit.
 - WooCommerce' nye blok-baserede produkteditor bruger ikke de klassiske hooks til produktfelter. Understøttet skrivevej er den klassiske produktskærm.
 - Koblinger lavet før uninstall med opt-in er væk efter geninstallation. Audit-tabellen er også væk.
+
+---
+
+# ADR-031: Kategori-mapping pr. creator som input til engangs-backfill; produkt-ejerskab via `_merchboard_creator_id`
+
+## Date
+2026-09-26
+
+## Status
+Accepteret (fase 17, før implementeringen af `ProductCreatorLink`). Besluttet af projektejeren. Supplerer ADR-011 og ADR-030 og **præciserer ADR-030 D6** (skriveveje).
+
+## Context
+Den eksisterende shop har én WooCommerce-produktkategori (`product_cat`) pr. creator. Produkter tilhører i praksis en creator via den kategori. Reglen findes kun i shoppens data og arbejdsgange, ikke i pluginet. Pluginet har ingen relation mellem creator og kategori (ingen kolonne, creator-meta eller term-meta).
+
+Kategorinavne og slugs kan ikke bruges sikkert til at finde creatoren. Allerede i de syntetiske testdata i Merch Dashboard Local hedder creatoren "Test Creator Alpha" og kategorien "Creator Alpha". Navne og slugs kan desuden ændres.
+
+Fase 18-20 (ledger, `/me/products` og statistik) kræver én entydig ejerskabsrelation. Eksisterende produkter skal derfor have en kobling. Det skal ske uden to sandheder og uden gætteri.
+
+## Decision
+1. **Ejerskab:** `_merchboard_creator_id` på parent-produktet er fortsat den **eneste autoritative relation for produkt-ejerskab** (ADR-030).
+2. **Kategori-mapping:** Creator-meta `product_category_id` (i `merchboard_creatormeta`, whitelistet i `CreatorMetaStore`) er en separat, administrativ mapping fra en creator til én WooCommerce-kategori. Den må **aldrig** bruges direkte som bevis for produkt-ejerskab eller creator-adgang. Den bruges kun som input til backfill (og til visning i admin).
+3. **1:1:** Én kategori pr. creator og én creator pr. kategori. Dubletter afvises med en fejl, og der sker ingen stille omflytning.
+4. **Kun eksplicit admin-valg:** Mappingen oprettes, ændres og fjernes kun af en administrator med `merchboard_manage_creators` på creatorens redigeringsside. Der er ingen match på navn, slug, dele af navne eller fuzzy matching (heller ikke som forslag) og ingen automatisk synkronisering.
+   - Standardkategorien (`default_product_cat`, fx "Uncategorized") kan ikke vælges.
+   - Kun aktive creators kan få en ny mapping.
+   - Mappingen oprettes og fjernes med audit (`creator_category_linked`, `creator_category_unlinked`).
+5. **Backfill er en eksplicit engangshandling:** gennemsyn af mappings → tørkørsel → bekræftelse → skrivning → resultat med audit. Den er idempotent: en ny kørsel skriver intet til produkter, der allerede er koblet. Klassifikation af hvert parent-produkt i denne rækkefølge:
+   - Allerede koblet (`_merchboard_creator_id` findes, uden hensyn til store og små bogstaver) → `already_linked`. Den rapporteres som *matcher mapping*, *afviger* eller *ingen mapping*, men skrives aldrig.
+   - Produktets kategorier i mappingen giver 0 creators → `unassigned`, 1 → `creator`, ≥2 → `ambiguous`. Kategorier uden mapping (fx "General Merchandise" eller standardkategorien) ignoreres.
+   - Produktstatusser med i kørslen: publish, draft, pending, private og future. Trash og auto-draft er udenfor og rapporteres kun.
+   - Kørslen sker i batches, kan genoptages og afsluttes med en resumé-post i audit (`product_backfill_completed`: optællinger og et øjebliksbillede af mappingen).
+6. **Ingen overskrivning:** Backfill overskriver eller ændrer aldrig en eksisterende `_merchboard_creator_id`.
+7. **Tvetydige produkter:** Produkter med flere mappede creator-kategorier er `ambiguous`. De springes over, rapporteres og rettes manuelt på produktskærmen.
+8. **Inaktive creators:** Kan ikke modtage nye produktkoblinger. Backfill springer dem over (`creator_inactive`) og rapporterer dem. Deres mapping bevares.
+9. **Varianter:** Får ingen egen creator-relation. Klassifikationen sker på parent-produktet.
+10. **Mapping-ændringer påvirker ikke produkter:** En ændret eller fjernet mapping ændrer ingen eksisterende produktkoblinger.
+11. **Kategori slettes:** Mappingen fjernes (hook på sletning af `product_cat`-terms) og auditeres med `reason: term_deleted`. Produkternes ejerskab ændres ikke.
+12. **Uden for fase 17:** Fremtidig selvbetjening for creators og en mere fleksibel kategorimodel (fx flere kategorier pr. creator) kræver en ny beslutning. Modellen kan udvides uden at ændre ejerskabsrelationen.
+
+**Præcisering af ADR-030 D6:** Fase 17 har præcis **to** understøttede skriveveje for produktets creator-relation:
+1. Den klassiske WooCommerce-produktskærm til enkeltprodukter.
+2. Den eksplicitte administrative engangs-backfill med tørkørsel og bekræftelse.
+
+Backfill skriver udelukkende gennem `ProductCreatorLink` med samme validering, capability-tjek og audit (`source: backfill`). Den kræver `merchboard_manage_creators` samt `edit_product` for hvert parent-produkt. Alle øvrige begrænsninger i ADR-030 D6 er uændrede: WooCommerce REST, CSV-import, quick/bulk edit og duplicate kan fortsat ikke ændre creator-relationen, og der er ingen nye offentlige REST-endpoints.
+
+## Alternatives considered
+- **Kategorien som ejerskab:** Alle WooCommerce-veje (quick/bulk edit, REST, CSV og duplicate) ville kunne ændre ejerskab uden validering og audit. Ejerskab ville være tvetydigt ved flere kategorier og følge omdøbning eller sletning af terms. Fravalgt.
+- **Match på navn eller slug:** falske match og brud ved omdøbning. Fravalgt.
+- **Parallel drift med synkronisering mellem kategori og meta:** to sandheder, og synkroniseringen ville reelt blive en skrivevej uden om D6. Fravalgt.
+- **Mapping som term-meta på `product_cat`:** plugin-data i WooCommerce' terms og en ny undtagelse i uninstall (ADR-025/030). Fravalgt.
+- **Egen tabel med unikhed håndhævet af databasen:** stærkeste garanti, men kræver migration 4 (roadmappet siger ingen migration i fase 17). Kan genovervejes, hvis modellen udvides.
+- **Mapping kun som input til den enkelte kørsel:** sikkert, men ikke vedligeholdt og ikke synligt i admin. Fravalgt til fordel for en gemt, auditeret mapping.
+
+## Reason
+Én auditeret ejerskabsrelation, et sikkert og gennemsigtigt udgangspunkt fra shoppens eksisterende kategorier og ingen gætteri. Kategorierne kan fortsat bruges frit til navigation og markedsføring.
+
+## Consequences
+- `CreatorMetaStore` får den tilladte nøgle `product_category_id`. Der er ingen migration, og schema forbliver 3.
+- Nye audit-actions: `creator_category_linked`, `creator_category_unlinked` og `product_backfill_completed` (samt produktkoblingens egne actions med `source`).
+- Creatorens redigeringsside får et afsnit med kategori-mapping, der kun vises med `WooCommerceModule` aktivt. Creators-listen får en kolonne "Category". Backfill åbnes fra Creators-listen og får ikke sit eget menupunkt.
+- Uninstall: mappingen forsvinder med `merchboard_creatormeta` (ADR-025). `_merchboard_creator_id` behandles efter ADR-030, og kategorierne bevares.
+- Uoverensstemmelser mellem kategori og ejerskab gøres synlige i tørkørslen, men rettes aldrig automatisk.
+- Fase 17 får to nye trin: mapping (trin 7) og backfill (trin 8).

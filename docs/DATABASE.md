@@ -114,6 +114,7 @@ Standard WordPress meta-tabel (`meta_id`, `merchboard_creator_id`, `meta_key` (i
 | --- | --- |
 | `bio` | Ren tekst, maks. 1000 tegn. Slettes ved tom værdi |
 | `social_links` | Array platform → https-URL, kun satte platforme. Slettes, når alle er tomme. Læses gennem `SocialLinks::from_stored()`, så korrupte værdier ignoreres |
+| `product_category_id` (planlagt, fase 17, ADR-031) | Term-ID for én `product_cat` (1:1 med creatoren, ikke standardkategorien). Administrativ mapping og kun input til engangs-backfill. **Aldrig bevis for produkt-ejerskab eller adgang** (det er `_merchboard_creator_id`). Fjernes, når kategorien slettes |
 
 Skrivninger går gennem `CreatorProfileService` i samme transaktion som eventuel omdøbning og audit (InnoDB, ADR-024) og verificeres ved genlæsning (`update_metadata()` returnerer `false` både ved fejl og ved uændret værdi). Værdier slashes før `update_metadata()`, som ellers ville fjerne backslashes. Tabellen er med i `Tables::all()` (engine-tjek og opt-in-uninstall). Ingen FK.
 

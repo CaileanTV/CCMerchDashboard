@@ -15,7 +15,7 @@
 - Product meta **`_merchboard_creator_id`** på parent-produktet. Varianter arver fra parent.
 - Sættes af admin i produktets data-panel (se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Ændringer audit-logges.
 - Kun **aktive** creators kan vælges. Hvis en creator bliver inaktiv, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
-- **Én autoritativ skrivevej (ADR-030):** Alle ændringer går gennem pluginets domæneservice: creator findes og er aktiv, variant → parent, capability-tjek og audit i samme transaktion. I fase 17 er kun den klassiske produktskærm understøttet:
+- **Én autoritativ skrivevej (ADR-030):** Alle ændringer går gennem pluginets domæneservice: creator findes og er aktiv, variant → parent, capability-tjek og audit i samme transaktion. I fase 17 er der præcis to understøttede skriveveje: den klassiske produktskærm og den eksplicitte administrative engangs-backfill (ADR-031, kræver `merchboard_manage_creators` og `edit_product` på hvert parent-produkt). Alt andet er lukket:
   - WooCommerce REST og CSV-import kan ikke ændre nøglen (tydelig afvisning via de hooks, som fase 17 verificerer i den faktiske WooCommerce-version).
   - Quick/bulk edit har intet Creator-felt.
   - "Duplicate product" starter uden koblingen.
@@ -23,6 +23,16 @@
   - **Grænse:** WordPress' rå meta-API fra vilkårlig PHP-kode og `wp post meta update` (WP-CLI) er ikke-understøttede bypasses, der kræver kode- eller shell-adgang. De blokeres ikke (ADR-030).
 - **Ingen produktrettigheder til creators (ADR-030):** Creator-rollen får ingen WooCommerce-produktcapabilities og ingen produktadgang i fase 17. `Capabilities::EDIT_PRODUCT` tildeles aldrig og bruges kun til at autorisere brugere, der i forvejen må redigere produktet.
 - **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglen (og kun den).
+- **Kategori-mapping og backfill (ADR-031):**
+  - Shoppens eksisterende regel er én `product_cat` pr. creator. Den bruges kun som **input til en engangs-backfill**, aldrig som ejerskab.
+  - En administrator knytter eksplicit én kategori til én creator (creator-meta `product_category_id`, 1:1, ikke standardkategorien, ingen match på navn eller slug).
+  - Backfill klassificerer parent-produkter:
+    - `already_linked`: rapporteres og overskrives aldrig.
+    - `creator`: én mappet creator-kategori.
+    - `ambiguous`: flere, springes over.
+    - `unassigned`: ingen, springes over.
+    - `creator_inactive`: springes over.
+  - Backfill skriver kun gennem `ProductCreatorLink` efter tørkørsel og bekræftelse. Mapping-ændringer og sletning af kategorier ændrer aldrig produkternes ejerskab, og der er ingen synkronisering.
 - **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `merchboard_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
 
 ## Sales ledger
