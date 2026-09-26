@@ -144,24 +144,33 @@ Settings gemmes i én option `merchboard_settings`. Alt læses gennem `Core\Sett
 Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-notice og ingen af skærmene nedenfor (ADR-030).
 
 - **Produktkoblinger (ADR-032):**
-  - Creatorens redigeringsside (Merch Dashboard → Creators → rediger) får afsnittet "Products". Det viser creatorens koblede produkter og lader admin tilknytte og fjerne produkter. Det er den eneste understøttede skrivevej for enkeltprodukter i fase 17. Den anden er den administrative engangs-backfill (ADR-031).
+  - Creatorens redigeringsside (Merch Dashboard → Creators → rediger) får afsnittet "Products". Det viser creatorens koblede produkter og lader admin tilknytte og fjerne produkter. Det er den manuelle skrivevej (`source: admin`). Den anden er den automatiske kategori-afstemning (`source: category`, ADR-033, ikke implementeret endnu).
   - Formularerne går via `admin-post.php` med egen nonce og kræver `merchboard_manage_creators` og `edit_product` for hvert produkt. Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`), aldrig med `update_meta_data()`.
   - Et produkt, der er koblet til en anden creator, overtages kun ved eksplicit admin-valg.
   - **Implementeret (fase 17, trin 4):**
     - Afsnittet vises under creator-formularen via hooken `merchboard_creators_edit_sections` (WooCommerce-modulet; Creators-modulet kender ikke WooCommerce).
     - Produktnavne vises kun for brugere med `edit_products`.
     - **Tilknyttede produkter:** højst 200, med navn (#ID), varenummer, status og en knap "Remove". Den afviser et produkt, der tilhører en anden creator, med `linked_elsewhere`.
-    - **"Add products":** søgning på navn, beskrivelse eller varenummer via WooCommerce' egen produktsøgning og på produktkategori (`product_cat`, hvis navn indeholder søgeordet). Kategorisøgningen finder kun produkter, der er direkte tildelt kategorien (ingen arv fra parent-kategorier). Resultaterne kombineres uden dubletter, navn/varenummer-match først (højst 20 resultater, kun parent-produkter, alle statusser). En kategori giver aldrig en creator-kobling; den hjælper kun med at finde produkter. Hvert resultat kan vælges, og flere kan tilknyttes på én gang.
+    - **"Add products":** søgning på navn, beskrivelse eller varenummer via WooCommerce' egen produktsøgning og på produktkategori (`product_cat`, hvis navn indeholder søgeordet). Kategorisøgningen finder kun produkter, der er direkte tildelt kategorien (ingen arv fra parent-kategorier). Resultaterne kombineres uden dubletter, navn/varenummer-match først (højst 20 resultater, kun parent-produkter, alle statusser). Søgningen opretter ingen kobling; den hjælper kun med at finde produkter. Automatiske koblinger kommer kun fra en kategori-mapping (ADR-033). Hvert resultat kan vælges, og flere kan tilknyttes på én gang.
     - **Overtagelse:** Produkter, der er koblet til en anden creator, vises med "Linked to <navn>" og et separat afkrydsningsfelt "Take over the product from <navn>". Det er aldrig valgt på forhånd og sendes som `replace_existing` for netop det produkt. Uden det afvises produktet (`already_linked`) uden ændring.
     - En ugyldig kobling kan erstattes eller fjernes på samme måde.
     - Hvilke produkter der kan kobles (varianter, papirkurv, inaktive creators, `edit_product`), afgøres af `ProductCreatorLink`. Resultatet vises pr. produkt efter Post/Redirect/Get, så fejl ikke skjules.
+  - **Planlagt (ADR-033, trin 11):**
+    - Hver kobling viser sin oprindelse: "Manual" (`admin`) eller "Via category <navn>" (`category`).
+    - **Remove afvises for kategori-styrede produkter** med forklaringen "Dette produkt styres af en produktkategori. Fjern produktet fra kategorien, eller vælg »Keep as manual«, hvis koblingen skal administreres manuelt." Der er ingen skjult undtagelsesliste.
+    - **"Keep as manual"** er en eksplicit handling pr. kategori-styret produkt. Den ændrer oprindelsen til `admin`, beholder creatoren og auditeres. Derefter fjernes koblingen aldrig automatisk.
+    - Overtagelse af et kategori-styret produkt til en anden creator giver en manuel (`admin`) kobling.
+    - Konflikter vises som needs attention: manuelle koblinger, der afviger fra produktets creator-kategori; tvetydige produkter i flere creators' kategorier; og produkter i en inaktiv creators kategori uden kobling.
 - **Produktliste:** skrivebeskyttet kolonne "Creator" og et creator-filter (ADR-032). De viser og filtrerer, men ændrer aldrig koblingen.
 - **WooCommerce-produktskærmen** (klassisk og blok-baseret) viser **ikke** creator-relationen og har intet creator-felt, ingen meta box og intet save-hook (ADR-032).
-- Ingen Creator-felt i quick/bulk edit. WooCommerce REST og CSV-import kan ikke ændre koblingen, og "Duplicate" giver et produkt uden creator (ADR-030).
+- Ingen Creator-felt i quick/bulk edit. WooCommerce REST og CSV-import kan ikke ændre koblingen direkte, og "Duplicate" kopierer ikke koblingen (ADR-030). Ændres produktets kategorier via disse veje, eller arver en kopi en creator-kategori, afstemmes koblingen automatisk (ADR-033).
 - Ordreliste: kolonnen "Creators" (afledt af ordrelinjer) er **udskudt** til en senere fase (ADR-030 D3).
-- **Kategori-mapping (ADR-031):**
-  - Creatorens redigeringsside får afsnittet "WooCommerce product category", med select over `product_cat` og "No category". Standardkategorien vises ikke, og kategorier, der er mappet til en anden creator, er deaktiverede med creatorens navn.
+- **Kategori-mapping (ADR-033, erstatter ADR-031's model; ikke implementeret endnu, trin 7-10):**
+  - Creatorens redigeringsside får afsnittet "WooCommerce product category" med en select over `product_cat` og "No category". Standardkategorien vises ikke, og kategorier, der er mappet til en anden creator, er deaktiverede med creatorens navn. Fase 17 tillader én kategori pr. creator (tabellen `merchboard_creator_categories` understøtter teknisk flere).
   - Afsnittet gemmes med sin egen nonce og handling og kræver `merchboard_manage_creators`. Nye mappings kan kun gives til aktive creators.
-  - En tekst ved feltet siger, at produkterne ikke ændres.
+  - Teksten ved feltet siger, at mappingen er en **vedvarende regel**: produkter, der direkte ligger i kategorien, kobles automatisk, og produkter, der forlader den, mister kategori-koblingen. Manuelle koblinger røres ikke.
+  - **Oprettelse:** tørkørsel med konsekvenser (kobles, allerede manuelt koblet til samme creator, konflikt med manuel kobling til en anden creator, tvetydig, creator inaktiv), derefter eksplicit bekræftelse. Den første afstemning køres i batches via Action Scheduler og afsluttes med `category_sync_completed`.
+  - **Fjernelse:** tørkørsel med antallet af berørte kategori-koblinger og et eksplicit valg: "Remove category-managed links" eller "Keep as manual links". Ingen masseændring uden bekræftelse.
+  - Sletter nogen en mappet kategori i WooCommerce, fjernes mappingen og de kategori-koblinger, der kun fandtes på grund af den (`reason: term_deleted`). Manuelle koblinger påvirkes ikke.
   - Creators-listen får en kolonne "Category".
-- **Backfill (ADR-031):** Handlingen "Link products from categories" på Creators-listen (`page=merchboard-creators&action=product-backfill`, intet nyt menupunkt). Den viser mappings, derefter en tørkørsel pr. klasse med produkt-ID'er, bekræftelse, skrivning i batches gennem `ProductCreatorLink` og til sidst et resumé.
+- **Fuld afstemning (ADR-033, erstatter ADR-031's backfill):** Et admin-værktøj på Creators-listen (intet nyt menupunkt) med tørkørsel pr. klasse, bekræftelse, kørsel i batches gennem `ProductCreatorLink` og et resumé. Det er sikkerhedsnet for kategoriændringer, som ingen hook ser. Den separate engangs-backfill "Link products from categories" (ADR-031) bygges ikke.

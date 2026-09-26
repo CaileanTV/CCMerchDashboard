@@ -119,20 +119,37 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ## Fase 17 – WooCommerce foundation
 
-- **Scope:** `WooCommerceModule` (betinget indlæsning), `WC requires at least`, produktkoblinger administreret i Merch Dashboard (creatorens redigeringsside, ADR-032), skrivebeskyttet "Creator"-kolonne og -filter i produktlisten og audit-log af koblinger. Intet creator-felt på WooCommerce-produktskærmen.
+- **Scope:** `WooCommerceModule` (betinget indlæsning), `WC requires at least`, produktkoblinger administreret i Merch Dashboard (creatorens redigeringsside, ADR-032), kategori-mapping som vedvarende automatisk kobling (ADR-033), skrivebeskyttet "Creator"-kolonne og -filter i produktlisten og audit-log af koblinger. Intet creator-felt på WooCommerce-produktskærmen.
 - **Præciseret før implementering (ADR-030, projektejerens beslutninger D1-D6):**
   - WooCommerce ≥ 10.3 (seneste linje, der kræver WordPress 6.7). Under minimum indlæses modulet ikke, og admin ser en notice.
   - Kolonnen "Creators" i ordrelisten er udskudt, og fasen har ingen ordrelogik.
-  - `_merchboard_creator_id` slettes kun ved opt-in-uninstall.
+  - `_merchboard_creator_id` (og fra ADR-033 `_merchboard_creator_link_source`) slettes kun ved opt-in-uninstall.
   - Ingen nye dependencies.
-  - Én autoritativ domæneservice (`ProductCreatorLink`) med to understøttede skriveveje: Merch Dashboard (wp-admin) → creatorens redigeringsside (`source: admin`) og en eksplicit administrativ engangs-backfill (ADR-031, ændret af ADR-032). WooCommerce-produktskærmen er ikke en skrivevej og viser ikke relationen. REST, CSV-import og XML-RPC kan ikke ændre koblingen, quick/bulk edit har intet felt, og duplicate starter uden kobling.
-  - Ingen nye REST-endpoints og ingen migration.
-- **Udvidet før implementering (ADR-031):**
-  - Kategori-mapping pr. creator (creator-meta `product_category_id`, 1:1, kun eksplicit admin-valg på creatorens redigeringsside). Den er aldrig bevis for ejerskab eller adgang.
-  - Engangs-backfill fra mappingen: tørkørsel, bekræftelse, idempotent, overskriver aldrig, springer `ambiguous`, `unassigned` og inaktive creators over, og auditeres.
-- **Ændret før trin 4 (ADR-032):** Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php` + nonce, `merchboard_manage_creators` + `edit_product` pr. produkt, `ProductLinkSource::Admin`), ikke på WooCommerce-produktskærmen. Produktlistens kolonne og filter er skrivebeskyttede. `product_screen` er forældet og fjernes i trin 4. Der er intet admin-REST-API, og creator-dashboardet bruges ikke.
-- **Rækkefølge:** 1-4 ✅ (undersøgelse, modul-skelet, `ProductCreatorLink`, produktkoblinger på creatorens redigeringsside), 5 skrivebeskyttet kolonne og filter i produktlisten, 6 vagter for skriveveje, 7 kategori-mapping, 8 backfill, 9 uninstall, 10 audit-log-labels, 11 i18n, docs og verifikation.
-- **Done:** Produkter kan kobles til creators. Pluginet virker stadig uden WooCommerce. Backfill giver de forventede klasser på fixture-datasættet i Merch Dashboard Local, og en ny kørsel skriver intet.
+  - Én autoritativ domæneservice (`ProductCreatorLink`). WooCommerce-produktskærmen er ikke en skrivevej og viser ikke relationen. REST, CSV-import og XML-RPC kan ikke ændre nøglerne direkte, quick/bulk edit har intet felt, og duplicate kopierer ikke koblingen.
+  - Ingen nye REST-endpoints.
+- **Udvidet før implementering (ADR-031, ændret af ADR-033):** kategori-mapping pr. creator og en engangs-backfill. Mapping som creator-meta og backfill som selvstændig skrivevej er erstattet af ADR-033.
+- **Ændret før trin 4 (ADR-032):** Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php` + nonce, `merchboard_manage_creators` + `edit_product` pr. produkt, `ProductLinkSource::Admin`), ikke på WooCommerce-produktskærmen. Produktlistens kolonne og filter er skrivebeskyttede. `product_screen` er fjernet i trin 4. Der er intet admin-REST-API, og creator-dashboardet bruges ikke.
+- **Ændret efter trin 4 (ADR-033, ikke implementeret endnu):**
+  - Tabellen `merchboard_creator_categories` (migration 4, schema-version 4): én creator pr. `product_cat`, teknisk flere kategorier pr. creator (fase 17's UI tillader én). Ingen creator-meta `product_category_id`.
+  - Oprindelse `_merchboard_creator_link_source` (`admin` | `category`) skrives sammen med `_merchboard_creator_id`. `backfill` udfases som kilde.
+  - Skriveveje: manuel admin-vej (`source: admin`) og automatisk kategori-afstemning (`source: category`, systemarbejde via Action Scheduler uden capability-tjek for den aktuelle bruger).
+  - Manuel kobling vinder altid. Remove afvises for kategori-styrede produkter; "Keep as manual" gør dem manuelle. Tvetydige produkter får ingen kategori-kobling. Kun direkte kategoritilknytning tæller.
+  - Engangs-backfillen erstattes af den første afstemning, når en kategori mappes (tørkørsel → bekræftelse).
+- **Rækkefølge:**
+  - 1-4 ✅: undersøgelse, modul-skelet, `ProductCreatorLink`, produktkoblinger på creatorens redigeringsside.
+  - 5: skrivebeskyttet kolonne og filter i produktlisten.
+  - 6: vagter for skriveveje (REST, CSV-import, duplicate m.fl.) for `_merchboard_creator_id` og `_merchboard_creator_link_source`.
+  - 7: migration 4 (`merchboard_creator_categories`) og mapping-service (oprettelse/fjernelse, én kategori pr. creator i fase 17, ikke standardkategorien, kun aktive creators, audit `creator_category_linked`/`creator_category_unlinked`).
+  - 8: kategori-afstemning: oprindelsesmeta i `ProductStore`/`ProductRecord`, `ProductLinkSource::Category` (`Backfill` fjernes), intern afstemningsmetode i `ProductCreatorLink`, tilstandsbaseret reconciler, kørsler i batches med `category_sync_completed` og et værktøj til fuld afstemning med tørkørsel.
+  - 9: hooks og Action Scheduler (`set_object_terms`, `deleted_term_relationships`, statusovergange for produkter, `pre_delete_term`, mapping-handlinger og domæne-event ved genaktivering af creators).
+  - 10: admin-UI for mapping på creatorens redigeringsside og kolonnen "Category" i Creators-listen, med tørkørsel ved oprettelse og valget "Remove category-managed links" / "Keep as manual links" ved fjernelse.
+  - 11: creatorens produktafsnit viser oprindelsen, afviser Remove for kategori-styrede produkter og tilbyder "Keep as manual".
+  - 12: integrationstests og verifikation af hele kæden i Merch Dashboard Local (wp-admin, bulk edit, CSV-import, REST, duplicate og kategorisletning).
+  - 13: uninstall (begge meta-nøgler; tabellen via `Tables::all()`).
+  - 14: audit-log-labels.
+  - 15: i18n, docs og slutverifikation.
+  - Trin 8-9 kommer før mapping-UI'et (10), fordi tørkørslen ved oprettelse bruger afstemningens klassifikation.
+- **Done:** Produkter kan kobles til creators manuelt og via kategori-mapping. Pluginet virker stadig uden WooCommerce. Den første afstemning giver de forventede klasser på fixture-datasættet i Merch Dashboard Local, en ny kørsel skriver intet, og kategoriændringer via wp-admin, bulk edit, CSV-import og REST afstemmes. Manuelle koblinger røres aldrig af afstemningen.
 
 ## Fase 18 – Sales ledger
 

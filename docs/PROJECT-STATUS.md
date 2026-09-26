@@ -271,11 +271,9 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - **Fase 17 – WooCommerce foundation:**
   - **Beslutninger:** D1-D6 er lukket i ADR-030 (D1 rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8).
   - **Udført:** Trin 1 (undersøgelse af skriveveje i WooCommerce 10.3.8), trin 2 (modul-skelet, WooCommerce ≥ 10.3) trin 3 (`ProductCreatorLink`, den autoritative domæneservice) og trin 4 (produktkoblinger på creatorens redigeringsside) er færdige.
-  - **ADR-031 (2026-09-26):**
+  - **ADR-031 (2026-09-26, ændret af ADR-033):**
     - `_merchboard_creator_id` er den eneste ejerskabsrelation.
-    - Kategori-mapping pr. creator (creator-meta `product_category_id`, 1:1, eksplicit admin-valg).
-    - Engangs-backfill med tørkørsel.
-    - D6 er præciseret med backfill som anden understøttet skrivevej gennem `ProductCreatorLink`.
+    - Kategori-mapping pr. creator og engangs-backfill med tørkørsel. **Erstattet af ADR-033:** mappingen ligger ikke i creator-meta, og backfill er ikke længere en selvstændig skrivevej.
   - **Testdata:** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen er verificeret med en tørkørsel, der intet skrev.
   - **ADR-032 (2026-09-26):**
     - Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php`, `merchboard_manage_creators` + `edit_product`, `source: admin`).
@@ -283,9 +281,16 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
     - Produktlistens kolonne og filter er skrivebeskyttede.
     - `product_screen` er forældet og fjernes i trin 4.
   - **Trin 4:**
-    - Afsnittet "Products" på creatorens redigeringsside (WooCommerce-modulet via `merchboard_creators_edit_sections`). Det viser koblede produkter og giver søgning på navn og varenummer via WooCommerce' egen søgning, valg af flere produkter, et eksplicit afkrydsningsfelt til overtagelse og resultat pr. produkt.
+    - Afsnittet "Products" på creatorens redigeringsside (WooCommerce-modulet via `merchboard_creators_edit_sections`). Det viser koblede produkter og giver søgning på navn og varenummer via WooCommerce' egen søgning og på produktkategori (kun direkte tilknytning, opretter ingen kobling), valg af flere produkter, et eksplicit afkrydsningsfelt til overtagelse og resultat pr. produkt.
     - Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`); `product_screen` er fjernet.
     - Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local: tilknytning, samme creator, afvist overtagelse, overtagelse, variant og fjernelse. Audit kommer fra servicen, og produkteditoren har ingen creator-UI. Koblingerne blev fjernet igen bagefter.
+  - **ADR-033 (2026-09-26, kun dokumenteret, implementering ikke startet):** Kategori-mapping som vedvarende automatisk kobling.
+    - Tabellen `merchboard_creator_categories` (migration 4): én creator pr. kategori, teknisk flere kategorier pr. creator.
+    - Oprindelse `_merchboard_creator_link_source` (`admin` | `category`); `backfill` udfases.
+    - Tilstandsbaseret afstemning via Action Scheduler, udløst af term- og produkt-hooks. Kører som systemarbejde gennem en intern metode i `ProductCreatorLink`.
+    - Manuel kobling vinder altid. Remove afvises for kategori-styrede produkter, og "Keep as manual" tilføjes. Tvetydige produkter får ingen kategori-kobling.
+    - Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3. Roadmappen er omlagt til trin 5-15.
+    - **Kode, der endnu afspejler den gamle model:** `ProductLinkSource::Backfill` og kommentarerne i `ProductLinkSource`, `ProductCreatorLink` og `WooCommerceModule` (engangs-backfill, `product_category_id`) opdateres i trin 8.
   - **Næste:** Trin 5 (skrivebeskyttet kolonne og filter i produktlisten).
 
 ## Planned

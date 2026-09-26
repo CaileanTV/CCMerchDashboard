@@ -1,6 +1,6 @@
 # WooCommerce-integration
 
-> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030. Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
+> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032 og ADR-033 (kategori-mapping som vedvarende automatisk kobling; ADR-033 er ikke implementeret endnu). Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
 
 ## Principper
 
@@ -13,30 +13,33 @@
 ## Kobling: produkt → creator
 
 - Product meta **`_merchboard_creator_id`** på parent-produktet. Varianter arver fra parent.
-- Sættes af admin i Merch Dashboard på creatorens redigeringsside, ikke på WooCommerce-produktskærmen, som hverken viser eller redigerer relationen (ADR-032, se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Produktlisten har en skrivebeskyttet kolonne og et filter. Ændringer audit-logges.
-- Kun **aktive** creators kan vælges. Hvis en creator bliver inaktiv, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
-- **Én autoritativ skrivevej (ADR-030):** Alle ændringer går gennem pluginets domæneservice: creator findes og er aktiv, variant → parent, capability-tjek og audit i samme transaktion. I fase 17 er der præcis to understøttede skriveveje (ADR-032):
-  - Merch Dashboard (wp-admin) → creatorens redigeringsside (`source: admin`).
-  - Den eksplicitte administrative engangs-backfill (ADR-031).
+- Sættes manuelt af admin i Merch Dashboard på creatorens redigeringsside eller automatisk af kategori-afstemningen (ADR-033), ikke på WooCommerce-produktskærmen, som hverken viser eller redigerer relationen (ADR-032, se [ADMIN.md](ADMIN.md#woocommerce-skærme-fase-17)). Produktlisten har en skrivebeskyttet kolonne og et filter. Ændringer audit-logges.
+- Kun **aktive** creators kan få nye koblinger (manuelt eller via kategori). Hvis en creator bliver inaktiv, beholder produktet koblingen (historik), men creator'en kan ikke logge ind.
+- **Én autoritativ domæneservice (ADR-030):** Alle ændringer går gennem pluginets domæneservice `ProductCreatorLink`: creator findes og er aktiv (ved nye koblinger), variant → parent, audit i samme transaktion. Der er to understøttede skriveveje (ADR-032, ændret af ADR-033):
+  - **Manuel:** Merch Dashboard (wp-admin) → creatorens redigeringsside (`source: admin`). Kræver `merchboard_manage_creators` og `edit_product` på hvert parent-produkt for den aktuelle bruger.
+  - **Automatisk kategori-afstemning** (`source: category`, ADR-033, **ikke implementeret endnu**). Kører som systemarbejde via Action Scheduler gennem en intern metode i `ProductCreatorLink` uden capability-tjek for den aktuelle bruger. Grundlaget er en mapping, som en administrator har oprettet. Audit har actor NULL og evt. `trigger_user_id`.
 
-  Begge kræver `merchboard_manage_creators` og `edit_product` på hvert parent-produkt. Alt andet er lukket, også WooCommerce-produktskærmen:
-  - WooCommerce REST, CSV-import og XML-RPC kan ikke ændre nøglen (tydelig afvisning via de hooks, som fase 17 verificerer i den faktiske WooCommerce-version).
+  Den tidligere engangs-backfill (ADR-031) er erstattet af den første afstemning, når en kategori mappes. Alle direkte ændringer af nøglerne uden for disse veje er lukket, også via WooCommerce-produktskærmen:
+  - WooCommerce REST, CSV-import og XML-RPC kan ikke ændre `_merchboard_creator_id` eller `_merchboard_creator_link_source` direkte (tydelig afvisning via de hooks, som fase 17 verificerer i den faktiske WooCommerce-version). Ændrer de produktets **kategorier**, kan det udløse kategori-afstemningen (ADR-033). Det er bevidst.
   - Quick/bulk edit har intet Creator-felt.
-  - "Duplicate product" starter uden koblingen.
+  - "Duplicate product" kopierer ikke koblingen. Kopien arver kategorierne og kan derfor få en `category`-kobling via afstemningen (ADR-033).
   - Der er ingen nye offentlige REST-endpoints.
   - **Grænse:** WordPress' rå meta-API fra vilkårlig PHP-kode og `wp post meta update` (WP-CLI) er ikke-understøttede bypasses, der kræver kode- eller shell-adgang. De blokeres ikke (ADR-030).
 - **Ingen produktrettigheder til creators (ADR-030):** Creator-rollen får ingen WooCommerce-produktcapabilities og ingen produktadgang i fase 17. `Capabilities::EDIT_PRODUCT` tildeles aldrig og bruges kun til at autorisere brugere, der i forvejen må redigere produktet.
-- **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglen (og kun den).
-- **Kategori-mapping og backfill (ADR-031):**
-  - Shoppens eksisterende regel er én `product_cat` pr. creator. Den bruges kun som **input til en engangs-backfill**, aldrig som ejerskab.
-  - En administrator knytter eksplicit én kategori til én creator (creator-meta `product_category_id`, 1:1, ikke standardkategorien, ingen match på navn eller slug).
-  - Backfill klassificerer parent-produkter:
-    - `already_linked`: rapporteres og overskrives aldrig.
-    - `creator`: én mappet creator-kategori.
-    - `ambiguous`: flere, springes over.
-    - `unassigned`: ingen, springes over.
-    - `creator_inactive`: springes over.
-  - Backfill skriver kun gennem `ProductCreatorLink` efter tørkørsel og bekræftelse. Mapping-ændringer og sletning af kategorier ændrer aldrig produkternes ejerskab, og der er ingen synkronisering.
+- **Livscyklus (ADR-030):** Koblingen bevares ved deaktivering af pluginet eller WooCommerce og ved opdateringer. Kun opt-in-uninstall sletter nøglerne (`_merchboard_creator_id` og `_merchboard_creator_link_source`, og kun dem).
+- **Oprindelse (ADR-033, ikke implementeret endnu):** product meta `_merchboard_creator_link_source` = `admin` (manuel) eller `category` (aktuelt afledt af en kategori-mapping). Den skrives og verificeres sammen med `_merchboard_creator_id`. Mangler den, er koblingen manuel. Den er ikke en ejerskabsrelation. Kilden `backfill` udfases.
+- **Kategori-mapping som vedvarende automatisk kobling (ADR-033, erstatter ADR-031's engangs-backfill, ikke implementeret endnu):**
+  - En administrator mapper eksplicit en `product_cat` til en creator i tabellen `merchboard_creator_categories` (én creator pr. kategori; teknisk flere kategorier pr. creator, men fase 17's UI tillader én; ikke standardkategorien; ingen match på navn eller slug). Mappingen er aldrig selv bevis for ejerskab eller adgang.
+  - **Afstemning:** Hooks (`set_object_terms`, `deleted_term_relationships`, statusovergange, `pre_delete_term`, mapping-handlinger og genaktivering af creators) sætter kun en unik, asynkron afstemning i kø via Action Scheduler. Afstemningen er tilstandsbaseret og idempotent og ser kun på **direkte** kategoritilknytning (ingen arv fra underkategorier). Umappede kategorier ignoreres.
+  - **Regler:**
+    - En manuel (`admin`) kobling vinder altid og røres aldrig af afstemningen. Afviger den fra kategorien, vises en konflikt.
+    - Uden kobling og med én mappet aktiv creator kobles produktet (`category`). Er creatoren inaktiv, oprettes intet nyt.
+    - En `category`-kobling fjernes, når produktet ikke længere ligger i creatorens kategori, og erstattes ved flytning til en anden aktiv creators kategori.
+    - Mappede kategorier for to eller flere creators er **tvetydige**: ingen kategori-kobling, og en eksisterende `category`-kobling fjernes.
+    - Produkter i papirkurv eller auto-draft afstemmes ikke. Ved gendannelse afstemmes de igen.
+  - **Admin:** Remove afvises for kategori-styrede produkter; "Keep as manual" gør koblingen manuel. Oprettelse af en mapping starter med en tørkørsel og bekræftelse, og den første afstemning køres i batches. Ved fjernelse af en mapping vælger admin eksplicit "Remove category-managed links" eller "Keep as manual links".
+  - **Sletning af en mappet kategori** fjerner mappingen og de `category`-koblinger, der kun fandtes på grund af den (`reason: term_deleted`). Manuelle koblinger påvirkes ikke.
+  - Et admin-værktøj til fuld afstemning (tørkørsel → bekræftelse) er sikkerhedsnet for ændringer, som ingen hook ser.
 - **Én creator pr. produkt i v1.** Collab-produkter med revenue split kræver en `merchboard_product_creators`-tabel. Det er et åbent spørgsmål, om det er nødvendigt.
 
 ## Sales ledger

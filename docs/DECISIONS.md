@@ -273,7 +273,7 @@ Et JS-build er nødvendigt (`build/` genereres i CI til releases). React-version
 2026-09-24
 
 ## Status
-Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall) og ADR-031 (kategori-mapping pr. creator og engangs-backfill).
+Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall) og ADR-031 (kategori-mapping pr. creator og engangs-backfill). ADR-031's engangs-backfill er erstattet af ADR-033 (kategori-mapping som vedvarende automatisk kobling).
 
 ## Decision
 WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `merchboard_sales`-ledger fodret af ordre- og refund-hooks.
@@ -891,7 +891,7 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 2026-09-25
 
 ## Status
-Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **D6 er ændret af ADR-032:** produktskærmen er ikke længere en skrivevej og viser ikke relationen. Den første skrivevej er Merch Dashboard (wp-admin) → creatorens redigeringsside (`ProductLinkSource::Admin`), og produktlisten får en skrivebeskyttet kolonne og et filter. **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
+Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **D6 er ændret af ADR-032:** produktskærmen er ikke længere en skrivevej og viser ikke relationen. Den første skrivevej er Merch Dashboard (wp-admin) → creatorens redigeringsside (`ProductLinkSource::Admin`), og produktlisten får en skrivebeskyttet kolonne og et filter. **D6 er ændret af ADR-033 (2026-09-26):** ud over den manuelle admin-vej findes en godkendt, systembaseret kategori-skrivevej (`source: category`) gennem `ProductCreatorLink` uden capability-tjek for den aktuelle bruger. Engangs-backfill som skrivevej udgår. Uninstall sletter også `_merchboard_creator_link_source`. **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
 
 ## Context
 Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_creator_id` (ADR-011). Før implementeringen skulle det afklares:
@@ -943,7 +943,7 @@ Forudsigelig kompatibilitet, ingen halvt fungerende integration og en kobling, d
 2026-09-26
 
 ## Status
-Accepteret (fase 17, før implementeringen af `ProductCreatorLink`). Besluttet af projektejeren. Supplerer ADR-011 og ADR-030 og **præciserer ADR-030 D6** (skriveveje). **Ændret af ADR-032:** den første skrivevej i præciseringen nedenfor ("den klassiske WooCommerce-produktskærm") er erstattet af Merch Dashboard (wp-admin) → creatorens redigeringsside. Tvetydige produkter (punkt 7) rettes dér. Backfill og alle øvrige regler er uændrede.
+Accepteret (fase 17, før implementeringen af `ProductCreatorLink`). Besluttet af projektejeren. Supplerer ADR-011 og ADR-030 og **præciserer ADR-030 D6** (skriveveje). **Ændret af ADR-032:** den første skrivevej i præciseringen nedenfor ("den klassiske WooCommerce-produktskærm") er erstattet af Merch Dashboard (wp-admin) → creatorens redigeringsside. Tvetydige produkter (punkt 7) rettes dér. Backfill og alle øvrige regler er uændrede. **Ændret af ADR-033 (2026-09-26):** mappingen er en vedvarende regel, der automatisk kobler og fjerner kategori-afledte koblinger. Den ligger i tabellen `merchboard_creator_categories`, ikke i creator-meta `product_category_id`. Engangs-backfillen erstattes af den første afstemning, når en kategori mappes. Punkt 2-7, 10, 11, præciseringen af D6 og alternativet "parallel drift med synkronisering" gælder ikke længere som skrevet. Punkt 1, 8 og 9 er uændrede. Teksten nedenfor er bevaret som beslutningshistorik.
 
 ## Context
 Den eksisterende shop har én WooCommerce-produktkategori (`product_cat`) pr. creator. Produkter tilhører i praksis en creator via den kategori. Reglen findes kun i shoppens data og arbejdsgange, ikke i pluginet. Pluginet har ingen relation mellem creator og kategori (ingen kolonne, creator-meta eller term-meta).
@@ -1006,7 +1006,7 @@ Backfill skriver udelukkende gennem `ProductCreatorLink` med samme validering, c
 2026-09-26
 
 ## Status
-Accepteret (fase 17, før trin 4). Besluttet af projektejeren. **Ændrer ADR-030 D6 og ADR-031's præcisering af D6** (skriveveje). Supplerer ADR-011. ADR-030 og ADR-031 gælder i øvrigt uændret.
+Accepteret (fase 17, før trin 4). Besluttet af projektejeren. **Ændrer ADR-030 D6 og ADR-031's præcisering af D6** (skriveveje). Supplerer ADR-011. ADR-030 og ADR-031 gælder i øvrigt uændret. **Pkt. 1 og 3 er ændret af ADR-033 (2026-09-26):** skrivevejene er den manuelle admin-vej (`source: admin`, uændret) og den automatiske kategori-afstemning (`source: category`). Engangs-backfill udgår, og `backfill` udfases som kilde. Remove afvises for kategori-styrede produkter, og "Keep as manual" tilføjes.
 
 ## Context
 ADR-030 D6, præciseret af ADR-031, gjorde den klassiske WooCommerce-produktskærm til den første af to understøttede skriveveje. Planen var et felt "Creator" i fanen *General* og et save-hook. `ProductLinkSource::ProductScreen` (trin 3) blev indført til den vej.
@@ -1056,3 +1056,204 @@ Relationen er Merch Dashboards forretningsdata. Den administreres dér, hvor cre
 - Creatorens redigeringsside får to Merch Dashboard-afsnit i fase 17: produktkoblinger (ADR-032) og kategori-mapping (ADR-031).
 - Den skrivebeskyttede kolonne og filteret i produktlisten er en ren læsevej.
 - ROADMAP, ADMIN.md og WOOCOMMERCE.md beskriver ikke længere et creator-felt på produktskærmen.
+
+---
+
+# ADR-033: Kategori-mapping som vedvarende automatisk kobling
+
+## Date
+2026-09-26
+
+## Status
+Accepteret (fase 17, efter trin 4, før implementering). Besluttet af projektejeren. **Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3** (se "Ændringer af tidligere ADR'er" nedenfor). Supplerer ADR-011 og ADR-025. Dette er en **bevidst arkitekturændring**, ikke en undtagelse fra de tidligere beslutninger. Implementeringen er ikke startet.
+
+## Context
+ADR-031 gjorde creator-kategori-mappingen til et rent input til en engangs-backfill: ingen automatisk synkronisering, og mapping-ændringer og sletning af kategorier påvirkede aldrig produkternes ejerskab. ADR-032 gjorde creatorens redigeringsside til den normale manuelle skrivevej. Trin 4 leverede den, inkl. søgning på produktkategori, som kun hjælper admin med at finde produkter.
+
+Projektejeren har besluttet, at det ikke er nok. Når admin vælger en WooCommerce-produktkategori til en creator, skal kategorien fungere som en **vedvarende automatisk kobling**. Produkter, der ligger direkte i kategorien, kobles automatisk. Nye produkter i kategorien kobles, når de kommer ind, og produkter, der forlader kategorien, mister den kobling, der kom fra kategorien. Admin skal ikke vælge hvert produkt.
+
+Det kræver en model, hvor **creator ↔ kategori** er en vedvarende administrativ relation, mens **produkt → creator** (`_merchboard_creator_id`) fortsat er den eneste effektive ejerskabsrelation. En kategori-afledt kobling skal kunne skelnes fra en manuel.
+
+Undersøgt i kildekoden til WordPress 7.1.2 og WooCommerce 10.3.8 (Merch Dashboard Local):
+- Alle kategoriændringer på produkter (wp-admin, quick/bulk edit, CSV-import, REST, WP-CLI og WooCommerce CRUD's `update_terms()`) går gennem `wp_set_object_terms()` (action `set_object_terms`) eller `wp_remove_object_terms()` (action `deleted_term_relationships`).
+- `wp_delete_term()` fyrer `pre_delete_term` og kalder derefter en af de to funktioner for hvert produkt i kategorien.
+- Action Scheduler 3.9.3 følger med WooCommerce og understøtter unikke asynkrone handlinger (`as_enqueue_async_action( …, $unique = true )`).
+
+## Decision
+
+1. **Datamodel: ny tabel `merchboard_creator_categories`** (ny migration):
+
+   | Kolonne | Type | Noter |
+   | --- | --- | --- |
+   | `term_id` | `BIGINT UNSIGNED` PRIMARY KEY | `product_cat`-term |
+   | `creator_id` | `BIGINT UNSIGNED NOT NULL`, KEY | Creator-ID |
+   | `created_at` | `DATETIME NOT NULL` | UTC |
+   | `created_by` | `BIGINT UNSIGNED NULL` | WordPress-brugeren, der oprettede mappingen |
+
+   - Én `product_cat` kan kun være mappet til én creator (håndhævet af primærnøglen).
+   - En creator kan teknisk have flere kategorier. Fase 17's UI og service begrænser det til én pr. creator.
+   - Standardkategorien (`default_product_cat`) kan ikke mappes. Der er ingen match på navn eller slug (uændret fra ADR-031).
+   - Relationen ligger **ikke** i creator-meta. Creator-meta `product_category_id` (ADR-031) indføres ikke.
+   - Mappingen er **ikke ejerskab** og aldrig bevis for adgang. `_merchboard_creator_id` på parent-produktet er fortsat den eneste autoritative produkt → creator-relation. Al læsning af ejerskab og adgang (produktlisten, `/me` og fase 18-20) bruger kun den.
+   - Tabellen slettes ved opt-in-uninstall via den eksisterende mekanisme (`Tables::all()`/`SchemaEraser`). Produktkategorierne selv slettes eller ændres aldrig.
+
+2. **Oprindelse på produktkoblingen:** product meta `_merchboard_creator_link_source` med værdien `admin` eller `category`.
+   - Skrives og verificeres **sammen med** `_merchboard_creator_id` (samme skrivning i `ProductStore`, samme transaktion og audit i `ProductCreatorLink`) og fjernes sammen med den.
+   - Mangler den på en eksisterende kobling eller har den en ukendt værdi, behandles koblingen som `admin` (manuel).
+   - `category` betyder, at koblingen **aktuelt** er afledt af en creator-kategori-mapping.
+   - Den er ikke en separat ejerskabsrelation og bruges kun af afstemningen og admin-visningen.
+   - `ProductLinkSource::Backfill` (`backfill`) udfases til fordel for `ProductLinkSource::Category` (`category`).
+
+3. **Manuel kobling vinder altid.**
+   - Afstemningen fjerner eller overtager aldrig en `admin`-kobling.
+   - Eksempel: et produkt er manuelt koblet til Alpha og ligger i Betas kategori. Alpha beholdes, og produktet vises som konflikt (needs attention).
+   - Overtager admin eksplicit et produkt via den eksisterende takeover (ADR-032), bliver resultatet en `admin`-kobling.
+
+4. **"Keep as manual":** en eksplicit admin-handling for et kategori-styret produkt.
+   - Den ændrer oprindelsen fra `category` til `admin` og beholder samme `_merchboard_creator_id`.
+   - Den auditeres og er aldrig implicit.
+   - Produktet er derefter immunt over for automatisk fjernelse.
+
+5. **Remove på et kategori-styret produkt afvises** med en forklaring: "Dette produkt styres af en produktkategori. Fjern produktet fra kategorien, eller vælg »Keep as manual«, hvis koblingen skal administreres manuelt." Der er ingen skjult undtagelses- eller ignore-liste.
+
+6. **Automatisk afstemning (vedvarende regel):**
+   - **Input pr. parent-produkt:** de **direkte** `product_cat`-termer, hvilke af dem der er mappet, de mappede creators' status, den nuværende kobling og dens oprindelse.
+     - Kun direkte kategoritilknytning tæller; der er ingen implicit arv fra underkategorier.
+     - Umappede kategorier (fx "General Merchandise" og standardkategorien) ignoreres.
+   - **Tilstandsbaseret og idempotent:** resultatet afhænger kun af den aktuelle tilstand, ikke af rækkefølgen eller antallet af hændelser. En afstemning uden ændring skriver intet.
+   - **Hooks på term- og produkt-livscyklusniveau**, så wp-admin, quick/bulk edit, CSV-import, REST, WP-CLI og WooCommerce CRUD dækkes:
+     - `set_object_terms` og `deleted_term_relationships` (taxonomy `product_cat`);
+     - statusovergange for produkter (fx gendannelse fra papirkurven);
+     - `pre_delete_term` for mappede kategorier;
+     - pluginets egne mapping-handlinger;
+     - genaktivering af en creator (nyt domæne-event i Creators-modulet).
+   - **Handlerne sætter kun i kø:** de sætter en idempotent afstemning i kø via **Action Scheduler** (asynkron, unik pr. produkt).
+     - Handlerne skriver aldrig selv koblinger.
+     - Afstemningen sker aldrig midt i WooCommerce' egen produktgemning.
+     - Koblingen bliver derfor konsistent med en kort forsinkelse (eventual consistency).
+   - **Sikkerhedsnet:** et admin-værktøj til fuld afstemning (tørkørsel → bekræftelse) fanger ændringer, som ingen hook ser (fx direkte SQL).
+
+7. **Autorisation for system-afstemning:**
+   - **Systemarbejde:** kategori-afledte ændringer køres via Action Scheduler.
+     - De går stadig gennem `ProductCreatorLink` med samme validering: parent-produkt, understøttet status, aktiv creator ved nye koblinger, audit og transaktion.
+     - De bruger en **eksplicit intern afstemningsmetode**, der ikke kræver `current_user_can( 'edit_product' )`. Kun afstemningen må kalde den.
+   - **Grundlag for autorisationen:** mappingen er oprettet af en administrator med `merchboard_manage_creators`, og selve kategoriændringen er autoriseret af WordPress/WooCommerce.
+   - **Bevidst konsekvens:** brugere og veje, der må ændre produktkategorier (fx shop managers, REST-klienter og CSV-import), styrer **indirekte** kategori-afledte koblinger. De kan ikke ændre manuelle koblinger.
+   - **Audit:** actor er NULL (system). Den bruger, der udløste kategoriændringen, gemmes som `trigger_user_id` i context, når den er kendt.
+   - **Stadig blokeret:** direkte ændring af `_merchboard_creator_id` og `_merchboard_creator_link_source` via REST, CSV-import, XML-RPC, quick/bulk edit og duplicate (ADR-030 D6).
+   - **Manuelle ændringer** (link, remove, takeover og "Keep as manual") kræver fortsat `merchboard_manage_creators` og `edit_product` for den aktuelle bruger.
+
+8. **Tvetydighed:**
+   - Ligger et produkt direkte i kategorier mappet til **to eller flere forskellige creators**, har det ingen kategori-baseret kobling. En eksisterende `category`-kobling fjernes (`reason: ambiguous`).
+   - Der vælges aldrig en creator ud fra rækkefølge eller historik.
+   - En manuel kobling må eksistere og vinder.
+   - Tvetydighed er en tilstand (needs attention), ikke en selvstændig audit-hændelse.
+
+9. **Scenarier** for et parent-produkt. "Mappet creator" betyder creatoren for en direkte, mappet kategori.
+
+   | Nuværende kobling | Mappede creators | Resultat |
+   | --- | --- | --- |
+   | `admin` (eller uden oprindelse) | vilkårlig | Ingen ændring. Konflikt vises, hvis den afviger. |
+   | ingen | ingen | Ingen kobling |
+   | ingen | én aktiv (A) | Kobl til A (`category`) |
+   | ingen | én inaktiv (A) | Ingen ny kobling. Vises som `creator_inactive` og afstemmes ved genaktivering. |
+   | `category` → A | A (aktiv eller inaktiv) | Ingen ændring. Eksisterende koblinger bevares ved inaktivitet. |
+   | `category` → A | ingen | Fjern koblingen |
+   | `category` → A | kun B, aktiv | Erstat A → B (`category_moved`) |
+   | `category` → A | kun B, inaktiv | Fjern A. Opret ikke B. |
+   | ingen eller `category` | to eller flere forskellige | Tvetydig: ingen kategori-kobling (en `category`-kobling fjernes) |
+
+   - **Almindelig kategori sammen med en creator-kategori** (fx Alpha + General Merchandise): creator-kategorien tæller, og produktet kobles til Alpha.
+   - **Underkategori:** et produkt, der kun ligger i en underkategori til en mappet kategori, får ingen kobling.
+   - **Papirkurv og auto-draft:** ingen aktiv afstemning, og de eksisterende livscyklusregler gælder. En kobling bevares i papirkurven, og `ProductCreatorLink` skriver ikke til produkter i papirkurv eller auto-draft.
+   - **Gendannelse fra papirkurven og overgang fra auto-draft:** produktet afstemmes igen.
+   - **Varianter** har ingen egen relation og ingen kategorier. Afstemningen sker på parent-produktet.
+
+10. **Oprettelse og fjernelse af en mapping:**
+    - **Oprettelse:**
+      - En tørkørsel viser konsekvenserne: fx kobles, allerede manuelt koblet til samme creator, konflikt med manuel kobling til en anden creator, tvetydig og creator inaktiv.
+      - Efter eksplicit bekræftelse gemmes mappingen, og den første afstemning køres i batches via Action Scheduler.
+    - **Fjernelse:**
+      - En tørkørsel viser antallet af berørte `category`-koblinger.
+      - Admin vælger eksplicit **"Remove category-managed links"** eller **"Keep as manual links"** (oprindelsen ændres til `admin`).
+      - Der sker ingen masseændring uden eksplicit bekræftelse.
+    - **Hvem og hvor:** kun en administrator med `merchboard_manage_creators` på creatorens redigeringsside. Nye mappings kan kun gives til aktive creators (uændret fra ADR-031).
+
+11. **Sletning af en mappet kategori:**
+    - Mappingen fjernes (`reason: term_deleted`).
+    - `category`-koblinger, der kun eksisterede på grund af denne mapping, fjernes, fordi produkterne forlader kategorien. De omdannes ikke til manuelle.
+    - Manuelle koblinger påvirkes ikke.
+    - Dette er bevidst forskelligt fra manuel fjernelse af en mapping (pkt. 10), fordi sletningen sker i WooCommerce uden et valg i Merch Dashboard.
+
+12. **Duplicate:**
+    - WooCommerce' duplicate kopierer ikke `_merchboard_creator_id` eller `_merchboard_creator_link_source` (ADR-030 D6, uændret).
+    - Kopien arver produktkategorierne og kan derfor få en `category`-kobling gennem den normale afstemning.
+    - Der er ingen særregel, der kopierer koblingen direkte.
+
+13. **Audit:** kun faktiske ændringer. Idempotente afstemninger uden ændring skriver intet.
+
+    | Hændelse | Action | Context |
+    | --- | --- | --- |
+    | Kategori mappet | `creator_category_linked` | `term_id` |
+    | Mapping fjernet | `creator_category_unlinked` | `term_id`, `reason` (`admin` eller `term_deleted`) og ved `admin` valget (`remove_links` eller `keep_as_manual`) |
+    | Kobling oprettet af afstemningen | `product_creator_linked` | `source: category`, `reason`, `category_ids`, evt. `trigger_user_id` og `run_id` |
+    | Kobling fjernet af afstemningen | `product_creator_unlinked` | `source: category`, `reason`, evt. `trigger_user_id` og `run_id` |
+    | Flyttet mellem creator-kategorier | `product_creator_unlinked` + `product_creator_linked` i samme transaktion (som ved takeover) | `reason: category_moved`, `previous_creator_id` |
+    | "Keep as manual" (enkeltprodukt eller ved fjernelse af mapping) | `product_creator_linked` med samme creator | `source: admin`, `previous_source: category` |
+    | Afstemning i batches afsluttet | `category_sync_completed` | `run_id`, anledning og optællinger pr. resultat |
+
+    - Reasons for `source: category`: `category_added`, `category_removed`, `category_moved`, `mapping_created`, `mapping_removed`, `creator_activated`, `term_deleted` og `ambiguous`.
+    - Tvetydighed og konflikter auditeres ikke som selvstændige hændelser.
+
+14. **Backfill:**
+    - ADR-031's engangs-backfill erstattes konceptuelt af **den første afstemning, når en kategori mappes** (pkt. 10).
+    - ADR-031's klassifikation genbruges og udvides med oprindelsen.
+    - `product_backfill_completed` erstattes af `category_sync_completed`.
+    - Idempotensen følger af den tilstandsbaserede afstemning og Action Schedulers unikke handlinger.
+
+### Ændringer af tidligere ADR'er
+- **ADR-030 D6:**
+  - Ud over den manuelle skrivevej findes nu en **godkendt, systembaseret kategori-skrivevej** (`source: category`) gennem `ProductCreatorLink` uden capability-tjek for den aktuelle bruger (pkt. 7).
+  - REST, CSV-import, XML-RPC, quick/bulk edit og duplicate kan fortsat ikke ændre nøglerne direkte. Kategoriændringer via disse veje kan udløse afstemningen.
+  - Uninstall sletter også `_merchboard_creator_link_source`.
+- **ADR-031:** følgende er **ændret** som beskrevet ovenfor:
+  - Pkt. 2: mappingen ligger ikke i creator-meta `product_category_id`.
+  - Pkt. 3: 1:1 bliver én creator pr. kategori, teknisk flere kategorier pr. creator.
+  - Pkt. 4: "ingen automatisk synkronisering" gælder ikke længere.
+  - Pkt. 5-6: engangs-backfill og "overskriver aldrig" erstattes.
+  - Pkt. 7: tvetydige produkter rettes ikke kun manuelt.
+  - Pkt. 10: mapping-ændringer påvirker nu produkter.
+  - Pkt. 11: kategorisletning kan nu ændre koblinger.
+  - Præciseringen af D6 (backfill som skrivevej) og det fravalgte alternativ "parallel drift med synkronisering".
+
+  Uændret: pkt. 1 (ejerskab via `_merchboard_creator_id`), pkt. 8 (inaktive creators får ikke nye koblinger) og pkt. 9 (varianter).
+- **ADR-032:**
+  - Pkt. 1: skrivevejene er nu den **manuelle admin-vej** (`source: admin`, den normale manuelle vej, uændret) og den **automatiske kategori-afstemning** (`source: category`). Engangs-backfill som selvstændig skrivevej udgår.
+  - Pkt. 3: `ProductLinkSource` får `category`, og `backfill` udfases.
+  - Remove afvises for kategori-styrede produkter (pkt. 5), og "Keep as manual" tilføjes (pkt. 4).
+  - Pkt. 2, 4 og 5 gælder i øvrigt uændret.
+
+## Alternatives considered
+- **Mapping i creator-meta `product_category_id` (ADR-031):** entydigheden pr. kategori ville kun blive håndhævet af applikationen, og opslaget fra kategori til creator ved hver produktændring ville ramme et felt uden indeks. Fravalgt.
+- **Term-meta på `product_cat`:** plugin-data i WooCommerce' terms og en ny undtagelse i uninstall. Fravalgt (som i ADR-031).
+- **Ingen gemt oprindelse (udled den):** når et produkt forlader en kategori, kan en kategori-afledt kobling ikke skelnes fra en manuel, og en legitim manuel kobling kunne blive slettet. Fravalgt.
+- **Behold den tidligere creator ved tvetydighed:** resultatet ville afhænge af rækkefølgen af ændringer. Fravalgt.
+- **Skjult undtagelsesliste ved manuel fjernelse:** usynlig tilstand, der modarbejder reglen. Fravalgt til fordel for "Keep as manual".
+- **Synkron afstemning i hooket eller på `shutdown`:** skrivning midt i WooCommerce' produktgemning (meta-cache, indlejrede transaktioner, midlertidig status) eller uden genforsøg. Fravalgt til fordel for Action Scheduler.
+- **Kategorien som ejerskab (ingen `_merchboard_creator_id`):** ingen validering, audit eller manuel overstyring, og ejerskab ville følge omdøbning. Fravalgt (som i ADR-031).
+- **Omdan kategori-koblinger til manuelle ved kategorisletning:** ville efterlade koblinger uden grundlag, som ingen har valgt. Fravalgt.
+
+## Reason
+Kategorien er shoppens eksisterende arbejdsgang for, hvilken creator et produkt tilhører. En vedvarende regel fjerner manuelt dobbeltarbejde. Ejerskab har stadig én relation, én domæneservice og audit for hver ændring. Oprindelsen gør det muligt at automatisere uden at røre legitime manuelle beslutninger.
+
+## Consequences
+- **Migration:** ny migration (schema-version 4) for `merchboard_creator_categories`. Fase 17's "ingen migration" gælder ikke længere.
+- **Ny meta-nøgle:** `_merchboard_creator_link_source` er plugin-ejet product meta. Den skal beskyttes af skrivevejsvagterne, udelades ved duplicate og slettes ved opt-in-uninstall sammen med `_merchboard_creator_id`.
+- **Kode, der skal ændres:**
+  - `ProductLinkSource`: `Admin` og `Category`; `Backfill` fjernes.
+  - `ProductRecord`/`ProductStore`: læser og skriver oprindelsen.
+  - `ProductCreatorLink`: får den interne afstemningsmetode, afviser Remove på kategori-styrede produkter og får "Keep as manual".
+- **Trin 4's UI** viser oprindelsen pr. produkt og tilbyder "Keep as manual". Kategorisøgningen fra trin 4 bevares som søgehjælp.
+- **Audit:** nye actions `creator_category_linked`, `creator_category_unlinked` og `category_sync_completed`. `product_backfill_completed` indføres ikke.
+- **Creators-modulet** får et domæne-event ved statusændring, så genaktivering kan udløse afstemning.
+- **Roadmap:** fase 17's resterende trin omlægges (se ROADMAP.md). Implementeringen er ikke startet.

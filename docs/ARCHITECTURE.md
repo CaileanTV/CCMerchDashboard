@@ -158,7 +158,7 @@ Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
 Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030)
+→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og `_merchboard_creator_link_source` (ADR-033)
 → alle andre WordPress- og WooCommerce-data bevares
 ```
 
@@ -174,7 +174,7 @@ Se [DATABASE.md](DATABASE.md). Kort:
 
 - **WordPress users/roles** = identitet og login.
 - **`merchboard_creators`** (✅ fase 3) = creator-domæneobjektet, adskilt fra login-kontoen. Creator-ID er den primære reference for al domænedata, og `user_id` er kun en nullable, unik relation til login-laget (ADR-020). `merchboard_creatormeta` kommer i fase 14.
-- **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta.
+- **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta `_merchboard_creator_id` (sat manuelt af admin eller automatisk via kategori-mapping, ADR-033).
 - **`merchboard_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
 - **Tekniske logs** = WooCommerce-logger eller `error_log()` (fase 4, ADR-021). Ingen tabel.
 - **`merchboard_audit_log`** (✅ fase 6, ADR-023) = append-only audit trail (`Core/Audit`: `AuditAction`, `AuditTrail`, `AuditRepository`). Creator-ændringer og audit skrives i én databasetransaktion (`Core/Database/Transaction`).

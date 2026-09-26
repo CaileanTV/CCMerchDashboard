@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 2.** `merchboard_creators` (fase 3) og `merchboard_audit_log` (fase 6) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19** og SQLite (Playground). MySQL er ikke verificeret endnu (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
+> Status: **Schema-version 3.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6) og `merchboard_creatormeta` (fase 14) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19** og SQLite (Playground). MySQL er ikke verificeret endnu (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
 
 ## Placering af data
 
@@ -19,7 +19,9 @@
 | Synkroniseret rolle-version | `wp_options`: `merchboard_roles_version` ✅ (autoload) | Styrer rolle-sync ved opdateringer (ADR-022) |
 | Secrets (API-nøgler til integrationer) | `wp-config.php`-konstanter (foretrukket) eller option med `autoload = no` | Aldrig i repo, aldrig autoloaded, aldrig sendt til frontend |
 | Produkter, varianter, ordrer, refunds og kunder | **WooCommerce** (HPOS) | Source of truth. Ingen kopi af masterdata. |
-| Produkt → creator | WooCommerce product meta `_merchboard_creator_id` (fase 17) | Én creator pr. produkt i v1. Pluginet ejer nøglen: bevares ved deaktivering af pluginet og WooCommerce, og slettes kun ved opt-in-uninstall (ADR-030) |
+| Produkt → creator | WooCommerce product meta `_merchboard_creator_id` (fase 17) | **Eneste ejerskabsrelation.** Én creator pr. produkt i v1. Pluginet ejer nøglen: bevares ved deaktivering af pluginet og WooCommerce, og slettes kun ved opt-in-uninstall (ADR-030) |
+| Koblingens oprindelse | WooCommerce product meta `_merchboard_creator_link_source` (`admin` | `category`), planlagt (fase 17, ADR-033) | Skrives og fjernes sammen med `_merchboard_creator_id`. Mangler den, er koblingen manuel. Ikke en ejerskabsrelation. Pluginet ejer nøglen og sletter den kun ved opt-in-uninstall |
+| Creator ↔ produktkategori (mapping) | `merchboard_creator_categories` (custom), planlagt (fase 17, schema-version 4, ADR-033) | Vedvarende administrativ regel for automatiske koblinger. Aldrig bevis for ejerskab eller adgang |
 | Salg pr. creator (historik) | `merchboard_sales` (custom ledger, fase 18) | Hurtige aggregeringer og uforanderlig attribution. Se [WOOCOMMERCE.md](WOOCOMMERCE.md). |
 | Tekniske logs | **Ingen tabel.** WooCommerce-logger eller `error_log()` (fase 4, ADR-021) | Tekniske logs er drift, ikke forretningsdata |
 | Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom) ✅ fase 6 | Forretningsdata, append-only (ADR-023). Read-only visning ✅ fase 11 (Merch Dashboard → Audit log). |
@@ -114,9 +116,23 @@ Standard WordPress meta-tabel (`meta_id`, `merchboard_creator_id`, `meta_key` (i
 | --- | --- |
 | `bio` | Ren tekst, maks. 1000 tegn. Slettes ved tom værdi |
 | `social_links` | Array platform → https-URL, kun satte platforme. Slettes, når alle er tomme. Læses gennem `SocialLinks::from_stored()`, så korrupte værdier ignoreres |
-| `product_category_id` (planlagt, fase 17, ADR-031) | Term-ID for én `product_cat` (1:1 med creatoren, ikke standardkategorien). Administrativ mapping og kun input til engangs-backfill. **Aldrig bevis for produkt-ejerskab eller adgang** (det er `_merchboard_creator_id`). Fjernes, når kategorien slettes |
+
+Creator-meta `product_category_id` (planlagt i ADR-031) indføres **ikke**. Kategori-mappingen ligger i `merchboard_creator_categories` (ADR-033).
 
 Skrivninger går gennem `CreatorProfileService` i samme transaktion som eventuel omdøbning og audit (InnoDB, ADR-024) og verificeres ved genlæsning (`update_metadata()` returnerer `false` både ved fejl og ved uændret værdi). Værdier slashes før `update_metadata()`, som ellers ville fjerne backslashes. Tabellen er med i `Tables::all()` (engine-tjek og opt-in-uninstall). Ingen FK.
+
+### `merchboard_creator_categories` (planlagt, schema-version 4, fase 17, ADR-033)
+
+Vedvarende administrativ mapping fra en WooCommerce-produktkategori til en creator. Den styrer den automatiske kategori-afstemning, men er **aldrig** bevis for ejerskab eller adgang. Det er kun `_merchboard_creator_id`.
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `term_id` | `bigint(20) unsigned NOT NULL` PK | `product_cat`-term. Primærnøglen sikrer én creator pr. kategori |
+| `creator_id` | `bigint(20) unsigned NOT NULL`, KEY | Creator-ID. En creator kan teknisk have flere kategorier; fase 17's UI og service tillader én |
+| `created_at` | `datetime NOT NULL` | UTC |
+| `created_by` | `bigint(20) unsigned DEFAULT NULL` | WordPress-brugeren, der oprettede mappingen |
+
+Standardkategorien (`default_product_cat`) kan ikke mappes. Nye mappings kun til aktive creators. Rækken slettes ved fjernelse af mappingen og når kategorien slettes i WooCommerce (`pre_delete_term`). Oprettelse og sletning auditeres (`creator_category_linked`/`creator_category_unlinked`). Tabellen kommer med i `Tables::all()` (engine-tjek og opt-in-uninstall). Produktkategorierne selv røres aldrig. Ingen FK.
 
 ### `merchboard_audit_log` ✅ (schema-version 2, ADR-023)
 
@@ -142,6 +158,9 @@ Indexes: `KEY(created_at)`, `KEY(action)`, `KEY(creator_id)`. Ingen fremmednøgl
 | `creator_activated` / `creator_deactivated` | `previous_status`. Ved slettet bruger desuden `reason: user_deleted` (fase 8) |
 | `creator_user_linked` / `creator_user_unlinked` | `user_id` (hhv. den nye og den tidligere). Ved slettet bruger desuden `reason: user_deleted` (fase 8) |
 | `settings_updated` (fase 9) | `setting` (navn) og den nye værdi (fx `enabled: true`). `creator_id` er NULL. |
+| `product_creator_linked` / `product_creator_unlinked` (fase 17) | `product_id`, `source` (`admin`; planlagt `category`, ADR-033), ved linked `previous_creator_id`, evt. `previous_link: invalid`. For `source: category` desuden `reason` (`category_added`, `category_removed`, `category_moved`, `mapping_created`, `mapping_removed`, `creator_activated`, `term_deleted`, `ambiguous`), `category_ids`, evt. `trigger_user_id` og `run_id`; actor er NULL (system). "Keep as manual" skrives som `product_creator_linked` med `source: admin` og `previous_source: category` |
+| `creator_category_linked` / `creator_category_unlinked` (planlagt, ADR-033) | `term_id`. Ved unlinked desuden `reason` (`admin` eller `term_deleted`) og ved `admin` valget (`remove_links` eller `keep_as_manual`) |
+| `category_sync_completed` (planlagt, ADR-033) | `run_id`, anledning og optællinger pr. resultat for en afstemning i batches. Kun faktiske ændringer skrives som produkt-records; afstemninger uden ændring skriver intet |
 
 En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `creator_deactivated`.
 
@@ -185,7 +204,7 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 
 | Del | Implementering |
 | --- | --- |
-| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **2**. |
+| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **3**. Planlagt: **4** (`merchboard_creator_categories`, ADR-033). |
 | Migrationsliste | `MerchBoard\Core\Database\Schema::migrations()`: `array<int, Migration>` nøglet på den schema-version, migrationen giver. Højeste nøgle = forventet version. |
 | Migration | Klasse, der implementerer `MerchBoard\Core\Database\Migration::up( wpdb )`. Kaster `DatabaseException`, hvis ændringen ikke kan verificeres. **Skal være idempotent.** |
 | Runner | `MerchBoard\Core\Database\Migrator`: kører manglende migrationer i stigende rækkefølge og gemmer versionen **efter hver succesfuld migration**. Fejler en migration, stopper kørslen, og versionen forbliver på sidste succes. |
@@ -278,23 +297,23 @@ Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
 Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030)
+→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og `_merchboard_creator_link_source` (ADR-033)
 → alle andre WordPress- og WooCommerce-data bevares
 ```
 
 | Plugin-ejet state (fuld inventory, fase 9) | Slettes ved opt-in-uninstall |
 | --- | --- |
-| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta` og (planlagt, ADR-033) `{prefix}merchboard_creator_categories` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
 | Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja |
 | Transient `merchboard_db_migration_failed` | Ja |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |
 | Rollen `merchboard_creator` | Ja: fjernes fra brugere (andre roller bevares) og derefter som rolle |
 | Capabilities `merchboard_access_dashboard`, `merchboard_manage`, `merchboard_manage_creators`, `merchboard_manage_settings` (`Capabilities::all()`) | Ja: fra alle roller og fra brugere, der har fået dem direkte. Kun disse præcise navne, ikke alt med prefix `merchboard_`. |
 | Tekniske log-poster (WooCommerce-log, source `merchboard`, eller `debug.log`) | Nej: ejes af WooCommerce/serveren og ryddes af deres retention |
-| Product meta `_merchboard_creator_id` (produkt→creator-koblingen, fra fase 17) | Ja: kun denne præcise nøgle, på de produkter og varianter hvor den findes, for det aktuelle site. Via WordPress' meta-API (virker også uden WooCommerce), idempotent og før tabellerne droppes. Selve produkterne bevares (ADR-030) |
-| WordPress-brugere, andre roller/capabilities, posts, sider, media, WooCommerce-produkter, -ordrer og -kunder, **al anden** WooCommerce- og produkt-meta end `_merchboard_creator_id`, andre plugins' data, themes | **Aldrig** |
+| Product meta `_merchboard_creator_id` (produkt→creator-koblingen, fra fase 17) og `_merchboard_creator_link_source` (oprindelsen, planlagt, ADR-033) | Ja: kun disse præcise nøgler, på de produkter og varianter hvor de findes, for det aktuelle site. Via WordPress' meta-API (virker også uden WooCommerce), idempotent og før tabellerne droppes. Selve produkterne bevares (ADR-030) |
+| WordPress-brugere, andre roller/capabilities, posts, sider, media, WooCommerce-produkter, -ordrer og -kunder, **al anden** WooCommerce- og produkt-meta end `_merchboard_creator_id` og `_merchboard_creator_link_source`, produktkategorier (`product_cat`-terms og deres tilknytninger), andre plugins' data, themes | **Aldrig** |
 
-**Strategi (ADR-025):** `DROP TABLE` committer implicit og kan ikke indgå i en transaktion, så der er ingen falsk atomicitet. Rækkefølgen er i stedet: brugere → roller → tabeller → options → `merchboard_settings` **sidst**. Fra fase 17 slettes product meta `_merchboard_creator_id` efter roller og før tabeller (ADR-030). Hvert trin er idempotent (`IF EXISTS`, manglende roller og options ignoreres). Fejler et tabel-drop, logges det, og der slettes ingen options. Opt-in'en bevares derfor, og den næste afinstallation fortsætter. Gentagen afinstallation er sikker. Uninstall skriver ingen audit-records.
+**Strategi (ADR-025):** `DROP TABLE` committer implicit og kan ikke indgå i en transaktion, så der er ingen falsk atomicitet. Rækkefølgen er i stedet: brugere → roller → tabeller → options → `merchboard_settings` **sidst**. Fra fase 17 slettes product meta `_merchboard_creator_id` (og fra ADR-033 `_merchboard_creator_link_source`) efter roller og før tabeller (ADR-030). Hvert trin er idempotent (`IF EXISTS`, manglende roller og options ignoreres). Fejler et tabel-drop, logges det, og der slettes ingen options. Opt-in'en bevares derfor, og den næste afinstallation fortsætter. Gentagen afinstallation er sikker. Uninstall skriver ingen audit-records.
 
 **Multisite (verificeret i WordPress 7.1.2's kildekode, ikke officielt understøttet):** `delete_plugins()` kalder `uninstall_plugin()` én gang uden `switch_to_blog()`. Tabelnavne bygges med det aktuelle sites `$wpdb->prefix`, roller ligger i det aktuelle sites `{prefix}user_roles`, og options og brugernes capabilities er pr. site. Afinstallation kan derfor kun slette det aktuelle sites data, og kun hvis opt-in'en er sat på det site. Andre sites' tabeller, roller og options røres ikke (testet med en tabel med lignende navn for et andet site). Data på andre sites i netværket bliver dermed liggende, selv hvis opt-in er sat der. Multisite-oprydning kræver en senere beslutning.
 | **GDPR** | Integration med WordPress' personal data exporter/eraser for creator-data (fase efter MVP). |
