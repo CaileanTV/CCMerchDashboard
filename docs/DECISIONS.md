@@ -273,7 +273,7 @@ Et JS-build er nødvendigt (`build/` genereres i CI til releases). React-version
 2026-09-24
 
 ## Status
-Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall) og ADR-031 (kategori-mapping pr. creator og engangs-backfill). ADR-031's engangs-backfill er erstattet af ADR-033 (kategori-mapping som vedvarende automatisk kobling).
+Accepteret. Suppleret af ADR-030 (WooCommerce-minimum 10.3, én autoritativ skrivevej for produkt→creator, oprydning ved opt-in-uninstall) og ADR-031 (kategori-mapping pr. creator og engangs-backfill). ADR-031's engangs-backfill er erstattet af ADR-033 (kategori-mapping som vedvarende automatisk kobling). **Suppleret af ADR-035 (2026-09-26):** beskyttelsen af den plugin-ejede produktmeta (`_merchboard_creator_id`, `_merchboard_creator_link_source`, ADR-034) er en core-service, der er aktiv uden WooCommerce og uden om `merchboard_modules`. WooCommerce-integrationen selv (skriveveje, UI, indgangs-vagter og ledger) forbliver i det valgfrie modul.
 
 ## Decision
 WooCommerce-integration i et betinget modul, kun HPOS-kompatible CRUD-API'er, produkt→creator via product meta og en uforanderlig `merchboard_sales`-ledger fodret af ordre- og refund-hooks.
@@ -891,7 +891,7 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 2026-09-25
 
 ## Status
-Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **D6 er ændret af ADR-032:** produktskærmen er ikke længere en skrivevej og viser ikke relationen. Den første skrivevej er Merch Dashboard (wp-admin) → creatorens redigeringsside (`ProductLinkSource::Admin`), og produktlisten får en skrivebeskyttet kolonne og et filter. **D6 er ændret af ADR-033 (2026-09-26):** ud over den manuelle admin-vej findes en godkendt, systembaseret kategori-skrivevej (`source: category`) gennem `ProductCreatorLink` uden capability-tjek for den aktuelle bruger. Engangs-backfill som skrivevej udgår. Uninstall sletter også `_merchboard_creator_link_source`. **Grænsen i D6 er ændret af ADR-034 (2026-09-26):** WordPress' rå meta-API og `wp post meta` via WP-CLI er ikke længere uden for vagterne. `ProtectedProductMeta` afviser generiske skrivninger af `_merchboard_creator_id` og `_merchboard_creator_link_source`, medmindre en eksplicit `ProtectedMetaWrite` for netop det produkt kører. Uden for grænsen er kun direkte SQL, kode der fjerner eller omgår pluginets hooks, og perioder uden indlæst WooCommerce-modul (uafklaret i ADR-034). D4's sletning via WordPress' meta-API ved uninstall skal afstemmes med vagten før trin 13 (ADR-034, Uafklaret B). **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
+Accepteret (fase 17, før implementering). Besluttet af projektejeren (D1-D6). Supplerer ADR-011 (WooCommerce-modul) og ADR-025 (uninstall). **D6 er præciseret af ADR-031:** fase 17 har to understøttede skriveveje (den klassiske produktskærm og en eksplicit administrativ engangs-backfill gennem `ProductCreatorLink`). Øvrige begrænsninger i D6 er uændrede. **D6 er ændret af ADR-032:** produktskærmen er ikke længere en skrivevej og viser ikke relationen. Den første skrivevej er Merch Dashboard (wp-admin) → creatorens redigeringsside (`ProductLinkSource::Admin`), og produktlisten får en skrivebeskyttet kolonne og et filter. **D6 er ændret af ADR-033 (2026-09-26):** ud over den manuelle admin-vej findes en godkendt, systembaseret kategori-skrivevej (`source: category`) gennem `ProductCreatorLink` uden capability-tjek for den aktuelle bruger. Engangs-backfill som skrivevej udgår. Uninstall sletter også `_merchboard_creator_link_source`. **Grænsen i D6 er ændret af ADR-034 (2026-09-26):** WordPress' rå meta-API og `wp post meta` via WP-CLI er ikke længere uden for vagterne. `ProtectedProductMeta` afviser generiske skrivninger af `_merchboard_creator_id` og `_merchboard_creator_link_source`, medmindre en eksplicit `ProtectedMetaWrite` for netop det produkt kører. Uden for grænsen er kun direkte SQL, kode der fjerner eller omgår pluginets hooks, og perioder uden indlæst WooCommerce-modul (uafklaret i ADR-034). **D4 er afstemt med vagten i ADR-036 (2026-09-26):** opt-in-uninstall sletter fortsat nøglerne via WordPress' meta-API (ingen direkte SQL). Når vagten er indlæst (fx `wp plugin uninstall --deactivate`), tillader den kun sletningen af de to nøgler, og kun når `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename og opt-in er aktivt. **Rettet 2026-09-25 (før implementering):** D1 blev først besluttet som 10.4 ud fra antagelsen, at 10.4 kræver WordPress 6.7. WooCommerce 10.4.0's egen pakke kræver WordPress 6.8, så projektejeren har valgt 10.3 (se D1 og Alternatives considered).
 
 ## Context
 Fase 17 kobler WooCommerce-produkter til creators via product meta `_merchboard_creator_id` (ADR-011). Før implementeringen skulle det afklares:
@@ -1266,7 +1266,7 @@ Kategorien er shoppens eksisterende arbejdsgang for, hvilken creator et produkt 
 2026-09-26
 
 ## Status
-Accepteret (fase 17, trin 6, implementeret). Besluttet af projektejeren i specifikationen af trin 6. **Ændrer ADR-030 D6** (grænsen for sikkerhedsmodellen). Supplerer ADR-033 (den fremtidige kategori-afstemning skal bruge denne mekanisme) og ADR-025/ADR-030 D4 (uninstall, se pkt. 6). To punkter er **uafklarede** og kræver særskilte beslutninger: beskyttelse uden et indlæst WooCommerce-modul (pkt. 5) og uninstall-mekanismen (pkt. 6).
+Accepteret (fase 17, trin 6, implementeret). Besluttet af projektejeren i specifikationen af trin 6. **Ændrer ADR-030 D6** (grænsen for sikkerhedsmodellen). Supplerer ADR-033 (den fremtidige kategori-afstemning skal bruge denne mekanisme) og ADR-025/ADR-030 D4 (uninstall, se pkt. 6). To punkter er **uafklarede** og kræver særskilte beslutninger: beskyttelse uden et indlæst WooCommerce-modul (pkt. 5) og uninstall-mekanismen (pkt. 6). **Uafklaret A er besluttet i ADR-035 (2026-09-26):** vagten bliver en core-service, der registreres i `Plugin::register_hooks()` uden om `merchboard_modules` (ikke implementeret endnu). **Uafklaret B er besluttet i ADR-036 (2026-09-26):** uninstall-vindue i vagten (ikke implementeret endnu). Pkt. 3 er dermed præciseret: `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst** (tilføje, ændre, omdøbe). Den eneste anden tilladte operation er ADR-036's **sletning** af de to nøgler, og kun når operationen er en sletning, `WP_UNINSTALL_PLUGIN` er Merch Dashboards eget basename, og opt-in til sletning af data er aktivt.
 
 ## Context
 ADR-030 D6 lukkede WooCommerce' skriveveje (REST, CSV-import, quick/bulk edit og duplicate) for produktkoblingen, men fastslog som grænse, at WordPress' rå meta-API (`update_post_meta()` m.fl. fra vilkårlig PHP-kode) og `wp post meta` via WP-CLI var ikke-understøttede bypasses. Der skulle ikke laves globale meta-hooks.
@@ -1326,7 +1326,7 @@ Undersøgt i WordPress 7.1.2 og WooCommerce 10.3.8:
   - Koblingen bevares (ADR-030 D4), men er ikke beskyttet mod ændringer via kode eller WP-CLI i den periode.
 - **Mulig løsning (ikke besluttet, ikke implementeret):** registrere metadata-vagten (pkt. 2-4) uafhængigt af WooCommerce, fx i pluginets core eller i et modul, der altid indlæses. Den afhænger kun af WordPress' metadata-API. Indgangs-vagterne (pkt. 5) bliver i WooCommerce-modulet.
 - **Afvejninger:** det kræver en beslutning om modulgrænsen (ADR-011: WooCommerce-koden bor i det valgfrie modul; MODULES.md), og om `merchboard_modules`-filteret fortsat må kunne fjerne beskyttelsen.
-- **Status:** særskilt opgave, der kræver projektejerens beslutning. Indtil da er dette en dokumenteret begrænsning.
+- **Status:** besluttet i ADR-035 (mulighed B: core-service, registreret i `Plugin::register_hooks()`, uden om `merchboard_modules`). Implementeringen er ikke startet; indtil da gælder begrænsningen.
 
 ### Uafklaret B: uninstall-mekanismen (før trin 13)
 - **Krav:** opt-in-uninstall skal slette `_merchboard_creator_id` og `_merchboard_creator_link_source` fra alle produkter og varianter (ADR-030 D4, ADR-033), idempotent og før tabellerne droppes (ADR-025).
@@ -1339,7 +1339,7 @@ Undersøgt i WordPress 7.1.2 og WooCommerce 10.3.8:
   - (b) at `Uninstaller` sletter pr. produkt med én kontekst pr. produkt;
   - (c) at `Uninstaller` fjerner vagtens hooks før sletningen. (c) svarer til en global bypass i den proces og bør vurderes kritisk.
   - Direkte SQL-sletning er fravalgt af ADR-030 (Alternatives considered).
-- **Status:** skal besluttes særskilt før trin 13 (uninstall).
+- **Status:** besluttet i ADR-036 (mulighed D): et uninstall-vindue i vagten, som kun tillader sletning af de to nøgler under dette plugins opt-in-uninstall. Oprettelse, ændring og omdøbning er fortsat blokeret. Implementeres i trin 13.
 
 ## Ændringer af tidligere ADR'er
 - **ADR-030 D6:** Grænsen "WordPress' rå meta-API … og `wp post meta update` via WP-CLI … er ikke-understøttede bypasses … Der laves ingen globale meta-hooks" gælder ikke længere. Disse veje afvises nu af metadata-vagten (pkt. 2). Uden for grænsen er kun direkte SQL og kode, der fjerner eller omgår pluginets hooks (pkt. 6), samt perioder uden indlæst WooCommerce-modul (Uafklaret A). D6's øvrige regler er uændrede.
@@ -1359,4 +1359,201 @@ Ejerskab af et produkt er forretningsdata med audit (ADR-023/030). Når nøglern
 - **Implementeret i trin 6:** `ProtectedProductMeta`, `ProtectedMetaWrite`, `ProtectedMetaPurpose` og `ProtectedMetaEntryPoints`. `ProductCreatorLink` skriver kun inden for en `manual_link`-kontekst.
 - **Nye skriveveje** for de beskyttede nøgler skal have et eget formål i `ProtectedMetaPurpose` og en særskilt beslutning.
 - **Teknisk log:** afviste forsøg ses som advarsler i den tekniske log (WooCommerce → Status → Logs, source `merchboard`).
-- **To opgaver kræver beslutning:** beskyttelse uden indlæst WooCommerce-modul (Uafklaret A) og uninstall-mekanismen før trin 13 (Uafklaret B).
+- **To opgaver kræver beslutning:** beskyttelse uden indlæst WooCommerce-modul (Uafklaret A) og uninstall-mekanismen før trin 13 (Uafklaret B). *(Senere besluttet: A i ADR-035, B i ADR-036.)*
+
+---
+
+# ADR-035: Beskyttelse af creator-produktmeta uafhængigt af WooCommerce
+
+## Date
+2026-09-26
+
+## Status
+**Accepteret (2026-09-26): mulighed B, registreret i `Plugin::register_hooks()`.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret A (beslutningen; implementeringen er ikke startet). Supplerer ADR-011 og ADR-034 (statusnoter med krydsreference). Uninstall (ADR-034, Uafklaret B) er **ikke** løst af denne beslutning. Vurderingen af mulighederne nedenfor er bevaret som beslutningsgrundlag.
+
+## Context
+ADR-034 beskytter `_merchboard_creator_id` og `_merchboard_creator_link_source` med `ProtectedProductMeta` på WordPress' metadata-lag. Vagten registreres i `WooCommerceModule::register()`.
+
+**Undersøgt i koden (trin 6-stand):**
+- **Hvornår modulerne indlæses:** `Plugin::boot()` kører på `plugins_loaded`. Den sender `default_modules()` gennem filteret `merchboard_modules` og kalder `register()` på hvert gyldigt modul. `default_modules()` tilføjer kun `WooCommerceModule`, når `WooCommerceSupport::from_environment()->is_supported()` (WooCommerce aktivt og mindst `Requirements::MIN_WOOCOMMERCE` = 10.3).
+- **Konsekvensen i dag:** uden WooCommerce, med en for gammel WooCommerce, eller når et filter på `merchboard_modules` fjerner modulet, er vagten ikke registreret. Nøglerne kan så ændres via `update_post_meta()` fra kode eller via `wp post meta`. Koblingen bevares i den periode (ADR-030 D4), men er ikke beskyttet.
+- **Vagtens afhængigheder:** `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` bruger kun WordPress' metadata-API, `Core\Logging\Logger` og PHP (`WeakMap`, `LogicException`). Den eneste binding til WooCommerce-modulet er, at nøglerne læses fra konstanterne i `ProductCreatorLink`. Vagten kræver ikke WooCommerce.
+- **Hvad der kræver WooCommerce:** `ProtectedMetaEntryPoints` (REST, `variations/generate`, CSV-import, duplicate) bruger kun WooCommerce' hooks og objekter. Uden WooCommerce findes de veje ikke.
+- **Core ejer allerede nøglen:** ADR-030 D4 lader core (`Core\Lifecycle\Uninstaller`) slette `_merchboard_creator_id` ved uninstall, også uden WooCommerce. Nøglen er altså allerede plugin-ejet data, som core kender, og ikke kun WooCommerce-integration (ADR-011).
+- **Core-services i dag** (`Plugin::register_core_services()`): `wpdb`, `Logger` (`PluginLogger`, WooCommerce-logger eller `error_log`, ADR-021), `Installer`, `RoleManager` m.fl. `Container` tillader ikke, at en allerede oprettet service erstattes.
+
+## Sikkerhedsmål (projektejerens forslag, til vurdering)
+1. De to nøgler er beskyttet, uanset om WooCommerce er aktivt.
+2. Beskyttelsen afhænger ikke af en WooCommerce-version.
+3. `merchboard_modules` kan ikke deaktivere den grundlæggende beskyttelse utilsigtet.
+4. `ProtectedMetaWrite` er fortsat den eneste godkendte interne skrivekontekst.
+5. Direkte SQL og bevidst fjernelse af sikkerhedshooks er fortsat dokumenterede begrænsninger (ADR-034 pkt. 6).
+
+## Muligheder
+
+| | A. Status quo | B. Core, uden for modulfilteret | C. Neutralt modul i `default_modules()` | D. Neutralt modul, der altid indlæses |
+| --- | --- | --- | --- | --- |
+| Hvor | `WooCommerceModule` | `Plugin` registrerer vagten som core-service, før eller uafhængigt af modul-boot | Nyt modul (fx `ProductOwnershipModule`), altid i `default_modules()` | Nyt modul, som `Plugin` registrerer uden om `merchboard_modules`, eller et nyt begreb "påkrævede moduler" |
+| Uden WooCommerce | **Ikke beskyttet** | Beskyttet | Beskyttet | Beskyttet |
+| For gammel WooCommerce | **Ikke beskyttet** | Beskyttet | Beskyttet | Beskyttet |
+| `merchboard_modules` kan fjerne beskyttelsen | Ja | Nej | **Ja** (bevidst eller ved en fejl i et filter) | Nej |
+| Opfylder mål 1-3 | Nej | Ja | Nej (mål 3) | Ja |
+| Ændring i arkitekturen | Ingen | Core får en sikkerhedsservice for plugin-ejet produktmeta. Modulfilteret styrer fortsat kun moduler. | Følger det eksisterende modulmønster; ingen nye begreber | Nyt begreb i modularkitekturen (moduler, filteret ikke må fjerne), eller en undtagelse i `Plugin::boot()` |
+| Kompleksitet | Ingen | Lav | Lav | Middel |
+
+B og D giver samme sikkerhed. De adskiller sig i, hvor begrebet bor: core-service (B) eller et særligt modul (D). A og C opfylder ikke det foreslåede mål. A er dog den nuværende, dokumenterede tilstand (ADR-034), og C beskytter uden WooCommerce, men kan fjernes via filteret.
+
+**Fælles for B, C og D, hvis en af dem vælges:**
+- **Placering og nøgler:** `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` flyttes ud af `Modules\WooCommerce` (fx til `Core\Security` eller modulets namespace). Nøglerne defineres dér, og `ProductCreatorLink::META_KEY`/`SOURCE_META_KEY` henviser til dem (ikke omvendt), så vagten ikke afhænger af WooCommerce-modulet.
+- **`ProtectedMetaEntryPoints`** bliver i `WooCommerceModule`, fordi den kun giver mening med WooCommerce.
+- **Én instans:** vagten oprettes og registreres præcis én gang. `WooCommerceModule` henter den samme instans fra containeren til `ProductCreatorLink` og må hverken oprette eller registrere en ny.
+- **Tidspunkt (under-valg):**
+  - Registrering i `Plugin::boot()` (på `plugins_loaded`) dækker alt efter indlæsningen af plugins.
+  - Registrering allerede i `Plugin::register_hooks()`, når `merchboard.php` indlæses, dækker også kode, der kører under indlæsningen af plugins, der indlæses efter Merch Dashboard.
+  - Kode i plugins, der indlæses før, er uden for begge dele.
+  - Valget påvirker ikke de andre punkter.
+
+## Konsekvenser for B/C/D (til vurdering)
+- **Dependency injection:** vagten bliver en core-service (B) eller en modul-service (C/D) i `Container` med `Logger` som eneste afhængighed. `ProductCreatorLink` får den stadig via constructoren; kun registreringen flytter.
+- **Logging:** uden WooCommerce skriver `PluginLogger` afviste forsøg til PHP's fejllog i stedet for WooCommerce-loggen (ADR-021). ADMIN.md og WOOCOMMERCE.md skal nævne det.
+- **Ydelse:** som i dag. De to `_by_mid`-hooks slår rækken op (`get_metadata_by_mid()`) ved hver skrivning via meta-ID; med B, C eller D sker det også uden WooCommerce. Uden WooCommerce er den slags skrivninger sjældne.
+- **Tests:**
+  - **Integration:** den nuværende test registrerer sin egen instans. Mindst én test skal bevise, at det **bootede** plugin beskytter nøglerne uden WooCommerce. Integrationsmiljøet har intet WooCommerce, så det er det naturlige sted: `update_post_meta()`, `delete_post_meta_by_key()` og skrivninger via meta-ID afvises uden testens egen registrering.
+  - **Unit:**
+    - `Plugin::boot()` registrerer vagten, også når WooCommerce mangler, er for gammelt (`WooCommerceSupport` med fx 10.2) eller `merchboard_modules` returnerer `array()` (B/D), eller dokumentér, at filteret fjerner den (C).
+    - `WooCommerceModule` genbruger instansen og registrerer ikke hooks to gange.
+    - Nøglekonstanterne er uændrede.
+  - De eksisterende tests af vagten flytter med klasserne.
+- **ADR-011** (WooCommerce som valgfrit modul):
+  - Ved B eller D får den en statusnote. Beskyttelsen af plugin-ejet produktmeta er core-ansvar (B) eller et påkrævet moduls ansvar (D) og ikke WooCommerce-integration. Integrationen selv (skriveveje, UI, indgangs-vagter og ledger) forbliver i det valgfrie modul.
+  - Ved C: MODULES.md beskriver det nye modul. ADR-011 ændres ikke.
+- **ADR-034:** ved B eller D lukkes Uafklaret A, og begrænsningen "perioder uden indlæst WooCommerce-modul" udgår. Ved C gælder begrænsningen fortsat for `merchboard_modules`. Ved A består den.
+
+## Uninstall (ADR-034, Uafklaret B)
+- **Modulgrænsen ændrer ikke behovet for en særskilt beslutning.** I det normale forløb (deaktivér → slet) er pluginet ikke indlæst, når `uninstall.php` kører, med A, B, C og D. `wp plugin uninstall --deactivate` kører i én proces, hvor pluginet og dermed vagten er indlæst, uanset placering.
+- **Et nyt fund, som gælder alle tre retninger i ADR-034:** `uninstall.php` bygger sine egne objekter (`Uninstaller`, `SchemaEraser`, `PluginLogger`) og kender ikke den registrerede vagt-instans i pluginets container. En kontekst eller et formål (retning a/b) har kun virkning på den instans, der ejer hooks. En ny instans i `uninstall.php` kan ikke autorisere noget. Det samme gælder retning c (at fjerne hooks kræver den registrerede instans). Uninstall-mekanismen skal derfor også afgøre, hvordan `Uninstaller` når den registrerede instans, når den findes.
+- **Hvad B eller D gør lettere:** hvis vagten bor i core, kan `Core\Lifecycle\Uninstaller` referere til vagtens klasser og formål uden at afhænge af WooCommerce-modulet. Det gør retning (a), et eget uninstall-formål, arkitektonisk renere.
+- **Hvad B eller D ikke afgør:** hvilken retning der vælges, og hvordan instansen findes.
+- **Status:** uninstall kræver fortsat en særskilt beslutning før trin 13.
+
+## Decision
+**Mulighed B.** Beskyttelsen af `_merchboard_creator_id` og `_merchboard_creator_link_source` er en **core-service**, der registreres uden om `merchboard_modules`:
+
+1. **Altid aktiv:** vagten (ADR-034 pkt. 2-4) er aktiv, når pluginet er indlæst, uanset om WooCommerce er installeret, aktiveret eller opfylder minimumsversionen. Den afhænger ikke af en WooCommerce-version.
+2. **Registreringstidspunkt:** vagten registreres i `Plugin::register_hooks()`, altså når `merchboard.php` indlæses, og **ikke** først i `Plugin::boot()` (`plugins_loaded`). Den dækker derfor også kode i plugins, der indlæses efter Merch Dashboard. Kode, der kører før `merchboard.php` indlæses, er uden for vagten.
+3. **Uden om modulfilteret:** `merchboard_modules` kan ikke deaktivere beskyttelsen. Filteret styrer fortsat modulerne, inkl. WooCommerce-integrationen.
+4. **Ikke et modul:** der indføres ikke et særligt eller påkrævet modul, som omgår modulmønstret.
+5. **Én instans:** core opretter og registrerer præcis én instans. `WooCommerceModule` genbruger samme instans (fra containeren) til `ProductCreatorLink` og registrerer ingen hooks for vagten. Hooks må ikke registreres dobbelt.
+6. **Klasser og nøgler:** `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` flyttes til core. Nøglerne defineres dér, og `ProductCreatorLink` henviser til dem, så vagten ikke afhænger af WooCommerce-modulet. Det præcise namespace fastlægges ved implementeringen.
+7. **Indgangs-vagter:** `ProtectedMetaEntryPoints` forbliver i `WooCommerceModule`, fordi REST, `variations/generate`, CSV-import og duplicate afhænger af WooCommerce.
+8. **Logging:** afviste skrivninger logges fortsat via `Logger`. Uden WooCommerce-loggen bruges den eksisterende fallback til PHP's fejllog (ADR-021).
+9. **Uændret:**
+   - `ProtectedMetaWrite` er fortsat den eneste godkendte interne skrivekontekst (ADR-034 pkt. 3).
+   - Direkte SQL og bevidst fjernelse af vagtens hooks er fortsat dokumenterede begrænsninger (ADR-034 pkt. 6).
+
+## Consequences
+- **Implementering:** en særskilt opgave, der ikke er startet. Kode og tests følger beslutningen ovenfor og de fælles konsekvenser for dependency injection, logging og tests ovenfor. Rækkefølgen i fase 17 fastlægges af projektejeren (ROADMAP.md).
+- **Indtil implementeringen:** vagten ligger stadig i `WooCommerceModule`, og begrænsningen fra ADR-034, Uafklaret A, gælder i praksis.
+- **ADR-011:** statusnote. Beskyttelsen af plugin-ejet produktmeta er core-ansvar. WooCommerce-integrationen forbliver i det valgfrie modul.
+- **ADR-034:** Uafklaret A er besluttet her. Begrænsningen "perioder uden indlæst WooCommerce-modul" udgår, når beslutningen er implementeret.
+- **Uninstall (ADR-034, Uafklaret B):** fortsat uafklaret. Skal besluttes særskilt før trin 13 (se afsnittet om uninstall ovenfor, inkl. spørgsmålet om hvordan `Uninstaller` når den registrerede instans). *(Senere besluttet i ADR-036: uninstall-vindue i vagten uden adgang til instansen.)*
+
+---
+
+# ADR-036: Sletning af beskyttet produktmeta ved opt-in-uninstall
+
+## Date
+2026-09-26
+
+## Status
+**Accepteret (2026-09-26): mulighed D.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret B, under ADR-035's core-service-model. **Ændrer ADR-034 pkt. 3** med én afgrænset undtagelse, der kun tillader **sletning**. `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst**. Krydsreference fra ADR-030 D4. Implementeringen er ikke startet; den sker sammen med eller efter ADR-035's flytning til core og i fase 17, trin 13. Vurderingen af de fravalgte muligheder A, B og C er bevaret som beslutningsgrundlag.
+
+## Context
+- **Krav:** opt-in-uninstall skal slette `_merchboard_creator_id` og `_merchboard_creator_link_source` fra alle produkter og varianter på det aktuelle site via WordPress' meta-API, idempotent og før tabellerne droppes (ADR-025, ADR-030 D4, ADR-033). Direkte SQL er fravalgt (ADR-030, Alternatives considered). Uninstall skriver ingen audit-records (ADR-025); audit-tabellen droppes i samme kørsel.
+- **Vagten:** `ProtectedProductMeta` afviser enhver generisk sletning af de to nøgler, også `delete_post_meta_by_key()` (→ `delete_metadata( …, $delete_all = true )`) (ADR-034). Efter ADR-035 registreres den i `Plugin::register_hooks()`, når `merchboard.php` indlæses, uden om `merchboard_modules`.
+- **`ProtectedMetaWrite`** er engangs, bundet til ét produkt og til et formål, og virker kun på den instans, der ejer hooks (ADR-034 pkt. 3).
+
+**Undersøgt i koden og WordPress 7.1.2:**
+- **`uninstall.php`** er et separat indgangspunkt. Den tjekker `WP_UNINSTALL_PLUGIN` mod pluginets basename, registrerer autoloaderen og bygger sine egne objekter (`Uninstaller`, `SchemaEraser`, `PluginLogger`). Den booter ikke pluginet og har ingen adgang til pluginets container.
+- **Ingen global adgang til instansen:** `merchboard.php` opretter `new Plugin( __FILE__ )` uden at gemme instansen. Containeren gives kun videre via `merchboard_loaded`. Der findes ingen global eller statisk adgang til en registreret service.
+- **`uninstall_plugin()`** definerer konstanten `WP_UNINSTALL_PLUGIN` med pluginets basename umiddelbart før `uninstall.php` inkluderes. Konstanten kan ikke fjernes igen i requesten.
+- **`Uninstaller::run()`** gør intet uden opt-in (`Settings::delete_data_on_uninstall()`). Opt-in-optionen slettes sidst, så den stadig er sand, når meta slettes (ADR-030: efter roller, før tabeller).
+- **Hvornår vagten er indlæst:**
+  - **wp-admin** (Plugins → slet) kræver et deaktiveret plugin. Pluginet er ikke indlæst i den request, så vagten er ikke registreret, og sletningen går igennem.
+  - **`wp plugin uninstall --deactivate`** deaktiverer og afinstallerer i samme WP-CLI-proces. Pluginet og dermed vagten er indlæst ved opstart, så sletningen ville blive afvist.
+- **Alle stavemåder slettes:** `delete_metadata( …, $delete_all = true )` finder rækkerne med `meta_key = %s` under MySQL's kollation uden hensyn til store og små bogstaver.
+
+## Vurderede muligheder
+
+### A. Særskilt uninstall-formål i `ProtectedMetaWrite`
+Fx `for_uninstall()`, der kun tillader sletning af de to nøgler på alle indlæg.
+- **Oprettelse:** kunne være sikker, fx privat og kun tilgængelig for `Uninstaller`. Men konteksten har kun virkning på den **registrerede** instans, og `uninstall.php` kan ikke nå den (se B).
+- **Brud på invarianterne:** konteksten ville bryde `ProtectedMetaWrite`'s produktbinding. Den skulle dække alle indlæg og `delete_all`, altså præcis den operation, som bindingen skal forhindre.
+- **Vurdering:** kræver B. Fravalgt som selvstændig løsning.
+
+### B. `Uninstaller` henter den registrerede instans
+- **Hvad det kræver:** en global eller statisk adgang til vagten, fx `Plugin::instance()` eller et statisk register på `ProtectedProductMeta`, som `uninstall.php` kan slå op i.
+- **Livscyklus:**
+  - I wp-admin-forløbet findes ingen instans, og `Uninstaller` skal forgrene sig.
+  - I WP-CLI-forløbet findes den.
+- **Risiko:** adgangen findes i **alle** requests, ikke kun under uninstall. Enhver kode kan så hente vagten og køre kontekster. Det er en permanent ny angrebsflade for at give adgang i et kort vindue.
+- **Vurdering:** fravalgt.
+
+### C. Midlertidig fjernelse af vagtens hooks
+- **Hvordan:** `remove_filter()` kræver den registrerede instans (B) eller indgreb i `$wp_filter` (at finde callbacks, hvis objekt er `ProtectedProductMeta`).
+- **Risiko:** efter fjernelsen er **alle** operationer ubeskyttede resten af processen, også `add` og `update`, dvs. ændring af ejerskab. Genregistrering efter sletningen kan springes over ved fejl, og indgreb i `$wp_filter` er skrøbeligt.
+- **Vurdering:** den generelle bypass, som skal undgås. Fravalgt.
+
+### D. Uninstall-vindue i vagten, som kun tillader sletning (anbefalet)
+Vagten genkender selv WordPress' eget uninstall-signal for netop dette plugin og tillader så kun sletning af de to nøgler, når opt-in er sat. Det kræver ingen adgang til instansen, ingen ny global og ingen kontekst fra `uninstall.php`.
+
+## Decision
+**Mulighed D**, præcist afgrænset:
+
+1. **Kun sletning:** undtagelsen gælder kun `delete_post_metadata` (inkl. `$delete_all`) og `delete_post_metadata_by_mid` for de to beskyttede nøgler. `add_post_metadata`, `update_post_metadata` og `update_post_metadata_by_mid` (inkl. omdøbning) afvises altid. Ejerskab kan derfor aldrig oprettes eller ændres ad denne vej, kun fjernes.
+2. **Kun under dette plugins uninstall:** `defined( 'WP_UNINSTALL_PLUGIN' )` og `WP_UNINSTALL_PLUGIN === plugin_basename( <pluginets hovedfil> )`. Konstanten sættes af WordPress i `uninstall_plugin()`. Basename gives til vagten af `Plugin`, når core-servicen oprettes i `register_hooks()` (ADR-035).
+3. **Kun med opt-in:** `Settings::delete_data_on_uninstall()` er sand. Uden opt-in sletter uninstall intet (ADR-025), og vinduet er lukket.
+4. **Sletningen:** `Uninstaller` sletter nøglerne med `delete_post_meta_by_key()` for hver nøgle via meta-API'et. Det sker idempotent, efter roller og før tabeller (ADR-030 D4), og uden direkte SQL.
+5. **Begge forløb:**
+   - **wp-admin:** vagten er ikke indlæst, og sletningen går direkte igennem meta-API'et.
+   - **`wp plugin uninstall --deactivate`:** vagten er indlæst, genkender vinduet og tillader kun sletningen.
+
+   Samme kode i `Uninstaller` i begge tilfælde.
+6. **Logging og audit:**
+   - Vagten logger hver tilladt uninstall-sletning på niveau `info` (operation og nøgle, aldrig værdier; ADR-021).
+   - `Uninstaller` logger som i dag ved afslutning.
+   - Ingen audit-records (ADR-025); audit-tabellen droppes i samme kørsel.
+   - Afviste forsøg logges som i dag (ADR-034).
+7. **Testbarhed:** signalet om uninstall gives til vagten som en afhængighed (fx en callable, som i produktion tjekker konstanten), så det kan testes uden at definere en proces-global konstant.
+8. **Ingen ny adgangsvej:** der bruges ingen global eller statisk adgang til vagt-instansen, der fjernes ingen hooks, og der bruges ingen direkte SQL. `Uninstaller` bruger fortsat WordPress' meta-API.
+9. **Accepteret WordPress-begrænsning:** `WP_UNINSTALL_PLUGIN` kan kun defineres én gang pr. request. Ved uninstall af flere plugins i samme request, hvor Merch Dashboard ikke er det første, returnerer `uninstall.php` tidligt og sletter intet (se "Resterende risici"). Det accepteres; nøglerne slettes ved en senere uninstall af Merch Dashboard alene.
+10. **ADR-034 pkt. 3 ændres med én undtagelse:** `ProtectedMetaWrite` forbliver den eneste kontekst, der må **skrive** (tilføje, ændre, omdøbe) de beskyttede nøgler. Den eneste anden tilladte operation er denne afgrænsede **sletning** under dette plugins opt-in-uninstall. Permanent sletning af et indlæg (ADR-034 pkt. 4) er uændret.
+
+## Hvorfor D ikke er en generel bypass
+- **Ingen skrivning:** add, update og omdøbning er aldrig tilladt; kun fjernelse.
+- **Uden for uninstall:** vinduet findes ikke, fordi WordPress kun definerer `WP_UNINSTALL_PLUGIN` i `uninstall_plugin()`.
+- **Kun dette plugin:** vinduet gælder kun, når konstanten er Merch Dashboards basename. Andre plugins' uninstall åbner det ikke.
+- **Kun med opt-in:** uden opt-in er vinduet lukket, også under uninstall.
+- **Ingen ny adgangsvej:** ingen global, ingen statisk adgang, ingen fjernelse af hooks og ingen offentlig metode.
+
+## Resterende risici (accepteret)
+- **Konstanten kan forfalskes:** kode kan selv definere `WP_UNINSTALL_PLUGIN` med pluginets basename. Det kræver kodeadgang og ligger uden for sikkerhedsmodellen, ligesom fjernelse af hooks (ADR-034 pkt. 6). Selv da tillades kun sletning og kun med opt-in.
+- **Vinduet varer resten af requesten:** når WordPress har defineret konstanten, kan anden kode i samme request (fx resten af `delete_plugins()` eller andre plugins' uninstall i samme masse-sletning) også slette de to nøgler. Det gælder kun med opt-in, hvor uninstall alligevel sletter dem.
+- **Eksisterende begrænsning i WordPress, uafhængig af denne ADR:** `WP_UNINSTALL_PLUGIN` kan kun defineres én gang pr. request. Ved masse-sletning af flere plugins, hvor Merch Dashboard ikke er det første, returnerer `uninstall.php` tidligt (basename-tjekket) og sletter intet. Nøglerne slettes så ikke før en senere uninstall. Denne ADR ændrer det ikke.
+
+## Alternatives considered
+A, B og C ovenfor. Desuden sletning pr. produkt med én kontekst pr. produkt; den kræver ligesom A adgang til instansen (B) og giver en kontekst pr. produkt uden sikkerhedsgevinst. Direkte SQL er udelukket (ADR-030).
+
+## Consequences
+- **Implementeres sammen med eller efter ADR-035's flytning til core og i trin 13:**
+  - Vagten får basename og et uninstall-signal ind ved oprettelsen.
+  - `filter_delete` og `filter_delete_by_mid` får undtagelsen.
+  - `Uninstaller` får trinnet med `delete_post_meta_by_key()` for de to nøgler.
+- **Tests:**
+  - **Unit:** sletning tillades kun med signal for dette plugin og opt-in. Add, update og omdøbning afvises også i vinduet. Andet basename og manglende opt-in afvises. Der logges info.
+  - **Integration:**
+    - `Uninstaller` fjerner begge nøgler i alle stavemåder med vagten registreret (WP-CLI-forløbet), og uden (wp-admin-forløbet).
+    - Anden meta og selve produkterne bevares.
+- **ADR-034:** statusnote (pkt. 3 og Uafklaret B).
+- **ADR-030 D4:** krydsreference.
+- **DATABASE.md:** afinstallationsafsnittet opdateres, når beslutningen er accepteret.

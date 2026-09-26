@@ -145,8 +145,8 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - 10: admin-UI for mapping på creatorens redigeringsside og kolonnen "Category" i Creators-listen, med tørkørsel ved oprettelse og valget "Remove category-managed links" / "Keep as manual links" ved fjernelse.
   - 11: creatorens produktafsnit viser oprindelsen, afviser Remove for kategori-styrede produkter og tilbyder "Keep as manual".
   - 12: integrationstests og verifikation af hele kæden i Merch Dashboard Local (wp-admin, bulk edit, CSV-import, REST, duplicate og kategorisletning).
-  - 13: uninstall (begge meta-nøgler; tabellen via `Tables::all()`). **Kræver først en beslutning** om en eksplicit, afgrænset oprydningsmekanisme i forhold til metadata-vagten (ADR-034, Uafklaret B).
-  - **Uafklaret, ikke planlagt som trin (ADR-034, Uafklaret A):** om metadata-vagten skal registreres uafhængigt af WooCommerce-modulet, så nøglerne også er beskyttet, når WooCommerce er deaktiveret eller for gammelt. Kræver projektejerens beslutning.
+  - 13: uninstall (begge meta-nøgler; tabellen via `Tables::all()`). Oprydningsmekanismen er besluttet i ADR-036: vagtens uninstall-vindue tillader kun sletning af de to nøgler under Merch Dashboards egen opt-in-uninstall (`WP_UNINSTALL_PLUGIN` + opt-in); `Uninstaller` bruger WordPress' meta-API. Forudsætter ADR-035's flytning af vagten til core eller implementeres sammen med den.
+  - **Besluttet, ikke implementeret (ADR-035):** metadata-vagten flyttes til core og registreres i `Plugin::register_hooks()` uden om `merchboard_modules`, så nøglerne er beskyttet uanset WooCommerce. `ProtectedMetaEntryPoints` bliver i WooCommerce-modulet. Særskilt implementeringsopgave; placeringen i rækkefølgen fastlægges af projektejeren.
   - 14: audit-log-labels.
   - 15: i18n, docs og slutverifikation.
   - Trin 8-9 kommer før mapping-UI'et (10), fordi tørkørslen ved oprettelse bruger afstemningens klassifikation.
