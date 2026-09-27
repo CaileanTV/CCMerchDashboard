@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-27 · **Seneste færdige fase:** 16 (Release-pipeline og staging ✅) · **Næste fase:** 17 (WooCommerce foundation) · **Schemaversion:** 4 · **Version:** 0.1.0 (tagget `v0.1.0`, draft-release, ikke udgivet) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-28 · **Seneste færdige fase:** 16 (Release-pipeline og staging ✅) · **Aktuel fase:** 17 (WooCommerce foundation, i gang: trin 15 og Local-verifikationen i trin 12 mangler) · **Schemaversion:** 4 · **Version:** 0.1.0 (tagget `v0.1.0`, draft-release, ikke udgivet) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -266,7 +266,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ## In progress
 
-- **Lokalt testmiljø (2026-09-26):** LocalWP-sitet Merch Dashboard Local er oprettet, verificeret og udpeget som projektets lokale WordPress/WooCommerce-testmiljø (åbent spørgsmål 9 er lukket). Der er endnu ingen testdata.
+- **Lokalt testmiljø (2026-09-26):** LocalWP-sitet Merch Dashboard Local er oprettet, verificeret og udpeget som projektets lokale WordPress/WooCommerce-testmiljø (åbent spørgsmål 9 er lukket). Testdata: se fase 17 nedenfor.
 
 - **Fase 17 – WooCommerce foundation:**
   - **Beslutninger:** D1-D6 er lukket i ADR-030 (D1 rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8).
@@ -274,17 +274,17 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
   - **ADR-031 (2026-09-26, ændret af ADR-033):**
     - `_merchboard_creator_id` er den eneste ejerskabsrelation.
     - Kategori-mapping pr. creator og engangs-backfill med tørkørsel. **Erstattet af ADR-033:** mappingen ligger ikke i creator-meta, og backfill er ikke længere en selvstændig skrivevej.
-  - **Testdata:** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen er verificeret med en tørkørsel, der intet skrev.
+  - **Testdata (2026-09-26):** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen efter ADR-031's model er verificeret med en tørkørsel, der intet skrev. Det var før ADR-033-implementeringen (trin 7-13); verifikationen af den implementerede afstemning på datasættet hører til trin 12 og er ikke udført.
   - **ADR-032 (2026-09-26):**
     - Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php`, `merchboard_manage_creators` + `edit_product`, `source: admin`).
     - WooCommerce-produktskærmen er ikke en skrivevej og viser ikke relationen.
     - Produktlistens kolonne og filter er skrivebeskyttede.
-    - `product_screen` er forældet og fjernes i trin 4.
+    - `product_screen` var forældet og blev fjernet i trin 4.
   - **Trin 4:**
     - Afsnittet "Products" på creatorens redigeringsside (WooCommerce-modulet via `merchboard_creators_edit_sections`). Det viser koblede produkter og giver søgning på navn og varenummer via WooCommerce' egen søgning og på produktkategori (kun direkte tilknytning, opretter ingen kobling), valg af flere produkter, et eksplicit afkrydsningsfelt til overtagelse og resultat pr. produkt.
     - Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`); `product_screen` er fjernet.
     - Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local: tilknytning, samme creator, afvist overtagelse, overtagelse, variant og fjernelse. Audit kommer fra servicen, og produkteditoren har ingen creator-UI. Koblingerne blev fjernet igen bagefter.
-  - **ADR-033 (2026-09-26, kun dokumenteret, implementering ikke startet):** Kategori-mapping som vedvarende automatisk kobling.
+  - **ADR-033 (2026-09-26; dokumenteret før implementering, implementeret i trin 6-14, se nedenfor):** Kategori-mapping som vedvarende automatisk kobling.
     - Tabellen `merchboard_creator_categories` (migration 4): én creator pr. kategori, teknisk flere kategorier pr. creator.
     - Oprindelse `_merchboard_creator_link_source` (`admin` | `category`); `backfill` udfases.
     - Tilstandsbaseret afstemning via Action Scheduler, udløst af term- og produkt-hooks. Kører som systemarbejde gennem en intern metode i `ProductCreatorLink`.
@@ -347,13 +347,13 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
     - Én hentning pr. side: alle mappings via `CreatorCategoryRepository::all()` og deres navne med ét `get_terms()`-kald. Antallet af forespørgsler vokser ikke med rækkerne (verificeret i integrationstest).
     - Creators-modulet kender stadig ikke WooCommerce. Listen har fået udvidelsespunkterne `merchboard_creators_list_columns`, `merchboard_creators_list_items` og `merchboard_creators_list_column`, i samme stil som `merchboard_creators_edit_sections`.
     - Ingen ny menu, capability, REST-route eller frontend.
-  - **Trin 12 (2026-09-27):** Oprindelse og "Keep as manual" i creatorens produktafsnit.
+  - **Trin 12a (2026-09-27; i commits og tidligere noter kaldt trin 12):** Oprindelse og "Keep as manual" i creatorens produktafsnit.
     - Kolonnen "Oprindelse" viser "Manuel" (`admin`, eller uden eller med ukendt oprindelse) eller "Produktkategori".
     - Ved en kategori-tilknytning nævnes produktets kategorier, der er mappet til creatoren. `CategoryLinkStatus` bruger den eksisterende reconciler med forudindlæste mappings (`PreloadedMappings`, én forespørgsel) og ét `get_terms()` til at vise, om afstemningen vil fjerne eller flytte tilknytningen. UI'et afgør det ikke selv, og kategorien vises aldrig som ejer. Visningen skriver intet og sætter intet i kø.
     - "Keep as manual" findes kun på kategori-tilknytninger til creatoren. Handlingen er en admin-post-handling (`merchboard_keep_creator_product_manual`) med nonce bundet til creatoren, eksplicit bekræftelse (`confirm`) og kontrol af, at produktet er tilknyttet creatoren. Den kalder `ProductCreatorLink::keep_as_manual()`: `merchboard_manage_creators` + `edit_product`, samme creator, oprindelsen `admin`, audit `product_creator_linked` med `previous_source: category` og admin som actor, i én transaktion. Handlingen er idempotent.
     - Også en tilknytning, som afstemningen vil fjerne eller flytte, kan beholdes som manuel. Det er et eksplicit admin-valg (ADR-033 pkt. 4), og UI'et viser afstemningens vurdering først.
     - Ingen ny menu, capability, REST-route, AJAX-handling eller creator-adgang.
-  - **Trin 13, Remove (2026-09-27):** ADR-033 pkt. 5 håndhæves i servicen.
+  - **Trin 13a, Remove (2026-09-27; tidligere kaldt trin 13, Remove):** ADR-033 pkt. 5 håndhæves i servicen.
     - `ProductCreatorLink::unlink()` (den manuelle vej) afviser en kategori-styret tilknytning med `category_managed`, før noget skrives: ingen meta-, audit- eller jobændring.
     - Hvad requesten ellers indeholder, er ligegyldigt: den gemte oprindelse afgør det.
     - Produktafsnittet viser ingen Remove på kategori-styrede tilknytninger, men "Keep as manual" og en kort forklaring. Efter "Keep as manual" kan tilknytningen fjernes som før.
@@ -393,13 +393,13 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 17:** WooCommerce foundation.
+1. **Fase 17:** WooCommerce foundation (i gang: trin 15 og trin 12).
 2. **Fase 18:** Sales ledger.
 3. **Fase 19:** Products og Orders i dashboard.
 
 ## Known bugs
 
-Ingen (der er ingen funktionalitet endnu).
+Ingen kendte fejl. Kendte begrænsninger står under Technical debt.
 
 ## Technical debt
 
@@ -408,7 +408,7 @@ Ingen (der er ingen funktionalitet endnu).
 | npm audit | 14 advisories (8 moderate, 6 high) i dev-dependencies (`@wordpress/scripts`, `@wp-playground/cli` og deres transitive pakker). Ingen i fase 13's nye pakker. Påvirker ikke det distribuerede plugin. | Tjek ved hver opdatering af `@wordpress/scripts`/`@wp-playground/cli` |
 | Versionskrav to steder | `MIN_PHP`/`MIN_WP` i `Requirements` skal holdes synkront med plugin-headeren manuelt | Overvej en unit-test, der læser headeren og sammenligner (lille, kan tages i fase 3) |
 | Pre-release WP-versioner | `version_compare( '6.7-RC1', '6.7' )` betragtes som for lav, så en RC af præcis minimumsversionen viser notice | Accepteret. Påvirker kun test af pre-releases. |
-| MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7), og **MySQL 8.0.46** i CI (`PHP integration (MySQL)`, 111 tests, grøn i CI #22 og i release-workflowet for `v0.1.0`). Staging- og produktionsversionen er ikke noteret. | Notér versionen fra staging/produktion (åbent spørgsmål 2) |
+| MySQL-verifikation | MariaDB 10.11.19 er verificeret lokalt (fase 7), og **MySQL 8.0.46** i CI (`PHP integration (MySQL)`): 111 tests i CI #22 og i release-workflowet for `v0.1.0`; 180 tests grønne på `c059bc3` (fase 17, 2026-09-27). Staging- og produktionsversionen er ikke noteret. | Notér versionen fra staging/produktion (åbent spørgsmål 2) |
 | Aktiveringslog i Playground | Info-posten fra aktivering i Playgrounds blueprint-trin kan ikke observeres (trinnet kører før `woocommerce_init` og uden for `debug.log`-omdirigeringen). Dækket af unit-tests. | Verificér ved rigtig admin-aktivering på staging (fase 16) |
 | Dinglende `user_id` efter fejlet frigivelse | Løst i fase 8 for normal sletning. Kun hvis frigivelsen fejler (databasefejl, MyISAM), peger creator'en på en slettet bruger. Fejlen logges, linket giver ingen adgang, og admin kan frakoble manuelt. Der er intet automatisk genforsøg. | Accepteret. Overvej et oprydnings-tjek i Overview (fase 9). |
 | WooCommerce og roller uden `edit_posts` | Med WooCommerce aktiv sendes brugere uden `edit_posts`, `manage_woocommerce` eller `view_admin_dashboard` fra wp-admin til "Min konto" (WooCommerce' egen regel). En rolle med kun `merchboard_manage_creators` kan dermed ikke nå siden. | Dokumenteret. Rolle-tildeling via settings i fase 12. |
@@ -431,6 +431,10 @@ Ingen (der er ingen funktionalitet endnu).
 | Oversættelser skal holdes ajour | `merchboard-da_DK.po` skal opdateres, når UI-strenge ændres (`npm run i18n`, derefter oversæt nye strenge). `TranslationsTest` fejler, hvis en streng mangler. JSON-filnavnet afhænger af stien `build/dashboard.js`. | Kør `npm run i18n` ved strengændringer |
 | Creators uden personligt sprog | Dashboardet følger sitets sprog. En creator på et engelsk site kan ikke vælge dansk (wp-admin er blokeret). | Revurder, hvis et flersproget behov opstår (fx sprogvalg i Profile) |
 | Metadata-læsefejl | `get_metadata()` giver ingen fejlinformation. En fejlet læsning af bio/links vises som tomme felter. Skrivninger verificeres og fejler lukket. | Accepteret (profilfelter er ikke adgangsstyrende) |
+| Tørkørsel i kategoriafstemningen | "Run a dry run" i Category reconciliation kører synkront i admin-requesten (GET) over alle relevante produkter og igen ved bekræftelsen. Pr. produkt læses produktet, én mapping pr. direkte kategori (`CreatorCategoryRepository::find()`, ingen samlet forhåndsindlæsning i batchen) og evt. creatoren. Store kataloger kan give lange svartider eller timeout. | Mål på et realistisk katalog. Overvej `PreloadedMappings` og cache af creator-status pr. tørkørsel (kræver godkendelse). |
+| Fingeraftryk i kategoriafstemningen | Fingeraftrykket dækker tællingerne og højst de første 500 forventede ændringer og 500 "needs attention"-poster (`CategoryReconciliationBatch::MAX_CHANGES`); `*_truncated` indgår ikke. En ændring ud over nr. 500 med uændrede tællinger opdages ikke som forældet. Jobbene udfører aldrig en gemt plan, men evaluerer den aktuelle tilstand. | Accepteret indtil videre. Udvid evt. med et hash over alle poster. |
+| Samtidige fulde afstemninger | Dedup gælder kun et ventende startjob med identisk payload. En ny fuld afstemning kan starte, mens en tidligere kører; de får hver sit `run_id` og sin egen `category_sync_completed` (ADMIN.md). Ufarligt pga. idempotens, men dobbelt arbejde. | Accepteret. |
+| Produktfejl i fuld afstemning | Et produkt, der ikke kan afstemmes, logges og tælles som `errors`; det gentages ikke inden for kørslen. Kun en fejlet hel side gentages (højst 3 gange efter 1, 5 og 15 minutter) (ADMIN.md). | Accepteret. Kør en ny fuld afstemning efter at have rettet årsagen. |
 | Tekniske logs uden WooCommerce | Kun i `debug.log`/serverlog, ikke i wp-admin | Accepteret (ADR-021). Revurder, hvis sites uden WooCommerce bliver relevante. |
 
 ## Godkendte eksterne services
@@ -465,4 +469,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Udgiv draft-releasen "Merch Dashboard 0.1.0" på GitHub, når projektejeren er klar (ikke gjort).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Fase 17 (WooCommerce foundation) jf. docs/ROADMAP.md.
+4. Fase 17: afslut trin 15 (dokumentation, i18n-kontrol, fuld test-suite, push og grøn CI) og trin 12 (verifikation i Merch Dashboard Local, kræver projektejerens godkendelse). Først derefter kan fase 17 afsluttes (se docs/ROADMAP.md).

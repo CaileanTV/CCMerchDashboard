@@ -1,6 +1,6 @@
 # WooCommerce-integration
 
-> Status: **Design.** Implementeres i fase 17-20. Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032, ADR-033 (kategori-mapping som vedvarende automatisk kobling; implementeret i fase 17, trin 7-13 og admin-værktøjet til fuld afstemning med "Needs attention"), ADR-034 (beskyttelse af koblingens meta) og ADR-035 (vagten som core-service; implementeret). Uninstall-mekanismen for de beskyttede nøgler er implementeret efter ADR-036. Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
+> Status: **Fase 17 i gang:** produkt↔creator (manuel kobling, kategori-mapping og -afstemning, vagter og uninstall) er implementeret; verifikationen i Merch Dashboard Local (roadmappens trin 12) er ikke udført. **Fase 18-20 (sales ledger, produkter/ordrer i dashboardet, statistik) er design.** Ingen WooCommerce-kode i tidligere faser. Beslutningerne for fase 17 er lukket i ADR-030, ADR-031, ADR-032, ADR-033 (kategori-mapping som vedvarende automatisk kobling; implementeret i fase 17, trin 7-13 og admin-værktøjet til fuld afstemning med "Needs attention"), ADR-034 (beskyttelse af koblingens meta) og ADR-035 (vagten som core-service; implementeret). Uninstall-mekanismen for de beskyttede nøgler er implementeret efter ADR-036. Kolonnen "Creators" i ordrelisten er udskudt til efter fase 17.
 
 ## Principper
 

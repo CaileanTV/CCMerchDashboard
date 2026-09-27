@@ -1,6 +1,6 @@
 # WordPress Admin
 
-> Status: **Admin komplet til og med fase 12:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9, dashboard-slug fra fase 12) og Audit log (`merchboard_view_logs`, fase 11).
+> Status: **Admin komplet til og med fase 12:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9, dashboard-slug fra fase 12) og Audit log (`merchboard_view_logs`, fase 11). **Fase 17 (i gang) med WooCommerce aktivt:** creatorens redigeringsside har afsnittene "Product category" og "Products", Creators-listen kolonnen "Product categories" og visningen "Category reconciliation", Audit log viser produkt- og kategori-hændelserne læsbart, og WooCommerce' produktliste har en skrivebeskyttet "Creator"-kolonne og et filter (se [WooCommerce-skærme](#woocommerce-skærme-fase-17)). Intet nyt menupunkt og ingen ny capability.
 
 ## Principper
 
@@ -14,7 +14,8 @@
 Merch Dashboard                       ✅ fase 10: menu-capability merchboard_manage (slug `merchboard`, Modules/Admin/AdminMenu)
 ├── Overview                   ✅ fase 10: creator-tal, dinglende links og systemstatus; ✅ fase 11: seneste aktivitet (kun med merchboard_view_logs)
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
-│   └── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger
+│   ├── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger; fase 17 (WooCommerce): afsnittene "Product category" og "Products"
+│   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
 ├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug). Tabs General · Access · Advanced kommer, når de får indhold
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
@@ -155,7 +156,7 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
     - **Overtagelse:** Produkter, der er koblet til en anden creator, vises med "Linked to <navn>" og et separat afkrydsningsfelt "Take over the product from <navn>". Det er aldrig valgt på forhånd og sendes som `replace_existing` for netop det produkt. Uden det afvises produktet (`already_linked`) uden ændring.
     - En ugyldig kobling kan erstattes eller fjernes på samme måde.
     - Hvilke produkter der kan kobles (varianter, papirkurv, inaktive creators, `edit_product`), afgøres af `ProductCreatorLink`. Resultatet vises pr. produkt efter Post/Redirect/Get, så fejl ikke skjules.
-  - **Implementeret (ADR-033, trin 12-13):**
+  - **Implementeret (ADR-033, trin 12a og 13a):**
     - Kolonnen "Origin" viser "Manual" (`admin`, eller uden eller med ukendt oprindelse) eller "Product category" med "Via: <kategori>" og, når afstemningen vil fjerne eller flytte koblingen, en note (vurderet af `CategoryLinkStatus` med den eksisterende reconciler).
     - **Remove afvises for kategori-styrede produkter** i `ProductCreatorLink::unlink()` (`category_managed`); afsnittet viser ingen Remove på dem, men forklaringen og "Keep as manual". Der er ingen skjult undtagelsesliste.
     - **"Keep as manual"** er en eksplicit handling pr. kategori-styret produkt med nonce og bekræftelsesfelt. Den ændrer oprindelsen til `admin`, beholder creatoren og auditeres. Derefter fjernes koblingen aldrig automatisk.
