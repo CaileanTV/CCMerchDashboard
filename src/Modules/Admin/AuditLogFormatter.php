@@ -46,6 +46,9 @@ final class AuditLogFormatter {
 			AuditAction::SettingsUpdated     => __( 'Settings changed', 'merchboard' ),
 			AuditAction::ProductCreatorLinked   => __( 'Product linked', 'merchboard' ),
 			AuditAction::ProductCreatorUnlinked => __( 'Product unlinked', 'merchboard' ),
+			AuditAction::CreatorCategoryLinked   => __( 'Product category mapped', 'merchboard' ),
+			AuditAction::CreatorCategoryUnlinked => __( 'Product category unmapped', 'merchboard' ),
+			AuditAction::CategorySyncCompleted   => __( 'Category reconciliation completed', 'merchboard' ),
 		};
 	}
 

@@ -55,16 +55,20 @@ final class WooCommerceProductStore implements ProductStore {
 		}
 
 		$entries = array();
+		$sources = array();
 
 		foreach ( $product->get_meta_data() as $meta ) {
-			$data = $meta->get_data();
-			$key  = is_string( $data['key'] ?? null ) ? $data['key'] : '';
+			$data  = $meta->get_data();
+			$key   = is_string( $data['key'] ?? null ) ? $data['key'] : '';
+			$entry = array(
+				'key'   => $key,
+				'value' => is_scalar( $data['value'] ?? null ) ? (string) $data['value'] : '',
+			);
 
 			if ( ProductCreatorLink::is_link_key( $key ) ) {
-				$entries[] = array(
-					'key'   => $key,
-					'value' => is_scalar( $data['value'] ?? null ) ? (string) $data['value'] : '',
-				);
+				$entries[] = $entry;
+			} elseif ( ProductCreatorLink::is_source_key( $key ) ) {
+				$sources[] = $entry;
 			}
 		}
 
@@ -75,7 +79,9 @@ final class WooCommerceProductStore implements ProductStore {
 			$product->get_status( 'edit' ),
 			$entries,
 			$product->get_name( 'edit' ),
-			$product->get_sku( 'edit' )
+			$product->get_sku( 'edit' ),
+			$sources,
+			array_values( array_map( 'intval', $product->get_category_ids( 'edit' ) ) )
 		);
 	}
 
@@ -182,6 +188,43 @@ final class WooCommerceProductStore implements ProductStore {
 	}
 
 	/**
+	 * Parent products directly assigned to a `product_cat` term, via
+	 * `wc_get_products()` with `include_children` off. Trash and auto-draft are
+	 * left out: no link is written for them (ProductCreatorLink).
+	 *
+	 * @param int $term_id Term id.
+	 * @param int $limit   Page size.
+	 * @param int $offset  Products to skip.
+	 * @return list<int>
+	 */
+	public function in_category( int $term_id, int $limit, int $offset ): array {
+		if ( $term_id < 1 || $limit < 1 ) {
+			return array();
+		}
+
+		$ids = wc_get_products(
+			array(
+				'status'    => array( 'publish', 'future', 'draft', 'pending', 'private' ),
+				'limit'     => $limit,
+				'offset'    => max( 0, $offset ),
+				'orderby'   => 'ID',
+				'order'     => 'ASC',
+				'return'    => 'ids',
+				'tax_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- One category's products, paged.
+					array(
+						'taxonomy'         => 'product_cat',
+						'field'            => 'term_id',
+						'terms'            => array( $term_id ),
+						'include_children' => false,
+					),
+				),
+			)
+		);
+
+		return is_array( $ids ) ? array_values( array_map( 'intval', array_filter( $ids, 'is_numeric' ) ) ) : array();
+	}
+
+	/**
 	 * Loads records for product ids, skipping unknown ids and variations.
 	 *
 	 * @param array<mixed> $ids Product ids.
@@ -202,13 +245,15 @@ final class WooCommerceProductStore implements ProductStore {
 	}
 
 	/**
-	 * Replaces every link entry with one for the creator, or removes them all.
+	 * Replaces every link and origin entry with one each for the creator, or
+	 * removes them all.
 	 *
-	 * @param int      $product_id Parent product id.
-	 * @param int|null $creator_id Creator id, or null to remove the link.
+	 * @param int               $product_id Parent product id.
+	 * @param int|null          $creator_id Creator id, or null to remove the link.
+	 * @param ProductLinkSource $source     Origin stored with a link.
 	 * @throws DatabaseException When the product is missing or the result is not stored as requested.
 	 */
-	public function write_creator( int $product_id, ?int $creator_id ): void {
+	public function write_creator( int $product_id, ?int $creator_id, ProductLinkSource $source = ProductLinkSource::Admin ): void {
 		$product = wc_get_product( $product_id );
 
 		if ( ! $product instanceof WC_Product ) {
@@ -217,19 +262,21 @@ final class WooCommerceProductStore implements ProductStore {
 
 		foreach ( $product->get_meta_data() as $meta ) {
 			$data = $meta->get_data();
+			$key  = is_string( $data['key'] ?? null ) ? $data['key'] : '';
 
-			if ( is_string( $data['key'] ?? null ) && ProductCreatorLink::is_link_key( $data['key'] ) && is_numeric( $data['id'] ?? null ) ) {
+			if ( ( ProductCreatorLink::is_link_key( $key ) || ProductCreatorLink::is_source_key( $key ) ) && is_numeric( $data['id'] ?? null ) ) {
 				$product->delete_meta_data_by_mid( (int) $data['id'] );
 			}
 		}
 
 		if ( null !== $creator_id ) {
 			$product->add_meta_data( ProductCreatorLink::META_KEY, (string) $creator_id, true );
+			$product->add_meta_data( ProductCreatorLink::SOURCE_META_KEY, $source->value, true );
 		}
 
 		$product->save_meta_data();
 
-		if ( ! $this->stored_as( $product_id, $creator_id ) ) {
+		if ( ! $this->stored_as( $product_id, $creator_id, $source ) ) {
 			throw new DatabaseException( 'The product creator link was not stored as requested.', array( 'product_id' => $product_id ) );
 		}
 	}
@@ -256,22 +303,25 @@ final class WooCommerceProductStore implements ProductStore {
 	}
 
 	/**
-	 * Whether the database holds exactly the requested link: one row with the
-	 * exact key and value, or no row in any key spelling.
+	 * Whether the database holds exactly the requested link: one row each with
+	 * the exact link and origin keys and values, or no row of either key in
+	 * any spelling.
 	 *
-	 * @param int      $product_id Product id.
-	 * @param int|null $creator_id Expected creator id, or null for none.
+	 * @param int               $product_id Product id.
+	 * @param int|null          $creator_id Expected creator id, or null for none.
+	 * @param ProductLinkSource $source     Expected origin with a link.
 	 */
-	private function stored_as( int $product_id, ?int $creator_id ): bool {
+	private function stored_as( int $product_id, ?int $creator_id, ProductLinkSource $source ): bool {
 		// Local $wpdb so WPCS can verify the query is prepared. The check must
 		// see the stored rows, not a cache, and must match every key spelling.
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Verification read of the rows just written; a cache would defeat it.
 			$wpdb->prepare(
-				'SELECT meta_key, meta_value FROM %i WHERE post_id = %d AND LOWER(TRIM(meta_key)) = %s',
+				'SELECT meta_key, meta_value FROM %i WHERE post_id = %d AND LOWER(TRIM(meta_key)) IN (%s, %s) ORDER BY meta_key',
 				$wpdb->postmeta,
 				$product_id,
-				ProductCreatorLink::META_KEY
+				ProductCreatorLink::META_KEY,
+				ProductCreatorLink::SOURCE_META_KEY
 			),
 			ARRAY_A
 		);
@@ -284,9 +334,14 @@ final class WooCommerceProductStore implements ProductStore {
 			return array() === $rows;
 		}
 
-		$row = 1 === count( $rows ) ? $rows[0] : array();
+		$stored = array();
 
-		return ProductCreatorLink::META_KEY === ( $row['meta_key'] ?? null )
-			&& 0 === strcmp( (string) $creator_id, (string) ( $row['meta_value'] ?? '' ) );
+		foreach ( $rows as $row ) {
+			$stored[] = (string) ( $row['meta_key'] ?? '' ) . '=' . (string) ( $row['meta_value'] ?? '' );
+		}
+
+		sort( $stored );
+
+		return array( ProductCreatorLink::META_KEY . '=' . $creator_id, ProductCreatorLink::SOURCE_META_KEY . '=' . $source->value ) === $stored;
 	}
 }

@@ -27,6 +27,9 @@ final class ProductCreatorLinkException extends DomainException {
 	public const CREATOR_NOT_FOUND     = 'creator_not_found';
 	public const CREATOR_INACTIVE      = 'creator_inactive';
 	public const ALREADY_LINKED        = 'already_linked';
+	public const MANUAL_LINK           = 'manual_link';
+	public const NOT_CATEGORY_MANAGED  = 'not_category_managed';
+	public const CATEGORY_MANAGED      = 'category_managed';
 
 	/**
 	 * Constructor.

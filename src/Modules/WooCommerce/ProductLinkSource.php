@@ -12,9 +12,10 @@ namespace MerchBoard\Modules\WooCommerce;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The two supported write paths of phase 17 (ADR-032, which replaced the
- * WooCommerce product screen of ADR-030 D6/ADR-031). Recorded as `source` in
- * the audit context. The WooCommerce product editor is not a write path.
+ * The two write paths of the product link (ADR-032, ADR-033). Recorded as
+ * `source` in the audit context and stored with the link as
+ * `_merchboard_creator_link_source`. The WooCommerce product editor is not a
+ * write path.
  */
 enum ProductLinkSource: string {
 
@@ -24,7 +25,8 @@ enum ProductLinkSource: string {
 	case Admin = 'admin';
 
 	/**
-	 * The explicit one-time administrative backfill from the category mapping.
+	 * The system category reconciliation (ADR-033): the link currently follows
+	 * from a creator ↔ product category mapping.
 	 */
-	case Backfill = 'backfill';
+	case Category = 'category';
 }

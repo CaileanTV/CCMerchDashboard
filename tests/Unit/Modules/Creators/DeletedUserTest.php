@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\Creators;
 
+use Brain\Monkey\Actions;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -73,6 +74,15 @@ final class DeletedUserTest extends TestCase {
 			array_column( $records, 'context' )
 		);
 		self::assertStringNotContainsString( 'Nova', (string) wp_json_encode( $records ) );
+	}
+
+	public function test_a_deactivation_by_a_deleted_user_fires_the_status_event_after_the_commit(): void {
+		$this->service->create( 'Nova', CreatorStatus::Active, 42 );
+		$this->delete_user( 42 );
+		Actions\expectDone( CreatorService::STATUS_CHANGED_ACTION )->once()->with( 1, 'inactive', 'active' );
+
+		$this->service->release_deleted_user( 42 );
+		$this->service->release_deleted_user( 42 );
 	}
 
 	public function test_inactive_creator_is_only_unlinked(): void {

@@ -55,6 +55,14 @@ final class ProductCreatorLinkTest extends TestCase {
 	 */
 	private array $product_checks = array();
 
+	/**
+	 * Whether the user has `merchboard_manage_creators` (only keep_as_manual()
+	 * checks it itself).
+	 *
+	 * @var bool
+	 */
+	private bool $manage = false;
+
 	private int $alpha;
 
 	private int $beta;
@@ -72,6 +80,10 @@ final class ProductCreatorLinkTest extends TestCase {
 		// Only product editing matters from here; the creator admin capability is not granted.
 		Functions\when( 'current_user_can' )->alias(
 			function ( string $capability, ...$args ): bool {
+				if ( Capabilities::MANAGE_CREATORS === $capability ) {
+					return $this->manage;
+				}
+
 				if ( Capabilities::EDIT_PRODUCT !== $capability ) {
 					return false;
 				}
@@ -198,15 +210,15 @@ final class ProductCreatorLinkTest extends TestCase {
 	}
 
 	public function test_the_write_path_is_recorded(): void {
-		$this->link->link( 10, $this->alpha, ProductLinkSource::Backfill );
+		$this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
 
-		self::assertSame( 'backfill', $this->product_audit()[0]['context']['source'] );
+		self::assertSame( 'admin', $this->product_audit()[0]['context']['source'] );
 	}
 
 	public function test_linking_the_current_creator_changes_nothing(): void {
 		$this->products->add_linked( 10, $this->alpha );
 
-		self::assertSame( array(), $this->link->link( 10, $this->alpha, ProductLinkSource::Backfill ) );
+		self::assertSame( array(), $this->link->link( 10, $this->alpha, ProductLinkSource::Admin ) );
 		self::assertSame( array(), $this->products->writes );
 		self::assertSame( array(), $this->product_audit() );
 	}
@@ -240,14 +252,14 @@ final class ProductCreatorLinkTest extends TestCase {
 			)
 		);
 
-		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Backfill ) );
+		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Admin ) );
 		self::assertSame( array( AuditAction::ProductCreatorUnlinked, AuditAction::ProductCreatorLinked ), $this->link->link( 10, $this->alpha, ProductLinkSource::Admin, true ) );
 	}
 
 	public function test_an_existing_link_is_never_replaced_implicitly(): void {
 		$this->products->add_linked( 10, $this->alpha );
 
-		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->beta, ProductLinkSource::Backfill ) );
+		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->beta, ProductLinkSource::Admin ) );
 		self::assertSame( $this->alpha, $this->link->creator_id( 10 ) );
 	}
 
@@ -299,7 +311,7 @@ final class ProductCreatorLinkTest extends TestCase {
 		$this->products->add( 10, $entries );
 
 		self::assertNull( $this->link->creator_id( 10 ) );
-		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Backfill ) );
+		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Admin ) );
 		self::assertSame( $entries, $this->products->entries( 10 ) );
 	}
 
@@ -366,7 +378,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_creator_management_rights_alone_do_not_allow_a_link(): void {
 		Functions\when( 'current_user_can' )->alias( static fn( string $capability ): bool => Capabilities::MANAGE_CREATORS === $capability );
 
-		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Backfill ) );
+		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->link( 10, $this->alpha, ProductLinkSource::Admin ) );
 	}
 
 	public function test_unknown_products_are_rejected(): void {
@@ -396,7 +408,7 @@ final class ProductCreatorLinkTest extends TestCase {
 	public function test_the_creator_must_exist_and_be_active(): void {
 		$this->expect_rejection( ProductCreatorLinkException::CREATOR_NOT_FOUND, fn() => $this->link->link( 10, 999, ProductLinkSource::Admin ) );
 		$this->expect_rejection( ProductCreatorLinkException::CREATOR_NOT_FOUND, fn() => $this->link->link( 10, 0, ProductLinkSource::Admin ) );
-		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->link( 10, $this->inactive, ProductLinkSource::Backfill ) );
+		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->link( 10, $this->inactive, ProductLinkSource::Admin ) );
 	}
 
 	public function test_an_audit_failure_keeps_the_product_unchanged(): void {
@@ -444,6 +456,224 @@ final class ProductCreatorLinkTest extends TestCase {
 		$rows = array_filter( $this->audit_rows(), static fn( array $row ): bool => str_starts_with( (string) $row['action'], 'product_' ) );
 
 		return array_values( array_map( static fn( array $row ): array => array_diff_key( $row, array( 'id' => true ) ), $rows ) );
+	}
+
+	public function test_a_manual_link_stores_the_admin_origin(): void {
+		$this->link->link( 10, $this->alpha, ProductLinkSource::Admin );
+
+		self::assertSame( array( 'admin' ), $this->products->written_sources );
+		self::assertFalse( $this->products->find( 10 )?->is_category_managed() );
+	}
+
+	public function test_the_manual_entry_points_refuse_the_category_source(): void {
+		$this->expectException( \InvalidArgumentException::class );
+		$this->link->link( 10, $this->alpha, ProductLinkSource::Category );
+	}
+
+	public function test_keep_as_manual_turns_a_category_link_into_a_manual_one_for_the_same_creator(): void {
+		$this->manage = true;
+		$this->products->add_linked( 12, $this->alpha, 'category' );
+		$purpose                  = null;
+		$guard                    = $this->guard;
+		$this->products->on_write = static function () use ( &$purpose, $guard ): void {
+			$active  = ( new \ReflectionProperty( ProtectedProductMeta::class, 'active' ) )->getValue( $guard );
+			$purpose = $active?->purpose;
+		};
+
+		$changes = $this->link->keep_as_manual(
+			12,
+			$this->alpha,
+			array(
+				'term_id' => 16,
+				'choice'  => 'keep_as_manual',
+			)
+		);
+
+		self::assertSame( array( AuditAction::ProductCreatorLinked ), $changes );
+		self::assertSame( \MerchBoard\Core\Security\ProtectedMetaPurpose::ManualLink, $purpose, 'Written through the manual grant.' );
+		$product = $this->products->find( 12 );
+		self::assertNotNull( $product );
+		self::assertSame( $this->alpha, $product->creator_id(), 'Creator kept.' );
+		self::assertTrue( $product->has_manual_link() );
+		self::assertSame( array( 'admin' ), $this->products->written_sources );
+		self::assertSame( array( 12 ), $this->product_checks, 'edit_product for the product.' );
+
+		$audit = $this->product_audit()[0];
+		self::assertSame( array( 'product_creator_linked', '7', (string) $this->alpha ), array( $audit['action'], $audit['actor_user_id'], $audit['creator_id'] ) );
+		self::assertSame(
+			array(
+				'product_id'          => 12,
+				'previous_creator_id' => $this->alpha,
+				'source'              => 'admin',
+				'previous_source'     => 'category',
+				'term_id'             => 16,
+				'choice'              => 'keep_as_manual',
+			),
+			$audit['context']
+		);
+
+		self::assertSame( array(), $this->link->keep_as_manual( 12, $this->alpha ), 'A repeat converts nothing.' );
+		self::assertCount( 1, $this->products->writes );
+		self::assertCount( 1, $this->product_audit() );
+	}
+
+	public function test_a_category_managed_link_cannot_be_removed_manually(): void {
+		$this->products->add_linked( 12, $this->alpha, 'category', array( 16 ) );
+		$before = array( $this->products->entries( 12 ), $this->products->sources( 12 ) );
+
+		$this->expect_rejection( ProductCreatorLinkException::CATEGORY_MANAGED, fn() => $this->link->unlink( 12, ProductLinkSource::Admin ) );
+
+		self::assertSame( $before, array( $this->products->entries( 12 ), $this->products->sources( 12 ) ), 'Creator id and origin unchanged.' );
+		self::assertSame( array(), $this->products->writes );
+		self::assertSame( array(), $this->product_audit() );
+	}
+
+	public function test_after_keep_as_manual_the_link_can_be_removed(): void {
+		$this->manage = true;
+		$this->products->add_linked( 12, $this->alpha, 'category' );
+
+		$this->link->keep_as_manual( 12, $this->alpha );
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 12, ProductLinkSource::Admin ) );
+
+		self::assertFalse( $this->products->find( 12 )?->has_link() );
+		self::assertSame( array( 'product_creator_linked', 'product_creator_unlinked' ), array_column( $this->product_audit(), 'action' ) );
+	}
+
+	public function test_links_without_or_with_an_unknown_origin_are_manual_and_can_be_removed(): void {
+		$this->products->add_linked( 11, $this->alpha );
+		$this->products->add_linked( 12, $this->alpha, 'something' );
+
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 11, ProductLinkSource::Admin ) );
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->unlink( 12, ProductLinkSource::Admin ) );
+	}
+
+	public function test_the_category_path_still_removes_and_moves_category_links(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category' );
+		$this->products->add_linked( 12, $this->alpha, 'category' );
+
+		$this->link->apply_category_link( 11, null, 'category_removed' );
+		$this->link->apply_category_link( 12, $this->beta, 'category_moved' );
+
+		self::assertFalse( $this->products->find( 11 )?->has_link() );
+		self::assertSame( $this->beta, $this->products->find( 12 )?->creator_id() );
+	}
+
+	public function test_keep_as_manual_leaves_manual_links_alone_and_refuses_changed_links(): void {
+		$this->manage = true;
+		$this->products->add_linked( 11, $this->alpha, 'admin' );
+		$this->products->add_linked( 12, $this->beta, 'category' );
+
+		self::assertSame( array(), $this->link->keep_as_manual( 11, $this->alpha ), 'Already manual: no-op.' );
+		$this->expect_rejection( ProductCreatorLinkException::NOT_CATEGORY_MANAGED, fn() => $this->link->keep_as_manual( 12, $this->alpha ) );
+		$this->expect_rejection( ProductCreatorLinkException::NOT_CATEGORY_MANAGED, fn() => $this->link->keep_as_manual( 10, $this->alpha ) );
+
+		self::assertSame( array(), $this->products->writes );
+		self::assertSame( array(), $this->product_audit() );
+	}
+
+	public function test_keep_as_manual_needs_both_the_admin_and_the_product_capability(): void {
+		$this->products->add_linked( 12, $this->alpha, 'category' );
+
+		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->keep_as_manual( 12, $this->alpha ) );
+
+		$this->manage   = true;
+		$this->editable = array();
+		$this->expect_rejection( ProductCreatorLinkException::NOT_AUTHORIZED, fn() => $this->link->keep_as_manual( 12, $this->alpha ) );
+
+		self::assertTrue( $this->products->find( 12 )?->is_category_managed() );
+		self::assertSame( array(), $this->product_audit() );
+	}
+
+	public function test_a_failed_keep_as_manual_write_leaves_the_link_and_its_audit_untouched(): void {
+		$this->manage = true;
+		$this->products->add_linked( 12, $this->alpha, 'category' );
+		$this->products->fail_write = true;
+
+		try {
+			$this->link->keep_as_manual( 12, $this->alpha );
+			self::fail( 'Expected a database failure.' );
+		} catch ( DatabaseException ) {
+			self::assertTrue( $this->products->find( 12 )?->is_category_managed(), 'Still the category link.' );
+		}
+
+		self::assertSame( array(), $this->product_audit(), 'Audit rolled back.' );
+		self::assertSame( array( 12 ), $this->products->forgotten );
+	}
+
+	public function test_a_category_link_is_system_work_with_its_own_grant_and_audit(): void {
+		$this->editable           = array();
+		$purpose                  = null;
+		$guard                    = $this->guard;
+		$this->products->on_write = static function () use ( &$purpose, $guard ): void {
+			$active  = ( new \ReflectionProperty( ProtectedProductMeta::class, 'active' ) )->getValue( $guard );
+			$purpose = $active?->purpose;
+		};
+
+		$changes = $this->link->apply_category_link(
+			10,
+			$this->alpha,
+			'category_added',
+			array(
+				'category_ids'    => array( 16 ),
+				'trigger_user_id' => 5,
+			)
+		);
+
+		self::assertSame( array( AuditAction::ProductCreatorLinked ), $changes );
+		self::assertSame( \MerchBoard\Core\Security\ProtectedMetaPurpose::CategoryReconciliation, $purpose, 'Written through the category reconciliation grant.' );
+		self::assertSame( array( 'category' ), $this->products->written_sources );
+		self::assertTrue( $this->products->find( 10 )?->is_category_managed() );
+		self::assertSame( array(), $this->product_checks, 'No capability check: system work.' );
+
+		$audit = $this->product_audit()[0];
+		self::assertNull( $audit['actor_user_id'], 'System record.' );
+		self::assertSame( (string) $this->alpha, $audit['creator_id'] );
+		self::assertSame(
+			array(
+				'product_id'          => 10,
+				'previous_creator_id' => null,
+				'source'              => 'category',
+				'reason'              => 'category_added',
+				'category_ids'        => array( 16 ),
+				'trigger_user_id'     => 5,
+			),
+			$audit['context']
+		);
+	}
+
+	public function test_a_category_move_records_both_sides_and_a_removal_records_the_reason(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category' );
+
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked, AuditAction::ProductCreatorLinked ), $this->link->apply_category_link( 11, $this->beta, 'category_moved' ) );
+		self::assertSame( array( AuditAction::ProductCreatorUnlinked ), $this->link->apply_category_link( 11, null, 'category_removed' ) );
+		self::assertSame( array(), $this->link->apply_category_link( 11, null, 'category_removed' ), 'Unchanged state: nothing.' );
+
+		$audit = $this->product_audit();
+		self::assertSame( array( 'product_creator_unlinked', 'product_creator_linked', 'product_creator_unlinked' ), array_column( $audit, 'action' ) );
+		self::assertSame( array( (string) $this->alpha, (string) $this->beta, (string) $this->beta ), array_column( $audit, 'creator_id' ) );
+		self::assertSame( array( 'category_moved', 'category_moved', 'category_removed' ), array_map( static fn( array $a ): string => $a['context']['reason'], $audit ) );
+		self::assertSame( array( null, null, null ), array_column( $audit, 'actor_user_id' ) );
+		self::assertSame( array(), $this->products->entries( 11 ) );
+		self::assertSame( array(), $this->products->sources( 11 ), 'The origin goes with the link.' );
+	}
+
+	public function test_the_category_path_never_touches_a_manual_or_invalid_link(): void {
+		$this->products->add_linked( 11, $this->alpha, 'admin' );
+		$this->products->add_linked( 12, $this->alpha );
+		$this->products->add( 13, array( array( 'key' => '_Merchboard_Creator_ID', 'value' => '1' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		foreach ( array( 11, 12, 13 ) as $id ) {
+			$this->expect_rejection( ProductCreatorLinkException::MANUAL_LINK, fn() => $this->link->apply_category_link( $id, $this->beta, 'category_added' ) );
+			$this->expect_rejection( ProductCreatorLinkException::MANUAL_LINK, fn() => $this->link->apply_category_link( $id, null, 'category_removed' ) );
+		}
+	}
+
+	public function test_the_category_path_rejects_variations_unsupported_products_and_inactive_creators(): void {
+		$this->expect_rejection( ProductCreatorLinkException::VARIATION, fn() => $this->link->apply_category_link( 21, $this->alpha, 'category_added' ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED, fn() => $this->link->apply_category_link( 30, $this->alpha, 'category_added' ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED, fn() => $this->link->apply_category_link( 31, $this->alpha, 'category_added' ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->apply_category_link( 99, $this->alpha, 'category_added' ) );
+		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->apply_category_link( 10, $this->inactive, 'category_added' ) );
 	}
 
 	/**

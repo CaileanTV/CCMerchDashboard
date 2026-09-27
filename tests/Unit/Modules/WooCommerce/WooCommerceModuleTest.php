@@ -18,9 +18,19 @@ use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
+use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesActions;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesSection;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
+use MerchBoard\Modules\WooCommerce\ActionSchedulerQueue;
+use MerchBoard\Modules\WooCommerce\CategoryReconciliationHooks;
+use MerchBoard\Modules\WooCommerce\CategoryReconciliationJobs;
+use MerchBoard\Modules\WooCommerce\CategoryReconciliationScheduler;
+use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -61,6 +71,18 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorProductsActions::LINK_ACTION, array( $container->get( CreatorProductsActions::class ), 'handle_link_request' ) ) );
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorProductsActions::UNLINK_ACTION, array( $container->get( CreatorProductsActions::class ), 'handle_unlink_request' ) ) );
 		self::assertSame( 10, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorProductsSection::class ), 'render' ) ) );
+		self::assertSame( 10, has_action( 'admin_post_' . CreatorCategoriesActions::MAP_ACTION, array( $container->get( CreatorCategoriesActions::class ), 'handle_map_request' ) ) );
+		self::assertSame( 10, has_action( 'admin_post_' . CreatorCategoriesActions::UNMAP_ACTION, array( $container->get( CreatorCategoriesActions::class ), 'handle_unmap_request' ) ) );
+		self::assertSame( 5, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorCategoriesSection::class ), 'render' ) ), 'The category above the products.' );
+		self::assertSame( 10, has_filter( 'merchboard_creators_list_columns', array( $container->get( CreatorListCategories::class ), 'columns' ) ) );
+		self::assertSame( 10, has_action( 'merchboard_creators_list_items', array( $container->get( CreatorListCategories::class ), 'load' ) ) );
+		self::assertSame( 10, has_filter( 'merchboard_creators_list_column', array( $container->get( CreatorListCategories::class ), 'render' ) ) );
+		self::assertSame( 10, has_action( 'admin_post_' . CategorySyncActions::ACTION, array( $container->get( CategorySyncActions::class ), 'handle_request' ) ) );
+		self::assertSame( 10, has_action( 'merchboard_creators_view_' . CategorySyncActions::VIEW, array( $container->get( CategorySyncScreen::class ), 'render' ) ) );
+		self::assertSame( 10, has_action( 'merchboard_creators_list_tools', array( $container->get( CategorySyncScreen::class ), 'render_link' ) ) );
+		self::assertFalse( has_action( 'admin_post_nopriv_' . CategorySyncActions::ACTION ) );
+		self::assertFalse( has_action( 'wp_ajax_' . CreatorCategoriesActions::MAP_ACTION ), 'Only admin-post; no AJAX or REST route.' );
+		self::assertFalse( has_action( 'admin_post_nopriv_' . CreatorCategoriesActions::MAP_ACTION ) );
 	}
 
 	public function test_the_module_reuses_the_core_guard_and_never_registers_it(): void {
@@ -83,6 +105,22 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertNotFalse( has_filter( 'woocommerce_product_import_process_item_data' ), 'Not waiting for admin_init: REST, cron and WP-CLI are covered too.' );
 		self::assertNotFalse( has_filter( 'woocommerce_rest_pre_insert_product_object' ) );
 		self::assertNotFalse( has_filter( 'woocommerce_duplicate_product_exclude_meta' ) );
+	}
+
+	public function test_the_automatic_reconciliation_is_hooked_for_every_request_with_action_scheduler(): void {
+		$container = self::core_container();
+		( new WooCommerceModule() )->register( $container );
+		$hooks = $container->get( CategoryReconciliationHooks::class );
+		$jobs  = $container->get( CategoryReconciliationJobs::class );
+
+		self::assertInstanceOf( ActionSchedulerQueue::class, $container->get( JobQueue::class ) );
+		self::assertSame( 10, has_action( 'set_object_terms', array( $hooks, 'terms_set' ) ), 'Not waiting for admin_init: REST, CSV import, WP-CLI and cron change categories too.' );
+		self::assertSame( 10, has_action( 'deleted_term_relationships', array( $hooks, 'terms_removed' ) ) );
+		self::assertSame( 10, has_action( 'transition_post_status', array( $hooks, 'status_changed' ) ) );
+		self::assertSame( 10, has_action( 'pre_delete_term', array( $hooks, 'term_deleting' ) ) );
+		self::assertSame( 10, has_action( 'delete_term', array( $hooks, 'term_deleted' ) ) );
+		self::assertSame( 10, has_action( CategoryReconciliationScheduler::PRODUCT_HOOK, array( $jobs, 'run_product' ) ) );
+		self::assertSame( 10, has_action( CategoryReconciliationScheduler::RUN_HOOK, array( $jobs, 'run_page' ) ) );
 	}
 
 	public function test_product_creator_link_uses_the_core_owned_keys(): void {

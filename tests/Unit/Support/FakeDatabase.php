@@ -132,7 +132,7 @@ final class FakeDatabase extends wpdb {
 	public function get_row( $query = null, $output = OBJECT, $y = 0 ) {
 		[ $sql, $args ] = $this->statement( $query );
 
-		if ( 1 !== preg_match( '/ FROM %i WHERE (id|user_id) = %d$/', $sql, $m ) ) {
+		if ( 1 !== preg_match( '/ FROM %i WHERE (id|user_id|term_id) = %d$/', $sql, $m ) ) {
 			throw new RuntimeException( 'Unsupported get_row: ' . $sql );
 		}
 
@@ -228,6 +228,20 @@ final class FakeDatabase extends wpdb {
 			);
 		}
 
+		if ( str_ends_with( $sql, 'FROM %i WHERE creator_id = %d ORDER BY term_id ASC' ) ) {
+			$rows = $this->filter( (string) $args[0], 'creator_id', (string) $args[1] );
+			usort( $rows, static fn( array $a, array $b ): int => (int) $a['term_id'] <=> (int) $b['term_id'] );
+
+			return $rows;
+		}
+
+		if ( str_ends_with( $sql, 'created_by FROM %i ORDER BY term_id ASC' ) ) {
+			$rows = $this->filter( (string) $args[0] );
+			usort( $rows, static fn( array $a, array $b ): int => (int) $a['term_id'] <=> (int) $b['term_id'] );
+
+			return $rows;
+		}
+
 		if ( str_ends_with( $sql, 'FROM %i WHERE creator_id = %d ORDER BY id DESC LIMIT %d' ) ) {
 			$rows = array_reverse( $this->filter( (string) $args[0], 'creator_id', (string) $args[1] ) );
 
@@ -287,6 +301,21 @@ final class FakeDatabase extends wpdb {
 			return false;
 		}
 
+		// Tables keyed by a natural primary key (no AUTO_INCREMENT id).
+		if ( $this->prefix . Tables::CREATOR_CATEGORIES === $table ) {
+			$key = (int) $data['term_id'];
+
+			if ( isset( $this->data[ $table ][ $key ] ) ) {
+				$this->last_error = "Duplicate entry '" . $key . "' for key 'PRIMARY'";
+				return false;
+			}
+
+			$this->data[ $table ][ $key ] = self::stringify( $data );
+			$this->last_error             = '';
+
+			return 1;
+		}
+
 		$id                          = $this->next_id[ $table ] ?? 1;
 		$this->next_id[ $table ]     = $id + 1;
 		$this->data[ $table ][ $id ] = array( 'id' => (string) $id ) + self::stringify( $data );
@@ -327,6 +356,35 @@ final class FakeDatabase extends wpdb {
 		$this->data[ $table ][ $id ] = array_merge( $this->data[ $table ][ $id ], self::stringify( $data ) );
 
 		return 1;
+	}
+
+	/**
+	 * Deletes rows matching every WHERE column.
+	 *
+	 * @param string               $table        Table.
+	 * @param array<string, mixed> $where        Where.
+	 * @param mixed                $where_format Where formats.
+	 * @return int|false
+	 */
+	public function delete( $table, $where, $where_format = null ) {
+		if ( $this->fails( $table ) ) {
+			return false;
+		}
+
+		$deleted = 0;
+
+		foreach ( $this->data[ $table ] ?? array() as $key => $row ) {
+			foreach ( self::stringify( $where ) as $column => $value ) {
+				if ( ( $row[ $column ] ?? null ) !== $value ) {
+					continue 2;
+				}
+			}
+
+			unset( $this->data[ $table ][ $key ] );
+			++$deleted;
+		}
+
+		return $deleted;
 	}
 
 	/**

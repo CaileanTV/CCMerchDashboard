@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Core\Database;
 
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
+use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 
@@ -33,6 +34,7 @@ final class Schema {
 			1 => new CreateCreatorsTable(),
 			2 => new CreateAuditLogTable(),
 			3 => new CreateCreatorMetaTable(),
+			4 => new CreateCreatorCategoriesTable(),
 		);
 	}
 }

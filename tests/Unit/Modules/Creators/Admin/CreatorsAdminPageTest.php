@@ -156,6 +156,23 @@ final class CreatorsAdminPageTest extends TestCase {
 		self::assertStringContainsString( '</form>', $html, 'Sections are added after the creator form, never inside it.' );
 	}
 
+	public function test_other_modules_can_add_views_that_run_only_after_the_capability_check(): void {
+		add_action( 'merchboard_creators_view_category-sync', static function (): void {} );
+		Actions\expectDone( 'merchboard_creators_view_category-sync' )->once()->whenHappen(
+			static function (): void {
+				echo '<p>module view</p>';
+			}
+		);
+
+		$html = $this->render( array( 'action' => 'category-sync' ) );
+
+		self::assertStringContainsString( '<div class="wrap"><p>module view</p></div>', $html );
+
+		$this->caps = array( 'read' );
+		$this->expectException( WpDie::class );
+		$this->render( array( 'action' => 'category-sync' ) );
+	}
+
 	public function test_unknown_creator_shows_not_found(): void {
 		$html = $this->render(
 			array(

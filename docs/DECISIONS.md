@@ -1065,7 +1065,7 @@ Relationen er Merch Dashboards forretningsdata. Den administreres dér, hvor cre
 2026-09-26
 
 ## Status
-Accepteret (fase 17, efter trin 4, før implementering). Besluttet af projektejeren. **Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3** (se "Ændringer af tidligere ADR'er" nedenfor). Supplerer ADR-011 og ADR-025. Dette er en **bevidst arkitekturændring**, ikke en undtagelse fra de tidligere beslutninger. Implementeringen er ikke startet. **Suppleret af ADR-034 (2026-09-26):** kategori-afstemningen (pkt. 7) skal skrive gennem `ProtectedMetaWrite::for_category_reconciliation()`; begge meta-nøgler er beskyttet mod generiske skriveveje.
+Accepteret (fase 17, efter trin 4, før implementering). **Implementeringsstatus 2026-09-27:** implementeret i fase 17, trin 6-13 (se PROJECT-STATUS); admin-værktøjet til fuld afstemning og visningen af konflikter som needs attention (tvetydige produkter, inaktive creators og manuelle koblinger, der afviger fra kategorien) er implementeret 2026-09-27. Beslutningen er uændret. Besluttet af projektejeren. **Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3** (se "Ændringer af tidligere ADR'er" nedenfor). Supplerer ADR-011 og ADR-025. Dette er en **bevidst arkitekturændring**, ikke en undtagelse fra de tidligere beslutninger. Implementeringen var ikke startet, da beslutningen blev taget (se implementeringsstatus ovenfor). **Suppleret af ADR-034 (2026-09-26):** kategori-afstemningen (pkt. 7) skal skrive gennem `ProtectedMetaWrite::for_category_reconciliation()`; begge meta-nøgler er beskyttet mod generiske skriveveje.
 
 ## Context
 ADR-031 gjorde creator-kategori-mappingen til et rent input til en engangs-backfill: ingen automatisk synkronisering, og mapping-ændringer og sletning af kategorier påvirkede aldrig produkternes ejerskab. ADR-032 gjorde creatorens redigeringsside til den normale manuelle skrivevej. Trin 4 leverede den, inkl. søgning på produktkategori, som kun hjælper admin med at finde produkter.
@@ -1256,7 +1256,7 @@ Kategorien er shoppens eksisterende arbejdsgang for, hvilken creator et produkt 
 - **Trin 4's UI** viser oprindelsen pr. produkt og tilbyder "Keep as manual". Kategorisøgningen fra trin 4 bevares som søgehjælp.
 - **Audit:** nye actions `creator_category_linked`, `creator_category_unlinked` og `category_sync_completed`. `product_backfill_completed` indføres ikke.
 - **Creators-modulet** får et domæne-event ved statusændring, så genaktivering kan udløse afstemning.
-- **Roadmap:** fase 17's resterende trin omlægges (se ROADMAP.md). Implementeringen er ikke startet.
+- **Roadmap:** fase 17's resterende trin omlægges (se ROADMAP.md). Implementeringen var ikke startet, da beslutningen blev taget; den er siden implementeret i fase 17 (se implementeringsstatus under Status og PROJECT-STATUS).
 
 ---
 
@@ -1293,7 +1293,7 @@ Undersøgt i WordPress 7.1.2 og WooCommerce 10.3.8:
    En afvist skrivning fejler (`false`), logges som teknisk advarsel (operation, post-ID og nøgle, aldrig værdier; ADR-021) og skriver ingen audit. Læsning påvirkes aldrig, og anden meta skrives normalt.
 
 3. **Godkendt skrivekontekst (`ProtectedMetaWrite`):** den eneste vej udenom vagten.
-   - **Formål:** hver kontekst har et formål (`ProtectedMetaPurpose`): `manual_link` (Merch Dashboards manuelle vej via `ProductCreatorLink`) eller `category_reconciliation` (ADR-033's systemafstemning; findes, men har endnu ingen kalder).
+   - **Formål:** hver kontekst har et formål (`ProtectedMetaPurpose`): `manual_link` (Merch Dashboards manuelle vej via `ProductCreatorLink`) eller `category_reconciliation` (ADR-033's systemafstemning; bruges siden fase 17, trin 8 af `ProductCreatorLink::apply_category_link()` via `ProtectedMetaWrite::for_category_reconciliation()`).
    - **Oprettelse:** kun via de navngivne fabrikker `for_manual_link( $product_id )` og `for_category_reconciliation( $product_id )`; constructoren er privat.
    - **Produktbinding:** konteksten dækker præcis ét produkt-ID (positivt). Den tillader aldrig skrivninger på andre indlæg, heller ikke produktets varianter, og aldrig sletning af en nøgle fra alle indlæg.
    - **Scope:** den har kun virkning under `ProtectedProductMeta::run( $write, $operation )` og kun for varigheden af det kald.

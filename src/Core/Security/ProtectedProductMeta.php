@@ -23,8 +23,9 @@ defined( 'ABSPATH' ) || exit;
  *
  * Why: the product → creator link is ownership (ADR-030/033/034). It may only
  * change through Merch Dashboard's approved paths, which validate, authorize
- * and audit: the manual path through ProductCreatorLink and, later, ADR-033's
- * system category reconciliation, which will use this same mechanism.
+ * and audit: the manual paths through ProductCreatorLink (link, unlink, "Keep
+ * as manual") and ADR-033's system category reconciliation, which uses this
+ * same mechanism.
  *
  * How: WordPress' metadata pre-hooks (`add_`, `update_`, `delete_post_metadata`
  * and the `_by_mid` variants that WooCommerce CRUD uses) run for every meta

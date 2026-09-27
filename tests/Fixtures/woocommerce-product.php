@@ -227,6 +227,16 @@ class WC_Product extends WC_Data {
 	}
 
 	/**
+	 * Direct product_cat term ids.
+	 *
+	 * @param string $context Context.
+	 * @return list<int>
+	 */
+	public function get_category_ids( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['categories'] ?? array();
+	}
+
+	/**
 	 * SKU.
 	 *
 	 * @param string $context Context.
@@ -325,7 +335,7 @@ function wc_get_products( $args ) {
 		}
 	}
 
-	return array_slice( $ids, 0, $args['limit'] );
+	return array_slice( $ids, (int) ( $args['offset'] ?? 0 ), $args['limit'] );
 }
 
 /**

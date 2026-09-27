@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Unit\Modules\WooCommerce;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Modules\WooCommerce\ProductRecord;
 use MerchBoard\Modules\WooCommerce\WooCommerceProductStore;
 use MerchBoard\Tests\Unit\Support\WcProductStorage;
@@ -30,7 +31,8 @@ use wpdb;
 #[PreserveGlobalState( false )]
 final class WooCommerceProductStoreTest extends TestCase {
 
-	private const KEY = ProductCreatorLink::META_KEY;
+	private const KEY    = ProductCreatorLink::META_KEY;
+	private const SOURCE = ProductCreatorLink::SOURCE_META_KEY;
 
 	private WooCommerceProductStore $store;
 
@@ -220,8 +222,89 @@ final class WooCommerceProductStoreTest extends TestCase {
 
 		$this->store->write_creator( 10, 7 );
 
-		self::assertSame( array( '_price' => '10', self::KEY => '7' ), self::stored( 10 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		self::assertSame( 7, $this->store->find( 10 )?->creator_id() );
+		self::assertSame( array( '_price' => '10', self::KEY => '7', self::SOURCE => 'admin' ), self::stored( 10 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$product = $this->store->find( 10 );
+		self::assertNotNull( $product );
+		self::assertSame( 7, $product->creator_id() );
+		self::assertFalse( $product->is_category_managed(), 'A manual link.' );
+	}
+
+	public function test_a_category_link_stores_its_origin_and_replaces_every_origin_spelling(): void {
+		WcProductStorage::add(
+			10,
+			array(
+				self::KEY                         => '3',
+				'_Merchboard_Creator_Link_Source' => 'admin',
+				'_price'                          => '10',
+			),
+			'simple',
+			0,
+			'',
+			'',
+			'publish',
+			array( 16, 19 )
+		);
+
+		$this->store->write_creator( 10, 4, ProductLinkSource::Category );
+
+		self::assertSame( array( '_price' => '10', self::KEY => '4', self::SOURCE => 'category' ), self::stored( 10 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$record = $this->store->find( 10 );
+		self::assertNotNull( $record );
+		self::assertTrue( $record->is_category_managed() );
+		self::assertSame( array( 16, 19 ), $record->category_ids );
+
+		$this->store->write_creator( 10, null );
+		self::assertSame( array( '_price' => '10' ), self::stored( 10 ), 'Removing a link removes its origin.' );
+	}
+
+	public function test_a_link_without_origin_or_with_an_odd_origin_is_manual(): void {
+		WcProductStorage::add( 10, array( self::KEY => '3' ) );
+		WcProductStorage::add(
+			11,
+			array(
+				self::KEY                         => '3',
+				'_Merchboard_Creator_Link_Source' => 'category',
+			)
+		);
+		WcProductStorage::add(
+			12,
+			array(
+				self::KEY    => '3',
+				self::SOURCE => 'something',
+			)
+		);
+
+		foreach ( array( 10, 11, 12 ) as $id ) {
+			$record = $this->store->find( $id );
+			self::assertNotNull( $record );
+			self::assertFalse( $record->is_category_managed(), (string) $id );
+			self::assertTrue( $record->has_manual_link(), (string) $id );
+		}
+	}
+
+	public function test_in_category_lists_parents_directly_in_the_category_without_trash(): void {
+		WcProductStorage::$categories = array(
+			16 => array(
+				'name'   => 'Creator Alpha',
+				'parent' => 0,
+			),
+			20 => array(
+				'name'   => 'Posters',
+				'parent' => 16,
+			),
+		);
+		WcProductStorage::add( 10, array(), 'simple', 0, '', '', 'publish', array( 16 ) );
+		WcProductStorage::add( 11, array(), 'simple', 0, '', '', 'draft', array( 16, 19 ) );
+		WcProductStorage::add( 12, array(), 'simple', 0, '', '', 'trash', array( 16 ) );
+		WcProductStorage::add( 13, array(), 'variation', 10, '', '', 'publish', array( 16 ) );
+		WcProductStorage::add( 14, array(), 'simple', 0, '', '', 'publish', array( 20 ) );
+
+		self::assertSame( array( 10, 11 ), $this->store->in_category( 16, 100, 0 ) );
+		$query = WcProductStorage::$queries[0];
+		self::assertFalse( $query['tax_query'][0]['include_children'] );
+		self::assertNotContains( 'trash', $query['status'] );
+		self::assertNotContains( 'auto-draft', $query['status'] );
+		self::assertSame( array(), $this->store->in_category( 0, 100, 0 ) );
 	}
 
 	public function test_write_null_removes_every_spelling_and_keeps_other_meta(): void {
@@ -342,7 +425,7 @@ final class WooCommerceProductStoreTest extends TestCase {
 				$rows       = array();
 
 				foreach ( WcProductStorage::$meta[ (int) $args[1] ] ?? array() as $row ) {
-					if ( strtolower( trim( $row['key'] ) ) === $args[2] ) {
+					if ( in_array( strtolower( trim( $row['key'] ) ), array_slice( $args, 2 ), true ) ) {
 						$rows[] = array(
 							'meta_key'   => $row['key'], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Test stand-in row, not a query.
 							'meta_value' => $row['value'], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Test stand-in row, not a query.

@@ -25,16 +25,17 @@ use wpdb;
 
 final class MigrationTest extends IntegrationTestCase {
 
-	public function test_fresh_install_creates_schema_version_3(): void {
+	public function test_fresh_install_creates_schema_version_4(): void {
 		self::assertSame( 0, $this->migrator()->installed_version() );
 
 		$this->install();
 
-		self::assertSame( 3, $this->migrator()->installed_version() );
-		self::assertSame( '3', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( 4, $this->migrator()->installed_version() );
+		self::assertSame( '4', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
+		self::assertSame( 0, $this->count_rows( Tables::CREATOR_CATEGORIES ) );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ), 'Lock released.' );
 		self::assertFalse( get_transient( Installer::FAILURE_TRANSIENT ) );
 	}
@@ -49,7 +50,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 3, $this->migrator()->installed_version() );
+		self::assertSame( 4, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 		self::assertSame( 'Før opgradering 🎸', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
@@ -75,7 +76,7 @@ final class MigrationTest extends IntegrationTestCase {
 		$this->install();
 		$this->install();
 
-		self::assertSame( 3, $this->migrator()->installed_version() );
+		self::assertSame( 4, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 	}
 
@@ -159,7 +160,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		self::assertTrue( $this->migrator()->migrate() );
 
-		self::assertSame( 3, $this->migrator()->installed_version() );
+		self::assertSame( 4, $this->migrator()->installed_version() );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ) );
 	}
 

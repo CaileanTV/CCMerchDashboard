@@ -21,12 +21,15 @@ use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Links products to a creator and removes links, from the creator's edit
- * page (ADR-032). Order of checks for every request:
+ * Links products to a creator, removes links and keeps category-managed
+ * links as manual, from the creator's edit page (ADR-032, ADR-033). Order
+ * of checks for every request:
  *
  * 1. capability `merchboard_manage_creators` → 403 otherwise;
  * 2. nonce, bound to the action AND the creator id → 403 otherwise;
- * 3. input: absint ids only, at most MAX_PRODUCTS per request;
+ * 3. input: absint ids only, at most MAX_PRODUCTS per request; "Keep as
+ *    manual" also needs the explicit confirmation (`confirm` = 1) and a
+ *    product currently linked to this creator;
  * 4. ProductCreatorLink for each product, which checks `edit_product` for
  *    that product and every business rule, and writes the audit record.
  *
@@ -49,6 +52,16 @@ final class CreatorProductsActions {
 	 * The admin-post action that removes one product link.
 	 */
 	public const UNLINK_ACTION = 'merchboard_unlink_creator_product';
+
+	/**
+	 * The admin-post action that keeps one category-managed link as manual.
+	 */
+	public const KEEP_ACTION = 'merchboard_keep_creator_product_manual';
+
+	/**
+	 * Outcome when the explicit confirmation is missing.
+	 */
+	public const CONFIRMATION_REQUIRED = 'confirmation_required';
 
 	/**
 	 * Query argument carrying the per-product outcomes after a redirect.
@@ -101,11 +114,30 @@ final class CreatorProductsActions {
 	}
 
 	/**
+	 * Nonce action for keeping links of one creator as manual.
+	 *
+	 * @param int $creator_id Creator id.
+	 */
+	public static function keep_nonce_action( int $creator_id ): string {
+		return self::KEEP_ACTION . '_' . $creator_id;
+	}
+
+	/**
 	 * Registers the admin-post handlers.
 	 */
 	public function register(): void {
 		add_action( 'admin_post_' . self::LINK_ACTION, array( $this, 'handle_link_request' ) );
 		add_action( 'admin_post_' . self::UNLINK_ACTION, array( $this, 'handle_unlink_request' ) );
+		add_action( 'admin_post_' . self::KEEP_ACTION, array( $this, 'handle_keep_request' ) );
+	}
+
+	/**
+	 * WordPress entry point for "Keep as manual".
+	 */
+	public function handle_keep_request(): void {
+		// The nonce is verified in keep_as_manual() before any input is used.
+		wp_safe_redirect( $this->keep_as_manual( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and every field sanitized in keep_as_manual().
+		exit;
 	}
 
 	/**
@@ -202,6 +234,48 @@ final class CreatorProductsActions {
 			$result = $e->reason();
 		} catch ( DatabaseException $e ) {
 			$result = $this->technical_failure( $e, 'unlink', $creator_id, $product_id );
+		}
+
+		return $this->back( $creator_id, array( $product_id => $result ), '' );
+	}
+
+	/**
+	 * Keeps one product's category-managed link to the creator as a manual
+	 * link (ADR-033 point 4), after the admin's explicit confirmation. The
+	 * creator stays; only the origin becomes `admin`. ProductCreatorLink
+	 * checks `edit_product`, that the link is a link to exactly this creator,
+	 * writes through the approved manual context and records the audit.
+	 * Accepted only for a product currently linked to this creator.
+	 *
+	 * @param array<mixed> $input Unslashed request data.
+	 * @return string Redirect URL.
+	 */
+	public function keep_as_manual( array $input ): string {
+		$this->require_capability();
+
+		$creator_id = absint( self::scalar( $input, 'creator_id' ) );
+		$this->require_nonce( $input, self::keep_nonce_action( $creator_id ) );
+
+		$product_id = absint( self::scalar( $input, 'product_id' ) );
+
+		if ( $product_id < 1 ) {
+			return $this->back( $creator_id, array( 0 => self::NO_SELECTION ), '' );
+		}
+
+		if ( '1' !== self::scalar( $input, 'confirm' ) ) {
+			return $this->back( $creator_id, array( $product_id => self::CONFIRMATION_REQUIRED ), '' );
+		}
+
+		if ( $this->link->creator_id( $product_id ) !== $creator_id ) {
+			return $this->back( $creator_id, array( $product_id => 'linked_elsewhere' ), '' );
+		}
+
+		try {
+			$result = array() === $this->link->keep_as_manual( $product_id, $creator_id ) ? 'unchanged' : 'kept_manual';
+		} catch ( ProductCreatorLinkException $e ) {
+			$result = $e->reason();
+		} catch ( DatabaseException $e ) {
+			$result = $this->technical_failure( $e, 'keep_as_manual', $creator_id, $product_id );
 		}
 
 		return $this->back( $creator_id, array( $product_id => $result ), '' );

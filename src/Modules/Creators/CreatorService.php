@@ -41,6 +41,11 @@ defined( 'ABSPATH' ) || exit;
 final class CreatorService {
 
 	/**
+	 * Action fired after a committed status change.
+	 */
+	public const STATUS_CHANGED_ACTION = 'merchboard_creator_status_changed';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CreatorRepository $creators    Creator storage.
@@ -165,6 +170,10 @@ final class CreatorService {
 			$this->users->grant_creator_role( $user_id );
 		}
 
+		if ( $restatus ) {
+			self::status_changed( $current->id, $status, $current->status );
+		}
+
 		return $changes;
 	}
 
@@ -204,8 +213,9 @@ final class CreatorService {
 			return array();
 		}
 
-		return $this->transaction->run(
-			function () use ( $user_id ): array {
+		$deactivated = 0;
+		$changes     = $this->transaction->run(
+			function () use ( $user_id, &$deactivated ): array {
 				$creator = $this->creators->find_by_user_id( $user_id );
 
 				// Only while still linked to that user (a concurrent re-link wins).
@@ -225,7 +235,8 @@ final class CreatorService {
 				);
 
 				if ( CreatorStatus::Active === $creator->status ) {
-					$changes[] = $this->record_system(
+					$deactivated = $creator->id;
+					$changes[]   = $this->record_system(
 						AuditAction::CreatorDeactivated,
 						$creator->id,
 						array(
@@ -238,6 +249,32 @@ final class CreatorService {
 				return $changes;
 			}
 		);
+
+		if ( $deactivated > 0 ) {
+			self::status_changed( $deactivated, CreatorStatus::Inactive, CreatorStatus::Active );
+		}
+
+		return $changes;
+	}
+
+	/**
+	 * Domain event after a committed status change (ADR-033: reactivation
+	 * reconciles the creator's category links). Fired only after the
+	 * transaction, never for a rolled-back change.
+	 *
+	 * @param int           $creator_id Creator id.
+	 * @param CreatorStatus $status     New status.
+	 * @param CreatorStatus $previous   Previous status.
+	 */
+	private static function status_changed( int $creator_id, CreatorStatus $status, CreatorStatus $previous ): void {
+		/**
+		 * Fires after a creator's status changed.
+		 *
+		 * @param int    $creator_id Creator id.
+		 * @param string $status     New status (`active` or `inactive`).
+		 * @param string $previous   Previous status.
+		 */
+		do_action( 'merchboard_creator_status_changed', $creator_id, $status->value, $previous->value );
 	}
 
 	/**

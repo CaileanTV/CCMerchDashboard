@@ -160,6 +160,14 @@ final class CreatorsAdminPage {
 			} else {
 				$this->render_form( $creator );
 			}
+		} elseif ( '' !== $action && has_action( 'merchboard_creators_view_' . $action ) ) {
+			/**
+			 * Renders a view another module adds to the Creators page
+			 * (`action=<name>`), e.g. the WooCommerce module's category
+			 * reconciliation. Runs only after the capability check above; the
+			 * view checks its own capabilities and escapes its own output.
+			 */
+			do_action( 'merchboard_creators_view_' . $action );
 		} else {
 			$this->render_list();
 		}
@@ -223,6 +231,12 @@ final class CreatorsAdminPage {
 
 		echo '<h1 class="wp-heading-inline">' . esc_html__( 'Creators', 'merchboard' ) . '</h1> ';
 		echo '<a href="' . esc_url( self::url( array( 'action' => 'new' ) ) ) . '" class="page-title-action">' . esc_html__( 'Add New Creator', 'merchboard' ) . '</a>';
+
+		/**
+		 * Fires after the list's title actions, so other modules can link to
+		 * their views on this page (escaped `page-title-action` links).
+		 */
+		do_action( 'merchboard_creators_list_tools' );
 		echo '<hr class="wp-header-end">';
 		$table->views();
 		echo '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '">';

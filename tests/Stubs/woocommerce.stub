@@ -56,6 +56,12 @@ class WC_Product extends WC_Data {
 
 	/**
 	 * @param string $context 'view' or 'edit'.
+	 * @return array<int|string>
+	 */
+	public function get_category_ids( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
 	 * @return int
 	 */
 	public function get_parent_id( $context = 'view' ) {}
@@ -171,3 +177,34 @@ function wc_get_product( $the_product = false, $deprecated = array() ) {}
  * @return void
  */
 function wc_delete_product_transients( $post_id = 0 ) {}
+
+/**
+ * Action Scheduler 3.9 (bundled with WooCommerce 10.3.8), functions.php.
+ *
+ * @param string       $hook     Hook.
+ * @param array<mixed> $args     Arguments.
+ * @param string       $group    Group.
+ * @param bool         $unique   Unique by hook and group.
+ * @param int          $priority Priority.
+ * @return int Action id (0 on failure).
+ */
+function as_enqueue_async_action( $hook, $args = array(), $group = '', $unique = false, $priority = 10 ) {}
+
+/**
+ * @param int          $timestamp When to run.
+ * @param string       $hook      Hook.
+ * @param array<mixed> $args      Arguments.
+ * @param string       $group     Group.
+ * @param bool         $unique    Unique by hook and group.
+ * @param int          $priority  Priority.
+ * @return int Action id (0 on failure).
+ */
+function as_schedule_single_action( $timestamp, $hook, $args = array(), $group = '', $unique = false, $priority = 10 ) {}
+
+/**
+ * @param string            $hook  Hook.
+ * @param array<mixed>|null $args  Arguments (null: any).
+ * @param string            $group Group.
+ * @return bool Whether a pending or running action matches.
+ */
+function as_has_scheduled_action( $hook, $args = null, $group = '' ) {}

@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Unit\Support;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Modules\WooCommerce\ProductRecord;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 
@@ -64,7 +65,23 @@ final class FakeProductStore implements ProductStore {
 	public array $searches = array();
 
 	/**
+	 * Calls to in_category(): term, limit, offset.
+	 *
+	 * @var list<array{int, int, int}>
+	 */
+	public array $category_queries = array();
+
+	/**
+	 * Origin written with each write, in order ('null' for a removal).
+	 *
+	 * @var list<string>
+	 */
+	public array $written_sources = array();
+
+	/**
 	 * Adds a product.
+	 *
+	 * @phpstan-param list<int> $categories
 	 *
 	 * @param int                                     $id           Product id.
 	 * @param list<array{key: string, value: string}> $entries      Stored link entries.
@@ -72,18 +89,25 @@ final class FakeProductStore implements ProductStore {
 	 * @param int                                     $parent_id    Parent id (variations).
 	 * @param string                                  $name         Product name.
 	 * @param string                                  $sku          SKU.
+	 * @param list<array{key: string, value: string}> $sources      Stored link origin entries.
+	 * @param int[]                                   $categories   Direct product_cat term ids.
 	 */
-	public function add( int $id, array $entries = array(), string $status = 'publish', int $parent_id = 0, string $name = '', string $sku = '' ): void {
-		$this->products[ $id ] = new ProductRecord( $id, $parent_id, $parent_id > 0, $status, $entries, '' === $name ? 'Product ' . $id : $name, $sku );
+	public function add( int $id, array $entries = array(), string $status = 'publish', int $parent_id = 0, string $name = '', string $sku = '', array $sources = array(), array $categories = array() ): void {
+		$this->products[ $id ] = new ProductRecord( $id, $parent_id, $parent_id > 0, $status, $entries, '' === $name ? 'Product ' . $id : $name, $sku, $sources, $categories );
 	}
 
 	/**
 	 * Adds a product linked to a creator with the exact key.
 	 *
-	 * @param int $id         Product id.
-	 * @param int $creator_id Creator id.
+	 * @phpstan-param list<int> $categories
+	 *
+	 * @param int         $id         Product id.
+	 * @param int         $creator_id Creator id.
+	 * @param string|null $source     Stored origin ('admin', 'category'), or null for none.
+	 * @param int[]       $categories Direct product_cat term ids.
+	 * @param string      $status     Post status.
 	 */
-	public function add_linked( int $id, int $creator_id ): void {
+	public function add_linked( int $id, int $creator_id, ?string $source = null, array $categories = array(), string $status = 'publish' ): void {
 		$this->add(
 			$id,
 			array(
@@ -91,8 +115,52 @@ final class FakeProductStore implements ProductStore {
 					'key'   => ProductCreatorLink::META_KEY,
 					'value' => (string) $creator_id,
 				),
-			)
+			),
+			$status,
+			0,
+			'',
+			'',
+			null === $source ? array() : array(
+				array(
+					'key'   => ProductCreatorLink::SOURCE_META_KEY,
+					'value' => $source,
+				),
+			),
+			$categories
 		);
+	}
+
+	/**
+	 * Stored link origin entries of a product.
+	 *
+	 * @param int $id Product id.
+	 * @return list<array{key: string, value: string}>
+	 */
+	public function sources( int $id ): array {
+		return $this->products[ $id ]->source_entries ?? array();
+	}
+
+	/**
+	 * Parent products directly in a category, not trash or auto-draft, by id.
+	 *
+	 * @param int $term_id Term id.
+	 * @param int $limit   Page size.
+	 * @param int $offset  Products to skip.
+	 * @return list<int>
+	 */
+	public function in_category( int $term_id, int $limit, int $offset ): array {
+		$this->category_queries[] = array( $term_id, $limit, $offset );
+		$ids                      = array();
+
+		foreach ( $this->products as $product ) {
+			if ( ! $product->is_variation && ! in_array( $product->status, array( 'trash', 'auto-draft' ), true ) && in_array( $term_id, $product->category_ids, true ) ) {
+				$ids[] = $product->id;
+			}
+		}
+
+		sort( $ids );
+
+		return array_slice( $ids, $offset, $limit );
 	}
 
 	/**
@@ -103,6 +171,18 @@ final class FakeProductStore implements ProductStore {
 	 */
 	public function entries( int $id ): array {
 		return $this->products[ $id ]->link_entries ?? array();
+	}
+
+	/**
+	 * Every stored product id (products and variations), ascending.
+	 *
+	 * @return list<int>
+	 */
+	public function ids(): array {
+		$ids = array_keys( $this->products );
+		sort( $ids );
+
+		return $ids;
 	}
 
 	/**
@@ -150,11 +230,12 @@ final class FakeProductStore implements ProductStore {
 	/**
 	 * Replaces the product's link entries.
 	 *
-	 * @param int      $product_id Product id.
-	 * @param int|null $creator_id Creator id or null.
+	 * @param int               $product_id Product id.
+	 * @param int|null          $creator_id Creator id or null.
+	 * @param ProductLinkSource $source     Origin stored with a link.
 	 * @throws DatabaseException When told to fail.
 	 */
-	public function write_creator( int $product_id, ?int $creator_id ): void {
+	public function write_creator( int $product_id, ?int $creator_id, ProductLinkSource $source = ProductLinkSource::Admin ): void {
 		if ( null !== $this->on_write ) {
 			( $this->on_write )( $product_id );
 		}
@@ -176,9 +257,17 @@ final class FakeProductStore implements ProductStore {
 				),
 			),
 			$current->name,
-			$current->sku
+			$current->sku,
+			null === $creator_id ? array() : array(
+				array(
+					'key'   => ProductCreatorLink::SOURCE_META_KEY,
+					'value' => $source->value,
+				),
+			),
+			$current->category_ids
 		);
 		$this->writes[]                = $product_id . ':' . ( null === $creator_id ? 'null' : $creator_id );
+		$this->written_sources[]       = null === $creator_id ? 'null' : $source->value;
 	}
 
 	/**

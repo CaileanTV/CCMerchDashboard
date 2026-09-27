@@ -13,9 +13,11 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\CategoryLinkStatus;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLinkException;
 use MerchBoard\Modules\WooCommerce\ProductRecord;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use MerchBoard\Modules\WooCommerce\ReconciliationOutcome;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -29,6 +31,13 @@ defined( 'ABSPATH' ) || exit;
  *
  * Product names are only listed for users who may edit WooCommerce products
  * (`edit_products`); each change is still authorised per product.
+ *
+ * Each linked product shows its origin (ADR-033): "Manual" (`admin`, or no
+ * or an unknown origin) or "Product category". For a category-managed link
+ * the product's mapped categories are named and, from the existing
+ * reconciliation rules (CategoryLinkStatus), whether the mappings still
+ * justify it; the category is never shown as the owner. Such a link offers
+ * "Keep as manual" with an explicit confirmation; manual links do not.
  */
 final class CreatorProductsSection {
 
@@ -52,12 +61,14 @@ final class CreatorProductsSection {
 	/**
 	 * Constructor.
 	 *
-	 * @param ProductStore      $products Product reads.
-	 * @param CreatorRepository $creators Creator names.
+	 * @param ProductStore            $products Product reads.
+	 * @param CreatorRepository       $creators Creator names.
+	 * @param CategoryLinkStatus|null $status   What the mappings say about category links (null: origin only).
 	 */
 	public function __construct(
 		private ProductStore $products,
-		private CreatorRepository $creators
+		private CreatorRepository $creators,
+		private ?CategoryLinkStatus $status = null
 	) {
 	}
 
@@ -79,6 +90,10 @@ final class CreatorProductsSection {
 			'linked'                                           => array( __( 'Linked to this creator.', 'merchboard' ), 'success' ),
 			'replaced'                                         => array( __( 'Taken over from the previous creator and linked to this creator.', 'merchboard' ), 'success' ),
 			'unlinked'                                         => array( __( 'Link removed.', 'merchboard' ), 'success' ),
+			'kept_manual'                                      => array( __( 'The link is now manual: same creator, no longer changed by product categories.', 'merchboard' ), 'success' ),
+			CreatorProductsActions::CONFIRMATION_REQUIRED      => array( __( 'Nothing changed: confirm that you want to keep the link as manual.', 'merchboard' ), 'error' ),
+			ProductCreatorLinkException::CATEGORY_MANAGED      => array( __( 'Not removed: the link is managed by a product category. Remove the product from the category, or keep the link as manual first.', 'merchboard' ), 'error' ),
+			ProductCreatorLinkException::NOT_CATEGORY_MANAGED  => array( __( 'Not changed: the product no longer has a link to this creator that can be kept as manual.', 'merchboard' ), 'error' ),
 			'unchanged'                                        => array( __( 'Nothing changed.', 'merchboard' ), 'info' ),
 			CreatorProductsActions::NO_SELECTION               => array( __( 'Select at least one product.', 'merchboard' ), 'info' ),
 			'linked_elsewhere'                                 => array( __( 'The product is linked to another creator, so it was not removed here.', 'merchboard' ), 'error' ),
@@ -167,8 +182,11 @@ final class CreatorProductsSection {
 		echo '<th scope="col">' . esc_html__( 'Product', 'merchboard' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'SKU', 'merchboard' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Status', 'merchboard' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Origin', 'merchboard' ) . '</th>';
 		echo '<th scope="col"><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th>';
 		echo '</tr></thead><tbody>';
+
+		$status = null === $this->status ? array() : $this->status->describe( $creator->id, $linked );
 
 		foreach ( $linked as $product ) {
 			echo '<tr><td>' . esc_html( self::name( $product ) );
@@ -178,7 +196,19 @@ final class CreatorProductsSection {
 			}
 
 			echo '</td><td>' . esc_html( $product->sku ) . '</td>';
-			echo '<td>' . esc_html( self::status_label( $product->status ) ) . '</td><td>';
+			echo '<td>' . esc_html( self::status_label( $product->status ) ) . '</td>';
+			echo '<td>' . self::origin( $product, $status[ $product->id ] ?? null ) . '</td><td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in origin().
+
+			// ADR-033 point 5: a category-managed link cannot be removed here.
+			if ( $product->is_category_managed() ) {
+				if ( $product->creator_id() === $creator->id ) {
+					self::render_keep_form( $creator, $product );
+				}
+
+				echo '<p class="description">' . esc_html__( 'Managed by the product category: remove the product from the category, or keep the link as manual first to remove it here.', 'merchboard' ) . '</p></td></tr>';
+				continue;
+			}
+
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( CreatorProductsActions::UNLINK_ACTION ) . '">';
 			echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
@@ -194,6 +224,66 @@ final class CreatorProductsSection {
 			/* translators: %d: number of products shown. */
 			echo '<p class="description">' . esc_html( sprintf( __( 'Only the first %d products are shown.', 'merchboard' ), self::LIST_LIMIT ) ) . '</p>';
 		}
+	}
+
+	/**
+	 * The origin of a link, and for a category-managed one its categories and
+	 * whether the mappings still justify it. Escaped HTML.
+	 *
+	 * @param ProductRecord $product Product.
+	 * @param array|null    $status  Its status from CategoryLinkStatus, if known.
+	 *
+	 * @phpstan-param array{outcome: ReconciliationOutcome, categories: list<array{term_id: int, name: string|null}>}|null $status
+	 */
+	private static function origin( ProductRecord $product, ?array $status ): string {
+		if ( ! $product->is_category_managed() ) {
+			return esc_html__( 'Manual', 'merchboard' );
+		}
+
+		$html = esc_html__( 'Product category', 'merchboard' );
+
+		if ( null === $status ) {
+			return $html;
+		}
+
+		$names = array_map(
+			/* translators: %d: term id of a deleted product category. */
+			static fn( array $c ): string => $c['name'] ?? sprintf( __( 'Deleted category (#%d)', 'merchboard' ), $c['term_id'] ),
+			$status['categories']
+		);
+
+		if ( array() !== $names ) {
+			/* translators: %s: comma-separated category names. */
+			$html .= '<br><span class="description">' . esc_html( sprintf( __( 'Via: %s', 'merchboard' ), implode( ', ', $names ) ) ) . '</span>';
+		}
+
+		$note = match ( $status['outcome'] ) {
+			ReconciliationOutcome::Unlinked  => __( 'No mapped category justifies this link any more; the reconciliation will remove it.', 'merchboard' ),
+			ReconciliationOutcome::Ambiguous => __( 'The product is in categories of several creators; the reconciliation will remove this link.', 'merchboard' ),
+			ReconciliationOutcome::Moved     => __( 'The product\'s categories are now mapped to another creator; the reconciliation will move this link.', 'merchboard' ),
+			ReconciliationOutcome::Error     => __( 'The category state could not be evaluated.', 'merchboard' ),
+			default                          => null,
+		};
+
+		return null === $note ? $html : $html . '<br><span class="description">' . esc_html( $note ) . '</span>';
+	}
+
+	/**
+	 * "Keep as manual" for one category-managed link, with its explanation
+	 * and the explicit confirmation.
+	 *
+	 * @param Creator       $creator Creator.
+	 * @param ProductRecord $product Product.
+	 */
+	private static function render_keep_form( Creator $creator, ProductRecord $product ): void {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="merchboard-keep-manual">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( CreatorProductsActions::KEEP_ACTION ) . '">';
+		echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
+		echo '<input type="hidden" name="product_id" value="' . esc_attr( (string) $product->id ) . '">';
+		wp_nonce_field( CreatorProductsActions::keep_nonce_action( $creator->id ) );
+		echo '<label><input type="checkbox" name="confirm" value="1" required> ' . esc_html__( 'Keep the product with this creator as a manual link. Product categories will no longer change it; only an administrator can remove it.', 'merchboard' ) . '</label> ';
+		echo '<button type="submit" class="button">' . esc_html__( 'Keep as manual', 'merchboard' ) . '</button>';
+		echo '</form>';
 	}
 
 	/**

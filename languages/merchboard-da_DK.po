@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-26T17:58:41+00:00\n"
+"PO-Revision-Date: 2026-09-27T20:13:20+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -107,107 +107,119 @@ msgstr "Produkt tilknyttet"
 msgid "Product unlinked"
 msgstr "Produkt frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:92
+#: src/Modules/Admin/AuditLogFormatter.php:49
+msgid "Product category mapped"
+msgstr "Produktkategori tilknyttet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:50
+msgid "Product category unmapped"
+msgstr "Produktkategori fjernet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:51
+msgid "Category reconciliation completed"
+msgstr "Kategoriafstemning gennemført"
+
+#: src/Modules/Admin/AuditLogFormatter.php:95
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:94
+#: src/Modules/Admin/AuditLogFormatter.php:97
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:97
+#: src/Modules/Admin/AuditLogFormatter.php:100
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:100
+#: src/Modules/Admin/AuditLogFormatter.php:103
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:103
+#: src/Modules/Admin/AuditLogFormatter.php:106
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:106
+#: src/Modules/Admin/AuditLogFormatter.php:109
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason code.
-#: src/Modules/Admin/AuditLogFormatter.php:108
+#: src/Modules/Admin/AuditLogFormatter.php:111
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:111
+#: src/Modules/Admin/AuditLogFormatter.php:114
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:112
+#: src/Modules/Admin/AuditLogFormatter.php:115
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:114
+#: src/Modules/Admin/AuditLogFormatter.php:117
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:118
+#: src/Modules/Admin/AuditLogFormatter.php:121
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:121
+#: src/Modules/Admin/AuditLogFormatter.php:124
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:123
+#: src/Modules/Admin/AuditLogFormatter.php:126
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:123
+#: src/Modules/Admin/AuditLogFormatter.php:126
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:141
+#: src/Modules/Admin/AuditLogFormatter.php:144
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:156
+#: src/Modules/Admin/AuditLogFormatter.php:159
 #: src/Modules/Admin/OverviewPage.php:136
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:156
+#: src/Modules/Admin/AuditLogFormatter.php:159
 #: src/Modules/Admin/OverviewPage.php:137
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:175
+#: src/Modules/Admin/AuditLogFormatter.php:178
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:176
+#: src/Modules/Admin/AuditLogFormatter.php:179
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:177
+#: src/Modules/Admin/AuditLogFormatter.php:180
 msgid "social links"
 msgstr "sociale links"
 
@@ -222,6 +234,7 @@ msgstr "Hændelse"
 
 #: src/Modules/Admin/AuditLogListTable.php:85
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
 msgid "Creator"
@@ -347,7 +360,7 @@ msgstr "Se auditlog"
 #: src/Modules/Admin/OverviewPage.php:121
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:84
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:224
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:232
 msgid "Creators"
 msgstr "Creators"
 
@@ -356,6 +369,7 @@ msgid "Creator data could not be read. See the technical log."
 msgstr "Creator-data kunne ikke læses. Se den tekniske log."
 
 #: src/Modules/Admin/OverviewPage.php:138
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:188
 msgid "Total"
 msgstr "I alt"
 
@@ -461,13 +475,17 @@ msgstr "Indstillinger"
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:134
-#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:257
+#: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
+#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
 msgid "Sorry, you are not allowed to manage creators."
 msgstr "Du har desværre ikke adgang til at administrere creators."
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:98
-#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:271
+#: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
+#: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:345
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
@@ -480,152 +498,155 @@ msgid "Creator not found"
 msgstr "Creator ikke fundet"
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:159
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:133
 msgid "Back to creators"
 msgstr "Tilbage til creators"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:178
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:186
 msgid "Creator created."
 msgstr "Creator oprettet."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:179
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:187
 msgid "Creator updated."
 msgstr "Creator opdateret."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:180
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:188
 msgid "Creator activated."
 msgstr "Creator aktiveret."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:181
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:189
 msgid "Creator deactivated."
 msgstr "Creator deaktiveret."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:182
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:190
 #: src/Modules/Settings/Admin/SettingsPage.php:87
 msgid "No changes were made."
 msgstr "Der blev ikke foretaget nogen ændringer."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:183
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:90
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:191
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:105
 msgid "The creator does not exist."
 msgstr "Creatoren findes ikke."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:184
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:192
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:85
 msgid "You are not allowed to manage creators."
 msgstr "Du har ikke adgang til at administrere creators."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:185
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:193
 msgid "Enter a display name of 1 to 191 characters."
 msgstr "Indtast et visningsnavn på 1 til 191 tegn."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:186
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:194
 msgid "Choose a valid status."
 msgstr "Vælg en gyldig status."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:187
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:195
 msgid "The selected WordPress user does not exist."
 msgstr "Den valgte WordPress-bruger findes ikke."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:188
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:196
 msgid "The selected WordPress user is already linked to another creator."
 msgstr "Den valgte WordPress-bruger er allerede tilknyttet en anden creator."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:189
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:197
 msgid "A technical error occurred. Please check the creator and try again later."
 msgstr "Der opstod en teknisk fejl. Kontrollér creatoren, og prøv igen senere."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:225
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:244
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:233
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:258
 msgid "Add New Creator"
 msgstr "Tilføj ny creator"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:244
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:258
 msgid "Edit Creator"
 msgstr "Redigér creator"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:245
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:259
 msgid "← Back to creators"
 msgstr "← Tilbage til creators"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:253
-#: src/Modules/Creators/Admin/CreatorsListTable.php:67
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:267
+#: src/Modules/Creators/Admin/CreatorsListTable.php:75
 #: build/dashboard.js:3
 msgid "Display name"
 msgstr "Visningsnavn"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:257
-#: src/Modules/Creators/Admin/CreatorsListTable.php:69
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:169
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:237
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:271
+#: src/Modules/Creators/Admin/CreatorsListTable.php:77
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
 msgid "Status"
 msgstr "Status"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:263
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:277
 msgid "Inactive creators keep their data but will not get dashboard access."
 msgstr "Inaktive creators beholder deres data, men får ikke adgang til dashboardet."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:266
-#: src/Modules/Creators/Admin/CreatorsListTable.php:68
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:280
+#: src/Modules/Creators/Admin/CreatorsListTable.php:76
 msgid "WordPress user"
 msgstr "WordPress-bruger"
 
 #. translators: %d: WordPress user id.
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:276
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
 #, php-format
 msgid "Linked to user #%d, which no longer exists. Clear the field to unlink."
 msgstr "Tilknyttet bruger #%d, som ikke længere findes. Ryd feltet for at frakoble."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:278
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:292
 msgid "Open WordPress user profile"
 msgstr "Åbn WordPress-brugerprofil"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:281
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:295
 msgid "Type the login of the account that may use this creator (suggestions appear after two characters), or leave the field empty for no WordPress user. Linking adds the \"Merch Dashboard Creator\" role; unlinking removes it. Neither deletes the user."
 msgstr "Skriv brugernavnet på den konto, der må bruge denne creator (forslag vises efter to tegn), eller lad feltet være tomt for ingen WordPress-bruger. Tilknytning giver rollen \"Merch Dashboard Creator\", og frakobling fjerner den. Ingen af delene sletter brugeren."
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:285
-#: src/Modules/Creators/Admin/CreatorsListTable.php:70
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:299
+#: src/Modules/Creators/Admin/CreatorsListTable.php:78
 msgid "Created"
 msgstr "Oprettet"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:286
-#: src/Modules/Creators/Admin/CreatorsListTable.php:71
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:300
+#: src/Modules/Creators/Admin/CreatorsListTable.php:79
 msgid "Last updated"
 msgstr "Senest opdateret"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:304
 msgid "Create creator"
 msgstr "Opret creator"
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:304
 msgid "Save changes"
 msgstr "Gem ændringer"
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:108
+#: src/Modules/Creators/Admin/CreatorsListTable.php:133
 msgid "All"
 msgstr "Alle"
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:153
+#: src/Modules/Creators/Admin/CreatorsListTable.php:186
 msgid "No creators found."
 msgstr "Ingen creators fundet."
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:176
+#: src/Modules/Creators/Admin/CreatorsListTable.php:209
 msgid "Edit"
 msgstr "Redigér"
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:180
+#: src/Modules/Creators/Admin/CreatorsListTable.php:213
 msgid "Activate"
 msgstr "Aktivér"
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:180
+#: src/Modules/Creators/Admin/CreatorsListTable.php:213
 msgid "Deactivate"
 msgstr "Deaktivér"
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:195
+#: src/Modules/Creators/Admin/CreatorsListTable.php:228
 msgid "No WordPress user"
 msgstr "Ingen WordPress-bruger"
 
 #. translators: %d: WordPress user id.
-#: src/Modules/Creators/Admin/CreatorsListTable.php:200
+#: src/Modules/Creators/Admin/CreatorsListTable.php:233
 #, php-format
 msgid "Unknown user #%d"
 msgstr "Ukendt bruger #%d"
@@ -757,184 +778,672 @@ msgstr "Små bogstaver, cifre og bindestreger. En ændring flytter dashboardet: 
 msgid "Save dashboard URL"
 msgstr "Gem dashboardadresse"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:79
-msgid "Linked to this creator."
-msgstr "Tilknyttet denne creator."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:100
+msgid "The full reconciliation has started in the background. It runs in batches of 100 products; when the last batch is done, \"Category reconciliation completed\" with its run id and counts appears in the audit log."
+msgstr "Den fulde afstemning er startet i baggrunden. Den kører i portioner på 100 produkter; når den sidste portion er færdig, vises \"Kategoriafstemning gennemført\" med kørsels-id og optællinger i auditloggen."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:80
-msgid "Taken over from the previous creator and linked to this creator."
-msgstr "Overtaget fra den tidligere creator og tilknyttet denne creator."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:101
+msgid "Nothing started: confirm that you reviewed the dry run."
+msgstr "Intet blev startet: bekræft, at du har gennemgået tørkørslen."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:81
-msgid "Link removed."
-msgstr "Tilknytning fjernet."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:102
+msgid "Nothing started: the products or mappings changed since your dry run. Review the new dry run below and confirm again."
+msgstr "Intet blev startet: produkterne eller mappingerne er ændret siden din tørkørsel. Gennemgå den nye tørkørsel nedenfor, og bekræft igen."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:82
-msgid "Nothing changed."
-msgstr "Intet blev ændret."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:103
+msgid "Nothing started: the background queue (Action Scheduler) is not available. Nothing was changed."
+msgstr "Intet blev startet: baggrundskøen (Action Scheduler) er ikke tilgængelig. Intet blev ændret."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:83
-msgid "Select at least one product."
-msgstr "Vælg mindst ét produkt."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:104
+msgid "A technical error occurred. Nothing was started."
+msgstr "Der opstod en teknisk fejl. Intet blev startet."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:84
-msgid "The product is linked to another creator, so it was not removed here."
-msgstr "Produktet er tilknyttet en anden creator, så det blev ikke fjernet her."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:114
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:132
+msgid "Category reconciliation"
+msgstr "Kategoriafstemning"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:85
-msgid "Not changed: the product is linked to another creator or holds an invalid link. Tick \"Take over\" for this product to move it."
-msgstr "Ikke ændret: Produktet er tilknyttet en anden creator eller har en ugyldig tilknytning. Sæt flueben i \"Overtag\" for dette produkt for at flytte det."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:134
+msgid "Brings every product's category-managed creator link in line with the product category mappings, for changes no automatic update saw. Manual links are never changed, ambiguous products get no link, and inactive creators get no new links. A category mapping is not ownership: only the product's creator link is."
+msgstr "Bringer alle produkters kategoristyrede creator-tilknytning i overensstemmelse med produktkategori-mappingerne, for ændringer som ingen automatisk opdatering så. Manuelle tilknytninger ændres aldrig, tvetydige produkter får ingen tilknytning, og inaktive creators får ingen nye tilknytninger. En kategorimapping er ikke ejerskab: det er kun produktets creator-tilknytning."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:86
-msgid "You are not allowed to edit this product."
-msgstr "Du har ikke tilladelse til at redigere dette produkt."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:143
+msgid "Open the audit log"
+msgstr "Åbn auditloggen"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:87
-msgid "The product does not exist."
-msgstr "Produktet findes ikke."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:150
+msgid "Run a dry run"
+msgstr "Kør en tørkørsel"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:88
-msgid "Variations cannot be linked on their own; they belong to the creator of their parent product."
-msgstr "Varianter kan ikke tilknyttes alene; de tilhører creatoren af deres overordnede produkt."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:151
+msgid "Evaluates every relevant product now and changes nothing."
+msgstr "Vurderer alle relevante produkter nu og ændrer intet."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:89
-msgid "Products in the trash or not yet saved cannot be linked."
-msgstr "Produkter i papirkurven eller som endnu ikke er gemt, kan ikke tilknyttes."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:163
+msgid "The dry run could not be completed. Nothing was changed."
+msgstr "Tørkørslen kunne ikke gennemføres. Intet blev ændret."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:91
-msgid "Inactive creators cannot get new products. Activate the creator first."
-msgstr "Inaktive creators kan ikke få nye produkter. Aktivér creatoren først."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
+msgid "Dry run"
+msgstr "Tørkørsel"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:92
-msgid "A technical error occurred. The product may not have been changed; check it and try again later."
-msgstr "Der opstod en teknisk fejl. Produktet er muligvis ikke ændret; kontrollér det, og prøv igen senere."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:181
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:280
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:398
+msgid "Outcome"
+msgstr "Resultat"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:107
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:181
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:122
 msgid "Products"
 msgstr "Produkter"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:110
-msgid "You need permission to edit WooCommerce products to see and change the products of this creator."
-msgstr "Du skal have tilladelse til at redigere WooCommerce-produkter for at se og ændre denne creators produkter."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:190
+msgid "This is a dry run. Nothing has been changed."
+msgstr "Dette er en tørkørsel. Intet er blevet ændret."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:114
-msgid "WooCommerce products that belong to this creator. Links are managed only here; the WooCommerce product screen does not show or change them. Variations belong to the creator of their parent product."
-msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger administreres kun her; WooCommerce-produktskærmen hverken viser eller ændrer dem. Varianter tilhører creatoren af deres overordnede produkt."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:199
+msgid "Needs attention"
+msgstr "Kræver opmærksomhed"
 
-#. translators: 1: product label, 2: outcome message.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:144
-#, php-format
-msgid "%1$s: %2$s"
-msgstr "%1$s: %2$s"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:202
+msgid "Nothing needs attention."
+msgstr "Intet kræver opmærksomhed."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
-msgid "Linked products"
-msgstr "Tilknyttede produkter"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:206
+msgid "The reconciliation does not decide these products. Fix them in WooCommerce (product categories) or on the creator's page (manual link, mapping, status). Nothing here is changed automatically."
+msgstr "Afstemningen afgør ikke disse produkter. Ret dem i WooCommerce (produktkategorier) eller på creatorens side (manuel tilknytning, mapping, status). Intet her ændres automatisk."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:162
-msgid "No products are linked to this creator yet."
-msgstr "Der er endnu ingen produkter tilknyttet denne creator."
-
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:167
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:235
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 msgid "Product"
 msgstr "Produkt"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:168
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:236
-msgid "SKU"
-msgstr "Varenummer"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:230
+msgid "Why"
+msgstr "Årsag"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:170
-msgid "Actions"
-msgstr "Handlinger"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:231
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:281
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:328
+msgid "Current creator"
+msgstr "Nuværende creator"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:177
-msgid "The stored link is invalid. Link the product again (with \"Take over\") to repair it, or remove it."
-msgstr "Den gemte tilknytning er ugyldig. Tilknyt produktet igen (med \"Overtag\") for at rette den, eller fjern den."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:232
+msgid "Mapped categories"
+msgstr "Mappede kategorier"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:187
-msgid "Remove"
-msgstr "Fjern"
+#. translators: 1: category name, 2: creator name.
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:242
+#, php-format
+msgid "%1$s → %2$s"
+msgstr "%1$s → %2$s"
+
+#. translators: %d: term id.
+#. translators: %d: term id of a deleted product category.
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:244
+#: src/Modules/WooCommerce/Admin/CreatorListCategories.php:160
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:251
+#, php-format
+msgid "Deleted category (#%d)"
+msgstr "Slettet kategori (#%d)"
 
 #. translators: %d: number of products shown.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:195
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:261
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:298
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:225
 #, php-format
 msgid "Only the first %d products are shown."
 msgstr "Kun de første %d produkter vises."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:206
-msgid "Add products"
-msgstr "Tilføj produkter"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:271
+msgid "Expected changes"
+msgstr "Forventede ændringer"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:211
-msgid "Search by product name, SKU or category"
-msgstr "Søg på produktnavn, varenummer eller kategori"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:274
+msgid "No product creator link would change."
+msgstr "Ingen produkters creator-tilknytning ville ændres."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:213
-msgid "Search products"
-msgstr "Søg produkter"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:282
+msgid "New creator"
+msgstr "Ny creator"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:223
-msgid "No products found."
-msgstr "Ingen produkter fundet."
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:308
+msgid "Run the reconciliation"
+msgstr "Kør afstemningen"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:234
-msgid "Select"
-msgstr "Vælg"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:313
+msgid "I have reviewed the dry run. Run the reconciliation now: it can create, move and remove category-managed product creator links as shown above. It runs in the background; if the products or mappings change first, nothing starts and a new dry run is shown."
+msgstr "Jeg har gennemgået tørkørslen. Kør afstemningen nu: den kan oprette, flytte og fjerne kategoristyrede creator-tilknytninger på produkter som vist ovenfor. Den kører i baggrunden; hvis produkterne eller mappingerne ændres først, starter intet, og en ny tørkørsel vises."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:238
-msgid "Current creator"
-msgstr "Nuværende creator"
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:314
+msgid "Start the reconciliation"
+msgstr "Start afstemningen"
 
-#. translators: %d: number of results shown.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:249
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
+msgid "(no name)"
+msgstr "(intet navn)"
+
+#. translators: 1: product name, 2: product id.
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
 #, php-format
-msgid "Only the first %d results are shown. Refine the search to find other products."
-msgstr "Kun de første %d resultater vises. Præcisér søgningen for at finde andre produkter."
+msgid "%1$s (#%2$d)"
+msgstr "%1$s (#%2$d)"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:252
-msgid "Link selected products"
-msgstr "Tilknyt valgte produkter"
-
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:276
-msgid "Already linked to this creator"
-msgstr "Allerede tilknyttet denne creator"
-
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:281
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:353
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:371
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:222
 msgid "Invalid link"
 msgstr "Ugyldig tilknytning"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:282
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
+msgid "Manual"
+msgstr "Manuel"
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:375
+msgid "(inactive)"
+msgstr "(inaktiv)"
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:386
+msgid "Manual link to another creator than the product's mapped category. The manual link wins and is not changed."
+msgstr "Manuel tilknytning til en anden creator end produktets mappede kategori. Den manuelle tilknytning vinder og ændres ikke."
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:387
+msgid "Manual link to another creator than the product's mapped category, whose creator is inactive. The manual link wins and is not changed."
+msgstr "Manuel tilknytning til en anden creator end produktets mappede kategori, hvis creator er inaktiv. Den manuelle tilknytning vinder og ændres ikke."
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:388
+msgid "Manual link, but the product is directly in categories mapped to several creators. The manual link wins and is not changed."
+msgstr "Manuel tilknytning, men produktet ligger direkte i kategorier, der er mappet til flere creators. Den manuelle tilknytning vinder og ændres ikke."
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:396
+msgid "Ambiguous: the product is directly in categories mapped to several creators, so it gets no category link."
+msgstr "Tvetydig: produktet ligger direkte i kategorier, der er mappet til flere creators, så det får ingen kategoritilknytning."
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:397
+msgid "The only mapped creator is inactive, so the product gets no new link."
+msgstr "Den eneste mappede creator er inaktiv, så produktet får ingen ny tilknytning."
+
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:398
+msgid "Could not be evaluated. Check the product; details are in the log."
+msgstr "Kunne ikke vurderes. Tjek produktet; detaljerne står i loggen."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:78
+msgid "The category is mapped. Its products are linked to the creator in the background; the links appear under Products shortly."
+msgstr "Kategorien er mappet. Dens produkter tilknyttes creatoren i baggrunden; tilknytningerne vises snart under Produkter."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:79
+msgid "The mapping is removed. Its category-managed links are removed in the background; manual links stay."
+msgstr "Mappingen er fjernet. Dens kategoristyrede tilknytninger fjernes i baggrunden; manuelle tilknytninger bliver."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:80
+msgid "The category-managed links are now manual links and the mapping is removed."
+msgstr "De kategoristyrede tilknytninger er nu manuelle, og mappingen er fjernet."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:81
+msgid "Not all category-managed links could be converted yet, so the mapping is still in place. Review the result below and run \"Keep as manual links\" again."
+msgstr "Ikke alle kategoristyrede tilknytninger kunne konverteres endnu, så mappingen er bevaret. Se resultatet nedenfor, og kør \"Behold som manuelle tilknytninger\" igen."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:82
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:97
+msgid "Nothing changed."
+msgstr "Intet blev ændret."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:83
+msgid "Nothing changed: confirm that you reviewed the preview."
+msgstr "Intet blev ændret: bekræft, at du har gennemgået forhåndsvisningen."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:84
+msgid "Nothing changed: choose what happens to the category-managed links."
+msgstr "Intet blev ændret: vælg, hvad der skal ske med de kategoristyrede tilknytninger."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:87
+msgid "Only active creators can get a product category. Activate the creator first."
+msgstr "Kun aktive creators kan få en produktkategori. Aktivér creatoren først."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:88
+msgid "The product category does not exist."
+msgstr "Produktkategorien findes ikke."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:89
+msgid "Only WooCommerce product categories can be mapped."
+msgstr "Kun WooCommerce-produktkategorier kan mappes."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:90
+msgid "The default product category cannot be mapped."
+msgstr "Standardproduktkategorien kan ikke mappes."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:91
+msgid "The category is already mapped to another creator. Remove that mapping first; a category is never moved silently."
+msgstr "Kategorien er allerede mappet til en anden creator. Fjern den mapping først; en kategori flyttes aldrig i stilhed."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:92
+msgid "The creator already has a product category. Remove it first."
+msgstr "Creatoren har allerede en produktkategori. Fjern den først."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:93
+msgid "The category is already mapped to this creator."
+msgstr "Kategorien er allerede mappet til denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:94
+msgid "A technical error occurred. Nothing may have been changed; check the mapping and try again later."
+msgstr "Der opstod en teknisk fejl. Intet er muligvis ændret; kontrollér mappingen, og prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:106
+msgid "Linked to the creator"
+msgstr "Tilknyttes creatoren"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:107
+msgid "Moved from another creator's category link"
+msgstr "Flyttes fra en anden creators kategoritilknytning"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:108
+msgid "Category link removed"
+msgstr "Kategoritilknytning fjernes"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
+msgid "Unchanged"
+msgstr "Uændret"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:110
+msgid "Manual link, never changed"
+msgstr "Manuel tilknytning, ændres aldrig"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:111
+msgid "Ambiguous: in categories of several creators, no category link"
+msgstr "Tvetydig: i kategorier fra flere creators, ingen kategoritilknytning"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:112
+msgid "Creator inactive, no new link"
+msgstr "Creator inaktiv, ingen ny tilknytning"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:113
+msgid "Could not be evaluated"
+msgstr "Kunne ikke vurderes"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
+msgid "Product category"
+msgstr "Produktkategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:128
+msgid "Products directly in the creator's WooCommerce product category are linked to the creator automatically, and lose that link when they leave the category. The mapping itself is not ownership: the links are created and removed in the background and appear under Products. Manual links always win and are never changed by a category. Products only in a subcategory are not linked."
+msgstr "Produkter, der ligger direkte i creatorens WooCommerce-produktkategori, tilknyttes automatisk creatoren og mister tilknytningen, når de forlader kategorien. Mappingen er ikke i sig selv ejerskab: tilknytningerne oprettes og fjernes i baggrunden og vises under Produkter. Manuelle tilknytninger vinder altid og ændres aldrig af en kategori. Produkter, der kun ligger i en underkategori, tilknyttes ikke."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:143
+msgid "The product category could not be loaded."
+msgstr "Produktkategorien kunne ikke indlæses."
+
+#. translators: 1: outcome message, 2: links converted, 3: links not converted.
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:178
+#, php-format
+msgid "%1$s Converted: %2$d. Not converted: %3$d."
+msgstr "%1$s Konverteret: %2$d. Ikke konverteret: %3$d."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:194
+msgid "No product category is mapped to this creator."
+msgstr "Ingen produktkategori er mappet til denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
+msgid "Category"
+msgstr "Kategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:200
+msgid "ID"
+msgstr "ID"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:202
+msgid "Mapped"
+msgstr "Mappet"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:203
+msgid "Published products directly in the category"
+msgstr "Udgivne produkter direkte i kategorien"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
+msgid "Actions"
+msgstr "Handlinger"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:213
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:351
+msgid "Deleted category"
+msgstr "Slettet kategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:213
+msgid "The category no longer exists, so this mapping links no products. Remove it to free the creator's category."
+msgstr "Kategorien findes ikke længere, så denne mapping tilknytter ingen produkter. Fjern den for at frigøre creatorens kategori."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:222
+msgid "Remove…"
+msgstr "Fjern…"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:235
+msgid "Map a product category"
+msgstr "Map en produktkategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:238
+msgid "Only active creators can get a product category."
+msgstr "Kun aktive creators kan få en produktkategori."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:252
+msgid "The category cannot be mapped."
+msgstr "Kategorien kan ikke mappes."
+
+#. translators: %s: category name.
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:260
+#, php-format
+msgid "Preview: mapping \"%s\""
+msgstr "Forhåndsvisning: mapping af \"%s\""
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:268
+msgid "I have reviewed the preview. Map the category; its products are linked to the creator in the background, and future changes to the category follow automatically."
+msgstr "Jeg har gennemgået forhåndsvisningen. Map kategorien; dens produkter tilknyttes creatoren i baggrunden, og fremtidige ændringer i kategorien følges automatisk."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:269
+msgid "Map category"
+msgstr "Map kategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:270
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:387
+msgid "Cancel"
+msgstr "Annullér"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:290
+msgid "There are no product categories."
+msgstr "Der er ingen produktkategorier."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:301
+msgid "The product categories could not be loaded."
+msgstr "Produktkategorierne kunne ikke indlæses."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:313
+msgid "Choose a category"
+msgstr "Vælg en kategori"
+
+#. translators: 1: category name, 2: creator name.
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:326
+#, php-format
+msgid "%1$s (mapped to %2$s)"
+msgstr "%1$s (mappet til %2$s)"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:339
+msgid "Preview"
+msgstr "Forhåndsvis"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:340
+msgid "The preview shows what the mapping would do. Nothing is changed until you confirm. The default product category cannot be mapped, and a category can only belong to one creator."
+msgstr "Forhåndsvisningen viser, hvad mappingen vil gøre. Intet ændres, før du bekræfter. Standardproduktkategorien kan ikke mappes, og en kategori kan kun tilhøre én creator."
+
+#. translators: %s: category name.
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:354
+#, php-format
+msgid "Remove the mapping of \"%s\""
+msgstr "Fjern mappingen af \"%s\""
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:364
+msgid "Choose what happens to the links this mapping created. Manual links are never changed. Nothing is changed until you confirm."
+msgstr "Vælg, hvad der skal ske med de tilknytninger, denne mapping har oprettet. Manuelle tilknytninger ændres aldrig. Intet ændres, før du bekræfter."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:366
+msgid "Preview: remove category-managed links"
+msgstr "Forhåndsvisning: fjern kategoristyrede tilknytninger"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:367
+msgid "Includes products that have left the category but still hold a category link to this creator."
+msgstr "Omfatter produkter, der har forladt kategorien, men stadig har en kategoritilknytning til denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:370
+msgid "Preview: keep as manual links"
+msgstr "Forhåndsvisning: behold som manuelle tilknytninger"
+
+#. translators: %d: number of links.
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:372
+#, php-format
+msgid "%d category-managed link becomes a manual link to this creator. It keeps the creator and is no longer changed by categories."
+msgid_plural "%d category-managed links become manual links to this creator. They keep the creator and are no longer changed by categories."
+msgstr[0] "%d kategoristyret tilknytning bliver en manuel tilknytning til denne creator. Den beholder creatoren og ændres ikke længere af kategorier."
+msgstr[1] "%d kategoristyrede tilknytninger bliver manuelle tilknytninger til denne creator. De beholder creatoren og ændres ikke længere af kategorier."
+
+#. translators: %d: most links converted per run.
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:374
+#, php-format
+msgid "At most %d links are converted per run, and you need permission to edit each product. If links are left or fail, the mapping stays in place and you can run this again; links already converted are not converted twice."
+msgstr "Højst %d tilknytninger konverteres pr. kørsel, og du skal have tilladelse til at redigere hvert produkt. Er der tilknytninger tilbage, eller fejler nogle, bevares mappingen, og du kan køre det igen; allerede konverterede tilknytninger konverteres ikke to gange."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:381
+msgid "What happens to the category-managed links"
+msgstr "Hvad der sker med de kategoristyrede tilknytninger"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
+msgid "Remove category-managed links"
+msgstr "Fjern kategoristyrede tilknytninger"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
+msgid "Keep as manual links"
+msgstr "Behold som manuelle tilknytninger"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:385
+msgid "I have reviewed the preview and want to remove the mapping with the chosen option."
+msgstr "Jeg har gennemgået forhåndsvisningen og vil fjerne mappingen med det valgte."
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:386
+msgid "Remove mapping"
+msgstr "Fjern mapping"
+
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:407
+msgid "This is a preview. Nothing has been changed."
+msgstr "Dette er en forhåndsvisning. Intet er ændret."
+
+#: src/Modules/WooCommerce/Admin/CreatorListCategories.php:85
+msgid "Product categories"
+msgstr "Produktkategorier"
+
+#: src/Modules/WooCommerce/Admin/CreatorListCategories.php:146
+msgid "Could not be loaded"
+msgstr "Kunne ikke indlæses"
+
+#: src/Modules/WooCommerce/Admin/CreatorListCategories.php:152
+msgid "No product category"
+msgstr "Ingen produktkategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:90
+msgid "Linked to this creator."
+msgstr "Tilknyttet denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:91
+msgid "Taken over from the previous creator and linked to this creator."
+msgstr "Overtaget fra den tidligere creator og tilknyttet denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:92
+msgid "Link removed."
+msgstr "Tilknytning fjernet."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:93
+msgid "The link is now manual: same creator, no longer changed by product categories."
+msgstr "Tilknytningen er nu manuel: samme creator, og den ændres ikke længere af produktkategorier."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:94
+msgid "Nothing changed: confirm that you want to keep the link as manual."
+msgstr "Intet blev ændret: bekræft, at du vil beholde tilknytningen som manuel."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:95
+msgid "Not removed: the link is managed by a product category. Remove the product from the category, or keep the link as manual first."
+msgstr "Ikke fjernet: tilknytningen styres af en produktkategori. Fjern produktet fra kategorien, eller behold tilknytningen som manuel først."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:96
+msgid "Not changed: the product no longer has a link to this creator that can be kept as manual."
+msgstr "Ikke ændret: produktet har ikke længere en tilknytning til denne creator, der kan beholdes som manuel."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:98
+msgid "Select at least one product."
+msgstr "Vælg mindst ét produkt."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:99
+msgid "The product is linked to another creator, so it was not removed here."
+msgstr "Produktet er tilknyttet en anden creator, så det blev ikke fjernet her."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:100
+msgid "Not changed: the product is linked to another creator or holds an invalid link. Tick \"Take over\" for this product to move it."
+msgstr "Ikke ændret: Produktet er tilknyttet en anden creator eller har en ugyldig tilknytning. Sæt flueben i \"Overtag\" for dette produkt for at flytte det."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:101
+msgid "You are not allowed to edit this product."
+msgstr "Du har ikke tilladelse til at redigere dette produkt."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:102
+msgid "The product does not exist."
+msgstr "Produktet findes ikke."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:103
+msgid "Variations cannot be linked on their own; they belong to the creator of their parent product."
+msgstr "Varianter kan ikke tilknyttes alene; de tilhører creatoren af deres overordnede produkt."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:104
+msgid "Products in the trash or not yet saved cannot be linked."
+msgstr "Produkter i papirkurven eller som endnu ikke er gemt, kan ikke tilknyttes."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:106
+msgid "Inactive creators cannot get new products. Activate the creator first."
+msgstr "Inaktive creators kan ikke få nye produkter. Aktivér creatoren først."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:107
+msgid "A technical error occurred. The product may not have been changed; check it and try again later."
+msgstr "Der opstod en teknisk fejl. Produktet er muligvis ikke ændret; kontrollér det, og prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:125
+msgid "You need permission to edit WooCommerce products to see and change the products of this creator."
+msgstr "Du skal have tilladelse til at redigere WooCommerce-produkter for at se og ændre denne creators produkter."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:129
+msgid "WooCommerce products that belong to this creator. Links are managed only here; the WooCommerce product screen does not show or change them. Variations belong to the creator of their parent product."
+msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger administreres kun her; WooCommerce-produktskærmen hverken viser eller ændrer dem. Varianter tilhører creatoren af deres overordnede produkt."
+
+#. translators: 1: product label, 2: outcome message.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
+#, php-format
+msgid "%1$s: %2$s"
+msgstr "%1$s: %2$s"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:174
+msgid "Linked products"
+msgstr "Tilknyttede produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:177
+msgid "No products are linked to this creator yet."
+msgstr "Der er endnu ingen produkter tilknyttet denne creator."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:183
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:326
+msgid "SKU"
+msgstr "Varenummer"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:185
+msgid "Origin"
+msgstr "Oprindelse"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:195
+msgid "The stored link is invalid. Link the product again (with \"Take over\") to repair it, or remove it."
+msgstr "Den gemte tilknytning er ugyldig. Tilknyt produktet igen (med \"Overtag\") for at rette den, eller fjern den."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:208
+msgid "Managed by the product category: remove the product from the category, or keep the link as manual first to remove it here."
+msgstr "Styres af produktkategorien: fjern produktet fra kategorien, eller behold tilknytningen som manuel først for at kunne fjerne den her."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
+msgid "Remove"
+msgstr "Fjern"
+
+#. translators: %s: comma-separated category names.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:257
+#, php-format
+msgid "Via: %s"
+msgstr "Via: %s"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:261
+msgid "No mapped category justifies this link any more; the reconciliation will remove it."
+msgstr "Ingen mappet kategori begrunder længere denne tilknytning; afstemningen vil fjerne den."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:262
+msgid "The product is in categories of several creators; the reconciliation will remove this link."
+msgstr "Produktet ligger i kategorier fra flere creators; afstemningen vil fjerne denne tilknytning."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:263
+msgid "The product's categories are now mapped to another creator; the reconciliation will move this link."
+msgstr "Produktets kategorier er nu mappet til en anden creator; afstemningen vil flytte denne tilknytning."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:264
+msgid "The category state could not be evaluated."
+msgstr "Kategoritilstanden kunne ikke vurderes."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:284
+msgid "Keep the product with this creator as a manual link. Product categories will no longer change it; only an administrator can remove it."
+msgstr "Behold produktet hos denne creator som en manuel tilknytning. Produktkategorier ændrer den ikke længere; kun en administrator kan fjerne den."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:285
+msgid "Keep as manual"
+msgstr "Behold som manuel"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:296
+msgid "Add products"
+msgstr "Tilføj produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:301
+msgid "Search by product name, SKU or category"
+msgstr "Søg på produktnavn, varenummer eller kategori"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:303
+msgid "Search products"
+msgstr "Søg produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:313
+msgid "No products found."
+msgstr "Ingen produkter fundet."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:324
+msgid "Select"
+msgstr "Vælg"
+
+#. translators: %d: number of results shown.
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:339
+#, php-format
+msgid "Only the first %d results are shown. Refine the search to find other products."
+msgstr "Kun de første %d resultater vises. Præcisér søgningen for at finde andre produkter."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:342
+msgid "Link selected products"
+msgstr "Tilknyt valgte produkter"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:366
+msgid "Already linked to this creator"
+msgstr "Allerede tilknyttet denne creator"
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:372
 msgid "Take over: replace the invalid link"
 msgstr "Overtag: erstat den ugyldige tilknytning"
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:285
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:375
 #, php-format
 msgid "Linked to %s"
 msgstr "Tilknyttet %s"
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:287
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:377
 #, php-format
 msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:292
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 msgid "None"
 msgstr "Ingen"
-
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:328
-msgid "(no name)"
-msgstr "(intet navn)"
-
-#. translators: 1: product name, 2: product id.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:331
-#, php-format
-msgid "%1$s (#%2$d)"
-msgstr "%1$s (#%2$d)"
 
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:153
 msgid "Filter by creator"
@@ -954,8 +1463,8 @@ msgstr "%s (inaktiv)"
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:108
-#: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:181
+#: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
+#: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182
 msgid "The creator of a product can only be changed in Merch Dashboard."
 msgstr "Et produkts creator kan kun ændres i Merch Dashboard."
 

@@ -23,6 +23,14 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Native WordPress list of creators: display name (with row actions), linked
  * user, status, created, updated. Status views, sorting and pagination.
+ *
+ * Other modules may add read-only columns without the Creators module knowing
+ * them (e.g. the WooCommerce module's product categories), through three
+ * hooks: `merchboard_creators_list_columns` (add column key => label),
+ * `merchboard_creators_list_items` (the creators of the page, once, so a
+ * column can load its data for all rows together) and
+ * `merchboard_creators_list_column` (the escaped cell HTML). They run only on
+ * this screen, which requires `merchboard_manage_creators`.
  */
 final class CreatorsListTable extends WP_List_Table {
 
@@ -63,13 +71,30 @@ final class CreatorsListTable extends WP_List_Table {
 	 * @return array<string, string>
 	 */
 	public function get_columns() {
-		return array(
+		$columns = array(
 			'display_name' => __( 'Display name', 'merchboard' ),
 			'user'         => __( 'WordPress user', 'merchboard' ),
 			'status'       => __( 'Status', 'merchboard' ),
 			'created_at'   => __( 'Created', 'merchboard' ),
 			'updated_at'   => __( 'Last updated', 'merchboard' ),
 		);
+
+		/**
+		 * Filters the columns added to the Creators list. Added columns are
+		 * read-only and rendered through `merchboard_creators_list_column`; the
+		 * built-in columns cannot be removed or relabelled.
+		 *
+		 * @param mixed $added Column key => label to add (default an empty array).
+		 */
+		$added = apply_filters( 'merchboard_creators_list_columns', array() );
+
+		foreach ( is_array( $added ) ? $added : array() as $key => $label ) {
+			if ( is_string( $key ) && is_string( $label ) && ! isset( $columns[ $key ] ) ) {
+				$columns[ sanitize_key( $key ) ] = $label;
+			}
+		}
+
+		return $columns;
 	}
 
 	/**
@@ -138,6 +163,14 @@ final class CreatorsListTable extends WP_List_Table {
 			array_values( array_filter( array_map( static fn( Creator $c ): ?int => $c->user_id, $page['items'] ) ) )
 		);
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns(), 'display_name' );
+
+		/**
+		 * Fires once with the creators shown on this page, so an added column can
+		 * load its data for all rows in one go (no query per row).
+		 *
+		 * @param list<Creator> $creators Creators of the page.
+		 */
+		do_action( 'merchboard_creators_list_items', $page['items'] );
 		$this->set_pagination_args(
 			array(
 				'total_items' => $page['total'],
@@ -231,6 +264,26 @@ final class CreatorsListTable extends WP_List_Table {
 	 */
 	protected function column_updated_at( $item ): string {
 		return esc_html( CreatorsAdminPage::local_time( $item->updated_at ) );
+	}
+
+	/**
+	 * A column added through `merchboard_creators_list_columns`.
+	 *
+	 * @param Creator $item        Creator.
+	 * @param string  $column_name Column key.
+	 */
+	protected function column_default( $item, $column_name ): string {
+		/**
+		 * Filters the cell of an added column. The callback returns escaped
+		 * HTML and must not change anything.
+		 *
+		 * @param mixed   $html        Cell HTML (default an empty string).
+		 * @param string  $column_name Column key.
+		 * @param Creator $item        Creator of the row.
+		 */
+		$html = apply_filters( 'merchboard_creators_list_column', '', $column_name, $item );
+
+		return is_string( $html ) ? $html : '';
 	}
 
 	/**

@@ -264,6 +264,125 @@ final class CreatorProductsActionsTest extends TestCase {
 		self::assertCount( CreatorProductsActions::MAX_PRODUCTS, CreatorProductsActions::parse_results( (string) ( self::query( $this->actions->link( $form ) )[ CreatorProductsActions::RESULTS_ARG ] ?? '' ) ) );
 	}
 
+	public function test_keep_as_manual_keeps_the_creator_and_changes_only_the_origin(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category', array( 16 ) );
+
+		self::assertSame( array( '11' => 'kept_manual' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 11 ) ) ) );
+
+		$product = $this->products->find( 11 );
+		self::assertNotNull( $product );
+		self::assertSame( $this->alpha, $product->creator_id(), 'Creator kept.' );
+		self::assertSame( array( array( 'key' => ProductCreatorLink::SOURCE_META_KEY, 'value' => 'admin' ) ), $product->source_entries ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 16 ), $product->category_ids, 'Categories untouched.' );
+
+		$audit = $this->product_audit();
+		self::assertCount( 1, $audit );
+		self::assertSame( array( 'product_creator_linked', '7', (string) $this->alpha ), array( $audit[0]['action'], $audit[0]['actor_user_id'], $audit[0]['creator_id'] ) );
+		self::assertSame(
+			array(
+				'product_id'          => 11,
+				'previous_creator_id' => $this->alpha,
+				'source'              => 'admin',
+				'previous_source'     => 'category',
+			),
+			$audit[0]['context']
+		);
+
+		self::assertSame( array( '11' => 'unchanged' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 11 ) ) ), 'Idempotent.' );
+		self::assertCount( 1, $this->products->writes );
+	}
+
+	public function test_remove_of_a_category_managed_link_is_refused_server_side(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category', array( 16 ) );
+		$before = array( $this->products->entries( 11 ), $this->products->sources( 11 ) );
+		Functions\expect( 'as_enqueue_async_action' )->never();
+
+		self::assertSame( array( '11' => 'category_managed' ), self::results( $this->actions->unlink( $this->unlink_form( 11 ) ) ) );
+
+		// Whatever else the request carries, the origin stored on the product decides.
+		$forged = $this->unlink_form( 11 ) + array(
+			'source'  => 'admin',
+			'choice'  => 'remove_links',
+			'confirm' => '1',
+			'replace' => array( '11' ),
+			'force'   => '1',
+		);
+		self::assertSame( array( '11' => 'category_managed' ), self::results( $this->actions->unlink( $forged ) ) );
+
+		self::assertSame( $before, array( $this->products->entries( 11 ), $this->products->sources( 11 ) ), 'Creator id and origin unchanged.' );
+		self::assertSame( array(), $this->products->writes );
+		self::assertSame( array(), $this->product_audit() );
+	}
+
+	public function test_keep_as_manual_then_remove_works(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category' );
+
+		self::assertSame( array( '11' => 'kept_manual' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 11 ) ) ) );
+		self::assertSame( array( '11' => 'unlinked' ), self::results( $this->actions->unlink( $this->unlink_form( 11 ) ) ) );
+
+		self::assertFalse( $this->products->find( 11 )?->has_link() );
+		self::assertSame( array( 'product_creator_linked', 'product_creator_unlinked' ), array_column( $this->product_audit(), 'action' ) );
+	}
+
+	public function test_keep_as_manual_needs_the_explicit_confirmation(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category' );
+
+		foreach ( array( '', '0', 'yes' ) as $confirm ) {
+			$form            = $this->keep_form( 11 );
+			$form['confirm'] = $confirm;
+			self::assertSame( array( '11' => 'confirmation_required' ), self::results( $this->actions->keep_as_manual( $form ) ) );
+		}
+
+		$form = $this->keep_form( 11 );
+		unset( $form['confirm'] );
+		self::assertSame( array( '11' => 'confirmation_required' ), self::results( $this->actions->keep_as_manual( $form ) ) );
+		self::assertSame( array(), $this->products->writes );
+	}
+
+	public function test_keep_as_manual_refuses_manual_foreign_and_unknown_links(): void {
+		$this->products->add_linked( 11, $this->alpha, 'admin' );
+		$this->products->add_linked( 12, $this->alpha );
+		$this->products->add_linked( 13, $this->beta, 'category' ); // Replaces fixture 13 (beta, manual).
+
+		self::assertSame( array( '11' => 'unchanged' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 11 ) ) ), 'Already manual.' );
+		self::assertSame( array( '12' => 'unchanged' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 12 ) ) ), 'No origin counts as manual.' );
+		self::assertSame( array( '13' => 'linked_elsewhere' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 13 ) ) ) );
+		self::assertSame( array( '10' => 'linked_elsewhere' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 10 ) ) ), 'Not linked at all.' );
+		self::assertSame( array( '0' => 'no_selection' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 0 ) ) ) );
+		self::assertSame( array(), $this->products->writes );
+		self::assertSame( array(), $this->product_audit() );
+	}
+
+	public function test_keep_as_manual_needs_edit_product_and_reports_failures_without_success(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category' );
+		$this->editable = array();
+
+		self::assertSame( array( '11' => 'not_authorized' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 11 ) ) ) );
+
+		$this->editable             = array( 11 );
+		$this->products->fail_write = true;
+		self::assertSame( array( '11' => 'error' ), self::results( $this->actions->keep_as_manual( $this->keep_form( 11 ) ) ) );
+		self::assertTrue( $this->products->find( 11 )?->is_category_managed(), 'Nothing half-written.' );
+		self::assertSame( array(), $this->product_audit(), 'Audit rolled back.' );
+		self::assertSame( 'Product link administration failed.', $this->logger->at( 'error' )[0]['message'] );
+	}
+
+	public function test_keep_as_manual_needs_the_capability_and_a_nonce_for_this_creator(): void {
+		$this->products->add_linked( 11, $this->alpha, 'category' );
+
+		$form             = $this->keep_form( 11 );
+		$form['_wpnonce'] = 'valid:' . CreatorProductsActions::keep_nonce_action( $this->beta );
+		$this->expect_forbidden( fn() => $this->actions->keep_as_manual( $form ) );
+
+		$form['_wpnonce'] = 'valid:' . CreatorProductsActions::unlink_nonce_action( $this->alpha );
+		$this->expect_forbidden( fn() => $this->actions->keep_as_manual( $form ) );
+
+		$this->caps = array( Capabilities::ACCESS_DASHBOARD ); // A creator: no self-service.
+		$this->expect_forbidden( fn() => $this->actions->keep_as_manual( $this->keep_form( 11 ) ) );
+
+		self::assertSame( array(), $this->products->writes );
+	}
+
 	public function test_results_are_parsed_strictly(): void {
 		self::assertSame(
 			array(
@@ -282,7 +401,7 @@ final class CreatorProductsActionsTest extends TestCase {
 	}
 
 	public function test_the_admin_source_is_the_only_one_besides_backfill(): void {
-		self::assertSame( array( 'admin', 'backfill' ), array_map( static fn( ProductLinkSource $s ): string => $s->value, ProductLinkSource::cases() ) );
+		self::assertSame( array( 'admin', 'category' ), array_map( static fn( ProductLinkSource $s ): string => $s->value, ProductLinkSource::cases() ) );
 	}
 
 	/**
@@ -316,6 +435,35 @@ final class CreatorProductsActionsTest extends TestCase {
 			'_wpnonce'   => 'valid:' . CreatorProductsActions::unlink_nonce_action( $this->alpha ),
 			'product_id' => (string) $product_id,
 		);
+	}
+
+	/**
+	 * A confirmed "Keep as manual" request for Alpha.
+	 *
+	 * @param int $product_id Product id.
+	 * @return array<string, string>
+	 */
+	private function keep_form( int $product_id ): array {
+		return array(
+			'creator_id' => (string) $this->alpha,
+			'_wpnonce'   => 'valid:' . CreatorProductsActions::keep_nonce_action( $this->alpha ),
+			'product_id' => (string) $product_id,
+			'confirm'    => '1',
+		);
+	}
+
+	/**
+	 * Asserts that the request stops with 403.
+	 *
+	 * @param callable $request Request.
+	 */
+	private function expect_forbidden( callable $request ): void {
+		try {
+			$request();
+			self::fail( 'Expected WpDie.' );
+		} catch ( WpDie $e ) {
+			self::assertSame( 403, $e->response );
+		}
 	}
 
 	/**

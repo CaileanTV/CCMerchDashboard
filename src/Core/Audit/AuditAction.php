@@ -67,4 +67,23 @@ enum AuditAction: string {
 	 * when the removed link was not a valid creator reference.
 	 */
 	case ProductCreatorUnlinked = 'product_creator_unlinked';
+
+	/**
+	 * A WooCommerce product category was mapped to the creator (context: term
+	 * id; ADR-033). The mapping is not ownership of any product.
+	 */
+	case CreatorCategoryLinked = 'creator_category_linked';
+
+	/**
+	 * A product category mapping of the creator was removed (context: term id
+	 * and reason; ADR-033). Product links are not changed by this.
+	 */
+	case CreatorCategoryUnlinked = 'creator_category_unlinked';
+
+	/**
+	 * A full category reconciliation run finished all its batches (context:
+	 * run id, dry-run status, trigger and the count per outcome; ADR-033). Not
+	 * tied to a creator; system work with no actor. Dry runs write none.
+	 */
+	case CategorySyncCompleted = 'category_sync_completed';
 }

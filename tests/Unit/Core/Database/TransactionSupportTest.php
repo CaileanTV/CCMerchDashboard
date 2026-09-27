@@ -27,7 +27,7 @@ final class TransactionSupportTest extends TestCase {
 	}
 
 	public function test_all_tables_on_a_transactional_engine_are_available(): void {
-		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES', 'wp_merchboard_creator_categories' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		$support = new TransactionSupport( $this->wpdb );
 
@@ -61,9 +61,10 @@ final class TransactionSupportTest extends TestCase {
 		self::assertFalse( $support->available() );
 		self::assertSame(
 			array(
-				'wp_merchboard_creators'    => 'MyISAM',
-				'wp_merchboard_audit_log'   => 'missing',
-				'wp_merchboard_creatormeta' => 'missing',
+				'wp_merchboard_creators'           => 'MyISAM',
+				'wp_merchboard_audit_log'          => 'missing',
+				'wp_merchboard_creatormeta'        => 'missing',
+				'wp_merchboard_creator_categories' => 'missing',
 			),
 			$support->unsupported_tables()
 		);
@@ -86,6 +87,11 @@ final class TransactionSupportTest extends TestCase {
 				'engine'       => 'InnoDB',
 				'transactions' => 'YES',
 			),
+			array(
+				'name'         => 'wp_merchboard_creator_categories',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
 		);
 
 		self::assertSame( array( 'wp_merchboard_creators' => 'unknown' ), ( new TransactionSupport( $this->wpdb ) )->unsupported_tables() );
@@ -99,7 +105,7 @@ final class TransactionSupportTest extends TestCase {
 
 	public function test_lower_cased_table_names_are_matched(): void {
 		$this->wpdb->prefix = 'WP_Shop_';
-		$this->tables( array( 'wp_shop_merchboard_creators' => 'YES', 'wp_shop_merchboard_audit_log' => 'YES', 'wp_shop_merchboard_creatormeta' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->tables( array( 'wp_shop_merchboard_creators' => 'YES', 'wp_shop_merchboard_audit_log' => 'YES', 'wp_shop_merchboard_creatormeta' => 'YES', 'wp_shop_merchboard_creator_categories' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		self::assertTrue( ( new TransactionSupport( $this->wpdb ) )->available() );
 	}
@@ -110,7 +116,7 @@ final class TransactionSupportTest extends TestCase {
 		$this->tables( array( 'wp_merchboard_creators' => 'YES' ) );
 		self::assertFalse( $support->available() );
 
-		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES', 'wp_merchboard_creator_categories' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertTrue( $support->available(), 'A table created later in the request is picked up.' );
 
 		$this->tables( array() );

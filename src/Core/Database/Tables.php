@@ -38,12 +38,18 @@ final class Tables {
 	public const CREATOR_META = 'merchboard_creatormeta';
 
 	/**
+	 * Creator ↔ product category mapping, schema version 4 (ADR-033).
+	 */
+	public const CREATOR_CATEGORIES = 'merchboard_creator_categories';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
 		self::CREATORS,
 		self::AUDIT_LOG,
 		self::CREATOR_META,
+		self::CREATOR_CATEGORIES,
 	);
 
 	/**

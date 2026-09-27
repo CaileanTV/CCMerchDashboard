@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\Creators;
 
+use Brain\Monkey\Actions;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
@@ -173,6 +174,17 @@ final class CreatorServiceTest extends TestCase {
 		self::assertSame( array( 'previous_status' => 'active' ), $rows[1]['context'] );
 		self::assertSame( array( 'previous_status' => 'inactive' ), $rows[2]['context'] );
 		self::assertSame( 'active', $this->db->rows( 'merchboard_creators' )[0]['status'] );
+	}
+
+	public function test_a_committed_status_change_fires_the_status_event_and_nothing_else_does(): void {
+		$this->service->create( 'Nova', CreatorStatus::Active, null );
+		Actions\expectDone( CreatorService::STATUS_CHANGED_ACTION )->once()->with( 1, 'inactive', 'active' );
+		Actions\expectDone( CreatorService::STATUS_CHANGED_ACTION )->once()->with( 1, 'active', 'inactive' );
+
+		$this->service->set_status( 1, CreatorStatus::Inactive );
+		$this->service->set_status( 1, CreatorStatus::Inactive );
+		$this->service->update( 1, 'Nova Renamed', CreatorStatus::Inactive, null );
+		$this->service->set_status( 1, CreatorStatus::Active );
 	}
 
 	public function test_link_and_unlink_write_audit_and_change_the_role_but_never_delete_the_user(): void {

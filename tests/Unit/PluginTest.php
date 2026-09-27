@@ -277,10 +277,11 @@ final class PluginTest extends TestCase {
 		$this->options->options[ Migrator::VERSION_OPTION ] = '1';
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_audit_log \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creatormeta \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creator_categories \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 3, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 4, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {
