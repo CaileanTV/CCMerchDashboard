@@ -51,6 +51,13 @@ final class AuditLogListTable extends WP_List_Table {
 	private array $creator_names = array();
 
 	/**
+	 * Labels for the ids in this page's context (looked up in prepare_items()).
+	 *
+	 * @var AuditContextLabels
+	 */
+	private AuditContextLabels $labels;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param AuditRepository   $audit    Audit storage (reads only).
@@ -64,6 +71,7 @@ final class AuditLogListTable extends WP_List_Table {
 		private UserAccounts $users,
 		private AuditFilter $filter
 	) {
+		$this->labels = new AuditContextLabels();
 		parent::__construct(
 			array(
 				'singular' => 'audit_record',
@@ -112,17 +120,110 @@ final class AuditLogListTable extends WP_List_Table {
 			)
 		);
 
-		$user_ids = array();
+		$user_ids     = array();
+		$creator_ids  = array();
+		$product_ids  = array();
+		$category_ids = array();
 
 		foreach ( $page['items'] as $entry ) {
-			$user_ids = array_merge( $user_ids, AuditLogFormatter::context_user_ids( $entry ), null === $entry->actor_user_id ? array() : array( $entry->actor_user_id ) );
+			$ids          = AuditLogFormatter::context_ids( $entry );
+			$user_ids     = array_merge( $user_ids, $ids['users'], null === $entry->actor_user_id ? array() : array( $entry->actor_user_id ) );
+			$creator_ids  = array_merge( $creator_ids, $ids['creators'], null === $entry->creator_id ? array() : array( $entry->creator_id ) );
+			$product_ids  = array_merge( $product_ids, $ids['products'] );
+			$category_ids = array_merge( $category_ids, $ids['categories'] );
+		}
 
-			if ( null !== $entry->creator_id && ! array_key_exists( $entry->creator_id, $this->creator_names ) ) {
-				$this->creator_names[ $entry->creator_id ] = $this->creators->find( $entry->creator_id )?->display_name;
-			}
+		// One lookup per distinct creator, as before; products and categories
+		// in one query each for the whole page.
+		foreach ( array_unique( $creator_ids ) as $creator_id ) {
+			$this->creator_names[ $creator_id ] = $this->creators->find( $creator_id )?->display_name;
 		}
 
 		$this->user_labels = $this->users->labels( array_values( array_unique( $user_ids ) ) );
+		$this->labels      = new AuditContextLabels(
+			$this->user_labels,
+			$this->creator_names,
+			self::products( array_values( array_unique( $product_ids ) ) ),
+			self::categories( array_values( array_unique( $category_ids ) ) )
+		);
+	}
+
+	/**
+	 * Names of the products on this page and, for those the current user may
+	 * edit, their edit URL. One query; deleted products are left out.
+	 *
+	 * @phpstan-param list<int> $ids
+	 *
+	 * @param int[] $ids Product ids.
+	 * @return array<int, array{name: string, url: string|null}>
+	 */
+	private static function products( array $ids ): array {
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$posts    = get_posts(
+			array(
+				'post_type'              => 'product',
+				// Every status a product keeps while it exists, trash included.
+				'post_status'            => array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' ),
+				'post__in'               => $ids,
+				'posts_per_page'         => count( $ids ),
+				'orderby'                => 'post__in',
+				'no_found_rows'          => true,
+				'ignore_sticky_posts'    => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+		$products = array();
+
+		foreach ( $posts as $post ) {
+			$url                   = current_user_can( Capabilities::EDIT_PRODUCT, $post->ID ) ? get_edit_post_link( $post->ID, 'raw' ) : null;
+			$products[ $post->ID ] = array(
+				'name' => $post->post_title,
+				'url'  => is_string( $url ) && '' !== $url ? $url : null,
+			);
+		}
+
+		return $products;
+	}
+
+	/**
+	 * Names of the product categories on this page. One query; deleted
+	 * categories (or no `product_cat` taxonomy without WooCommerce) are left
+	 * out.
+	 *
+	 * @phpstan-param list<int> $ids
+	 *
+	 * @param int[] $ids Term ids.
+	 * @return array<int, string>
+	 */
+	private static function categories( array $ids ): array {
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'include'    => $ids,
+				'hide_empty' => false,
+				'fields'     => 'id=>name',
+			)
+		);
+
+		if ( ! is_array( $terms ) ) {
+			return array();
+		}
+
+		$names = array();
+
+		foreach ( $terms as $id => $name ) {
+			$names[ (int) $id ] = (string) $name;
+		}
+
+		return $names;
 	}
 
 	/**
@@ -216,8 +317,9 @@ final class AuditLogListTable extends WP_List_Table {
 	 * @param AuditEntry $item Record.
 	 */
 	protected function column_details( $item ): string {
-		$lines = AuditLogFormatter::details( $item, $this->user_labels );
+		// The formatter escapes every line (a product may be a link).
+		$lines = AuditLogFormatter::details( $item, $this->labels );
 
-		return array() === $lines ? '—' : implode( '<br>', array_map( 'esc_html', $lines ) );
+		return array() === $lines ? '—' : implode( '<br>', $lines );
 	}
 }

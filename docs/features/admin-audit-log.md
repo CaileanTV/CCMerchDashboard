@@ -17,8 +17,8 @@ Ingen for creators. Creator-adgang giver aldrig adgang til audit-loggen.
 
 ## Technical implementation
 - `Modules/Admin/AuditLogPage`: menu (submenu under `merchboard`, prioritet 30), capability-tjek, filter-parsing (`filter_from_request`) og rendering.
-- `Modules/Admin/AuditLogListTable` (`WP_List_Table`): henter én side via `AuditRepository::paginate` og slår brugerlabels op i én forespørgsel (`UserAccounts::labels`) og creator-navne pr. unik creator på siden.
-- `Modules/Admin/AuditLogFormatter`: labels for alle `AuditAction`-cases og læsbar context (whitelist).
+- `Modules/Admin/AuditLogListTable` (`WP_List_Table`): henter én side via `AuditRepository::paginate` og slår brugerlabels op i én forespørgsel (`UserAccounts::labels`, også `trigger_user_id`), creator-navne pr. unik creator på siden (også `previous_creator_id` og scope-`creator_id`) og produkter og produktkategorier i én forespørgsel hver (`AuditContextLabels`, fase 17, trin 14).
+- `Modules/Admin/AuditLogFormatter`: labels for alle `AuditAction`-cases og læsbar context (whitelist), returneret som escaped HTML (et produkt kan være et link).
 - `Core/Audit/AuditFilter` og `AuditRepository::paginate`: validerede filtre og faste, prepared SQL-fragmenter.
 
 ## Relevant files

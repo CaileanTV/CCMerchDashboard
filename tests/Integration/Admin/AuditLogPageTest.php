@@ -84,6 +84,124 @@ final class AuditLogPageTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( 'bulk-action', $html );
 	}
 
+	public function test_product_and_category_events_are_readable_with_bulk_lookups(): void {
+		register_post_type( 'product', array( 'capability_type' => 'post', 'show_ui' => true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Edit links need show_ui.
+		register_taxonomy( 'product_cat', 'product' );
+		add_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10, 2 );
+
+		try {
+			$creator = $this->service( CreatorService::class )->create( 'Studio <b>Nova</b>', CreatorStatus::Active, null );
+			$trigger = $this->create_user( 'audit_trigger' );
+			$gone    = $this->create_user( 'audit_gone' );
+			$product = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Tee <i>x</i>' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$deleted = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Gone' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$term    = wp_insert_term( 'Nova <u>shirts</u>', 'product_cat' );
+			$old     = wp_insert_term( 'Old', 'product_cat' );
+			self::assertIsArray( $term );
+			self::assertIsArray( $old );
+			$term_id = (int) $term['term_id'];
+			$old_id  = (int) $old['term_id'];
+			$run_id  = '0b9f2c4e-1d2a-4c3b-8e5f-6a7b8c9d0e1f';
+
+			$audit = new AuditRepository( $this->wpdb );
+			$now   = current_time( 'mysql', true );
+			$audit->append( AuditAction::ProductCreatorLinked, null, $creator->id, array( 'product_id' => $product, 'previous_creator_id' => null, 'source' => 'category', 'reason' => 'category_added', 'category_ids' => array( $term_id, $old_id ), 'trigger_user_id' => $trigger, 'run_id' => $run_id ), $now ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$audit->append( AuditAction::ProductCreatorUnlinked, null, $creator->id, array( 'product_id' => $deleted, 'source' => 'category', 'reason' => 'term_deleted', 'trigger_user_id' => $gone ), $now ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$audit->append( AuditAction::CreatorCategoryUnlinked, 1, $creator->id, array( 'term_id' => $old_id, 'reason' => 'admin', 'choice' => 'keep_as_manual' ), $now ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$audit->append( AuditAction::CategorySyncCompleted, null, null, array( 'run_id' => $run_id, 'dry_run' => false, 'trigger' => 'full_sync', 'trigger_user_id' => $trigger, 'scope' => 'all', 'linked' => 12, 'moved' => 3, 'unlinked' => 2, 'unchanged' => 85, 'skipped_manual' => 4, 'ambiguous' => 1, 'skipped_inactive' => 0, 'errors' => 0, 'total' => 107 ), $now ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			wp_delete_post( $deleted, true );
+			wp_delete_term( $old_id, 'product_cat' );
+			wp_delete_user( $gone );
+			wp_set_current_user( 1 );
+			$before = $this->rows( Tables::AUDIT_LOG );
+
+			$html = $this->render();
+
+			self::assertStringContainsString( 'Product: <a href="' . esc_url( (string) get_edit_post_link( $product, 'raw' ) ) . '">Tee &lt;i&gt;x&lt;/i&gt; (#' . $product . ')</a>', $html );
+			// WordPress strips tags from term names on insert.
+			self::assertStringContainsString( 'Product categories: Nova shirts (#' . $term_id . '), #' . $old_id, $html, 'The deleted category is "#id".' );
+			self::assertStringContainsString( 'Product: #' . $deleted, $html, 'The deleted product is "#id".' );
+			self::assertStringContainsString( 'Triggered by: audit_trigger (audit_trigger)', $html );
+			self::assertStringContainsString( 'Triggered by: #' . $gone . ' (no longer exists)', $html );
+			self::assertStringContainsString( 'Origin: Product category', $html );
+			self::assertStringContainsString( 'Reason: the product category was deleted', $html );
+			self::assertStringContainsString( 'Product category: #' . $old_id, $html );
+			self::assertStringContainsString( 'Choice: Keep as manual links', $html );
+			self::assertStringContainsString( 'Run: <abbr title="' . $run_id . '">0b9f2c4e</abbr>', $html );
+			self::assertStringContainsString( 'Linked: 12 · Moved: 3 · Removed: 2 · Unchanged: 85 · Manual: 4 · Ambiguous: 1 · Inactive: 0 · Errors: 0', $html );
+			self::assertStringNotContainsString( '<i>x</i>', $html );
+			self::assertStringNotContainsString( '<u>', $html );
+			self::assertStringNotContainsString( 'product_id:', $html, 'No raw keys for known context.' );
+			self::assertStringNotContainsString( '<form method="post"', $html, 'Still read-only.' );
+			self::assertSame( $before, $this->rows( Tables::AUDIT_LOG ), 'The context is not changed.' );
+
+			$viewer = get_user_by( 'id', $this->create_user( 'audit_viewer' ) );
+			self::assertInstanceOf( \WP_User::class, $viewer );
+			$viewer->add_cap( Capabilities::VIEW_LOGS );
+			wp_set_current_user( $viewer->ID );
+			$html = $this->render();
+			self::assertStringContainsString( 'Product: Tee &lt;i&gt;x&lt;/i&gt; (#' . $product . ')', $html );
+			self::assertStringNotContainsString( 'post.php?post=' . $product, $html, 'No product link without edit_product.' );
+		} finally {
+			remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
+			unregister_taxonomy( 'product_cat' );
+			unregister_post_type( 'product' );
+		}
+	}
+
+	public function test_product_lookups_do_not_grow_with_the_number_of_records(): void {
+		register_post_type( 'product', array( 'capability_type' => 'post', 'show_ui' => true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Edit links need show_ui.
+		register_taxonomy( 'product_cat', 'product' );
+		add_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10, 2 );
+
+		try {
+			$creator = $this->service( CreatorService::class )->create( 'Studio', CreatorStatus::Active, null );
+			$term    = wp_insert_term( 'Shirts', 'product_cat' );
+			self::assertIsArray( $term );
+			$audit = new AuditRepository( $this->wpdb );
+			$add   = function ( int $count ) use ( $audit, $creator, $term ): void {
+				for ( $i = 0; $i < $count; $i++ ) {
+					$product = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Product ' . $i ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					$audit->append( AuditAction::ProductCreatorLinked, 1, $creator->id, array( 'product_id' => $product, 'source' => 'admin', 'category_ids' => array( (int) $term['term_id'] ) ), current_time( 'mysql', true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				}
+			};
+			wp_set_current_user( 1 );
+
+			$add( 3 );
+			$this->render(); // Warm-up: one-time work of the first rendering in a process.
+
+			// Both measurements start with a cold object cache, so repeated
+			// lookups the cache would answer still show up as queries.
+			wp_cache_flush();
+			$queries = $this->wpdb->num_queries;
+			$this->render();
+			$few = $this->wpdb->num_queries - $queries;
+
+			$add( 9 );
+			wp_cache_flush();
+			$queries = $this->wpdb->num_queries;
+			$this->render();
+			$many = $this->wpdb->num_queries - $queries;
+
+			self::assertSame( $few, $many, '3 or 12 product records: the same number of queries.' );
+		} finally {
+			remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
+			unregister_taxonomy( 'product_cat' );
+			unregister_post_type( 'product' );
+		}
+	}
+
+	/**
+	 * Maps `edit_product` like WooCommerce's product post type does.
+	 *
+	 * @param mixed $caps Primitive capabilities.
+	 * @param mixed $cap  Requested capability.
+	 * @return mixed
+	 */
+	public static function product_caps( mixed $caps, mixed $cap ): mixed {
+		return 'edit_product' === $cap ? array( 'edit_posts' ) : $caps;
+	}
+
 	public function test_pagination_shows_twenty_per_page(): void {
 		$audit = new AuditRepository( $this->wpdb );
 

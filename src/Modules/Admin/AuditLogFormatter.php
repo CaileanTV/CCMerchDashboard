@@ -16,12 +16,21 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns audit records into plain text for the admin screens (phase 11).
+ * Turns audit records into readable lines for the admin screens (phase 11,
+ * product and category events from phase 17).
  *
  * Context is never dumped as raw JSON: known keys (the shapes AuditTrail
- * callers write, docs/DATABASE.md) get a readable line; unknown keys are shown
- * only as "key: value" for short scalar values, and nested data as a
- * placeholder. Returned strings are plain text: callers escape them.
+ * callers write, docs/DATABASE.md) get a readable line; unknown keys and codes
+ * are shown only as "key: value" for short scalar values, and nested data as
+ * a placeholder. The context itself is never changed.
+ *
+ * Ids are resolved from AuditContextLabels, which the caller looks up once per
+ * page (context_ids()): products and categories as "Name (#id)", or "#id" when
+ * they no longer exist; a product links to its edit screen only when the
+ * labels carry a URL (the viewer may edit it).
+ *
+ * details() returns escaped HTML: every dynamic value goes through esc_html(),
+ * esc_attr() or esc_url() here.
  */
 final class AuditLogFormatter {
 
@@ -29,6 +38,17 @@ final class AuditLogFormatter {
 	 * Longest scalar value shown for an unknown context key.
 	 */
 	private const MAX_VALUE_LENGTH = 100;
+
+	/**
+	 * Characters of a run id shown (the full id is in the title).
+	 */
+	private const RUN_ID_LENGTH = 8;
+
+	/**
+	 * Outcome counts of `category_sync_completed`, in the order of the
+	 * reconciliation result (CategoryReconciliationResult::to_array()).
+	 */
+	private const COUNT_KEYS = array( 'linked', 'moved', 'unlinked', 'unchanged', 'skipped_manual', 'ambiguous', 'skipped_inactive', 'errors' );
 
 	/**
 	 * Label of an action.
@@ -55,15 +75,28 @@ final class AuditLogFormatter {
 	/**
 	 * Readable details of a record's context.
 	 *
-	 * @param AuditEntry         $entry       Record.
-	 * @param array<int, string> $user_labels "Display Name (login)" by user id (existing users only).
-	 * @return list<string> Plain-text lines.
+	 * @param AuditEntry         $entry  Record.
+	 * @param AuditContextLabels $labels Labels looked up for the page.
+	 * @return list<string> Escaped HTML lines.
 	 */
-	public static function details( AuditEntry $entry, array $user_labels ): array {
-		$lines = array();
+	public static function details( AuditEntry $entry, AuditContextLabels $labels ): array {
+		$lines  = array();
+		$counts = AuditAction::CategorySyncCompleted === $entry->action ? self::counts( $entry->context ) : null;
 
 		foreach ( $entry->context as $key => $value ) {
-			$lines[] = self::line( (string) $key, $value, $user_labels );
+			$key = (string) $key;
+
+			if ( null !== $counts && in_array( $key, self::COUNT_KEYS, true ) ) {
+				// All eight counts as one line, where the first one stood.
+				if ( '' !== $counts ) {
+					$lines[] = $counts;
+					$counts  = '';
+				}
+
+				continue;
+			}
+
+			$lines[] = self::line( $key, $value, $labels );
 		}
 
 		return $lines;
@@ -76,72 +109,348 @@ final class AuditLogFormatter {
 	 * @return list<int>
 	 */
 	public static function context_user_ids( AuditEntry $entry ): array {
-		$user_id = $entry->context['user_id'] ?? null;
+		return self::ids( $entry->context, array( 'user_id', 'trigger_user_id' ) );
+	}
 
-		return is_int( $user_id ) && $user_id > 0 ? array( $user_id ) : array();
+	/**
+	 * Every id a record's context refers to, by kind (to look up in bulk).
+	 *
+	 * @param AuditEntry $entry Record.
+	 * @return array{users: list<int>, creators: list<int>, products: list<int>, categories: list<int>}
+	 */
+	public static function context_ids( AuditEntry $entry ): array {
+		$categories = $entry->context['category_ids'] ?? array();
+
+		return array(
+			'users'      => self::context_user_ids( $entry ),
+			'creators'   => self::ids( $entry->context, array( 'previous_creator_id', 'creator_id' ) ),
+			'products'   => self::ids( $entry->context, array( 'product_id' ) ),
+			'categories' => array_merge( self::ids( $entry->context, array( 'term_id' ) ), is_array( $categories ) ? self::ids( $categories, array_keys( $categories ) ) : array() ),
+		);
 	}
 
 	/**
 	 * One context line.
 	 *
-	 * @param string             $key         Context key.
-	 * @param mixed              $value       Context value.
-	 * @param array<int, string> $user_labels User labels.
+	 * @param string             $key    Context key.
+	 * @param mixed              $value  Context value.
+	 * @param AuditContextLabels $labels Labels.
 	 */
-	private static function line( string $key, mixed $value, array $user_labels ): string {
+	private static function line( string $key, mixed $value, AuditContextLabels $labels ): string {
 		switch ( $key ) {
 			case 'user_id':
 				return null === $value
-					? __( 'WordPress user: none', 'merchboard' )
+					? esc_html__( 'WordPress user: none', 'merchboard' )
 					/* translators: %s: user label or "#id". */
-					: sprintf( __( 'WordPress user: %s', 'merchboard' ), self::user( $value, $user_labels ) );
+					: self::text( __( 'WordPress user: %s', 'merchboard' ), self::user( $value, $labels ) );
+			case 'trigger_user_id':
+				/* translators: %s: user label or "#id". */
+				return self::text( __( 'Triggered by: %s', 'merchboard' ), self::user( $value, $labels ) );
 			case 'status':
 				/* translators: %s: creator status. */
-				return sprintf( __( 'Status: %s', 'merchboard' ), self::status( $value ) );
+				return self::text( __( 'Status: %s', 'merchboard' ), self::status( $value ) );
 			case 'previous_status':
 				/* translators: %s: creator status. */
-				return sprintf( __( 'Previous status: %s', 'merchboard' ), self::status( $value ) );
+				return self::text( __( 'Previous status: %s', 'merchboard' ), self::status( $value ) );
 			case 'changed_fields':
 				/* translators: %s: comma-separated field names. */
-				return sprintf( __( 'Changed: %s', 'merchboard' ), self::fields( $value ) );
+				return self::text( __( 'Changed: %s', 'merchboard' ), self::fields( $value ) );
 			case 'reason':
 				return 'user_deleted' === $value
-					? __( 'Reason: the WordPress user was deleted', 'merchboard' )
-					/* translators: %s: reason code. */
-					: sprintf( __( 'Reason: %s', 'merchboard' ), self::scalar( $value ) );
+					? esc_html__( 'Reason: the WordPress user was deleted', 'merchboard' )
+					/* translators: %s: reason. */
+					: self::text( __( 'Reason: %s', 'merchboard' ), self::reason( $value ) );
+			case 'trigger':
+				/* translators: %s: what started the reconciliation. */
+				return self::text( __( 'Trigger: %s', 'merchboard' ), self::reason( $value ) );
 			case 'setting':
 				return match ( $value ) {
-					'delete_data_on_uninstall' => __( 'Setting: delete all data when the plugin is deleted', 'merchboard' ),
-					'dashboard_slug'           => __( 'Setting: creator dashboard URL slug', 'merchboard' ),
+					'delete_data_on_uninstall' => esc_html__( 'Setting: delete all data when the plugin is deleted', 'merchboard' ),
+					'dashboard_slug'           => esc_html__( 'Setting: creator dashboard URL slug', 'merchboard' ),
 					/* translators: %s: setting name. */
-					default                    => sprintf( __( 'Setting: %s', 'merchboard' ), self::scalar( $value ) ),
+					default                    => self::text( __( 'Setting: %s', 'merchboard' ), self::scalar( $value ) ),
 				};
 			case 'previous_value':
 				/* translators: %s: previous setting value. */
-				return sprintf( __( 'Previous value: %s', 'merchboard' ), self::scalar( $value ) );
+				return self::text( __( 'Previous value: %s', 'merchboard' ), self::scalar( $value ) );
 			case 'value':
 				/* translators: %s: new setting value. */
-				return sprintf( __( 'New value: %s', 'merchboard' ), self::scalar( $value ) );
+				return self::text( __( 'New value: %s', 'merchboard' ), self::scalar( $value ) );
 			case 'enabled':
-				return true === $value ? __( 'New value: enabled', 'merchboard' ) : __( 'New value: disabled', 'merchboard' );
+				return true === $value ? esc_html__( 'New value: enabled', 'merchboard' ) : esc_html__( 'New value: disabled', 'merchboard' );
+			case 'product_id':
+				/* translators: %s: product name and id, or "#id". */
+				return self::html( __( 'Product: %s', 'merchboard' ), self::product( $value, $labels ) );
+			case 'term_id':
+				/* translators: %s: product category name and id, or "#id". */
+				return self::text( __( 'Product category: %s', 'merchboard' ), self::category( $value, $labels ) );
+			case 'category_ids':
+				/* translators: %s: comma-separated product categories. */
+				return self::text( __( 'Product categories: %s', 'merchboard' ), self::categories( $value, $labels ) );
+			case 'previous_creator_id':
+				return null === $value
+					? esc_html__( 'Previous creator: none', 'merchboard' )
+					/* translators: %s: creator name or "#id". */
+					: self::text( __( 'Previous creator: %s', 'merchboard' ), self::creator( $value, $labels ) );
+			case 'creator_id':
+				/* translators: %s: creator name or "#id". */
+				return self::text( __( 'Creator: %s', 'merchboard' ), self::creator( $value, $labels ) );
+			case 'source':
+				/* translators: %s: origin of the product link. */
+				return self::text( __( 'Origin: %s', 'merchboard' ), self::source( $value ) );
+			case 'previous_source':
+				/* translators: %s: previous origin of the product link. */
+				return self::text( __( 'Previous origin: %s', 'merchboard' ), self::source( $value ) );
+			case 'previous_link':
+				return 'invalid' === $value
+					? esc_html__( 'Previous link: invalid', 'merchboard' )
+					/* translators: %s: previous link state. */
+					: self::text( __( 'Previous link: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'choice':
+				/* translators: %s: what happens to the category-managed links. */
+				return self::text( __( 'Choice: %s', 'merchboard' ), self::choice( $value ) );
+			case 'run_id':
+				/* translators: %s: shortened run id. */
+				return self::html( __( 'Run: %s', 'merchboard' ), self::run_id( $value ) );
+			case 'scope':
+				/* translators: %s: which products the reconciliation covered. */
+				return self::text( __( 'Scope: %s', 'merchboard' ), self::scope( $value ) );
+			case 'dry_run':
+				return true === $value ? esc_html__( 'Dry run: yes', 'merchboard' ) : esc_html__( 'Dry run: no', 'merchboard' );
+			case 'total':
+				/* translators: %s: number of products. */
+				return self::text( __( 'Products evaluated: %s', 'merchboard' ), self::scalar( $value ) );
 		}
 
-		return sanitize_key( $key ) . ': ' . self::scalar( $value );
+		return esc_html( sanitize_key( $key ) . ': ' . self::scalar( $value ) );
 	}
 
 	/**
-	 * A user reference: its label while the user exists, else "#id (deleted)".
+	 * A translated format with a plain-text value, escaped.
 	 *
-	 * @param mixed              $value       User id.
-	 * @param array<int, string> $user_labels User labels.
+	 * @param string $format Format with one %s.
+	 * @param string $value  Plain text.
 	 */
-	private static function user( mixed $value, array $user_labels ): string {
+	private static function text( string $format, string $value ): string {
+		return esc_html( sprintf( $format, $value ) );
+	}
+
+	/**
+	 * A translated format with an already escaped HTML value.
+	 *
+	 * @param string $format Format with one %s.
+	 * @param string $html   Escaped HTML.
+	 */
+	private static function html( string $format, string $html ): string {
+		return sprintf( esc_html( $format ), $html );
+	}
+
+	/**
+	 * The eight outcome counts of `category_sync_completed` as one line, or
+	 * null when the context does not hold all of them as integers.
+	 *
+	 * @param array<mixed> $context Context.
+	 */
+	private static function counts( array $context ): ?string {
+		$labels = array(
+			'linked'           => __( 'Linked', 'merchboard' ),
+			'moved'            => __( 'Moved', 'merchboard' ),
+			'unlinked'         => __( 'Removed', 'merchboard' ),
+			'unchanged'        => __( 'Unchanged', 'merchboard' ),
+			'skipped_manual'   => __( 'Manual', 'merchboard' ),
+			'ambiguous'        => __( 'Ambiguous', 'merchboard' ),
+			'skipped_inactive' => __( 'Inactive', 'merchboard' ),
+			'errors'           => __( 'Errors', 'merchboard' ),
+		);
+		$parts  = array();
+
+		foreach ( self::COUNT_KEYS as $key ) {
+			if ( ! is_int( $context[ $key ] ?? null ) ) {
+				return null;
+			}
+
+			/* translators: 1: outcome, 2: number of products. */
+			$parts[] = sprintf( __( '%1$s: %2$d', 'merchboard' ), $labels[ $key ], $context[ $key ] );
+		}
+
+		return esc_html( implode( ' · ', $parts ) );
+	}
+
+	/**
+	 * A user reference: its label while the user exists, else "#id (no
+	 * longer exists)". Plain text.
+	 *
+	 * @param mixed              $value  User id.
+	 * @param AuditContextLabels $labels Labels.
+	 */
+	private static function user( mixed $value, AuditContextLabels $labels ): string {
 		if ( ! is_int( $value ) ) {
 			return self::scalar( $value );
 		}
 
 		/* translators: %d: user id. */
-		return $user_labels[ $value ] ?? sprintf( __( '#%d (no longer exists)', 'merchboard' ), $value );
+		return $labels->users[ $value ] ?? sprintf( __( '#%d (no longer exists)', 'merchboard' ), $value );
+	}
+
+	/**
+	 * A creator reference: its name, else "Creator #id (not found)". Plain text.
+	 *
+	 * @param mixed              $value  Creator id.
+	 * @param AuditContextLabels $labels Labels.
+	 */
+	private static function creator( mixed $value, AuditContextLabels $labels ): string {
+		if ( ! is_int( $value ) ) {
+			return self::scalar( $value );
+		}
+
+		/* translators: %d: creator id. */
+		return $labels->creators[ $value ] ?? sprintf( __( 'Creator #%d (not found)', 'merchboard' ), $value );
+	}
+
+	/**
+	 * A product: "Name (#id)", linked when the labels carry an edit URL, or
+	 * "#id" when it no longer exists. Escaped HTML.
+	 *
+	 * @param mixed              $value  Product id.
+	 * @param AuditContextLabels $labels Labels.
+	 */
+	private static function product( mixed $value, AuditContextLabels $labels ): string {
+		if ( ! is_int( $value ) ) {
+			return esc_html( self::scalar( $value ) );
+		}
+
+		$product = $labels->products[ $value ] ?? null;
+
+		if ( null === $product ) {
+			return esc_html( '#' . $value );
+		}
+
+		$label = esc_html( self::named( $product['name'], $value ) );
+
+		return null === $product['url'] ? $label : '<a href="' . esc_url( $product['url'] ) . '">' . $label . '</a>';
+	}
+
+	/**
+	 * A product category: "Name (#id)", or "#id" when it no longer exists.
+	 * Plain text.
+	 *
+	 * @param mixed              $value  Term id.
+	 * @param AuditContextLabels $labels Labels.
+	 */
+	private static function category( mixed $value, AuditContextLabels $labels ): string {
+		if ( ! is_int( $value ) ) {
+			return self::scalar( $value );
+		}
+
+		$name = $labels->categories[ $value ] ?? null;
+
+		return null === $name ? '#' . $value : self::named( $name, $value );
+	}
+
+	/**
+	 * Several product categories. Plain text.
+	 *
+	 * @param mixed              $value  Term ids.
+	 * @param AuditContextLabels $labels Labels.
+	 */
+	private static function categories( mixed $value, AuditContextLabels $labels ): string {
+		if ( ! is_array( $value ) ) {
+			return self::scalar( $value );
+		}
+
+		if ( array() === $value ) {
+			return '—';
+		}
+
+		return implode( ', ', array_map( static fn( mixed $id ): string => self::category( $id, $labels ), array_values( $value ) ) );
+	}
+
+	/**
+	 * "Name (#id)"; an empty name is shown as "(no name)".
+	 *
+	 * @param string $name Name.
+	 * @param int    $id   Id.
+	 */
+	private static function named( string $name, int $id ): string {
+		/* translators: 1: name, 2: id. */
+		return sprintf( __( '%1$s (#%2$d)', 'merchboard' ), '' === $name ? __( '(no name)', 'merchboard' ) : $name, $id );
+	}
+
+	/**
+	 * A reason or trigger code. Unknown codes are shown as they are.
+	 *
+	 * @param mixed $value Code.
+	 */
+	private static function reason( mixed $value ): string {
+		return match ( $value ) {
+			'category_added'    => __( 'the product was added to a mapped category', 'merchboard' ),
+			'category_removed'  => __( 'the product left its mapped category', 'merchboard' ),
+			'category_moved'    => __( 'the product moved to another creator\'s category', 'merchboard' ),
+			'category_changed'  => __( 'product categories changed', 'merchboard' ),
+			'mapping_created'   => __( 'a category mapping was created', 'merchboard' ),
+			'mapping_removed'   => __( 'a category mapping was removed', 'merchboard' ),
+			'creator_activated' => __( 'the creator was activated', 'merchboard' ),
+			'term_deleted'      => __( 'the product category was deleted', 'merchboard' ),
+			'ambiguous'         => __( 'categories of several creators (ambiguous)', 'merchboard' ),
+			'full_sync'         => __( 'full reconciliation', 'merchboard' ),
+			'admin'             => __( 'an administrator', 'merchboard' ),
+			default             => self::scalar( $value ),
+		};
+	}
+
+	/**
+	 * A link origin. Unknown codes are shown as they are.
+	 *
+	 * @param mixed $value Origin.
+	 */
+	private static function source( mixed $value ): string {
+		return match ( $value ) {
+			'admin'    => __( 'Manual', 'merchboard' ),
+			'category' => __( 'Product category', 'merchboard' ),
+			default    => self::scalar( $value ),
+		};
+	}
+
+	/**
+	 * A mapping removal choice. Unknown codes are shown as they are.
+	 *
+	 * @param mixed $value Choice.
+	 */
+	private static function choice( mixed $value ): string {
+		return match ( $value ) {
+			'remove_links'   => __( 'Remove category-managed links', 'merchboard' ),
+			'keep_as_manual' => __( 'Keep as manual links', 'merchboard' ),
+			default          => self::scalar( $value ),
+		};
+	}
+
+	/**
+	 * A reconciliation scope. Unknown values are shown as they are.
+	 *
+	 * @param mixed $value Scope.
+	 */
+	private static function scope( mixed $value ): string {
+		return match ( $value ) {
+			'all'      => __( 'all relevant products', 'merchboard' ),
+			'category' => __( 'the products of one category', 'merchboard' ),
+			'mapping'  => __( 'the products of one mapping', 'merchboard' ),
+			default    => self::scalar( $value ),
+		};
+	}
+
+	/**
+	 * A run id, shortened, with the full id as title. Escaped HTML.
+	 *
+	 * @param mixed $value Run id.
+	 */
+	private static function run_id( mixed $value ): string {
+		if ( ! is_string( $value ) || mb_strlen( $value ) <= self::RUN_ID_LENGTH ) {
+			return esc_html( self::scalar( $value ) );
+		}
+
+		$full = self::scalar( $value );
+
+		return '<abbr title="' . esc_attr( $full ) . '">' . esc_html( mb_substr( $full, 0, self::RUN_ID_LENGTH ) ) . '</abbr>';
 	}
 
 	/**
@@ -186,7 +495,28 @@ final class AuditLogFormatter {
 	}
 
 	/**
-	 * A short scalar value; nested data is not shown.
+	 * Positive integer ids among the given keys of an array.
+	 *
+	 * @param array<mixed>      $data Data.
+	 * @param array<int|string> $keys Keys.
+	 * @return list<int>
+	 */
+	private static function ids( array $data, array $keys ): array {
+		$ids = array();
+
+		foreach ( $keys as $key ) {
+			$id = $data[ $key ] ?? null;
+
+			if ( is_int( $id ) && $id > 0 ) {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * A short scalar value; nested data is not shown. Plain text.
 	 *
 	 * @param mixed $value Value.
 	 */

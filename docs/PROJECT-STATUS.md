@@ -383,7 +383,11 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
     - `CategoryReconciliationBatch::preview()` lægger afvigelsen i den eksisterende `attention`-liste med `conflict`, `creator_id` og `mapped_creator_ids`; `CategorySyncReport::fingerprint()` omfatter den, så en ændret afvigelse gør en tørkørsel forældet.
     - Visningen har kolonnen "Current creator" ("Manual" ved en manuel afvigelse). Creatornavne læses højst én gang pr. visning.
     - Ingen skrivning, audit, job eller `ProtectedMetaWrite`.
-  - **Næste:** Audit-labels (roadmappens trin 14), i18n/docs/slutverifikation (15).
+  - **Trin 14, audit-log-labels (2026-09-27):** `AuditLogFormatter` gør produkt- og kategori-hændelsernes context læsbar; `AuditLogListTable` slår produkter og produktkategorier op i én forespørgsel hver pr. side (`AuditContextLabels`), brugere inkl. `trigger_user_id` som før i én forespørgsel og creators pr. unik creator.
+    - Produkt/kategori: "Navn (#ID)", "#ID" når de er slettet; produktlink kun med `edit_product`, ingen kategorilinks.
+    - `run_id` vises forkortet (8 tegn) med fuldt id som `title`; optællingerne fra `category_sync_completed` som én linje i afstemningens rækkefølge.
+    - Ukendte koder vises escaped som de er. Audit-context og -schema er uændrede, og siden er fortsat read-only.
+  - **Næste:** i18n/docs/slutverifikation (roadmappens trin 15); Local-verifikationen (trin 12) er ikke udført.
 
 ## Planned
 

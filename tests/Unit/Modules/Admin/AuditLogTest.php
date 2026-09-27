@@ -19,6 +19,7 @@ use MerchBoard\Core\Audit\AuditEntry;
 use MerchBoard\Core\Audit\AuditFilter;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Admin\AuditContextLabels;
 use MerchBoard\Modules\Admin\AuditLogFormatter;
 use MerchBoard\Modules\Admin\AuditLogPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -201,7 +202,7 @@ final class AuditLogTest extends TestCase {
 			)
 		);
 
-		$lines = AuditLogFormatter::details( $entry, array( 42 => 'Nova (nova)' ) );
+		$lines = AuditLogFormatter::details( $entry, new AuditContextLabels( array( 42 => 'Nova (nova)' ) ) );
 
 		self::assertSame( 'WordPress user: Nova (nova)', $lines[0] );
 		self::assertSame( 'Reason: the WordPress user was deleted', $lines[1] );
@@ -216,7 +217,7 @@ final class AuditLogTest extends TestCase {
 	public function test_deleted_users_and_settings_changes_are_described(): void {
 		self::assertSame(
 			array( 'WordPress user: #7 (no longer exists)' ),
-			AuditLogFormatter::details( $this->entry( AuditAction::CreatorUserLinked, array( 'user_id' => 7 ) ), array() )
+			AuditLogFormatter::details( $this->entry( AuditAction::CreatorUserLinked, array( 'user_id' => 7 ) ), new AuditContextLabels() )
 		);
 		self::assertSame(
 			array( 'Setting: delete all data when the plugin is deleted', 'New value: enabled' ),
@@ -228,10 +229,232 @@ final class AuditLogTest extends TestCase {
 						'enabled' => true,
 					)
 				),
-				array()
+				new AuditContextLabels()
 			)
 		);
-		self::assertSame( array( 'WordPress user: none', 'Status: Inactive' ), AuditLogFormatter::details( $this->entry( AuditAction::CreatorCreated, array( 'user_id' => null, 'status' => 'inactive' ) ), array() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'WordPress user: none', 'Status: Inactive' ), AuditLogFormatter::details( $this->entry( AuditAction::CreatorCreated, array( 'user_id' => null, 'status' => 'inactive' ) ), new AuditContextLabels() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	public function test_product_link_details_are_readable(): void {
+		$labels = new AuditContextLabels(
+			array( 5 => 'Ada (ada)' ),
+			array( 3 => 'Studio Beta' ),
+			array(
+				10 => array(
+					'name' => 'Tee',
+					'url'  => 'https://shop.test/wp-admin/post.php?post=10&action=edit',
+				),
+				11 => array(
+					'name' => 'Mug',
+					'url'  => null,
+				),
+			),
+			array(
+				16 => 'Alpha',
+				17 => 'Beta',
+			)
+		);
+		$lines  = AuditLogFormatter::details(
+			$this->entry(
+				AuditAction::ProductCreatorLinked,
+				array(
+					'product_id'          => 10,
+					'previous_creator_id' => 3,
+					'source'              => 'category',
+					'previous_source'     => 'admin',
+					'reason'              => 'category_moved',
+					'category_ids'        => array( 16, 17, 99 ),
+					'trigger_user_id'     => 5,
+					'run_id'              => '0b9f2c4e-1d2a-4c3b-8e5f-6a7b8c9d0e1f',
+					'previous_link'       => 'invalid',
+				)
+			),
+			$labels
+		);
+
+		self::assertSame(
+			array(
+				'Product: <a href="https://shop.test/wp-admin/post.php?post=10&action=edit">Tee (#10)</a>',
+				'Previous creator: Studio Beta',
+				'Origin: Product category',
+				'Previous origin: Manual',
+				'Reason: the product moved to another creator&#039;s category',
+				'Product categories: Alpha (#16), Beta (#17), #99',
+				'Triggered by: Ada (ada)',
+				'Run: <abbr title="0b9f2c4e-1d2a-4c3b-8e5f-6a7b8c9d0e1f">0b9f2c4e</abbr>',
+				'Previous link: invalid',
+			),
+			$lines,
+			'esc_url is a pass-through stub here.'
+		);
+
+		$gone = AuditLogFormatter::details( $this->entry( AuditAction::ProductCreatorUnlinked, array( 'product_id' => 11, 'previous_creator_id' => 404, 'trigger_user_id' => 6 ) ), $labels ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'Product: Mug (#11)', 'Previous creator: Creator #404 (not found)', 'Triggered by: #6 (no longer exists)' ), $gone, 'No link without edit_product; deleted creator and user.' );
+		self::assertSame( array( 'Product: #12', 'Previous creator: none' ), AuditLogFormatter::details( $this->entry( AuditAction::ProductCreatorLinked, array( 'product_id' => 12, 'previous_creator_id' => null ) ), $labels ), 'A deleted product is "#id".' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	/**
+	 * Reason and trigger codes with their labels.
+	 *
+	 * @return array<string, array{string, string}>
+	 */
+	public static function reasons(): array {
+		return array(
+			'category_added'    => array( 'category_added', 'the product was added to a mapped category' ),
+			'category_removed'  => array( 'category_removed', 'the product left its mapped category' ),
+			'category_moved'    => array( 'category_moved', 'the product moved to another creator&#039;s category' ),
+			'mapping_created'   => array( 'mapping_created', 'a category mapping was created' ),
+			'mapping_removed'   => array( 'mapping_removed', 'a category mapping was removed' ),
+			'creator_activated' => array( 'creator_activated', 'the creator was activated' ),
+			'term_deleted'      => array( 'term_deleted', 'the product category was deleted' ),
+			'ambiguous'         => array( 'ambiguous', 'categories of several creators (ambiguous)' ),
+			'admin'             => array( 'admin', 'an administrator' ),
+		);
+	}
+
+	#[DataProvider( 'reasons' )]
+	public function test_every_decided_reason_code_has_a_label( string $code, string $label ): void {
+		self::assertSame( array( 'Reason: ' . $label ), AuditLogFormatter::details( $this->entry( AuditAction::ProductCreatorUnlinked, array( 'reason' => $code ) ), new AuditContextLabels() ) );
+	}
+
+	public function test_mapping_details_sources_and_choices_are_readable(): void {
+		$labels = new AuditContextLabels( array(), array(), array(), array( 16 => 'Alpha' ) );
+
+		self::assertSame(
+			array( 'Product category: Alpha (#16)', 'Reason: an administrator', 'Choice: Remove category-managed links' ),
+			AuditLogFormatter::details( $this->entry( AuditAction::CreatorCategoryUnlinked, array( 'term_id' => 16, 'reason' => 'admin', 'choice' => 'remove_links' ) ), $labels ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		);
+		self::assertSame(
+			array( 'Product category: #18', 'Reason: the product category was deleted', 'Choice: Keep as manual links' ),
+			AuditLogFormatter::details( $this->entry( AuditAction::CreatorCategoryUnlinked, array( 'term_id' => 18, 'reason' => 'term_deleted', 'choice' => 'keep_as_manual' ) ), $labels ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'A deleted category is "#id".'
+		);
+		self::assertSame(
+			array( 'Origin: Manual', 'Previous origin: Product category' ),
+			AuditLogFormatter::details( $this->entry( AuditAction::ProductCreatorLinked, array( 'source' => 'admin', 'previous_source' => 'category' ) ), $labels ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		);
+	}
+
+	public function test_unknown_codes_and_hostile_values_are_escaped_and_never_fatal(): void {
+		$labels = new AuditContextLabels(
+			array( 5 => 'Eve <b>(eve)</b>' ),
+			array( 3 => 'Studio <script>' ),
+			array(
+				10 => array(
+					'name' => 'Tee <img src=x>',
+					'url'  => null,
+				),
+			),
+			array( 16 => 'Cat "quoted" <i>' )
+		);
+		$lines  = AuditLogFormatter::details(
+			$this->entry(
+				AuditAction::ProductCreatorLinked,
+				array(
+					'product_id'          => 10,
+					'previous_creator_id' => 3,
+					'term_id'             => 16,
+					'trigger_user_id'     => 5,
+					'reason'              => 'new_<b>reason',
+					'source'              => 'backfill<script>',
+					'choice'              => array( 'nested' ),
+					'trigger'             => 'something_else',
+					'scope'               => '<i>x</i>',
+					'run_id'              => '"><script>alert(1)</script>',
+				)
+			),
+			$labels
+		);
+		$html   = implode( "\n", $lines );
+
+		foreach ( array( '<b>', '<script>', '<img', '<i>' ) as $tag ) {
+			self::assertStringNotContainsString( $tag, $html, $tag );
+		}
+		self::assertStringContainsString( 'Reason: new_&lt;b&gt;reason', $html, 'Unknown code shown as it is, escaped.' );
+		self::assertStringContainsString( 'Origin: backfill&lt;script&gt;', $html );
+		self::assertStringContainsString( 'Choice: …', $html, 'Nested data is not shown.' );
+		self::assertStringContainsString( 'Trigger: something_else', $html );
+		self::assertStringContainsString( 'Product: Tee &lt;img src=x&gt; (#10)', $html );
+		self::assertStringContainsString( 'Product category: Cat &quot;quoted&quot; &lt;i&gt; (#16)', $html );
+		self::assertStringContainsString( 'title="&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"', $html );
+	}
+
+	public function test_category_sync_counts_are_one_line_in_the_result_order(): void {
+		$context = array(
+			'run_id'           => '0b9f2c4e-1d2a-4c3b-8e5f-6a7b8c9d0e1f',
+			'dry_run'          => false,
+			'trigger'          => 'full_sync',
+			'trigger_user_id'  => 5,
+			'scope'            => 'all',
+			'linked'           => 12,
+			'moved'            => 3,
+			'unlinked'         => 2,
+			'unchanged'        => 85,
+			'skipped_manual'   => 4,
+			'ambiguous'        => 1,
+			'skipped_inactive' => 0,
+			'errors'           => 0,
+			'total'            => 107,
+		);
+
+		self::assertSame(
+			array(
+				'Run: <abbr title="0b9f2c4e-1d2a-4c3b-8e5f-6a7b8c9d0e1f">0b9f2c4e</abbr>',
+				'Dry run: no',
+				'Trigger: full reconciliation',
+				'Triggered by: #5 (no longer exists)',
+				'Scope: all relevant products',
+				'Linked: 12 · Moved: 3 · Removed: 2 · Unchanged: 85 · Manual: 4 · Ambiguous: 1 · Inactive: 0 · Errors: 0',
+				'Products evaluated: 107',
+			),
+			AuditLogFormatter::details( $this->entry( AuditAction::CategorySyncCompleted, $context ), new AuditContextLabels() )
+		);
+
+		$scoped = array(
+			'scope'      => 'mapping',
+			'term_id'    => 16,
+			'creator_id' => 3,
+		) + $context;
+		$lines  = AuditLogFormatter::details( $this->entry( AuditAction::CategorySyncCompleted, $scoped ), new AuditContextLabels( array(), array( 3 => 'Studio Beta' ), array(), array( 16 => 'Alpha' ) ) );
+		self::assertSame( array( 'Scope: the products of one mapping', 'Product category: Alpha (#16)', 'Creator: Studio Beta' ), array_slice( $lines, 0, 3 ) );
+
+		unset( $context['errors'] );
+		self::assertContains( 'linked: 12', AuditLogFormatter::details( $this->entry( AuditAction::CategorySyncCompleted, $context ), new AuditContextLabels() ), 'Incomplete counts are not merged.' );
+	}
+
+	public function test_context_ids_collect_every_referenced_id_for_bulk_lookups(): void {
+		$entry = $this->entry(
+			AuditAction::CategorySyncCompleted,
+			array(
+				'user_id'             => 7,
+				'trigger_user_id'     => 5,
+				'product_id'          => 10,
+				'previous_creator_id' => 3,
+				'creator_id'          => 4,
+				'term_id'             => 16,
+				'category_ids'        => array( 17, 'x', -1, 18 ),
+			)
+		);
+
+		self::assertSame( array( 7, 5 ), AuditLogFormatter::context_user_ids( $entry ) );
+		self::assertSame(
+			array(
+				'users'      => array( 7, 5 ),
+				'creators'   => array( 3, 4 ),
+				'products'   => array( 10 ),
+				'categories' => array( 16, 17, 18 ),
+			),
+			AuditLogFormatter::context_ids( $entry )
+		);
+		self::assertSame(
+			array(
+				'users'      => array(),
+				'creators'   => array(),
+				'products'   => array(),
+				'categories' => array(),
+			),
+			AuditLogFormatter::context_ids( $this->entry( AuditAction::ProductCreatorLinked, array( 'product_id' => '10', 'category_ids' => 'x' ) ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		);
 	}
 
 	public function test_page_requires_merchboard_view_logs(): void {

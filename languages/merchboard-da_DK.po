@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-27T20:13:20+00:00\n"
+"PO-Revision-Date: 2026-09-27T21:58:31+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -71,168 +71,404 @@ msgstr "Merch Dashboard-overblik"
 msgid "Overview"
 msgstr "Overblik"
 
-#: src/Modules/Admin/AuditLogFormatter.php:40
+#: src/Modules/Admin/AuditLogFormatter.php:60
 msgid "Creator created"
 msgstr "Creator oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:41
+#: src/Modules/Admin/AuditLogFormatter.php:61
 msgid "Creator updated"
 msgstr "Creator opdateret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:42
+#: src/Modules/Admin/AuditLogFormatter.php:62
 msgid "Creator activated"
 msgstr "Creator aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:43
+#: src/Modules/Admin/AuditLogFormatter.php:63
 msgid "Creator deactivated"
 msgstr "Creator deaktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:44
+#: src/Modules/Admin/AuditLogFormatter.php:64
 msgid "WordPress user linked"
 msgstr "WordPress-bruger tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:45
+#: src/Modules/Admin/AuditLogFormatter.php:65
 msgid "WordPress user unlinked"
 msgstr "WordPress-bruger frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:46
+#: src/Modules/Admin/AuditLogFormatter.php:66
 msgid "Settings changed"
 msgstr "Indstillinger ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:47
+#: src/Modules/Admin/AuditLogFormatter.php:67
 msgid "Product linked"
 msgstr "Produkt tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:48
+#: src/Modules/Admin/AuditLogFormatter.php:68
 msgid "Product unlinked"
 msgstr "Produkt frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:49
+#: src/Modules/Admin/AuditLogFormatter.php:69
 msgid "Product category mapped"
 msgstr "Produktkategori tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:50
+#: src/Modules/Admin/AuditLogFormatter.php:70
 msgid "Product category unmapped"
 msgstr "Produktkategori fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:51
+#: src/Modules/Admin/AuditLogFormatter.php:71
 msgid "Category reconciliation completed"
 msgstr "Kategoriafstemning gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:95
+#: src/Modules/Admin/AuditLogFormatter.php:143
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:97
+#: src/Modules/Admin/AuditLogFormatter.php:145
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
+#. translators: %s: user label or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:148
+#, php-format
+msgid "Triggered by: %s"
+msgstr "Udløst af: %s"
+
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:100
+#: src/Modules/Admin/AuditLogFormatter.php:151
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:103
+#: src/Modules/Admin/AuditLogFormatter.php:154
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:106
+#: src/Modules/Admin/AuditLogFormatter.php:157
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:109
+#: src/Modules/Admin/AuditLogFormatter.php:160
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
-#. translators: %s: reason code.
-#: src/Modules/Admin/AuditLogFormatter.php:111
+#. translators: %s: reason.
+#: src/Modules/Admin/AuditLogFormatter.php:162
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:114
+#. translators: %s: what started the reconciliation.
+#: src/Modules/Admin/AuditLogFormatter.php:165
+#, php-format
+msgid "Trigger: %s"
+msgstr "Anledning: %s"
+
+#: src/Modules/Admin/AuditLogFormatter.php:168
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:115
+#: src/Modules/Admin/AuditLogFormatter.php:169
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:117
+#: src/Modules/Admin/AuditLogFormatter.php:171
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:121
+#: src/Modules/Admin/AuditLogFormatter.php:175
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:124
+#: src/Modules/Admin/AuditLogFormatter.php:178
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:126
+#: src/Modules/Admin/AuditLogFormatter.php:180
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:126
+#: src/Modules/Admin/AuditLogFormatter.php:180
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
-#. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:144
+#. translators: %s: product name and id, or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:183
 #, php-format
-msgid "#%d (no longer exists)"
-msgstr "#%d (findes ikke længere)"
+msgid "Product: %s"
+msgstr "Produkt: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:159
-#: src/Modules/Admin/OverviewPage.php:136
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
-#: build/dashboard.js:2
-msgid "Active"
-msgstr "Aktiv"
+#. translators: %s: product category name and id, or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:186
+#, php-format
+msgid "Product category: %s"
+msgstr "Produktkategori: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:159
+#. translators: %s: comma-separated product categories.
+#: src/Modules/Admin/AuditLogFormatter.php:189
+#, php-format
+msgid "Product categories: %s"
+msgstr "Produktkategorier: %s"
+
+#: src/Modules/Admin/AuditLogFormatter.php:192
+msgid "Previous creator: none"
+msgstr "Tidligere creator: ingen"
+
+#. translators: %s: creator name or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:194
+#, php-format
+msgid "Previous creator: %s"
+msgstr "Tidligere creator: %s"
+
+#. translators: %s: creator name or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:197
+#, php-format
+msgid "Creator: %s"
+msgstr "Creator: %s"
+
+#. translators: %s: origin of the product link.
+#: src/Modules/Admin/AuditLogFormatter.php:200
+#, php-format
+msgid "Origin: %s"
+msgstr "Oprindelse: %s"
+
+#. translators: %s: previous origin of the product link.
+#: src/Modules/Admin/AuditLogFormatter.php:203
+#, php-format
+msgid "Previous origin: %s"
+msgstr "Tidligere oprindelse: %s"
+
+#: src/Modules/Admin/AuditLogFormatter.php:206
+msgid "Previous link: invalid"
+msgstr "Tidligere tilknytning: ugyldig"
+
+#. translators: %s: previous link state.
+#: src/Modules/Admin/AuditLogFormatter.php:208
+#, php-format
+msgid "Previous link: %s"
+msgstr "Tidligere tilknytning: %s"
+
+#. translators: %s: what happens to the category-managed links.
+#: src/Modules/Admin/AuditLogFormatter.php:211
+#, php-format
+msgid "Choice: %s"
+msgstr "Valg: %s"
+
+#. translators: %s: shortened run id.
+#: src/Modules/Admin/AuditLogFormatter.php:214
+#, php-format
+msgid "Run: %s"
+msgstr "Kørsel: %s"
+
+#. translators: %s: which products the reconciliation covered.
+#: src/Modules/Admin/AuditLogFormatter.php:217
+#, php-format
+msgid "Scope: %s"
+msgstr "Omfang: %s"
+
+#: src/Modules/Admin/AuditLogFormatter.php:219
+msgid "Dry run: yes"
+msgstr "Tørkørsel: ja"
+
+#: src/Modules/Admin/AuditLogFormatter.php:219
+msgid "Dry run: no"
+msgstr "Tørkørsel: nej"
+
+#. translators: %s: number of products.
+#: src/Modules/Admin/AuditLogFormatter.php:222
+#, php-format
+msgid "Products evaluated: %s"
+msgstr "Vurderede produkter: %s"
+
+#: src/Modules/Admin/AuditLogFormatter.php:256
+msgid "Linked"
+msgstr "Linket"
+
+#: src/Modules/Admin/AuditLogFormatter.php:257
+msgid "Moved"
+msgstr "Flyttet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:258
+msgid "Removed"
+msgstr "Fjernet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
+msgid "Unchanged"
+msgstr "Uændret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:408
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
+msgid "Manual"
+msgstr "Manuel"
+
+#: src/Modules/Admin/AuditLogFormatter.php:261
+msgid "Ambiguous"
+msgstr "Tvetydig"
+
+#: src/Modules/Admin/AuditLogFormatter.php:262
+#: src/Modules/Admin/AuditLogFormatter.php:468
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:178
+#: src/Modules/Admin/AuditLogFormatter.php:263
+msgid "Errors"
+msgstr "Fejl"
+
+#. translators: 1: outcome, 2: number of products.
+#: src/Modules/Admin/AuditLogFormatter.php:273
+#, php-format
+msgid "%1$s: %2$d"
+msgstr "%1$s: %2$d"
+
+#. translators: %d: user id.
+#: src/Modules/Admin/AuditLogFormatter.php:292
+#, php-format
+msgid "#%d (no longer exists)"
+msgstr "#%d (findes ikke længere)"
+
+#. translators: %d: creator id.
+#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogListTable.php:276
+#: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
+#, php-format
+msgid "Creator #%d (not found)"
+msgstr "Creator #%d (ikke fundet)"
+
+#. translators: 1: name, 2: id.
+#. translators: 1: product name, 2: product id.
+#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
+#, php-format
+msgid "%1$s (#%2$d)"
+msgstr "%1$s (#%2$d)"
+
+#. translators: 1: name, 2: id.
+#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
+msgid "(no name)"
+msgstr "(intet navn)"
+
+#: src/Modules/Admin/AuditLogFormatter.php:386
+msgid "the product was added to a mapped category"
+msgstr "produktet blev tilføjet en mappet kategori"
+
+#: src/Modules/Admin/AuditLogFormatter.php:387
+msgid "the product left its mapped category"
+msgstr "produktet forlod sin mappede kategori"
+
+#: src/Modules/Admin/AuditLogFormatter.php:388
+msgid "the product moved to another creator's category"
+msgstr "produktet flyttede til en anden creators kategori"
+
+#: src/Modules/Admin/AuditLogFormatter.php:389
+msgid "product categories changed"
+msgstr "produktkategorier blev ændret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:390
+msgid "a category mapping was created"
+msgstr "en kategorimapping blev oprettet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:391
+msgid "a category mapping was removed"
+msgstr "en kategorimapping blev fjernet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:392
+msgid "the creator was activated"
+msgstr "creatoren blev aktiveret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:393
+msgid "the product category was deleted"
+msgstr "produktkategorien blev slettet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:394
+msgid "categories of several creators (ambiguous)"
+msgstr "kategorier fra flere creators (tvetydig)"
+
+#: src/Modules/Admin/AuditLogFormatter.php:395
+msgid "full reconciliation"
+msgstr "fuld afstemning"
+
+#: src/Modules/Admin/AuditLogFormatter.php:396
+msgid "an administrator"
+msgstr "en administrator"
+
+#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
+msgid "Product category"
+msgstr "Produktkategori"
+
+#: src/Modules/Admin/AuditLogFormatter.php:421
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
+msgid "Remove category-managed links"
+msgstr "Fjern kategoristyrede tilknytninger"
+
+#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
+msgid "Keep as manual links"
+msgstr "Behold som manuelle tilknytninger"
+
+#: src/Modules/Admin/AuditLogFormatter.php:434
+msgid "all relevant products"
+msgstr "alle relevante produkter"
+
+#: src/Modules/Admin/AuditLogFormatter.php:435
+msgid "the products of one category"
+msgstr "produkterne i én kategori"
+
+#: src/Modules/Admin/AuditLogFormatter.php:436
+msgid "the products of one mapping"
+msgstr "produkterne i én mapping"
+
+#: src/Modules/Admin/AuditLogFormatter.php:468
+#: src/Modules/Admin/OverviewPage.php:136
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
+#: build/dashboard.js:2
+msgid "Active"
+msgstr "Aktiv"
+
+#: src/Modules/Admin/AuditLogFormatter.php:487
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:179
+#: src/Modules/Admin/AuditLogFormatter.php:488
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:180
+#: src/Modules/Admin/AuditLogFormatter.php:489
 msgid "social links"
 msgstr "sociale links"
 
-#: src/Modules/Admin/AuditLogListTable.php:83
+#: src/Modules/Admin/AuditLogListTable.php:90
 msgid "Time"
 msgstr "Tidspunkt"
 
-#: src/Modules/Admin/AuditLogListTable.php:84
+#: src/Modules/Admin/AuditLogListTable.php:91
 #: src/Modules/Admin/AuditLogPage.php:235
 msgid "Event"
 msgstr "Hændelse"
 
-#: src/Modules/Admin/AuditLogListTable.php:85
+#: src/Modules/Admin/AuditLogListTable.php:92
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
@@ -240,40 +476,33 @@ msgstr "Hændelse"
 msgid "Creator"
 msgstr "Creator"
 
-#: src/Modules/Admin/AuditLogListTable.php:86
+#: src/Modules/Admin/AuditLogListTable.php:93
 msgid "By"
 msgstr "Af"
 
-#: src/Modules/Admin/AuditLogListTable.php:87
+#: src/Modules/Admin/AuditLogListTable.php:94
 msgid "Details"
 msgstr "Detaljer"
 
-#: src/Modules/Admin/AuditLogListTable.php:134
+#: src/Modules/Admin/AuditLogListTable.php:234
 #: src/Modules/Admin/OverviewPage.php:105
 msgid "No audit records yet."
 msgstr "Ingen audit-poster endnu."
 
-#: src/Modules/Admin/AuditLogListTable.php:135
+#: src/Modules/Admin/AuditLogListTable.php:235
 msgid "No audit records match the filter."
 msgstr "Ingen audit-poster matcher filteret."
 
-#. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogListTable.php:176
-#: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
-#, php-format
-msgid "Creator #%d (not found)"
-msgstr "Creator #%d (ikke fundet)"
-
-#: src/Modules/Admin/AuditLogListTable.php:186
+#: src/Modules/Admin/AuditLogListTable.php:286
 msgid "(filter)"
 msgstr "(filtrér)"
 
-#: src/Modules/Admin/AuditLogListTable.php:198
+#: src/Modules/Admin/AuditLogListTable.php:298
 msgid "System"
 msgstr "System"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogListTable.php:205
+#: src/Modules/Admin/AuditLogListTable.php:305
 #, php-format
 msgid "User #%d (no longer exists)"
 msgstr "Bruger #%d (findes ikke længere)"
@@ -923,28 +1152,11 @@ msgstr "Jeg har gennemgået tørkørslen. Kør afstemningen nu: den kan oprette,
 msgid "Start the reconciliation"
 msgstr "Start afstemningen"
 
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
-msgid "(no name)"
-msgstr "(intet navn)"
-
-#. translators: 1: product name, 2: product id.
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
-#, php-format
-msgid "%1$s (#%2$d)"
-msgstr "%1$s (#%2$d)"
-
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:353
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:371
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:222
 msgid "Invalid link"
 msgstr "Ugyldig tilknytning"
-
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
-msgid "Manual"
-msgstr "Manuel"
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:375
 msgid "(inactive)"
@@ -1047,10 +1259,6 @@ msgstr "Flyttes fra en anden creators kategoritilknytning"
 msgid "Category link removed"
 msgstr "Kategoritilknytning fjernes"
 
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
-msgid "Unchanged"
-msgstr "Uændret"
-
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:110
 msgid "Manual link, never changed"
 msgstr "Manuel tilknytning, ændres aldrig"
@@ -1066,12 +1274,6 @@ msgstr "Creator inaktiv, ingen ny tilknytning"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:113
 msgid "Could not be evaluated"
 msgstr "Kunne ikke vurderes"
-
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
-msgid "Product category"
-msgstr "Produktkategori"
 
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:128
 msgid "Products directly in the creator's WooCommerce product category are linked to the creator automatically, and lose that link when they leave the category. The mapping itself is not ownership: the links are created and removed in the background and appear under Products. Manual links always win and are never changed by a category. Products only in a subcategory are not linked."
@@ -1221,14 +1423,6 @@ msgstr "Højst %d tilknytninger konverteres pr. kørsel, og du skal have tillade
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:381
 msgid "What happens to the category-managed links"
 msgstr "Hvad der sker med de kategoristyrede tilknytninger"
-
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
-msgid "Remove category-managed links"
-msgstr "Fjern kategoristyrede tilknytninger"
-
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
-msgid "Keep as manual links"
-msgstr "Behold som manuelle tilknytninger"
 
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:385
 msgid "I have reviewed the preview and want to remove the mapping with the chosen option."

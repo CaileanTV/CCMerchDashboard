@@ -5,6 +5,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 ## [Unreleased]
 
 ### Added
+- **Audit-log-labels (fase 17, trin 14):** produkt- og kategori-hændelser vises læsbart i Merch Dashboard → Audit log: produkter og produktkategorier med navn og ID, oprindelse, årsag, valg, hvem der udløste en afstemning, forkortet kørsels-id og afstemningens optællinger på én linje. Danske oversættelser.
 - **Schema-version 4 (fase 17, ADR-033):** ny tabel `{prefix}merchboard_creator_categories` (`term_id` PRIMARY KEY, `creator_id` KEY, `created_at` UTC, `created_by` nullable) til creator ↔ produktkategori-mappingen. Migration 3 → 4 kører automatisk ved aktivering eller opdatering. Nye audit-actions `creator_category_linked` og `creator_category_unlinked`.
 - **Kategori-afstemning (fase 17, trin 8, ADR-033):** `CreatorCategoryReconciler` kobler produkter til creators ud fra deres direkte, mappede produktkategorier. Tilstandsbaseret og idempotent; manuelle koblinger røres aldrig, tvetydige produkter får ingen kobling, og inaktive creators får ingen nye. Kaldes automatisk via Action Scheduler (se nedenfor). Product meta `_merchboard_creator_link_source` (`admin` | `category`) skrives nu sammen med `_merchboard_creator_id`.
 - **Fuld kategori-afstemning (fase 17, trin 9, ADR-033):** `CategoryReconciliationBatch` afstemmer alle relevante produkter i batches med ét `run_id` pr. kørsel, en tørkørsel uden bivirkninger og audit-actionen `category_sync_completed`, når alle batches er færdige.
