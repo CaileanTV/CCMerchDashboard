@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-28 · **Seneste færdige fase:** 16 (Release-pipeline og staging ✅) · **Aktuel fase:** 17 (WooCommerce foundation, i gang: trin 15 og Local-verifikationen i trin 12 mangler) · **Schemaversion:** 4 · **Version:** 0.1.0 (tagget `v0.1.0`, draft-release, ikke udgivet) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-28 · **Seneste færdige fase:** 17 (WooCommerce foundation ✅) · **Næste fase:** 18 (Sales ledger) · **Schemaversion:** 4 · **Version:** 0.1.0 (tagget `v0.1.0`, draft-release, ikke udgivet) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -264,138 +264,145 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] **Staging:** Release-ZIP'en er manuelt installeret og testet på `devpage.ccmerch.dk` af projektejeren. Testen er bestået. MySQL/MariaDB-versionen på staging er ikke noteret (åbent spørgsmål 2).
 - [x] Audit-retention for v0.1.0 er afklaret: ubegrænset (ADR-029).
 
-## In progress
+### Fase 17 – WooCommerce foundation ✅ (2026-09-28)
 
 - **Lokalt testmiljø (2026-09-26):** LocalWP-sitet Merch Dashboard Local er oprettet, verificeret og udpeget som projektets lokale WordPress/WooCommerce-testmiljø (åbent spørgsmål 9 er lukket). Testdata: se fase 17 nedenfor.
+- **Beslutninger:** D1-D6 er lukket i ADR-030 (D1 rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8).
+- **Udført:** Trin 1 (undersøgelse af skriveveje i WooCommerce 10.3.8), trin 2 (modul-skelet, WooCommerce ≥ 10.3) trin 3 (`ProductCreatorLink`, den autoritative domæneservice) og trin 4 (produktkoblinger på creatorens redigeringsside) er færdige.
+- **ADR-031 (2026-09-26, ændret af ADR-033):**
+  - `_merchboard_creator_id` er den eneste ejerskabsrelation.
+  - Kategori-mapping pr. creator og engangs-backfill med tørkørsel. **Erstattet af ADR-033:** mappingen ligger ikke i creator-meta, og backfill er ikke længere en selvstændig skrivevej.
+- **Testdata (2026-09-26):** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen efter ADR-031's model er verificeret med en tørkørsel, der intet skrev. Det var før ADR-033-implementeringen (trin 7-13); verifikationen af den implementerede afstemning på datasættet er udført i trin 12 (2026-09-28; en fuld tørkørsel gav 0 ændringer).
+- **ADR-032 (2026-09-26):**
+  - Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php`, `merchboard_manage_creators` + `edit_product`, `source: admin`).
+  - WooCommerce-produktskærmen er ikke en skrivevej og viser ikke relationen.
+  - Produktlistens kolonne og filter er skrivebeskyttede.
+  - `product_screen` var forældet og blev fjernet i trin 4.
+- **Trin 4:**
+  - Afsnittet "Products" på creatorens redigeringsside (WooCommerce-modulet via `merchboard_creators_edit_sections`). Det viser koblede produkter og giver søgning på navn og varenummer via WooCommerce' egen søgning og på produktkategori (kun direkte tilknytning, opretter ingen kobling), valg af flere produkter, et eksplicit afkrydsningsfelt til overtagelse og resultat pr. produkt.
+  - Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`); `product_screen` er fjernet.
+  - Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local: tilknytning, samme creator, afvist overtagelse, overtagelse, variant og fjernelse. Audit kommer fra servicen, og produkteditoren har ingen creator-UI. Koblingerne blev fjernet igen bagefter.
+- **ADR-033 (2026-09-26; dokumenteret før implementering, implementeret i trin 6-14, se nedenfor):** Kategori-mapping som vedvarende automatisk kobling.
+  - Tabellen `merchboard_creator_categories` (migration 4): én creator pr. kategori, teknisk flere kategorier pr. creator.
+  - Oprindelse `_merchboard_creator_link_source` (`admin` | `category`); `backfill` udfases.
+  - Tilstandsbaseret afstemning via Action Scheduler, udløst af term- og produkt-hooks. Kører som systemarbejde gennem en intern metode i `ProductCreatorLink`.
+  - Manuel kobling vinder altid. Remove afvises for kategori-styrede produkter, og "Keep as manual" tilføjes. Tvetydige produkter får ingen kategori-kobling.
+  - Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3. Roadmappen er omlagt til trin 5-15.
+  - Kode fra den gamle model (`ProductLinkSource::Backfill`, kommentarer om engangs-backfill og `product_category_id`) er fjernet i trin 8.
+- **Trin 5 (2026-09-26):** Skrivebeskyttet kolonne "Creator" og creator-filter i WooCommerce' produktliste (`ProductListCreators`, kun for `merchboard_manage_creators`; læser kun `_merchboard_creator_id`; ingen kategorier, ingen skrivning, ingen audit). `CreatorRepository::all()` er tilføjet til filterets creator-liste. Verificeret skrivebeskyttet mod WooCommerce 10.3.8 i Merch Dashboard Local (kolonne, filter, kombination med kategorifilter og paginering, varianter og uden capability); data var uændret bagefter.
+- **Trin 6 (2026-09-26):** Vagter for skriveveje: `ProtectedProductMeta` afviser deny-by-default alle generiske skrivninger af `_merchboard_creator_id` og `_merchboard_creator_link_source` via metadata-API'ets pre-hooks; kun en eksplicit, scoped, engangs-`ProtectedMetaWrite` for ét produkt (brugt af `ProductCreatorLink`, senere af ADR-033's afstemning) slipper igennem. `ProtectedMetaEntryPoints` giver tydelige afvisninger i REST, `variations/generate` og CSV-import og holder felterne ude af duplicate. Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local i en transaktion, der blev rullet tilbage; data var identiske bagefter.
+- **ADR-034 (2026-09-26):** Dokumenterer trin 6's beskyttelse af `_merchboard_creator_id` og `_merchboard_creator_link_source` og ændrer ADR-030 D6 (rå meta-API og WP-CLI er nu blokeret; direkte SQL og kode, der omgår hooks, er stadig udenfor). **Uafklaret:** (A) beskyttelse, når WooCommerce er deaktiveret eller for gammelt (vagten ligger i WooCommerce-modulet); (B) uninstall-mekanismen for de to nøgler, som skal besluttes før trin 13.
+- **ADR-035 (2026-09-26, accepteret og implementeret):**
+  - (A) er besluttet: mulighed B.
+  - `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` ligger nu i `MerchBoard\Core\Security`. Core ejer nøglerne (`LINK_KEY`, `SOURCE_KEY`), og `ProductCreatorLink` henviser til dem.
+  - `Plugin::register_hooks()` registrerer den ene instans uden om `merchboard_modules`. Loggeren slås først op ved brug (`LazyLogger`). `WooCommerceModule` genbruger instansen og registrerer kun `ProtectedMetaEntryPoints`.
+  - Aktiv uden WooCommerce, med for gammel WooCommerce og med en tom `merchboard_modules`. Det er verificeret med unit-tests, integrationstest mod det bootede plugin og en skrivebeskyttet kontrol i Merch Dashboard Local (WooCommerce 10.3.8, én registrering pr. hook).
+  - Uninstall (B) blev besluttet særskilt i ADR-036 og er implementeret. ADR-035 tilføjede, at `uninstall.php` ikke kender den registrerede vagt-instans.
+- **ADR-036 (2026-09-26, accepteret):** Uninstall (B) er besluttet: mulighed D, et uninstall-vindue i vagten. Kun sletning af de to nøgler, kun når `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename, og kun med opt-in; oprettelse, ændring og omdøbning afvises altid. Ingen adgang til den registrerede instans, ingen fjernelse af hooks, ingen direkte SQL; `Uninstaller` bruger WordPress' meta-API. Logges uden værdier, ingen audit. **Implementeret 2026-09-26:**
+  - `Uninstaller` sletter nøglerne med `delete_post_meta_by_key()` før tabeller og opt-in.
+  - Vagten tillader kun sletningen i vinduet og logger den på `info` uden værdier.
+  - Verificeret med unit-tests og integrationstests: med pluginet indlæst, uden pluginet (separat proces) og under et andet plugins uninstall (separat proces).
+  - `uninstall.php` er uændret.
+- **Trin 7 (2026-09-26):**
+  - Migration 4 opretter `merchboard_creator_categories` (`term_id` som primærnøgle, indeks på `creator_id`, InnoDB). Tabellen er med i `Tables::all()`, så engine-tjek og opt-in-uninstall dækker den.
+  - `CreatorCategoryService` og `CreatorCategoryRepository` (WooCommerce-modulet) er den eneste skrivevej for mappingen, med audit (`creator_category_linked`/`creator_category_unlinked`) i samme transaktion.
+  - Reglerne: kun eksisterende `product_cat`-terms, ikke standardkategorien; kun eksisterende, aktive creators; én kategori pr. creator i fase 17 (ADR-033); ingen stille flytning; no-ops uden audit.
+  - Servicen skriver ingen produktmeta og afstemmer intet (trin 8-10).
+  - Verificeret med unit-tests og integrationstests mod MariaDB: schema, opgradering fra version 3, primærnøgle, rigtige taksonomier og rollback.
+- **Trin 8 (2026-09-26):**
+  - Oprindelsen `_merchboard_creator_link_source` læses (`ProductRecord`) og skrives sammen med koblingen (`ProductStore::write_creator()`): `admin` ved manuelle koblinger, `category` kun fra afstemningen. En kobling uden eller med ukendt oprindelse er manuel.
+  - `ProductCreatorLink::apply_category_link()` er den interne skrivevej for afstemningen: systemarbejde uden capability-tjek, kun for eksisterende parent-produkter (ikke trash/auto-draft), aldrig for manuelle eller ugyldige koblinger, kun aktive creators for nye koblinger. Skriver via `ProtectedMetaWrite::for_category_reconciliation()` for netop det produkt og audit (`product_creator_linked`/`unlinked`, `source: category`, `reason`, actor NULL) i samme transaktion.
+  - `CreatorCategoryReconciler` afstemmer én kategori (sidevis, kun direkte tilknyttede parent-produkter) eller ét produkt ud fra ALLE produktets direkte kategorier: manuel vinder, tvetydig (flere creators) giver ingen kobling og fjerner en kategori-kobling, inaktiv creator får ingen ny kobling. Returnerer tællinger (`linked`, `moved`, `unlinked`, `unchanged`, `skipped_manual`, `ambiguous`, `skipped_inactive`, `errors`). En fejl i ét produkt logges og tælles; kørslen fortsætter.
+  - Ingen hooks, Action Scheduler, cron eller UI; mappings og creators læses kun.
+  - Verificeret med unit-tests og integrationstests mod MariaDB med den bootede core-vagt (rigtige transaktioner, audit og rollback).
+- **Trin 9 (2026-09-27):**
+  - `CategoryReconciliationBatch` afstemmer alle relevante produkter med `CreatorCategoryReconciler`'s regler: `preview()` (tørkørsel) og `execute()`. Ingen parallel ejerskabsmodel; skrivninger går stadig kun gennem `ProductCreatorLink::apply_category_link()`.
+  - Kandidater (`ReconciliationCandidateRepository`, én skrivebeskyttet forespørgsel pr. side): parent-produkter (ikke trash/auto-draft) direkte i en mappet `product_cat` eller med en gemt `_merchboard_creator_link_source`. Dermed findes også produkter, der har forladt en kategori, eller hvis mapping er fjernet. Keyset-paginering på id (100 pr. side): intet produkt to gange, ingen uendelig løkke, stabil mens kørslen skriver.
+  - Evalueringen er delt: `plan_product()` (`ReconciliationPlan`) bruges af tørkørslen, `reconcile_product()` anvender samme plan.
+  - `ReconciliationRunId` (UUID v4, uforanderlig) genereres én gang pr. kørsel og står i hver produkt-audit og i `category_sync_completed`.
+  - Tørkørsel: ingen produktmeta, ingen audit, ingen ændring af mappings eller creators; returnerer tællinger og de forventede ændringer (højst 500).
+  - Fejlsemantik: et fejlende produkt rulles tilbage alene, logges med `run_id` og tælles under `errors`; kørslen fortsætter og afsluttes med `category_sync_completed` (inkl. fejlantal). Kan en side ikke læses, eller går pagineringen ikke frem, afbrydes kørslen, logges og kastes videre uden `category_sync_completed`; allerede afstemte produkter beholder deres (atomare) resultat, og en ny kørsel samler resten op.
+  - Ny anledning `full_sync` (bruger de eksisterende reasons `category_added`/`category_removed`).
+  - Verificeret med unit-tests og integrationstests mod MariaDB (rigtig kandidatforespørgsel, core-vagt, transaktioner, audit og rollback).
+- **Trin 9b (2026-09-27):** Automatisk afstemning via Action Scheduler. Projektejerens beslutninger: påkrævet valg ved fjernelse af en mapping, begrænset auto-retry og systemet som actor ved sletning af en kategori.
+  - `CategoryReconciliationHooks` (WooCommerce-modulet, registreret én gang pr. request): `set_object_terms`/`deleted_term_relationships` for `product_cat` på parent-produkter (kun ved faktisk ændring), `transition_post_status` (fra trash eller auto-draft), `pre_delete_term`/`delete_term` for mappede kategorier, mapping-events fra `CreatorCategoryService` og `merchboard_creator_status_changed` fra `CreatorService` (fyres efter commit). Handlerne skriver aldrig koblinger.
+  - `CategoryReconciliationScheduler` sætter jobs i kø (`merchboard_reconcile_product`, `merchboard_reconcile_run`, gruppe `merchboard`). Identiske ventende jobs deduplikeres. Uden Action Scheduler sættes intet i kø, og det logges; der er ingen synkron eller cron-fallback.
+  - `CategoryReconciliationJobs` kører et produkt eller én side (100) af en kørsel og sætter næste side i kø med samme `run_id`, markør og tællinger (`CategorySyncPage`). En fejlet side eller et fejlet produkt gentages højst 3 gange med samme payload; en opgivet kørsel skriver ingen `category_sync_completed`.
+  - Scopes (`ReconciliationScope`): mapping oprettet og creator genaktiveret afstemmer kategorien; mapping fjernet (`remove_links`) afstemmer kategorien og alle creatorens kategori-koblinger, også på produkter der har forladt kategorien; en slettet kategori får sin mapping fjernet som systemarbejde (`reason: term_deleted`, actor NULL, `trigger_user_id`), og produkterne afstemmes med `term_deleted`.
+  - `CreatorCategoryService::unlink()` kræver nu `MappingRemovalChoice`. (I trin 9b blev `keep_as_manual` afvist; trin 10 har leveret det.)
+  - Verificeret med unit-tests og integrationstests mod MariaDB (rigtige WordPress-term- og post-API'er, core-vagten, transaktioner, audit og rollback; Action Scheduler er erstattet af en optagende kø, der kører jobs via `do_action_ref_array()`). LocalWP er ikke brugt.
+  - **Kendt begrænsning (løst i trin 10):** slettes en mappet kategori, mens WooCommerce-modulet ikke er indlæst, bliver mappingen liggende uden term. Den gør ingen skade på koblinger, men blokerer creatorens ene kategori; oprydning hører til mapping-UI'et (trin 10).
+- **Trin 10 (2026-09-27):** Mapping-UI på creatorens redigeringsside (sektionen "Produktkategori" over "Produkter", kun for `merchboard_manage_creators`). Projektejerens beslutninger: "Keep as manual" kører i admin-requesten, og oprydning af en orphaned mapping kræver samme valg som en almindelig fjernelse.
+  - **Liste:** kategori, id, creator, mappet-dato og antal udgivne produkter direkte i kategorien (termens egen optælling, ingen N+1). En mapping, hvis kategori er slettet, vises som "Slettet kategori". Den skaber intet ejerskab, fordi intet produkt kan ligge i den.
+  - **Oprettelse:** vælg kategori (standardkategorien udelades, kategorier mappet til andre creators er deaktiverede) → tørkørsel af den første afstemning med tællinger for alle otte udfald → eksplicit bekræftelse (`confirm`) → `CreatorCategoryService::link()`, som sætter afstemningen af kategorien i kø (trin 9b). Tørkørslen (`CategoryMappingPreview`) lægger den planlagte mapping oven på de gemte (`HypotheticalMappings` via `MappingLookup`) og bruger den eksisterende reconciler og batch uden at skrive noget. `CreatorCategoryService::check_link()` tjekker reglerne på forhånd.
+  - **Fjernelse:** tørkørsel af begge valg (`remove_links`: kategorien og alle creatorens kategori-tilknytninger, også på produkter der har forladt kategorien; `keep_as_manual`: antal tilknytninger, der konverteres) → obligatorisk valg og bekræftelse. Uden valg eller bekræftelse ændres intet.
+  - **Keep as manual:** `CategoryMappingRemoval` konverterer gennem `ProductCreatorLink::keep_as_manual()`, som kræver `merchboard_manage_creators` og `edit_product`, beholder creatoren og skriver oprindelsen `admin` via `ProtectedMetaWrite::for_manual_link()`. Audit er `product_creator_linked` med `previous_source: category`, én transaktion pr. produkt. Der konverteres højst 200 pr. kørsel. Mappingen fjernes først, når en frisk skanning ikke finder flere tilknytninger, og intet produkt fejlede; ellers bevares den, og admin ser status og kan køre igen. Det er idempotent.
+  - **Orphaned mapping:** `CreatorCategoryService::remove_orphaned()` (admin, samme valg, `reason: term_deleted`) fjerner en mapping, hvis kategori ikke længere findes.
+  - Verificeret med unit-tests og integrationstests mod MariaDB (rigtig vagt, transaktioner, audit og rollback). Ingen LocalWP.
+- **Trin 11, kolonnen (2026-09-27):** Kolonnen "Produktkategorier" i Merch Dashboard → Creators (`CreatorListCategories`, WooCommerce-modulet).
+  - Skrivebeskyttet og kun for `merchboard_manage_creators`, som selve siden.
+  - Viser navnene på creatorens mappede kategorier, "—" uden mapping og "Slettet kategori (#id)" for en mapping, hvis kategori ikke findes. Sådan en mapping ryddes ikke op herfra.
+  - Én hentning pr. side: alle mappings via `CreatorCategoryRepository::all()` og deres navne med ét `get_terms()`-kald. Antallet af forespørgsler vokser ikke med rækkerne (verificeret i integrationstest).
+  - Creators-modulet kender stadig ikke WooCommerce. Listen har fået udvidelsespunkterne `merchboard_creators_list_columns`, `merchboard_creators_list_items` og `merchboard_creators_list_column`, i samme stil som `merchboard_creators_edit_sections`.
+  - Ingen ny menu, capability, REST-route eller frontend.
+- **Trin 12a (2026-09-27; i commits og tidligere noter kaldt trin 12):** Oprindelse og "Keep as manual" i creatorens produktafsnit.
+  - Kolonnen "Oprindelse" viser "Manuel" (`admin`, eller uden eller med ukendt oprindelse) eller "Produktkategori".
+  - Ved en kategori-tilknytning nævnes produktets kategorier, der er mappet til creatoren. `CategoryLinkStatus` bruger den eksisterende reconciler med forudindlæste mappings (`PreloadedMappings`, én forespørgsel) og ét `get_terms()` til at vise, om afstemningen vil fjerne eller flytte tilknytningen. UI'et afgør det ikke selv, og kategorien vises aldrig som ejer. Visningen skriver intet og sætter intet i kø.
+  - "Keep as manual" findes kun på kategori-tilknytninger til creatoren. Handlingen er en admin-post-handling (`merchboard_keep_creator_product_manual`) med nonce bundet til creatoren, eksplicit bekræftelse (`confirm`) og kontrol af, at produktet er tilknyttet creatoren. Den kalder `ProductCreatorLink::keep_as_manual()`: `merchboard_manage_creators` + `edit_product`, samme creator, oprindelsen `admin`, audit `product_creator_linked` med `previous_source: category` og admin som actor, i én transaktion. Handlingen er idempotent.
+  - Også en tilknytning, som afstemningen vil fjerne eller flytte, kan beholdes som manuel. Det er et eksplicit admin-valg (ADR-033 pkt. 4), og UI'et viser afstemningens vurdering først.
+  - Ingen ny menu, capability, REST-route, AJAX-handling eller creator-adgang.
+- **Trin 13a, Remove (2026-09-27; tidligere kaldt trin 13, Remove):** ADR-033 pkt. 5 håndhæves i servicen.
+  - `ProductCreatorLink::unlink()` (den manuelle vej) afviser en kategori-styret tilknytning med `category_managed`, før noget skrives: ingen meta-, audit- eller jobændring.
+  - Hvad requesten ellers indeholder, er ligegyldigt: den gemte oprindelse afgør det.
+  - Produktafsnittet viser ingen Remove på kategori-styrede tilknytninger, men "Keep as manual" og en kort forklaring. Efter "Keep as manual" kan tilknytningen fjernes som før.
+  - Manuelle tilknytninger (`admin`, uden eller med ukendt oprindelse) fjernes uændret.
+  - Afstemningen (`apply_category_link()`), fjernelse af mappings og "Keep as manual" er separate veje og uændrede.
+  - Takeover via "Link" (`replace_existing`) er fortsat tilladt og giver en manuel tilknytning (ADR-033 pkt. 3).
+- **Trin 13, uninstall-verifikation (2026-09-27):** ADR-036 er verificeret med integrationstests mod det bootede plugin, uninstall.php og separate PHP-processer. Ingen produktionskode er ændret.
+  - Opt-in: begge nøgler slettes i alle stavemåder på produkter og varianter, anden meta bevares.
+  - Opt-out og en forfalsket opt-in-værdi: intet slettes.
+  - Manglende `WP_UNINSTALL_PLUGIN` (ny, i egen proces) og et andet plugins uninstall: intet slettes, heller ikke med opt-in.
+  - I vinduet afvises add, update og rename, og kun godkendte `ProtectedMetaWrite` (manuel og kategori) må skrive.
+  - Uninstall sletter via meta-API'et (`delete_post_metadata` ses for begge nøgler), og ingen hook fjernes.
+  - Efter uninstall er opt-in væk, så vinduet er lukket igen, selvom konstanten stadig er defineret: ingen permanent bypass.
+  - Gentagelse uden nøgler giver ingen fejl eller blokeringer.
+  - Kun beskyttede sletninger logges, med nøgle men uden værdi.
+  - Samtidig er en rækkefølgeafhængig test i trin 11 rettet (`CreatorListCategoriesTest`: den første rendering i en proces laver engangsarbejde, så testen varmer nu op, før den måler).
+- **ADR-033, værktøj til fuld afstemning (2026-09-27):** "Category reconciliation" på Creators-siden (`action=category-sync`, `CategorySyncScreen`/`CategorySyncActions`).
+  - Kun `merchboard_manage_creators`; intet nyt menupunkt, ingen ny capability, kun `admin-post.php` med nonce (ingen AJAX, REST eller `nopriv`).
+  - Tørkørsel via `CategoryReconciliationBatch::preview()` (tællinger, forventede ændringer og nu også "needs attention"-poster, højst 500) uden skrivninger, audit eller jobs.
+  - Bekræftelse: afkrydsning + fingeraftryk (`CategorySyncReport::fingerprint()`). Handleren kører en ny tørkørsel; afviger den, starter intet (`preview_outdated`), og den nye tørkørsel vises.
+  - Kørsel: `CategoryReconciliationScheduler::run()` med fuldt scope og `full_sync`, dvs. den eksisterende Action Scheduler-kæde med `run_page()`, dedup og begrænset retry. `execute()` (synkron) bruges ikke fra admin. `run_id` og resumé står i audit-posten `category_sync_completed`.
+  - "Needs attention": tvetydige produkter, produkter hvis eneste mappede creator er inaktiv, og fejl, med de mappede kategorier. Beregnes pr. tørkørsel; ingen ny persistent tilstand.
+  - Nye udvidelsespunkter på Creators-siden: `merchboard_creators_list_tools` og `merchboard_creators_view_<action>` (efter capability-tjekket).
+- **ADR-033, manuelle afvigelser i "Needs attention" (2026-09-27):** ADR-033 pkt. 3 og 8 og scenarietabellens første række ("Konflikt vises, hvis den afviger") er nu implementeret.
+  - En manuel kobling (`admin`, uden eller med ukendt oprindelse, eller ugyldig) afviger, når produktets direkte kategorier er mappet til: én anden, aktiv creator ("manual_other_creator"); én anden, inaktiv creator ("manual_inactive_creator"); eller to eller flere creators ("manual_ambiguous"). Ingen mappet creator, eller kun den manuelt koblede (også inaktiv), er ingen afvigelse.
+  - `CreatorCategoryReconciler::plan_product()` (kun tørkørsel) klassificerer med de samme mappede creators som reglerne (`ManualLinkConflict` på `ReconciliationPlan`); `reconcile_product()` er uændret og laver ingen ekstra læsninger. Udfaldet er fortsat `skipped_manual`, og der planlægges ingen ændring.
+  - `CategoryReconciliationBatch::preview()` lægger afvigelsen i den eksisterende `attention`-liste med `conflict`, `creator_id` og `mapped_creator_ids`; `CategorySyncReport::fingerprint()` omfatter den, så en ændret afvigelse gør en tørkørsel forældet.
+  - Visningen har kolonnen "Current creator" ("Manual" ved en manuel afvigelse). Creatornavne læses højst én gang pr. visning.
+  - Ingen skrivning, audit, job eller `ProtectedMetaWrite`.
+- **Trin 14, audit-log-labels (2026-09-27):** `AuditLogFormatter` gør produkt- og kategori-hændelsernes context læsbar; `AuditLogListTable` slår produkter og produktkategorier op i én forespørgsel hver pr. side (`AuditContextLabels`), brugere inkl. `trigger_user_id` som før i én forespørgsel og creators pr. unik creator.
+  - Produkt/kategori: "Navn (#ID)", "#ID" når de er slettet; produktlink kun med `edit_product`, ingen kategorilinks.
+  - `run_id` vises forkortet (8 tegn) med fuldt id som `title`; optællingerne fra `category_sync_completed` som én linje i afstemningens rækkefølge.
+  - Ukendte koder vises escaped som de er. Audit-context og -schema er uændrede, og siden er fortsat read-only.
+- **Afslutning:** efter trin 14 manglede trin 15 (i18n/docs/slutverifikation) og trin 12 (Local-verifikation); begge er udført 2026-09-28 (nedenfor).
+- **Trin 12, Local-verifikation (2026-09-28):** udført med projektejerens godkendelse mod Merch Dashboard Local (WordPress 7.1.2, WooCommerce 10.3.8) på plugin-versionen `983ceed`. Metode: WP-CLI i sitets eget miljø og HTTP mod webserveren, kun midlertidige, syntetiske objekter, Action Scheduler-jobs kørt med Action Schedulers egen behandling og fuld oprydning bagefter (snapshot før og efter var ens, bortset fra de append-only audit-records og Action Schedulers historik over færdige jobs).
+  - Bestået: fixturens klassifikation (fuld tørkørsel med 0 ændringer), creator-login og dashboard, produktkoblinger og oprindelse, kategori-mapping og automatisk afstemning, manuel-vinder og `manual_other_creator`, Keep as manual og Remove-blokering, produktlistens kolonne og filter, klassisk produkteditor (også en gemning), quick og bulk edit, CSV-import, REST, duplicate, kategorisletning, vagten for beskyttet meta, `/me` uden vilkårligt creator-ID, ingen kunde-PII for creators og audit-log-labels.
+  - Ikke manuelt verificeret: blok-produkteditorens UI (kun indirekte via WooCommerce REST, som blev verificeret) og "Pluginet virker stadig uden WooCommerce" (ikke kørt i Local; dækket af automatiske tests).
+  - Observeret og dokumenteret (ADR-033-modellen, ingen fejl): efter Keep as manual og Remove forbliver produktet i den mappede kategori, så en senere kategori-trigger eller fuld afstemning kan give det en kategori-kobling igen.
+- **Trin 15 (2026-09-28):** dokumentationen er gennemgået (15a, `983ceed`), i18n-kontrollen giver ingen diff, den fulde suite er grøn, og CI er grøn på `983ceed`. Den afsluttende dokumentation for trin 12 skal pushes med grøn CI.
 
-- **Fase 17 – WooCommerce foundation:**
-  - **Beslutninger:** D1-D6 er lukket i ADR-030 (D1 rettet fra 10.4 til 10.3, fordi 10.4 kræver WordPress 6.8).
-  - **Udført:** Trin 1 (undersøgelse af skriveveje i WooCommerce 10.3.8), trin 2 (modul-skelet, WooCommerce ≥ 10.3) trin 3 (`ProductCreatorLink`, den autoritative domæneservice) og trin 4 (produktkoblinger på creatorens redigeringsside) er færdige.
-  - **ADR-031 (2026-09-26, ændret af ADR-033):**
-    - `_merchboard_creator_id` er den eneste ejerskabsrelation.
-    - Kategori-mapping pr. creator og engangs-backfill med tørkørsel. **Erstattet af ADR-033:** mappingen ligger ikke i creator-meta, og backfill er ikke længere en selvstændig skrivevej.
-  - **Testdata (2026-09-26):** Syntetisk fixture-datasæt i Merch Dashboard Local (3 creators, 4 kategorier, 10 produkter). Klassifikationen efter ADR-031's model er verificeret med en tørkørsel, der intet skrev. Det var før ADR-033-implementeringen (trin 7-13); verifikationen af den implementerede afstemning på datasættet hører til trin 12 og er ikke udført.
-  - **ADR-032 (2026-09-26):**
-    - Produktkoblingen administreres i Merch Dashboard på creatorens redigeringsside (`admin-post.php`, `merchboard_manage_creators` + `edit_product`, `source: admin`).
-    - WooCommerce-produktskærmen er ikke en skrivevej og viser ikke relationen.
-    - Produktlistens kolonne og filter er skrivebeskyttede.
-    - `product_screen` var forældet og blev fjernet i trin 4.
-  - **Trin 4:**
-    - Afsnittet "Products" på creatorens redigeringsside (WooCommerce-modulet via `merchboard_creators_edit_sections`). Det viser koblede produkter og giver søgning på navn og varenummer via WooCommerce' egen søgning og på produktkategori (kun direkte tilknytning, opretter ingen kobling), valg af flere produkter, et eksplicit afkrydsningsfelt til overtagelse og resultat pr. produkt.
-    - Skrivning sker kun gennem `ProductCreatorLink` (`source: admin`); `product_screen` er fjernet.
-    - Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local: tilknytning, samme creator, afvist overtagelse, overtagelse, variant og fjernelse. Audit kommer fra servicen, og produkteditoren har ingen creator-UI. Koblingerne blev fjernet igen bagefter.
-  - **ADR-033 (2026-09-26; dokumenteret før implementering, implementeret i trin 6-14, se nedenfor):** Kategori-mapping som vedvarende automatisk kobling.
-    - Tabellen `merchboard_creator_categories` (migration 4): én creator pr. kategori, teknisk flere kategorier pr. creator.
-    - Oprindelse `_merchboard_creator_link_source` (`admin` | `category`); `backfill` udfases.
-    - Tilstandsbaseret afstemning via Action Scheduler, udløst af term- og produkt-hooks. Kører som systemarbejde gennem en intern metode i `ProductCreatorLink`.
-    - Manuel kobling vinder altid. Remove afvises for kategori-styrede produkter, og "Keep as manual" tilføjes. Tvetydige produkter får ingen kategori-kobling.
-    - Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3. Roadmappen er omlagt til trin 5-15.
-    - Kode fra den gamle model (`ProductLinkSource::Backfill`, kommentarer om engangs-backfill og `product_category_id`) er fjernet i trin 8.
-  - **Trin 5 (2026-09-26):** Skrivebeskyttet kolonne "Creator" og creator-filter i WooCommerce' produktliste (`ProductListCreators`, kun for `merchboard_manage_creators`; læser kun `_merchboard_creator_id`; ingen kategorier, ingen skrivning, ingen audit). `CreatorRepository::all()` er tilføjet til filterets creator-liste. Verificeret skrivebeskyttet mod WooCommerce 10.3.8 i Merch Dashboard Local (kolonne, filter, kombination med kategorifilter og paginering, varianter og uden capability); data var uændret bagefter.
-  - **Trin 6 (2026-09-26):** Vagter for skriveveje: `ProtectedProductMeta` afviser deny-by-default alle generiske skrivninger af `_merchboard_creator_id` og `_merchboard_creator_link_source` via metadata-API'ets pre-hooks; kun en eksplicit, scoped, engangs-`ProtectedMetaWrite` for ét produkt (brugt af `ProductCreatorLink`, senere af ADR-033's afstemning) slipper igennem. `ProtectedMetaEntryPoints` giver tydelige afvisninger i REST, `variations/generate` og CSV-import og holder felterne ude af duplicate. Verificeret mod WooCommerce 10.3.8 i Merch Dashboard Local i en transaktion, der blev rullet tilbage; data var identiske bagefter.
-  - **ADR-034 (2026-09-26):** Dokumenterer trin 6's beskyttelse af `_merchboard_creator_id` og `_merchboard_creator_link_source` og ændrer ADR-030 D6 (rå meta-API og WP-CLI er nu blokeret; direkte SQL og kode, der omgår hooks, er stadig udenfor). **Uafklaret:** (A) beskyttelse, når WooCommerce er deaktiveret eller for gammelt (vagten ligger i WooCommerce-modulet); (B) uninstall-mekanismen for de to nøgler, som skal besluttes før trin 13.
-  - **ADR-035 (2026-09-26, accepteret og implementeret):**
-    - (A) er besluttet: mulighed B.
-    - `ProtectedProductMeta`, `ProtectedMetaWrite` og `ProtectedMetaPurpose` ligger nu i `MerchBoard\Core\Security`. Core ejer nøglerne (`LINK_KEY`, `SOURCE_KEY`), og `ProductCreatorLink` henviser til dem.
-    - `Plugin::register_hooks()` registrerer den ene instans uden om `merchboard_modules`. Loggeren slås først op ved brug (`LazyLogger`). `WooCommerceModule` genbruger instansen og registrerer kun `ProtectedMetaEntryPoints`.
-    - Aktiv uden WooCommerce, med for gammel WooCommerce og med en tom `merchboard_modules`. Det er verificeret med unit-tests, integrationstest mod det bootede plugin og en skrivebeskyttet kontrol i Merch Dashboard Local (WooCommerce 10.3.8, én registrering pr. hook).
-    - Uninstall (B) blev besluttet særskilt i ADR-036 og er implementeret. ADR-035 tilføjede, at `uninstall.php` ikke kender den registrerede vagt-instans.
-  - **ADR-036 (2026-09-26, accepteret):** Uninstall (B) er besluttet: mulighed D, et uninstall-vindue i vagten. Kun sletning af de to nøgler, kun når `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename, og kun med opt-in; oprettelse, ændring og omdøbning afvises altid. Ingen adgang til den registrerede instans, ingen fjernelse af hooks, ingen direkte SQL; `Uninstaller` bruger WordPress' meta-API. Logges uden værdier, ingen audit. **Implementeret 2026-09-26:**
-    - `Uninstaller` sletter nøglerne med `delete_post_meta_by_key()` før tabeller og opt-in.
-    - Vagten tillader kun sletningen i vinduet og logger den på `info` uden værdier.
-    - Verificeret med unit-tests og integrationstests: med pluginet indlæst, uden pluginet (separat proces) og under et andet plugins uninstall (separat proces).
-    - `uninstall.php` er uændret.
-  - **Trin 7 (2026-09-26):**
-    - Migration 4 opretter `merchboard_creator_categories` (`term_id` som primærnøgle, indeks på `creator_id`, InnoDB). Tabellen er med i `Tables::all()`, så engine-tjek og opt-in-uninstall dækker den.
-    - `CreatorCategoryService` og `CreatorCategoryRepository` (WooCommerce-modulet) er den eneste skrivevej for mappingen, med audit (`creator_category_linked`/`creator_category_unlinked`) i samme transaktion.
-    - Reglerne: kun eksisterende `product_cat`-terms, ikke standardkategorien; kun eksisterende, aktive creators; én kategori pr. creator i fase 17 (ADR-033); ingen stille flytning; no-ops uden audit.
-    - Servicen skriver ingen produktmeta og afstemmer intet (trin 8-10).
-    - Verificeret med unit-tests og integrationstests mod MariaDB: schema, opgradering fra version 3, primærnøgle, rigtige taksonomier og rollback.
-  - **Trin 8 (2026-09-26):**
-    - Oprindelsen `_merchboard_creator_link_source` læses (`ProductRecord`) og skrives sammen med koblingen (`ProductStore::write_creator()`): `admin` ved manuelle koblinger, `category` kun fra afstemningen. En kobling uden eller med ukendt oprindelse er manuel.
-    - `ProductCreatorLink::apply_category_link()` er den interne skrivevej for afstemningen: systemarbejde uden capability-tjek, kun for eksisterende parent-produkter (ikke trash/auto-draft), aldrig for manuelle eller ugyldige koblinger, kun aktive creators for nye koblinger. Skriver via `ProtectedMetaWrite::for_category_reconciliation()` for netop det produkt og audit (`product_creator_linked`/`unlinked`, `source: category`, `reason`, actor NULL) i samme transaktion.
-    - `CreatorCategoryReconciler` afstemmer én kategori (sidevis, kun direkte tilknyttede parent-produkter) eller ét produkt ud fra ALLE produktets direkte kategorier: manuel vinder, tvetydig (flere creators) giver ingen kobling og fjerner en kategori-kobling, inaktiv creator får ingen ny kobling. Returnerer tællinger (`linked`, `moved`, `unlinked`, `unchanged`, `skipped_manual`, `ambiguous`, `skipped_inactive`, `errors`). En fejl i ét produkt logges og tælles; kørslen fortsætter.
-    - Ingen hooks, Action Scheduler, cron eller UI; mappings og creators læses kun.
-    - Verificeret med unit-tests og integrationstests mod MariaDB med den bootede core-vagt (rigtige transaktioner, audit og rollback).
-  - **Trin 9 (2026-09-27):**
-    - `CategoryReconciliationBatch` afstemmer alle relevante produkter med `CreatorCategoryReconciler`'s regler: `preview()` (tørkørsel) og `execute()`. Ingen parallel ejerskabsmodel; skrivninger går stadig kun gennem `ProductCreatorLink::apply_category_link()`.
-    - Kandidater (`ReconciliationCandidateRepository`, én skrivebeskyttet forespørgsel pr. side): parent-produkter (ikke trash/auto-draft) direkte i en mappet `product_cat` eller med en gemt `_merchboard_creator_link_source`. Dermed findes også produkter, der har forladt en kategori, eller hvis mapping er fjernet. Keyset-paginering på id (100 pr. side): intet produkt to gange, ingen uendelig løkke, stabil mens kørslen skriver.
-    - Evalueringen er delt: `plan_product()` (`ReconciliationPlan`) bruges af tørkørslen, `reconcile_product()` anvender samme plan.
-    - `ReconciliationRunId` (UUID v4, uforanderlig) genereres én gang pr. kørsel og står i hver produkt-audit og i `category_sync_completed`.
-    - Tørkørsel: ingen produktmeta, ingen audit, ingen ændring af mappings eller creators; returnerer tællinger og de forventede ændringer (højst 500).
-    - Fejlsemantik: et fejlende produkt rulles tilbage alene, logges med `run_id` og tælles under `errors`; kørslen fortsætter og afsluttes med `category_sync_completed` (inkl. fejlantal). Kan en side ikke læses, eller går pagineringen ikke frem, afbrydes kørslen, logges og kastes videre uden `category_sync_completed`; allerede afstemte produkter beholder deres (atomare) resultat, og en ny kørsel samler resten op.
-    - Ny anledning `full_sync` (bruger de eksisterende reasons `category_added`/`category_removed`).
-    - Verificeret med unit-tests og integrationstests mod MariaDB (rigtig kandidatforespørgsel, core-vagt, transaktioner, audit og rollback).
-  - **Trin 9b (2026-09-27):** Automatisk afstemning via Action Scheduler. Projektejerens beslutninger: påkrævet valg ved fjernelse af en mapping, begrænset auto-retry og systemet som actor ved sletning af en kategori.
-    - `CategoryReconciliationHooks` (WooCommerce-modulet, registreret én gang pr. request): `set_object_terms`/`deleted_term_relationships` for `product_cat` på parent-produkter (kun ved faktisk ændring), `transition_post_status` (fra trash eller auto-draft), `pre_delete_term`/`delete_term` for mappede kategorier, mapping-events fra `CreatorCategoryService` og `merchboard_creator_status_changed` fra `CreatorService` (fyres efter commit). Handlerne skriver aldrig koblinger.
-    - `CategoryReconciliationScheduler` sætter jobs i kø (`merchboard_reconcile_product`, `merchboard_reconcile_run`, gruppe `merchboard`). Identiske ventende jobs deduplikeres. Uden Action Scheduler sættes intet i kø, og det logges; der er ingen synkron eller cron-fallback.
-    - `CategoryReconciliationJobs` kører et produkt eller én side (100) af en kørsel og sætter næste side i kø med samme `run_id`, markør og tællinger (`CategorySyncPage`). En fejlet side eller et fejlet produkt gentages højst 3 gange med samme payload; en opgivet kørsel skriver ingen `category_sync_completed`.
-    - Scopes (`ReconciliationScope`): mapping oprettet og creator genaktiveret afstemmer kategorien; mapping fjernet (`remove_links`) afstemmer kategorien og alle creatorens kategori-koblinger, også på produkter der har forladt kategorien; en slettet kategori får sin mapping fjernet som systemarbejde (`reason: term_deleted`, actor NULL, `trigger_user_id`), og produkterne afstemmes med `term_deleted`.
-    - `CreatorCategoryService::unlink()` kræver nu `MappingRemovalChoice`. (I trin 9b blev `keep_as_manual` afvist; trin 10 har leveret det.)
-    - Verificeret med unit-tests og integrationstests mod MariaDB (rigtige WordPress-term- og post-API'er, core-vagten, transaktioner, audit og rollback; Action Scheduler er erstattet af en optagende kø, der kører jobs via `do_action_ref_array()`). LocalWP er ikke brugt.
-    - **Kendt begrænsning (løst i trin 10):** slettes en mappet kategori, mens WooCommerce-modulet ikke er indlæst, bliver mappingen liggende uden term. Den gør ingen skade på koblinger, men blokerer creatorens ene kategori; oprydning hører til mapping-UI'et (trin 10).
-  - **Trin 10 (2026-09-27):** Mapping-UI på creatorens redigeringsside (sektionen "Produktkategori" over "Produkter", kun for `merchboard_manage_creators`). Projektejerens beslutninger: "Keep as manual" kører i admin-requesten, og oprydning af en orphaned mapping kræver samme valg som en almindelig fjernelse.
-    - **Liste:** kategori, id, creator, mappet-dato og antal udgivne produkter direkte i kategorien (termens egen optælling, ingen N+1). En mapping, hvis kategori er slettet, vises som "Slettet kategori". Den skaber intet ejerskab, fordi intet produkt kan ligge i den.
-    - **Oprettelse:** vælg kategori (standardkategorien udelades, kategorier mappet til andre creators er deaktiverede) → tørkørsel af den første afstemning med tællinger for alle otte udfald → eksplicit bekræftelse (`confirm`) → `CreatorCategoryService::link()`, som sætter afstemningen af kategorien i kø (trin 9b). Tørkørslen (`CategoryMappingPreview`) lægger den planlagte mapping oven på de gemte (`HypotheticalMappings` via `MappingLookup`) og bruger den eksisterende reconciler og batch uden at skrive noget. `CreatorCategoryService::check_link()` tjekker reglerne på forhånd.
-    - **Fjernelse:** tørkørsel af begge valg (`remove_links`: kategorien og alle creatorens kategori-tilknytninger, også på produkter der har forladt kategorien; `keep_as_manual`: antal tilknytninger, der konverteres) → obligatorisk valg og bekræftelse. Uden valg eller bekræftelse ændres intet.
-    - **Keep as manual:** `CategoryMappingRemoval` konverterer gennem `ProductCreatorLink::keep_as_manual()`, som kræver `merchboard_manage_creators` og `edit_product`, beholder creatoren og skriver oprindelsen `admin` via `ProtectedMetaWrite::for_manual_link()`. Audit er `product_creator_linked` med `previous_source: category`, én transaktion pr. produkt. Der konverteres højst 200 pr. kørsel. Mappingen fjernes først, når en frisk skanning ikke finder flere tilknytninger, og intet produkt fejlede; ellers bevares den, og admin ser status og kan køre igen. Det er idempotent.
-    - **Orphaned mapping:** `CreatorCategoryService::remove_orphaned()` (admin, samme valg, `reason: term_deleted`) fjerner en mapping, hvis kategori ikke længere findes.
-    - Verificeret med unit-tests og integrationstests mod MariaDB (rigtig vagt, transaktioner, audit og rollback). Ingen LocalWP.
-  - **Trin 11, kolonnen (2026-09-27):** Kolonnen "Produktkategorier" i Merch Dashboard → Creators (`CreatorListCategories`, WooCommerce-modulet).
-    - Skrivebeskyttet og kun for `merchboard_manage_creators`, som selve siden.
-    - Viser navnene på creatorens mappede kategorier, "—" uden mapping og "Slettet kategori (#id)" for en mapping, hvis kategori ikke findes. Sådan en mapping ryddes ikke op herfra.
-    - Én hentning pr. side: alle mappings via `CreatorCategoryRepository::all()` og deres navne med ét `get_terms()`-kald. Antallet af forespørgsler vokser ikke med rækkerne (verificeret i integrationstest).
-    - Creators-modulet kender stadig ikke WooCommerce. Listen har fået udvidelsespunkterne `merchboard_creators_list_columns`, `merchboard_creators_list_items` og `merchboard_creators_list_column`, i samme stil som `merchboard_creators_edit_sections`.
-    - Ingen ny menu, capability, REST-route eller frontend.
-  - **Trin 12a (2026-09-27; i commits og tidligere noter kaldt trin 12):** Oprindelse og "Keep as manual" i creatorens produktafsnit.
-    - Kolonnen "Oprindelse" viser "Manuel" (`admin`, eller uden eller med ukendt oprindelse) eller "Produktkategori".
-    - Ved en kategori-tilknytning nævnes produktets kategorier, der er mappet til creatoren. `CategoryLinkStatus` bruger den eksisterende reconciler med forudindlæste mappings (`PreloadedMappings`, én forespørgsel) og ét `get_terms()` til at vise, om afstemningen vil fjerne eller flytte tilknytningen. UI'et afgør det ikke selv, og kategorien vises aldrig som ejer. Visningen skriver intet og sætter intet i kø.
-    - "Keep as manual" findes kun på kategori-tilknytninger til creatoren. Handlingen er en admin-post-handling (`merchboard_keep_creator_product_manual`) med nonce bundet til creatoren, eksplicit bekræftelse (`confirm`) og kontrol af, at produktet er tilknyttet creatoren. Den kalder `ProductCreatorLink::keep_as_manual()`: `merchboard_manage_creators` + `edit_product`, samme creator, oprindelsen `admin`, audit `product_creator_linked` med `previous_source: category` og admin som actor, i én transaktion. Handlingen er idempotent.
-    - Også en tilknytning, som afstemningen vil fjerne eller flytte, kan beholdes som manuel. Det er et eksplicit admin-valg (ADR-033 pkt. 4), og UI'et viser afstemningens vurdering først.
-    - Ingen ny menu, capability, REST-route, AJAX-handling eller creator-adgang.
-  - **Trin 13a, Remove (2026-09-27; tidligere kaldt trin 13, Remove):** ADR-033 pkt. 5 håndhæves i servicen.
-    - `ProductCreatorLink::unlink()` (den manuelle vej) afviser en kategori-styret tilknytning med `category_managed`, før noget skrives: ingen meta-, audit- eller jobændring.
-    - Hvad requesten ellers indeholder, er ligegyldigt: den gemte oprindelse afgør det.
-    - Produktafsnittet viser ingen Remove på kategori-styrede tilknytninger, men "Keep as manual" og en kort forklaring. Efter "Keep as manual" kan tilknytningen fjernes som før.
-    - Manuelle tilknytninger (`admin`, uden eller med ukendt oprindelse) fjernes uændret.
-    - Afstemningen (`apply_category_link()`), fjernelse af mappings og "Keep as manual" er separate veje og uændrede.
-    - Takeover via "Link" (`replace_existing`) er fortsat tilladt og giver en manuel tilknytning (ADR-033 pkt. 3).
-  - **Trin 13, uninstall-verifikation (2026-09-27):** ADR-036 er verificeret med integrationstests mod det bootede plugin, uninstall.php og separate PHP-processer. Ingen produktionskode er ændret.
-    - Opt-in: begge nøgler slettes i alle stavemåder på produkter og varianter, anden meta bevares.
-    - Opt-out og en forfalsket opt-in-værdi: intet slettes.
-    - Manglende `WP_UNINSTALL_PLUGIN` (ny, i egen proces) og et andet plugins uninstall: intet slettes, heller ikke med opt-in.
-    - I vinduet afvises add, update og rename, og kun godkendte `ProtectedMetaWrite` (manuel og kategori) må skrive.
-    - Uninstall sletter via meta-API'et (`delete_post_metadata` ses for begge nøgler), og ingen hook fjernes.
-    - Efter uninstall er opt-in væk, så vinduet er lukket igen, selvom konstanten stadig er defineret: ingen permanent bypass.
-    - Gentagelse uden nøgler giver ingen fejl eller blokeringer.
-    - Kun beskyttede sletninger logges, med nøgle men uden værdi.
-    - Samtidig er en rækkefølgeafhængig test i trin 11 rettet (`CreatorListCategoriesTest`: den første rendering i en proces laver engangsarbejde, så testen varmer nu op, før den måler).
-  - **ADR-033, værktøj til fuld afstemning (2026-09-27):** "Category reconciliation" på Creators-siden (`action=category-sync`, `CategorySyncScreen`/`CategorySyncActions`).
-    - Kun `merchboard_manage_creators`; intet nyt menupunkt, ingen ny capability, kun `admin-post.php` med nonce (ingen AJAX, REST eller `nopriv`).
-    - Tørkørsel via `CategoryReconciliationBatch::preview()` (tællinger, forventede ændringer og nu også "needs attention"-poster, højst 500) uden skrivninger, audit eller jobs.
-    - Bekræftelse: afkrydsning + fingeraftryk (`CategorySyncReport::fingerprint()`). Handleren kører en ny tørkørsel; afviger den, starter intet (`preview_outdated`), og den nye tørkørsel vises.
-    - Kørsel: `CategoryReconciliationScheduler::run()` med fuldt scope og `full_sync`, dvs. den eksisterende Action Scheduler-kæde med `run_page()`, dedup og begrænset retry. `execute()` (synkron) bruges ikke fra admin. `run_id` og resumé står i audit-posten `category_sync_completed`.
-    - "Needs attention": tvetydige produkter, produkter hvis eneste mappede creator er inaktiv, og fejl, med de mappede kategorier. Beregnes pr. tørkørsel; ingen ny persistent tilstand.
-    - Nye udvidelsespunkter på Creators-siden: `merchboard_creators_list_tools` og `merchboard_creators_view_<action>` (efter capability-tjekket).
-  - **ADR-033, manuelle afvigelser i "Needs attention" (2026-09-27):** ADR-033 pkt. 3 og 8 og scenarietabellens første række ("Konflikt vises, hvis den afviger") er nu implementeret.
-    - En manuel kobling (`admin`, uden eller med ukendt oprindelse, eller ugyldig) afviger, når produktets direkte kategorier er mappet til: én anden, aktiv creator ("manual_other_creator"); én anden, inaktiv creator ("manual_inactive_creator"); eller to eller flere creators ("manual_ambiguous"). Ingen mappet creator, eller kun den manuelt koblede (også inaktiv), er ingen afvigelse.
-    - `CreatorCategoryReconciler::plan_product()` (kun tørkørsel) klassificerer med de samme mappede creators som reglerne (`ManualLinkConflict` på `ReconciliationPlan`); `reconcile_product()` er uændret og laver ingen ekstra læsninger. Udfaldet er fortsat `skipped_manual`, og der planlægges ingen ændring.
-    - `CategoryReconciliationBatch::preview()` lægger afvigelsen i den eksisterende `attention`-liste med `conflict`, `creator_id` og `mapped_creator_ids`; `CategorySyncReport::fingerprint()` omfatter den, så en ændret afvigelse gør en tørkørsel forældet.
-    - Visningen har kolonnen "Current creator" ("Manual" ved en manuel afvigelse). Creatornavne læses højst én gang pr. visning.
-    - Ingen skrivning, audit, job eller `ProtectedMetaWrite`.
-  - **Trin 14, audit-log-labels (2026-09-27):** `AuditLogFormatter` gør produkt- og kategori-hændelsernes context læsbar; `AuditLogListTable` slår produkter og produktkategorier op i én forespørgsel hver pr. side (`AuditContextLabels`), brugere inkl. `trigger_user_id` som før i én forespørgsel og creators pr. unik creator.
-    - Produkt/kategori: "Navn (#ID)", "#ID" når de er slettet; produktlink kun med `edit_product`, ingen kategorilinks.
-    - `run_id` vises forkortet (8 tegn) med fuldt id som `title`; optællingerne fra `category_sync_completed` som én linje i afstemningens rækkefølge.
-    - Ukendte koder vises escaped som de er. Audit-context og -schema er uændrede, og siden er fortsat read-only.
-  - **Næste:** i18n/docs/slutverifikation (roadmappens trin 15); Local-verifikationen (trin 12) er ikke udført.
+## In progress
+
+Ingen. Fase 17 er afsluttet 2026-09-28; næste fase er 18 (Sales ledger).
 
 ## Planned
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 17:** WooCommerce foundation (i gang: trin 15 og trin 12).
-2. **Fase 18:** Sales ledger.
-3. **Fase 19:** Products og Orders i dashboard.
+1. **Fase 18:** Sales ledger.
+2. **Fase 19:** Products og Orders i dashboard.
+3. **Fase 20:** Sales & statistics.
 
 ## Known bugs
 
@@ -469,4 +476,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. Udgiv draft-releasen "Merch Dashboard 0.1.0" på GitHub, når projektejeren er klar (ikke gjort).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Fase 17: afslut trin 15 (dokumentation, i18n-kontrol, fuld test-suite, push og grøn CI) og trin 12 (verifikation i Merch Dashboard Local, kræver projektejerens godkendelse). Først derefter kan fase 17 afsluttes (se docs/ROADMAP.md).
+4. Push den afsluttende fase 17-dokumentation og bekræft grøn CI; derefter fase 18 (Sales ledger) jf. docs/ROADMAP.md.

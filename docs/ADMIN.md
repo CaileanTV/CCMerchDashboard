@@ -1,6 +1,6 @@
 # WordPress Admin
 
-> Status: **Admin komplet til og med fase 12:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9, dashboard-slug fra fase 12) og Audit log (`merchboard_view_logs`, fase 11). **Fase 17 (i gang) med WooCommerce aktivt:** creatorens redigeringsside har afsnittene "Product category" og "Products", Creators-listen kolonnen "Product categories" og visningen "Category reconciliation", Audit log viser produkt- og kategori-hændelserne læsbart, og WooCommerce' produktliste har en skrivebeskyttet "Creator"-kolonne og et filter (se [WooCommerce-skærme](#woocommerce-skærme-fase-17)). Intet nyt menupunkt og ingen ny capability.
+> Status: **Admin komplet til og med fase 12:** topmenu med Overview (`merchboard_manage`), Creators (fase 6/10), Settings (fase 9, dashboard-slug fra fase 12) og Audit log (`merchboard_view_logs`, fase 11). **Fase 17 (✅ 2026-09-28) med WooCommerce aktivt:** creatorens redigeringsside har afsnittene "Product category" og "Products", Creators-listen kolonnen "Product categories" og visningen "Category reconciliation", Audit log viser produkt- og kategori-hændelserne læsbart, og WooCommerce' produktliste har en skrivebeskyttet "Creator"-kolonne og et filter (se [WooCommerce-skærme](#woocommerce-skærme-fase-17)). Intet nyt menupunkt og ingen ny capability.
 
 ## Principper
 

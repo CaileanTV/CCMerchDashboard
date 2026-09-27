@@ -4,7 +4,7 @@
 Butikken skal vide, hvilken creator et WooCommerce-produkt tilhører, som grundlag for salg, produkter og statistik i fase 18-20. Administratorer kobler produkter manuelt eller lader en produktkategori styre koblingen automatisk. Relationen administreres i Merch Dashboard, ikke på WooCommerce-produktskærmen (ADR-030, ADR-032, ADR-033).
 
 ## Current status
-I gang (fase 17). Implementeret i trin 1-11, 12a, 13, 13a og 14 (se [ROADMAP.md](../ROADMAP.md)). Verifikationen af hele kæden i Merch Dashboard Local (trin 12) er ikke udført, og fase 17 er ikke afsluttet.
+Færdig (fase 17, 2026-09-28; endnu ikke udgivet i en version). Implementeret i trin 1-11, 12a, 13, 13a og 14 og verificeret i Merch Dashboard Local i trin 12 (se [ROADMAP.md](../ROADMAP.md)). Blok-produkteditorens UI og drift uden WooCommerce er ikke kørt manuelt i Local (se [TESTING.md](../TESTING.md#woocommerce-foundation-fase-17)).
 
 ## User-facing functionality
 Ingen for creators i fase 17. Creator-rollen får ingen produktrettigheder, og koblingen vises ikke i creator-dashboardet endnu (fase 19).
@@ -17,6 +17,7 @@ Kun med WooCommerce ≥ 10.3 aktivt. Alt ligger under Merch Dashboard → Creato
 - **Kategori-mapping:** afsnittet "Product category" mapper én `product_cat` til creatoren (tabellen understøtter teknisk flere). Standardkategorien kan ikke mappes, kategorier mappet til andre creators er deaktiverede, og kun aktive creators kan få nye mappings. Oprettelse sker efter en tørkørsel og eksplicit bekræftelse. Fjernelse kræver et eksplicit valg efter tørkørsel: "Remove category-managed links" eller "Keep as manual links". Mappings til slettede kategorier vises og ryddes op med samme valg.
 - **Keep as manual:** gør en kategori-styret kobling manuel (samme creator, oprindelse `admin`), pr. produkt med bekræftelse eller som massekonvertering ved fjernelse af en mapping (højst 200 pr. kørsel).
 - **Remove:** afvises for kategori-styrede produkter (`category_managed`); brug "Keep as manual" først, eller fjern produktet fra kategorien.
+- **Efter Keep as manual og Remove (den nuværende ADR-033-model):** produktet ligger stadig i den mappede kategori. En senere kategori-trigger eller en fuld afstemning kan derfor give det en kategori-styret kobling igen. Skal produktet forblive uden kategori-baseret ejerskab, skal det fjernes fra den mappede kategori.
 - **Creators-listen:** skrivebeskyttet kolonne "Product categories".
 - **Category reconciliation (`action=category-sync`):** tørkørsel over alle relevante produkter med tællinger for de otte udfald, forventede ændringer og "Needs attention" → eksplicit bekræftelse → asynkron kørsel via Action Scheduler.
 - **Produktlisten i WooCommerce:** skrivebeskyttet kolonne "Creator" og creator-filter. WooCommerce-produktskærmen viser og redigerer ikke relationen.
@@ -71,10 +72,11 @@ Ingen. Der er ingen nye REST-endpoints i fase 17 (ADR-030).
 - Ingen nye tredjeparts-dependencies.
 
 ## Tests
-Se [TESTING.md](../TESTING.md#woocommerce-foundation-fase-17). Unit- og integrationstests dækker skriveveje og rettigheder, vagten og uninstall-scenarierne, afstemningens regler inkl. manuel-vinder, batch, dedup og retry, mapping-UI og fjernelse, Keep as manual, Remove-blokering, Category Sync inkl. fingeraftryk og manuelle konflikter samt audit-labels. Hele kæden mod et rigtigt WooCommerce er ikke automatisk testet (trin 12).
+Se [TESTING.md](../TESTING.md#woocommerce-foundation-fase-17). Unit- og integrationstests dækker skriveveje og rettigheder, vagten og uninstall-scenarierne, afstemningens regler inkl. manuel-vinder, batch, dedup og retry, mapping-UI og fjernelse, Keep as manual, Remove-blokering, Category Sync inkl. fingeraftryk og manuelle konflikter samt audit-labels. Hele kæden mod et rigtigt WooCommerce er ikke automatisk testet, men verificeret manuelt i Merch Dashboard Local (trin 12).
 
 ## Known limitations
-- Verifikationen i Merch Dashboard Local (trin 12) er ikke udført.
+- Blok-produkteditorens UI er ikke verificeret manuelt (kun indirekte via WooCommerce REST), og drift uden WooCommerce er kun dækket af automatiske tests.
+- Efter Keep as manual og Remove kan en senere afstemning give produktet en kategori-kobling igen, så længe det ligger i den mappede kategori.
 - Tørkørslen i Category reconciliation kører synkront i admin-requesten over hele kataloget, med ét mapping-opslag pr. direkte kategori pr. produkt; store kataloger kan give lange svartider.
 - Fingeraftrykket dækker højst de første 500 forventede ændringer og "needs attention"-poster.
 - Flere fulde afstemninger kan køre samtidig (hver med eget `run_id`); produktfejl i en fuld afstemning gentages ikke pr. produkt.
