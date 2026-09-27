@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\Lifecycle;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\ProtectedMetaWrite;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
@@ -207,6 +208,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame(
 			array(
 				'guard'          => true,
+				'uninstalling'   => true,
 				'deleted_link'   => false,
 				'deleted_source' => false,
 			),
@@ -214,6 +216,101 @@ final class UninstallTest extends IntegrationTestCase {
 		);
 		wp_cache_flush();
 		self::assertSame( $before, $this->protected_rows() );
+	}
+
+	public function test_without_any_uninstall_running_the_opt_in_opens_nothing(): void {
+		$this->enable_deletion();
+		$before = $this->protected_rows();
+
+		$result = $this->run_process( 'loaded-none' );
+
+		self::assertSame(
+			array(
+				'guard'          => true,
+				'uninstalling'   => false,
+				'deleted_link'   => false,
+				'deleted_source' => false,
+			),
+			$result,
+			'WP_UNINSTALL_PLUGIN missing: the opt-in alone deletes nothing.'
+		);
+		wp_cache_flush();
+		self::assertSame( $before, $this->protected_rows() );
+	}
+
+	public function test_uninstall_deletes_through_the_meta_api_and_the_window_closes_afterwards(): void {
+		$guard = $this->service( ProtectedProductMeta::class );
+		$this->enable_deletion();
+		$seen = array();
+		$spy  = static function ( mixed $check, mixed $object_id, mixed $meta_key, mixed $meta_value = '', mixed $delete_all = false ) use ( &$seen ): mixed {
+			if ( ProtectedProductMeta::is_protected_key( $meta_key ) ) {
+				$seen[] = array( $meta_key, $delete_all );
+			}
+
+			return $check;
+		};
+		add_filter( 'delete_post_metadata', $spy, 10, 5 );
+
+		try {
+			$this->run_uninstall();
+		} finally {
+			remove_filter( 'delete_post_metadata', $spy, 10 );
+		}
+
+		self::assertSame( array( array( ProtectedProductMeta::LINK_KEY, true ), array( ProtectedProductMeta::SOURCE_KEY, true ) ), $seen, 'WordPress\' meta API (delete_post_meta_by_key), which the guard sees.' );
+		self::assertSame( 1000, has_filter( 'delete_post_metadata', array( $guard, 'filter_delete' ) ), 'No hook was removed.' );
+
+		// After the uninstall the opt-in is gone, so the window is closed again
+		// although WP_UNINSTALL_PLUGIN stays defined in this request.
+		$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $this->product, ProtectedProductMeta::LINK_KEY, '424242' );
+		wp_cache_flush();
+		self::assertFalse( delete_post_meta( $this->product, ProtectedProductMeta::LINK_KEY ), 'No lasting bypass.' );
+		self::assertFalse( update_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, '7' ) );
+		self::assertFalse( add_post_meta( $this->other_product, ProtectedProductMeta::SOURCE_KEY, 'admin' ) );
+		self::assertSame( '424242', get_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, true ) );
+	}
+
+	public function test_only_protected_deletions_are_logged_and_never_with_values(): void {
+		$this->enable_deletion();
+		$this->define_uninstall_constant();
+		file_put_contents( MERCHBOARD_TEST_LOG, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test log.
+
+		self::assertTrue( delete_post_meta( $this->product, '_price' ), 'Other meta is deleted as usual.' );
+		self::assertSame( '', (string) file_get_contents( MERCHBOARD_TEST_LOG ), 'An unrelated deletion is not logged as protected.' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+
+		self::assertTrue( delete_post_meta( $this->product, ProtectedProductMeta::LINK_KEY ) );
+		$log = (string) file_get_contents( MERCHBOARD_TEST_LOG ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+
+		self::assertSame( 1, substr_count( $log, 'Deleted protected product meta during the Merch Dashboard uninstall.' ) );
+		self::assertStringContainsString( ProtectedProductMeta::LINK_KEY, $log, 'The key is logged.' );
+		self::assertStringNotContainsString( '424242', $log, 'The value is not.' );
+		self::assertStringNotContainsString( '_price', $log );
+	}
+
+	public function test_approved_writes_still_work_during_the_window_and_only_them(): void {
+		$guard = $this->service( ProtectedProductMeta::class );
+		$this->enable_deletion();
+		$this->define_uninstall_constant();
+
+		self::assertTrue( $guard->run( ProtectedMetaWrite::for_manual_link( $this->product ), fn(): int|bool => update_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, '7' ) ), 'ProductCreatorLink\'s manual context.' );
+		self::assertIsInt( $guard->run( ProtectedMetaWrite::for_category_reconciliation( $this->other_product ), fn(): int|false => add_post_meta( $this->other_product, ProtectedProductMeta::SOURCE_KEY, 'category' ) ), 'The category reconciliation\'s context.' );
+		self::assertFalse( update_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, '8' ), 'Outside a context writes stay denied.' );
+		self::assertSame( '7', get_post_meta( $this->product, ProtectedProductMeta::LINK_KEY, true ) );
+	}
+
+	public function test_a_repeated_uninstall_after_the_keys_are_gone_raises_nothing(): void {
+		$this->enable_deletion();
+		$this->run_uninstall();
+		self::assertSame( array(), $this->protected_rows() );
+
+		update_option( Settings::OPTION, array( Settings::DELETE_DATA_ON_UNINSTALL => true ) );
+		$this->run_uninstall();
+
+		$log = (string) file_get_contents( MERCHBOARD_TEST_LOG ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+		self::assertStringNotContainsString( 'Blocked a write to protected product meta', $log );
+		self::assertStringNotContainsString( 'error', strtolower( $log ) );
+		self::assertSame( array(), $this->protected_rows() );
+		self::assertSame( '10', get_post_meta( $this->product, '_price', true ) );
 	}
 
 	public function test_uninstall_writes_no_audit_records(): void {
@@ -359,7 +456,7 @@ final class UninstallTest extends IntegrationTestCase {
 	 * Runs tests/Integration/Fixtures/uninstall-process.php in its own PHP
 	 * process (own WordPress, own constants) against the same database.
 	 *
-	 * @param string $mode 'unloaded' or 'loaded-other'.
+	 * @param string $mode 'unloaded', 'loaded-other' or 'loaded-none'.
 	 * @return array<string, mixed>
 	 */
 	private function run_process( string $mode ): array {

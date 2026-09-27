@@ -9,6 +9,8 @@
  * - loaded-other: the plugin is loaded (its guard is registered) while
  *                 WordPress uninstalls another plugin; tries to delete the
  *                 link meta of every post.
+ * - loaded-none:  the plugin is loaded and no uninstall is running
+ *                 (`WP_UNINSTALL_PLUGIN` undefined); tries the same.
  *
  * @package MerchBoard
  */
@@ -20,7 +22,7 @@ require dirname( __DIR__ ) . '/config.php';
 $merchboard_mode = (string) ( $argv[1] ?? '' );
 $merchboard_file = dirname( __DIR__, 3 ) . '/merchboard.php';
 
-if ( 'loaded-other' === $merchboard_mode ) {
+if ( in_array( $merchboard_mode, array( 'loaded-other', 'loaded-none' ), true ) ) {
 	// Loaded as the test bootstrap loads it (must-use).
 	$GLOBALS['wp_filter'] = array( // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Pre-initialized hooks, as in the test bootstrap.
 		'muplugins_loaded' => array(
@@ -44,8 +46,12 @@ if ( 'unloaded' === $merchboard_mode ) {
 	define( 'WP_UNINSTALL_PLUGIN', plugin_basename( $merchboard_file ) );
 	include dirname( __DIR__, 3 ) . '/uninstall.php';
 	$merchboard_result['uninstalled'] = true;
-} elseif ( 'loaded-other' === $merchboard_mode ) {
-	define( 'WP_UNINSTALL_PLUGIN', 'other-plugin/other-plugin.php' );
+} elseif ( in_array( $merchboard_mode, array( 'loaded-other', 'loaded-none' ), true ) ) {
+	if ( 'loaded-other' === $merchboard_mode ) {
+		define( 'WP_UNINSTALL_PLUGIN', 'other-plugin/other-plugin.php' );
+	}
+
+	$merchboard_result['uninstalling']   = defined( 'WP_UNINSTALL_PLUGIN' );
 	$merchboard_result['deleted_link']   = delete_post_meta_by_key( '_merchboard_creator_id' );
 	$merchboard_result['deleted_source'] = delete_post_meta_by_key( '_merchboard_creator_link_source' );
 }

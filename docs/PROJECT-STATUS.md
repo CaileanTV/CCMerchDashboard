@@ -360,6 +360,16 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
     - Manuelle tilknytninger (`admin`, uden eller med ukendt oprindelse) fjernes uændret.
     - Afstemningen (`apply_category_link()`), fjernelse af mappings og "Keep as manual" er separate veje og uændrede.
     - Takeover via "Link" (`replace_existing`) er fortsat tilladt og giver en manuel tilknytning (ADR-033 pkt. 3).
+  - **Trin 13, uninstall-verifikation (2026-09-27):** ADR-036 er verificeret med integrationstests mod det bootede plugin, uninstall.php og separate PHP-processer. Ingen produktionskode er ændret.
+    - Opt-in: begge nøgler slettes i alle stavemåder på produkter og varianter, anden meta bevares.
+    - Opt-out og en forfalsket opt-in-værdi: intet slettes.
+    - Manglende `WP_UNINSTALL_PLUGIN` (ny, i egen proces) og et andet plugins uninstall: intet slettes, heller ikke med opt-in.
+    - I vinduet afvises add, update og rename, og kun godkendte `ProtectedMetaWrite` (manuel og kategori) må skrive.
+    - Uninstall sletter via meta-API'et (`delete_post_metadata` ses for begge nøgler), og ingen hook fjernes.
+    - Efter uninstall er opt-in væk, så vinduet er lukket igen, selvom konstanten stadig er defineret: ingen permanent bypass.
+    - Gentagelse uden nøgler giver ingen fejl eller blokeringer.
+    - Kun beskyttede sletninger logges, med nøgle men uden værdi.
+    - Samtidig er en rækkefølgeafhængig test i trin 11 rettet (`CreatorListCategoriesTest`: den første rendering i en proces laver engangsarbejde, så testen varmer nu op, før den måler).
   - **ADR-033, værktøj til fuld afstemning (2026-09-27):** "Category reconciliation" på Creators-siden (`action=category-sync`, `CategorySyncScreen`/`CategorySyncActions`).
     - Kun `merchboard_manage_creators`; intet nyt menupunkt, ingen ny capability, kun `admin-post.php` med nonce (ingen AJAX, REST eller `nopriv`).
     - Tørkørsel via `CategoryReconciliationBatch::preview()` (tællinger, forventede ændringer og nu også "needs attention"-poster, højst 500) uden skrivninger, audit eller jobs.

@@ -1470,7 +1470,7 @@ B og D giver samme sikkerhed. De adskiller sig i, hvor begrebet bor: core-servic
 2026-09-26
 
 ## Status
-**Accepteret (2026-09-26): mulighed D.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret B, under ADR-035's core-service-model. **Ændrer ADR-034 pkt. 3** med én afgrænset undtagelse, der kun tillader **sletning**. `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst**. Krydsreference fra ADR-030 D4. **Implementeret 2026-09-26** oven på ADR-035's core-vagt (se Consequences). Vurderingen af de fravalgte muligheder A, B og C er bevaret som beslutningsgrundlag.
+**Accepteret (2026-09-26): mulighed D.** Besluttet af projektejeren. Lukker ADR-034, Uafklaret B, under ADR-035's core-service-model. **Ændrer ADR-034 pkt. 3** med én afgrænset undtagelse, der kun tillader **sletning**. `ProtectedMetaWrite` er fortsat den eneste godkendte **skrivekontekst**. Krydsreference fra ADR-030 D4. **Verificeret 2026-09-27** med integrationstests af scenarierne opt-in, opt-out, manglende/forkert basename, skrivninger i vinduet, et andet plugins uninstall, gentagelse og logning; beslutningen er uændret. **Implementeret 2026-09-26** oven på ADR-035's core-vagt (se Consequences). Vurderingen af de fravalgte muligheder A, B og C er bevaret som beslutningsgrundlag.
 
 ## Context
 - **Krav:** opt-in-uninstall skal slette `_merchboard_creator_id` og `_merchboard_creator_link_source` fra alle produkter og varianter på det aktuelle site via WordPress' meta-API, idempotent og før tabellerne droppes (ADR-025, ADR-030 D4, ADR-033). Direkte SQL er fravalgt (ADR-030, Alternatives considered). Uninstall skriver ingen audit-records (ADR-025); audit-tabellen droppes i samme kørsel.
