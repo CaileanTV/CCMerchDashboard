@@ -96,12 +96,13 @@ final class CreatorCategoryMappingTest extends IntegrationTestCase {
 
 		self::assertSame(
 			array(
-				array( 'term_id', 'bigint(20) unsigned', 'NO', 'PRI' ),
-				array( 'creator_id', 'bigint(20) unsigned', 'NO', 'MUL' ),
+				array( 'term_id', 'bigint unsigned', 'NO', 'PRI' ),
+				array( 'creator_id', 'bigint unsigned', 'NO', 'MUL' ),
 				array( 'created_at', 'datetime', 'NO', '' ),
-				array( 'created_by', 'bigint(20) unsigned', 'YES', '' ),
+				array( 'created_by', 'bigint unsigned', 'YES', '' ),
 			),
-			array_map( static fn( array $c ): array => array( $c['Field'], $c['Type'], $c['Null'], $c['Key'] ), is_array( $columns ) ? $columns : array() )
+			// MySQL 8.0.19+ reports no integer display width, MariaDB does (see SchemaTest).
+			array_map( static fn( array $c ): array => array( $c['Field'], (string) preg_replace( '/^bigint\(\d+\)/', 'bigint', $c['Type'] ), $c['Null'], $c['Key'] ), is_array( $columns ) ? $columns : array() )
 		);
 
 		$status = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT TABLE_NAME, ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (%s, %s)', $table, $this->table( Tables::CREATORS ) ), OBJECT_K );
