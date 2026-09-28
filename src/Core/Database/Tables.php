@@ -43,6 +43,16 @@ final class Tables {
 	public const CREATOR_CATEGORIES = 'merchboard_creator_categories';
 
 	/**
+	 * Sales ledger, schema version 5 (ADR-037, ADR-038). Append-only.
+	 */
+	public const SALES = 'merchboard_sales';
+
+	/**
+	 * Sales cycle events per order, schema version 5 (ADR-038). Append-only.
+	 */
+	public const SALES_CYCLES = 'merchboard_sales_cycles';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -50,6 +60,8 @@ final class Tables {
 		self::AUDIT_LOG,
 		self::CREATOR_META,
 		self::CREATOR_CATEGORIES,
+		self::SALES,
+		self::SALES_CYCLES,
 	);
 
 	/**

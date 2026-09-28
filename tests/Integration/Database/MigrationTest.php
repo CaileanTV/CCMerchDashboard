@@ -25,17 +25,19 @@ use wpdb;
 
 final class MigrationTest extends IntegrationTestCase {
 
-	public function test_fresh_install_creates_schema_version_4(): void {
+	public function test_fresh_install_creates_schema_version_5(): void {
 		self::assertSame( 0, $this->migrator()->installed_version() );
 
 		$this->install();
 
-		self::assertSame( 4, $this->migrator()->installed_version() );
-		self::assertSame( '4', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( 5, $this->migrator()->installed_version() );
+		self::assertSame( '5', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_CATEGORIES ) );
+		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
+		self::assertSame( 0, $this->count_rows( Tables::SALES_CYCLES ) );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ), 'Lock released.' );
 		self::assertFalse( get_transient( Installer::FAILURE_TRANSIENT ) );
 	}
@@ -50,10 +52,28 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 4, $this->migrator()->installed_version() );
+		self::assertSame( 5, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 		self::assertSame( 'Før opgradering 🎸', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
+	}
+
+	public function test_upgrade_from_4_adds_only_the_sales_ledger_tables(): void {
+		$migrations = Schema::migrations();
+		unset( $migrations[5] );
+		( new Migrator( $this->wpdb, $migrations ) )->migrate();
+		( new CreatorRepository( $this->wpdb ) )->create( 'Før salg', CreatorStatus::Active );
+		$before = $this->rows( Tables::CREATORS );
+
+		self::assertSame( 4, $this->migrator()->installed_version() );
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table( Tables::SALES ) ) ) );
+
+		$this->install();
+
+		self::assertSame( 5, $this->migrator()->installed_version() );
+		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
+		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
+		self::assertSame( 0, $this->count_rows( Tables::SALES_CYCLES ) );
 	}
 
 	public function test_current_schema_runs_no_queries(): void {
@@ -76,7 +96,7 @@ final class MigrationTest extends IntegrationTestCase {
 		$this->install();
 		$this->install();
 
-		self::assertSame( 4, $this->migrator()->installed_version() );
+		self::assertSame( 5, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 	}
 
@@ -160,7 +180,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		self::assertTrue( $this->migrator()->migrate() );
 
-		self::assertSame( 4, $this->migrator()->installed_version() );
+		self::assertSame( 5, $this->migrator()->installed_version() );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ) );
 	}
 

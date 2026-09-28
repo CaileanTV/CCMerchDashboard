@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-28 · **Seneste færdige fase:** 17 (WooCommerce foundation ✅) · **Næste fase:** 18 (Sales ledger) · **Schemaversion:** 4 · **Version:** 0.1.0 (tagget `v0.1.0`, draft-release, ikke udgivet) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-28 · **Seneste færdige fase:** 17 (WooCommerce foundation ✅) · **Aktuel fase:** 18 (Sales ledger, i gang: trin 1–2 ✅, trin 3 implementeret lokalt og afventer CI) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -394,13 +394,21 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ## In progress
 
-Ingen. Fase 17 er afsluttet 2026-09-28; næste fase er 18 (Sales ledger).
+- **Fase 18 – Sales ledger:**
+  - **Trin 1 (2026-09-28):** beslutningsrunde. ADR-037 fastlægger forretningsreglerne (omsætning efter rabatter ekskl. moms, fragt og gebyrer fra WooCommerce CRUD; append-only ledger; fortegn; central, auditeret og kun fremadrettet statusindstilling; synkron registrering og asynkron backfill med dry-run; ingen fordeling af refunds uden ordrelinjer; papirkurv ændrer intet, permanent sletning modposterer; ingen audit pr. ledger-række; opt-in-uninstall; afstemning senere). DATABASE, WOOCOMMERCE, ROADMAP og ARCHITECTURE er opdateret. Kun dokumentation.
+  - **Trin 2 ✅ (2026-09-28), første runde:** read-only kildekodeanalyse af WooCommerce 10.3.8 (sitet kørte ikke; runtime-indstillinger ikke verificeret) og retningsbeslutningerne i ADR-038: ledger-invariant (balancen følger WooCommerce' netto efter refunds, når ordren er tællende, ellers 0), nye salgscyklusser med den resterende netto-balance, lukning uden 0/0-række, live-registrering af ordrer oprettet i tællende status, append-only korrektioner ved sletning af refunds og ændrede ordrelinjer, `date_paid` ved backfill (ikke `date_completed` universelt), refunds på ikke-tællende ordrer mod tidligere cyklusser, vedvarende fejlmarkør uden automatisk retry, `item_name`-snapshot med privacy-forbehold, og `merchboard_sale_recorded` udskudt. Intet er implementeret.
+  - **Trin 2, afklaring og verifikation (2026-09-28):** read-only discovery af WooCommerce 10.3.8 og verifikation på projektets MariaDB 10.11.19-testdatabase (`@@in_transaction`, `GET_LOCK()` og transaktioner, `wpdb`-genforbindelse) samt af hook-rækkefølgen ved sletning af ordrer og refunds og HPOS' gemning efter meta-ændringer. Besluttet i ADR-038's supplement: `correction` med `correction_reason` (positiv eller negativ, supplerer ADR-037's fortegn), tilstandsbaseret synkronisering pr. ordre, append-only `merchboard_sales_cycles`, cyklus 1 som brutto + refunds (bevidst asymmetri mod senere cyklusser med resterende netto), korrektionstyper, `event_key` med `UNIQUE`, lås + kort transaktion, `occurred_at`-regler, fejlmarkøren `_merchboard_ledger_failure` med re-entrancy-vagt, triggere og den accepterede HPOS/REST-begrænsning ved sletning af refunds. **Skemaet er design-låst** (ikke implementeret).
+  - **Resterende OPEN efter trin 2 (ikke kritiske for skemaet):** `@@in_transaction` på MySQL 8.0 og låsens timeout. Afklaret i trin 3: timeout 5 sekunder; `@@in_transaction` bruges ikke. Vagten mod en fremmed transaktion på samme forbindelse er fortsat OPEN og skal afklares, før ledgeren skrives fra recorder-flowet (ADR-038, statusnote 2026-09-28).
+  - **Trin 3 (2026-09-28): implementeret lokalt, afventer CI.** Migration 5 (schema-version 5) opretter `merchboard_sales` og `merchboard_sales_cycles` jf. DATABASE.md; begge er med i `Tables::all()` (engine-tjek og opt-in-uninstall). `SalesRepository` gemmer og læser ledger- og cyklusrækker under en navngiven ordrelås (`GET_LOCK()`, timeout 5 s) og i én transaktion pr. skrivning; en `event_key`- eller cyklus-dublet er en registreret no-op, andre fejl giver `DatabaseException`. Ingen recorder, hooks, fejlmarkør eller backfill endnu. Integrationstests grønne på MariaDB 10.11.19 (203 tests, heraf 18 for repositoryet, inkl. lås med ekstra forbindelse, samtidige processer og rollback). **MySQL 8-verifikationen af datalaget afventer CI** (intet pushet endnu).
+  - **Forbindelsessikkerhed (fund i trin 3):** `wpdb` genforbinder stille efter en tabt forbindelse (fejl 2006) og gentager sætningen i en ny session i autocommit. Låsen og transaktionen er da tabt, og uden beskyttelse ville en INSERT blive gemt uden for den oprindelige transaktion (påvist med `KILL` i en test). Repositoryet betinger derfor hver INSERT af låsens forbindelse (`INSERT … SELECT … WHERE CONNECTION_ID() = …`), så intet skrives i en ny session, og kontrollerer forbindelse og låsejer før og efter COMMIT (ADR-038 pkt. 18, fund B). `@@in_transaction` bruges ikke længere.
+  - **SQLite/Playground:** sales ledger understøttes ikke (se Technical debt).
+  - **Næste:** trin 4 (`SalesRecorder`), men først efter grøn CI for trin 3 eller eksplicit håndtering af CI-fejl, og efter projektejerens gennemgang.
 
 ## Planned
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 18:** Sales ledger.
+1. **Fase 18:** Sales ledger (i gang: trin 1–2 ✅, trin 3 implementeret lokalt og afventer CI; næste er trin 4).
 2. **Fase 19:** Products og Orders i dashboard.
 3. **Fase 20:** Sales & statistics.
 
@@ -423,6 +431,7 @@ Ingen kendte fejl. Kendte begrænsninger står under Technical debt.
 | Udgåede capabilities | Uninstall fjerner kun de præcise navne i `Capabilities::all()`. Udgår en capability senere, skal den fortsat stå på oprydningslisten. | Husk ved ændring af `Capabilities` (ADR-025) |
 | Multisite: bruger fjernet fra et site | WordPress fyrer `deleted_user` også, når en bruger kun fjernes fra et site. Brugeren findes stadig, så linket bevares. Uden rolle på sitet er der ingen adgang. | Multisite er ikke understøttet. Revurder ved behov. |
 | Samtidig kobling og sletning | Kobles en bruger i samme øjeblik, som den slettes, kan linket pege på en slettet bruger. Det giver ingen adgang. | Accepteret (meget sjældent) |
+| Sales ledger på SQLite/Playground | Ikke understøttet: `SalesRepository` bruger MySQL/MariaDB-funktionerne `GET_LOCK()`, `IS_USED_LOCK()` og `CONNECTION_ID()`, som ikke er afklaret i WordPress' SQLite-integration. Uden dem kan låsen og forbindelseskontrollen ikke garanteres. Repositoryet forventes at fejle lukket (`DatabaseException`, når låsen ikke kan tages), men det er ikke verificeret på SQLite (OPEN). Ingen alternativ låsemekanisme. | Accepteret teknisk begrænsning (fase 18). Playground bruges ikke til at verificere sales ledger. |
 | Transaktioner uden InnoDB | Fail closed (ADR-024): creator-ændringer afvises på MyISAM. Rollback verificeret på MariaDB og SQLite. | Accepteret krav. Dokumenteret i DATABASE.md. |
 | Genforbindelse midt i en transaktion | Mister `wpdb` forbindelsen midt i en transaktion, genforbinder den og fortsætter uden transaktion. Meget sjældent. | Accepteret. Revurder ved problemer på staging. |
 | Emoji på legacy `utf8mb3`-tabeller | `wpdb` afviser display names med 4-byte-tegn. Admin ser den tekniske fejl i stedet for en valideringsbesked. Ingen datakorruption. | Tabellerne oprettes som `utf8mb4` på moderne sites. Valideringsbesked kan tilføjes senere (ikke gjort i fase 10). |
@@ -464,7 +473,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 2. **Hosting – delvist besvaret:** Dev og produktion kører **PHP 8.3** (minimum forbliver 8.2, ADR-003). Åbent: Hvilken **MySQL/MariaDB-version** og hvilket charset/collation? (Fase 7 verificerede MariaDB 10.11.19 lokalt. Den lokale version bør matche produktionen, når den kendes.) Findes der et eksisterende WooCommerce-produktionssite, som pluginet skal installeres på? (fase 7 / 16)
 3. ✅ **TypeScript – lukket (fase 13, ADR-027):** Ja. Dashboardet skrives i TypeScript (strict) med React og `@wordpress/scripts`.
 4. **Teams:** Kan en creator have flere brugere (fx manager)? Fase 8 er bygget med én bruger pr. creator (ADR-020). Teams vil kræve `merchboard_creator_members`, og ændringen bliver lokal til `CreatorContext` og repositoriet. (før fase 14)
-5. **Revenue-model:** Én creator pr. produkt, eller collabs med split? Opgøres creator-omsætning før/efter rabat, ekskl./inkl. moms? Hvilke ordrestatusser tæller? (fase 17-18)
+5. **Revenue-model – delvist besvaret (ADR-037, 2026-09-28):** Omsætning er ordrelinjens beløb efter rabatter, ekskl. moms, fragt og gebyrer, og de tællende ordrestatusser er en central indstilling, der kun gælder fremadrettet. Åbent: én creator pr. produkt (v1) eller collabs med split?
 6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
 7. ✅ **UI-sprog – lukket (fase 15):** Engelske kildestrenge og dansk oversættelse via WordPress i18n. Dashboardet vises på sitets sprog, admin på brugerens.
 8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
@@ -473,7 +482,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 
 ## Next recommended steps
 
-1. Udgiv draft-releasen "Merch Dashboard 0.1.0" på GitHub, når projektejeren er klar (ikke gjort).
+1. ✅ Releasen "Merch Dashboard 0.1.0" er udgivet på GitHub (vist som "Latest" ved kontrol 2026-09-28).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Push den afsluttende fase 17-dokumentation og bekræft grøn CI; derefter fase 18 (Sales ledger) jf. docs/ROADMAP.md.
+4. Fase 18, trin 3: push (projektejeren vælger tidspunktet) og grøn CI på MySQL 8 for migration 5 og `SalesRepository`; håndtér eventuelle CI-fejl. Derefter trin 4 (`SalesRecorder`) efter projektejerens godkendelse.

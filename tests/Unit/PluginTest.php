@@ -17,6 +17,7 @@ use Brain\Monkey\Functions;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Lifecycle\Installer;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
@@ -257,7 +258,8 @@ final class PluginTest extends TestCase {
 
 	public function test_activation_installs_the_schema(): void {
 		unset( $this->options->options[ Migrator::VERSION_OPTION ] );
-		Functions\expect( 'dbDelta' )->times( self::latest_schema_version() );
+		// One dbDelta() per table (migration 5 creates two).
+		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) );
 
 		$this->plugin()->activate();
 
@@ -266,7 +268,7 @@ final class PluginTest extends TestCase {
 
 	public function test_boot_upgrades_an_outdated_schema_before_modules_register(): void {
 		$this->options->options[ Migrator::VERSION_OPTION ] = '0';
-		Functions\expect( 'dbDelta' )->times( self::latest_schema_version() );
+		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) );
 
 		$this->plugin()->boot();
 
@@ -278,10 +280,12 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_audit_log \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creatormeta \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creator_categories \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_sales \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_sales_cycles \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 4, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 5, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

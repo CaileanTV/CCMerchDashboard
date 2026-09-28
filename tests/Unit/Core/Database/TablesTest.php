@@ -39,7 +39,7 @@ final class TablesTest extends TestCase {
 			'prefixed core'      => array( 'wp_users' ),
 			'sql injection'      => array( 'merchboard_creators; DROP TABLE wp_users' ),
 			'case variant'       => array( 'MERCHBOARD_CREATORS' ),
-			'unregistered table' => array( 'merchboard_sales' ),
+			'unregistered table' => array( 'merchboard_payouts' ),
 			'empty'              => array( '' ),
 		);
 	}
@@ -52,7 +52,7 @@ final class TablesTest extends TestCase {
 	}
 
 	public function test_all_lists_every_plugin_table_with_prefix_convention(): void {
-		self::assertSame( array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_creatormeta', 'merchboard_creator_categories' ), Tables::all() );
+		self::assertSame( array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_creatormeta', 'merchboard_creator_categories', 'merchboard_sales', 'merchboard_sales_cycles' ), Tables::all() );
 		self::assertSame( 'wp_merchboard_audit_log', Tables::name( new RecordingWpdb(), Tables::AUDIT_LOG ) );
 
 		foreach ( Tables::all() as $table ) {

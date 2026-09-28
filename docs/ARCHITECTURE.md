@@ -175,7 +175,7 @@ Se [DATABASE.md](DATABASE.md). Kort:
 - **WordPress users/roles** = identitet og login.
 - **`merchboard_creators`** (✅ fase 3) = creator-domæneobjektet, adskilt fra login-kontoen. Creator-ID er den primære reference for al domænedata, og `user_id` er kun en nullable, unik relation til login-laget (ADR-020). `merchboard_creatormeta` kommer i fase 14.
 - **WooCommerce** = produkter og ordrer (source of truth). Produkt → creator via product meta `_merchboard_creator_id` (sat manuelt af admin eller automatisk via kategori-mapping, ADR-033).
-- **`merchboard_sales`** = ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts).
+- **`merchboard_sales`** = append-only ledger med snapshots af ordrelinjer pr. creator (til statistik og payouts), og **`merchboard_sales_cycles`** = append-only salgscyklusser pr. ordre (fase 18, design-låst, ADR-038).
 - **Tekniske logs** = WooCommerce-logger eller `error_log()` (fase 4, ADR-021). Ingen tabel.
 - **`merchboard_audit_log`** (✅ fase 6, ADR-023) = append-only audit trail (`Core/Audit`: `AuditAction`, `AuditTrail`, `AuditRepository`). Creator-ændringer og audit skrives i én databasetransaktion (`Core/Database/Transaction`).
 - **Options** = settings og schemaversion (`merchboard_db_version`).
@@ -270,7 +270,7 @@ Egne actions og filters prefixes med `merchboard_` og dokumenteres i det modul, 
 | `merchboard_modules` | filter | Tilføj/fjern moduler |
 | `merchboard_creator_created` / `_updated` / `_status_changed` | action | Domæne-events |
 | `merchboard_dashboard_sections` | filter | Sektioner/navigation i creator dashboard |
-| `merchboard_sale_recorded` | action | Ny linje i sales ledger |
+| `merchboard_sale_recorded` | action | Ny linje i sales ledger. **Udskudt:** ikke en del af fase 18; timing og den offentlige kontrakt vurderes i et senere API-/event-design (ADR-038). |
 
 Hooks bruges som event-mekanisme. Der bygges ingen separat event-bus.
 

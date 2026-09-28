@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 4.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14) og `merchboard_creator_categories` (fase 17) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19** og SQLite (Playground). MySQL er ikke verificeret endnu (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
+> Status: **Schema-version 5.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19** og SQLite (Playground). MySQL er ikke verificeret endnu (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
 
 ## Placering af data
 
@@ -170,27 +170,80 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 **Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (✅ fase 9, ADR-025), hvor tabellen er med i `Tables::all()`. Uninstall skriver ingen audit-records. **v0.1.0 har bevidst ingen automatisk retention** (ADR-029): ingen cron og ingen sletning efter N år. En retention-politik for produktion skal besluttes før produktionsbrug.
 
-### `merchboard_sales` (fase 18)
+### `merchboard_sales` og `merchboard_sales_cycles` (fase 18, design-låst)
 
-Uforanderlig ledger. Én række pr. (ordrelinje × hændelse). Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
+> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); der registreres endnu intet salg (ingen recorder eller hooks).** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (MySQL 8.0 er fortsat OPEN).
+
+**`merchboard_sales`** er en append-only ledger (ADR-037). Historiske rækker ændres og slettes aldrig; afvigelser rettes med nye rækker. Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
+
+**Invariant (ADR-038):** for en ordre i en tællende status er ledgerens balance for hver ordrelinje med creator lig WooCommerce' aktuelle netto for linjen efter registrerede refunds; for en ordre, der ikke er tællende, er balancen 0. Balancen er summen af de relevante rækker.
+
+**Salgscyklusser (ADR-038):** gælder hele ordren. Cyklus 1 registreres som brutto-salgsbalancen plus eksisterende refunds som `refund`-rækker (resultat: nettoen); senere cyklusser starter med den resterende netto-balance. Asymmetrien er bevidst: ved cyklus 1 står refunds endnu ikke i ledgeren, ved senere cyklusser gør de.
 
 | Kolonne | Type | Noter |
 | --- | --- | --- |
 | `id` | `BIGINT UNSIGNED AUTO_INCREMENT` PK | |
-| `creator_id` | `BIGINT UNSIGNED NOT NULL` | Snapshot ved salgstidspunkt |
+| `event_key` | `VARCHAR(64) NOT NULL` | Deterministisk hændelsesidentitet (se nedenfor). `UNIQUE`. |
+| `creator_id` | `BIGINT UNSIGNED NOT NULL` | Snapshot af produktets creator-kobling ved registreringen. Ved backfill den aktuelle kobling (ADR-037 pkt. 6). |
 | `order_id` | `BIGINT UNSIGNED NOT NULL` | WooCommerce-ordre |
-| `order_item_id` | `BIGINT UNSIGNED NOT NULL` | |
-| `refund_id` | `BIGINT UNSIGNED NOT NULL DEFAULT 0` | 0 for salg, ellers refund-ID |
+| `order_item_id` | `BIGINT UNSIGNED NOT NULL` | Den oprindelige ordrelinje (for refunds via refund-linjens `_refunded_item_id`) |
+| `cycle` | `INT UNSIGNED NOT NULL` | Ordrens salgscyklus (1, 2, …), jf. `merchboard_sales_cycles` |
+| `refund_id` | `BIGINT UNSIGNED NOT NULL DEFAULT 0` | Refund-ID for `refund` og refund-relaterede `correction`, ellers 0 |
 | `product_id` | `BIGINT UNSIGNED NOT NULL` | Parent-produkt |
 | `variation_id` | `BIGINT UNSIGNED NOT NULL DEFAULT 0` | |
-| `type` | `VARCHAR(10) NOT NULL` | `sale`, `refund` eller `reversal` |
-| `quantity` | `INT NOT NULL` | Negativ ved refund/reversal |
-| `net_amount` | `DECIMAL(19,4) NOT NULL` | Linjetotal efter rabat, ekskl. moms og fragt. Negativ ved refund. |
-| `currency` | `CHAR(3) NOT NULL` | |
-| `occurred_at` | `DATETIME NOT NULL` | UTC. Tidspunkt for salg/refund. |
+| `item_name` | `VARCHAR(191) NOT NULL DEFAULT ''` | Snapshot af ordrelinjens navn (afkortet til 191 tegn). Privacy: kan i særlige tilfælde indeholde personoplysninger; ingen kundefelter eller anden PII. |
+| `type` | `VARCHAR(10) NOT NULL` | `sale` (positiv), `refund` (negativ), `reversal` (negativ) eller `correction` (positiv eller negativ) |
+| `correction_reason` | `VARCHAR(32) NULL` | Påkrævet for `correction`, ellers NULL (se nedenfor) |
+| `quantity` | `INT NOT NULL` | Fortegn efter typen |
+| `net_amount` | `DECIMAL(19,4) NOT NULL` | Ordrelinjens beløb efter rabatter, ekskl. moms, fragt og gebyrer, fra WooCommerce CRUD-data. Fortegn efter typen. |
+| `currency` | `CHAR(3) NOT NULL` | Ordrens valuta |
+| `occurred_at` | `DATETIME NOT NULL` | UTC. Se fallback-reglerne nedenfor. |
 | `created_at` | `DATETIME NOT NULL` | UTC. Indsættelsestidspunkt. |
 
-Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id, occurred_at)`, `KEY(order_id)`.
+Indexes: `UNIQUE(event_key)`, `KEY(creator_id, occurred_at)`, `KEY(order_id)`, `KEY(refund_id)` (opslag af ordren ved sletning af en refund).
+
+**Hændelsesidentitet (`event_key`):**
+
+| Hændelse | `type` / `correction_reason` | `event_key` |
+| --- | --- | --- |
+| Salg i en cyklus | `sale` | `s:{order_item_id}:{cycle}` |
+| Reversal, der lukker en cyklus | `reversal` | `v:{order_item_id}:{cycle}` |
+| Refund af en ordrelinje | `refund` | `r:{order_item_id}:{refund_id}` |
+| Refund registreret på en lukket cyklus (modpost, så cyklussen forbliver 0) | `correction` / `closed_cycle_refund` | `c-ro:{order_item_id}:{refund_id}` |
+| Refund slettet i WooCommerce | `correction` / `refund_deleted` | `c-rd:{order_item_id}:{refund_id}` |
+| Slettet refund, der lå på en lukket cyklus (modpost) | `correction` / `closed_cycle_refund_deleted` | `c-rdo:{order_item_id}:{refund_id}` |
+| Ændret antal eller beløb på en tællende ordrelinje | `correction` / `line_changed` | `c-l:{order_item_id}:{cycle}:{n}` |
+| Ordrelinje fjernet fra en tællende ordre | `correction` / `line_removed` | `c-l:{order_item_id}:{cycle}:{n}` |
+
+`n` er det næste løbenummer for linjekorrektioner i cyklussen, beregnet under ordrelåsen. `order_item_id` er globalt unik (auto-increment i `woocommerce_order_items`, også under HPOS), og refund-ID'er genbruges ikke. Refund-nøglerne afhænger bevidst ikke af cyklussen, så en refund aldrig registreres to gange. Den tidligere `UNIQUE(order_item_id, refund_id, type)` er forkastet: den tillader kun én `sale` og én `reversal` pr. ordrelinje og ingen korrektioner.
+
+**`correction_reason`:** `closed_cycle_refund`, `refund_deleted`, `closed_cycle_refund_deleted`, `line_changed` og `line_removed` (tabellen ovenfor).
+
+**`occurred_at`:**
+
+| Hændelse | `occurred_at` |
+| --- | --- |
+| `sale`, cyklus 1 (live og backfill) | `date_paid`, ellers `date_created`. Aldrig `date_completed` (WooCommerce overskriver den ved hver overgang til `completed`). |
+| `sale`, cyklus 2 og senere | Behandlingstidspunktet (WooCommerce gemmer intet tidspunkt pr. statusovergang) |
+| `refund` | Refundens `date_created` (altid sat) |
+| `reversal`, `correction` og permanent sletning | Behandlingstidspunktet |
+
+Konstateres en reversal eller korrektion først ved en senere genbehandling, er `occurred_at` genbehandlingens tidspunkt (accepteret, ADR-038). `date_modified` bruges ikke som kunstig hændelsestid.
+
+**`merchboard_sales_cycles`** (append-only; ADR-038):
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `id` | `BIGINT UNSIGNED AUTO_INCREMENT` PK | |
+| `order_id` | `BIGINT UNSIGNED NOT NULL` | WooCommerce-ordre |
+| `cycle` | `INT UNSIGNED NOT NULL` | 1, 2, … |
+| `event` | `VARCHAR(5) NOT NULL` | `open` eller `close` |
+| `occurred_at` | `DATETIME NOT NULL` | UTC |
+| `created_at` | `DATETIME NOT NULL` | UTC |
+
+Indexes: `UNIQUE(order_id, cycle, event)`; den dækker også opslag på `order_id` (venstre præfiks), så et separat `KEY(order_id)` er unødvendigt. Den aktive cyklus er den højeste `cycle` for ordren uden en `close`-række; den næste er højeste `cycle` + 1. Rækker ændres og slettes aldrig.
+
+**Skrivning (ADR-038):** under en navngiven lås pr. ordre (`GET_LOCK()`) og i én transaktion for ledger- og cyklusrækker; `UNIQUE` er sidste sikkerhedsnet. Begge tabeller kommer med i `Tables::all()` og slettes kun ved opt-in-uninstall (ADR-025). Fejlmarkøren er ordremeta (`_merchboard_ledger_failure`, se WOOCOMMERCE.md), ikke en tabel.
 
 ### Fremtidige (ikke designet i detaljer)
 
@@ -204,7 +257,7 @@ Indexes: `UNIQUE(order_item_id, refund_id, type)` (idempotens), `KEY(creator_id,
 
 | Del | Implementering |
 | --- | --- |
-| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **4** (`merchboard_creator_categories`, ADR-033). |
+| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **5** (`merchboard_sales` og `merchboard_sales_cycles`, ADR-037/038). |
 | Migrationsliste | `MerchBoard\Core\Database\Schema::migrations()`: `array<int, Migration>` nøglet på den schema-version, migrationen giver. Højeste nøgle = forventet version. |
 | Migration | Klasse, der implementerer `MerchBoard\Core\Database\Migration::up( wpdb )`. Kaster `DatabaseException`, hvis ændringen ikke kan verificeres. **Skal være idempotent.** |
 | Runner | `MerchBoard\Core\Database\Migrator`: kører manglende migrationer i stigende rækkefølge og gemmer versionen **efter hver succesfuld migration**. Fejler en migration, stopper kørslen, og versionen forbliver på sidste succes. |
@@ -303,7 +356,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 | Plugin-ejet state (fuld inventory, fase 9) | Slettes ved opt-in-uninstall |
 | --- | --- |
-| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta` og `{prefix}merchboard_creator_categories` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta`, `{prefix}merchboard_creator_categories`, `{prefix}merchboard_sales` og `{prefix}merchboard_sales_cycles` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
 | Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja |
 | Transient `merchboard_db_migration_failed` | Ja |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |

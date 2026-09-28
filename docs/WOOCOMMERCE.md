@@ -64,19 +64,43 @@
 - Uforanderlig attribution: Hvis et produkt senere flyttes til en anden creator, må historisk salg ikke skifte ejer. Ledger-rækken er et snapshot.
 - Grundlag for fremtidige payouts: Payouts skal kunne revideres række for række.
 
-**Hvordan (fase 18):**
+**Hvordan (fase 18, ADR-037 og ADR-038 med supplement; design-låst, ikke implementeret):**
 
-| Hændelse | Hook | Ledger-effekt |
-| --- | --- | --- |
-| Ordre bliver "tællende" (default: `processing` eller `completed`; kan konfigureres) | `woocommerce_order_status_changed` | Én `sale`-række pr. ordrelinje med creator |
-| Ordre forlader tællende status (fx → `cancelled`, `failed`) | `woocommerce_order_status_changed` | `reversal`-rækker, der modposterer |
-| Refund oprettet | `woocommerce_order_refunded` / `woocommerce_refund_created` | `refund`-række pr. refunderet linje (negativt beløb/antal) |
-| Ordre slettet permanent | `woocommerce_before_delete_order` (HPOS) / `before_delete_post` | `reversal` hvis der er poster |
+**Invariant (ADR-038):** for en ordre i en tællende status er ledgerens aktuelle balance for hver ordrelinje med creator lig WooCommerce' aktuelle netto for linjen efter registrerede refunds; for en ordre, der ikke er tællende, er balancen 0. `net_amount` er netto efter rabatter, ekskl. moms, fragt og gebyrer. Historiske rækker ændres eller slettes aldrig. Alle triggere kalder den samme **synkronisering pr. ordre**, som skriver de typede rækker, der mangler; gentagne triggere ændrer intet.
 
-- **Idempotens:** `UNIQUE(order_item_id, refund_id, type)`. Gentagne hooks giver ingen dubletter (`INSERT IGNORE`). Et salg, der er reverseret og bliver tællende igen, håndteres med en løbende saldo pr. linje, som skal specificeres i fase 18.
-- **Beløb:** `net_amount` = linjetotal efter rabatter (`$item->get_total()`), **ekskl. moms og fragt**. Valuta pr. ordre gemmes. Om creator-omsætning skal opgøres før eller efter rabat/moms er en forretningsbeslutning (åbent spørgsmål).
-- **Backfill:** WP-CLI-kommando og/eller admin-knap, der via Action Scheduler gennemløber historiske ordrer i batches.
-- **Reconciliation:** en senere job-type, der sammenligner ledger med WooCommerce for en periode og logger afvigelser.
+| Hændelse | Ledger-effekt |
+| --- | --- |
+| Ordren bliver tællende første gang (også hvis den oprettes direkte i en tællende status) | Cyklus 1 åbnes: `sale` pr. ordrelinje med creator med **bruttobeløbet**; eksisterende refunds registreres som `refund`-rækker (balancen bliver nettoen) |
+| Ordren forlader tællende status | `reversal` af den resterende balance (udelades ved 0); cyklussen lukkes med en `close`-række |
+| Ordren bliver tællende igen | Ny cyklus med **den resterende netto-balance** (fx 100 − refund 30 = 70) |
+| Refund med ordrelinjer | `refund`-række i ordrens seneste cyklus; er den lukket, også en modpost (`correction`/`closed_cycle_refund`), så der ikke opstår en ny salgsbalance |
+| Refund uden ordrelinjer, fragt og gebyrer | Ingen rækker (ADR-037) |
+| En refund slettes i WooCommerce | `correction`/`refund_deleted`; lå den i en lukket cyklus, også `correction`/`closed_cycle_refund_deleted` |
+| Antal eller beløb på en tællende ordrelinje ændres, eller linjen fjernes | `correction`/`line_changed` eller `line_removed` med deltaet; en ny linje med creator får en `sale` i den åbne cyklus |
+| Ordren flyttes til papirkurven eller gendannes | Ingen ændring (en ordre med status `trash` springes over) |
+| Ordren slettes permanent | `reversal` af ledgerens resterende balance og en `close`-række; beregnes kun fra ledgeren |
+
+Cyklus 1 og senere cyklusser er bevidst asymmetriske (brutto + refunds mod resterende netto), fordi refunds ved cyklus 1 endnu ikke står i ledgeren. Fortegn: `sale` positiv, `refund` og `reversal` negative, `correction` positiv eller negativ med en `correction_reason`. Skema og hændelsesnøgler: [DATABASE.md](DATABASE.md).
+
+- **Triggere (ADR-038):** `woocommerce_after_order_object_save` (kun `shop_order`, ikke `trash`) er den fælles trigger; den dækker statusskift, ordrer oprettet direkte i en status og redigerede ordrelinjer, og den må koste mindst én indekseret ledger-forespørgsel pr. gemning for ordrer med mulige creator-linjer. Sletning af en ordre: `woocommerce_before_delete_order` og `before_delete_post` (prioritet under 10, posttypen `shop_order`). Sletning af en refund: `woocommerce_refund_deleted`, `woocommerce_delete_order_refund` og `before_delete_post` for `shop_order_refund`.
+- **Samtidighed:** navngiven lås pr. ordre (`GET_LOCK()`), WooCommerce-data læses før transaktionen, ledger og cyklusser skrives i én kort transaktion, forbindelsen kontrolleres før commit, og låsen frigives i `finally`. `UNIQUE(event_key)` er sidste sikkerhedsnet.
+- **Fejl og genbehandling:** fejler synkroniseringen (fx lås-timeout, deadlock, databasefejl, skiftet forbindelse eller inkonsistente refund-data), rulles den tilbage, og ordremetaen `_merchboard_ledger_failure` (`{v, first_at, last_at, code, count}`, ingen beløb eller PII) sættes eller opdateres. Den ryddes efter en vellykket synkronisering. Genbehandling sker eksplicit via senere WP-CLI-, backfill- eller reprocess-funktionalitet; ingen automatisk retry. Markøren følger opt-in-uninstall (ADR-025). En re-entrancy-vagt forhindrer, at markørskrivningen udløser en ny synkronisering (under HPOS gemmer WooCommerce ordren efter en meta-ændring).
+- **`occurred_at`:** `sale` i cyklus 1: `date_paid`, ellers `date_created`; senere cyklusser, `reversal`, `correction` og sletning: behandlingstidspunktet; `refund`: refundens `date_created`. Ved senere genbehandling er det genbehandlingens tidspunkt.
+- **Refunds uden tidligere cyklus:** ingen rækker, hvis ordren aldrig har haft en cyklus og ikke er tællende (de registreres i cyklus 1, hvis den senere bliver tællende). Undtagelse med fejlmarkør og uden rækker: `_refunded_item_id` kan ikke løses, en refund ville give negativt antal eller negativ balance, og andre inkonsistente data.
+- **Begrænsning (accepteret):** under HPOS uden synkronisering affyrer WooCommerce 10.3.8 intet hook ved sletning af en refund via REST. Korrektionen sker ved næste synkronisering af ordren eller ved eksplicit genbehandling eller backfill.
+- **`item_name`-snapshot:** ordrelinjens navn gemmes for historisk læsbarhed. Privacy: ordrelinjenavne kan i særlige tilfælde indeholde personoplysninger; ingen kundefelter eller anden PII.
+- **Tællende statusser, backfill, audit, uninstall og afstemning:** som ADR-037 (central, auditeret og kun fremadrettet statusindstilling; backfill via WP-CLI og Action Scheduler med dry-run og resumé, tilskrivning ud fra den aktuelle creator-kobling; ingen audit pr. ledger-række; opt-in-uninstall; afstemning senere).
+- **`merchboard_sale_recorded`:** ikke en del af fase 18 (ADR-038).
+
+**Resterende OPEN (ikke kritiske for skemaet):**
+- **Fremmed transaktion på samme forbindelse:** der er ingen eksplicit vagt mod, at anden kode allerede har åbnet en transaktion på `wpdb`-forbindelsen (`START TRANSACTION` ville committe den implicit). `@@in_transaction` bruges ikke. Skal afklares, før ledgeren skrives fra recorder-flowet (ADR-038, statusnote 2026-09-28). Låsens timeout (5 sekunder) er afklaret.
+
+**Verificeret i WooCommerce 10.3.8 og MariaDB (fase 18; kildekode og integrationstest-databasen, ikke Local-runtime, fordi sitet var stoppet):**
+- **Statushooks** affyres fra `WC_Order::status_transition()` efter `save()` (ens for HPOS og legacy) og kun ved en reel ændring på en indlæst ordre, når ordre og linjer er gemt; de kører i `try … catch ( Exception )`. En ordre oprettet direkte i en status får intet `woocommerce_order_status_changed`. `woocommerce_new_order` affyres før `save_items()`; `woocommerce_after_order_object_save` efter. Redigering af ordrelinjer i admin gemmer ordren via `calculate_totals()`.
+- **Datoer:** `date_created` sættes altid; `date_paid` sættes én gang, når en indlæst ordre når betalt status (eller ved `payment_complete()`), og mangler for ordrer oprettet direkte i en status, medmindre API'et eller importen sætter den; `date_completed` overskrives ved hver overgang til `completed`; en refunds `date_created` er altid sat.
+- **Refunds:** en `WC_Order_Refund` med eget ID; linjerne har `_refunded_item_id`, negativt antal og negativ total ekskl. moms. Ved fuld refund skifter ordren status til `refunded` før `woocommerce_refund_created` og `woocommerce_order_refunded`; synkroniseringen registrerer derfor refunden, før den ser den ikke-tællende status.
+- **Papirkurv:** intet statushook; gendannelse under HPOS affyrer `woocommerce_order_status_changed` med `from = trash`.
+- **Sletning af ordrer og refunds, `GET_LOCK()`/`@@in_transaction`, genforbindelse i `wpdb` og HPOS' gemning efter meta-ændringer:** se ADR-038's supplement (A–D).
 
 ## Dashboard-data og privacy
 
@@ -87,5 +111,5 @@
 ## Øvrige hensyn
 
 - **Multi-currency:** Hvis shoppen sælger i flere valutaer, aggregeres pr. valuta. Der sker ingen omregning i v1.
-- **Produkter slettet:** Ledger-rækker bevares. Visning falder tilbage til snapshot-navn, så produktnavn bør overvejes tilføjet til ledgeren i fase 18.
+- **Produkter slettet:** Ledger-rækker bevares. Ledgeren gemmer et snapshot af ordrelinjens navn til visning efter sletning (ADR-038, ikke implementeret).
 - **WooCommerce deaktiveret:** Modulet indlæses ikke. Dashboard-sektioner, der kræver WooCommerce, registreres ikke. Eksisterende ledger-data bevares.

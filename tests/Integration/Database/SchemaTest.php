@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Integration\Database;
 
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
+use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 
@@ -65,6 +66,68 @@ final class SchemaTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_sales_table_matches_the_locked_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'id'                => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
+				'event_key'         => array( 'varchar(64)', '', 'NO', '' ),
+				'creator_id'        => array( 'bigint', 'unsigned', 'NO', '' ),
+				'order_id'          => array( 'bigint', 'unsigned', 'NO', '' ),
+				'order_item_id'     => array( 'bigint', 'unsigned', 'NO', '' ),
+				'cycle'             => array( 'int', 'unsigned', 'NO', '' ),
+				'refund_id'         => array( 'bigint', 'unsigned', 'NO', '' ),
+				'product_id'        => array( 'bigint', 'unsigned', 'NO', '' ),
+				'variation_id'      => array( 'bigint', 'unsigned', 'NO', '' ),
+				'item_name'         => array( 'varchar(191)', '', 'NO', '' ),
+				'type'              => array( 'varchar(10)', '', 'NO', '' ),
+				'correction_reason' => array( 'varchar(32)', '', 'YES', '' ),
+				'quantity'          => array( 'int', '', 'NO', '' ),
+				'net_amount'        => array( 'decimal(19,4)', '', 'NO', '' ),
+				'currency'          => array( 'char(3)', '', 'NO', '' ),
+				'occurred_at'       => array( 'datetime', '', 'NO', '' ),
+				'created_at'        => array( 'datetime', '', 'NO', '' ),
+			),
+			$this->columns( Tables::SALES )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'          => array( 'unique', 'id' ),
+				'creator_occurred' => array( 'non-unique', 'creator_id,occurred_at' ),
+				'event_key'        => array( 'unique', 'event_key' ),
+				'order_id'         => array( 'non-unique', 'order_id' ),
+				'refund_id'        => array( 'non-unique', 'refund_id' ),
+			),
+			$this->indexes( Tables::SALES ),
+			'No UNIQUE(order_item_id, refund_id, type).'
+		);
+	}
+
+	public function test_sales_cycles_table_matches_the_locked_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'id'          => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
+				'order_id'    => array( 'bigint', 'unsigned', 'NO', '' ),
+				'cycle'       => array( 'int', 'unsigned', 'NO', '' ),
+				'event'       => array( 'varchar(5)', '', 'NO', '' ),
+				'occurred_at' => array( 'datetime', '', 'NO', '' ),
+				'created_at'  => array( 'datetime', '', 'NO', '' ),
+			),
+			$this->columns( Tables::SALES_CYCLES )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'           => array( 'unique', 'id' ),
+				'order_cycle_event' => array( 'unique', 'order_id,cycle,event' ),
+			),
+			$this->indexes( Tables::SALES_CYCLES ),
+			'No separate order_id index: the unique key covers it.'
+		);
+	}
+
 	public function test_tables_use_the_site_prefix_charset_and_collation_of_wordpress(): void {
 		$this->install();
 
@@ -103,13 +166,15 @@ final class SchemaTest extends IntegrationTestCase {
 
 		self::assertSame( array(), dbDelta( CreateCreatorsTable::schema( $this->table( Tables::CREATORS ), $charset_collate ) ) );
 		self::assertSame( array(), dbDelta( CreateAuditLogTable::schema( $this->table( Tables::AUDIT_LOG ), $charset_collate ) ) );
+		self::assertSame( array(), dbDelta( CreateSalesLedgerTables::sales_schema( $this->table( Tables::SALES ), $charset_collate ) ) );
+		self::assertSame( array(), dbDelta( CreateSalesLedgerTables::cycles_schema( $this->table( Tables::SALES_CYCLES ), $charset_collate ) ) );
 	}
 
 	/**
 	 * Columns as [type without integer display width, unsigned, nullable, extra].
 	 *
 	 * MySQL 8.0.19+ no longer reports integer display widths (bigint(20) →
-	 * bigint), MariaDB does; both are normalized here.
+	 * bigint, int(10) → int), MariaDB does; both are normalized here.
 	 *
 	 * @param string $table Tables constant.
 	 * @return array<string, list<string>>
@@ -128,7 +193,7 @@ final class SchemaTest extends IntegrationTestCase {
 			$type = strtolower( (string) $row['COLUMN_TYPE'] );
 
 			$columns[ (string) $row['COLUMN_NAME'] ] = array(
-				(string) preg_replace( '/^(bigint)\(\d+\)/', '$1', str_replace( ' unsigned', '', $type ) ),
+				(string) preg_replace( '/^(bigint|int)\(\d+\)/', '$1', str_replace( ' unsigned', '', $type ) ),
 				str_contains( $type, 'unsigned' ) ? 'unsigned' : '',
 				(string) $row['IS_NULLABLE'],
 				strtolower( (string) $row['EXTRA'] ),

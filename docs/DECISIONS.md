@@ -1570,3 +1570,152 @@ A, B og C ovenfor. Desuden sletning pr. produkt med én kontekst pr. produkt; de
 - **ADR-034:** statusnote (pkt. 3 og Uafklaret B).
 - **ADR-030 D4:** krydsreference.
 - **DATABASE.md:** afinstallationsafsnittet opdateres, når beslutningen er accepteret.
+
+---
+
+# ADR-037: Sales ledger-semantik (fase 18)
+
+## Date
+2026-09-28
+
+## Status
+Accepteret (fase 18, trin 1, før implementering). Besluttet af projektejeren. Supplerer ADR-011 (sales ledger) og ADR-025 (uninstall). Fastlægger forretningsreglerne for `merchboard_sales`. De tekniske detaljer under "Åbne tekniske afklaringer" besluttes i fase 18, trin 2, før migrationen skrives. Besvarer åbent spørgsmål 5 for beløbsgrundlag og tællende statusser; én creator pr. produkt gælder fortsat i v1, og revenue split er fortsat uafklaret. **Suppleret af ADR-038 (2026-09-28):** ledger-invariant og cyklusmodel, live-registrering af ordrer oprettet i tællende status, `occurred_at` ved backfill, fejlmarkør, `item_name`-snapshot, og `merchboard_sale_recorded` udskudt. Listen "Åbne tekniske afklaringer" nedenfor er stillingen efter trin 1; den aktuelle liste står i ADR-038. **Fortegnsreglen (pkt. 3) er suppleret af ADR-038 (2026-09-28):** den nye type `correction` kan være positiv eller negativ og har altid en `correction_reason`; `sale` er positiv, `refund` og `reversal` negative. Historiske rækker ændres eller slettes aldrig.
+
+## Context
+ADR-011 besluttede en uforanderlig ledger fodret af ordre- og refund-hooks. WOOCOMMERCE.md og DATABASE.md indeholdt et udkast (nøglen `UNIQUE(order_item_id, refund_id, type)`, `net_amount` efter rabat ekskl. moms og fragt), men beløbsgrundlaget var et åbent spørgsmål (5), udkastets nøgle understøtter ikke en ordre, der tæller igen efter en reversal, og papirkurv, refunds uden ordrelinjer, attribution ved backfill, audit og afstemning var ikke besluttet.
+
+## Decision
+1. **Omsætning:** ordrelinjens beløb efter rabatter, ekskl. moms, fragt og gebyrer. Beløbet tages fra WooCommerce CRUD-data; pluginet beregner ikke selv ordrelinjens beløb.
+2. **Ledger:** append-only historik. Historiske rækker ændres ikke, når produktets creator-kobling ændres.
+3. **Fortegn:** salg har positivt beløb og antal. Refunds og reversals har negativt beløb og antal. Ledgerens saldo er summen af de relevante rækker.
+4. **Tællende statusser:** konfigureres centralt i Merch Dashboard. Ændringer kræver passende capability og auditeres. Ændringer gælder kun fremadrettet og genberegner ikke automatisk historikken.
+5. **Registrering:** salgs- og refundhændelser registreres synkront fra WooCommerce-hooks. Backfill og større batcharbejde kører asynkront via Action Scheduler. Fejl skal kunne opdages og genbehandles.
+6. **Backfill:** både en WP-CLI-kommando og Action Scheduler. Backfill understøtter dry-run, batching, idempotent genkørsel og et resumé. Historiske ordrer tilskrives ud fra den **aktuelle** creator-kobling, fordi historisk ejerskab ikke kan rekonstrueres ud fra de eksisterende data.
+7. **Refunds:** refunds, der ikke kan henføres til ordrelinjer, fordeles ikke automatisk på creators. Fragt og gebyrer medregnes ikke.
+8. **Papirkurv og permanent sletning:** flytning af en ordre til papirkurven ændrer ikke ledgeren. Permanent sletning håndteres som en ledgerhændelse, der modposterer den resterende saldo, uden at slette historikken.
+9. **Audit:** ledgeren er den detaljerede hændelseshistorik. Der oprettes ikke en audit-record for hver ledger-række. Backfill og administrative ændringer (fx af de tællende statusser) får passende audit eller resumé.
+10. **Uninstall:** `merchboard_sales` følger de eksisterende opt-in-regler for sletning af plugin-data (ADR-025). Uden opt-in bevares tabellen.
+11. **Afstemning:** fuld afstemning af ledgeren mod WooCommerce er ikke en del af fase 18's leverance. Den forbliver en senere job-type.
+
+## Åbne tekniske afklaringer (fase 18, trin 2)
+- **Idempotensnøgle:** den konkrete, deterministiske nøgle, som både tillader gentagne salgscyklusser (tællende → ikke-tællende → tællende) og afviser dubletter ved gentagne hooks. `UNIQUE(order_item_id, refund_id, type)` fra det tidligere udkast er ikke tilstrækkelig, fordi den kun tillader én `sale` og én `reversal` pr. ordrelinje.
+- **Reversal efter delvis refund:** den præcise beregning, så en reversal kun modposterer den resterende saldo pr. ordrelinje, og intet tælles dobbelt.
+- **WooCommerce-hooks og tidsstempler:** de præcise hooks og de tilgængelige, pålidelige tidsstempler for statusændringer, refunds, papirkurv og permanent sletning i WooCommerce 10.3.8 (HPOS og legacy). `occurred_at` skal repræsentere den faktiske forretningshændelse, men der vælges ikke et konkret felt, før det er verificeret.
+- **Testharness for WooCommerce-ordrer:** uden nye dependencies. Viser det sig, at en ny dependency er nødvendig, stoppes der, og behovet rapporteres (ADR-030 D5).
+- **`merchboard_sale_recorded`:** om og hvordan hooket eksponeres offentligt. Det står kun som et planlagt eksempel i ARCHITECTURE.md og er ikke besluttet.
+- **Produktnavn-snapshot:** om ledgeren skal gemme produktnavnet (til visning efter permanent sletning af et produkt). Tilføjes kun med en dokumenteret begrundelse og konsekvenser.
+- **Fejlhåndtering ved synkron registrering:** hvordan en fejlet registrering opdages og genbehandles (pkt. 5).
+
+## Alternatives considered
+- **Live-forespørgsler mod WooCommerce i stedet for en ledger:** fravalgt i ADR-011.
+- **Genberegning af historikken, når de tællende statusser ændres:** fravalgt; ændringer gælder kun fremadrettet (pkt. 4).
+- **Asynkron registrering af hver salgs- og refundhændelse:** fravalgt til fordel for synkron registrering; Action Scheduler bruges til backfill og batcharbejde (pkt. 5).
+- **Automatisk fordeling af refunds uden ordrelinjer på creators:** fravalgt (pkt. 7).
+- **Historisk ejerskab ved backfill:** ikke muligt, fordi koblingens historik ikke er gemt (pkt. 6).
+- **En audit-record pr. ledger-række:** fravalgt; ledgeren er selv historikken (pkt. 9).
+- **Afstemning mod WooCommerce i fase 18:** udskudt (pkt. 11).
+
+## Reason
+Ledgeren skal være en reviderbar, uforanderlig historik (grundlag for statistik og senere payouts), hvor intet tælles dobbelt, konfigurationsændringer ikke omskriver fortiden, og creators kun tilskrives beløb, der kan henføres til deres egne ordrelinjer.
+
+## Consequences
+- **DATABASE.md:** `merchboard_sales` er et skemaudkast, indtil trin 2 har fastlagt idempotensnøglen, `occurred_at`'s kilde og spørgsmålet om produktnavn-snapshot. Beløbssemantik og fortegn følger pkt. 1 og 3.
+- **WOOCOMMERCE.md:** hændelsestabellen, beløbsreglerne, statusindstillingen, backfill, papirkurv, permanent sletning og afstemning følger denne ADR.
+- **ROADMAP.md:** fase 18 er opdelt i små trin med trin 2 som teknisk afklaring før migrationen.
+- **Indstillingen for tællende statusser** er en ny, central indstilling. Placering og capability fastlægges i det trin, der bygger den; ændringer auditeres som administrative ændringer.
+- **Uninstall:** tabellen kommer automatisk med i opt-in-sletningen via `Tables::all()`, når den findes (ADR-025).
+- **Åbent spørgsmål 5** er besvaret for beløbsgrundlag og tællende statusser; revenue split er fortsat åbent.
+
+---
+
+# ADR-038: Sales ledger – invariant og cyklusmodel (fase 18, trin 2)
+
+## Date
+2026-09-28
+
+## Status
+Accepteret som retning (fase 18, trin 2, før implementering). Besluttet af projektejeren. Supplerer ADR-037. **Supplement accepteret 2026-09-28 (teknisk afklaring og verifikation, se nederst):** de tidligere OPEN-punkter er afklaret, og skemaet i DATABASE.md er **design-låst** (ikke implementeret). Intet af dette er implementeret. **Statusnote 2026-09-28 (ROADMAP trin 3, se nederst):** dublet-semantikken i pkt. 18 er præciseret (en dublet er en idempotent no-op), og vagten mod en fremmed transaktion er OPEN.
+
+## Context
+Trin 2 undersøgte WooCommerce 10.3.8's kildekode (read-only; sitet Merch Dashboard Local kørte ikke, så runtime-indstillinger som HPOS og synkronisering er ikke verificeret). Fundene, som påvirker ledgeren, står i WOOCOMMERCE.md under "Verificeret i WooCommerce 10.3.8": statushooks affyres fra `WC_Order::status_transition()` for både HPOS og legacy, en fuld refund skifter status (ud af tællende status), **før** `woocommerce_refund_created`/`woocommerce_order_refunded` affyres, papirkurven affyrer intet statushook, men gendannelse under HPOS gør (`from = trash`), en ordre oprettet direkte i en status får intet `woocommerce_order_status_changed`, og `woocommerce_new_order` affyres før ordrelinjerne er gemt. En registrering, der kun reagerer på enkelte hændelser, er derfor sårbar over for rækkefølge og gentagelser.
+
+## Decision
+1. **Ledger-invariant:** for en ordre i en tællende status skal ledgerens aktuelle balance for hver ordrelinje med creator svare til WooCommerce' aktuelle netto for linjen efter registrerede refunds. For en ordre, der ikke er i en tællende status, skal balancen være 0. `net_amount` er fortsat netto efter rabatter, ekskl. moms, fragt og gebyrer (ADR-037). Historiske rækker ændres eller slettes aldrig for at få balancen til at passe.
+2. **Nye salgscyklusser:** når en ordre igen bliver tællende efter, at en tidligere cyklus er lukket, oprettes en ny salgscyklus med **den resterende aktuelle netto-balance**, ikke nødvendigvis det oprindelige ordrebeløb. Eksempel: første cyklus 100, refund 30, cyklussen lukkes med resterende balance 70; bliver ordren tællende igen, starter den nye cyklus med 70.
+3. **Lukning ved balance 0:** en cyklus skal kunne markeres som lukket, også når dens balance er 0. Der oprettes ikke en kunstig reversal-række på 0/0 kun for at markere lukningen. Repræsentationen er OPEN (punkt 1).
+4. **Ordrer oprettet direkte i tællende status:** skal registreres live, ikke kun via backfill. Hook og timing (fx `woocommerce_after_order_object_save`) er teknisk afklaring; implementeringen skal undgå unødvendige forespørgsler og være HPOS-kompatibel.
+5. **Sletning af en refund:** historiske ledger-rækker slettes eller ændres aldrig, og sletningen må ikke bare ignoreres, hvis ledgeren så ikke længere kan forklares ud fra den append-only historik. Den kræver en eksplicit korrektion; korrektionstypen er OPEN (punkt 2).
+6. **Ændring af en tællende ordrelinje:** ændres antal eller beløb efter registreringen, korrigeres ledgeren append-only; den gamle række overskrives ikke. Korrektionsmodellen er OPEN (punkt 3).
+7. **`occurred_at`:** backfill bruger WooCommerce' relevante historiske datoer. `date_paid` bruges, når den er den relevante, tilgængelige hændelsesdato. `date_completed` bruges ikke universelt som standard. Der skal være en eksplicit, dokumenteret fallback, når `date_paid` mangler eller ikke er relevant; rækkefølgen er OPEN (punkt 6).
+8. **Refunds på ikke-tællende ordrer:** en refund på en ordre, der ikke er tællende nu, registreres stadig, hvis den relaterer sig til en tidligere salgscyklus, men den skaber ikke en ny salgsbalance. Håndteringen af en refund, der ikke kan relateres til nogen tidligere salgscyklus, er OPEN (punkt 8).
+9. **Vedvarende fejlmarkør:** fejler ledger-behandlingen, registreres en vedvarende markør via WooCommerce CRUD/ordremeta eller en anden allerede tilladt mekanisme. Der indføres ingen skjult, automatisk retry-kø; genbehandling sker eksplicit via senere WP-CLI-, backfill- eller reprocess-funktionalitet. Nøgle, livscyklus og rydning er OPEN (punkt 7).
+10. **Snapshot af ordrelinjens navn:** ledgeren gemmer et snapshot af ordrelinjens navn (fx `item_name`), så historikken kan læses, også når produktet senere ændres eller slettes. **Privacy:** WooCommerce' ordrelinjenavne kan i særlige tilfælde indeholde bruger- eller personoplysninger; ledgeren udvides derfor ikke med unødvendige kundefelter eller PII.
+11. **`merchboard_sale_recorded`:** implementeres og låses ikke i fase 18. Udskudt til et senere API-/event-design, hvor timing og den offentlige kontrakt vurderes særskilt.
+
+## Åbne punkter (OPEN) – stillingen ved beslutningen; afklaret i supplementet nedenfor
+1. **Cyklusstatus:** hvordan en cyklus repræsenteres som åben eller lukket (også ved balance 0) i database og model.
+2. **Korrektion ved sletning af en refund:** korrektionstypen/modellen.
+3. **Korrektion ved ændring af en tællende ordrelinje:** fx reversal + ny række eller en særskilt korrektionstype.
+4. **Deterministisk idempotensnøgle.**
+5. **Samtidighed og låsning.**
+6. **Fallback-rækkefølge for `occurred_at`**, når `date_paid` ikke findes eller ikke er relevant.
+7. **Livscyklus for den vedvarende fejlmarkør:** metadata-nøgle, hvornår den sættes, og hvordan den ryddes.
+8. **Refunds uden en identificerbar tidligere salgscyklus:** den præcise håndtering.
+
+Der vælges ikke kolonner, unikke indekser eller korrektionstyper for disse punkter, før de er afklaret.
+
+## Alternatives considered
+- **Hændelsesstyret registrering uden invariant** (hver hook skriver sin egen række): sårbar over for WooCommerce' rækkefølge (fuld refund før refund-hooks), gentagne hooks og gendannelse fra papirkurven.
+- **En ny cyklus med det oprindelige ordrebeløb:** ville tælle allerede refunderede beløb igen.
+- **En reversal-række på 0/0 som lukkemarkør:** fravalgt (pkt. 3).
+- **Kun backfill for ordrer oprettet direkte i tællende status:** fravalgt (pkt. 4).
+- **At ignorere sletning af refunds eller ændringer af ordrelinjer:** fravalgt, fordi ledgeren så ikke kan forklares ud fra historikken (pkt. 5 og 6).
+- **`date_completed` som universel dato ved backfill:** fravalgt; WooCommerce sætter den ved hver overgang til `completed` (pkt. 7).
+- **En automatisk retry-kø:** fravalgt (pkt. 9).
+- **Et offentligt `merchboard_sale_recorded` i fase 18:** udskudt (pkt. 11).
+
+## Reason
+En tilstandsbaseret invariant gør registreringen uafhængig af hooks' rækkefølge og antal, holder ledgeren append-only og forklarlig, og undgår dobbelttælling ved gentagne salgscyklusser og refunds.
+
+## Consequences
+- **DATABASE.md:** skemaet forbliver et udkast. `item_name` er besluttet som snapshot; cyklusstatus, korrektionstyper, idempotensnøgle, låsning og fejlmarkør er OPEN.
+- **WOOCOMMERCE.md:** invarianten, cyklusserne og de verificerede WooCommerce-fund er beskrevet.
+- **ARCHITECTURE.md:** `merchboard_sale_recorded` er markeret som udskudt.
+- **ROADMAP.md:** trin 2 afsluttes først, når OPEN-punkterne er afklaret; derefter låses skemaet i trin 3.
+
+
+## Supplement 2026-09-28: afklaring og verifikation (accepteret)
+
+Besluttet af projektejeren efter en read-only discovery og verifikation af WooCommerce 10.3.8's kildekode (Merch Dashboard Local) og af MariaDB-adfærd i projektets egen integrationstest-database. Intet er implementeret.
+
+### Beslutninger
+12. **Fortegn:** `sale` er positiv, `refund` og `reversal` negative, og den nye type `correction` kan være positiv eller negativ afhængigt af, hvad der korrigeres. En `correction` har altid en `correction_reason`. Supplerer ADR-037 pkt. 3.
+13. **Tilstandsbaseret synkronisering pr. ordre:** alle triggere kalder den samme synkronisering, som bringer ledgeren i overensstemmelse med invarianten (pkt. 1) med typede rækker. Salgscyklusser gælder hele ordren, fordi "tællende" er en egenskab ved ordren.
+14. **Cyklusstatus:** en separat, append-only tabel `merchboard_sales_cycles` med hændelserne `open` og `close` pr. `(order_id, cycle)` og `UNIQUE(order_id, cycle, event)`. Ingen mutabel statuskolonne. En cyklus lukkes med en `close`-række, også ved balance 0 (pkt. 3).
+15. **Cyklus 1 og senere cyklusser (bevidst asymmetri):** første gang en ordre bliver tællende, registreres cyklus 1 som den aktuelle **brutto**-salgsbalance, og eksisterende refunds registreres som `refund`-rækker, så balancen bliver WooCommerce' netto. Senere cyklusser starter med den **resterende netto**-balance (pkt. 2), fordi alle refunds da allerede står i tidligere cyklusser. Refunds registreres altid i ordrens seneste eksisterende cyklus; er den lukket, modposteres de med en `correction` (`closed_cycle_refund`), så cyklussen forbliver 0 og ingen ny salgsbalance opstår (pkt. 8).
+16. **Korrektioner:** en slettet refund korrigeres med `correction`/`refund_deleted` (spejling af ledgerens egne refund-rækker for refund-ID'et, fordi WooCommerce' data da er væk), og ligger refunden i en lukket cyklus, også med en modpost (`closed_cycle_refund_deleted`). Ændret antal eller beløb på en tællende ordrelinje korrigeres med `correction`/`line_changed` (delta mellem WooCommerce' netto for linjen og cyklussens balance); en fjernet linje med `line_removed`; en ny linje med creator i en åben cyklus får en `sale` i cyklussen.
+17. **Idempotens:** kolonnen `event_key` med `UNIQUE`, bygget deterministisk pr. hændelsestype (tabellen i DATABASE.md). Refund-nøgler afhænger ikke af cyklussen. `UNIQUE(order_item_id, refund_id, type)` er forkastet.
+18. **Samtidighed:** en navngiven lås pr. ordre med `GET_LOCK()` om hele synkroniseringen og en kort transaktion (`Transaction::run()`) om ledger- og cyklusskrivningerne; `UNIQUE` er sidste sikkerhedsnet. Rækkefølge: (1) tag låsen og notér `CONNECTION_ID()`, (2) læs WooCommerce-ordren via CRUD **uden for** transaktionen, (3) start transaktionen, (4) læs ledger- og cyklustilstanden, (5) beregn, (6) skriv, (7) kontrollér, at forbindelsen er den samme, (8) commit eller rollback, (9) frigiv låsen i `finally`. Timeout, deadlock, en dublet-konflikt eller en skiftet forbindelse giver rollback og fejlmarkør; ingen automatisk retry.
+19. **`occurred_at`:** `sale` i cyklus 1: `date_paid`, ellers `date_created` (aldrig `date_completed`); `sale` i senere cyklusser, `reversal`, `correction` og sletning: behandlingstidspunktet; `refund`: refundens `date_created`. Ved senere genbehandling er det behandlingstidspunktet (accepteret); `date_modified` bruges ikke.
+20. **Fejlmarkør:** ordremeta `_merchboard_ledger_failure` med `{v, first_at, last_at, code, count}` (ingen beløb, ingen PII). Sættes eller opdateres ved fejl (`count` øges), ryddes efter en vellykket synkronisering, skrives med `update_meta_data()` + `save_meta_data()`. Følger opt-in-uninstall (ADR-025). Ingen separat fejltabel og ingen automatisk retry.
+21. **Triggere:** `woocommerce_after_order_object_save` (kun ordrer af typen `shop_order`; en ordre med status `trash` springes over) er den fælles trigger; den må koste mindst én indekseret ledger-forespørgsel for ordrer med mulige creator-linjer, uden unødvendige CRUD-kald eller globale forespørgsler. Sletning af en ordre: `woocommerce_before_delete_order` og `before_delete_post` (prioritet under 10, kun posttypen `shop_order`); lukningen beregnes kun ud fra ledgeren og er idempotent. Sletning af en refund: `woocommerce_refund_deleted`, `woocommerce_delete_order_refund` (ordren findes via ledgerens `refund_id`) og `before_delete_post` for posttypen `shop_order_refund` (ordren via `post_parent`); alle kalder synkroniseringen.
+22. **WooCommerce-begrænsning (accepteret):** under HPOS uden synkronisering affyrer WooCommerce 10.3.8 intet hook ved sletning af en refund via REST. Korrektionen sker da ved næste synkronisering af ordren eller ved eksplicit genbehandling eller backfill; ingen skjult kø.
+23. **Refunds uden tidligere cyklus:** normal flow: refunds uden ordrelinjer (ADR-037), refund-linjer uden creator og uden ledger-rækker, og refunds på en ordre, der aldrig har haft en cyklus og ikke er tællende, giver ingen rækker; bliver ordren senere tællende, registreres de i cyklus 1 (pkt. 15). Undtagelse (fejlmarkør, ingen rækker): `_refunded_item_id` mangler eller peger på en linje, der hverken findes i WooCommerce eller i ledgeren, en refund, der ville give negativt antal eller en negativ balance for en linje, og andre inkonsistente data.
+
+### Verificerede fund (A–D)
+- **A. `@@in_transaction` (MariaDB 10.11.19, projektets integrationstest-database):** variablen findes; 0 uden transaktion, 1 straks efter `START TRANSACTION`/`BEGIN` og efter skrivninger, 0 efter `ROLLBACK`/`COMMIT`. Med `autocommit = 0` er den 0, indtil en sætning faktisk starter en transaktion (fx en `SELECT 1` gør det ikke). MySQL 8.0 er ikke verificeret (OPEN).
+- **B. `GET_LOCK()`:** hører til forbindelsen (sessionen), ikke til transaktionen: den committer eller afbryder ikke en åben transaktion (en indsættelse før `GET_LOCK()` blev rullet tilbage), overlever `COMMIT` og `ROLLBACK`, kan tages før `START TRANSACTION` (`@@in_transaction` forbliver 0), er re-entrant i samme session (hver `GET_LOCK()` kræver sin egen `RELEASE_LOCK()`), frigives, når forbindelsen lukkes, og en anden forbindelse får 0 ved timeout 0, mens låsen holdes. `RELEASE_LOCK()` på en lås, der ikke findes, returnerer NULL, så `finally` er sikkert. MariaDB afviste ikke et navn på 65 tegn, men MySQL begrænser navne til 64 tegn; navnet holdes under 64. Projektets `Transaction::run()` og `GET_LOCK()` via `wpdb` bruger samme forbindelse. WordPress' `wpdb::query()` genforbinder ved fejl 2006 og kører sætningen igen i en **ny** session: låsen og en åben transaktion er da tabt uden fejl. Derfor kontrolleres `CONNECTION_ID()` før commit (pkt. 18), og `UNIQUE` sikrer, at en ny synkronisering konvergerer.
+- **C. Sletning af en ordre (WooCommerce 10.3.8):** legacy: `woocommerce_before_delete_order($id, $order)` (linjerne findes) → `wp_delete_post()` → `before_delete_post` (WooCommerce sletter linjerne på prioritet 10) → `delete_post` → `woocommerce_delete_order($id)`; en direkte `wp_delete_post()` giver kun `before_delete_post`. HPOS: `woocommerce_before_delete_order` (linjerne findes) → sletning i HPOS-tabellerne og af linjerne → med synkronisering `wp_delete_post()` på den spejlede post (`before_delete_post` med linjerne allerede væk), uden synkronisering slettes placeholder-posten med direkte SQL uden WordPress-hooks → `woocommerce_delete_order($id)`. Ledgerens egne data kan altid læses. Samme ordre kan derfor ramme både WooCommerce- og WordPress-hooket; lukningen beregnes kun fra ledgeren, og den anden kørsel finder ingen åben cyklus (no-op).
+- **D. Sletning af en refund:** legacy: `WC_Order_Refund_Data_Store_CPT::delete()` → `wp_delete_post()` (`before_delete_post` med refunden stadig til stede) → `woocommerce_delete_order_refund($id)` (efter sletningen; ingen ordre-ID). Admin-AJAX affyrer derefter `woocommerce_refund_deleted($refund_id, $order_id)` i begge datalagre. HPOS: `OrdersTableRefundDataStore::delete()` fjerner refunden fra HPOS-tabellerne og kalder med synkronisering `wp_delete_post()` (så `before_delete_post` med refunden allerede fjernet), uden synkronisering intet hook. Alle triggere kalder den samme synkronisering, som ser en ledger-refund, der ikke længere findes i WooCommerce, og skriver én korrektion med nøglen `c-rd:…`; gentagne triggere afvises af `UNIQUE`.
+- **Fejlmarkøren og re-entrance:** `WC_Data::save_meta_data()` affyrer kun `added_/updated_/deleted_order_meta`. Under HPOS gemmer datalagret dog ordren efter en meta-ændring (`after_meta_change()`, medmindre ordren er ændret i samme sekund), hvilket affyrer `woocommerce_after_order_object_save`. Der findes intet filter for at gøre nøglen "ephemeral". Synkroniseringen skal derfor have en re-entrancy-vagt pr. ordre i requesten, så en markørskrivning ikke udløser en ny synkronisering; et scoped `woocommerce_orders_table_datastore_should_save_after_meta_change`-filter under markørskrivningen kan desuden undgå den ekstra gemning (valg ved implementeringen).
+
+### Resterende OPEN (ikke kritiske for skemaet)
+- **`@@in_transaction` på MySQL 8.0:** verificeret på MariaDB 10.11.19 (projektets testdatabase), men ikke på MySQL 8.0, som kun kører i CI. Skal verificeres i CI, når registreringen implementeres. Findes variablen ikke på MySQL 8.0, er vagten mod tredjeparts-transaktioner kun aktiv på MariaDB, eller den erstattes; det dokumenteres som en begrænsning. Påvirker ikke skemaet.
+- **Timeout for den navngivne lås** fastlægges ved implementeringen (kort; ingen ventekø). Påvirker ikke skemaet.
+
+### Statusnote 2026-09-28: ROADMAP trin 3 (migration 5 og `SalesRepository`)
+Besluttet af projektejeren efter implementeringen af trin 3. Teksten ovenfor er bevaret som historik; noten præciserer den.
+
+- **Dublet = idempotent no-op (præciserer pkt. 18):** pkt. 18's "en dublet-konflikt … giver rollback og fejlmarkør" gælder ikke en almindelig dublet. En række, hvis `event_key` (pkt. 17) eller `(order_id, cycle, event)` (pkt. 14) allerede er gemt, er en allerede registreret hændelse. `SalesRepository::write()` springer den over, og transaktionen fortsætter og committer de øvrige nye rækker og cyklushændelser; resultatet angiver de oversprungne nøgler. Begrundelse: en deterministisk `event_key` gør det sikkert at afspille hooks igen (gentagne og overlappende triggere, fund C og D), så en dublet er forventet og ikke en fejl. Reelle databasefejl, lås-timeout, deadlock og en skiftet forbindelse giver fortsat rollback (og fejlmarkør, når recorder-flowet findes).
+- **Timeout og `@@in_transaction` (afklarer to OPEN-punkter ovenfor):** låsens timeout er 5 sekunder. `@@in_transaction` bruges ikke; forbindelsen sikres i stedet med `CONNECTION_ID()` (hver INSERT er betinget af låsens forbindelse, og forbindelse og låsejer kontrolleres før og efter COMMIT), fordi `wpdb` kan genforbinde stille og gentage en sætning uden for transaktionen (fund B).
+- **OPEN: fremmed transaktion på samme forbindelse.** `Transaction::run()` sender `START TRANSACTION`/`COMMIT` på den fælles `wpdb`-forbindelse. Der er i dag ingen eksplicit vagt mod, at anden kode allerede har åbnet en transaktion på den forbindelse; `START TRANSACTION` ville så committe den implicit. `Transaction`'s egen vagt mod indlejring dækker kun dens egne transaktioner. `@@in_transaction` genindføres ikke nu alene for at lukke punktet. Implementeringen må ikke antage, at en ekstern transaktion ikke findes. Punktet skal afklares (design og verifikation), før ledgeren skrives fra recorder-flowet.

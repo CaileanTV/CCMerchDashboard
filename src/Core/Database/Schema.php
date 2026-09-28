@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
+use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,6 +36,7 @@ final class Schema {
 			2 => new CreateAuditLogTable(),
 			3 => new CreateCreatorMetaTable(),
 			4 => new CreateCreatorCategoriesTable(),
+			5 => new CreateSalesLedgerTables(),
 		);
 	}
 }
