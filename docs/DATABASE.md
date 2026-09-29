@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 5.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19** og SQLite (Playground). MySQL er ikke verificeret endnu (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
+> Status: **Schema-version 5.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
 
 ## Placering af data
 
@@ -172,13 +172,13 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 ### `merchboard_sales` og `merchboard_sales_cycles` (fase 18, design-låst)
 
-> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); der registreres endnu intet salg (ingen recorder eller hooks).** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (MySQL 8.0 er fortsat OPEN).
+> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); der registreres endnu intet salg (ingen recorder eller hooks).** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (findes ikke på MySQL 8.0; ADR-038, B4).
 
 **`merchboard_sales`** er en append-only ledger (ADR-037). Historiske rækker ændres og slettes aldrig; afvigelser rettes med nye rækker. Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
 
 **Invariant (ADR-038):** for en ordre i en tællende status er ledgerens balance for hver ordrelinje med creator lig WooCommerce' aktuelle netto for linjen efter registrerede refunds; for en ordre, der ikke er tællende, er balancen 0. Balancen er summen af de relevante rækker.
 
-**Salgscyklusser (ADR-038):** gælder hele ordren. Cyklus 1 registreres som brutto-salgsbalancen plus eksisterende refunds som `refund`-rækker (resultat: nettoen); senere cyklusser starter med den resterende netto-balance. Asymmetrien er bevidst: ved cyklus 1 står refunds endnu ikke i ledgeren, ved senere cyklusser gør de.
+**Salgscyklusser (ADR-038):** gælder hele ordren. Cyklus 1 registreres som brutto-salgsbalancen plus eksisterende refunds som `refund`-rækker (resultat: nettoen); senere cyklusser starter med den resterende netto-balance og åbnes kun ved en positiv ny balance (ADR-038, statusnote 2026-09-29). Asymmetrien er bevidst: ved cyklus 1 står refunds endnu ikke i ledgeren, ved senere cyklusser gør de.
 
 | Kolonne | Type | Noter |
 | --- | --- | --- |
@@ -299,29 +299,29 @@ Integrationstestene (`npm run test:integration`, fase 7) kører en rigtig WordPr
 
 | Egenskab | SQLite (Playground) | MariaDB 10.11.19 (lokalt) | MySQL (CI) |
 | --- | --- | --- | --- |
-| Kolonner, typer, nullability og indexes præcis som dokumenteret | ✅ runtime | ✅ `information_schema` | ❓ |
-| Gentaget `dbDelta()` finder ingen ændringer | – | ✅ | ❓ |
-| Tabeller og tekstkolonner bruger WordPress' charset/collation (`utf8mb4_unicode_520_ci`), intet hardcodet | – | ✅ | ❓ |
-| Tabeller oprettes på en transaktionel engine (server-default InnoDB) | – | ✅ | ❓ |
-| Creator-ændring og audit committes sammen | ✅ | ✅ | ❓ |
-| Audit-fejl (rigtig databasefejl via trigger) ruller creator-ændringen tilbage, også ved flerfeltsopdatering | ✅ (fremtvunget exception) | ✅ | ❓ |
-| Creator-fejl (rigtigt UNIQUE-brud/trigger) efterlader ingen audit-record | unit | ✅ | ❓ |
-| MyISAM ignorerer faktisk `ROLLBACK`, og pluginet afviser derfor at skrive (fail closed) | – | ✅ | ❓ |
-| `UNIQUE(user_id)` afviser duplikat og tillader flere `NULL` | ✅ | ✅ | ❓ |
-| Unicode (dansk, emoji, CJK, kombinerende tegn, 191 tegn à 4 byte) gemmes byte-præcist | – | ✅ | ❓ |
-| 4-byte-tegn på en legacy `utf8mb3`-tabel afvises rent (ingen `?` eller trunkering), og ASCII-JSON-context virker | – | ✅ | ❓ |
-| UTC uafhængigt af sitets tidszone og databasesessionens `time_zone` | ✅ | ✅ | ❓ |
-| Migration 0 → 2, 1 → 2 med data, aktuel schema (0 queries), gentagen kørsel uden datatab | ✅ (0 → 2, 1 → 2) | ✅ | ❓ |
-| Fejlet migration: version gemmes ikke, lås frigives, rigtig serverfejl i log-context, Installer pauser og logger | unit | ✅ | ❓ |
-| Lås: atomisk `INSERT IGNORE`, compare-and-swap, ejer-baseret sletning | ✅ (SQL-semantik) | ✅ | ❓ |
-| 6 samtidige processer: migrationen kører præcis én gang | – | ✅ | ❓ |
-| SQL injection-strenge gemmes bogstaveligt, injiceret sortering ignoreres | unit | ✅ | ❓ |
+| Kolonner, typer, nullability og indexes præcis som dokumenteret | ✅ runtime | ✅ `information_schema` | ✅ |
+| Gentaget `dbDelta()` finder ingen ændringer | – | ✅ | ✅ |
+| Tabeller og tekstkolonner bruger WordPress' charset/collation (`utf8mb4_unicode_520_ci`), intet hardcodet | – | ✅ | ✅ |
+| Tabeller oprettes på en transaktionel engine (server-default InnoDB) | – | ✅ | ✅ |
+| Creator-ændring og audit committes sammen | ✅ | ✅ | ✅ |
+| Audit-fejl (rigtig databasefejl via trigger) ruller creator-ændringen tilbage, også ved flerfeltsopdatering | ✅ (fremtvunget exception) | ✅ | ✅ |
+| Creator-fejl (rigtigt UNIQUE-brud/trigger) efterlader ingen audit-record | unit | ✅ | ✅ |
+| MyISAM ignorerer faktisk `ROLLBACK`, og pluginet afviser derfor at skrive (fail closed) | – | ✅ | ✅ |
+| `UNIQUE(user_id)` afviser duplikat og tillader flere `NULL` | ✅ | ✅ | ✅ |
+| Unicode (dansk, emoji, CJK, kombinerende tegn, 191 tegn à 4 byte) gemmes byte-præcist | – | ✅ | ✅ |
+| 4-byte-tegn på en legacy `utf8mb3`-tabel afvises rent (ingen `?` eller trunkering), og ASCII-JSON-context virker | – | ✅ | ✅ |
+| UTC uafhængigt af sitets tidszone og databasesessionens `time_zone` | ✅ | ✅ | ✅ |
+| Migration 0 → 2, 1 → 2 med data, aktuel schema (0 queries), gentagen kørsel uden datatab | ✅ (0 → 2, 1 → 2) | ✅ | ✅ |
+| Fejlet migration: version gemmes ikke, lås frigives, rigtig serverfejl i log-context, Installer pauser og logger | unit | ✅ | ✅ |
+| Lås: atomisk `INSERT IGNORE`, compare-and-swap, ejer-baseret sletning | ✅ (SQL-semantik) | ✅ | ✅ |
+| 6 samtidige processer: migrationen kører præcis én gang | – | ✅ | ✅ |
+| SQL injection-strenge gemmes bogstaveligt, injiceret sortering ignoreres | unit | ✅ | ✅ |
 
-❓ = CI-jobbet `PHP integration (MySQL)` kører de samme tests mod den MySQL-server, som GitHubs Ubuntu-runner leverer. Resultatet kan ikke læses fra udviklingsmiljøet (privat repo, ingen `gh`), så MySQL er **ikke verificeret**, før nogen har set jobbet grønt under GitHub → Actions. Jobbet udskriver den præcise serverversion.
+MySQL-kolonnen: CI-jobbet `PHP integration (MySQL)` kører de samme integrationstests mod den MySQL-server, som GitHubs Ubuntu-runner leverer, og udskriver den præcise serverversion. Grøn på MySQL 8.0.46 (senest set 2026-09-28, commit `602cd50`).
 
 **Observeret på MariaDB 10.11.19:** WordPress fjerner strict mode fra sin databasesession (`sql_mode` = `ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION`). Uden WordPress' egen charset-kontrol ville serveren derfor gemme `?` i stedet for at afvise ugyldige tegn. Pluginet går altid gennem `$wpdb->insert()`/`update()`, som afviser værdien, og sætter altid alle `NOT NULL`-kolonner selv.
 
-**Ikke verificeret:** MySQL (se ovenfor), andre MariaDB-versioner end 10.11.19, versionen på dev/staging/produktion (åbent spørgsmål 2), persistent object cache (fx Redis) sammen med låsen, replikering/Galera og en databaseforbindelse, der genoprettes midt i en transaktion (`wpdb` genforbinder og fortsætter så uden transaktion). Autoritativ verifikation af produktionsmiljøet sker på staging (fase 16).
+**Ikke verificeret:** andre MySQL-versioner end CI's, andre MariaDB-versioner end 10.11.19, versionen på dev/staging/produktion (åbent spørgsmål 2), persistent object cache (fx Redis) sammen med låsen, replikering/Galera og en databaseforbindelse, der genoprettes midt i en transaktion (`wpdb` genforbinder og fortsætter så uden transaktion). Autoritativ verifikation af produktionsmiljøet sker på staging (fase 16).
 
 ### Forudsætninger for MySQL/MariaDB
 

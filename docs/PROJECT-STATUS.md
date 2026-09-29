@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-09-28 · **Seneste færdige fase:** 17 (WooCommerce foundation ✅) · **Aktuel fase:** 18 (Sales ledger, i gang: trin 1–2 ✅, trin 3 implementeret lokalt og afventer CI) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-09-29 · **Seneste færdige fase:** 17 (WooCommerce foundation ✅) · **Aktuel fase:** 18 (Sales ledger, i gang: trin 1–3 ✅, trin 4 implementeret lokalt) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -42,7 +42,7 @@
 
 **Bevidst ikke i fase 3:** creator-rolle/capabilities (5), CreatorService, update og lister (6), adgang/login (8), admin-UI (10), `/me`-API (14), `merchboard_creatormeta` (14), WooCommerce-data og ledger (17-18), slet-data-rutine (9).
 
-**MySQL/MariaDB:** MariaDB 10.11.19 verificeret i fase 7. MySQL afventer CI-resultatet. Se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite).
+**MySQL/MariaDB:** MariaDB 10.11.19 verificeret i fase 7. MySQL 8.0 verificeres i CI (senest 8.0.46, grøn). Se [DATABASE.md](DATABASE.md#mysqlmariadb-vs-playground-sqlite).
 
 ### Fase 4 – Logging og fejlhåndtering ✅
 
@@ -398,17 +398,19 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
   - **Trin 1 (2026-09-28):** beslutningsrunde. ADR-037 fastlægger forretningsreglerne (omsætning efter rabatter ekskl. moms, fragt og gebyrer fra WooCommerce CRUD; append-only ledger; fortegn; central, auditeret og kun fremadrettet statusindstilling; synkron registrering og asynkron backfill med dry-run; ingen fordeling af refunds uden ordrelinjer; papirkurv ændrer intet, permanent sletning modposterer; ingen audit pr. ledger-række; opt-in-uninstall; afstemning senere). DATABASE, WOOCOMMERCE, ROADMAP og ARCHITECTURE er opdateret. Kun dokumentation.
   - **Trin 2 ✅ (2026-09-28), første runde:** read-only kildekodeanalyse af WooCommerce 10.3.8 (sitet kørte ikke; runtime-indstillinger ikke verificeret) og retningsbeslutningerne i ADR-038: ledger-invariant (balancen følger WooCommerce' netto efter refunds, når ordren er tællende, ellers 0), nye salgscyklusser med den resterende netto-balance, lukning uden 0/0-række, live-registrering af ordrer oprettet i tællende status, append-only korrektioner ved sletning af refunds og ændrede ordrelinjer, `date_paid` ved backfill (ikke `date_completed` universelt), refunds på ikke-tællende ordrer mod tidligere cyklusser, vedvarende fejlmarkør uden automatisk retry, `item_name`-snapshot med privacy-forbehold, og `merchboard_sale_recorded` udskudt. Intet er implementeret.
   - **Trin 2, afklaring og verifikation (2026-09-28):** read-only discovery af WooCommerce 10.3.8 og verifikation på projektets MariaDB 10.11.19-testdatabase (`@@in_transaction`, `GET_LOCK()` og transaktioner, `wpdb`-genforbindelse) samt af hook-rækkefølgen ved sletning af ordrer og refunds og HPOS' gemning efter meta-ændringer. Besluttet i ADR-038's supplement: `correction` med `correction_reason` (positiv eller negativ, supplerer ADR-037's fortegn), tilstandsbaseret synkronisering pr. ordre, append-only `merchboard_sales_cycles`, cyklus 1 som brutto + refunds (bevidst asymmetri mod senere cyklusser med resterende netto), korrektionstyper, `event_key` med `UNIQUE`, lås + kort transaktion, `occurred_at`-regler, fejlmarkøren `_merchboard_ledger_failure` med re-entrancy-vagt, triggere og den accepterede HPOS/REST-begrænsning ved sletning af refunds. **Skemaet er design-låst** (ikke implementeret).
-  - **Resterende OPEN efter trin 2 (ikke kritiske for skemaet):** `@@in_transaction` på MySQL 8.0 og låsens timeout. Afklaret i trin 3: timeout 5 sekunder; `@@in_transaction` bruges ikke. Vagten mod en fremmed transaktion på samme forbindelse er fortsat OPEN og skal afklares, før ledgeren skrives fra recorder-flowet (ADR-038, statusnote 2026-09-28).
-  - **Trin 3 (2026-09-28): implementeret lokalt, afventer CI.** Migration 5 (schema-version 5) opretter `merchboard_sales` og `merchboard_sales_cycles` jf. DATABASE.md; begge er med i `Tables::all()` (engine-tjek og opt-in-uninstall). `SalesRepository` gemmer og læser ledger- og cyklusrækker under en navngiven ordrelås (`GET_LOCK()`, timeout 5 s) og i én transaktion pr. skrivning; en `event_key`- eller cyklus-dublet er en registreret no-op, andre fejl giver `DatabaseException`. Ingen recorder, hooks, fejlmarkør eller backfill endnu. Integrationstests grønne på MariaDB 10.11.19 (203 tests, heraf 18 for repositoryet, inkl. lås med ekstra forbindelse, samtidige processer og rollback). **MySQL 8-verifikationen af datalaget afventer CI** (intet pushet endnu).
+  - **Resterende OPEN efter trin 2 (ikke kritiske for skemaet):** `@@in_transaction` på MySQL 8.0 og låsens timeout. Afklaret i trin 3: timeout 5 sekunder; `@@in_transaction` bruges ikke. Vagten mod en fremmed transaktion på samme forbindelse var derefter OPEN; den blev lukket 2026-09-28 som dokumenteret restrisiko uden vagt (ADR-038, B4).
+  - **Trin 3 ✅ (2026-09-28):** Migration 5 (schema-version 5) opretter `merchboard_sales` og `merchboard_sales_cycles` jf. DATABASE.md; begge er med i `Tables::all()` (engine-tjek og opt-in-uninstall). `SalesRepository` gemmer og læser ledger- og cyklusrækker under en navngiven ordrelås (`GET_LOCK()`, timeout 5 s) og i én transaktion pr. skrivning; en `event_key`- eller cyklus-dublet er en registreret no-op, andre fejl giver `DatabaseException`. Ingen recorder, hooks, fejlmarkør eller backfill endnu. Integrationstests grønne på MariaDB 10.11.19 (203 tests, heraf 18 for repositoryet, inkl. lås med ekstra forbindelse, samtidige processer og rollback). CI er grøn på MySQL 8.0.46 (commit `602cd50`).
   - **Forbindelsessikkerhed (fund i trin 3):** `wpdb` genforbinder stille efter en tabt forbindelse (fejl 2006) og gentager sætningen i en ny session i autocommit. Låsen og transaktionen er da tabt, og uden beskyttelse ville en INSERT blive gemt uden for den oprindelige transaktion (påvist med `KILL` i en test). Repositoryet betinger derfor hver INSERT af låsens forbindelse (`INSERT … SELECT … WHERE CONNECTION_ID() = …`), så intet skrives i en ny session, og kontrollerer forbindelse og låsejer før og efter COMMIT (ADR-038 pkt. 18, fund B). `@@in_transaction` bruges ikke længere.
   - **SQLite/Playground:** sales ledger understøttes ikke (se Technical debt).
-  - **Næste:** trin 4 (`SalesRecorder`), men først efter grøn CI for trin 3 eller eksplicit håndtering af CI-fejl, og efter projektejerens gennemgang.
+  - **Designbeslutninger for recorderen (2026-09-28):** B1 (1/10000-heltal), B2/B3 (creator-reglen), B4 (ingen vagt mod fremmed transaktion, dokumenteret restrisiko; `@@in_transaction` findes ikke på MySQL 8.0.46 ifølge en midlertidig CI-probe), B5 afvist (ingen `shutdown`-batching), B6 (sletning af refunds med et kendt slettet refund-ID, `deleted_post`), B7 (fejlkoder) og den midlertidige liste af tællende statusser (`processing`, `completed`). Se ADR-038.
+  - **Trin 4 (2026-09-29): implementeret lokalt, ikke committet.** Ren planlægningslogik (`SalesPlanner`, input-snapshots, `SalesAmount`, `SalesPlanResult`) uden database, hooks eller fejlmarkør; 57 unit-tests grønne. To fortolkninger er normative for trin 5: en åben cyklus med balance 0 lukkes ikke af sig selv, og cyklus 1 kan åbnes ved balance 0 (ADR-038, statusnote 2026-09-29).
+  - **Næste:** trin 5 (synkronisering pr. ordre, hooks og fejlmarkør) efter projektejerens godkendelse.
 
 ## Planned
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 18:** Sales ledger (i gang: trin 1–2 ✅, trin 3 implementeret lokalt og afventer CI; næste er trin 4).
+1. **Fase 18:** Sales ledger (i gang: trin 1–3 ✅, trin 4 implementeret lokalt; næste er trin 5).
 2. **Fase 19:** Products og Orders i dashboard.
 3. **Fase 20:** Sales & statistics.
 
@@ -485,4 +487,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. ✅ Releasen "Merch Dashboard 0.1.0" er udgivet på GitHub (vist som "Latest" ved kontrol 2026-09-28).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Fase 18, trin 3: push (projektejeren vælger tidspunktet) og grøn CI på MySQL 8 for migration 5 og `SalesRepository`; håndtér eventuelle CI-fejl. Derefter trin 4 (`SalesRecorder`) efter projektejerens godkendelse.
+4. Fase 18: commit og push af trin 4 (projektejeren vælger tidspunktet), derefter trin 5 (synkronisering, hooks og fejlmarkør) efter projektejerens godkendelse.
