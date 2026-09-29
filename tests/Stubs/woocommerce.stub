@@ -42,7 +42,142 @@ abstract class WC_Data {
 	 * @return void
 	 */
 	public function save_meta_data() {}
+
+	/**
+	 * @param string $key     Meta key.
+	 * @param bool   $single  Return the first value only.
+	 * @param string $context 'view' or 'edit'.
+	 * @return mixed
+	 */
+	public function get_meta( $key = '', $single = true, $context = 'view' ) {}
+
+	/**
+	 * @param string           $key     Meta key.
+	 * @param array|string|int $value   Meta value.
+	 * @param int              $meta_id Meta id.
+	 * @return void
+	 */
+	public function update_meta_data( $key, $value, $meta_id = 0 ) {}
+
+	/**
+	 * @param string $key Meta key.
+	 * @return void
+	 */
+	public function delete_meta_data( $key ) {}
 }
+
+/**
+ * WooCommerce date (class-wc-datetime.php).
+ */
+class WC_DateTime extends DateTime {
+}
+
+/**
+ * Abstract order (abstract-wc-order.php).
+ */
+abstract class WC_Abstract_Order extends WC_Data {
+
+	/**
+	 * @return string
+	 */
+	public function get_type() {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_status( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_currency( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return WC_DateTime|null
+	 */
+	public function get_date_created( $context = 'view' ) {}
+
+	/**
+	 * @param string|string[] $types Item types.
+	 * @return WC_Order_Item[]
+	 */
+	public function get_items( $types = 'line_item' ) {}
+}
+
+/**
+ * Order (class-wc-order.php).
+ */
+class WC_Order extends WC_Abstract_Order {
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return WC_DateTime|null
+	 */
+	public function get_date_paid( $context = 'view' ) {}
+}
+
+/**
+ * Refund (class-wc-order-refund.php).
+ */
+class WC_Order_Refund extends WC_Abstract_Order {
+}
+
+/**
+ * Order item (class-wc-order-item.php).
+ */
+class WC_Order_Item extends WC_Data {
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_name( $context = 'view' ) {}
+}
+
+/**
+ * Product line (class-wc-order-item-product.php).
+ */
+class WC_Order_Item_Product extends WC_Order_Item {
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return int
+	 */
+	public function get_product_id( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return int
+	 */
+	public function get_variation_id( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return int|float
+	 */
+	public function get_quantity( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|int
+	 */
+	public function get_total( $context = 'view' ) {}
+}
+
+/**
+ * @param mixed $the_order Order id or object.
+ * @return WC_Order|WC_Order_Refund|false
+ */
+function wc_get_order( $the_order = false ) {}
+
+/**
+ * @param array<string, mixed> $args Query arguments.
+ * @return array<int, WC_Order|WC_Order_Refund|int>|object
+ */
+function wc_get_orders( $args ) {}
 
 /**
  * WooCommerce product (abstract-wc-product.php).

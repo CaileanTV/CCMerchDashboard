@@ -21,6 +21,9 @@ parameters:
         # Stand-in for WooCommerce product CRUD (loaded only in isolated test
         # processes); PHPStan uses tests/Stubs/woocommerce.stub instead.
         - tests/Fixtures/woocommerce-product.php
+        # Stand-in for WooCommerce order CRUD (isolated test processes only);
+        # PHPStan uses tests/Stubs/woocommerce.stub instead.
+        - tests/Fixtures/woocommerce-order.php
         # Stand-in for WP_Error and WP_REST_Request (loaded only in isolated
         # test processes); PHPStan uses the real WordPress stubs.
         - tests/Fixtures/wp-rest.php

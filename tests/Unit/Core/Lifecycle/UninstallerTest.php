@@ -160,9 +160,15 @@ final class UninstallerTest extends TestCase {
 					'tables_left'  => true,
 					'settings'     => true,
 				),
+				array(
+					'key'          => '_merchboard_ledger_failure',
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
 			),
 			$deleted,
-			'Both keys, through the meta API, while the opt-in is on and before the tables are dropped.'
+			'Both product keys and the order failure marker (legacy post meta), through the meta API, while the opt-in is on and before the tables are dropped.'
 		);
 		self::assertArrayNotHasKey( Settings::OPTION, $options->options, 'The opt-in is removed last.' );
 	}

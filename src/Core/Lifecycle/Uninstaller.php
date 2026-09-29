@@ -16,6 +16,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
+use WC_Order;
 use WP_User;
 use wpdb;
 
@@ -46,6 +47,11 @@ defined( 'ABSPATH' ) || exit;
  *    this deletion, through ADR-036's uninstall window, which needs the
  *    opt-in still on: hence before the settings are deleted. Products and all
  *    other meta stay;
+ * 3a. the sales ledger failure marker `_merchboard_ledger_failure` from every
+ *    order (ADR-038 pkt. 20 and Q3): legacy post meta through the meta API;
+ *    HPOS order meta only through WooCommerce CRUD while WooCommerce is loaded.
+ *    With WooCommerce inactive, markers in HPOS' meta table stay (accepted).
+ *    Never direct SQL against WooCommerce tables. Orders themselves stay;
  * 4. the plugin tables (SchemaEraser, by exact name);
  * 5. the plugin options and transient, and the settings option LAST.
  *
@@ -56,6 +62,25 @@ defined( 'ABSPATH' ) || exit;
  * a lifecycle operation, and the audit log itself is being deleted.
  */
 final class Uninstaller {
+
+	/**
+	 * Order meta keys owned by the plugin: the sales ledger failure marker
+	 * (Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker::META_KEY; a
+	 * test keeps both equal, so core does not depend on the module).
+	 */
+	public const ORDER_META_KEYS = array( '_merchboard_ledger_failure' );
+
+	/**
+	 * WooCommerce' HPOS filter deciding whether an order is saved after a meta change.
+	 */
+	private const HPOS_SAVE_FILTER = 'woocommerce_orders_table_datastore_should_save_after_meta_change';
+
+	/**
+	 * Orders per CRUD batch, and the most batches per key (a safety stop).
+	 */
+	private const ORDER_BATCH = 100;
+
+	private const MAX_ORDER_BATCHES = 1000;
 
 	/**
 	 * Constructor.
@@ -80,6 +105,7 @@ final class Uninstaller {
 		$this->remove_from_users();
 		$this->remove_from_roles();
 		$this->remove_product_meta();
+		$this->remove_order_meta();
 
 		if ( ! $this->schema->erase() ) {
 			// Keep the options (including the opt-in) so a later uninstall can finish.
@@ -104,6 +130,53 @@ final class Uninstaller {
 	private function remove_product_meta(): void {
 		foreach ( ProtectedProductMeta::KEYS as $key ) {
 			delete_post_meta_by_key( $key );
+		}
+	}
+
+	/**
+	 * Deletes the plugin's order meta: legacy post meta through the meta API,
+	 * HPOS order meta through WooCommerce CRUD in batches while WooCommerce is
+	 * loaded. Only the meta is saved, never the whole order, and HPOS' save
+	 * after a meta change is suppressed like WooCommerce does itself.
+	 */
+	private function remove_order_meta(): void {
+		foreach ( self::ORDER_META_KEYS as $key ) {
+			delete_post_meta_by_key( $key );
+
+			if ( ! function_exists( 'wc_get_orders' ) ) {
+				continue;
+			}
+
+			for ( $batch = 0; $batch < self::MAX_ORDER_BATCHES; $batch++ ) {
+				// meta_key + meta_compare filter in both HPOS and legacy storage;
+				// legacy wc_get_orders() ignores `meta_query` and would return every order.
+				$orders = wc_get_orders(
+					array(
+						'type'         => 'shop_order',
+						'limit'        => self::ORDER_BATCH,
+						'meta_key'     => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Runs once on uninstall.
+						'meta_compare' => 'EXISTS',
+					)
+				);
+				$orders = array_filter( is_array( $orders ) ? $orders : array(), static fn( mixed $order ): bool => $order instanceof WC_Order );
+
+				if ( array() === $orders ) {
+					continue 2;
+				}
+
+				foreach ( $orders as $order ) {
+					$order->delete_meta_data( $key );
+					add_filter( self::HPOS_SAVE_FILTER, '__return_false' );
+
+					try {
+						$order->save_meta_data();
+					} finally {
+						remove_filter( self::HPOS_SAVE_FILTER, '__return_false' );
+					}
+				}
+			}
+
+			$this->logger->warning( 'Stopped removing order meta on uninstall after the batch limit.', array( 'key' => $key ) );
 		}
 	}
 

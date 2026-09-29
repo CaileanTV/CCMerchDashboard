@@ -172,7 +172,7 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 ### `merchboard_sales` og `merchboard_sales_cycles` (fase 18, design-låst)
 
-> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); der registreres endnu intet salg (ingen recorder eller hooks).** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (findes ikke på MySQL 8.0; ADR-038, B4).
+> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); fra trin 5 skriver `SalesSynchronizer` rækkerne fra WooCommerce-hooks (runtime-verificeret med HPOS og legacy; ikke committet endnu).** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (findes ikke på MySQL 8.0; ADR-038, B4).
 
 **`merchboard_sales`** er en append-only ledger (ADR-037). Historiske rækker ændres og slettes aldrig; afvigelser rettes med nye rækker. Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
 
@@ -357,6 +357,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 | Plugin-ejet state (fuld inventory, fase 9) | Slettes ved opt-in-uninstall |
 | --- | --- |
 | Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta`, `{prefix}merchboard_creator_categories`, `{prefix}merchboard_sales` og `{prefix}merchboard_sales_cycles` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Ordremeta `_merchboard_ledger_failure` (fejlmarkøren, ADR-038) | Ja: legacy-postmeta via `delete_post_meta_by_key()`; HPOS-ordremeta kun via WooCommerce CRUD (ordrerne findes med `meta_key` + `meta_compare => EXISTS`), mens WooCommerce er aktivt (ellers bliver den liggende, ADR-038 Q3). Ingen direkte SQL mod WooCommerce-tabeller. |
 | Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja |
 | Transient `merchboard_db_migration_failed` | Ja |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |

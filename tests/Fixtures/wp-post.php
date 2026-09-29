@@ -28,12 +28,20 @@ final class WP_Post {
 	public $post_type;
 
 	/**
+	 * Parent post id.
+	 *
+	 * @var int
+	 */
+	public $post_parent = 0;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param object $post Post data (ID, post_type).
+	 * @param object $post Post data (ID, post_type, optionally post_parent).
 	 */
 	public function __construct( $post ) {
-		$this->ID        = (int) $post->ID;
-		$this->post_type = (string) $post->post_type;
+		$this->ID          = (int) $post->ID;
+		$this->post_type   = (string) $post->post_type;
+		$this->post_parent = (int) ( $post->post_parent ?? 0 );
 	}
 }

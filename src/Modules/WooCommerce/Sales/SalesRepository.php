@@ -150,7 +150,8 @@ final class SalesRepository {
 	 *
 	 * @param int                                          $order_id WooCommerce order.
 	 * @param callable(SalesLedgerState): SalesLedgerWrite $plan     Decides the new rows from the stored state.
-	 * @throws DatabaseException When the lock is not held, a read or write fails, or the connection changed (rolled back; after COMMIT the outcome is unknown).
+	 * @throws DatabaseException When the lock is not held, or a read or write fails (rolled back).
+	 * @throws SalesConnectionChangedException When the connection changed (rolled back; after COMMIT the outcome is unknown).
 	 * @throws InvalidArgumentException When a planned row belongs to another order (rolled back).
 	 * @throws Throwable Whatever $plan throws (rolled back).
 	 */
@@ -450,7 +451,8 @@ final class SalesRepository {
 	 * @param string|null $sql      Result of $wpdb->prepare().
 	 * @param int         $order_id WooCommerce order (for the log).
 	 * @return bool True when the row was inserted, false when the statement failed (e.g. a duplicate).
-	 * @throws DatabaseException When the statement ran in another session than the lock's.
+	 * @throws DatabaseException When the statement could not be prepared.
+	 * @throws SalesConnectionChangedException When the statement ran in another session than the lock's.
 	 */
 	private function guarded_insert( ?string $sql, int $order_id ): bool {
 		if ( null === $sql ) {
@@ -466,7 +468,7 @@ final class SalesRepository {
 		}
 
 		if ( 0 === $result ) {
-			throw new DatabaseException( 'The database connection changed while the sales ledger lock was held.', array( 'order_id' => $order_id ) );
+			throw new SalesConnectionChangedException( 'The database connection changed while the sales ledger lock was held.' );
 		}
 
 		return 1 === $result;
@@ -489,7 +491,7 @@ final class SalesRepository {
 	 * and to still hold the lock.
 	 *
 	 * @param int $order_id WooCommerce order.
-	 * @throws DatabaseException When the connection changed or the lock is lost.
+	 * @throws SalesConnectionChangedException When the connection changed or the lock is lost.
 	 */
 	private function assert_same_connection( int $order_id ): void {
 		$wpdb = $this->wpdb;
@@ -503,7 +505,7 @@ final class SalesRepository {
 			|| (string) ( $row['connection_id'] ?? '' ) !== (string) $this->lock_connection
 			|| (string) ( $row['holder'] ?? '' ) !== (string) $this->lock_connection
 		) {
-			throw new DatabaseException( 'The database connection changed while the sales ledger lock was held.', array( 'order_id' => $order_id ) );
+			throw new SalesConnectionChangedException( 'The database connection changed while the sales ledger lock was held.' );
 		}
 	}
 

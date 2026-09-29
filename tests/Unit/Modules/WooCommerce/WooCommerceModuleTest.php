@@ -33,6 +33,7 @@ use MerchBoard\Modules\WooCommerce\CategoryReconciliationScheduler;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceProductStore;
@@ -85,6 +86,18 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertFalse( has_action( 'admin_post_nopriv_' . CreatorCategoriesActions::MAP_ACTION ) );
 	}
 
+	public function test_the_sales_ledger_hooks_are_registered_once_for_every_request(): void {
+		$container = self::core_container();
+
+		( new WooCommerceModule() )->register( $container );
+		$hooks = $container->get( SalesLedgerHooks::class );
+
+		self::assertSame( $hooks, $container->get( SalesLedgerHooks::class ), 'One instance.' );
+		self::assertSame( 10, has_action( 'woocommerce_after_order_object_save', array( $hooks, 'order_saved' ) ) );
+		self::assertSame( SalesLedgerHooks::DELETE_POST_PRIORITY, has_action( 'before_delete_post', array( $hooks, 'post_deleting' ) ) );
+		self::assertSame( 10, has_action( 'woocommerce_refund_deleted', array( $hooks, 'refund_deleted' ) ) );
+	}
+
 	public function test_the_module_reuses_the_core_guard_and_never_registers_it(): void {
 		$container = self::core_container();
 		$guard     = $container->get( ProtectedProductMeta::class );
@@ -96,7 +109,7 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( $guard, ( new ReflectionProperty( ProductCreatorLink::class, 'guard' ) )->getValue( $link ), 'ProductCreatorLink writes through the core instance.' );
 		self::assertFalse( has_filter( 'update_post_metadata' ), 'Registering the guard is core\'s job (ADR-035).' );
 		self::assertFalse( has_filter( 'delete_post_metadata_by_mid' ) );
-		self::assertFalse( has_action( 'before_delete_post' ) );
+		self::assertFalse( has_action( 'before_delete_post', array( $guard, 'deleting_post' ) ), 'Only the sales ledger listens to before_delete_post here.' );
 	}
 
 	public function test_the_woocommerce_entry_point_checks_are_hooked_for_every_request(): void {

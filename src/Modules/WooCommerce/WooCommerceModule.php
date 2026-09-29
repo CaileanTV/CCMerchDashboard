@@ -24,6 +24,13 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
+use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
+use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
+use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
+use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
+use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
+use MerchBoard\Modules\WooCommerce\Sales\WooCommerceOrderSnapshotReader;
+use MerchBoard\Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -147,6 +154,24 @@ final class WooCommerceModule implements Module {
 		// the jobs run outside wp-admin.
 		$container->get( CategoryReconciliationHooks::class )->register();
 		$container->get( CategoryReconciliationJobs::class )->register();
+
+		// Sales ledger (ADR-037, ADR-038): every request, since orders change in
+		// checkout, wp-admin, REST, WP-CLI and cron.
+		$container->set(
+			SalesSynchronizer::class,
+			static fn( Container $c ): SalesSynchronizer => new SalesSynchronizer(
+				new SalesRepository( $c->get( wpdb::class ), $c->get( Transaction::class ) ),
+				new SalesPlanner(),
+				new WooCommerceOrderSnapshotReader( $c->get( ProductCreatorLink::class ), new CountedOrderStatuses() ),
+				new WooCommerceSalesFailureMarker(),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			SalesLedgerHooks::class,
+			static fn( Container $c ): SalesLedgerHooks => new SalesLedgerHooks( $c->get( SalesSynchronizer::class ) )
+		);
+		$container->get( SalesLedgerHooks::class )->register();
 
 		// The protected meta guard itself is a core service (ADR-035): Plugin
 		// registers its one instance in register_hooks(), and ProductCreatorLink

@@ -22,6 +22,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCorrectionReason;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEvent;
+use MerchBoard\Modules\WooCommerce\Sales\SalesConnectionChangedException;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEventType;
 use MerchBoard\Modules\WooCommerce\Sales\SalesEntry;
 use MerchBoard\Modules\WooCommerce\Sales\SalesEntryType;
@@ -503,8 +504,10 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 					}
 				)
 			);
-			self::fail( 'Expected DatabaseException.' );
-		} catch ( DatabaseException $e ) {
+			self::fail( 'Expected SalesConnectionChangedException.' );
+		} catch ( Throwable $e ) {
+			// Thrown by write() inside the lock's closure (ADR-038, Q2: a type of its own).
+			self::assertInstanceOf( SalesConnectionChangedException::class, $e );
 			self::assertSame( 'The database connection changed while the sales ledger lock was held.', $e->getMessage() );
 		}
 
