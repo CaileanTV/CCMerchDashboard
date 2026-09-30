@@ -24,7 +24,10 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
+use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
+use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
+use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatusSettings;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
@@ -156,13 +159,15 @@ final class WooCommerceModule implements Module {
 		$container->get( CategoryReconciliationJobs::class )->register();
 
 		// Sales ledger (ADR-037, ADR-038): every request, since orders change in
-		// checkout, wp-admin, REST, WP-CLI and cron.
+		// checkout, wp-admin, REST, WP-CLI and cron. The counted statuses are
+		// read from the setting on every synchronization (ADR-038 S6).
+		$container->set( CountedOrderStatuses::class, static fn(): CountedOrderStatuses => new CountedOrderStatuses() );
 		$container->set(
 			SalesSynchronizer::class,
 			static fn( Container $c ): SalesSynchronizer => new SalesSynchronizer(
 				new SalesRepository( $c->get( wpdb::class ), $c->get( Transaction::class ) ),
 				new SalesPlanner(),
-				new WooCommerceOrderSnapshotReader( $c->get( ProductCreatorLink::class ), new CountedOrderStatuses() ),
+				new WooCommerceOrderSnapshotReader( $c->get( ProductCreatorLink::class ), $c->get( CountedOrderStatuses::class ) ),
 				new WooCommerceSalesFailureMarker(),
 				$c->get( Logger::class )
 			)
@@ -285,11 +290,29 @@ final class WooCommerceModule implements Module {
 			)
 		);
 
+		// The "Sales ledger" section on the settings screen (ADR-038 S1-S14).
+		$container->set(
+			CountedOrderStatusSettings::class,
+			static fn( Container $c ): CountedOrderStatusSettings => new CountedOrderStatusSettings(
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( CountedOrderStatuses::class )
+			)
+		);
+		$container->set(
+			SalesLedgerSettingsActions::class,
+			static fn( Container $c ): SalesLedgerSettingsActions => new SalesLedgerSettingsActions( $c->get( CountedOrderStatusSettings::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			SalesLedgerSettingsSection::class,
+			static fn( Container $c ): SalesLedgerSettingsSection => new SalesLedgerSettingsSection( $c->get( CountedOrderStatusSettings::class ) )
+		);
+
 		// Only wp-admin: the product category column in the Creators list, the
 		// product category and product links on the
 		// creator's edit page and the read-only column and filter in the
-		// product list. Nothing is hooked into WooCommerce's product editor
-		// (ADR-032).
+		// product list, and the "Sales ledger" settings section. Nothing is
+		// hooked into WooCommerce's product editor (ADR-032).
 		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
@@ -301,6 +324,8 @@ final class WooCommerceModule implements Module {
 				$container->get( CreatorProductsActions::class )->register();
 				$container->get( CreatorProductsSection::class )->register();
 				$container->get( ProductListCreators::class )->register();
+				$container->get( SalesLedgerSettingsActions::class )->register();
+				$container->get( SalesLedgerSettingsSection::class )->register();
 			}
 		);
 	}

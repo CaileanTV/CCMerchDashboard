@@ -124,9 +124,82 @@ final class SettingsTest extends TestCase {
 			array(
 				Settings::DELETE_DATA_ON_UNINSTALL => true,
 				Settings::DASHBOARD_SLUG           => Settings::DEFAULT_DASHBOARD_SLUG,
+				Settings::COUNTED_ORDER_STATUSES   => array( 'processing', 'completed' ),
 			),
 			Settings::all()
 		);
+	}
+
+	public function test_counted_order_statuses_default_to_processing_and_completed(): void {
+		self::assertSame( array( 'processing', 'completed' ), Settings::DEFAULT_COUNTED_ORDER_STATUSES );
+		self::assertSame( array( 'processing', 'completed' ), Settings::counted_order_statuses() );
+		self::assertSame( array( 'processing', 'completed' ), Settings::defaults()[ Settings::COUNTED_ORDER_STATUSES ] );
+	}
+
+	public function test_counted_order_statuses_keep_a_valid_list_in_its_order(): void {
+		$this->options->options[ Settings::OPTION ] = array( Settings::COUNTED_ORDER_STATUSES => array( 'on-hold', 'completed', 'shipped-2' ) );
+
+		self::assertSame( array( 'on-hold', 'completed', 'shipped-2' ), Settings::counted_order_statuses() );
+	}
+
+	/**
+	 * Stored values and the list Core Settings makes of them (format only).
+	 *
+	 * @return array<string, array{mixed, list<string>}>
+	 */
+	public static function stored_status_lists(): array {
+		return array(
+			'not an array'          => array( 'completed', array( 'processing', 'completed' ) ),
+			'empty list'            => array( array(), array( 'processing', 'completed' ) ),
+			'only invalid entries'  => array( array( 'Completed', 'on hold', 'on.hold', 'wc-completed', 'wc-', '', 1, null, array( 'completed' ) ), array( 'processing', 'completed' ) ),
+			'invalid entries mixed' => array( array( 'BAD', 'completed', 7, 'Awaiting_Shipment', 'on-hold' ), array( 'completed', 'on-hold' ) ),
+			'underscores kept'      => array( array( 'awaiting_shipment', 'partial_paid-2', 'completed' ), array( 'awaiting_shipment', 'partial_paid-2', 'completed' ) ),
+			'sanitize_key charset'  => array( array( '-x', 'a--b', 'x_', '_' ), array( '-x', 'a--b', 'x_', '_' ) ),
+			'17 characters fit'     => array( array( str_repeat( 'a', 17 ) ), array( str_repeat( 'a', 17 ) ) ),
+			'18 characters do not'  => array( array( str_repeat( 'a', 18 ), 'completed' ), array( 'completed' ) ),
+			'duplicates'            => array( array( 'completed', 'on-hold', 'completed', 'on-hold' ), array( 'completed', 'on-hold' ) ),
+			'associative keys'      => array(
+				array(
+					'x' => 'on-hold',
+					'y' => 'completed',
+				),
+				array( 'on-hold', 'completed' ),
+			),
+			'denied is format-ok'   => array( array( 'pending' ), array( 'pending' ) ),
+		);
+	}
+
+	/**
+	 * Core only checks the format and removes duplicates deterministically;
+	 * the deny list and WooCommerce' registrations are the WooCommerce
+	 * module's job.
+	 *
+	 * @param mixed    $stored   Stored value.
+	 * @param string[] $expected Resulting list.
+	 */
+	#[DataProvider( 'stored_status_lists' )]
+	public function test_counted_order_statuses_are_format_checked_and_deduplicated( mixed $stored, array $expected ): void {
+		$this->options->options[ Settings::OPTION ] = array( Settings::COUNTED_ORDER_STATUSES => $stored );
+
+		self::assertSame( $expected, Settings::counted_order_statuses() );
+		self::assertSame( $expected, Settings::sanitize( array( Settings::COUNTED_ORDER_STATUSES => $stored ) )[ Settings::COUNTED_ORDER_STATUSES ] );
+	}
+
+	public function test_status_slug_limit_fits_the_prefixed_status_in_both_order_stores(): void {
+		// wp_posts.post_status and wc_orders.status are varchar(20) and hold "wc-" + slug.
+		self::assertSame( 20, Settings::STATUS_SLUG_MAX_LENGTH + strlen( 'wc-' ) );
+		self::assertTrue( Settings::valid_status_slug( 'awaiting_shipment' ) );
+		self::assertFalse( Settings::valid_status_slug( 'Awaiting_shipment' ), 'Capitals are rejected.' );
+		self::assertFalse( Settings::valid_status_slug( 'wc-shipped' ), 'Stored slugs never carry the prefix.' );
+		self::assertFalse( Settings::valid_status_slug( '' ) );
+	}
+
+	public function test_saving_other_settings_keeps_the_counted_order_statuses(): void {
+		$this->options->options[ Settings::OPTION ] = array( Settings::COUNTED_ORDER_STATUSES => array( 'on-hold' ) );
+
+		self::assertTrue( $this->service->set_delete_data_on_uninstall( true, 'DELETE' ) );
+
+		self::assertSame( array( 'on-hold' ), Settings::counted_order_statuses() );
 	}
 
 	public function test_enabling_requires_the_typed_confirmation(): void {
@@ -309,10 +382,37 @@ final class SettingsTest extends TestCase {
 
 	public function test_page_refuses_users_without_the_capability(): void {
 		$this->caps = array( Capabilities::MANAGE_CREATORS );
+		$sections   = 0;
+		Functions\when( 'do_action' )->alias(
+			static function () use ( &$sections ): void {
+				++$sections;
+			}
+		);
 
-		$this->expectException( WpDie::class );
+		try {
+			$this->render_page();
+			self::fail( 'Expected WpDie.' );
+		} catch ( WpDie $e ) {
+			self::assertSame( 403, $e->response );
+		}
 
-		$this->render_page();
+		self::assertSame( 0, $sections, 'Sections are never rendered without the capability.' );
+	}
+
+	public function test_other_modules_add_sections_between_the_slug_and_data_on_uninstall(): void {
+		Functions\when( 'do_action' )->alias(
+			static function ( string $hook ): void {
+				echo '[section:' . $hook . ']'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Test stub.
+			}
+		);
+
+		$html    = $this->render_page();
+		$section = strpos( $html, '[section:merchboard_settings_sections]' );
+
+		self::assertNotFalse( $section );
+		self::assertSame( 1, substr_count( $html, '[section:' ) );
+		self::assertGreaterThan( (int) strpos( $html, 'Save dashboard URL' ), $section );
+		self::assertLessThan( (int) strpos( $html, 'Data on uninstall' ), $section );
 	}
 
 	public function test_only_whitelisted_notices_are_shown(): void {

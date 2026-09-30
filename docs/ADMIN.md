@@ -16,7 +16,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   ├── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger; fase 17 (WooCommerce): afsnittene "Product category" og "Products"
 │   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
-├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug). Tabs General · Access · Advanced kommer, når de får indhold
+├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce). Tabs General · Access · Advanced kommer, når de får indhold
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
@@ -111,6 +111,14 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 → Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030)
 → alle andre WordPress- og WooCommerce-data bevares
 ```
+
+**"Sales ledger"** (✅ fase 18, trin 6, runtime-verificeret i Merch Dashboard Local med HPOS og legacy, ADR-038 statusnote "trin 6 afsluttet"; ADR-038 S1–S14 og statusnote 2026-09-30):
+
+- Tilføjes af WooCommerce-modulet via udvidelsespunktet `merchboard_settings_sections` (kaldes i `SettingsPage::render()` efter capability-tjekket); Settings-modulet kender ikke WooCommerce. Vises kun med WooCommerce aktivt og står efter "Creator dashboard" og før "Data on uninstall".
+- Egen formular og nonce (egen admin-post-action); capability `merchboard_manage_settings` tjekkes før nonce. Notices via sektionens egne query-argumenter.
+- Én afkrydsning pr. registreret status fra `wc_get_order_statuses()` (gemt uden `wc-`), undtagen `pending`, `failed`, `cancelled`, `refunded`, `checkout-draft` og `trash`. Gemte statusser, der ikke længere er registreret, vises som "ikke registreret" og kan beholdes eller fravælges, men ikke tilføjes på ny. Registrerede statusser, der ikke kan understøttes (nøgle uden `wc-`, ugyldigt format som store bogstaver, eller slug over 17 tegn), vises under "Not supported" med årsag og uden afkrydsning (ADR-038, statusnote 2026-09-30). Mindst én status kræves; standard `processing` + `completed`.
+- Forklaring i UI: Ændringen gælder for synkroniseringer efter ændringen – også af eksisterende ordrer, ikke kun nye ordrer. Der sker ingen masse-genberegning og ingen backfill; en ordre vurderes efter den aktuelle liste, næste gang den synkroniseres, og kan så få reversal og lukning eller en ny cyklus med behandlingstidspunktet som `occurred_at` (følger af den tilstandsbaserede synkronisering, ADR-038 pkt. 13). Historiske rækker ændres aldrig.
+- En ændring skriver `settings_updated` med `setting` = `counted_order_statuses`, `previous_value` og `value` som lister (vises som `a, b`), i samme transaktion som option'en.
 
 **Planlagte settings** (når de får indhold):
 

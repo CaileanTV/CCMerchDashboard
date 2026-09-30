@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-27T21:58:31+00:00\n"
+"PO-Revision-Date: 2026-09-30T17:31:07+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -177,175 +177,179 @@ msgstr "Indstilling: slet alle data, når pluginet slettes"
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
+#: src/Modules/Admin/AuditLogFormatter.php:170
+msgid "Setting: counted order statuses"
+msgstr "Indstilling: tællende ordrestatusser"
+
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:171
+#: src/Modules/Admin/AuditLogFormatter.php:172
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:175
+#: src/Modules/Admin/AuditLogFormatter.php:176
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:178
+#: src/Modules/Admin/AuditLogFormatter.php:179
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:180
+#: src/Modules/Admin/AuditLogFormatter.php:181
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:180
+#: src/Modules/Admin/AuditLogFormatter.php:181
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:183
+#: src/Modules/Admin/AuditLogFormatter.php:184
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:186
+#: src/Modules/Admin/AuditLogFormatter.php:187
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:189
+#: src/Modules/Admin/AuditLogFormatter.php:190
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:192
+#: src/Modules/Admin/AuditLogFormatter.php:193
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:194
+#: src/Modules/Admin/AuditLogFormatter.php:195
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:197
+#: src/Modules/Admin/AuditLogFormatter.php:198
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:200
+#: src/Modules/Admin/AuditLogFormatter.php:201
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:203
+#: src/Modules/Admin/AuditLogFormatter.php:204
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:206
+#: src/Modules/Admin/AuditLogFormatter.php:207
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:208
+#: src/Modules/Admin/AuditLogFormatter.php:209
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:211
+#: src/Modules/Admin/AuditLogFormatter.php:212
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:214
+#: src/Modules/Admin/AuditLogFormatter.php:215
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:217
+#: src/Modules/Admin/AuditLogFormatter.php:218
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:219
+#: src/Modules/Admin/AuditLogFormatter.php:220
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:219
+#: src/Modules/Admin/AuditLogFormatter.php:220
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:222
+#: src/Modules/Admin/AuditLogFormatter.php:223
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:256
+#: src/Modules/Admin/AuditLogFormatter.php:257
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:258
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:258
+#: src/Modules/Admin/AuditLogFormatter.php:259
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/Admin/AuditLogFormatter.php:260
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:260
-#: src/Modules/Admin/AuditLogFormatter.php:408
+#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:409
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:262
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:262
-#: src/Modules/Admin/AuditLogFormatter.php:468
+#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:469
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:264
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:274
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:292
+#: src/Modules/Admin/AuditLogFormatter.php:293
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:307
-#: src/Modules/Admin/AuditLogListTable.php:276
+#: src/Modules/Admin/AuditLogFormatter.php:308
+#: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
 msgid "Creator #%d (not found)"
@@ -353,7 +357,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/Admin/AuditLogFormatter.php:377
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
 #, php-format
@@ -361,114 +365,114 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/Admin/AuditLogFormatter.php:377
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:386
+#: src/Modules/Admin/AuditLogFormatter.php:387
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:387
+#: src/Modules/Admin/AuditLogFormatter.php:388
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:388
+#: src/Modules/Admin/AuditLogFormatter.php:389
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:389
+#: src/Modules/Admin/AuditLogFormatter.php:390
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:390
+#: src/Modules/Admin/AuditLogFormatter.php:391
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:391
+#: src/Modules/Admin/AuditLogFormatter.php:392
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:392
+#: src/Modules/Admin/AuditLogFormatter.php:393
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:393
+#: src/Modules/Admin/AuditLogFormatter.php:394
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:395
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:396
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:397
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:410
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:421
+#: src/Modules/Admin/AuditLogFormatter.php:422
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:423
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:434
+#: src/Modules/Admin/AuditLogFormatter.php:435
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:435
+#: src/Modules/Admin/AuditLogFormatter.php:436
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:436
+#: src/Modules/Admin/AuditLogFormatter.php:437
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:468
+#: src/Modules/Admin/AuditLogFormatter.php:469
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:487
+#: src/Modules/Admin/AuditLogFormatter.php:488
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:488
+#: src/Modules/Admin/AuditLogFormatter.php:489
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:489
+#: src/Modules/Admin/AuditLogFormatter.php:490
 msgid "social links"
 msgstr "sociale links"
 
-#: src/Modules/Admin/AuditLogListTable.php:90
+#: src/Modules/Admin/AuditLogListTable.php:91
 msgid "Time"
 msgstr "Tidspunkt"
 
-#: src/Modules/Admin/AuditLogListTable.php:91
+#: src/Modules/Admin/AuditLogListTable.php:92
 #: src/Modules/Admin/AuditLogPage.php:235
 msgid "Event"
 msgstr "Hændelse"
 
-#: src/Modules/Admin/AuditLogListTable.php:92
+#: src/Modules/Admin/AuditLogListTable.php:93
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
@@ -476,33 +480,33 @@ msgstr "Hændelse"
 msgid "Creator"
 msgstr "Creator"
 
-#: src/Modules/Admin/AuditLogListTable.php:93
+#: src/Modules/Admin/AuditLogListTable.php:94
 msgid "By"
 msgstr "Af"
 
-#: src/Modules/Admin/AuditLogListTable.php:94
+#: src/Modules/Admin/AuditLogListTable.php:95
 msgid "Details"
 msgstr "Detaljer"
 
-#: src/Modules/Admin/AuditLogListTable.php:234
+#: src/Modules/Admin/AuditLogListTable.php:235
 #: src/Modules/Admin/OverviewPage.php:105
 msgid "No audit records yet."
 msgstr "Ingen audit-poster endnu."
 
-#: src/Modules/Admin/AuditLogListTable.php:235
+#: src/Modules/Admin/AuditLogListTable.php:236
 msgid "No audit records match the filter."
 msgstr "Ingen audit-poster matcher filteret."
 
-#: src/Modules/Admin/AuditLogListTable.php:286
+#: src/Modules/Admin/AuditLogListTable.php:287
 msgid "(filter)"
 msgstr "(filtrér)"
 
-#: src/Modules/Admin/AuditLogListTable.php:298
+#: src/Modules/Admin/AuditLogListTable.php:299
 msgid "System"
 msgstr "System"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogListTable.php:305
+#: src/Modules/Admin/AuditLogListTable.php:306
 #, php-format
 msgid "User #%d (no longer exists)"
 msgstr "Bruger #%d (findes ikke længere)"
@@ -685,7 +689,7 @@ msgid "WooCommerce"
 msgstr "WooCommerce"
 
 #: src/Modules/Admin/OverviewPage.php:198
-#: src/Modules/Settings/Admin/SettingsPage.php:119
+#: src/Modules/Settings/Admin/SettingsPage.php:132
 msgid "Data on uninstall"
 msgstr "Data ved afinstallation"
 
@@ -698,7 +702,7 @@ msgid "Kept when the plugin is deleted"
 msgstr "Bevares, når pluginet slettes"
 
 #: src/Modules/Admin/OverviewPage.php:206
-#: src/Modules/Settings/Admin/SettingsPage.php:71
+#: src/Modules/Settings/Admin/SettingsPage.php:77
 msgid "Settings"
 msgstr "Indstillinger"
 
@@ -715,6 +719,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:345
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:99
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
@@ -748,7 +753,7 @@ msgid "Creator deactivated."
 msgstr "Creator deaktiveret."
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:190
-#: src/Modules/Settings/Admin/SettingsPage.php:87
+#: src/Modules/Settings/Admin/SettingsPage.php:93
 msgid "No changes were made."
 msgstr "Der blev ikke foretaget nogen ændringer."
 
@@ -903,107 +908,109 @@ msgid "Some profile fields are invalid."
 msgstr "Nogle profilfelter er ugyldige."
 
 #: src/Modules/Settings/Admin/SettingsActions.php:92
-#: src/Modules/Settings/Admin/SettingsPage.php:102
+#: src/Modules/Settings/Admin/SettingsPage.php:108
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:93
 msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
 msgstr "Du har desværre ikke adgang til at administrere Merch Dashboards indstillinger."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:70
-#: src/Modules/Settings/Admin/SettingsPage.php:111
+#: src/Modules/Settings/Admin/SettingsPage.php:76
+#: src/Modules/Settings/Admin/SettingsPage.php:117
 msgid "Merch Dashboard Settings"
 msgstr "Merch Dashboard-indstillinger"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:86
+#: src/Modules/Settings/Admin/SettingsPage.php:92
 msgid "Settings saved."
 msgstr "Indstillingerne er gemt."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:88
+#: src/Modules/Settings/Admin/SettingsPage.php:94
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
 msgid "You are not allowed to change these settings."
 msgstr "Du har ikke adgang til at ændre disse indstillinger."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:89
+#: src/Modules/Settings/Admin/SettingsPage.php:95
 msgid "Permanent deletion was not enabled: type DELETE in the confirmation field to enable it."
 msgstr "Permanent sletning blev ikke slået til: skriv DELETE i bekræftelsesfeltet for at slå den til."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:90
+#: src/Modules/Settings/Admin/SettingsPage.php:96
 msgid "The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path."
 msgstr "Dashboard-sluggen blev ikke ændret: brug 3-50 små bogstaver, cifre og enkelte bindestreger, og ikke en reserveret WordPress- eller WooCommerce-sti."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:91
+#: src/Modules/Settings/Admin/SettingsPage.php:97
 msgid "The dashboard slug was not changed: a page, post, product or archive already uses it."
 msgstr "Dashboard-sluggen blev ikke ændret: en side, et indlæg, et produkt eller et arkiv bruger den allerede."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:92
+#: src/Modules/Settings/Admin/SettingsPage.php:98
 msgid "A technical error occurred. The settings were not changed."
 msgstr "Der opstod en teknisk fejl. Indstillingerne blev ikke ændret."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:120
+#: src/Modules/Settings/Admin/SettingsPage.php:133
 msgid "Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here."
 msgstr "Deaktivering af pluginet sletter aldrig data. Sletning af pluginet bevarer også alle data, medmindre permanent sletning er slået til her."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:123
+#: src/Modules/Settings/Admin/SettingsPage.php:136
 msgid "Permanent deletion is ENABLED."
 msgstr "Permanent sletning er SLÅET TIL."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:124
+#: src/Modules/Settings/Admin/SettingsPage.php:137
 msgid "When the plugin is deleted from the Plugins screen, all Merch Dashboard data is permanently removed."
 msgstr "Når pluginet slettes fra siden Plugins, fjernes alle Merch Dashboard-data permanent."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:126
+#: src/Modules/Settings/Admin/SettingsPage.php:139
 msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
 msgstr "Permanent sletning er slået fra. Sletning af pluginet bevarer alle Merch Dashboard-data."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:129
+#: src/Modules/Settings/Admin/SettingsPage.php:142
 msgid "If enabled, deleting the plugin permanently removes: all creators, the audit log, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
 msgstr "Hvis det er slået til, fjerner sletning af pluginet permanent: alle creators, auditloggen, Merch Dashboards indstillinger og skemastatus, rollen \"Merch Dashboard Creator\" og alle merchboard_-rettigheder. Det kan ikke fortrydes."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:130
+#: src/Modules/Settings/Admin/SettingsPage.php:143
 msgid "Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers."
 msgstr "Fjernes aldrig: WordPress-brugere, andre roller og rettigheder, indlæg, sider, medier samt WooCommerce-produkter, -ordrer og -kunder."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:136
+#: src/Modules/Settings/Admin/SettingsPage.php:149
 msgid "Permanent deletion"
 msgstr "Permanent sletning"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:138
+#: src/Modules/Settings/Admin/SettingsPage.php:151
 msgid "Delete all Merch Dashboard data when the plugin is deleted"
 msgstr "Slet alle Merch Dashboard-data, når pluginet slettes"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:142
+#: src/Modules/Settings/Admin/SettingsPage.php:155
 msgid "Confirmation"
 msgstr "Bekræftelse"
 
 #. translators: %s: the word to type, "DELETE".
-#: src/Modules/Settings/Admin/SettingsPage.php:145
+#: src/Modules/Settings/Admin/SettingsPage.php:158
 #, php-format
 msgid "To enable permanent deletion, also type %s here."
 msgstr "For at slå permanent sletning til skal du også skrive %s her."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:150
+#: src/Modules/Settings/Admin/SettingsPage.php:163
 msgid "Save settings"
 msgstr "Gem indstillinger"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:162
+#: src/Modules/Settings/Admin/SettingsPage.php:175
 #: templates/dashboard/shell.php:31
 msgid "Creator dashboard"
 msgstr "Creator-dashboard"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:163
+#: src/Modules/Settings/Admin/SettingsPage.php:176
 msgid "Creators log in and use their dashboard at this address:"
 msgstr "Creators logger ind og bruger deres dashboard på denne adresse:"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:166
+#: src/Modules/Settings/Admin/SettingsPage.php:179
 msgid "Plain permalinks are active, so the slug is not used; the dashboard address above works regardless."
 msgstr "Simple permalinks er aktive, så sluggen bruges ikke; dashboardadressen ovenfor virker alligevel."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:173
+#: src/Modules/Settings/Admin/SettingsPage.php:186
 msgid "Dashboard URL slug"
 msgstr "URL-slug for dashboardet"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:175
+#: src/Modules/Settings/Admin/SettingsPage.php:188
 msgid "Lowercase letters, digits and hyphens. Changing it moves the dashboard: the old address stops working and bookmarks must be updated. Pages, posts, products and archives that already use a slug cannot be chosen."
 msgstr "Små bogstaver, cifre og bindestreger. En ændring flytter dashboardet: den gamle adresse holder op med at virke, og bogmærker skal opdateres. Slugs, som sider, indlæg, produkter og arkiver allerede bruger, kan ikke vælges."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:177
+#: src/Modules/Settings/Admin/SettingsPage.php:190
 msgid "Save dashboard URL"
 msgstr "Gem dashboardadresse"
 
@@ -1656,6 +1663,89 @@ msgstr "%s (inaktiv)"
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:55
+msgid "Counted order statuses saved. They apply from the next synchronization of an order; nothing was recalculated."
+msgstr "De tællende ordrestatusser er gemt. De gælder fra næste synkronisering af en ordre; intet blev genberegnet."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:56
+msgid "No changes were made to the counted order statuses."
+msgstr "Der blev ikke ændret noget i de tællende ordrestatusser."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:58
+msgid "The counted order statuses were not changed: WooCommerce is not available."
+msgstr "De tællende ordrestatusser blev ikke ændret: WooCommerce er ikke tilgængelig."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:59
+msgid "The counted order statuses were not changed: choose at least one status."
+msgstr "De tællende ordrestatusser blev ikke ændret: vælg mindst én status."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:60
+msgid "The counted order statuses were not changed: a chosen status cannot count. Reload the page and try again."
+msgstr "De tællende ordrestatusser blev ikke ændret: en valgt status kan ikke tælle. Genindlæs siden, og prøv igen."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:61
+msgid "A technical error occurred. The counted order statuses were not changed."
+msgstr "Der opstod en teknisk fejl. De tællende ordrestatusser blev ikke ændret."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:78
+msgid "Sales ledger"
+msgstr "Salgsjournal"
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:88
+msgid "WooCommerce is not available, so the counted order statuses cannot be changed now."
+msgstr "WooCommerce er ikke tilgængelig, så de tællende ordrestatusser kan ikke ændres nu."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:93
+msgid "Orders in these statuses count as sales in the sales ledger."
+msgstr "Ordrer i disse statusser tæller som salg i salgsjournalen."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:94
+msgid "A change applies only to future synchronizations: an order is evaluated with the new list the next time it is saved or synchronized, also if it already exists. Nothing is recalculated now, and the sales history is never changed."
+msgstr "En ændring gælder kun for fremtidige synkroniseringer: en ordre vurderes efter den nye liste, næste gang den gemmes eller synkroniseres, også hvis den allerede findes. Intet genberegnes nu, og salgshistorikken ændres aldrig."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:100
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:101
+msgid "Counted order statuses"
+msgstr "Tællende ordrestatusser"
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:108
+msgid "not registered"
+msgstr "ikke registreret"
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:115
+msgid "At least one status is required. Pending payment, failed, cancelled, refunded, draft and trashed orders never count. A status marked \"not registered\" is no longer known to WooCommerce (for example because the plugin that adds it is inactive); it still counts, can be removed, but cannot be added again until it is registered."
+msgstr "Mindst én status er påkrævet. Ordrer, der afventer betaling, er mislykkede, annullerede, refunderede, kladder eller i papirkurven, tæller aldrig. En status markeret \"ikke registreret\" kendes ikke længere af WooCommerce (fx fordi pluginet, der tilføjer den, er inaktivt); den tæller stadig og kan fjernes, men kan ikke tilføjes igen, før den er registreret."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:119
+msgid "Save counted statuses"
+msgstr "Gem tællende statusser"
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:134
+msgid "Not supported"
+msgstr "Ikke understøttet"
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:135
+msgid "These statuses are registered by WooCommerce or another plugin, but they cannot count as sales and cannot be chosen: only statuses with a \"wc-\" key and a slug that both order storages (HPOS and legacy) keep unchanged are supported."
+msgstr "Disse statusser er registreret af WooCommerce eller et andet plugin, men de kan ikke tælle som salg og kan ikke vælges: kun statusser med en \"wc-\"-nøgle og en slug, som begge ordrelagre (HPOS og legacy) gemmer uændret, understøttes."
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:155
+msgid "the key must be \"wc-\" followed by the status slug, without an empty or repeated \"wc-\""
+msgstr "nøglen skal være \"wc-\" efterfulgt af status-sluggen, uden et tomt eller gentaget \"wc-\""
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:159
+msgid "the key does not start with \"wc-\""
+msgstr "nøglen starter ikke med \"wc-\""
+
+#. translators: %d: maximum number of characters.
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:162
+#, php-format
+msgid "longer than %d characters without \"wc-\""
+msgstr "længere end %d tegn uden \"wc-\""
+
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:165
+msgid "only lowercase letters, digits, \"_\" and \"-\" are supported"
+msgstr "kun små bogstaver, cifre, \"_\" og \"-\" understøttes"
 
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182

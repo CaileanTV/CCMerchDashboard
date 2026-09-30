@@ -26,6 +26,8 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
+use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
+use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\ActionSchedulerQueue;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationHooks;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationJobs;
@@ -33,6 +35,7 @@ use MerchBoard\Modules\WooCommerce\CategoryReconciliationScheduler;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
@@ -84,6 +87,23 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertFalse( has_action( 'admin_post_nopriv_' . CategorySyncActions::ACTION ) );
 		self::assertFalse( has_action( 'wp_ajax_' . CreatorCategoriesActions::MAP_ACTION ), 'Only admin-post; no AJAX or REST route.' );
 		self::assertFalse( has_action( 'admin_post_nopriv_' . CreatorCategoriesActions::MAP_ACTION ) );
+	}
+
+	public function test_the_sales_ledger_settings_section_is_wired_to_the_settings_page_only(): void {
+		$container = self::core_container();
+		( new WooCommerceModule() )->register( $container );
+
+		self::assertFalse( has_action( 'merchboard_settings_sections' ), 'Only after admin_init.' );
+
+		self::run_admin_init();
+		$container = self::core_container();
+		( new WooCommerceModule() )->register( $container );
+
+		self::assertSame( 10, has_action( 'admin_post_' . SalesLedgerSettingsActions::SAVE_ACTION, array( $container->get( SalesLedgerSettingsActions::class ), 'handle_save_request' ) ) );
+		self::assertSame( 10, has_action( 'merchboard_settings_sections', array( $container->get( SalesLedgerSettingsSection::class ), 'render' ) ) );
+		self::assertFalse( has_action( 'admin_post_nopriv_' . SalesLedgerSettingsActions::SAVE_ACTION ) );
+		self::assertFalse( has_action( 'wp_ajax_' . SalesLedgerSettingsActions::SAVE_ACTION ), 'Only admin-post; no AJAX or REST route.' );
+		self::assertInstanceOf( CountedOrderStatuses::class, $container->get( CountedOrderStatuses::class ), 'One reader of the setting for sync and settings.' );
 	}
 
 	public function test_the_sales_ledger_hooks_are_registered_once_for_every_request(): void {

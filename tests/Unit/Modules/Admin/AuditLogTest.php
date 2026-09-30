@@ -235,6 +235,67 @@ final class AuditLogTest extends TestCase {
 		self::assertSame( array( 'WordPress user: none', 'Status: Inactive' ), AuditLogFormatter::details( $this->entry( AuditAction::CreatorCreated, array( 'user_id' => null, 'status' => 'inactive' ) ), new AuditContextLabels() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
+	public function test_counted_order_statuses_are_shown_as_flat_lists(): void {
+		self::assertSame(
+			array( 'Setting: counted order statuses', 'Previous value: completed, processing', 'New value: completed, on-hold, processing' ),
+			AuditLogFormatter::details(
+				$this->entry(
+					AuditAction::SettingsUpdated,
+					array(
+						'setting'        => 'counted_order_statuses',
+						'previous_value' => array( 'completed', 'processing' ),
+						'value'          => array( 'completed', 'on-hold', 'processing' ),
+					)
+				),
+				new AuditContextLabels()
+			)
+		);
+	}
+
+	/**
+	 * Setting values and how they are shown.
+	 *
+	 * @return array<string, array{mixed, string}>
+	 */
+	public static function setting_values(): array {
+		return array(
+			'empty list'        => array( array(), '—' ),
+			'scalars and bools' => array( array( 'a', 2, true ), 'a, 2, true' ),
+			'underscore slugs'  => array( array( 'awaiting_shipment', 'completed' ), 'awaiting_shipment, completed' ),
+			'nested list'       => array( array( 'a', array( 'b' ) ), '…' ),
+			'null in a list'    => array( array( 'a', null ), '…' ),
+			'associative array' => array( array( 'x' => 'a' ), '…' ),
+			'scalar unchanged'  => array( 'creator-dashboard', 'creator-dashboard' ),
+			'long list capped'  => array( array_fill( 0, 40, 'processing' ), mb_substr( implode( ', ', array_fill( 0, 40, 'processing' ) ), 0, 100 ) . '…' ),
+			'<b>markup</b>'     => array( array( '<b>x</b>' ), '&lt;b&gt;x&lt;/b&gt;' ),
+		);
+	}
+
+	#[DataProvider( 'setting_values' )]
+	public function test_setting_values_show_only_flat_lists( mixed $value, string $shown ): void {
+		$lines = AuditLogFormatter::details(
+			$this->entry(
+				AuditAction::SettingsUpdated,
+				array(
+					'previous_value' => $value,
+					'value'          => $value,
+				)
+			),
+			new AuditContextLabels()
+		);
+
+		self::assertSame( array( 'Previous value: ' . $shown, 'New value: ' . $shown ), $lines );
+	}
+
+	public function test_other_keys_still_hide_every_array(): void {
+		$lines = AuditLogFormatter::details(
+			$this->entry( AuditAction::SettingsUpdated, array( 'nested' => array( 'a', 'b' ) ) ),
+			new AuditContextLabels()
+		);
+
+		self::assertSame( array( 'nested: …' ), $lines, 'Only previous_value and value show lists.' );
+	}
+
 	public function test_product_link_details_are_readable(): void {
 		$labels = new AuditContextLabels(
 			array( 5 => 'Ada (ada)' ),

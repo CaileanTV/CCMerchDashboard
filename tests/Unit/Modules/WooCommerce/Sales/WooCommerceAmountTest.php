@@ -102,7 +102,7 @@ final class WooCommerceAmountTest extends TestCase {
 	}
 
 	public function test_counted_statuses_are_processing_and_completed_only(): void {
-		$statuses = new CountedOrderStatuses();
+		$statuses = new CountedOrderStatuses( static fn(): array => CountedOrderStatuses::DEFAULT );
 
 		self::assertSame( array( 'processing', 'completed' ), CountedOrderStatuses::DEFAULT );
 		self::assertTrue( $statuses->counts( 'processing' ) );

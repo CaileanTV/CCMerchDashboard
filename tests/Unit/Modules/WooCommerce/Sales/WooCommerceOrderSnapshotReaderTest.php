@@ -55,7 +55,7 @@ final class WooCommerceOrderSnapshotReaderTest extends TestCase {
 			new ProtectedProductMeta( new RecordingLogger() )
 		);
 
-		$this->reader = new WooCommerceOrderSnapshotReader( $link, new CountedOrderStatuses() );
+		$this->reader = new WooCommerceOrderSnapshotReader( $link, new CountedOrderStatuses( static fn(): array => CountedOrderStatuses::DEFAULT ) );
 	}
 
 	public function test_reads_status_currency_dates_and_lines_with_the_edit_context(): void {

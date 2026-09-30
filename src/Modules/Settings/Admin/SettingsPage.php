@@ -23,6 +23,12 @@ defined( 'ABSPATH' ) || exit;
  * "Merch Dashboard → Settings": the creator dashboard slug (ADR-026) and the
  * opt-in for permanent data deletion on uninstall (ADR-025). Read-only rendering; changes go through
  * SettingsActions. Everything is escaped at output.
+ *
+ * Other modules add their own sections between the dashboard slug and "Data
+ * on uninstall" via the action `merchboard_settings_sections` (ADR-038, S1
+ * and S11). It fires only after the capability check; each section checks
+ * the capability again, renders its own form, nonce and notices and escapes
+ * its own output.
  */
 final class SettingsPage {
 
@@ -115,6 +121,13 @@ final class SettingsPage {
 		}
 
 		$this->render_dashboard_slug();
+
+		/**
+		 * Fires between the dashboard slug and "Data on uninstall" so other
+		 * modules can add their own settings sections (own form, nonce, notices
+		 * and escaping; ADR-038 S1).
+		 */
+		do_action( 'merchboard_settings_sections' );
 
 		echo '<h2>' . esc_html__( 'Data on uninstall', 'merchboard' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here.', 'merchboard' ) . '</p>';

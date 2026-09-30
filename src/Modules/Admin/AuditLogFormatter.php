@@ -167,15 +167,16 @@ final class AuditLogFormatter {
 				return match ( $value ) {
 					'delete_data_on_uninstall' => esc_html__( 'Setting: delete all data when the plugin is deleted', 'merchboard' ),
 					'dashboard_slug'           => esc_html__( 'Setting: creator dashboard URL slug', 'merchboard' ),
+					'counted_order_statuses'   => esc_html__( 'Setting: counted order statuses', 'merchboard' ),
 					/* translators: %s: setting name. */
 					default                    => self::text( __( 'Setting: %s', 'merchboard' ), self::scalar( $value ) ),
 				};
 			case 'previous_value':
 				/* translators: %s: previous setting value. */
-				return self::text( __( 'Previous value: %s', 'merchboard' ), self::scalar( $value ) );
+				return self::text( __( 'Previous value: %s', 'merchboard' ), self::setting_value( $value ) );
 			case 'value':
 				/* translators: %s: new setting value. */
-				return self::text( __( 'New value: %s', 'merchboard' ), self::scalar( $value ) );
+				return self::text( __( 'New value: %s', 'merchboard' ), self::setting_value( $value ) );
 			case 'enabled':
 				return true === $value ? esc_html__( 'New value: enabled', 'merchboard' ) : esc_html__( 'New value: disabled', 'merchboard' );
 			case 'product_id':
@@ -513,6 +514,41 @@ final class AuditLogFormatter {
 		}
 
 		return $ids;
+	}
+
+	/**
+	 * A setting value (`previous_value`, `value`): a flat list of scalars is
+	 * shown as "a, b", an empty list as "—"; nested or associative arrays stay
+	 * hidden ("…"), like everywhere else. The whole text is capped. Plain text.
+	 *
+	 * @param mixed $value Value.
+	 */
+	private static function setting_value( mixed $value ): string {
+		if ( ! is_array( $value ) ) {
+			return self::scalar( $value );
+		}
+
+		if ( array() === $value ) {
+			return '—';
+		}
+
+		if ( ! array_is_list( $value ) ) {
+			return '…';
+		}
+
+		$items = array();
+
+		foreach ( $value as $item ) {
+			if ( ! is_scalar( $item ) ) {
+				return '…';
+			}
+
+			$items[] = is_bool( $item ) ? ( $item ? 'true' : 'false' ) : (string) $item;
+		}
+
+		$text = implode( ', ', $items );
+
+		return mb_strlen( $text ) > self::MAX_VALUE_LENGTH ? mb_substr( $text, 0, self::MAX_VALUE_LENGTH ) . '…' : $text;
 	}
 
 	/**

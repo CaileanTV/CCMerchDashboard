@@ -180,6 +180,13 @@ function wc_get_order( $the_order = false ) {}
 function wc_get_orders( $args ) {}
 
 /**
+ * Registered order statuses (wc-order-functions.php), keys with `wc-`.
+ *
+ * @return array<string, string>
+ */
+function wc_get_order_statuses() {}
+
+/**
  * WooCommerce product (abstract-wc-product.php).
  */
 class WC_Product extends WC_Data {

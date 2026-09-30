@@ -30,7 +30,7 @@ Definitionerne findes ét sted: `MerchBoard\Core\Security\Capabilities` (konstan
 | `merchboard_access_dashboard` | `Capabilities::ACCESS_DASHBOARD` | rollen `merchboard_creator` | Forudsætning (ikke tilstrækkelig) for Creator Dashboard |
 | `merchboard_manage` | `Capabilities::MANAGE` | `administrator` | Se Merch Dashboard-menuen og Overview (✅ fase 10) |
 | `merchboard_manage_creators` | `Capabilities::MANAGE_CREATORS` | `administrator` | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra (fase 6/10) |
-| `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9) |
+| `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9; fra fase 18, trin 6 også de tællende ordrestatusser for sales ledger, ADR-038 S2) |
 | `merchboard_view_logs` | `Capabilities::VIEW_LOGS` | `administrator` | Læse business audit trail (Audit log, Overview-aktivitet) (✅ fase 11). Giver ingen adgang til tekniske logs og ingen skriveadgang. Creator-adgang giver den aldrig. |
 
 `merchboard_manage_creators` bruges fra fase 6 (creator-administration: admin-side, handlers og `CreatorService`). De øvrige er fundamentet for fase 8-10. Checks skal altid være positive capability-checks: `current_user_can( Capabilities::MANAGE_CREATORS )` / `user_can( $user, … )`. Aldrig "er logget ind", rolle- eller display-navne eller hardcodede user-ID'er.
