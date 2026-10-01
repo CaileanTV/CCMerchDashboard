@@ -2,6 +2,7 @@ import { __ } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 import { EmptyState } from '../components/EmptyState';
+import { OrdersSection } from '../sections/orders/OrdersSection';
 import { OverviewSection } from '../sections/overview/OverviewSection';
 import { ProductsSection } from '../sections/products/ProductsSection';
 import { ProfileSection } from '../sections/profile/ProfileSection';
@@ -17,6 +18,7 @@ export interface Page {
 const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	overview: () => <OverviewSection />,
 	products: () => <ProductsSection />,
+	orders: () => <OrdersSection />,
 	profile: () => <ProfileSection />,
 };
 

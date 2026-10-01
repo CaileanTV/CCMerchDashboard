@@ -24,7 +24,7 @@ final class DashboardSectionRegistrationTest extends TestCase {
 		Functions\when( '__' )->returnArg();
 	}
 
-	public function test_products_follow_the_overview(): void {
+	public function test_products_and_then_orders_follow_the_overview(): void {
 		$sections = DashboardSectionRegistration::add_sections(
 			array(
 				self::section( 'overview', '' ),
@@ -33,7 +33,7 @@ final class DashboardSectionRegistrationTest extends TestCase {
 		);
 
 		self::assertIsArray( $sections );
-		self::assertSame( array( 'overview', 'products', 'profile' ), array_column( $sections, 'id' ) );
+		self::assertSame( array( 'overview', 'products', 'orders', 'profile' ), array_column( $sections, 'id' ) );
 		self::assertSame(
 			array(
 				'id'         => 'products',
@@ -43,13 +43,22 @@ final class DashboardSectionRegistrationTest extends TestCase {
 			),
 			$sections[1]
 		);
+		self::assertSame(
+			array(
+				'id'         => 'orders',
+				'label'      => 'Orders',
+				'path'       => 'orders',
+				'capability' => Capabilities::ACCESS_DASHBOARD,
+			),
+			$sections[2]
+		);
 	}
 
-	public function test_without_an_overview_entry_products_come_last(): void {
+	public function test_without_an_overview_entry_products_and_orders_come_last(): void {
 		$sections = DashboardSectionRegistration::add_sections( array( self::section( 'profile', 'profile' ) ) );
 
 		self::assertIsArray( $sections );
-		self::assertSame( array( 'profile', 'products' ), array_column( $sections, 'id' ) );
+		self::assertSame( array( 'profile', 'products', 'orders' ), array_column( $sections, 'id' ) );
 	}
 
 	public function test_a_filter_value_that_is_not_a_list_is_passed_on(): void {
@@ -62,7 +71,7 @@ final class DashboardSectionRegistrationTest extends TestCase {
 
 		self::assertIsArray( $sections );
 		self::assertSame( 'not a section', $sections[0] );
-		self::assertCount( 3, $sections );
+		self::assertCount( 4, $sections );
 	}
 
 	public function test_register_hooks_the_section_filter(): void {

@@ -532,3 +532,17 @@
 	color: var(--merchboard-text);
 	white-space: normal;
 }
+
+.merchboard-orders__notes {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-1);
+}
+
+.merchboard-orders__legend {
+	padding: 0;
+	margin: var(--merchboard-space-3) 0 0;
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-text-muted);
+	list-style: none;
+}

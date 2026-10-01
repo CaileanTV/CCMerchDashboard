@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * (`merchboard_dashboard_sections`, docs/FRONTEND.md#sektioner). The
  * WooCommerce module hooks it, so without WooCommerce the sections are not
  * sent to the dashboard (ADR-039 P11). DashboardSections still validates every
- * entry. Phase 19: Products, right after the overview.
+ * entry. Phase 19: Products and then Orders, right after the overview.
  */
 final class DashboardSectionRegistration {
 
@@ -31,9 +31,9 @@ final class DashboardSectionRegistration {
 	}
 
 	/**
-	 * The sections with Products after the overview (or at the end when there
-	 * is no overview entry). Anything that is not a list is passed on
-	 * untouched for DashboardSections to reject.
+	 * The sections with Products and Orders after the overview (or at the end
+	 * when there is no overview entry). Anything that is not a list is passed
+	 * on untouched for DashboardSections to reject.
 	 *
 	 * @param mixed $sections Filtered sections.
 	 * @return mixed
@@ -43,26 +43,34 @@ final class DashboardSectionRegistration {
 			return $sections;
 		}
 
-		$products = array(
-			'id'         => 'products',
-			'label'      => __( 'Products', 'merchboard' ),
-			'path'       => 'products',
-			'capability' => Capabilities::ACCESS_DASHBOARD,
+		$added_sections = array(
+			array(
+				'id'         => 'products',
+				'label'      => __( 'Products', 'merchboard' ),
+				'path'       => 'products',
+				'capability' => Capabilities::ACCESS_DASHBOARD,
+			),
+			array(
+				'id'         => 'orders',
+				'label'      => __( 'Orders', 'merchboard' ),
+				'path'       => 'orders',
+				'capability' => Capabilities::ACCESS_DASHBOARD,
+			),
 		);
-		$result   = array();
-		$added    = false;
+		$result         = array();
+		$added          = false;
 
 		foreach ( $sections as $section ) {
 			$result[] = $section;
 
 			if ( ! $added && is_array( $section ) && 'overview' === ( $section['id'] ?? null ) ) {
-				$result[] = $products;
-				$added    = true;
+				array_push( $result, ...$added_sections );
+				$added = true;
 			}
 		}
 
 		if ( ! $added ) {
-			$result[] = $products;
+			array_push( $result, ...$added_sections );
 		}
 
 		return $result;

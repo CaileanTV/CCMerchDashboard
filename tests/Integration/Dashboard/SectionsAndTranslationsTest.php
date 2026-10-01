@@ -77,11 +77,11 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		self::assertSame( array(), $registry->for_current_user() );
 	}
 
-	public function test_the_products_section_is_sent_only_with_the_woocommerce_registration(): void {
+	public function test_the_products_and_orders_sections_are_sent_only_with_the_woocommerce_registration(): void {
 		$registry = $this->service( DashboardSections::class );
 		wp_set_current_user( $this->creator );
 
-		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Products section.' );
+		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Products or Orders section.' );
 
 		( new DashboardSectionRegistration() )->register();
 
@@ -96,6 +96,11 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 					'id'    => 'products',
 					'label' => 'Products',
 					'path'  => 'products',
+				),
+				array(
+					'id'    => 'orders',
+					'label' => 'Orders',
+					'path'  => 'orders',
 				),
 				array(
 					'id'    => 'profile',
