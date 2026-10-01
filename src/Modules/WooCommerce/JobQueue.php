@@ -42,4 +42,30 @@ interface JobQueue {
 	 * @return bool Whether the job was queued.
 	 */
 	public function enqueue( string $hook, array $args, int $delay = 0 ): bool;
+
+	/**
+	 * Whether any job with this hook is pending or running, whatever its
+	 * arguments.
+	 *
+	 * @param string $hook Job hook.
+	 */
+	public function has_any( string $hook ): bool;
+
+	/**
+	 * The arguments of the latest failed or cancelled job with this hook, if
+	 * no job with the hook completed after it (a run that stopped and can be
+	 * resumed); null otherwise.
+	 *
+	 * @param string $hook Job hook.
+	 * @return array<mixed>|null
+	 */
+	public function resumable( string $hook ): ?array;
+
+	/**
+	 * Cancels every pending job with this hook. A running job cannot be
+	 * cancelled; it finishes.
+	 *
+	 * @param string $hook Job hook.
+	 */
+	public function cancel_all( string $hook ): void;
 }

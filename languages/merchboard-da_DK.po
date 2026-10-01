@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-30T17:31:07+00:00\n"
+"PO-Revision-Date: 2026-09-30T19:46:41+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -71,284 +71,361 @@ msgstr "Merch Dashboard-overblik"
 msgid "Overview"
 msgstr "Overblik"
 
-#: src/Modules/Admin/AuditLogFormatter.php:60
+#: src/Modules/Admin/AuditLogFormatter.php:71
 msgid "Creator created"
 msgstr "Creator oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:61
+#: src/Modules/Admin/AuditLogFormatter.php:72
 msgid "Creator updated"
 msgstr "Creator opdateret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:62
+#: src/Modules/Admin/AuditLogFormatter.php:73
 msgid "Creator activated"
 msgstr "Creator aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:63
+#: src/Modules/Admin/AuditLogFormatter.php:74
 msgid "Creator deactivated"
 msgstr "Creator deaktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:64
+#: src/Modules/Admin/AuditLogFormatter.php:75
 msgid "WordPress user linked"
 msgstr "WordPress-bruger tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:65
+#: src/Modules/Admin/AuditLogFormatter.php:76
 msgid "WordPress user unlinked"
 msgstr "WordPress-bruger frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:66
+#: src/Modules/Admin/AuditLogFormatter.php:77
 msgid "Settings changed"
 msgstr "Indstillinger ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:67
+#: src/Modules/Admin/AuditLogFormatter.php:78
 msgid "Product linked"
 msgstr "Produkt tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:68
+#: src/Modules/Admin/AuditLogFormatter.php:79
 msgid "Product unlinked"
 msgstr "Produkt frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:69
+#: src/Modules/Admin/AuditLogFormatter.php:80
 msgid "Product category mapped"
 msgstr "Produktkategori tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:70
+#: src/Modules/Admin/AuditLogFormatter.php:81
 msgid "Product category unmapped"
 msgstr "Produktkategori fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:71
+#: src/Modules/Admin/AuditLogFormatter.php:82
 msgid "Category reconciliation completed"
 msgstr "Kategoriafstemning gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:143
+#: src/Modules/Admin/AuditLogFormatter.php:83
+msgid "Sales ledger backfill completed"
+msgstr "Backfill af salgsjournalen gennemført"
+
+#: src/Modules/Admin/AuditLogFormatter.php:173
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:145
+#: src/Modules/Admin/AuditLogFormatter.php:175
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:148
+#: src/Modules/Admin/AuditLogFormatter.php:178
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:151
+#: src/Modules/Admin/AuditLogFormatter.php:181
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:154
+#: src/Modules/Admin/AuditLogFormatter.php:184
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:157
+#: src/Modules/Admin/AuditLogFormatter.php:187
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:160
+#: src/Modules/Admin/AuditLogFormatter.php:190
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:162
+#: src/Modules/Admin/AuditLogFormatter.php:192
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:165
+#: src/Modules/Admin/AuditLogFormatter.php:195
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:168
+#: src/Modules/Admin/AuditLogFormatter.php:198
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:169
+#: src/Modules/Admin/AuditLogFormatter.php:199
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:170
+#: src/Modules/Admin/AuditLogFormatter.php:200
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:172
+#: src/Modules/Admin/AuditLogFormatter.php:202
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:176
+#: src/Modules/Admin/AuditLogFormatter.php:206
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:179
+#: src/Modules/Admin/AuditLogFormatter.php:209
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:181
+#: src/Modules/Admin/AuditLogFormatter.php:211
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:181
+#: src/Modules/Admin/AuditLogFormatter.php:211
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:184
+#: src/Modules/Admin/AuditLogFormatter.php:214
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:187
+#: src/Modules/Admin/AuditLogFormatter.php:217
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:190
+#: src/Modules/Admin/AuditLogFormatter.php:220
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:193
+#: src/Modules/Admin/AuditLogFormatter.php:223
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:195
+#: src/Modules/Admin/AuditLogFormatter.php:225
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:198
+#: src/Modules/Admin/AuditLogFormatter.php:228
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:201
+#: src/Modules/Admin/AuditLogFormatter.php:231
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:204
+#: src/Modules/Admin/AuditLogFormatter.php:234
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:207
+#: src/Modules/Admin/AuditLogFormatter.php:237
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:209
+#: src/Modules/Admin/AuditLogFormatter.php:239
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:212
+#: src/Modules/Admin/AuditLogFormatter.php:242
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:215
+#: src/Modules/Admin/AuditLogFormatter.php:245
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:218
+#: src/Modules/Admin/AuditLogFormatter.php:248
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:220
+#: src/Modules/Admin/AuditLogFormatter.php:250
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:220
+#: src/Modules/Admin/AuditLogFormatter.php:250
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:223
+#: src/Modules/Admin/AuditLogFormatter.php:253
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#. translators: %s: number of orders.
+#: src/Modules/Admin/AuditLogFormatter.php:294
+#, php-format
+msgid "Orders scanned: %s"
+msgstr "Ordrer gennemgået: %s"
+
+#. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
+#. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
+#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
+#, php-format
+msgid "Rows written: %s"
+msgstr "Rækker skrevet: %s"
+
+#. translators: %s: failed orders per error code, or "none".
+#: src/Modules/Admin/AuditLogFormatter.php:298
+#, php-format
+msgid "Failures by code: %s"
+msgstr "Fejl pr. kode: %s"
+
+#: src/Modules/Admin/AuditLogFormatter.php:311
+msgid "Registered"
+msgstr "Registreret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:312
+msgid "Already in the ledger"
+msgstr "Allerede i salgsjournalen"
+
+#: src/Modules/Admin/AuditLogFormatter.php:313
+msgid "Not counted"
+msgstr "Tæller ikke"
+
+#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
+msgid "No creator"
+msgstr "Ingen creator"
+
+#: src/Modules/Admin/AuditLogFormatter.php:315
+msgid "Not found"
+msgstr "Ikke fundet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:316
+msgid "Busy"
+msgstr "Optaget"
+
+#: src/Modules/Admin/AuditLogFormatter.php:317
+msgid "Failed"
+msgstr "Fejlet"
+
+#. translators: 1: outcome, 2: number of orders.
+#. translators: 1: ledger row type, 2: number of rows.
+#. translators: 1: outcome, 2: number of products.
+#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:353
+#: src/Modules/Admin/AuditLogFormatter.php:412
+#, php-format
+msgid "%1$s: %2$d"
+msgstr "%1$s: %2$d"
+
+#: src/Modules/Admin/AuditLogFormatter.php:340
+msgid "Sale"
+msgstr "Salg"
+
+#: src/Modules/Admin/AuditLogFormatter.php:341
+msgid "Refund"
+msgstr "Refundering"
+
+#: src/Modules/Admin/AuditLogFormatter.php:342
+msgid "Reversal"
+msgstr "Tilbageførsel"
+
+#: src/Modules/Admin/AuditLogFormatter.php:343
+msgid "Correction"
+msgstr "Korrektion"
+
+#: src/Modules/Admin/AuditLogFormatter.php:371
+msgid "none"
+msgstr "ingen"
+
+#: src/Modules/Admin/AuditLogFormatter.php:395
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:258
+#: src/Modules/Admin/AuditLogFormatter.php:396
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/Admin/AuditLogFormatter.php:397
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:398
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:399
+#: src/Modules/Admin/AuditLogFormatter.php:547
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:262
+#: src/Modules/Admin/AuditLogFormatter.php:400
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:263
-#: src/Modules/Admin/AuditLogFormatter.php:469
+#: src/Modules/Admin/AuditLogFormatter.php:401
+#: src/Modules/Admin/AuditLogFormatter.php:607
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:264
+#: src/Modules/Admin/AuditLogFormatter.php:402
 msgid "Errors"
 msgstr "Fejl"
 
-#. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:274
-#, php-format
-msgid "%1$s: %2$d"
-msgstr "%1$s: %2$d"
-
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:293
+#: src/Modules/Admin/AuditLogFormatter.php:431
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:308
+#: src/Modules/Admin/AuditLogFormatter.php:446
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -357,7 +434,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:515
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
 #, php-format
@@ -365,101 +442,101 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:515
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:387
+#: src/Modules/Admin/AuditLogFormatter.php:525
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:388
+#: src/Modules/Admin/AuditLogFormatter.php:526
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:389
+#: src/Modules/Admin/AuditLogFormatter.php:527
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:390
+#: src/Modules/Admin/AuditLogFormatter.php:528
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:391
+#: src/Modules/Admin/AuditLogFormatter.php:529
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:392
+#: src/Modules/Admin/AuditLogFormatter.php:530
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:393
+#: src/Modules/Admin/AuditLogFormatter.php:531
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:532
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:533
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:534
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:535
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:410
+#: src/Modules/Admin/AuditLogFormatter.php:548
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:560
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:423
+#: src/Modules/Admin/AuditLogFormatter.php:561
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:435
+#: src/Modules/Admin/AuditLogFormatter.php:573
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:436
+#: src/Modules/Admin/AuditLogFormatter.php:574
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:437
+#: src/Modules/Admin/AuditLogFormatter.php:575
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:469
+#: src/Modules/Admin/AuditLogFormatter.php:607
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:2
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:488
+#: src/Modules/Admin/AuditLogFormatter.php:626
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:489
+#: src/Modules/Admin/AuditLogFormatter.php:627
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:490
+#: src/Modules/Admin/AuditLogFormatter.php:628
 msgid "social links"
 msgstr "sociale links"
 
@@ -1660,10 +1737,6 @@ msgstr "Alle creators"
 msgid "%s (inactive)"
 msgstr "%s (inaktiv)"
 
-#: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
-msgid "No creator"
-msgstr "Ingen creator"
-
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:55
 msgid "Counted order statuses saved. They apply from the next synchronization of an order; nothing was recalculated."
 msgstr "De tællende ordrestatusser er gemt. De gælder fra næste synkronisering af en ordre; intet blev genberegnet."
@@ -1746,6 +1819,147 @@ msgstr "længere end %d tegn uden \"wc-\""
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:165
 msgid "only lowercase letters, digits, \"_\" and \"-\" are supported"
 msgstr "kun små bogstaver, cifre, \"_\" og \"-\" understøttes"
+
+#. translators: %s: comma-separated order status slugs.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:80
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:131
+#, php-format
+msgid "Counted statuses: %s"
+msgstr "Tællende statusser: %s"
+
+#. translators: %d: number of orders scanned so far.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:88
+#, php-format
+msgid "Scanned %d orders…"
+msgstr "Gennemgået %d ordrer …"
+
+#. translators: %s: technical reason.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:93
+#, php-format
+msgid "The dry run stopped: %s"
+msgstr "Tørkørslen stoppede: %s"
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:97
+msgid "Dry run finished. Nothing was written."
+msgstr "Tørkørslen er færdig. Intet blev skrevet."
+
+#. translators: 1: run id, 2: orders per page.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:133
+#, php-format
+msgid "Backfill run %1$s queued (%2$d orders per page). The summary is written to the audit log when it finishes."
+msgstr "Backfill-kørsel %1$s er sat i kø (%2$d ordrer pr. side). Resuméet skrives i audit-loggen, når den er færdig."
+
+#. translators: 1: run id, 2: position of the first order of the page.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:162
+#, php-format
+msgid "Backfill run %1$s resumed at order %2$d."
+msgstr "Backfill-kørsel %1$s genoptaget fra ordre %2$d."
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:179
+msgid "A backfill run is pending or running."
+msgstr "En backfill-kørsel venter eller kører."
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:187
+msgid "No backfill run is active, and none can be resumed."
+msgstr "Ingen backfill-kørsel er aktiv, og ingen kan genoptages."
+
+#. translators: 1: run id, 2: number of orders processed.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:193
+#, php-format
+msgid "Backfill run %1$s stopped after %2$d orders and can be resumed (`wp merchboard sales-backfill resume`)."
+msgstr "Backfill-kørsel %1$s stoppede efter %2$d ordrer og kan genoptages (`wp merchboard sales-backfill resume`)."
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:208
+msgid "This command takes no positional arguments."
+msgstr "Kommandoen tager ingen positionelle argumenter."
+
+#. translators: %s: option name.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:214
+#, php-format
+msgid "Unknown option: --%s"
+msgstr "Ukendt option: --%s"
+
+#. translators: %d: largest allowed number of orders per page.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:236
+#, php-format
+msgid "--batch-size must be a whole number from 1 to %d."
+msgstr "--batch-size skal være et heltal fra 1 til %d."
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:249
+#, php-format
+msgid "Orders scanned: %d"
+msgstr "Ordrer gennemgået: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:253
+#, php-format
+msgid "Would register: %d"
+msgstr "Ville blive registreret: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:255
+#, php-format
+msgid "Registered: %d"
+msgstr "Registreret: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:258
+#, php-format
+msgid "Skipped, already in the ledger: %d"
+msgstr "Sprunget over, allerede i salgsjournalen: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:260
+#, php-format
+msgid "Skipped, not counted: %d"
+msgstr "Sprunget over, tæller ikke: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:262
+#, php-format
+msgid "Skipped, no creator: %d"
+msgstr "Sprunget over, ingen creator: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:264
+#, php-format
+msgid "Skipped, not found: %d"
+msgstr "Sprunget over, ikke fundet: %d"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:266
+#, php-format
+msgid "Skipped, busy: %d"
+msgstr "Sprunget over, optaget: %d"
+
+#. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:277
+#, php-format
+msgid "Rows that would be written: %s"
+msgstr "Rækker, der ville blive skrevet: %s"
+
+#. translators: %d: number of orders.
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:289
+#, php-format
+msgid "Failed: %d"
+msgstr "Fejlet: %d"
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:299
+msgid "A backfill run is already pending or running. Wait for it, or check `wp merchboard sales-backfill status`."
+msgstr "En backfill-kørsel venter eller kører allerede. Vent på den, eller se `wp merchboard sales-backfill status`."
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:300
+msgid "There is no stopped backfill run to resume."
+msgstr "Der er ingen stoppet backfill-kørsel at genoptage."
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:301
+msgid "Action Scheduler is not available, so nothing was queued."
+msgstr "Action Scheduler er ikke tilgængelig, så intet blev sat i kø."
+
+#: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:302
+msgid "The backfill job could not be queued."
+msgstr "Backfill-jobbet kunne ikke sættes i kø."
 
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182

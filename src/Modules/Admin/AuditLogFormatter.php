@@ -51,6 +51,17 @@ final class AuditLogFormatter {
 	private const COUNT_KEYS = array( 'linked', 'moved', 'unlinked', 'unchanged', 'skipped_manual', 'ambiguous', 'skipped_inactive', 'errors' );
 
 	/**
+	 * Order outcome counts of `sales_backfill_completed`, in the order of
+	 * SalesBackfillStatus.
+	 */
+	private const BACKFILL_KEYS = array( 'registered', 'skipped_history', 'skipped_not_counted', 'skipped_no_creator', 'skipped_missing', 'skipped_busy', 'failed' );
+
+	/**
+	 * Ledger row types counted by `sales_backfill_completed` (SalesEntryType).
+	 */
+	private const BACKFILL_ROW_KEYS = array( 'sale', 'refund', 'reversal', 'correction' );
+
+	/**
 	 * Label of an action.
 	 *
 	 * @param AuditAction $action Action.
@@ -69,6 +80,7 @@ final class AuditLogFormatter {
 			AuditAction::CreatorCategoryLinked   => __( 'Product category mapped', 'merchboard' ),
 			AuditAction::CreatorCategoryUnlinked => __( 'Product category unmapped', 'merchboard' ),
 			AuditAction::CategorySyncCompleted   => __( 'Category reconciliation completed', 'merchboard' ),
+			AuditAction::SalesBackfillCompleted  => __( 'Sales ledger backfill completed', 'merchboard' ),
 		};
 	}
 
@@ -80,11 +92,29 @@ final class AuditLogFormatter {
 	 * @return list<string> Escaped HTML lines.
 	 */
 	public static function details( AuditEntry $entry, AuditContextLabels $labels ): array {
-		$lines  = array();
-		$counts = AuditAction::CategorySyncCompleted === $entry->action ? self::counts( $entry->context ) : null;
+		$lines    = array();
+		$counts   = AuditAction::CategorySyncCompleted === $entry->action ? self::counts( $entry->context ) : null;
+		$backfill = AuditAction::SalesBackfillCompleted === $entry->action ? self::backfill_outcomes( $entry->context ) : null;
 
 		foreach ( $entry->context as $key => $value ) {
 			$key = (string) $key;
+
+			if ( null !== $backfill ) {
+				$line = self::backfill_line( $key, $value, $backfill );
+
+				if ( null !== $line ) {
+					// The outcome counts are one line, where the first one stood.
+					if ( '' !== $line ) {
+						$lines[] = $line;
+					}
+
+					if ( in_array( $key, self::BACKFILL_KEYS, true ) ) {
+						$backfill = '';
+					}
+
+					continue;
+				}
+			}
 
 			if ( null !== $counts && in_array( $key, self::COUNT_KEYS, true ) ) {
 				// All eight counts as one line, where the first one stood.
@@ -244,6 +274,114 @@ final class AuditLogFormatter {
 	 */
 	private static function html( string $format, string $html ): string {
 		return sprintf( esc_html( $format ), $html );
+	}
+
+	/**
+	 * A `sales_backfill_completed` line for a known key; null for other keys
+	 * (shown as usual); '' for an outcome count already shown.
+	 *
+	 * @param string $key      Context key.
+	 * @param mixed  $value    Context value.
+	 * @param string $outcomes The outcome line, or '' once it is shown.
+	 */
+	private static function backfill_line( string $key, mixed $value, string $outcomes ): ?string {
+		if ( in_array( $key, self::BACKFILL_KEYS, true ) ) {
+			return $outcomes;
+		}
+
+		return match ( $key ) {
+			/* translators: %s: number of orders. */
+			'scanned'  => self::text( __( 'Orders scanned: %s', 'merchboard' ), self::scalar( $value ) ),
+			/* translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1". */
+			'rows'     => self::text( __( 'Rows written: %s', 'merchboard' ), self::backfill_rows( $value ) ),
+			/* translators: %s: failed orders per error code, or "none". */
+			'failures' => self::text( __( 'Failures by code: %s', 'merchboard' ), self::backfill_failures( $value ) ),
+			default    => null,
+		};
+	}
+
+	/**
+	 * The seven order outcome counts of `sales_backfill_completed` as one
+	 * line, or null when the context does not hold all of them as integers.
+	 *
+	 * @param array<mixed> $context Context.
+	 */
+	private static function backfill_outcomes( array $context ): ?string {
+		$labels = array(
+			'registered'          => __( 'Registered', 'merchboard' ),
+			'skipped_history'     => __( 'Already in the ledger', 'merchboard' ),
+			'skipped_not_counted' => __( 'Not counted', 'merchboard' ),
+			'skipped_no_creator'  => __( 'No creator', 'merchboard' ),
+			'skipped_missing'     => __( 'Not found', 'merchboard' ),
+			'skipped_busy'        => __( 'Busy', 'merchboard' ),
+			'failed'              => __( 'Failed', 'merchboard' ),
+		);
+		$parts  = array();
+
+		foreach ( self::BACKFILL_KEYS as $key ) {
+			if ( ! is_int( $context[ $key ] ?? null ) ) {
+				return null;
+			}
+
+			/* translators: 1: outcome, 2: number of orders. */
+			$parts[] = sprintf( __( '%1$s: %2$d', 'merchboard' ), $labels[ $key ], $context[ $key ] );
+		}
+
+		return esc_html( implode( ' · ', $parts ) );
+	}
+
+	/**
+	 * Rows per ledger type ("Sale: 2 · Refund: 1 · …"); plain text.
+	 *
+	 * @param mixed $value Rows per type.
+	 */
+	private static function backfill_rows( mixed $value ): string {
+		$labels = array(
+			'sale'       => __( 'Sale', 'merchboard' ),
+			'refund'     => __( 'Refund', 'merchboard' ),
+			'reversal'   => __( 'Reversal', 'merchboard' ),
+			'correction' => __( 'Correction', 'merchboard' ),
+		);
+		$parts  = array();
+
+		foreach ( self::BACKFILL_ROW_KEYS as $key ) {
+			if ( ! is_array( $value ) || ! is_int( $value[ $key ] ?? null ) ) {
+				return '…';
+			}
+
+			/* translators: 1: ledger row type, 2: number of rows. */
+			$parts[] = sprintf( __( '%1$s: %2$d', 'merchboard' ), $labels[ $key ], $value[ $key ] );
+		}
+
+		return implode( ' · ', $parts );
+	}
+
+	/**
+	 * Failed orders per error code ("lock_timeout: 1, db_error: 2") or
+	 * "none"; plain text. Codes are shown as stored (they are fixed values).
+	 *
+	 * @param mixed $value Failures per code.
+	 */
+	private static function backfill_failures( mixed $value ): string {
+		if ( ! is_array( $value ) ) {
+			return '…';
+		}
+
+		if ( array() === $value ) {
+			return __( 'none', 'merchboard' );
+		}
+
+		$parts = array();
+
+		foreach ( $value as $code => $count ) {
+			if ( ! is_int( $count ) ) {
+				return '…';
+			}
+
+			$parts[] = sanitize_key( (string) $code ) . ': ' . $count;
+		}
+
+		return implode( ', ', $parts );
 	}
 
 	/**

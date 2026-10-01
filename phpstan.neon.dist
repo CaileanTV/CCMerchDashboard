@@ -24,14 +24,18 @@ parameters:
         # Stand-in for WooCommerce order CRUD (isolated test processes only);
         # PHPStan uses tests/Stubs/woocommerce.stub instead.
         - tests/Fixtures/woocommerce-order.php
+        # Stand-in for Action Scheduler's action class (isolated test processes only);
+        # PHPStan uses tests/Stubs/woocommerce.stub instead.
+        - tests/Fixtures/action-scheduler-action.php
         # Stand-in for WP_Error and WP_REST_Request (loaded only in isolated
         # test processes); PHPStan uses the real WordPress stubs.
         - tests/Fixtures/wp-rest.php
         - tests/Fixtures/wp-term.php
         - tests/Fixtures/wp-post.php
-    # Declares the WooCommerce API the plugin uses (no stubs package, ADR-030 D5).
+    # Declares the WooCommerce and WP-CLI API the plugin uses (no stubs package, ADR-030 D5).
     scanFiles:
         - tests/Stubs/woocommerce.stub
+        - tests/Stubs/wp-cli.stub
     # Runtime constants of the integration test harness (tests/Integration/config.php).
     bootstrapFiles:
         - tests/phpstan-bootstrap.php

@@ -42,8 +42,12 @@ defined( 'ABSPATH' ) || exit;
  * under its own lock when the lock and transaction context allow it; when the
  * repository or Transaction refuses the nested call, that order gets its
  * failure marker and log entry like any other failure.
+ *
+ * Backfill (ROADMAP trin 7): backfill() registers an order without ledger
+ * history through the same steps, and preview() is its read-only dry run.
+ * Both are outside the SalesSync contract the live hooks use.
  */
-final class SalesSynchronizer implements SalesSync {
+final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 	/**
 	 * Orders being synchronized in this request.
@@ -58,6 +62,14 @@ final class SalesSynchronizer implements SalesSync {
 	 * @var array<int, true>
 	 */
 	private array $deleting = array();
+
+	/**
+	 * The planning failure of the running backfill() (with its item or refund),
+	 * for the log and the marker.
+	 *
+	 * @var SalesPlanFailure|null
+	 */
+	private ?SalesPlanFailure $failed_plan = null;
 
 	/**
 	 * Processing clock.
@@ -175,50 +187,242 @@ final class SalesSynchronizer implements SalesSync {
 			}
 
 			return $this->locked( $order_id, fn(): ?OrderSnapshot => $this->reader->read( $order_id, $deleted_refund_id ) );
-		} catch ( SalesLockTimeoutException ) {
-			return new SalesPlanFailure( SalesFailureCode::LockTimeout, $order_id );
-		} catch ( SalesConnectionChangedException ) {
-			return new SalesPlanFailure( SalesFailureCode::ConnectionChanged, $order_id );
-		} catch ( DatabaseException ) {
-			return new SalesPlanFailure( SalesFailureCode::DbError, $order_id );
-		} catch ( Throwable ) {
-			return new SalesPlanFailure( SalesFailureCode::Unexpected, $order_id );
+		} catch ( Throwable $e ) {
+			return self::failure( $e, $order_id );
 		}
 	}
 
 	/**
+	 * Registers one order that has no ledger history yet: the backfill's entry
+	 * (ADR-038, status note "ROADMAP trin 7", D1 and D4). It is the same
+	 * synchronization as sync() (same reader, lock, transaction, planner,
+	 * failure marker and log), restricted to orders whose ledger is empty: an
+	 * order with history is never touched, also when a live hook registered it
+	 * between the check and the lock. Never throws; the live contract
+	 * (SalesSync) is unchanged.
+	 *
+	 * @param int $order_id Order id.
+	 */
+	public function backfill( int $order_id ): SalesBackfillOutcome {
+		if ( $order_id < 1 ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::Missing );
+		}
+
+		if ( isset( $this->running[ $order_id ] ) || isset( $this->deleting[ $order_id ] ) ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::Busy );
+		}
+
+		$this->running[ $order_id ] = true;
+
+		try {
+			$outcome = $this->register( $order_id );
+
+			if ( SalesBackfillStatus::Failed === $outcome->status && null !== $outcome->failure ) {
+				$this->report( $order_id, $this->failed_plan ?? new SalesPlanFailure( $outcome->failure, $order_id ), false );
+			} elseif ( in_array( $outcome->status, array( SalesBackfillStatus::Registered, SalesBackfillStatus::NotCounted, SalesBackfillStatus::NoCreator ), true ) ) {
+				// Like sync(): a synchronization that found nothing wrong clears a marker.
+				$this->report( $order_id, true, false );
+			}
+
+			return $outcome;
+		} catch ( Throwable ) {
+			// The marker itself could not be written; the ledger result stands.
+			$this->logger->error( 'Could not update the sales ledger failure marker.', array( 'order_id' => $order_id ) );
+
+			return SalesBackfillOutcome::failed( SalesFailureCode::Unexpected );
+		} finally {
+			$this->failed_plan = null;
+			unset( $this->running[ $order_id ] );
+		}
+	}
+
+	/**
+	 * What backfill() would do, read-only (the dry run, D3): the same checks
+	 * and the same planner on the stored ledger state, without the lock,
+	 * without writing rows, without a failure marker and without a log entry.
+	 * The result is advisory: the order may change before a real run.
+	 *
+	 * @param int $order_id Order id.
+	 */
+	public function preview( int $order_id ): SalesBackfillOutcome {
+		if ( $order_id < 1 ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::Missing );
+		}
+
+		try {
+			$order = $this->eligible( $order_id );
+
+			if ( $order instanceof SalesBackfillOutcome ) {
+				return $order;
+			}
+
+			$result = $this->planner->plan( $order, $this->repository->state( $order_id ), ( $this->clock )() );
+
+			return null !== $result->failure
+				? SalesBackfillOutcome::failed( $result->failure->code )
+				: SalesBackfillOutcome::registered( $result->write ?? new SalesLedgerWrite() );
+		} catch ( Throwable $e ) {
+			return SalesBackfillOutcome::failed( self::failure( $e, $order_id )->code );
+		}
+	}
+
+	/**
+	 * The registration of one order without history, classified.
+	 *
+	 * @param int $order_id Order id.
+	 */
+	private function register( int $order_id ): SalesBackfillOutcome {
+		try {
+			$order = $this->eligible( $order_id );
+
+			if ( $order instanceof SalesBackfillOutcome ) {
+				return $order;
+			}
+
+			$history = false;
+			$planned = null;
+			$result  = $this->locked(
+				$order_id,
+				fn(): ?OrderSnapshot => $this->reader->read( $order_id ),
+				static function ( SalesLedgerState $state ) use ( &$history ): bool {
+					// Registered meanwhile (e.g. by a live hook): never touched (D1).
+					$history = 0 !== $state->cycles->latest_cycle();
+
+					return ! $history;
+				},
+				static function ( SalesLedgerWrite $write ) use ( &$planned ): void {
+					$planned = $write;
+				}
+			);
+		} catch ( Throwable $e ) {
+			$this->failed_plan = self::failure( $e, $order_id );
+
+			return SalesBackfillOutcome::failed( $this->failed_plan->code );
+		}
+
+		if ( $result instanceof SalesPlanFailure ) {
+			$this->failed_plan = $result;
+
+			return SalesBackfillOutcome::failed( $result->code );
+		}
+
+		if ( $history ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::HasHistory );
+		}
+
+		return true === $result && $planned instanceof SalesLedgerWrite
+			? SalesBackfillOutcome::registered( $planned )
+			: SalesBackfillOutcome::of( SalesBackfillStatus::Missing );
+	}
+
+	/**
+	 * The order's snapshot when the backfill may register it, else the reason
+	 * it is skipped. Same preflight as synchronize(), plus: an order with
+	 * ledger history is skipped.
+	 *
+	 * @param int $order_id Order id.
+	 * @throws Throwable Reader or repository errors (classified by the caller).
+	 */
+	private function eligible( int $order_id ): OrderSnapshot|SalesBackfillOutcome {
+		$counted = $this->reader->counts( $order_id );
+
+		// Missing, not a shop_order, or in the trash (ADR-038, Q8).
+		if ( null === $counted ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::Missing );
+		}
+
+		if ( 0 !== $this->repository->cycle_state( $order_id )->latest_cycle() ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::HasHistory );
+		}
+
+		if ( ! $counted ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::NotCounted );
+		}
+
+		$order = $this->reader->read( $order_id );
+
+		if ( null === $order ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::Missing );
+		}
+
+		return self::has_creator_line( $order ) ? $order : SalesBackfillOutcome::of( SalesBackfillStatus::NoCreator );
+	}
+
+	/**
+	 * The failure code of an exception (lock, connection, database, other).
+	 *
+	 * @param Throwable $e        Exception.
+	 * @param int       $order_id Order id.
+	 */
+	private static function failure( Throwable $e, int $order_id ): SalesPlanFailure {
+		return new SalesPlanFailure(
+			match ( true ) {
+				$e instanceof SalesLockTimeoutException      => SalesFailureCode::LockTimeout,
+				$e instanceof SalesConnectionChangedException => SalesFailureCode::ConnectionChanged,
+				$e instanceof DatabaseException              => SalesFailureCode::DbError,
+				default                                      => SalesFailureCode::Unexpected,
+			},
+			$order_id
+		);
+	}
+
+	/**
 	 * Reads (outside the transaction), plans and appends under the order's lock.
-	 * Lock, connection and database errors propagate to synchronize().
+	 * Lock, connection and database errors propagate to the caller.
+	 *
+	 * The backfill passes $admit (checked on the locked ledger state before
+	 * planning; false writes nothing and returns false) and $observe (receives
+	 * the planned rows). The live synchronization passes neither.
 	 *
 	 * @phpstan-param Closure(): ?OrderSnapshot $snapshot
+	 * @phpstan-param (Closure(SalesLedgerState): bool)|null $admit
+	 * @phpstan-param (Closure(SalesLedgerWrite): void)|null $observe
 	 *
-	 * @param int     $order_id Order id.
-	 * @param Closure $snapshot Reads the order under the lock.
+	 * @param int          $order_id Order id.
+	 * @param Closure      $snapshot Reads the order under the lock.
+	 * @param Closure|null $admit    Whether to plan for this ledger state.
+	 * @param Closure|null $observe  Receives the planned rows.
 	 * @return SalesPlanFailure|bool
 	 */
-	private function locked( int $order_id, Closure $snapshot ): SalesPlanFailure|bool {
+	private function locked( int $order_id, Closure $snapshot, ?Closure $admit = null, ?Closure $observe = null ): SalesPlanFailure|bool {
 		return $this->repository->with_order_lock(
 			$order_id,
-			function () use ( $order_id, $snapshot ): SalesPlanFailure|bool {
+			function () use ( $order_id, $snapshot, $admit, $observe ): SalesPlanFailure|bool {
 				$order = $snapshot();
 
 				if ( null === $order ) {
 					return false;
 				}
 
-				$now     = ( $this->clock )();
-				$failure = null;
+				$now      = ( $this->clock )();
+				$failure  = null;
+				$admitted = true;
 
 				$this->repository->write(
 					$order_id,
-					function ( SalesLedgerState $state ) use ( $order, $now, &$failure ): SalesLedgerWrite {
+					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted ): SalesLedgerWrite {
+						if ( null !== $admit && ! $admit( $state ) ) {
+							$admitted = false;
+
+							return new SalesLedgerWrite();
+						}
+
 						$result  = $this->planner->plan( $order, $state, $now );
 						$failure = $result->failure;
+						$write   = $result->write ?? new SalesLedgerWrite();
+
+						if ( null !== $observe && null === $failure ) {
+							$observe( $write );
+						}
 
 						// A planning failure writes nothing (ADR-038 pkt. 23).
-						return $result->write ?? new SalesLedgerWrite();
+						return $write;
 					}
 				);
+
+				if ( ! $admitted ) {
+					return false;
+				}
 
 				return $failure ?? true;
 			}

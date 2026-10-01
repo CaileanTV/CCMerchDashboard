@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\WooCommerce;
 
+use ActionScheduler_Action;
 use Closure;
 use Throwable;
 
@@ -87,5 +88,73 @@ final class ActionSchedulerQueue implements JobQueue {
 		}
 
 		return $id > 0;
+	}
+
+	/**
+	 * Whether a job with this hook is pending or running (any arguments).
+	 *
+	 * @param string $hook Job hook.
+	 */
+	public function has_any( string $hook ): bool {
+		return $this->available() && as_has_scheduled_action( $hook, null, self::GROUP );
+	}
+
+	/**
+	 * The arguments of the latest failed or cancelled job with this hook, if
+	 * no job with it completed later (action ids only grow).
+	 *
+	 * @param string $hook Job hook.
+	 * @return array<mixed>|null
+	 */
+	public function resumable( string $hook ): ?array {
+		if ( ! $this->available() || ! function_exists( 'as_get_scheduled_actions' ) ) {
+			return null;
+		}
+
+		$latest = static fn( array $statuses ): array => as_get_scheduled_actions(
+			array(
+				'hook'     => $hook,
+				'group'    => self::GROUP,
+				'status'   => $statuses,
+				'orderby'  => 'action_id',
+				'order'    => 'DESC',
+				'per_page' => 1,
+			)
+		);
+
+		$stopped = $latest( array( 'failed', 'canceled' ) );
+
+		if ( array() === $stopped ) {
+			return null;
+		}
+
+		$stopped_id = (int) array_key_first( $stopped );
+		$done       = $latest( array( 'complete' ) );
+
+		if ( array() !== $done && (int) array_key_first( $done ) > $stopped_id ) {
+			return null;
+		}
+
+		$action = $stopped[ $stopped_id ];
+
+		return $action instanceof ActionScheduler_Action ? $action->get_args() : null;
+	}
+
+	/**
+	 * Cancels every pending job with this hook (Action Scheduler cannot
+	 * cancel a running one).
+	 *
+	 * @param string $hook Job hook.
+	 */
+	public function cancel_all( string $hook ): void {
+		if ( ! $this->available() || ! function_exists( 'as_unschedule_all_actions' ) ) {
+			return;
+		}
+
+		try {
+			as_unschedule_all_actions( $hook );
+		} catch ( Throwable ) {
+			return;
+		}
 	}
 }

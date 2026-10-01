@@ -350,3 +350,37 @@ function as_schedule_single_action( $timestamp, $hook, $args = array(), $group =
  * @return bool Whether a pending or running action matches.
  */
 function as_has_scheduled_action( $hook, $args = null, $group = '' ) {}
+
+/**
+ * @param string       $hook  Hook.
+ * @param array<mixed> $args  Arguments.
+ * @param string       $group Group.
+ * @return void
+ */
+function as_unschedule_all_actions( $hook, $args = array(), $group = '' ) {}
+
+/**
+ * @param array<string, mixed> $args          Query.
+ * @param string               $return_format OBJECT, ARRAY_A or 'ids'.
+ * @return array<int, ActionScheduler_Action|int|array<mixed>>
+ */
+function as_get_scheduled_actions( $args = array(), $return_format = 'OBJECT' ) {}
+
+/**
+ * Action Scheduler action (ActionScheduler_Action.php).
+ */
+class ActionScheduler_Action {
+
+	/**
+	 * @param string       $hook     Hook.
+	 * @param array<mixed> $args     Arguments.
+	 * @param mixed        $schedule Schedule.
+	 * @param string       $group    Group.
+	 */
+	public function __construct( $hook, array $args = array(), $schedule = null, $group = '' ) {}
+
+	/**
+	 * @return array<mixed>
+	 */
+	public function get_args() {}
+}

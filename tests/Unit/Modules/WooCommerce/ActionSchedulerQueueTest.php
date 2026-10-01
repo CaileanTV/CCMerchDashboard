@@ -13,6 +13,8 @@ use Brain\Monkey\Functions;
 use MerchBoard\Modules\WooCommerce\ActionSchedulerQueue;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use RuntimeException;
 
 #[CoversClass( ActionSchedulerQueue::class )]
@@ -66,5 +68,68 @@ final class ActionSchedulerQueueTest extends TestCase {
 		self::assertFalse( $queue->enqueue( 'hook', array() ) );
 		self::assertTrue( $queue->enqueue( 'hook', array() ) );
 		self::assertFalse( $queue->enqueue( 'hook', array(), 30 ) );
+	}
+
+	public function test_any_pending_or_running_job_of_a_hook_is_found_whatever_its_arguments(): void {
+		$queue = new ActionSchedulerQueue( static fn(): bool => true );
+		Functions\expect( 'as_has_scheduled_action' )->once()->with( 'merchboard_sales_backfill', null, 'merchboard' )->andReturn( true );
+
+		self::assertTrue( $queue->has_any( 'merchboard_sales_backfill' ) );
+		self::assertFalse( ( new ActionSchedulerQueue( static fn(): bool => false ) )->has_any( 'merchboard_sales_backfill' ) );
+	}
+
+	public function test_cancelling_uses_the_hook_only(): void {
+		Functions\expect( 'as_unschedule_all_actions' )->once()->with( 'merchboard_sales_backfill' );
+
+		( new ActionSchedulerQueue( static fn(): bool => true ) )->cancel_all( 'merchboard_sales_backfill' );
+		( new ActionSchedulerQueue( static fn(): bool => false ) )->cancel_all( 'merchboard_sales_backfill' );
+	}
+
+	public function test_a_failing_cancel_is_ignored(): void {
+		Functions\expect( 'as_unschedule_all_actions' )->once()->andThrow( new RuntimeException( 'Store down.' ) );
+
+		( new ActionSchedulerQueue( static fn(): bool => true ) )->cancel_all( 'merchboard_sales_backfill' );
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * The latest failed or cancelled action is resumable unless a later one completed.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_the_latest_stopped_job_is_resumable_unless_a_later_one_completed(): void {
+		require_once dirname( __DIR__, 3 ) . '/Fixtures/action-scheduler-action.php';
+
+		$queue   = new ActionSchedulerQueue( static fn(): bool => true );
+		$stopped = array( 12 => new \ActionScheduler_Action( 'merchboard_sales_backfill', array( array( 'offset' => 4 ) ) ) );
+		$queries = array();
+		$results = array( $stopped, array( 10 => new \ActionScheduler_Action( 'merchboard_sales_backfill' ) ), $stopped, array( 15 => new \ActionScheduler_Action( 'merchboard_sales_backfill' ) ), array() );
+
+		Functions\when( 'as_get_scheduled_actions' )->alias(
+			static function ( array $args ) use ( &$queries, &$results ): array {
+				$queries[] = $args;
+
+				return (array) array_shift( $results );
+			}
+		);
+
+		self::assertSame( array( array( 'offset' => 4 ) ), $queue->resumable( 'merchboard_sales_backfill' ), 'Failed after the last completed one.' );
+		self::assertNull( $queue->resumable( 'merchboard_sales_backfill' ), 'A later job completed.' );
+		self::assertNull( $queue->resumable( 'merchboard_sales_backfill' ), 'Nothing stopped.' );
+
+		self::assertSame(
+			array(
+				'hook'     => 'merchboard_sales_backfill',
+				'group'    => 'merchboard',
+				'status'   => array( 'failed', 'canceled' ),
+				'orderby'  => 'action_id',
+				'order'    => 'DESC',
+				'per_page' => 1,
+			),
+			$queries[0]
+		);
+		self::assertSame( array( 'complete' ), $queries[1]['status'] );
+		self::assertCount( 5, $queries, 'Nothing stopped: no second query.' );
 	}
 }

@@ -26,7 +26,14 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
+use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
+use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfill;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillJobs;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillOrders;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillScheduler;
+use MerchBoard\Modules\WooCommerce\Sales\WooCommerceBackfillOrders;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatusSettings;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
@@ -34,6 +41,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceOrderSnapshotReader;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker;
+use WP_CLI;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -177,6 +185,42 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): SalesLedgerHooks => new SalesLedgerHooks( $c->get( SalesSynchronizer::class ) )
 		);
 		$container->get( SalesLedgerHooks::class )->register();
+
+		// Sales ledger backfill (ADR-037 pkt. 6; ADR-038, status note "ROADMAP
+		// trin 7"): the job callback on every request (Action Scheduler runs it
+		// from WP-Cron, async requests and WP-CLI); the command only in WP-CLI.
+		$container->set( SalesBackfillOrders::class, static fn(): SalesBackfillOrders => new WooCommerceBackfillOrders() );
+		$container->set(
+			SalesBackfill::class,
+			static fn( Container $c ): SalesBackfill => new SalesBackfill( $c->get( SalesSynchronizer::class ), $c->get( SalesBackfillOrders::class ) )
+		);
+		$container->set(
+			SalesBackfillScheduler::class,
+			static fn( Container $c ): SalesBackfillScheduler => new SalesBackfillScheduler( $c->get( JobQueue::class ), $c->get( CountedOrderStatuses::class ) )
+		);
+		$container->set(
+			SalesBackfillJobs::class,
+			static fn( Container $c ): SalesBackfillJobs => new SalesBackfillJobs(
+				$c->get( SalesBackfill::class ),
+				$c->get( SalesBackfillScheduler::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			SalesBackfillCommand::class,
+			static fn( Container $c ): SalesBackfillCommand => new SalesBackfillCommand(
+				$c->get( SalesBackfill::class ),
+				$c->get( SalesBackfillScheduler::class ),
+				$c->get( CountedOrderStatuses::class ),
+				new WpCliOutput()
+			)
+		);
+		$container->get( SalesBackfillJobs::class )->register();
+
+		if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WP_CLI', false ) ) {
+			WP_CLI::add_command( 'merchboard sales-backfill', $container->get( SalesBackfillCommand::class ) );
+		}
 
 		// The protected meta guard itself is a core service (ADR-035): Plugin
 		// registers its one instance in register_hooks(), and ProductCreatorLink

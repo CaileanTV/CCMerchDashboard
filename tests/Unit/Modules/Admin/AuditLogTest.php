@@ -235,6 +235,62 @@ final class AuditLogTest extends TestCase {
 		self::assertSame( array( 'WordPress user: none', 'Status: Inactive' ), AuditLogFormatter::details( $this->entry( AuditAction::CreatorCreated, array( 'user_id' => null, 'status' => 'inactive' ) ), new AuditContextLabels() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
+	public function test_backfill_summaries_are_readable_counts(): void {
+		$context = array(
+			'run_id'              => '0f8b8c3e-2b0a-4c1e-9d7a-1a2b3c4d5e6f',
+			'trigger_user_id'     => 42,
+			'scanned'             => 12,
+			'registered'          => 7,
+			'skipped_history'     => 2,
+			'skipped_not_counted' => 0,
+			'skipped_no_creator'  => 1,
+			'skipped_missing'     => 0,
+			'skipped_busy'        => 0,
+			'failed'              => 2,
+			'rows'                => array(
+				'sale'       => 7,
+				'refund'     => 3,
+				'reversal'   => 0,
+				'correction' => 0,
+			),
+			'failures'            => array(
+				'lock_timeout'     => 1,
+				'negative_balance' => 1,
+			),
+		);
+
+		self::assertSame( 'Sales ledger backfill completed', AuditLogFormatter::action_label( AuditAction::SalesBackfillCompleted ) );
+		self::assertSame(
+			array(
+				'Run: <abbr title="0f8b8c3e-2b0a-4c1e-9d7a-1a2b3c4d5e6f">0f8b8c3e</abbr>',
+				'Triggered by: Nova (nova)',
+				'Orders scanned: 12',
+				'Registered: 7 · Already in the ledger: 2 · Not counted: 0 · No creator: 1 · Not found: 0 · Busy: 0 · Failed: 2',
+				'Rows written: Sale: 7 · Refund: 3 · Reversal: 0 · Correction: 0',
+				'Failures by code: lock_timeout: 1, negative_balance: 1',
+			),
+			AuditLogFormatter::details( $this->entry( AuditAction::SalesBackfillCompleted, $context ), new AuditContextLabels( array( 42 => 'Nova (nova)' ) ) )
+		);
+
+		$context['failures'] = array();
+		self::assertContains( 'Failures by code: none', AuditLogFormatter::details( $this->entry( AuditAction::SalesBackfillCompleted, $context ), new AuditContextLabels() ) );
+	}
+
+	public function test_a_malformed_backfill_summary_falls_back_to_plain_lines(): void {
+		$lines = AuditLogFormatter::details(
+			$this->entry(
+				AuditAction::SalesBackfillCompleted,
+				array(
+					'registered' => '7',
+					'rows'       => array( 'x' => 1 ),
+				)
+			),
+			new AuditContextLabels()
+		);
+
+		self::assertSame( array( 'registered: 7', 'rows: …' ), $lines, 'Nothing is guessed from invalid counts.' );
+	}
+
 	public function test_counted_order_statuses_are_shown_as_flat_lists(): void {
 		self::assertSame(
 			array( 'Setting: counted order statuses', 'Previous value: completed, processing', 'New value: completed, on-hold, processing' ),

@@ -43,7 +43,7 @@ final class AuditTrailTest extends TestCase {
 
 	public function test_action_names_are_a_closed_set(): void {
 		self::assertSame(
-			array( 'creator_created', 'creator_updated', 'creator_activated', 'creator_deactivated', 'creator_user_linked', 'creator_user_unlinked', 'settings_updated', 'product_creator_linked', 'product_creator_unlinked', 'creator_category_linked', 'creator_category_unlinked', 'category_sync_completed' ),
+			array( 'creator_created', 'creator_updated', 'creator_activated', 'creator_deactivated', 'creator_user_linked', 'creator_user_unlinked', 'settings_updated', 'product_creator_linked', 'product_creator_unlinked', 'creator_category_linked', 'creator_category_unlinked', 'category_sync_completed', 'sales_backfill_completed' ),
 			array_map( static fn( AuditAction $a ): string => $a->value, AuditAction::cases() )
 		);
 	}

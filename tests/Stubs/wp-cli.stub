@@ -1,0 +1,40 @@
+<?php
+/**
+ * PHPStan stub for the part of WP-CLI the plugin uses (no stubs package, no
+ * new dependency). WP-CLI itself is never loaded in the test suites.
+ *
+ * @package MerchBoard
+ */
+
+/**
+ * WP-CLI's static API (php/class-wp-cli.php).
+ */
+class WP_CLI {
+
+	/**
+	 * @param string                   $name     Command name.
+	 * @param callable|object|string   $callable Command implementation.
+	 * @param array<string, mixed>     $args     Registration arguments.
+	 * @return bool
+	 */
+	public static function add_command( $name, $callable, $args = array() ) {}
+
+	/**
+	 * @param string $message Message.
+	 * @return void
+	 */
+	public static function line( $message = '' ) {}
+
+	/**
+	 * @param string $message Message.
+	 * @return void
+	 */
+	public static function success( $message ) {}
+
+	/**
+	 * @param string   $message Message.
+	 * @param bool|int $exit    Exit code, or false to not exit.
+	 * @return void
+	 */
+	public static function error( $message, $exit = true ) {}
+}

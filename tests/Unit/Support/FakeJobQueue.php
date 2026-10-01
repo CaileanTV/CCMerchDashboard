@@ -56,6 +56,73 @@ final class FakeJobQueue implements JobQueue {
 	 */
 	public bool $refuse = false;
 
+	/**
+	 * Every finished or cancelled job with its status, in order (like Action
+	 * Scheduler's growing action ids): `complete`, `failed` or `canceled`.
+	 *
+	 * @var list<array{hook: string, args: array<mixed>, status: string}>
+	 */
+	public array $history = array();
+
+	/**
+	 * Hook of the job being run, if any.
+	 *
+	 * @var string|null
+	 */
+	public ?string $running = null;
+
+	/**
+	 * Whether any job with the hook is pending or running.
+	 *
+	 * @param string $hook Job hook.
+	 */
+	public function has_any( string $hook ): bool {
+		return $hook === $this->running || in_array( $hook, $this->pending_hooks(), true );
+	}
+
+	/**
+	 * Arguments of the latest failed or cancelled job with the hook, unless a
+	 * job with it completed later.
+	 *
+	 * @param string $hook Job hook.
+	 * @return array<mixed>|null
+	 */
+	public function resumable( string $hook ): ?array {
+		foreach ( array_reverse( $this->history ) as $job ) {
+			if ( $job['hook'] !== $hook ) {
+				continue;
+			}
+
+			return 'complete' === $job['status'] ? null : $job['args'];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Cancels every pending job with the hook.
+	 *
+	 * @param string $hook Job hook.
+	 */
+	public function cancel_all( string $hook ): void {
+		$kept = array();
+
+		foreach ( $this->pending as $job ) {
+			if ( $job['hook'] === $hook ) {
+				$this->history[] = array(
+					'hook'   => $job['hook'],
+					'args'   => $job['args'],
+					'status' => 'canceled',
+				);
+				continue;
+			}
+
+			$kept[] = $job;
+		}
+
+		$this->pending = $kept;
+	}
+
 	public function available(): bool {
 		return $this->is_available;
 	}
@@ -113,11 +180,23 @@ final class FakeJobQueue implements JobQueue {
 			return false;
 		}
 
+		$this->running = $job['hook'];
+		$status        = 'complete';
+
 		try {
 			$runner( $job['hook'], $job['args'] );
 		} catch ( Throwable ) {
 			$this->failed[] = $job;
+			$status         = 'failed';
+		} finally {
+			$this->running = null;
 		}
+
+		$this->history[] = array(
+			'hook'   => $job['hook'],
+			'args'   => $job['args'],
+			'status' => $status,
+		);
 
 		return true;
 	}

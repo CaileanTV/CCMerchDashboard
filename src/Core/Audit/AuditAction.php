@@ -86,4 +86,13 @@ enum AuditAction: string {
 	 * tied to a creator; system work with no actor. Dry runs write none.
 	 */
 	case CategorySyncCompleted = 'category_sync_completed';
+
+	/**
+	 * A sales ledger backfill run finished all its pages (context: run id,
+	 * the user who started it, if known, and counts only: orders scanned, per
+	 * outcome, rows per type and failures per code; ADR-038, status note
+	 * "ROADMAP trin 7"). No order ids, no amounts. System work with no actor.
+	 * Dry runs write none.
+	 */
+	case SalesBackfillCompleted = 'sales_backfill_completed';
 }

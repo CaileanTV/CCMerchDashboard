@@ -25,7 +25,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Runs from uninstall.php when WordPress deletes the plugin (ADR-025).
  *
- * Deletes nothing unless "delete all data on uninstall" is exactly true.
+ * Always cancels pending sales ledger backfill jobs (ScheduledJobs; jobs,
+ * not data). Deletes nothing unless "delete all data on uninstall" is
+ * exactly true.
  * With the opt-in it removes only what the plugin owns, for the current site:
  *
  * 1. from users: the `merchboard_creator` role and the plugin's capabilities
@@ -98,6 +100,9 @@ final class Uninstaller {
 	 * @return bool Whether all plugin data was deleted.
 	 */
 	public function run(): bool {
+		// Not data: pending backfill pages are cancelled with or without the opt-in.
+		ScheduledJobs::cancel_sales_backfill();
+
 		if ( ! Settings::delete_data_on_uninstall() ) {
 			return false;
 		}

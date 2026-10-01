@@ -1,0 +1,50 @@
+<?php
+/**
+ * Background jobs cancelled when the plugin goes away.
+ *
+ * @package MerchBoard
+ */
+
+declare( strict_types=1 );
+
+namespace MerchBoard\Core\Lifecycle;
+
+use Throwable;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Cancels the pending sales ledger backfill jobs on deactivation and on
+ * uninstall (ADR-038, status note "ROADMAP trin 7", D6), so no page is left
+ * that would run without the plugin. Only this hook: the cleanup of other
+ * Merch Dashboard jobs is unchanged. A page that is running at that moment
+ * cannot be cancelled by Action Scheduler; it finishes, and a page it queues
+ * is cancelled by the next deactivation or the uninstall.
+ *
+ * Deactivation and uninstall run without the WooCommerce module, so the hook
+ * is named here (a test keeps it equal to
+ * Modules\WooCommerce\Sales\SalesBackfillScheduler::HOOK, like
+ * Uninstaller::ORDER_META_KEYS). Without Action Scheduler nothing happens.
+ */
+final class ScheduledJobs {
+
+	/**
+	 * Action Scheduler hook of a sales ledger backfill page.
+	 */
+	public const SALES_BACKFILL_HOOK = 'merchboard_sales_backfill';
+
+	/**
+	 * Cancels the pending backfill pages; never throws.
+	 */
+	public static function cancel_sales_backfill(): void {
+		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
+			return;
+		}
+
+		try {
+			as_unschedule_all_actions( self::SALES_BACKFILL_HOOK );
+		} catch ( Throwable ) {
+			return;
+		}
+	}
+}

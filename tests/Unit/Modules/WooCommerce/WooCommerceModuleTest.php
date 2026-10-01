@@ -36,6 +36,9 @@ use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
+use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillJobs;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillScheduler;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
@@ -104,6 +107,17 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertFalse( has_action( 'admin_post_nopriv_' . SalesLedgerSettingsActions::SAVE_ACTION ) );
 		self::assertFalse( has_action( 'wp_ajax_' . SalesLedgerSettingsActions::SAVE_ACTION ), 'Only admin-post; no AJAX or REST route.' );
 		self::assertInstanceOf( CountedOrderStatuses::class, $container->get( CountedOrderStatuses::class ), 'One reader of the setting for sync and settings.' );
+	}
+
+	public function test_the_backfill_job_is_hooked_for_every_request_and_the_command_only_in_wp_cli(): void {
+		$container = self::core_container();
+
+		( new WooCommerceModule() )->register( $container );
+		$jobs = $container->get( SalesBackfillJobs::class );
+
+		self::assertSame( 10, has_action( SalesBackfillScheduler::HOOK, array( $jobs, 'run' ) ), 'Not waiting for admin_init: Action Scheduler runs from cron, async requests and WP-CLI.' );
+		self::assertInstanceOf( SalesBackfillCommand::class, $container->get( SalesBackfillCommand::class ) );
+		self::assertFalse( defined( 'WP_CLI' ), 'The unit suite has no WP-CLI, so no command is registered.' );
 	}
 
 	public function test_the_sales_ledger_hooks_are_registered_once_for_every_request(): void {
