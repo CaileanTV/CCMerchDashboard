@@ -245,6 +245,68 @@ class WC_Product extends WC_Data {
 	public function get_sku( $context = 'view' ) {
 		return WcProductStorage::$products[ $this->id ]['sku'];
 	}
+
+	/**
+	 * Active price ('' without one; a filter may return a float).
+	 *
+	 * @param string $context Context.
+	 * @return string|float
+	 */
+	public function get_price( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['price'] ?? '';
+	}
+
+	/**
+	 * Regular price.
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 */
+	public function get_regular_price( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['regular_price'] ?? '';
+	}
+
+	/**
+	 * Stock status.
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 */
+	public function get_stock_status( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['stock_status'] ?? 'instock';
+	}
+
+	/**
+	 * Image attachment id (WooCommerce returns it as a string).
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 */
+	public function get_image_id( $context = 'view' ) {
+		return (string) ( WcProductStorage::$products[ $this->id ]['image_id'] ?? '' );
+	}
+}
+
+/**
+ * Variable product: the prices of its visible variations.
+ */
+class WC_Product_Variable extends WC_Product {
+
+	/**
+	 * Variation prices by variation id; records $for_display.
+	 *
+	 * @param bool $for_display Whether to adjust for display.
+	 * @return array<string, array<int, string|float>>
+	 */
+	public function get_variation_prices( $for_display = false ) {
+		WcProductStorage::$variation_price_calls[] = $for_display;
+
+		return WcProductStorage::$products[ $this->id ]['variation_prices'] ?? array(
+			'price'         => array(),
+			'regular_price' => array(),
+			'sale_price'    => array(),
+		);
+	}
 }
 
 /**
@@ -361,7 +423,13 @@ class WC_Cache_Helper {
  * @return WC_Product|false
  */
 function wc_get_product( $the_product = false ) {
-	return isset( WcProductStorage::$products[ (int) $the_product ] ) ? new WC_Product( (int) $the_product ) : false;
+	$id = (int) $the_product;
+
+	if ( ! isset( WcProductStorage::$products[ $id ] ) ) {
+		return false;
+	}
+
+	return 'variable' === WcProductStorage::$products[ $id ]['type'] ? new WC_Product_Variable( $id ) : new WC_Product( $id );
 }
 
 /**

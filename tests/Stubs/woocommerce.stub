@@ -231,7 +231,55 @@ class WC_Product extends WC_Data {
 	 * @return string
 	 */
 	public function get_sku( $context = 'view' ) {}
+
+	/**
+	 * The active price (filters may return a float).
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|float
+	 */
+	public function get_price( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_stock_status( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return int|string
+	 */
+	public function get_image_id( $context = 'view' ) {}
 }
+
+/**
+ * Variable product (class-wc-product-variable.php).
+ */
+class WC_Product_Variable extends WC_Product {
+
+	/**
+	 * Prices of the visible variations by variation id, sorted ascending:
+	 * keys `price`, `regular_price` and `sale_price`.
+	 *
+	 * @param bool $for_display Whether to adjust the prices for display (tax).
+	 * @return array<string, array<int, string|float>>
+	 */
+	public function get_variation_prices( $for_display = false ) {}
+}
+
+/**
+ * @return string Store currency code (ISO 4217).
+ */
+function get_woocommerce_currency() {}
+
+/**
+ * @param string|float|int $number     Number.
+ * @param int|string|false $dp         Decimal places, false to keep them.
+ * @param bool             $trim_zeros Whether to trim trailing zeros.
+ * @return string
+ */
+function wc_format_decimal( $number, $dp = false, $trim_zeros = false ) {}
 
 /**
  * WooCommerce data store loader (class-wc-data-store.php). For 'product' it

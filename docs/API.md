@@ -30,7 +30,7 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
 | `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
 | `GET` | `/me/overview` | Nøgletal til Overview (fase 15 bruger `/me` og `/me/profile`; KPI-kortene er empty states uden API) | 20 |
-| `GET` | `/me/products` | Creator'ens produkter (pagineret) | 19 |
+| `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
 | `GET` | `/me/orders` | Ordrelinjer med creator'ens produkter **uden kunde-PII** | 19 |
 | `GET` | `/me/sales?from=&to=&interval=` | Salgsaggregeringer | 20 |
 
@@ -116,6 +116,32 @@ Alle kræver en aktiv creator for den indloggede bruger (`CreatorContext`). Crea
 - Andre felter (`status`, `user_id`, `id`, `creator_id` …) og query-parametre ignoreres.
 - Ugyldige typer eller ukendte platforme giver 400 `rest_invalid_param` (argument-skema). Regelbrud giver 400 `merchboard_invalid_profile` med `data.fields` = felt → kode (`required`, `invalid`, `too_long`, `invalid_url`, fx `"social_links.x": "invalid_url"`). Input ekkoes aldrig. Ét ugyldigt felt afviser hele opdateringen, og intet gemmes.
 - Uden reelle ændringer skrives intet. Ved ændringer skrives navn (creators-tabellen), bio og links (`merchboard_creatormeta`) og én audit-record `creator_updated` med `changed_fields` (actor = creatorens bruger) i én transaktion.
+
+## `GET /me/products` ✅ (fase 19, trin 2, ADR-039)
+
+Findes kun, når WooCommerce-modulet er indlæst (uden WooCommerce: 404 `rest_no_route`). Adgang som de øvrige `/me`-routes (401, 403, inaktiv creator 403). Paginering efter [konventionen](#paginering) med `page` og `per_page`; andre query-parametre ignoreres, og creator'en kommer kun fra `CreatorContext`. Ingen søgning, filtre eller caching.
+
+**Udvælgelse:** parent-produkter (`post_type = product`, aldrig varianter) med status `publish` eller `private`, som har præcis én koblingsrække `_merchboard_creator_id`, og den er creator'ens ID (sammenlignet byte for byte). Sorteret efter navn og derefter ID.
+
+```json
+[
+  {
+    "id": 12,
+    "name": "Tour tee",
+    "status": "publish",
+    "price": { "min": "149.00", "max": "199.00", "currency": "DKK", "tax": "store_setting" },
+    "stock_status": "instock",
+    "image": { "url": "https://shop.example/wp-content/uploads/tee-150x150.jpg", "alt": "Tour tee" }
+  }
+]
+```
+
+| Felt | Regel |
+| --- | --- |
+| `name` | Det aktuelle produktnavn som ren tekst (tags fjernet, entities afkodet) |
+| `price` | Den aktive WooCommerce-pris som strenge: `get_price()` for simple produkter (`min` = `max`), min og max af de aktive variationspriser for variable produkter. Ingen momsberegning; grundlaget er butikkens indstilling (`tax: "store_setting"`). Uden aktiv pris: `null` (ADR-039, præcisering af P7) |
+| `stock_status` | `instock`, `outofstock` eller `onbackorder`; andre værdier giver `null`. Aldrig lagerantal |
+| `image` | Thumbnail med samme origin som sitet (scheme, host og port mod `home_url()`), `alt` = produktnavnet; ellers `null`. CSP'en er uændret |
 
 ## Test-krav
 

@@ -17,6 +17,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
@@ -32,6 +33,10 @@ use MerchBoard\Modules\WooCommerce\ActionSchedulerQueue;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationHooks;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationJobs;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationScheduler;
+use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
+use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
@@ -68,6 +73,18 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertInstanceOf( ProductCreatorLink::class, $container->get( ProductCreatorLink::class ) );
 		// The module never widens the creator role (ADR-030).
 		self::assertSame( array( 'read', Capabilities::ACCESS_DASHBOARD ), Capabilities::creator_capabilities() );
+	}
+
+	public function test_the_creator_products_route_is_registered_on_rest_api_init(): void {
+		$container = self::core_container();
+		$container->set( CreatorContext::class, static fn( Container $c ): CreatorContext => new CreatorContext( $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
+		Actions\expectAdded( 'rest_api_init' )->once();
+
+		( new WooCommerceModule() )->register( $container );
+
+		self::assertInstanceOf( WooCommerceProductDetails::class, $container->get( ProductDetails::class ) );
+		self::assertInstanceOf( CreatorProducts::class, $container->get( CreatorProducts::class ) );
+		self::assertInstanceOf( MeProductsController::class, $container->get( MeProductsController::class ) );
 	}
 
 	public function test_product_links_are_wired_to_the_creator_edit_page_only(): void {

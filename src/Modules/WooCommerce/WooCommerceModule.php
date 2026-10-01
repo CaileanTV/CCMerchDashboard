@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
@@ -28,6 +29,10 @@ use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
+use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
+use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfill;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillJobs;
@@ -350,6 +355,33 @@ final class WooCommerceModule implements Module {
 		$container->set(
 			SalesLedgerSettingsSection::class,
 			static fn( Container $c ): SalesLedgerSettingsSection => new SalesLedgerSettingsSection( $c->get( CountedOrderStatusSettings::class ) )
+		);
+
+		// Creator dashboard (phase 19, ADR-039): read-only product data for the
+		// creator-scope REST route. Registered only with WooCommerce, so
+		// without it the route does not exist.
+		$container->set(
+			CreatorProducts::class,
+			static fn( Container $c ): CreatorProducts => new CreatorProducts( $c->get( wpdb::class ) )
+		);
+		$container->set(
+			ProductDetails::class,
+			static fn(): ProductDetails => new WooCommerceProductDetails()
+		);
+		$container->set(
+			MeProductsController::class,
+			static fn( Container $c ): MeProductsController => new MeProductsController(
+				$c->get( CreatorContext::class ),
+				$c->get( CreatorProducts::class ),
+				$c->get( ProductDetails::class ),
+				$c->get( Logger::class )
+			)
+		);
+		add_action(
+			'rest_api_init',
+			static function () use ( $container ): void {
+				$container->get( MeProductsController::class )->register_routes();
+			}
 		);
 
 		// Only wp-admin: the product category column in the Creators list, the

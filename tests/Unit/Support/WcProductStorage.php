@@ -17,7 +17,7 @@ final class WcProductStorage {
 	/**
 	 * Products by id.
 	 *
-	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[]}>
+	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[], price?: string|float, regular_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>}>
 	 */
 	public static array $products = array();
 
@@ -69,6 +69,26 @@ final class WcProductStorage {
 	 * @var bool
 	 */
 	public static bool $drop_writes = false;
+
+	/**
+	 * The `$for_display` argument of every get_variation_prices() call.
+	 *
+	 * @var list<bool>
+	 */
+	public static array $variation_price_calls = array();
+
+	/**
+	 * Sets more product fields (price, regular_price, stock_status, image_id,
+	 * variation_prices) on a product added with add().
+	 *
+	 * @phpstan-param array{price?: string|float, regular_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>} $fields
+	 *
+	 * @param int                  $id     Product id.
+	 * @param array<string, mixed> $fields Fields.
+	 */
+	public static function set( int $id, array $fields ): void {
+		self::$products[ $id ] = array_merge( self::$products[ $id ], $fields );
+	}
 
 	/**
 	 * Adds a product with meta rows.
