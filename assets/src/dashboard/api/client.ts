@@ -43,9 +43,14 @@ export interface ApiError {
 	readonly fields: Readonly< Record< string, string > >;
 }
 
+/** The failed side of every ApiResult. */
+export interface ApiFailure {
+	readonly ok: false;
+	readonly error: ApiError;
+}
+
 export type ApiResult< T > =
-	| { readonly ok: true; readonly data: T }
-	| { readonly ok: false; readonly error: ApiError };
+	{ readonly ok: true; readonly data: T } | ApiFailure;
 
 /** Turns an untrusted response body into a typed value, or null. */
 export type Validator< T > = ( body: unknown ) => T | null;
@@ -58,10 +63,38 @@ export interface ApiRequest {
 	readonly signal?: AbortSignal;
 }
 
+/** Default page size of list routes (docs/API.md#paginering). */
+export const DEFAULT_PER_PAGE = 20;
+
+/** Largest page size of list routes. */
+export const MAX_PER_PAGE = 100;
+
+export interface ListRequest {
+	/** Path of a list route inside the plugin namespace, without a query. */
+	readonly path: string;
+	/** Page, from 1. */
+	readonly page: number;
+	/** Page size, 1 to MAX_PER_PAGE. */
+	readonly perPage: number;
+	readonly signal?: AbortSignal;
+}
+
+/** One page of a list route and the totals from its headers. */
+export interface Paginated< T > {
+	readonly items: readonly T[];
+	readonly page: number;
+	readonly perPage: number;
+	/** `X-WP-Total`: items over all pages. */
+	readonly total: number;
+	/** `X-WP-TotalPages`: 0 when there is nothing to list. */
+	readonly totalPages: number;
+}
+
 /** Minimal shape of a fetch Response, as rejected or resolved by apiFetch. */
 interface ResponseLike {
 	readonly status: number;
 	readonly ok: boolean;
+	readonly headers?: { get: ( name: string ) => string | null };
 	json: () => Promise< unknown >;
 }
 
@@ -78,7 +111,7 @@ function failure(
 	status = 0,
 	code: string | null = null,
 	fields: Readonly< Record< string, string > > = {}
-): ApiResult< never > {
+): ApiFailure {
 	return { ok: false, error: { kind, status, code, fields } };
 }
 
@@ -147,7 +180,7 @@ async function readJson(
 
 async function errorFromResponse(
 	response: ResponseLike
-): Promise< ApiResult< never > > {
+): Promise< ApiFailure > {
 	const parsed = await readJson( response );
 	const code =
 		parsed.ok &&
@@ -173,16 +206,14 @@ function isAbort( error: unknown ): boolean {
 	return isRecord( error ) && error.name === 'AbortError';
 }
 
+type Sent = { readonly ok: true; readonly response: ResponseLike } | ApiFailure;
+
 /**
- * Sends a request and validates the response.
+ * Sends a request: a successful response, or the reduced error.
  *
- * @param options  Request.
- * @param validate Response validator.
+ * @param options Request.
  */
-export async function request< T >(
-	options: ApiRequest,
-	validate: Validator< T >
-): Promise< ApiResult< T > > {
+async function send( options: ApiRequest ): Promise< Sent > {
 	if (
 		! options.path.startsWith( NAMESPACE ) ||
 		options.path.includes( '..' )
@@ -225,10 +256,118 @@ export async function request< T >(
 		return errorFromResponse( response );
 	}
 
-	const parsed = await readJson( response );
+	return { ok: true, response };
+}
+
+/**
+ * Sends a request and validates the response.
+ *
+ * @param options  Request.
+ * @param validate Response validator.
+ */
+export async function request< T >(
+	options: ApiRequest,
+	validate: Validator< T >
+): Promise< ApiResult< T > > {
+	const sent = await send( options );
+
+	if ( ! sent.ok ) {
+		return sent;
+	}
+
+	const parsed = await readJson( sent.response );
 	const data = parsed.ok ? validate( parsed.body ) : null;
 
 	return data === null
-		? failure( 'invalid_response', response.status )
+		? failure( 'invalid_response', sent.response.status )
 		: { ok: true, data };
+}
+
+const COUNT = /^(0|[1-9][0-9]{0,8})$/;
+
+/**
+ * A count header (`X-WP-Total`, `X-WP-TotalPages`), or null when it is
+ * missing or not a plain non-negative integer.
+ *
+ * @param response Response.
+ * @param name     Header name.
+ */
+function countHeader( response: ResponseLike, name: string ): number | null {
+	const value = response.headers?.get( name ) ?? null;
+
+	return value !== null && COUNT.test( value.trim() )
+		? Number( value.trim() )
+		: null;
+}
+
+/**
+ * Requests one page of a list route (docs/API.md#paginering): `page` and
+ * `per_page` in the query, a plain JSON array as body and the totals in
+ * `X-WP-Total` and `X-WP-TotalPages`. Every item is validated; one invalid
+ * item, a body that is not an array, or missing or inconsistent totals make
+ * the whole response `invalid_response`. A page after the last one is an
+ * empty, valid page.
+ *
+ * @param options      Request.
+ * @param validateItem Validator for one item.
+ */
+export async function requestList< T >(
+	options: ListRequest,
+	validateItem: Validator< T >
+): Promise< ApiResult< Paginated< T > > > {
+	const { page, perPage } = options;
+
+	if (
+		! Number.isInteger( page ) ||
+		page < 1 ||
+		! Number.isInteger( perPage ) ||
+		perPage < 1 ||
+		perPage > MAX_PER_PAGE ||
+		options.path.includes( '?' )
+	) {
+		throw new Error(
+			'List requests need a page from 1, a page size from 1 to 100 and a path without a query.'
+		);
+	}
+
+	const sent = await send( {
+		path: `${ options.path }?page=${ page }&per_page=${ perPage }`,
+		...( options.signal === undefined ? {} : { signal: options.signal } ),
+	} );
+
+	if ( ! sent.ok ) {
+		return sent;
+	}
+
+	const total = countHeader( sent.response, 'X-WP-Total' );
+	const totalPages = countHeader( sent.response, 'X-WP-TotalPages' );
+	const parsed = await readJson( sent.response );
+
+	if (
+		total === null ||
+		totalPages === null ||
+		( total === 0 ) !== ( totalPages === 0 ) ||
+		! parsed.ok ||
+		! Array.isArray( parsed.body ) ||
+		parsed.body.length > perPage
+	) {
+		return failure( 'invalid_response', sent.response.status );
+	}
+
+	const items: T[] = [];
+
+	for ( const body of parsed.body as unknown[] ) {
+		const item = validateItem( body );
+
+		if ( item === null ) {
+			return failure( 'invalid_response', sent.response.status );
+		}
+
+		items.push( item );
+	}
+
+	return {
+		ok: true,
+		data: { items, page, perPage, total, totalPages },
+	};
 }

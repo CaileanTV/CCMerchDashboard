@@ -448,3 +448,61 @@
 	margin: 0;
 	font-weight: 500;
 }
+
+// Phase 19: tables and pagination ---------------------------------------------
+
+.merchboard-table {
+	overflow-x: auto;
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+}
+
+.merchboard-table__table {
+	width: 100%;
+	font-size: var(--merchboard-text-sm);
+	border-collapse: collapse;
+
+	th,
+	td {
+		padding: var(--merchboard-space-3) var(--merchboard-space-4);
+		text-align: start;
+		white-space: nowrap;
+		border-bottom: 1px solid var(--merchboard-border);
+	}
+
+	th {
+		font-weight: 600;
+		color: var(--merchboard-text-muted);
+		background: var(--merchboard-surface-muted);
+	}
+
+	tbody tr:last-child td {
+		border-bottom: 0;
+	}
+}
+
+.merchboard-table__caption {
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	font-weight: 600;
+	text-align: start;
+}
+
+.merchboard-table__table .merchboard-table__cell--end {
+	text-align: end;
+}
+
+.merchboard-pagination {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-3);
+	align-items: center;
+	justify-content: space-between;
+	margin-top: var(--merchboard-space-4);
+}
+
+.merchboard-pagination__status {
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text-muted);
+}

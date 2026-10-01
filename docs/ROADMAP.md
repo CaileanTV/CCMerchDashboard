@@ -195,8 +195,8 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - 1 ✅ (2026-10-01; commit `0f2f02c`, pushet, CI grøn, run `36910534650`): REST-paginering: `RestController::pagination_args()` og `paginated()` og `Core\Http\Pagination`.
   - 2 ✅ (2026-10-01; commit `3c3bef6`, pushet, CI grøn, run `36914299093`): Products backend (`GET /me/products`).
   - 3 ✅ (2026-10-01; commit `98db3b5`, pushet, CI grøn, run `36916711735`): Orders read-model på sales ledgeren (inkl. måling med `EXPLAIN`).
-  - 4 (i gang): Orders endpoint (`GET /me/orders`) med berigelse fra WooCommerce.
-  - 5: Frontend-fundament (liste-klient, tabel, paginering, sektionerne).
+  - 4 ✅ (2026-10-01; commit `c4a7bd2`, pushet, CI grøn, run `36919587593`): Orders endpoint (`GET /me/orders`) med berigelse fra WooCommerce.
+  - 5 (i gang): Frontend-fundament (liste-klient, tabel, paginering, sektionerne).
   - 6: Products-sektionen.
   - 7: Orders-sektionen.
   - 8: Verifikation i Merch Dashboard Local (HPOS og legacy, kræver projektejerens godkendelse).
