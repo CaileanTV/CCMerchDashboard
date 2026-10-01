@@ -37,6 +37,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - Integrationstesten for migration 4 sammenligner kolonnetyper uden heltals-display-bredde, så den består på både MariaDB og MySQL 8.0.19+ (CI).
 
 ### Verifikation
+- **Sales ledger i Merch Dashboard Local (fase 18, trin 8, 2026-10-01):** regression af Q4-scenarierne (refunds, sletning af refunds via admin, papirkurv, gendannelse, permanent sletning, forældet refund-cache, fejlmarkør og teknisk log) og et samspilsscenarie mellem backfill og live-hooks på `00fb066`, bestået i HPOS og legacy. Ingen ændring af adfærden.
 - **Uninstall-verifikation (ADR-036):** integrationstests for alle uninstall-scenarier (opt-in/opt-out, manglende eller forkert `WP_UNINSTALL_PLUGIN`, skrivninger i vinduet, idempotens og logning uden værdier). Ingen ændring af uninstall-adfærden.
 
 ## [0.1.0] - 2026-09-25

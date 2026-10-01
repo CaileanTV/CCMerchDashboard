@@ -173,7 +173,7 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 ### `merchboard_sales` og `merchboard_sales_cycles` (fase 18, design-låst)
 
-> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); fra trin 5 skriver `SalesSynchronizer` rækkerne fra WooCommerce-hooks (runtime-verificeret med HPOS og legacy; commit `366714c`, CI grøn inkl. MySQL 8.0.46).** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (findes ikke på MySQL 8.0; ADR-038, B4).
+> **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); fra trin 5 skriver `SalesSynchronizer` rækkerne fra WooCommerce-hooks (runtime-verificeret med HPOS og legacy; commit `366714c`, CI grøn inkl. MySQL 8.0.46); fra trin 7 registrerer backfillen historiske ordrer uden ledger-historik (commit `00fb066`). Fase 18 er afsluttet 2026-10-01.** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (findes ikke på MySQL 8.0; ADR-038, B4).
 
 **`merchboard_sales`** er en append-only ledger (ADR-037). Historiske rækker ændres og slettes aldrig; afvigelser rettes med nye rækker. Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
 
