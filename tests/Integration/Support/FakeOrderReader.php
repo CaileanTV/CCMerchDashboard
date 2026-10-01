@@ -29,7 +29,7 @@ final class FakeOrderReader implements OrderSnapshotReader {
 	/**
 	 * Orders by id.
 	 *
-	 * @var array<int, array{status: string, currency: string, lines: list<OrderLineSnapshot>, refunds: list<RefundSnapshot>}>
+	 * @var array<int, array{status: string, currency: string, lines: list<OrderLineSnapshot>, refunds: list<RefundSnapshot>, date_paid?: string}>
 	 */
 	public array $orders = array();
 
@@ -98,7 +98,7 @@ final class FakeOrderReader implements OrderSnapshotReader {
 			$counts,
 			$order['currency'],
 			new DateTimeImmutable( '2026-09-01 10:00:00', $utc ),
-			new DateTimeImmutable( '2026-09-01 10:05:00', $utc ),
+			new DateTimeImmutable( $order['date_paid'] ?? '2026-09-01 10:05:00', $utc ),
 			$order['lines'],
 			$order['refunds'],
 			$deleted_refund_id
