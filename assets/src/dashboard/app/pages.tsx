@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { EmptyState } from '../components/EmptyState';
 import { OverviewSection } from '../sections/overview/OverviewSection';
+import { ProductsSection } from '../sections/products/ProductsSection';
 import { ProfileSection } from '../sections/profile/ProfileSection';
 import type { DashboardSection } from '../types/config';
 import { Link } from './router';
@@ -15,6 +16,7 @@ export interface Page {
 /** Section components known to this build, by section id. */
 const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	overview: () => <OverviewSection />,
+	products: () => <ProductsSection />,
 	profile: () => <ProfileSection />,
 };
 

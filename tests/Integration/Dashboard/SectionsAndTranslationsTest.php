@@ -18,6 +18,7 @@ use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Dashboard\DashboardSections;
 use MerchBoard\Modules\Dashboard\ShellController;
+use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 
 final class SectionsAndTranslationsTest extends IntegrationTestCase {
@@ -71,6 +72,39 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 
 		wp_get_current_user()->add_cap( Capabilities::MANAGE );
 		self::assertSame( array( 'overview', 'profile', 'reports' ), array_column( $registry->for_current_user(), 'id' ) );
+
+		wp_set_current_user( $this->create_user( 'plain_subscriber' ) );
+		self::assertSame( array(), $registry->for_current_user() );
+	}
+
+	public function test_the_products_section_is_sent_only_with_the_woocommerce_registration(): void {
+		$registry = $this->service( DashboardSections::class );
+		wp_set_current_user( $this->creator );
+
+		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Products section.' );
+
+		( new DashboardSectionRegistration() )->register();
+
+		self::assertSame(
+			array(
+				array(
+					'id'    => 'overview',
+					'label' => 'Overview',
+					'path'  => '',
+				),
+				array(
+					'id'    => 'products',
+					'label' => 'Products',
+					'path'  => 'products',
+				),
+				array(
+					'id'    => 'profile',
+					'label' => 'Profile',
+					'path'  => 'profile',
+				),
+			),
+			$registry->for_current_user()
+		);
 
 		wp_set_current_user( $this->create_user( 'plain_subscriber' ) );
 		self::assertSame( array(), $registry->for_current_user() );

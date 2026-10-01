@@ -506,3 +506,29 @@
 	font-size: var(--merchboard-text-sm);
 	color: var(--merchboard-text-muted);
 }
+
+.merchboard-product {
+	display: inline-flex;
+	gap: var(--merchboard-space-3);
+	align-items: center;
+}
+
+.merchboard-product__image {
+	flex: none;
+	width: 40px;
+	height: 40px;
+	object-fit: cover;
+	border-radius: var(--merchboard-radius-sm);
+}
+
+.merchboard-product__image--none {
+	display: inline-block;
+	background: var(--merchboard-surface-muted);
+	border: 1px solid var(--merchboard-border);
+}
+
+.merchboard-product__name {
+	font-weight: 500;
+	color: var(--merchboard-text);
+	white-space: normal;
+}

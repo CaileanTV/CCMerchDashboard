@@ -30,6 +30,7 @@ use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
 use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceOrderLineEnricher;
@@ -405,6 +406,8 @@ final class WooCommerceModule implements Module {
 				$container->get( MeOrdersController::class )->register_routes();
 			}
 		);
+		// The dashboard sections that need WooCommerce (Products).
+		( new DashboardSectionRegistration() )->register();
 
 		// Only wp-admin: the product category column in the Creators list, the
 		// product category and product links on the
