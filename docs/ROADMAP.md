@@ -190,6 +190,17 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 - **Scope:** `/me/products`, `/me/orders` (uden kunde-PII), sektionerne Products og Orders (responsive tabeller, paginering, empty states).
 - **Done:** IDOR-tests (ordre med anden creators produkt). Privacy er bekræftet af virksomheden.
+- **Beslutninger (2026-10-01):** ADR-039 (P1–P12, privacy bekræftet af virksomheden, P2 præciseret, P7 præciseret om pris og moms). Pagineringskonventionen for liste-routes står i [API.md](API.md#paginering).
+- **Rækkefølge:**
+  - 1 ✅ (2026-10-01, lokalt): REST-paginering: `RestController::pagination_args()` og `paginated()` og `Core\Http\Pagination`.
+  - 2: Products backend (`GET /me/products`).
+  - 3: Orders read-model på sales ledgeren (inkl. måling med `EXPLAIN`).
+  - 4: Orders endpoint (`GET /me/orders`) med berigelse fra WooCommerce.
+  - 5: Frontend-fundament (liste-klient, tabel, paginering, sektionerne).
+  - 6: Products-sektionen.
+  - 7: Orders-sektionen.
+  - 8: Verifikation i Merch Dashboard Local (HPOS og legacy, kræver projektejerens godkendelse).
+  - 9: i18n, docs og slutverifikation.
 
 ## Fase 20 – Sales & statistics
 

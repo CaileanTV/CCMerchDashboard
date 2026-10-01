@@ -1,6 +1,6 @@
 # REST API
 
-> Status: **Design.** REST-fundamentet kommer i roadmap-fase 14.
+> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), og pagineringen af liste-routes er tilføjet i fase 19, trin 1. Øvrige routes i tabellerne nedenfor er design.
 
 ## Principper
 
@@ -56,7 +56,7 @@ Ingen konkrete integrationer er godkendt. Hver tjeneste kræver projektejerens e
 - JSON-objekter med `snake_case`-nøgler (som WordPress core).
 - Beløb returneres som **strenge med fast decimalantal** plus `currency` (fx `{"amount": "149.0000", "currency": "DKK"}`). Aldrig floats. Formattering sker i klienten via `Intl.NumberFormat`.
 - Datoer i ISO 8601 UTC (`2026-09-24T12:00:00Z`).
-- Lister: `?page=&per_page=` (max 100). Headers `X-WP-Total` og `X-WP-TotalPages`.
+- Lister: `?page=&per_page=` (max 100), headers `X-WP-Total` og `X-WP-TotalPages` og et rent JSON-array som body. Se [Paginering](#paginering).
 - Fejl: `WP_Error` med koder prefixet `merchboard_` (fx `merchboard_creator_inactive`), passende HTTP-status og **ingen interne detaljer** (SQL, stack traces, stier) i beskeden.
 
 ## Controller-basisklasse ✅ (fase 14)
@@ -68,8 +68,22 @@ Ingen konkrete integrationer er godkendt. Hver tjeneste kræver projektejerens e
 - `require_capability( string )` til fremtidige admin-routes.
 - `run( route, callback )`: `DatabaseException` og uventede exceptions logges via `Logger` (route og årsag, ingen request-data) og giver en generisk `500 merchboard_internal_error`.
 - `error( code, message, status, data )`: `WP_Error` med `merchboard_`-kode, oversat generisk besked og `status`.
+- `pagination_args()` og `paginated( items, total, Pagination )` (✅ fase 19, trin 1): argumenterne og svaret for liste-routes, se [Paginering](#paginering). `Core\Http\Pagination` er side og sidestørrelse (`from_request()`, `offset()`, `total_pages()`).
 
-Paginerings-helpers tilføjes med den første liste-route.
+## Paginering
+
+✅ Fase 19, trin 1. Projektets konvention for alle liste-routes:
+
+| Parameter | Regel |
+| --- | --- |
+| `page` | Heltal ≥ 1, standard 1 |
+| `per_page` | Heltal 1-100, standard 20 |
+
+- Ugyldige værdier (fx `page=0`, `per_page=101` eller `per_page=abc`) afvises af WordPress' argumentvalidering med 400 `rest_invalid_param`. Der findes ingen projektspecifik fejlkode for paginering.
+- **Body** er altid et rent JSON-array med sidens elementer (`[ … ]`), aldrig et objekt som `{ "items": [ … ] }`.
+- **Headers:** `X-WP-Total` er det samlede antal elementer, og `X-WP-TotalPages` er `ceil( total / per_page )`. Ved total 0 er begge `0`, og body er `[]`.
+- **Side efter sidste side:** en `page` større end antallet af sider (ved total > 0) giver **200** med `[]` og de samme totaler, ikke en fejl. Det afviger bevidst fra WordPress core (fx `rest_post_invalid_page_number`), så en liste, der skrumper mellem to requests, ikke giver en fejlside.
+- Testet i `tests/Integration/Rest/RestPaginationTest.php` (rigtig REST-server og argumentvalidering) og `tests/Unit/Core/Http/PaginationTest.php`.
 
 ## Endpoints ✅ (fase 14)
 

@@ -1836,3 +1836,92 @@ Status, ingen nye beslutninger. Trin 8 er udført som en målrettet regressionsr
 
 ### Statusnote 2026-10-01: fase 18 afsluttet (ROADMAP trin 9)
 Status, ingen nye beslutninger. Fase 18's Done-kriterium (integrationstests for salg, hel og delvis refund, annullering efter `completed` og gentagne hooks) er opfyldt af `tests/Integration/WooCommerce/SalesSynchronizerTest.php` (registrering af en ordre oprettet i tællende status, statusskift med reversal, lukning og ny cyklus, delvis og fuld refund med sletning af en refund og forældet cache, gentagne hooks uden nye rækker) sammen med planner-, repository- og backfill-testene og runtime-verifikationen i trin 5–8 (HPOS og legacy). Backfillens idempotens og genoptagelse efter D6 er dækket af `tests/Integration/WooCommerce/SalesBackfillTest.php` og `tests/Unit/Modules/WooCommerce/Sales/SalesBackfillJobsTest.php`. Dokumentationen er gennemgået for konsistens, i18n-kontrollen gav ingen utilsigtet diff, og den fulde suite er grøn; trin 9's ændringer committes, pushes og CI-verificeres som afslutning.
+
+---
+
+# ADR-039: Products og Orders i creator-dashboardet (fase 19)
+
+## Date
+2026-10-01
+
+## Status
+Accepteret (fase 19, trin 1, før implementering). Besluttet af projektejeren på grundlag af beslutningsoversigten P1–P12. Privacy-beslutningen (P5, P6 og øvrige kundeoplysninger) er bekræftet af virksomheden 2026-10-01: virksomhedsbekræftelse modtaget i projektbeslutningen (navn og rolle er ikke angivet). Besvarer åbent spørgsmål 6 (privacy). Supplerer ADR-007 (`/me`-scope), ADR-011 og ADR-037 (ledgeren som datakilde; pkt. 10 om `item_name`) og ADR-026 (dashboardets CSP, som ikke ændres). Ændrer ikke ADR-038. **Præcisering 2026-10-01 (se nederst):** P7's produktpris og moms.
+
+## Context
+Fase 19 skal give creators `GET /me/products` og `GET /me/orders` og sektionerne Products og Orders (ROADMAP). Done kræver IDOR-tests, og at privacy er bekræftet af virksomheden. Fase 18 har leveret en append-only sales ledger (`merchboard_sales`, `merchboard_sales_cycles`) med et creator-snapshot pr. række og `KEY(creator_id, occurred_at)`. Produktkoblingen er `_merchboard_creator_id` (ADR-030/031). Dashboardets CSP er `img-src 'self' data:` (`ShellController`). API.md fastlægger lister med `page`/`per_page` (max 100) og `X-WP-Total`/`X-WP-TotalPages`, og FRONTEND.md forbyder HTML fra serveren i dashboardet.
+
+**Teknisk begrænsning i ledgeren:** en permanent sletning af en ordre med en åben cyklus skrives som den samme `reversal` (`v:{order_item_id}:{cycle}`) og `close` som en ordre, der ikke længere tæller (`SalesPlanner`, DATABASE.md's event-key-model). En ordre, der allerede var lukket, før den blev slettet, får ingen ny række. Ledgeren kan derfor ikke skelne permanent slettede ordrer fra almindelige reversal/close-forløb.
+
+## Decision
+1. **P1 – datakilde for Orders:** sales ledgeren er den eneste kilde til udvælgelse, creator-filtrering og paginering. Creator'en udledes server-side via `CreatorContext`, og filteret på `creator_id` ligger i selve SQL-queryen (ADR-007). Queryen er den samme under HPOS og legacy.
+2. **P2 – rækkeenhed, antal og markeringer:** én række pr. ordrelinje, aggregeret over alle ledger-rækker for `order_id` + `order_item_id` på tværs af cyklusser, kun rækker med creator'ens `creator_id`.
+   - **Antal** er linjens saldo i ledgeren: summen af rækkernes `quantity` (ADR-037 pkt. 3). Mens ordren har en åben cyklus, svarer den til WooCommerce' nettoantal (ordrelinjen minus refunds); når ordren ikke tæller, er den 0. Et købt bruttoantal vises ikke, fordi det ikke kan udledes entydigt (en genåbnet cyklus starter med det resterende netto).
+   - **Refunderet** (`refunded`): linjen har mindst én `refund`-række (`r:{order_item_id}:{refund_id}`) uden en tilhørende `refund_deleted`-korrektion (`c-rd:{order_item_id}:{refund_id}`). `closed_cycle_refund` og `closed_cycle_refund_deleted` påvirker ikke markeringen. Der skelnes ikke mellem hel og delvis refund. Refunds uden ordrelinje står ikke i ledgeren (ADR-037 pkt. 7) og giver ingen markering.
+   - **Ikke tællende** (`counted = false`): ordren har ingen åben cyklus i `merchboard_sales_cycles` (lige mange `open`- og `close`-rækker for `order_id`). Markeringen hører til ordren og gælder alle dens linjer. Den angiver ikke årsagen: ledgeren skelner ikke mellem annullering, fuld refund, andre ikke-tællende statusser og permanent sletning; årsagen vises alene via den live status (P4).
+   - Begge markeringer kan gælde samtidig. En linje fjernet fra en tællende ordre (`line_removed`) har antal 0 uden markering.
+   - Alt udledes af de eksisterende tabeller uden nye ledger-hændelser, uden migration og uden WooCommerce-opslag. Rå hændelser vises ikke i fase 19.
+3. **P3 – felter:**
+   - **Products:** navn, status, pris, lagerstatus og billede (produkt-ID kun som nøgle).
+   - **Orders:** ordrenummer, dato, status, produktnavn og antal (plus markeringen fra P2). Datoen er `occurred_at` for linjens første salgsrække.
+   - **Ingen salgsbeløb i fase 19** (hverken pr. linje eller summer). Beløb, valuta pr. aggregering og nøgletal hører til fase 20 (`/me/sales`).
+4. **P4 – status og slettede ordrer (hybrid, løsning A):** ledgeren udvælger og paginerer; WooCommerce bruges kun til at berige de viste ordrer med live status og ordrenummer (højst ét ordreopslag pr. ordre på siden).
+   - Findes ordren, vises dens WooCommerce-status og ordrenummer (`get_order_number()`).
+   - Ligger ordren i papirkurven, vises den med status **"Trashed"**.
+   - Findes ordren ikke længere (permanent slettet), vises den med status **"Deleted"**, og ordre-ID'et vises som fallback for ordrenummeret, fordi WooCommerce-ordrenummeret ikke kan hentes.
+   - **Slettede ordrer filtreres ikke ud fra ledgeren** (se begrænsningen ovenfor). Der tilføjes **ingen ny ledger-hændelse** i fase 19, og der laves **ingen HPOS- eller legacy-specifik SQL-join** for at skjule slettede ordrer. `X-WP-Total` og `X-WP-TotalPages` beregnes alene fra ledgeren og forbliver korrekte.
+5. **P5 – kundens land (privacy, bekræftet af virksomheden 2026-10-01):** kundens land vises **aldrig** i Orders-listen (hverken fakturerings- eller leveringsland).
+6. **P6 – produktnavn i Orders (privacy, bekræftet af virksomheden 2026-10-01):** det aktuelle WooCommerce-produktnavn vises, når produktet findes (varianten, når linjen har en, ellers produktet). Er produktet slettet, må det gemte `item_name` fra salgstidspunktet vises (ADR-037 pkt. 10).
+7. **Øvrige kundeoplysninger (privacy, bekræftet af virksomheden 2026-10-01):** ingen øvrige kundeidentificerende oplysninger vises i fase 19, herunder navn, e-mail, telefon, adresse, by, postnummer, kundenoter, IP-adresse, betalingsoplysninger og kunde- eller bruger-ID. Svarene indeholder kun felterne fra P3.
+8. **P7 – produkter:** kun produkter med status `publish` og `private`, der er koblet til creator'en (kladder, `pending` og `trash` vises ikke). Prisen sendes som strukturerede data (strenge, aldrig floats, plus valuta); variable produkter som min/max-pris. Kun lagerstatus (`instock`, `outofstock`, `onbackorder`), ikke lagerantal. Der sendes ingen HTML, heller ikke fra `get_price_html()`; klienten formatterer.
+9. **P8 – produktbilleder:** kun en thumbnail-URL med samme origin som dashboardet; ellers `null`, og klienten viser en pladsholder. Billedet får produktnavnet som `alt`. **Ingen CSP-udvidelse i fase 19** (`img-src 'self' data:` bevares).
+10. **P9 – paginering og sortering:** `page` og `per_page` (standard 20, max 100) med `X-WP-Total` og `X-WP-TotalPages`, som API.md fastlægger. Fast sortering: Orders efter datoen fra P3, nyeste først (derefter `order_item_id` faldende); Products efter navn stigende (derefter ID). Ingen filtre og ingen søgning; andre query-parametre ignoreres.
+11. **P10 – IDOR:** kun liste-endpoints (`GET /me/products`, `GET /me/orders`). En ordre med linjer fra flere creators viser kun creator'ens egne linjer, filtreret server-side i queryen. Intet `/me/orders/{id}` i fase 19; et senere detalje-endpoint skal svare 404 ved manglende ejerskab (ADR-007).
+12. **P11 – WooCommerce inaktiv:** routes og dashboard-sektioner registreres af WooCommerce-modulet (sektionerne via `merchboard_dashboard_sections`). Uden WooCommerce er der hverken routes eller sektioner. Ledger-data bevares.
+13. **P12 – caching:** ingen caching i fase 19 (ingen transients, options eller invalidering). Caching hører til fase 20.
+
+## Åbent designpunkt (ikke del af denne ADR's implementeringsscope)
+**Ekstra checkoutfelt identificeret med et ID:** virksomheden har åbnet mulighed for et ekstra checkoutfelt, som eventuelt kan vises i stedet for et navn. Det implementeres **ikke** under denne ADR, og ADR-039 lover ingen funktion for det. Uafklaret:
+- om feltet er en del af fase 19 eller en senere fase;
+- hvordan admin konfigurerer, hvilket checkoutfelt-ID der bruges;
+- hvordan feltets værdi læses fra WooCommerce;
+- hvilke validerings- og privacy-regler der gælder;
+- om feltet må erstatte produktnavnet eller kun være et ekstra felt;
+- hvordan feltet håndteres for gamle ordrer, slettede ordrer og manglende værdier.
+
+Feltet kræver en særskilt beslutning (ny ADR eller dateret statusnote) før implementering.
+
+## Alternatives considered
+- **Live `wc_get_orders()` som datakilde (P1):** viser også ordrer, der aldrig har talt, tilskriver anderledes end salgsdataene og kræver forskellige queries for HPOS og legacy. Fravalgt.
+- **Én række pr. ordre eller pr. ledger-hændelse (P2):** pr. ordre skjuler linjeniveauet; pr. hændelse er en Sales-visning (fase 20). Fravalgt.
+- **Beløb i Orders i fase 19 (P3):** giver to steder at forklare omsætning og multi-valuta, før fase 20 har designet det. Udskudt.
+- **Slettede ordrer skjult (P4):** via en SQL-join mod WooCommerces ordretabeller (afhænger af datalageret), efter det live opslag (forkerte totaler og ufulde sider) eller via en ny ledger-hændelse (ændrer ADR-038's skrivevej og virker ikke for allerede slettede ordrer). Fravalgt af projektejeren til fordel for løsning A.
+- **Kundens land, altid `item_name` eller altid det aktuelle navn uden fallback (P5/P6):** fravalgt af virksomheden.
+- **Alle produktstatusser, lagerantal eller `get_price_html()` (P7):** viser upublicerede planer, mere lagerdata end nødvendigt eller HTML i dashboardet. Fravalgt.
+- **Udvidet CSP til uploads- eller CDN-host, eller ingen billeder (P8):** en CSP-ændring kræver et security-review; ingen billeder giver en ringere sektion. Fravalgt i fase 19.
+- **Detalje-endpoint og filtre/søgning (P9/P10), caching (P12):** ikke nødvendige for fase 19's leverance. Udskudt.
+
+## Reason
+Ledgeren giver samme tilskrivning som salgsdataene, én query uafhængig af datalageret, korrekt paginering og creator-filtrering i SQL, så IDOR er udelukket i designet (ADR-007). WooCommerce bruges kun til berigelse af højst én side. Privacy følger virksomhedens bekræftelse og dataminimering: ingen kundedata, og `item_name` kun som fallback. Ingen HTML og ingen CSP-ændring holder dashboardets sikkerhedsmodel uændret.
+
+## Consequences
+- **Database:** ingen migration og intet nyt skema; Orders bruger `KEY(creator_id, occurred_at)`. Viser aggregeringen sig langsom på realistisk datamængde, kræver et nyt indeks en særskilt beslutning. Ingen nye options, meta eller jobs; lifecycle og uninstall er uændrede.
+- **Backend:** pagineringshjælpere i `RestController` (første liste-route); en read-model for Orders på ledgeren; produktlisten kræver paginering med offset og total (`WooCommerceProductStore::linked_to()` har i dag kun en grænse). Status, ordrenummer og produktnavn læses live for højst `per_page` ordrer pr. side.
+- **Frontend:** `client.ts` skal give total-headers videre (i dag returneres kun det validerede body); nye validatorer, typer, tabeller og paginering; statusserne "Trashed" og "Deleted" og ordre-ID'et som fallback skal kunne vises.
+- **Ordrer før ledgeren:** kun ordrer, der er registreret i ledgeren, vises; ældre ordrer kræver, at backfillen er kørt (ADR-038, statusnote "ROADMAP trin 7"). Creator-snapshottet betyder, at en senere omkobling af et produkt ikke flytter tidligere ordrelinjer (ADR-037).
+- **Slettede ordrer:** creators ser linjer for ordrer, som butikken har slettet, med status "Deleted" og ordre-ID'et i stedet for ordrenummeret.
+- **Billeder:** sites med medier på en anden origin (CDN/offload) viser pladsholdere. Det er en dokumenteret begrænsning.
+- **Tests:** integrationstests for begge endpoints efter API.md's krav 1–5, inklusive IDOR med en ordre med flere creators. WooCommerce-opslag læses gennem interfaces med fakes, fordi integrationsmiljøet ikke har WooCommerce. Den rigtige adfærd (HPOS og legacy, papirkurv, permanent sletning, slettede produkter, billeder) verificeres i Merch Dashboard Local med projektejerens godkendelse.
+- **Dokumentation:** API.md, FRONTEND.md, WOOCOMMERCE.md ("Dashboard-data og privacy"), SECURITY.md, TESTING.md, PROJECT-STATUS.md (åbent spørgsmål 6) og ROADMAP.md opdateres i de relevante trin.
+
+### Præcisering 2026-10-01: P7 – produktpris og moms
+Besluttet af projektejeren før implementering. Præciserer P7's "pris"; de øvrige beslutninger i ADR-039 er uændrede.
+
+1. **Aktiv pris:** `GET /me/products` viser den aktive WooCommerce-pris: `get_price()` for simple produkter og de tilsvarende aktive variationspriser for variable produkter. `regular_price` bruges ikke og sendes ikke som særskilt felt.
+2. **Ingen momsberegning:** prisen er den gemte aktive pris, som WooCommerce returnerer. `wc_get_price_to_display()`, `wc_get_price_excluding_tax()` og `wc_get_price_including_tax()` kaldes ikke, og variationspriserne læses uden visningsjustering (`get_variation_prices()` uden `$for_display`).
+3. **Momsgrundlag:** butikkens egen konfiguration (`woocommerce_prices_include_tax`). API'et beregner og omregner ikke moms.
+4. **Prisobjekt:** `{ "min": "<streng>", "max": "<streng>", "currency": "<ISO 4217>", "tax": "store_setting" }`. Feltet `tax` er maskinlæsbart metadata, så klienten ikke antager, at prisen altid er inkl. eller ekskl. moms. Beløb er altid strenge, aldrig floats, og der sendes ingen HTML.
+5. **Simple produkter:** den aktive `get_price()` som både `min` og `max`.
+6. **Variable produkter:** `min` og `max` af de aktive variationspriser efter samme princip.
+7. **Tom pris:** en tom aktiv pris (for et variabelt produkt: ingen aktive variationspriser) giver `price: null`.
+8. **UI:** dashboardet beregner ikke moms og viser ingen lokal "inkl. moms"/"ekskl. moms"-etiket, fordi API'et ikke fastlægger grundlaget.
+9. **Tests (trin 2 og 6):** aktiv pris frem for `regular_price` (udsalg), simpel pris, variable min/max, tom pris, `tax: "store_setting"`, og at svaret ikke indeholder floats eller HTML.

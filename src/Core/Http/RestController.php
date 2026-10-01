@@ -115,6 +115,47 @@ abstract class RestController {
 	}
 
 	/**
+	 * Arguments of a paginated list route (docs/API.md#paginering): `page`
+	 * from 1 (default 1) and `per_page` from 1 to 100 (default 20). WordPress'
+	 * argument validation rejects other values with 400 `rest_invalid_param`.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	protected static function pagination_args(): array {
+		return array(
+			'page'     => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+				'default' => 1,
+			),
+			'per_page' => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+				'maximum' => Pagination::MAX_PER_PAGE,
+				'default' => Pagination::DEFAULT_PER_PAGE,
+			),
+		);
+	}
+
+	/**
+	 * A paginated list: the items as a plain JSON array (never wrapped in an
+	 * object) with `X-WP-Total` and `X-WP-TotalPages`. A page after the last
+	 * one is not an error: 200 with an empty array and the same totals.
+	 *
+	 * @param array<mixed> $items      Items of the requested page.
+	 * @param int          $total      Total number of items over all pages.
+	 * @param Pagination   $pagination Requested page.
+	 */
+	protected static function paginated( array $items, int $total, Pagination $pagination ): WP_REST_Response {
+		$total    = max( 0, $total );
+		$response = new WP_REST_Response( array_values( $items ), 200 );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) $pagination->total_pages( $total ) );
+
+		return $response;
+	}
+
+	/**
 	 * A REST error.
 	 *
 	 * @param string               $code    Error code (prefix `merchboard_`).

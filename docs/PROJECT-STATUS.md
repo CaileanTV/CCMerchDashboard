@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-10-01 · **Seneste færdige fase:** 18 (Sales ledger ✅; trin 9's commit, push og CI afslutter fasen) · **Aktuel fase:** ingen (næste er fase 19, Products og Orders i dashboard, efter projektejerens godkendelse) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-10-01 · **Seneste færdige fase:** 18 (Sales ledger ✅, commit `aa7f8ca`, CI grøn) · **Aktuel fase:** 19 (Products og Orders i dashboard, i gang: trin 1 ✅ lokalt, ikke committet) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -416,13 +416,16 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ## In progress
 
-- Ingen fase er i gang. Næste er fase 19 (Products og Orders i dashboard) efter projektejerens godkendelse.
+- **Fase 19 – Products og Orders i dashboard:**
+  - **Beslutninger (2026-10-01):** ADR-039 fastlægger P1–P12: Orders bygges på sales ledgeren med creator-filter i SQL, én række pr. ordrelinje med saldo, `refunded` og `counted` (P2), status og ordrenummer live fra WooCommerce med "Trashed" og "Deleted" (P4), kun produkter med status `publish` og `private` og den aktive pris med `tax: "store_setting"` (P7), billeder kun fra samme origin og ingen CSP-ændring (P8), ingen beløb og ingen caching. Privacy er bekræftet af virksomheden 2026-10-01: intet land og ingen øvrige kundeoplysninger; det aktuelle produktnavn, ellers `item_name` for et slettet produkt. Et muligt ekstra checkoutfelt er et åbent designpunkt uden for ADR-039.
+  - **Trin 1 ✅ (2026-10-01, lokalt, ikke committet):** REST-paginering: `RestController::pagination_args()` (`page` ≥ 1, standard 1; `per_page` 1-100, standard 20; ugyldige værdier giver 400 `rest_invalid_param`) og `paginated()` (rent JSON-array, `X-WP-Total`, `X-WP-TotalPages`, 0 sider ved total 0, 200 med `[]` efter sidste side) samt `Core\Http\Pagination`. Konventionen er dokumenteret i API.md. Lint, PHPUnit (1261), Jest (136) og integrationstests (246, MariaDB 10.11.19) er grønne, og `git diff --check` er ren.
+  - **Næste:** commit og push af trin 1 og grøn CI; derefter trin 2 (Products backend).
 
 ## Planned
 
 Se [ROADMAP.md](ROADMAP.md). Næste tre:
 
-1. **Fase 19:** Products og Orders i dashboard.
+1. **Fase 19:** Products og Orders i dashboard (i gang: trin 1 ✅ lokalt, ikke committet).
 2. **Fase 20:** Sales & statistics.
 3. **Senere (uprioriteret):** se ROADMAP.md. Fuld afstemning af ledgeren mod WooCommerce er en senere job-type uden for fase 18 (ADR-037 pkt. 11).
 
@@ -499,4 +502,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. ✅ Releasen "Merch Dashboard 0.1.0" er udgivet på GitHub (vist som "Latest" ved kontrol 2026-09-28).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Fase 18: commit og push af trin 9 (projektejeren vælger tidspunktet) og grøn CI; derefter fase 19 efter projektejerens godkendelse.
+4. Fase 19: commit og push af trin 1 (projektejeren vælger tidspunktet) og grøn CI; derefter trin 2 (Products backend).
