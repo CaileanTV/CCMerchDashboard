@@ -192,10 +192,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 - **Done:** IDOR-tests (ordre med anden creators produkt). Privacy er bekræftet af virksomheden.
 - **Beslutninger (2026-10-01):** ADR-039 (P1–P12, privacy bekræftet af virksomheden, P2 præciseret, P7 præciseret om pris og moms). Pagineringskonventionen for liste-routes står i [API.md](API.md#paginering).
 - **Rækkefølge:**
-  - 1 ✅ (2026-10-01, lokalt): REST-paginering: `RestController::pagination_args()` og `paginated()` og `Core\Http\Pagination`.
-  - 2: Products backend (`GET /me/products`).
-  - 3: Orders read-model på sales ledgeren (inkl. måling med `EXPLAIN`).
-  - 4: Orders endpoint (`GET /me/orders`) med berigelse fra WooCommerce.
+  - 1 ✅ (2026-10-01; commit `0f2f02c`, pushet, CI grøn, run `36910534650`): REST-paginering: `RestController::pagination_args()` og `paginated()` og `Core\Http\Pagination`.
+  - 2 ✅ (2026-10-01; commit `3c3bef6`, pushet, CI grøn, run `36914299093`): Products backend (`GET /me/products`).
+  - 3 ✅ (2026-10-01; commit `98db3b5`, pushet, CI grøn, run `36916711735`): Orders read-model på sales ledgeren (inkl. måling med `EXPLAIN`).
+  - 4 (i gang): Orders endpoint (`GET /me/orders`) med berigelse fra WooCommerce.
   - 5: Frontend-fundament (liste-klient, tabel, paginering, sektionerne).
   - 6: Products-sektionen.
   - 7: Orders-sektionen.

@@ -78,6 +78,13 @@ final class WcProductStorage {
 	public static array $variation_price_calls = array();
 
 	/**
+	 * The id of every wc_get_product() call.
+	 *
+	 * @var list<int>
+	 */
+	public static array $lookups = array();
+
+	/**
 	 * Sets more product fields (price, regular_price, stock_status, image_id,
 	 * variation_prices) on a product added with add().
 	 *

@@ -34,9 +34,13 @@ use MerchBoard\Modules\WooCommerce\CategoryReconciliationHooks;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationJobs;
 use MerchBoard\Modules\WooCommerce\CategoryReconciliationScheduler;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceOrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
+use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
+use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLines;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
@@ -75,7 +79,7 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( array( 'read', Capabilities::ACCESS_DASHBOARD ), Capabilities::creator_capabilities() );
 	}
 
-	public function test_the_creator_products_route_is_registered_on_rest_api_init(): void {
+	public function test_the_creator_dashboard_routes_are_registered_on_rest_api_init(): void {
 		$container = self::core_container();
 		$container->set( CreatorContext::class, static fn( Container $c ): CreatorContext => new CreatorContext( $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		Actions\expectAdded( 'rest_api_init' )->once();
@@ -85,6 +89,9 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertInstanceOf( WooCommerceProductDetails::class, $container->get( ProductDetails::class ) );
 		self::assertInstanceOf( CreatorProducts::class, $container->get( CreatorProducts::class ) );
 		self::assertInstanceOf( MeProductsController::class, $container->get( MeProductsController::class ) );
+		self::assertInstanceOf( SalesOrderLines::class, $container->get( SalesOrderLines::class ) );
+		self::assertInstanceOf( WooCommerceOrderLineEnricher::class, $container->get( OrderLineEnricher::class ) );
+		self::assertInstanceOf( MeOrdersController::class, $container->get( MeOrdersController::class ) );
 	}
 
 	public function test_product_links_are_wired_to_the_creator_edit_page_only(): void {

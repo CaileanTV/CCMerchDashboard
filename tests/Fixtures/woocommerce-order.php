@@ -135,6 +135,15 @@ class WC_Order extends WC_Abstract_Order {
 	public function get_date_paid( $context = 'view' ) {
 		return null === $this->data['paid'] ? null : new WC_DateTime( $this->data['paid'] );
 	}
+
+	/**
+	 * Order number: the stored `number` (a sequential-number plugin), else the id.
+	 *
+	 * @return string|int
+	 */
+	public function get_order_number() {
+		return $this->data['number'] ?? $this->id;
+	}
 }
 
 /**
@@ -144,7 +153,8 @@ class WC_Order_Refund extends WC_Abstract_Order {
 }
 
 function wc_get_order( $the_order = false ) {
-	$data = WcOrderStorage::$orders[ $the_order ] ?? null;
+	WcOrderStorage::$lookups[] = $the_order;
+	$data                      = WcOrderStorage::$orders[ $the_order ] ?? null;
 
 	if ( null === $data ) {
 		return false;

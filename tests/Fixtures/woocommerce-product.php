@@ -423,7 +423,8 @@ class WC_Cache_Helper {
  * @return WC_Product|false
  */
 function wc_get_product( $the_product = false ) {
-	$id = (int) $the_product;
+	$id                          = (int) $the_product;
+	WcProductStorage::$lookups[] = $id;
 
 	if ( ! isset( WcProductStorage::$products[ $id ] ) ) {
 		return false;

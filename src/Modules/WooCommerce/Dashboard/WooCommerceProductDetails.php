@@ -60,7 +60,7 @@ final class WooCommerceProductDetails implements ProductDetails {
 
 		return new ProductSummary(
 			$product->get_id(),
-			self::plain_text( $product->get_name() ),
+			PlainText::of( $product->get_name() ),
 			$status,
 			self::price( $product ),
 			in_array( $stock, self::STOCK_STATUSES, true ) ? $stock : null,
@@ -153,14 +153,5 @@ final class WooCommerceProductDetails implements ProductDetails {
 		$port = (int) ( $parts['port'] ?? ( 'https' === $scheme ? 443 : 80 ) );
 
 		return $scheme . '://' . $host . ':' . $port;
-	}
-
-	/**
-	 * Plain text: no tags, entities decoded, trimmed.
-	 *
-	 * @param string $value Value.
-	 */
-	private static function plain_text( string $value ): string {
-		return trim( html_entity_decode( wp_strip_all_tags( $value ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 	}
 }

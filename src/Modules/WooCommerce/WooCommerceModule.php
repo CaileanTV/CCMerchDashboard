@@ -30,8 +30,11 @@ use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceOrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
+use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfill;
@@ -41,6 +44,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillScheduler;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceBackfillOrders;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatusSettings;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
+use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLines;
 use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
@@ -357,9 +361,9 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): SalesLedgerSettingsSection => new SalesLedgerSettingsSection( $c->get( CountedOrderStatusSettings::class ) )
 		);
 
-		// Creator dashboard (phase 19, ADR-039): read-only product data for the
-		// creator-scope REST route. Registered only with WooCommerce, so
-		// without it the route does not exist.
+		// Creator dashboard (phase 19, ADR-039): read-only product and order
+		// data for the creator-scope REST routes. Registered only with
+		// WooCommerce, so without it the routes do not exist.
 		$container->set(
 			CreatorProducts::class,
 			static fn( Container $c ): CreatorProducts => new CreatorProducts( $c->get( wpdb::class ) )
@@ -377,10 +381,28 @@ final class WooCommerceModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		$container->set(
+			SalesOrderLines::class,
+			static fn( Container $c ): SalesOrderLines => new SalesOrderLines( $c->get( wpdb::class ) )
+		);
+		$container->set(
+			OrderLineEnricher::class,
+			static fn(): OrderLineEnricher => new WooCommerceOrderLineEnricher()
+		);
+		$container->set(
+			MeOrdersController::class,
+			static fn( Container $c ): MeOrdersController => new MeOrdersController(
+				$c->get( CreatorContext::class ),
+				$c->get( SalesOrderLines::class ),
+				$c->get( OrderLineEnricher::class ),
+				$c->get( Logger::class )
+			)
+		);
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
 				$container->get( MeProductsController::class )->register_routes();
+				$container->get( MeOrdersController::class )->register_routes();
 			}
 		);
 

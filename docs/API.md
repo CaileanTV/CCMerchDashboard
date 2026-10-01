@@ -31,7 +31,7 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
 | `GET` | `/me/overview` | Nøgletal til Overview (fase 15 bruger `/me` og `/me/profile`; KPI-kortene er empty states uden API) | 20 |
 | `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
-| `GET` | `/me/orders` | Ordrelinjer med creator'ens produkter **uden kunde-PII** | 19 |
+| `GET` | `/me/orders` | ✅ Ordrelinjer med creator'ens produkter **uden kunde-PII** (se nedenfor) | 19 |
 | `GET` | `/me/sales?from=&to=&interval=` | Salgsaggregeringer | 20 |
 
 Fordi der ikke findes `/creators/{id}` i creator-scope, **kan Creator A ikke ændre et ID for at se Creator B**. For underressourcer med ID (fx `/me/orders/{order_id}`) tjekker service-laget ejerskab (`order indeholder mindst én linje for creator'en`). Svaret er **404** ved manglende ejerskab, ikke 403, så eksistensen af andres ressourcer ikke afsløres.
@@ -142,6 +142,39 @@ Findes kun, når WooCommerce-modulet er indlæst (uden WooCommerce: 404 `rest_no
 | `price` | Den aktive WooCommerce-pris som strenge: `get_price()` for simple produkter (`min` = `max`), min og max af de aktive variationspriser for variable produkter. Ingen momsberegning; grundlaget er butikkens indstilling (`tax: "store_setting"`). Uden aktiv pris: `null` (ADR-039, præcisering af P7) |
 | `stock_status` | `instock`, `outofstock` eller `onbackorder`; andre værdier giver `null`. Aldrig lagerantal |
 | `image` | Thumbnail med samme origin som sitet (scheme, host og port mod `home_url()`), `alt` = produktnavnet; ellers `null`. CSP'en er uændret |
+
+## `GET /me/orders` ✅ (fase 19, trin 4, ADR-039)
+
+Findes kun, når WooCommerce-modulet er indlæst (uden WooCommerce: 404 `rest_no_route`; ledger-data bevares). Adgang som de øvrige `/me`-routes (401, 403, inaktiv creator 403). Paginering efter [konventionen](#paginering) med `page` og `per_page`; andre query-parametre ignoreres, og creator'en kommer kun fra `CreatorContext`. Ingen søgning, filtre, detalje-route eller caching.
+
+**Udvælgelse og sortering:** sales ledgeren (`SalesOrderLines`) alene: creator'ens ordrelinjer (filter på `creator_id` i SQL), én række pr. ordrelinje, nyeste første salgsdato først og derefter højeste `line_id`. En ordre med linjer fra flere creators giver kun creator'ens egne linjer. Kun sidens ordrer og produkter slås op i WooCommerce (højst ét opslag pr. ordre og pr. produkt).
+
+```json
+[
+  {
+    "line_id": 4101,
+    "order_number": "1041",
+    "date": "2026-08-15T08:30:00Z",
+    "status": "processing",
+    "status_label": "Processing",
+    "product_name": "Tour tee",
+    "quantity": 2,
+    "refunded": false,
+    "counted": true
+  }
+]
+```
+
+| Felt | Regel |
+| --- | --- |
+| `line_id` | Ordrelinjens ID (`order_item_id`) |
+| `order_number` | WooCommerce' ordrenummer (`get_order_number()`); ordre-ID'et for en slettet ordre |
+| `date` | `occurred_at` for linjens første salgsrække, ISO 8601 UTC |
+| `status`, `status_label` | WooCommerce' status og label; `trashed`/"Trashed" for en ordre i papirkurven; `deleted`/"Deleted" for en permanent slettet ordre (ADR-039 P4) |
+| `product_name` | Det aktuelle navn på varianten (når linjen har en) eller produktet; ledgerens `item_name`, når det ikke findes. Aldrig parent-navnet for en manglende variant. Ren tekst (P6) |
+| `quantity`, `refunded`, `counted` | Linjens saldo og markeringer efter ADR-039 P2 |
+
+Svaret indeholder aldrig kundedata (navn, e-mail, telefon, adresse, by, postnummer, land, noter, IP, betaling, kunde- eller bruger-ID), beløb eller ordre-, produkt-, variant- eller creator-ID'er (P3, P5).
 
 ## Test-krav
 

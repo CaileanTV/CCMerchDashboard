@@ -19,7 +19,7 @@ final class WcOrderStorage {
 	/**
 	 * Orders and refunds by id.
 	 *
-	 * @var array<int, array{type: string, status: string, currency: string, created: string, paid: string|null, parent: int, items: list<array<string, mixed>>}>
+	 * @var array<int, array{type: string, status: string, currency: string, created: string, paid: string|null, parent: int, items: list<array<string, mixed>>, number?: string|int, billing?: array<string, string>}>
 	 */
 	public static array $orders = array();
 
@@ -52,6 +52,13 @@ final class WcOrderStorage {
 	public static bool $fail_save = false;
 
 	/**
+	 * The argument of every wc_get_order() call.
+	 *
+	 * @var list<mixed>
+	 */
+	public static array $lookups = array();
+
+	/**
 	 * Resets everything.
 	 */
 	public static function reset(): void {
@@ -60,6 +67,7 @@ final class WcOrderStorage {
 		self::$queries   = array();
 		self::$saves     = array();
 		self::$fail_save = false;
+		self::$lookups   = array();
 	}
 
 	/**

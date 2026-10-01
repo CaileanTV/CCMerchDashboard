@@ -10,7 +10,6 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\WooCommerce\Sales;
 
-use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLine;
@@ -34,10 +33,9 @@ final class SalesOrderLinesTest extends TestCase {
 		// so the test rows carry the cycles column (open_cycles) too.
 		$this->wpdb  = new RecordingWpdb();
 		$this->lines = new SalesOrderLines( $this->wpdb );
-		// Only the ledger is read; WooCommerce is never asked.
-		Functions\expect( 'wc_get_order' )->never();
-		Functions\expect( 'wc_get_orders' )->never();
-		Functions\expect( 'wc_get_product' )->never();
+		// No WooCommerce function is mocked here: in this shared process a mock
+		// would define it for later tests. That only the ledger is read is
+		// shown by tests/Integration/WooCommerce/SalesOrderLinesTest.
 	}
 
 	public function test_the_creator_id_is_only_the_argument_and_bound_as_an_integer(): void {

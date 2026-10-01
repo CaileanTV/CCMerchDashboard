@@ -117,6 +117,14 @@ class WC_Order extends WC_Abstract_Order {
 	 * @return WC_DateTime|null
 	 */
 	public function get_date_paid( $context = 'view' ) {}
+
+	/**
+	 * The order number shown to customers (filterable, e.g. by
+	 * sequential-number plugins); the id by default.
+	 *
+	 * @return string|int
+	 */
+	public function get_order_number() {}
 }
 
 /**
@@ -185,6 +193,14 @@ function wc_get_orders( $args ) {}
  * @return array<string, string>
  */
 function wc_get_order_statuses() {}
+
+/**
+ * The translated label of an order status, with or without `wc-`.
+ *
+ * @param string $status Status.
+ * @return string
+ */
+function wc_get_order_status_name( $status ) {}
 
 /**
  * WooCommerce product (abstract-wc-product.php).
