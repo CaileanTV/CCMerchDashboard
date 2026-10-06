@@ -1,6 +1,6 @@
 # REST API
 
-> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), og pagineringen af liste-routes er tilføjet i fase 19, trin 1. Øvrige routes i tabellerne nedenfor er design.
+> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039). Øvrige routes i tabellerne nedenfor er design.
 
 ## Principper
 

@@ -7,7 +7,7 @@ Butikken skal vide, hvilken creator et WooCommerce-produkt tilhører, som grundl
 Færdig (fase 17, 2026-09-28; endnu ikke udgivet i en version). Implementeret i trin 1-11, 12a, 13, 13a og 14 og verificeret i Merch Dashboard Local i trin 12 (se [ROADMAP.md](../ROADMAP.md)). Blok-produkteditorens UI og drift uden WooCommerce er ikke kørt manuelt i Local (se [TESTING.md](../TESTING.md#woocommerce-foundation-fase-17)).
 
 ## User-facing functionality
-Ingen for creators i fase 17. Creator-rollen får ingen produktrettigheder, og koblingen vises ikke i creator-dashboardet endnu (fase 19).
+Ingen for creators i fase 17. Creator-rollen får ingen produktrettigheder. Fra fase 19 ser creators deres koblede produkter (read-only) i creator-dashboardets Products-sektion (ADR-039); de kan ikke ændre koblingen.
 
 ## Admin functionality
 Kun med WooCommerce ≥ 10.3 aktivt. Alt ligger under Merch Dashboard → Creators og kræver `merchboard_manage_creators`; intet nyt menupunkt og ingen ny capability. Detaljer i [ADMIN.md](../ADMIN.md#woocommerce-skærme-fase-17).
@@ -86,4 +86,4 @@ Se [TESTING.md](../TESTING.md#woocommerce-foundation-fase-17). Unit- og integrat
 
 ## Future improvements
 - Forhåndsindlæste mappings og cache af creator-status i tørkørsler (kræver godkendelse).
-- Produkter og ordrer i creator-dashboardet (fase 19) og sales ledger (fase 18).
+- ✅ Leveret senere: sales ledger (fase 18) og produkter og ordrer i creator-dashboardet (fase 19).

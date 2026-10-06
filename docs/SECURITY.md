@@ -211,6 +211,16 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Data:** Context vises via en whitelist (ingen rå JSON). Brugere vises som "Display Name (login)", aldrig e-mail, og profil-link kræver `edit_user`. Slettede brugere og creators vises som "#ID". Alt output escapes.
 - **Adskillelse:** Tekniske logs vises ikke (ADR-021). Der er ingen ny log-tabel.
 
+### Products og Orders i creator-dashboardet (fase 19, ADR-039)
+
+- **Adgang:** `GET /me/products` og `GET /me/orders` kræver en indlogget bruger med en aktiv creator via `CreatorContext` (`require_creator()` i både permission callback og endpoint): 401 udlogget, 403 uden creator-adgang (også inaktiv creator). Routes og dashboard-sektioner findes kun, når WooCommerce-modulet er indlæst.
+- **Creator-identitet:** kommer kun fra `CreatorContext` på serveren. Routes tager kun `page` og `per_page`; et `creator_id` eller andre parametre fra klienten ignoreres og bruges aldrig til autorisation (testet).
+- **IDOR:** creator-filtret ligger i selve SQL'en: produkter via præcis én `_merchboard_creator_id`-række lig creator'ens ID (byte for byte), ordrelinjer via `creator_id` i sales ledgeren (`SalesOrderLines`). En ordre med linjer fra flere creators returnerer kun creator'ens egne linjer. Der er intet detalje-endpoint (`/me/orders/{id}`) i fase 19.
+- **Data leakage:** svarene er whitelists (`ProductSummary`, `OrderLineView`): ingen kundedata (navn, e-mail, telefon, adresse, by, postnummer, **land**, noter, IP, betaling, kunde-/bruger-ID), ingen beløb eller valuta i ordrelinjer og ingen creator-, ordre-, produkt- eller variant-id'er (ordrelinjens `line_id` er kun en nøgle). Navne sendes som ren tekst og renderes som tekst.
+- **Slettede og papirkurvsordrer:** vises som `deleted`/"Deleted" (ordre-ID'et som nummer) eller `trashed`/"Trashed" alene ud fra ordreobjektets eksistens og status; der læses intet andet fra ordren, så ingen kundedata kan slippe ud.
+- **Billeder:** kun thumbnails med samme origin som sitet; andre bliver `null`. Dashboardets CSP er uændret (`img-src 'self' data:`).
+- **Tests:** integrationstests for 401/403/inaktiv creator/IDOR/ugyldig paginering for begge endpoints og runtime-verifikation i Merch Dashboard Local (se [TESTING.md](TESTING.md#products-og-orders-fase-19)).
+
 ## Tjekliste pr. ændring
 
 - [ ] Hvert nyt endpoint/handler har capability- eller `CreatorContext`-tjek **server-side**.

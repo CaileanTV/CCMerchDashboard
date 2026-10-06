@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-10-01 · **Seneste færdige fase:** 18 (Sales ledger ✅, commit `aa7f8ca`, CI grøn) · **Aktuel fase:** 19 (Products og Orders i dashboard, i gang: trin 1 ✅ lokalt, ikke committet) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-10-06 · **Seneste færdige fase:** 19 (Products og Orders i dashboard ✅; trin 9's commit, push og CI afslutter fasen) · **Aktuel fase:** ingen (næste er fase 20, Sales & statistics, efter projektejerens godkendelse) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -412,22 +412,31 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - **Trin 7 ✅ (2026-09-30; commit `00fb066`, pushet, CI grøn inkl. MySQL 8.0.46, run `36887796803`):** backfill (`SalesBackfill`, `SalesBackfillRun`/`SalesBackfillTally`, `WooCommerceBackfillOrders`, `SalesBackfillScheduler`/`SalesBackfillJobs`, `SalesSynchronizer::backfill()`/`preview()` via `SalesBackfillSync`, WP-CLI `wp merchboard sales-backfill` med `dry-run`, `start`, `status`, `resume` og `--batch-size`, audit-action `sales_backfill_completed`, annullering af ventende backfill-jobs ved deaktivering og uninstall via `Core\Lifecycle\ScheduledJobs`). Lint, PHPUnit, Jest og integrationstests (MariaDB 10.11.19) er grønne. runtime-verificeret i Merch Dashboard Local (WordPress 7.1.2, WooCommerce 10.3.8) med syntetiske data i HPOS og legacy: dry-run uden skrivninger, første kørsel side for side (cyklus 1 med `date_paid` og refundens dato), ordren med historik uændret, ikke-tællende og creator-løse ordrer uden rækker, fejlmarkør og teknisk log ved en ordrefejl, en fejlet side genoptaget fra sin cursor, ét run ad gangen, resumé i audit-loggen, idempotent anden kørsel, annullering ved deaktivering med genstart forfra efter Action Schedulers oprydning og ingen efterladte backfill-jobs. Tilbage i sitet er append-only audit-records og Action Schedulers historik over færdige og fejlede testjobs.
 - **Trin 8 ✅ (2026-10-01):** runtime-regression på `00fb066` i Merch Dashboard Local (WordPress 7.1.2, WooCommerce 10.3.8) med syntetiske data og projektejerens godkendelse, i HPOS og legacy: alle Q4-scenarier fra trin 5 (refunds via `wc_create_refund()`, refund-sletning via admin-vejen med og uden forudindlæst refund-liste og uden hook, papirkurv, gendannelse, permanent sletning, fejlmarkørens livscyklus og teknisk log) og et samspilsscenarie (en ordre registreret af backfillen, derefter live refund, ny backfill uden ændring, refund-sletning, papirkurv og gendannelse, permanent sletning) bestod. Afvigelser: refund-sletning via admin er verificeret som `delete()` + `woocommerce_refund_deleted` (som `WC_AJAX::delete_refund()`), ikke via HTTP-AJAX; den forældede refund-cache er en legacy-adfærd, som HPOS-kørslen ikke tester reelt. Oprydning: 0 ordrer, 0 ledger- og cyklusrækker, 0 markører, testprodukterne slettet, testcreatoren inaktiv, HPOS slået til igen; append-only audit-records og Action Schedulers historik er bevaret, og to ventende `merchboard_reconcile_product`-jobs for slettede testprodukter er harmløse no-ops (ADR-038, statusnote "trin 8 afsluttet").
 - **Trin 9 ✅ (2026-10-01):** dokumentationen er gennemgået og konsistent med ADR-037 og ADR-038, i18n-kontrollen gav ingen utilsigtet diff, og den fulde suite er grøn; Done-kriteriet er opfyldt (ADR-038, statusnote "fase 18 afsluttet"). Commit, push og grøn CI afslutter trinnet.
-- **Næste:** commit og push af trin 9 og grøn CI; derefter fase 19 efter projektejerens godkendelse.
+- **Afsluttet:** trin 9 er committet og pushet som `aa7f8ca` med grøn CI; fase 19 fulgte efter projektejerens godkendelse.
+
+### Fase 19 – Products og Orders i dashboard ✅ (2026-10-06)
+
+- **Beslutninger (2026-10-01):** ADR-039 fastlægger P1–P12: Orders bygges på sales ledgeren med creator-filter i SQL, én række pr. ordrelinje med saldo, `refunded` og `counted` (P2), status og ordrenummer live fra WooCommerce med "Trashed" og "Deleted" (P4), kun produkter med status `publish` og `private` og den aktive pris med `tax: "store_setting"` (P7), billeder kun fra samme origin og ingen CSP-ændring (P8), ingen beløb og ingen caching. Privacy er bekræftet af virksomheden 2026-10-01: intet land og ingen øvrige kundeoplysninger; det aktuelle produktnavn, ellers `item_name` for et slettet produkt. Et muligt ekstra checkoutfelt er et åbent designpunkt uden for ADR-039.
+- **Trin 1 ✅ (2026-10-01; commit `0f2f02c`, CI grøn):** REST-paginering: `RestController::pagination_args()` (`page` ≥ 1, standard 1; `per_page` 1-100, standard 20; ugyldige værdier giver 400 `rest_invalid_param`) og `paginated()` (rent JSON-array, `X-WP-Total`, `X-WP-TotalPages`, 0 sider ved total 0, 200 med `[]` efter sidste side) samt `Core\Http\Pagination`. Konventionen er dokumenteret i API.md. Lint, PHPUnit (1261), Jest (136) og integrationstests (246, MariaDB 10.11.19) er grønne, og `git diff --check` er ren.
+- **Trin 2 ✅ (2026-10-01; commit `3c3bef6`, CI grøn):** `GET /me/products`: read-model `CreatorProducts` (publish og private, præcis én koblingsrække lig creator'ens ID, sorteret efter navn og ID) og `WooCommerceProductDetails` via CRUD (aktiv pris som strenge med `tax: "store_setting"`, lagerstatus, thumbnail med samme origin). Registreres kun med WooCommerce.
+- **Trin 3 ✅ (2026-10-01; commit `98db3b5`, CI grøn):** read-model `SalesOrderLines` på sales ledgeren (creator-filter i SQL, én række pr. ordrelinje, saldo, `refunded` og `counted` efter P2, første salgsdato). Målt med `EXPLAIN` (O1): ingen indeks eller migration nødvendig.
+- **Trin 4 ✅ (2026-10-01; commit `c4a7bd2`, CI grøn):** `GET /me/orders` med `WooCommerceOrderLineEnricher` (ét opslag pr. ordre og pr. produkt; status, ordrenummer, `trashed`/`deleted`, produktnavn med `item_name`-fallback). Rettet en testforurening i trin 3's unit-test.
+- **Trin 5 ✅ (2026-10-01; commit `25e1a53`, CI grøn):** frontend-liste-fundament (`requestList()`, `usePagedApi`, `Table`, `Pagination`).
+- **Trin 6 ✅ (2026-10-01; commit `c0b34af`, CI grøn):** Products-sektionen og server-registrering af sektionen (`DashboardSectionRegistration`).
+- **Trin 7 ✅ (2026-10-01; commit `ac94f68`, CI grøn):** Orders-sektionen (tekstbadges for refunderet/tæller ikke, dato via `Intl.DateTimeFormat`).
+- **Trin 8 ✅ (2026-10-06; commit `65e5540`, CI grøn):** runtime-verifikation i Merch Dashboard Local med HPOS og syntetiske data: 42 checks bestået. Begrænsninger: intet browserværktøj (UI'et er ikke klikket igennem; dækket af Jest og HTTP-tjek af shellen), legacy-ordrelager ikke testet (et skift ville kræve ændring af en eksisterende ordre), Local kører MariaDB 10.11.18.
+- **Trin 9 ✅ (2026-10-06):** i18n (38 nye strenge oversat til dansk), opdaterede docs (FRONTEND, WOOCOMMERCE, SECURITY, TESTING, feature-doc, CHANGELOG, åbent spørgsmål 6 lukket), fuld suite grøn og en kort læsende sanity-check i Local. Commit, push og grøn CI afslutter fasen.
 
 ## In progress
 
-- **Fase 19 – Products og Orders i dashboard:**
-  - **Beslutninger (2026-10-01):** ADR-039 fastlægger P1–P12: Orders bygges på sales ledgeren med creator-filter i SQL, én række pr. ordrelinje med saldo, `refunded` og `counted` (P2), status og ordrenummer live fra WooCommerce med "Trashed" og "Deleted" (P4), kun produkter med status `publish` og `private` og den aktive pris med `tax: "store_setting"` (P7), billeder kun fra samme origin og ingen CSP-ændring (P8), ingen beløb og ingen caching. Privacy er bekræftet af virksomheden 2026-10-01: intet land og ingen øvrige kundeoplysninger; det aktuelle produktnavn, ellers `item_name` for et slettet produkt. Et muligt ekstra checkoutfelt er et åbent designpunkt uden for ADR-039.
-  - **Trin 1 ✅ (2026-10-01, lokalt, ikke committet):** REST-paginering: `RestController::pagination_args()` (`page` ≥ 1, standard 1; `per_page` 1-100, standard 20; ugyldige værdier giver 400 `rest_invalid_param`) og `paginated()` (rent JSON-array, `X-WP-Total`, `X-WP-TotalPages`, 0 sider ved total 0, 200 med `[]` efter sidste side) samt `Core\Http\Pagination`. Konventionen er dokumenteret i API.md. Lint, PHPUnit (1261), Jest (136) og integrationstests (246, MariaDB 10.11.19) er grønne, og `git diff --check` er ren.
-  - **Næste:** commit og push af trin 1 og grøn CI; derefter trin 2 (Products backend).
+- Ingen fase er i gang. Næste er fase 20 (Sales & statistics) efter projektejerens godkendelse.
 
 ## Planned
 
-Se [ROADMAP.md](ROADMAP.md). Næste tre:
+Se [ROADMAP.md](ROADMAP.md). Næste:
 
-1. **Fase 19:** Products og Orders i dashboard (i gang: trin 1 ✅ lokalt, ikke committet).
-2. **Fase 20:** Sales & statistics.
-3. **Senere (uprioriteret):** se ROADMAP.md. Fuld afstemning af ledgeren mod WooCommerce er en senere job-type uden for fase 18 (ADR-037 pkt. 11).
+1. **Fase 20:** Sales & statistics.
+2. **Senere (uprioriteret):** se ROADMAP.md. Fuld afstemning af ledgeren mod WooCommerce er en senere job-type uden for fase 18 (ADR-037 pkt. 11).
 
 ## Known bugs
 
@@ -491,7 +500,7 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 3. ✅ **TypeScript – lukket (fase 13, ADR-027):** Ja. Dashboardet skrives i TypeScript (strict) med React og `@wordpress/scripts`.
 4. **Teams:** Kan en creator have flere brugere (fx manager)? Fase 8 er bygget med én bruger pr. creator (ADR-020). Teams vil kræve `merchboard_creator_members`, og ændringen bliver lokal til `CreatorContext` og repositoriet. (før fase 14)
 5. **Revenue-model – delvist besvaret (ADR-037, 2026-09-28):** Omsætning er ordrelinjens beløb efter rabatter, ekskl. moms, fragt og gebyrer, og de tællende ordrestatusser er en central indstilling, der kun gælder fremadrettet. Åbent: én creator pr. produkt (v1) eller collabs med split?
-6. **Privacy:** Må creators se *nogen* kundedata (fx land)? Default: ingen PII. (fase 19)
+6. ✅ **Privacy – lukket (ADR-039, 2026-10-01):** Creators ser ingen kundedata, heller ikke land; det aktuelle produktnavn vises, ellers ordrelinjens gemte navn for et slettet produkt. Bekræftet af virksomheden. Et muligt ekstra checkoutfelt er et åbent designpunkt uden for ADR-039.
 7. ✅ **UI-sprog – lukket (fase 15):** Engelske kildestrenge og dansk oversættelse via WordPress i18n. Dashboardet vises på sitets sprog, admin på brugerens.
 8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
 9. ✅ **Lokal persistent WordPress – lukket (2026-09-26):** Projektejeren har udpeget LocalWP-sitet **Merch Dashboard Local** (`http://merchboard.local`: WordPress 7.1.2, PHP 8.2.29, MariaDB 10.11.18, WooCommerce 10.3.8, pluginet via junction til repoet) som projektets officielle lokale WordPress/WooCommerce-testmiljø. Playground bruges fortsat til flygtige smoke-tests. Andre LocalWP-sites er uden for scope, og staging og produktion må ikke bruges af AI-agenter. Se [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local).
@@ -502,4 +511,4 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 1. ✅ Releasen "Merch Dashboard 0.1.0" er udgivet på GitHub (vist som "Latest" ved kontrol 2026-09-28).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Fase 19: commit og push af trin 1 (projektejeren vælger tidspunktet) og grøn CI; derefter trin 2 (Products backend).
+4. Fase 19: commit og push af trin 9 og grøn CI; derefter fase 20 efter projektejerens godkendelse.

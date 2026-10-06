@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-09-30T19:46:41+00:00\n"
+"PO-Revision-Date: 2026-10-06T17:20:28+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -328,6 +328,7 @@ msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
 #: src/Modules/Admin/AuditLogFormatter.php:313
+#: build/dashboard.js:2
 msgid "Not counted"
 msgstr "Tæller ikke"
 
@@ -410,7 +411,7 @@ msgstr "Tvetydig"
 #: src/Modules/Admin/AuditLogFormatter.php:607
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "Inactive"
 msgstr "Inaktiv"
 
@@ -524,7 +525,7 @@ msgstr "produkterne i én mapping"
 #: src/Modules/Admin/AuditLogFormatter.php:607
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "Active"
 msgstr "Aktiv"
 
@@ -880,7 +881,7 @@ msgstr "← Tilbage til creators"
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:267
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Display name"
 msgstr "Visningsnavn"
 
@@ -888,6 +889,8 @@ msgstr "Visningsnavn"
 #: src/Modules/Creators/Admin/CreatorsListTable.php:77
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
+#: build/dashboard.js:2
+#: build/dashboard.js:4
 msgid "Status"
 msgstr "Status"
 
@@ -1149,6 +1152,7 @@ msgstr "Resultat"
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:181
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:399
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:122
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:49
 msgid "Products"
 msgstr "Produkter"
 
@@ -1172,6 +1176,8 @@ msgstr "Afstemningen afgør ikke disse produkter. Ret dem i WooCommerce (produkt
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
+#: build/dashboard.js:2
+#: build/dashboard.js:4
 msgid "Product"
 msgstr "Produkt"
 
@@ -1720,6 +1726,7 @@ msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"
 
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
+#: build/dashboard.js:2
 msgid "None"
 msgstr "Ingen"
 
@@ -1961,6 +1968,19 @@ msgstr "Action Scheduler er ikke tilgængelig, så intet blev sat i kø."
 msgid "The backfill job could not be queued."
 msgstr "Backfill-jobbet kunne ikke sættes i kø."
 
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:55
+#: build/dashboard.js:4
+msgid "Orders"
+msgstr "Ordrer"
+
+#: src/Modules/WooCommerce/Dashboard/WooCommerceOrderLineEnricher.php:88
+msgid "Deleted"
+msgstr "Slettet"
+
+#: src/Modules/WooCommerce/Dashboard/WooCommerceOrderLineEnricher.php:97
+msgid "Trashed"
+msgstr "I papirkurven"
+
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182
 msgid "The creator of a product can only be changed in Merch Dashboard."
@@ -1997,7 +2017,7 @@ msgid "Log out"
 msgstr "Log ud"
 
 #: templates/dashboard/shell.php:41
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Loading your dashboard…"
 msgstr "Indlæser dit dashboard …"
 
@@ -2058,7 +2078,7 @@ msgid "This page could not be displayed."
 msgstr "Siden kunne ikke vises."
 
 #: build/dashboard.js:1
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Please reload the page."
 msgstr "Genindlæs siden."
 
@@ -2079,146 +2099,292 @@ msgid "Dashboard"
 msgstr "Dashboard"
 
 #: build/dashboard.js:1
+msgid "Pagination"
+msgstr "Sidenavigation"
+
+#: build/dashboard.js:1
+msgid "Previous"
+msgstr "Forrige"
+
+#. translators: 1: current page number, 2: number of pages.
+#: build/dashboard.js:2
+#, js-format
+msgid "Page %1$d of %2$d"
+msgstr "Side %1$d af %2$d"
+
+#: build/dashboard.js:2
+msgid "Next"
+msgstr "Næste"
+
+#: build/dashboard.js:2
+msgid "Refund recorded"
+msgstr "Refundering registreret"
+
+#: build/dashboard.js:2
+msgid "Your order lines"
+msgstr "Dine ordrelinjer"
+
+#: build/dashboard.js:2
+msgid "Date"
+msgstr "Dato"
+
+#: build/dashboard.js:2
+msgid "Order"
+msgstr "Ordre"
+
+#: build/dashboard.js:2
+msgid "Unnamed product"
+msgstr "Produkt uden navn"
+
+#: build/dashboard.js:2
+msgid "Quantity"
+msgstr "Antal"
+
+#: build/dashboard.js:2
+msgid "Notes"
+msgstr "Bemærkninger"
+
+#: build/dashboard.js:2
+msgid "Loading orders…"
+msgstr "Indlæser ordrer…"
+
+#: build/dashboard.js:2
+msgid "There are no order lines on this page."
+msgstr "Der er ingen ordrelinjer på denne side."
+
+#: build/dashboard.js:2
+msgid "You have no orders yet."
+msgstr "Du har ingen ordrer endnu."
+
+#: build/dashboard.js:2
+msgid "Orders with your products will appear here."
+msgstr "Ordrer med dine produkter vises her."
+
+#: build/dashboard.js:2
+msgid "Refund recorded: at least one refund applies to this order line."
+msgstr "Refundering registreret: mindst én refundering gælder for denne ordrelinje."
+
+#: build/dashboard.js:2
+msgid "Not counted: the order does not currently count as a sale."
+msgstr "Tæller ikke: ordren tæller ikke som et salg lige nu."
+
+#: build/dashboard.js:2
+msgid "Order pages"
+msgstr "Ordresider"
+
+#: build/dashboard.js:2
 msgid "Website"
 msgstr "Websted"
 
-#: build/dashboard.js:1
+#: build/dashboard.js:2
 msgid "This field is required."
 msgstr "Feltet skal udfyldes."
 
-#: build/dashboard.js:1
+#: build/dashboard.js:2
 msgid "This text is too long."
 msgstr "Teksten er for lang."
 
 #. translators: %d: maximum number of characters.
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 #, js-format
 msgid "Use at most %d characters."
 msgstr "Brug højst %d tegn."
 
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "Enter a full address starting with https://"
 msgstr "Indtast en fuld adresse, der starter med https://"
 
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "This value is not valid."
 msgstr "Værdien er ikke gyldig."
 
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "Your profile is still empty."
 msgstr "Din profil er stadig tom."
 
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "Add a short bio and links to your channels."
 msgstr "Tilføj en kort bio og links til dine kanaler."
 
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "Edit profile"
 msgstr "Redigér profil"
 
-#: build/dashboard.js:2
+#: build/dashboard.js:3
 msgid "(opens in a new tab)"
 msgstr "(åbner i en ny fane)"
 
-#: build/dashboard.js:2
 #: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Loading your profile…"
 msgstr "Indlæser din profil …"
 
 #. translators: %s: creator display name.
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 #, js-format
 msgid "Welcome, %s"
 msgstr "Velkommen, %s"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "This is your creator dashboard. Here you will follow your merch and keep your profile up to date."
 msgstr "Dette er dit creator-dashboard. Her følger du din merch og holder din profil opdateret."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Account status:"
 msgstr "Kontostatus:"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Your profile"
 msgstr "Din profil"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Key figures"
 msgstr "Nøgletal"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Revenue"
 msgstr "Omsætning"
 
-#: build/dashboard.js:3
-msgid "Orders"
-msgstr "Ordrer"
-
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Products sold"
 msgstr "Solgte produkter"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Sales data coming soon"
 msgstr "Salgsdata kommer snart"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
+msgid "No image"
+msgstr "Intet billede"
+
+#: build/dashboard.js:4
+msgid "Your products"
+msgstr "Dine produkter"
+
+#: build/dashboard.js:4
+msgid "Published"
+msgstr "Udgivet"
+
+#: build/dashboard.js:4
+msgid "Private"
+msgstr "Privat"
+
+#: build/dashboard.js:4
+msgid "Price"
+msgstr "Pris"
+
+#: build/dashboard.js:4
+msgid "No price"
+msgstr "Ingen pris"
+
+#. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
+#: build/dashboard.js:5
+#, js-format
+msgid "%1$s %2$s"
+msgstr "%1$s %2$s"
+
+#. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
+#: build/dashboard.js:6
+#, js-format
+msgid "%1$s–%2$s %3$s"
+msgstr "%1$s–%2$s %3$s"
+
+#: build/dashboard.js:6
+msgid "Stock"
+msgstr "Lager"
+
+#: build/dashboard.js:6
+msgid "In stock"
+msgstr "På lager"
+
+#: build/dashboard.js:6
+msgid "Out of stock"
+msgstr "Udsolgt"
+
+#: build/dashboard.js:6
+msgid "On backorder"
+msgstr "I restordre"
+
+#: build/dashboard.js:6
+msgid "Unknown"
+msgstr "Ukendt"
+
+#: build/dashboard.js:6
+msgid "Loading products…"
+msgstr "Indlæser produkter…"
+
+#: build/dashboard.js:6
+msgid "There are no products on this page."
+msgstr "Der er ingen produkter på denne side."
+
+#: build/dashboard.js:6
+msgid "You have no products yet."
+msgstr "Du har ingen produkter endnu."
+
+#: build/dashboard.js:6
+msgid "Products linked to you in the shop will appear here."
+msgstr "Produkter, der er koblet til dig i butikken, vises her."
+
+#: build/dashboard.js:6
+msgid "Product pages"
+msgstr "Produktsider"
+
+#: build/dashboard.js:6
 msgid "Dismiss"
 msgstr "Luk"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "No changes to save."
 msgstr "Ingen ændringer at gemme."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Profile saved."
 msgstr "Profilen er gemt."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "About you"
 msgstr "Om dig"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Bio"
 msgstr "Bio"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Links"
 msgstr "Links"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Password"
 msgstr "Adgangskode"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Change your password"
 msgstr "Skift din adgangskode"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Saving…"
 msgstr "Gemmer …"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Save profile"
 msgstr "Gem profil"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "This section is not available yet."
 msgstr "Denne sektion er ikke tilgængelig endnu."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Page not found"
 msgstr "Siden blev ikke fundet"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "This page does not exist."
 msgstr "Siden findes ikke."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "Go to the start page"
 msgstr "Gå til forsiden"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:6
 msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."

@@ -1,6 +1,6 @@
 # Frontend – Creator Dashboard
 
-> Status: **MVP ✅ (fase 15).** Route og sikker shell (fase 12), React/TypeScript-fundament (fase 13), `GET /me` og Profile (fase 14), Overview, sektion-registry og dansk oversættelse (fase 15).
+> Status: **MVP ✅ (fase 15).** Route og sikker shell (fase 12), React/TypeScript-fundament (fase 13), `GET /me` og Profile (fase 14), Overview, sektion-registry og dansk oversættelse (fase 15). **Fase 19 ✅:** fælles liste-fundament og sektionerne Products og Orders (ADR-039, se [Lister](#lister-products-og-orders--fase-19)).
 
 ## Teknologivalg
 
@@ -74,14 +74,19 @@ assets/src/dashboard/
 ├── index.tsx                # entry: finder #merchboard-dashboard-root og kalder mountDashboard()
 ├── mount.tsx                # parseConfig() → <App> eller generisk fejl
 ├── bootstrap.ts             # runtime-validering af window.merchboardDashboard
-├── types/                   # config.ts (DashboardConfig, DashboardSection), creator.ts (Me, Profile, SocialLinks, grænser), assets.d.ts
-├── api/                     # client.ts (eneste sted med apiFetch), creator.ts (getMe, getProfile, updateProfile + validatorer), validate.ts
-├── hooks/                   # useApi.ts (loading/success/error, retry, abort)
+├── types/                   # config.ts (DashboardConfig, DashboardSection), creator.ts (Me, Profile, SocialLinks, grænser),
+│                            # products.ts (Product), orders.ts (OrderLine), assets.d.ts
+├── api/                     # client.ts (eneste sted med apiFetch; request() og requestList()), creator.ts (getMe, getProfile,
+│                            # updateProfile + validatorer), products.ts (getProducts, parseProduct), orders.ts (getOrders,
+│                            # parseOrderLine), validate.ts
+├── hooks/                   # useApi.ts (loading/success/error, retry, abort), usePagedApi.ts (side + useApi)
 ├── app/                     # App, config-context, creator-context (GET /me), router (RouterProvider, useRouter, Link), routes.ts,
 │   │                        # pages.tsx (sti → side), ErrorBoundary
 │   └── layout/              # Layout (skip link, topbar, sidebar, mobil-nav, main), Navigation
-├── components/              # Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field, Toast
+├── components/              # Button, Card, Alert, Skeleton, EmptyState, ErrorState, ApiErrorState, Field, Toast, Table, Pagination
 ├── sections/overview/       # OverviewSection: velkomst, status, profil-resumé (GET /me/profile), KPI-kort med empty state
+├── sections/products/       # ProductsSection (GET /me/products, fase 19)
+├── sections/orders/         # OrdersSection (GET /me/orders, fase 19)
 ├── sections/profile/        # ProfileSection (formular), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
 ├── styles/                  # _tokens.scss, index.scss (kun .merchboard-*-selektorer)
 ├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures), api.ts (apiFetch-dobbelt: mockApi, response)
@@ -89,12 +94,12 @@ assets/src/dashboard/
 ```
 
 - **Routing:** en lille egen router baseret på History API (`app/router.tsx`, `app/routes.ts`). Stier er `''` eller segmenter af `[a-z0-9-]` (samme regel som serverens `DashboardRoute`), så navigation aldrig kan pege på et andet site eller en `javascript:`-URL. `Link` er et rigtigt `<a href>`, der navigerer client-side ved almindeligt venstreklik. Tilbage-knap og refresh virker. Revurderes, hvis behovene vokser (fx nested routes).
-- **API-boundary (`api/client.ts`):** `request( { path, method, data, signal }, validate )` er den eneste vej til REST. Den kalder `apiFetch( { …, parse: false } )`, afviser stier uden for `/merchboard/v1/`, validerer svaret med en endpoint-specifik validator og returnerer `ApiResult<T>` = `{ ok: true, data }` eller `{ ok: false, error: { kind, status, code } }`. Fejltyper: `invalid_request` (400, med sikre feltkoder i `fields`), `unauthenticated` (401, samt 403 `rest_cookie_invalid_nonce`), `forbidden` (403), `not_found` (404), `server`, `network`, `invalid_response` og `aborted`. Serverens fejlbeskeder bruges aldrig i UI'et. Komponenter kalder aldrig `fetch()`/`apiFetch()` direkte. Endpoint-funktioner (fx `api/me.ts`) kommer med endpoints i fase 14.
+- **API-boundary (`api/client.ts`):** `request( { path, method, data, signal }, validate )` er den eneste vej til REST. Den kalder `apiFetch( { …, parse: false } )`, afviser stier uden for `/merchboard/v1/`, validerer svaret med en endpoint-specifik validator og returnerer `ApiResult<T>` = `{ ok: true, data }` eller `{ ok: false, error: { kind, status, code } }`. Fejltyper: `invalid_request` (400, med sikre feltkoder i `fields`), `unauthenticated` (401, samt 403 `rest_cookie_invalid_nonce`), `forbidden` (403), `not_found` (404), `server`, `network`, `invalid_response` og `aborted`. Serverens fejlbeskeder bruges aldrig i UI'et. Komponenter kalder aldrig `fetch()`/`apiFetch()` direkte. Endpoint-funktioner ligger pr. område (`api/creator.ts`, `api/products.ts`, `api/orders.ts`). Liste-routes bruger `requestList()` (se [Lister](#lister-products-og-orders--fase-19)).
 - **Data og state:** `useApi( load )` giver `loading`/`success`/`error`, `retry()` og afbryder requesten ved unmount. Ingen global store.
 - **Creator (✅ fase 14):** `CreatorProvider` henter `GET /me` én gang pr. sideindlæsning. Sideindhold vises først, når svaret er kommet: under indlæsning vises en skeleton, og ved fejl (401, 403, netværk, ugyldigt svar) erstatter `ApiErrorState` med "Try again" indholdet. Navigationen bliver stående. Navnet vises i topbaren. Efter et gemt profilnavn opdateres det uden ny request. Adgang afgøres stadig af serveren (shellen gennemfører `CreatorContext` før appen overhovedet indlæses).
 - **Profile (✅ fase 14):** `GET /me/profile` → formular (display name, bio med tegntæller og seks links) og link til WordPress' password-reset (`password_url`). Klientvalidering bruger samme regler og fejlkoder som serveren og kun til hurtig feedback. Kun ændrede felter sendes (`PATCH`). Serverens feltkoder (400) vises som faste tekster ved felterne (`aria-invalid`, `aria-describedby`). Andre fejl vises som `ApiErrorState` over formularen, og input bevares. Succes → `Toast` "Profile saved." (live region, kan lukkes, forsvinder efter 6 s). `apiFetch` sender `PATCH` som `POST` med `X-HTTP-Method-Override`.
 - **401/403 i UI'et (`ApiErrorState`):** 401 → "Your session has expired" og et link til login. 403 → "You do not have access to this" og et log ud-link. Øvrige fejl → generisk besked og "Try again". Der redirectes aldrig automatisk (ingen redirect-loops). Links er server-leverede URL'er på samme origin. Adgang afgøres altid af serveren. UI-state bestemmer aldrig adgang.
-- **Sektioner (✅ fase 15):** `Modules/Dashboard/DashboardSections` er registry'et. Hver sektion er `{ id, label, path, capability }` i visningsrækkefølge. Standard: `overview` (`''`) og `profile` (`profile`), begge med `merchboard_access_dashboard`. Moduler tilføjer sektioner med filteret `merchboard_dashboard_sections`. Poster valideres (id `[a-z][a-z0-9_-]`, label som ren tekst, sti som dashboard-sti, capability som streng). Ugyldige og dubletter (id eller sti) droppes og logges, og startsiden findes altid. Kun sektioner, hvis capability brugeren har, sendes i bootstrap-data (uden capability). Klienten viser kun dem. En sektion uden komponent i bygget viser "not available yet", og ukendte stier viser "Page not found". Ikoner og lazy-loading (`React.lazy`) tilføjes, når der er flere sektioner.
+- **Sektioner (✅ fase 15):** `Modules/Dashboard/DashboardSections` er registry'et. Hver sektion er `{ id, label, path, capability }` i visningsrækkefølge. Standard: `overview` (`''`) og `profile` (`profile`), begge med `merchboard_access_dashboard`. Moduler tilføjer sektioner med filteret `merchboard_dashboard_sections`. Poster valideres (id `[a-z][a-z0-9_-]`, label som ren tekst, sti som dashboard-sti, capability som streng). Ugyldige og dubletter (id eller sti) droppes og logges, og startsiden findes altid. Kun sektioner, hvis capability brugeren har, sendes i bootstrap-data (uden capability). Klienten viser kun dem. En sektion uden komponent i bygget viser "not available yet", og ukendte stier viser "Page not found". Sektionerne har ingen ikoner, og alle sektionskomponenter ligger i samme bundle (ingen `React.lazy`); klienten slår komponenten op efter id i `app/pages.tsx`. Fase 19: WooCommerce-modulet tilføjer `products` og `orders` lige efter `overview` via filteret (`DashboardSectionRegistration`), så de kun findes, når WooCommerce er aktivt (ADR-039 P11).
 - **Grafer:** vælges i fase 20. Krav: lille bundle, tilgængelighed og tree-shaking. Kandidat: Chart.js eller en letvægts-SVG-løsning.
 - **i18n (✅ fase 15):** Kildestrenge er engelske (`__( 'Overview', 'merchboard' )`, `sprintf` med translators-kommentarer). `DashboardAssets` kalder `wp_set_script_translations( 'merchboard-dashboard', 'merchboard', <plugin>/languages )`, og WordPress udskriver oversættelserne som inline-script (med CSP-noncen) før bundlen. Dansk ligger i `languages/merchboard-da_DK-<md5(build/dashboard.js)>.json`. Dashboardet vises på **sitets sprog** (`determine_locale()` på frontend). Sektion-labels og shell-/403-tekster oversættes i PHP (`load_plugin_textdomain()` på `init`). Nye strenge: `npm run i18n` og oversæt i `merchboard-da_DK.po` (se [DEVELOPMENT.md](DEVELOPMENT.md#oversættelser)).
 - **Sikkerhed:** `dangerouslySetInnerHTML` er forbudt (ESLint `react/no-danger`). Serverværdier renderes altid som tekst. `any` er forbudt (`@typescript-eslint/no-explicit-any`). `localStorage`, `sessionStorage`, `indexedDB` og `document.cookie` er forbudt i dashboard-koden (ESLint). Eksterne links skal bruge `rel="noopener noreferrer"`.
@@ -104,8 +109,8 @@ assets/src/dashboard/
 | Sektion | Indhold | Fase |
 | --- | --- | --- |
 | **Overview** | ✅ Fase 15: velkomst, status, profil-resumé og KPI-kort (omsætning, ordrer, solgte produkter) med "Salgsdata kommer snart". Rigtige nøgletal og aktivitet i fase 20 | 15 → 20 |
-| **Products** | Creator'ens merch (read-only i v1): billede, navn, pris, lager og status | 19 |
-| **Orders** | Ordrelinjer med creator'ens produkter: dato, ordrenr., produkt, antal, status og evt. land. **Ingen kundens navn, e-mail eller adresse.** | 19 |
+| **Products** | ✅ Fase 19: creator'ens produkter (read-only): billede, navn, status, aktiv pris og lagerstatus | 19 |
+| **Orders** | ✅ Fase 19: creator'ens ordrelinjer: dato, ordrenr., produkt, antal, status og markeringerne refunderet/tæller ikke. **Ingen kundedata (heller ikke land) og ingen beløb.** | 19 |
 | **Sales** | Omsætning og antal over tid, pr. produkt og refunds. Samler "Sales" og "Statistics" i én sektion. | 20 |
 | **Payouts** | Afregninger (fremtid) | – |
 | **Profile** | Visningsnavn, bio, avatar og sociale links; link til WP-password-reset | 14 |
@@ -134,7 +139,9 @@ Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle v
 
 **✅ Fase 13:** `Button` (primary/secondary/ghost/danger; sm/md; busy-tilstand, native `<button>`, default `type="button"`), `Card` (labelled `<section>` med h2/h3), `Alert` (info/success/warning/danger; tonen skrevet som tekst; `role="alert"` for warning/danger og ellers `status`), `Skeleton` (`role="status"` med skjult tekst, søjler `aria-hidden`), `EmptyState`, `ErrorState` (`role="alert"`, "Error:" som tekst), `ApiErrorState`, `Field` (label, hjælpetekst og fejl koblet via id, `aria-describedby` og `aria-invalid`), navigation (`Layout` med topbar, sidebar og mobil-nav).
 
-**Senere:** `StatCard`, `Table` (responsiv: kort-layout på mobil), `Badge`, `Modal`/`Dialog` (fokusfælde, `Esc`, `aria-modal`), `Input`/`Select`/`Textarea`, `Toast`, `Spinner` og `Avatar`, når en sektion har brug for dem.
+**✅ Fase 19:** `Table` (semantisk `<table>` med `<caption>` og `<th scope="col">` i en fokuserbar region med label, der scroller vandret på små skærme; viser `Skeleton` ved indlæsning og en given empty state uden rækker; celler renderes som tekst) og `Pagination` (se [Lister](#lister-products-og-orders--fase-19)). Badges er klassen `.merchboard-badge` med tekst.
+
+**Senere:** `StatCard`, `Modal`/`Dialog` (fokusfælde, `Esc`, `aria-modal`), `Input`/`Select`/`Textarea`, `Spinner` og `Avatar`, når en sektion har brug for dem.
 
 ### Layout (✅ fase 13)
 
@@ -154,3 +161,38 @@ Mål: WCAG 2.1 AA. Kontrast ≥ 4.5:1, synlig fokusmarkering (`:focus-visible`-o
 - **Velkomst:** `Card` med "Welcome, <navn>" (fra `GET /me` via `CreatorProvider`, altid som tekst) og kontostatus som badge med tekst ("Active"), ikke kun farve.
 - **Din profil:** egen `useApi( getProfile )` med skeleton, `ApiErrorState` og retry. Resten af Overview vises uanset. Bio vises med bevarede linjeskift (`white-space: pre-line`). Links vises kun, hvis de består samme https-tjek som formularen, med `target="_blank"`, `rel="noopener noreferrer"` og en skjult "(opens in a new tab)". Er profilen tom, vises en empty state med "Edit profile" (client-side link til `profile`).
 - **Nøgletal:** `<section>` med h2 "Key figures" og tre kort (`<h3>` + "Sales data coming soon"). Ingen tal og intet API-kald, før salgsdata findes (fase 18-20, `GET /me/overview` i fase 20). Kortene er et responsivt grid (én kolonne på mobil).
+
+## Lister: Products og Orders (✅ fase 19)
+
+Beslutningerne står i ADR-039 (inkl. præciseringen af P7); API-kontrakterne i [API.md](API.md#get-meproducts--fase-19-trin-2-adr-039) og [API.md](API.md#get-meorders--fase-19-trin-4-adr-039).
+
+### Fælles liste-fundament (trin 5)
+
+- **`requestList( { path, page, perPage, signal }, validateItem )`** i `api/client.ts` sender `?page=&per_page=` og går gennem samme afsendelse som `request()` (namespace-tjek, `apiFetch` med `parse: false`, faste fejltyper uden servertekst). Svaret skal være et rent JSON-array med højst `perPage` elementer, og hvert element valideres; `X-WP-Total` og `X-WP-TotalPages` skal være ikke-negative heltal, og total 0 og 0 sider følges ad. Alt andet giver `invalid_response`. Resultatet er `Paginated<T>` = `{ items, page, perPage, total, totalPages }`.
+- **Validering af side og sidestørrelse:** `page` ≥ 1 og `perPage` 1-100 (standard `DEFAULT_PER_PAGE` = 20); andet er en programmeringsfejl, der kaster før requesten (også en query i stien).
+- **Side efter sidste side:** serveren svarer 200 med `[]` og de samme totaler; klienten behandler det som en gyldig, tom side.
+- **`usePagedApi( load, perPage )`** holder siden i komponentens state (ikke i URL'en) oven på `useApi`, som afbryder den forrige request.
+- **`Pagination`:** "Previous"/"Next" (native knapper) og "Page X of Y" som polite live region i en `<nav>` med label. Skjult ved 0 eller 1 side, medmindre siden ligger efter den sidste (så fører "Previous" tilbage til sidste side). Bliver den fokuserede knap deaktiveret, flyttes fokus til statusteksten.
+- **`Table`:** se [Komponenter](#komponenter). Indlæsning, tom liste og fejl bruger de eksisterende `Skeleton`, `EmptyState` og `ApiErrorState` (med "Try again"). Under et sideskift forbliver pagineringen (deaktiveret) med det sidst kendte antal sider, så tastaturfokus ikke tabes; der vises ingen tom tilstand, mens første side indlæses.
+
+### Products (trin 6)
+
+- `GET /me/products` via `getProducts`, valideret af `parseProduct`. Viser creator'ens produkter med status `publish` og `private`; kladder, `pending` og `trash` sendes ikke af serveren.
+- **Pris:** den aktive WooCommerce-pris (ikke normalprisen) som strenge, aldrig floats, med `tax: "store_setting"`; variable produkter som min/max af de aktive variationspriser. Prisen vises præcis som sendt ("149.00 DKK" eller "199.50–300.00 DKK"), uden parsing, momsberegning eller momsetiket; uden pris "No price".
+- **Lager:** kun lagerstatus (In stock, Out of stock, On backorder; ukendt → "Unknown"), aldrig lagerantal. Status vises som "Published"/"Private".
+- **Billede:** kun en thumbnail med samme origin (serveren sender ellers `null`, og klienten tjekker igen); `alt` er produktnavnet. Uden billede vises en pladsholder med `role="img"` og label "No image". CSP'en er uændret.
+- Produkt-id'et bruges kun som rækkenøgle og vises ikke.
+
+### Orders (trin 7)
+
+- `GET /me/orders` via `getOrders`, valideret af `parseOrderLine`, som læser præcis de ni felter (`line_id`, `order_number`, `date`, `status`, `status_label`, `product_name`, `quantity`, `refunded`, `counted`).
+- **Én række pr. creator'ens ordrelinje**, ikke pr. ordre. En ordre med linjer fra flere creators viser kun creator'ens egne linjer. Udvælgelse, creator-filter, aggregering og paginering sker i ledgerens read-model på serveren; WooCommerce beriger kun de viste linjer (status, ordrenummer, produktnavn).
+- **Kolonner:** Date, Order, Product, Quantity, Status (serverens `status_label`, fx "Deleted" eller "Trashed") og Notes. `line_id` er kun rækkenøgle; der er ingen links og intet detalje-endpoint i fase 19.
+- **Antal:** API-heltallet som sendt: summen af ledgerens antal for linjen (ADR-039 P2), ikke et købt bruttoantal.
+- **Markeringer (tekstbadges, ikke kun farve):** "Refund recorded", når `refunded` er sand (mindst én refundering gælder; siger ikke, at alt er refunderet), og "Not counted", når `counted` er falsk (ordren har ingen åben salgscyklus; siger ikke hvorfor). Begge kan stå samtidig. En kort forklaring under tabellen beskriver dem.
+- **Dato:** API'et sender ISO 8601 UTC (`date`). Klienten viser den med `Intl.DateTimeFormat` i sitets locale (`config.locale`, fx `da_DK` → `da-DK`, `dateStyle: 'medium'`) og brugerens tidszone, i et `<time dateTime>`-element. Kan locale ikke bruges, vises API-datoen (`YYYY-MM-DD`). Dags dato bruges aldrig som erstatning.
+- Et tomt produktnavn vises som "Unnamed product".
+
+### Privacy (ADR-039 P5)
+
+Products og Orders viser ingen kundedata: hverken navn, e-mail, telefon, adresse, by, postnummer, land, noter, IP, betalingsoplysninger eller kunde-/bruger-ID. Orders viser heller ingen beløb eller valuta i fase 19, og ingen creator-, ordre-, produkt- eller variant-id'er.

@@ -14,7 +14,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Admin | 9-11 | Menu, settings, creator-administration, logs |
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
 | Deployment | 16 | Release-pipeline og staging (✅ fase 16, `v0.1.0`) |
-| WooCommerce | 17-19 | Produkt↔creator (✅ fase 17), sales ledger, produkter/ordrer i dashboard |
+| WooCommerce | 17-19 | Produkt↔creator (✅ fase 17), sales ledger (✅ fase 18), produkter/ordrer i dashboard (✅ fase 19) |
 | Statistics | 20 | Salgsanalyse og grafer |
 | Senere | – | Payouts, notifications, integrations, campaigns, support, reporting, hardening og E2E |
 
@@ -186,10 +186,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - 9 ✅ (2026-10-01, ADR-038 statusnote "fase 18 afsluttet"): i18n, docs og slutverifikation (som fase 17's trin 15: konsistente docs, i18n uden utilsigtet diff, grøn suite, pushet og grøn CI). Docs og i18n er gennemgået og suiten er grøn lokalt; commit, push og grøn CI er afslutningen af trinnet.
 - **Done:** Integrationstests for sale, refund (hel og delvis), cancel efter complete og gentagne hooks. **✅ Opfyldt 2026-10-01:** `SalesSynchronizerTest` (salg, statusskift med reversal og ny cyklus, delvis og fuld refund, sletning af en refund, gentagne hooks), sammen med planner-, repository- og backfill-testene og runtime-verifikationen i Merch Dashboard Local (trin 5–8, HPOS og legacy).
 
-## Fase 19 – Products og Orders i dashboard
+## Fase 19 – Products og Orders i dashboard ✅
 
 - **Scope:** `/me/products`, `/me/orders` (uden kunde-PII), sektionerne Products og Orders (responsive tabeller, paginering, empty states).
-- **Done:** IDOR-tests (ordre med anden creators produkt). Privacy er bekræftet af virksomheden.
+- **Done:** IDOR-tests (ordre med anden creators produkt). Privacy er bekræftet af virksomheden. **✅ Opfyldt 2026-10-06:** IDOR-tests i `MeProductsEndpointTest` og `MeOrdersEndpointTest` (bl.a. en ordre med linjer fra to creators og `creator_id` i query), `SalesOrderLinesTest` og runtime-verifikationen i trin 8; privacy bekræftet af virksomheden 2026-10-01 (ADR-039).
 - **Beslutninger (2026-10-01):** ADR-039 (P1–P12, privacy bekræftet af virksomheden, P2 præciseret, P7 præciseret om pris og moms). Pagineringskonventionen for liste-routes står i [API.md](API.md#paginering).
 - **Rækkefølge:**
   - 1 ✅ (2026-10-01; commit `0f2f02c`, pushet, CI grøn, run `36910534650`): REST-paginering: `RestController::pagination_args()` og `paginated()` og `Core\Http\Pagination`.
@@ -199,10 +199,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - 5 ✅ (2026-10-01; commit `25e1a53`, pushet, CI grøn, run `36921436459`): Frontend-fundament (liste-klient, tabel, paginering, sektionerne).
   - 6 ✅ (2026-10-01; commit `c0b34af`, pushet, CI grøn, run `36924655185`): Products-sektionen.
   - 7 ✅ (2026-10-01; commit `ac94f68`, pushet, CI grøn, run `36926731509`): Orders-sektionen.
-  - 8 ✅ (2026-10-06, med projektejerens godkendelse, på `ac94f68`): Verifikation i Merch Dashboard Local (HPOS og legacy, kræver projektejerens godkendelse).
+  - 8 ✅ (2026-10-06, med projektejerens godkendelse, på `ac94f68`; commit `65e5540`, pushet, CI grøn, run `37499509045`): Verifikation i Merch Dashboard Local (HPOS og legacy, kræver projektejerens godkendelse).
     - **Resultat:** 42 runtime-checks bestået med syntetiske data (præfiks MB-T19; den syntetiske creator 4 genbrugt, en ny syntetisk creator "MB-T19 Other Creator" oprettet og sat inaktiv bagefter, da creators ikke kan slettes): adgang og sektioner (overview, products, orders, profile; 401 udlogget, 403 uden creator-adgang), `GET /me/products` (publish og private, kladde og anden creators produkt skjult, aktiv udsalgspris, variabelt interval, `price: null`, lagerstatus, billede med samme origin og `alt`, CDN-billede undertrykt, paginering) og `GET /me/orders` (én række pr. ordrelinje, ordre med blandede creators, antal, `refunded` og `counted` inkl. begge samtidig, `deleted`/`trashed`, første salgsdato, aktuelt produktnavn og snapshot for slettet produkt og slettet variant uden parent-fallback, ingen kundedata eller beløb, totaler lig ledgeren, paginering) samt dashboard-shellen over HTTP (bootstrap-sektioner, bundle, uændret CSP). Testdataene er fjernet; append-only audit-records og fem ventende `merchboard_reconcile_product`-jobs for de slettede testprodukter (harmløse no-ops) er bevaret.
     - **Begrænsninger:** UI'et er ikke testet i en browser (intet browserværktøj til rådighed; UI-adfærden er dækket af Jest). Legacy-ordrelager er ikke testet, fordi et skift af testsitet ville kræve ændring af en eksisterende ordre; kun HPOS er verificeret. Local kører MariaDB 10.11.18 (som dokumenteret i PROJECT-STATUS); trin 8-instruksen angav 10.11.19, som er integrationstest-databasen.
-  - 9: i18n, docs og slutverifikation.
+  - 9 ✅ (2026-10-06): i18n, docs og slutverifikation. 38 nye strenge oversat til dansk via `npm run i18n` (0 uoversatte, 0 fuzzy, ingen ændrede oversættelser); FRONTEND, WOOCOMMERCE, SECURITY, TESTING, API, MODULES, PROJECT-STATUS (åbent spørgsmål 6 lukket), CHANGELOG og feature-docs opdateret; fuld suite grøn; læsende sanity-check i Merch Dashboard Local (dansk Ordrer, begge endpoints, 401 udlogget). Begrænsningerne fra trin 8 gælder uændret. Commit, push og grøn CI afslutter trinnet og fasen.
 
 ## Fase 20 – Sales & statistics
 
