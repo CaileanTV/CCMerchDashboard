@@ -198,8 +198,10 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
   - 4 ✅ (2026-10-01; commit `c4a7bd2`, pushet, CI grøn, run `36919587593`): Orders endpoint (`GET /me/orders`) med berigelse fra WooCommerce.
   - 5 ✅ (2026-10-01; commit `25e1a53`, pushet, CI grøn, run `36921436459`): Frontend-fundament (liste-klient, tabel, paginering, sektionerne).
   - 6 ✅ (2026-10-01; commit `c0b34af`, pushet, CI grøn, run `36924655185`): Products-sektionen.
-  - 7 (i gang): Orders-sektionen.
-  - 8: Verifikation i Merch Dashboard Local (HPOS og legacy, kræver projektejerens godkendelse).
+  - 7 ✅ (2026-10-01; commit `ac94f68`, pushet, CI grøn, run `36926731509`): Orders-sektionen.
+  - 8 ✅ (2026-10-06, med projektejerens godkendelse, på `ac94f68`): Verifikation i Merch Dashboard Local (HPOS og legacy, kræver projektejerens godkendelse).
+    - **Resultat:** 42 runtime-checks bestået med syntetiske data (præfiks MB-T19; den syntetiske creator 4 genbrugt, en ny syntetisk creator "MB-T19 Other Creator" oprettet og sat inaktiv bagefter, da creators ikke kan slettes): adgang og sektioner (overview, products, orders, profile; 401 udlogget, 403 uden creator-adgang), `GET /me/products` (publish og private, kladde og anden creators produkt skjult, aktiv udsalgspris, variabelt interval, `price: null`, lagerstatus, billede med samme origin og `alt`, CDN-billede undertrykt, paginering) og `GET /me/orders` (én række pr. ordrelinje, ordre med blandede creators, antal, `refunded` og `counted` inkl. begge samtidig, `deleted`/`trashed`, første salgsdato, aktuelt produktnavn og snapshot for slettet produkt og slettet variant uden parent-fallback, ingen kundedata eller beløb, totaler lig ledgeren, paginering) samt dashboard-shellen over HTTP (bootstrap-sektioner, bundle, uændret CSP). Testdataene er fjernet; append-only audit-records og fem ventende `merchboard_reconcile_product`-jobs for de slettede testprodukter (harmløse no-ops) er bevaret.
+    - **Begrænsninger:** UI'et er ikke testet i en browser (intet browserværktøj til rådighed; UI-adfærden er dækket af Jest). Legacy-ordrelager er ikke testet, fordi et skift af testsitet ville kræve ændring af en eksisterende ordre; kun HPOS er verificeret. Local kører MariaDB 10.11.18 (som dokumenteret i PROJECT-STATUS); trin 8-instruksen angav 10.11.19, som er integrationstest-databasen.
   - 9: i18n, docs og slutverifikation.
 
 ## Fase 20 – Sales & statistics
