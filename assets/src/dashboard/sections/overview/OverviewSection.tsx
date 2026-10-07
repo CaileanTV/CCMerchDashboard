@@ -12,6 +12,7 @@ import { SOCIAL_PLATFORMS } from '../../types/creator';
 import type { CreatorStatus, Profile } from '../../types/creator';
 import { platformLabel } from '../profile/platforms';
 import { isValidLink } from '../profile/validation';
+import { SalesKpis } from './SalesKpis';
 
 function statusLabel( status: CreatorStatus ): string {
 	return status === 'active'
@@ -105,22 +106,10 @@ function CreatorInfo() {
 	return <ProfileSummary profile={ state.data } />;
 }
 
-/** The figures the overview will show once sales data exists (phase 18-20). */
-function kpis(): ReadonlyArray< {
-	readonly id: string;
-	readonly label: string;
-} > {
-	return [
-		{ id: 'revenue', label: __( 'Revenue', 'merchboard' ) },
-		{ id: 'orders', label: __( 'Orders', 'merchboard' ) },
-		{ id: 'products', label: __( 'Products sold', 'merchboard' ) },
-	];
-}
-
 /**
- * Overview (phase 15, MVP): welcome, creator info and key figures. Sales data
- * does not exist yet, so the key figures are empty states; no numbers are
- * invented and no API is called for them.
+ * Overview: welcome, creator info and key figures. The key figures come from
+ * `GET /me/sales` with its default period (SalesKpis, ADR-040 pkt. 12); there
+ * is no `/me/overview`.
  */
 export function OverviewSection() {
 	const { state } = useCreator();
@@ -166,21 +155,7 @@ export function OverviewSection() {
 				>
 					{ __( 'Key figures', 'merchboard' ) }
 				</h2>
-				<ul className="merchboard-kpi-grid">
-					{ kpis().map( ( kpi ) => (
-						<li
-							key={ kpi.id }
-							className="merchboard-card merchboard-kpi"
-						>
-							<h3 className="merchboard-kpi__label">
-								{ kpi.label }
-							</h3>
-							<p className="merchboard-kpi__empty">
-								{ __( 'Sales data coming soon', 'merchboard' ) }
-							</p>
-						</li>
-					) ) }
-				</ul>
+				<SalesKpis />
 			</section>
 		</div>
 	);

@@ -113,7 +113,7 @@ final class TranslationsTest extends TestCase {
 		$messages = $json['locale_data']['messages'] ?? array();
 		self::assertIsArray( $messages );
 		self::assertSame( 'da_DK', $messages['']['lang'] ?? null );
-		self::assertSame( array( 'Salgsdata kommer snart' ), $messages['Sales data coming soon'] ?? null );
+		self::assertSame( array( 'Nettosalg (ekskl. moms)' ), $messages['Net sales (excl. VAT)'] ?? null );
 		self::assertSame( array( 'Profilen er gemt.' ), $messages['Profile saved.'] ?? null );
 		self::assertArrayNotHasKey( 'Overview', $messages, 'Section labels come translated from the server.' );
 

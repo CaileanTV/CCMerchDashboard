@@ -1,6 +1,6 @@
 # Project status
 
-**Sidst opdateret:** 2026-10-06 · **Seneste færdige fase:** 19 (Products og Orders i dashboard ✅; trin 9's commit, push og CI afslutter fasen) · **Aktuel fase:** ingen (næste er fase 20, Sales & statistics, efter projektejerens godkendelse) · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
+**Sidst opdateret:** 2026-10-07 · **Seneste færdige fase:** 20 (Sales & statistics ✅; trin 10's commit, push og CI afslutter fasen; ADR-040's p95-krav er ikke erklæret opfyldt, åbent spørgsmål 11) · **Aktuel fase:** ingen · **Schemaversion:** 5 · **Version:** 0.1.0 (tagget `v0.1.0`, udgivet på GitHub) · **Naming:** `Merch Dashboard` / `merchboard` / `MerchBoard\` (ADR-018)
 
 ## Completed
 
@@ -427,15 +427,30 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - **Trin 8 ✅ (2026-10-06; commit `65e5540`, CI grøn):** runtime-verifikation i Merch Dashboard Local med HPOS og syntetiske data: 42 checks bestået. Begrænsninger: intet browserværktøj (UI'et er ikke klikket igennem; dækket af Jest og HTTP-tjek af shellen), legacy-ordrelager ikke testet (et skift ville kræve ændring af en eksisterende ordre), Local kører MariaDB 10.11.18.
 - **Trin 9 ✅ (2026-10-06):** i18n (38 nye strenge oversat til dansk), opdaterede docs (FRONTEND, WOOCOMMERCE, SECURITY, TESTING, feature-doc, CHANGELOG, åbent spørgsmål 6 lukket), fuld suite grøn og en kort læsende sanity-check i Local. Commit, push og grøn CI afslutter fasen.
 
+### Fase 20 – Sales & statistics ✅ (2026-10-07; performancekravet er åbent)
+
+- **Trin 1 ✅ (2026-10-06, lokalt):** beslutninger i ADR-040 (KPI-semantik, perioder, valuta, caching, `/me/sales`, admin Sales, terminologi, ydelsesmål) og ADR-041 (grafer uden tredjeparts-bibliotek).
+- **Trin 2 ✅ (2026-10-06, lokalt, reviewed):** `SalesStatistics` read-model på `merchboard_sales` (`LedgerSalesStatistics`, `SalesPeriods`); målt på fase 19-datasættet (et år dagligt + produkter: p95 ca. 27 ms på MariaDB 10.11), intet nyt indeks.
+- **Trin 3 ✅ (2026-10-06, lokalt, reviewed):** `GET /me/sales` (`MeSalesController`, `SalesQuery`, `SalesReport`, `WooCommerceSalesProductNames`); kontrakten står i API.md.
+- **Trin 4 ✅ (2026-10-06, lokalt, reviewed):** `SalesCache` (object cache, gruppe `merchboard_sales`, 15 minutter, generation pr. creator som tilfældigt token) og `CachedSalesReports` omkring `/me/sales`; invalidering i `SalesRepository::write()` efter COMMIT for creators med indsatte rækker. Ingen transients, ingen migration, ingen offentlig hook.
+- **Trin 5 ✅ (2026-10-06, lokalt, reviewed):** Overview-KPI'erne "Nettosalg (ekskl. moms)", enheder og ordrer pr. valuta kommer fra `GET /me/sales` uden parametre (standardperioden: 30 kalenderdage inkl. i dag) gennem samme `CachedSalesReports`/`SalesReport` og cache-post; intet `/me/overview`, ingen separat KPI-forespørgsel. Projektejerens valg (2026-10-06): browseren kalder det eksisterende `/me/sales` (ADR-040 pkt. 12) frem for KPI-data i bootstrap.
+- **Trin 6 ✅ (2026-10-07, lokalt, reviewed):** Sales-sektionen (`sales`, kun med WooCommerce): periode og interval, nøgletal, egen SVG-søjlegraf (BigInt-skalering, ingen chart-bibliotek) og altid en semantisk tabel pr. valuta, alt fra `GET /me/sales`. Produktopdelingen vises ikke endnu.
+- **Trin 7 ✅ (2026-10-07, lokalt, reviewed):** admin-sektionen "Sales" på creatorens redigeringsside (`CreatorSalesSection`, WooCommerce-modulet): standardperioden på 30 dage med nettosalg, enheder og ordrer pr. valuta og den daglige serie som tabel, via samme `SalesReports`/cache som `/me/sales` (intet HTTP, intet admin-REST). Projektejerens beslutning 2026-10-07 (ADR-040 statusnote): ingen månedstotaler og ingen produktopdeling i trin 7.
+- **Trin 8 ✅ (2026-10-07, lokalt; konklusion B):** benchmark på MariaDB 10.11.19 (MySQL 8.0 ikke lokalt verificeret) med et syntetisk datasæt på 176.735 rækker. ADR-040's p95 < 200 ms uden cache er opfyldt for den mellemstore (cirka 2.300 rækker/år: 15 ms) og den lille creator og for 30-dagesvisningen (38 ms), men ikke for den store creator (80.511 rækker/år) et år dagligt (392 ms) eller månedligt (348 ms). Et dækkende indeks gav i et eksperiment 213 ms. Beslutningsanalyse 8b (færre ledger-scans med `WITH ROLLUP`, byte-identiske rapporter): 320 ms med eksisterende indeks og 210–226 ms med dækkende indeks, altså stadig over kravet. Anbefaling: fastsæt en forventet produktionsvolumen (kravet holder op til cirka 40.000 rækker pr. creator pr. år) eller beslut et dagsaggregat. Ingen produktionskode, indeks eller migration er ændret; detaljer i ROADMAP. **Afklaring 8c:** repoet har intet dokumenteret volumenmål pr. creator (ADR-040 pkt. 15), så p95-kravet kan ikke erklæres opfyldt; det står åbent (åbent spørgsmål 11). Målt teknisk kapacitet: cirka 40.000 ledger-rækker pr. creator pr. år ved et års dagligt; 30-dagesvisningen er under 40 ms selv for den store creator. Benchmark og 8b-eksperiment er bevaret som opt-in fixtures.
+- **Trin 9 ✅ (2026-10-07, lokalt, med projektejerens godkendelse):** runtime-verifikation i Merch Dashboard Local (WordPress 7.1.3, WooCommerce 11.1.2, PHP 8.2.29, MariaDB 10.11.18, HPOS til, sitets tidszone UTC, dansk): PASS, 53 checks (`/me/sales`, cache og invalidering, admin Sales, fase 18/19-integritet og shellen over HTTP), syntetiske MB-T20-data, fuld oprydning. Ingen browser; WooCommerce ikke deaktiveret på sitet. Detaljer i ROADMAP. Performancekravet er fortsat åbent (åbent spørgsmål 11).
+- **Note (ikke en del af sales-beslutningen):** den lokale integrationssuite tog 269 sekunder uden Composer-timeout; med Composers standard-timeout på 300 sekunder blev en tidligere kørsel afbrudt ved test 386/395 uden testfejl. Ikke optimeret; kan sættes med `COMPOSER_PROCESS_TIMEOUT=0` lokalt.
+- **Trin 10 ✅ (2026-10-07):** final review og dokumentation (CHANGELOG, MODULES, feature-doc, DEVELOPMENT); fuld suite grøn. Fase 20 committes, pushes og CI-verificeres samlet (alle trin 1–10 i ét commit, efter projektejerens anvisning).
+- **Status:** fasen er funktionelt færdig og testet. ADR-040's krav om p95 < 200 ms uden cache er ikke erklæret opfyldt (intet repo-dokumenteret volumenmål; åbent spørgsmål 11). Benchmarkresultaterne fra trin 8/8b/8c står i ROADMAP og er ikke et bestået ydelseskrav. Ligger et fremtidigt volumenmål over den målte kapacitet (cirka 40.000 ledger-rækker pr. creator pr. år), kræves en særskilt arkitekturbeslutning.
+
 ## In progress
 
-- Ingen fase er i gang. Næste er fase 20 (Sales & statistics) efter projektejerens godkendelse.
+Ingen.
 
 ## Planned
 
 Se [ROADMAP.md](ROADMAP.md). Næste:
 
-1. **Fase 20:** Sales & statistics.
+1. **Beslutning om sales-volumen pr. creator** (åbent spørgsmål 11), før en eventuel arkitekturændring for statistikken.
 2. **Senere (uprioriteret):** se ROADMAP.md. Fuld afstemning af ledgeren mod WooCommerce er en senere job-type uden for fase 18 (ADR-037 pkt. 11).
 
 ## Known bugs
@@ -503,12 +518,13 @@ Skal besvares af projektejeren. Fasen, hvor svaret senest er nødvendigt, står 
 6. ✅ **Privacy – lukket (ADR-039, 2026-10-01):** Creators ser ingen kundedata, heller ikke land; det aktuelle produktnavn vises, ellers ordrelinjens gemte navn for et slettet produkt. Bekræftet af virksomheden. Et muligt ekstra checkoutfelt er et åbent designpunkt uden for ADR-039.
 7. ✅ **UI-sprog – lukket (fase 15):** Engelske kildestrenge og dansk oversættelse via WordPress i18n. Dashboardet vises på sitets sprog, admin på brugerens.
 8. ✅ **Dashboard-URL – lukket (fase 12):** `/creator-dashboard/`, og slug'en kan ændres under Merch Dashboard → Settings.
-9. ✅ **Lokal persistent WordPress – lukket (2026-09-26):** Projektejeren har udpeget LocalWP-sitet **Merch Dashboard Local** (`http://merchboard.local`: WordPress 7.1.2, PHP 8.2.29, MariaDB 10.11.18, WooCommerce 10.3.8, pluginet via junction til repoet) som projektets officielle lokale WordPress/WooCommerce-testmiljø. Playground bruges fortsat til flygtige smoke-tests. Andre LocalWP-sites er uden for scope, og staging og produktion må ikke bruges af AI-agenter. Se [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local).
+9. ✅ **Lokal persistent WordPress – lukket (2026-09-26):** Projektejeren har udpeget LocalWP-sitet **Merch Dashboard Local** (`http://merchboard.local`: WordPress 7.1.2, PHP 8.2.29, MariaDB 10.11.18, WooCommerce 10.3.8, pluginet via junction til repoet) som projektets officielle lokale WordPress/WooCommerce-testmiljø. Playground bruges fortsat til flygtige smoke-tests. Andre LocalWP-sites er uden for scope, og staging og produktion må ikke bruges af AI-agenter. Se [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local). **Observeret 2026-10-07 (fase 20, trin 9):** sitet kører nu WordPress 7.1.3 og WooCommerce 11.1.2 (opdateret uden for projektets verifikationer), PHP 8.2.29, MariaDB 10.11.18, HPOS til; creator 1 er koblet til bruger 1 og har ikke-syntetiske ledger-rækker. Pluginet understøtter WooCommerce ≥ 10.3.
 10. ✅ **Audit-retention – lukket for v0.1.0 (ADR-029):** Audit-records bevares ubegrænset i v0.1.0, uden automatisk retention eller sletning. Det er ikke en produktionsbeslutning: en retention-politik for produktion (periode og GDPR-begrundelse) skal besluttes før produktionsbrug og registreres i en ny ADR.
+11. **Sales-volumen pr. creator (åben, fase 20 trin 8c, 2026-10-07):** Hvor mange ordrer eller ledger-rækker pr. år har den største forventede creator? Repoet dokumenterer intet volumenmål, så ADR-040's krav om p95 < 200 ms uden cache (et år dagligt) kan ikke erklæres opfyldt. Målt kapacitet med den nuværende implementation: cirka 40.000 ledger-rækker pr. creator pr. år (MariaDB 10.11.19). Under det: kravet kan erklæres opfyldt med en statusnote i ADR-040. Over det: et dagsaggregat kræver en ny ADR. MySQL 8.0 er ikke målt. (før produktion)
 
 ## Next recommended steps
 
 1. ✅ Releasen "Merch Dashboard 0.1.0" er udgivet på GitHub (vist som "Latest" ved kontrol 2026-09-28).
 2. Notér MySQL/MariaDB-version og charset fra staging (Værktøjer → Webstedets tilstand → Info → Database) i åbent spørgsmål 2.
 3. Før produktionsbrug: beslut en retention-politik for audit-records (ADR-029, ny ADR). v0.1.0 bevarer dem ubegrænset.
-4. Fase 19: commit og push af trin 9 og grøn CI; derefter fase 20 efter projektejerens godkendelse.
+4. ✅ Fase 19 og fase 20 er afsluttet. Næste: projektejeren fastsætter et volumenmål pr. creator (åbent spørgsmål 11), så ADR-040's ydelseskrav kan afgøres; derefter næste fase efter projektejerens prioritering.

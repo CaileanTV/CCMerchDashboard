@@ -263,9 +263,7 @@ describe( 'dashboard with the creator API', () => {
 		expect(
 			container.querySelector( '[role="status"]' )?.textContent
 		).toContain( 'Loading your dashboard…' );
-		expect( container.textContent ).not.toContain(
-			'Sales data coming soon'
-		);
+		expect( container.textContent ).not.toContain( 'Key figures' );
 
 		await act( async () =>
 			resolve(
@@ -282,7 +280,7 @@ describe( 'dashboard with the creator API', () => {
 				?.textContent
 		).toBe( 'Nova <b>Studio</b>' );
 		expect( container.querySelector( 'b' ) ).toBeNull();
-		expect( container.textContent ).toContain( 'Sales data coming soon' );
+		expect( container.textContent ).toContain( 'Key figures' );
 	} );
 
 	it.each( [
@@ -310,9 +308,7 @@ describe( 'dashboard with the creator API', () => {
 					.querySelector( 'main [role="alert"] a' )
 					?.getAttribute( 'href' )
 			).toBe( href );
-			expect( container.textContent ).not.toContain(
-				'Sales data coming soon'
-			);
+			expect( container.textContent ).not.toContain( 'Key figures' );
 			expect( container.textContent ).not.toContain( 'Internal' );
 			expect(
 				container.querySelector( '.merchboard-topbar__creator' )
@@ -339,7 +335,7 @@ describe( 'dashboard with the creator API', () => {
 		await flush();
 
 		expect( calls ).toBe( 2 );
-		expect( container.textContent ).toContain( 'Sales data coming soon' );
+		expect( container.textContent ).toContain( 'Key figures' );
 	} );
 
 	it( 'treats a malformed /me as an error', async () => {

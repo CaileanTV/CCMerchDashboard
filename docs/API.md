@@ -1,6 +1,6 @@
 # REST API
 
-> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039). Øvrige routes i tabellerne nedenfor er design.
+> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039), og `/me/sales` er implementeret i fase 20, trin 3 (ADR-040). Øvrige routes i tabellerne nedenfor er design.
 
 ## Principper
 
@@ -29,10 +29,11 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `GET` | `/me` | ✅ Den aktuelle creator: `display_name`, `status`. Rettigheder og sektioner kommer fortsat fra bootstrap-data (sektion-registry i fase 15). | 14 |
 | `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
 | `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
-| `GET` | `/me/overview` | Nøgletal til Overview (fase 15 bruger `/me` og `/me/profile`; KPI-kortene er empty states uden API) | 20 |
 | `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
 | `GET` | `/me/orders` | ✅ Ordrelinjer med creator'ens produkter **uden kunde-PII** (se nedenfor) | 19 |
-| `GET` | `/me/sales?from=&to=&interval=` | Salgsaggregeringer | 20 |
+| `GET` | `/me/sales?from=&to=&interval=` | ✅ Salgsstatistik pr. valuta: totaler, tæt serie og produkter (se nedenfor) | 20 |
+
+Der findes intet `/me/overview` (ADR-040 pkt. 12). Overview kalder `/me/sales` uden parametre (standardperioden: 30 kalenderdage inklusive i dag, `day`) og viser `totals` pr. valuta, så hver KPI kun har én definition og samme cache-post som `/me/sales` (✅ fase 20, trin 5; se [FRONTEND.md](FRONTEND.md#overview--fase-15)).
 
 Fordi der ikke findes `/creators/{id}` i creator-scope, **kan Creator A ikke ændre et ID for at se Creator B**. For underressourcer med ID (fx `/me/orders/{order_id}`) tjekker service-laget ejerskab (`order indeholder mindst én linje for creator'en`). Svaret er **404** ved manglende ejerskab, ikke 403, så eksistensen af andres ressourcer ikke afsløres.
 
@@ -176,6 +177,90 @@ Findes kun, når WooCommerce-modulet er indlæst (uden WooCommerce: 404 `rest_no
 
 Svaret indeholder aldrig kundedata (navn, e-mail, telefon, adresse, by, postnummer, land, noter, IP, betaling, kunde- eller bruger-ID), beløb eller ordre-, produkt-, variant- eller creator-ID'er (P3, P5).
 
+## `GET /me/sales` ✅ (fase 20, trin 3, ADR-040)
+
+Findes kun, når WooCommerce-modulet er indlæst (uden WooCommerce: 404 `rest_no_route`; ledger-data bevares). Adgang som de øvrige `/me`-routes (401 udlogget, 403 uden creator-adgang, inaktiv creator 403). Creator'en kommer kun fra `CreatorContext`; andre query-parametre (fx `creator_id`) ignoreres. Ingen paginering. Svaret caches (se [Caching](#caching-af-mesales)).
+
+**Kilde:** sales ledgeren `merchboard_sales` alene (`SalesStatistics`), uafhængigt af HPOS eller legacy-ordrelager. Kun de viste produkters navne slås op i WooCommerce (højst ét opslag pr. unikt produkt-ID, aldrig for produkt-ID 0).
+
+### Parametre
+
+| Parameter | Regel | Standard |
+| --- | --- | --- |
+| `from` | Dato `YYYY-MM-DD` i sitets tidszone, inklusive | 29 dage før `to` |
+| `to` | Dato `YYYY-MM-DD` i sitets tidszone, inklusive | I dag i sitets tidszone |
+| `interval` | `day`, `week` eller `month` | `day` |
+
+Uden parametre er perioden altså de seneste 30 dage inklusive i dag, dag for dag.
+
+**Tidszone og perioder:** datoerne fortolkes i sitets tidszone (`wp_timezone()`, angivet i svaret som `timezone`). Internt bliver de til det halvåbne UTC-interval `[from 00:00 lokal tid, dagen efter to 00:00 lokal tid)`; grænserne beregnes i PHP (sommertid håndteres, og et døgn kan være 23 eller 25 timer), aldrig med `CONVERT_TZ()`. Ledgerens `occurred_at` bruges uændret (ADR-038): en refund tæller på refundens dato, ikke på salgsdagen. `week` er ISO-uger (mandag–søndag) og `month` kalendermåneder; første og sidste delperiode kan være delvise, og `from`/`to` udvides ikke.
+
+**Validering:**
+
+| Tilfælde | Svar |
+| --- | --- |
+| Ugyldigt datoformat eller ugyldig dato (fx `2026-9-01`, `2026-02-30`, tom streng, tidspunkt) | 400 `rest_invalid_param` (WordPress' argumentvalidering) |
+| Ukendt `interval` (fx `year`, `DAY`) | 400 `rest_invalid_param` |
+| `from` efter `to` (også `from` efter i dag uden `to`) | 400 `merchboard_invalid_period` |
+| `to` på eller efter `from` + 5 år (fx `2020-01-01`–`2025-01-01`) | 400 `merchboard_invalid_period` |
+| Mere end 366 delperioder (fx 367 dage med `day`) | 400 `merchboard_invalid_period` |
+
+`merchboard_invalid_period` har en generisk besked og gentager ikke input.
+
+### Svar
+
+```json
+{
+  "from": "2026-09-01",
+  "to": "2026-09-30",
+  "interval": "day",
+  "timezone": "Europe/Copenhagen",
+  "currencies": [
+    {
+      "currency": "DKK",
+      "totals": {
+        "net_sales": "1234.0000",
+        "sales": "1500.0000",
+        "adjustments": "-266.0000",
+        "units": 12,
+        "orders": 7
+      },
+      "series": [
+        { "start": "2026-09-01", "end": "2026-09-01", "net_sales": "0.0000", "units": 0, "orders": 0 }
+      ],
+      "products": [
+        { "product_id": 12, "name": "Tour tee", "net_sales": "500.0000", "units": 5 }
+      ],
+      "truncated": false
+    }
+  ]
+}
+```
+
+| Felt | Regel |
+| --- | --- |
+| `from`, `to`, `interval`, `timezone` | Den anvendte periode (efter standardværdier) og sitets tidszone |
+| `currencies` | Én blok pr. valuta med data i perioden, sorteret alfabetisk. Ingen omregning og ingen samlet total på tværs af valutaer. En periode uden data giver 200 med `currencies: []` |
+| `totals.sales` | Summen af `sale`-rækker |
+| `totals.adjustments` | Summen af alle andre rækker (refund, reversal, korrektion); typisk negativ |
+| `totals.net_sales` | `sales + adjustments` (kan være negativ i en periode med flere refunds end salg) |
+| `totals.units` | Summen af antal over alle rækker (med fortegn; kan være negativ) |
+| `totals.orders` | Antal unikke ordrer med mindst én `sale`-række i perioden; refunds, reversals og korrektioner ændrer det ikke, og det følger ikke ordrens nuværende tællestatus. Tælles over hele perioden, ikke som summen af serien |
+| `series` | Tæt: alle delperioder i rækkefølge, også før første og efter sidste hændelse, med nuller (`"0.0000"`, 0, 0) uden data. `start` og `end` er delperiodens første og sidste lokale dato (inklusive). `orders` tælles pr. delperiode |
+| `products` | Grupperet på parent-produkt (`product_id`; varianter samles under deres produkt), sorteret efter `net_sales` faldende og derefter `product_id`. Højst 100 pr. valuta; totalerne omfatter altid alle produkter |
+| `products[].name` | Produktets aktuelle navn som ren tekst, når det findes; ellers ledgerens `item_name`-snapshot fra produktets seneste række i perioden (ADR-039 P6). `product_id` 0 er gruppen af rækker uden produkt: den slås aldrig op og får snapshot-navnet. Tomt navn: "Unknown product" (oversat) |
+| `truncated` | `true`, når valutaen har mere end 100 produkter i perioden |
+
+### Caching af `/me/sales`
+
+✅ Fase 20, trin 4 (ADR-040 pkt. 10). Hele svaret caches i WordPress' object cache (`wp_cache_*`), gruppe `merchboard_sales`, i 15 minutter; aldrig transients, aldrig databasen. Uden persistent object cache gælder cachen kun den enkelte request. Cachen ændrer ikke svaret: et hit giver præcis samme JSON som en ny beregning, uden ledger-forespørgsler.
+
+- **Nøgle:** `report:<creator-ID>:<generation>:<md5 af formatversion, from, to, interval, tidszone og ugekonvention (ISO)>` med de anvendte værdier efter standardværdier (under 100 tegn). Creator-ID'et kommer fra `CreatorContext`, så en post kan aldrig deles mellem creators. Valuta er ikke en del af nøglen; én post rummer alle valutaer.
+- **Generation pr. creator:** nøglen `generation:<creator-ID>` i samme gruppe. Uden gemt generation er den `1`. Efter hver committet `SalesRepository::write()` får hver creator med indsatte ledger-rækker én ny generation (et tilfældigt 64-bit token, ikke en optælling), så alle ældre poster bliver uopnåelige. Det dækker live-synkronisering, refunds, reversals, korrektioner, sletning af refunds og ordrer og backfill, som alle skriver gennem `write()`. Statusskift uden nye rækker, omdøbte produkter, priser og lager invaliderer ikke (et nyt produktnavn ses senest efter 15 minutter).
+- **Kapløb:** ved et miss læses generationen før ledgeren, og resultatet gemmes kun, hvis generationen er uændret bagefter. En skrivning, der committes undervejs, giver derfor ikke en forældet post under den nye generation. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#caching-af-salgsstatistik) for de resterende grænser.
+
+Beløb er decimalstrenge med fire decimaler, aldrig floats; der beregnes ingen moms, visningspris, revenue split eller afregning. Svaret indeholder aldrig kundedata (navn, e-mail, telefon, adresse, IP, betaling, kunde- eller bruger-ID), ordre-, ordrelinje-, variant- eller creator-ID'er.
+
 ## Test-krav
 
 Hvert creator-endpoint skal have integrationstests for mindst:
@@ -187,3 +272,5 @@ Hvert creator-endpoint skal have integrationstests for mindst:
 5. ugyldigt input → 400 med ændringer ikke gemt
 
 ✅ Fase 14: `tests/Integration/Rest/MeEndpointTest.php` dækker punkt 1-5 for `/me` og `/me/profile` (IDOR: ID'er i query og body ignoreres, og en anden creator er uændret), plus route-registrering med permission callbacks, præcise svarfelter, deaktivering på næste request, databasefejl (403 uden detaljer, logget) og fejlet skrivning (500, rollback).
+
+✅ Fase 20, trin 3: `tests/Integration/Rest/MeSalesEndpointTest.php` dækker punkt 1-5 for `/me/sales` (IDOR: `creator_id` og andre ID'er i query ignoreres; en ordre med linjer fra to creators), plus standardperiode, lokale datoer og sommertid, `day`/`week`/`month`, tæt serie, valutaer, tom periode, produktgrænse og sortering, navne-fallback, beløb som strenge, ingen `/me/overview` og ingen persondata. `SalesQueryTest`, `SalesPeriodsTest` og `WooCommerceSalesProductNamesTest` er unit-tests.

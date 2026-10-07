@@ -25,7 +25,7 @@
 | Salg pr. creator (historik) | `merchboard_sales` (custom ledger, fase 18) | Hurtige aggregeringer og uforanderlig attribution. Se [WOOCOMMERCE.md](WOOCOMMERCE.md). |
 | Tekniske logs | **Ingen tabel.** WooCommerce-logger eller `error_log()` (fase 4, ADR-021) | Tekniske logs er drift, ikke forretningsdata |
 | Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom) ✅ fase 6 | Forretningsdata, append-only (ADR-023). Read-only visning ✅ fase 11 (Merch Dashboard → Audit log). |
-| Cache af aggregeringer | Transients/object cache | Afledte data, må forsvinde |
+| Cache af aggregeringer | Object cache (gruppe `merchboard_sales`, ADR-040), aldrig transients | Afledte data, må forsvinde |
 
 **Tommelfingerregel:** WordPress' datamodel bruges, hvor data er *konfiguration* eller *tilhører en eksisterende WP-entitet*. Custom tables bruges, hvor data er *domæneentiteter med relationer, volumen eller behov for effektive queries*.
 
@@ -290,7 +290,7 @@ Indexes: `UNIQUE(order_id, cycle, event)`; den dækker også opslag på `order_i
 - Repositories udfører **ingen authorization**. Se [SECURITY.md](SECURITY.md#datalaget-fase-3).
 - `ORDER BY` og kolonner fra input valideres mod en whitelist (når lister tilføjes).
 - Lister er altid paginerede (default 20, max 100).
-- Aggregeringer til dashboardet caches (transient pr. creator og periode) og invalideres ved nye ledger-rækker.
+- Aggregeringer til dashboardet caches i object cachen (gruppe `merchboard_sales`, en generation pr. creator, 15 minutter; ingen transients, ADR-040 pkt. 10) og invalideres efter hver committet `SalesRepository::write()` med nye rækker for creatoren (fase 20, trin 4). Cachen efterlader intet i databasen, så uninstall (ADR-025) skal ikke rydde op efter den.
 
 ## MySQL/MariaDB vs. Playground (SQLite)
 

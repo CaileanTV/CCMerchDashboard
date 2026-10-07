@@ -19,7 +19,8 @@ defined( 'ABSPATH' ) || exit;
  * (`merchboard_dashboard_sections`, docs/FRONTEND.md#sektioner). The
  * WooCommerce module hooks it, so without WooCommerce the sections are not
  * sent to the dashboard (ADR-039 P11). DashboardSections still validates every
- * entry. Phase 19: Products and then Orders, right after the overview.
+ * entry. Right after the overview: Sales (phase 20, ADR-040), Products and
+ * Orders (phase 19).
  */
 final class DashboardSectionRegistration {
 
@@ -31,7 +32,7 @@ final class DashboardSectionRegistration {
 	}
 
 	/**
-	 * The sections with Products and Orders after the overview (or at the end
+	 * The sections with Sales, Products and Orders after the overview (or at the end
 	 * when there is no overview entry). Anything that is not a list is passed
 	 * on untouched for DashboardSections to reject.
 	 *
@@ -44,6 +45,12 @@ final class DashboardSectionRegistration {
 		}
 
 		$added_sections = array(
+			array(
+				'id'         => 'sales',
+				'label'      => __( 'Sales', 'merchboard' ),
+				'path'       => 'sales',
+				'capability' => Capabilities::ACCESS_DASHBOARD,
+			),
 			array(
 				'id'         => 'products',
 				'label'      => __( 'Products', 'merchboard' ),

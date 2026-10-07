@@ -26,6 +26,7 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorSalesSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
@@ -36,10 +37,19 @@ use MerchBoard\Modules\WooCommerce\CategoryReconciliationScheduler;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\SalesProductNames;
+use MerchBoard\Modules\WooCommerce\Dashboard\CachedSalesReports;
+use MerchBoard\Modules\WooCommerce\Dashboard\SalesReport;
+use MerchBoard\Modules\WooCommerce\Dashboard\SalesReports;
+use MerchBoard\Modules\WooCommerce\Sales\SalesCache;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceOrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceSalesProductNames;
 use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
+use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
+use MerchBoard\Modules\WooCommerce\Sales\LedgerSalesStatistics;
+use MerchBoard\Modules\WooCommerce\Sales\SalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLines;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
@@ -92,6 +102,12 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertInstanceOf( SalesOrderLines::class, $container->get( SalesOrderLines::class ) );
 		self::assertInstanceOf( WooCommerceOrderLineEnricher::class, $container->get( OrderLineEnricher::class ) );
 		self::assertInstanceOf( MeOrdersController::class, $container->get( MeOrdersController::class ) );
+		self::assertInstanceOf( LedgerSalesStatistics::class, $container->get( SalesStatistics::class ) );
+		self::assertInstanceOf( WooCommerceSalesProductNames::class, $container->get( SalesProductNames::class ) );
+		self::assertInstanceOf( SalesReport::class, $container->get( SalesReport::class ) );
+		self::assertInstanceOf( MeSalesController::class, $container->get( MeSalesController::class ) );
+		self::assertInstanceOf( CachedSalesReports::class, $container->get( SalesReports::class ), '/me/sales goes through the object cache.' );
+		self::assertInstanceOf( SalesCache::class, $container->get( SalesCache::class ) );
 	}
 
 	public function test_product_links_are_wired_to_the_creator_edit_page_only(): void {
@@ -105,6 +121,7 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorCategoriesActions::MAP_ACTION, array( $container->get( CreatorCategoriesActions::class ), 'handle_map_request' ) ) );
 		self::assertSame( 10, has_action( 'admin_post_' . CreatorCategoriesActions::UNMAP_ACTION, array( $container->get( CreatorCategoriesActions::class ), 'handle_unmap_request' ) ) );
 		self::assertSame( 5, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorCategoriesSection::class ), 'render' ) ), 'The category above the products.' );
+		self::assertSame( 20, has_action( 'merchboard_creators_edit_sections', array( $container->get( CreatorSalesSection::class ), 'render' ) ), 'Sales below the products.' );
 		self::assertSame( 10, has_filter( 'merchboard_creators_list_columns', array( $container->get( CreatorListCategories::class ), 'columns' ) ) );
 		self::assertSame( 10, has_action( 'merchboard_creators_list_items', array( $container->get( CreatorListCategories::class ), 'load' ) ) );
 		self::assertSame( 10, has_filter( 'merchboard_creators_list_column', array( $container->get( CreatorListCategories::class ), 'render' ) ) );

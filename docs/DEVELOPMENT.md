@@ -88,8 +88,8 @@ Projektets **officielle, persistente lokale WordPress/WooCommerce-testmiljø** (
 | URL | `http://merchboard.local` |
 | Site-mappe | `%USERPROFILE%\Local Sites\merch-dashboard-local` (WordPress i `app\public`) |
 | Miljø | LocalWP 10.1.2, "Custom": PHP 8.2.29, nginx 1.26.1, MariaDB 10.11.18 (utf8mb4, InnoDB) |
-| WordPress | 7.1.2 (LocalWP's aktuelle version, over pluginets minimum 6.7) |
-| WooCommerce | 10.3.8 (installeret med WP-CLI fra wordpress.org, ADR-030's referenceversion) |
+| WordPress | 7.1.3 (observeret 2026-10-07; ved oprettelsen 7.1.2; over pluginets minimum 6.7) |
+| WooCommerce | 11.1.2 (observeret 2026-10-07, opdateret uden for projektets verifikationer; ved oprettelsen 10.3.8, ADR-030's referenceversion, installeret med WP-CLI fra wordpress.org) |
 | Plugin | Junction `app\public\wp-content\plugins\merchboard` → dette repo. Ingen kopi af koden, og ændringer slår igennem med det samme. `npm run build` er nødvendig for dashboardet |
 
 - **Opsætning (allerede gjort, 2026-09-26):** Sitet blev oprettet fra bunden i LocalWP's brugerflade. Der blev ikke importeret data eller kopieret noget fra andre sites. WooCommerce 10.3.8 og junctionen blev lagt ind via sitets WP-CLI, og begge plugins blev aktiveret. Verificeret: schema 3, rolleversion 2, de tre plugin-tabeller (InnoDB), creator-rollen med præcis `read` + `merchboard_access_dashboard` (ingen produktrettigheder), og `WooCommerceModule` bootet med WooCommerce 10.3.8 uden notice. Ingen fatal errors.

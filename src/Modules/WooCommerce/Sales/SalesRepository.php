@@ -82,17 +82,27 @@ final class SalesRepository {
 	private int $lock_connection = 0;
 
 	/**
+	 * Invalidation of the cached sales statistics.
+	 *
+	 * @var SalesCacheInvalidator
+	 */
+	private SalesCacheInvalidator $cache;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param wpdb        $wpdb         WordPress database object.
-	 * @param Transaction $transaction  The project's transaction helper.
-	 * @param int         $lock_timeout Seconds to wait for an order lock (≥ 0).
+	 * @param wpdb                       $wpdb         WordPress database object.
+	 * @param Transaction                $transaction  The project's transaction helper.
+	 * @param int                        $lock_timeout Seconds to wait for an order lock (≥ 0).
+	 * @param SalesCacheInvalidator|null $cache        Invalidation after a committed write (default: SalesCache, so every repository invalidates).
 	 * @throws InvalidArgumentException When the timeout is negative.
 	 */
-	public function __construct( private wpdb $wpdb, private Transaction $transaction, private int $lock_timeout = self::LOCK_TIMEOUT ) {
+	public function __construct( private wpdb $wpdb, private Transaction $transaction, private int $lock_timeout = self::LOCK_TIMEOUT, ?SalesCacheInvalidator $cache = null ) {
 		if ( $lock_timeout < 0 ) {
 			throw new InvalidArgumentException( 'The lock timeout must not be negative.' );
 		}
+
+		$this->cache = $cache ?? new SalesCache();
 	}
 
 	/**
@@ -148,6 +158,13 @@ final class SalesRepository {
 	 * appends them, all in one transaction. Must run inside with_order_lock()
 	 * for the same order.
 	 *
+	 * After COMMIT, the creators of the rows actually inserted (not skipped
+	 * duplicates, not cycle events, which the statistics do not read) get a
+	 * new cache generation, once per creator and write (ADR-040 pkt. 10). A
+	 * rolled-back write invalidates nothing. When the connection check after
+	 * COMMIT fails, the outcome is unknown; the invalidation has already run,
+	 * which at worst costs a recomputation.
+	 *
 	 * @param int                                          $order_id WooCommerce order.
 	 * @param callable(SalesLedgerState): SalesLedgerWrite $plan     Decides the new rows from the stored state.
 	 * @throws DatabaseException When the lock is not held, or a read or write fails (rolled back).
@@ -158,8 +175,9 @@ final class SalesRepository {
 	public function write( int $order_id, callable $plan ): SalesWriteResult {
 		$this->assert_locked( $order_id );
 
-		$result = $this->transaction->run(
-			function () use ( $order_id, $plan ): SalesWriteResult {
+		$creators = array();
+		$result   = $this->transaction->run(
+			function () use ( $order_id, $plan, &$creators ): SalesWriteResult {
 				$write = $plan( $this->state( $order_id ) );
 
 				foreach ( array_merge( $write->entries, $write->cycle_events ) as $row ) {
@@ -183,7 +201,8 @@ final class SalesRepository {
 
 				foreach ( $write->entries as $entry ) {
 					if ( $this->insert_entry( $entry ) ) {
-						$inserted_entries[] = $entry->event_key;
+						$inserted_entries[]             = $entry->event_key;
+						$creators[ $entry->creator_id ] = $entry->creator_id;
 					} else {
 						$skipped_entries[] = $entry->event_key;
 					}
@@ -195,6 +214,11 @@ final class SalesRepository {
 				return new SalesWriteResult( $inserted_entries, $skipped_entries, $inserted_cycles, $skipped_cycles );
 			}
 		);
+
+		// Committed (Transaction rejects nesting, so run() returning means COMMIT).
+		if ( array() !== $creators ) {
+			$this->cache->invalidate( array_values( $creators ) );
+		}
 
 		// After COMMIT: a reconnect during COMMIT leaves the outcome unknown.
 		$this->assert_same_connection( $order_id );

@@ -24,6 +24,7 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorSalesSection;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
@@ -33,11 +34,18 @@ use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
 use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\SalesProductNames;
+use MerchBoard\Modules\WooCommerce\Dashboard\CachedSalesReports;
+use MerchBoard\Modules\WooCommerce\Dashboard\SalesReport;
+use MerchBoard\Modules\WooCommerce\Dashboard\SalesReports;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceOrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
+use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceSalesProductNames;
 use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
+use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
+use MerchBoard\Modules\WooCommerce\Sales\LedgerSalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfill;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillJobs;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillOrders;
@@ -47,7 +55,9 @@ use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatusSettings;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLines;
 use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
+use MerchBoard\Modules\WooCommerce\Sales\SalesCache;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
+use MerchBoard\Modules\WooCommerce\Sales\SalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceOrderSnapshotReader;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker;
@@ -180,10 +190,13 @@ final class WooCommerceModule implements Module {
 		// checkout, wp-admin, REST, WP-CLI and cron. The counted statuses are
 		// read from the setting on every synchronization (ADR-038 S6).
 		$container->set( CountedOrderStatuses::class, static fn(): CountedOrderStatuses => new CountedOrderStatuses() );
+		// Object cache of the sales statistics (ADR-040 pkt. 10): the repository
+		// invalidates it after every committed write.
+		$container->set( SalesCache::class, static fn(): SalesCache => new SalesCache() );
 		$container->set(
 			SalesSynchronizer::class,
 			static fn( Container $c ): SalesSynchronizer => new SalesSynchronizer(
-				new SalesRepository( $c->get( wpdb::class ), $c->get( Transaction::class ) ),
+				new SalesRepository( $c->get( wpdb::class ), $c->get( Transaction::class ), SalesRepository::LOCK_TIMEOUT, $c->get( SalesCache::class ) ),
 				new SalesPlanner(),
 				new WooCommerceOrderSnapshotReader( $c->get( ProductCreatorLink::class ), $c->get( CountedOrderStatuses::class ) ),
 				new WooCommerceSalesFailureMarker(),
@@ -253,6 +266,15 @@ final class WooCommerceModule implements Module {
 				$c->get( ProductStore::class ),
 				$c->get( CreatorRepository::class ),
 				$c->get( CategoryLinkStatus::class )
+			)
+		);
+		// Sales of the edited creator (phase 20, ADR-040 pkt. 13): the same
+		// SalesReports service and cache as `GET /me/sales`.
+		$container->set(
+			CreatorSalesSection::class,
+			static fn( Container $c ): CreatorSalesSection => new CreatorSalesSection(
+				$c->get( SalesReports::class ),
+				$c->get( Logger::class )
 			)
 		);
 
@@ -399,11 +421,38 @@ final class WooCommerceModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		// Sales statistics (phase 20, ADR-040): the ledger read model, current
+		// product names and `GET /me/sales` through the object cache.
+		$container->set(
+			SalesStatistics::class,
+			static fn( Container $c ): SalesStatistics => new LedgerSalesStatistics( $c->get( wpdb::class ) )
+		);
+		$container->set(
+			SalesProductNames::class,
+			static fn(): SalesProductNames => new WooCommerceSalesProductNames()
+		);
+		$container->set(
+			SalesReport::class,
+			static fn( Container $c ): SalesReport => new SalesReport( $c->get( SalesStatistics::class ), $c->get( SalesProductNames::class ) )
+		);
+		$container->set(
+			SalesReports::class,
+			static fn( Container $c ): SalesReports => new CachedSalesReports( $c->get( SalesReport::class ), $c->get( SalesCache::class ) )
+		);
+		$container->set(
+			MeSalesController::class,
+			static fn( Container $c ): MeSalesController => new MeSalesController(
+				$c->get( CreatorContext::class ),
+				$c->get( SalesReports::class ),
+				$c->get( Logger::class )
+			)
+		);
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
 				$container->get( MeProductsController::class )->register_routes();
 				$container->get( MeOrdersController::class )->register_routes();
+				$container->get( MeSalesController::class )->register_routes();
 			}
 		);
 		// The dashboard sections that need WooCommerce (Products).
@@ -424,6 +473,7 @@ final class WooCommerceModule implements Module {
 				$container->get( CategorySyncScreen::class )->register();
 				$container->get( CreatorProductsActions::class )->register();
 				$container->get( CreatorProductsSection::class )->register();
+				$container->get( CreatorSalesSection::class )->register();
 				$container->get( ProductListCreators::class )->register();
 				$container->get( SalesLedgerSettingsActions::class )->register();
 				$container->get( SalesLedgerSettingsSection::class )->register();

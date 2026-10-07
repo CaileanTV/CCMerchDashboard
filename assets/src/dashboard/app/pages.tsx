@@ -6,6 +6,7 @@ import { OrdersSection } from '../sections/orders/OrdersSection';
 import { OverviewSection } from '../sections/overview/OverviewSection';
 import { ProductsSection } from '../sections/products/ProductsSection';
 import { ProfileSection } from '../sections/profile/ProfileSection';
+import { SalesSection } from '../sections/sales/SalesSection';
 import type { DashboardSection } from '../types/config';
 import { Link } from './router';
 
@@ -17,6 +18,7 @@ export interface Page {
 /** Section components known to this build, by section id. */
 const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	overview: () => <OverviewSection />,
+	sales: () => <SalesSection />,
 	products: () => <ProductsSection />,
 	orders: () => <OrdersSection />,
 	profile: () => <ProfileSection />,

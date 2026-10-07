@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-06T17:20:28+00:00\n"
+"PO-Revision-Date: 2026-10-07T15:35:24+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -411,7 +411,7 @@ msgstr "Tvetydig"
 #: src/Modules/Admin/AuditLogFormatter.php:607
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Inactive"
 msgstr "Inaktiv"
 
@@ -525,7 +525,7 @@ msgstr "produkterne i én mapping"
 #: src/Modules/Admin/AuditLogFormatter.php:607
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Active"
 msgstr "Aktiv"
 
@@ -619,10 +619,12 @@ msgid "All events"
 msgstr "Alle hændelser"
 
 #: src/Modules/Admin/AuditLogPage.php:250
+#: build/dashboard.js:10
 msgid "From"
 msgstr "Fra"
 
 #: src/Modules/Admin/AuditLogPage.php:256
+#: build/dashboard.js:10
 msgid "To"
 msgstr "Til"
 
@@ -881,7 +883,7 @@ msgstr "← Tilbage til creators"
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:267
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Display name"
 msgstr "Visningsnavn"
 
@@ -890,7 +892,7 @@ msgstr "Visningsnavn"
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
 #: build/dashboard.js:2
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Status"
 msgstr "Status"
 
@@ -1152,7 +1154,7 @@ msgstr "Resultat"
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:181
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:399
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:122
-#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:49
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:56
 msgid "Products"
 msgstr "Produkter"
 
@@ -1177,7 +1179,7 @@ msgstr "Afstemningen afgør ikke disse produkter. Ret dem i WooCommerce (produkt
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 #: build/dashboard.js:2
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Product"
 msgstr "Produkt"
 
@@ -1611,8 +1613,10 @@ msgid "WooCommerce products that belong to this creator. Links are managed only 
 msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger administreres kun her; WooCommerce-produktskærmen hverken viser eller ændrer dem. Varianter tilhører creatoren af deres overordnede produkt."
 
 #. translators: 1: product label, 2: outcome message.
+#. translators: 1: period, 2: net sales with currency.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
-#, php-format
+#: build/dashboard.js:8
+#, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr "%1$s: %2$s"
 
@@ -1729,6 +1733,75 @@ msgstr "Overtag produktet fra %s"
 #: build/dashboard.js:2
 msgid "None"
 msgstr "Ingen"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:78
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:50
+msgid "Sales"
+msgstr "Salg"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:91
+msgid "The sales could not be loaded. Try again later; details are in the log."
+msgstr "Salget kunne ikke indlæses. Prøv igen senere; detaljerne står i loggen."
+
+#. translators: 1: first day, 2: last day (both included).
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:99
+#: build/dashboard.js:4
+#, js-format,php-format
+msgid "Last 30 days: %1$s – %2$s"
+msgstr "Seneste 30 dage: %1$s – %2$s"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:104
+msgid "The shop's net sales of this creator's products after discounts, excluding VAT, shipping and fees. It is not a payout. The figures and their definitions are the same as in the creator's dashboard; dates are in the site's time zone."
+msgstr "Butikkens nettosalg af creatorens produkter efter rabatter, ekskl. moms, fragt og gebyrer. Det er ikke en afregning. Tallene og deres definitioner er de samme som i creatorens dashboard; datoerne er i sitets tidszone."
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:109
+#: build/dashboard.js:4
+msgid "No net sales in the last 30 days."
+msgstr "Intet nettosalg de seneste 30 dage."
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:115
+#: build/dashboard.js:3
+msgid "The figures are shown per currency and never added together."
+msgstr "Tallene vises pr. valuta og lægges aldrig sammen."
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
+#: build/dashboard.js:3
+#: build/dashboard.js:8
+msgid "Net sales (excl. VAT)"
+msgstr "Nettosalg (ekskl. moms)"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:136
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:154
+#: build/dashboard.js:3
+#: build/dashboard.js:8
+msgid "Units"
+msgstr "Enheder"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:137
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:155
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
+#: build/dashboard.js:3
+#: build/dashboard.js:8
+msgid "Orders"
+msgstr "Ordrer"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:144
+#: build/dashboard.js:7
+msgid "Net sales per day"
+msgstr "Nettosalg pr. dag"
+
+#. translators: %s: currency code (e.g. DKK).
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:148
+#: build/dashboard.js:9
+#, js-format,php-format
+msgid "Net sales, units and orders per period (%s)"
+msgstr "Nettosalg, enheder og ordrer pr. periode (%s)"
+
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:152
+#: build/dashboard.js:8
+msgid "Day"
+msgstr "Dag"
 
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:153
 msgid "Filter by creator"
@@ -1968,10 +2041,9 @@ msgstr "Action Scheduler er ikke tilgængelig, så intet blev sat i kø."
 msgid "The backfill job could not be queued."
 msgstr "Backfill-jobbet kunne ikke sættes i kø."
 
-#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:55
-#: build/dashboard.js:4
-msgid "Orders"
-msgstr "Ordrer"
+#: src/Modules/WooCommerce/Dashboard/SalesReport.php:168
+msgid "Unknown product"
+msgstr "Ukendt produkt"
 
 #: src/Modules/WooCommerce/Dashboard/WooCommerceOrderLineEnricher.php:88
 msgid "Deleted"
@@ -1985,6 +2057,14 @@ msgstr "I papirkurven"
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182
 msgid "The creator of a product can only be changed in Merch Dashboard."
 msgstr "Et produkts creator kan kun ændres i Merch Dashboard."
+
+#: src/Modules/WooCommerce/Rest/MeSalesController.php:123
+msgid "Use a date in the format YYYY-MM-DD."
+msgstr "Brug en dato i formatet ÅÅÅÅ-MM-DD."
+
+#: src/Modules/WooCommerce/Rest/MeSalesController.php:171
+msgid "The requested period is not valid."
+msgstr "Den valgte periode er ikke gyldig."
 
 #: src/Modules/WooCommerce/WooCommerceSupport.php:90
 msgid "unknown"
@@ -2017,7 +2097,7 @@ msgid "Log out"
 msgstr "Log ud"
 
 #: templates/dashboard/shell.php:41
-#: build/dashboard.js:6
+#: build/dashboard.js:10
 msgid "Loading your dashboard…"
 msgstr "Indlæser dit dashboard …"
 
@@ -2034,6 +2114,7 @@ msgid "Please try again later."
 msgstr "Prøv igen senere."
 
 #: build/dashboard.js:1
+#: build/dashboard.js:7
 msgid "Error:"
 msgstr "Fejl:"
 
@@ -2078,7 +2159,7 @@ msgid "This page could not be displayed."
 msgstr "Siden kunne ikke vises."
 
 #: build/dashboard.js:1
-#: build/dashboard.js:6
+#: build/dashboard.js:10
 msgid "Please reload the page."
 msgstr "Genindlæs siden."
 
@@ -2199,192 +2280,274 @@ msgid "This value is not valid."
 msgstr "Værdien er ikke gyldig."
 
 #: build/dashboard.js:3
+msgid "The shop's net sales of your products after discounts, excluding VAT, shipping and fees. It is not your payout."
+msgstr "Butikkens nettosalg af dine produkter efter rabatter, ekskl. moms, fragt og gebyrer. Det er ikke din afregning."
+
+#: build/dashboard.js:3
+msgid "Sales figures are not available."
+msgstr "Salgstal er ikke tilgængelige."
+
+#: build/dashboard.js:4
+msgid "Sales of your products will appear here."
+msgstr "Salg af dine produkter vises her."
+
+#: build/dashboard.js:4
+msgid "Loading key figures…"
+msgstr "Indlæser nøgletal…"
+
+#: build/dashboard.js:4
 msgid "Your profile is still empty."
 msgstr "Din profil er stadig tom."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Add a short bio and links to your channels."
 msgstr "Tilføj en kort bio og links til dine kanaler."
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "Edit profile"
 msgstr "Redigér profil"
 
-#: build/dashboard.js:3
+#: build/dashboard.js:4
 msgid "(opens in a new tab)"
 msgstr "(åbner i en ny fane)"
 
-#: build/dashboard.js:3
-#: build/dashboard.js:6
+#: build/dashboard.js:4
+#: build/dashboard.js:7
 msgid "Loading your profile…"
 msgstr "Indlæser din profil …"
 
 #. translators: %s: creator display name.
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 #, js-format
 msgid "Welcome, %s"
 msgstr "Velkommen, %s"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "This is your creator dashboard. Here you will follow your merch and keep your profile up to date."
 msgstr "Dette er dit creator-dashboard. Her følger du din merch og holder din profil opdateret."
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Account status:"
 msgstr "Kontostatus:"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Your profile"
 msgstr "Din profil"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Key figures"
 msgstr "Nøgletal"
 
-#: build/dashboard.js:4
-msgid "Revenue"
-msgstr "Omsætning"
-
-#: build/dashboard.js:4
-msgid "Products sold"
-msgstr "Solgte produkter"
-
-#: build/dashboard.js:4
-msgid "Sales data coming soon"
-msgstr "Salgsdata kommer snart"
-
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "No image"
 msgstr "Intet billede"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Your products"
 msgstr "Dine produkter"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Published"
 msgstr "Udgivet"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Private"
 msgstr "Privat"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Price"
 msgstr "Pris"
 
-#: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "No price"
 msgstr "Ingen pris"
 
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
-#: build/dashboard.js:5
+#: build/dashboard.js:6
 #, js-format
 msgid "%1$s %2$s"
 msgstr "%1$s %2$s"
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr "%1$s–%2$s %3$s"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Stock"
 msgstr "Lager"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "In stock"
 msgstr "På lager"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Out of stock"
 msgstr "Udsolgt"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "On backorder"
 msgstr "I restordre"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Unknown"
 msgstr "Ukendt"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Loading products…"
 msgstr "Indlæser produkter…"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "There are no products on this page."
 msgstr "Der er ingen produkter på denne side."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "You have no products yet."
 msgstr "Du har ingen produkter endnu."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Products linked to you in the shop will appear here."
 msgstr "Produkter, der er koblet til dig i butikken, vises her."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Product pages"
 msgstr "Produktsider"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Dismiss"
 msgstr "Luk"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "No changes to save."
 msgstr "Ingen ændringer at gemme."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Profile saved."
 msgstr "Profilen er gemt."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "About you"
 msgstr "Om dig"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Bio"
 msgstr "Bio"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Links"
 msgstr "Links"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Password"
 msgstr "Adgangskode"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Change your password"
 msgstr "Skift din adgangskode"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Saving…"
 msgstr "Gemmer …"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
 msgid "Save profile"
 msgstr "Gem profil"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:7
+msgid "Success:"
+msgstr "Udført:"
+
+#: build/dashboard.js:7
+msgid "Warning:"
+msgstr "Advarsel:"
+
+#: build/dashboard.js:7
+msgid "Note:"
+msgstr "Bemærk:"
+
+#: build/dashboard.js:7
+msgid "Net sales per week"
+msgstr "Nettosalg pr. uge"
+
+#: build/dashboard.js:7
+msgid "Net sales per month"
+msgstr "Nettosalg pr. måned"
+
+#: build/dashboard.js:7
+msgid "(the table below has the same figures)"
+msgstr "(tabellen nedenfor har de samme tal)"
+
+#: build/dashboard.js:8
+msgid "Week"
+msgstr "Uge"
+
+#: build/dashboard.js:8
+msgid "Month"
+msgstr "Måned"
+
+#: build/dashboard.js:8
+msgid "Period"
+msgstr "Periode"
+
+#: build/dashboard.js:8
+msgid "Your sales"
+msgstr "Dit salg"
+
+#. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
+#: build/dashboard.js:10
+#, js-format
+msgid "Period: %1$s – %2$s · Interval: %3$s"
+msgstr "Periode: %1$s – %2$s · Interval: %3$s"
+
+#: build/dashboard.js:10
+msgid "No net sales in this period."
+msgstr "Intet nettosalg i denne periode."
+
+#: build/dashboard.js:10
+msgid "Choose another period, or check back after your next sale."
+msgstr "Vælg en anden periode, eller kig igen efter dit næste salg."
+
+#: build/dashboard.js:10
+msgid "Loading sales…"
+msgstr "Indlæser salg…"
+
+#: build/dashboard.js:10
+msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
+msgstr "Perioden kan ikke vises. Vælg højst 366 dage, uger eller måneder og højst fem år."
+
+#: build/dashboard.js:10
+msgid "The end date must be on or after the start date."
+msgstr "Slutdatoen skal være samme dag som eller efter startdatoen."
+
+#: build/dashboard.js:10
+msgid "Choose period"
+msgstr "Vælg periode"
+
+#: build/dashboard.js:10
+msgid "Interval"
+msgstr "Interval"
+
+#: build/dashboard.js:10
+msgid "Show"
+msgstr "Vis"
+
+#: build/dashboard.js:10
 msgid "This section is not available yet."
 msgstr "Denne sektion er ikke tilgængelig endnu."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:10
 msgid "Page not found"
 msgstr "Siden blev ikke fundet"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:10
 msgid "This page does not exist."
 msgstr "Siden findes ikke."
 
-#: build/dashboard.js:6
+#: build/dashboard.js:10
 msgid "Go to the start page"
 msgstr "Gå til forsiden"
 
-#: build/dashboard.js:6
+#: build/dashboard.js:10
 msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."

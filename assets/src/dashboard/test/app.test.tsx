@@ -70,7 +70,7 @@ describe( 'dashboard app', () => {
 		expect( container.querySelector( 'h2' )?.textContent ).toBe(
 			'Welcome, Nova'
 		);
-		expect( container.textContent ).toContain( 'Sales data coming soon' );
+		expect( container.textContent ).toContain( 'Key figures' );
 		expect(
 			container
 				.querySelector( '.merchboard-skip-link' )

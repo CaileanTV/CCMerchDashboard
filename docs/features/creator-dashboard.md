@@ -1,21 +1,22 @@
 # Feature: Creator Dashboard
 
 ## Purpose
-Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser og vedligeholder sine egne oplysninger og ser sine produkter og ordrelinjer (fase 19); salg følger i fase 20.
+Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser og vedligeholder sine egne oplysninger og ser sine produkter, ordrelinjer (fase 19) og salg (fase 20).
 
 ## Current status
-**MVP ✅ (fase 15).** Route og sikker shell (12), frontend-fundament (13), `/me` og Profile (14), Overview, sektion-registry og dansk oversættelse (15). **Fase 19 ✅:** Products og Orders (kun med WooCommerce, ADR-039).
+**MVP ✅ (fase 15).** Route og sikker shell (12), frontend-fundament (13), `/me` og Profile (14), Overview, sektion-registry og dansk oversættelse (15). **Fase 19 ✅:** Products og Orders (kun med WooCommerce, ADR-039). **Fase 20 ✅:** salgsnøgletal på Overview og sektionen Sales (kun med WooCommerce, ADR-040/041).
 
 ## User-facing functionality (MVP)
 - Adgang via `/creator-dashboard/` (slug kan konfigureres) efter login.
 - Layout: sidebar (desktop) / off-canvas (mobil), topbar med navn/avatar og log ud.
-- **Overview ✅ (fase 15):** velkomst med navn og status, profil-resumé (bio og links, ellers link til Profile) og nøgletal som empty state "Salgsdata kommer snart" (rigtige tal i fase 20).
+- **Overview ✅ (fase 15):** velkomst med navn og status, profil-resumé (bio og links, ellers link til Profile) og nøgletal (fase 20): "Nettosalg (ekskl. moms)", enheder og ordrer for de seneste 30 dage pr. valuta fra `GET /me/sales`, ellers en empty state.
 - **Profile ✅ (fase 14):** se og redigere visningsnavn, bio (maks. 1000 tegn) og sociale links (website, Instagram, TikTok, YouTube, X, Facebook; https). Link til WordPress' password-reset. Bekræftelse med toast.
 - **Products ✅ (fase 19):** creator'ens udgivne og private produkter med billede, navn, status, aktiv pris og lagerstatus, pagineret. Se [FRONTEND.md](../FRONTEND.md#products-trin-6).
 - **Orders ✅ (fase 19):** creator'ens ordrelinjer med dato, ordrenummer, produkt, antal, status og markeringerne "Refund recorded"/"Not counted", pagineret; ingen kundedata og ingen beløb. Se [FRONTEND.md](../FRONTEND.md#orders-trin-7).
+- **Sales ✅ (fase 20):** valgt periode og interval (dag, uge, måned), nøgletal, egen SVG-søjlegraf og altid en tabel med samme tal, pr. valuta. Se [FRONTEND.md](../FRONTEND.md#sales--fase-20-trin-6-adr-040-adr-041).
 - Loading-, empty- og error-states overalt.
 
-Senere sektioner: Sales, Payouts og Settings. Se [FRONTEND.md](../FRONTEND.md#sektioner-informationsarkitektur).
+Senere sektioner: Payouts og Settings. Se [FRONTEND.md](../FRONTEND.md#sektioner-informationsarkitektur).
 
 ## Admin functionality
 - ✅ Settings: dashboard-slug (fase 12, validering og audit, se [ADMIN.md](../ADMIN.md#settings)).
@@ -25,8 +26,8 @@ Senere sektioner: Sales, Payouts og Settings. Se [FRONTEND.md](../FRONTEND.md#se
 - **Route ✅:** `Modules/Dashboard/DashboardRoute` registrerer rewrite rule og query vars og ugyldiggør gemte rewrite rules ved behov. `ShellController` (`template_redirect`, prioritet 0) håndterer auth-gate via `CreatorContext` og renderer `templates/dashboard/shell.php` eller `no-access.php` uden theme. Se [FRONTEND.md](../FRONTEND.md#serving-dedikeret-route-og-standalone-shell--fase-12).
 - **Assets ✅ (fase 13):** `DashboardAssets` registrerer `build/dashboard.js` og `.css` (+ RTL) med dependencies og version fra `build/dashboard.asset.php`. Kun dette handle og dets WordPress-dependencies udskrives i shellen, alle med CSP-nonce.
 - **Bootstrap-data ✅ (fase 13):** `window.merchboardDashboard` (sitenavn, dashboard-URL, routing, logout- og login-URL, locale og sektioner; ingen creator-data). REST-root og nonce sættes af WordPress' `wp-api-fetch`. Se [FRONTEND.md](../FRONTEND.md#bootstrap-data).
-- **Sektioner:** `DashboardSections`-registry (filter `merchboard_dashboard_sections`). Hver sektion har `id`, `label`, `path` og `capability` (ingen ikon). Serveren filtrerer på capability og sender kun synlige sektioner (uden capability) i bootstrap-data. Klienten slår sektionens komponent op efter id i `app/pages.tsx`; alle komponenter ligger i samme bundle (ingen lazy-loading). WooCommerce-modulet tilføjer `products` og `orders` efter `overview` (`DashboardSectionRegistration`).
-- **Data:** `GET /merchboard/v1/me`, `GET`/`PATCH /merchboard/v1/me/profile`, og med WooCommerce `GET /merchboard/v1/me/products` og `GET /merchboard/v1/me/orders` (paginerede lister via `requestList()`, fase 19).
+- **Sektioner:** `DashboardSections`-registry (filter `merchboard_dashboard_sections`). Hver sektion har `id`, `label`, `path` og `capability` (ingen ikon). Serveren filtrerer på capability og sender kun synlige sektioner (uden capability) i bootstrap-data. Klienten slår sektionens komponent op efter id i `app/pages.tsx`; alle komponenter ligger i samme bundle (ingen lazy-loading). WooCommerce-modulet tilføjer `sales`, `products` og `orders` efter `overview` (`DashboardSectionRegistration`).
+- **Data:** `GET /merchboard/v1/me`, `GET`/`PATCH /merchboard/v1/me/profile`, og med WooCommerce `GET /merchboard/v1/me/products` og `GET /merchboard/v1/me/orders` (paginerede lister via `requestList()`, fase 19) og `GET /merchboard/v1/me/sales` (fase 20).
 
 ## Relevant files
 ✅ `src/Modules/Dashboard/{DashboardModule,DashboardRoute,ShellController,ShellResponse}.php`, `src/Core/Lifecycle/Deactivator.php`, `templates/dashboard/{shell,no-access}.php`, `tests/Unit/Modules/Dashboard/*` og `tests/Integration/Access/DashboardAccessTest.php`. ✅ `src/Modules/Dashboard/DashboardAssets.php`, `assets/src/dashboard/**` (fase 13, struktur i [FRONTEND.md](../FRONTEND.md#struktur--fase-13)), `tsconfig.json` og `jest.config.js`. ✅ Fase 19: `src/Modules/WooCommerce/Rest/{MeProductsController,MeOrdersController}.php`, `src/Modules/WooCommerce/Dashboard/*` (read-model for produkter, berigelse af ordrelinjer, sektionsregistrering), `src/Modules/WooCommerce/Sales/{SalesOrderLines,SalesOrderLine}.php` og i frontend `api/{products,orders}.ts`, `hooks/usePagedApi.ts`, `components/{Table,Pagination}.tsx` og `sections/{products,orders}/`.

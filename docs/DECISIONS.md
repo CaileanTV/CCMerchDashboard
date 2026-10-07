@@ -1925,3 +1925,89 @@ Besluttet af projektejeren før implementering. Præciserer P7's "pris"; de øvr
 7. **Tom pris:** en tom aktiv pris (for et variabelt produkt: ingen aktive variationspriser) giver `price: null`.
 8. **UI:** dashboardet beregner ikke moms og viser ingen lokal "inkl. moms"/"ekskl. moms"-etiket, fordi API'et ikke fastlægger grundlaget.
 9. **Tests (trin 2 og 6):** aktiv pris frem for `regular_price` (udsalg), simpel pris, variable min/max, tom pris, `tax: "store_setting"`, og at svaret ikke indeholder floats eller HTML.
+
+---
+
+# ADR-040: Sales & statistics fra sales ledgeren (fase 20)
+
+## Date
+2026-10-06
+
+## Status
+Accepteret (fase 20, trin 1, før implementering). Besluttet af projektejeren på grundlag af beslutningsgrundlaget for fase 20. Bygger på ADR-011 (ledgeren som grundlag for statistik), ADR-037 (omsætningsgrundlag, fortegn, ingen genberegning, udskudt `merchboard_sale_recorded`), ADR-038 (event-nøgler og `occurred_at`) og ADR-039 (beløb, nøgletal og caching udskudt til fase 20; produktnavn-fallback P6). Overholder ADR-007 (`/me`-scope), ADR-025 (præcist ejerskab ved uninstall) og ADR-032 (administration i wp-admin). Grafvalget står i ADR-041. Revenue split (åbent spørgsmål 5) er fortsat åbent og ikke en del af denne ADR.
+
+## Context
+Fase 20 skal give creators salgsstatistik (`/me/sales`, en Sales-sektion og KPI'er på Overview) og administratorer en Sales-visning pr. creator, med caching og målt ydelse (ROADMAP). Ledgeren `merchboard_sales` er append-only med fortegn pr. række (`sale` positiv; `refund` og `reversal` negative; `correction` begge veje), `currency` pr. række, et creator-snapshot pr. række og `occurred_at` som hændelsens tidspunkt i UTC (ADR-038): første salg på betalingsdatoen (ellers oprettelsesdatoen), salg i en senere cyklus, reversal og korrektion på behandlingstidspunktet og refund på refundens dato. Indekset `creator_occurred (creator_id, occurred_at)` dækker filtrering på creator og periode. Brutto købte enheder kan ikke rekonstrueres entydigt (en genåbnet cyklus starter med det resterende netto, ADR-039 P2).
+
+## Decision
+1. **Read-model:** én service, `SalesStatistics`, læser alene `merchboard_sales` og bruges af både `/me/sales`, Overview og admin-sektionen. Ingen WooCommerce-forespørgsler til tallene; kun produktnavne slås op (punkt 4).
+2. **Ordrer (`orders`):** antal unikke `order_id` med mindst én `sale`-række i den valgte periode (eller i den enkelte delperiode i serien). Refunds, reversals og korrektioner ændrer ikke antallet; en genåbnet ordre tæller kun igen, hvis der er en ny `sale`-række i perioden. Totalens antal tælles over hele perioden (ikke som summen af delperioderne).
+3. **Enheder (`units`):** `SUM(quantity)` over alle ledger-hændelser i perioden. Refunds, reversals og korrektioner rammer deres egen `occurred_at` og kan give negative enheder. Brutto købte enheder rekonstrueres ikke.
+4. **Pr. produkt:** grupperes på `product_id` (parent); varianter samles under deres produkt, og der er ingen opdeling på variantniveau i fase 20. Navnet er produktets aktuelle navn, når produktet findes, ellers ledgerens `item_name`-snapshot fra produktets seneste række (som ADR-039 P6; snapshottet kan indeholde variantens suffiks).
+5. **Hændelsesdatoer:** ledgerens `occurred_at` bruges uændret. En refund flyttes ikke tilbage til salgsdagen; negative værdier i en periode er gyldige. Historiske perioder ændres kun, når ledgeren selv får rækker med en gammel dato (fx backfill eller en senere refund af et gammelt salg).
+6. **Tidszone:** perioder fortolkes i sitets tidszone (`wp_timezone()`). Grænserne for dag, uge og måned beregnes i PHP med `DateTimeImmutable` (sommertid håndteres der) og konverteres til UTC-intervaller; SQL bruger ikke `CONVERT_TZ()` (kræver tidszone-tabeller, som ikke er garanteret). Svaret angiver tidszonen.
+7. **Perioder:** `from` og `to` er datoer `YYYY-MM-DD` i sitets tidszone, begge inklusive; internt bruges det halvåbne interval `[from 00:00, to + 1 dag 00:00)`. `interval` er `day`, `week` eller `month`; en uge er en ISO-uge (mandag–søndag), en måned en kalendermåned. Første og sidste delperiode kan være delvise for `week` og `month`; `from` og `to` udvides ikke. Standard uden parametre: i dag minus 29 dage til i dag med `day`. Højst 366 delperioder pr. svar og et inputinterval på højst 5 år.
+8. **Valuta:** der aggregeres altid pr. `currency`, uden omregning, og der er aldrig en samlet total på tværs af valutaer (bekræfter reglen i WOOCOMMERCE.md). Overview viser ét KPI-sæt pr. valuta.
+9. **Beløb og totaler:** `sales` = summen af `sale`-rækker, `adjustments` = summen af alle andre typer, og `net_sales = sales + adjustments`. Beløb sendes som decimalstrenge (API.md's konvention), aldrig floats.
+10. **Caching:** WordPress' object cache (`wp_cache_*`), gruppe `merchboard_sales`, med en generation pr. creator. Nøglen indeholder creator, generation, `from`, `to`, `interval` og tidszone; levetid 15 minutter (sikkerhedsnet for dagsskifte, ændret tidszone og omdøbte produkter). Efter en vellykket `SalesRepository::write()` øges generationen for hver `creator_id` blandt de indsatte rækker; det dækker live-synkronisering, backfill og sletning, fordi de alle skriver gennem `write()`. Invalideringen er et internt kald i repository-laget, ingen offentlig hook: `merchboard_sale_recorded` forbliver udskudt (ADR-037 pkt. 11). Ændring af de tællende statusser kræver ingen invalidering, fordi ledgeren ikke genberegnes (ADR-037 pkt. 4). **Ingen transients:** uden persistent object cache gemmes transients i options-tabellen med dynamiske navne, og ADR-025 kræver, at uninstall kun sletter præcise, plugin-ejede navne (prefix-sletning er bevidst fravalgt). Object cache efterlader intet i databasen; uden persistent object cache gælder cachen kun den enkelte request.
+11. **`GET /me/sales`:** read-only `/me`-route (kun med WooCommerce, adgang som de øvrige `/me`-routes, creator kun fra `CreatorContext`) med `from`, `to` og `interval` (standard og grænser fra punkt 7). Svaret er et objekt: den anvendte periode (`from`, `to`), `interval`, `timezone` og `currencies` = en liste pr. valuta med `currency`, `totals` (`net_sales`, `sales`, `adjustments`, `units`, `orders`), en tæt `series` (alle delperioder, også tomme med 0, hver med start og slut) og `products` (højst 100, sorteret efter `net_sales`, med `truncated`). Ingen paginering. En periode uden data giver HTTP 200 med `currencies: []`. Ugyldige formater eller intervaller afvises af argumentvalideringen (400 `rest_invalid_param`); `from > to` eller overskredne grænser giver 400 med en fast `merchboard_`-kode, uden at gentage input.
+12. **`/me/overview` udgår:** der oprettes intet separat endpoint. Overview bruger `/me/sales` med standardperioden og viser `totals`, så hver KPI kun har én definition. API.md's planlagte `/me/overview` fjernes i fase 20's docs-trin.
+13. **Admin Sales:** en server-renderet sektion "Sales" på creatorens redigeringsside (via `merchboard_creators_edit_sections`, som produktkoblingerne i fase 17), kun for `merchboard_manage_creators`, for aktive og inaktive creators. Den bruger samme `SalesStatistics` med creator-ID'et fra den redigerede creator og viser totaler pr. måned og produktopdeling pr. valuta. Intet admin-REST og ingen kundedata. Ingen global admin-salgsoversigt i fase 20.
+14. **Terminologi:** API-felterne hedder `net_sales`, `units` og `orders`. UI: "Net sales" / "Nettosalg (ekskl. moms)", "Units" / "Enheder" og "Orders" / "Ordrer", med forklaringen: "Butikkens nettosalg af dine produkter efter rabatter, ekskl. moms, fragt og gebyrer. Det er ikke din afregning." Overviews nuværende KPI-label "Omsætning" ændres til "Nettosalg". Ingen revenue split og ingen afregning i fase 20.
+15. **Ydelse:** `/me/sales` benchmarkes uden cache på både MySQL 8.0 og MariaDB 10.11 med målet p95 < 200 ms for selve read-model-operationen, for et år med daglige delperioder og produktaggregering. Repoet dokumenterer ingen forventet produktionsvolumen; benchmark-trinnet definerer derfor et syntetisk datasæt og dokumenterer det som test-fixture, ikke som en forretningsmæssig forudsætning. Et nyt indeks tilføjes kun, hvis målingen viser et reelt behov, og kræver en særskilt beslutning med migration.
+
+## Alternatives considered
+- **Ordrer som "tæller nu" (åben cyklus):** en tilstand, ikke en hændelse; kan ikke tidsfæstes til en periode. Fravalgt.
+- **Brutto købte enheder:** kan ikke rekonstrueres entydigt fra ledgeren. Fravalgt.
+- **Produkt på variantniveau eller snapshot-navn som nøgle:** lange lister og ustabile nøgler. Fravalgt i fase 20.
+- **Refunds henført til salgets periode:** ændrer gamle perioder, er sværere at cache og forklare og strider mod ledgerens hændelsesmodel. Fravalgt.
+- **UTC-dage eller fast forskydning i SQL:** forkerte dage for brugeren og ved sommertid; `CONVERT_TZ()` kræver tidszone-tabeller. Fravalgt.
+- **Omregning eller samlet total på tværs af valutaer:** kræver kurser (en ekstern kilde) og blander valutaer. Fravalgt.
+- **Transients:** dynamiske options-navne i strid med ADR-025's præcise uninstall. Fravalgt.
+- **Offentlig `merchboard_sale_recorded` til invalidering:** udskudt af ADR-037 pkt. 11; et internt kald er nok. Fravalgt.
+- **Separat `/me/overview`:** to definitioner af samme KPI. Fravalgt.
+- **Admin-REST eller global admin-oversigt:** ikke i ROADMAP's fase 20-scope; ADR-032-mønstret er server-renderet. Fravalgt.
+
+## Reason
+Én read-model på ledgeren giver samme tal i dashboardet, på Overview og i admin, med deterministiske, testbare definitioner, der følger ledgerens hændelsesmodel. Sitets tidszone og inklusive datoer er det, brugeren forventer; grænser beregnet i PHP er sommertid-sikre og databaseuafhængige. Object cache med generationer giver invalidering pr. creator uden ny offentlig API og uden data i databasen.
+
+## Consequences
+- **Database:** intet nyt skema og intet nyt indeks nu; `creator_occurred` dækker filtreringen. Aggregeringen slår rækkerne op og grupperer i en midlertidig tabel; et dækkende indeks overvejes kun efter målingen (punkt 15).
+- **Caching:** reel gevinst kræver persistent object cache i produktion; ydelsesmålet gælder derfor uden cache.
+- **API.md, FRONTEND.md, ADMIN.md, WOOCOMMERCE.md og TESTING.md** opdateres i fase 20's trin; `/me/overview` fjernes, og Overview-KPI'erne omdøbes.
+- **Fortsat åbent:** revenue split (åbent spørgsmål 5), produktionens databaseversion (åbent spørgsmål 2), global admin-salgsoversigt og `merchboard_sale_recorded`.
+
+### Statusnote 2026-10-07: indholdet af admin Sales (ROADMAP trin 7)
+Besluttet af projektejeren 2026-10-07 før implementeringen af trin 7. Præciserer pkt. 13; teksten ovenfor er bevaret som historik. Admin-sektionen "Sales" viser **standardperioden fra pkt. 7** (30 kalenderdage inklusive i dag, `day`, sitets tidszone) med nettosalg, enheder og ordrer pr. valuta og den daglige serie som tabel. **Ingen totaler pr. måned og ingen produktopdeling** i trin 7; begge kan tages op senere som en særskilt beslutning. Alt øvrige i pkt. 13 gælder uændret: server-renderet via `merchboard_creators_edit_sections`, kun `merchboard_manage_creators`, aktive og inaktive creators, creator-ID'et fra den redigerede creator, intet admin-REST og ingen kundedata. Sektionen kalder samme `SalesReports`-service (i produktion `CachedSalesReports`) som `GET /me/sales` uden HTTP, så definitionerne (pkt. 2–9), cache-posten og invalideringen (pkt. 10) er de samme som i creator-dashboardet.
+
+---
+
+# ADR-041: Grafer i dashboardet uden tredjeparts-bibliotek (fase 20)
+
+## Date
+2026-10-06
+
+## Status
+Accepteret (fase 20, trin 1, før implementering). Besluttet af projektejeren. ROADMAP kræver, at valget af grafbibliotek dokumenteres i en ADR. Supplerer ADR-010 (eget designsystem), ADR-004 og ADR-016 (ingen unødvendige afhængigheder og ingen eksterne services) og ADR-026 (dashboardets CSP). Bruges af ADR-040.
+
+## Context
+Fase 20 skal vise salg over tid og pr. produkt, og grafer skal være tilgængelige med et tabel-alternativ (ROADMAP's Done-kriterium). FRONTEND.md stillede krav om lille bundle, tilgængelighed og tree-shaking med Chart.js eller en letvægts-SVG-løsning som kandidater. Dashboard-bundlen (`build/dashboard.js`) er i dag cirka 31 KB minificeret (cirka 9 KB gzip) og har ingen runtime-afhængigheder ud over WordPress' egne externals. Shellens CSP tillader kun egne scripts med nonce (`script-src 'self' 'nonce-…'`); en CDN er udelukket (ADR-016).
+
+## Decision
+1. **Intet tredjeparts grafbibliotek:** dashboardet bruger egne, små SVG-visualiseringer (fx søjler for nettosalg og enheder pr. periode), skrevet som React-komponenter i det eksisterende designsystem.
+2. **Tabel altid:** hver visualisering har en semantisk tabel med de samme tal som data- og tilgængeligheds-alternativ. SVG'en har en tekstlig beskrivelse (`role="img"` med label); tabellen er den primære kilde for skærmlæsere.
+3. **Ingen CDN og ingen ny runtime-afhængighed:** intet nyt npm-runtime-bibliotek; alt bygges ind i den eksisterende bundle.
+4. **CSP uændret:** SVG og React kræver ingen ændring af CSP'en.
+5. **Test:** visualiseringerne er DOM/SVG, der kan testes deterministisk i Jest.
+
+## Alternatives considered
+- **Chart.js:** fravalgt. Det ville gøre bundlen flere gange større end hele det nuværende dashboard, tilføje en unødvendig afhængighed med egen vedligeholdelse, og canvas er ikke tilgængeligt, så et tabel-alternativ kræves alligevel. Den begrænsede visualisering (få serier, ingen avanceret interaktion) kan dækkes af projektets eget React-designsystem.
+- **Kun tabeller:** opfylder tilgængeligheden, men giver intet overblik over udviklingen. Fravalgt; tabellen beholdes som alternativ.
+- **Andre biblioteker (fx D3- eller React-chart-biblioteker):** samme afhængigheds- og størrelsesindvending. Fravalgt.
+
+## Reason
+Lille bundle, ingen nye afhængigheder, uændret CSP og fuld tilgængelighed via tabellen, med visualiseringer, der kan testes deterministisk.
+
+## Consequences
+- Avancerede interaktioner (zoom, tooltips med animation, mange serier) kræver en ny vurdering og en ny ADR, hvis behovet opstår.
+- FRONTEND.md's afsnit om grafer opdateres i fase 20's docs-trin.

@@ -77,11 +77,11 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		self::assertSame( array(), $registry->for_current_user() );
 	}
 
-	public function test_the_products_and_orders_sections_are_sent_only_with_the_woocommerce_registration(): void {
+	public function test_the_sales_products_and_orders_sections_are_sent_only_with_the_woocommerce_registration(): void {
 		$registry = $this->service( DashboardSections::class );
 		wp_set_current_user( $this->creator );
 
-		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Products or Orders section.' );
+		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Sales, Products or Orders section.' );
 
 		( new DashboardSectionRegistration() )->register();
 
@@ -91,6 +91,11 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 					'id'    => 'overview',
 					'label' => 'Overview',
 					'path'  => '',
+				),
+				array(
+					'id'    => 'sales',
+					'label' => 'Sales',
+					'path'  => 'sales',
 				),
 				array(
 					'id'    => 'products',
@@ -156,7 +161,7 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		$html       = $controller->render( $response );
 
 		self::assertSame( 200, $response->status );
-		self::assertStringContainsString( 'Salgsdata kommer snart', $html, 'Script translations are printed for the bundle.' );
+		self::assertStringContainsString( 'Nettosalg (ekskl. moms)', $html, 'Script translations are printed for the bundle.' );
 		self::assertStringContainsString( '"locale":"da_DK"', $html );
 		self::assertSame( substr_count( $html, '<script' ), substr_count( $html, 'nonce="' . $response->script_nonce . '"' ), 'The translation script carries the nonce too.' );
 	}
