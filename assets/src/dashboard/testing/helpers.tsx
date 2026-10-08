@@ -30,6 +30,7 @@ export const CONFIG: DashboardConfig = {
 	passwordUrl: `${ ORIGIN }/wp-login.php?action=lostpassword`,
 	locale: 'da_DK',
 	sections: [ { id: 'overview', label: 'Overview', path: '' } ],
+	logo: null,
 };
 
 export interface Rendered {

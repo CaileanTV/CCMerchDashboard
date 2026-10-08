@@ -18,7 +18,7 @@ use MerchBoard\Modules\Settings\SettingsService;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Handles the settings forms (deletion opt-in, dashboard slug), each with its
+ * Handles the settings forms (deletion opt-in, dashboard slug, logo), each with its
  * own admin-post action and nonce. Order of checks, as for creator administration:
  *
  * 1. capability (`merchboard_manage_settings`) → 403 otherwise;
@@ -42,6 +42,11 @@ final class SettingsActions {
 	public const SAVE_SLUG_ACTION = 'merchboard_save_dashboard_slug';
 
 	/**
+	 * The admin-post action and nonce action of the logo form (ADR-042).
+	 */
+	public const SAVE_LOGO_ACTION = 'merchboard_save_logo';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param SettingsService $service Use cases.
@@ -56,6 +61,39 @@ final class SettingsActions {
 	public function register(): void {
 		add_action( 'admin_post_' . self::SAVE_ACTION, array( $this, 'handle_save_request' ) );
 		add_action( 'admin_post_' . self::SAVE_SLUG_ACTION, array( $this, 'handle_save_slug_request' ) );
+		add_action( 'admin_post_' . self::SAVE_LOGO_ACTION, array( $this, 'handle_save_logo_request' ) );
+	}
+
+	/**
+	 * WordPress entry point of the logo form.
+	 */
+	public function handle_save_logo_request(): void {
+		// The nonce is verified in save_logo() before any input is used.
+		wp_safe_redirect( $this->save_logo( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and the fields sanitized in save_logo().
+		exit;
+	}
+
+	/**
+	 * Processes the logo form (same order of checks as save()): the chosen
+	 * attachment id, or "use the default logo". Only an id is accepted; the
+	 * service validates the attachment.
+	 *
+	 * @param array<mixed> $input Unslashed request data.
+	 * @return string Redirect URL.
+	 */
+	public function save_logo( array $input ): string {
+		$this->verify( $input, self::SAVE_LOGO_ACTION );
+
+		// The "Use the default logo" submit button is sent only when it was clicked.
+		$remove = array_key_exists( SettingsPage::FIELD_REMOVE_LOGO, $input );
+		$raw    = is_scalar( $input[ SettingsPage::FIELD_LOGO ] ?? null ) ? trim( (string) $input[ SettingsPage::FIELD_LOGO ] ) : '';
+		$id     = $remove ? 0 : ( 1 === preg_match( '/^\d{1,19}$/', $raw ) ? absint( $raw ) : -1 );
+
+		if ( $id < 0 ) {
+			return SettingsPage::url( SettingsException::LOGO_NOT_FOUND );
+		}
+
+		return $this->run( fn(): bool => $this->service->set_logo_attachment_id( $id ) );
 	}
 
 	/**

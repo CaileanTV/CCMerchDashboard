@@ -15,7 +15,8 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Creator Dashboard | 12-15 | Route/shell, frontend-fundament, profil, overview → **MVP** |
 | Deployment | 16 | Release-pipeline og staging (✅ fase 16, `v0.1.0`) |
 | WooCommerce | 17-19 | Produkt↔creator (✅ fase 17), sales ledger (✅ fase 18), produkter/ordrer i dashboard (✅ fase 19) |
-| Statistics | 20 | Salgsanalyse og grafer |
+| Statistics | 20 | Salgsanalyse og grafer (✅ fase 20) |
+| Branding & Themes | 21 | Admin-styret logo, seks dashboard-temaer og branded login (i gang) |
 | Senere | – | Payouts, notifications, integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -253,6 +254,54 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 
 ---
 
+## Fase 21 – Branding & Themes 🔄
+
+Mål: et globalt, admin-styret logo (dashboard-header og WordPress-login), seks dashboard-temaer (Light, Dark Black, Dark Green, Dark Blue, Dark Red, Dark Pink) på semantiske design tokens og en branded login-side uden ændring af login-flowet. Brand-font er ikke en del af fasen (systemfonte bevares).
+
+- **Trin:**
+  - 1 ✅ (2026-10-07, lokalt): arkitektur- og scopeafklaring, ingen implementering. Analyse: [reports/2026-10-07-fase-21-branding-themes.md](reports/2026-10-07-fase-21-branding-themes.md). Anbefalet: attachment-ID i `merchboard_settings` (kun raster, ingen SVG-upload, same-origin, fallback til et first-party default-SVG), temaet i user meta med serverrenderet `data-theme`, login via `login_enqueue_scripts` uden JS.
+  - 2 ✅ (2026-10-07): beslutninger. Login-arkitekturen er undersøgt (rapportens afsnit K) og besluttet som mulighed B. ADR-042 (globalt admin-logo og login-branding kun i Merch Dashboard-kontekst, login følger `prefers-color-scheme`), ADR-043 (seks temaer på semantiske tokens med `data-theme`; Dark Red og Dark Pink skal revideres, fordi accent og danger ligger for tæt) og ADR-044 (user meta `merchboard_dashboard_theme` og `PATCH /me/preferences`). Statusnoter på ADR-010 og ADR-025. Kontrasten er ikke verificeret endnu.
+  - 3 ✅ (2026-10-07, lokalt): token-refaktor til semantiske tokens (ADR-043). Tokens ligger på `:root` uden rå palette; 18 farver migreret (13 rå palette-referencer og 5 hardcodede farver inkl. `body`). No-access-siden og "unavailable"-boksen bruger samme tokennavne via `FallbackStyles`, uden afhængighed af bundlen. Bevidste visuelle ændringer i Light: kontrolkant (input og sekundær knap) og grafens baseline fra 1,48:1 til 3,63:1 (`#7c8799`); negative søjler fra en accent-nuance (ΔE 7,9 fra accenten) til den neutrale `negative`-rolle (`#64748b`, ΔE 19,7, ADR-043 pkt. 6–7); fokusring på toasten fra 2,84:1 til 8,96:1; no-access-siden fra WordPress-admin-farver til dashboardets farver. `DesignTokensTest` håndhæver ingen farve-literaler, definerede tokens, fallback-synkronisering, Light-kontrast og afstand mellem accent og danger/negative. Ingen temaer, ingen vælger, ingen persistence og intet logo eller login. Kontrasten for de mørke temaer er ikke verificeret.
+  - 4 ✅ (2026-10-08, lokalt): theme-infrastruktur og de fem mørke paletter (ADR-043).
+    - **Tekniske beslutninger:** ét stylesheet. Light på `:root`; `:root[data-theme="dark-black|dark-green|dark-blue|dark-red|dark-pink"]` via én SCSS-mixin pr. tema og en fælles mixin for de stabile mørke roller (inkl. `color-scheme: dark`). Uden eksplicit `data-theme` giver `prefers-color-scheme: dark` Dark Black i ren CSS; et eksplicit valg vinder altid. Komponenterne er uændrede og kender ingen temanavne.
+    - **Accenter:** Dark Black `#9aa3f2`, Dark Green `#6dbb94`, Dark Blue `#7aa7e8`, **Dark Red `#e9c6c8`** og **Dark Pink `#ebbbe0`**. De to sidste erstatter trin 1's `#e09a9e`/`#e3a0c3`, der lå for tæt på danger.
+    - **Stabile mørke roller:** danger `#f87171`, negative `#7a7a7a` (mørkere neutral, så den holder ΔE ≥ 15 fra de lyse accenter), fokus `#a5b4fc`.
+    - **Resultater:** ΔE accent/danger 18,7–34,6 og accent/negative 17,8–28,0 i alle seks temaer. Laveste kontrast i de mørke temaer: tekst på bg 15,3:1, `on-primary` på primary 7,65:1, kontrolkant 3,54:1, negative-søjler 3,92:1.
+    - **Test:** `DesignTokensTest` håndhæver 36 kontrastpar pr. tema og ΔE-reglerne. Mutationstjek: trin 1-accenten, et manglende token og et ΔE-brud fanges.
+    - **Ikke en del af trinnet:** ingen persistence, vælger, REST eller login; fallback-siderne forbliver Light. Verifikationen er på token-niveau, og visuel browser-verifikation mangler.
+  - 5 ✅ (2026-10-08, lokalt): theme-persistence og temavælger (ADR-044).
+    - **Backend:** `Modules/Dashboard/ThemePreference` (user meta `merchboard_dashboard_theme`, kun de seks værdier, `null` sletter, verificeret ved genlæsning). `PATCH /me/preferences` i den eksisterende `MeController` (samme adgang som `/me`; kun body'en; kun den aktuelle bruger; 400 ved ugyldig værdi; svar `{ "theme": … }`; ingen audit, ingen `GET`). `ShellController`/`shell.php` sætter `data-theme` på `<html>` kun for et eksplicit valg; uden valg følger CSS systemet. Intet bootstrap-felt.
+    - **Uninstall:** `Uninstaller::USER_META_KEYS` sletter nøglen med `delete_metadata()` kun ved opt-in (ADR-025).
+    - **Frontend:** kortet "Udseende" på Profile med en native `<select>` (Systemstandard og de seks temaer på dansk). Valget anvendes straks. Højst ét request ad gangen, og kun det nyeste ventende valg sendes, så et sent svar aldrig overskriver et nyere valg. Ved fejl sættes det gemte tema tilbage med `ApiErrorState` og "Try again".
+    - **Test:** PHPUnit unit (`ThemePreferenceTest`, `ShellControllerTest` for `data-theme` for alle seks temaer og ingen attribut for null og ugyldige værdier, `UninstallerTest`). Integration (`MeEndpointTest`, `UninstallTest`, `DashboardAccessTest`, `SectionsAndTranslationsTest`: 73 tests). Jest `theme.test.tsx` (12 tests, inkl. race og fejl); mutationstjek uden serialisering får begge race-tests til at fejle.
+    - **i18n:** 12 nye strenge oversat til dansk.
+    - **Ikke en del af trinnet:** logo, login, Media Library og pakker. Ingen browser-verifikation.
+  - 6 ✅ (2026-10-08, lokalt; projektejeren samlede de planlagte trin 6–8 i ét trin): logo og branded login (ADR-042).
+    - **Logo:** default-logo `assets/brand/logo.svg` (eget SVG-mærke, ingen tekst, script, referencer eller fonte). `BrandLogo` resolver ét globalt logo for dashboard og login: admin-logo → default-SVG → sitenavn som tekst. Alle URL'er er på samme origin.
+    - **Indstilling:** `merchboard_settings['logo_attachment_id']` (kun ID). Sektionen "Branding" på Settings bruger Media Library via `assets/js/settings-logo.js`, kun PNG, JPEG og WebP. Vejen er `SettingsService::set_logo_attachment_id()` med capability `merchboard_manage_settings`, egen nonce og admin-post-action og `settings_updated`-audit. `LogoAttachment` validerer server-side: offentligt attachment, MIME-type og filendelse, 64–2000 px, 1:1–6:1 og samme origin. Ingen SVG og ingen migration.
+    - **Dashboard:** bootstrap-feltet `logo`. Headeren viser admin-logoet i stedet for sitenavnet, eller default-mærket ved siden af sitenavnet. Logo-pladen er token-baseret på de mørke temaer, og der er fallback ved fejl.
+    - **Login:** `LoginBranding` på WordPress' egen `wp-login.php`, kun når handlingen er `login`, ikke ved interim login, og når `redirect_to` er en dashboard-URL. Det sker via `login_form_login` (observatør), `login_enqueue_scripts`, `login_body_class`, `login_headerurl` og `login_headertext`. Stylesheetet er statisk og scopet, følger `prefers-color-scheme` og bruger ingen JS. Login-flow, glemt adgangskode og reset er uændrede.
+    - **Test:** unit (`BrandingTest`, `LogoSettingTest`, `ShellControllerTest`, `DesignTokensTest` inkl. logo-plade og login-CSS mod tokens) og integration mod rigtig WordPress og database (`Integration/Dashboard/BrandingTest`: PNG, JPEG, WebP, SVG, PDF, størrelse, rettighed, slettet logo, login-hooks og kontekst). Jest `brand.test.tsx` og bootstrap.
+    - **i18n:** 19 nye strenge oversat til dansk.
+    - **Ikke verificeret:** ingen browser til rådighed; login-CSS og header er ikke kontrolleret visuelt.
+  - 7–8: udgår (indgår i trin 6).
+  - 9 ✅ (2026-10-08, lokalt): samlet slutvalidering af fase 21.
+    - **Suite fra rent udgangspunkt (`build/` slettet):** `php -l` 407 filer uden fejl; `npm run lint` grøn (ESLint, stylelint, tsc, PHPCS, PHPStan "No errors"); PHPUnit 1717; Jest 325 (17 suites); integration 432 mod en rigtig MariaDB 10.11.19 (projektets engangsdatabase, ikke LocalWP's); production build; `git diff --check` ren.
+    - **Runtime i Merch Dashboard Local** (WordPress 7.1.3, WooCommerce 11.1.2): 69 checks via WP-CLI og HTTP med syntetiske MB-T21-data. 68 bestod i første kørsel; den sidste var en fejl i selve checket (sitets domæne `merchboard.local` indeholder ordet "merchboard") og blev verificeret korrekt bagefter (0 plugin-scripts på login-siden).
+      - Plugin deaktiveret og aktiveret (schema 5, rolleversion 2, settings uændrede).
+      - Alle seks temaer og `null` via `PATCH /me/preferences`, ugyldige værdier (400), brugerisolation og 401/403.
+      - `data-theme` på `<html>` før CSS over HTTP; bootstrap med præcis de aftalte felter og `logo` med `url`, `width`, `height`, `alt` og `custom`.
+      - Logo: PNG, JPEG og WebP gemt; SVG, for lille og ikke-attachment afvist; afvist uden rettighed; slettet logo giver default-SVG (serveret som `image/svg+xml`).
+      - Login: branded login til dashboardet; ikke branded ved almindeligt login, wp-admin, andre sider, glemt adgangskode, interim login og registrering. Rigtigt login gennem `wp-login.php` til dashboardet; fejlet login viser WordPress' egen fejl.
+      - `/me`, `/me/profile`, `/me/products`, `/me/orders` og `/me/sales` gav 200; creator-adgang (403 uden adgang og for en deaktiveret creator, 302 til login udlogget).
+    - **Sitets egne data:** det eksisterende logo (attachment 198) og bruger 1's tema (`dark-pink`) blev bevaret; logo-indstillingen blev gendannet via `SettingsService`. Creators 1–5 er uændrede, og alle MB-T21-brugere, -attachments og -filer er fjernet (inkl. 12 billedstørrelser, som WooCommerce genererede undervejs uden for WordPress' metadata). 12 append-only audit-records er bevaret.
+    - **Sikkerhedsscan:** ingen `wp_signon`, `authenticate`-, `login_url`- eller `upload_mimes`-hook, ingen hooks på glemt adgangskode eller reset, ingen localStorage eller cookies, ingen eksterne ressourcer, ingen nye afhængigheder, ingen nye tabeller eller migrationer; settings skrives kun via de godkendte services.
+    - **Dokumentation:** præciseringer i ADR-043 og ADR-044 (2026-10-08); ADMIN.md (Branding) og SECURITY.md (branding, login og tema) opdateret.
+    - **Ikke verificeret (kendt begrænsning):** ingen browser. Dashboard-header og logo, alle seks temaer visuelt, logo-pladen på mørke temaer, den brandede login-side visuelt og responsiv opførsel er ikke kontrolleret visuelt.
+  - 10: commit, push og grøn CI (i18n, docs og slutverifikation er udført i trin 5–9).
+
+---
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
@@ -267,4 +316,4 @@ Analyse, dokumentation, dev-tooling (Composer, PHPCS/WPCS, PHPStan, wp-scripts/E
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
 | Impersonation | "Se som creator" for admins med audit |
-| Branding | Branded login-side, dark mode og brand-font (self-hosted) |
+| Branding | Brand-font (self-hosted). Logo, temaer og branded login er flyttet til fase 21 |

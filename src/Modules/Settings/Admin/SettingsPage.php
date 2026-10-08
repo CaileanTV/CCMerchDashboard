@@ -13,6 +13,8 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
+use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
+use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Settings\SettingsException;
 use MerchBoard\Modules\Settings\SettingsService;
@@ -53,6 +55,21 @@ final class SettingsPage {
 	public const FIELD_SLUG = 'dashboard_slug';
 
 	/**
+	 * Logo attachment id field (ADR-042).
+	 */
+	public const FIELD_LOGO = 'logo_attachment_id';
+
+	/**
+	 * "Use the default logo" submit button.
+	 */
+	public const FIELD_REMOVE_LOGO = 'remove_logo';
+
+	/**
+	 * Script handle of the logo picker.
+	 */
+	public const LOGO_SCRIPT = 'merchboard-settings-logo';
+
+	/**
 	 * URL of the settings screen, optionally with a notice code.
 	 *
 	 * @param string $notice Notice code.
@@ -71,7 +88,7 @@ final class SettingsPage {
 	 * Adds "Settings" to the Merch Dashboard menu.
 	 */
 	public function add_menu(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			AdminMenu::PARENT_SLUG,
 			__( 'Merch Dashboard Settings', 'merchboard' ),
 			__( 'Settings', 'merchboard' ),
@@ -79,6 +96,58 @@ final class SettingsPage {
 			self::SLUG,
 			array( $this, 'render' )
 		);
+
+		if ( is_string( $hook ) && '' !== $hook ) {
+			add_action( 'load-' . $hook, array( $this, 'enqueue_assets_on_load' ) );
+		}
+	}
+
+	/**
+	 * Hooks the asset loading for this screen only.
+	 */
+	public function enqueue_assets_on_load(): void {
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Progressive enhancement for the logo: WordPress' Media Library modal
+	 * (images of the allowed types only) and a small script without a build.
+	 * Without JavaScript the default logo can still be restored. The server
+	 * validates every chosen attachment.
+	 */
+	public function enqueue_assets(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+			return;
+		}
+
+		wp_enqueue_media();
+		wp_enqueue_script(
+			self::LOGO_SCRIPT,
+			plugins_url( 'assets/js/settings-logo.js', self::plugin_root() . 'merchboard.php' ),
+			array( 'media-editor' ),
+			defined( 'MERCHBOARD_VERSION' ) ? (string) constant( 'MERCHBOARD_VERSION' ) : false,
+			true
+		);
+		wp_add_inline_script(
+			self::LOGO_SCRIPT,
+			'window.merchboardLogo = ' . (string) wp_json_encode(
+				array(
+					'types'    => LogoAttachment::MIME_TYPES,
+					'title'    => __( 'Choose the Merch Dashboard logo', 'merchboard' ),
+					'button'   => __( 'Use this logo', 'merchboard' ),
+					'selected' => __( 'Logo chosen. Save the logo to use it.', 'merchboard' ),
+				),
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+			) . ';',
+			'before'
+		);
+	}
+
+	/**
+	 * Plugin root directory (src/Modules/Settings/Admin → root), with trailing slash.
+	 */
+	private static function plugin_root(): string {
+		return dirname( __DIR__, 4 ) . '/';
 	}
 
 	/**
@@ -95,6 +164,10 @@ final class SettingsPage {
 			SettingsException::CONFIRMATION_REQUIRED => array( __( 'Permanent deletion was not enabled: type DELETE in the confirmation field to enable it.', 'merchboard' ), 'error' ),
 			SettingsException::INVALID_SLUG          => array( __( 'The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path.', 'merchboard' ), 'error' ),
 			SettingsException::SLUG_IN_USE           => array( __( 'The dashboard slug was not changed: a page, post, product or archive already uses it.', 'merchboard' ), 'error' ),
+			SettingsException::LOGO_NOT_FOUND        => array( __( 'The logo was not changed: choose an image from the Media Library.', 'merchboard' ), 'error' ),
+			SettingsException::LOGO_WRONG_TYPE       => array( __( 'The logo was not changed: use a PNG, JPEG or WebP image. SVG is not allowed.', 'merchboard' ), 'error' ),
+			SettingsException::LOGO_WRONG_SIZE       => array( __( 'The logo was not changed: the image must be at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high.', 'merchboard' ), 'error' ),
+			SettingsException::LOGO_FOREIGN_URL      => array( __( 'The logo was not changed: the image must be stored on this site, not on another domain.', 'merchboard' ), 'error' ),
 			'error'                                  => array( __( 'A technical error occurred. The settings were not changed.', 'merchboard' ), 'error' ),
 			default                                  => null,
 		};
@@ -121,6 +194,7 @@ final class SettingsPage {
 		}
 
 		$this->render_dashboard_slug();
+		$this->render_branding();
 
 		/**
 		 * Fires between the dashboard slug and "Data on uninstall" so other
@@ -162,6 +236,50 @@ final class SettingsPage {
 		echo '</tbody></table>';
 		submit_button( __( 'Save settings', 'merchboard' ) );
 		echo '</form></div>';
+	}
+
+	/**
+	 * The logo form (ADR-042; its own form and nonce). Shows the logo in use
+	 * (the chosen one when it is still valid, else the default). Choosing
+	 * needs the Media Library script; "Use the default logo" works without
+	 * JavaScript.
+	 */
+	private function render_branding(): void {
+		$stored = Settings::logo_attachment_id();
+		$logo   = ( new BrandLogo( new LogoAttachment(), self::plugin_root() ) )->resolve();
+		$custom = null !== $logo && $logo['custom'];
+
+		echo '<h2>' . esc_html__( 'Branding', 'merchboard' ) . '</h2>';
+		echo '<p>' . esc_html__( 'The logo is shown at the top of the creator dashboard and on the WordPress login page when creators log in to their dashboard. Other login pages are not changed.', 'merchboard' ) . '</p>';
+
+		if ( $stored > 0 && ! $custom ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The chosen logo can no longer be used (deleted, changed or not on this site), so the default logo is shown.', 'merchboard' ) . '</p></div>';
+		}
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( SettingsActions::SAVE_LOGO_ACTION ) . '">';
+		wp_nonce_field( SettingsActions::SAVE_LOGO_ACTION );
+		echo '<input type="hidden" id="merchboard-logo-id" name="' . esc_attr( self::FIELD_LOGO ) . '" value="' . esc_attr( (string) $stored ) . '">';
+		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Logo', 'merchboard' ) . '</th><td>';
+
+		if ( null !== $logo ) {
+			echo '<p><img id="merchboard-logo-preview" src="' . esc_url( $logo['url'] ) . '" alt="' . esc_attr__( 'Current logo', 'merchboard' ) . '" height="64"></p>';
+		}
+
+		echo '<p id="merchboard-logo-status" aria-live="polite">' . esc_html( $custom ? __( 'A custom logo is in use.', 'merchboard' ) : __( 'The default Merch Dashboard logo is in use.', 'merchboard' ) ) . '</p>';
+		echo '<p class="hide-if-no-js"><button type="button" class="button" id="merchboard-logo-select">' . esc_html__( 'Choose logo', 'merchboard' ) . '</button></p>';
+		echo '<p class="description">' . esc_html__( 'PNG, JPEG or WebP from the Media Library, at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high. SVG is not allowed. Use a logo that is readable on a light background; on dark dashboard themes it is shown on a light plate.', 'merchboard' ) . '</p>';
+		echo '</td></tr></tbody></table>';
+		echo '<p class="submit">';
+		submit_button( __( 'Save logo', 'merchboard' ), 'primary', 'submit', false );
+
+		if ( $stored > 0 ) {
+			echo ' ';
+			submit_button( __( 'Use the default logo', 'merchboard' ), 'secondary', self::FIELD_REMOVE_LOGO, false );
+		}
+
+		echo '</p></form>';
 	}
 
 	/**

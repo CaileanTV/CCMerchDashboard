@@ -106,6 +106,24 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 
 **Login-redirect for rene creators (✅ fase 12):** `DashboardRoute::dashboard_url_for()` accepterer kun en `redirect_to`, der er på samme site (`wp_validate_redirect`, samme host, kun `http`/`https`) og hvis sti er præcis dashboardet eller ligger under det (ikke `/creator-dashboard-evil/`). `..`, `\` og `@` afvises også efter URL-decoding. URL'en genopbygges ud fra den normaliserede sti, så query, fragment og credentials fra input aldrig overlever. Alt andet (wp-admin, andre sider, eksterne hosts, `//evil`, `javascript:`) giver dashboardets startside.
 
+### Branding, login og tema (fase 21, ADR-042–044)
+
+- **Logo:** kun et attachment-ID gemmes, og det vælges kun af `merchboard_manage_settings` (capability før nonce, egen admin-post-action, audit).
+  - `LogoAttachment` validerer ved gem og ved hver visning: offentligt attachment, PNG, JPEG eller WebP med matchende filendelse, størrelsesgrænser og samme origin.
+  - Der er ingen SVG-upload og intet `upload_mimes`-filter; pluginet åbner ingen ny uploadvej (logoet vælges blandt eksisterende medier).
+  - Billeder fra et andet domæne bruges aldrig (dashboardets CSP `img-src 'self' data:` er uændret); så vises standardlogoet.
+- **Standardlogo:** `assets/brand/logo.svg` er pluginets egen, reviewede SVG uden script, event-attributter, eksterne referencer eller fonte. Den vises kun som `<img>` og CSS-baggrund, hvor scripts ikke kører.
+- **Login:** `wp-login.php` brandes kun i Merch Dashboard-kontekst (login-handlingen, ikke interim login, og en `redirect_to`, der består `DashboardRoute::dashboard_url_for()`).
+  - Kun præsentation via `login_form_login` (passiv observatør), `login_enqueue_scripts`, `login_body_class`, `login_headerurl` og `login_headertext`.
+  - Ingen egen login-route, formular, credential-håndtering, `wp_signon()`, `authenticate`-hook, `login_url`-filter eller ændring af glemt adgangskode, reset eller logout. CAPTCHA, 2FA og hosting-regler på `/wp-login.php` virker uændret.
+  - `redirect_to` er kun en betingelse og udskrives aldrig af pluginet.
+  - Logo-URL'en i den inline CSS skal bestå af rene URL-tegn (ingen `"`, `(`, `)`, `\`, `<`, `>`, `;`, `{`, `}` eller whitespace); ellers udelades reglen. Stylesheetet er scopet til `body.merchboard-login` og indlæser ingen eksterne ressourcer.
+- **Tema:** `PATCH /me/preferences` skriver kun den aktuelle brugers user meta (`get_current_user_id()`). Kun body'en tæller; ID'er i body og query ignoreres.
+  - Værdien er en lukket enum og valideres to gange (skema og endpoint).
+  - `data-theme` udskrives kun for en gyldig værdi, escapet og tjekket igen i skabelonen.
+  - Ingen localStorage og ingen cookies; temaet er ikke bootstrap-data.
+- **Verifikation:** unit-, integrations- og runtime-tests (Merch Dashboard Local via WP-CLI og HTTP, 2026-10-08). Login-siden og dashboardet er ikke verificeret visuelt i en browser.
+
 ### Filuploads (fremtid: avatar, produktbilleder)
 
 - Via `media_handle_upload()` / `wp_handle_upload()` med `mimes`-whitelist (kun jpeg/png/webp), `wp_check_filetype_and_ext()`, størrelsesgrænse og capability-/ejerskabs-tjek.

@@ -17,7 +17,39 @@ const MOBILE_NAV_ID = 'merchboard-mobile-nav';
 const MAIN_ID = 'merchboard-main';
 
 /**
- * App frame: skip link, top bar (site name, creator name, menu button below lg, log out),
+ * The logo and/or the site name (ADR-042). An admin logo replaces the site
+ * name (alt = site name); the default logo is a mark next to the site name
+ * (alt = ""). Without a logo, or when the image fails to load, only the site
+ * name is shown, so there is never a broken image.
+ */
+function Brand() {
+	const { logo, siteName } = useConfig();
+	const [ failed, setFailed ] = useState( false );
+	const showLogo = logo !== null && ! failed;
+
+	return (
+		<div className="merchboard-topbar__brand">
+			{ showLogo && (
+				<span className="merchboard-logo">
+					<img
+						className="merchboard-logo__image"
+						src={ logo.url }
+						width={ logo.width }
+						height={ logo.height }
+						alt={ logo.alt }
+						onError={ () => setFailed( true ) }
+					/>
+				</span>
+			) }
+			{ ( ! showLogo || ! logo.custom ) && (
+				<p className="merchboard-topbar__site">{ siteName }</p>
+			) }
+		</div>
+	);
+}
+
+/**
+ * App frame: skip link, top bar (logo and/or site name, creator name, menu button below lg, log out),
  * sidebar (lg and up), off-canvas navigation (below lg) and the main region.
  */
 export function Layout( { title, creatorName, children }: LayoutProps ) {
@@ -61,7 +93,8 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 						? __( 'Close menu', 'merchboard' )
 						: __( 'Menu', 'merchboard' ) }
 				</button>
-				<p className="merchboard-topbar__site">{ config.siteName }</p>
+				<Brand />
+
 				{ creatorName !== undefined && (
 					<p className="merchboard-topbar__creator">
 						{ creatorName }

@@ -16,7 +16,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   ├── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger; fase 17 (WooCommerce): afsnittene "Product category" og "Products"
 │   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
-├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce). Tabs General · Access · Advanced kommer, når de får indhold
+├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo). Tabs General · Access · Advanced kommer, når de får indhold
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
 
@@ -112,6 +112,22 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 → alle andre WordPress- og WooCommerce-data bevares
 ```
 
+**"Branding"** (✅ fase 21, trin 6, ADR-042; egen formular `admin-post.php?action=merchboard_save_logo` og egen nonce; står efter "Creator dashboard"):
+
+- **Logoet:** ét globalt logo, ikke pr. creator, til toppen af creator-dashboardet og WordPress' login-side, når creators logger ind til dashboardet. Andre login-sider ændres ikke.
+- **Visning:** siden viser logoet i brug (eget logo eller Merch Dashboard-standardlogoet) og en advarsel, hvis et valgt logo ikke længere kan bruges (slettet, ændret eller på et andet domæne). Så vises standardlogoet.
+- **"Choose logo"** åbner WordPress' mediebibliotek, filtreret til PNG, JPEG og WebP (kræver JavaScript), og **"Save logo"** gemmer valget.
+- **"Use the default logo"** går tilbage til standardlogoet og virker også uden JavaScript.
+- **Server-side validering** (`SettingsService::set_logo_attachment_id()` → `LogoAttachment`):
+  - kun et offentligt attachment;
+  - PNG, JPEG eller WebP, og filendelsen skal passe til typen. SVG afvises altid;
+  - mindst 64 px højt, højst 2000 px på den længste side og mellem kvadratisk og seks gange så bredt som højt;
+  - billedet skal ligge på sitets eget domæne.
+  - Notices: `logo_not_found`, `logo_wrong_type`, `logo_wrong_size` og `logo_foreign_url`.
+- **Lagring:** kun attachment-ID'et i `merchboard_settings['logo_attachment_id']` (0 = standardlogo). En ændring skriver `settings_updated` med `setting`, `previous_value` og `value` (ID'er) i samme transaktion. Attachmentet ejes af mediebiblioteket og slettes aldrig af pluginet.
+- **Adgang:** kun `merchboard_manage_settings`; capability tjekkes før nonce.
+- **Brug:** logoet skal kunne læses på lys baggrund. På dashboardets mørke temaer vises det på en lys plade.
+
 **"Sales ledger"** (✅ fase 18, trin 6, runtime-verificeret i Merch Dashboard Local med HPOS og legacy, ADR-038 statusnote "trin 6 afsluttet"; ADR-038 S1–S14 og statusnote 2026-09-30):
 
 - Tilføjes af WooCommerce-modulet via udvidelsespunktet `merchboard_settings_sections` (kaldes i `SettingsPage::render()` efter capability-tjekket); Settings-modulet kender ikke WooCommerce. Vises kun med WooCommerce aktivt og står efter "Creator dashboard" og før "Data on uninstall".
@@ -124,7 +140,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 | Tab | Indstillinger |
 | --- | --- |
-| General | Branding (logo, primærfarve, navn vist i dashboard). Dashboard-slug er implementeret (fase 12). |
+| General | Dashboard-slug (✅ fase 12) og Branding/logo (✅ fase 21) er implementeret. En admin-styret primærfarve er fravalgt (kan ikke kontrastgaranteres, ADR-043); dashboardets farver kommer fra de seks temaer, som hver bruger vælger på sin Profile-side. |
 | Access | Hvilke roller ud over administrator der får admin-caps (fx `shop_manager`). Login-redirect og wp-admin-blokering for rene creators er altid slået til (ADR-026). Til/fra-knapper tilføjes kun ved et konkret behov. |
 | Advanced | "Slet alle data ved afinstallation" (fra). En indstilling for audit-retention (dage) findes ikke i v0.1.0 (ADR-029) og afhænger af den retention-politik, der skal besluttes før produktion. Teknisk log-niveau styres af `WP_DEBUG`/filteret `merchboard_log_level` (ADR-021). |
 

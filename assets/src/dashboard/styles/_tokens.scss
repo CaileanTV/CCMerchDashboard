@@ -1,36 +1,74 @@
-// Design tokens (docs/FRONTEND.md#tokens). Custom properties on the app root,
-// so a dark theme can later swap them without touching components.
-.merchboard-app {
-	--merchboard-gray-50: #f8fafc;
-	--merchboard-gray-100: #f1f5f9;
-	--merchboard-gray-200: #e2e8f0;
-	--merchboard-gray-300: #cbd5e1;
-	--merchboard-gray-500: #64748b;
-	--merchboard-gray-600: #475569;
-	--merchboard-gray-700: #334155;
-	--merchboard-gray-900: #0f172a;
+// Design tokens (docs/FRONTEND.md#tokens, ADR-043). Custom properties on the
+// document root, so the body is covered too. `:root` holds Light (default);
+// the dark themes below override only color tokens with [data-theme]. Without
+// an explicit data-theme, a dark system preference gives Dark Black.
+// Components use only the semantic roles; they never know theme names.
+// The fallback pages in templates/dashboard (no bundle) mirror a few values
+// in MerchBoard\Modules\Dashboard\FallbackStyles; a test keeps them in sync.
+:root {
+	color-scheme: light;
 
-	--merchboard-primary-50: #eef2ff;
-	--merchboard-primary-100: #e0e7ff;
-	--merchboard-primary-500: #6366f1;
-	--merchboard-primary-600: #4f46e5;
-	--merchboard-primary-700: #4338ca;
+	// Page and surfaces.
+	--merchboard-bg: #f8fafc;
+	--merchboard-surface: #fff;
+	--merchboard-surface-muted: #f8fafc;
+	--merchboard-border: #e2e8f0; // Decorative separators only.
+	--merchboard-border-strong: #7c8799; // >= 3:1: control boundaries, essential graphics.
 
+	// Text.
+	--merchboard-text: #0f172a;
+	--merchboard-text-muted: #475569;
+	--merchboard-text-subtle: #64748b;
+
+	// Accent (theme-dependent). Status, negative and focus never derive from it.
+	--merchboard-primary: #4f46e5;
+	--merchboard-primary-hover: #4338ca;
+	--merchboard-on-primary: #fff;
+	--merchboard-link: #4338ca;
+	--merchboard-selected-bg: #eef2ff; // Current item, e.g. the active navigation link.
+	--merchboard-selected-text: #4338ca;
+
+	// Neutral interaction.
+	--merchboard-hover-bg: #f1f5f9;
+
+	// Focus (stable role, independent of the accent).
+	--merchboard-focus: #4f46e5;
+	--merchboard-focus-on-inverse: #a5b4fc;
+
+	// Controls.
+	--merchboard-control-bg: var(--merchboard-surface);
+	--merchboard-control-border: var(--merchboard-border-strong);
+
+	// Status (stable roles, independent of the accent).
 	--merchboard-success: #15803d;
 	--merchboard-success-bg: #f0fdf4;
 	--merchboard-warning: #a16207;
 	--merchboard-warning-bg: #fefce8;
 	--merchboard-danger: #b91c1c;
 	--merchboard-danger-bg: #fef2f2;
+	--merchboard-on-danger: #fff;
 	--merchboard-info: #1d4ed8;
 	--merchboard-info-bg: #eff6ff;
 
-	--merchboard-surface: #fff;
-	--merchboard-surface-muted: var(--merchboard-gray-50);
-	--merchboard-border: var(--merchboard-gray-200);
-	--merchboard-text: var(--merchboard-gray-900);
-	--merchboard-text-muted: var(--merchboard-gray-600);
-	--merchboard-focus: var(--merchboard-primary-600);
+	// Negative values, e.g. negative net sales (stable role, neither the
+	// accent nor danger; the sign is also shown by position and minus sign).
+	--merchboard-negative: #64748b;
+
+	// Inverse surfaces (toast).
+	--merchboard-inverse-surface: #0f172a;
+	--merchboard-on-inverse: #fff;
+
+	// Loading placeholders.
+	--merchboard-skeleton: #e2e8f0;
+
+	// Behind the logo (ADR-042): none on Light; a light plate on dark themes,
+	// so a logo made for light backgrounds stays readable.
+	--merchboard-logo-plate: transparent;
+
+	// Data visualisation.
+	--merchboard-chart-series: var(--merchboard-primary);
+	--merchboard-chart-negative: var(--merchboard-negative);
+	--merchboard-chart-baseline: var(--merchboard-border-strong);
 
 	--merchboard-font: system-ui, -apple-system, "Segoe UI", roboto, "Helvetica Neue", arial, sans-serif;
 	--merchboard-text-xs: 0.75rem;
@@ -57,6 +95,185 @@
 
 	--merchboard-z-nav: 100;
 	--merchboard-motion: 150ms ease-out;
+}
+
+// Roles shared by every dark theme. Status, negative and focus are stable:
+// the same values in all dark themes and never derived from an accent.
+@mixin merchboard-dark-roles {
+	color-scheme: dark;
+
+	--merchboard-focus: #a5b4fc;
+	--merchboard-focus-on-inverse: #4338ca;
+
+	--merchboard-success: #6ccf96;
+	--merchboard-success-bg: #10251a;
+	--merchboard-warning: #e8b94a;
+	--merchboard-warning-bg: #2a210c;
+	--merchboard-danger: #f87171;
+	--merchboard-danger-bg: #2e1414;
+	--merchboard-on-danger: #1a0707;
+	--merchboard-info: #93b8f5;
+	--merchboard-info-bg: #111d33;
+
+	--merchboard-negative: #7a7a7a;
+
+	--merchboard-inverse-surface: #e5e7eb;
+	--merchboard-on-inverse: #0f172a;
+
+	--merchboard-logo-plate: #f8fafc;
+
+	--merchboard-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+	--merchboard-shadow: 0 1px 3px rgb(0 0 0 / 50%), 0 1px 2px rgb(0 0 0 / 30%);
+}
+
+@mixin merchboard-theme-dark-black {
+
+	@include merchboard-dark-roles;
+
+	--merchboard-bg: #0b0c0e;
+	--merchboard-surface: #16181b;
+	--merchboard-surface-muted: #1d2024;
+	--merchboard-border: #2c3036;
+	--merchboard-border-strong: #6b7280;
+	--merchboard-text: #e6e8eb;
+	--merchboard-text-muted: #a3aab4;
+	--merchboard-text-subtle: #8b939e;
+	--merchboard-primary: #9aa3f2;
+	--merchboard-primary-hover: #b4bbf6;
+	--merchboard-on-primary: #0b0c0e;
+	--merchboard-link: #aab2f5;
+	--merchboard-selected-bg: #23264a;
+	--merchboard-selected-text: #c3c8f8;
+	--merchboard-hover-bg: #22252a;
+	--merchboard-skeleton: #2c3036;
+}
+
+@mixin merchboard-theme-dark-green {
+
+	@include merchboard-dark-roles;
+
+	--merchboard-bg: #0b1310;
+	--merchboard-surface: #132019;
+	--merchboard-surface-muted: #192a21;
+	--merchboard-border: #2a3d33;
+	--merchboard-border-strong: #62806f;
+	--merchboard-text: #e3ece7;
+	--merchboard-text-muted: #a2b7ab;
+	--merchboard-text-subtle: #87a092;
+	--merchboard-primary: #6dbb94;
+	--merchboard-primary-hover: #8ccdab;
+	--merchboard-on-primary: #0b1310;
+	--merchboard-link: #7fc7a2;
+	--merchboard-selected-bg: #1b3a2a;
+	--merchboard-selected-text: #a5dbbf;
+	--merchboard-hover-bg: #1d2e25;
+	--merchboard-skeleton: #2a3d33;
+}
+
+@mixin merchboard-theme-dark-blue {
+
+	@include merchboard-dark-roles;
+
+	--merchboard-bg: #0a1120;
+	--merchboard-surface: #121b2e;
+	--merchboard-surface-muted: #18233a;
+	--merchboard-border: #29364f;
+	--merchboard-border-strong: #62728f;
+	--merchboard-text: #e2e8f2;
+	--merchboard-text-muted: #a0aec4;
+	--merchboard-text-subtle: #8696b0;
+	--merchboard-primary: #7aa7e8;
+	--merchboard-primary-hover: #9bbdee;
+	--merchboard-on-primary: #0a1120;
+	--merchboard-link: #8db4ec;
+	--merchboard-selected-bg: #1c3157;
+	--merchboard-selected-text: #b5cdf3;
+	--merchboard-hover-bg: #1b2740;
+	--merchboard-skeleton: #29364f;
+}
+
+// Dark Red and Dark Pink: the theme comes from the tinted surfaces; the
+// accents are low-chroma rose and pink, kept apart from danger and negative
+// (ADR-043: OKLab ΔE >= 15). The phase 21 step 1 drafts (#e09a9e, #e3a0c3)
+// were too close to danger and must not return.
+@mixin merchboard-theme-dark-red {
+
+	@include merchboard-dark-roles;
+
+	--merchboard-bg: #150c0d;
+	--merchboard-surface: #211415;
+	--merchboard-surface-muted: #2a1a1c;
+	--merchboard-border: #3f2a2d;
+	--merchboard-border-strong: #8a6a6e;
+	--merchboard-text: #f0e4e5;
+	--merchboard-text-muted: #bca5a8;
+	--merchboard-text-subtle: #a68c90;
+	--merchboard-primary: #e9c6c8;
+	--merchboard-primary-hover: #f2d8d9;
+	--merchboard-on-primary: #150c0d;
+	--merchboard-link: #edcdcf;
+	--merchboard-selected-bg: #3d2628;
+	--merchboard-selected-text: #f4dcdd;
+	--merchboard-hover-bg: #2d1c1e;
+	--merchboard-skeleton: #3f2a2d;
+}
+
+@mixin merchboard-theme-dark-pink {
+
+	@include merchboard-dark-roles;
+
+	--merchboard-bg: #140c11;
+	--merchboard-surface: #20141b;
+	--merchboard-surface-muted: #291a23;
+	--merchboard-border: #3e2a36;
+	--merchboard-border-strong: #88697b;
+	--merchboard-text: #f1e4ec;
+	--merchboard-text-muted: #bea4b2;
+	--merchboard-text-subtle: #a88b9b;
+	--merchboard-primary: #ebbbe0;
+	--merchboard-primary-hover: #f3d0eb;
+	--merchboard-on-primary: #140c11;
+	--merchboard-link: #efc5e6;
+	--merchboard-selected-bg: #3c2434;
+	--merchboard-selected-text: #f6d9ee;
+	--merchboard-hover-bg: #2c1c26;
+	--merchboard-skeleton: #3e2a36;
+}
+
+// No explicit choice: follow the system (dark → Dark Black). An explicit
+// data-theme (including "light") always wins, because this rule only matches
+// without the attribute.
+@media (prefers-color-scheme: dark) {
+
+	:root:not([data-theme]) {
+
+		@include merchboard-theme-dark-black;
+	}
+}
+
+:root[data-theme="dark-black"] {
+
+	@include merchboard-theme-dark-black;
+}
+
+:root[data-theme="dark-green"] {
+
+	@include merchboard-theme-dark-green;
+}
+
+:root[data-theme="dark-blue"] {
+
+	@include merchboard-theme-dark-blue;
+}
+
+:root[data-theme="dark-red"] {
+
+	@include merchboard-theme-dark-red;
+}
+
+:root[data-theme="dark-pink"] {
+
+	@include merchboard-theme-dark-pink;
 }
 
 // Breakpoints (mobile-first min-width queries).

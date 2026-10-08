@@ -23,6 +23,10 @@ final class SettingsException extends DomainException {
 	public const CONFIRMATION_REQUIRED = 'confirmation_required';
 	public const INVALID_SLUG          = 'invalid_slug';
 	public const SLUG_IN_USE           = 'slug_in_use';
+	public const LOGO_NOT_FOUND        = 'logo_not_found';
+	public const LOGO_WRONG_TYPE       = 'logo_wrong_type';
+	public const LOGO_WRONG_SIZE       = 'logo_wrong_size';
+	public const LOGO_FOREIGN_URL      = 'logo_foreign_url';
 
 	/**
 	 * Constructor.

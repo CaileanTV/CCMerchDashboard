@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,6 +27,7 @@ defined( 'ABSPATH' ) || exit;
  *   word, checked server-side; disabling never needs it (always safe).
  * - The dashboard slug is validated server-side (format, reserved paths,
  *   conflicts with existing content).
+ * - The logo is only an attachment id, validated server-side (ADR-042).
  * - Every change writes a `settings_updated` audit record. The record is
  *   written first and the option last in one transaction: if the option
  *   cannot be saved, the audit record is rolled back (fail closed without a
@@ -44,8 +46,69 @@ final class SettingsService {
 	 * @param AuditTrail       $audit       Audit trail.
 	 * @param Transaction      $transaction Database transaction.
 	 * @param SlugAvailability $slugs       Dashboard slug conflict check.
+	 * @param LogoAttachment   $logos       Logo attachment validation (ADR-042).
 	 */
-	public function __construct( private AuditTrail $audit, private Transaction $transaction, private SlugAvailability $slugs ) {
+	public function __construct( private AuditTrail $audit, private Transaction $transaction, private SlugAvailability $slugs, private LogoAttachment $logos = new LogoAttachment() ) {
+	}
+
+	/**
+	 * Sets the Merch Dashboard logo to a Media Library attachment, or back to
+	 * the built-in default with 0 (ADR-042). Only the attachment id is
+	 * stored. The attachment must pass LogoAttachment (PNG/JPEG/WebP, no SVG,
+	 * size bounds, same origin), checked here, server-side.
+	 *
+	 * @param int $attachment_id Attachment id; 0 = default logo.
+	 * @return bool Whether the setting changed.
+	 * @throws SettingsException When not authorized or the attachment is not usable.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	public function set_logo_attachment_id( int $attachment_id ): bool {
+		$this->authorize();
+
+		$settings = Settings::all();
+		$previous = $settings[ Settings::LOGO_ATTACHMENT_ID ];
+		$id       = max( 0, $attachment_id );
+
+		if ( $id > 0 ) {
+			$this->assert_usable_logo( $id );
+		}
+
+		if ( $previous === $id ) {
+			return false;
+		}
+
+		$settings[ Settings::LOGO_ATTACHMENT_ID ] = $id;
+
+		$this->save(
+			$settings,
+			array(
+				'setting'        => Settings::LOGO_ATTACHMENT_ID,
+				'previous_value' => $previous,
+				'value'          => $id,
+			)
+		);
+
+		return true;
+	}
+
+	/**
+	 * Requires an attachment that may be the logo.
+	 *
+	 * @param int $id Attachment id.
+	 * @throws SettingsException When it may not.
+	 */
+	private function assert_usable_logo( int $id ): void {
+		$reason = match ( $this->logos->problem( $id ) ) {
+			null                            => null,
+			LogoAttachment::WRONG_TYPE      => SettingsException::LOGO_WRONG_TYPE,
+			LogoAttachment::WRONG_SIZE      => SettingsException::LOGO_WRONG_SIZE,
+			LogoAttachment::FOREIGN_URL     => SettingsException::LOGO_FOREIGN_URL,
+			default                         => SettingsException::LOGO_NOT_FOUND,
+		};
+
+		if ( null !== $reason ) {
+			throw new SettingsException( $reason );
+		}
 	}
 
 	/**

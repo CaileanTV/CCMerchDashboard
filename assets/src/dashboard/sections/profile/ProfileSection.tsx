@@ -17,6 +17,7 @@ import { useApi } from '../../hooks/useApi';
 import { PROFILE_LIMITS, SOCIAL_PLATFORMS } from '../../types/creator';
 import type { Profile, SocialLinks, SocialPlatform } from '../../types/creator';
 import { platformLabel } from './platforms';
+import { ThemeSettings } from './ThemeSettings';
 import { errorMessage, validateProfile } from './validation';
 import type { FieldErrors } from './validation';
 
@@ -211,10 +212,7 @@ function ProfileForm( { initial }: { readonly initial: Profile } ) {
 	);
 }
 
-/**
- * Profile section (phase 14): the creator's own display name, bio and links.
- */
-export function ProfileSection() {
+function ProfileContent() {
 	const { state, retry } = useApi( getProfile );
 
 	if ( state.status === 'loading' ) {
@@ -231,4 +229,18 @@ export function ProfileSection() {
 	}
 
 	return <ProfileForm initial={ state.data } />;
+}
+
+/**
+ * Profile section (phase 14): the creator's own display name, bio and links,
+ * and (phase 21) the personal dashboard theme. The theme is saved on its own,
+ * outside the profile form, and does not wait for the profile to load.
+ */
+export function ProfileSection() {
+	return (
+		<>
+			<ProfileContent />
+			<ThemeSettings />
+		</>
+	);
 }

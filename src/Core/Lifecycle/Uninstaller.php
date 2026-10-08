@@ -33,6 +33,8 @@ defined( 'ABSPATH' ) || exit;
  * 1. from users: the `merchboard_creator` role and the plugin's capabilities
  *    (Capabilities::all()) granted directly; other roles and capabilities stay,
  *    and users themselves are never deleted;
+ * 1a. from users: the user meta in USER_META_KEYS (the dashboard theme,
+ *    ADR-044), through WordPress' meta API; users and other meta stay;
  * 2. from roles: the plugin's capabilities (Capabilities::all()), then the
  *    `merchboard_creator` role itself.
  *
@@ -73,6 +75,13 @@ final class Uninstaller {
 	public const ORDER_META_KEYS = array( '_merchboard_ledger_failure' );
 
 	/**
+	 * User meta keys owned by the plugin: the dashboard theme preference
+	 * (Modules\Dashboard\ThemePreference::META_KEY, ADR-044; a test keeps both
+	 * equal, so core does not depend on the module).
+	 */
+	public const USER_META_KEYS = array( 'merchboard_dashboard_theme' );
+
+	/**
 	 * WooCommerce' HPOS filter deciding whether an order is saved after a meta change.
 	 */
 	private const HPOS_SAVE_FILTER = 'woocommerce_orders_table_datastore_should_save_after_meta_change';
@@ -108,6 +117,7 @@ final class Uninstaller {
 		}
 
 		$this->remove_from_users();
+		$this->remove_user_meta();
 		$this->remove_from_roles();
 		$this->remove_product_meta();
 		$this->remove_order_meta();
@@ -126,6 +136,16 @@ final class Uninstaller {
 		$this->logger->info( 'Merch Dashboard data deleted on uninstall.' );
 
 		return true;
+	}
+
+	/**
+	 * Deletes the plugin's user meta keys from every user through the meta API
+	 * (exact keys; users and their other meta stay). Idempotent.
+	 */
+	private function remove_user_meta(): void {
+		foreach ( self::USER_META_KEYS as $key ) {
+			delete_metadata( 'user', 0, $key, '', true );
+		}
 	}
 
 	/**

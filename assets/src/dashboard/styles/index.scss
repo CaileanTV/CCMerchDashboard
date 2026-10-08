@@ -5,7 +5,7 @@
 
 .merchboard-body {
 	margin: 0;
-	background: #f8fafc;
+	background: var(--merchboard-bg);
 }
 
 .merchboard-app {
@@ -14,7 +14,7 @@
 	font-size: var(--merchboard-text-md);
 	line-height: 1.5;
 	color: var(--merchboard-text);
-	background: var(--merchboard-surface-muted);
+	background: var(--merchboard-bg);
 
 	*,
 	*::before,
@@ -28,7 +28,7 @@
 	}
 
 	a {
-		color: var(--merchboard-primary-700);
+		color: var(--merchboard-link);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -83,10 +83,35 @@
 	border-bottom: 1px solid var(--merchboard-border);
 }
 
-.merchboard-topbar__site {
+.merchboard-topbar__brand {
+	display: flex;
 	flex: 1;
+	gap: var(--merchboard-space-3);
+	align-items: center;
+	min-width: 0;
+}
+
+.merchboard-topbar__site {
 	margin: 0;
 	font-weight: 600;
+}
+
+// The logo (ADR-042) on the logo plate: transparent on Light, a light plate
+// on the dark themes. The image keeps its own colors.
+.merchboard-logo {
+	display: inline-flex;
+	flex: none;
+	padding: var(--merchboard-space-1);
+	background: var(--merchboard-logo-plate);
+	border-radius: var(--merchboard-radius-sm);
+}
+
+.merchboard-logo__image {
+	display: block;
+	width: auto;
+	max-width: 10rem;
+	height: 2rem;
+	object-fit: contain;
 }
 
 .merchboard-topbar__menu-button {
@@ -145,13 +170,13 @@
 	border-radius: var(--merchboard-radius-sm);
 
 	&:hover {
-		background: var(--merchboard-gray-100);
+		background: var(--merchboard-hover-bg);
 	}
 
 	&[aria-current="page"] {
 		font-weight: 600;
-		color: var(--merchboard-primary-700);
-		background: var(--merchboard-primary-50);
+		color: var(--merchboard-selected-text);
+		background: var(--merchboard-selected-bg);
 	}
 }
 
@@ -209,18 +234,18 @@
 }
 
 .merchboard-app .merchboard-button--primary {
-	color: #fff;
-	background: var(--merchboard-primary-600);
+	color: var(--merchboard-on-primary);
+	background: var(--merchboard-primary);
 
 	&:hover:not(:disabled) {
-		background: var(--merchboard-primary-700);
+		background: var(--merchboard-primary-hover);
 	}
 }
 
 .merchboard-app .merchboard-button--secondary {
 	color: var(--merchboard-text);
 	background: var(--merchboard-surface);
-	border-color: var(--merchboard-gray-300);
+	border-color: var(--merchboard-control-border);
 }
 
 .merchboard-app .merchboard-button--ghost {
@@ -229,7 +254,7 @@
 }
 
 .merchboard-app .merchboard-button--danger {
-	color: #fff;
+	color: var(--merchboard-on-danger);
 	background: var(--merchboard-danger);
 }
 
@@ -268,7 +293,7 @@
 .merchboard-skeleton__line {
 	display: block;
 	height: 0.875rem;
-	background: var(--merchboard-gray-200);
+	background: var(--merchboard-skeleton);
 	border-radius: var(--merchboard-radius-sm);
 
 	&:last-child {
@@ -350,8 +375,8 @@
 	padding: var(--merchboard-space-2) var(--merchboard-space-3);
 	font: inherit;
 	color: var(--merchboard-text);
-	background: var(--merchboard-surface);
-	border: 1px solid var(--merchboard-gray-300);
+	background: var(--merchboard-control-bg);
+	border: 1px solid var(--merchboard-control-border);
 	border-radius: var(--merchboard-radius-sm);
 
 	&[aria-invalid="true"] {
@@ -376,15 +401,19 @@
 	gap: var(--merchboard-space-4);
 	align-items: center;
 	padding: var(--merchboard-space-3) var(--merchboard-space-4);
-	color: #fff;
-	background: var(--merchboard-gray-900);
+	color: var(--merchboard-on-inverse);
+	background: var(--merchboard-inverse-surface);
 	border-radius: var(--merchboard-radius);
 	box-shadow: var(--merchboard-shadow);
+
+	:focus-visible {
+		outline-color: var(--merchboard-focus-on-inverse);
+	}
 }
 
 .merchboard-toast__dismiss {
 	font: inherit;
-	color: #fff;
+	color: var(--merchboard-on-inverse);
 	text-decoration: underline;
 	cursor: pointer;
 	background: transparent;
@@ -547,16 +576,16 @@
 }
 
 .merchboard-sales-chart__baseline {
-	stroke: var(--merchboard-gray-300);
+	stroke: var(--merchboard-chart-baseline);
 	stroke-width: 1;
 }
 
 .merchboard-sales-chart__column {
-	fill: var(--merchboard-primary-600);
+	fill: var(--merchboard-chart-series);
 }
 
 .merchboard-sales-chart__column--negative {
-	fill: var(--merchboard-primary-500);
+	fill: var(--merchboard-chart-negative);
 }
 
 .merchboard-sales-chart__dates {

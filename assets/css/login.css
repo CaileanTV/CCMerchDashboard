@@ -1,0 +1,157 @@
+/*
+ * Merch Dashboard branding of WordPress' own login screen (ADR-042).
+ *
+ * Loaded by LoginBranding only in Merch Dashboard context; every rule is
+ * scoped to body.merchboard-login, so it cannot style any other login. Only
+ * presentation: the form, its fields and the whole login flow are
+ * WordPress'. No fonts, no external resources and no JavaScript; the logo URL
+ * is added as an inline rule.
+ *
+ * The colors mirror the dashboard tokens: Light, and Dark Black when the
+ * system prefers dark (DesignTokensTest keeps the values in sync). The
+ * dashboard theme of a user is not used here.
+ */
+body.merchboard-login {
+	--merchboard-bg: #f8fafc;
+	--merchboard-surface: #fff;
+	--merchboard-border: #e2e8f0;
+	--merchboard-text: #0f172a;
+	--merchboard-text-muted: #475569;
+	--merchboard-control-border: #7c8799;
+	--merchboard-primary: #4f46e5;
+	--merchboard-primary-hover: #4338ca;
+	--merchboard-on-primary: #fff;
+	--merchboard-link: #4338ca;
+	--merchboard-focus: #4f46e5;
+	--merchboard-logo-plate: transparent;
+
+	color-scheme: light;
+	color: var(--merchboard-text);
+	background: var(--merchboard-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+
+	body.merchboard-login {
+		--merchboard-bg: #0b0c0e;
+		--merchboard-surface: #16181b;
+		--merchboard-border: #2c3036;
+		--merchboard-text: #e6e8eb;
+		--merchboard-text-muted: #a3aab4;
+		--merchboard-control-border: #6b7280;
+		--merchboard-primary: #9aa3f2;
+		--merchboard-primary-hover: #b4bbf6;
+		--merchboard-on-primary: #0b0c0e;
+		--merchboard-link: #aab2f5;
+		--merchboard-focus: #a5b4fc;
+		--merchboard-logo-plate: #f8fafc;
+
+		color-scheme: dark;
+	}
+}
+
+/* The logo on its plate; the image keeps its own colors. */
+body.merchboard-login #login h1 a {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 15rem;
+	height: 5.25rem;
+	padding: 0.5rem;
+	margin: 0 auto 1.5rem;
+	background-color: var(--merchboard-logo-plate);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-origin: content-box;
+	background-size: contain;
+	border-radius: 10px;
+}
+
+body.merchboard-login #login h1 a:focus {
+	outline: 3px solid var(--merchboard-focus);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+body.merchboard-login.login form {
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: 10px;
+	box-shadow: none;
+}
+
+body.merchboard-login.login label {
+	color: var(--merchboard-text);
+}
+
+body.merchboard-login.login form .input,
+body.merchboard-login.login input[type="text"],
+body.merchboard-login.login input[type="password"] {
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface);
+	border-color: var(--merchboard-control-border);
+}
+
+body.merchboard-login.login form .input:focus,
+body.merchboard-login.login input[type="text"]:focus,
+body.merchboard-login.login input[type="password"]:focus,
+body.merchboard-login.login input[type="checkbox"]:focus {
+	border-color: var(--merchboard-focus);
+	outline: 2px solid transparent;
+	box-shadow: 0 0 0 2px var(--merchboard-focus);
+}
+
+body.merchboard-login.login .button-primary {
+	color: var(--merchboard-on-primary);
+	background: var(--merchboard-primary);
+	border-color: var(--merchboard-primary);
+}
+
+body.merchboard-login.login .button-primary:hover,
+body.merchboard-login.login .button-primary:focus {
+	color: var(--merchboard-on-primary);
+	background: var(--merchboard-primary-hover);
+	border-color: var(--merchboard-primary-hover);
+}
+
+body.merchboard-login.login .button-primary:focus {
+	box-shadow: 0 0 0 2px var(--merchboard-surface), 0 0 0 4px var(--merchboard-focus);
+}
+
+body.merchboard-login.login .button.wp-hide-pw,
+body.merchboard-login.login .button.wp-hide-pw .dashicons {
+	color: var(--merchboard-link);
+}
+
+body.merchboard-login.login #nav a,
+body.merchboard-login.login #backtoblog a,
+body.merchboard-login.login .privacy-policy-page-link a {
+	color: var(--merchboard-text-muted);
+}
+
+body.merchboard-login.login #nav a:hover,
+body.merchboard-login.login #nav a:focus,
+body.merchboard-login.login #backtoblog a:hover,
+body.merchboard-login.login #backtoblog a:focus,
+body.merchboard-login.login .privacy-policy-page-link a:hover,
+body.merchboard-login.login .privacy-policy-page-link a:focus {
+	color: var(--merchboard-link);
+}
+
+body.merchboard-login.login .message,
+body.merchboard-login.login .notice,
+body.merchboard-login.login .success {
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface);
+}
+
+body.merchboard-login.login .language-switcher label .dashicons {
+	color: var(--merchboard-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	body.merchboard-login * {
+		transition: none !important;
+	}
+}

@@ -45,6 +45,7 @@ final class UninstallerTest extends TestCase {
 		Functions\expect( 'wp_roles' )->never();
 		Functions\expect( 'remove_role' )->never();
 		Functions\expect( 'delete_post_meta_by_key' )->never();
+		Functions\expect( 'delete_metadata' )->never();
 
 		self::assertFalse( $this->uninstaller()->run() );
 
@@ -118,6 +119,7 @@ final class UninstallerTest extends TestCase {
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
 		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
+		Functions\when( 'delete_metadata' )->justReturn( true );
 		$this->wpdb->query_results['PREPARED#0'] = false;
 
 		self::assertFalse( $this->uninstaller()->run() );
@@ -131,6 +133,7 @@ final class UninstallerTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'delete_metadata' )->justReturn( true );
 		$deleted = array();
 		Functions\when( 'delete_post_meta_by_key' )->alias(
 			function ( string $key ) use ( &$deleted, $options ): bool {
@@ -171,6 +174,30 @@ final class UninstallerTest extends TestCase {
 			'Both product keys and the order failure marker (legacy post meta), through the meta API, while the opt-in is on and before the tables are dropped.'
 		);
 		self::assertArrayNotHasKey( Settings::OPTION, $options->options, 'The opt-in is removed last.' );
+	}
+
+	public function test_with_opt_in_the_theme_user_meta_is_deleted_for_every_user_by_exact_key(): void {
+		$options = InMemoryOptions::install( array( Settings::OPTION => array( Settings::DELETE_DATA_ON_UNINSTALL => true ) ) );
+		Functions\when( 'get_users' )->justReturn( array() );
+		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
+		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
+		$calls = array();
+		Functions\when( 'delete_metadata' )->alias(
+			static function ( string $type, int $object_id, string $key, mixed $value, bool $all ) use ( &$calls, $options ): bool {
+				$calls[] = array( $type, $object_id, $key, $value, $all, array_key_exists( Settings::OPTION, $options->options ) );
+				return false;
+			}
+		);
+
+		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
+
+		self::assertSame( array( 'merchboard_dashboard_theme' ), Uninstaller::USER_META_KEYS );
+		self::assertSame(
+			array( array( 'user', 0, 'merchboard_dashboard_theme', '', true, true ) ),
+			$calls,
+			'Exact key, every user, through the meta API, while the opt-in still exists.'
+		);
 	}
 
 	private function uninstaller(): Uninstaller {

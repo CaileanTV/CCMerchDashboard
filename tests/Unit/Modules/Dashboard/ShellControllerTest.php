@@ -13,16 +13,22 @@ use Brain\Monkey\Functions;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
+use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
 use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Dashboard\DashboardSections;
+use MerchBoard\Modules\Dashboard\FallbackStyles;
 use MerchBoard\Modules\Dashboard\ShellController;
 use MerchBoard\Modules\Dashboard\ShellResponse;
+use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Tests\Unit\Support\FakeDatabase;
+use MerchBoard\Tests\Unit\Support\FakeMediaLibrary;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\TestCase;
@@ -34,6 +40,8 @@ use RuntimeException;
 #[CoversClass( ShellResponse::class )]
 #[CoversClass( DashboardAssets::class )]
 #[CoversClass( DashboardModule::class )]
+#[CoversClass( FallbackStyles::class )]
+#[CoversClass( ThemePreference::class )]
 final class ShellControllerTest extends TestCase {
 
 	private FakeDatabase $db;
@@ -45,6 +53,13 @@ final class ShellControllerTest extends TestCase {
 	private InMemoryOptions $options;
 
 	private int $current_user_id = 0;
+
+	/**
+	 * User meta per user id and key.
+	 *
+	 * @var array<int, array<string, mixed>>
+	 */
+	private array $user_meta = array();
 
 	/**
 	 * Capabilities per user id.
@@ -109,6 +124,7 @@ final class ShellControllerTest extends TestCase {
 		);
 		Functions\when( 'get_query_var' )->alias( fn( string $name ): mixed => $this->query_vars[ $name ] ?? '' );
 		Functions\when( 'get_current_user_id' )->alias( fn(): int => $this->current_user_id );
+		Functions\when( 'get_user_meta' )->alias( fn( int $user_id, string $key ): mixed => $this->user_meta[ $user_id ][ $key ] ?? '' );
 		Functions\when( 'is_user_logged_in' )->alias( fn(): bool => $this->current_user_id > 0 );
 		Functions\when( 'user_can' )->alias(
 			fn( int $user_id, string $capability ): bool => in_array( $capability, $this->user_caps[ $user_id ] ?? array(), true )
@@ -231,6 +247,9 @@ final class ShellControllerTest extends TestCase {
 		self::assertStringNotContainsString( 'wp-admin', $html, 'Never a way into wp-admin.' );
 		self::assertStringNotContainsString( '<script', $html );
 		self::assertStringContainsString( 'Shop &lt;b&gt;&amp;&lt;/b&gt; Co', $html, 'Site name escaped.' );
+		self::assertStringContainsString( '<style>' . FallbackStyles::css() . '</style>', $html, 'Semantic tokens without the bundle.' );
+		self::assertStringContainsString( '<div class="merchboard-fallback__card">', $html );
+		self::assertStringNotContainsString( 'style="', $html, 'No inline style attributes.' );
 	}
 
 	public function test_active_creator_gets_the_react_shell_with_bootstrap_data_and_nonce(): void {
@@ -256,9 +275,92 @@ final class ShellControllerTest extends TestCase {
 		self::assertSame( array( true, true ), $this->wp_assets['nonce_filters'], 'Script tags get the nonce while printing.' );
 		self::assertSame( array( 'merchboard-dashboard' ), $this->wp_assets['printed_scripts'], 'Only the dashboard handle (and its dependencies).' );
 		self::assertSame( array( 'merchboard-dashboard' ), $this->wp_assets['printed_styles'] );
+		self::assertStringNotContainsString( 'merchboard-fallback', $html, 'The fallback styles are only for pages without the bundle.' );
 		self::assertStringNotContainsString( 'Nova', $html, 'The creator is not part of the page; it comes from the API (phase 14).' );
 		self::assertFalse( has_filter( 'wp_script_attributes' ), 'Nonce filters are removed after rendering.' );
 		self::assertFalse( has_filter( 'wp_inline_script_attributes' ) );
+	}
+
+	/**
+	 * Every valid theme becomes `data-theme` on <html> (ADR-044).
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function themes(): array {
+		return array_combine( ThemePreference::THEMES, array_map( static fn( string $theme ): array => array( $theme ), ThemePreference::THEMES ) );
+	}
+
+	/**
+	 * The user's explicit theme is on <html> in the server response, so the
+	 * first paint uses it.
+	 *
+	 * @param string $theme Theme.
+	 */
+	#[DataProvider( 'themes' )]
+	public function test_the_explicit_theme_is_set_on_html_by_the_server( string $theme ): void {
+		$this->login( array( 'read', Capabilities::ACCESS_DASHBOARD ), CreatorStatus::Active );
+		$this->user_meta[ $this->current_user_id ][ ThemePreference::META_KEY ] = $theme;
+
+		$html = $this->controller()->render( $this->controller()->respond() );
+
+		self::assertStringContainsString( '<html lang="en-US" data-theme="' . $theme . '">', $html );
+		self::assertSame( 1, substr_count( $html, 'data-theme=' ) );
+	}
+
+	/**
+	 * Values that must not reach the page: no attribute, so CSS follows the
+	 * system preference.
+	 *
+	 * @return array<string, array{mixed}>
+	 */
+	public static function no_explicit_theme(): array {
+		return array(
+			'no preference'   => array( '' ),
+			'unknown theme'   => array( 'dark-purple' ),
+			'injection'       => array( 'dark-red"><script>alert(1)</script>' ),
+			'different case'  => array( 'Dark-Red' ),
+			'not a string'    => array( array( 'dark-red' ) ),
+			'system guessing' => array( 'dark' ),
+		);
+	}
+
+	/**
+	 * Without a valid explicit theme there is no `data-theme`, so the CSS
+	 * `prefers-color-scheme` rule decides between Light and Dark Black.
+	 *
+	 * @param mixed $stored Stored meta value.
+	 */
+	#[DataProvider( 'no_explicit_theme' )]
+	public function test_without_a_valid_theme_html_has_no_data_theme( mixed $stored ): void {
+		$this->login( array( 'read', Capabilities::ACCESS_DASHBOARD ), CreatorStatus::Active );
+		$this->user_meta[ $this->current_user_id ][ ThemePreference::META_KEY ] = $stored;
+
+		$response = $this->controller()->respond();
+		$html     = $this->controller()->render( $response );
+
+		self::assertNull( $response->view['theme'] );
+		self::assertStringContainsString( '<html lang="en-US">', $html );
+		self::assertStringNotContainsString( 'data-theme', $html );
+		self::assertStringNotContainsString( 'alert(1)', $html );
+	}
+
+	public function test_the_theme_is_not_bootstrap_data_and_not_on_pages_without_the_app(): void {
+		$this->login( array( 'read', Capabilities::ACCESS_DASHBOARD ), CreatorStatus::Active );
+		$this->user_meta[ $this->current_user_id ][ ThemePreference::META_KEY ] = 'dark-blue';
+
+		self::assertArrayNotHasKey( 'theme', $this->controller()->bootstrap(), 'ADR-044: no new bootstrap field.' );
+		$this->controller()->respond();
+		self::assertStringNotContainsString( 'dark-blue', (string) $this->wp_assets['inline'][1], 'The bootstrap script does not carry the theme.' );
+
+		unlink( $this->plugin_dir . 'build/dashboard.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Test fixture.
+		$html = $this->controller()->render( $this->controller()->respond() );
+		self::assertStringNotContainsString( 'data-theme', $html, 'The 503 page is the Light fallback.' );
+
+		$this->login( array( 'read' ), null );
+		$this->user_meta[ $this->current_user_id ][ ThemePreference::META_KEY ] = 'dark-blue';
+		$html = $this->controller()->render( $this->controller()->respond() );
+		self::assertStringContainsString( 'Your access is not active', $html );
+		self::assertStringNotContainsString( 'data-theme', $html, 'The 403 page is the Light fallback.' );
 	}
 
 	public function test_bootstrap_data_is_non_sensitive_and_encoded_safely(): void {
@@ -272,7 +374,8 @@ final class ShellControllerTest extends TestCase {
 
 		$data = json_decode( substr( $inline, strlen( 'window.merchboardDashboard = ' ), -1 ), true );
 		self::assertIsArray( $data );
-		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections' ), array_keys( $data ) );
+		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo' ), array_keys( $data ) );
+		self::assertNull( $data['logo'], 'This fake plugin has no default logo file: the site name is shown as text.' );
 		self::assertSame( 'https://shop.test/wp-login.php?action=lostpassword', $data['password_url'] );
 		self::assertSame( 'Shop <b>&</b> Co', $data['site_name'] );
 		self::assertSame( 'https://shop.test/creator-dashboard/', $data['dashboard_url'] );
@@ -299,6 +402,44 @@ final class ShellControllerTest extends TestCase {
 		self::assertStringNotContainsString( '"id":1', $inline, 'No creator id.' );
 	}
 
+	public function test_the_header_gets_the_default_logo_or_the_chosen_one(): void {
+		$media = FakeMediaLibrary::install();
+		Functions\when( 'plugins_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/wp-content/plugins/merchboard/' . $path );
+		mkdir( $this->plugin_dir . 'assets/brand', 0777, true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Test fixture.
+		copy( dirname( __DIR__, 4 ) . '/assets/brand/logo.svg', $this->plugin_dir . 'assets/brand/logo.svg' );
+		$this->login( array( 'read', Capabilities::ACCESS_DASHBOARD ), CreatorStatus::Active );
+
+		try {
+			$logo = $this->controller()->bootstrap()['logo'];
+			self::assertIsArray( $logo );
+			self::assertStringStartsWith( 'https://shop.test/wp-content/plugins/merchboard/assets/brand/logo.svg', $logo['url'] );
+			self::assertSame( array( 64, 64, '', false ), array( $logo['width'], $logo['height'], $logo['alt'], $logo['custom'] ), 'The default mark sits next to the site name: empty alt.' );
+
+			$media->add( 5 );
+			$this->options->options[ Settings::OPTION ] = array( Settings::LOGO_ATTACHMENT_ID => 5 );
+			self::assertSame(
+				array(
+					'url'    => 'https://shop.test/wp-content/uploads/logo-5.png',
+					'width'  => 400,
+					'height' => 100,
+					'alt'    => 'Shop <b>&</b> Co',
+					'custom' => true,
+				),
+				$this->controller()->bootstrap()['logo'],
+				'The chosen logo replaces the site name, which becomes its alt text (JSON-encoded safely, escaped by React).'
+			);
+
+			$media->items[5]['mime'] = 'image/svg+xml';
+			$fallback                = ( new BrandLogo( new LogoAttachment(), $this->plugin_dir ) )->resolve();
+			self::assertNotNull( $fallback );
+			self::assertFalse( $fallback['custom'], 'An unusable choice falls back to the default logo.' );
+		} finally {
+			unlink( $this->plugin_dir . 'assets/brand/logo.svg' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Test fixture.
+			rmdir( $this->plugin_dir . 'assets/brand' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test fixture.
+			rmdir( $this->plugin_dir . 'assets' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test fixture.
+		}
+	}
+
 	public function test_plain_permalinks_use_query_routing(): void {
 		$this->options->options['permalink_structure'] = '';
 		$this->login( array( 'read', Capabilities::ACCESS_DASHBOARD ), CreatorStatus::Active );
@@ -323,6 +464,9 @@ final class ShellControllerTest extends TestCase {
 		$html = $this->controller()->render( $response );
 		self::assertStringContainsString( 'temporarily unavailable', $html );
 		self::assertStringNotContainsString( '<script', $html );
+		self::assertStringContainsString( '<style>' . FallbackStyles::css() . '</style>', $html, 'Semantic tokens without the bundle.' );
+		self::assertStringContainsString( '<div role="alert" class="merchboard-fallback__card">', $html );
+		self::assertStringNotContainsString( 'style="', $html, 'No inline style attributes.' );
 	}
 
 	/**
@@ -458,6 +602,6 @@ final class ShellControllerTest extends TestCase {
 	}
 
 	private function controller(): ShellController {
-		return new ShellController( new DashboardRoute(), new CreatorContext( $this->creators, $this->logger ), $this->assets(), new DashboardSections( $this->logger ) );
+		return new ShellController( new DashboardRoute(), new CreatorContext( $this->creators, $this->logger ), $this->assets(), new DashboardSections( $this->logger ), new ThemePreference(), new BrandLogo( new LogoAttachment(), $this->plugin_dir ) );
 	}
 }

@@ -90,6 +90,8 @@ final class DashboardSlugTest extends TestCase {
 		Functions\when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test' . $path );
 		Functions\when( 'trailingslashit' )->alias( static fn( string $s ): string => rtrim( $s, '/' ) . '/' );
 		Functions\when( 'add_query_arg' )->alias( static fn( array $args, string $url ): string => $url . '?' . http_build_query( $args ) );
+		Functions\when( 'plugins_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/wp-content/plugins/merchboard/' . $path );
+		Functions\when( 'wp_parse_url' )->alias( static fn( string $url ): mixed => parse_url( $url ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Test stand-in.
 
 		// The site's content and rewrite bases, as WooCommerce registers them.
 		Functions\when( 'get_posts' )->alias( fn( array $args ): array => in_array( $args['name'], $this->post_slugs, true ) ? array( 7 ) : array() );

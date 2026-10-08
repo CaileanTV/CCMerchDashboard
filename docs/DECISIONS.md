@@ -248,7 +248,7 @@ Theme- og plugin-scripts (fx analytics eller cookie-banner) indlæses ikke autom
 2026-09-24
 
 ## Status
-Accepteret. TypeScript besluttet i ADR-027.
+Accepteret. TypeScript besluttet i ADR-027. Suppleret af ADR-043 (2026-10-07): seks dashboard-temaer på semantiske tokens med `data-theme`.
 
 ## Context
 Dashboardet skal understøtte navigation, grafer, tabeller, formularer, modaler og mange fremtidige moduler.
@@ -707,7 +707,7 @@ Konsistensgarantien i ADR-023 bliver ægte på alle engines, i stedet for at afh
 2026-09-24
 
 ## Status
-Accepteret (fase 9). Suppleret af ADR-030: pluginets egen product meta `_merchboard_creator_id` slettes også ved opt-in-uninstall. Anden WooCommerce-data røres fortsat ikke.
+Accepteret (fase 9). Suppleret af ADR-030: pluginets egen product meta `_merchboard_creator_id` slettes også ved opt-in-uninstall. Anden WooCommerce-data røres fortsat ikke. Suppleret af ADR-044 (2026-10-07): user meta-nøglen `merchboard_dashboard_theme` slettes også ved opt-in-uninstall (præcist navn).
 
 ## Context
 Uninstall bevarede indtil nu alle data (fase 3-8), fordi creators og audit er forretningsdata. Pluginet skal kunne fjernes helt, men permanent datatab må aldrig ske ved et uheld. Det må heller ikke ramme WordPress-, WooCommerce- eller andre plugins' data, eller andre sites i et multisite-netværk. `DROP TABLE` kan ikke indgå i en transaktion.
@@ -2011,3 +2011,332 @@ Lille bundle, ingen nye afhængigheder, uændret CSP og fuld tilgængelighed via
 ## Consequences
 - Avancerede interaktioner (zoom, tooltips med animation, mange serier) kræver en ny vurdering og en ny ADR, hvis behovet opstår.
 - FRONTEND.md's afsnit om grafer opdateres i fase 20's docs-trin.
+
+---
+
+# ADR-042: Branding – globalt admin-styret logo og login-branding i Merch Dashboard-kontekst (fase 21)
+
+## Date
+2026-10-07
+
+## Status
+Accepteret (fase 21, trin 2, før implementering). Besluttet af projektejeren efter arkitekturafklaringen (trin 1) og login-undersøgelsen (trin 2), se [reports/2026-10-07-fase-21-branding-themes.md](reports/2026-10-07-fase-21-branding-themes.md) afsnit B, F, G og K. Bekræfter SECURITY.md's regel om SVG-upload. Supplerer ADR-006 (WordPress-authentication) og ADR-026 (dashboard-indgang og login-redirect) uden at ændre dem. Bruges af ADR-043.
+
+## Context
+Dashboard-headeren viser i dag kun sitenavnet som tekst, og pluginet rører ikke `wp-login.php`'s udseende. Repoet har ingen logo-assets. Fase 21 skal give Merch Dashboard et logo i headeren og en brandet login-oplevelse.
+
+Login-undersøgelsen læste WordPress 7.1.2's kildekode (repoets dev-dependency `vendor/roots/wordpress-no-content`) og fandt:
+- `wp_login_form()` poster altid til `wp-login.php`.
+- `login_redirect`, testcookie, secure cookie, fejlvisning, sessionsudløb og admin-e-mail-bekræftelse findes kun i `wp-login.php`, ikke i `wp_signon()`.
+- WordPress' login har ingen CSRF-nonce.
+- Brute-force-beskyttelse og 2FA ligger hos plugins og hosting (SECURITY.md), ofte som regler på URL'en `/wp-login.php`.
+- Logget ud sendes man fra enhver dashboard-URL allerede til `wp_login_url( <dashboard-URL> )` (`ShellController`).
+- `DashboardRoute::dashboard_url_for()` validerer en dashboard-URL på samme site.
+
+## Decision
+
+**Logo**
+
+1. **Ét globalt logo**, ikke pr. creator. Det gemmes som attachment-ID i `merchboard_settings['logo_attachment_id']` (heltal ≥ 0; 0 = intet logo). `Settings::sanitize()` gør ugyldige værdier til 0. Ingen URL og ingen kopi af filen gemmes.
+2. **Administration:** en sektion "Branding" på Merch Dashboard → Settings med egen formular, nonce og `admin-post`-action (samme mønster som dashboard-slug'en, ADR-026).
+   - Kræver capability `merchboard_manage_settings`. Ingen nye capabilities.
+   - Ændringer går kun gennem `SettingsService`: `settings_updated`-audit (`setting`, gamle og nye attachment-ID'er) og option i én transaktion.
+   - Logoet vælges i WordPress' Media Library (`wp_enqueue_media()` og en lille vanilla JS-fil uden build, som `assets/js/creator-user-search.js`).
+   - "Remove logo" sætter værdien til 0 (fallback). Uden JS kan logoet fjernes, men ikke vælges.
+3. **Validering ved gem** (server-side; klienten stoles ikke på):
+   - attachmentet findes (`post_type = attachment`);
+   - MIME-typen er `image/png`, `image/webp` eller `image/jpeg`;
+   - dimensionerne fra `wp_get_attachment_metadata()` holder sig inden for grænserne: højde mindst 64 px, største side højst 2000 px, forhold mellem 1:1 og 6:1;
+   - URL'en har samme origin som sitet.
+
+   Ellers afvises valget med en notice, og intet gemmes.
+4. **Ingen SVG-upload** (bekræfter SECURITY.md: XSS-risiko; en sanitizer ville kræve en runtime-dependency, jf. ADR-004). **Default-logoet er en first-party SVG** i `assets/brand/`, versioneret og reviewet i repoet:
+   - ingen `<script>`, event-attributter, `<foreignObject>`, eksterne referencer eller indlejrede fonte;
+   - vises kun som `<img>` og som CSS-`background-image`, hvor scripts ikke kører;
+   - designes, så det er læseligt på både lys og mørk baggrund.
+5. **Én uploadet variant er tilstrækkelig.**
+   - **Begrundelse:** et logo med mørkt motiv på transparent baggrund forsvinder på mørke flader, og et lyst forsvinder på lyse. Det løses uden en ekstra variant ved altid at vise det uploadede logo på en lys **logo-plade** (`--merchboard-logo-plate`, padding og radius) på mørke temaer og på mørk login.
+   - **Krav til admin:** logoet skal være læseligt på lys baggrund (vises som hjælpetekst i Settings).
+   - En separat mørk variant tilføjes ikke. Den kræver en ny beslutning, hvis pladen viser sig utilstrækkelig.
+   - Logoer er undtaget fra WCAG's kontrastkrav (SC 1.4.3/1.4.11), men pladen sikrer læselighed.
+6. **Fælles opløsning:** én service løser logoet til `{ url, width, height, alt }` og bruges af både dashboard-headeren og login.
+   - Den genvaliderer ved hver læsning, fordi attachmentet kan være slettet eller ændret.
+   - Fallback-kæde: admin-logo → default-SVG → sitenavnet som tekst.
+   - `alt` er sitenavnet, fordi logoet erstatter navnet.
+   - Dashboardet får logoet som bootstrap-feltet `logo`. Det er sitekonfiguration og ikke creator-data, i tråd med FRONTEND.md's bootstrap-regel. Klienten validerer det som en URL med samme origin.
+7. **Same-origin:** dashboardets CSP (`img-src 'self' data:`, ADR-026) ændres ikke. Ligger mediefilerne på en anden origin (CDN eller offload), bruges default-logoet, som for produktbilleder (ADR-039 P8).
+
+**Login**
+
+8. **WordPress' `wp-login.php` brandes kun i Merch Dashboard-kontekst.** Resten af sitets login er uændret. En anmodning er i Merch Dashboard-kontekst, når alle tre betingelser er opfyldt:
+   1. **Login-skærmen:** WordPress har afgjort, at handlingen er `login` (også standardhandlingen uden `action`). Det konstateres passivt med actionen `login_form_login`, som WordPress kun udløser for netop den handling. Observatøren sætter kun et internt flag og giver aldrig output, redirect, `exit` eller ændring af request eller credentials. Det er ikke en overtagelse af `login_form_*`.
+   2. **Ikke interim login:** `interim-login` er ikke sat (wp-admin's modal ved sessionsudløb).
+   3. **Dashboard-mål:** `$_REQUEST['redirect_to']` er en string, og efter `wp_unslash()` giver `DashboardRoute::dashboard_url_for()` en værdi (dvs. `wp_validate_redirect()`, samme host, `http(s)`, ingen `..`, `\` eller `@`, og en dashboard-sti).
+
+   Konteksten dækker første visning efter dashboardets redirect, mislykkede forsøg (WordPress bevarer `redirect_to` som skjult felt), udløbet session og sprogskift. Den dækker ikke glemt adgangskode, reset, registrering, `checkemail`, `confirm_admin_email`, `postpass`, `confirmaction`, interim login eller login uden en dashboard-`redirect_to` (fx administratorer og WooCommerce' "Min konto").
+9. **`redirect_to` bruges kun som betingelse** (ja/nej), aldrig som output. Der indføres ingen ny redirect-mekanisme. Redirect efter login er uændret: WordPress' `login_redirect` og `wp_safe_redirect()` samt `LoginRedirect` for rene creators (ADR-026).
+10. **Hooks i konteksten (kun præsentation):**
+    - `login_enqueue_scripts`: en statisk CSS-fil uden build, afhængig af WordPress' `login`-style, så den indlæses efter den. Logo-URL'en tilføjes via `wp_add_inline_style()` og escapes til CSS-kontekst; er den ugyldig, udelades reglen.
+    - `login_body_class`: klassen `merchboard-login`, som scoper al CSS.
+    - `login_headerurl`: `home_url( '/' )`.
+    - `login_headertext`: sitenavnet.
+
+    Ingen JavaScript, ingen React-bundle, ingen afhængighed af WooCommerce (registreres uden for WooCommerce-modulet).
+11. **Merch Dashboard må ikke:**
+    - oprette en separat login-route eller egen login-formular;
+    - håndtere credentials;
+    - kalde `wp_signon()` som eget credential-flow;
+    - ændre `login_url`, `lostpassword_url` eller `logout_url`;
+    - overtage `login_form_*` eller `login_init`;
+    - ændre login-designet uden for konteksten.
+
+    WordPress' egne cookies og sessions, testcookie, login-hooks, fejlvisning, CAPTCHA- og 2FA-integration, logout, glemt adgangskode og reset samt redirects bruges uændret.
+12. **Farver følger systemet:** `@media (prefers-color-scheme: dark)` giver en mørk login (værdier fra Dark Black, ADR-043); ellers lys (Light).
+    - Ingen relation til brugerens dashboard-tema, som ikke er kendt før login.
+    - Ingen localStorage, cookie, user meta eller JavaScript.
+    - **Fallback:** kan et element i WordPress' login-markup ikke styles sikkert mørkt, bevarer det WordPress' lyse standardudseende. Kan login som helhed ikke styles sikkert mørkt, bruges kun den lyse udgave. Der indføres aldrig JS for at løse det.
+13. **Glemt adgangskode, reset og øvrige handlinger** vises i WordPress' standarddesign (accepteret begrænsning).
+14. **WordPress-versioner:** CSS'en er bundet til WordPress' login-markup (fx `body.login`, `#login h1 a`, `#loginform`, `.button-primary`, `#nav`, `#backtoblog`) og verificeres ved runtime pr. WordPress-version (LocalWP: 7.1.3). En markup-ændring kan give visuelle, men ikke funktionelle, regressioner.
+
+## Alternatives considered
+- **A1 – egen login-side med `wp_signon()`:** fravalgt.
+  - Et nyt credential-endpoint, som hosting- og WAF-regler og "skjul login"-plugins på `/wp-login.php` ikke beskytter (SECURITY.md lægger brute-force-beskyttelse der).
+  - `login_init`, `login_form_login`, `login_form` og `login_redirect` kører ikke. Captcha-plugins, der viser feltet via `login_form` og tjekker i `authenticate`, ville afvise alle logins. 2FA- og SSO-plugins forventer `wp-login.php`.
+  - Testcookie, secure cookie, fejlbeskeder uden brugeroptælling, sessionsudløb og admin-e-mail-bekræftelse skulle genopfindes.
+  - I praksis et eget authentication-flow, i strid med ADR-006.
+- **A2 – egen side med `wp_login_form()`:** fravalgt.
+  - Formularen poster til `wp-login.php`, så fejl, captcha, 2FA, lockout-beskeder og glemt adgangskode alligevel ender der. Den egne side er kun brandet ved første visning.
+  - At sende brugeren tilbage via `wp_login_failed` virker ikke ved tomme felter og skjuler pluginbeskeder.
+  - Formularen udløser ikke `login_form` og har ingen testcookie.
+  - En ekstra formularflade med færre garantier og en ny offentlig route.
+- **C – global branding af `wp-login.php`:** fravalgt. Ændrer login for alle sitets brugere, og det er ikke nødvendigt for Merch Dashboard.
+- **Pæn login-adresse (`/<slug>/login/`) som alias:** fravalgt. Giver intet ud over dashboard-URL'en og reserverer et sektionsnavn.
+- **To logo-uploads (lys og mørk):** fravalgt nu. Logo-pladen løser læseligheden med én upload.
+- **Gemme URL'en eller kopiere filen ind i pluginet:** fravalgt. Kan ikke valideres, kan blive forældet og kræver ejerskab af filer.
+- **SVG-upload med sanitizer:** fravalgt (ADR-004, SECURITY.md).
+- **Udvidet CSP for medier på en anden origin:** fravalgt uden security-review.
+
+## Reason
+Kun præsentationen ændres. Authentication, redirects og alle sikkerhedsmekanismer forbliver WordPress' egne og plugin-kompatible, og brandingen rammer kun Merch Dashboards egne login-anmodninger. Ét logo med fast fallback og en plade holder modellen enkel.
+
+## Security
+- **CSRF:** WordPress' login har ingen nonce, og det ændres ikke. Brandingen udfører ingen handlinger. Admin-formularen har capability og nonce, ligesom de øvrige settings.
+- **Open redirect:** uændret, fordi WordPress og `LoginRedirect` står for redirect. En manipuleret `redirect_to` til en dashboard-URL kan kun slå vores egen branding til.
+- **Brute force, CAPTCHA og 2FA:** uændret; plugins og hosting virker som før.
+- **Output:** logo-URL'en kommer kun fra den validerede service og escapes til CSS-kontekst. `login_headerurl` og `login_headertext` er sitets egne værdier.
+- **Upload:** kun raster; ingen SVG fra admins.
+- **CSP:** uændret. `wp-login.php` har ingen CSP fra pluginet, og der tilføjes ingen.
+
+## Accessibility
+- WordPress' login-formular (labels, `autocomplete`, fejlboks) bevares og virker med tastatur alene og uden JavaScript.
+- Pluginets CSS skal overholde ADR-043's krav: tekst ≥ 4,5:1; UI, fokus og væsentlig grafik ≥ 3:1; synlig fokus; respekt for `prefers-reduced-motion`.
+- `login_headertext` giver logo-linket et tilgængeligt navn.
+- Admin-sektionen: knapper med labels, tastaturbetjening og Media Library som WordPress' egen.
+
+## Migration/data implications
+- Ingen migration og ingen schemaændring: én ny nøgle i den eksisterende `merchboard_settings`.
+- Uninstall uændret: optionen slettes allerede ved opt-in (ADR-025).
+- Attachmentet ejes af Media Library og slettes aldrig af pluginet.
+
+## Consequences
+- Settings-siden får en Branding-sektion. ADMIN.md og SECURITY.md opdateres i implementeringstrinene.
+- Logo-servicen bruges af både dashboard og login.
+- Login-CSS skal gen-verificeres ved nye WordPress-versioner.
+- Glemt adgangskode og reset forbliver standard. En senere ændring kræver en ny beslutning.
+- Brand-font er ikke en del af ADR'en (ROADMAP "Senere").
+
+## Related
+ADR-004, ADR-006, ADR-016, ADR-025, ADR-026, ADR-039 (P8), ADR-043; SECURITY.md; FRONTEND.md (bootstrap-data); fase 21-rapporten.
+
+### Præcisering 2026-10-08: implementering (fase 21, trin 6)
+Beslutningerne er uændrede. Implementeringen præciserer fire detaljer:
+
+- **Alt-tekst (pkt. 6):** default-logoet er et grafisk mærke uden tekst (`assets/brand/logo.svg`).
+  - I dashboard-headeren står det derfor ved siden af sitenavnet som tekst og har `alt=""`, så alt-teksten aldrig beskriver noget, billedet ikke viser.
+  - Et admin-logo erstatter sitenavnet og har sitenavnet som `alt`, som besluttet.
+  - Bootstrap-feltet `logo` er `{ url, width, height, alt, custom }` eller `null` (sitenavnet som tekst).
+- **Synlighed (pkt. 3):** attachmentet skal være offentligt, dvs. `get_post_status()` giver `publish` (uvedhæftet eller vedhæftet et publiceret indlæg). Papirkurv og medier på private indlæg eller kladder afvises. Filendelsen skal give samme MIME-type som den gemte.
+- **Logo-plade (pkt. 5):** pladen bruges på alle mørke temaer, både til admin-logoet og default-logoet. Default-logoet har sin egen mørke baggrundsflade og er læseligt på pladen og på Light.
+- **Login-konteksten (pkt. 8):** `wp-login.php` i WordPress 7.1.2 (repoets dev-dependency) har den forventede markup (`#login`, `.wp-login-logo`, `#nav`, `#backtoblog`). Stylesheetet er scopet til `body.merchboard-login` og indlæses først efter WordPress' `login`-style. Runtime-verifikation i Merch Dashboard Local (WordPress 7.1.3) og i en browser mangler.
+
+---
+
+# ADR-043: Dashboard-temaer – seks temaer på semantiske tokens med `data-theme` (fase 21)
+
+## Date
+2026-10-07
+
+## Status
+Accepteret (fase 21, trin 2, før implementering). Besluttet af projektejeren. Supplerer ADR-010 (eget design system med CSS custom properties) og ADR-041 (graf og negative værdier). Persistens: ADR-044. Login-farver: ADR-042.
+
+## Context
+Dashboardet har allerede CSS custom properties (`_tokens.scss`, 149 anvendelser), men tokens sidder på `.merchboard-app`.
+- Komponenter bruger rå palette-trin 13 steder, og 5 farver er hardcodet.
+- `body`-baggrunden ligger uden for tokens, og no-access- og unavailable-skabelonerne har egne farver.
+- Input-kanten har kontrast cirka 1,48:1 (krav ≥ 3:1).
+
+Målt i trin 2 med trin 1's paletter er afstanden mellem accent og danger:
+
+| Tema | ΔE (OKLab) |
+| --- | --- |
+| Light | 34,6 |
+| Dark Black | 18,6 |
+| Dark Green | 20,9 |
+| Dark Blue | 20,5 |
+| Dark Red | **8,5** |
+| Dark Pink | **7,7** |
+
+Dark Red og Dark Pink ville altså lade accent og danger ligne hinanden.
+
+## Decision
+1. **Seks temaer, lukket sæt:** `light`, `dark-black`, `dark-green`, `dark-blue`, `dark-red`, `dark-pink`. Et nyt tema kræver en ny beslutning.
+2. **Ét token- og stylesheet-system:** tokens defineres på dokumentets rod (`:root`/`html` i shellen, så `body` er med).
+   - Light er standardværdierne. De mørke temaer overstyrer via `[data-theme="…"]` i samme stylesheet i den eksisterende bundle.
+   - Ingen separate stylesheets pr. tema, ingen runtime-dependency, intet JS-temabibliotek, ingen eksterne fonte, CDN'er eller services. Systemfonte bevares.
+3. **Rækkefølge:**
+   1. brugerens eksplicitte valg (serverrenderet `data-theme`, ADR-044) vinder altid;
+   2. uden valg bestemmer `prefers-color-scheme` (mørk → Dark Black, ellers Light);
+   3. uden systempræference: Light.
+
+   Det løses i CSS uden JS.
+4. **Semantiske tokens:** komponenter bruger kun semantiske tokens (præfiks `--merchboard-`). Rå paletter må kun findes i token-filen. Rollerne er:
+   - flader og tekst: `bg`, `surface`, `surface-muted`, `border` (dekorativ), `border-strong` (UI-afgrænsning ≥ 3:1), `text`, `text-muted`;
+   - accent: `primary`, `primary-hover`, `on-primary`, `link`, `nav-active-bg`, `nav-hover-bg`;
+   - stabile roller: `focus`, `success`, `warning`, `danger`, `info`, deres `-bg`, `on-danger`, `negative`;
+   - komponenter: `toast-bg`, `toast-text`, `skeleton`, `chart-bar`, `chart-bar-negative`, `chart-baseline`, `shadow-sm`, `shadow`, `logo-plate`.
+
+   De 13 rå referencer, de 5 hardcodede farver, `body`-baggrunden og no-access/unavailable-skabelonerne flyttes på tokens. Input-kanten rettes til ≥ 3:1.
+5. **Accent må variere** mellem temaer (`primary`, `link`, navigation og `on-primary`).
+6. **Stabile semantiske roller:** success, warning, danger, negative værdier og fokus har samme betydning og nuance-familie i alle temaer (danger rød, success grøn, warning gul/rav).
+   - Kun lyshed og mætning tilpasses lys/mørk for kontrast.
+   - De afledes aldrig af temaets accent, og `--merchboard-focus` er en egen rolle.
+7. **Accent ≠ danger og negative:** i hvert tema skal accenten kunne skelnes tydeligt fra `danger` og `negative`.
+   - **Mål:** OKLab ΔE ≥ 15, valideres ved implementering.
+   - Dark Red og Dark Pink må ikke genbruge danger- eller negativ-farven som primary eller accent. Deres identitet bæres af tonede baggrunde og flader og en accent, der holdes væk fra danger. **Trin 1's udkast til Dark Red og Dark Pink opfylder ikke kravet og skal revideres.**
+   - Danger og fejl bæres aldrig af farve alene (tekst eller ikon, fx "Error:"-præfiks).
+8. **Negative værdier:** vises fortsat ved placering under baselinen, minustegn og tabellen (ADR-041). Farven (`chart-bar-negative`/`negative`) er sekundær og følger punkt 6–7.
+9. **Paletter:** trin 1's paletter (rapportens afsnit E) er designudkast og udgangspunkt, ikke verificerede værdier. Endelige værdier fastlægges og kontrastvalideres i implementeringstrinene.
+10. **Gælder kun creator-dashboardet** (shellen). wp-admin og admin-sektionerne temes ikke. Login følger systemet (ADR-042) og genbruger Light- og Dark Black-værdierne.
+11. **Temaskift** sker uden animation.
+
+## Alternatives considered
+- **Et stylesheet pr. tema:** flere filer, dobbelt vedligehold og risiko for blink. Fravalgt.
+- **Tokens fortsat på `.merchboard-app`:** `body` og skabeloner uden for appen ville ikke følge temaet. Fravalgt.
+- **Accent afledt automatisk (fx `color-mix`):** uforudsigelig kontrast. Fravalgt.
+- **Fri farvevælger eller admin-styret primærfarve** (ADMIN.md's oprindelige "primærfarve"): kan ikke kontrastgaranteres. Ikke en del af fase 21.
+- **Danger farvet efter tema:** bryder rollernes stabilitet. Fravalgt.
+
+## Reason
+Én tokenstruktur gør temaer til ren data, giver forudsigelig kontrast og kræver hverken JS eller nye afhængigheder. Stabile semantiske roller sikrer, at fejl og negative tal betyder det samme i alle temaer.
+
+## Security
+- Temaet er en attributværdi fra en lukket allowlist (ADR-044). Den bruges aldrig som CSS-tekst, klassenavn fra input eller filnavn.
+- Ingen eksterne ressourcer og ingen CSP-ændring.
+
+## Accessibility
+Krav i alle seks temaer og på login:
+- normal tekst ≥ 4,5:1 (stor tekst ≥ 3:1);
+- UI-komponenters afgrænsning, fokusindikator og væsentlig grafik ≥ 3:1 (WCAG 2.1 SC 1.4.3/1.4.11);
+- synlig tastaturfokus;
+- ingen information kun via farve;
+- `prefers-reduced-motion` respekteres;
+- temavælgeren er tastaturbetjent med korrekt label (ADR-044).
+
+Input-kantens cirka 1,48:1 løses i token-refaktoreringen. **Kontrasten er ikke verificeret endnu.** Den valideres under implementering og runtime-verifikation og erklæres først opfyldt der.
+
+## Migration/data implications
+Ingen. Ren CSS i den eksisterende bundle. Valget lagres efter ADR-044.
+
+## Consequences
+- FRONTEND.md's design-system-afsnit ("tokens på `.merchboard-app`") opdateres, når token-refaktoreringen implementeres.
+- Kontrasttests eller -checks pr. tema er en del af implementeringen.
+- Jest dækker ikke CSS, så visuel kontrol er en del af runtime-verifikationen.
+
+## Related
+ADR-010, ADR-041, ADR-042, ADR-044; FRONTEND.md; fase 21-rapporten (afsnit C, E og H).
+
+### Præcisering 2026-10-08: implementering (fase 21, trin 3–4 og 6)
+Beslutningerne er uændrede. De faktiske tokennavne og værdier:
+
+- **Tokennavne (pkt. 4):** implementeret som `selected-bg`/`selected-text` (aktiv navigation; ADR'ens `nav-active-bg`), `hover-bg` (`nav-hover-bg`), `inverse-surface`/`on-inverse` (toast; `toast-bg`/`toast-text`) og `chart-series`/`chart-negative`/`chart-baseline` (`chart-bar`/`chart-bar-negative`).
+- **Ekstra roller:** `text-subtle`, `focus-on-inverse`, `control-bg`, `control-border` og (trin 6) `logo-plate`. Listen står i FRONTEND.md (Tokens og Temaer).
+- **Placering:** Light på `:root`; de fem mørke temaer som SCSS-mixins, der overstyrer alle farvetokens, med en fælles mixin for de stabile mørke roller og `color-scheme`.
+- **Dark Red og Dark Pink (pkt. 7):** accenterne er `#e9c6c8` og `#ebbbe0` (ΔE 19,4 og 18,7 fra den mørke danger `#f87171`). Trin 1-udkastene er afvist og beskyttet af en regressionstest.
+- **Light-ændringer (trin 3):**
+  - kontrolkant og grafbaseline 3,63:1;
+  - negative søjler som selvstændig neutral rolle (`#64748b`);
+  - fokus på toast 8,96:1.
+- **Verifikation:** statisk på token-niveau (`DesignTokensTest`). Visuel browser-verifikation er ikke udført.
+
+---
+
+# ADR-044: Theme-persistence – user meta og `PATCH /me/preferences` (fase 21)
+
+## Date
+2026-10-07
+
+## Status
+Accepteret (fase 21, trin 2, før implementering). Besluttet af projektejeren. Supplerer ADR-007 (`/me`-scope), ADR-008 (REST) og ADR-025 (præcis oprydning ved opt-in-uninstall). Bruges af ADR-043.
+
+## Context
+Temaet (ADR-043) er en personlig UI-præference. Dashboardets ESLint forbyder `localStorage`, `sessionStorage`, `indexedDB` og `document.cookie`. Shellen renderes server-side for den indloggede bruger, så præferencen kan sættes, før CSS'en tolkes. Bootstrap-data må ikke indeholde creator-data (FRONTEND.md).
+
+## Decision
+1. **Lagring:** user meta `merchboard_dashboard_theme` på den autentificerede WordPress-bruger, ikke på creator-recorden.
+   - Præferencen tilhører login-kontoen, i tråd med adskillelsen mellem login og forretningsenhed (ADR-005/ADR-020).
+   - Gyldige værdier er præcis de seks temaer fra ADR-043. Ingen værdi betyder "intet eksplicit valg" (systemstandard).
+2. **Læsning og ingen blink:** `ShellController` læser værdien for den aktuelle bruger og validerer den mod allowlisten.
+   - Kun ved en gyldig værdi sætter `shell.php` `data-theme` på `<html>`, før stylesheetet indlæses. En ugyldig gemt værdi behandles som manglende og repareres ikke automatisk.
+   - Der tilføjes intet bootstrap-felt. Klienten læser det aktuelle valg fra den serverrenderede attribut og validerer mod de seks værdier, så bootstrap-reglen er uændret.
+3. **Skrivning:** `PATCH /merchboard/v1/me/preferences` med JSON-body `{ "theme": "<en af de seks>" | null }`.
+   - Adgang som de øvrige `/me`-routes: `CreatorContext`, cookie og `X-WP-Nonce`; 401 udlogget, 403 uden adgang.
+   - Der skrives kun for `get_current_user_id()`; ID'er i body eller query ignoreres (ADR-007).
+   - Schemaet har `theme` som enum. Enhver anden værdi afvises med 400 (`rest_invalid_param`), og intet gemmes. Ukendte felter ignoreres som ved `PATCH /me/profile`.
+   - `null` sletter metaen (tilbage til systemstandarden).
+   - Svaret er `{ "theme": <værdi> | null }`. Efter succes sætter eller fjerner klienten `data-theme` på `<html>`.
+4. **Eksplicit valg vinder altid** over systemets præference (ADR-043). Der gemmes ingen "auto"-værdi; tilbage til systemet = `null`.
+5. **Ingen** localStorage, sessionStorage, IndexedDB eller cookie (ESLint-reglen bevares). Ingen audit: en personlig UI-præference uden sikkerheds- eller forretningsbetydning. Ingen caching.
+6. **Rækkevidde:** kun creator-dashboardet. wp-admin og login påvirkes ikke (login følger systemet, ADR-042). En administrator, der også er creator, bruger samme præference i dashboardet.
+7. **Uninstall:** nøglen tilføjes den præcise oprydning i `Uninstaller` (`delete_metadata( 'user', 0, 'merchboard_dashboard_theme', '', true )`). Den slettes kun ved opt-in (ADR-025); uden opt-in bevares den som alle andre data. Deaktivering sletter intet.
+
+## Alternatives considered
+- **localStorage:** forbudt af den eksisterende ESLint-regel, kun én browser og blink ved første visning. Fravalgt.
+- **Cookie:** `document.cookie` er forbudt, og en server-cookie gælder kun én browser og er unødvendig, når serveren kender brugeren. Fravalgt.
+- **Kolonne på creator-tabellen:** migration og forkert entitet (præferencen tilhører login-kontoen). Fravalgt.
+- **Map pr. bruger i `merchboard_settings`:** autoloaded, vokser med brugere og blander global konfiguration med personlige data. Fravalgt.
+- **`PATCH /me`:** `/me` beskriver creator-identiteten; præferencer er en selvstændig ressource. Fravalgt.
+- **Bootstrap-felt eller `GET /me/preferences`:** unødvendigt, når den serverrenderede attribut allerede er sandheden. `GET` kan tilføjes, hvis flere præferencer kommer.
+- **Admin-post-formular med sidegenindlæsning:** passer ikke til SPA'en (ADR-008 dækker JS via REST). Fravalgt.
+
+## Reason
+Persistens på tværs af enheder, intet blink, ingen klientlager og en route, der følger `/me`-mønstret med en lukket allowlist.
+
+## Security
+- Kun den indloggede bruger kan ændre sin egen præference (`/me`-scope, nonce).
+- Værdien er en enum og bruges kun som attributværdi fra allowlisten, aldrig som CSS, filnavn eller klassenavn fra input.
+- Ingen eskalering og ingen nye capabilities.
+
+## Accessibility
+- Temavælgeren i dashboardet er et rigtigt formularelement (radiogruppe eller `<select>`) med label ("Tema"). Navnene vises som tekst, ikke kun som farveprikker.
+- Vælgeren er fuldt tastaturbetjent med synlig fokus, og resultatet annonceres via det eksisterende toast- og fejlmønster.
+- Vælgeren giver mulighed for at vende tilbage til systemets standard.
+
+## Migration/data implications
+- Ingen migration og ingen schemaændring (WordPress' `usermeta`).
+- Ny plugin-ejet user meta-nøgle, der skal listes i `Uninstaller` (præcist navn, ADR-025).
+- Den fremtidige GDPR exporter/eraser (ROADMAP "Senere") skal medtage nøglen.
+
+## Consequences
+- API.md, FRONTEND.md og DATABASE.md opdateres, når routen og metaen implementeres.
+- Integrationstests skal dække 401/403, enum-afvisning, `null`, IDOR (ID'er ignoreres) og uninstall.
+- Flere præferencer senere kan bruge samme ressource.
+
+## Related
+ADR-005, ADR-007, ADR-008, ADR-020, ADR-025, ADR-043; API.md; FRONTEND.md (bootstrap-data og ESLint-regler).
+
+### Præcisering 2026-10-08: implementering (fase 21, trin 5)
+Beslutningerne er uændrede.
+
+- **Fejl (pkt. 3):** et ugyldigt `theme` giver 400, enten `rest_invalid_param` (argument-skemaet) eller `merchboard_invalid_preferences` med `data.fields.theme = "invalid"` (`theme` mangler, eller endpointets egen kontrol afviser værdien). `required` bruges ikke i skemaet, fordi WordPress behandler `null` som manglende. Kun body'en tæller, ikke query-parametre. `GET /me/preferences` findes ikke (404).
+- **Vælgeren (pkt. 6 og Accessibility):** et kort "Udseende" på Profile-siden med en native `<select>` (Systemstandard + de seks temaer på dansk). Gem er serialiseret, så serverens sidste skrivning altid er brugerens sidste valg, og ved fejl rulles der tilbage til det gemte tema.
+- **Runtime:** verificeret i Merch Dashboard Local 2026-10-08 (fase 21, trin 9) via WP-CLI og HTTP, ikke i en browser.

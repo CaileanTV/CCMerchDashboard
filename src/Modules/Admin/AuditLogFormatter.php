@@ -198,6 +198,7 @@ final class AuditLogFormatter {
 					'delete_data_on_uninstall' => esc_html__( 'Setting: delete all data when the plugin is deleted', 'merchboard' ),
 					'dashboard_slug'           => esc_html__( 'Setting: creator dashboard URL slug', 'merchboard' ),
 					'counted_order_statuses'   => esc_html__( 'Setting: counted order statuses', 'merchboard' ),
+					'logo_attachment_id'       => esc_html__( 'Setting: logo (Media Library attachment ID, 0 = default logo)', 'merchboard' ),
 					/* translators: %s: setting name. */
 					default                    => self::text( __( 'Setting: %s', 'merchboard' ), self::scalar( $value ) ),
 				};

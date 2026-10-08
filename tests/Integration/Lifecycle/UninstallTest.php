@@ -81,6 +81,7 @@ final class UninstallTest extends IntegrationTestCase {
 		$this->run_uninstall();
 
 		self::assertSame( $before, $this->snapshot() );
+		self::assertSame( array( 'dark-red', 'light' ), $before['themes'], 'Theme preferences are kept without the opt-in.' );
 	}
 
 	public function test_forged_opt_in_value_keeps_everything(): void {
@@ -109,8 +110,11 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertNull( get_role( Capabilities::CREATOR_ROLE ) );
 		self::assertSame( array(), $this->plugin_caps_on_roles() );
 		self::assertSame( array(), $this->plugin_caps_on_users() );
+		self::assertSame( '', get_user_meta( $this->creator_user, 'merchboard_dashboard_theme', true ), 'Theme preference removed (ADR-044).' );
+		self::assertSame( '', get_user_meta( $this->multi_role_user, 'merchboard_dashboard_theme', true ) );
 
 		// Everything else kept.
+		self::assertSame( 'kept', get_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', true ), 'Exact key only, no prefix match.' );
 		self::assertInstanceOf( WP_User::class, get_userdata( $this->creator_user ), 'Linked WordPress user survives.' );
 		self::assertSame( array( 'subscriber' ), array_values( $this->user( $this->creator_user )->roles ) );
 		self::assertSame( array( 'subscriber', 'merchboard_test_custom' ), array_values( $this->user( $this->multi_role_user )->roles ) );
@@ -385,6 +389,11 @@ final class UninstallTest extends IntegrationTestCase {
 
 		$this->plain_user = $this->create_user( 'uninstall_plain' );
 
+		// The dashboard theme (ADR-044) and a foreign key with a similar name.
+		update_user_meta( $this->creator_user, 'merchboard_dashboard_theme', 'dark-red' );
+		update_user_meta( $this->multi_role_user, 'merchboard_dashboard_theme', 'light' );
+		update_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', 'kept' );
+
 		update_option( 'merchboard_test_unrelated', 'kept' );
 		$this->post_id = (int) wp_insert_post(
 			array(
@@ -508,6 +517,10 @@ final class UninstallTest extends IntegrationTestCase {
 			'role'     => get_role( Capabilities::CREATOR_ROLE )?->capabilities,
 			'roles'    => $this->plugin_caps_on_roles(),
 			'users'    => $this->plugin_caps_on_users(),
+			'themes'   => array(
+				get_user_meta( $this->creator_user, 'merchboard_dashboard_theme', true ),
+				get_user_meta( $this->multi_role_user, 'merchboard_dashboard_theme', true ),
+			),
 		) + $this->foreign_snapshot();
 	}
 
@@ -526,6 +539,7 @@ final class UninstallTest extends IntegrationTestCase {
 			'multi_roles'   => array_values( array_diff( $this->user( $this->multi_role_user )->roles, array( Capabilities::CREATOR_ROLE ) ) ),
 			'post'          => get_post_status( $this->post_id ),
 			'unrelated'     => get_option( 'merchboard_test_unrelated' ),
+			'user_meta'     => get_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', true ),
 			'foreign_table' => $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( self::OTHER_SITE_TABLE ) ) ),
 		);
 	}

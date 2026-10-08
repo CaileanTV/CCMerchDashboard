@@ -89,7 +89,8 @@ assets/src/dashboard/
 │                            # format.ts (beløb, tal, datoer), texts.ts (fælles tekster med Overview)
 ├── sections/products/       # ProductsSection (GET /me/products, fase 19)
 ├── sections/orders/         # OrdersSection (GET /me/orders, fase 19)
-├── sections/profile/        # ProfileSection (formular), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
+├── sections/profile/        # ProfileSection (formular), ThemeSettings (temavælger, fase 21), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
+├── theme/                   # themes.ts: de seks temaer, navne (i18n), læs/sæt data-theme på <html> (fase 21)
 ├── styles/                  # _tokens.scss, index.scss (kun .merchboard-*-selektorer)
 ├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures), api.ts (apiFetch-dobbelt: mockApi, response)
 └── test/                    # Jest-tests (*.test.ts/tsx)
@@ -122,13 +123,13 @@ assets/src/dashboard/
 
 ## Design system
 
-Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle værdier er CSS custom properties på `.merchboard-app`, så dark mode senere kan tilføjes ved at skifte tokens. Alle selektorer har prefix `merchboard-`. Der er ingen globale element-selektorer uden for `.merchboard-app` og intet CSS-framework.
+Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle værdier er CSS custom properties på dokumentets rod (`:root`, ✅ fase 21 trin 3). Temaerne overstyrer dem med `[data-theme]` uden at røre komponenterne (✅ fase 21 trin 4, ADR-043; se [Temaer](#temaer--fase-21-trin-4-adr-043)). Alle selektorer har prefix `merchboard-`. Der er ingen globale element-selektorer uden for `.merchboard-app` og intet CSS-framework.
 
-### Tokens (✅ fase 13 i `styles/_tokens.scss`)
+### Tokens (✅ fase 13 i `styles/_tokens.scss`; semantiske roller ✅ fase 21 trin 3)
 
 | Gruppe | Tokens |
 | --- | --- |
-| Farver | Neutral skala `--merchboard-gray-50…900`; `--merchboard-primary-{50,100,500,600,700}`; semantiske `--merchboard-success`, `--merchboard-warning`, `--merchboard-danger`, `--merchboard-info` (+ `-bg`-varianter); overflader `--merchboard-surface`, `--merchboard-surface-muted`, `--merchboard-border`; tekst `--merchboard-text`, `--merchboard-text-muted`; `--merchboard-focus` |
+| Farver | Kun semantiske roller (ingen rå palette; komponenter må ikke bruge farve-literaler, `DesignTokensTest` håndhæver det). **Flader:** `bg`, `surface`, `surface-muted`, `border` (dekorativ), `border-strong` (≥ 3:1). **Tekst:** `text`, `text-muted`, `text-subtle`. **Accent (tema-afhængig):** `primary`, `primary-hover`, `on-primary`, `link`, `selected-bg`, `selected-text`. **Neutral interaktion:** `hover-bg`. **Fokus:** `focus`, `focus-on-inverse`. **Kontroller:** `control-bg`, `control-border`. **Status (stabile, uafhængige af accenten):** `success`, `warning`, `danger`, `info` (+ `-bg`), `on-danger`. **Negative værdier:** `negative` (stabil, hverken accent eller danger). **Inverse:** `inverse-surface`, `on-inverse` (toast). **Øvrige:** `skeleton`, `chart-series`, `chart-negative`, `chart-baseline`. Alle med præfiks `--merchboard-`. Siderne uden bundle (no-access og "unavailable") bruger samme navne med Light-værdierne fra `Modules/Dashboard/FallbackStyles`. |
 | Typografi | System font stack (`system-ui, -apple-system, "Segoe UI", Roboto, …`) i v1. Skal der bruges en brand-font, **self-hostes** den. Ingen Google Fonts-CDN (GDPR, jf. dansk/EU-praksis). Skala: 12 / 14 (body) / 16 / 20 / 24 px, line-height 1.5, vægte 400/500/600. |
 | Spacing | 4px-grid: `--merchboard-space-1` (4) … `--merchboard-space-12` (48) |
 | Radius | `--merchboard-radius-sm` 6px, `--merchboard-radius` 10px, `--merchboard-radius-lg` 16px, `--merchboard-radius-full` |
@@ -136,6 +137,56 @@ Mål: moderne, roligt SaaS-udtryk og konsistens frem for mange varianter. Alle v
 | Breakpoints | `lg` 1024 i brug (mobile-first `min-width`). `sm` 640, `md` 768 og `xl` 1280 tilføjes, når de bruges. |
 | Z-index | `--merchboard-z-nav` 100. Dropdown, modal og toast tilføjes med komponenterne. |
 | Motion | `--merchboard-motion` 150ms ease-out. `prefers-reduced-motion` slår transitions og animationer fra. |
+
+### Temaer (✅ fase 21 trin 4, ADR-043)
+
+Seks temaer i ét stylesheet (`styles/_tokens.scss`), uden separate filer, runtime-afhængigheder, CDN eller eksterne fonte:
+
+- **Light** er `:root` (standard, `color-scheme: light`).
+- **De fem mørke temaer** er `:root[data-theme="dark-black|dark-green|dark-blue|dark-red|dark-pink"]` (præcis de værdier, ADR-044 gemmer; ingen aliaser). Hver er en SCSS-mixin, der overstyrer alle farvetokens.
+- **Fælles mørke roller:** `merchboard-dark-roles` giver de stabile roller (success, warning, danger, info og deres `-bg`, `on-danger`, `negative`, `focus`, `focus-on-inverse`), inverse flader, skygger og `color-scheme: dark` (native kontroller og scrollbars), ens i alle mørke temaer.
+- **Intet eksplicit valg:** `@media (prefers-color-scheme: dark)` på `:root:not([data-theme])` giver Dark Black uden JS. Et eksplicit `data-theme` (også `light`) vinder altid, fordi reglen kun gælder uden attributten.
+- **Komponenter** kender ingen temanavne; temalogik findes kun i tokenfilen.
+- **Persistence (✅ fase 21 trin 5, ADR-044):** `ShellController` læser brugerens user meta `merchboard_dashboard_theme` (`ThemePreference`) og sætter `data-theme` på `<html>` i `shell.php`, før stylesheetet indlæses. Så er første maling allerede i det valgte tema, uden blink. Uden et gyldigt valg sættes ingen attribut, og CSS følger systemet. Der er intet bootstrap-felt: klienten læser valget fra attributten (`theme/themes.ts`). Fallback-siderne (no-access og "unavailable") forbliver Light.
+- **Logo (✅ fase 21 trin 6, ADR-042):** headeren viser bootstrap-feltet `logo` (`Brand` i `app/layout/Layout.tsx`).
+  - **Admin-logo:** erstatter sitenavnet og har sitenavnet som `alt`.
+  - **Default-logoet:** et mærke ved siden af sitenavnet med `alt=""`.
+  - **Fallback:** uden logo, eller hvis billedet ikke kan indlæses (`onError`), vises kun sitenavnet, så der aldrig er et brudt billede.
+  - **Logo-pladen:** `.merchboard-logo` bruger tokenet `--merchboard-logo-plate` (transparent på Light, `#f8fafc` på alle mørke temaer); billedet beholder sine egne farver.
+  - **Validering:** `bootstrap.ts` kræver en URL på samme origin og positive heltalsstørrelser; et ugyldigt logo bliver `null` uden at vælte resten af konfigurationen.
+- **Vælger (✅ fase 21 trin 5):** kortet "Appearance" ("Udseende") på Profile-siden (`sections/profile/ThemeSettings.tsx`), uden for profilformularen, så temaet gemmes for sig og ikke venter på, at profilen indlæses. Profile er den eneste personlige indstillingsside, og der findes ingen Settings-sektion.
+  - **Kontrol:** en native `<select>` via `Field` (label "Theme"/"Tema", hjælpetekst og fokus fra designsystemet) med "System default" ("Systemstandard", `null`) og de seks temaer ved navn (Lys, Mørk sort, Mørk grøn, Mørk blå, Mørk rød, Mørk pink). Den interne værdi er temaets maskinværdi. Det valgte vises som tekst, ikke kun som farve.
+  - **Gem (`hooks/useThemePreference.ts`):** et valg sættes straks på `<html>` og gemmes med `PATCH /me/preferences`. Der er højst ét request ad gangen, og et valg, der laves imens, venter; kun det nyeste ventende valg sendes bagefter. Serverens sidste skrivning er derfor altid brugerens sidste valg, og et overhalet svar ændrer intet.
+  - **Fejl:** fejler det sidste request, sættes det senest gemte tema tilbage (ingen falsk gemt tilstand), og `ApiErrorState` viser fejlen med "Try again". Succes giver `Toast` "Theme saved." ("Temaet er gemt.").
+  - **Ingen** localStorage, sessionStorage, cookie eller bootstrap-felt.
+
+| Tema | bg | surface | text | primary (accent) | on-primary | link |
+| --- | --- | --- | --- | --- | --- | --- |
+| Light | `#f8fafc` | `#fff` | `#0f172a` | `#4f46e5` | `#fff` | `#4338ca` |
+| Dark Black | `#0b0c0e` | `#16181b` | `#e6e8eb` | `#9aa3f2` | `#0b0c0e` | `#aab2f5` |
+| Dark Green | `#0b1310` | `#132019` | `#e3ece7` | `#6dbb94` | `#0b1310` | `#7fc7a2` |
+| Dark Blue | `#0a1120` | `#121b2e` | `#e2e8f2` | `#7aa7e8` | `#0a1120` | `#8db4ec` |
+| Dark Red | `#150c0d` | `#211415` | `#f0e4e5` | `#e9c6c8` (afdæmpet rosa) | `#150c0d` | `#edcdcf` |
+| Dark Pink | `#140c11` | `#20141b` | `#f1e4ec` | `#ebbbe0` (afdæmpet pink) | `#140c11` | `#efc5e6` |
+
+**Logo-plade:** `--merchboard-logo-plate` er transparent på Light og `#f8fafc` på de fem mørke temaer (fælles mørk rolle). `DesignTokensTest` kræver, at pladen står ≥ 3:1 mod bg og surface i alle mørke temaer.
+
+**Login (ADR-042):** `assets/css/login.css` spejler Light og Dark Black (under `prefers-color-scheme: dark`) med de samme tokennavne; `DesignTokensTest` holder værdierne i takt.
+
+**Stabile mørke roller:** danger `#f87171` (på danger `#1a0707`), success `#6ccf96`, warning `#e8b94a`, info `#93b8f5`, negative `#7a7a7a` (neutral), fokus `#a5b4fc`. Light: danger `#b91c1c`, negative `#64748b`, fokus `#4f46e5`.
+
+**Dark Red og Dark Pink:** trin 1's accenter (`#e09a9e`, `#e3a0c3`) lå for tæt på danger (OKLab ΔE 9,4 og 12,7 mod den mørke danger `#f87171`; kravet er ≥ 15) og er erstattet af accenter med lav kroma. Temaets karakter bæres af de tonede flader. Danger og fejl har altid tekst.
+
+**Verifikation:** `tests/Unit/Modules/Dashboard/DesignTokensTest.php` kontrollerer statisk alle seks temaer:
+
+- 36 kontrastpar pr. tema (tekst ≥ 4,5:1; UI, fokus og grafik ≥ 3:1);
+- ΔE ≥ 15 for accent mod danger og negative, negative mod danger og graf-serie mod negativ;
+- at hvert mørkt tema overstyrer alle farvetokens;
+- at de stabile roller ikke afledes af accenten;
+- regression mod trin 1-accenterne;
+- de uændrede Light-værdier.
+
+Det er verifikation på token-niveau. **Visuel verifikation i en browser mangler** (ingen browser til rådighed).
 
 ### Komponenter
 
@@ -174,7 +225,7 @@ Sektionen `sales` (sti `sales`, label "Sales" / "Salg") registreres af WooCommer
 
 - **Periode og interval:** en formular med "From"/"To" (native `<input type="date">`, ingen egen date-picker) og "Interval" (Day/Week/Month) og knappen "Show". Første request er uden parametre, altså serverens standardperiode (30 kalenderdage inklusive i dag, `day`) og samme request og cache-post som Overview. Formularen udfyldes med den periode, serveren anvendte. "Show" sender `from`, `to` og `interval` (`salesPath()` udelader tomme felter); et skift af interval bevarer datoerne i formularen. `from` efter `to` afvises i klienten (feltfejl på "To", ingen request); serverens 400 (`rest_invalid_param` eller `merchboard_invalid_period`, fx mere end 366 perioder eller 5 år) giver en fast advarsel uden serverens tekst, og formularen bevarer input.
 - **Pr. valuta:** én `Card` pr. valuta i API'ets rækkefølge. Én valuta: titlen "Your sales" (valutaen fremgår af beløbene); flere: valutakoden som titel og teksten "Tallene vises pr. valuta og lægges aldrig sammen". Ingen sum og ingen omregning. Hvert kort har nøgletallene (`SalesFigures`, samme komponent som Overview), grafen og tabellen. `currencies: []` giver en empty state ("No net sales in this period.") i stedet for en tom graf.
-- **Graf (`SalesChart`, ADR-041):** søjler fra en nul-baseline, én pr. periode, i en egen SVG (ingen chart-bibliotek, ingen CDN, CSP uændret). Én serie pr. graf, så ingen legende; figcaption "Net sales per day/week/month". Positive søjler over baselinen, negative under (fortegnet vises af placeringen, ikke kun af farven; negative søjler har en lysere nuance af samme token). Farver kommer fra design-tokens (`--merchboard-primary-600/500`, baseline `--merchboard-gray-300`). SVG'en har `viewBox` med én slot pr. periode og `preserveAspectRatio="none"`, fylder containerens bredde (ingen faste pixelbredder) og er 12rem høj; aksemærkaterne (største og mindste værdi og 0) og første/sidste periode er HTML ved siden af og under SVG'en, så teksten er læselig på alle bredder. Hver søjle har en native tooltip (`<title>`: periode og beløb).
+- **Graf (`SalesChart`, ADR-041):** søjler fra en nul-baseline, én pr. periode, i en egen SVG (ingen chart-bibliotek, ingen CDN, CSP uændret). Én serie pr. graf, så ingen legende; figcaption "Net sales per day/week/month". Positive søjler over baselinen, negative under (fortegnet vises af placeringen, ikke kun af farven; negative søjler har den neutrale `--merchboard-chart-negative`, der ikke afhænger af accenten). Farver kommer fra design-tokens (`--merchboard-chart-series`, `--merchboard-chart-negative`, baseline `--merchboard-chart-baseline` ≥ 3:1). SVG'en har `viewBox` med én slot pr. periode og `preserveAspectRatio="none"`, fylder containerens bredde (ingen faste pixelbredder) og er 12rem høj; aksemærkaterne (største og mindste værdi og 0) og første/sidste periode er HTML ved siden af og under SVG'en, så teksten er læselig på alle bredder. Hver søjle har en native tooltip (`<title>`: periode og beløb).
 - **Geometri (`chart-geometry.ts`, ren og deterministisk):** beløb bliver aldrig til JavaScript-tal: decimalstrengen parses til BigInt-enheder af 1/10000, og skaleringen sker med heltalsaritmetik; kun de færdige viewBox-koordinater (0–100, afrundet til 1/100) er tal. Derfor ingen overflow eller tab af præcision ved store beløb (fx `999999999999999.9999`). Domænet er altid [min(0, mindste), max(0, største)], så baselinen er 0. En serie af nuller tegner kun baselinen (ingen division med 0), én periode er én søjle, og et lille beløb ≠ 0 får en minimumshøjde, så det kan ses.
 - **Tabel (det tilgængelige alternativ):** altid i DOM'en under grafen: den eksisterende `Table` (`<caption>` "Net sales, units and orders per period (<valuta>)", `<th scope="col">`, fokuserbar scroll-region) med Period, Net sales (excl. VAT), Units og Orders for hver periode. SVG'en og aksemærkaterne er `aria-hidden`; figcaption siger, at tabellen har de samme tal. Ingen information formidles kun via farve eller kun via grafen.
 - **Tilstande:** skeleton ("Loading sales…"), `ApiErrorState` med retry (ingen servertekst), "Sales figures are not available." ved 404 `rest_no_route`, advarslen ved 400. "Show" er deaktiveret under indlæsning.

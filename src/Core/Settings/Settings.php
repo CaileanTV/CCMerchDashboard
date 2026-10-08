@@ -64,6 +64,13 @@ final class Settings {
 	public const STATUS_SLUG_MAX_LENGTH = 17;
 
 	/**
+	 * The admin-chosen logo (ADR-042): a Media Library attachment id, 0 for
+	 * none (the built-in default logo). Only the id is stored; whether it is a
+	 * usable logo is checked when it is saved and again whenever it is shown.
+	 */
+	public const LOGO_ATTACHMENT_ID = 'logo_attachment_id';
+
+	/**
 	 * Slugs WordPress, WooCommerce or common setups already use for their own
 	 * URLs; the dashboard must never shadow them.
 	 */
@@ -101,13 +108,14 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int}
 	 */
 	public static function defaults(): array {
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL => false,
 			self::DASHBOARD_SLUG           => self::DEFAULT_DASHBOARD_SLUG,
 			self::COUNTED_ORDER_STATUSES   => self::DEFAULT_COUNTED_ORDER_STATUSES,
+			self::LOGO_ATTACHMENT_ID       => 0,
 		);
 	}
 
@@ -118,15 +126,17 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug = $values[ self::DASHBOARD_SLUG ] ?? null;
+		$logo = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
 
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
 			self::DASHBOARD_SLUG           => is_string( $slug ) && self::valid_slug( $slug ) ? $slug : self::DEFAULT_DASHBOARD_SLUG,
 			self::COUNTED_ORDER_STATUSES   => self::status_list( $values[ self::COUNTED_ORDER_STATUSES ] ?? null ),
+			self::LOGO_ATTACHMENT_ID       => is_int( $logo ) && $logo > 0 ? $logo : 0,
 		);
 	}
 
@@ -146,7 +156,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -204,6 +214,14 @@ final class Settings {
 		}
 
 		return array() === $statuses ? self::DEFAULT_COUNTED_ORDER_STATUSES : $statuses;
+	}
+
+	/**
+	 * The stored logo attachment id (0 = the default logo). Not validated
+	 * against the Media Library here; see Modules\Dashboard\Branding.
+	 */
+	public static function logo_attachment_id(): int {
+		return self::all()[ self::LOGO_ATTACHMENT_ID ];
 	}
 
 	/**

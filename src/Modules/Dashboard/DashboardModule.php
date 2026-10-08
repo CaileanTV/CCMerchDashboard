@@ -14,6 +14,9 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorProfileService;
+use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
+use MerchBoard\Modules\Dashboard\Branding\LoginBranding;
+use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
 use MerchBoard\Modules\Dashboard\Rest\MeController;
 
 defined( 'ABSPATH' ) || exit;
@@ -51,6 +54,19 @@ final class DashboardModule implements Module {
 			}
 		);
 
+		$container->set( ThemePreference::class, static fn(): ThemePreference => new ThemePreference() );
+
+		// Branding (ADR-042): one logo for the dashboard and the login screen.
+		$container->set( LogoAttachment::class, static fn(): LogoAttachment => new LogoAttachment() );
+		$container->set( BrandLogo::class, static fn( Container $c ): BrandLogo => new BrandLogo( $c->get( LogoAttachment::class ), dirname( __DIR__, 3 ) . '/' ) );
+		$container->set(
+			LoginBranding::class,
+			static fn( Container $c ): LoginBranding => new LoginBranding( $c->get( DashboardRoute::class ), $c->get( BrandLogo::class ), dirname( __DIR__, 3 ) . '/' )
+		);
+
+		// WordPress' own login screen, branded only in Merch Dashboard context.
+		$container->get( LoginBranding::class )->register();
+
 		$container->set( DashboardSections::class, static fn( Container $c ): DashboardSections => new DashboardSections( $c->get( Logger::class ) ) );
 
 		$container->set(
@@ -59,7 +75,9 @@ final class DashboardModule implements Module {
 				$c->get( DashboardRoute::class ),
 				$c->get( CreatorContext::class ),
 				$c->get( DashboardAssets::class ),
-				$c->get( DashboardSections::class )
+				$c->get( DashboardSections::class ),
+				$c->get( ThemePreference::class ),
+				$c->get( BrandLogo::class )
 			)
 		);
 
@@ -93,6 +111,7 @@ final class DashboardModule implements Module {
 			static fn( Container $c ): MeController => new MeController(
 				$c->get( CreatorContext::class ),
 				$c->get( CreatorProfileService::class ),
+				$c->get( ThemePreference::class ),
 				$c->get( Logger::class )
 			)
 		);

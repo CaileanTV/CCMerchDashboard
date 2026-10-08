@@ -17,6 +17,19 @@ export interface DashboardSection {
 	readonly path: string;
 }
 
+/**
+ * The header logo (ADR-042), on the page's own origin. A custom (admin) logo
+ * replaces the site name and carries it as alt text; the default logo is a
+ * mark next to the site name (empty alt text).
+ */
+export interface DashboardLogo {
+	readonly url: string;
+	readonly width: number;
+	readonly height: number;
+	readonly alt: string;
+	readonly custom: boolean;
+}
+
 /** Validated configuration used by the app (camelCase, URLs checked). */
 export interface DashboardConfig {
 	readonly siteName: string;
@@ -29,4 +42,6 @@ export interface DashboardConfig {
 	readonly passwordUrl: string;
 	readonly locale: string;
 	readonly sections: readonly DashboardSection[];
+	/** Null: no usable logo; the site name is shown as text. */
+	readonly logo: DashboardLogo | null;
 }

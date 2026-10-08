@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Dashboard;
 
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -39,8 +40,10 @@ final class ShellController {
 	 * @param CreatorContext    $context  Creator access policy.
 	 * @param DashboardAssets   $assets   Built frontend assets.
 	 * @param DashboardSections $sections Section registry.
+	 * @param ThemePreference   $themes   The user's dashboard theme.
+	 * @param BrandLogo         $logo     The logo (ADR-042).
 	 */
-	public function __construct( private DashboardRoute $route, private CreatorContext $context, private DashboardAssets $assets, private DashboardSections $sections ) {
+	public function __construct( private DashboardRoute $route, private CreatorContext $context, private DashboardAssets $assets, private DashboardSections $sections, private ThemePreference $themes, private BrandLogo $logo ) {
 	}
 
 	/**
@@ -93,7 +96,22 @@ final class ShellController {
 			return ShellResponse::page( 503, ShellResponse::TEMPLATE_SHELL, array_merge( $common, array( 'assets_ready' => false ) ) );
 		}
 
-		return ShellResponse::page( 200, ShellResponse::TEMPLATE_SHELL, array_merge( $common, array( 'assets_ready' => true ) ), self::nonce() );
+		// The user's explicit theme on <html> (ADR-044), so the first paint
+		// already uses it. Null: no attribute, and CSS follows the system.
+		$theme = $this->themes->for_user( get_current_user_id() );
+
+		return ShellResponse::page(
+			200,
+			ShellResponse::TEMPLATE_SHELL,
+			array_merge(
+				$common,
+				array(
+					'assets_ready' => true,
+					'theme'        => $theme,
+				)
+			),
+			self::nonce()
+		);
 	}
 
 	/**
@@ -114,6 +132,31 @@ final class ShellController {
 			'password_url'  => wp_lostpassword_url(),
 			'locale'        => determine_locale(),
 			'sections'      => $this->sections->for_current_user(),
+			'logo'          => $this->logo_data(),
+		);
+	}
+
+	/**
+	 * The header logo (ADR-042): site configuration, not creator data. An
+	 * admin logo replaces the site name, so its alt text is the site name;
+	 * the default logo is a mark next to the site name, so it has an empty
+	 * alt text. Null: no usable logo, the site name is shown as text.
+	 *
+	 * @return array{url: string, width: int, height: int, alt: string, custom: bool}|null
+	 */
+	private function logo_data(): ?array {
+		$logo = $this->logo->resolve();
+
+		if ( null === $logo ) {
+			return null;
+		}
+
+		return array(
+			'url'    => $logo['url'],
+			'width'  => $logo['width'],
+			'height' => $logo['height'],
+			'alt'    => $logo['custom'] ? (string) get_bloginfo( 'name' ) : '',
+			'custom' => $logo['custom'],
 		);
 	}
 

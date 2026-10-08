@@ -86,6 +86,8 @@ final class SettingsTest extends TestCase {
 		Functions\when( 'trailingslashit' )->alias( static fn( string $s ): string => rtrim( $s, '/' ) . '/' );
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'add_query_arg' )->alias( static fn( array $args, string $url ): string => $url . '?' . http_build_query( $args ) );
+		Functions\when( 'plugins_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/wp-content/plugins/merchboard/' . $path );
+		Functions\when( 'wp_parse_url' )->alias( static fn( string $url ): mixed => parse_url( $url ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Test stand-in.
 	}
 
 	/**
@@ -125,9 +127,42 @@ final class SettingsTest extends TestCase {
 				Settings::DELETE_DATA_ON_UNINSTALL => true,
 				Settings::DASHBOARD_SLUG           => Settings::DEFAULT_DASHBOARD_SLUG,
 				Settings::COUNTED_ORDER_STATUSES   => array( 'processing', 'completed' ),
+				Settings::LOGO_ATTACHMENT_ID       => 0,
 			),
 			Settings::all()
 		);
+	}
+
+	/**
+	 * Stored logo values: only a positive integer id counts (ADR-042).
+	 *
+	 * @return array<string, array{mixed, int}>
+	 */
+	public static function stored_logo_ids(): array {
+		return array(
+			'id'           => array( 42, 42 ),
+			'missing'      => array( null, 0 ),
+			'zero'         => array( 0, 0 ),
+			'negative'     => array( -3, 0 ),
+			'numeric text' => array( '42', 0 ),
+			'url'          => array( 'https://evil.test/logo.png', 0 ),
+			'float'        => array( 4.2, 0 ),
+			'array'        => array( array( 42 ), 0 ),
+		);
+	}
+
+	/**
+	 * The stored logo id is sanitized on every read.
+	 *
+	 * @param mixed $stored   Stored value.
+	 * @param int   $expected Expected id.
+	 */
+	#[DataProvider( 'stored_logo_ids' )]
+	public function test_logo_attachment_id_is_only_a_positive_integer( mixed $stored, int $expected ): void {
+		$this->options->options[ Settings::OPTION ] = array( Settings::LOGO_ATTACHMENT_ID => $stored );
+
+		self::assertSame( $expected, Settings::logo_attachment_id() );
+		self::assertSame( 0, Settings::defaults()[ Settings::LOGO_ATTACHMENT_ID ] );
 	}
 
 	public function test_counted_order_statuses_default_to_processing_and_completed(): void {

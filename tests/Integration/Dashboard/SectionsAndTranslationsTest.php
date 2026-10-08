@@ -14,10 +14,12 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Dashboard\DashboardSections;
 use MerchBoard\Modules\Dashboard\ShellController;
+use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 
@@ -155,7 +157,9 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 			new DashboardRoute(),
 			$this->service( CreatorContext::class ),
 			new DashboardAssets( $dir, content_url( '/plugins/merchboard/' ), $this->service( Logger::class ) ),
-			$this->service( DashboardSections::class )
+			$this->service( DashboardSections::class ),
+			new ThemePreference(),
+			$this->service( BrandLogo::class )
 		);
 		$response   = $controller->respond();
 		$html       = $controller->render( $response );

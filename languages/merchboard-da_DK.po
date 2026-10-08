@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-07T15:35:24+00:00\n"
+"PO-Revision-Date: 2026-10-08T15:20:33+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -40,7 +40,7 @@ msgstr "Du skal være logget ind."
 
 #: src/Core/Http/RestController.php:65
 #: src/Core/Http/RestController.php:79
-#: src/Modules/Dashboard/Rest/MeController.php:176
+#: src/Modules/Dashboard/Rest/MeController.php:229
 msgid "You do not have access to this resource."
 msgstr "Du har ikke adgang til denne ressource."
 
@@ -185,248 +185,252 @@ msgstr "Indstilling: URL-slug for creator-dashboardet"
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
+#: src/Modules/Admin/AuditLogFormatter.php:201
+msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
+msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
+
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:202
+#: src/Modules/Admin/AuditLogFormatter.php:203
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:206
+#: src/Modules/Admin/AuditLogFormatter.php:207
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:209
+#: src/Modules/Admin/AuditLogFormatter.php:210
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:211
+#: src/Modules/Admin/AuditLogFormatter.php:212
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:211
+#: src/Modules/Admin/AuditLogFormatter.php:212
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:214
+#: src/Modules/Admin/AuditLogFormatter.php:215
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:217
+#: src/Modules/Admin/AuditLogFormatter.php:218
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:220
+#: src/Modules/Admin/AuditLogFormatter.php:221
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:223
+#: src/Modules/Admin/AuditLogFormatter.php:224
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:225
+#: src/Modules/Admin/AuditLogFormatter.php:226
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:228
+#: src/Modules/Admin/AuditLogFormatter.php:229
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:231
+#: src/Modules/Admin/AuditLogFormatter.php:232
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:234
+#: src/Modules/Admin/AuditLogFormatter.php:235
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:237
+#: src/Modules/Admin/AuditLogFormatter.php:238
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:239
+#: src/Modules/Admin/AuditLogFormatter.php:240
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:242
+#: src/Modules/Admin/AuditLogFormatter.php:243
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:245
+#: src/Modules/Admin/AuditLogFormatter.php:246
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:248
+#: src/Modules/Admin/AuditLogFormatter.php:249
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:251
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:251
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:253
+#: src/Modules/Admin/AuditLogFormatter.php:254
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:294
+#: src/Modules/Admin/AuditLogFormatter.php:295
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:297
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:299
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:311
+#: src/Modules/Admin/AuditLogFormatter.php:312
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:312
+#: src/Modules/Admin/AuditLogFormatter.php:313
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:313
+#: src/Modules/Admin/AuditLogFormatter.php:314
 #: build/dashboard.js:2
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:316
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:316
+#: src/Modules/Admin/AuditLogFormatter.php:317
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:317
+#: src/Modules/Admin/AuditLogFormatter.php:318
 msgid "Failed"
 msgstr "Fejlet"
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:327
-#: src/Modules/Admin/AuditLogFormatter.php:353
-#: src/Modules/Admin/AuditLogFormatter.php:412
+#: src/Modules/Admin/AuditLogFormatter.php:328
+#: src/Modules/Admin/AuditLogFormatter.php:354
+#: src/Modules/Admin/AuditLogFormatter.php:413
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:340
+#: src/Modules/Admin/AuditLogFormatter.php:341
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:341
+#: src/Modules/Admin/AuditLogFormatter.php:342
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:342
+#: src/Modules/Admin/AuditLogFormatter.php:343
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:343
+#: src/Modules/Admin/AuditLogFormatter.php:344
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:371
+#: src/Modules/Admin/AuditLogFormatter.php:372
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:396
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:397
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:398
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:398
+#: src/Modules/Admin/AuditLogFormatter.php:399
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:399
-#: src/Modules/Admin/AuditLogFormatter.php:547
+#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:548
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:401
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:401
-#: src/Modules/Admin/AuditLogFormatter.php:607
+#: src/Modules/Admin/AuditLogFormatter.php:402
+#: src/Modules/Admin/AuditLogFormatter.php:608
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:4
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:402
+#: src/Modules/Admin/AuditLogFormatter.php:403
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:431
+#: src/Modules/Admin/AuditLogFormatter.php:432
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:446
+#: src/Modules/Admin/AuditLogFormatter.php:447
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -435,7 +439,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:515
+#: src/Modules/Admin/AuditLogFormatter.php:516
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
 #, php-format
@@ -443,101 +447,101 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:515
+#: src/Modules/Admin/AuditLogFormatter.php:516
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:525
+#: src/Modules/Admin/AuditLogFormatter.php:526
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:526
+#: src/Modules/Admin/AuditLogFormatter.php:527
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:527
+#: src/Modules/Admin/AuditLogFormatter.php:528
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:528
+#: src/Modules/Admin/AuditLogFormatter.php:529
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:529
+#: src/Modules/Admin/AuditLogFormatter.php:530
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:530
+#: src/Modules/Admin/AuditLogFormatter.php:531
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:531
+#: src/Modules/Admin/AuditLogFormatter.php:532
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:532
+#: src/Modules/Admin/AuditLogFormatter.php:533
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:533
+#: src/Modules/Admin/AuditLogFormatter.php:534
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:534
+#: src/Modules/Admin/AuditLogFormatter.php:535
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:535
+#: src/Modules/Admin/AuditLogFormatter.php:536
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:548
+#: src/Modules/Admin/AuditLogFormatter.php:549
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:560
+#: src/Modules/Admin/AuditLogFormatter.php:561
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:561
+#: src/Modules/Admin/AuditLogFormatter.php:562
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:573
+#: src/Modules/Admin/AuditLogFormatter.php:574
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:574
+#: src/Modules/Admin/AuditLogFormatter.php:575
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:575
+#: src/Modules/Admin/AuditLogFormatter.php:576
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:607
+#: src/Modules/Admin/AuditLogFormatter.php:608
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:4
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:626
+#: src/Modules/Admin/AuditLogFormatter.php:627
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:627
+#: src/Modules/Admin/AuditLogFormatter.php:628
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:628
+#: src/Modules/Admin/AuditLogFormatter.php:629
 msgid "social links"
 msgstr "sociale links"
 
@@ -769,7 +773,7 @@ msgid "WooCommerce"
 msgstr "WooCommerce"
 
 #: src/Modules/Admin/OverviewPage.php:198
-#: src/Modules/Settings/Admin/SettingsPage.php:132
+#: src/Modules/Settings/Admin/SettingsPage.php:206
 msgid "Data on uninstall"
 msgstr "Data ved afinstallation"
 
@@ -782,7 +786,7 @@ msgid "Kept when the plugin is deleted"
 msgstr "Bevares, når pluginet slettes"
 
 #: src/Modules/Admin/OverviewPage.php:206
-#: src/Modules/Settings/Admin/SettingsPage.php:77
+#: src/Modules/Settings/Admin/SettingsPage.php:94
 msgid "Settings"
 msgstr "Indstillinger"
 
@@ -795,7 +799,7 @@ msgid "Sorry, you are not allowed to manage creators."
 msgstr "Du har desværre ikke adgang til at administrere creators."
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
-#: src/Modules/Settings/Admin/SettingsActions.php:98
+#: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:345
@@ -833,7 +837,7 @@ msgid "Creator deactivated."
 msgstr "Creator deaktiveret."
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:190
-#: src/Modules/Settings/Admin/SettingsPage.php:93
+#: src/Modules/Settings/Admin/SettingsPage.php:162
 msgid "No changes were made."
 msgstr "Der blev ikke foretaget nogen ændringer."
 
@@ -985,114 +989,190 @@ msgstr "Tilknyttet %1$s (%2$s)."
 msgid "Profile"
 msgstr "Profil"
 
-#: src/Modules/Dashboard/Rest/MeController.php:174
+#: src/Modules/Dashboard/Rest/MeController.php:206
+msgid "The theme is not valid."
+msgstr "Temaet er ikke gyldigt."
+
+#: src/Modules/Dashboard/Rest/MeController.php:227
 msgid "Some profile fields are invalid."
 msgstr "Nogle profilfelter er ugyldige."
 
-#: src/Modules/Settings/Admin/SettingsActions.php:92
-#: src/Modules/Settings/Admin/SettingsPage.php:108
+#: src/Modules/Settings/Admin/SettingsActions.php:130
+#: src/Modules/Settings/Admin/SettingsPage.php:181
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:93
 msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
 msgstr "Du har desværre ikke adgang til at administrere Merch Dashboards indstillinger."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:76
-#: src/Modules/Settings/Admin/SettingsPage.php:117
+#: src/Modules/Settings/Admin/SettingsPage.php:93
+#: src/Modules/Settings/Admin/SettingsPage.php:190
 msgid "Merch Dashboard Settings"
 msgstr "Merch Dashboard-indstillinger"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:92
+#: src/Modules/Settings/Admin/SettingsPage.php:136
+msgid "Choose the Merch Dashboard logo"
+msgstr "Vælg Merch Dashboard-logoet"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:137
+msgid "Use this logo"
+msgstr "Brug dette logo"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:138
+msgid "Logo chosen. Save the logo to use it."
+msgstr "Logoet er valgt. Gem logoet for at bruge det."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:161
 msgid "Settings saved."
 msgstr "Indstillingerne er gemt."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:94
+#: src/Modules/Settings/Admin/SettingsPage.php:163
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
 msgid "You are not allowed to change these settings."
 msgstr "Du har ikke adgang til at ændre disse indstillinger."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:95
+#: src/Modules/Settings/Admin/SettingsPage.php:164
 msgid "Permanent deletion was not enabled: type DELETE in the confirmation field to enable it."
 msgstr "Permanent sletning blev ikke slået til: skriv DELETE i bekræftelsesfeltet for at slå den til."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:96
+#: src/Modules/Settings/Admin/SettingsPage.php:165
 msgid "The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path."
 msgstr "Dashboard-sluggen blev ikke ændret: brug 3-50 små bogstaver, cifre og enkelte bindestreger, og ikke en reserveret WordPress- eller WooCommerce-sti."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:97
+#: src/Modules/Settings/Admin/SettingsPage.php:166
 msgid "The dashboard slug was not changed: a page, post, product or archive already uses it."
 msgstr "Dashboard-sluggen blev ikke ændret: en side, et indlæg, et produkt eller et arkiv bruger den allerede."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:98
+#: src/Modules/Settings/Admin/SettingsPage.php:167
+msgid "The logo was not changed: choose an image from the Media Library."
+msgstr "Logoet blev ikke ændret: vælg et billede fra mediebiblioteket."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:168
+msgid "The logo was not changed: use a PNG, JPEG or WebP image. SVG is not allowed."
+msgstr "Logoet blev ikke ændret: brug et PNG-, JPEG- eller WebP-billede. SVG er ikke tilladt."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:169
+msgid "The logo was not changed: the image must be at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high."
+msgstr "Logoet blev ikke ændret: billedet skal være mindst 64 px højt, højst 2000 px på den længste side og mellem kvadratisk og seks gange så bredt som højt."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:170
+msgid "The logo was not changed: the image must be stored on this site, not on another domain."
+msgstr "Logoet blev ikke ændret: billedet skal ligge på dette site, ikke på et andet domæne."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:171
 msgid "A technical error occurred. The settings were not changed."
 msgstr "Der opstod en teknisk fejl. Indstillingerne blev ikke ændret."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:133
+#: src/Modules/Settings/Admin/SettingsPage.php:207
 msgid "Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here."
 msgstr "Deaktivering af pluginet sletter aldrig data. Sletning af pluginet bevarer også alle data, medmindre permanent sletning er slået til her."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:136
+#: src/Modules/Settings/Admin/SettingsPage.php:210
 msgid "Permanent deletion is ENABLED."
 msgstr "Permanent sletning er SLÅET TIL."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:137
+#: src/Modules/Settings/Admin/SettingsPage.php:211
 msgid "When the plugin is deleted from the Plugins screen, all Merch Dashboard data is permanently removed."
 msgstr "Når pluginet slettes fra siden Plugins, fjernes alle Merch Dashboard-data permanent."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:139
+#: src/Modules/Settings/Admin/SettingsPage.php:213
 msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
 msgstr "Permanent sletning er slået fra. Sletning af pluginet bevarer alle Merch Dashboard-data."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:142
+#: src/Modules/Settings/Admin/SettingsPage.php:216
 msgid "If enabled, deleting the plugin permanently removes: all creators, the audit log, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
 msgstr "Hvis det er slået til, fjerner sletning af pluginet permanent: alle creators, auditloggen, Merch Dashboards indstillinger og skemastatus, rollen \"Merch Dashboard Creator\" og alle merchboard_-rettigheder. Det kan ikke fortrydes."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:143
+#: src/Modules/Settings/Admin/SettingsPage.php:217
 msgid "Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers."
 msgstr "Fjernes aldrig: WordPress-brugere, andre roller og rettigheder, indlæg, sider, medier samt WooCommerce-produkter, -ordrer og -kunder."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:149
+#: src/Modules/Settings/Admin/SettingsPage.php:223
 msgid "Permanent deletion"
 msgstr "Permanent sletning"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:151
+#: src/Modules/Settings/Admin/SettingsPage.php:225
 msgid "Delete all Merch Dashboard data when the plugin is deleted"
 msgstr "Slet alle Merch Dashboard-data, når pluginet slettes"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:155
+#: src/Modules/Settings/Admin/SettingsPage.php:229
 msgid "Confirmation"
 msgstr "Bekræftelse"
 
 #. translators: %s: the word to type, "DELETE".
-#: src/Modules/Settings/Admin/SettingsPage.php:158
+#: src/Modules/Settings/Admin/SettingsPage.php:232
 #, php-format
 msgid "To enable permanent deletion, also type %s here."
 msgstr "For at slå permanent sletning til skal du også skrive %s her."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:163
+#: src/Modules/Settings/Admin/SettingsPage.php:237
 msgid "Save settings"
 msgstr "Gem indstillinger"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:175
-#: templates/dashboard/shell.php:31
+#: src/Modules/Settings/Admin/SettingsPage.php:252
+msgid "Branding"
+msgstr "Branding"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:253
+msgid "The logo is shown at the top of the creator dashboard and on the WordPress login page when creators log in to their dashboard. Other login pages are not changed."
+msgstr "Logoet vises øverst i creator-dashboardet og på WordPress-login-siden, når creators logger ind på deres dashboard. Andre login-sider ændres ikke."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:256
+msgid "The chosen logo can no longer be used (deleted, changed or not on this site), so the default logo is shown."
+msgstr "Det valgte logo kan ikke længere bruges (slettet, ændret eller ikke på dette site), så standardlogoet vises."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:264
+msgid "Logo"
+msgstr "Logo"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:267
+msgid "Current logo"
+msgstr "Nuværende logo"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:270
+msgid "A custom logo is in use."
+msgstr "Et eget logo er i brug."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:270
+msgid "The default Merch Dashboard logo is in use."
+msgstr "Standardlogoet for Merch Dashboard er i brug."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:271
+msgid "Choose logo"
+msgstr "Vælg logo"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:272
+msgid "PNG, JPEG or WebP from the Media Library, at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high. SVG is not allowed. Use a logo that is readable on a light background; on dark dashboard themes it is shown on a light plate."
+msgstr "PNG, JPEG eller WebP fra mediebiblioteket, mindst 64 px højt, højst 2000 px på den længste side og mellem kvadratisk og seks gange så bredt som højt. SVG er ikke tilladt. Brug et logo, der kan læses på lys baggrund; på mørke dashboard-temaer vises det på en lys plade."
+
+#: src/Modules/Settings/Admin/SettingsPage.php:275
+msgid "Save logo"
+msgstr "Gem logo"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:279
+msgid "Use the default logo"
+msgstr "Brug standardlogoet"
+
+#: src/Modules/Settings/Admin/SettingsPage.php:293
+#: templates/dashboard/shell.php:35
 msgid "Creator dashboard"
 msgstr "Creator-dashboard"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:176
+#: src/Modules/Settings/Admin/SettingsPage.php:294
 msgid "Creators log in and use their dashboard at this address:"
 msgstr "Creators logger ind og bruger deres dashboard på denne adresse:"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:179
+#: src/Modules/Settings/Admin/SettingsPage.php:297
 msgid "Plain permalinks are active, so the slug is not used; the dashboard address above works regardless."
 msgstr "Simple permalinks er aktive, så sluggen bruges ikke; dashboardadressen ovenfor virker alligevel."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:186
+#: src/Modules/Settings/Admin/SettingsPage.php:304
 msgid "Dashboard URL slug"
 msgstr "URL-slug for dashboardet"
 
-#: src/Modules/Settings/Admin/SettingsPage.php:188
+#: src/Modules/Settings/Admin/SettingsPage.php:306
 msgid "Lowercase letters, digits and hyphens. Changing it moves the dashboard: the old address stops working and bookmarks must be updated. Pages, posts, products and archives that already use a slug cannot be chosen."
 msgstr "Små bogstaver, cifre og bindestreger. En ændring flytter dashboardet: den gamle adresse holder op med at virke, og bogmærker skal opdateres. Slugs, som sider, indlæg, produkter og arkiver allerede bruger, kan ikke vælges."
 
-#: src/Modules/Settings/Admin/SettingsPage.php:190
+#: src/Modules/Settings/Admin/SettingsPage.php:308
 msgid "Save dashboard URL"
 msgstr "Gem dashboardadresse"
 
@@ -2076,40 +2156,40 @@ msgstr "ukendt"
 msgid "The Merch Dashboard WooCommerce integration is not active: WooCommerce %1$s or later is required. Current version: %2$s. The rest of Merch Dashboard works normally."
 msgstr "Merch Dashboards WooCommerce-integration er ikke aktiv: WooCommerce %1$s eller nyere kræves. Nuværende version: %2$s. Resten af Merch Dashboard virker normalt."
 
-#: templates/dashboard/no-access.php:28
+#: templates/dashboard/no-access.php:30
 msgid "Access not active"
 msgstr "Adgang ikke aktiv"
 
-#: templates/dashboard/no-access.php:39
+#: templates/dashboard/no-access.php:36
 msgid "Your access is not active"
 msgstr "Din adgang er ikke aktiv"
 
 #. translators: %s: site name.
-#: templates/dashboard/no-access.php:41
+#: templates/dashboard/no-access.php:38
 #, php-format
 msgid "Your creator dashboard access is not active. Please contact %s."
 msgstr "Din adgang til creator-dashboardet er ikke aktiv. Kontakt %s."
 
-#: templates/dashboard/no-access.php:42
-#: templates/dashboard/shell.php:47
+#: templates/dashboard/no-access.php:39
+#: templates/dashboard/shell.php:54
 #: build/dashboard.js:1
 msgid "Log out"
 msgstr "Log ud"
 
-#: templates/dashboard/shell.php:41
+#: templates/dashboard/shell.php:47
 #: build/dashboard.js:10
 msgid "Loading your dashboard…"
 msgstr "Indlæser dit dashboard …"
 
-#: templates/dashboard/shell.php:42
+#: templates/dashboard/shell.php:48
 msgid "The creator dashboard needs JavaScript. Please enable it in your browser."
 msgstr "Creator-dashboardet kræver JavaScript. Slå det til i din browser."
 
-#: templates/dashboard/shell.php:45
+#: templates/dashboard/shell.php:52
 msgid "The dashboard is temporarily unavailable."
 msgstr "Dashboardet er midlertidigt utilgængeligt."
 
-#: templates/dashboard/shell.php:46
+#: templates/dashboard/shell.php:53
 msgid "Please try again later."
 msgstr "Prøv igen senere."
 
@@ -2417,6 +2497,50 @@ msgstr "Produktsider"
 #: build/dashboard.js:7
 msgid "Dismiss"
 msgstr "Luk"
+
+#: build/dashboard.js:7
+msgid "Light"
+msgstr "Lys"
+
+#: build/dashboard.js:7
+msgid "Dark black"
+msgstr "Mørk sort"
+
+#: build/dashboard.js:7
+msgid "Dark green"
+msgstr "Mørk grøn"
+
+#: build/dashboard.js:7
+msgid "Dark blue"
+msgstr "Mørk blå"
+
+#: build/dashboard.js:7
+msgid "Dark red"
+msgstr "Mørk rød"
+
+#: build/dashboard.js:7
+msgid "Dark pink"
+msgstr "Mørk pink"
+
+#: build/dashboard.js:7
+msgid "Theme saved."
+msgstr "Temaet er gemt."
+
+#: build/dashboard.js:7
+msgid "Appearance"
+msgstr "Udseende"
+
+#: build/dashboard.js:7
+msgid "Theme"
+msgstr "Tema"
+
+#: build/dashboard.js:7
+msgid "System default follows the light or dark setting of your device."
+msgstr "Systemstandard følger den lyse eller mørke indstilling på din enhed."
+
+#: build/dashboard.js:7
+msgid "System default"
+msgstr "Systemstandard"
 
 #: build/dashboard.js:7
 msgid "No changes to save."

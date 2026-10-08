@@ -14,6 +14,8 @@
 
 declare( strict_types=1 );
 
+use MerchBoard\Modules\Dashboard\FallbackStyles;
+
 defined( 'ABSPATH' ) || exit;
 
 $merchboard_site   = (string) ( $merchboard_view['site_name'] ?? '' );
@@ -26,16 +28,11 @@ $merchboard_logout = (string) ( $merchboard_view['logout_url'] ?? '' );
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title><?php echo esc_html( __( 'Access not active', 'merchboard' ) . ' · ' . $merchboard_site ); ?></title>
-<style>
-	body { margin: 0; font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f6f7f7; color: #1d2327; }
-	main { max-width: 32rem; margin: 4rem auto; padding: 0 1.5rem; }
-	.card { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 1.5rem; }
-	a { color: #2271b1; }
-</style>
+<style><?php echo FallbackStyles::css(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static CSS without input. ?></style>
 </head>
 <body>
-<main>
-	<div class="card">
+<main class="merchboard-fallback">
+	<div class="merchboard-fallback__card">
 		<h1><?php esc_html_e( 'Your access is not active', 'merchboard' ); ?></h1>
 		<?php /* translators: %s: site name. */ ?>
 		<p><?php echo esc_html( sprintf( __( 'Your creator dashboard access is not active. Please contact %s.', 'merchboard' ), $merchboard_site ) ); ?></p>

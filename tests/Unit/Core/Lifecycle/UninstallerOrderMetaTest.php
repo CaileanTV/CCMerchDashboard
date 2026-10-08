@@ -38,6 +38,7 @@ final class UninstallerOrderMetaTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'delete_metadata' )->justReturn( true );
 	}
 
 	public function test_hpos_markers_are_removed_through_crud_in_batches_with_the_order_save_suppressed(): void {

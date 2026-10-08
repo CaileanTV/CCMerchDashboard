@@ -5,6 +5,7 @@ import { isRecord, readSameOriginUrl, readString } from './api/validate';
 import { normalizePath } from './app/routes';
 import type {
 	DashboardConfig,
+	DashboardLogo,
 	DashboardSection,
 	RoutingMode,
 } from './types/config';
@@ -34,6 +35,45 @@ function parseSections( value: unknown ): DashboardSection[] | null {
 	}
 
 	return sections;
+}
+
+const MAX_LOGO_SIDE = 4000;
+
+function isSize( value: unknown ): value is number {
+	return (
+		typeof value === 'number' &&
+		Number.isInteger( value ) &&
+		value > 0 &&
+		value <= MAX_LOGO_SIDE
+	);
+}
+
+/**
+ * The logo, or null when it is missing or invalid. A bad logo never breaks
+ * the dashboard: the header then shows the site name as text.
+ *
+ * @param value  Raw `logo` value.
+ * @param origin Origin of the current page.
+ */
+function parseLogo( value: unknown, origin: string ): DashboardLogo | null {
+	if ( ! isRecord( value ) ) {
+		return null;
+	}
+
+	const url = readSameOriginUrl( value.url, origin );
+	const { width, height, alt, custom } = value;
+
+	if (
+		url === null ||
+		! isSize( width ) ||
+		! isSize( height ) ||
+		typeof alt !== 'string' ||
+		typeof custom !== 'boolean'
+	) {
+		return null;
+	}
+
+	return { url, width, height, alt, custom };
 }
 
 /**
@@ -84,5 +124,6 @@ export function parseConfig(
 		passwordUrl,
 		locale,
 		sections,
+		logo: parseLogo( raw.logo, origin ),
 	};
 }

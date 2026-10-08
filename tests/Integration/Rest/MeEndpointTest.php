@@ -1,7 +1,7 @@
 <?php
 /**
- * GET /me, GET and PATCH /me/profile against the real WordPress REST server,
- * users, roles and database.
+ * GET /me, GET and PATCH /me/profile and PATCH /me/preferences against the
+ * real WordPress REST server, users, roles and database.
  *
  * @package MerchBoard
  */
@@ -14,7 +14,9 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -41,11 +43,11 @@ final class MeEndpointTest extends IntegrationTestCase {
 	public function test_routes_are_registered_with_permission_callbacks(): void {
 		$routes = rest_get_server()->get_routes( 'merchboard/v1' );
 
-		self::assertSame( array( '/merchboard/v1', '/merchboard/v1/me', '/merchboard/v1/me/profile' ), array_keys( $routes ) );
+		self::assertSame( array( '/merchboard/v1', '/merchboard/v1/me', '/merchboard/v1/me/profile', '/merchboard/v1/me/preferences' ), array_keys( $routes ) );
 
 		$methods = array();
 
-		foreach ( array( '/merchboard/v1/me', '/merchboard/v1/me/profile' ) as $route ) {
+		foreach ( array( '/merchboard/v1/me', '/merchboard/v1/me/profile', '/merchboard/v1/me/preferences' ) as $route ) {
 			foreach ( $routes[ $route ] as $endpoint ) {
 				self::assertIsCallable( $endpoint['permission_callback'] ?? null, $route );
 				self::assertNotSame( '__return_true', $endpoint['permission_callback'] );
@@ -55,11 +57,155 @@ final class MeEndpointTest extends IntegrationTestCase {
 
 		self::assertSame(
 			array(
-				'/merchboard/v1/me'         => array( 'GET' ),
-				'/merchboard/v1/me/profile' => array( 'GET', 'PATCH' ),
+				'/merchboard/v1/me'             => array( 'GET' ),
+				'/merchboard/v1/me/profile'     => array( 'GET', 'PATCH' ),
+				'/merchboard/v1/me/preferences' => array( 'PATCH' ),
 			),
 			$methods
 		);
+	}
+
+	/**
+	 * The six themes of ADR-043.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function themes(): array {
+		return array_combine( ThemePreference::THEMES, array_map( static fn( string $theme ): array => array( $theme ), ThemePreference::THEMES ) );
+	}
+
+	/**
+	 * Each theme is saved in the user's meta and echoed back.
+	 *
+	 * @param string $theme Theme.
+	 */
+	#[DataProvider( 'themes' )]
+	public function test_patch_preferences_saves_each_theme( string $theme ): void {
+		$user = $this->creator_user( 'theme_creator', 'Nova', CreatorStatus::Active );
+		wp_set_current_user( $user );
+		$audit = $this->count_rows( Tables::AUDIT_LOG );
+
+		$response = $this->request( 'PATCH', '/me/preferences', array( 'theme' => $theme ) );
+
+		self::assertSame( 200, $response->get_status() );
+		self::assertSame( array( 'theme' => $theme ), $response->get_data() );
+		self::assertSame( $theme, get_user_meta( $user, ThemePreference::META_KEY, true ) );
+		self::assertSame( $audit, $this->count_rows( Tables::AUDIT_LOG ), 'No audit record for a UI preference.' );
+	}
+
+	public function test_null_resets_to_the_system_preference(): void {
+		$user = $this->creator_user( 'theme_creator', 'Nova', CreatorStatus::Active );
+		wp_set_current_user( $user );
+		update_user_meta( $user, ThemePreference::META_KEY, 'dark-red' );
+
+		$response = $this->request( 'PATCH', '/me/preferences', array( 'theme' => null ) );
+
+		self::assertSame( 200, $response->get_status() );
+		self::assertSame( array( 'theme' => null ), $response->get_data() );
+		self::assertSame( array(), get_user_meta( $user, ThemePreference::META_KEY, false ), 'The meta row is deleted, nothing about the system is stored.' );
+
+		self::assertSame( 200, $this->request( 'PATCH', '/me/preferences', array( 'theme' => null ) )->get_status(), 'Resetting again is fine.' );
+	}
+
+	/**
+	 * Bodies that must be refused with 400.
+	 *
+	 * @return array<string, array{array<string, mixed>}>
+	 */
+	public static function invalid_preferences(): array {
+		return array(
+			'unknown theme'  => array( array( 'theme' => 'dark-purple' ) ),
+			'system guess'   => array( array( 'theme' => 'dark' ) ),
+			'different case' => array( array( 'theme' => 'Dark-Blue' ) ),
+			'empty string'   => array( array( 'theme' => '' ) ),
+			'number'         => array( array( 'theme' => 3 ) ),
+			'boolean'        => array( array( 'theme' => true ) ),
+			'array'          => array( array( 'theme' => array( 'dark-blue' ) ) ),
+			'markup'         => array( array( 'theme' => 'light"><script>' ) ),
+			'missing theme'  => array( array( 'other' => 'dark-blue' ) ),
+		);
+	}
+
+	/**
+	 * Invalid input gives 400 and changes nothing.
+	 *
+	 * @param array<string, mixed> $body Body.
+	 */
+	#[DataProvider( 'invalid_preferences' )]
+	public function test_invalid_preferences_give_400_and_change_nothing( array $body ): void {
+		$user = $this->creator_user( 'theme_creator', 'Nova', CreatorStatus::Active );
+		wp_set_current_user( $user );
+		update_user_meta( $user, ThemePreference::META_KEY, 'dark-green' );
+
+		$response = $this->request( 'PATCH', '/me/preferences', $body );
+
+		self::assertSame( 400, $response->get_status() );
+		self::assertContains( ( (array) $response->get_data() )['code'] ?? null, array( 'rest_invalid_param', 'merchboard_invalid_preferences' ) );
+		self::assertSame( 'dark-green', get_user_meta( $user, ThemePreference::META_KEY, true ) );
+		self::assertStringNotContainsString( '<script>', (string) wp_json_encode( $response->get_data() ), 'Input is not echoed.' );
+	}
+
+	public function test_an_empty_body_or_a_query_parameter_is_not_a_preference(): void {
+		$user = $this->creator_user( 'theme_creator', 'Nova', CreatorStatus::Active );
+		wp_set_current_user( $user );
+
+		self::assertSame( 400, $this->request( 'PATCH', '/me/preferences' )->get_status() );
+		self::assertSame( 400, $this->request( 'PATCH', '/me/preferences', array(), array( 'theme' => 'dark-blue' ) )->get_status(), 'Only the body counts.' );
+		self::assertSame( '', get_user_meta( $user, ThemePreference::META_KEY, true ) );
+	}
+
+	/**
+	 * Logged out and users without creator access are refused.
+	 *
+	 * @param string $kind   Kind of user.
+	 * @param int    $status Expected status.
+	 * @param string $code   Expected code.
+	 */
+	#[DataProvider( 'denied' )]
+	public function test_preferences_require_creator_access( string $kind, int $status, string $code ): void {
+		$user = $this->user_of_kind( $kind );
+		wp_set_current_user( $user );
+
+		$response = $this->request( 'PATCH', '/me/preferences', array( 'theme' => 'dark-blue' ) );
+
+		self::assertSame( $status, $response->get_status() );
+		self::assertSame( $code, ( (array) $response->get_data() )['code'] ?? null );
+
+		if ( $user > 0 ) {
+			self::assertSame( '', get_user_meta( $user, ThemePreference::META_KEY, true ) );
+		}
+	}
+
+	public function test_preferences_change_only_the_current_users_theme(): void {
+		$other = $this->creator_user( 'theme_other', 'Other', CreatorStatus::Active );
+		update_user_meta( $other, ThemePreference::META_KEY, 'light' );
+		$mine = $this->creator_user( 'theme_mine', 'Mine', CreatorStatus::Active );
+		wp_set_current_user( $mine );
+
+		$response = $this->request(
+			'PATCH',
+			'/me/preferences',
+			array(
+				'theme'      => 'dark-pink',
+				'user_id'    => $other,
+				'creator_id' => $this->creator_id( $other ),
+			),
+			array(
+				'user_id'    => $other,
+				'creator_id' => $this->creator_id( $other ),
+			)
+		);
+
+		self::assertSame( 200, $response->get_status() );
+		self::assertSame( array( 'theme' => 'dark-pink' ), $response->get_data() );
+		self::assertSame( 'dark-pink', get_user_meta( $mine, ThemePreference::META_KEY, true ) );
+		self::assertSame( 'light', get_user_meta( $other, ThemePreference::META_KEY, true ), 'Another user is unchanged.' );
+	}
+
+	public function test_there_is_no_get_preferences_route(): void {
+		wp_set_current_user( $this->creator_user( 'theme_creator', 'Nova', CreatorStatus::Active ) );
+
+		self::assertSame( 404, $this->request( 'GET', '/me/preferences' )->get_status(), 'ADR-044: the current choice comes from the server-rendered data-theme.' );
 	}
 
 	public function test_active_creator_gets_only_the_allowed_fields(): void {

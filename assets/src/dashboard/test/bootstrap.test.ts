@@ -108,6 +108,50 @@ describe( 'parseConfig', () => {
 			'passwordUrl',
 			'locale',
 			'sections',
+			'logo',
 		] );
+	} );
+
+	const LOGO = {
+		url: `${ ORIGIN }/wp-content/uploads/logo.png`,
+		width: 400,
+		height: 100,
+		alt: 'Merch Shop',
+		custom: true,
+	};
+
+	it( 'accepts a same-origin logo', () => {
+		expect(
+			parseConfig( { ...RAW_CONFIG, logo: LOGO }, ORIGIN )?.logo
+		).toEqual( LOGO );
+		expect(
+			parseConfig(
+				{
+					...RAW_CONFIG,
+					logo: { ...LOGO, alt: '', custom: false, extra: 'x' },
+				},
+				ORIGIN
+			)?.logo
+		).toEqual( { ...LOGO, alt: '', custom: false } );
+	} );
+
+	it.each( [
+		null,
+		'logo.png',
+		{ ...LOGO, url: 'https://cdn.example/logo.png' },
+		{ ...LOGO, url: 'javascript:alert(1)' },
+		{ ...LOGO, url: 'data:image/svg+xml,<svg/>' },
+		{ ...LOGO, url: '/relative.png' },
+		{ ...LOGO, width: 0 },
+		{ ...LOGO, height: -1 },
+		{ ...LOGO, width: 1.5 },
+		{ ...LOGO, width: 99999 },
+		{ ...LOGO, alt: 42 },
+		{ ...LOGO, custom: 'yes' },
+	] )( 'drops an invalid logo %# but keeps the configuration', ( logo ) => {
+		const config = parseConfig( { ...RAW_CONFIG, logo }, ORIGIN );
+
+		expect( config ).not.toBeNull();
+		expect( config?.logo ).toBeNull();
 	} );
 } );

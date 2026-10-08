@@ -1,6 +1,6 @@
 # REST API
 
-> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039), og `/me/sales` er implementeret i fase 20, trin 3 (ADR-040). Øvrige routes i tabellerne nedenfor er design.
+> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039), `/me/sales` er implementeret i fase 20, trin 3 (ADR-040), og `PATCH /me/preferences` er implementeret i fase 21, trin 5 (ADR-044). Øvrige routes i tabellerne nedenfor er design.
 
 ## Principper
 
@@ -29,11 +29,12 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `GET` | `/me` | ✅ Den aktuelle creator: `display_name`, `status`. Rettigheder og sektioner kommer fortsat fra bootstrap-data (sektion-registry i fase 15). | 14 |
 | `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
 | `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
+| `PATCH` | `/me/preferences` | ✅ Brugerens dashboard-tema (`theme`; `null` = følg systemet). Ingen `GET` | 21 |
 | `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
 | `GET` | `/me/orders` | ✅ Ordrelinjer med creator'ens produkter **uden kunde-PII** (se nedenfor) | 19 |
 | `GET` | `/me/sales?from=&to=&interval=` | ✅ Salgsstatistik pr. valuta: totaler, tæt serie og produkter (se nedenfor) | 20 |
 
-Der findes intet `/me/overview` (ADR-040 pkt. 12). Overview kalder `/me/sales` uden parametre (standardperioden: 30 kalenderdage inklusive i dag, `day`) og viser `totals` pr. valuta, så hver KPI kun har én definition og samme cache-post som `/me/sales` (✅ fase 20, trin 5; se [FRONTEND.md](FRONTEND.md#overview--fase-15)).
+Der findes intet `/me/overview` (ADR-040 pkt. 12). Logoet (fase 21, trin 6, ADR-042) har ingen REST-route: det vælges i wp-admin (Settings → Branding, `admin-post.php`) og når dashboardet via bootstrap-feltet `logo` (sitekonfiguration, ikke creator-data). Overview kalder `/me/sales` uden parametre (standardperioden: 30 kalenderdage inklusive i dag, `day`) og viser `totals` pr. valuta, så hver KPI kun har én definition og samme cache-post som `/me/sales` (✅ fase 20, trin 5; se [FRONTEND.md](FRONTEND.md#overview--fase-15)).
 
 Fordi der ikke findes `/creators/{id}` i creator-scope, **kan Creator A ikke ændre et ID for at se Creator B**. For underressourcer med ID (fx `/me/orders/{order_id}`) tjekker service-laget ejerskab (`order indeholder mindst én linje for creator'en`). Svaret er **404** ved manglende ejerskab, ikke 403, så eksistensen af andres ressourcer ikke afsløres.
 
@@ -117,6 +118,32 @@ Alle kræver en aktiv creator for den indloggede bruger (`CreatorContext`). Crea
 - Andre felter (`status`, `user_id`, `id`, `creator_id` …) og query-parametre ignoreres.
 - Ugyldige typer eller ukendte platforme giver 400 `rest_invalid_param` (argument-skema). Regelbrud giver 400 `merchboard_invalid_profile` med `data.fields` = felt → kode (`required`, `invalid`, `too_long`, `invalid_url`, fx `"social_links.x": "invalid_url"`). Input ekkoes aldrig. Ét ugyldigt felt afviser hele opdateringen, og intet gemmes.
 - Uden reelle ændringer skrives intet. Ved ændringer skrives navn (creators-tabellen), bio og links (`merchboard_creatormeta`) og én audit-record `creator_updated` med `changed_fields` (actor = creatorens bruger) i én transaktion.
+
+## `PATCH /me/preferences` ✅ (fase 21, trin 5, ADR-044)
+
+Den indloggede brugers dashboard-tema. Adgang som de øvrige `/me`-routes (`CreatorContext`; 401 `merchboard_unauthenticated` udlogget, 403 `merchboard_forbidden` uden creator-adgang). Kræver ikke WooCommerce. Der findes ingen `GET` (404): det aktuelle valg står som `data-theme` på `<html>` i shellen.
+
+**Body** (JSON eller form):
+
+```json
+{ "theme": "dark-blue" }
+```
+
+eller `{ "theme": null }`.
+
+- **`theme`:** præcis én af `light`, `dark-black`, `dark-green`, `dark-blue`, `dark-red`, `dark-pink` (ADR-043), eller `null`.
+- **`null`:** sletter user meta `merchboard_dashboard_theme`, så dashboardet følger systemets `prefers-color-scheme` igen. Intet om systemets valg gemmes.
+- **Kun body'en tæller:** query-parametre og andre felter (`user_id`, `creator_id` …) ignoreres. Der skrives kun for `get_current_user_id()`.
+- **Ugyldig værdi:** 400 `rest_invalid_param` (argument-skemaet: forkert type eller ukendt tema) eller 400 `merchboard_invalid_preferences` med `data.fields.theme = "invalid"` (`theme` mangler, eller værdien afvises af endpointets egen kontrol). Intet gemmes, og input ekkoes ikke. `required` bruges ikke i skemaet, fordi WordPress behandler `null` som manglende.
+- **Ingen audit og ingen caching:** en personlig UI-præference uden forretnings- eller sikkerhedsbetydning.
+
+**Svar** → 200: den gemte værdi, læst tilbage efter skrivningen:
+
+```json
+{ "theme": "dark-blue" }
+```
+
+eller `{ "theme": null }`.
 
 ## `GET /me/products` ✅ (fase 19, trin 2, ADR-039)
 
@@ -272,5 +299,7 @@ Hvert creator-endpoint skal have integrationstests for mindst:
 5. ugyldigt input → 400 med ændringer ikke gemt
 
 ✅ Fase 14: `tests/Integration/Rest/MeEndpointTest.php` dækker punkt 1-5 for `/me` og `/me/profile` (IDOR: ID'er i query og body ignoreres, og en anden creator er uændret), plus route-registrering med permission callbacks, præcise svarfelter, deaktivering på næste request, databasefejl (403 uden detaljer, logget) og fejlet skrivning (500, rollback).
+
+✅ Fase 21, trin 5: `MeEndpointTest` dækker `PATCH /me/preferences`: alle seks temaer, `null`, ugyldige værdier (400, intet ændret), tom body og query-parameter (400), 401/403 for alle afviste brugertyper, brugerisolation (ID'er i body og query ignoreres, en anden brugers tema er uændret), ingen audit og ingen `GET`-route.
 
 ✅ Fase 20, trin 3: `tests/Integration/Rest/MeSalesEndpointTest.php` dækker punkt 1-5 for `/me/sales` (IDOR: `creator_id` og andre ID'er i query ignoreres; en ordre med linjer fra to creators), plus standardperiode, lokale datoer og sommertid, `day`/`week`/`month`, tæt serie, valutaer, tom periode, produktgrænse og sortering, navne-fallback, beløb som strenge, ingen `/me/overview` og ingen persondata. `SalesQueryTest`, `SalesPeriodsTest` og `WooCommerceSalesProductNamesTest` er unit-tests.
