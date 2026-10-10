@@ -19,6 +19,7 @@ import type {
 } from '../types/sales';
 import { request } from './client';
 import type { ApiResult } from './client';
+import { parseProfit } from './profit';
 import { isRecord } from './validate';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -34,14 +35,32 @@ function isInteger( value: unknown ): value is number {
 	return typeof value === 'number' && Number.isSafeInteger( value );
 }
 
+function isAmountOrNull( value: unknown ): value is string | null {
+	return (
+		value === null || ( typeof value === 'string' && AMOUNT.test( value ) )
+	);
+}
+
 function parseTotals( value: unknown ): SalesTotals | null {
 	if ( ! isRecord( value ) ) {
 		return null;
 	}
 
-	const { net_sales: netSales, sales, adjustments, units, orders } = value;
+	const {
+		net_sales: netSales,
+		sales,
+		adjustments,
+		units,
+		orders,
+		net_sales_incl_vat: netSalesInclVat,
+		sales_incl_vat: salesInclVat,
+		adjustments_incl_vat: adjustmentsInclVat,
+	} = value;
 
 	if (
+		! isAmountOrNull( netSalesInclVat ) ||
+		! isAmountOrNull( salesInclVat ) ||
+		! isAmountOrNull( adjustmentsInclVat ) ||
 		typeof netSales !== 'string' ||
 		! AMOUNT.test( netSales ) ||
 		typeof sales !== 'string' ||
@@ -55,7 +74,51 @@ function parseTotals( value: unknown ): SalesTotals | null {
 		return null;
 	}
 
-	return { netSales, sales, adjustments, units, orders };
+	return {
+		netSales,
+		sales,
+		adjustments,
+		units,
+		orders,
+		netSalesInclVat,
+		salesInclVat,
+		adjustmentsInclVat,
+	};
+}
+
+/**
+ * The VAT state of a currency: complete exactly when the totals include VAT.
+ *
+ * @param value  Raw `vat`.
+ * @param totals Parsed totals.
+ */
+function parseVat(
+	value: unknown,
+	totals: SalesTotals
+): { vatIncluded: boolean; missingVatRows: number } | null {
+	if ( ! isRecord( value ) ) {
+		return null;
+	}
+
+	const { status, missing_rows: missingVatRows } = value;
+	const vatIncluded = status === 'complete';
+	const amounts = [
+		totals.netSalesInclVat,
+		totals.salesInclVat,
+		totals.adjustmentsInclVat,
+	];
+
+	if (
+		( status !== 'complete' && status !== 'incomplete' ) ||
+		! isInteger( missingVatRows ) ||
+		missingVatRows < 0 ||
+		vatIncluded !== ( missingVatRows === 0 ) ||
+		! amounts.every( ( amount ) => ( amount !== null ) === vatIncluded )
+	) {
+		return null;
+	}
+
+	return { vatIncluded, missingVatRows };
 }
 
 function parseCurrency( value: unknown ): SalesCurrencyTotals | null {
@@ -65,16 +128,25 @@ function parseCurrency( value: unknown ): SalesCurrencyTotals | null {
 
 	const { currency } = value;
 	const totals = parseTotals( value.totals );
+	const vat = totals === null ? null : parseVat( value.vat, totals );
+	const profit =
+		value.profit === undefined || value.profit === null
+			? null
+			: parseProfit( value.profit );
 
 	if (
 		typeof currency !== 'string' ||
 		! CURRENCY.test( currency ) ||
-		totals === null
+		totals === null ||
+		vat === null ||
+		( value.profit !== undefined &&
+			value.profit !== null &&
+			( profit === null || profit.currency !== currency ) )
 	) {
 		return null;
 	}
 
-	return { currency, totals };
+	return { currency, totals, ...vat, profit };
 }
 
 /**
@@ -126,14 +198,23 @@ export function parseSalesSummary( body: unknown ): SalesSummary | null {
 	};
 }
 
-function parsePoint( value: unknown ): SalesPoint | null {
+function parsePoint( value: unknown, vatIncluded: boolean ): SalesPoint | null {
 	if ( ! isRecord( value ) ) {
 		return null;
 	}
 
-	const { start, end, net_sales: netSales, units, orders } = value;
+	const {
+		start,
+		end,
+		net_sales: netSales,
+		net_sales_incl_vat: netSalesInclVat,
+		units,
+		orders,
+	} = value;
 
 	if (
+		! isAmountOrNull( netSalesInclVat ) ||
+		( netSalesInclVat !== null ) !== vatIncluded ||
 		typeof start !== 'string' ||
 		! DATE.test( start ) ||
 		typeof end !== 'string' ||
@@ -148,7 +229,7 @@ function parsePoint( value: unknown ): SalesPoint | null {
 		return null;
 	}
 
-	return { start, end, netSales, units, orders };
+	return { start, end, netSales, netSalesInclVat, units, orders };
 }
 
 /**
@@ -167,14 +248,16 @@ function nextDay( date: string ): string {
  * A dense series: every period of [from, to] in order, each starting the day
  * after the previous one ends, without gaps or overlaps.
  *
- * @param value Raw series.
- * @param from  First day of the query.
- * @param to    Last day of the query.
+ * @param value       Raw series.
+ * @param from        First day of the query.
+ * @param to          Last day of the query.
+ * @param vatIncluded Whether the currency's amounts incl. VAT are known.
  */
 function parseSeries(
 	value: unknown,
 	from: string,
-	to: string
+	to: string,
+	vatIncluded: boolean
 ): SalesPoint[] | null {
 	if ( ! Array.isArray( value ) || value.length === 0 ) {
 		return null;
@@ -183,7 +266,7 @@ function parseSeries(
 	const series: SalesPoint[] = [];
 
 	for ( const item of value ) {
-		const point = parsePoint( item );
+		const point = parsePoint( item, vatIncluded );
 		const previous = series[ series.length - 1 ];
 		const expected =
 			previous === undefined ? from : nextDay( previous.end );
@@ -218,7 +301,12 @@ export function parseSalesReport( body: unknown ): SalesReport | null {
 	for ( const [ index, entry ] of summary.currencies.entries() ) {
 		const item = raw[ index ];
 		const series = isRecord( item )
-			? parseSeries( item.series, summary.from, summary.to )
+			? parseSeries(
+					item.series,
+					summary.from,
+					summary.to,
+					entry.vatIncluded
+				)
 			: null;
 
 		if (

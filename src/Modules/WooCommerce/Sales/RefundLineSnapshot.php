@@ -23,12 +23,13 @@ final readonly class RefundLineSnapshot {
 	/**
 	 * Constructor.
 	 *
-	 * @param int $refunded_item_id Original order item id, or 0 when WooCommerce has none.
-	 * @param int $quantity         Refunded quantity (≤ 0).
-	 * @param int $net              Refunded amount excl. tax, in 1/10000 units (≤ 0).
+	 * @param int      $refunded_item_id Original order item id, or 0 when WooCommerce has none.
+	 * @param int      $quantity         Refunded quantity (≤ 0).
+	 * @param int      $net              Refunded amount excl. tax, in 1/10000 units (≤ 0).
+	 * @param int|null $tax              The refund line's actual tax in 1/10000 units (≤ 0), or null when unknown (ADR-048).
 	 * @throws InvalidArgumentException When the item id is negative.
 	 */
-	public function __construct( public int $refunded_item_id, public int $quantity, public int $net ) {
+	public function __construct( public int $refunded_item_id, public int $quantity, public int $net, public ?int $tax = null ) {
 		if ( $refunded_item_id < 0 ) {
 			throw new InvalidArgumentException( 'Invalid refund line snapshot.' );
 		}

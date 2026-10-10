@@ -15,10 +15,10 @@ use wpdb;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Drops exactly the tables in Tables::all() for the current site's prefix,
- * by full name (never by pattern), so no table of WordPress, another plugin
- * or another site of a multisite network can be affected. Used only by the
- * opt-in uninstall (ADR-025).
+ * Drops exactly the tables in Tables::all() and Tables::retired() for the
+ * current site's prefix, by full name (never by pattern), so no table of
+ * WordPress, another plugin or another site of a multisite network can be
+ * affected. Used only by the opt-in uninstall (ADR-025).
  *
  * DROP TABLE commits implicitly, so this cannot be transactional. It is
  * idempotent instead (IF EXISTS) and reports failures, so the caller can stop
@@ -44,7 +44,7 @@ final class SchemaEraser {
 	public function erase(): bool {
 		$wpdb = $this->wpdb;
 
-		foreach ( Tables::all() as $table ) {
+		foreach ( array_merge( Tables::all(), Tables::retired() ) as $table ) {
 			$name = Tables::name( $wpdb, $table );
 			$sql  = $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $name );
 

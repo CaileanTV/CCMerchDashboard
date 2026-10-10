@@ -32,6 +32,8 @@ Definitionerne findes ét sted: `MerchBoard\Core\Security\Capabilities` (konstan
 | `merchboard_manage_creators` | `Capabilities::MANAGE_CREATORS` | `administrator` | Oprette, redigere, aktivere/deaktivere creators og koble brugere til/fra (fase 6/10) |
 | `merchboard_manage_settings` | `Capabilities::MANAGE_SETTINGS` | `administrator` | Ændre plugin-settings (fase 9; fra fase 18, trin 6 også de tællende ordrestatusser for sales ledger, ADR-038 S2) |
 | `merchboard_view_logs` | `Capabilities::VIEW_LOGS` | `administrator` | Læse business audit trail (Audit log, Overview-aktivitet) (✅ fase 11). Giver ingen adgang til tekniske logs og ingen skriveadgang. Creator-adgang giver den aldrig. |
+| `merchboard_delete_order_history` | `Capabilities::DELETE_ORDER_HISTORY` | `administrator` | Slette Merch Dashboards gemte historik for én ordre (ledger, cyklusser, gemt moms og profit-snapshots), kun når WooCommerce-ordren ligger i papirkurven eller er slettet, fx en testordre (fase 22, ADR-052). Bruges af "Order history". Ændrer aldrig WooCommerce. Creators får den aldrig. |
+| `merchboard_manage_creator_pricing` | `Capabilities::MANAGE_CREATOR_PRICING` | `administrator` | Konfigurere creator pricing: creatorens markup (andel af salgsprisen), momsstatus og produktmarkup (fase 22, ADR-048/049). Produktmarkup kræver desuden `edit_product` på produktet. Bruges af afsnittet "Pricing" på creatorens redigeringsside. Giver ingen ret til at skrive WooCommerce-priser; det gør Merch Dashboard aldrig. Creators får den aldrig. |
 
 `merchboard_manage_creators` bruges fra fase 6 (creator-administration: admin-side, handlers og `CreatorService`). De øvrige er fundamentet for fase 8-10. Checks skal altid være positive capability-checks: `current_user_can( Capabilities::MANAGE_CREATORS )` / `user_can( $user, … )`. Aldrig "er logget ind", rolle- eller display-navne eller hardcodede user-ID'er.
 
@@ -45,7 +47,7 @@ Administratorer beholder alle deres WordPress-capabilities uændret. Pluginet ti
 | Meta-capabilities `merchboard_view_creator`/`merchboard_edit_creator` (`map_meta_cap`) | Fase 14 (REST `/me`), udskudt igen fra fase 8 | Ejerskabsdelen kræver creator-record og status. `CreatorContext` (fase 8) leverer grundlaget, og meta-capabilities tilføjes, når de første ressourcer (`/me`) skal beskyttes. |
 | Fjernelse af rolle/caps ved uninstall | ✅ Fase 9 (opt-in "Slet alle data", ADR-025) | Uninstall bevarer data (DATABASE.md). Brugere, der har rollen, må ikke miste den implicit. |
 
-Fremtidige capabilities (tilføjes med deres modul): `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`. `merchboard_view_logs` kom i fase 11 med `RoleManager::VERSION` 2, så eksisterende sites får den ved næste request.
+Fremtidige capabilities (tilføjes med deres modul): `merchboard_manage_payouts`, `merchboard_view_reports` og `merchboard_manage_integrations`. `merchboard_view_logs` kom i fase 11 med `RoleManager::VERSION` 2, så eksisterende sites får den ved næste request. `merchboard_manage_creator_pricing` kom i fase 22 (trin 3) med `RoleManager::VERSION` 3 på samme måde, og `merchboard_delete_order_history` i fase 22 (ADR-052) med `RoleManager::VERSION` 4.
 
 ## Rollen `merchboard_creator` (implementeret, fase 5)
 

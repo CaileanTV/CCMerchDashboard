@@ -15,6 +15,8 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
+use MerchBoard\Modules\WooCommerce\Pricing\ProfitSummary;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -32,6 +34,11 @@ defined( 'ABSPATH' ) || exit;
  * takes only `page` and `per_page`, and other parameters are ignored. It is
  * registered by the WooCommerce module, so without WooCommerce it does not
  * exist. No caching (ADR-039 P12).
+ *
+ * Each product carries `profit` (ADR-050): the creator's realized profit
+ * (ADR-049) from the ledger rows of the product and its variations, all
+ * time, per currency, or null when the creator has no ledger rows for it.
+ * One aggregation query per page (CreatorProfits), never one per product.
  */
 final class MeProductsController extends RestController {
 
@@ -47,8 +54,9 @@ final class MeProductsController extends RestController {
 	 * @param CreatorProducts $products Selection of the creator's products.
 	 * @param ProductDetails  $details  Product data.
 	 * @param Logger          $logger   Technical log.
+	 * @param CreatorProfits  $profits  Realized profit of the creator's ledger rows.
 	 */
-	public function __construct( private CreatorContext $context, private CreatorProducts $products, private ProductDetails $details, Logger $logger ) {
+	public function __construct( private CreatorContext $context, private CreatorProducts $products, private ProductDetails $details, Logger $logger, private CreatorProfits $profits ) {
 		parent::__construct( $logger );
 	}
 
@@ -104,11 +112,16 @@ final class MeProductsController extends RestController {
 				$items      = array();
 
 				if ( $pagination->offset() < $total ) {
-					foreach ( $this->products->ids( $creator->id, $pagination ) as $product_id ) {
+					$ids     = $this->products->ids( $creator->id, $pagination );
+					$profits = $this->profits->by_product( $creator->id, $ids );
+
+					foreach ( $ids as $product_id ) {
 						$summary = $this->details->find( $product_id );
 
 						if ( null !== $summary ) {
-							$items[] = $summary->to_array();
+							$items[] = $summary->to_array() + array(
+								'profit' => isset( $profits[ $product_id ] ) ? array_map( static fn( ProfitSummary $profit ): array => $profit->to_array(), $profits[ $product_id ] ) : null,
+							);
 						}
 					}
 				}
@@ -165,6 +178,11 @@ final class MeProductsController extends RestController {
 					'type'     => array( 'string', 'null' ),
 					'enum'     => array( 'instock', 'outofstock', 'onbackorder', null ),
 					'readonly' => true,
+				),
+				'profit'       => array(
+					'type'     => array( 'array', 'null' ),
+					'readonly' => true,
+					'items'    => ProfitSummary::schema(),
 				),
 				'image'        => array(
 					'type'       => array( 'object', 'null' ),

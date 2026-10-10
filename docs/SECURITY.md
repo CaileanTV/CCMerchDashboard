@@ -239,6 +239,26 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Billeder:** kun thumbnails med samme origin som sitet; andre bliver `null`. Dashboardets CSP er uændret (`img-src 'self' data:`).
 - **Tests:** integrationstests for 401/403/inaktiv creator/IDOR/ugyldig paginering for begge endpoints og runtime-verifikation i Merch Dashboard Local (se [TESTING.md](TESTING.md#products-og-orders-fase-19)).
 
+### Creator pricing (fase 22, ADR-048/049)
+
+- **Ingen prisskrivning:** Merch Dashboard skriver aldrig en WooCommerce-pris (regular, sale eller `_price`), har ingen prisfiltre og ingen SQL mod WooCommerces data. `PricingProductStore` har kun læsemetoder. Kundernes pris kan derfor ikke ændres via creator pricing.
+- **Adgang:**
+  - Creator-markup og momsstatus kræver `merchboard_manage_creator_pricing` (kun administrator); en produktmarkup kræver desuden WooCommerce' `edit_product` på parent-produktet. Begge tjekkes i `CreatorPricingSettings`.
+  - Creators får ingen af delene. Der er intet REST-endpoint.
+- **Ingen tillid til input:**
+  - Creatoren er altid parent-produktets nuværende ejer (`ProductCreatorLink`), aldrig et ID fra kalderen.
+  - En produktmarkup gælder kun for den ejer, den blev sat for.
+- **Historik:** snapshots er append-only, og ingen konfigurationsændring ændrer et snapshot, en profit eller en udbetaling bagud.
+- **Audit:** hver ændring auditeres med aktør, creator og gammel og ny værdi, uden kundedata (`creator_markup_changed`, `creator_vat_status_changed`, `product_markup_set`/`_removed`).
+- **Admin-UI:**
+  - `CreatorPricingActions` tjekker capability før nonce (bundet til handling og creator), og domæneservicen tjekker capability, `edit_product` og ejerskab igen.
+  - Creator-ID'et fra formularen bruges kun til at afvise et produkt, der tilhører en anden creator; det giver aldrig ejerskab.
+  - Forhåndsvisningen er et skrivebeskyttet GET bag samme capability.
+  - Al output escapes. Beløb og valuta valideres server-side.
+- **Sletning af en ordres historik (ADR-052):** kun med `merchboard_delete_order_history` (administrator), via `admin-post.php` (POST, kun indloggede): capability (403), nonce bundet til ordren (403), indtastet ordre-ID som bekræftelse, og kun når WooCommerce-ordren ligger i papirkurven eller er slettet (tjekket under ledgerens ordrelås). Én transaktion med audit `order_history_deleted` (antal rækker og ID'er, ingen beløb eller kundedata). WooCommerce ændres aldrig.
+- **Momsstatus (ADR-048):** ændres kun med `merchboard_manage_creator_pricing` (capability før nonce, domænetjek og audit `creator_vat_status_changed`). `merchboard_sales_tax` indeholder kun ledger-nøgle, ordre- og linje-ID, beløb og valuta, aldrig kundedata.
+- **Snapshots (trin 5):** `merchboard_sales_line_pricing` indeholder kun ID'er, valuta, status og årsag samt enhedspriser (forretningsdata), aldrig kundens navn, e-mail, adresse, land eller andre checkout-data. Snapshottet tages som systemarbejde i kundens request uden capability-tjek og kaster aldrig; det kan ikke ændres bagefter, og der er ingen API til det.
+
 ## Tjekliste pr. ændring
 
 - [ ] Hvert nyt endpoint/handler har capability- eller `CreatorContext`-tjek **server-side**.

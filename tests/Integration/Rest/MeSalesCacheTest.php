@@ -37,6 +37,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesQuery;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeOrderReader;
 use MerchBoard\Tests\Integration\Support\FakeSalesProductNames;
@@ -103,7 +104,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		$this->creators = $this->service( CreatorService::class );
 		$this->names    = new FakeSalesProductNames();
 		$this->cache    = new SalesCache();
-		$this->uncached = new SalesReport( new LedgerSalesStatistics( $this->wpdb ), $this->names );
+		$this->uncached = new SalesReport( new LedgerSalesStatistics( $this->wpdb ), $this->names, new LedgerCreatorProfits( $this->wpdb ) );
 		$after          = function ( int $creator_id ): void {
 			if ( is_callable( $this->during_build ) ) {
 				( $this->during_build )( $creator_id );
@@ -173,7 +174,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		$this->row( $mine, 'sale', 101, 2, '200.0000', '2026-09-10 10:00:00' );
 		wp_set_current_user( $mine );
 
-		$miss = $this->sales( array(), 3 );
+		$miss = $this->sales( array(), 4 );
 		$key  = $this->key_of( $mine, array() );
 
 		self::assertSame( SalesCache::INITIAL_GENERATION, $this->cache->generation( $this->creator_id( $mine ) ) );
@@ -204,7 +205,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 			'interval' => 'day',
 		);
 
-		$sales    = $this->sales( $explicit, 3 );
+		$sales    = $this->sales( $explicit, 4 );
 		$overview = $this->sales( array(), 0 );
 
 		self::assertSame( $sales, $overview );
@@ -212,8 +213,8 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		self::assertSame( array( '2026-09-01', '2026-09-30', 'day' ), array( $overview['from'], $overview['to'], $overview['interval'] ) );
 		self::assertSame(
 			array(
-				array( 'DKK', '150.0000', '200.0000', '-50.0000', 1, 1 ),
-				array( 'EUR', '10.0000', '10.0000', '0.0000', 1, 1 ),
+				array( 'DKK', '150.0000', '200.0000', '-50.0000', null, null, null, 1, 1 ),
+				array( 'EUR', '10.0000', '10.0000', '0.0000', null, null, null, 1, 1 ),
 			),
 			array_map(
 				static fn( array $block ): array => array( $block['currency'], ...array_values( $block['totals'] ) ),
@@ -223,7 +224,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		);
 
 		$this->cache->invalidate( array( $this->creator_id( $mine ) ) );
-		$overview = $this->sales( array(), 3 );
+		$overview = $this->sales( array(), 4 );
 		self::assertSame( $overview, $this->sales( $explicit, 0 ), 'And the other way round.' );
 
 		self::assertArrayNotHasKey( '/merchboard/v1/me/overview', rest_get_server()->get_routes( 'merchboard/v1' ) );
@@ -255,7 +256,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		);
 
 		$uncached = $this->uncached->build( $this->creator_id( $mine ), $this->resolve( $query ) );
-		$miss     = $this->sales( $query, 3 );
+		$miss     = $this->sales( $query, 4 );
 		$hit      = $this->sales( $query, 0 );
 
 		self::assertSame( $uncached, $miss );
@@ -270,10 +271,10 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		$this->row( $theirs, 'sale', 102, 5, '999.0000', '2026-09-10 10:00:00' );
 
 		wp_set_current_user( $mine );
-		self::assertSame( '100.0000', $this->sales( array(), 3 )['currencies'][0]['totals']['net_sales'] );
+		self::assertSame( '100.0000', $this->sales( array(), 4 )['currencies'][0]['totals']['net_sales'] );
 
 		wp_set_current_user( $theirs );
-		$theirs_data = $this->sales( array( 'creator_id' => (string) $this->creator_id( $mine ) ), 3 );
+		$theirs_data = $this->sales( array( 'creator_id' => (string) $this->creator_id( $mine ) ), 4 );
 		self::assertSame( '999.0000', $theirs_data['currencies'][0]['totals']['net_sales'], 'Same period and generation `1`, but a miss: the key has the creator.' );
 		self::assertNotSame( $this->key_of( $mine, array() ), $this->key_of( $theirs, array() ) );
 
@@ -303,7 +304,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		);
 
 		foreach ( $queries as $query ) {
-			$this->sales( $query, 3 );
+			$this->sales( $query, 4 );
 		}
 
 		foreach ( $queries as $query ) {
@@ -338,7 +339,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 				'from' => '2026-09-30',
 				'to'   => '2026-09-30',
 			),
-			3
+			4
 		);
 		self::assertSame( 'America/New_York', $new_york['timezone'] );
 		self::assertSame( '100.0000', $new_york['currencies'][0]['totals']['net_sales'] );
@@ -354,7 +355,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		$this->row( $mine, 'sale', 103, 1, '300.0000', '2026-09-10 10:00:00', array( 'currency' => 'SEK' ) );
 		wp_set_current_user( $mine );
 
-		$this->sales( array(), 3 );
+		$this->sales( array(), 4 );
 		$hit = $this->sales( array(), 0 );
 
 		self::assertSame( array( 'DKK', 'EUR', 'SEK' ), array_column( $hit['currencies'], 'currency' ) );
@@ -367,9 +368,9 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		$this->row( $mine, 'sale', 101, 1, '100.0000', '2026-09-10 10:00:00' );
 		$this->row( $theirs, 'sale', 102, 1, '50.0000', '2026-09-10 10:00:00' );
 		wp_set_current_user( $mine );
-		$this->sales( array(), 3 );
+		$this->sales( array(), 4 );
 		wp_set_current_user( $theirs );
-		$this->sales( array(), 3 );
+		$this->sales( array(), 4 );
 
 		// A new order of mine through the real synchronization (repository with the default SalesCache).
 		$reader              = new FakeOrderReader();
@@ -394,7 +395,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 
 		wp_set_current_user( $mine );
 		$this->queries = array();
-		self::assertSame( array( '125.0000', 2 ), self::totals( $this->sales( array(), 3 ), array( 'net_sales', 'orders' ) ), 'A miss with the new sale.' );
+		self::assertSame( array( '125.0000', 2 ), self::totals( $this->sales( array(), 4 ), array( 'net_sales', 'orders' ) ), 'A miss with the new sale.' );
 		self::assertSame( array( '125.0000', 2 ), self::totals( $this->sales( array(), 0 ), array( 'net_sales', 'orders' ) ), 'Cached again under the new generation.' );
 
 		wp_set_current_user( $theirs );
@@ -408,7 +409,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 		wp_set_current_user( $mine );
 		$generation = $this->cache->generation( $this->creator_id( $mine ) );
 
-		self::assertSame( 'Tour tee', $this->sales( array(), 3 )['currencies'][0]['products'][0]['name'] );
+		self::assertSame( 'Tour tee', $this->sales( array(), 4 )['currencies'][0]['products'][0]['name'] );
 
 		// The product is renamed in WooCommerce: no ledger write, so the entry stays (at most 15 minutes).
 		$this->names->names = array( 20 => 'Renamed tee' );
@@ -431,11 +432,11 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 			$this->cache->invalidate( array( $creator_id ) );
 		};
 
-		self::assertSame( '100.0000', $this->sales( array(), 3 )['currencies'][0]['totals']['net_sales'], 'This request answers with what it read.' );
+		self::assertSame( '100.0000', $this->sales( array(), 4 )['currencies'][0]['totals']['net_sales'], 'This request answers with what it read.' );
 		self::assertFalse( wp_cache_get( $old_key, SalesCache::GROUP ), 'Nothing stored under the old generation.' );
 		self::assertFalse( wp_cache_get( $this->key_of( $mine, array() ), SalesCache::GROUP ), 'Nor under the new one.' );
 
-		self::assertSame( '150.0000', $this->sales( array(), 3 )['currencies'][0]['totals']['net_sales'], 'The next request reads the ledger again.' );
+		self::assertSame( '150.0000', $this->sales( array(), 4 )['currencies'][0]['totals']['net_sales'], 'The next request reads the ledger again.' );
 		self::assertSame( '150.0000', $this->sales( array(), 0 )['currencies'][0]['totals']['net_sales'] );
 	}
 
@@ -447,7 +448,7 @@ final class MeSalesCacheTest extends IntegrationTestCase {
 
 		foreach ( array( 'garbage', array( 'from' => '2020-01-01' ), array() ) as $bad ) {
 			wp_cache_set( $key, $bad, SalesCache::GROUP );
-			self::assertSame( '100.0000', $this->sales( array(), 3 )['currencies'][0]['totals']['net_sales'] );
+			self::assertSame( '100.0000', $this->sales( array(), 4 )['currencies'][0]['totals']['net_sales'] );
 		}
 
 		$this->sales( array(), 0 );

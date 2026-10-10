@@ -32,6 +32,9 @@ defined( 'ABSPATH' ) || exit;
  * - Refunds are queried with `wc_get_orders()`, not `$order->get_refunds()`,
  *   whose list cache can still hold a deleted refund (ADR-038, B6).
  * - Dates become UTC DateTimeImmutable from their Unix timestamp.
+ * - Tax (ADR-048): the line's and the refund line's own tax
+ *   (`get_total_tax( 'edit' )`, after discounts), never a rate or a
+ *   recalculation; a value that is not a plain decimal is unknown (null).
  */
 final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 
@@ -129,7 +132,8 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			(string) $item->get_name( 'edit' ),
 			WooCommerceAmount::quantity( $item->get_quantity( 'edit' ) ),
 			WooCommerceAmount::units( $item->get_total( 'edit' ) ),
-			$product_id > 0 ? $this->links->creator_id( $product_id ) : null
+			$product_id > 0 ? $this->links->creator_id( $product_id ) : null,
+			self::tax( $item )
 		);
 	}
 
@@ -176,11 +180,29 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 				// A missing link becomes 0: the planner reports unresolved_refund_item.
 				is_numeric( $refunded ) && (int) $refunded > 0 ? (int) $refunded : 0,
 				WooCommerceAmount::quantity( $item->get_quantity( 'edit' ) ),
-				WooCommerceAmount::units( $item->get_total( 'edit' ) )
+				WooCommerceAmount::units( $item->get_total( 'edit' ) ),
+				self::tax( $item )
 			);
 		}
 
 		return new RefundSnapshot( (int) $refund->get_id(), self::utc( $date ), $lines );
+	}
+
+	/**
+	 * A line's actual tax in units, or null when WooCommerce' value is not a
+	 * plain decimal (unknown, never guessed).
+	 *
+	 * @param WC_Order_Item_Product $item Line.
+	 */
+	private static function tax( WC_Order_Item_Product $item ): ?int {
+		// WooCommerce stores a decimal string; anything else (e.g. a float) is unknown.
+		$tax = $item->get_total_tax( 'edit' );
+
+		try {
+			return WooCommerceAmount::units( '' === $tax ? '0' : $tax );
+		} catch ( InvalidArgumentException ) {
+			return null;
+		}
 	}
 
 	/**

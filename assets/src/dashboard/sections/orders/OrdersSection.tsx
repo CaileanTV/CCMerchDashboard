@@ -7,6 +7,7 @@ import { ApiErrorState } from '../../components/ApiErrorState';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Pagination } from '../../components/Pagination';
+import { ProfitLegend, ProfitValue } from '../../components/ProfitValue';
 import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
 import { usePagedApi } from '../../hooks/usePagedApi';
@@ -62,6 +63,24 @@ function Notes( { line }: { readonly line: OrderLine } ) {
 	);
 }
 
+/**
+ * The line's profit (refunds, reversals and corrections included) and, when
+ * the creator has more lines in the order, the order's total (ADR-050).
+ */
+function LineProfit( { line }: { readonly line: OrderLine } ) {
+	return (
+		<span className="merchboard-profit__list">
+			<ProfitValue profit={ line.profit } />
+			{ line.orderLines > 1 && (
+				<span className="merchboard-profit__order">
+					<span>{ __( 'Order total:', 'merchboard' ) } </span>
+					<ProfitValue profit={ line.orderProfit } />
+				</span>
+			) }
+		</span>
+	);
+}
+
 const columns = ( locale: string ): readonly TableColumn< OrderLine >[] => [
 	{
 		key: 'date',
@@ -100,6 +119,12 @@ const columns = ( locale: string ): readonly TableColumn< OrderLine >[] => [
 		key: 'notes',
 		header: __( 'Notes', 'merchboard' ),
 		render: ( line ) => <Notes line={ line } />,
+	},
+	{
+		key: 'profit',
+		header: __( 'Profit', 'merchboard' ),
+		render: ( line ) => <LineProfit line={ line } />,
+		align: 'end',
 	},
 ];
 
@@ -176,6 +201,7 @@ export function OrdersSection() {
 					</li>
 				</ul>
 			) }
+			{ lines.length > 0 && <ProfitLegend /> }
 			<Pagination
 				page={ page }
 				totalPages={

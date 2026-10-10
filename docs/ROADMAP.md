@@ -17,6 +17,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | WooCommerce | 17-19 | Produkt↔creator (✅ fase 17), sales ledger (✅ fase 18), produkter/ordrer i dashboard (✅ fase 19) |
 | Statistics | 20 | Salgsanalyse og grafer (✅ fase 20) |
 | Branding & Themes | 21 | Admin-styret logo, seks dashboard-temaer og branded login (i gang) |
+| Creator pricing | 22 | Creator-profit = WooCommerce-salgspris × markup %, udbetaling efter momsstatus (× 80 % uden momsregistrering), produktmarkup og historiske snapshots; Merch Dashboard skriver aldrig priser (i gang) |
 | Senere | – | Payouts, notifications, integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -299,6 +300,36 @@ Mål: et globalt, admin-styret logo (dashboard-header og WordPress-login), seks 
     - **Dokumentation:** præciseringer i ADR-043 og ADR-044 (2026-10-08); ADMIN.md (Branding) og SECURITY.md (branding, login og tema) opdateret.
     - **Ikke verificeret (kendt begrænsning):** ingen browser. Dashboard-header og logo, alle seks temaer visuelt, logo-pladen på mørke temaer, den brandede login-side visuelt og responsiv opførsel er ikke kontrolleret visuelt.
   - 10: commit, push og grøn CI (i18n, docs og slutverifikation er udført i trin 5–9).
+
+---
+
+## Fase 22 – Creator pricing 🔄
+
+Mål (ADR-049, rettet 2026-10-09): WooCommerce-salgsprisen er den endelige kundepris inkl. creator-profit og moms. Creator-profit = salgspris × markup % (creatorens markup 0–100 % eller en eksklusiv produktmarkup); udbetaling = profit for momsregistrerede og profit × 80 % for ikke-momsregistrerede. Merch Dashboard skriver aldrig WooCommerce-priser. Historisk profit og udbetaling sikres med immutable snapshots pr. ordrelinje. Penge regnes uden floats og uden valutaomregning. Design: [reports/2026-10-08-fase-22-creator-pricing.md](reports/2026-10-08-fase-22-creator-pricing.md); beslutninger: ADR-045–048 (delvist erstattet) og ADR-049.
+
+- **Trin:**
+  - 1 ✅ (2026-10-08): arkitekturanalyse uden implementering. Projektejeren godkendte 22 bindende beslutninger.
+  - 2 ✅ (2026-10-08): endeligt design (udsalg, rabatter, tilstande, creatorskift, database, snapshot og ledger-integration). ADR-045–047 foreslået.
+  - 3 ✅ (2026-10-08, lokalt, ikke committet): database- og domænefundament.
+    - **Beslutninger:** ADR-045–047 accepteret og flyttet til DECISIONS.md med præciseringer (`cannot_apply`, ingen CHECK-constraints, den præcise `priced`-regel).
+    - **Migration 6:** `merchboard_creators.default_markup_bps` (0 for alle) samt tabellerne `merchboard_pricing_overrides`, `merchboard_item_pricing` og `merchboard_sales_line_pricing` (append-only, ingen fremmednøgler).
+    - **Capability:** `merchboard_manage_creator_pricing` (administrator, `RoleManager::VERSION` 3).
+    - **Domæne:** det rene domæne i `src/Modules/WooCommerce/Pricing/` (beregning, tilstande, snapshot-regel, realiseret profit og repositories). Opt-in-uninstall sletter tabellerne og nulstiller aldrig WooCommerce-priser.
+    - **Ikke implementeret endnu:** UI, REST, WooCommerce-skrivning, hooks og ændringer i `/me`. Ledgeren er uændret.
+  - 4 ✅ (2026-10-08, lokalt, ikke committet): WooCommerce-integration uden UI. `PricingService` med preview, `apply()` (kun regular price via CRUD, aldrig udsalgspris, ingen overskrivning af drift) og den eksplicitte `apply_despite_drift()`; audit-actions `creator_pricing_applied` og `creator_pricing_drift_overwritten`. Runtime-verificeret mod WooCommerce 11.1.2 i Merch Dashboard Local (33/33, syntetiske data fjernet). Ingen REST og ingen hooks.
+  - 5 ✅ (2026-10-08, lokalt, ikke committet): snapshot pr. ny ordrelinje (`woocommerce_new_order_item`, append-only, første vinder, kaster aldrig) og realiseret profit af ledger-rækker (`SalesProfit`, kun læsning; ledgeren er uændret). Runtime-verificeret mod WooCommerce 11.1.2 med HPOS (25/25, syntetiske data fjernet).
+  - 6 ✅ (2026-10-08, lokalt, ikke committet): admin-UI "Pricing" på creatorens redigeringsside: standardmarkup, fast profit pr. parent ("Brug creatorens markup"), skrivebeskyttet forhåndsvisning, eksplicit anvendelse og anvendelse trods afvigelse med bekræftelse og stale-tjek. Audit for markup og fast profit. Runtime-verificeret mod WooCommerce 11.1.2 (37/37, syntetiske data fjernet). Ingen browser.
+  - Moms og payout (2026-10-08, før trin 7, lokalt, ikke committet, ADR-048): creatorens momsstatus (standard "Nej", admin-felt og audit), snapshottet momsstatus, faktisk moms pr. ledger-række (`merchboard_sales_tax`, migration 7), `RealizedPayout` adskilt fra `RealizedProfit` (ekskl. moms). Runtime-verificeret mod WooCommerce med midlertidig moms (21/21).
+  - Rettelse af beregningsmodellen ✅ (2026-10-09, lokalt, ikke committet, ADR-049): den tidligere model (grundpris + profit skrevet som regular price, anvendelse, drift og fast profit, trin 3–6) er erstattet af andelsmodellen. Pris-skrivningen er fjernet; produktmarkup i procent erstatter fast profit; snapshottet gemmer andel, kilde, prisdecimaler og momsstatus; profit og udbetaling beregnes ud fra rækkens betalte beløb inkl. moms. Migration 8 (`AddCreatorShareModel`, schema-version 8). Gamle snapshots har ukendt andel. Detaljer og runtime-resultat i rapporten.
+  - Creator-profit i dashboardet ✅ (2026-10-09, lokalt, ikke committet, ADR-050): profit pr. produkt, pr. ordrelinje og ordre og for en salgsperiode i `/me/products`, `/me/orders` og `/me/sales` og i dashboardets Products, Orders og Sales. Ukendt eller ufuldstændig profit vises aldrig som 0. Detaljer i rapporten (afsnit 17).
+  - Admin-ordrehistorik ✅ (2026-10-09, lokalt, ikke committet, ADR-051): "Merch Dashboard → Order history" med server-side pagineret liste pr. ordre, filtre, detalje med hændelser, linjer, snapshots og gemt moms, og diagnose af ukendt profit. Kun læsning. **Ingen sletning af ordrehistorik:** projektejeren har 2026-10-09 godkendt siden som ren visning; append-only-reglerne i ADR-037/038/047/048 gælder uændret (ADR-051, beslutningsnote). Detaljer i rapporten (afsnit 18).
+  - Sletning af en testordres historik ✅ (2026-10-10, lokalt, ikke committet, ADR-052): projektejeren ændrede beslutningen fra 2026-10-09; admin kan slette én ordres gemte historik, når WooCommerce-ordren ligger i papirkurven eller er slettet (ny capability, nonce, indtastet ordre-ID, én transaktion med audit). Detaljer i rapporten (afsnit 18).
+  - Salg inkl. moms ✅ (2026-10-10, lokalt, ikke committet, ADR-053): Overview, Sales og admin Sales viser salget inkl. gemt moms; fallback til ekskl. moms med mærkning, når moms mangler for ældre rækker.
+  - Næste trin (rapportens afsnit 13, omnummereres ved planlægning):
+    - ejerskift og livscyklus;
+    - creator-API og dashboard;
+    - runtime-verifikation;
+    - docs, commit, push og CI.
 
 ---
 

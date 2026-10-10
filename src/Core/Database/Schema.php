@@ -9,9 +9,12 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Core\Database;
 
+use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
+use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
+use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 
@@ -37,6 +40,9 @@ final class Schema {
 			3 => new CreateCreatorMetaTable(),
 			4 => new CreateCreatorCategoriesTable(),
 			5 => new CreateSalesLedgerTables(),
+			6 => new CreateCreatorPricingTables(),
+			7 => new AddCreatorVatAndSalesTax(),
+			8 => new AddCreatorShareModel(),
 		);
 	}
 }

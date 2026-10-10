@@ -52,9 +52,9 @@ final class SalesCache implements SalesCacheInvalidator {
 	public const INITIAL_GENERATION = '1';
 
 	/**
-	 * Version of the cached report format; part of every report key.
+	 * Version of the cached report format; part of every report key (v2: per-currency `profit`, ADR-050).
 	 */
-	private const FORMAT = 'v1';
+	private const FORMAT = 'v3';
 
 	/**
 	 * Week convention of SalesPeriods (ISO weeks, Monday first).

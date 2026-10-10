@@ -25,6 +25,8 @@ export interface ProductImage {
 	readonly alt: string;
 }
 
+import type { Profit } from './profit';
+
 export interface Product {
 	/** Product id; the row key only, never shown. */
 	readonly id: number;
@@ -33,4 +35,9 @@ export interface Product {
 	readonly price: ProductPrice | null;
 	readonly stockStatus: StockStatus | null;
 	readonly image: ProductImage | null;
+	/**
+	 * The creator's realized profit of the product and its variations, all
+	 * time, one entry per currency; null when the creator has no sales of it.
+	 */
+	readonly profit: readonly Profit[] | null;
 }

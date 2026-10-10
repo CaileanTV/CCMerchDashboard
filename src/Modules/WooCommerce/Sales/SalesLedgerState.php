@@ -25,12 +25,13 @@ final readonly class SalesLedgerState {
 	 *
 	 * @phpstan-param list<SalesEntry> $entries
 	 *
-	 * @param int             $order_id WooCommerce order.
-	 * @param SalesEntry[]    $entries  Ledger rows of the order, by id.
-	 * @param SalesCycleState $cycles   Cycle events of the order.
+	 * @param int                $order_id WooCommerce order.
+	 * @param SalesEntry[]       $entries  Ledger rows of the order, by id.
+	 * @param SalesCycleState    $cycles   Cycle events of the order.
+	 * @param array<string, int> $taxes Stored actual tax by event key (ADR-048); rows without one have unknown tax.
 	 * @throws InvalidArgumentException When a row or the cycles belong to another order.
 	 */
-	public function __construct( public int $order_id, public array $entries, public SalesCycleState $cycles ) {
+	public function __construct( public int $order_id, public array $entries, public SalesCycleState $cycles, public array $taxes = array() ) {
 		foreach ( $entries as $entry ) {
 			if ( $entry->order_id !== $order_id ) {
 				throw new InvalidArgumentException( 'Sales entry of another order.' );

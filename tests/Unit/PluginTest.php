@@ -258,8 +258,8 @@ final class PluginTest extends TestCase {
 
 	public function test_activation_installs_the_schema(): void {
 		unset( $this->options->options[ Migrator::VERSION_OPTION ] );
-		// One dbDelta() per table (migration 5 creates two).
-		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) );
+		// One dbDelta() per table, including the retired one (created by migration 6, dropped by 8).
+		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) + count( Tables::retired() ) );
 
 		$this->plugin()->activate();
 
@@ -268,7 +268,7 @@ final class PluginTest extends TestCase {
 
 	public function test_boot_upgrades_an_outdated_schema_before_modules_register(): void {
 		$this->options->options[ Migrator::VERSION_OPTION ] = '0';
-		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) );
+		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) + count( Tables::retired() ) );
 
 		$this->plugin()->boot();
 
@@ -282,10 +282,14 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creator_categories \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_sales \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_sales_cycles \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_pricing_overrides \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_item_pricing \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_sales_line_pricing \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_sales_tax \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 5, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 8, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

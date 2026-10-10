@@ -34,6 +34,9 @@ const SALE = {
 	quantity: 2,
 	refunded: false,
 	counted: true,
+	profit: { currency: 'DKK', status: 'complete', amount: '20.0000' },
+	order_profit: { currency: 'DKK', status: 'complete', amount: '40.0000' },
+	order_lines: 2,
 };
 
 const REFUNDED = {
@@ -43,6 +46,9 @@ const REFUNDED = {
 	product_name: 'Hoodie',
 	quantity: 1,
 	refunded: true,
+	profit: { currency: 'DKK', status: 'unknown', amount: null },
+	order_profit: { currency: 'DKK', status: 'unknown', amount: null },
+	order_lines: 1,
 };
 
 const NOT_COUNTED = {
@@ -54,6 +60,9 @@ const NOT_COUNTED = {
 	product_name: 'Cap',
 	quantity: 0,
 	counted: false,
+	profit: { currency: 'DKK', status: 'complete', amount: '0.0000' },
+	order_profit: { currency: 'DKK', status: 'complete', amount: '0.0000' },
+	order_lines: 1,
 };
 
 const BOTH = {
@@ -66,7 +75,18 @@ const BOTH = {
 	quantity: 0,
 	refunded: true,
 	counted: false,
+	profit: { currency: 'DKK', status: 'incomplete', amount: null },
+	order_profit: { currency: 'DKK', status: 'incomplete', amount: null },
+	order_lines: 1,
 };
+
+/** An amount as the dashboard formats it (site locale da_DK, DKK). */
+function money( amount: string ): string {
+	return new Intl.NumberFormat( 'da-DK', {
+		style: 'currency',
+		currency: 'DKK',
+	} ).format( Number( amount ) );
+}
 
 /** The date as the section shows it (site locale, viewer's time zone). */
 function shown( iso: string ): string {
@@ -125,6 +145,13 @@ describe( 'parseOrderLine', () => {
 			quantity: 2,
 			refunded: false,
 			counted: true,
+			profit: { currency: 'DKK', status: 'complete', amount: '20.0000' },
+			orderProfit: {
+				currency: 'DKK',
+				status: 'complete',
+				amount: '40.0000',
+			},
+			orderLines: 2,
 		} );
 		expect(
 			parseOrderLine( { ...SALE, product_name: '' } )?.productName
@@ -179,6 +206,7 @@ describe( 'Orders section', () => {
 			'Quantity',
 			'Status',
 			'Notes',
+			'Profit',
 		] );
 		expect( rows( container ) ).toEqual( [
 			[
@@ -188,6 +216,7 @@ describe( 'Orders section', () => {
 				'2',
 				'Processing',
 				'–None',
+				`${ money( '20' ) }Order total: ${ money( '40' ) }`,
 			],
 			[
 				shown( SALE.date ),
@@ -196,6 +225,7 @@ describe( 'Orders section', () => {
 				'1',
 				'Processing',
 				'Refund recorded',
+				'Unknown',
 			],
 			[
 				shown( SALE.date ),
@@ -204,6 +234,7 @@ describe( 'Orders section', () => {
 				'0',
 				'Cancelled',
 				'Not counted',
+				money( '0' ),
 			],
 		] );
 	} );
@@ -243,7 +274,11 @@ describe( 'Orders section', () => {
 			container.querySelectorAll( 'tbody .merchboard-badge' )
 		).map( ( badge ) => badge.textContent );
 
-		expect( badges ).toEqual( [ 'Refund recorded', 'Not counted' ] );
+		expect( badges ).toEqual( [
+			'Refund recorded',
+			'Not counted',
+			'Incomplete',
+		] );
 		expect( rows( container )[ 0 ]?.[ 4 ] ).toBe( 'Deleted' );
 	} );
 

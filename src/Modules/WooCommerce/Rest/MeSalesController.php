@@ -190,7 +190,12 @@ final class MeSalesController extends RestController {
 			'type'     => 'integer',
 			'readonly' => true,
 		);
-		$date    = array(
+		// Amounts incl. VAT (ADR-053): null when a row of the period has no stored tax.
+		$vat_text = array(
+			'type'     => array( 'string', 'null' ),
+			'readonly' => true,
+		);
+		$date     = array(
 			'type'     => 'string',
 			'format'   => 'date',
 			'readonly' => true,
@@ -215,11 +220,26 @@ final class MeSalesController extends RestController {
 							'totals'    => array(
 								'type'       => 'object',
 								'properties' => array(
-									'net_sales'   => $text,
-									'sales'       => $text,
-									'adjustments' => $text,
-									'units'       => $integer,
-									'orders'      => $integer,
+									'net_sales'            => $text,
+									'sales'                => $text,
+									'adjustments'          => $text,
+									'net_sales_incl_vat'   => $vat_text,
+									'sales_incl_vat'       => $vat_text,
+									'adjustments_incl_vat' => $vat_text,
+									'units'                => $integer,
+									'orders'               => $integer,
+								),
+							),
+							'vat'       => array(
+								'type'       => 'object',
+								'readonly'   => true,
+								'properties' => array(
+									'status'       => array(
+										'type'     => 'string',
+										'enum'     => array( 'complete', 'incomplete' ),
+										'readonly' => true,
+									),
+									'missing_rows' => $integer,
 								),
 							),
 							'series'    => array(
@@ -230,6 +250,7 @@ final class MeSalesController extends RestController {
 										'start'     => $date,
 										'end'       => $date,
 										'net_sales' => $text,
+										'net_sales_incl_vat' => $vat_text,
 										'units'     => $integer,
 										'orders'    => $integer,
 									),
@@ -243,6 +264,7 @@ final class MeSalesController extends RestController {
 										'product_id' => $integer,
 										'name'       => $text,
 										'net_sales'  => $text,
+										'net_sales_incl_vat' => $vat_text,
 										'units'      => $integer,
 									),
 								),

@@ -128,6 +128,27 @@ final class RecordingWpdb extends wpdb {
 	public array $option_rows = array();
 
 	/**
+	 * Columns added by prepared "ALTER TABLE %i ADD COLUMN" statements, "table.column" => true.
+	 *
+	 * @var array<string, true>
+	 */
+	public array $added_columns = array();
+
+	/**
+	 * Whether "SHOW COLUMNS FROM %i LIKE %s" finds the column; null follows $tables_exist.
+	 *
+	 * @var bool|null
+	 */
+	public ?bool $columns_exist = null;
+
+	/**
+	 * Tables dropped by prepared "DROP TABLE IF EXISTS %i" statements, name => true.
+	 *
+	 * @var array<string, true>
+	 */
+	public array $dropped_tables = array();
+
+	/**
 	 * No database connection (the real constructor connects to MySQL).
 	 */
 	public function __construct() {
@@ -179,7 +200,15 @@ final class RecordingWpdb extends wpdb {
 		$prepared = $this->prepared_for( (string) $query );
 
 		if ( $this->tables_exist && null !== $prepared && 'SHOW TABLES LIKE %s' === $prepared['query'] ) {
-			return stripslashes( (string) $prepared['args'][0] );
+			$table = stripslashes( (string) $prepared['args'][0] );
+
+			return isset( $this->dropped_tables[ $table ] ) ? null : $table;
+		}
+
+		if ( null !== $prepared && 'SHOW COLUMNS FROM %i LIKE %s' === $prepared['query'] && ! array_key_exists( (string) $query, $this->vars ) ) {
+			$column = (string) $prepared['args'][1];
+
+			return ( $this->columns_exist ?? $this->tables_exist ) || isset( $this->added_columns[ $prepared['args'][0] . '.' . $column ] ) ? $column : null;
 		}
 
 		if ( array_key_exists( (string) $query, $this->vars ) ) {
@@ -253,7 +282,23 @@ final class RecordingWpdb extends wpdb {
 		$prepared            = $this->prepared_for( (string) $query );
 
 		if ( null !== $prepared && 'DROP TABLE IF EXISTS %i' === $prepared['query'] ) {
-			return $this->query_results[ $query ] ?? true;
+			$result = $this->query_results[ $query ] ?? true;
+
+			if ( false !== $result ) {
+				$this->dropped_tables[ (string) $prepared['args'][0] ] = true;
+			}
+
+			return $result;
+		}
+
+		if ( null !== $prepared && 1 === preg_match( '/^ALTER TABLE %i ADD COLUMN (\w+) /', $prepared['query'], $match ) ) {
+			$result = $this->query_results[ $query ] ?? true;
+
+			if ( false !== $result ) {
+				$this->added_columns[ $prepared['args'][0] . '.' . $match[1] ] = true;
+			}
+
+			return $result;
 		}
 
 		if ( null !== $prepared ) {

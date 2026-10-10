@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Rest;
 
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Access\CreatorContext;
@@ -20,6 +21,7 @@ use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeProductDetails;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
@@ -150,10 +152,56 @@ final class MeProductsEndpointTest extends IntegrationTestCase {
 				'price'        => null,
 				'stock_status' => 'instock',
 				'image'        => null,
+				// No ledger rows of the creator for the product: no profit, never 0 (ADR-050).
+				'profit'       => null,
 			),
 			( (array) $response->get_data() )[0]
 		);
 		self::assertSame( array( '2', '1' ), self::totals( $response ) );
+	}
+
+	public function test_each_product_has_its_own_historical_profit_or_none(): void {
+		$mine   = $this->creator_user( 'mine', 'Mine', CreatorStatus::Active );
+		$theirs = $this->creator_user( 'theirs', 'Theirs', CreatorStatus::Active );
+		$me     = $this->creator_id( $mine );
+		$tee    = $this->posts->add( 'A tee', 'publish', array( (string) $me ) );
+		$cap    = $this->posts->add( 'B cap', 'publish', array( (string) $me ) );
+		$this->posts->add( 'C unsold', 'publish', array( (string) $me ) );
+
+		// Tee: a sale of the simple product and of a variation (both 100.00 incl. VAT at 20 %), and a refund.
+		$this->ledger_row( $me, $tee, 0, 601, 's:601:1', '80.0000', '20.0000', 2000 );
+		$this->ledger_row( $me, $tee, 31, 602, 's:602:1', '80.0000', '20.0000', 2000 );
+		$this->ledger_row( $me, $tee, 31, 602, 'r:602:9', '-40.0000', '-10.0000', 2000 );
+		// The other creator's row on the same product id never counts for me.
+		$this->ledger_row( $this->creator_id( $theirs ), $tee, 0, 603, 's:603:1', '800.0000', '200.0000', 5000 );
+		// Cap: one known row and one row without a snapshot (before phase 22).
+		$this->ledger_row( $me, $cap, 0, 604, 's:604:1', '80.0000', '20.0000', 2000 );
+		$this->ledger_row( $me, $cap, 0, 605, 's:605:1', '80.0000', '20.0000', null );
+		wp_set_current_user( $mine );
+
+		$data = array_column( (array) $this->request()->get_data(), 'profit', 'name' );
+
+		self::assertSame(
+			array(
+				'A tee'    => array(
+					array(
+						'currency' => 'DKK',
+						'status'   => 'complete',
+						'amount'   => '30.0000',
+					),
+				),
+				'B cap'    => array(
+					array(
+						'currency' => 'DKK',
+						'status'   => 'incomplete',
+						'amount'   => null,
+					),
+				),
+				'C unsold' => null,
+			),
+			$data,
+			'20 + 20 - 10 for the tee (variation under its parent); the cap is incomplete, not a partial sum.'
+		);
 	}
 
 	public function test_request_parameters_cannot_select_another_creator(): void {
@@ -307,6 +355,78 @@ final class MeProductsEndpointTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * A ledger row (DKK, order = item id) with its stored tax and, with a
+	 * share, the line's share snapshot (not VAT registered, 2 decimals).
+	 *
+	 * @param int      $creator_id Ledger creator.
+	 * @param int      $product_id Parent product.
+	 * @param int      $variation  Variation.
+	 * @param int      $item       Order item (also the order id).
+	 * @param string   $event_key  Event key.
+	 * @param string   $net        Net amount.
+	 * @param string   $tax        Tax.
+	 * @param int|null $share_bps  Share, null for no snapshot.
+	 */
+	private function ledger_row( int $creator_id, int $product_id, int $variation, int $item, string $event_key, string $net, string $tax, ?int $share_bps ): void {
+		$refund = str_starts_with( $event_key, 'r:' );
+
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::SALES ),
+				array(
+					'event_key'     => $event_key,
+					'creator_id'    => $creator_id,
+					'order_id'      => $item,
+					'order_item_id' => $item,
+					'cycle'         => 1,
+					'refund_id'     => $refund ? 9 : 0,
+					'product_id'    => $product_id,
+					'variation_id'  => $variation,
+					'item_name'     => 'Line',
+					'type'          => $refund ? 'refund' : 'sale',
+					'quantity'      => $refund ? 0 : 1,
+					'net_amount'    => $net,
+					'currency'      => 'DKK',
+					'occurred_at'   => '2026-09-10 10:00:00',
+					'created_at'    => '2026-09-10 10:00:00',
+				)
+			)
+		);
+		$this->wpdb->insert(
+			$this->table( Tables::SALES_TAX ),
+			array(
+				'event_key'     => $event_key,
+				'order_id'      => $item,
+				'order_item_id' => $item,
+				'tax_amount'    => $tax,
+				'currency'      => 'DKK',
+				'created_at'    => '2026-09-10 10:00:00',
+			)
+		);
+
+		if ( null !== $share_bps && ! $refund ) {
+			$this->wpdb->insert(
+				$this->table( Tables::SALES_LINE_PRICING ),
+				array(
+					'order_item_id'  => $item,
+					'order_id'       => $item,
+					'creator_id'     => $creator_id,
+					'product_id'     => $product_id,
+					'variation_id'   => $variation,
+					'status'         => 'share',
+					'currency'       => 'DKK',
+					'captured_at'    => '2026-09-10 10:00:00',
+					'share_bps'      => $share_bps,
+					'share_source'   => 'creator',
+					'price_decimals' => 2,
+					'vat_registered' => 0,
+				)
+			);
+		}
+	}
+
+	/**
 	 * Registers the controller (with FakeProductDetails) on a fresh REST server.
 	 */
 	private function register_route(): void {
@@ -314,7 +434,8 @@ final class MeProductsEndpointTest extends IntegrationTestCase {
 			$this->service( CreatorContext::class ),
 			new CreatorProducts( $this->wpdb ),
 			$this->details,
-			$this->service( Logger::class )
+			$this->service( Logger::class ),
+			new LedgerCreatorProfits( $this->wpdb )
 		);
 
 		$this->register = static function () use ( $controller ): void {

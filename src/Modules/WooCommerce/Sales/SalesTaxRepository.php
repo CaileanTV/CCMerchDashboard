@@ -1,0 +1,65 @@
+<?php
+/**
+ * Read access to the actual tax of sales ledger rows.
+ *
+ * @package MerchBoard
+ */
+
+declare( strict_types=1 );
+
+namespace MerchBoard\Modules\WooCommerce\Sales;
+
+use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Database\Tables;
+use wpdb;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Reads `merchboard_sales_tax` (ADR-048) for read models such as the payout.
+ * Written only by SalesRepository::write() in the ledger's transaction; this
+ * class never writes.
+ */
+final class SalesTaxRepository {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param wpdb $wpdb WordPress database object.
+	 */
+	public function __construct( private wpdb $wpdb ) {
+	}
+
+	/**
+	 * The actual tax of one ledger row, or null when none is stored (rows
+	 * registered before schema version 7, or with unknown tax).
+	 *
+	 * @param string $event_key The row's event key.
+	 * @return array{tax: int, currency: string}|null Signed tax in 1/10000 units and its currency.
+	 * @throws DatabaseException When the query fails or the stored amount is invalid.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function find( string $event_key ): ?array {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT tax_amount, currency FROM %i WHERE event_key = %s', Tables::name( $wpdb, Tables::SALES_TAX ), $event_key ), ARRAY_A );
+
+		if ( ! is_array( $row ) ) {
+			if ( '' !== $wpdb->last_error ) {
+				throw new DatabaseException( 'Could not read the sales tax.' );
+			}
+
+			return null;
+		}
+
+		$amount = (string) ( $row['tax_amount'] ?? '' );
+
+		if ( 1 !== preg_match( '/^-?\d{1,15}(?:\.\d{1,4})?$/', $amount ) ) {
+			throw new DatabaseException( 'Invalid sales tax row.' );
+		}
+
+		return array(
+			'tax'      => SalesAmount::parse( $amount ),
+			'currency' => (string) ( $row['currency'] ?? '' ),
+		);
+	}
+}

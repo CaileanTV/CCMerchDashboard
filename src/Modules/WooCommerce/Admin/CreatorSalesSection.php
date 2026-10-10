@@ -101,12 +101,12 @@ final class CreatorSalesSection {
 				self::day( $query->to )
 			)
 		) . '</p>';
-		echo '<p class="description">' . esc_html__( "The shop's net sales of this creator's products after discounts, excluding VAT, shipping and fees. It is not a payout. The figures and their definitions are the same as in the creator's dashboard; dates are in the site's time zone.", 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( "The shop's sales of this creator's products after discounts, including VAT, excluding shipping and fees. It is not a payout. The figures and their definitions are the same as in the creator's dashboard; dates are in the site's time zone.", 'merchboard' ) . '</p>';
 
 		$currencies = is_array( $report['currencies'] ?? null ) ? array_values( array_filter( $report['currencies'], 'is_array' ) ) : array();
 
 		if ( array() === $currencies ) {
-			echo '<p><em>' . esc_html__( 'No net sales in the last 30 days.', 'merchboard' ) . '</em></p>';
+			echo '<p><em>' . esc_html__( 'No sales in the last 30 days.', 'merchboard' ) . '</em></p>';
 
 			return;
 		}
@@ -129,28 +129,37 @@ final class CreatorSalesSection {
 		$currency = is_string( $block['currency'] ?? null ) ? $block['currency'] : '';
 		$totals   = is_array( $block['totals'] ?? null ) ? $block['totals'] : array();
 		$series   = is_array( $block['series'] ?? null ) ? array_values( array_filter( $block['series'], 'is_array' ) ) : array();
+		// ADR-053: incl. VAT when every row has its stored tax; otherwise the amounts excl. VAT, labelled as such.
+		$vat     = is_string( $totals['net_sales_incl_vat'] ?? null );
+		$amount  = $vat ? 'net_sales_incl_vat' : 'net_sales';
+		$heading = $vat ? __( 'Sales (incl. VAT)', 'merchboard' ) : __( 'Net sales (excl. VAT)', 'merchboard' );
 
 		echo '<h3>' . esc_html( $currency ) . '</h3>';
+
+		if ( ! $vat ) {
+			echo '<p class="description">' . esc_html__( 'VAT is missing for some older sales in this period, so the amounts are shown excluding VAT.', 'merchboard' ) . '</p>';
+		}
+
 		echo '<table class="widefat striped merchboard-sales-totals" style="max-width:40rem"><thead><tr>';
-		echo '<th scope="col">' . esc_html__( 'Net sales (excl. VAT)', 'merchboard' ) . '</th>';
+		echo '<th scope="col">' . esc_html( $heading ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Units', 'merchboard' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Orders', 'merchboard' ) . '</th>';
 		echo '</tr></thead><tbody><tr>';
-		echo '<td>' . esc_html( self::money( $totals['net_sales'] ?? null, $currency ) ) . '</td>';
+		echo '<td>' . esc_html( self::money( $totals[ $amount ] ?? null, $currency ) ) . '</td>';
 		echo '<td>' . esc_html( self::count( $totals['units'] ?? null ) ) . '</td>';
 		echo '<td>' . esc_html( self::count( $totals['orders'] ?? null ) ) . '</td>';
 		echo '</tr></tbody></table>';
 
-		echo '<details class="merchboard-sales-series"><summary>' . esc_html__( 'Net sales per day', 'merchboard' ) . '</summary>';
+		echo '<details class="merchboard-sales-series"><summary>' . esc_html( $vat ? __( 'Sales per day (incl. VAT)', 'merchboard' ) : __( 'Net sales per day', 'merchboard' ) ) . '</summary>';
 		echo '<table class="widefat striped" style="max-width:40rem"><caption class="screen-reader-text">' . esc_html(
 			sprintf(
 				/* translators: %s: currency code (e.g. DKK). */
-				__( 'Net sales, units and orders per period (%s)', 'merchboard' ),
+				__( 'Sales, units and orders per period (%s)', 'merchboard' ),
 				$currency
 			)
 		) . '</caption><thead><tr>';
 		echo '<th scope="col">' . esc_html__( 'Day', 'merchboard' ) . '</th>';
-		echo '<th scope="col">' . esc_html__( 'Net sales (excl. VAT)', 'merchboard' ) . '</th>';
+		echo '<th scope="col">' . esc_html( $heading ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Units', 'merchboard' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Orders', 'merchboard' ) . '</th>';
 		echo '</tr></thead><tbody>';
@@ -158,7 +167,7 @@ final class CreatorSalesSection {
 		foreach ( $series as $point ) {
 			echo '<tr>';
 			echo '<th scope="row">' . esc_html( is_string( $point['start'] ?? null ) ? self::day( $point['start'] ) : '' ) . '</th>';
-			echo '<td>' . esc_html( self::money( $point['net_sales'] ?? null, $currency ) ) . '</td>';
+			echo '<td>' . esc_html( self::money( $point[ $amount ] ?? null, $currency ) ) . '</td>';
 			echo '<td>' . esc_html( self::count( $point['units'] ?? null ) ) . '</td>';
 			echo '<td>' . esc_html( self::count( $point['orders'] ?? null ) ) . '</td>';
 			echo '</tr>';

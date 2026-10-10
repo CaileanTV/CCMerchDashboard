@@ -46,6 +46,13 @@ defined( 'ABSPATH' ) || exit;
  * Creator (ADR-038, B2/B3): a line's creator is its snapshot from its first
  * row. A line without history can get its first creator only in the open
  * cycle (or the one opening now); never in a closed one.
+ *
+ * Tax (ADR-048): every row also gets its actual tax by the same rule as its
+ * amount: a sale the line's tax, a refund the refund line's own tax, the
+ * corrections and the reversal the mirrored stored tax or tax balance, and a
+ * line delta the difference between WooCommerce' tax (line + refunds) and the
+ * line's tax balance. When an input is unknown (null) the row's tax is
+ * unknown and is not written; amounts, keys and cycles are never affected.
  */
 final class SalesPlanner {
 
@@ -109,11 +116,12 @@ final class SalesPlanner {
 				}
 
 				$net = SalesAmount::parse( $row->net_amount );
-				$draft->add( SalesEntryType::Correction, SalesCorrectionReason::RefundDeleted, $key, $item_id, $row->cycle, $refund_id, -$row->quantity, SalesAmount::negate( $net ), $processed_at );
+				$tax = $draft->stored_tax( $row->event_key );
+				$draft->add( SalesEntryType::Correction, SalesCorrectionReason::RefundDeleted, $key, $item_id, $row->cycle, $refund_id, -$row->quantity, SalesAmount::negate( $net ), $processed_at, tax: self::tax_negate( $tax ) );
 
 				// Planned together with c-rd only: a closed cycle must stay at 0.
 				if ( $draft->cycles()->is_closed( $row->cycle ) ) {
-					$draft->add( SalesEntryType::Correction, SalesCorrectionReason::ClosedCycleRefundDeleted, 'c-rdo:' . $item_id . ':' . $refund_id, $item_id, $row->cycle, $refund_id, $row->quantity, $net, $processed_at );
+					$draft->add( SalesEntryType::Correction, SalesCorrectionReason::ClosedCycleRefundDeleted, 'c-rdo:' . $item_id . ':' . $refund_id, $item_id, $row->cycle, $refund_id, $row->quantity, $net, $processed_at, tax: $tax );
 				}
 			}
 		}
@@ -146,10 +154,10 @@ final class SalesPlanner {
 					continue;
 				}
 
-				$draft->add( SalesEntryType::Refund, null, $key, $item_id, $latest, $refund->refund_id, $line->quantity, $line->net, $refund->date_created );
+				$draft->add( SalesEntryType::Refund, null, $key, $item_id, $latest, $refund->refund_id, $line->quantity, $line->net, $refund->date_created, tax: $line->tax );
 
 				if ( $closed ) {
-					$draft->add( SalesEntryType::Correction, SalesCorrectionReason::ClosedCycleRefund, 'c-ro:' . $item_id . ':' . $refund->refund_id, $item_id, $latest, $refund->refund_id, -$line->quantity, SalesAmount::negate( $line->net ), $processed_at );
+					$draft->add( SalesEntryType::Correction, SalesCorrectionReason::ClosedCycleRefund, 'c-ro:' . $item_id . ':' . $refund->refund_id, $item_id, $latest, $refund->refund_id, -$line->quantity, SalesAmount::negate( $line->net ), $processed_at, tax: self::tax_negate( $line->tax ) );
 				}
 			}
 		}
@@ -205,7 +213,7 @@ final class SalesPlanner {
 		$draft->cycle_event( $cycle, SalesCycleEventType::Open, $sale_time );
 
 		foreach ( $remaining as $item_id => $delta ) {
-			$draft->add( SalesEntryType::Sale, null, 's:' . $item_id . ':' . $cycle, $item_id, $cycle, 0, $delta['quantity'], $delta['net'], $sale_time );
+			$draft->add( SalesEntryType::Sale, null, 's:' . $item_id . ':' . $cycle, $item_id, $cycle, 0, $delta['quantity'], $delta['net'], $sale_time, tax: $delta['tax'] );
 		}
 
 		foreach ( $new_lines as $line ) {
@@ -230,6 +238,7 @@ final class SalesPlanner {
 			$target = null === $line ? array(
 				'quantity' => 0,
 				'net'      => 0,
+				'tax'      => 0,
 			) : self::target( $line, $refunds );
 
 			if ( $target['net'] < 0 || $target['quantity'] < 0 ) {
@@ -251,7 +260,8 @@ final class SalesPlanner {
 				0,
 				$delta['quantity'],
 				$delta['net'],
-				$processed_at
+				$processed_at,
+				tax: $delta['tax']
 			);
 		}
 
@@ -282,7 +292,7 @@ final class SalesPlanner {
 
 			// No 0/0 reversal: the close event alone marks the end (ADR-038 pkt. 3).
 			if ( 0 !== $total['net'] || 0 !== $total['quantity'] ) {
-				$draft->add( SalesEntryType::Reversal, null, 'v:' . $item_id . ':' . $cycle, $item_id, $cycle, 0, -$total['quantity'], SalesAmount::negate( $total['net'] ), $processed_at );
+				$draft->add( SalesEntryType::Reversal, null, 'v:' . $item_id . ':' . $cycle, $item_id, $cycle, 0, -$total['quantity'], SalesAmount::negate( $total['net'] ), $processed_at, tax: self::tax_negate( $draft->tax_total( $item_id ) ) );
 			}
 		}
 
@@ -308,34 +318,36 @@ final class SalesPlanner {
 		}
 
 		$attribution = SalesPlanDraft::attribution( $line->creator_id, $line->product_id, $line->variation_id, $line->name );
-		$draft->add( SalesEntryType::Sale, null, 's:' . $line->item_id . ':' . $cycle, $line->item_id, $cycle, 0, $line->quantity, $line->net, $sale_time, $attribution );
+		$draft->add( SalesEntryType::Sale, null, 's:' . $line->item_id . ':' . $cycle, $line->item_id, $cycle, 0, $line->quantity, $line->net, $sale_time, $attribution, $line->tax );
 
 		foreach ( $refunds as $refund ) {
 			foreach ( $refund->lines as $refund_line ) {
 				if ( $refund_line->refunded_item_id === $line->item_id ) {
-					$draft->add( SalesEntryType::Refund, null, 'r:' . $line->item_id . ':' . $refund->refund_id, $line->item_id, $cycle, $refund->refund_id, $refund_line->quantity, $refund_line->net, $refund->date_created );
+					$draft->add( SalesEntryType::Refund, null, 'r:' . $line->item_id . ':' . $refund->refund_id, $line->item_id, $cycle, $refund->refund_id, $refund_line->quantity, $refund_line->net, $refund->date_created, tax: $refund_line->tax );
 				}
 			}
 		}
 	}
 
 	/**
-	 * WooCommerce' current quantity and net of a line: the line minus its
-	 * current refunds.
+	 * WooCommerce' current quantity, net and tax of a line: the line minus its
+	 * current refunds (tax null when any part is unknown).
 	 *
 	 * @param OrderLineSnapshot          $line    Line.
 	 * @param array<int, RefundSnapshot> $refunds Current refunds by id.
-	 * @return array{quantity: int, net: int}
+	 * @return array{quantity: int, net: int, tax: int|null}
 	 */
 	private static function target( OrderLineSnapshot $line, array $refunds ): array {
 		$quantity = $line->quantity;
 		$net      = $line->net;
+		$tax      = $line->tax;
 
 		foreach ( $refunds as $refund ) {
 			foreach ( $refund->lines as $refund_line ) {
 				if ( $refund_line->refunded_item_id === $line->item_id ) {
 					$quantity = SalesAmount::add( $quantity, $refund_line->quantity );
 					$net      = SalesAmount::add( $net, $refund_line->net );
+					$tax      = self::tax_add( $tax, $refund_line->tax );
 				}
 			}
 		}
@@ -343,16 +355,17 @@ final class SalesPlanner {
 		return array(
 			'quantity' => $quantity,
 			'net'      => $net,
+			'tax'      => $tax,
 		);
 	}
 
 	/**
 	 * Target minus the ledger's total of a line.
 	 *
-	 * @param SalesPlanDraft                 $draft   Draft.
-	 * @param int                            $item_id Order item id.
-	 * @param array{quantity: int, net: int} $target  Target.
-	 * @return array{quantity: int, net: int}
+	 * @param SalesPlanDraft                                $draft   Draft.
+	 * @param int                                           $item_id Order item id.
+	 * @param array{quantity: int, net: int, tax: int|null} $target Target.
+	 * @return array{quantity: int, net: int, tax: int|null}
 	 */
 	private static function delta( SalesPlanDraft $draft, int $item_id, array $target ): array {
 		$total = $draft->total( $item_id );
@@ -360,7 +373,27 @@ final class SalesPlanner {
 		return array(
 			'quantity' => SalesAmount::add( $target['quantity'], SalesAmount::negate( $total['quantity'] ) ),
 			'net'      => SalesAmount::add( $target['net'], SalesAmount::negate( $total['net'] ) ),
+			'tax'      => self::tax_add( $target['tax'], self::tax_negate( $draft->tax_total( $item_id ) ) ),
 		);
+	}
+
+	/**
+	 * Sum of two taxes; null when either is unknown.
+	 *
+	 * @param int|null $a Tax.
+	 * @param int|null $b Tax.
+	 */
+	private static function tax_add( ?int $a, ?int $b ): ?int {
+		return null === $a || null === $b ? null : SalesAmount::add( $a, $b );
+	}
+
+	/**
+	 * Negated tax; null when unknown.
+	 *
+	 * @param int|null $tax Tax.
+	 */
+	private static function tax_negate( ?int $tax ): ?int {
+		return null === $tax ? null : SalesAmount::negate( $tax );
 	}
 
 	/**

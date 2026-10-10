@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\WooCommerce;
 
 use Brain\Monkey\Actions;
+use Brain\Monkey\Functions;
+use Closure;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
@@ -27,6 +29,8 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorSalesSection;
+use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryActions;
+use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
 use MerchBoard\Modules\WooCommerce\Admin\ProductListCreators;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
@@ -58,6 +62,7 @@ use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillJobs;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillScheduler;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingHooks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerHooks;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
@@ -67,6 +72,7 @@ use MerchBoard\Tests\Unit\Support\FakeProductStore;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionProperty;
 use wpdb;
@@ -129,8 +135,35 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'merchboard_creators_view_' . CategorySyncActions::VIEW, array( $container->get( CategorySyncScreen::class ), 'render' ) ) );
 		self::assertSame( 10, has_action( 'merchboard_creators_list_tools', array( $container->get( CategorySyncScreen::class ), 'render_link' ) ) );
 		self::assertFalse( has_action( 'admin_post_nopriv_' . CategorySyncActions::ACTION ) );
+		self::assertSame( 10, has_action( 'admin_post_' . OrderHistoryActions::ACTION, array( $container->get( OrderHistoryActions::class ), 'handle_request' ) ) );
+		self::assertFalse( has_action( 'admin_post_nopriv_' . OrderHistoryActions::ACTION ), 'Deleting order history needs a logged-in user.' );
+		self::assertFalse( has_action( 'wp_ajax_' . OrderHistoryActions::ACTION ), 'Only admin-post; no AJAX or REST route.' );
 		self::assertFalse( has_action( 'wp_ajax_' . CreatorCategoriesActions::MAP_ACTION ), 'Only admin-post; no AJAX or REST route.' );
 		self::assertFalse( has_action( 'admin_post_nopriv_' . CreatorCategoriesActions::MAP_ACTION ) );
+	}
+
+	public function test_the_order_history_submenu_is_hooked_on_admin_menu_without_waiting_for_admin_init(): void {
+		$container = self::core_container();
+		$menu      = null;
+		// WordPress fires admin_menu before admin_init, so the hook must not be added from admin_init.
+		Actions\expectAdded( 'admin_init' )->zeroOrMoreTimes();
+		Actions\expectAdded( 'admin_menu' )
+			->once()
+			->with( Mockery::type( Closure::class ), OrderHistoryPage::PRIORITY )
+			->whenHappen(
+				static function ( callable $callback ) use ( &$menu ): void {
+					$menu = $callback;
+				}
+			);
+
+		( new WooCommerceModule() )->register( $container );
+
+		self::assertIsCallable( $menu );
+		Functions\stubTranslationFunctions();
+		Functions\expect( 'add_submenu_page' )
+			->once()
+			->with( 'merchboard', Mockery::type( 'string' ), Mockery::type( 'string' ), Capabilities::MANAGE_CREATORS, OrderHistoryPage::SLUG, Mockery::type( 'array' ) );
+		$menu();
 	}
 
 	public function test_the_sales_ledger_settings_section_is_wired_to_the_settings_page_only(): void {
@@ -171,6 +204,18 @@ final class WooCommerceModuleTest extends TestCase {
 		self::assertSame( 10, has_action( 'woocommerce_after_order_object_save', array( $hooks, 'order_saved' ) ) );
 		self::assertSame( SalesLedgerHooks::DELETE_POST_PRIORITY, has_action( 'before_delete_post', array( $hooks, 'post_deleting' ) ) );
 		self::assertSame( 10, has_action( 'woocommerce_refund_deleted', array( $hooks, 'refund_deleted' ) ) );
+	}
+
+	public function test_the_pricing_snapshot_hook_is_registered_once_and_pricing_has_no_other_hooks(): void {
+		$container = self::core_container();
+
+		( new WooCommerceModule() )->register( $container );
+		$hooks = $container->get( SalesLinePricingHooks::class );
+
+		self::assertSame( $hooks, $container->get( SalesLinePricingHooks::class ), 'One instance.' );
+		self::assertSame( 10, has_action( 'woocommerce_new_order_item', array( $hooks, 'item_created' ) ) );
+		self::assertFalse( has_filter( 'woocommerce_product_get_price' ), 'No price filters.' );
+		self::assertFalse( has_filter( 'woocommerce_product_get_regular_price' ) );
 	}
 
 	public function test_the_module_reuses_the_core_guard_and_never_registers_it(): void {

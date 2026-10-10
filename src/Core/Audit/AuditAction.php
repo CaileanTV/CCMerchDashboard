@@ -95,4 +95,82 @@ enum AuditAction: string {
 	 * Dry runs write none.
 	 */
 	case SalesBackfillCompleted = 'sales_backfill_completed';
+
+	/**
+	 * Creator pricing was applied to a sellable unit: Merch Dashboard wrote
+	 * WooCommerce' regular price (ADR-045). Creator id: the parent product's
+	 * owner. Context: product and variation id, previous and new regular
+	 * price, rule, markup, base price, profit, currency, the base price's
+	 * source and the unit's state before. Prices are business data, never
+	 * customer data.
+	 *
+	 * Withdrawn (ADR-049): Merch Dashboard no longer writes WooCommerce
+	 * prices, so this action is never recorded again. It stays for the
+	 * append-only history that already contains it.
+	 */
+	case CreatorPricingApplied = 'creator_pricing_applied';
+
+	/**
+	 * Like CreatorPricingApplied, but on an explicit decision to replace a
+	 * regular price that had drifted from the price Merch Dashboard last
+	 * wrote (PricingService::apply_despite_drift(), ADR-045 point 6). Never
+	 * automatic. Withdrawn like CreatorPricingApplied (ADR-049); kept for the
+	 * existing history.
+	 */
+	case CreatorPricingDriftOverwritten = 'creator_pricing_drift_overwritten';
+
+	/**
+	 * The creator's default markup (share of the sale price) changed (context:
+	 * previous and new markup in basis points; ADR-049). No WooCommerce price
+	 * and no snapshot is changed by this.
+	 */
+	case CreatorMarkupChanged = 'creator_markup_changed';
+
+	/**
+	 * A fixed profit was set or changed for a parent product of the creator
+	 * (context: product id, fixed profit, currency and the previous fixed
+	 * profit or null; ADR-046). Withdrawn (ADR-049): never recorded again;
+	 * kept for the existing history.
+	 */
+	case ProductFixedProfitSet = 'product_fixed_profit_set';
+
+	/**
+	 * A parent product's fixed profit was removed, so the creator's default
+	 * markup applies again (context: product id, previous fixed profit and
+	 * currency; ADR-046). Withdrawn (ADR-049): never recorded again; kept for
+	 * the existing history.
+	 */
+	case ProductFixedProfitRemoved = 'product_fixed_profit_removed';
+
+	/**
+	 * The creator's VAT status changed (context: previous and new status;
+	 * ADR-048). It changes no WooCommerce price, no snapshot and no past
+	 * payout: snapshots keep the status of the moment their line was created.
+	 */
+	case CreatorVatStatusChanged = 'creator_vat_status_changed';
+
+	/**
+	 * A product-specific share was set or changed for a parent product of the
+	 * creator (context: product id, markup and the previous markup or null,
+	 * in basis points; ADR-049). No WooCommerce price and no snapshot is
+	 * changed by this.
+	 */
+	case ProductMarkupSet = 'product_markup_set';
+
+	/**
+	 * A parent product's own share was removed, so the creator's default
+	 * markup applies again (context: product id and previous markup in basis
+	 * points; ADR-049). No WooCommerce price and no snapshot is changed by
+	 * this.
+	 */
+	case ProductMarkupRemoved = 'product_markup_removed';
+
+	/**
+	 * An admin permanently deleted Merch Dashboard's stored history of one
+	 * order whose WooCommerce order was in the trash or deleted, e.g. a test
+	 * order (ADR-052). Context: order id, the WooCommerce state, the number of
+	 * deleted rows per table and the affected creator ids; no amounts and no
+	 * customer data. The WooCommerce order itself is never changed.
+	 */
+	case OrderHistoryDeleted = 'order_history_deleted';
 }

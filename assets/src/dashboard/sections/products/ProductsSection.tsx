@@ -6,6 +6,7 @@ import { ApiErrorState } from '../../components/ApiErrorState';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Pagination } from '../../components/Pagination';
+import { ProfitLegend, ProfitValue } from '../../components/ProfitValue';
 import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
 import { usePagedApi } from '../../hooks/usePagedApi';
@@ -108,7 +109,36 @@ const columns = (): readonly TableColumn< Product >[] => [
 		header: __( 'Stock', 'merchboard' ),
 		render: ( product ) => stockLabel( product.stockStatus ),
 	},
+	{
+		key: 'profit',
+		header: __( 'Profit', 'merchboard' ),
+		render: ( product ) => <ProductProfit product={ product } />,
+		align: 'end',
+	},
 ];
+
+/**
+ * The product's historical profit, one line per currency; "No sales" when the
+ * creator has never sold it (ADR-050).
+ */
+function ProductProfit( { product }: { readonly product: Product } ) {
+	if ( product.profit === null ) {
+		return (
+			<ProfitValue
+				profit={ null }
+				emptyText={ __( 'No sales', 'merchboard' ) }
+			/>
+		);
+	}
+
+	return (
+		<span className="merchboard-profit__list">
+			{ product.profit.map( ( profit ) => (
+				<ProfitValue key={ profit.currency } profit={ profit } />
+			) ) }
+		</span>
+	);
+}
 
 /**
  * Products (ADR-039): the creator's products from `GET /me/products`, read
@@ -164,6 +194,9 @@ export function ProductsSection() {
 					)
 				}
 			/>
+			{ state.status === 'success' && state.data.items.length > 0 && (
+				<ProfitLegend />
+			) }
 			<Pagination
 				page={ page }
 				totalPages={

@@ -694,3 +694,25 @@
 	color: var(--merchboard-text-muted);
 	list-style: none;
 }
+
+// Profit (ADR-050): amounts as text; incomplete and unknown use the badge.
+.merchboard-profit__list {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--merchboard-space-1);
+}
+
+.merchboard-profit--none,
+.merchboard-profit__order {
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-profit__legend {
+	padding: 0;
+	margin: var(--merchboard-space-3) 0 0;
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-text-muted);
+	list-style: none;
+}

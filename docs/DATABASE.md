@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 5.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Øvrige tabeller er planlagte. Verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)).
+> Status: **Schema-version 8.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Fra fase 22 findes også creator pricing (ADR-049): `merchboard_creators.default_markup_bps`, `merchboard_pricing_overrides` (produkt-markup) og `merchboard_sales_line_pricing`; `merchboard_item_pricing` blev oprettet i version 6 og droppet i version 8. Øvrige tabeller er planlagte. Schema-version 1–5 er verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)). Fra version 7 (fase 22, ADR-048) også `merchboard_creators.vat_registered`, `merchboard_sales_line_pricing.vat_registered` og `merchboard_sales_tax`. Version 8 (ADR-049) tilføjer andelen i snapshottet, genopretter produkt-markup-tabellen og dropper `merchboard_item_pricing`. Schema-version 6–8 er indtil videre kun verificeret lokalt mod MariaDB 10.11.19 (integrationstests); CI mod MySQL følger ved næste push.
 
 ## Placering af data
 
@@ -23,6 +23,8 @@
 | Koblingens oprindelse | WooCommerce product meta `_merchboard_creator_link_source` (`admin` | `category`) ✅ fase 17, trin 8 (ADR-033) | Skrives og fjernes sammen med `_merchboard_creator_id`: `admin` ved manuelle koblinger, `category` kun af kategori-afstemningen (`CreatorCategoryReconciler`). Mangler den, eller har den en anden værdi, er koblingen manuel og røres aldrig af afstemningen. Ikke en ejerskabsrelation. Pluginet ejer nøglen og sletter den kun ved opt-in-uninstall |
 | Creator ↔ produktkategori (mapping) | `merchboard_creator_categories` (custom) ✅ fase 17, schema-version 4 (ADR-033) | Vedvarende administrativ regel for automatiske koblinger. Aldrig bevis for ejerskab eller adgang |
 | Salg pr. creator (historik) | `merchboard_sales` (custom ledger, fase 18) | Hurtige aggregeringer og uforanderlig attribution. Se [WOOCOMMERCE.md](WOOCOMMERCE.md). |
+| Creator pricing: creatorens markup (andel af salgsprisen) og momsstatus, produkt-markup | `merchboard_creators.default_markup_bps`/`vat_registered`, `merchboard_pricing_overrides` (custom) ✅ fase 22, schema-version 6–8 (ADR-048/049) | Pluginets egne forretningsdata. Alle WooCommerce-priser forbliver WooCommerce' data og skrives aldrig af Merch Dashboard |
+| Pricing-snapshot pr. ordrelinje (historik) | `merchboard_sales_line_pricing` (custom, append-only) ✅ fase 22, schema-version 6 (ADR-047) | Uforanderlig kilde til realiseret profit. Ledgeren `merchboard_sales` er uændret |
 | Tekniske logs | **Ingen tabel.** WooCommerce-logger eller `error_log()` (fase 4, ADR-021) | Tekniske logs er drift, ikke forretningsdata |
 | Audit trail (hvem ændrede hvad) | `merchboard_audit_log` (custom) ✅ fase 6 | Forretningsdata, append-only (ADR-023). Read-only visning ✅ fase 11 (Merch Dashboard → Audit log). |
 | Cache af aggregeringer | Object cache (gruppe `merchboard_sales`, ADR-040), aldrig transients | Afledte data, må forsvinde |
@@ -79,10 +81,12 @@ Creator som forretningsenhed. Indeholder **ingen** kundedata og er **ikke** en k
 | `status` | `varchar(20) NOT NULL` | `active` eller `inactive` (se statusmodel) |
 | `created_at` | `datetime NOT NULL` | UTC |
 | `updated_at` | `datetime NOT NULL` | UTC |
+| `vat_registered` | `tinyint(1) unsigned NOT NULL DEFAULT 0` | ✅ Schema-version 7 (ADR-048). 1 = momsregistreret, 0 = ikke (standard for eksisterende og nye creators). Skrives kun af `CreatorVatRepository` via `CreatorPricingSettings` (audit `creator_vat_status_changed`) |
+| `default_markup_bps` | `int(10) unsigned NOT NULL DEFAULT 0` | ✅ Schema-version 6 (fase 22, ADR-049). Creatorens markup = andel af WooCommerce-salgsprisen i basis points, 0–10 000 (10 000 = 100 %). Eksisterende og nye creators får 0. Intervallet håndhæves af `MarkupBps` ved skrivning og læsning (ingen CHECK) |
 
 Indexes: `PRIMARY KEY (id)`, `UNIQUE KEY user_id (user_id)`, `KEY status (status)`.
 
-Kilde: `src/Core/Database/Migrations/CreateCreatorsTable.php`.
+Kilde: `src/Core/Database/Migrations/CreateCreatorsTable.php`; kolonnen `default_markup_bps` tilføjes af `CreateCreatorPricingTables` (migration 6) med `ALTER TABLE … ADD COLUMN`, kun hvis den mangler. Den skrives og læses kun af `CreatorMarkupRepository`, ikke af `CreatorRepository`.
 
 **Bevidst udeladt** (tilføjes med ny migration, når en fase har brug for det): `slug` (offentlige URL'er), `created_by` (audit håndteres af logs i fase 4), profilfelter (creatormeta i fase 14).
 
@@ -175,7 +179,7 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 > **Status: design-låst (ADR-037, ADR-038 med supplement 2026-09-28). Tabellerne findes fra schema-version 5 (migration 5) med `SalesRepository` (lagring, lås og transaktion); fra trin 5 skriver `SalesSynchronizer` rækkerne fra WooCommerce-hooks (runtime-verificeret med HPOS og legacy; commit `366714c`, CI grøn inkl. MySQL 8.0.46); fra trin 7 registrerer backfillen historiske ordrer uden ledger-historik (commit `00fb066`). Fase 18 er afsluttet 2026-10-01.** Låsens timeout er 5 sekunder (`SalesRepository::LOCK_TIMEOUT`). Hver INSERT er betinget af `CONNECTION_ID()` = låsens forbindelse, så intet skrives uden for transaktionen, hvis `wpdb` genforbinder. `@@in_transaction` bruges ikke (findes ikke på MySQL 8.0; ADR-038, B4).
 
-**`merchboard_sales`** er en append-only ledger (ADR-037). Historiske rækker ændres og slettes aldrig; afvigelser rettes med nye rækker. Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
+**`merchboard_sales`** er en append-only ledger (ADR-037). Historiske rækker ændres og slettes aldrig; afvigelser rettes med nye rækker. **Eneste undtagelse (ADR-052):** en administrator kan slette alle rækker for én ordre i `merchboard_sales`, `merchboard_sales_cycles`, `merchboard_sales_tax` og `merchboard_sales_line_pricing`, når WooCommerce-ordren ligger i papirkurven eller er slettet (fx en testordre), i én transaktion med audit (`SalesRepository::erase_order()`). Refererer til **creator-ID**. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#sales-ledger).
 
 **Invariant (ADR-038):** for en ordre i en tællende status er ledgerens balance for hver ordrelinje med creator lig WooCommerce' aktuelle netto for linjen efter registrerede refunds; for en ordre, der ikke er tællende, er balancen 0. Balancen er summen af de relevante rækker.
 
@@ -246,6 +250,87 @@ Indexes: `UNIQUE(order_id, cycle, event)`; den dækker også opslag på `order_i
 
 **Skrivning (ADR-038):** under en navngiven lås pr. ordre (`GET_LOCK()`) og i én transaktion for ledger- og cyklusrækker; `UNIQUE` er sidste sikkerhedsnet. Begge tabeller kommer med i `Tables::all()` og slettes kun ved opt-in-uninstall (ADR-025). Fejlmarkøren er ordremeta (`_merchboard_ledger_failure`, se WOOCOMMERCE.md), ikke en tabel.
 
+### Creator pricing ✅ (schema-version 6–8, fase 22, ADR-049)
+
+Oprettet af `CreateCreatorPricingTables` (migration 6) og ændret af `AddCreatorVatAndSalesTax` (migration 7) og `AddCreatorShareModel` (migration 8), plus kolonnerne `merchboard_creators.default_markup_bps` og `vat_registered`. Modellen er ADR-049: creatorens profit er en andel af WooCommerce-salgsprisen, og Merch Dashboard skriver aldrig priser. Fælles regler:
+
+- **Procenter og beløb:** andele i basis points (0–10 000); beløb som `DECIMAL(19,4)`, læst og skrevet som heltal i 1/10 000-enheder (`SalesAmount`); aldrig floats og ingen valutaomregning.
+- **Ingen fremmednøgler** (ADR-019): snapshottet skal overleve ordrer, ordrelinjer, produkter, creators og regler.
+- **Ingen CHECK-constraints:** værdiintervaller og sammenhænge håndhæves af domænet før skrivning og igen ved læsning (en ugyldig række giver `DatabaseException`).
+- **dbDelta og versionerede `ALTER`/`DROP`** i migrationerne, ingen `CURRENT_TIMESTAMP`; tider er UTC.
+- **Adgang:** kun via repositories i `src/Modules/WooCommerce/Pricing/`. Autorisation og audit ligger i `CreatorPricingSettings`.
+
+#### `merchboard_pricing_overrides` (current state, ADR-049)
+
+Højst én produkt-markup pr. parent-produkt, bundet til ejeren. Den erstatter creatorens markup for produktet og alle varianter; de summeres aldrig. Genoprettet af migration 8 (før: fast profit pr. enhed, ADR-046, som ikke kan omregnes).
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `product_id` | `bigint(20) unsigned NOT NULL` PK | Parent-produkt (WooCommerce-ID) |
+| `creator_id` | `bigint(20) unsigned NOT NULL` | Ejeren, da markup'en blev sat. Gælder kun, mens det er den nuværende ejer |
+| `markup_bps` | `int(10) unsigned NOT NULL` | Andel af salgsprisen, 0–10 000 |
+| `created_at`, `updated_at` | `datetime NOT NULL` | UTC. `created_at` bevares, når markup'en erstattes |
+
+Indexes: `PRIMARY KEY (product_id)`, `KEY creator_id (creator_id)`. Repository: `ProductMarkupRepository` (`find`, `for_creator`, `save` (indsæt eller erstat, verificeret ved genlæsning), `delete`).
+
+#### `merchboard_item_pricing` (udgået)
+
+Grundpriser og sidst anvendte priser for den tilbagetrukne pris-skrivning (ADR-045). Oprettet af migration 6 og droppet af migration 8. `Tables::ITEM_PRICING` findes kun som "retired" konstant (`Tables::retired()`), så migration 6 og opt-in-uninstall kan nævne tabellen.
+
+#### `merchboard_sales_line_pricing` (append-only snapshot, ADR-047, ADR-049)
+
+Ét snapshot pr. ordrelinje med creator, taget når linjen oprettes (`woocommerce_new_order_item`; se WOOCOMMERCE.md). Det gemmer den andel og momsstatus, der gjaldt da, aldrig nuværende regler, aldrig priser og aldrig kundedata.
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `order_item_id` | `bigint(20) unsigned NOT NULL` PK | WooCommerce-ordrelinje |
+| `order_id`, `creator_id`, `product_id` | `bigint(20) unsigned NOT NULL` | Ejer på salgstidspunktet; parent-produkt |
+| `variation_id` | `bigint(20) unsigned NOT NULL DEFAULT 0` | 0 for et simpelt produkt |
+| `status` | `varchar(8) NOT NULL` | `share` (fra migration 8); `priced`/`unpriced` kun i ældre rækker |
+| `reason` | `varchar(20) DEFAULT NULL` | Kun ældre `unpriced`-rækker |
+| `currency` | `char(3) NOT NULL` | Ordrens valuta |
+| `rule`, `markup_bps`, `base_unit`, `profit_unit`, `price_unit` | `DEFAULT NULL` | Den tilbagetrukne model (ADR-045/047): kun udfyldt i ældre `priced`-rækker, aldrig genfortolket |
+| `captured_at` | `datetime NOT NULL` | UTC |
+| `vat_registered` | `tinyint(1) unsigned DEFAULT NULL` | Migration 7 (ADR-048): ejerens momsstatus ved oprettelsen; NULL = ukendt (rækker fra før version 7) |
+| `share_bps` | `int(10) unsigned DEFAULT NULL` | Migration 8: creatorens andel af salgsprisen; NULL = ukendt (rækker fra før version 8) |
+| `share_source` | `varchar(8) DEFAULT NULL` | Migration 8: `creator` eller `product` |
+| `price_decimals` | `tinyint(3) unsigned DEFAULT NULL` | Migration 8: butikkens prisdecimaler (0–4) ved oprettelsen, til afrunding |
+
+`share_bps`, `share_source` og `price_decimals` er enten alle kendte (status `share`) eller alle NULL. Indexes: `PRIMARY KEY (order_item_id)`, `KEY order_id (order_id)`, `KEY creator_id (creator_id)`.
+
+**Uforanderlig:** `SalesLinePricingRepository` har kun `insert` og `find`. En ekstra INSERT for samme ordrelinje (også samtidig) beholder det første snapshot. Kun opt-in-uninstall sletter tabellen.
+
+**Realiseret profit og udbetaling** for en ledger-række (`RealizedProfit`, `RealizedPayout`):
+
+- salgspris = `net_amount` + rækkens moms fra `merchboard_sales_tax` (det betalte beløb inkl. moms);
+- profit = `round_half_away(salgspris × share_bps / 10 000)` til `price_decimals`;
+- udbetaling = profit (momsregistreret) eller `round_half_away(profit × 80 %)` (ikke momsregistreret).
+
+De beregnes kun med et matchende snapshot med andel og rækkens gemte moms; ellers er de ukendte (NULL). Der er ingen profit- eller udbetalingskolonne i `merchboard_sales`.
+
+#### `merchboard_sales_tax` (append-only, schema-version 7, ADR-048)
+
+Den faktiske WooCommerce-moms pr. sales ledger-række. Den er en følgetabel til `merchboard_sales`, som ikke er ændret.
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `event_key` | `varchar(64) NOT NULL` PK | Ledger-rækkens `event_key` |
+| `order_id`, `order_item_id` | `bigint(20) unsigned NOT NULL` | Som rækken |
+| `tax_amount` | `decimal(19,4) NOT NULL` | Rækkens moms med fortegn |
+| `currency` | `char(3) NOT NULL` | Rækkens valuta |
+| `created_at` | `datetime NOT NULL` | UTC |
+
+Indexes: `PRIMARY KEY (event_key)`, `KEY order_id (order_id)`.
+
+**Skrivning:** `SalesRepository::write()` skriver i samme transaktion og med samme `CONNECTION_ID()`-vagt som rækken, kun for rækker, der faktisk indsættes. Planneren beregner momsen efter samme regel som beløbet:
+- salg: linjens `get_total_tax`;
+- refund: refund-linjens egen moms;
+- korrektioner og reversal: spejlet gemt moms eller momsbalance.
+
+**Ukendt moms:** rækker fra før version 7, og værdier der ikke er rene decimaler, giver ingen momsrække, aldrig et gæt.
+
+**Læsning:** `SalesTaxRepository` (payout).
+
 ### Fremtidige (ikke designet i detaljer)
 
 - `merchboard_creator_members` – hvis flere brugere (fx en manager) skal have adgang til samme creator. Erstatter `user_id`-kolonnen. Ændringen bliver lokal, fordi al opslag af "nuværende creator" går gennem `CreatorContext`.
@@ -258,7 +343,7 @@ Indexes: `UNIQUE(order_id, cycle, event)`; den dækker også opslag på `order_i
 
 | Del | Implementering |
 | --- | --- |
-| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **5** (`merchboard_sales` og `merchboard_sales_cycles`, ADR-037/038). |
+| Version | Heltal. Gemt i option `merchboard_db_version` (autoload), `0`/manglende = ikke installeret. Nuværende version: **8** (creator-andel i snapshottet, produkt-markup og droppet `merchboard_item_pricing`, ADR-049; version 7: creator-momsstatus og moms pr. ledger-række, ADR-048; version 6: creator pricing, ADR-045–047; version 5: `merchboard_sales` og `merchboard_sales_cycles`, ADR-037/038). |
 | Migrationsliste | `MerchBoard\Core\Database\Schema::migrations()`: `array<int, Migration>` nøglet på den schema-version, migrationen giver. Højeste nøgle = forventet version. |
 | Migration | Klasse, der implementerer `MerchBoard\Core\Database\Migration::up( wpdb )`. Kaster `DatabaseException`, hvis ændringen ikke kan verificeres. **Skal være idempotent.** |
 | Runner | `MerchBoard\Core\Database\Migrator`: kører manglende migrationer i stigende rækkefølge og gemmer versionen **efter hver succesfuld migration**. Fejler en migration, stopper kørslen, og versionen forbliver på sidste succes. |
@@ -357,16 +442,17 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 | Plugin-ejet state (fuld inventory, fase 9) | Slettes ved opt-in-uninstall |
 | --- | --- |
-| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta`, `{prefix}merchboard_creator_categories`, `{prefix}merchboard_sales` og `{prefix}merchboard_sales_cycles` (`Tables::all()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta`, `{prefix}merchboard_creator_categories`, `{prefix}merchboard_sales`, `{prefix}merchboard_sales_cycles`, `{prefix}merchboard_pricing_overrides`, `{prefix}merchboard_sales_line_pricing` og `{prefix}merchboard_sales_tax` (`Tables::all()`; `default_markup_bps` og `vat_registered` forsvinder med creator-tabellen), samt den udgåede `{prefix}merchboard_item_pricing`, hvis den stadig findes (`Tables::retired()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
 | Ordremeta `_merchboard_ledger_failure` (fejlmarkøren, ADR-038) | Ja: legacy-postmeta via `delete_post_meta_by_key()`; HPOS-ordremeta kun via WooCommerce CRUD (ordrerne findes med `meta_key` + `meta_compare => EXISTS`), mens WooCommerce er aktivt (ellers bliver den liggende, ADR-038 Q3). Ingen direkte SQL mod WooCommerce-tabeller. |
 | Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja |
 | Transient `merchboard_db_migration_failed` | Ja |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |
 | Rollen `merchboard_creator` | Ja: fjernes fra brugere (andre roller bevares) og derefter som rolle |
-| Capabilities `merchboard_access_dashboard`, `merchboard_manage`, `merchboard_manage_creators`, `merchboard_manage_settings` (`Capabilities::all()`) | Ja: fra alle roller og fra brugere, der har fået dem direkte. Kun disse præcise navne, ikke alt med prefix `merchboard_`. |
+| Capabilities `merchboard_access_dashboard`, `merchboard_manage`, `merchboard_manage_creators`, `merchboard_manage_settings`, `merchboard_manage_creator_pricing` og `merchboard_delete_order_history` (fase 22) (`Capabilities::all()`) | Ja: fra alle roller og fra brugere, der har fået dem direkte. Kun disse præcise navne, ikke alt med prefix `merchboard_`. |
 | Tekniske log-poster (WooCommerce-log, source `merchboard`, eller `debug.log`) | Nej: ejes af WooCommerce/serveren og ryddes af deres retention |
 | Product meta `_merchboard_creator_id` (produkt→creator-koblingen, fra fase 17) og `_merchboard_creator_link_source` (oprindelsen, ADR-033) | Ja: kun disse præcise nøgler, på de produkter og varianter hvor de findes, for det aktuelle site. Via WordPress' meta-API (virker også uden WooCommerce), idempotent og før tabellerne droppes. Når metadata-vagten er indlæst, tillader dens uninstall-vindue kun denne sletning (ADR-036: `WP_UNINSTALL_PLUGIN` er Merch Dashboards basename, og opt-in er aktivt). Selve produkterne bevares (ADR-030) |
 | WordPress-brugere, andre roller/capabilities, posts, sider, media, WooCommerce-produkter, -ordrer og -kunder, **al anden** WooCommerce- og produkt-meta end `_merchboard_creator_id` og `_merchboard_creator_link_source`, produktkategorier (`product_cat`-terms og deres tilknytninger), andre plugins' data, themes | **Aldrig** |
+| WooCommerce-priser (regular price, sale price, `_price`) | **Aldrig**: Merch Dashboard skriver dem ikke (ADR-049), og de nulstilles og slettes ikke. Kun pluginets egne pricing-tabeller slettes (testet i `UninstallTest`) |
 
 **Strategi (ADR-025):** `DROP TABLE` committer implicit og kan ikke indgå i en transaktion, så der er ingen falsk atomicitet. Rækkefølgen er i stedet: brugere → roller → tabeller → options → `merchboard_settings` **sidst**. Fra fase 17 slettes product meta `_merchboard_creator_id` (og fra ADR-033 `_merchboard_creator_link_source`) efter roller og før tabeller (ADR-030). Hvert trin er idempotent (`IF EXISTS`, manglende roller og options ignoreres). Fejler et tabel-drop, logges det, og der slettes ingen options. Opt-in'en bevares derfor, og den næste afinstallation fortsætter. Gentagen afinstallation er sikker. Uninstall skriver ingen audit-records.
 

@@ -9,7 +9,10 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Database;
 
+use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
+use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
+use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Tables;
@@ -22,12 +25,16 @@ final class SchemaTest extends IntegrationTestCase {
 
 		self::assertSame(
 			array(
-				'id'           => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
-				'user_id'      => array( 'bigint', 'unsigned', 'YES', '' ),
-				'display_name' => array( 'varchar(191)', '', 'NO', '' ),
-				'status'       => array( 'varchar(20)', '', 'NO', '' ),
-				'created_at'   => array( 'datetime', '', 'NO', '' ),
-				'updated_at'   => array( 'datetime', '', 'NO', '' ),
+				'id'                 => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
+				'user_id'            => array( 'bigint', 'unsigned', 'YES', '' ),
+				'display_name'       => array( 'varchar(191)', '', 'NO', '' ),
+				'status'             => array( 'varchar(20)', '', 'NO', '' ),
+				'created_at'         => array( 'datetime', '', 'NO', '' ),
+				'updated_at'         => array( 'datetime', '', 'NO', '' ),
+				// Migration 6 (phase 22); 0 for existing and new creators.
+				'default_markup_bps' => array( 'int', 'unsigned', 'NO', '' ),
+				// Migration 7 (ADR-048); 0 = not VAT registered.
+				'vat_registered'     => array( 'tinyint(1)', 'unsigned', 'NO', '' ),
 			),
 			$this->columns( Tables::CREATORS )
 		);
@@ -128,6 +135,121 @@ final class SchemaTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_creator_markup_defaults_to_0(): void {
+		$this->install();
+
+		self::assertSame( '0', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s', $this->table( Tables::CREATORS ), 'default_markup_bps' ) ) );
+	}
+
+	public function test_pricing_overrides_table_matches_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'product_id' => array( 'bigint', 'unsigned', 'NO', '' ),
+				'creator_id' => array( 'bigint', 'unsigned', 'NO', '' ),
+				'markup_bps' => array( 'int', 'unsigned', 'NO', '' ),
+				'created_at' => array( 'datetime', '', 'NO', '' ),
+				'updated_at' => array( 'datetime', '', 'NO', '' ),
+			),
+			$this->columns( Tables::PRICING_OVERRIDES )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'    => array( 'unique', 'product_id' ),
+				'creator_id' => array( 'non-unique', 'creator_id' ),
+			),
+			$this->indexes( Tables::PRICING_OVERRIDES ),
+			'At most one product markup per parent product.'
+		);
+	}
+
+	public function test_the_retired_item_pricing_table_does_not_exist(): void {
+		$this->install();
+
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table( Tables::ITEM_PRICING ) ) ) );
+	}
+
+	public function test_sales_line_pricing_table_matches_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'order_item_id'  => array( 'bigint', 'unsigned', 'NO', '' ),
+				'order_id'       => array( 'bigint', 'unsigned', 'NO', '' ),
+				'creator_id'     => array( 'bigint', 'unsigned', 'NO', '' ),
+				'product_id'     => array( 'bigint', 'unsigned', 'NO', '' ),
+				'variation_id'   => array( 'bigint', 'unsigned', 'NO', '' ),
+				'status'         => array( 'varchar(8)', '', 'NO', '' ),
+				'reason'         => array( 'varchar(20)', '', 'YES', '' ),
+				'currency'       => array( 'char(3)', '', 'NO', '' ),
+				'rule'           => array( 'varchar(7)', '', 'YES', '' ),
+				'markup_bps'     => array( 'int', 'unsigned', 'YES', '' ),
+				'base_unit'      => array( 'decimal(19,4)', '', 'YES', '' ),
+				'profit_unit'    => array( 'decimal(19,4)', '', 'YES', '' ),
+				'price_unit'     => array( 'decimal(19,4)', '', 'YES', '' ),
+				'captured_at'    => array( 'datetime', '', 'NO', '' ),
+				// Migration 7 (ADR-048); NULL = unknown (snapshots from before).
+				'vat_registered' => array( 'tinyint(1)', 'unsigned', 'YES', '' ),
+				// Migration 8 (ADR-049); NULL = unknown share (snapshots from before).
+				'share_bps'      => array( 'int', 'unsigned', 'YES', '' ),
+				'share_source'   => array( 'varchar(8)', '', 'YES', '' ),
+				'price_decimals' => array( 'tinyint', 'unsigned', 'YES', '' ),
+			),
+			$this->columns( Tables::SALES_LINE_PRICING )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'    => array( 'unique', 'order_item_id' ),
+				'creator_id' => array( 'non-unique', 'creator_id' ),
+				'order_id'   => array( 'non-unique', 'order_id' ),
+			),
+			$this->indexes( Tables::SALES_LINE_PRICING ),
+			'One snapshot per order line.'
+		);
+	}
+
+	public function test_sales_tax_table_matches_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'event_key'     => array( 'varchar(64)', '', 'NO', '' ),
+				'order_id'      => array( 'bigint', 'unsigned', 'NO', '' ),
+				'order_item_id' => array( 'bigint', 'unsigned', 'NO', '' ),
+				'tax_amount'    => array( 'decimal(19,4)', '', 'NO', '' ),
+				'currency'      => array( 'char(3)', '', 'NO', '' ),
+				'created_at'    => array( 'datetime', '', 'NO', '' ),
+			),
+			$this->columns( Tables::SALES_TAX )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'  => array( 'unique', 'event_key' ),
+				'order_id' => array( 'non-unique', 'order_id' ),
+			),
+			$this->indexes( Tables::SALES_TAX ),
+			'One tax row per ledger row.'
+		);
+		self::assertSame( '0', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s', $this->table( Tables::CREATORS ), 'vat_registered' ) ) );
+	}
+
+	public function test_plugin_tables_have_no_foreign_keys(): void {
+		$this->install();
+
+		foreach ( Tables::all() as $table ) {
+			$references = $this->wpdb->get_var(
+				$this->wpdb->prepare(
+					'SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND (TABLE_NAME = %s OR REFERENCED_TABLE_NAME = %s) AND REFERENCED_TABLE_NAME IS NOT NULL',
+					$this->table( $table ),
+					$this->table( $table )
+				)
+			);
+
+			self::assertSame( '0', $references, $table . ' has no foreign keys (snapshots outlive orders, products and rules).' );
+		}
+	}
+
 	public function test_tables_use_the_site_prefix_charset_and_collation_of_wordpress(): void {
 		$this->install();
 
@@ -168,13 +290,17 @@ final class SchemaTest extends IntegrationTestCase {
 		self::assertSame( array(), dbDelta( CreateAuditLogTable::schema( $this->table( Tables::AUDIT_LOG ), $charset_collate ) ) );
 		self::assertSame( array(), dbDelta( CreateSalesLedgerTables::sales_schema( $this->table( Tables::SALES ), $charset_collate ) ) );
 		self::assertSame( array(), dbDelta( CreateSalesLedgerTables::cycles_schema( $this->table( Tables::SALES_CYCLES ), $charset_collate ) ) );
+		self::assertSame( array(), dbDelta( AddCreatorShareModel::product_markups_schema( $this->table( Tables::PRICING_OVERRIDES ), $charset_collate ) ) );
+		self::assertSame( array(), dbDelta( CreateCreatorPricingTables::sales_line_pricing_schema( $this->table( Tables::SALES_LINE_PRICING ), $charset_collate ) ) );
+		self::assertSame( array(), dbDelta( AddCreatorVatAndSalesTax::sales_tax_schema( $this->table( Tables::SALES_TAX ), $charset_collate ) ) );
 	}
 
 	/**
 	 * Columns as [type without integer display width, unsigned, nullable, extra].
 	 *
 	 * MySQL 8.0.19+ no longer reports integer display widths (bigint(20) →
-	 * bigint, int(10) → int), MariaDB does; both are normalized here.
+	 * bigint, int(10) → int, tinyint(3) → tinyint; tinyint(1) is kept), MariaDB
+	 * does; both are normalized here.
 	 *
 	 * @param string $table Tables constant.
 	 * @return array<string, list<string>>
@@ -193,7 +319,7 @@ final class SchemaTest extends IntegrationTestCase {
 			$type = strtolower( (string) $row['COLUMN_TYPE'] );
 
 			$columns[ (string) $row['COLUMN_NAME'] ] = array(
-				(string) preg_replace( '/^(bigint|int)\(\d+\)/', '$1', str_replace( ' unsigned', '', $type ) ),
+				(string) preg_replace( '/^(bigint|int|tinyint)\((?!1\))\d+\)/', '$1', str_replace( ' unsigned', '', $type ) ),
 				str_contains( $type, 'unsigned' ) ? 'unsigned' : '',
 				(string) $row['IS_NULLABLE'],
 				strtolower( (string) $row['EXTRA'] ),

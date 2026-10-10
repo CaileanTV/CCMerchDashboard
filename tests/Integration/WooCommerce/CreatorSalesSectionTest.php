@@ -28,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Sales\LedgerSalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCache;
 use MerchBoard\Modules\WooCommerce\Sales\SalesInterval;
 use MerchBoard\Modules\WooCommerce\Sales\SalesQuery;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeSalesProductNames;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
@@ -66,7 +67,7 @@ final class CreatorSalesSectionTest extends IntegrationTestCase {
 		$this->alpha   = $creators->create( 'Sales Alpha', CreatorStatus::Active, null );
 		$this->beta    = $creators->create( 'Sales Beta', CreatorStatus::Inactive, null );
 		$this->cache   = new SalesCache();
-		$this->reports = new CachedSalesReports( new SalesReport( new LedgerSalesStatistics( $this->wpdb ), new FakeSalesProductNames() ), $this->cache );
+		$this->reports = new CachedSalesReports( new SalesReport( new LedgerSalesStatistics( $this->wpdb ), new FakeSalesProductNames(), new LedgerCreatorProfits( $this->wpdb ) ), $this->cache );
 		$this->section = new CreatorSalesSection(
 			$this->reports,
 			new RecordingLogger(),
@@ -94,6 +95,40 @@ final class CreatorSalesSectionTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'The figures and their definitions are the same as in the creator&#039;s dashboard', $html );
 		self::assertSame( array( '200.00 DKK', '2', '1' ), self::totals( $html, 'DKK' ) );
 		self::assertSame( 30, substr_count( (string) strstr( $html, 'merchboard-sales-series' ), '<th scope="row">' ), 'One row per day of the 30-day period.' );
+	}
+
+	public function test_the_amounts_include_vat_when_every_row_has_its_stored_tax(): void {
+		$this->row( $this->alpha, 'sale', 101, 2, '200.0000', '2026-09-10 10:00:00' );
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::SALES_TAX ),
+				array(
+					'event_key'     => 'test:' . $this->key,
+					'order_id'      => 101,
+					'order_item_id' => 1010,
+					'tax_amount'    => '50.0000',
+					'currency'      => 'DKK',
+					'created_at'    => '2026-09-10 10:00:00',
+				)
+			)
+		);
+
+		$html = $this->render( $this->alpha );
+
+		self::assertSame( array( '250.00 DKK', '2', '1' ), self::totals( $html, 'DKK' ) );
+		self::assertStringContainsString( '<th scope="col">Sales (incl. VAT)</th>', $html );
+		self::assertStringContainsString( '<th scope="row">September 10, 2026</th><td>250.00 DKK</td>', $html );
+		self::assertStringNotContainsString( 'VAT is missing', $html );
+
+		// A row without stored tax: the amounts excl. VAT, labelled, with the note.
+		$this->row( $this->alpha, 'sale', 102, 1, '80.0000', '2026-09-11 10:00:00' );
+		$this->cache->invalidate( array( $this->alpha->id ) );
+		$html = $this->render( $this->alpha );
+
+		self::assertSame( array( '280.00 DKK', '3', '2' ), self::totals( $html, 'DKK' ) );
+		self::assertStringContainsString( '<th scope="col">Net sales (excl. VAT)</th>', $html );
+		self::assertStringContainsString( 'VAT is missing for some older sales in this period, so the amounts are shown excluding VAT.', $html );
 	}
 
 	public function test_the_default_period_is_30_local_days_including_today(): void {
@@ -172,7 +207,7 @@ final class CreatorSalesSectionTest extends IntegrationTestCase {
 
 		$html = $this->render( $this->alpha );
 
-		self::assertStringContainsString( 'No net sales in the last 30 days.', $html );
+		self::assertStringContainsString( 'No sales in the last 30 days.', $html );
 		self::assertStringNotContainsString( '<table', $html );
 		self::assertStringNotContainsString( '0.00', $html );
 	}
@@ -355,7 +390,7 @@ final class CreatorSalesSectionTest extends IntegrationTestCase {
 	 * @return list<string>
 	 */
 	private static function totals( string $html, string $currency ): array {
-		if ( 1 !== preg_match( '#<h3>' . $currency . '</h3><table class="widefat striped merchboard-sales-totals"[^>]*>.*?<tbody><tr><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td></tr>#s', $html, $match ) ) {
+		if ( 1 !== preg_match( '#<h3>' . $currency . '</h3>(?:<p class="description">[^<]*</p>)?<table class="widefat striped merchboard-sales-totals"[^>]*>.*?<tbody><tr><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td></tr>#s', $html, $match ) ) {
 			return array();
 		}
 

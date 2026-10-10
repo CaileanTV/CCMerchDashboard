@@ -34,8 +34,10 @@ final class RoleManager {
 	 * Version of the role/capability definitions. Increase it whenever
 	 * Capabilities changes so existing sites are synchronised on update.
 	 * 2: `merchboard_view_logs` for administrators (phase 11).
+	 * 3: `merchboard_manage_creator_pricing` for administrators (phase 22).
+	 * 4: `merchboard_delete_order_history` for administrators (phase 22, ADR-052).
 	 */
-	public const VERSION = 2;
+	public const VERSION = 4;
 
 	/**
 	 * Option holding the synchronised version (integer).

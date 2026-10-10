@@ -15,6 +15,9 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineView;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
+use MerchBoard\Modules\WooCommerce\Pricing\ProfitSummary;
+use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLine;
 use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLines;
 use WP_Error;
 use WP_REST_Request;
@@ -34,6 +37,13 @@ defined( 'ABSPATH' ) || exit;
  * status and product name for that page only. The route takes only `page` and
  * `per_page`; other parameters are ignored. Registered by the WooCommerce
  * module, so without WooCommerce it does not exist. No caching (P12).
+ *
+ * Profit (ADR-050): `profit` is the line's realized profit (ADR-049) over all
+ * its ledger rows (sale, refunds, reversals and corrections with their
+ * signs); `order_profit` sums every line of the creator in the same order
+ * (also lines on other pages), and `order_lines` counts them. Both come from
+ * one aggregation query per page (CreatorProfits) on the ledger's order and
+ * order item ids. An unknown or incomplete profit has no amount.
  */
 final class MeOrdersController extends RestController {
 
@@ -49,9 +59,36 @@ final class MeOrdersController extends RestController {
 	 * @param SalesOrderLines   $lines    The creator's order lines from the ledger.
 	 * @param OrderLineEnricher $enricher Order and product data of a page.
 	 * @param Logger            $logger   Technical log.
+	 * @param CreatorProfits    $profits  Realized profit of the creator's ledger rows.
 	 */
-	public function __construct( private CreatorContext $context, private SalesOrderLines $lines, private OrderLineEnricher $enricher, Logger $logger ) {
+	public function __construct( private CreatorContext $context, private SalesOrderLines $lines, private OrderLineEnricher $enricher, Logger $logger, private CreatorProfits $profits ) {
 		parent::__construct( $logger );
+	}
+
+	/**
+	 * The creator's profit and number of lines per order, from the lines.
+	 *
+	 * @param array<int, array{order_id: int, profit: ProfitSummary}> $lines Profit by order item id.
+	 * @return array<int, array{profit: ProfitSummary, lines: int}> By order id.
+	 */
+	private static function orders( array $lines ): array {
+		$orders = array();
+
+		foreach ( $lines as $line ) {
+			$id = $line['order_id'];
+
+			$orders[ $id ] = isset( $orders[ $id ] )
+				? array(
+					'profit' => $orders[ $id ]['profit']->plus( $line['profit'] ),
+					'lines'  => $orders[ $id ]['lines'] + 1,
+				)
+				: array(
+					'profit' => $line['profit'],
+					'lines'  => 1,
+				);
+		}
+
+		return $orders;
 	}
 
 	/**
@@ -106,9 +143,26 @@ final class MeOrdersController extends RestController {
 				$items      = array();
 
 				if ( $pagination->offset() < $total ) {
+					$page    = $this->lines->page( $creator->id, $pagination );
+					$profits = $this->profits->by_order_line( $creator->id, array_values( array_unique( array_map( static fn( SalesOrderLine $line ): int => $line->order_id, $page ) ) ) );
+					$orders  = self::orders( $profits );
+					$order   = array();
+
+					foreach ( $page as $line ) {
+						$order[ $line->order_item_id ] = $line->order_id;
+					}
+
 					$items = array_map(
-						static fn( OrderLineView $view ): array => $view->to_array(),
-						$this->enricher->enrich( $this->lines->page( $creator->id, $pagination ) )
+						static function ( OrderLineView $view ) use ( $profits, $orders, $order ): array {
+							$order_id = $order[ $view->line_id ] ?? 0;
+
+							return $view->to_array() + array(
+								'profit'       => isset( $profits[ $view->line_id ] ) ? $profits[ $view->line_id ]['profit']->to_array() : null,
+								'order_profit' => isset( $orders[ $order_id ] ) ? $orders[ $order_id ]['profit']->to_array() : null,
+								'order_lines'  => $orders[ $order_id ]['lines'] ?? 0,
+							);
+						},
+						$this->enricher->enrich( $page )
 					);
 				}
 
@@ -156,6 +210,12 @@ final class MeOrdersController extends RestController {
 				),
 				'refunded'     => $flag,
 				'counted'      => $flag,
+				'profit'       => array( 'type' => array( 'object', 'null' ) ) + ProfitSummary::schema(),
+				'order_profit' => array( 'type' => array( 'object', 'null' ) ) + ProfitSummary::schema(),
+				'order_lines'  => array(
+					'type'     => 'integer',
+					'readonly' => true,
+				),
 			),
 		);
 	}

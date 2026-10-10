@@ -20,6 +20,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * - `net` is the line total after discounts, excl. tax, in 1/10000 units,
  *   before refunds (ADR-037).
+ * - `tax` is the line's actual tax (WooCommerce' `total_tax`, after
+ *   discounts) in 1/10000 units, or null when unknown (ADR-048).
  * - `creator_id` is the product's current, valid creator link (the parent's
  *   for a variation), or null. It only matters for a line without ledger
  *   history; a line with history keeps its snapshot creator (ADR-038, B3).
@@ -36,6 +38,7 @@ final readonly class OrderLineSnapshot {
 	 * @param int      $quantity     Quantity.
 	 * @param int      $net          Line total after discounts, excl. tax, in 1/10000 units.
 	 * @param int|null $creator_id   Current creator of the product, or null.
+	 * @param int|null $tax          Actual line tax in 1/10000 units, or null when unknown.
 	 * @throws InvalidArgumentException When an id is invalid.
 	 */
 	public function __construct(
@@ -45,7 +48,8 @@ final readonly class OrderLineSnapshot {
 		public string $name,
 		public int $quantity,
 		public int $net,
-		public ?int $creator_id
+		public ?int $creator_id,
+		public ?int $tax = null
 	) {
 		if ( $item_id < 1 || $product_id < 0 || $variation_id < 0 || ( null !== $creator_id && ( $creator_id < 1 || $product_id < 1 ) ) ) {
 			throw new InvalidArgumentException( 'Invalid order line snapshot.' );

@@ -30,6 +30,11 @@ defined( 'ABSPATH' ) || exit;
  *   every other type; net_sales = sales + adjustments (added as integers of
  *   1/10000, never as floats).
  * - units = SUM(quantity) of all rows (signed).
+ * - Incl. VAT (ADR-053): the same sums of `net_amount` plus the row's stored
+ *   actual tax (`merchboard_sales_tax`, ADR-048, joined by `event_key`), but
+ *   only when every row of the group has its stored tax in the row's
+ *   currency; otherwise null and the number of rows without tax is counted.
+ *   Missing tax is never treated as 0.
  * - orders = COUNT(DISTINCT order_id) of `sale` rows (not the current cycle
  *   state).
  * - Products are grouped by parent `product_id` (variations included). Rows
@@ -69,16 +74,20 @@ final class LedgerSalesStatistics implements SalesStatistics {
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; caching is a separate layer (ADR-040 pkt. 10).
 			$wpdb->prepare(
-				"SELECT currency,
-					COALESCE( SUM( CASE WHEN type = 'sale' THEN net_amount END ), 0 ) AS sales,
-					COALESCE( SUM( CASE WHEN type <> 'sale' THEN net_amount END ), 0 ) AS adjustments,
-					SUM( quantity ) AS units,
-					COUNT( DISTINCT CASE WHEN type = 'sale' THEN order_id END ) AS orders
-				FROM %i
-				WHERE creator_id = %d AND occurred_at >= %s AND occurred_at < %s
-				GROUP BY currency
-				ORDER BY currency ASC",
+				"SELECT r.currency,
+					COALESCE( SUM( CASE WHEN r.type = 'sale' THEN r.net_amount END ), 0 ) AS sales,
+					COALESCE( SUM( CASE WHEN r.type <> 'sale' THEN r.net_amount END ), 0 ) AS adjustments,
+					COALESCE( SUM( CASE WHEN r.type = 'sale' AND ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN r.net_amount + t.tax_amount END ), 0 ) AS sales_incl_vat,
+					COALESCE( SUM( CASE WHEN r.type <> 'sale' AND ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN r.net_amount + t.tax_amount END ), 0 ) AS adjustments_incl_vat,
+					SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN 0 ELSE 1 END ) AS missing_vat_rows,
+					SUM( r.quantity ) AS units,
+					COUNT( DISTINCT CASE WHEN r.type = 'sale' THEN r.order_id END ) AS orders
+				FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key
+				WHERE r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
+				GROUP BY r.currency
+				ORDER BY r.currency ASC",
 				$this->table(),
+				$this->tax_table(),
 				$creator_id,
 				self::utc( $from ),
 				self::utc( $to )
@@ -91,13 +100,20 @@ final class LedgerSalesStatistics implements SalesStatistics {
 		foreach ( $this->checked( $rows ) as $row ) {
 			$sales       = self::amount( $row['sales'] ?? null );
 			$adjustments = self::amount( $row['adjustments'] ?? null );
+			$missing     = self::integer( $row['missing_vat_rows'] ?? null );
+			$sales_vat   = self::amount( $row['sales_incl_vat'] ?? null );
+			$adjust_vat  = self::amount( $row['adjustments_incl_vat'] ?? null );
 			$totals[]    = new SalesTotals(
 				self::currency( $row['currency'] ?? null ),
 				SalesAmount::format( $sales ),
 				SalesAmount::format( $adjustments ),
 				SalesAmount::format( self::sum( $sales, $adjustments ) ),
 				self::integer( $row['units'] ?? null ),
-				self::integer( $row['orders'] ?? null )
+				self::integer( $row['orders'] ?? null ),
+				0 === $missing ? SalesAmount::format( $sales_vat ) : null,
+				0 === $missing ? SalesAmount::format( $adjust_vat ) : null,
+				0 === $missing ? SalesAmount::format( self::sum( $sales_vat, $adjust_vat ) ) : null,
+				$missing
 			);
 		}
 
@@ -133,15 +149,17 @@ final class LedgerSalesStatistics implements SalesStatistics {
 		$rows   = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; caching is a separate layer (ADR-040 pkt. 10).
 			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One %s per period start, then the table, creator and interval.
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $marks holds only %s placeholders, one per period.
-				"SELECT INTERVAL( TO_SECONDS( occurred_at ), {$marks} ) - 1 AS period, currency,
-					SUM( net_amount ) AS net_sales,
-					SUM( quantity ) AS units,
-					COUNT( DISTINCT CASE WHEN type = 'sale' THEN order_id END ) AS orders
-				FROM %i
-				WHERE creator_id = %d AND occurred_at >= %s AND occurred_at < %s
-				GROUP BY period, currency
-				ORDER BY period ASC, currency ASC",
-				...array_merge( $starts, array( $this->table(), $creator_id, self::utc( $from ), self::utc( $to ) ) )
+				"SELECT INTERVAL( TO_SECONDS( r.occurred_at ), {$marks} ) - 1 AS period, r.currency,
+					SUM( r.net_amount ) AS net_sales,
+					COALESCE( SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN r.net_amount + t.tax_amount END ), 0 ) AS net_sales_incl_vat,
+					SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN 0 ELSE 1 END ) AS missing_vat_rows,
+					SUM( r.quantity ) AS units,
+					COUNT( DISTINCT CASE WHEN r.type = 'sale' THEN r.order_id END ) AS orders
+				FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key
+				WHERE r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
+				GROUP BY period, r.currency
+				ORDER BY period ASC, r.currency ASC",
+				...array_merge( $starts, array( $this->table(), $this->tax_table(), $creator_id, self::utc( $from ), self::utc( $to ) ) )
 			),
 			ARRAY_A
 		);
@@ -160,7 +178,8 @@ final class LedgerSalesStatistics implements SalesStatistics {
 				self::currency( $row['currency'] ?? null ),
 				SalesAmount::format( self::amount( $row['net_sales'] ?? null ) ),
 				self::integer( $row['units'] ?? null ),
-				self::integer( $row['orders'] ?? null )
+				self::integer( $row['orders'] ?? null ),
+				0 === self::integer( $row['missing_vat_rows'] ?? null ) ? SalesAmount::format( self::amount( $row['net_sales_incl_vat'] ?? null ) ) : null
 			);
 		}
 
@@ -187,16 +206,20 @@ final class LedgerSalesStatistics implements SalesStatistics {
 		$table = $this->table();
 		$rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; caching is a separate layer (ADR-040 pkt. 10).
 			$wpdb->prepare(
-				'SELECT g.currency, g.product_id, g.net_sales, g.units, s.item_name
+				'SELECT g.currency, g.product_id, g.net_sales, g.net_sales_incl_vat, g.missing_vat_rows, g.units, s.item_name
 				FROM (
-					SELECT currency, product_id, SUM( net_amount ) AS net_sales, SUM( quantity ) AS units, MAX( id ) AS last_id
-					FROM %i
-					WHERE creator_id = %d AND occurred_at >= %s AND occurred_at < %s
-					GROUP BY currency, product_id
+					SELECT r.currency, r.product_id, SUM( r.net_amount ) AS net_sales,
+						COALESCE( SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN r.net_amount + t.tax_amount END ), 0 ) AS net_sales_incl_vat,
+						SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN 0 ELSE 1 END ) AS missing_vat_rows,
+						SUM( r.quantity ) AS units, MAX( r.id ) AS last_id
+					FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key
+					WHERE r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
+					GROUP BY r.currency, r.product_id
 				) g
 				INNER JOIN %i s ON s.id = g.last_id
 				ORDER BY g.currency ASC, g.net_sales DESC, g.product_id ASC',
 				$table,
+				$this->tax_table(),
 				$creator_id,
 				self::utc( $from ),
 				self::utc( $to ),
@@ -219,7 +242,8 @@ final class LedgerSalesStatistics implements SalesStatistics {
 				$product_id,
 				SalesAmount::format( self::amount( $row['net_sales'] ?? null ) ),
 				self::integer( $row['units'] ?? null ),
-				is_string( $row['item_name'] ?? null ) ? $row['item_name'] : ''
+				is_string( $row['item_name'] ?? null ) ? $row['item_name'] : '',
+				0 === self::integer( $row['missing_vat_rows'] ?? null ) ? SalesAmount::format( self::amount( $row['net_sales_incl_vat'] ?? null ) ) : null
 			);
 		}
 
@@ -327,5 +351,12 @@ final class LedgerSalesStatistics implements SalesStatistics {
 	 */
 	private function table(): string {
 		return Tables::name( $this->wpdb, Tables::SALES );
+	}
+
+	/**
+	 * Full name of the stored tax table.
+	 */
+	private function tax_table(): string {
+		return Tables::name( $this->wpdb, Tables::SALES_TAX );
 	}
 }

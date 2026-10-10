@@ -10,6 +10,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Field } from '../../components/Field';
+import { ProfitLegend } from '../../components/ProfitValue';
 import { Skeleton } from '../../components/Skeleton';
 import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
@@ -25,7 +26,9 @@ import { SalesChart } from './SalesChart';
 import { SalesFigures } from './SalesFigures';
 import { countText, dayText, moneyText, periodText } from './format';
 import {
-	netSalesExplanation,
+	salesExplanation,
+	salesLabel,
+	shownSales,
 	notAvailableText,
 	perCurrencyNote,
 } from './texts';
@@ -54,7 +57,8 @@ interface Draft {
 
 function columns(
 	currency: string,
-	locale: string
+	locale: string,
+	vatIncluded: boolean
 ): readonly TableColumn< SalesPoint >[] {
 	return [
 		{
@@ -64,8 +68,9 @@ function columns(
 		},
 		{
 			key: 'net-sales',
-			header: __( 'Net sales (excl. VAT)', 'merchboard' ),
-			render: ( point ) => moneyText( point.netSales, currency, locale ),
+			header: salesLabel( vatIncluded ),
+			render: ( point ) =>
+				moneyText( shownSales( point, vatIncluded ), currency, locale ),
 			align: 'end',
 		},
 		{
@@ -109,23 +114,30 @@ function CurrencyBlock( {
 				several ? entry.currency : __( 'Your sales', 'merchboard' )
 			}
 		>
-			<SalesFigures entry={ entry } locale={ locale } labelLevel="h3" />
+			<SalesFigures
+				entry={ entry }
+				locale={ locale }
+				labelLevel="h3"
+				withProfit
+			/>
+			<ProfitLegend />
 			<SalesChart
 				series={ entry.series }
 				currency={ entry.currency }
 				interval={ report.interval }
 				locale={ locale }
+				vatIncluded={ entry.vatIncluded }
 			/>
 			<Table
 				caption={ sprintf(
 					/* translators: %s: currency code (e.g. DKK). */
 					__(
-						'Net sales, units and orders per period (%s)',
+						'Sales, units and orders per period (%s)',
 						'merchboard'
 					),
 					entry.currency
 				) }
-				columns={ columns( entry.currency, locale ) }
+				columns={ columns( entry.currency, locale, entry.vatIncluded ) }
 				rows={ entry.series }
 				rowKey={ ( point ) => point.start }
 				empty={ null }
@@ -155,11 +167,11 @@ function Report( {
 				) }
 			</p>
 			<p className="merchboard-sales__explanation">
-				{ netSalesExplanation() }
+				{ salesExplanation() }
 			</p>
 			{ report.currencies.length === 0 && (
 				<EmptyState
-					title={ __( 'No net sales in this period.', 'merchboard' ) }
+					title={ __( 'No sales in this period.', 'merchboard' ) }
 					description={ __(
 						'Choose another period, or check back after your next sale.',
 						'merchboard'

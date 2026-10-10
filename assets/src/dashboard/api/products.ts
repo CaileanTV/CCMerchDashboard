@@ -12,6 +12,7 @@ import type {
 	StockStatus,
 } from '../types/products';
 import { requestList } from './client';
+import { parseProfitList } from './profit';
 import { isRecord, readSameOriginUrl } from './validate';
 
 const DECIMAL = /^-?\d{1,15}(?:\.\d{1,6})?$/;
@@ -92,6 +93,7 @@ export function parseProduct( body: unknown ): Product | null {
 	const { id, name, status, stock_status: stock } = body;
 	const price = parsePrice( body.price );
 	const image = parseImage( body.image );
+	const profit = parseProfitList( body.profit );
 
 	if (
 		typeof id !== 'number' ||
@@ -103,7 +105,8 @@ export function parseProduct( body: unknown ): Product | null {
 		( stock !== null &&
 			! STOCK_STATUSES.includes( stock as StockStatus ) ) ||
 		price === undefined ||
-		image === undefined
+		image === undefined ||
+		profit === undefined
 	) {
 		return null;
 	}
@@ -115,6 +118,7 @@ export function parseProduct( body: unknown ): Product | null {
 		price,
 		stockStatus: stock as StockStatus | null,
 		image,
+		profit,
 	};
 }
 

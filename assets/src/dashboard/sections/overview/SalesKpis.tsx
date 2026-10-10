@@ -4,13 +4,14 @@ import { getDefaultSales } from '../../api/sales';
 import { useConfig } from '../../app/config-context';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { EmptyState } from '../../components/EmptyState';
+import { ProfitLegend } from '../../components/ProfitValue';
 import { Skeleton } from '../../components/Skeleton';
 import { useApi } from '../../hooks/useApi';
 import type { SalesSummary } from '../../types/sales';
 import { SalesFigures } from '../sales/SalesFigures';
 import { dayText } from '../sales/format';
 import {
-	netSalesExplanation,
+	salesExplanation,
 	notAvailableText,
 	perCurrencyNote,
 } from '../sales/texts';
@@ -35,12 +36,12 @@ function Summary( {
 				) }
 			</p>
 			<p className="merchboard-overview__explanation">
-				{ netSalesExplanation() }
+				{ salesExplanation() }
 			</p>
 			{ summary.currencies.length === 0 && (
 				<EmptyState
 					title={ __(
-						'No net sales in the last 30 days.',
+						'No sales in the last 30 days.',
 						'merchboard'
 					) }
 					description={ __(
@@ -71,6 +72,7 @@ function Summary( {
 							entry={ entry }
 							locale={ locale }
 							labelLevel="h4"
+							withProfit
 						/>
 					</section>
 				) : (
@@ -79,17 +81,31 @@ function Summary( {
 						entry={ entry }
 						locale={ locale }
 						labelLevel="h3"
+						withProfit
 					/>
 				)
+			) }
+			{ summary.currencies.length > 0 && (
+				<>
+					<p className="merchboard-overview__explanation">
+						{ __(
+							'Profit applies to the same 30 days as the sales figures.',
+							'merchboard'
+						) }
+					</p>
+					<ProfitLegend />
+				</>
 			) }
 		</>
 	);
 }
 
 /**
- * The Overview's key figures (ADR-040 pkt. 12, 14): net sales, units and
- * orders of the default period from `GET /me/sales`, one set per currency and
- * never summed across currencies. Without WooCommerce the route does not
+ * The Overview's key figures (ADR-040 pkt. 12, 14): net sales, units,
+ * orders and the creator's profit (ADR-050) of the default period from
+ * `GET /me/sales`, one set per currency and never summed across currencies.
+ * The profit is the same per-currency object as in the Sales section;
+ * incomplete or unknown profit is never shown as an amount. Without WooCommerce the route does not
  * exist (404 `rest_no_route`); that is not an error but "not available".
  */
 export function SalesKpis() {

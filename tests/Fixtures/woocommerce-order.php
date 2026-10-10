@@ -55,6 +55,10 @@ class WC_Order_Item_Product {
 		return 'edit' === $context ? $this->data['total'] : 999.99;
 	}
 
+	public function get_total_tax( $context = 'view' ) {
+		return 'edit' === $context ? ( $this->data['total_tax'] ?? '0' ) : 999.99;
+	}
+
 	public function get_meta( $key = '', $single = true, $context = 'view' ) {
 		return 'edit' === $context ? ( $this->data['meta'][ $key ] ?? '' ) : '999';
 	}

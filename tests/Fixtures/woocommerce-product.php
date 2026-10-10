@@ -285,6 +285,104 @@ class WC_Product extends WC_Data {
 	public function get_image_id( $context = 'view' ) {
 		return (string) ( WcProductStorage::$products[ $this->id ]['image_id'] ?? '' );
 	}
+
+	/**
+	 * Unsaved property changes.
+	 *
+	 * @var array<string, string>
+	 */
+	private $changes = array();
+
+	/**
+	 * Product type.
+	 *
+	 * @return string
+	 */
+	public function get_type() {
+		return WcProductStorage::$products[ $this->id ]['type'];
+	}
+
+	/**
+	 * Sale price ('' without one).
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 */
+	public function get_sale_price( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['sale_price'] ?? '';
+	}
+
+	/**
+	 * Records the setter call and the change.
+	 *
+	 * @param string $price Regular price.
+	 * @return void
+	 */
+	public function set_regular_price( $price ) {
+		WcProductStorage::$setters[]    = array( $this->id, 'regular_price', $price );
+		$this->changes['regular_price'] = $price;
+	}
+
+	/**
+	 * Child ids: variations whose parent is this product, not trashed.
+	 *
+	 * @return list<int>
+	 */
+	public function get_children() {
+		$ids = array();
+
+		foreach ( WcProductStorage::$products as $id => $product ) {
+			if ( 'variation' === $product['type'] && $product['parent_id'] === $this->id && 'trash' !== $product['status'] ) {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Records the setter call (Merch Dashboard must never call it).
+	 *
+	 * @param string $price Sale price.
+	 * @return void
+	 */
+	public function set_sale_price( $price ) {
+		WcProductStorage::$setters[] = array( $this->id, 'sale_price', $price );
+	}
+
+	/**
+	 * Saves the changes like WooCommerce 11.1.2 for a simple product or a
+	 * variation (WC_Product_Data_Store_CPT::handle_updated_props()): a sale
+	 * price not below the new regular price is removed, and the active price
+	 * is the sale price when on sale, else the regular price. Returns 0 when
+	 * WcProductStorage::$fail_save is set.
+	 *
+	 * @return int
+	 */
+	public function save() {
+		if ( WcProductStorage::$fail_save ) {
+			return 0;
+		}
+
+		$product = WcProductStorage::$products[ $this->id ];
+
+		if ( array_key_exists( 'regular_price', $this->changes ) ) {
+			$product['regular_price'] = $this->changes['regular_price'];
+			$sale                     = $product['sale_price'] ?? '';
+
+			if ( '' !== $sale && $sale >= $product['regular_price'] ) {
+				$sale = '';
+			}
+
+			$product['sale_price'] = $sale;
+			$product['price']      = '' !== $sale && $product['regular_price'] > $sale ? $sale : $product['regular_price'];
+		}
+
+		WcProductStorage::$products[ $this->id ] = $product;
+		$this->changes                           = array();
+
+		return $this->id;
+	}
 }
 
 /**

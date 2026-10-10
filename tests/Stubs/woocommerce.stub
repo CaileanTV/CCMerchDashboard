@@ -125,6 +125,13 @@ class WC_Order extends WC_Abstract_Order {
 	 * @return string|int
 	 */
 	public function get_order_number() {}
+
+	/**
+	 * The order's edit screen in wp-admin (HPOS or legacy).
+	 *
+	 * @return string
+	 */
+	public function get_edit_order_url() {}
 }
 
 /**
@@ -173,6 +180,14 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	 * @return string|int
 	 */
 	public function get_total( $context = 'view' ) {}
+
+	/**
+	 * The line's tax after discounts (negative on a refund line).
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|int|float
+	 */
+	public function get_total_tax( $context = 'view' ) {}
 }
 
 /**
@@ -267,6 +282,51 @@ class WC_Product extends WC_Data {
 	 * @return int|string
 	 */
 	public function get_image_id( $context = 'view' ) {}
+
+	/**
+	 * Product type, e.g. 'simple', 'variable', 'variation'.
+	 *
+	 * @return string
+	 */
+	public function get_type() {}
+
+	/**
+	 * Regular price as stored ('' when none; filters may return a float).
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|float
+	 */
+	public function get_regular_price( $context = 'view' ) {}
+
+	/**
+	 * Sale price as stored ('' when none; filters may return a float).
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|float
+	 */
+	public function get_sale_price( $context = 'view' ) {}
+
+	/**
+	 * Sets the regular price (stored through wc_format_decimal()).
+	 *
+	 * @param string $price Regular price.
+	 * @return void
+	 */
+	public function set_regular_price( $price ) {}
+
+	/**
+	 * Saves the product through its data store.
+	 *
+	 * @return int Product id.
+	 */
+	public function save() {}
+
+	/**
+	 * Child ids (variations of a variable product, without the trash).
+	 *
+	 * @return array<int|string>
+	 */
+	public function get_children() {}
 }
 
 /**
@@ -288,6 +348,11 @@ class WC_Product_Variable extends WC_Product {
  * @return string Store currency code (ISO 4217).
  */
 function get_woocommerce_currency() {}
+
+/**
+ * @return int Number of decimals of prices (store setting).
+ */
+function wc_get_price_decimals() {}
 
 /**
  * @param string|float|int $number     Number.

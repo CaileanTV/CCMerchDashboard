@@ -53,6 +53,29 @@ final class Tables {
 	public const SALES_CYCLES = 'merchboard_sales_cycles';
 
 	/**
+	 * Product-specific creator share per parent product (ADR-049; recreated by
+	 * schema version 8, fixed profits of ADR-046 before). Current state.
+	 */
+	public const PRICING_OVERRIDES = 'merchboard_pricing_overrides';
+
+	/**
+	 * Base price and last applied pricing per sellable unit (ADR-045), created
+	 * by schema version 6 and dropped by version 8 (ADR-049). Retired: only
+	 * migrations and opt-in uninstall still name it.
+	 */
+	public const ITEM_PRICING = 'merchboard_item_pricing';
+
+	/**
+	 * Creator share snapshot per order line, schema version 6 (ADR-047, ADR-049). Append-only.
+	 */
+	public const SALES_LINE_PRICING = 'merchboard_sales_line_pricing';
+
+	/**
+	 * Actual WooCommerce tax per sales ledger row, schema version 7 (ADR-048). Append-only.
+	 */
+	public const SALES_TAX = 'merchboard_sales_tax';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -62,6 +85,18 @@ final class Tables {
 		self::CREATOR_CATEGORIES,
 		self::SALES,
 		self::SALES_CYCLES,
+		self::PRICING_OVERRIDES,
+		self::SALES_LINE_PRICING,
+		self::SALES_TAX,
+	);
+
+	/**
+	 * Tables of earlier schema versions that a later migration dropped. They
+	 * are not part of all(), but may still exist on a site whose migrations
+	 * have not run yet, so uninstall drops them too.
+	 */
+	private const RETIRED = array(
+		self::ITEM_PRICING,
 	);
 
 	/**
@@ -72,7 +107,7 @@ final class Tables {
 	 * @throws InvalidArgumentException When the table is not owned by the plugin.
 	 */
 	public static function name( wpdb $wpdb, string $table ): string {
-		if ( ! in_array( $table, self::ALL, true ) ) {
+		if ( ! in_array( $table, self::ALL, true ) && ! in_array( $table, self::RETIRED, true ) ) {
 			throw new InvalidArgumentException( 'Unknown table.' );
 		}
 
@@ -86,5 +121,14 @@ final class Tables {
 	 */
 	public static function all(): array {
 		return self::ALL;
+	}
+
+	/**
+	 * Unprefixed names of retired plugin tables (dropped by a migration).
+	 *
+	 * @return list<string>
+	 */
+	public static function retired(): array {
+		return self::RETIRED;
 	}
 }

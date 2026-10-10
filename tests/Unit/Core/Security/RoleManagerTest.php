@@ -62,10 +62,12 @@ final class RoleManagerTest extends TestCase {
 
 		self::assertSame(
 			self::ADMIN_CAPS + array(
-				'merchboard_manage'          => true,
-				'merchboard_manage_creators' => true,
-				'merchboard_manage_settings' => true,
-				'merchboard_view_logs'       => true,
+				'merchboard_manage'                 => true,
+				'merchboard_manage_creators'        => true,
+				'merchboard_manage_settings'        => true,
+				'merchboard_view_logs'              => true,
+				'merchboard_manage_creator_pricing' => true,
+				'merchboard_delete_order_history'   => true,
 			),
 			$roles->capabilities( 'administrator' )
 		);

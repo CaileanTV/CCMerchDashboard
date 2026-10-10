@@ -22,6 +22,10 @@ defined( 'ABSPATH' ) || exit;
  *   taken from its earliest row and never changes (ADR-038, B3).
  * - Totals: quantity and amount (1/10000 units) over all cycles; closed cycles
  *   sum to 0, so the total is the balance of the latest cycle.
+ * - Tax (ADR-048): the actual tax of each row, stored and planned, summed per
+ *   line like the amount. A row without known tax (e.g. registered before
+ *   schema version 7) makes the line's tax balance unknown (null) for good,
+ *   so no later row of that line gets a guessed tax.
  *
  * @internal
  */
@@ -61,6 +65,20 @@ final class SalesPlanDraft {
 	 * @var array<string, int>
 	 */
 	private array $line_corrections = array();
+
+	/**
+	 * Tax balance per order line, stored + planned; null when unknown.
+	 *
+	 * @var array<int, int|null>
+	 */
+	private array $tax_totals = array();
+
+	/**
+	 * Actual tax of the planned rows by event key (known ones only).
+	 *
+	 * @var array<string, int>
+	 */
+	private array $taxes = array();
 
 	/**
 	 * Planned rows.
@@ -105,6 +123,7 @@ final class SalesPlanDraft {
 			$currencies[ $entry->currency ]  = true;
 			$this->history[ $item ]        ??= self::attribution( $entry->creator_id, $entry->product_id, $entry->variation_id, $entry->item_name );
 			$this->accumulate( $item, $entry->quantity, SalesAmount::parse( $entry->net_amount ) );
+			$this->accumulate_tax( $item, $ledger->taxes[ $entry->event_key ] ?? null );
 
 			if ( SalesEntryType::Refund === $entry->type ) {
 				$this->refund_rows[ $item ][ $entry->refund_id ] = $entry;
@@ -165,6 +184,25 @@ final class SalesPlanDraft {
 	}
 
 	/**
+	 * Tax balance of an order line over all cycles, stored + planned; 0 for a
+	 * line without rows, null when unknown.
+	 *
+	 * @param int $item_id Order item id.
+	 */
+	public function tax_total( int $item_id ): ?int {
+		return array_key_exists( $item_id, $this->tax_totals ) ? $this->tax_totals[ $item_id ] : 0;
+	}
+
+	/**
+	 * Stored actual tax of a row, null when unknown.
+	 *
+	 * @param string $event_key Event key.
+	 */
+	public function stored_tax( string $event_key ): ?int {
+		return $this->ledger->taxes[ $event_key ] ?? null;
+	}
+
+	/**
 	 * Stored `refund` rows by order line (ascending) and refund id (ascending).
 	 *
 	 * @return array<int, array<int, SalesEntry>>
@@ -216,6 +254,7 @@ final class SalesPlanDraft {
 	 * @param int                                                                           $net               Signed amount in 1/10000 units.
 	 * @param DateTimeImmutable                                                             $occurred_at       Event time.
 	 * @param array{creator_id: int, product_id: int, variation_id: int, name: string}|null $first_attribution Attribution of a line without history.
+	 * @param int|null                                                                      $tax               Actual tax of the row in 1/10000 units, null when unknown (ADR-048).
 	 * @throws SalesPlanAbort When the line has no attribution.
 	 */
 	public function add(
@@ -228,7 +267,8 @@ final class SalesPlanDraft {
 		int $quantity,
 		int $net,
 		DateTimeImmutable $occurred_at,
-		?array $first_attribution = null
+		?array $first_attribution = null,
+		?int $tax = null
 	): void {
 		if ( $this->has_key( $event_key ) ) {
 			return;
@@ -260,6 +300,11 @@ final class SalesPlanDraft {
 		$this->keys[ $event_key ]    = true;
 		$this->history[ $item_id ] ??= $attribution;
 		$this->accumulate( $item_id, $quantity, $net );
+		$this->accumulate_tax( $item_id, $tax );
+
+		if ( null !== $tax ) {
+			$this->taxes[ $event_key ] = $tax;
+		}
 
 		if ( 1 === preg_match( '/^c-l:(\d+):(\d+):(\d+)$/', $event_key, $parts ) ) {
 			$this->line_corrections[ $parts[1] . ':' . $parts[2] ] = (int) $parts[3];
@@ -283,7 +328,7 @@ final class SalesPlanDraft {
 	 * Everything planned, in planning order.
 	 */
 	public function write(): SalesLedgerWrite {
-		return new SalesLedgerWrite( $this->entries, $this->events );
+		return new SalesLedgerWrite( $this->entries, $this->events, $this->taxes );
 	}
 
 	/**
@@ -302,6 +347,18 @@ final class SalesPlanDraft {
 			'variation_id' => $variation_id,
 			'name'         => $name,
 		);
+	}
+
+	/**
+	 * Adds a row's tax to a line's tax balance; an unknown tax makes the
+	 * balance unknown.
+	 *
+	 * @param int      $item_id Order item id.
+	 * @param int|null $tax     Signed tax, or null when unknown.
+	 */
+	private function accumulate_tax( int $item_id, ?int $tax ): void {
+		$total                        = $this->tax_total( $item_id );
+		$this->tax_totals[ $item_id ] = null === $total || null === $tax ? null : SalesAmount::add( $total, $tax );
 	}
 
 	/**

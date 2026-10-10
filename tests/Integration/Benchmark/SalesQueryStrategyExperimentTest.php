@@ -30,6 +30,7 @@ use MerchBoard\Modules\WooCommerce\Dashboard\SalesReport;
 use MerchBoard\Modules\WooCommerce\Sales\LedgerSalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesInterval;
 use MerchBoard\Modules\WooCommerce\Sales\SalesQuery;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeSalesProductNames;
 use PHPUnit\Framework\Attributes\Group;
@@ -58,14 +59,14 @@ final class SalesQueryStrategyExperimentTest extends IntegrationTestCase {
 		$now       = new DateTimeImmutable( self::NOW, new DateTimeZone( 'UTC' ) );
 		$ledger    = new LedgerSalesStatistics( $this->wpdb );
 		$names     = new FakeSalesProductNames();
-		$baseline  = new SalesReport( $ledger, $names );
+		$baseline  = new SalesReport( $ledger, $names, new LedgerCreatorProfits( $this->wpdb ) );
 		$scenarios = array(
 			'30 days by day'  => SalesQuery::resolve( null, null, SalesInterval::Day, $timezone, $now ),
 			'1 year by day'   => SalesQuery::resolve( '2025-10-01', '2026-09-30', SalesInterval::Day, $timezone, $now ),
 			'1 year by month' => SalesQuery::resolve( '2025-10-01', '2026-09-30', SalesInterval::Month, $timezone, $now ),
 			'edge week'       => SalesQuery::resolve( '2026-08-24', '2026-09-13', SalesInterval::Week, $timezone, $now ),
 		);
-		$report    = fn( SalesQuery $query, string $strategy, int $creator_id ): array => ( new SalesReport( new ExperimentalSalesStatistics( $this->wpdb, $ledger, $query, $strategy ), $names ) )->build( $creator_id, $query );
+		$report    = fn( SalesQuery $query, string $strategy, int $creator_id ): array => ( new SalesReport( new ExperimentalSalesStatistics( $this->wpdb, $ledger, $query, $strategy ), $names, new LedgerCreatorProfits( $this->wpdb ) ) )->build( $creator_id, $query );
 
 		// Correctness first: identical reports (totals, series, products, currencies, periods).
 		foreach ( array( $large->id, 100001, $small->id, self::EDGE ) as $creator_id ) {

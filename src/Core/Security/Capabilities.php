@@ -74,6 +74,22 @@ final class Capabilities {
 	public const VIEW_LOGS = 'merchboard_view_logs';
 
 	/**
+	 * May configure creator pricing: the creator's markup (share of the
+	 * WooCommerce sale price), VAT status and product markups (ADR-048,
+	 * ADR-049). It decides what creators are paid, so it is separate from
+	 * managing creators. It never allows writing WooCommerce prices.
+	 */
+	public const MANAGE_CREATOR_PRICING = 'merchboard_manage_creator_pricing';
+
+	/**
+	 * May permanently delete Merch Dashboard's stored history of one order
+	 * (ledger, cycles, stored tax and profit snapshots), only when the
+	 * WooCommerce order is in the trash or deleted, e.g. a test order
+	 * (ADR-052). Separate from viewing it: deleting changes sales and profit.
+	 */
+	public const DELETE_ORDER_HISTORY = 'merchboard_delete_order_history';
+
+	/**
 	 * WordPress' capability for editorial work. Not owned by the plugin and never
 	 * granted by it; only checked to tell editors apart from pure creators
 	 * (ADR-026).
@@ -129,6 +145,8 @@ final class Capabilities {
 			self::MANAGE_CREATORS,
 			self::MANAGE_SETTINGS,
 			self::VIEW_LOGS,
+			self::MANAGE_CREATOR_PRICING,
+			self::DELETE_ORDER_HISTORY,
 		);
 	}
 

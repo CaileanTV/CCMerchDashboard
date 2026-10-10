@@ -41,6 +41,7 @@ use MerchBoard\Modules\WooCommerce\Sales\LedgerSalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCache;
 use MerchBoard\Modules\WooCommerce\Sales\SalesInterval;
 use MerchBoard\Modules\WooCommerce\Sales\SalesQuery;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeSalesProductNames;
 use PHPUnit\Framework\Attributes\Group;
@@ -69,7 +70,7 @@ final class SalesBenchmarkTest extends IntegrationTestCase {
 		$timezone   = new DateTimeZone( 'Europe/Copenhagen' );
 		$now        = new DateTimeImmutable( self::NOW, new DateTimeZone( 'UTC' ) );
 		$statistics = new LedgerSalesStatistics( $this->wpdb );
-		$uncached   = new SalesReport( $statistics, new FakeSalesProductNames() );
+		$uncached   = new SalesReport( $statistics, new FakeSalesProductNames(), new LedgerCreatorProfits( $this->wpdb ) );
 		$cache      = new SalesCache();
 		$cached     = new CachedSalesReports( $uncached, $cache );
 		$scenarios  = array(

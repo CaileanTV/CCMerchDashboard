@@ -103,6 +103,78 @@ Cyklus 1 og senere cyklusser er bevidst asymmetriske (brutto + refunds mod reste
 - **Papirkurv:** intet statushook; gendannelse under HPOS affyrer `woocommerce_order_status_changed` med `from = trash`.
 - **Sletning af ordrer og refunds, `GET_LOCK()`/`@@in_transaction`, genforbindelse i `wpdb` og HPOS' gemning efter meta-ændringer:** se ADR-038's supplement (A–D).
 
+## Creator pricing (fase 22, ADR-049)
+
+> ADR-045 og ADR-046 (grundpris + profit som WooCommerce-listepris, anvendelse, drift og fast profit) er erstattet af ADR-049 (2026-10-09). Koden blev fjernet, før den blev frigivet.
+
+**Regel:** WooCommerce-salgsprisen er den endelige kundepris og indeholder allerede creatorens profit og moms. Merch Dashboard lægger intet oven i prisen og skriver aldrig en WooCommerce-pris.
+
+| | Formel |
+| --- | --- |
+| Creator-profit | salgspris × markup % |
+| Udbetaling, momsregistreret | = creator-profit |
+| Udbetaling, ikke momsregistreret | creator-profit × 80 % (20 % fradrag af profitten) |
+
+**Forudsætninger:** WooCommerce-prisen, kunden betaler, er inkl. moms; profitten beregnes af det faktisk betalte beløb inkl. moms. Fradraget for ikke-momsregistrerede er et fast fradrag på 20 % af creator-profitten. Det er ikke en beregning af linjens faktiske WooCommerce-moms og afhænger ikke af momssatsen. Mangler data, er profit og udbetaling ukendte, aldrig 0.
+
+Eksempler: 100,00 / 20 % → profit 20,00, udbetaling 16,00 (Nej) eller 20,00 (Ja). 200,00 / 10 % → 20,00 og 16,00 eller 20,00. 100,00 / 0 % → 0,00.
+
+**Data og ejerskab:**
+
+| Data | Kilde | Skrives af Merch Dashboard? |
+| --- | --- | --- |
+| Regular, sale og aktiv pris | WooCommerce | **Aldrig** (`PricingProductStore` har ingen skrivemetode; ingen prisfiltre) |
+| Creatorens markup (andel af salgsprisen) | `merchboard_creators.default_markup_bps` | Ja, af admin |
+| Produktets egen markup (erstatter creatorens) | `merchboard_pricing_overrides.markup_bps` | Ja, af admin |
+| Creatorens momsstatus | `merchboard_creators.vat_registered` | Ja, af admin |
+| Andel, kilde, prisdecimaler og momsstatus pr. ordrelinje | `merchboard_sales_line_pricing` | Ja, én gang ved oprettelsen |
+| Faktisk moms pr. ledger-række | `merchboard_sales_tax` | Ja, sammen med ledger-rækken (ADR-048) |
+
+**Gældende markup (`MarkupResolver`):** produktets ejer findes via `ProductCreatorLink`. Har parent-produktet en egen markup, der blev sat for den nuværende ejer, gælder den for produktet og alle varianter (kilde `product`). Ellers gælder ejerens markup (kilde `creator`). En produkt-markup sat for en tidligere ejer ignoreres. De to summeres aldrig.
+
+**Konfiguration (`CreatorPricingSettings`):** den eneste skrivevej for markup, produkt-markup og momsstatus.
+
+- Kræver `merchboard_manage_creator_pricing`; produkt-markup kræver desuden `edit_product` på parent.
+- Produkt-markup kun for simple og variable parent-produkter, bundet til den nuværende ejer.
+- Procent med højst to decimaler (0–100, "." eller ","), ingen floats.
+- Skrivning og audit i én transaktion; en uændret værdi skriver og auditerer intet.
+- Ingen ændring påvirker en WooCommerce-pris, et snapshot eller en tidligere udbetaling. Den gælder for ordrelinjer, der oprettes bagefter.
+
+### Admin-UI
+
+Afsnittet "Pricing" på creatorens redigeringsside; se ADMIN.md. WooCommerces produktliste og produktskærm ændres ikke. Produktlisten viser WooCommerce-priserne skrivebeskyttet og et eksempel på profit og udbetaling ved den aktuelle pris, med creatorens nuværende momsstatus. Ingen SQL mod WooCommerces tabeller; hver enhed læses via CRUD.
+
+### Snapshot pr. ordrelinje (ADR-047, ADR-049)
+
+**Hook og timing:**
+
+- `SalesLinePricingHooks` lytter på `woocommerce_new_order_item`. WooCommerce affyrer den én gang pr. linje, fra ordrelinjens data store (`create()`), lige efter at linjen er indsat. Det gælder for HPOS og legacy, ved checkout, i wp-admin, via REST og med `add_product()`.
+- Kun produktlinjer på `shop_order` får et snapshot; refund-linjer gør ikke.
+- Opdatering af en linje affyrer ingen create-hook. Er linjen allerede registreret, er det append-only-insert'et, der beskytter: første snapshot vinder.
+
+**Indhold (`SalesLinePricingRecorder`):** ejeren på oprettelsestidspunktet, den gældende andel (`share_bps`), kilden (`creator`/`product`), butikkens prisdecimaler, ejerens momsstatus og ordrens valuta. Status `share`. Ingen priser: salgsprisen kommer fra ledger-rækken. Linjer uden ejer eller produkt og variationer, der ikke hører til linjens produkt, får intet snapshot.
+
+**Fejl:** recorderen kaster aldrig og afbryder aldrig ordreoprettelsen. En fejl logges, og linjen får intet snapshot (ukendt profit). Snapshottet gættes eller skrives aldrig senere. Sales ledgeren er uafhængig af det.
+
+### Realiseret profit og udbetaling
+
+- **Salgspris pr. ledger-række** = rækkens `net_amount` (efter alle rabatter, ekskl. moms) + rækkens faktiske moms fra `merchboard_sales_tax` = det beløb, kunden betalte inkl. moms. Momsen bruges kun til at genskabe det betalte beløb, aldrig som sats eller som separat profitformel.
+- **Profit** (`RealizedProfit`, via `SalesProfit::for_entry()`) = `round_half_away(salgspris × share_bps / 10 000)` til snapshottets prisdecimaler.
+- **Udbetaling** (`RealizedPayout`, via `SalesProfit::payout_for_entry()`) = profit (momsregistreret) eller `round_half_away(profit × 80 %)` (ikke momsregistreret), med momsstatus fra snapshottet.
+- Heltal i 1/10 000-enheder (`CreatorShare`, `PricingMath::share`), half away from zero, ingen floats. Afrundes pr. række.
+- Rækkens beløb er linjebeløbet, så antallet ganges aldrig igen. Udsalg, kuponer og manuelle rabatter er indeholdt i det betalte beløb.
+- Refunds, reversals og korrektioner (fx slettet refund) har fortegn og egen moms, så profit og udbetaling følger med fortegn; en fuldt refunderet linje summerer til 0.
+- **Ukendt (null):** uden matchende snapshot med andel (ordre, ordrelinje, creator, valuta, parent-produkt og variation), uden rækkens gemte moms i rækkens valuta (rækker fra før schema-version 7), og for udbetalingen også uden momsstatus i snapshottet. Ingen valutaomregning og ingen fallback til nuværende værdier.
+- Intet gemmes: ingen profit- eller udbetalingskolonne. Ledgerens schema, invarianter, idempotens og tællende statusser er uændrede.
+
+**Livscyklus:** statusskift, refunds, sletning af refunds, papirkurv, gendannelse og permanent sletning af ordren ændrer kun ledgeren, aldrig snapshottet. Sletning af produkt eller variation, ejerskift, deaktivering af creatoren og ændret markup, produkt-markup, momsstatus eller WooCommerce-pris ændrer heller ikke snapshottet. Der er ingen fremmednøgler.
+
+**Historiske data:** ordrer fra før fase 22 har intet snapshot, og snapshots fra før migration 8 (`priced`/`unpriced`) har ingen andel. De er gyldige ledger-rækker med ukendt profit; der sker ingen backfill og ingen genfortolkning.
+
+**Afgrænsning:** der er endnu intet creator-API og ingen `/me/payout`.
+
+**Åbent spørgsmål:** se ADR-049 (20 %-fradraget ved andre momssatser end 25 %).
+
 ## Dashboard-data og privacy
 
 ✅ Fase 19 (ADR-039; kontrakterne i [API.md](API.md#get-meproducts--fase-19-trin-2-adr-039)). Creator'en kommer altid fra `CreatorContext` på serveren, aldrig fra requesten.

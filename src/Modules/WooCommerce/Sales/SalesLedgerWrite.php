@@ -23,10 +23,11 @@ final readonly class SalesLedgerWrite {
 	 * @phpstan-param list<SalesEntry> $entries
 	 * @phpstan-param list<SalesCycleEvent> $cycle_events
 	 *
-	 * @param SalesEntry[]      $entries      New ledger rows.
-	 * @param SalesCycleEvent[] $cycle_events New cycle events.
+	 * @param SalesEntry[]       $entries      New ledger rows.
+	 * @param SalesCycleEvent[]  $cycle_events New cycle events.
+	 * @param array<string, int> $taxes       Actual tax of new rows by event key (ADR-048); rows with unknown tax are left out.
 	 */
-	public function __construct( public array $entries = array(), public array $cycle_events = array() ) {
+	public function __construct( public array $entries = array(), public array $cycle_events = array(), public array $taxes = array() ) {
 	}
 
 	/**

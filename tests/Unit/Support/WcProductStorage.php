@@ -17,7 +17,7 @@ final class WcProductStorage {
 	/**
 	 * Products by id.
 	 *
-	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[], price?: string|float, regular_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>}>
+	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[], price?: string|float, regular_price?: string, sale_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>}>
 	 */
 	public static array $products = array();
 
@@ -78,6 +78,20 @@ final class WcProductStorage {
 	public static array $variation_price_calls = array();
 
 	/**
+	 * Every price setter call: [product id, property, value].
+	 *
+	 * @var list<array{int, string, string}>
+	 */
+	public static array $setters = array();
+
+	/**
+	 * When true, WC_Product::save() fails (returns 0).
+	 *
+	 * @var bool
+	 */
+	public static bool $fail_save = false;
+
+	/**
 	 * The id of every wc_get_product() call.
 	 *
 	 * @var list<int>
@@ -88,7 +102,7 @@ final class WcProductStorage {
 	 * Sets more product fields (price, regular_price, stock_status, image_id,
 	 * variation_prices) on a product added with add().
 	 *
-	 * @phpstan-param array{price?: string|float, regular_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>} $fields
+	 * @phpstan-param array{price?: string|float, regular_price?: string, sale_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>} $fields
 	 *
 	 * @param int                  $id     Product id.
 	 * @param array<string, mixed> $fields Fields.

@@ -1,6 +1,6 @@
 # REST API
 
-> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039), `/me/sales` er implementeret i fase 20, trin 3 (ADR-040), og `PATCH /me/preferences` er implementeret i fase 21, trin 5 (ADR-044). Øvrige routes i tabellerne nedenfor er design.
+> Status: **Delvist implementeret.** REST-fundamentet, `/me` og `/me/profile` er implementeret (fase 14), pagineringen af liste-routes er tilføjet i fase 19, trin 1, og `/me/products` og `/me/orders` er implementeret i fase 19 (ADR-039), `/me/sales` er implementeret i fase 20, trin 3 (ADR-040), og `PATCH /me/preferences` er implementeret i fase 21, trin 5 (ADR-044). Fase 22 (ADR-050) tilføjer creatorens profit til `/me/products`, `/me/orders` og `/me/sales`. Øvrige routes i tabellerne nedenfor er design.
 
 ## Principper
 
@@ -287,6 +287,45 @@ Uden parametre er perioden altså de seneste 30 dage inklusive i dag, dag for da
 - **Kapløb:** ved et miss læses generationen før ledgeren, og resultatet gemmes kun, hvis generationen er uændret bagefter. En skrivning, der committes undervejs, giver derfor ikke en forældet post under den nye generation. Se [WOOCOMMERCE.md](WOOCOMMERCE.md#caching-af-salgsstatistik) for de resterende grænser.
 
 Beløb er decimalstrenge med fire decimaler, aldrig floats; der beregnes ingen moms, visningspris, revenue split eller afregning. Svaret indeholder aldrig kundedata (navn, e-mail, telefon, adresse, IP, betaling, kunde- eller bruger-ID), ordre-, ordrelinje-, variant- eller creator-ID'er.
+
+## Profit i `/me/products`, `/me/orders` og `/me/sales` ✅ (fase 22, ADR-050)
+
+Creatorens realiserede profit efter ADR-049 (salgspris inkl. moms × den historiske markup, pr. ledger-række, afrundet til butikkens præcision). Profit er ikke udbetaling og ikke et salgstal. Alle tre endpoints bruger samme aggregering (`CreatorProfits`) og samme objekt:
+
+```json
+{ "currency": "DKK", "status": "complete", "amount": "29.8000" }
+```
+
+| `status` | Betydning | `amount` |
+| --- | --- | --- |
+| `complete` | Alle relevante ledger-rækker har de nødvendige historiske data | Summen (decimalstreng med fire decimaler; kan være `0.0000` eller negativ) |
+| `incomplete` | Nogle rækker mangler data (intet snapshot med andel eller ingen gemt moms) | `null` |
+| `unknown` | Ingen række har data | `null` |
+
+En ufuldstændig eller ukendt profit sendes aldrig som et beløb og vises aldrig som 0. Kun rækker med creatorens `creator_id` tæller; et creator-ID fra klienten ignoreres.
+
+| Endpoint | Felt | Indhold |
+| --- | --- | --- |
+| `/me/products` | `profit` | Liste med ét objekt pr. valuta for produktet og dets variationer (al tid), eller `null`, når creator'en ikke har salg af produktet |
+| `/me/orders` | `profit` | Linjens profit over alle dens rækker (salg, refunds, reversals og korrektioner med fortegn) |
+| `/me/orders` | `order_profit` | Summen af creatorens linjer i samme ordre (også linjer på andre sider) |
+| `/me/orders` | `order_lines` | Antal af creatorens linjer i ordren |
+| `/me/sales` | `currencies[].profit` | Profit for de samme rækker og samme periode som `totals` |
+
+De eksisterende felter, paginering og sortering er uændrede. `/me/sales`-cachens format er `v2` (ADR-050).
+
+## Salg inkl. moms i `/me/sales` ✅ (fase 22, ADR-053)
+
+Additive felter; de eksisterende beløb ekskl. moms er uændrede.
+
+| Felt | Indhold |
+| --- | --- |
+| `currencies[].totals.net_sales_incl_vat`, `sales_incl_vat`, `adjustments_incl_vat` | Samme summer plus hver rækkes gemte faktiske moms (`merchboard_sales_tax`), decimalstreng; `null`, når en række i perioden ikke har gemt moms i rækkens valuta |
+| `currencies[].vat` | `{ "status": "complete" \| "incomplete", "missing_rows": <antal rækker uden gemt moms> }`; `complete` præcis når `missing_rows` er 0 og beløbene inkl. moms ikke er `null` |
+| `currencies[].series[].net_sales_incl_vat` | Periodens beløb inkl. moms ("0.0000" uden rækker), eller `null` for hele valutaen, når den er `incomplete` (aldrig en blanding) |
+| `currencies[].products[].net_sales_incl_vat` | Produktets beløb inkl. moms, eller `null`, når en af dets rækker mangler moms |
+
+Manglende moms regnes aldrig som 0. Dashboardet viser beløbene inkl. moms, når `vat.status` er `complete`, og ellers beløbene ekskl. moms med tydelig mærkning og en forklaring. `/me/sales`-cachens format er `v3`.
 
 ## Test-krav
 

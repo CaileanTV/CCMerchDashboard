@@ -6,6 +6,7 @@
 import type { PageLoader } from '../hooks/usePagedApi';
 import type { OrderLine } from '../types/orders';
 import { requestList } from './client';
+import { parseProfit } from './profit';
 import { isRecord } from './validate';
 
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
@@ -32,7 +33,11 @@ export function parseOrderLine( body: unknown ): OrderLine | null {
 		quantity,
 		refunded,
 		counted,
+		order_lines: orderLines,
 	} = body;
+	const profit = body.profit === null ? null : parseProfit( body.profit );
+	const orderProfit =
+		body.order_profit === null ? null : parseProfit( body.order_profit );
 
 	if (
 		typeof lineId !== 'number' ||
@@ -51,7 +56,12 @@ export function parseOrderLine( body: unknown ): OrderLine | null {
 		typeof quantity !== 'number' ||
 		! Number.isInteger( quantity ) ||
 		typeof refunded !== 'boolean' ||
-		typeof counted !== 'boolean'
+		typeof counted !== 'boolean' ||
+		( body.profit !== null && profit === null ) ||
+		( body.order_profit !== null && orderProfit === null ) ||
+		typeof orderLines !== 'number' ||
+		! Number.isInteger( orderLines ) ||
+		orderLines < 0
 	) {
 		return null;
 	}
@@ -66,6 +76,9 @@ export function parseOrderLine( body: unknown ): OrderLine | null {
 		quantity,
 		refunded,
 		counted,
+		profit,
+		orderProfit,
+		orderLines,
 	};
 }
 

@@ -48,16 +48,24 @@ function currency(
 	totals: Record< string, unknown >,
 	extra: Record< string, unknown > = {}
 ): Record< string, unknown > {
+	const merged: Record< string, unknown > = {
+		net_sales: '0.0000',
+		sales: '0.0000',
+		adjustments: '0.0000',
+		units: 0,
+		orders: 0,
+		...totals,
+	};
+
 	return {
 		currency: code,
 		totals: {
-			net_sales: '0.0000',
-			sales: '0.0000',
-			adjustments: '0.0000',
-			units: 0,
-			orders: 0,
-			...totals,
+			net_sales_incl_vat: merged.net_sales,
+			sales_incl_vat: merged.sales,
+			adjustments_incl_vat: merged.adjustments,
+			...merged,
 		},
+		vat: { status: 'complete', missing_rows: 0 },
 		series: [],
 		products: [],
 		truncated: false,
@@ -296,36 +304,50 @@ describe( 'overview section', () => {
 			);
 		} );
 
-		it( 'shows net sales (excl. VAT), units and orders of one currency with the period and the explanation', async () => {
+		it( 'shows sales (incl. VAT), units and orders of one currency with the period and the explanation', async () => {
 			const container = await renderWith(
 				() => response( 200, PROFILE ),
 				withCurrencies( [
-					currency( 'DKK', {
-						net_sales: '1234.5000',
-						sales: '1500.0000',
-						adjustments: '-265.5000',
-						units: 1234,
-						orders: 7,
-					} ),
+					currency(
+						'DKK',
+						{
+							net_sales: '1234.5000',
+							sales: '1500.0000',
+							adjustments: '-265.5000',
+							units: 1234,
+							orders: 7,
+						},
+						{
+							profit: {
+								currency: 'DKK',
+								status: 'complete',
+								amount: '205.7900',
+							},
+						}
+					),
 				] )
 			);
 			const section = kpiSection( container );
 
 			expect( kpiTexts( section ) ).toEqual( [
-				[ 'Net sales (excl. VAT)', '1.234,50 kr.' ],
+				[ 'Sales (incl. VAT)', '1.234,50 kr.' ],
 				[ 'Units', '1.234' ],
 				[ 'Orders', '7' ],
+				[ 'Profit', '205,79 kr.' ],
 			] );
 			expect(
 				Array.from( section?.querySelectorAll( 'h3' ) ?? [] ).map(
 					( heading ) => heading.textContent
 				)
-			).toEqual( [ 'Net sales (excl. VAT)', 'Units', 'Orders' ] );
+			).toEqual( [ 'Sales (incl. VAT)', 'Units', 'Orders', 'Profit' ] );
+			expect( section?.textContent ).toContain(
+				'Profit applies to the same 30 days as the sales figures.'
+			);
 			expect( plain( section?.textContent ) ).toContain(
 				'Last 30 days: 1. sep. 2026 – 30. sep. 2026'
 			);
 			expect( section?.textContent ).toContain(
-				"The shop's net sales of your products after discounts, excluding VAT, shipping and fees. It is not your payout."
+				"The shop's sales of your products after discounts, including VAT, excluding shipping and fees. It is not your payout."
 			);
 			expect( section?.textContent ).not.toContain( 'Revenue' );
 			expect(
@@ -337,21 +359,51 @@ describe( 'overview section', () => {
 			const container = await renderWith(
 				() => response( 200, PROFILE ),
 				withCurrencies( [
-					currency( 'DKK', {
-						net_sales: '100.0000',
-						units: 2,
-						orders: 1,
-					} ),
-					currency( 'EUR', {
-						net_sales: '30.2500',
-						units: 3,
-						orders: 2,
-					} ),
-					currency( 'SEK', {
-						net_sales: '50.0000',
-						units: 4,
-						orders: 1,
-					} ),
+					currency(
+						'DKK',
+						{
+							net_sales: '100.0000',
+							units: 2,
+							orders: 1,
+						},
+						{
+							profit: {
+								currency: 'DKK',
+								status: 'complete',
+								amount: '16.6700',
+							},
+						}
+					),
+					currency(
+						'EUR',
+						{
+							net_sales: '30.2500',
+							units: 3,
+							orders: 2,
+						},
+						{
+							profit: {
+								currency: 'EUR',
+								status: 'incomplete',
+								amount: null,
+							},
+						}
+					),
+					currency(
+						'SEK',
+						{
+							net_sales: '50.0000',
+							units: 4,
+							orders: 1,
+						},
+						{
+							profit: {
+								currency: 'SEK',
+								status: 'unknown',
+								amount: null,
+							},
+						}
+					),
 				] )
 			);
 			const section = kpiSection( container );
@@ -366,19 +418,22 @@ describe( 'overview section', () => {
 			).toEqual( [ 'DKK', 'EUR', 'SEK' ] );
 			expect( blocks.map( ( block ) => kpiTexts( block ) ) ).toEqual( [
 				[
-					[ 'Net sales (excl. VAT)', '100,00 kr.' ],
+					[ 'Sales (incl. VAT)', '100,00 kr.' ],
 					[ 'Units', '2' ],
 					[ 'Orders', '1' ],
+					[ 'Profit', '16,67 kr.' ],
 				],
 				[
-					[ 'Net sales (excl. VAT)', '30,25 €' ],
+					[ 'Sales (incl. VAT)', '30,25 €' ],
 					[ 'Units', '3' ],
 					[ 'Orders', '2' ],
+					[ 'Profit', 'Incomplete' ],
 				],
 				[
-					[ 'Net sales (excl. VAT)', '50,00 SEK' ],
+					[ 'Sales (incl. VAT)', '50,00 SEK' ],
 					[ 'Units', '4' ],
 					[ 'Orders', '1' ],
+					[ 'Profit', 'Unknown' ],
 				],
 			] );
 			expect(
@@ -392,7 +447,7 @@ describe( 'overview section', () => {
 				blocks.every(
 					( block ) =>
 						block.querySelectorAll( 'h4.merchboard-kpi__label' )
-							.length === 3
+							.length === 4
 				)
 			).toBe( true );
 			expect( section?.textContent ).toContain(
@@ -400,7 +455,7 @@ describe( 'overview section', () => {
 			);
 			expect(
 				section?.querySelectorAll( '.merchboard-kpi' )
-			).toHaveLength( 9 );
+			).toHaveLength( 12 );
 			const text = plain( section?.textContent );
 			expect( text ).not.toContain( '180' );
 			expect( text ).not.toContain( '9' );
@@ -410,20 +465,31 @@ describe( 'overview section', () => {
 			const container = await renderWith(
 				() => response( 200, PROFILE ),
 				withCurrencies( [
-					currency( 'DKK', {
-						net_sales: '-266.0000',
-						sales: '0.0000',
-						adjustments: '-266.0000',
-						units: -2,
-						orders: 0,
-					} ),
+					currency(
+						'DKK',
+						{
+							net_sales: '-266.0000',
+							sales: '0.0000',
+							adjustments: '-266.0000',
+							units: -2,
+							orders: 0,
+						},
+						{
+							profit: {
+								currency: 'DKK',
+								status: 'complete',
+								amount: '-44.3400',
+							},
+						}
+					),
 				] )
 			);
 
 			expect( kpiTexts( kpiSection( container ) ) ).toEqual( [
-				[ 'Net sales (excl. VAT)', '-266,00 kr.' ],
+				[ 'Sales (incl. VAT)', '-266,00 kr.' ],
 				[ 'Units', '-2' ],
 				[ 'Orders', '0' ],
+				[ 'Profit', '-44,34 kr.' ],
 			] );
 		} );
 
@@ -436,7 +502,7 @@ describe( 'overview section', () => {
 			);
 
 			expect( kpiTexts( kpiSection( container ) )[ 0 ] ).toEqual( [
-				'Net sales (excl. VAT)',
+				'Sales (incl. VAT)',
 				'123.456.789.012.345,01 kr.',
 			] );
 		} );
@@ -448,7 +514,7 @@ describe( 'overview section', () => {
 			const section = kpiSection( container );
 
 			expect( section?.textContent ).toContain(
-				'No net sales in the last 30 days.'
+				'No sales in the last 30 days.'
 			);
 			expect( section?.querySelector( '.merchboard-kpi' ) ).toBeNull();
 			expect( plain( section?.textContent ) ).not.toMatch(

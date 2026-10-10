@@ -41,20 +41,29 @@ function currency(
 	amounts: readonly string[],
 	totals: Record< string, unknown > = {}
 ): Record< string, unknown > {
+	const merged: Record< string, unknown > = {
+		net_sales: '0.0000',
+		sales: '0.0000',
+		adjustments: '0.0000',
+		units: 0,
+		orders: 0,
+		...totals,
+	};
+
 	return {
 		currency: code,
 		totals: {
-			net_sales: '0.0000',
-			sales: '0.0000',
-			adjustments: '0.0000',
-			units: 0,
-			orders: 0,
-			...totals,
+			net_sales_incl_vat: merged.net_sales,
+			sales_incl_vat: merged.sales,
+			adjustments_incl_vat: merged.adjustments,
+			...merged,
 		},
+		vat: { status: 'complete', missing_rows: 0 },
 		series: amounts.map( ( amount, index ) => ( {
 			start: day( index + 1 ),
 			end: day( index + 1 ),
 			net_sales: amount,
+			net_sales_incl_vat: amount,
 			units: index,
 			orders: index === 0 ? 0 : 1,
 		} ) ),
@@ -83,13 +92,17 @@ function report(
 }
 
 const MIXED = report( 3, [
-	currency( 'DKK', [ '1234.5000', '-266.0000', '0.0000' ], {
-		net_sales: '968.5000',
-		sales: '1234.5000',
-		adjustments: '-266.0000',
-		units: 3,
-		orders: 2,
-	} ),
+	{
+		...currency( 'DKK', [ '1234.5000', '-266.0000', '0.0000' ], {
+			net_sales: '968.5000',
+			net_sales_incl_vat: '968.5000',
+			sales: '1234.5000',
+			adjustments: '-266.0000',
+			units: 3,
+			orders: 2,
+		} ),
+		profit: { currency: 'DKK', status: 'complete', amount: '161.4200' },
+	},
 ] );
 
 /** Text with Intl's non-breaking spaces as plain spaces. */
@@ -213,6 +226,7 @@ describe( 'parseSalesReport', () => {
 				start: day( 1 ),
 				end: day( 1 ),
 				netSales: '1.0000',
+				netSalesInclVat: '1.0000',
 				units: 0,
 				orders: 0,
 			},
@@ -240,6 +254,7 @@ describe( 'parseSalesReport', () => {
 						start,
 						end,
 						net_sales: '0.0000',
+						net_sales_incl_vat: '0.0000',
 						units: 0,
 						orders: 0,
 					} ) ),
@@ -262,6 +277,7 @@ describe( 'parseSalesReport', () => {
 						start: day( 1 ),
 						end: day( 1 ),
 						net_sales: '1.0000',
+						net_sales_incl_vat: '1.0000',
 						units: 1,
 						orders: 1,
 						...overrides,
@@ -360,9 +376,10 @@ describe( 'sales section', () => {
 		} );
 
 		expect( kpis( container ) ).toEqual( [
-			[ 'Net sales (excl. VAT)', '968,50 kr.' ],
+			[ 'Sales (incl. VAT)', '968,50 kr.' ],
 			[ 'Units', '3' ],
 			[ 'Orders', '2' ],
+			[ 'Profit', '161,42 kr.' ],
 		] );
 		expect( container.querySelector( 'h2' )?.textContent ).toBe(
 			'Choose period'
@@ -371,7 +388,7 @@ describe( 'sales section', () => {
 			container.querySelector( '.merchboard-card__title' )?.textContent
 		).toBe( 'Your sales' );
 		expect( container.textContent ).toContain(
-			"The shop's net sales of your products after discounts, excluding VAT, shipping and fees. It is not your payout."
+			"The shop's sales of your products after discounts, including VAT, excluding shipping and fees. It is not your payout."
 		);
 	} );
 
@@ -382,7 +399,7 @@ describe( 'sales section', () => {
 		const table = container.querySelector( 'table' );
 
 		expect( table?.querySelector( 'caption' )?.textContent ).toBe(
-			'Net sales, units and orders per period (DKK)'
+			'Sales, units and orders per period (DKK)'
 		);
 		expect(
 			Array.from( table?.querySelectorAll( 'thead th' ) ?? [] ).map(
@@ -390,7 +407,7 @@ describe( 'sales section', () => {
 			)
 		).toEqual( [
 			[ 'Period', 'col' ],
-			[ 'Net sales (excl. VAT)', 'col' ],
+			[ 'Sales (incl. VAT)', 'col' ],
 			[ 'Units', 'col' ],
 			[ 'Orders', 'col' ],
 		] );
@@ -450,7 +467,7 @@ describe( 'sales section', () => {
 		).toBe( '-266,00 kr.' );
 		expect(
 			first.querySelector( 'figure figcaption' )?.textContent
-		).toContain( 'Net sales per day' );
+		).toContain( 'Sales per day (incl. VAT)' );
 
 		rendered?.unmount();
 		const second = await show( {
@@ -544,11 +561,13 @@ describe( 'sales section', () => {
 					report( 2, [
 						currency( 'DKK', [ '100.0000', '0.0000' ], {
 							net_sales: '100.0000',
+							net_sales_incl_vat: '100.0000',
 							units: 1,
 							orders: 1,
 						} ),
 						currency( 'EUR', [ '0.0000', '30.2500' ], {
 							net_sales: '30.2500',
+							net_sales_incl_vat: '30.2500',
 							units: 2,
 							orders: 1,
 						} ),
@@ -566,8 +585,8 @@ describe( 'sales section', () => {
 			)
 		).toEqual( [ 'DKK', 'EUR' ] );
 		expect( cards.map( ( card ) => kpis( card )[ 0 ] ) ).toEqual( [
-			[ 'Net sales (excl. VAT)', '100,00 kr.' ],
-			[ 'Net sales (excl. VAT)', '30,25 €' ],
+			[ 'Sales (incl. VAT)', '100,00 kr.' ],
+			[ 'Sales (incl. VAT)', '30,25 €' ],
 		] );
 		expect(
 			cards.map( ( card ) => card.querySelectorAll( 'svg' ).length )
@@ -577,8 +596,8 @@ describe( 'sales section', () => {
 				( card ) => card.querySelector( 'caption' )?.textContent
 			)
 		).toEqual( [
-			'Net sales, units and orders per period (DKK)',
-			'Net sales, units and orders per period (EUR)',
+			'Sales, units and orders per period (DKK)',
+			'Sales, units and orders per period (EUR)',
 		] );
 		expect( container.textContent ).toContain(
 			'The figures are shown per currency and never added together.'
@@ -591,9 +610,7 @@ describe( 'sales section', () => {
 			[ `GET ${ DEFAULT }` ]: () => response( 200, report( 3, [] ) ),
 		} );
 
-		expect( container.textContent ).toContain(
-			'No net sales in this period.'
-		);
+		expect( container.textContent ).toContain( 'No sales in this period.' );
 		expect( container.querySelector( 'svg' ) ).toBeNull();
 		expect( container.querySelector( 'table' ) ).toBeNull();
 		expect( container.querySelector( '.merchboard-kpi' ) ).toBeNull();
@@ -616,6 +633,7 @@ describe( 'sales section', () => {
 									start: day( 1 ),
 									end: day( 3 ),
 									net_sales: '968.5000',
+									net_sales_incl_vat: '968.5000',
 									units: 3,
 									orders: 2,
 								},
@@ -636,6 +654,7 @@ describe( 'sales section', () => {
 									start: '2026-08-01',
 									end: '2026-08-31',
 									net_sales: '0.0000',
+									net_sales_incl_vat: '0.0000',
 									units: 0,
 									orders: 0,
 								},
@@ -643,6 +662,7 @@ describe( 'sales section', () => {
 									start: day( 1 ),
 									end: day( 3 ),
 									net_sales: '968.5000',
+									net_sales_incl_vat: '968.5000',
 									units: 3,
 									orders: 2,
 								},
@@ -664,7 +684,7 @@ describe( 'sales section', () => {
 		] );
 		expect(
 			container.querySelector( 'figure figcaption' )?.textContent
-		).toContain( 'Net sales per week' );
+		).toContain( 'Sales per week (incl. VAT)' );
 
 		setValue(
 			container.querySelector( 'input[name="from"]' ),
@@ -863,5 +883,193 @@ describe( 'sales section', () => {
 		).toBe( 'Sales' );
 		expect( paths() ).toContain( DEFAULT );
 		expect( container.querySelector( 'table' ) ).not.toBeNull();
+	} );
+} );
+
+/** The parts of a report's currency the VAT tests change. */
+interface VatCurrency {
+	totals: Record< string, unknown >;
+	vat?: { status: string; missing_rows: number };
+	series: Array< Record< string, unknown > >;
+}
+
+describe( 'sales including VAT (ADR-053)', () => {
+	/**
+	 * DKK with 1000.00 excl. VAT and 1250.00 incl. VAT over two days, or
+	 * without VAT (null amounts) when a row lacks its stored VAT.
+	 *
+	 * @param complete Whether every row has its stored VAT.
+	 */
+	function vatReport( complete: boolean ): Record< string, unknown > {
+		return report( 2, [
+			{
+				currency: 'DKK',
+				totals: {
+					net_sales: '1000.0000',
+					sales: '1200.0000',
+					adjustments: '-200.0000',
+					net_sales_incl_vat: complete ? '1250.0000' : null,
+					sales_incl_vat: complete ? '1500.0000' : null,
+					adjustments_incl_vat: complete ? '-250.0000' : null,
+					units: 4,
+					orders: 2,
+				},
+				vat: complete
+					? { status: 'complete', missing_rows: 0 }
+					: { status: 'incomplete', missing_rows: 3 },
+				profit: null,
+				series: [
+					{
+						start: day( 1 ),
+						end: day( 1 ),
+						net_sales: '1200.0000',
+						net_sales_incl_vat: complete ? '1500.0000' : null,
+						units: 5,
+						orders: 2,
+					},
+					{
+						start: day( 2 ),
+						end: day( 2 ),
+						net_sales: '-200.0000',
+						net_sales_incl_vat: complete ? '-250.0000' : null,
+						units: -1,
+						orders: 0,
+					},
+				],
+				products: [],
+				truncated: false,
+			},
+		] );
+	}
+
+	afterEach( () => {
+		rendered?.unmount();
+		rendered = null;
+		jest.restoreAllMocks();
+	} );
+
+	it( 'shows the totals, the chart and the table including VAT when every row has its VAT', async () => {
+		const container = await show( {
+			[ `GET ${ DEFAULT }` ]: () => response( 200, vatReport( true ) ),
+		} );
+
+		expect( kpis( container )[ 0 ] ).toEqual( [
+			'Sales (incl. VAT)',
+			'1.250,00 kr.',
+		] );
+		expect( rows( container.querySelector( 'table' ) ) ).toEqual( [
+			[ '1. sep. 2026', '1.500,00 kr.', '5', '2' ],
+			[ '2. sep. 2026', '-250,00 kr.', '-1', '0' ],
+		] );
+		expect(
+			container.querySelector( 'figure figcaption' )?.textContent
+		).toContain( 'Sales per day (incl. VAT)' );
+		expect(
+			Array.from( container.querySelectorAll( 'rect title' ) ).map(
+				( title ) => plain( title.textContent )
+			)
+		).toEqual( [
+			'1. sep. 2026: 1.500,00 kr.',
+			'2. sep. 2026: -250,00 kr.',
+		] );
+		expect( container.textContent ).not.toContain( '1.000,00' );
+		expect( container.textContent ).not.toContain(
+			'VAT is missing for some older sales'
+		);
+	} );
+
+	it( 'falls back to the amounts excluding VAT, labelled and explained, when a row lacks its VAT', async () => {
+		const container = await show( {
+			[ `GET ${ DEFAULT }` ]: () => response( 200, vatReport( false ) ),
+		} );
+
+		expect( kpis( container )[ 0 ] ).toEqual( [
+			'Net sales (excl. VAT)',
+			'1.000,00 kr.',
+		] );
+		expect( rows( container.querySelector( 'table' ) ) ).toEqual( [
+			[ '1. sep. 2026', '1.200,00 kr.', '5', '2' ],
+			[ '2. sep. 2026', '-200,00 kr.', '-1', '0' ],
+		] );
+		expect(
+			container.querySelector( 'figure figcaption' )?.textContent
+		).toContain( 'Net sales per day' );
+		expect( container.textContent ).toContain(
+			'VAT is missing for some older sales in this period, so the amounts are shown excluding VAT.'
+		);
+		expect( container.textContent ).not.toContain( '1.250,00' );
+	} );
+
+	it.each( [
+		[
+			'complete VAT without the amounts',
+			( entry: VatCurrency ) => {
+				entry.totals.net_sales_incl_vat = null;
+			},
+		],
+		[
+			'incomplete VAT with amounts',
+			( entry: VatCurrency ) => {
+				entry.vat = { status: 'incomplete', missing_rows: 1 };
+			},
+		],
+		[
+			'a missing VAT state',
+			( entry: VatCurrency ) => {
+				delete entry.vat;
+			},
+		],
+		[
+			'complete VAT with missing rows',
+			( entry: VatCurrency ) => {
+				entry.vat = { status: 'complete', missing_rows: 2 };
+			},
+		],
+		[
+			'a float amount incl. VAT',
+			( entry: VatCurrency ) => {
+				entry.totals.net_sales_incl_vat = 1250;
+			},
+		],
+		[
+			'a period without its amount incl. VAT',
+			( entry: VatCurrency ) => {
+				const period = entry.series[ 1 ];
+
+				if ( period !== undefined ) {
+					period.net_sales_incl_vat = null;
+				}
+			},
+		],
+	] )( 'rejects %s', ( _label, change ) => {
+		const body = JSON.parse( JSON.stringify( vatReport( true ) ) ) as {
+			currencies: VatCurrency[];
+		};
+		const entry = body.currencies[ 0 ];
+
+		expect( entry ).toBeDefined();
+
+		if ( entry !== undefined ) {
+			change( entry );
+		}
+
+		expect( parseSalesReport( body ) ).toBeNull();
+	} );
+
+	it( 'parses the VAT state and keeps every amount as a string', () => {
+		const parsed = parseSalesReport( vatReport( false ) );
+
+		expect( parsed?.currencies[ 0 ] ).toMatchObject( {
+			vatIncluded: false,
+			missingVatRows: 3,
+			totals: { netSales: '1000.0000', netSalesInclVat: null },
+		} );
+		expect( parsed?.currencies[ 0 ]?.series[ 0 ]?.netSalesInclVat ).toBe(
+			null
+		);
+		expect(
+			parseSalesReport( vatReport( true ) )?.currencies[ 0 ]?.totals
+				.netSalesInclVat
+		).toBe( '1250.0000' );
 	} );
 } );

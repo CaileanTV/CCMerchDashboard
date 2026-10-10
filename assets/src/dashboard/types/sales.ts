@@ -5,6 +5,8 @@
  * decimals), never numbers.
  */
 
+import type { Profit } from './profit';
+
 export type SalesInterval = 'day' | 'week' | 'month';
 
 export interface SalesTotals {
@@ -18,12 +20,32 @@ export interface SalesTotals {
 	readonly units: number;
 	/** Distinct orders with a sale in the period. */
 	readonly orders: number;
+	/**
+	 * The same sums including the rows' stored VAT (ADR-053); null when a row
+	 * of the period has no stored VAT (never treated as 0).
+	 */
+	readonly netSalesInclVat: string | null;
+	readonly salesInclVat: string | null;
+	readonly adjustmentsInclVat: string | null;
 }
 
 export interface SalesCurrencyTotals {
 	/** ISO 4217 code, e.g. "DKK". */
 	readonly currency: string;
 	readonly totals: SalesTotals;
+	/**
+	 * Whether every row of the period has its stored VAT, so the amounts
+	 * including VAT are known (ADR-053). Otherwise the figures fall back to the
+	 * amounts excluding VAT, labelled as such.
+	 */
+	readonly vatIncluded: boolean;
+	/** Rows of the period without stored VAT. */
+	readonly missingVatRows: number;
+	/**
+	 * The creator's realized profit of the same rows (ADR-050), separate from
+	 * the sales figures; null when the server sent none.
+	 */
+	readonly profit: Profit | null;
 }
 
 export interface SalesSummary {
@@ -45,6 +67,8 @@ export interface SalesPoint {
 	/** Last day of the period, `YYYY-MM-DD` (inclusive). */
 	readonly end: string;
 	readonly netSales: string;
+	/** Incl. VAT; null when the currency's VAT is incomplete. */
+	readonly netSalesInclVat: string | null;
 	readonly units: number;
 	readonly orders: number;
 }

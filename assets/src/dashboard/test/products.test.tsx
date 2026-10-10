@@ -46,6 +46,7 @@ const TEE = {
 		url: `${ ORIGIN }/wp-content/uploads/tee-150x150.jpg`,
 		alt: 'Tour tee',
 	},
+	profit: [ { currency: 'DKK', status: 'complete', amount: '29.8000' } ],
 };
 
 const HOODIE = {
@@ -60,6 +61,7 @@ const HOODIE = {
 	},
 	stock_status: 'onbackorder',
 	image: null,
+	profit: [ { currency: 'DKK', status: 'incomplete', amount: null } ],
 };
 
 const CAP = {
@@ -69,7 +71,16 @@ const CAP = {
 	price: null,
 	stock_status: 'outofstock',
 	image: null,
+	profit: null,
 };
+
+/** An amount as the dashboard formats it (site locale da_DK, DKK). */
+function money( amount: string ): string {
+	return new Intl.NumberFormat( 'da-DK', {
+		style: 'currency',
+		currency: 'DKK',
+	} ).format( Number( amount ) );
+}
 
 let rendered: Rendered | null = null;
 
@@ -120,6 +131,9 @@ describe( 'parseProduct', () => {
 				url: `${ ORIGIN }/wp-content/uploads/tee-150x150.jpg`,
 				alt: 'Tour tee',
 			},
+			profit: [
+				{ currency: 'DKK', status: 'complete', amount: '29.8000' },
+			],
 		} );
 		expect( parseProduct( CAP )?.price ).toBeNull();
 		expect(
@@ -177,11 +191,23 @@ describe( 'Products section', () => {
 			Array.from( container.querySelectorAll( 'thead th' ) ).map(
 				( th ) => th.textContent
 			)
-		).toEqual( [ 'Product', 'Status', 'Price', 'Stock' ] );
+		).toEqual( [ 'Product', 'Status', 'Price', 'Stock', 'Profit' ] );
 		expect( rows( container ) ).toEqual( [
-			[ 'Tour tee', 'Published', '149.00 DKK', 'In stock' ],
-			[ 'Hoodie', 'Private', '199.50–300 DKK', 'On backorder' ],
-			[ 'Cap', 'Published', 'No price', 'Out of stock' ],
+			[
+				'Tour tee',
+				'Published',
+				'149.00 DKK',
+				'In stock',
+				money( '29.8000' ),
+			],
+			[
+				'Hoodie',
+				'Private',
+				'199.50–300 DKK',
+				'On backorder',
+				'Incomplete',
+			],
+			[ 'Cap', 'Published', 'No price', 'Out of stock', 'No sales' ],
 		] );
 	} );
 
@@ -240,7 +266,7 @@ describe( 'Products section', () => {
 
 		expect( paths() ).toEqual( [ FIRST, SECOND ] );
 		expect( rows( container ) ).toEqual( [
-			[ 'Cap', 'Published', 'No price', 'Out of stock' ],
+			[ 'Cap', 'Published', 'No price', 'Out of stock', 'No sales' ],
 		] );
 		expect(
 			container.querySelector( '.merchboard-pagination__status' )

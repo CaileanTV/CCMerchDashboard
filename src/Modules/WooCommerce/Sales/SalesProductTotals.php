@@ -22,18 +22,20 @@ final readonly class SalesProductTotals {
 	/**
 	 * Constructor.
 	 *
-	 * @param string $currency   Currency (ISO 4217).
-	 * @param int    $product_id Parent product id (0: rows without a product).
-	 * @param string $net_sales  Sum of all rows' amounts, four decimals.
-	 * @param int    $units      Sum of all rows' quantity.
-	 * @param string $item_name  Item name snapshot of the latest row.
+	 * @param string  $currency   Currency (ISO 4217).
+	 * @param int     $product_id Parent product id (0: rows without a product).
+	 * @param string  $net_sales  Sum of all rows' amounts, four decimals.
+	 * @param int     $units      Sum of all rows' quantity.
+	 * @param string  $item_name  Item name snapshot of the latest row.
+	 * @param ?string $net_sales_incl_vat `net_sales` plus the rows' stored tax (ADR-053); null when a row has none.
 	 */
 	public function __construct(
 		public string $currency,
 		public int $product_id,
 		public string $net_sales,
 		public int $units,
-		public string $item_name
+		public string $item_name,
+		public ?string $net_sales_incl_vat = null
 	) {
 	}
 }

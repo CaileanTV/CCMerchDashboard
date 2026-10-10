@@ -1837,6 +1837,9 @@ Status, ingen nye beslutninger. Trin 8 er udført som en målrettet regressionsr
 ### Statusnote 2026-10-01: fase 18 afsluttet (ROADMAP trin 9)
 Status, ingen nye beslutninger. Fase 18's Done-kriterium (integrationstests for salg, hel og delvis refund, annullering efter `completed` og gentagne hooks) er opfyldt af `tests/Integration/WooCommerce/SalesSynchronizerTest.php` (registrering af en ordre oprettet i tællende status, statusskift med reversal, lukning og ny cyklus, delvis og fuld refund med sletning af en refund og forældet cache, gentagne hooks uden nye rækker) sammen med planner-, repository- og backfill-testene og runtime-verifikationen i trin 5–8 (HPOS og legacy). Backfillens idempotens og genoptagelse efter D6 er dækket af `tests/Integration/WooCommerce/SalesBackfillTest.php` og `tests/Unit/Modules/WooCommerce/Sales/SalesBackfillJobsTest.php`. Dokumentationen er gennemgået for konsistens, i18n-kontrollen gav ingen utilsigtet diff, og den fulde suite er grøn; trin 9's ændringer committes, pushes og CI-verificeres som afslutning.
 
+### Statusnote 2026-10-08: moms pr. ledger-række (ADR-048)
+Ledgeren (`merchboard_sales`), dens invariant, nøgler, idempotens og tællende statusser er uændrede. Skrivevejen bærer nu også rækkens faktiske WooCommerce-moms og skriver den i den nye append-only-tabel `merchboard_sales_tax` (`event_key` → moms), i samme transaktion og med samme `CONNECTION_ID()`-vagt som rækken, og kun for rækker, der faktisk indsættes. Ukendt moms skrives ikke. Se ADR-048.
+
 ---
 
 # ADR-039: Products og Orders i creator-dashboardet (fase 19)
@@ -1929,6 +1932,8 @@ Besluttet af projektejeren før implementering. Præciserer P7's "pris"; de øvr
 ---
 
 # ADR-040: Sales & statistics fra sales ledgeren (fase 20)
+
+> **Note 2026-10-10:** visningen af salg er ændret til inkl. moms af ADR-053. Definitionerne nedenfor (nettosalg ekskl. moms fra `net_amount`) gælder fortsat for ledgeren og API'ets eksisterende felter.
 
 ## Date
 2026-10-06
@@ -2340,3 +2345,623 @@ Beslutningerne er uændrede.
 - **Fejl (pkt. 3):** et ugyldigt `theme` giver 400, enten `rest_invalid_param` (argument-skemaet) eller `merchboard_invalid_preferences` med `data.fields.theme = "invalid"` (`theme` mangler, eller endpointets egen kontrol afviser værdien). `required` bruges ikke i skemaet, fordi WordPress behandler `null` som manglende. Kun body'en tæller, ikke query-parametre. `GET /me/preferences` findes ikke (404).
 - **Vælgeren (pkt. 6 og Accessibility):** et kort "Udseende" på Profile-siden med en native `<select>` (Systemstandard + de seks temaer på dansk). Gem er serialiseret, så serverens sidste skrivning altid er brugerens sidste valg, og ved fejl rulles der tilbage til det gemte tema.
 - **Runtime:** verificeret i Merch Dashboard Local 2026-10-08 (fase 21, trin 9) via WP-CLI og HTTP, ikke i en browser.
+
+---
+
+# ADR-045: Creator pricing-model (fase 22)
+
+## Date
+2026-10-08
+
+## Status
+Accepteret (fase 22, trin 3). Besluttet af projektejeren på grundlag af de 22 bindende beslutninger i [reports/2026-10-08-fase-22-creator-pricing.md](reports/2026-10-08-fase-22-creator-pricing.md) (afsnit 0) og designet i samme rapport (trin 2, foreslået som PROPOSED). Supplerer ADR-030 (ejerskab), ADR-037/038 (ledgeren er uændret) og ADR-039 P7 (`/me/products`).
+
+## Context
+Creators skal tjene en profit oven på virksomhedens grundpris, og creator-prisen er den pris, kunden betaler. WooCommerce er sandheden for salgsprisen; grundpris og regler findes ikke i WooCommerce. Penge regnes uden floats (ADR-038 B1). WooCommerce sletter selv en udsalgspris ≥ regular price ved gemning.
+
+## Decision
+1. **Listepris** (creator-pris) = WooCommerce' regular price for den salgbare enhed = grundpris + profit pr. enhed. Grundprisen er virksomhedens andel af listeprisen før rabatter, i butikkens momsgrundlag.
+2. **Profit:** fast override (ADR-046), ellers `round_half_away(grundpris × markup_bps / 10000)` til butikkens prisdecimaler. Markup pr. creator i basis points 0–10 000, standard 0.
+3. **Data og valuta:** grundpris pr. salgbar enhed og creatorens markup er Merch Dashboard-data (`merchboard_item_pricing`, `merchboard_creators.default_markup_bps`) med valuta; ingen omregning. Regler i en anden valuta end butikkens anvendes ikke.
+4. **Anvendelse:** creator-prisen publiceres kun ved en eksplicit, auditeret handling (`merchboard_manage_creator_pricing` + `edit_product`).
+   - Den skriver kun regular price via CRUD og gemmer den anvendte tilstand (`applied_*`).
+   - Ingen runtime-filtre; sale price og `_price` skrives aldrig.
+   - En forhåndsvisning viser udsalg, som WooCommerce fjerner.
+5. **Udsalg og rabatter** er rabatter på listeprisen. De ændrer hverken regel, tilstand eller profit pr. enhed; den realiserede profit reduceres forholdsmæssigt (ADR-047).
+6. **Tilstand pr. enhed** beregnes deterministisk (rapportens afsnit 5): `unavailable`, `not_applied` (`no_base_price`, `never_applied`, `creator_changed`, `config_changed`), `drift` og `applied`. Afvigelser overskrives aldrig automatisk, og WooCommerce-priser låses ikke.
+7. **Første aktivering:** WooCommerce' regular price må foreslås som grundpris, men kun en eksplicit "Gem" gemmer den.
+8. **Creators** ser deres standardregel, deres anvendte creator-pris og profit (`/me`, `/me/products`), aldrig grundprisen eller konfigurationen.
+
+## Alternatives considered
+- **Runtime-prisfiltre:** risiko for salg til grundpris ved deaktivering eller oversete prisveje. Fravalgt.
+- **Creator-pris kun i dashboardet:** kunden betaler ikke creator-prisen (strider mod beslutning 1). Fravalgt.
+- **WooCommerce COGS:** `float`, valgfri feature og en anden betydning. Fravalgt.
+- **Grundpris som produkt-meta:** kræver flere beskyttede WooCommerce-meta-nøgler og spredt validering. Fravalgt.
+- **Udsalgspris som separat pricing** (fx profit-fradrag først): en skjult anden model. Fravalgt.
+
+## Reason
+Kunden betaler altid det, WooCommerce viser. Pluginet kan deaktiveres uden tab. Én forklarlig model for listepris, udsalg og rabat, og deterministiske tilstande.
+
+## Security
+- Konfiguration og anvendelse kræver den nye capability `merchboard_manage_creator_pricing` (kun administrator, ADR-022-mønstret). Anvendelse kræver desuden `edit_product` på produktet.
+- Creators får kun læseadgang til egne, anvendte værdier via `/me`-scope (ADR-007). Grundprisen sendes aldrig.
+
+## Migration/data implications
+- Migration 6: kolonnen `merchboard_creators.default_markup_bps` og tabellen `merchboard_item_pricing` (se DATABASE.md).
+- Ny capability; rolleversionen bumpes (ADR-022).
+- Nye audit-actions, når skrivende handlinger implementeres.
+- Opt-in-uninstall sletter pricing-tabellerne og kolonnen med creator-tabellen. WooCommerce-priser, som pluginet har skrevet, nulstilles aldrig.
+
+## Consequences
+- **Brugerflader:** admin-sektioner og felter i `/me` og `/me/products` (senere trin).
+- **Dokumentation:** WOOCOMMERCE.md præciseres (grundpris og regler er pluginets data; listeprisen publiceres via CRUD).
+
+## Related
+ADR-004, ADR-007, ADR-019, ADR-022, ADR-025, ADR-030, ADR-037, ADR-038, ADR-039, ADR-046, ADR-047; [reports/2026-10-08-fase-22-creator-pricing.md](reports/2026-10-08-fase-22-creator-pricing.md).
+
+### Præcisering 2026-10-08: fundamentet (fase 22, trin 3)
+Beslutningerne er uændrede. Implementeret: migration 6, capability og det rene domæne (`src/Modules/WooCommerce/Pricing/`). Ingen UI, ingen skrivning til WooCommerce og ingen skrivende endpoints endnu.
+
+- **Tilstandsnavn (pkt. 6):** `unavailable` hedder `cannot_apply` i koden og API'et. Årsagerne er:
+  - `no_creator`;
+  - `trashed`;
+  - `unsupported_product`;
+  - `currency_mismatch` (butikkens valuta ≠ grundprisens eller den faste profits);
+  - `invalid_precision` (butikkens prisdecimaler uden for 0–4, eller en grundpris eller fast profit med flere decimaler end butikken).
+- **Rækkefølge:** `cannot_apply` → `not_applied` (`no_base_price`, `never_applied`) → `drift` → `not_applied` (`creator_changed`, `config_changed`) → `applied`. `drift` vinder over en konfigurationsændring, fordi WooCommerce-prisen er ændret uden om pluginet.
+- **Ændrede prisdecimaler (rapportens afsnit 14, pkt. 6):** giver `config_changed`, når beløbene stadig kan udtrykkes, ellers `cannot_apply`/`invalid_precision`.
+- **Beregning:** én eksakt heltalsdivision i 1/10 000-enheder (`PricingMath::mul_div_round`, cifferstrenge, ingen floats, ingen bcmath), så der ikke afrundes to gange. Overflow afvises.
+
+### Præcisering 2026-10-08: WooCommerce-integrationen (fase 22, trin 4)
+Beslutningerne er uændrede. Detaljerne står i WOOCOMMERCE.md ("Creator pricing").
+
+- **Anvendelse (pkt. 4 og 6):**
+  - `PricingService::apply()` skriver kun i tilstanden `not_applied`.
+  - Ved `drift` skriver den intet og returnerer resultatet `drift`.
+  - Den separate, eksplicitte `apply_despite_drift()` er "admin anvender igen" (beslutning 11): den kræver den afvigende pris, admin så, auditeres som `creator_pricing_drift_overwritten` og kaldes aldrig automatisk.
+- **Første aktivering (pkt. 7):** preview foreslår WooCommerce' regular price som grundpris uden at gemme den. "Gem" er den eksplicitte anvendelse, der gemmer grundprisen og den anvendte pris i samme transaktion. Der er endnu ingen separat "gem kun grundprisen"-handling.
+- **Udsalg:**
+  - Merch Dashboard kalder kun `set_regular_price()` + `save()`.
+  - At WooCommerce fjerner en udsalgspris, der ikke er under den nye regular price, er WooCommerce' egen regel. Preview forudsiger den (`sale_would_be_removed`) i stedet for at vise den som en separat forhåndsvisning af udsalg.
+- **Konsistensgrænse:**
+  - Item pricing, audit og WooCommerce-gemningen (sidst) kører i én databasetransaktion.
+  - Pluginets tabeller rulles altid tilbage; WooCommerces data kun på en transaktionel engine.
+  - Sideeffekter uden for databasen kan ikke rulles tilbage.
+- **Adgang:** preview kræver kun `merchboard_manage_creator_pricing`, da preview ikke skriver; skrivning kræver desuden `edit_product` på parent.
+- **Hooks i transaktionen (låst 2026-10-08, trin 5):** WooCommerce' gemning kører egne og andre plugins' hooks, mens transaktionen er åben. Deres databaseskrivninger følger transaktionen, men andre sideeffekter gør ikke, og langsomme hooks holder transaktionen og dens rækkelåse åbne længere. Det er en dokumenteret konsistens- og ydelsesgrænse, ikke et redesign.
+
+### Statusnote 2026-10-09: erstattet af ADR-049
+**Status: Erstattet af ADR-049**, besluttet af projektejeren 2026-10-09. Ny låst forretningsregel: WooCommerce-salgsprisen er allerede den endelige kundepris inkl. creator-profit og moms. Merch Dashboard lægger derfor aldrig profit oven i en grundpris og skriver aldrig WooCommerce-priser.
+
+- Punkt 1, 2, 4, 6 og 7 (listepris = grundpris + profit, anvendelse, tilstande, grundpris) gælder ikke længere.
+- Koden er fjernet, før den blev frigivet: `PricingService`, `PricingInspector`, tilstandsevalueringen og `merchboard_item_pricing` (droppet af migration 8).
+- Punkt 3 (markup i basis points på creatoren, ingen floats og ingen omregning) og capability'en `merchboard_manage_creator_pricing` består med ny betydning: markup er creatorens andel af salgsprisen.
+- Historikken ovenfor ændres ikke.
+
+---
+
+# ADR-046: Produktspecifik fast profit som eksklusiv override (fase 22)
+
+## Date
+2026-10-08
+
+## Status
+Accepteret (fase 22, trin 3). Besluttet af projektejeren (foreslået i fase 22, trin 2). Bruges af ADR-045.
+
+## Context
+Admin skal kunne give et creator-produkt en fast profit, der erstatter procenten. Ejerskab ligger på parent (ADR-030), og grundpriser kan variere pr. variant.
+
+## Decision
+1. **Én override pr. parent-produkt** i `merchboard_pricing_overrides` (`product_id` PK), bundet til ejeren (`creator_id`) og valutaen. Den gælder pr. enhed for alle varianter. Ingen variantregler i v1.
+2. **Gyldighed:** en override gælder kun, når `creator_id` = produktets nuværende ejer, og valutaen = butikkens. Så er profit = den faste profit, ellers creatorens standard. Procent og fast profit summeres aldrig, og override-tabellen har ingen procentkolonne.
+3. **Nulstilling og 0:** "Brug standard" sletter rækken (auditeret). En fast profit på 0 er en gyldig override.
+4. **Ejerskift:** en override kan kun oprettes for den nuværende ejer.
+   - Ved ejerskift eller frakobling slettes den i samme transaktion som koblingen i `ProductCreatorLink` (manuelt og via kategori-afstemning) og auditeres med årsag `ownership_changed`.
+   - WooCommerce-prisen ændres ikke; enhederne får tilstand `creator_changed` eller `unavailable`.
+5. **Permanent sletning** af produktet sletter overriden.
+
+## Alternatives considered
+- **Override pr. variant eller begge niveauer:** overlap og uklar forrang. Fravalgt.
+- **Procent og fast profit i samme række:** muliggør ugyldige kombinationer. Fravalgt.
+- **At beholde overriden inaktiv ved ejerskift:** den ville vågne skjult op, hvis produktet vender tilbage. Fravalgt.
+
+## Reason
+Strukturel eksklusivitet, ingen cross-creator-lækage og ingen skjult genaktivering.
+
+## Migration/data implications
+- Migration 6: tabellen `merchboard_pricing_overrides` (se DATABASE.md).
+
+## Consequences
+- **Validering:** domænevalidering og CHECK (`fixed_profit >= 0`).
+- **Integration:** `ProductCreatorLink` får et pricing-trin i sin transaktion (senere trin).
+- **Tests:** forrang, nulstilling, 0-override, ejerskift (A→B, A→B→A), kategori-afstemning og varianter med forskellig grundpris.
+
+## Related
+ADR-019, ADR-030, ADR-045, ADR-047.
+
+### Præcisering 2026-10-08: fundamentet (fase 22, trin 3)
+Beslutningerne er uændrede.
+
+- **Ingen CHECK-constraint (Consequences):** skemaet bruger dbDelta og har ingen CHECK-constraints nogen steder (ADR-019). `fixed_profit >= 0`, gyldig valuta og positive ID'er håndhæves af domænet (`PricingOverride`) før skrivning og igen ved læsning (`PricingOverrideRepository` afviser en ugyldig række med `DatabaseException`).
+- **Forrang (pkt. 2):** `ResolvedRule::resolve()` bruger kun en override, der tilhører den nuværende ejer. Ellers gælder ejerens standard, så B arver aldrig A's faste profit, heller ikke før oprydningen i `ProductCreatorLink` er implementeret.
+- **Ikke implementeret endnu:** sletning ved ejerskift og permanent sletning (pkt. 4–5) og audit.
+
+### Præcisering 2026-10-08: admin-UI (fase 22, trin 6)
+Beslutningerne er uændrede.
+
+- **Admin-UI (trin 6):** at sætte eller fjerne en fast profit kræver ud over `merchboard_manage_creator_pricing` også `edit_product` på parent-produktet, som for produktkoblingen (ADR-030). Det er strengere end "kun ved prisskrivning", fordi det er produktkonfiguration. Den faste profit bindes til den nuværende ejer, og "Brug creatorens markup" sletter rækken. Begge auditeres (`product_fixed_profit_set`/`_removed`) og ændrer aldrig WooCommerce-prisen.
+
+### Statusnote 2026-10-09: erstattet af ADR-049
+**Status: Erstattet af ADR-049**, besluttet af projektejeren 2026-10-09. En fast profit pr. enhed har ingen entydig betydning, når profitten er en andel af salgsprisen. I stedet kan et parent-produkt få sin egen markup-procent, som erstatter creatorens markup (samme eksklusivitet, ejerbinding og `edit_product`-krav som her).
+
+- Migration 8 genopretter `merchboard_pricing_overrides` med `markup_bps` i stedet for `fixed_profit`/`currency`. Eksisterende faste beløb kan ikke omregnes til en andel uden at gætte og slettes derfor; deres historik står i audit-loggen.
+- Audit-actions `product_fixed_profit_set`/`_removed` skrives ikke længere, men bevares til den eksisterende append-only-historik. Nye actions: `product_markup_set`/`_removed`.
+
+---
+
+# ADR-047: Historiske creator-pricing-snapshots (fase 22)
+
+## Date
+2026-10-08
+
+## Status
+Accepteret (fase 22, trin 3). Besluttet af projektejeren (foreslået i fase 22, trin 2). Supplerer ADR-037/038 uden at ændre dem.
+
+## Context
+Historisk creator-profit skal kunne garanteres (beslutning 13), men vises ikke endnu (beslutning 14). `merchboard_sales` er append-only, med `net_amount` efter rabatter, ekskl. moms, og overlever ordresletning. Pricing-regler og WooCommerce-priser ændrer sig over tid.
+
+## Decision
+1. **Snapshot:** når WooCommerce opretter en produktlinje med creator (`woocommerce_new_order_item`), skrives et snapshot i den immutable tabel `merchboard_sales_line_pricing`.
+   - Nøglen er `order_item_id` (PK).
+   - Snapshottet gemmer linjens creator, produkt, variant og ordrevaluta samt status `priced`/`unpriced` med årsag.
+   - Ved `priced` gemmes de **anvendte** værdier: regel, markup, grundpris, profit og listepris pr. enhed.
+   - Kun INSERT, aldrig UPDATE eller DELETE (undtagen opt-in-uninstall).
+2. **Status:** `priced` kun når alle tre gælder:
+   - WooCommerce' regular price = den anvendte pris;
+   - prisen er anvendt for den nuværende ejer;
+   - ordrens valuta = den anvendte valuta.
+
+   Ellers `unpriced` med en årsag: `no_base_price`, `never_applied`, `creator_changed`, `price_drift`, `currency_mismatch` eller `unavailable`.
+3. **Realiseret profit** for en ledger-række = `round_half_away(net_amount × profit_unit / price_unit, 4)`.
+   - Kun når snapshottet er `priced`, og creator og valuta matcher rækken; ellers NULL.
+   - Beregnes overflow-sikkert i heltal uden floats.
+   - Gælder alle rækketyper (sale, refund, reversal, correction). Udsalg, kuponer og delvise refunds reducerer profitten forholdsmæssigt.
+4. **Ledgeren** ændres ikke: hverken ledgeren, dens invariant eller dens rækker, og der kommer ingen profitkolonne. Profit rekonstrueres aldrig ud fra nuværende regler. Linjer uden snapshot (før fase 22) har ukendt profit.
+5. **Scope i fase 22:** snapshot og beregningsfunktion (unit-testet). Aggregering og visning kommer med Payouts og statistik, og SQL-aggregering skal give samme resultat som funktionen.
+
+## Alternatives considered
+- **Profitkolonne i ledgeren:** en cache af en ren funktion af immutable data. Fravalgt.
+- **Ordrelinje-meta som kilde:** tabes ved permanent ordresletning, og der bliver to kilder. Fravalgt.
+- **Fast profit pr. enhed uanset rabat:** strider mod den godkendte rabatregel. Fravalgt.
+- **Beregning ud fra nuværende regler:** ændrer historikken. Fravalgt.
+
+## Reason
+Hver ordrelinje bærer den pricing, kunden faktisk så. Ledgeren forbliver uændret og append-only, og profit er deterministisk og reviderbar.
+
+## Migration/data implications
+- Migration 6: tabellen `merchboard_sales_line_pricing` uden fremmednøgler (se DATABASE.md). `merchboard_sales` er uændret.
+
+## Consequences
+- **Implementering:** hook ved oprettelse af ordrelinjer (senere trin) og beregningsfunktion.
+- **Tests:** udsalg, kupon, delvis og fuld refund, reversal, korrektioner, ordre- og produktsletning, ejerskift, afvigelse, valuta og ordrer før fase 22.
+
+## Related
+ADR-019, ADR-037, ADR-038, ADR-045, ADR-046.
+
+### Præcisering 2026-10-08: fundamentet (fase 22, trin 3)
+Beslutningerne er uændrede. Implementeret: tabellen, `SalesLinePricingRepository` (kun `insert` og `find`, ingen update- eller delete-metode), `SalesLinePricingCapture` (ren regel) og `RealizedProfit`. Hooket på ordrelinjer er ikke implementeret.
+
+- **Status (pkt. 2):** `priced` følger præcis de tre betingelser, uanset enhedens øvrige tilstand. Fx giver `config_changed` eller en ændret præcision stadig `priced` med de anvendte værdier, fordi kunden betalte den anvendte pris.
+- **Årsager:** en `unpriced`-linje får enhedens tilstandsårsag (ADR-045, præcisering). `unavailable` svarer til årsagerne under `cannot_apply`.
+- **Ingen snapshot uden ejer:** en linje uden creator får intet snapshot. Den kommer heller ikke i ledgeren.
+- **Dobbelt insert:** en ekstra INSERT for samme ordrelinje (også samtidig) beholder det første snapshot uændret og rapporteres som "ikke gemt", ikke som fejl.
+- **Realiseret profit (pkt. 3):** kræver også, at snapshottets `order_item_id` matcher rækkens. Er `price_unit` 0, er profitten 0.
+- **Ingen CHECK-constraints:** sammenhængen mellem `priced`, årsag og beløb håndhæves af `SalesLinePricing` ved skrivning og læsning.
+
+### Statusnote 2026-10-08: moms og payout (ADR-048)
+`RealizedProfit` (pkt. 3) er uændret og er, fordi ledgerens `net_amount` er ekskl. moms, creatorens profit **ekskl. moms**. Payout er et separat begreb (`RealizedPayout`, ADR-048) med creatorens momsstatus fra snapshottet; snapshottet har fået feltet `vat_registered`.
+
+### Præcisering 2026-10-08: snapshot og ledger-integration (fase 22, trin 5)
+Beslutningerne er uændrede. Detaljerne står i WOOCOMMERCE.md.
+
+- **Hook (pkt. 1):** `woocommerce_new_order_item`, kun for produktlinjer på `shop_order`; refund-linjer springes over. Repositoriets append-only-insert er den sidste beskyttelse mod dobbelt registrering.
+- **Kun persisteret pricing:** snapshottet bruger aldrig WooCommerce' regular price som foreslået grundpris. Uden gemt item pricing er årsagen `no_base_price`.
+- **Fejl:** snapshottet kaster aldrig og afbryder aldrig ordreoprettelsen. En fejl logges og efterlader linjen uden snapshot, altså med ukendt profit.
+- **Matching (pkt. 3):** `RealizedProfit::for_entry()` kræver desuden samme ordre, parent-produkt og variation som ledger-rækken (ud over ordrelinje, creator og valuta).
+- **Ledger:** profit hentes on demand via `SalesProfit`. Der er ingen profitkolonne, og ledgerens schema og invarianter er uændrede.
+
+### Statusnote 2026-10-09: delvist erstattet af ADR-049
+Princippet består: et immutable snapshot pr. ordrelinje ved `woocommerce_new_order_item`, append-only, ingen profitkolonne i ledgeren, aldrig beregning ud fra nuværende regler. Indholdet og beregningen er erstattet af ADR-049:
+
+- Snapshottet gemmer nu creatorens **andel** (`share_bps`), dens kilde (`share_source`), butikkens prisdecimaler og momsstatus på **hver** linje med creator. Status er `share`; `priced`/`unpriced` og grundpris/profit/listepris pr. enhed skrives ikke længere.
+- Punkt 3 er erstattet: realiseret profit = `round_half_away((net_amount + rækkens faktiske moms) × share_bps / 10 000)` til butikkens præcision. Den gamle formel `net × profit_unit / price_unit` er trukket tilbage.
+- Snapshots fra før migration 8 (`priced`/`unpriced`) bevares uændrede, men har ukendt andel og dermed ukendt profit. De genfortolkes aldrig.
+
+---
+
+# ADR-048: Creatorens momsstatus og historisk payout (fase 22)
+
+## Date
+2026-10-08
+
+## Status
+Accepteret (fase 22, før trin 7). Besluttet af projektejeren 2026-10-08 efter arkitekturanalysen: profit forbliver ekskl. moms, den faktiske moms gemmes pr. ledger-række (mulighed A), standard er "ikke momsregistreret", og moms må slås midlertidigt til på Merch Dashboard Local til runtime-test. Supplerer ADR-045 og ADR-047. ADR-037/038 er uændrede (se statusnoten der).
+
+## Context
+Ny forretningsregel: momsregistrerede creators får deres profit udbetalt inkl. moms, ikke-momsregistrerede ekskl. den moms, der faktisk gælder for det konkrete salg. Analysen viste:
+
+1. **Ledgerens grundlag:** `net_amount` er linjens beløb **ekskl. moms**, efter WooCommerces egen opdeling (`get_total`, ADR-037/038).
+   - `RealizedProfit = round(net × profit_unit / price_unit)` er derfor creatorens andel **ekskl. moms**.
+   - Forholdet profit/pris afhænger ikke af, om butikkens priser er inkl. eller ekskl. moms.
+2. **Hvor momsen findes:** WooCommerce har moms pr. ordrelinje og pr. refund-linje (`get_total_tax`). For reversals og korrektioner findes den ikke; de udledes af ledgerens egne balancer.
+3. **Når data forsvinder:** efter slettede refunds og ordrer kan WooCommerce ikke længere levere momsen.
+
+## Decision
+1. **Creatorens momsstatus:** `merchboard_creators.vat_registered` (0/1).
+   - Standard er 0 (ikke momsregistreret) for nye og eksisterende creators. Det udbetaler det lavere beløb, indtil admin eksplicit vælger "Ja".
+   - Den er forretningsdata på creatoren, aldrig user meta.
+   - Den ændres kun via `CreatorPricingSettings::set_vat_registered()` (`merchboard_manage_creator_pricing`) og auditeres som `creator_vat_status_changed`.
+2. **Snapshot:** `merchboard_sales_line_pricing.vat_registered` gemmer ejerens status, når ordrelinjen oprettes (ADR-047).
+   - Snapshots fra før schema-version 7 har NULL (ukendt), og det udfyldes aldrig bagefter.
+   - En senere ændring af creatorens status ændrer aldrig snapshottet.
+3. **Faktisk moms pr. ledger-række:** append-only-tabellen `merchboard_sales_tax` (`event_key` → `tax_amount`, valuta).
+   - Den skrives af `SalesRepository::write()` i ledgerens transaktion, kun for rækker, der faktisk indsættes.
+   - Planneren beregner rækkens moms efter samme regel som beløbet:
+     - salg: linjens moms;
+     - refund: refund-linjens egen moms;
+     - `c-rd`/`c-rdo`/`c-ro`: spejlet gemt moms;
+     - reversal: `−` momsbalancen;
+     - linjeændring: WooCommerces moms (linje + refunds) minus momsbalancen.
+   - Momsen læses via CRUD (`get_total_tax( 'edit' )`). Der bruges aldrig en sats, en global standard, produktets momsklasse eller nuværende indstillinger.
+   - En ukendt værdi (ikke en ren decimal, eller rækker fra før version 7) gør linjens momsbalance ukendt. Der skrives så ingen momsrække, og den gættes aldrig.
+4. **Profit og payout er adskilt** (`RealizedProfit` og `RealizedPayout`):
+   - **profit** = `round_half_away( net × profit_unit / price_unit, 4 )` (uændret, ekskl. moms);
+   - **ikke momsregistreret:** payout = profit. Den faktiske moms er allerede trukket fra af WooCommerce i `net`;
+   - **momsregistreret:** payout = `round_half_away( (net + tax) × profit_unit / price_unit, 4 )` med rækkens gemte faktiske moms.
+5. **Afrunding og præcision:**
+   - 1/10 000-enheder, én eksakt division (`PricingMath::mul_div_round`), half away from zero, ingen floats og ingen omregning.
+   - Fortegn følger rækken, så refunds, reversals og korrektioner giver negative eller positive beløb.
+   - En momsfri linje (tax 0) giver samme payout begge veje. Pris 0 giver 0.
+6. **Ukendt (null):**
+   - intet matchende `priced`-snapshot (ordre, ordrelinje, creator, valuta, produkt og variation, som ADR-047);
+   - snapshot uden momsstatus;
+   - for momsregistrerede: ingen gemt moms for rækken, eller moms i en anden valuta.
+   - Der er aldrig fallback til creatorens nuværende status, nuværende priser eller momsindstillinger.
+7. **Ledgeren:** `merchboard_sales` får ingen kolonne, og dens rækker, invarianter, idempotens og tællende statusser er uændrede. Profit og payout beregnes ved læsning (`SalesProfit`) og gemmes aldrig.
+
+## Alternatives considered
+- **Momsandel snapshottet én gang pr. ordrelinje:** en refund med ikke-proportional moms ville blive beregnet ud fra linjens andel i stedet for sin egen moms. Fravalgt.
+- **Moms læst live fra WooCommerce:** overlever ikke slettede refunds og ordrer, og ordrer kan ændres bagefter. Fravalgt.
+- **Fast eller konfigurerbar momssats i Merch Dashboard:** strider mod beslutningen og forkert for nulsats, andre satser og fritagne linjer. Fravalgt.
+- **Moms- eller payout-kolonne i `merchboard_sales`:** strider mod den låste ledger. Fravalgt.
+- **"momsregistreret" som standard:** overbetaler ikke-registrerede, indtil admin retter det. Fravalgt.
+
+## Reason
+Payout følger kun uforanderlige historiske data: ledger-rækken, snapshottet og den moms, WooCommerce havde for netop den række. Det er korrekt for alle rækketyper og alle satser, kræver ingen sats og ændrer ikke ledgeren.
+
+## Security
+- Momsstatus kan kun ændres af `merchboard_manage_creator_pricing` (capability, nonce og audit). Creators kan hverken se eller ændre den.
+- Snapshot- og momsrækker indeholder kun ID'er, beløb, valuta og status, aldrig kundedata.
+
+## Migration/data implications
+- Migration 7 (`AddCreatorVatAndSalesTax`):
+  - kolonnen `merchboard_creators.vat_registered` (default 0);
+  - kolonnen `merchboard_sales_line_pricing.vat_registered` (NULL for eksisterende snapshots);
+  - tabellen `merchboard_sales_tax`.
+- Ledger-rækker fra før version 7 har ingen moms, så payout er ukendt for momsregistrerede. Der sker ingen backfill.
+- Opt-in-uninstall sletter `merchboard_sales_tax` sammen med de øvrige tabeller.
+
+## Consequences
+- Fase 18-skrivevejen (læser, planner og repository) bærer nu momsen ved siden af beløbet. Ledgerens beløb og nøgler beregnes uændret.
+- **Kendt grænse:** en ren momsændring på en linje uden ændret beløb eller antal giver ingen ny ledger-række, og dermed heller ingen momsrække. Momsbalancen følger rækkerne.
+- Admin-UI: feltet "Momsregistreret" (Ja/Nej) på creatorens Pricing-sektion med forklaring.
+- Der er endnu intet creator-API og ingen `/me/payout`.
+
+## Related
+ADR-019, ADR-024, ADR-025, ADR-037, ADR-038, ADR-045, ADR-046, ADR-047.
+
+### Statusnote 2026-10-09: payout-formlen erstattet af ADR-049
+Punkt 1–3 og 7 består: creatorens momsstatus (standard "ikke momsregistreret", audit), status i snapshottet ved oprettelsen, `merchboard_sales_tax` med den faktiske moms pr. ledger-række og den uændrede ledger. Punkt 4 er erstattet, besluttet af projektejeren 2026-10-09:
+
+- **Profit:** salgsprisen × markup %, hvor salgsprisen er det beløb, kunden betalte inkl. moms (`net + moms`).
+- **Momsregistreret:** payout = profit.
+- **Ikke momsregistreret:** payout = profit × 80 % (et fradrag på 20 % af profitten).
+- Formlen `(net + tax) × profit_unit / price_unit` og "payout = profit ekskl. moms" er trukket tilbage. Den gemte moms bruges kun til at genskabe det betalte beløb inkl. moms, aldrig som sats eller som separat profitformel. Der antages aldrig en fast sats.
+- Det ukendte tilfælde "momsregistreret uden gemt moms" gælder nu alle: uden rækkens gemte moms er salgsprisen, og dermed profit og payout, ukendt.
+
+---
+
+# ADR-049: Creator-profit som andel af WooCommerce-salgsprisen (fase 22)
+
+## Date
+2026-10-09
+
+## Status
+Accepteret. Besluttet af projektejeren 2026-10-09 som låst forretningsregel, med fire afklaringer samme dag: pris-skrivningen fjernes helt, produktspecifik procent i stedet for fast profit, grundlaget er det faktisk betalte beløb inkl. moms, og ny migration 8 med ukendt andel for gamle snapshots. Erstatter ADR-045 og ADR-046 og dele af ADR-047 og ADR-048 (se statusnoterne der). ADR-037/038 er uændrede.
+
+## Context
+Den første fase 22-model (ADR-045) lagde creatorens profit oven på en grundpris og skrev resultatet til WooCommerce. Det er forkert: WooCommerce-salgsprisen er allerede den endelige kundepris inkl. creator-profit og moms. Merch Dashboard må ikke øge den og må aldrig skrive den.
+
+## Decision
+1. **WooCommerce ejer prisen.** Merch Dashboard læser aldrig en pris for at skrive den, skriver aldrig regular price, sale price eller `_price`, og har ingen prisfiltre. `PricingProductStore` har ingen skrivemetode.
+2. **Markup** er creatorens andel af salgsprisen i basis points (0–10 000, 1 bp = 0,01 %), standard 0. Den ligger på creatoren (`merchboard_creators.default_markup_bps`). Et parent-produkt kan få sin egen markup (`merchboard_pricing_overrides.markup_bps`), som erstatter creatorens for produktet og alle varianter; de summeres aldrig. En produkt-markup gælder kun for den creator, der ejede produktet, da den blev sat.
+3. **Formel (`CreatorShare`):**
+   - `creator_profit = salgspris × markup / 100`;
+   - momsregistreret: `creator_payout = creator_profit`;
+   - ikke momsregistreret: `creator_payout = creator_profit × 0,80`.
+
+   Eksempel: 100,00 × 20 % = 20,00; udbetaling 20,00 (momsregistreret) eller 16,00 (ikke momsregistreret).
+4. **Salgsprisen pr. ledger-række** er det beløb, kunden faktisk betalte inkl. moms: rækkens `net_amount` (efter alle rabatter, ekskl. moms, ADR-037) + rækkens faktiske moms (`merchboard_sales_tax`, ADR-048). Udsalg, kuponer og manuelle rabatter indgår derfor automatisk. Refunds, reversals og korrektioner har fortegn og giver negativ eller positiv profit og payout.
+5. **Afrunding:** heltal i 1/10 000-enheder, én eksakt division, half away from zero, til butikkens prisdecimaler fra snapshottet. Payout afrundes fra den afrundede profit. Ingen floats. Der afrundes pr. ledger-række.
+6. **Snapshot (ADR-047):** når en produktlinje med creator oprettes, gemmes ejeren, den gældende andel (`share_bps`), kilden (`creator`/`product`), butikkens prisdecimaler og ejerens momsstatus. Senere ændringer af markup, produkt-markup, momsstatus, WooCommerce-pris eller ejer ændrer aldrig snapshottet, profitten eller udbetalingen.
+7. **Ukendt (null):** uden matchende snapshot med andel (ordre, ordrelinje, creator, valuta, produkt og variation), uden rækkens gemte moms i rækkens valuta, eller (kun payout) uden momsstatus i snapshottet. Der er aldrig fallback til nuværende værdier.
+8. **Ledgeren** er uændret (ingen kolonne, samme invarianter); profit og payout beregnes ved læsning (`SalesProfit`).
+
+## Alternatives considered
+- **Markup oven på en grundpris (ADR-045):** strider mod reglen. Trukket tilbage.
+- **Profit ud fra linjens moms eller `(net + tax) × profit_unit / price_unit`:** forbudt af reglen.
+- **Listepris på salgstidspunktet × antal:** ignorerer rabatter og kuponer. Fravalgt af projektejeren.
+- **Fast profit pr. enhed:** har ingen entydig betydning i en andelsmodel. Erstattet af produktspecifik procent.
+- **Omskrive migration 6/7:** kræver nulstilling af tabeller. Fravalgt; migration 8 er additiv for historikken.
+- **Genfortolke gamle snapshots:** deres `markup_bps` var en markup på grundprisen, ikke en andel af salgsprisen. Fravalgt; de forbliver ukendte.
+
+## Reason
+Én entydig model: kunden betaler WooCommerce-prisen, creatoren får en kendt andel af det betalte beløb, og udbetalingen afhænger kun af den momsstatus, der gjaldt, da ordrelinjen blev oprettet.
+
+## Security
+- Uændret: `merchboard_manage_creator_pricing` for markup og momsstatus, desuden `edit_product` på parent for produkt-markup. Nonce bundet til handling og creator; audit pr. ændring.
+- Snapshots indeholder kun ID'er, procent, decimaler, valuta og status, aldrig kundedata.
+
+## Migration/data implications
+Migration 8 (`AddCreatorShareModel`):
+- `merchboard_sales_line_pricing` får `share_bps`, `share_source` og `price_decimals` (NULL for eksisterende rækker). Eksisterende rækker og deres gamle kolonner ændres ikke.
+- `merchboard_pricing_overrides` genoprettes med `markup_bps` (aktuel konfiguration, ingen historik). Faste beløb kan ikke omregnes uden at gætte og slettes.
+- `merchboard_item_pricing` (grundpriser og anvendte priser) droppes. Konstanten bevares som "retired", så opt-in-uninstall også fjerner tabellen på en installation, hvor migration 8 endnu ikke har kørt.
+- WooCommerce-priser, ledgeren, `merchboard_sales_tax` og audit-loggen røres ikke. Fase 22 var ikke frigivet; på Merch Dashboard Local var de berørte tabeller tomme.
+
+## Consequences
+- Admin-sektionen viser markup, momsstatus og pr. produkt den gældende andel, WooCommerce-priserne (kun læsning) og et eksempel på profit og udbetaling ved den aktuelle pris. Apply, drift, grundpris og preview-panelet er fjernet.
+- Audit-actions `creator_pricing_applied`, `creator_pricing_drift_overwritten` og `product_fixed_profit_set`/`_removed` skrives ikke længere, men bevares til historikken. Nye: `product_markup_set`/`_removed`.
+- **Åbent spørgsmål (moms og bogføring):** et fradrag på 20 % af en profit beregnet af et beløb inkl. 25 % moms svarer præcis til momsandelen (20/1,25 = 16). For linjer med en anden sats eller 0 % (fx momsfritaget salg eller eksport) afviger fradraget fra den faktiske moms. Reglen er implementeret som besluttet; om fradraget skal være momsandelen ved andre satser, skal afklares med projektejeren og eventuelt revisor, før payout bruges til afregning.
+- Rækker uden gemt moms (registreret før schema-version 7) har ukendt profit; der sker ingen backfill.
+
+## Related
+ADR-007, ADR-019, ADR-022, ADR-030, ADR-037, ADR-038, ADR-045, ADR-046, ADR-047, ADR-048.
+
+### Præcisering 2026-10-09: review før afslutning af fase 22
+Beslutningerne er uændrede. Præciseret:
+
+- **Forudsætning om moms i prisen:** modellen forudsætter, at WooCommerce-prisen, kunden betaler, er inkl. moms (butikken bruger "priser inkl. moms"). Grundlaget for profitten er altid det faktisk betalte beløb inkl. moms (`net_amount` + rækkens gemte moms). Indtastes priser ekskl. moms, beregnes profitten stadig af det betalte beløb inkl. moms; det er ikke valideret mod butikkens indstilling.
+- **20 % er et fast fradrag, ikke moms:** for ikke-momsregistrerede er udbetalingen creator-profitten × 0,80. Fradraget er altid 20 % af profitten. Det beregner ikke og afhænger ikke af linjens faktiske WooCommerce-moms, sats eller momsklasse; den gemte moms bruges kun til at genskabe det betalte beløb. Ved 25 % moms svarer fradraget tilfældigvis til momsandelen af profitten; ved andre satser gør det ikke (åbent spørgsmål ovenfor).
+- **Ukendt er aldrig 0:** profit og udbetaling er `null` (ukendt), når snapshot, andel, prisdecimaler, rækkens moms eller (for udbetalingen) momsstatus mangler. En ukendt moms på en linje gør også dens reversal ukendt; en refund eller korrektion med sin egen kendte moms beregnes for sig selv. Kun en faktisk markup på 0 % giver 0.
+- **Migration 8 og faste beløb:** sletningen af `merchboard_pricing_overrides` sker kun, mens tabellen mangler `markup_bps`. Fejler `DROP`, afbrydes migrationen, før `dbDelta()` kører, så gamle rækker med fast profit aldrig kan blive til produktmarkups på 0 %. Fase 22 er ikke frigivet (migration 6–8 findes ikke i nogen commit); de eneste miljøer, der har kørt dem, er integrationstest-databasen og Merch Dashboard Local, hvor tabellen var tom.
+
+---
+
+# ADR-050: Creator-profit i dashboardet pr. produkt, ordre og periode (fase 22)
+
+## Date
+2026-10-09
+
+## Status
+Accepteret. Besluttet af projektejeren 2026-10-09 som opgave til fase 22 ("Creator dashboard: profit pr. produkt, salg og ordre"). Udvider ADR-039 (P3 udskød beløb i Orders "i fase 19") og ADR-040 (rapportformatet) additivt; beregningen er uændret ADR-049. Ingen låst beslutning ændres.
+
+## Context
+Creators skal se deres historiske profit pr. produkt, pr. ordre og for en valgt periode. Profitten findes pr. ledger-række (ADR-049: `RealizedProfit`), men endpoints har brug for summer over mange rækker. En række kan mangle data (intet snapshot med andel, ingen gemt moms), og så må en sum aldrig se komplet ud.
+
+## Decision
+1. **Ét profitobjekt** i alle tre endpoints: `{ "currency", "status", "amount" }`.
+   - `complete`: alle rækker er kendte; `amount` er summen (kan være 0 eller negativ).
+   - `incomplete`: nogle rækker mangler historiske data; `amount` er `null` (den kendte del er hverken en nedre eller øvre grænse, fordi refunds og reversals er negative).
+   - `unknown`: ingen række er kendt; `amount` er `null`.
+   Ukendt eller ufuldstændig profit vises aldrig som 0. Feltet hedder profit og er ikke udbetaling; udbetaling vises ikke i denne opgave.
+2. **Felter:**
+   - `/me/products`: `profit` = liste pr. valuta over creatorens ledger-rækker for parent-produktet og dets variationer (al tid), eller `null` uden salg.
+   - `/me/orders`: `profit` (linjens rækker), `order_profit` (creatorens linjer i samme ordre, også på andre sider) og `order_lines` (antal). Ledgerens `order_id` og `order_item_id`; ingen ny ejerrelation.
+   - `/me/sales`: `profit` pr. valuta for de samme rækker og samme periode som `totals`. Salgstallene er uændrede.
+   De eksisterende felter, paginering, sortering og privacy-regler er uændrede; kun creatorens egen profit tilføjes (ingen kundedata, ingen salgsbeløb i Orders).
+3. **Én aggregering** (`CreatorProfits`, implementeret af `LedgerCreatorProfits`) bruges af alle tre endpoints. Den læser kun pluginets egne tabeller (`merchboard_sales` + `merchboard_sales_line_pricing` + `merchboard_sales_tax`, joinet på nøgler), ingen WooCommerce-tabeller, med én forespørgsel pr. kald (ingen N+1) og ingen nye indexes.
+4. **Formlen i SQL er ADR-049 pr. række** (`ROUND((net + moms) × share_bps × 0,0001, prisdecimaler)`, eksakt DECIMAL, half away from zero) og summeres derefter. Som ADR-047 pkt. 5 kræver, testes det, at hver sum er lig summen af `RealizedProfit` over de samme rækker, også for refunds, reversals, korrektioner og afrundingsgrænser. Kendt-betingelsen er den samme som i `RealizedProfit`.
+5. **Kun creatorens egne rækker** (ledgerens `creator_id` fra `CreatorContext`); et creator-ID fra klienten bruges aldrig.
+6. **Cache:** `/me/sales` caches som før (ADR-040 pkt. 10); rapportformatet er bumpet til `v2`, og ledger-skrivninger invaliderer som hidtil. Snapshots skrives før ledger-rækkerne og ændres aldrig, og momsrækker skrives i ledgerens transaktion, så ledger-invalideringen dækker profitten. `/me/products` og `/me/orders` caches ikke (ADR-039 P12).
+
+## Alternatives considered
+- **Profit pr. række i PHP og summering i PHP:** samme formel ét sted, men læser alle rækker i perioden ind i PHP (op til hundredtusinder for 5 år) og regner med cifferstrenge pr. række. Fravalgt af ydelseshensyn; i stedet sikrer ækvivalenstests, at SQL og PHP er ens.
+- **En delvis sum ved ufuldstændige data:** misvisende, fordi negative rækker kan mangle. Fravalgt.
+- **Profit pr. ordre som separat liste:** dashboardets ordreoversigt er pr. linje (ADR-039 P2); linjeprofit plus ordretotal bevarer kontrakten.
+- **Payout i samme kolonne:** blander to begreber (ADR-049). Fravalgt.
+
+## Reason
+Creators ser én konsistent profit i alle tre visninger, beregnet efter ADR-049 fra historiske snapshots, og en ufuldstændig historik kan aldrig ligne et komplet beløb.
+
+## Security
+- Uændret adgangsmodel: `CreatorContext` i permission callback og endpoint; kun ledger-rækker med creatorens `creator_id`.
+- Ingen kundedata; profitobjektet indeholder kun valuta, status og beløb.
+
+## Migration/data implications
+Ingen migration og ingen nye tabeller, kolonner eller indexes. Cache-formatet for `/me/sales` er `v2`.
+
+## Consequences
+- Dashboardet viser kolonnen **Profit** i Products og Orders og nøgletallet **Profit** i Sales (ikke i Overview) med en forklaring af "Ufuldstændig" og "Ukendt".
+- `/me/sales` laver én ekstra ledger-forespørgsel ved cache-miss.
+- Åbne begrænsninger: profit for ældre rækker (før schema-version 7/8) er ukendt; afrunding sker pr. række (ADR-049).
+
+## Related
+ADR-007, ADR-037, ADR-038, ADR-039, ADR-040, ADR-047, ADR-048, ADR-049.
+
+### Præcisering 2026-10-09: Overview og "Ufuldstændig" på Merch Dashboard Local
+Beslutningerne er uændrede.
+
+- **Overview** viser nu også nøgletallet Profit for sin standardperiode (de seneste 30 dage). Det er det samme `GET /me/sales`-kald og det samme profitobjekt som i Sales, så der er ingen ny API og ingen tredje beregning. Konsekvensafsnittets "ikke i Overview" er dermed erstattet.
+- **Diagnose af "Ufuldstændig" i Sales:** creator 1 havde i perioden 12 ledger-rækker. 4 rækker fra en ordre oprettet efter migration 8 har snapshot med andel og gemt moms (1,67 + 1,67 + 1,67 + 2,00). 6 rækker fra ordrer oprettet 2026-10-01 og 2026-10-07 er registreret før snapshots og gemt moms fandtes. 2 rækker (ordrelinjer oprettet 2026-10-01 og 2026-10-08 for et produkt, der først senere fik creatoren) fik ledger- og momsrækker ved en senere synkronisering, men intet snapshot, fordi snapshottet kun tages, når ordrelinjen oprettes, og kun når produktet da har en creator (ADR-047). Status `incomplete` er derfor korrekt og ikke en fejl i hook, ledger, beregning eller cache. Der gættes ingen andel bagud; en eventuel tilbagevirkende tildeling ville kræve en ny, eksplicit og auditeret forretningsbeslutning.
+
+### Note 2026-10-09 (review): aktuel diagnose af "Ufuldstændig" på Merch Dashboard Local
+Beslutningerne og den foregående note er uændrede; noten ovenfor beskriver tilstanden på sit tidspunkt (12 rækker).
+
+Ved reviewet (kun læsning, SELECT og `wc_get_order`; ingen data ændret) havde creator 1 **14 ledger-rækker** i Sales' standardperiode (2026-09-10 til og med 2026-10-09, UTC), alle i DKK: **6 kendte og 8 ukendte**, og derfor status `incomplete` uden beløb.
+
+- **6 kendte:** ordre 330 (linjerne 185–188) og ordre 333 (linjerne 190 og 191). De har snapshot med andel (1667 bps, kilde `creator`, 2 decimaler) og gemt moms (0,00).
+- **6 ukendte uden både snapshot og gemt moms:** ordre 177 (linjerne 88, 89 og 91) og ordre 201 (linjerne 103–105). De er registreret, før gemt moms (migration 7) og snapshots med andel (migration 8) fandtes.
+- **2 ukendte med gemt moms, men uden snapshot:** linje 90 (ordre 177) og linje 116 (ordre 217), begge for produkt 16. Snapshottet tages kun, når ordrelinjen oprettes, og kun hvis produktet da har en creator (ADR-047).
+- Ordrerne 177, 201, 217 og 330 ligger i WooCommerce' papirkurv og tæller fortsat med (ADR-037: papirkurven ændrer intet). Ordre 333 har status `processing`. Hvem der har oprettet ordre 333, er ikke afklaret; den og dens ledger-data er ikke ændret eller undersøgt yderligere.
+
+Ingen række er gjort til 0, og ingen andel er udledt af nuværende markup, ejerskab eller momsstatus.
+
+---
+
+# ADR-051: Admin-ordrehistorik for sales ledgeren (fase 22)
+
+## Date
+2026-10-09
+
+## Status
+Accepteret som ren visning (projektejerens beslutning 2026-10-09; se "Beslutning 2026-10-09: kun læsning" nederst). Oprindelig status: Delvist accepteret. Besluttet af projektejeren 2026-10-09 som opgave til fase 22 ("Admin UI for sales ledger and order history"). Visningen og diagnosen (pkt. 1–6) er implementeret. **Sletning af Merch Dashboard-data pr. ordre (pkt. 7) er ikke implementeret**, fordi den strider mod låste beslutninger; den afventer projektejerens beslutning. Ingen låst beslutning er ændret.
+
+## Context
+Admin skal kunne se, hvad Merch Dashboard har gemt pr. WooCommerce-ordre (ledger-hændelser, ordrelinjer, snapshots og gemt moms), og hvorfor en ordres profit er komplet, ufuldstændig eller ukendt. Opgaven bad også om sletning af pluginets data pr. ordre, men med instruktionen at stoppe og rapportere, hvis sletningen ville bryde en dokumenteret uforanderlighedsregel.
+
+## Decision
+1. **Side:** "Merch Dashboard → Order history" (`admin.php?page=merchboard-order-history`, `OrderHistoryPage`, WooCommerce-modulet), kun med WooCommerce. Undermenu under den eksisterende Merch Dashboard-menu; ingen ny capability: `merchboard_manage_creators` (samme som Sales på creatorens side). Andre afvises med `wp_die` 403. Siden er ren GET og skriver intet (ingen formularer med sideeffekt, ingen nonce nødvendig, ingen audit).
+2. **Liste:** én række pr. ordre i ledgeren (`OrderHistory`), server-side pagineret (20 pr. side) og sorteret efter første ledger-dato, nyeste først. Kolonner: ordre-ID (link til detaljen), ledger-datoer (første/seneste), creators, valuta, hændelser/linjer (og antal `sale`-rækker), gemt nettobeløb, momsdata (rækker med gemt moms af alle) og profitdata (komplet med beløb, ufuldstændig eller ukendt med antal kendte og ukendte rækker). Filtre: ordre-ID, creator og profitstatus. Ugyldige parametre ignoreres med en notice. Én grupperet SQL på pluginets egne tabeller; profitbetingelsen og -formlen er de samme konstanter som i `LedgerCreatorProfits` (ADR-050), så listen og dashboardet aldrig kan være uenige.
+3. **Detalje pr. ordre** (`OrderHistoryDetails`): WooCommerce-status og link (kun via CRUD; "Deleted in WooCommerce", hvis ordren ikke findes), ledgerens cyklusser (åbnet/lukket), ordrelinjer med deres snapshot (andel, kilde, momsstatus, eller "Missing"/"Unreadable"/"Withdrawn model") og alle ledger-hændelser med event-nøgle, type, korrektion, creator, linje, produkt, antal, netto, gemt moms og profit eller "Unknown" med årsag.
+4. **Diagnose** (`ProfitDiagnosis`, `ProfitGap`): profitten kommer altid fra `RealizedProfit`; kun når den er ukendt, bestemmes én årsag i fast rækkefølge: intet snapshot, ulæseligt snapshot, snapshot fra den tilbagetrukne model, snapshot for en anden creator/produkt/variation/ordre/valuta, ingen gemt moms, moms i anden valuta, andet. Manglende data udfyldes aldrig, genberegnes aldrig fra nuværende indstillinger og vises aldrig som 0 (ADR-049).
+5. **Ingen PII:** ingen kundedata, adresser, e-mails eller betalingsdata; kun ID'er, creatornavne, produkt-ID'er, beløb og status.
+6. **Ingen nye tabeller, kolonner eller indexes.**
+7. **Sletning af pluginets data pr. ordre: ikke implementeret.** Den ville fjerne rækker i `merchboard_sales` og `merchboard_sales_cycles` (ordrens `order_id`), `merchboard_sales_tax` (rækkernes `event_key`) og `merchboard_sales_line_pricing` (ordrens `order_item_id`) og invalidere salgscachen. Det strider mod:
+   - ADR-037 pkt. 2 (ledgeren er append-only) og pkt. 8 (permanent sletning af en ordre registreres som reversal, og historikken bevares);
+   - ADR-038 pkt. 5 (historiske ledger-rækker slettes eller ændres aldrig);
+   - ADR-047 (snapshots er INSERT-only og uforanderlige);
+   - ADR-048 (gemt moms er append-only);
+   - ADR-023/026 (audit er append-only; en sletning skal kunne forklares bagefter).
+   Desuden: findes WooCommerce-ordren stadig, registrerer næste synkronisering dens rækker igen ud fra den aktuelle tilstand, men uden snapshot (det tages kun ved `woocommerce_new_order_item`), så profitten bliver permanent ukendt. Sletningen kræver derfor en ny ADR og en eksplicit forretningsbeslutning.
+
+## Alternatives considered
+- **Sletning trods ADR'erne:** fravalgt; opgaven krævede stop ved konflikt.
+- **WP_List_Table:** fravalgt for at holde én grupperet SQL med HAVING-filter og egen paginering; siden følger de eksisterende server-renderede afsnit.
+- **Diagnose i SQL:** fravalgt; detaljen bruger de samme PHP-klasser (`RealizedProfit`) som beregningen, så årsagen aldrig afviger fra resultatet.
+
+## Reason
+Admin får indsigt i præcis det, pluginet har gemt, og hvorfor profitten mangler, uden at historikken kan ændres.
+
+## Security
+- Capability tjekkes i menuen og i `render()`; ingen skrivninger, så ingen nonce eller audit.
+- Alle parametre valideres (positive heltal, kendt status); output escapes.
+- WooCommerce læses kun via `wc_get_order` (HPOS-sikkert) og ændres aldrig.
+
+## Migration/data implications
+Ingen.
+
+## Consequences
+- Ny undermenu "Order history".
+- Åben beslutning: sletning pr. ordre. Forslag, hvis projektejeren vil have den: en ny ADR, der udtrykkeligt undtager ADR-037/038/047/048; en egen capability; POST med nonce og indtastet ordre-ID som bekræftelse; én transaktion over de fire tabeller; audit-posten med antal slettede rækker pr. tabel (ingen beløb eller kundedata); kun tilladt, når WooCommerce-ordren ikke længere findes (eller med en vedvarende "registrér ikke igen"-markering); invalidering af salgscachen for de berørte creators.
+
+## Related
+ADR-023, ADR-026, ADR-037, ADR-038, ADR-040, ADR-047, ADR-048, ADR-049, ADR-050.
+
+### Beslutning 2026-10-09: kun læsning
+Projektejeren har besluttet den åbne del (pkt. 7): **fysisk sletning af ordrehistorik er ikke en del af fase 22.**
+
+- Append-only- og snapshotreglerne i ADR-037, ADR-038, ADR-047 og ADR-048 gælder uændret; der indføres ingen undtagelse.
+- Der slettes ingen rækker i `merchboard_sales`, `merchboard_sales_cycles`, `merchboard_sales_tax` eller `merchboard_sales_line_pricing`, og der indføres ingen vedvarende "ignorér/registrér ikke igen"-markering.
+- WooCommerce-ordrer røres ikke.
+- Historiske rækker uden tilstrækkeligt snapshot forbliver ukendte; profit udledes aldrig af nuværende markup, nuværende creator-ejerskab eller nuværende momsstatus.
+- Siden forbliver ren visning med de eksisterende capability-tjek, validering, escaping, paginering, filtre og diagnoser. Teksterne siger nu, at historikken er append-only og aldrig ændres eller slettes (ikke blot "ikke her"), og en test sikrer, at siden ingen POST-formular, nonce, `admin-post`-handling eller sletteknap har.
+- Forslaget i pkt. 7 og "Åben beslutning" under Consequences er dermed ikke længere åbne. De bevares som historik. En eventuel sletning senere kræver en ny ADR.
+
+### Beslutning 2026-10-10: gamle ordrer skjules i visningen
+Projektejeren ønskede at "cleare" de gamle ordrer fra ordrehistorikken og valgte at skjule dem i visningen frem for at slette dem. Beslutningen fra 2026-10-09 og ADR-037/038/047/048 er uændrede.
+
+- Listen viser som standard kun ordrer med profitdata: mindst én række med snapshot med andel og gemt moms (status komplet eller ufuldstændig, filterværdien `with_data`). Ordrer, hvor ingen række har profitdata (status ukendt), skjules.
+- En notits viser antallet af skjulte ordrer med linket "Vis alle ordrer" (`status=all`). Filteret har valgene "Alle ordrer", "Med profitdata", "Komplet", "Ufuldstændig" og "Ukendt". En skjult ordre kan stadig åbnes direkte.
+- Kun visningen ændres: intet slettes, markeres eller gemmes, og Sales, Overview, `/me`-endpoints og creator-profit er uændrede. Der er ingen indstilling og ingen vedvarende tilstand.
+- En ny ordre, hvis linjer blev oprettet, før produktet havde en creator, har heller ingen profitdata og skjules også som standard; notitsen nævner begge årsager.
+
+### Note 2026-10-10: sletning af en ordres historik er besluttet i ADR-052
+Projektejeren har ændret beslutningen fra 2026-10-09 om, at fysisk sletning ikke er en del af fase 22: admin skal kunne slette en testordres historik helt. Det er besluttet og afgrænset i ADR-052. Teksten ovenfor bevares som historik; siden er ikke længere ren visning, men selve visningen og filtrene skriver stadig intet.
+
+---
+
+# ADR-052: Sletning af én ordres historik, fx en testordre (fase 22)
+
+## Date
+2026-10-10
+
+## Status
+Accepteret. Besluttet af projektejeren 2026-10-10: "det skal være muligt for admin at kunne helt slette en ordre uden den fremgår, da der nogle gange skal køres en testordre igennem", med valget "når ordren er i papirkurv/slettet". Erstatter beslutningen i ADR-051 (note 2026-10-09) om, at fysisk sletning ikke er en del af fase 22. **Udtrykkelig, afgrænset undtagelse** fra append-only-reglerne i ADR-037 pkt. 2 og 8, ADR-038 pkt. 5, ADR-047 og ADR-048; de ADR'er er ellers uændrede og omskrives ikke.
+
+## Context
+Testordrer, der køres igennem butikken, registreres som rigtigt salg og indgår i creatorens Sales, Overview og profit. Ledgeren er append-only, og en permanent slettet WooCommerce-ordre registreres som en reversal, så den stadig fremgår af historikken. Admin skal kunne fjerne sådan en ordre helt.
+
+## Decision
+1. **Hvad slettes:** for én ordre alle Merch Dashboards egne rækker med ordrens `order_id`: `merchboard_sales` (ledger-rækker inkl. refunds, reversals og korrektioner), `merchboard_sales_cycles`, `merchboard_sales_tax` og `merchboard_sales_line_pricing`. Intet andet: ingen WooCommerce-ordre, ordrelinjer, refunds, produkter, priser eller WooCommerce-tabeller, ingen andre ordrer og ingen audit-records.
+2. **Betingelse:** kun når WooCommerce-ordren ligger i papirkurven eller ikke længere findes (`OrderStatusLookup::erasable_state()`, via `wc_get_order()`). Begge tilstande springes over af synkroniseringen (ADR-038 Q8), så historikken ikke registreres igen. Gendannes ordren senere fra papirkurven, registreres den igen ud fra sin aktuelle tilstand uden snapshot (profit ukendt); det står i UI'et. Der indføres ingen "registrér ikke igen"-markering.
+3. **Adgang:** ny capability `merchboard_delete_order_history` (kun administratorer, `RoleManager::VERSION` 4). At se ordrehistorikken kræver fortsat `merchboard_manage_creators`.
+4. **Request:** `admin-post.php?action=merchboard_delete_order_history` (`OrderHistoryActions`), kun POST og kun for indloggede: capability (403), nonce bundet til ordren (403), ordre-ID'et indtastet som bekræftelse, derefter `OrderHistoryEraser`. Post/Redirect/Get med en besked. Ingen AJAX, REST eller `nopriv`.
+5. **Konsistens:** sletningen sker under ledgerens ordrelås (samme som synkroniseringen) og i én transaktion (`SalesRepository::erase_order()`); betingelsen tjekkes igen under låsen. Hver DELETE er bundet til låsens forbindelse, ligesom ledgerens INSERTs. Audit-posten skrives i samme transaktion: fejler den, rulles sletningen tilbage. Efter COMMIT fornyes salgscachen for de berørte creators.
+6. **Audit:** `order_history_deleted` med aktøren, ordre-ID, WooCommerce-tilstanden (`trash`/`deleted`), antal slettede rækker pr. tabel og de berørte creator-ID'er. Ingen beløb og ingen kundedata. Audit-records slettes aldrig (ADR-023).
+7. **UI:** på ordrens side i "Order history" vises afsnittet "Slet gemt historik" kun med capability'en: en forklaring, hvis ordren stadig er aktiv i WooCommerce, ellers en formular med advarsel og indtastning af ordre-ID'et. Ingen massesletning og ingen "slet alt".
+
+## Alternatives considered
+- **Sletning uanset WooCommerce-status med en "registrér ikke igen"-markering:** fravalgt af projektejeren; en rigtig ordre kunne udelukkes ved en fejl.
+- **Kun når WooCommerce-ordren er permanent slettet:** fravalgt; papirkurven er nok, fordi synkroniseringen springer den over.
+- **Kun skjule i visningen (ADR-051, note 2026-10-10):** bevaret som standardfilter, men fjerner ikke ordren fra creatorens salg og profit.
+
+## Reason
+Testordrer skal kunne fjernes helt fra creatorens tal, uden at Merch Dashboard rører WooCommerce, og uden at historikken for andre ordrer kan påvirkes.
+
+## Security
+- Egen capability, nonce pr. ordre, indtastet bekræftelse, kun POST og kun admin-post for indloggede.
+- Ordre-ID'et valideres som positivt heltal; ingen anden input bruges.
+- Audit i samme transaktion; tekniske fejl logges kun med ordre-ID og fejltype.
+
+## Migration/data implications
+Ingen migration, ingen nye tabeller, kolonner eller indexes. `RoleManager::VERSION` 4 giver administratorer den nye capability ved næste request; opt-in-uninstall fjerner den som de øvrige.
+
+## Consequences
+- Creatorens Sales, Overview, Products, Orders og profit ændres for den slettede ordre (den forsvinder). Det er hensigten.
+- Historiske rapporter for perioden ændres; audit-posten dokumenterer, hvem der slettede hvad.
+- Sletningen kan ikke fortrydes.
+
+## Related
+ADR-023, ADR-037, ADR-038, ADR-040, ADR-047, ADR-048, ADR-049, ADR-050, ADR-051.
+
+---
+
+# ADR-053: Salg vises inkl. moms (fase 22)
+
+## Date
+2026-10-10
+
+## Status
+Accepteret. Besluttet af projektejeren 2026-10-10: "Den skal stadig vise salget på både overblik og salgssiden inkl. moms i stedet for ekskl. moms." Ændrer visningen fra ADR-040 pkt. 2 og 14 (nettosalg ekskl. moms); ADR-040's ledger-definitioner og de eksisterende API-felter er uændrede.
+
+## Context
+Creatorens Overview og Sales viste "Nettosalg (ekskl. moms)" fra ledgerens `net_amount`. Projektejeren vil se det beløb, kunderne betalte, inkl. moms. Den faktiske moms pr. ledger-række er gemt siden schema-version 7 (ADR-048); ældre rækker har ingen.
+
+## Decision
+1. **Beløb inkl. moms** = rækkens `net_amount` + rækkens gemte faktiske moms i `merchboard_sales_tax` (samme rækkevalg, perioder, fortegn og valutaregler som ADR-040). Ingen sats og ingen genberegning.
+2. **Manglende moms:** har en række i perioden ingen gemt moms i rækkens valuta, er beløbene inkl. moms for hele valutaen ukendte (`null`), og `vat.status` er `incomplete` med antallet af rækker. Manglende moms regnes aldrig som 0, og der blandes aldrig grundlag i en valuta.
+3. **API:** additive felter i `/me/sales` (`totals.*_incl_vat`, `vat`, `series[].net_sales_incl_vat`, `products[].net_sales_incl_vat`); de eksisterende felter ekskl. moms er uændrede. Cacheformat `v3`.
+4. **Visning:** Overview, Sales (nøgletal, graf, tabel) og admin-afsnittet Sales viser "Salg (inkl. moms)", når momsen er komplet, ellers "Nettosalg (ekskl. moms)" med noten "Momsen mangler for nogle ældre salg i perioden, så beløbene vises ekskl. moms." Forklaringen siger "inkl. moms, ekskl. fragt og gebyrer".
+5. **Uændret:** ledgeren, enheder, ordrer, profit (ADR-049/050) og ordrehistorikken.
+
+## Alternatives considered
+- **Beregne moms med en sats:** fravalgt; det betalte beløb skal komme fra WooCommerce' faktiske moms (ADR-048).
+- **Blande inkl. og ekskl. moms i samme valuta:** fravalgt; tallene ville ikke kunne sammenlignes.
+- **Vise begge beløb:** fravalgt af projektejeren ("i stedet for").
+
+## Reason
+Creatorer ser det beløb, kunderne betalte, uden at historik uden moms vises forkert.
+
+## Security
+Uændret adgangsmodel (`CreatorContext`, kun creatorens rækker); kun pluginets egne tabeller læses; ingen kundedata.
+
+## Migration/data implications
+Ingen migration. Statistikforespørgslerne joiner `merchboard_sales_tax` på `event_key` (primærnøgle); ingen nye indexes.
+
+## Consequences
+- Hvis WooCommerce ikke beregner moms (moms slået fra), er den gemte moms 0, og beløbet inkl. moms er lig beløbet ekskl. moms.
+- Perioder med salg fra før schema-version 7 vises ekskl. moms med noten.
+
+## Related
+ADR-037, ADR-040, ADR-041, ADR-048, ADR-049, ADR-050.

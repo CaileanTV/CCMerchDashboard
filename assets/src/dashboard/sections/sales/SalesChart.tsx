@@ -3,13 +3,25 @@ import { __, sprintf } from '@wordpress/i18n';
 import type { SalesInterval, SalesPoint } from '../../types/sales';
 import { chartGeometry, HEIGHT } from './chart-geometry';
 import { moneyText, periodText } from './format';
+import { shownSales } from './texts';
 
 /**
  * The chart's caption for an interval.
  *
  * @param interval Interval of the series.
  */
-function captionText( interval: SalesInterval ): string {
+function captionText( interval: SalesInterval, vatIncluded: boolean ): string {
+	if ( vatIncluded ) {
+		switch ( interval ) {
+			case 'week':
+				return __( 'Sales per week (incl. VAT)', 'merchboard' );
+			case 'month':
+				return __( 'Sales per month (incl. VAT)', 'merchboard' );
+			default:
+				return __( 'Sales per day (incl. VAT)', 'merchboard' );
+		}
+	}
+
 	switch ( interval ) {
 		case 'week':
 			return __( 'Net sales per week', 'merchboard' );
@@ -25,10 +37,12 @@ export interface SalesChartProps {
 	readonly currency: string;
 	readonly interval: SalesInterval;
 	readonly locale: string;
+	/** Whether the amounts include VAT (ADR-053). */
+	readonly vatIncluded?: boolean;
 }
 
 /**
- * Net sales per period as columns from a zero baseline (ADR-041: own SVG, no
+ * Sales per period as columns from a zero baseline (ADR-041: own SVG, no
  * chart library). Columns above the baseline are positive, below negative, so
  * the sign is shown by position, not by color alone. The SVG is decorative
  * (`aria-hidden`): the table next to it carries the same figures for
@@ -41,8 +55,11 @@ export function SalesChart( {
 	currency,
 	interval,
 	locale,
+	vatIncluded = false,
 }: SalesChartProps ) {
-	const geometry = chartGeometry( series.map( ( point ) => point.netSales ) );
+	const amount = ( point: SalesPoint ): string =>
+		shownSales( point, vatIncluded );
+	const geometry = chartGeometry( series.map( amount ) );
 	const first = series[ 0 ];
 	const last = series[ series.length - 1 ];
 	const max =
@@ -58,7 +75,7 @@ export function SalesChart( {
 	return (
 		<figure className="merchboard-sales-chart">
 			<figcaption className="merchboard-sales-chart__caption">
-				{ captionText( interval ) }
+				{ captionText( interval, vatIncluded ) }
 				<span className="merchboard-visually-hidden">
 					{ ' ' }
 					{ __(
@@ -77,7 +94,7 @@ export function SalesChart( {
 							className="merchboard-sales-chart__tick merchboard-sales-chart__tick--top"
 							data-tick="max"
 						>
-							{ moneyText( max.netSales, currency, locale ) }
+							{ moneyText( amount( max ), currency, locale ) }
 						</span>
 					) }
 					{ showZero && (
@@ -94,7 +111,7 @@ export function SalesChart( {
 							className="merchboard-sales-chart__tick merchboard-sales-chart__tick--bottom"
 							data-tick="min"
 						>
-							{ moneyText( min.netSales, currency, locale ) }
+							{ moneyText( amount( min ), currency, locale ) }
 						</span>
 					) }
 				</div>
@@ -139,7 +156,7 @@ export function SalesChart( {
 											locale
 										),
 										moneyText(
-											point.netSales,
+											amount( point ),
 											currency,
 											locale
 										)

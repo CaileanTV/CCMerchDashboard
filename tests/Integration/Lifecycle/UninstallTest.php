@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Lifecycle;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\Capabilities;
@@ -17,8 +19,17 @@ use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\CreatorService;
+use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Settings\SettingsService;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\MarkupBps;
+use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
+use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkup;
+use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricing;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\SnapshotStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use WP_User;
 
@@ -135,6 +146,33 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( self::OTHER_SITE_TABLE, $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( self::OTHER_SITE_TABLE ) ) ), "Another site's table with a similar name survives." );
 
 		self::assertStringContainsString( 'Merch Dashboard data deleted on uninstall.', (string) file_get_contents( MERCHBOARD_TEST_LOG ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
+	}
+
+	public function test_pricing_data_follows_the_opt_in_and_woocommerce_prices_are_never_reset(): void {
+		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Pricing', CreatorStatus::Active );
+		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( 1900 ) );
+		( new ProductMarkupRepository( $this->wpdb ) )->save( new ProductMarkup( $this->other_product, $creator->id, new MarkupBps( 2500 ) ) );
+		( new SalesLinePricingRepository( $this->wpdb ) )->insert( new SalesLinePricing( 9001, 9000, $creator->id, $this->product, 0, SnapshotStatus::Share, 'DKK', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ), 1900, MarkupSource::Creator, 2, false ) );
+		// WooCommerce' own prices; Merch Dashboard never writes them.
+		update_post_meta( $this->product, '_regular_price', '117.81' );
+		update_post_meta( $this->product, '_price', '117.81' );
+
+		$this->run_uninstall();
+
+		foreach ( array( Tables::PRICING_OVERRIDES, Tables::SALES_LINE_PRICING ) as $table ) {
+			self::assertSame( 1, $this->count_rows( $table ), $table . ' kept without the opt-in.' );
+		}
+
+		$this->enable_deletion();
+		$this->run_uninstall();
+
+		foreach ( array( Tables::PRICING_OVERRIDES, Tables::SALES_LINE_PRICING ) as $table ) {
+			self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( $table ) ) ) ), $table . ' dropped with the opt-in.' );
+		}
+
+		wp_cache_flush();
+		self::assertSame( '117.81', get_post_meta( $this->product, '_regular_price', true ), 'WooCommerce prices are never reset.' );
+		self::assertSame( '117.81', get_post_meta( $this->product, '_price', true ) );
 	}
 
 	public function test_uninstall_with_the_plugin_loaded_deletes_only_the_protected_meta_through_the_window(): void {
@@ -360,7 +398,7 @@ final class UninstallTest extends IntegrationTestCase {
 
 		remove_filter( 'query', $fail );
 		self::assertTrue( Settings::delete_data_on_uninstall(), 'Opt-in kept for the retry.' );
-		self::assertSame( '5', $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '8', $this->raw_option( Migrator::VERSION_OPTION ) );
 
 		$this->run_uninstall();
 

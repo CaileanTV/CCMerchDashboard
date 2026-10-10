@@ -26,6 +26,7 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Dashboard\SalesReport;
 use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
 use MerchBoard\Modules\WooCommerce\Sales\LedgerSalesStatistics;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeSalesProductNames;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -73,7 +74,7 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		$this->names    = new FakeSalesProductNames();
 		$controller     = new MeSalesController(
 			$this->service( CreatorContext::class ),
-			new SalesReport( new LedgerSalesStatistics( $this->wpdb ), $this->names ),
+			new SalesReport( new LedgerSalesStatistics( $this->wpdb ), $this->names, new LedgerCreatorProfits( $this->wpdb ) ),
 			$this->service( Logger::class ),
 			fn(): DateTimeImmutable => new DateTimeImmutable( $this->now, new DateTimeZone( 'UTC' ) )
 		);
@@ -355,9 +356,10 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		);
 
 		self::assertSame( array( 'DKK', 'EUR', 'SEK' ), array_column( $data['currencies'], 'currency' ) );
-		self::assertSame( array( '75.0000', '75.0000', '0.0000', 1, 1 ), array_values( $data['currencies'][0]['totals'] ) );
-		self::assertSame( array( '15.2500', '30.5000', '-15.2500', 1, 1 ), array_values( $data['currencies'][1]['totals'] ) );
-		self::assertSame( array( '100.0000', '100.0000', '0.0000', 1, 1 ), array_values( $data['currencies'][2]['totals'] ) );
+		// Rows without stored tax: the amounts incl. VAT are unknown (ADR-053).
+		self::assertSame( array( '75.0000', '75.0000', '0.0000', null, null, null, 1, 1 ), array_values( $data['currencies'][0]['totals'] ) );
+		self::assertSame( array( '15.2500', '30.5000', '-15.2500', null, null, null, 1, 1 ), array_values( $data['currencies'][1]['totals'] ) );
+		self::assertSame( array( '100.0000', '100.0000', '0.0000', null, null, null, 1, 1 ), array_values( $data['currencies'][2]['totals'] ) );
 
 		foreach ( $data['currencies'] as $block ) {
 			self::assertCount( 5, $block['series'], $block['currency'] );
@@ -368,6 +370,65 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( 20 ), array_column( $data['currencies'][1]['products'], 'product_id' ) );
 		self::assertSame( array( array( 30, 20 ) ), $this->names->calls, 'One lookup per distinct product, across currencies.' );
 		self::assertArrayNotHasKey( 'totals', $data, 'No total across currencies.' );
+	}
+
+	public function test_the_period_profit_is_complete_only_when_every_row_has_its_history(): void {
+		$mine  = $this->creator_user( 'mine', 'Mine', CreatorStatus::Active );
+		$other = $this->creator_user( 'other', 'Other', CreatorStatus::Active );
+		$query = array(
+			'from' => '2026-09-01',
+			'to'   => '2026-09-30',
+		);
+		// Two order lines with a share snapshot (16.67 %) and their stored tax: 1.67 + 2.00.
+		$this->priced_row( $mine, 501, 5011, '10.0000', '0.0000', '2026-09-10 10:00:00' );
+		$this->priced_row( $mine, 501, 5012, '12.0000', '0.0000', '2026-09-10 10:00:00' );
+		// Another creator's legacy row never makes my profit incomplete.
+		$this->row( $other, 'sale', 601, 1, '10.0000', '2026-09-11 10:00:00' );
+		wp_set_current_user( $mine );
+
+		$complete = $this->data( $query )['currencies'][0]['profit'];
+		self::assertSame(
+			array(
+				'currency' => 'DKK',
+				'status'   => 'complete',
+				'amount'   => '3.6700',
+			),
+			$complete
+		);
+
+		// A legacy row (registered before snapshots and stored tax existed, as orders 177 and
+		// 201 on Merch Dashboard Local): the period is incomplete and shows no amount, never 0
+		// and never only the known 3.67.
+		$this->row( $mine, 'sale', 177, 1, '10.0000', '2026-09-12 10:00:00' );
+
+		$incomplete = $this->data( $query )['currencies'][0];
+		self::assertSame(
+			array(
+				'currency' => 'DKK',
+				'status'   => 'incomplete',
+				'amount'   => null,
+			),
+			$incomplete['profit']
+		);
+		self::assertSame( '32.0000', $incomplete['totals']['net_sales'], 'The sales figures are unchanged and include the legacy row.' );
+
+		// A period with only the legacy row is unknown.
+		self::assertSame(
+			array(
+				'currency' => 'DKK',
+				'status'   => 'unknown',
+				'amount'   => null,
+			),
+			$this->data(
+				array(
+					'from' => '2026-09-12',
+					'to'   => '2026-09-12',
+				)
+			)['currencies'][0]['profit']
+		);
+
+		// The creator id comes from CreatorContext only.
+		self::assertSame( $incomplete, $this->data( $query + array( 'creator_id' => (string) $this->creator_id( $other ) ) )['currencies'][0] );
 	}
 
 	public function test_an_empty_period_has_no_currencies(): void {
@@ -547,10 +608,11 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		self::assertSame(
 			array(
 				array(
-					'product_id' => 20,
-					'name'       => 'Tour tee',
-					'net_sales'  => '300.0000',
-					'units'      => 3,
+					'product_id'         => 20,
+					'name'               => 'Tour tee',
+					'net_sales'          => '300.0000',
+					'net_sales_incl_vat' => null,
+					'units'              => 3,
 				),
 			),
 			$products
@@ -818,6 +880,47 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		self::assertSame( 200, $five->get_status(), 'Five years (262 weeks).' );
 	}
 
+	public function test_sales_incl_vat_add_the_stored_tax_of_every_row_and_are_null_when_a_row_has_none(): void {
+		$mine = $this->creator_user( 'mine', 'Mine', CreatorStatus::Active );
+		$this->priced_row( $mine, 101, 1011, '80.0000', '20.0000', '2026-09-10 10:00:00' );
+		$this->priced_row( $mine, 102, 1021, '40.0000', '10.0000', '2026-09-11 10:00:00' );
+		wp_set_current_user( $mine );
+
+		$block = $this->data()['currencies'][0];
+		$days  = array_column( $block['series'], 'net_sales_incl_vat', 'start' );
+
+		self::assertSame(
+			array(
+				'status'       => 'complete',
+				'missing_rows' => 0,
+			),
+			$block['vat']
+		);
+		self::assertSame( array( '120.0000', '150.0000', '150.0000', '0.0000' ), array( $block['totals']['net_sales'], $block['totals']['net_sales_incl_vat'], $block['totals']['sales_incl_vat'], $block['totals']['adjustments_incl_vat'] ) );
+		self::assertSame( array( '100.0000', '50.0000', '0.0000' ), array( $days['2026-09-10'], $days['2026-09-11'], $days['2026-09-12'] ), 'A day without rows is 0 incl. VAT too.' );
+		self::assertSame( '150.0000', $block['products'][0]['net_sales_incl_vat'] );
+
+		// A row without stored tax (another period, so another cache entry): unknown, never 0.
+		$this->row( $mine, 'sale', 103, 1, '5.0000', '2026-09-12 10:00:00' );
+		$block = $this->data(
+			array(
+				'from' => '2026-09-09',
+				'to'   => '2026-09-12',
+			)
+		)['currencies'][0];
+
+		self::assertSame(
+			array(
+				'status'       => 'incomplete',
+				'missing_rows' => 1,
+			),
+			$block['vat']
+		);
+		self::assertSame( array( '125.0000', null ), array( $block['totals']['net_sales'], $block['totals']['net_sales_incl_vat'] ) );
+		self::assertSame( array( null ), array_values( array_unique( array_column( $block['series'], 'net_sales_incl_vat' ) ) ), 'One basis per currency: no mix.' );
+		self::assertNull( $block['products'][0]['net_sales_incl_vat'] );
+	}
+
 	public function test_the_response_has_only_the_allowed_fields_and_no_personal_data(): void {
 		$mine = $this->creator_user( 'mine', 'Mine', CreatorStatus::Active );
 		$this->row(
@@ -839,10 +942,21 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		$json  = (string) wp_json_encode( $data );
 
 		self::assertSame( array( 'from', 'to', 'interval', 'timezone', 'currencies' ), array_keys( $data ) );
-		self::assertSame( array( 'currency', 'totals', 'series', 'products', 'truncated' ), array_keys( $block ) );
-		self::assertSame( array( 'net_sales', 'sales', 'adjustments', 'units', 'orders' ), array_keys( $block['totals'] ) );
-		self::assertSame( array( 'start', 'end', 'net_sales', 'units', 'orders' ), array_keys( $block['series'][0] ) );
-		self::assertSame( array( 'product_id', 'name', 'net_sales', 'units' ), array_keys( $block['products'][0] ) );
+		self::assertSame( array( 'currency', 'totals', 'vat', 'profit', 'series', 'products', 'truncated' ), array_keys( $block ) );
+		self::assertSame( 'incomplete', $block['vat']['status'], 'Rows without stored tax.' );
+		self::assertGreaterThan( 0, $block['vat']['missing_rows'] );
+		// Rows without a pricing snapshot: the period's profit is unknown, without an amount (ADR-050).
+		self::assertSame(
+			array(
+				'currency' => 'DKK',
+				'status'   => 'unknown',
+				'amount'   => null,
+			),
+			$block['profit']
+		);
+		self::assertSame( array( 'net_sales', 'sales', 'adjustments', 'net_sales_incl_vat', 'sales_incl_vat', 'adjustments_incl_vat', 'units', 'orders' ), array_keys( $block['totals'] ) );
+		self::assertSame( array( 'start', 'end', 'net_sales', 'net_sales_incl_vat', 'units', 'orders' ), array_keys( $block['series'][0] ) );
+		self::assertSame( array( 'product_id', 'name', 'net_sales', 'net_sales_incl_vat', 'units' ), array_keys( $block['products'][0] ) );
 
 		foreach ( array( 'customer', 'email', 'phone', 'address', 'billing', 'shipping', 'city', 'postcode', 'country', 'note', 'ip', 'payment', 'user', 'creator', 'order_id', 'order_item_id', 'variation_id', 'item_name', 'event_key', 'cycle', 'refund_id', '4242', '4343' ) as $forbidden ) {
 			self::assertStringNotContainsString( $forbidden, $json );
@@ -887,6 +1001,69 @@ final class MeSalesEndpointTest extends IntegrationTestCase {
 		);
 
 		self::assertSame( 1, $inserted, $this->wpdb->last_error );
+	}
+
+	/**
+	 * A sale row with its stored tax and a share snapshot of its order line
+	 * (16.67 %, 2 decimals, not VAT registered), as recorded since schema 8.
+	 *
+	 * @param int    $user_id     User of the creator.
+	 * @param int    $order_id    Order id.
+	 * @param int    $item        Order item id.
+	 * @param string $net         Net amount.
+	 * @param string $tax         Tax.
+	 * @param string $occurred_at UTC time.
+	 */
+	private function priced_row( int $user_id, int $order_id, int $item, string $net, string $tax, string $occurred_at ): void {
+		$creator_id = $this->creator_id( $user_id );
+		$event_key  = 's:' . $item . ':1';
+
+		$this->row(
+			$user_id,
+			'sale',
+			$order_id,
+			1,
+			$net,
+			$occurred_at,
+			array(
+				'event_key'     => $event_key,
+				'order_item_id' => $item,
+			)
+		);
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::SALES_TAX ),
+				array(
+					'event_key'     => $event_key,
+					'order_id'      => $order_id,
+					'order_item_id' => $item,
+					'tax_amount'    => $tax,
+					'currency'      => 'DKK',
+					'created_at'    => $occurred_at,
+				)
+			)
+		);
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::SALES_LINE_PRICING ),
+				array(
+					'order_item_id'  => $item,
+					'order_id'       => $order_id,
+					'creator_id'     => $creator_id,
+					'product_id'     => 20,
+					'variation_id'   => 0,
+					'status'         => 'share',
+					'currency'       => 'DKK',
+					'captured_at'    => $occurred_at,
+					'share_bps'      => 1667,
+					'share_source'   => 'creator',
+					'price_decimals' => 2,
+					'vat_registered' => 0,
+				)
+			)
+		);
 	}
 
 	/**

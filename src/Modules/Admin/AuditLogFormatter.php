@@ -81,6 +81,15 @@ final class AuditLogFormatter {
 			AuditAction::CreatorCategoryUnlinked => __( 'Product category unmapped', 'merchboard' ),
 			AuditAction::CategorySyncCompleted   => __( 'Category reconciliation completed', 'merchboard' ),
 			AuditAction::SalesBackfillCompleted  => __( 'Sales ledger backfill completed', 'merchboard' ),
+			AuditAction::CreatorPricingApplied   => __( 'Creator price applied', 'merchboard' ),
+			AuditAction::CreatorPricingDriftOverwritten => __( 'Creator price applied over a changed WooCommerce price', 'merchboard' ),
+			AuditAction::CreatorMarkupChanged    => __( 'Default markup changed', 'merchboard' ),
+			AuditAction::ProductFixedProfitSet   => __( 'Fixed profit set', 'merchboard' ),
+			AuditAction::ProductFixedProfitRemoved => __( 'Fixed profit removed', 'merchboard' ),
+			AuditAction::CreatorVatStatusChanged   => __( 'VAT status changed', 'merchboard' ),
+			AuditAction::ProductMarkupSet          => __( 'Product markup set', 'merchboard' ),
+			AuditAction::ProductMarkupRemoved      => __( 'Product markup removed', 'merchboard' ),
+			AuditAction::OrderHistoryDeleted       => __( 'Order history deleted', 'merchboard' ),
 		};
 	}
 
@@ -150,10 +159,11 @@ final class AuditLogFormatter {
 	 */
 	public static function context_ids( AuditEntry $entry ): array {
 		$categories = $entry->context['category_ids'] ?? array();
+		$creators   = $entry->context['creator_ids'] ?? array();
 
 		return array(
 			'users'      => self::context_user_ids( $entry ),
-			'creators'   => self::ids( $entry->context, array( 'previous_creator_id', 'creator_id' ) ),
+			'creators'   => array_merge( self::ids( $entry->context, array( 'previous_creator_id', 'creator_id' ) ), is_array( $creators ) ? self::ids( $creators, array_keys( $creators ) ) : array() ),
 			'products'   => self::ids( $entry->context, array( 'product_id' ) ),
 			'categories' => array_merge( self::ids( $entry->context, array( 'term_id' ) ), is_array( $categories ) ? self::ids( $categories, array_keys( $categories ) ) : array() ),
 		);
@@ -252,6 +262,28 @@ final class AuditLogFormatter {
 			case 'total':
 				/* translators: %s: number of products. */
 				return self::text( __( 'Products evaluated: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'order_id':
+				/* translators: %s: WooCommerce order id. */
+				return self::text( __( 'Order: #%s', 'merchboard' ), self::scalar( $value ) );
+			case 'woocommerce_order':
+				return 'trash' === $value
+					? esc_html__( 'WooCommerce order: in the trash', 'merchboard' )
+					: esc_html__( 'WooCommerce order: deleted', 'merchboard' );
+			case 'ledger_rows':
+				/* translators: %s: number of rows. */
+				return self::text( __( 'Ledger rows deleted: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'cycle_events':
+				/* translators: %s: number of rows. */
+				return self::text( __( 'Cycle events deleted: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'tax_rows':
+				/* translators: %s: number of rows. */
+				return self::text( __( 'Stored tax rows deleted: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'snapshots':
+				/* translators: %s: number of rows. */
+				return self::text( __( 'Profit snapshots deleted: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'creator_ids':
+				/* translators: %s: comma-separated creators. */
+				return self::text( __( 'Creators: %s', 'merchboard' ), is_array( $value ) && array() !== $value ? implode( ', ', array_map( static fn( mixed $id ): string => self::creator( $id, $labels ), $value ) ) : '—' );
 		}
 
 		return esc_html( sanitize_key( $key ) . ': ' . self::scalar( $value ) );

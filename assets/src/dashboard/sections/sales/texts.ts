@@ -4,12 +4,52 @@
  */
 import { __ } from '@wordpress/i18n';
 
-/** What net sales are, and are not. */
-export function netSalesExplanation(): string {
+/** What the sales figures are, and are not (ADR-053: including VAT). */
+export function salesExplanation(): string {
 	return __(
-		"The shop's net sales of your products after discounts, excluding VAT, shipping and fees. It is not your payout.",
+		"The shop's sales of your products after discounts, including VAT, excluding shipping and fees. It is not your payout.",
 		'merchboard'
 	);
+}
+
+/** Shown for a currency whose period has sales without stored VAT. */
+export function missingVatNote(): string {
+	return __(
+		'VAT is missing for some older sales in this period, so the amounts are shown excluding VAT.',
+		'merchboard'
+	);
+}
+
+/**
+ * Label of the sales amount: including VAT, or the excl. VAT fallback.
+ *
+ * @param vatIncluded Whether the amounts include VAT.
+ */
+export function salesLabel( vatIncluded: boolean ): string {
+	return vatIncluded
+		? __( 'Sales (incl. VAT)', 'merchboard' )
+		: __( 'Net sales (excl. VAT)', 'merchboard' );
+}
+
+/**
+ * The amount to show: incl. VAT when known, otherwise excl. VAT (never a
+ * mix: the whole currency uses one basis).
+ *
+ * @param amounts                 Amounts.
+ * @param amounts.netSales        Excl. VAT.
+ * @param amounts.netSalesInclVat Incl. VAT, or null.
+ * @param vatIncluded             Whether the currency's amounts include VAT.
+ */
+export function shownSales(
+	amounts: {
+		readonly netSales: string;
+		readonly netSalesInclVat: string | null;
+	},
+	vatIncluded: boolean
+): string {
+	return vatIncluded && amounts.netSalesInclVat !== null
+		? amounts.netSalesInclVat
+		: amounts.netSales;
 }
 
 /** Shown when the figures come in more than one currency. */

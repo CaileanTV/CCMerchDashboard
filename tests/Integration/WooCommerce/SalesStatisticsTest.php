@@ -42,6 +42,47 @@ final class SalesStatisticsTest extends IntegrationTestCase {
 		$this->copenhagen = new DateTimeZone( 'Europe/Copenhagen' );
 	}
 
+	public function test_amounts_incl_vat_add_each_rows_stored_tax_and_are_null_when_a_row_has_none(): void {
+		$this->row( 'sale', 101, 2, '200.0000', '2026-07-10 10:00:00' );
+		$this->tax( 101, '50.0000' );
+		$this->row( 'refund', 101, -1, '-100.0000', '2026-07-12 10:00:00' );
+		$this->tax( 101, '-25.0000' );
+
+		$totals = $this->statistics->totals( self::MINE, ...SalesPeriods::from_dates( '2026-07-01', '2026-07-31', $this->copenhagen ) );
+		self::assertCount( 1, $totals );
+		self::assertSame( array( '200.0000', '-100.0000', '100.0000' ), array( $totals[0]->sales, $totals[0]->adjustments, $totals[0]->net_sales ), 'The amounts excl. VAT are unchanged.' );
+		self::assertSame( array( '250.0000', '-125.0000', '125.0000', 0 ), array( $totals[0]->sales_incl_vat, $totals[0]->adjustments_incl_vat, $totals[0]->net_sales_incl_vat, $totals[0]->missing_vat_rows ) );
+		self::assertSame(
+			array(
+				9  => '250.0000',
+				11 => '-125.0000',
+			),
+			$this->series_incl_vat( '2026-07-01', '2026-07-31' )
+		);
+		self::assertSame( array( '125.0000' ), $this->products_incl_vat( '2026-07-01', '2026-07-31' ) );
+
+		// A row without stored tax (registered before migration 7): unknown, never 0.
+		$this->row( 'sale', 102, 1, '80.0000', '2026-07-20 10:00:00' );
+		$totals = $this->statistics->totals( self::MINE, ...SalesPeriods::from_dates( '2026-07-01', '2026-07-31', $this->copenhagen ) );
+		self::assertSame( array( '280.0000', null, null, null, 1 ), array( $totals[0]->sales, $totals[0]->sales_incl_vat, $totals[0]->adjustments_incl_vat, $totals[0]->net_sales_incl_vat, $totals[0]->missing_vat_rows ) );
+		self::assertSame(
+			array(
+				9  => '250.0000',
+				11 => '-125.0000',
+				19 => null,
+			),
+			$this->series_incl_vat( '2026-07-01', '2026-07-31' ),
+			'Only the period with the untaxed row is unknown.'
+		);
+		self::assertSame( array( null ), $this->products_incl_vat( '2026-07-01', '2026-07-31' ) );
+
+		// Tax in another currency than the row counts as missing.
+		$this->row( 'sale', 103, 1, '10.0000', '2026-08-03 10:00:00', array( 'currency' => 'EUR' ) );
+		$this->tax( 103, '2.5000', 'DKK' );
+		$eur = $this->statistics->totals( self::MINE, ...SalesPeriods::from_dates( '2026-08-01', '2026-08-31', $this->copenhagen ) );
+		self::assertSame( array( 'EUR', null, 1 ), array( $eur[0]->currency, $eur[0]->net_sales_incl_vat, $eur[0]->missing_vat_rows ) );
+	}
+
 	public function test_sales_only(): void {
 		$this->row( 'sale', 101, 2, '200.0000', '2026-07-10 10:00:00' );
 
@@ -255,7 +296,7 @@ final class SalesStatisticsTest extends IntegrationTestCase {
 		$queries = $this->recorded( fn() => $this->totals( '2026-07-01', '2026-07-31' ) );
 
 		self::assertCount( 1, $queries );
-		self::assertStringContainsString( "occurred_at >= '2026-06-30 22:00:00' AND occurred_at < '2026-07-31 22:00:00'", $queries[0] );
+		self::assertStringContainsString( "r.occurred_at >= '2026-06-30 22:00:00' AND r.occurred_at < '2026-07-31 22:00:00'", $queries[0] );
 		self::assertStringNotContainsStringIgnoringCase( 'CONVERT_TZ', $queries[0] );
 	}
 
@@ -376,7 +417,8 @@ final class SalesStatisticsTest extends IntegrationTestCase {
 		foreach ( $queries as $query ) {
 			preg_match_all( '/`?(' . preg_quote( $prefix, '/' ) . '\w+)`?/', $query, $tables );
 			self::assertNotSame( array(), $tables[1], $query );
-			self::assertSame( array( $this->table( Tables::SALES ) ), array_values( array_unique( $tables[1] ) ), $query );
+			// The ledger and its stored tax (ADR-053), Merch Dashboard's own tables only.
+			self::assertSame( array( $this->table( Tables::SALES ), $this->table( Tables::SALES_TAX ) ), array_values( array_unique( $tables[1] ) ), $query );
 			self::assertStringNotContainsStringIgnoringCase( 'CONVERT_TZ', $query );
 		}
 	}
@@ -418,6 +460,57 @@ final class SalesStatisticsTest extends IntegrationTestCase {
 		);
 
 		self::assertSame( 1, $inserted, $this->wpdb->last_error );
+	}
+
+	/**
+	 * Stores the actual tax of the latest ledger row.
+	 *
+	 * @param int    $order_id Order of the row.
+	 * @param string $tax      Signed tax.
+	 * @param string $currency Currency of the tax.
+	 */
+	private function tax( int $order_id, string $tax, string $currency = 'DKK' ): void {
+		$inserted = $this->wpdb->insert(
+			$this->table( Tables::SALES_TAX ),
+			array(
+				'event_key'     => 'test:' . $this->key,
+				'order_id'      => $order_id,
+				'order_item_id' => $order_id * 10,
+				'tax_amount'    => $tax,
+				'currency'      => $currency,
+				'created_at'    => '2026-10-01 10:00:00',
+			)
+		);
+
+		self::assertSame( 1, $inserted, $this->wpdb->last_error );
+	}
+
+	/**
+	 * Daily amounts incl. VAT of MINE by period index (only periods with rows).
+	 *
+	 * @param string $from First date.
+	 * @param string $to   Last date.
+	 * @return array<int, string|null>
+	 */
+	private function series_incl_vat( string $from, string $to ): array {
+		$result = array();
+
+		foreach ( $this->statistics->series( self::MINE, $this->periods( $from, $to, SalesInterval::Day ) ) as $point ) {
+			$result[ $point->index ] = $point->net_sales_incl_vat;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Product amounts incl. VAT of MINE.
+	 *
+	 * @param string $from First date.
+	 * @param string $to   Last date.
+	 * @return list<string|null>
+	 */
+	private function products_incl_vat( string $from, string $to ): array {
+		return array_map( static fn( SalesProductTotals $p ): ?string => $p->net_sales_incl_vat, $this->statistics->products( self::MINE, ...SalesPeriods::from_dates( $from, $to, $this->copenhagen ) ) );
 	}
 
 	/**

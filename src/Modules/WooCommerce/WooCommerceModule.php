@@ -22,6 +22,14 @@ use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
+use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryActions;
+use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
+use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
+use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
+use MerchBoard\Modules\WooCommerce\Sales\OrderHistory;
+use MerchBoard\Modules\WooCommerce\Sales\OrderHistoryDetails;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorPricingActions;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorPricingSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorProductsSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorSalesSection;
@@ -41,6 +49,19 @@ use MerchBoard\Modules\WooCommerce\Dashboard\SalesReports;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceOrderLineEnricher;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceProductDetails;
 use MerchBoard\Modules\WooCommerce\Dashboard\WooCommerceSalesProductNames;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\MarkupResolver;
+use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
+use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingHooks;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRecorder;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesProfit;
+use MerchBoard\Modules\WooCommerce\Pricing\WooCommercePricingProductStore;
 use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
@@ -59,6 +80,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesCache;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesStatistics;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
+use MerchBoard\Modules\WooCommerce\Sales\SalesTaxRepository;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceOrderSnapshotReader;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker;
 use WP_CLI;
@@ -108,6 +130,45 @@ final class WooCommerceModule implements Module {
 				$c->get( Transaction::class ),
 				$c->get( ProtectedProductMeta::class )
 			)
+		);
+
+		// Creator pricing (ADR-049): read-only WooCommerce access (Merch
+		// Dashboard never writes a price) and the share that applies to a
+		// product. No hooks and no routes here.
+		$container->set(
+			PricingProductStore::class,
+			static fn(): PricingProductStore => new WooCommercePricingProductStore()
+		);
+
+		$container->set(
+			MarkupResolver::class,
+			static fn( Container $c ): MarkupResolver => new MarkupResolver(
+				$c->get( ProductCreatorLink::class ),
+				new CreatorMarkupRepository( $c->get( wpdb::class ) ),
+				new ProductMarkupRepository( $c->get( wpdb::class ) )
+			)
+		);
+
+		// Share snapshot per new order line (ADR-047, ADR-049): system work on every
+		// request, since orders are created in checkout, wp-admin, REST and CLI.
+		$container->set(
+			SalesLinePricingHooks::class,
+			static fn( Container $c ): SalesLinePricingHooks => new SalesLinePricingHooks(
+				new SalesLinePricingRecorder(
+					$c->get( PricingProductStore::class ),
+					$c->get( MarkupResolver::class ),
+					new SalesLinePricingRepository( $c->get( wpdb::class ) ),
+					$c->get( Logger::class ),
+					new CreatorVatRepository( $c->get( wpdb::class ) )
+				)
+			)
+		);
+		$container->get( SalesLinePricingHooks::class )->register();
+
+		// Realized profit and payout of ledger rows (ADR-049); read only, no hooks.
+		$container->set(
+			SalesProfit::class,
+			static fn( Container $c ): SalesProfit => new SalesProfit( new SalesLinePricingRepository( $c->get( wpdb::class ) ), new SalesTaxRepository( $c->get( wpdb::class ) ) )
 		);
 
 		// Creator ↔ product category mapping (ADR-033): storage and the only
@@ -260,6 +321,40 @@ final class WooCommerceModule implements Module {
 			)
 		);
 
+		// Pricing on the creator's edit page (ADR-048, ADR-049).
+		$container->set(
+			CreatorPricingSettings::class,
+			static fn( Container $c ): CreatorPricingSettings => new CreatorPricingSettings(
+				$c->get( CreatorRepository::class ),
+				new CreatorMarkupRepository( $c->get( wpdb::class ) ),
+				new ProductMarkupRepository( $c->get( wpdb::class ) ),
+				$c->get( ProductCreatorLink::class ),
+				$c->get( PricingProductStore::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				new CreatorVatRepository( $c->get( wpdb::class ) )
+			)
+		);
+
+		$container->set(
+			CreatorPricingActions::class,
+			static fn( Container $c ): CreatorPricingActions => new CreatorPricingActions(
+				$c->get( CreatorPricingSettings::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		$container->set(
+			CreatorPricingSection::class,
+			static fn( Container $c ): CreatorPricingSection => new CreatorPricingSection(
+				$c->get( ProductStore::class ),
+				$c->get( PricingProductStore::class ),
+				$c->get( MarkupResolver::class ),
+				new CreatorMarkupRepository( $c->get( wpdb::class ) ),
+				new CreatorVatRepository( $c->get( wpdb::class ) )
+			)
+		);
+
 		$container->set(
 			CreatorProductsSection::class,
 			static fn( Container $c ): CreatorProductsSection => new CreatorProductsSection(
@@ -275,6 +370,36 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): CreatorSalesSection => new CreatorSalesSection(
 				$c->get( SalesReports::class ),
 				$c->get( Logger::class )
+			)
+		);
+
+		// Order history of the sales ledger (ADR-051): read only.
+		$container->set(
+			OrderHistoryPage::class,
+			static fn( Container $c ): OrderHistoryPage => new OrderHistoryPage(
+				new OrderHistory( $c->get( wpdb::class ) ),
+				new OrderHistoryDetails(
+					new SalesRepository( $c->get( wpdb::class ), $c->get( Transaction::class ) ),
+					new SalesLinePricingRepository( $c->get( wpdb::class ) ),
+					new SalesTaxRepository( $c->get( wpdb::class ) )
+				),
+				new OrderStatusLookup(),
+				$c->get( CreatorRepository::class ),
+				$c->get( Logger::class )
+			)
+		);
+
+		// Deletion of one order's history (ADR-052): the ledger's own lock,
+		// transaction and cache invalidation, audited in the same transaction.
+		$container->set(
+			OrderHistoryActions::class,
+			static fn( Container $c ): OrderHistoryActions => new OrderHistoryActions(
+				new OrderHistoryEraser(
+					new SalesRepository( $c->get( wpdb::class ), $c->get( Transaction::class ), SalesRepository::LOCK_TIMEOUT, $c->get( SalesCache::class ) ),
+					new OrderStatusLookup(),
+					$c->get( AuditTrail::class ),
+					$c->get( Logger::class )
+				)
 			)
 		);
 
@@ -395,13 +520,20 @@ final class WooCommerceModule implements Module {
 			ProductDetails::class,
 			static fn(): ProductDetails => new WooCommerceProductDetails()
 		);
+		// Realized profit of the creator's ledger rows (ADR-050): one
+		// aggregation for /me/products, /me/orders and /me/sales.
+		$container->set(
+			CreatorProfits::class,
+			static fn( Container $c ): CreatorProfits => new LedgerCreatorProfits( $c->get( wpdb::class ) )
+		);
 		$container->set(
 			MeProductsController::class,
 			static fn( Container $c ): MeProductsController => new MeProductsController(
 				$c->get( CreatorContext::class ),
 				$c->get( CreatorProducts::class ),
 				$c->get( ProductDetails::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( CreatorProfits::class )
 			)
 		);
 		$container->set(
@@ -418,7 +550,8 @@ final class WooCommerceModule implements Module {
 				$c->get( CreatorContext::class ),
 				$c->get( SalesOrderLines::class ),
 				$c->get( OrderLineEnricher::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( CreatorProfits::class )
 			)
 		);
 		// Sales statistics (phase 20, ADR-040): the ledger read model, current
@@ -433,7 +566,7 @@ final class WooCommerceModule implements Module {
 		);
 		$container->set(
 			SalesReport::class,
-			static fn( Container $c ): SalesReport => new SalesReport( $c->get( SalesStatistics::class ), $c->get( SalesProductNames::class ) )
+			static fn( Container $c ): SalesReport => new SalesReport( $c->get( SalesStatistics::class ), $c->get( SalesProductNames::class ), $c->get( CreatorProfits::class ) )
 		);
 		$container->set(
 			SalesReports::class,
@@ -458,6 +591,16 @@ final class WooCommerceModule implements Module {
 		// The dashboard sections that need WooCommerce (Products).
 		( new DashboardSectionRegistration() )->register();
 
+		// "Order history" (ADR-051). Hooked directly: WordPress fires
+		// admin_menu before admin_init, so it cannot wait for admin_init.
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( OrderHistoryPage::class )->add_menu();
+			},
+			OrderHistoryPage::PRIORITY
+		);
+
 		// Only wp-admin: the product category column in the Creators list, the
 		// product category and product links on the
 		// creator's edit page and the read-only column and filter in the
@@ -473,7 +616,10 @@ final class WooCommerceModule implements Module {
 				$container->get( CategorySyncScreen::class )->register();
 				$container->get( CreatorProductsActions::class )->register();
 				$container->get( CreatorProductsSection::class )->register();
+				$container->get( CreatorPricingActions::class )->register();
+				$container->get( CreatorPricingSection::class )->register();
 				$container->get( CreatorSalesSection::class )->register();
+				$container->get( OrderHistoryActions::class )->register();
 				$container->get( ProductListCreators::class )->register();
 				$container->get( SalesLedgerSettingsActions::class )->register();
 				$container->get( SalesLedgerSettingsSection::class )->register();

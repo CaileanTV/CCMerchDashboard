@@ -11,6 +11,8 @@ namespace MerchBoard\Tests\Integration\Database;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migration;
+use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
+use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Schema;
@@ -20,24 +22,29 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\MarkupBps;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use wpdb;
 
 final class MigrationTest extends IntegrationTestCase {
 
-	public function test_fresh_install_creates_schema_version_5(): void {
+	public function test_fresh_install_creates_schema_version_8(): void {
 		self::assertSame( 0, $this->migrator()->installed_version() );
 
 		$this->install();
 
-		self::assertSame( 5, $this->migrator()->installed_version() );
-		self::assertSame( '5', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( '8', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_CATEGORIES ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES_CYCLES ) );
+		self::assertSame( 0, $this->count_rows( Tables::PRICING_OVERRIDES ) );
+		self::assertFalse( $this->has_table( Tables::ITEM_PRICING ), 'Created by version 6, dropped by version 8.' );
+		self::assertSame( 0, $this->count_rows( Tables::SALES_LINE_PRICING ) );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ), 'Lock released.' );
 		self::assertFalse( get_transient( Installer::FAILURE_TRANSIENT ) );
 	}
@@ -52,15 +59,16 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 5, $this->migrator()->installed_version() );
-		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
+		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ) );
+		self::assertSame( array( '0' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT default_markup_bps FROM %i', $this->table( Tables::CREATORS ) ) ) );
 		self::assertSame( 'Før opgradering 🎸', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
 	}
 
 	public function test_upgrade_from_4_adds_only_the_sales_ledger_tables(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[5] );
+		unset( $migrations[5], $migrations[6], $migrations[7], $migrations[8] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		( new CreatorRepository( $this->wpdb ) )->create( 'Før salg', CreatorStatus::Active );
 		$before = $this->rows( Tables::CREATORS );
@@ -70,10 +78,146 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 5, $this->migrator()->installed_version() );
-		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
+		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES_CYCLES ) );
+	}
+
+	public function test_upgrade_from_5_adds_pricing_with_0_markup_for_existing_creators_and_keeps_the_ledger(): void {
+		$migrations = Schema::migrations();
+		unset( $migrations[6], $migrations[7], $migrations[8] );
+		( new Migrator( $this->wpdb, $migrations ) )->migrate();
+		$repository = new CreatorRepository( $this->wpdb );
+		$active     = $repository->create( 'Aktiv før prissætning', CreatorStatus::Active );
+		$inactive   = $repository->create( 'Inaktiv før prissætning', CreatorStatus::Inactive );
+		$before     = $this->rows( Tables::CREATORS );
+		$sales      = $this->rows( Tables::SALES );
+		$sales_cols = $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $this->table( Tables::SALES ) ) );
+
+		self::assertSame( 5, $this->migrator()->installed_version() );
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table( Tables::CREATORS ), 'default_markup_bps' ) ) );
+
+		$this->install();
+
+		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ), 'Existing creator data unchanged.' );
+
+		$markups = new CreatorMarkupRepository( $this->wpdb );
+		self::assertSame( 0, $markups->find( $active->id )?->bps );
+		self::assertSame( 0, $markups->find( $inactive->id )?->bps );
+		self::assertSame( $sales, $this->rows( Tables::SALES ), 'The sales ledger is untouched.' );
+		self::assertSame( $sales_cols, $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $this->table( Tables::SALES ) ) ), 'No profit column on the ledger.' );
+		self::assertSame( 0, $this->count_rows( Tables::PRICING_OVERRIDES ) );
+		self::assertFalse( $this->has_table( Tables::ITEM_PRICING ), 'Created by version 6, dropped by version 8.' );
+		self::assertSame( 0, $this->count_rows( Tables::SALES_LINE_PRICING ) );
+
+		// A creator created after the upgrade also starts at 0 %.
+		self::assertSame( 0, $markups->find( $repository->create( 'Ny', CreatorStatus::Active )->id )?->bps );
+	}
+
+	public function test_pricing_migration_is_idempotent_and_adds_the_column_once(): void {
+		$this->install();
+		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Markup', CreatorStatus::Active );
+		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( 1950 ) );
+
+		( new CreateCreatorPricingTables() )->up( $this->wpdb );
+		( new CreateCreatorPricingTables() )->up( $this->wpdb );
+
+		self::assertSame( 1950, ( new CreatorMarkupRepository( $this->wpdb ) )->find( $creator->id )?->bps, 'Re-running keeps the stored markup.' );
+		self::assertCount( 1, $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table( Tables::CREATORS ), 'default_markup_bps' ) ) );
+	}
+
+	public function test_upgrade_from_6_adds_vat_status_and_sales_tax_without_changing_existing_data(): void {
+		$migrations = Schema::migrations();
+		unset( $migrations[7], $migrations[8] );
+		( new Migrator( $this->wpdb, $migrations ) )->migrate();
+		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før moms', CreatorStatus::Active );
+		$this->wpdb->insert(
+			$this->table( Tables::SALES_LINE_PRICING ),
+			array(
+				'order_item_id' => 901,
+				'order_id'      => 900,
+				'creator_id'    => $creator->id,
+				'product_id'    => 20,
+				'variation_id'  => 0,
+				'status'        => 'unpriced',
+				'reason'        => 'never_applied',
+				'currency'      => 'DKK',
+				'captured_at'   => '2026-10-08 10:00:00',
+			)
+		);
+		$before = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
+
+		self::assertSame( 6, $this->migrator()->installed_version() );
+
+		$this->install();
+
+		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( '0', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT vat_registered FROM %i WHERE id = %d', $this->table( Tables::CREATORS ), $creator->id ) ), 'Existing creators: not VAT registered.' );
+		$after = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
+		self::assertIsArray( $after );
+		self::assertNull( $after['vat_registered'], 'Existing snapshots keep an unknown VAT status; never filled in.' );
+		unset( $after['vat_registered'], $after['share_bps'], $after['share_source'], $after['price_decimals'] );
+		self::assertSame( $before, $after );
+		self::assertSame( 0, $this->count_rows( Tables::SALES_TAX ) );
+	}
+
+	public function test_upgrade_from_7_switches_to_the_share_model_without_changing_history(): void {
+		$migrations = Schema::migrations();
+		unset( $migrations[8] );
+		( new Migrator( $this->wpdb, $migrations ) )->migrate();
+		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før andel', CreatorStatus::Active );
+		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( 1667 ) );
+		$this->wpdb->update( $this->table( Tables::CREATORS ), array( 'vat_registered' => 1 ), array( 'id' => $creator->id ) );
+		$this->wpdb->insert(
+			$this->table( Tables::SALES_LINE_PRICING ),
+			array(
+				'order_item_id'  => 901,
+				'order_id'       => 900,
+				'creator_id'     => $creator->id,
+				'product_id'     => 20,
+				'variation_id'   => 0,
+				'status'         => 'priced',
+				'currency'       => 'DKK',
+				'rule'           => 'default',
+				'markup_bps'     => 1900,
+				'base_unit'      => '120.0000',
+				'profit_unit'    => '22.8000',
+				'price_unit'     => '142.8000',
+				'captured_at'    => '2026-10-08 10:00:00',
+				'vat_registered' => 0,
+			)
+		);
+		$this->wpdb->insert( $this->table( Tables::PRICING_OVERRIDES ), array( 'product_id' => 20, 'creator_id' => $creator->id, 'fixed_profit' => '25.0000', 'currency' => 'DKK', 'created_at' => '2026-10-08 10:00:00', 'updated_at' => '2026-10-08 10:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->wpdb->insert( $this->table( Tables::ITEM_PRICING ), array( 'item_id' => 20, 'product_id' => 20, 'base_price' => '120.0000', 'base_currency' => 'DKK', 'base_updated_at' => '2026-10-08 10:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$creators = $this->rows( Tables::CREATORS );
+		$snapshot = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
+		$sales    = $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $this->table( Tables::SALES ) ) );
+
+		self::assertSame( 7, $this->migrator()->installed_version() );
+
+		$this->install();
+
+		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( $creators, $this->rows( Tables::CREATORS ), 'Markup and VAT status unchanged.' );
+
+		$after = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
+		self::assertIsArray( $after );
+		self::assertNull( $after['share_bps'], 'The share of an existing snapshot is unknown and never filled in.' );
+		self::assertNull( $after['share_source'] );
+		self::assertNull( $after['price_decimals'] );
+		unset( $after['share_bps'], $after['share_source'], $after['price_decimals'] );
+		self::assertSame( $snapshot, $after, 'The existing snapshot is unchanged.' );
+
+		self::assertSame( array( 'product_id', 'creator_id', 'markup_bps', 'created_at', 'updated_at' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $this->table( Tables::PRICING_OVERRIDES ) ) ) );
+		self::assertSame( 0, $this->count_rows( Tables::PRICING_OVERRIDES ), 'A fixed amount cannot become a share without guessing.' );
+		self::assertFalse( $this->has_table( Tables::ITEM_PRICING ) );
+		self::assertSame( $sales, $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $this->table( Tables::SALES ) ) ), 'The ledger is untouched.' );
+
+		// Re-running the migration changes nothing.
+		( new AddCreatorShareModel() )->up( $this->wpdb );
+		self::assertSame( 0, $this->count_rows( Tables::PRICING_OVERRIDES ) );
 	}
 
 	public function test_current_schema_runs_no_queries(): void {
@@ -96,7 +240,7 @@ final class MigrationTest extends IntegrationTestCase {
 		$this->install();
 		$this->install();
 
-		self::assertSame( 5, $this->migrator()->installed_version() );
+		self::assertSame( 8, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 	}
 
@@ -180,7 +324,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		self::assertTrue( $this->migrator()->migrate() );
 
-		self::assertSame( 5, $this->migrator()->installed_version() );
+		self::assertSame( 8, $this->migrator()->installed_version() );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ) );
 	}
 
@@ -257,6 +401,26 @@ final class MigrationTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * Rows without the column added by migration 6, to compare with rows read
+	 * before it; fails when a row's markup is not the default 0.
+	 *
+	 * @param string $table Tables constant.
+	 * @return list<array<string, string|null>>
+	 */
+	private function rows_without_markup( string $table ): array {
+		return array_map(
+			static function ( array $row ): array {
+				self::assertSame( '0', $row['default_markup_bps'] ?? null, 'Existing creators get 0 %.' );
+				self::assertSame( '0', $row['vat_registered'] ?? null, 'Existing creators are not VAT registered (ADR-048).' );
+				unset( $row['default_markup_bps'], $row['vat_registered'] );
+
+				return $row;
+			},
+			$this->rows( $table )
+		);
+	}
+
+	/**
 	 * Option value straight from the database (no cache).
 	 *
 	 * @param string $name Option name.
@@ -281,5 +445,14 @@ final class MigrationTest extends IntegrationTestCase {
 				'autoload'     => 'off',
 			)
 		);
+	}
+
+	/**
+	 * Whether a plugin table exists.
+	 *
+	 * @param string $table Tables constant.
+	 */
+	private function has_table( string $table ): bool {
+		return null !== $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table( $table ) ) );
 	}
 }

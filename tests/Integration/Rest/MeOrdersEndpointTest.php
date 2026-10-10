@@ -31,6 +31,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesOrderLines;
 use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeOrderLineEnricher;
 use MerchBoard\Tests\Integration\Support\FakeOrderReader;
@@ -48,7 +49,7 @@ final class MeOrdersEndpointTest extends IntegrationTestCase {
 	/**
 	 * The only keys an order line may have (ADR-039 P3).
 	 */
-	private const KEYS = array( 'line_id', 'order_number', 'date', 'status', 'status_label', 'product_name', 'quantity', 'refunded', 'counted' );
+	private const KEYS = array( 'line_id', 'order_number', 'date', 'status', 'status_label', 'product_name', 'quantity', 'refunded', 'counted', 'profit', 'order_profit', 'order_lines' );
 
 	private CreatorService $creators;
 
@@ -79,7 +80,7 @@ final class MeOrdersEndpointTest extends IntegrationTestCase {
 			static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-09-30 12:00:00', new DateTimeZone( 'UTC' ) )
 		);
 		$this->enricher = new FakeOrderLineEnricher();
-		$controller     = new MeOrdersController( $this->service( CreatorContext::class ), new SalesOrderLines( $this->wpdb ), $this->enricher, $this->service( Logger::class ) );
+		$controller     = new MeOrdersController( $this->service( CreatorContext::class ), new SalesOrderLines( $this->wpdb ), $this->enricher, $this->service( Logger::class ), new LedgerCreatorProfits( $this->wpdb ) );
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();
 		};
@@ -190,6 +191,18 @@ final class MeOrdersEndpointTest extends IntegrationTestCase {
 					'quantity'     => 2,
 					'refunded'     => false,
 					'counted'      => true,
+					// No pricing snapshot and no tax: unknown, never 0 (ADR-050).
+					'profit'       => array(
+						'currency' => 'DKK',
+						'status'   => 'unknown',
+						'amount'   => null,
+					),
+					'order_profit' => array(
+						'currency' => 'DKK',
+						'status'   => 'unknown',
+						'amount'   => null,
+					),
+					'order_lines'  => 1,
 				),
 			),
 			$data
@@ -197,6 +210,48 @@ final class MeOrdersEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( '1', '1' ), self::totals( $response ) );
 		self::assertSame( array( array( 1011 ) ), $this->enricher->calls, 'Only the creator\'s line reaches the enrichment.' );
 		self::assertStringNotContainsString( 'Their', (string) wp_json_encode( $data ) );
+	}
+
+	public function test_each_line_has_its_profit_and_its_orders_total_with_signs(): void {
+		$mine   = $this->creator_user( 'mine', 'Mine', CreatorStatus::Active );
+		$theirs = $this->creator_user( 'theirs', 'Theirs', CreatorStatus::Active );
+		$me     = $this->creator_id( $mine );
+		// Order 301: two lines of mine (100.00 incl. VAT each at 20 %) and one of theirs.
+		$this->snapshot( 3011, 301, $me, 2000 );
+		$this->snapshot( 3012, 301, $me, 2000 );
+		$this->place(
+			301,
+			'completed',
+			array(
+				new OrderLineSnapshot( 3011, 20, 0, 'Tee', 1, SalesAmount::parse( '80' ), $me, SalesAmount::parse( '20' ) ),
+				new OrderLineSnapshot( 3012, 20, 0, 'Cap', 1, SalesAmount::parse( '80' ), $me, SalesAmount::parse( '20' ) ),
+				new OrderLineSnapshot( 3013, 20, 0, 'Their hoodie', 1, SalesAmount::parse( '800' ), $this->creator_id( $theirs ), SalesAmount::parse( '200' ) ),
+			)
+		);
+		// Order 302: one line of mine without a snapshot (unknown), then cancelled.
+		$this->place( 302, 'completed', array( $this->line( 3021, 1, $mine, 'Old tee' ) ) );
+		$this->place( 302, 'cancelled', array( $this->line( 3021, 1, $mine, 'Old tee' ) ) );
+		wp_set_current_user( $mine );
+
+		$data = array_column( (array) $this->request()->get_data(), null, 'line_id' );
+
+		$complete = static fn( string $amount ): array => array(
+			'currency' => 'DKK',
+			'status'   => 'complete',
+			'amount'   => $amount,
+		);
+		self::assertSame( array( 3021, 3012, 3011 ), array_map( 'intval', array_keys( $data ) ), 'Newest first, then by line.' );
+		self::assertSame( $complete( '20.0000' ), $data[3011]['profit'] );
+		self::assertSame( $complete( '40.0000' ), $data[3011]['order_profit'], 'Both of my lines, never the other creator\'s.' );
+		self::assertSame( 2, $data[3011]['order_lines'] );
+		self::assertSame( $data[3011]['order_profit'], $data[3012]['order_profit'] );
+		$unknown = array(
+			'currency' => 'DKK',
+			'status'   => 'unknown',
+			'amount'   => null,
+		);
+		self::assertSame( $unknown, $data[3021]['profit'], 'Sale and reversal without a snapshot: unknown, not 0.' );
+		self::assertSame( 1, $data[3021]['order_lines'] );
 	}
 
 	public function test_request_parameters_cannot_select_another_creator(): void {
@@ -328,9 +383,18 @@ final class MeOrdersEndpointTest extends IntegrationTestCase {
 		wp_set_current_user( $mine );
 
 		$data = (array) $this->request()->get_data();
-		$json = (string) wp_json_encode( $data );
 
 		self::assertSame( self::KEYS, array_keys( (array) $data[0] ) );
+
+		// The only amounts are the creator's profit objects (ADR-050); no sales amount.
+		$line = (array) $data[0];
+		foreach ( array( 'profit', 'order_profit' ) as $field ) {
+			self::assertSame( array( 'currency', 'status', 'amount' ), array_keys( (array) $line[ $field ] ) );
+			unset( $line[ $field ] );
+		}
+		$json = (string) wp_json_encode( array( $line ) );
+		self::assertStringNotContainsString( 'net_amount', (string) wp_json_encode( $data ) );
+		self::assertStringNotContainsString( 'total', (string) wp_json_encode( $data ) );
 
 		foreach ( array( 'creator', 'product_id', 'variation_id', 'order_id', 'customer', 'email', 'phone', 'address', 'city', 'postcode', 'country', 'note', 'ip', 'payment', 'net_amount', 'amount', 'total', 'currency', 'DKK', 'event_key', 'cycle' ) as $forbidden ) {
 			self::assertStringNotContainsString( $forbidden, $json );
@@ -373,6 +437,37 @@ final class MeOrdersEndpointTest extends IntegrationTestCase {
 	 */
 	private function line( int $item, int $quantity, int $user_id, string $name = '' ): OrderLineSnapshot {
 		return new OrderLineSnapshot( $item, 20, 0, '' === $name ? 'Line ' . $item : $name, $quantity, SalesAmount::parse( (string) ( 50 * $quantity ) ), $this->creator_id( $user_id ) );
+	}
+
+	/**
+	 * A share snapshot of an order line (product 20, DKK, 2 decimals, not VAT registered).
+	 *
+	 * @param int $item       Order item.
+	 * @param int $order_id   Order.
+	 * @param int $creator_id Creator.
+	 * @param int $share_bps  Share.
+	 */
+	private function snapshot( int $item, int $order_id, int $creator_id, int $share_bps ): void {
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::SALES_LINE_PRICING ),
+				array(
+					'order_item_id'  => $item,
+					'order_id'       => $order_id,
+					'creator_id'     => $creator_id,
+					'product_id'     => 20,
+					'variation_id'   => 0,
+					'status'         => 'share',
+					'currency'       => 'DKK',
+					'captured_at'    => '2026-09-01 10:00:00',
+					'share_bps'      => $share_bps,
+					'share_source'   => 'creator',
+					'price_decimals' => 2,
+					'vat_registered' => 0,
+				)
+			)
+		);
 	}
 
 	/**

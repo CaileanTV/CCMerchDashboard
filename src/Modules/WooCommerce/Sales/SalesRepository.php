@@ -41,7 +41,9 @@ defined( 'ABSPATH' ) || exit;
  *    nothing, so no row is committed outside the transaction.
  * 3. The lock is released in `finally`.
  *
- * Rows are only ever inserted, never updated or deleted. Inserting a row
+ * Rows are only ever inserted, never updated; the one exception is
+ * erase_order(), which deletes an erased test order's whole history
+ * (ADR-052). Inserting a row
  * whose identity is already stored (`event_key`; order/cycle/event) is a
  * recorded no-op; any other database error is a DatabaseException.
  *
@@ -203,6 +205,11 @@ final class SalesRepository {
 					if ( $this->insert_entry( $entry ) ) {
 						$inserted_entries[]             = $entry->event_key;
 						$creators[ $entry->creator_id ] = $entry->creator_id;
+
+						// The row's actual tax (ADR-048), only for a row written now.
+						if ( isset( $write->taxes[ $entry->event_key ] ) ) {
+							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ] );
+						}
 					} else {
 						$skipped_entries[] = $entry->event_key;
 					}
@@ -224,6 +231,89 @@ final class SalesRepository {
 		$this->assert_same_connection( $order_id );
 
 		return $result;
+	}
+
+	/**
+	 * Permanently deletes Merch Dashboard's stored history of one order: its
+	 * ledger rows, cycle events, stored tax and profit snapshots, in one
+	 * transaction under the order's lock (ADR-052, the only exception to the
+	 * append-only rule; the caller decides whether the order may be erased).
+	 * $audit runs in the same transaction after the deletes, so the deletion
+	 * and its audit record are committed together or not at all. Every DELETE
+	 * is guarded by the lock's connection, like the inserts, so a reconnect
+	 * deletes nothing outside the transaction. After COMMIT, the creators of
+	 * the deleted rows get a new cache generation.
+	 *
+	 * @phpstan-param callable(array{ledger_rows: int, cycle_events: int, tax_rows: int, snapshots: int}, list<int>): void $audit
+	 *
+	 * @param int      $order_id WooCommerce order.
+	 * @param callable $audit    Records the deletion (deleted rows per table, creator ids).
+	 * @return array{ledger_rows: int, cycle_events: int, tax_rows: int, snapshots: int, creator_ids: list<int>}
+	 * @throws DatabaseException When the lock is not held or a statement fails (rolled back).
+	 * @throws SalesConnectionChangedException When the connection changed (rolled back; after COMMIT the outcome is unknown).
+	 * @throws Throwable Whatever $audit throws (rolled back).
+	 */
+	public function erase_order( int $order_id, callable $audit ): array {
+		$this->assert_locked( $order_id );
+
+		$result = $this->transaction->run(
+			function () use ( $order_id, $audit ): array {
+				$wpdb     = $this->wpdb;
+				$creators = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT creator_id FROM %i WHERE order_id = %d ORDER BY creator_id FOR UPDATE', $this->table( Tables::SALES ), $order_id ) );
+
+				if ( '' !== $wpdb->last_error ) {
+					throw new DatabaseException( 'Could not read the order\'s sales ledger.', array( 'order_id' => $order_id ) );
+				}
+
+				$counts = array(
+					'ledger_rows'  => $this->guarded_delete( Tables::SALES, $order_id ),
+					'cycle_events' => $this->guarded_delete( Tables::SALES_CYCLES, $order_id ),
+					'tax_rows'     => $this->guarded_delete( Tables::SALES_TAX, $order_id ),
+					'snapshots'    => $this->guarded_delete( Tables::SALES_LINE_PRICING, $order_id ),
+				);
+				$ids    = array_map( 'intval', $creators );
+
+				// Before the audit record and before COMMIT: a changed connection means the transaction is gone.
+				$this->assert_same_connection( $order_id );
+				$audit( $counts, $ids );
+				$this->assert_same_connection( $order_id );
+
+				return $counts + array( 'creator_ids' => $ids );
+			}
+		);
+
+		if ( array() !== $result['creator_ids'] ) {
+			$this->cache->invalidate( $result['creator_ids'] );
+		}
+
+		$this->assert_same_connection( $order_id );
+
+		return $result;
+	}
+
+	/**
+	 * Deletes an order's rows of one ledger table on the lock's connection.
+	 *
+	 * @param string $table    Tables constant with an `order_id` column.
+	 * @param int    $order_id WooCommerce order.
+	 * @return int Deleted rows.
+	 * @throws DatabaseException When the statement fails.
+	 */
+	private function guarded_delete( string $table, int $order_id ): int {
+		$wpdb = $this->wpdb;
+		$sql  = $wpdb->prepare( 'DELETE FROM %i WHERE order_id = %d AND CONNECTION_ID() = %d', $this->table( $table ), $order_id, $this->lock_connection );
+
+		if ( null === $sql ) {
+			throw new DatabaseException( 'Could not prepare the deletion of the order\'s stored history.', array( 'order_id' => $order_id ) );
+		}
+
+		$result = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is the result of $wpdb->prepare().
+
+		if ( false === $result || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not delete the order\'s stored history.', array( 'order_id' => $order_id ) );
+		}
+
+		return (int) $result;
 	}
 
 	/**
@@ -284,6 +374,40 @@ final class SalesRepository {
 	}
 
 	/**
+	 * Appends the actual tax of a ledger row (ADR-048), in the same session
+	 * guard as the row. Requires the order's lock; used by write() right after
+	 * the row was inserted. Append-only: an existing tax row is kept.
+	 *
+	 * @param SalesEntry $entry The row just inserted.
+	 * @param int        $tax   Its signed tax in 1/10000 units.
+	 * @throws DatabaseException When the lock is not held or the tax cannot be stored.
+	 */
+	private function insert_tax( SalesEntry $entry, int $tax ): void {
+		$this->assert_locked( $entry->order_id );
+
+		$wpdb     = $this->wpdb;
+		$table    = $this->table( Tables::SALES_TAX );
+		$inserted = $this->guarded_insert(
+			$wpdb->prepare(
+				'INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at) SELECT %s, %d, %d, %s, %s, %s FROM DUAL WHERE CONNECTION_ID() = %d',
+				$table,
+				$entry->event_key,
+				$entry->order_id,
+				$entry->order_item_id,
+				SalesAmount::format( $tax ),
+				$entry->currency,
+				current_time( 'mysql', true ),
+				$this->lock_connection
+			),
+			$entry->order_id
+		);
+
+		if ( ! $inserted && null === $wpdb->get_var( $wpdb->prepare( 'SELECT event_key FROM %i WHERE event_key = %s FOR UPDATE', $table, $entry->event_key ) ) ) {
+			throw new DatabaseException( 'Could not store the sales tax.', array( 'order_id' => $entry->order_id ) );
+		}
+	}
+
+	/**
 	 * Appends a cycle event. Requires the order's lock; use it through write().
 	 *
 	 * @param SalesCycleEvent $event New event.
@@ -332,7 +456,40 @@ final class SalesRepository {
 	 * @throws DatabaseException When a query fails or a stored row is invalid (InvalidArgumentException for a non-positive id).
 	 */
 	public function state( int $order_id ): SalesLedgerState {
-		return new SalesLedgerState( $order_id, $this->entries_for_order( $order_id ), $this->cycle_state( $order_id ) );
+		return new SalesLedgerState( $order_id, $this->entries_for_order( $order_id ), $this->cycle_state( $order_id ), $this->taxes_for_order( $order_id ) );
+	}
+
+	/**
+	 * Stored actual tax of an order's ledger rows by event key (ADR-048);
+	 * rows without a tax row are missing (unknown).
+	 *
+	 * @param int $order_id WooCommerce order.
+	 * @return array<string, int>
+	 * @throws DatabaseException When the query fails or a stored amount is invalid.
+	 */
+	public function taxes_for_order( int $order_id ): array {
+		self::assert_positive_id( $order_id, 'Order id' );
+
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT event_key, tax_amount FROM %i WHERE order_id = %d', $this->table( Tables::SALES_TAX ), $order_id ), ARRAY_A );
+
+		if ( ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the sales tax.' );
+		}
+
+		$taxes = array();
+
+		foreach ( $rows as $row ) {
+			$amount = (string) ( $row['tax_amount'] ?? '' );
+
+			if ( 1 !== preg_match( '/^-?\d{1,15}(?:\.\d{1,4})?$/', $amount ) ) {
+				throw new DatabaseException( 'Invalid sales tax row.' );
+			}
+
+			$taxes[ (string) ( $row['event_key'] ?? '' ) ] = SalesAmount::parse( $amount );
+		}
+
+		return $taxes;
 	}
 
 	/**
