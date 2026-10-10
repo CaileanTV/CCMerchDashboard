@@ -34,7 +34,7 @@ final class SchemaTest extends IntegrationTestCase {
 				// Migration 6 (phase 22); 0 for existing and new creators.
 				'default_markup_bps' => array( 'int', 'unsigned', 'NO', '' ),
 				// Migration 7 (ADR-048); 0 = not VAT registered.
-				'vat_registered'     => array( 'tinyint(1)', 'unsigned', 'NO', '' ),
+				'vat_registered'     => array( 'tinyint', 'unsigned', 'NO', '' ),
 			),
 			$this->columns( Tables::CREATORS )
 		);
@@ -190,7 +190,7 @@ final class SchemaTest extends IntegrationTestCase {
 				'price_unit'     => array( 'decimal(19,4)', '', 'YES', '' ),
 				'captured_at'    => array( 'datetime', '', 'NO', '' ),
 				// Migration 7 (ADR-048); NULL = unknown (snapshots from before).
-				'vat_registered' => array( 'tinyint(1)', 'unsigned', 'YES', '' ),
+				'vat_registered' => array( 'tinyint', 'unsigned', 'YES', '' ),
 				// Migration 8 (ADR-049); NULL = unknown share (snapshots from before).
 				'share_bps'      => array( 'int', 'unsigned', 'YES', '' ),
 				'share_source'   => array( 'varchar(8)', '', 'YES', '' ),
@@ -299,8 +299,9 @@ final class SchemaTest extends IntegrationTestCase {
 	 * Columns as [type without integer display width, unsigned, nullable, extra].
 	 *
 	 * MySQL 8.0.19+ no longer reports integer display widths (bigint(20) →
-	 * bigint, int(10) → int, tinyint(3) → tinyint; tinyint(1) is kept), MariaDB
-	 * does; both are normalized here.
+	 * bigint, int(10) → int, tinyint(3) → tinyint; only a signed tinyint(1)
+	 * keeps it, `tinyint(1) unsigned` becomes `tinyint unsigned`), MariaDB
+	 * reports them all; every width is removed here so both compare alike.
 	 *
 	 * @param string $table Tables constant.
 	 * @return array<string, list<string>>
@@ -319,7 +320,7 @@ final class SchemaTest extends IntegrationTestCase {
 			$type = strtolower( (string) $row['COLUMN_TYPE'] );
 
 			$columns[ (string) $row['COLUMN_NAME'] ] = array(
-				(string) preg_replace( '/^(bigint|int|tinyint)\((?!1\))\d+\)/', '$1', str_replace( ' unsigned', '', $type ) ),
+				(string) preg_replace( '/^(bigint|int|tinyint)\(\d+\)/', '$1', str_replace( ' unsigned', '', $type ) ),
 				str_contains( $type, 'unsigned' ) ? 'unsigned' : '',
 				(string) $row['IS_NULLABLE'],
 				strtolower( (string) $row['EXTRA'] ),
