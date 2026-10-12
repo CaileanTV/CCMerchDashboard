@@ -29,10 +29,11 @@ defined( 'ABSPATH' ) || exit;
  * - the holding period in days (planning decision 2, default 14);
  * - the payout gift card provider (ADR-057, default none);
  * - a creator's settlement start (D3, D6, ADR-054): set, changed or removed
- *   under the creator's payout lock, so no request runs against the old
- *   window meanwhile. It only bounds the window; no ledger row is changed or
- *   filled in. D3 locks it once the creator has a settlement document
- *   (ADR-060). A start in the future is refused.
+ *   under the creator's payout lock and row lock (CreatorRowLock), so no
+ *   request runs against the old window meanwhile. It only bounds the
+ *   window; no ledger row is changed or filled in. D3 locks it once the
+ *   creator has a settlement document (ADR-060). A start in the future is
+ *   refused.
  *
  * A failed read or write is a DatabaseException; the transaction is rolled
  * back.
@@ -176,7 +177,7 @@ final class PayoutSettings {
 			$creator_id,
 			fn(): bool => $this->transaction->run(
 				function () use ( $creator_id, $start, $now ): bool {
-					$previous = $this->payouts->settlement_start( $creator_id, true );
+					$previous = CreatorRowLock::acquire( $this->payouts, $creator_id );
 
 					if ( self::stored( $previous ) === self::stored( $start ) ) {
 						return false;

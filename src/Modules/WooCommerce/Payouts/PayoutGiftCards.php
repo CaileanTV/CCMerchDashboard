@@ -33,7 +33,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * **Registration** (admin, `merchboard_manage_payouts`): an admin created
  * the card by hand in the plugin and enters its code. Under the creator's
- * payout lock and in one transaction the payout is read again FOR UPDATE,
+ * payout lock and in one transaction the creator's row is locked first
+ * (CreatorRowLock), the payout is read again FOR UPDATE,
  * the chosen provider must be available, the card is read by its code and
  * must be exactly one card, active, not expired, in the payout's currency,
  * with amount = balance = the payout amount (integer units, no VAT), and on
@@ -109,10 +110,13 @@ final class PayoutGiftCards {
 			throw new PayoutException( PayoutException::WRONG_METHOD );
 		}
 
+		$creator_id = $found->creator_id;
+
 		return $this->payouts->with_creator_lock(
-			$found->creator_id,
+			$creator_id,
 			fn(): Payout => $this->transaction->run(
-				function () use ( $payout_id, $code ): Payout {
+				function () use ( $creator_id, $payout_id, $code ): Payout {
+					CreatorRowLock::acquire( $this->payouts, $creator_id );
 					$payout   = $this->payouts->find( $payout_id, true ) ?? throw new PayoutException( PayoutException::NOT_FOUND );
 					$provider = $this->providers->usable() ?? throw new PayoutException( PayoutException::GIFT_CARDS_UNAVAILABLE );
 					$card     = $this->read( $provider, $payout->id, static fn(): ?GiftCardSnapshot => $provider->find_by_code( $code ) )

@@ -26,7 +26,8 @@ defined( 'ABSPATH' ) || exit;
  * capability itself; the admin screens are PayoutsPage and PayoutActions.
  *
  * A decision runs under the payout creator's lock and in one transaction:
- * the row is read FOR UPDATE, the status checked, the conditional UPDATE
+ * the creator's row is locked first (CreatorRowLock), the payout row is read
+ * FOR UPDATE, the status checked, the conditional UPDATE
  * run, the details emptied and the audit record written. Repeating a
  * decision that already happened returns the payout unchanged ("already
  * handled"); a different decision on a decided payout is refused.
@@ -206,10 +207,13 @@ final class PayoutDecisions {
 			throw new PayoutException( PayoutException::NOT_FOUND );
 		}
 
+		$creator_id = $found->creator_id;
+
 		return $this->payouts->with_creator_lock(
-			$found->creator_id,
+			$creator_id,
 			fn(): Payout => $this->transaction->run(
-				function () use ( $payout_id, $target, $decide ): Payout {
+				function () use ( $creator_id, $payout_id, $target, $decide ): Payout {
+					CreatorRowLock::acquire( $this->payouts, $creator_id );
 					$payout = $this->payouts->find( $payout_id, true ) ?? throw new PayoutException( PayoutException::NOT_FOUND );
 
 					if ( $target === $payout->status ) {

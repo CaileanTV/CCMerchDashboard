@@ -42,6 +42,10 @@ defined( 'ABSPATH' ) || exit;
  *   held: one makes the currency's amount unknown (ProfitSummary::amount_units()
  *   is null), so nothing can be requested against it.
  *
+ * earned() and unsettled_rows() select rows with the same private helpers
+ * (window(), known() and RELEASED), so the balance and a settlement document
+ * can never apply different rules (K6.1).
+ *
  * The non-VAT-registered payout is ROUND( profit × 0.8, price_decimals ):
  * exact DECIMAL arithmetic rounding half away from zero, the same as
  * CreatorShare::payout() (PricingMath::share() with 8 000 bps). Integration
@@ -85,6 +89,12 @@ final class LedgerCreatorPayouts {
 	END END';
 
 	/**
+	 * D2: when a row is released. Placeholders: now, then now minus the
+	 * holding period (release_times()).
+	 */
+	private const RELEASED = '( ( ( ' . self::PAYOUT . ' ) < 0 AND r.occurred_at <= %s ) OR ( ( ' . self::PAYOUT . ' ) >= 0 AND r.occurred_at < %s ) )';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb $wpdb Database.
@@ -116,29 +126,29 @@ final class LedgerCreatorPayouts {
 			return array();
 		}
 
-		$released = $now->sub( new DateInterval( 'P' . $holding_days . 'D' ) );
-		$counted  = '( ( ( ' . self::PAYOUT . ' ) < 0 AND r.occurred_at <= %s ) OR ( ( ' . self::PAYOUT . ' ) >= 0 AND r.occurred_at < %s ) )';
-		$known    = null === $start ? self::KNOWN : '( ' . self::KNOWN . ' AND s.id IS NOT NULL )';
-		$where    = null === $start ? 'r.creator_id = %d' : 'r.creator_id = %d AND ( s.id IS NULL OR s.occurred_at >= %s )';
-		$args     = null === $start ? array( $creator_id ) : array( $creator_id, self::utc( $start ) );
-		$columns  = 'r.currency,
-			SUM( CASE WHEN ' . $known . ' AND ' . $counted . ' THEN ' . self::PAYOUT . ' ELSE 0 END ) AS earned,
-			SUM( CASE WHEN ' . $known . ' AND ' . $counted . ' THEN 1 ELSE 0 END ) AS known_rows,
+		$known   = self::known( $start );
+		$times   = self::release_times( $now, $holding_days );
+		$columns = 'r.currency,
+			SUM( CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN ' . self::PAYOUT . ' ELSE 0 END ) AS earned,
+			SUM( CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN 1 ELSE 0 END ) AS known_rows,
 			SUM( CASE WHEN ' . $known . ' THEN 0 ELSE 1 END ) AS unknown_rows';
-		$wpdb     = $this->wpdb;
-		$sql      = $wpdb->prepare(
-			"SELECT {$columns} " . self::FROM . " WHERE {$where} GROUP BY r.currency HAVING known_rows + unknown_rows > 0 ORDER BY r.currency", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two times of $counted twice (earned, known rows), the table names, then the filter's values.
-			self::utc( $now ),
-			self::utc( $released ),
-			self::utc( $now ),
-			self::utc( $released ),
-			Tables::name( $wpdb, Tables::SALES ),
-			Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
-			Tables::name( $wpdb, Tables::SALES_TAX ),
-			Tables::name( $wpdb, Tables::SALES ),
-			...$args
+		$wpdb    = $this->wpdb;
+		$sql     = $wpdb->prepare(
+			"SELECT {$columns} " . self::FROM . ' WHERE r.creator_id = %d' . self::window( $start ) . ' GROUP BY r.currency HAVING known_rows + unknown_rows > 0 ORDER BY r.currency', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times twice (earned, known rows), the table names, the creator, then the window's values.
+			...array_merge(
+				$times,
+				$times,
+				array(
+					Tables::name( $wpdb, Tables::SALES ),
+					Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
+					Tables::name( $wpdb, Tables::SALES_TAX ),
+					Tables::name( $wpdb, Tables::SALES ),
+					$creator_id,
+				),
+				self::window_args( $start )
+			)
 		);
-		$rows     = is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; payouts are never cached (they change with the time and with every request).
+		$rows    = is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; payouts are never cached (they change with the time and with every request).
 
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new DatabaseException( 'Could not read the creator\'s payout.' );
@@ -197,23 +207,29 @@ final class LedgerCreatorPayouts {
 			throw new InvalidArgumentException( 'The holding period is out of range.' );
 		}
 
-		$known = null === $start ? self::KNOWN : '( ' . self::KNOWN . ' AND s.id IS NOT NULL )';
-		$where = 'r.creator_id = %d AND r.currency = %s AND d.event_key IS NULL' . ( null === $start ? '' : ' AND ( s.id IS NULL OR s.occurred_at >= %s )' );
-		$args  = null === $start ? array( $creator_id, $currency ) : array( $creator_id, $currency, self::utc( $start ) );
+		$known = self::known( $start );
 		$wpdb  = $this->wpdb;
 		$query = 'SELECT r.event_key, r.order_id, r.order_item_id, r.product_id, r.variation_id, r.item_name, r.type, r.quantity, r.net_amount, r.occurred_at, t.tax_amount, p.share_bps, p.vat_registered, p.price_decimals,
 			CASE WHEN ' . $known . ' THEN 1 ELSE 0 END AS known_row,
+			CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN 1 ELSE 0 END AS released_row,
 			CASE WHEN ' . $known . ' THEN ' . LedgerCreatorProfits::PROFIT . ' ELSE NULL END AS profit,
 			CASE WHEN ' . $known . ' THEN ' . self::PAYOUT . ' ELSE NULL END AS payout '
-			. self::FROM . " LEFT JOIN %i d ON d.event_key = r.event_key WHERE {$where} ORDER BY r.occurred_at, r.id" . ( $lock ? ' LOCK IN SHARE MODE' : '' );
+			. self::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key WHERE r.creator_id = %d AND r.currency = %s AND d.event_key IS NULL' . self::window( $start ) . ' ORDER BY r.occurred_at, r.id' . ( $lock ? ' LOCK IN SHARE MODE' : '' );
 		$sql   = $wpdb->prepare(
-			$query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the table names, then the filter's values.
-			Tables::name( $wpdb, Tables::SALES ),
-			Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
-			Tables::name( $wpdb, Tables::SALES_TAX ),
-			Tables::name( $wpdb, Tables::SALES ),
-			Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
-			...$args
+			$query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times, the table names, the creator and currency, then the window's values.
+			...array_merge(
+				self::release_times( $now, $holding_days ),
+				array(
+					Tables::name( $wpdb, Tables::SALES ),
+					Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
+					Tables::name( $wpdb, Tables::SALES_TAX ),
+					Tables::name( $wpdb, Tables::SALES ),
+					Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
+					$creator_id,
+					$currency,
+				),
+				self::window_args( $start )
+			)
 		);
 		$rows  = is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; settlements are never cached.
 
@@ -221,9 +237,7 @@ final class LedgerCreatorPayouts {
 			throw new DatabaseException( 'Could not read the creator\'s unsettled rows.' );
 		}
 
-		$released = self::utc( $now->sub( new DateInterval( 'P' . $holding_days . 'D' ) ) );
-		$until    = self::utc( $now );
-		$result   = array();
+		$result = array();
 
 		foreach ( $rows as $row ) {
 			if ( '1' !== (string) $row['known_row'] ) {
@@ -234,8 +248,8 @@ final class LedgerCreatorPayouts {
 				$payout   = SalesAmount::parse( (string) $row['payout'] );
 				$occurred = (string) $row['occurred_at'];
 
-				// D2: a negative row counts at once, a row ≥ 0 after the holding period.
-				if ( $payout < 0 ? $occurred > $until : $occurred >= $released ) {
+				// D2, as in earned(): a held row is not settled yet.
+				if ( '1' !== (string) $row['released_row'] ) {
 					continue;
 				}
 
@@ -263,6 +277,50 @@ final class LedgerCreatorPayouts {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * When a row in the window is known: its payout is known and, with a
+	 * start, its sale row exists (a row that cannot be placed is unknown).
+	 *
+	 * @param DateTimeImmutable|null $start Settlement start, null for the whole history.
+	 * @return literal-string
+	 */
+	private static function known( ?DateTimeImmutable $start ): string {
+		return null === $start ? self::KNOWN : '( ' . self::KNOWN . ' AND s.id IS NOT NULL )';
+	}
+
+	/**
+	 * D1: the condition that keeps a row in the window, appended to a WHERE
+	 * clause; its value comes from window_args(). A row whose sale row is
+	 * missing stays in the window (and is unknown).
+	 *
+	 * @param DateTimeImmutable|null $start Settlement start, null for the whole history.
+	 * @return literal-string
+	 */
+	private static function window( ?DateTimeImmutable $start ): string {
+		return null === $start ? '' : ' AND ( s.id IS NULL OR s.occurred_at >= %s )';
+	}
+
+	/**
+	 * The values of window().
+	 *
+	 * @param DateTimeImmutable|null $start Settlement start, null for the whole history.
+	 * @return list<string>
+	 */
+	private static function window_args( ?DateTimeImmutable $start ): array {
+		return null === $start ? array() : array( self::utc( $start ) );
+	}
+
+	/**
+	 * The values of RELEASED.
+	 *
+	 * @param DateTimeImmutable $now          The time of the calculation.
+	 * @param int               $holding_days Holding period for rows with a payout ≥ 0.
+	 * @return list<string>
+	 */
+	private static function release_times( DateTimeImmutable $now, int $holding_days ): array {
+		return array( self::utc( $now ), self::utc( $now->sub( new DateInterval( 'P' . $holding_days . 'D' ) ) ) );
 	}
 
 	/**

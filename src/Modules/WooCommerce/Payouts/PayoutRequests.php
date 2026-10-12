@@ -33,7 +33,8 @@ defined( 'ABSPATH' ) || exit;
  * takes a creator id from input on its own.
  *
  * A request runs under the creator's payout lock and in one transaction:
- * the request key is looked up (a resent request returns the stored
+ * the creator's row is locked first (CreatorRowLock), the request key is
+ * looked up (a resent request returns the stored
  * payout), the limits are checked (3 pending, 10 new per 24 hours), the
  * balance is recalculated, the amount validated (> 0, ≤ available, at most
  * the store's decimals), the details encrypted (ADR-056), the payout and
@@ -151,6 +152,7 @@ final class PayoutRequests {
 			$creator_id,
 			fn(): Payout => $this->transaction->run(
 				function () use ( $creator_id, $currency, $amount, $type, $destination, $idempotency_key, $user_id, $decimals ): Payout {
+					CreatorRowLock::acquire( $this->payouts, $creator_id );
 					$existing = $this->payouts->find_by_key( $creator_id, $idempotency_key );
 
 					if ( null !== $existing ) {
@@ -210,6 +212,7 @@ final class PayoutRequests {
 			$creator_id,
 			fn(): Payout => $this->transaction->run(
 				function () use ( $creator_id, $payout_id, $user_id ): Payout {
+					CreatorRowLock::acquire( $this->payouts, $creator_id );
 					$payout = $this->payouts->find( $payout_id, true );
 
 					if ( null === $payout || $payout->creator_id !== $creator_id ) {

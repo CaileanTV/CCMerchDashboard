@@ -3052,6 +3052,16 @@ Schema-version 9: `merchboard_payouts` (se DATABASE.md).
 - REST (trin 23.4), dashboard (23.5) og admin-sider (23.6) bygger på disse services.
 - En refund under behandling kan kræve, at admin afviser en anmodning.
 - **Note 2026-10-11:** gavekort (ADR-057) følger de samme statusser; en gavekort-payout bliver kun `completed` ved registrering af et valideret kort, aldrig ved manuel gennemførelse.
+- **Note 2026-10-12 (K6.1, låseprotokol; forberedende trin uden adfærdsændring):**
+  - **Låseprotokol:** de godkendte payout-veje låser creator-rækken (`merchboard_creators`) med `FOR UPDATE` som transaktionens første sætning, før saldo, payout eller bilagsdata læses. Rækkefølgen er: den navngivne creator-lås (`GET_LOCK`), derefter `Transaction`, derefter creator-rækken. Låsen holdes til COMMIT eller ROLLBACK.
+  - **Omfattede veje:** anmodning, annullering, afvisning, gennemførelse inkl. udstedelse af afregningsbilag (ADR-060), registrering af gavekort (ADR-057) og ændring af afregningsstarten (ADR-054 D3).
+  - **Fælles hjælpefunktion:** `CreatorRowLock::acquire()`. Den afviser at låse, hvis den navngivne lås ikke er holdt.
+  - **Ingen adfærdsændring:** alle veje holder allerede den navngivne lås for samme creator, så rækkelåsen giver ingen ny gensidig udelukkelse mellem dem. Den gør det muligt for en senere afgørelse, der låser flere creator-rækker (i stigende ID-orden) uden de navngivne låse, at vente på alle payout-veje for de creators.
+  - **Endnu ikke implementeret:** sådanne udelukkelsesafgørelser findes ikke endnu.
+  - **Uden for:** `SettlementDocuments::correct()`, synkroniseringen og ændring af karensperioden.
+  - **Fælles rækkeregel:** samtidig bruger `LedgerCreatorPayouts::earned()` og `unsettled_rows()` samme rækkeregel (ADR-054 D1, D2 og ukendte rækker) via fælles private hjælpere. Offentlige konstanter og signaturer er uændrede.
+  - **Ingen skemaændring.**
+  - **Validering:** lokalt på MariaDB 10.11.19. MySQL 8 er ikke valideret, før CI har kørt.
 
 ## Related
 ADR-024, ADR-038, ADR-049, ADR-054, ADR-056, ADR-058.
