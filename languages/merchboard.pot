@@ -52,6 +52,42 @@ msgstr ""
 msgid "Merch Dashboard could not update its database tables. The update is retried automatically. Technical details are in the log (WooCommerce → Status → Logs, source \"merchboard\", or the server error log)."
 msgstr ""
 
+#: src/Core/Lifecycle/UninstallHalt.php:69
+msgid "Merch Dashboard was not deleted"
+msgstr ""
+
+#: src/Core/Lifecycle/UninstallHalt.php:84
+msgid "Merch Dashboard was not deleted: it could not check whether payouts are pending."
+msgstr ""
+
+#. translators: %d: number of pending payouts.
+#: src/Core/Lifecycle/UninstallHalt.php:86
+#, php-format
+msgid "Merch Dashboard was not deleted: %d payout is still pending."
+msgid_plural "Merch Dashboard was not deleted: %d payouts are still pending."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Core/Lifecycle/UninstallHalt.php:88
+msgid "Nothing was deleted: its data is still in the database, and permanent deletion is still switched on. Activate Merch Dashboard again, handle the pending payouts under Merch Dashboard → Payouts, then delete the plugin again."
+msgstr ""
+
+#: src/Core/Lifecycle/UninstallNotice.php:51
+msgid "Merch Dashboard could not check whether payouts are pending."
+msgstr ""
+
+#. translators: %d: number of pending payouts.
+#: src/Core/Lifecycle/UninstallNotice.php:53
+#, php-format
+msgid "%d Merch Dashboard payout is pending."
+msgid_plural "%d Merch Dashboard payouts are pending."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Core/Lifecycle/UninstallNotice.php:55
+msgid "Permanent deletion is switched on, but deleting Merch Dashboard now deletes nothing and is refused: handle the pending payouts under Merch Dashboard → Payouts first."
+msgstr ""
+
 #: src/Core/Requirements.php:109
 msgid "Merch Dashboard is not running."
 msgstr ""
@@ -915,7 +951,7 @@ msgid "Data on uninstall"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:200
-msgid "DELETED when the plugin is deleted"
+msgid "DELETED when the plugin is deleted (payout history, settlement documents, audit log and archived creators are kept)"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:201
@@ -1028,6 +1064,14 @@ msgstr ""
 msgid "← Back to creators"
 msgstr ""
 
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:263
+msgid "Archived when Merch Dashboard was deleted."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:264
+msgid "This creator is kept as historical documentation only. Reactivating it or linking a WordPress user is not supported: the sales ledger was rebuilt from the products' current creator links, so orders can be attributed to another creator than in its kept settlement documents, and its balance, payouts and documents would not match."
+msgstr ""
+
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:267
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
 #: build/dashboard.js:18
@@ -1085,6 +1129,12 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:304
 msgid "Save changes"
+msgstr ""
+
+#. translators: %s: status, e.g. "Inactive".
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:369
+#, php-format
+msgid "%s (archived on uninstall)"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:133
@@ -1215,16 +1265,28 @@ msgstr ""
 msgid "Permanent deletion is ENABLED."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:211
-msgid "When the plugin is deleted from the Plugins screen, all Merch Dashboard data is permanently removed."
+#: src/Modules/Settings/Admin/SettingsPage.php:213
+msgid "When the plugin is deleted from the Plugins screen, the Merch Dashboard data listed below is permanently removed."
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:213
 msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:216
-msgid "If enabled, deleting the plugin permanently removes: all creators, the audit log, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
+#: src/Modules/Settings/Admin/SettingsPage.php:219
+msgid "If enabled, deleting the plugin permanently removes: the sales ledger, pricing and VAT data, creator metadata and categories, the encrypted payment details of payout requests, the creators' links to products and WordPress users, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:220
+msgid "Kept as historical documentation: the payout history, the settlement documents with their rows and numbering, the audit log and the creators. Every creator is archived: set to inactive and unlinked from its WordPress user, so no one gets dashboard access. Payment details are only kept masked (e.g. the last four digits of an account)."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:221
+msgid "Installing the plugin again shows this history, but only as documentation: reactivating an archived creator and normal payouts for it are not supported. The sales ledger is then rebuilt from the products' current creator links, so orders can be attributed to another creator than in the kept settlement documents, and balances, payouts and documents would not match."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:222
+msgid "While a payout is pending, deleting the plugin deletes nothing and is refused, so the pending payouts can still be handled."
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:217
@@ -1235,8 +1297,8 @@ msgstr ""
 msgid "Permanent deletion"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:225
-msgid "Delete all Merch Dashboard data when the plugin is deleted"
+#: src/Modules/Settings/Admin/SettingsPage.php:231
+msgid "Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)"
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:229
@@ -1252,6 +1314,18 @@ msgstr ""
 #: src/Modules/Settings/Admin/SettingsPage.php:237
 msgid "Save settings"
 msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:265
+msgid "Whether payouts are pending cannot be checked right now. Deleting the plugin is refused until it can."
+msgstr ""
+
+#. translators: %d: number of pending payouts.
+#: src/Modules/Settings/Admin/SettingsPage.php:267
+#, php-format
+msgid "%d payout is pending. Deleting the plugin now deletes nothing and is refused; handle it under Payouts first."
+msgid_plural "%d payouts are pending. Deleting the plugin now deletes nothing and is refused; handle them under Payouts first."
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:252
 msgid "Branding"
@@ -2782,6 +2856,10 @@ msgid "Not registered: the reference may have at most 191 characters."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:150
+msgid "Not saved: the reference or reason must not contain bank or payment details, such as an account number, an IBAN or an e-mail address. Nothing was changed. Use the transaction ID from the bank or PayPal, or describe the reason without the details."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:150
 msgid "This request has already been handled; nothing was changed."
 msgstr ""
 
@@ -3170,6 +3248,10 @@ msgstr ""
 msgid "Reference (optional)"
 msgstr ""
 
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:568
+msgid "For example the transaction ID from the bank or PayPal. Never enter an account number, IBAN or e-mail address: the reference is kept with the payout history."
+msgstr ""
+
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:567
 msgid "The transfer has been made outside Merch Dashboard"
 msgstr ""
@@ -3180,6 +3262,10 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:583
 msgid "Reason (shown to the creator)"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:587
+msgid "Never enter an account number, IBAN or e-mail address: the reason is shown to the creator and kept with the payout history."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:585
