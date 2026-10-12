@@ -124,13 +124,37 @@ final class SettingsTest extends TestCase {
 		);
 		self::assertSame(
 			array(
-				Settings::DELETE_DATA_ON_UNINSTALL => true,
-				Settings::DASHBOARD_SLUG           => Settings::DEFAULT_DASHBOARD_SLUG,
-				Settings::COUNTED_ORDER_STATUSES   => array( 'processing', 'completed' ),
-				Settings::LOGO_ATTACHMENT_ID       => 0,
+				Settings::DELETE_DATA_ON_UNINSTALL  => true,
+				Settings::DASHBOARD_SLUG            => Settings::DEFAULT_DASHBOARD_SLUG,
+				Settings::COUNTED_ORDER_STATUSES    => array( 'processing', 'completed' ),
+				Settings::LOGO_ATTACHMENT_ID        => 0,
+				Settings::PAYOUT_HOLDING_DAYS       => 14,
+				Settings::PAYOUT_GIFT_CARD_PROVIDER => '',
 			),
 			Settings::all()
 		);
+	}
+
+	/**
+	 * The payout gift card provider is none by default; only a well-formed id
+	 * is kept, never a guess (ADR-057).
+	 */
+	public function test_gift_card_provider_defaults_to_none_and_keeps_only_well_formed_ids(): void {
+		self::assertSame( '', Settings::payout_gift_card_provider() );
+
+		foreach ( array(
+			'yith-wcgc' => 'yith-wcgc',
+			'YITH'      => '',
+			'a b'       => '',
+			''          => '',
+			'x'         => 'x',
+		) as $stored => $expected ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::PAYOUT_GIFT_CARD_PROVIDER => (string) $stored );
+			self::assertSame( $expected, Settings::payout_gift_card_provider(), (string) $stored );
+		}
+
+		$this->options->options[ Settings::OPTION ] = array( Settings::PAYOUT_GIFT_CARD_PROVIDER => 7 );
+		self::assertSame( '', Settings::payout_gift_card_provider() );
 	}
 
 	/**

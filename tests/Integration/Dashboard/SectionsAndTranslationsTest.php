@@ -83,7 +83,7 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		$registry = $this->service( DashboardSections::class );
 		wp_set_current_user( $this->creator );
 
-		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Sales, Products or Orders section.' );
+		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Sales, Products, Orders or Payouts section.' );
 
 		( new DashboardSectionRegistration() )->register();
 
@@ -108,6 +108,11 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 					'id'    => 'orders',
 					'label' => 'Orders',
 					'path'  => 'orders',
+				),
+				array(
+					'id'    => 'payouts',
+					'label' => 'Payouts',
+					'path'  => 'payouts',
 				),
 				array(
 					'id'    => 'profile',

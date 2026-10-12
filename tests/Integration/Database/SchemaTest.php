@@ -35,6 +35,8 @@ final class SchemaTest extends IntegrationTestCase {
 				'default_markup_bps' => array( 'int', 'unsigned', 'NO', '' ),
 				// Migration 7 (ADR-048); 0 = not VAT registered.
 				'vat_registered'     => array( 'tinyint', 'unsigned', 'NO', '' ),
+				// Migration 9 (D6); NULL = the whole history.
+				'payout_start_at'    => array( 'datetime', '', 'YES', '' ),
 			),
 			$this->columns( Tables::CREATORS )
 		);
@@ -232,6 +234,94 @@ final class SchemaTest extends IntegrationTestCase {
 			'One tax row per ledger row.'
 		);
 		self::assertSame( '0', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s', $this->table( Tables::CREATORS ), 'vat_registered' ) ) );
+	}
+
+	public function test_payout_tables_match_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'id'                    => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
+				'creator_id'            => array( 'bigint', 'unsigned', 'NO', '' ),
+				'currency'              => array( 'char(3)', '', 'NO', '' ),
+				'amount'                => array( 'decimal(19,4)', '', 'NO', '' ),
+				'price_decimals'        => array( 'tinyint', 'unsigned', 'NO', '' ),
+				'method'                => array( 'varchar(20)', '', 'NO', '' ),
+				'status'                => array( 'varchar(20)', '', 'NO', '' ),
+				'destination_hint'      => array( 'varchar(191)', '', 'NO', '' ),
+				'idempotency_key'       => array( 'varchar(64)', '', 'NO', '' ),
+				'requested_by'          => array( 'bigint', 'unsigned', 'YES', '' ),
+				'requested_at'          => array( 'datetime', '', 'NO', '' ),
+				'decided_by'            => array( 'bigint', 'unsigned', 'YES', '' ),
+				'decided_at'            => array( 'datetime', '', 'YES', '' ),
+				'decision_reason'       => array( 'varchar(500)', '', 'YES', '' ),
+				'reference'             => array( 'varchar(191)', '', 'YES', '' ),
+				'updated_at'            => array( 'datetime', '', 'NO', '' ),
+				// Migration 10 (ADR-057): provider id and the card's id, never its code.
+				'gift_card_provider'    => array( 'varchar(32)', '', 'YES', '' ),
+				'gift_card_external_id' => array( 'varchar(64)', '', 'YES', '' ),
+			),
+			$this->columns( Tables::PAYOUTS )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'             => array( 'unique', 'id' ),
+				'creator_idempotency' => array( 'unique', 'creator_id,idempotency_key' ),
+				'creator_status'      => array( 'non-unique', 'creator_id,status,currency' ),
+				'gift_card'           => array( 'unique', 'gift_card_provider,gift_card_external_id' ),
+				'status_requested'    => array( 'non-unique', 'status,requested_at' ),
+			),
+			$this->indexes( Tables::PAYOUTS ),
+			'A resent request key is unique per creator (ADR-055); a gift card belongs to at most one payout (ADR-057).'
+		);
+		self::assertSame(
+			array(
+				'payout_id'  => array( 'bigint', 'unsigned', 'NO', '' ),
+				'kind'       => array( 'varchar(20)', '', 'NO', '' ),
+				'ciphertext' => array( 'text', '', 'YES', '' ),
+				'key_id'     => array( 'varchar(32)', '', 'NO', '' ),
+				'created_at' => array( 'datetime', '', 'NO', '' ),
+				'purged_at'  => array( 'datetime', '', 'YES', '' ),
+			),
+			$this->columns( Tables::PAYOUT_SECRETS )
+		);
+		self::assertSame( array( 'PRIMARY' => array( 'unique', 'payout_id' ) ), $this->indexes( Tables::PAYOUT_SECRETS ) );
+	}
+
+	public function test_settlement_tables_match_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'PRIMARY'           => array( 'unique', 'id' ),
+				'corrects_document' => array( 'unique', 'corrects_document_id' ),
+				'creator_currency'  => array( 'non-unique', 'creator_id,currency,id' ),
+				'document_number'   => array( 'unique', 'document_number' ),
+				'payout_id'         => array( 'non-unique', 'payout_id' ),
+				'settlement_payout' => array( 'unique', 'settlement_payout_id' ),
+			),
+			$this->indexes( Tables::SETTLEMENT_DOCUMENTS ),
+			'One number, one document per payout and one correction per document (ADR-060, D8, D9, D11).'
+		);
+		self::assertSame( array( 'decimal(19,4)', '', 'NO', '' ), $this->columns( Tables::SETTLEMENT_DOCUMENTS )['commission_amount'] );
+		self::assertSame( array( 'longtext', '', 'NO', '' ), $this->columns( Tables::SETTLEMENT_DOCUMENTS )['snapshot'] );
+		self::assertSame(
+			array(
+				'PRIMARY'     => array( 'unique', 'event_key' ),
+				'document_id' => array( 'non-unique', 'document_id' ),
+				'order_id'    => array( 'non-unique', 'order_id' ),
+			),
+			$this->indexes( Tables::SETTLEMENT_ROWS ),
+			'A ledger row is settled at most once.'
+		);
+		self::assertSame( array( 'decimal(19,4)', '', 'NO', '' ), $this->columns( Tables::SETTLEMENT_ROWS )['payout_amount'] );
+		self::assertSame(
+			array(
+				'series'     => array( 'varchar(10)', '', 'NO', '' ),
+				'next_value' => array( 'bigint', 'unsigned', 'NO', '' ),
+			),
+			$this->columns( Tables::SETTLEMENT_COUNTERS )
+		);
 	}
 
 	public function test_plugin_tables_have_no_foreign_keys(): void {

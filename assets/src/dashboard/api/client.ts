@@ -41,6 +41,12 @@ export interface ApiError {
 	 * keys and codes of the form `[a-z_.]`; never messages or values.
 	 */
 	readonly fields: Readonly< Record< string, string > >;
+	/**
+	 * Reason code of a refused operation (`data.reason`, e.g. a payout's
+	 * `insufficient_balance`), only when present and of the form `[a-z_]`;
+	 * never a message.
+	 */
+	readonly reason?: string;
 }
 
 /** The failed side of every ApiResult. */
@@ -110,9 +116,19 @@ function failure(
 	kind: ApiErrorKind,
 	status = 0,
 	code: string | null = null,
-	fields: Readonly< Record< string, string > > = {}
+	fields: Readonly< Record< string, string > > = {},
+	reason: string | null = null
 ): ApiFailure {
-	return { ok: false, error: { kind, status, code, fields } };
+	return {
+		ok: false,
+		error: {
+			kind,
+			status,
+			code,
+			fields,
+			...( reason === null ? {} : { reason } ),
+		},
+	};
 }
 
 const SAFE_CODE = /^[a-z_]{1,50}$/;
@@ -146,6 +162,21 @@ function fieldErrors( body: unknown ): Record< string, string > {
 	}
 
 	return fields;
+}
+
+/**
+ * The reason code of a refusal (`data.reason`), or null when it is missing
+ * or not a plain code.
+ *
+ * @param body Parsed error body.
+ */
+function reasonCode( body: unknown ): string | null {
+	return isRecord( body ) &&
+		isRecord( body.data ) &&
+		typeof body.data.reason === 'string' &&
+		SAFE_CODE.test( body.data.reason )
+		? body.data.reason
+		: null;
 }
 
 function kindForStatus( status: number ): ApiErrorKind {
@@ -198,7 +229,8 @@ async function errorFromResponse(
 			: kindForStatus( response.status ),
 		response.status,
 		code !== null && SAFE_CODE.test( code ) ? code : null,
-		parsed.ok ? fieldErrors( parsed.body ) : {}
+		parsed.ok ? fieldErrors( parsed.body ) : {},
+		parsed.ok ? reasonCode( parsed.body ) : null
 	);
 }
 

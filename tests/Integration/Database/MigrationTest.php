@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\Database;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migration;
 use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
+use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
 use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 use MerchBoard\Core\Database\Migrator;
@@ -29,13 +30,13 @@ use wpdb;
 
 final class MigrationTest extends IntegrationTestCase {
 
-	public function test_fresh_install_creates_schema_version_8(): void {
+	public function test_fresh_install_creates_schema_version_9(): void {
 		self::assertSame( 0, $this->migrator()->installed_version() );
 
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
-		self::assertSame( '8', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( 11, $this->migrator()->installed_version() );
+		self::assertSame( '11', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
@@ -45,6 +46,8 @@ final class MigrationTest extends IntegrationTestCase {
 		self::assertSame( 0, $this->count_rows( Tables::PRICING_OVERRIDES ) );
 		self::assertFalse( $this->has_table( Tables::ITEM_PRICING ), 'Created by version 6, dropped by version 8.' );
 		self::assertSame( 0, $this->count_rows( Tables::SALES_LINE_PRICING ) );
+		self::assertSame( 0, $this->count_rows( Tables::PAYOUTS ) );
+		self::assertSame( 0, $this->count_rows( Tables::PAYOUT_SECRETS ) );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ), 'Lock released.' );
 		self::assertFalse( get_transient( Installer::FAILURE_TRANSIENT ) );
 	}
@@ -59,7 +62,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( 11, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ) );
 		self::assertSame( array( '0' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT default_markup_bps FROM %i', $this->table( Tables::CREATORS ) ) ) );
 		self::assertSame( 'Før opgradering 🎸', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
@@ -68,7 +71,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_4_adds_only_the_sales_ledger_tables(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[5], $migrations[6], $migrations[7], $migrations[8] );
+		unset( $migrations[5], $migrations[6], $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		( new CreatorRepository( $this->wpdb ) )->create( 'Før salg', CreatorStatus::Active );
 		$before = $this->rows( Tables::CREATORS );
@@ -78,7 +81,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( 11, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES_CYCLES ) );
@@ -86,7 +89,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_5_adds_pricing_with_0_markup_for_existing_creators_and_keeps_the_ledger(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[6], $migrations[7], $migrations[8] );
+		unset( $migrations[6], $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$repository = new CreatorRepository( $this->wpdb );
 		$active     = $repository->create( 'Aktiv før prissætning', CreatorStatus::Active );
@@ -100,7 +103,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( 11, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ), 'Existing creator data unchanged.' );
 
 		$markups = new CreatorMarkupRepository( $this->wpdb );
@@ -130,7 +133,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_6_adds_vat_status_and_sales_tax_without_changing_existing_data(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[7], $migrations[8] );
+		unset( $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før moms', CreatorStatus::Active );
 		$this->wpdb->insert(
@@ -153,7 +156,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( 11, $this->migrator()->installed_version() );
 		self::assertSame( '0', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT vat_registered FROM %i WHERE id = %d', $this->table( Tables::CREATORS ), $creator->id ) ), 'Existing creators: not VAT registered.' );
 		$after = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
 		self::assertIsArray( $after );
@@ -165,7 +168,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_7_switches_to_the_share_model_without_changing_history(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[8] );
+		unset( $migrations[8], $migrations[9], $migrations[10], $migrations[11] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før andel', CreatorStatus::Active );
 		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( 1667 ) );
@@ -199,8 +202,8 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
-		self::assertSame( $creators, $this->rows( Tables::CREATORS ), 'Markup and VAT status unchanged.' );
+		self::assertSame( 11, $this->migrator()->installed_version() );
+		self::assertSame( $creators, array_map( static fn( array $row ): array => array_diff_key( $row, array( 'payout_start_at' => null ) ), $this->rows( Tables::CREATORS ) ), 'Markup and VAT status unchanged (the settlement start is added by version 9).' );
 
 		$after = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
 		self::assertIsArray( $after );
@@ -218,6 +221,42 @@ final class MigrationTest extends IntegrationTestCase {
 		// Re-running the migration changes nothing.
 		( new AddCreatorShareModel() )->up( $this->wpdb );
 		self::assertSame( 0, $this->count_rows( Tables::PRICING_OVERRIDES ) );
+	}
+
+	public function test_upgrade_from_9_adds_the_gift_card_columns_without_changing_payouts(): void {
+		$migrations = Schema::migrations();
+		unset( $migrations[10], $migrations[11] );
+		( new Migrator( $this->wpdb, $migrations ) )->migrate();
+		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før gavekort', CreatorStatus::Active );
+		$this->wpdb->insert( $this->table( Tables::PAYOUTS ), array( 'creator_id' => $creator->id, 'currency' => 'DKK', 'amount' => '25.0000', 'price_decimals' => 2, 'method' => 'bank', 'status' => 'pending', 'destination_hint' => '•••• 1234', 'idempotency_key' => 'key-before-10', 'requested_at' => '2026-10-10 10:00:00', 'updated_at' => '2026-10-10 10:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$before = $this->rows( Tables::PAYOUTS );
+
+		self::assertSame( 9, $this->migrator()->installed_version() );
+
+		$this->install();
+
+		self::assertSame( 11, $this->migrator()->installed_version() );
+		$after = $this->rows( Tables::PAYOUTS );
+		self::assertNull( $after[0]['gift_card_provider'] );
+		self::assertNull( $after[0]['gift_card_external_id'] );
+		self::assertSame(
+			$before,
+			array_map(
+				static fn( array $row ): array => array_diff_key(
+					$row,
+					array(
+						'gift_card_provider'    => null,
+						'gift_card_external_id' => null,
+					)
+				),
+				$after
+			),
+			'Existing payouts are unchanged.'
+		);
+
+		// Re-running the migration changes nothing.
+		( new AddPayoutGiftCards() )->up( $this->wpdb );
+		self::assertSame( $after, $this->rows( Tables::PAYOUTS ) );
 	}
 
 	public function test_current_schema_runs_no_queries(): void {
@@ -240,7 +279,7 @@ final class MigrationTest extends IntegrationTestCase {
 		$this->install();
 		$this->install();
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( 11, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 	}
 
@@ -324,7 +363,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		self::assertTrue( $this->migrator()->migrate() );
 
-		self::assertSame( 8, $this->migrator()->installed_version() );
+		self::assertSame( 11, $this->migrator()->installed_version() );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ) );
 	}
 
@@ -401,8 +440,9 @@ final class MigrationTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Rows without the column added by migration 6, to compare with rows read
-	 * before it; fails when a row's markup is not the default 0.
+	 * Rows without the columns added by migrations 6, 7 and 9, to compare with
+	 * rows read before them; fails when a row's markup, VAT status or settlement
+	 * start is not the default.
 	 *
 	 * @param string $table Tables constant.
 	 * @return list<array<string, string|null>>
@@ -412,7 +452,9 @@ final class MigrationTest extends IntegrationTestCase {
 			static function ( array $row ): array {
 				self::assertSame( '0', $row['default_markup_bps'] ?? null, 'Existing creators get 0 %.' );
 				self::assertSame( '0', $row['vat_registered'] ?? null, 'Existing creators are not VAT registered (ADR-048).' );
-				unset( $row['default_markup_bps'], $row['vat_registered'] );
+				self::assertArrayHasKey( 'payout_start_at', $row );
+				self::assertNull( $row['payout_start_at'], 'Existing creators count their whole history (D6).' );
+				unset( $row['default_markup_bps'], $row['vat_registered'], $row['payout_start_at'] );
 
 				return $row;
 			},

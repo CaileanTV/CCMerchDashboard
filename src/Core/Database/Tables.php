@@ -76,6 +76,35 @@ final class Tables {
 	public const SALES_TAX = 'merchboard_sales_tax';
 
 	/**
+	 * Payout requests and their outcome, schema version 9 (ADR-055). Amount,
+	 * method and creator never change; the status only moves forward.
+	 */
+	public const PAYOUTS = 'merchboard_payouts';
+
+	/**
+	 * Encrypted bank and PayPal details of pending payouts, schema version 9
+	 * (ADR-056). Separate from PAYOUTS, so reading requests never reads them.
+	 */
+	public const PAYOUT_SECRETS = 'merchboard_payout_secrets';
+
+	/**
+	 * Settlement documents (self-billing), schema version 11 (ADR-060).
+	 * Insert-only: never updated or deleted (except opt-in uninstall).
+	 */
+	public const SETTLEMENT_DOCUMENTS = 'merchboard_settlement_documents';
+
+	/**
+	 * The ledger rows settled by a document, as a snapshot, schema version 11
+	 * (ADR-060). `UNIQUE(event_key)`: a ledger row is settled at most once.
+	 */
+	public const SETTLEMENT_ROWS = 'merchboard_settlement_document_rows';
+
+	/**
+	 * The next number of each document series, schema version 11 (ADR-060, D9).
+	 */
+	public const SETTLEMENT_COUNTERS = 'merchboard_settlement_counters';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -88,6 +117,11 @@ final class Tables {
 		self::PRICING_OVERRIDES,
 		self::SALES_LINE_PRICING,
 		self::SALES_TAX,
+		self::PAYOUTS,
+		self::PAYOUT_SECRETS,
+		self::SETTLEMENT_DOCUMENTS,
+		self::SETTLEMENT_ROWS,
+		self::SETTLEMENT_COUNTERS,
 	);
 
 	/**

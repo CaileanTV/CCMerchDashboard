@@ -135,6 +135,13 @@ final class RecordingWpdb extends wpdb {
 	public array $added_columns = array();
 
 	/**
+	 * Indexes added by prepared "ALTER TABLE %i ADD UNIQUE KEY %i" statements, "table.index" => true.
+	 *
+	 * @var array<string, true>
+	 */
+	public array $added_indexes = array();
+
+	/**
 	 * Whether "SHOW COLUMNS FROM %i LIKE %s" finds the column; null follows $tables_exist.
 	 *
 	 * @var bool|null
@@ -182,6 +189,13 @@ final class RecordingWpdb extends wpdb {
 	 */
 	public function get_row( $query = null, $output = OBJECT, $y = 0 ) {
 		$this->executed[] = (string) $query;
+		$prepared         = $this->prepared_for( (string) $query );
+
+		if ( null !== $prepared && 'SHOW INDEX FROM %i WHERE Key_name = %s' === $prepared['query'] ) {
+			$key = $prepared['args'][0] . '.' . $prepared['args'][1];
+
+			return ( $this->columns_exist ?? $this->tables_exist ) || isset( $this->added_indexes[ $key ] ) ? array( 'Key_name' => $prepared['args'][1] ) : null;
+		}
 
 		return array_shift( $this->rows );
 	}
@@ -296,6 +310,16 @@ final class RecordingWpdb extends wpdb {
 
 			if ( false !== $result ) {
 				$this->added_columns[ $prepared['args'][0] . '.' . $match[1] ] = true;
+			}
+
+			return $result;
+		}
+
+		if ( null !== $prepared && 'ALTER TABLE %i ADD UNIQUE KEY %i (gift_card_provider, gift_card_external_id)' === $prepared['query'] ) {
+			$result = $this->query_results[ $query ] ?? true;
+
+			if ( false !== $result ) {
+				$this->added_indexes[ $prepared['args'][0] . '.' . $prepared['args'][1] ] = true;
 			}
 
 			return $result;

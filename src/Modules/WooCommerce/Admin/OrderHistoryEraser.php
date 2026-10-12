@@ -14,6 +14,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLockTimeoutException;
+use MerchBoard\Modules\WooCommerce\Sales\SalesOrderSettledException;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use Throwable;
 
@@ -29,6 +30,8 @@ defined( 'ABSPATH' ) || exit;
  *   the order's ledger lock, so no synchronization runs at the same time and
  *   none registers it again afterwards (ADR-038 Q8) unless the order is
  *   restored from the trash;
+ * - never when a settlement document settled a row of the order (D5,
+ *   ADR-060): its history is then kept;
  * - only Merch Dashboard's rows of that order (ledger, cycles, stored tax,
  *   profit snapshots). The WooCommerce order, its items, refunds, products
  *   and prices are never read for writing or changed.
@@ -105,6 +108,10 @@ final class OrderHistoryEraser {
 			// Thrown by the work above (and rolled back): passed on as it is.
 			if ( $e instanceof OrderHistoryEraseException ) {
 				throw new OrderHistoryEraseException( $e->reason() );
+			}
+
+			if ( $e instanceof SalesOrderSettledException ) {
+				throw new OrderHistoryEraseException( OrderHistoryEraseException::SETTLED );
 			}
 
 			$this->logger->error(

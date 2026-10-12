@@ -68,6 +68,8 @@ final class RoleManagerTest extends TestCase {
 				'merchboard_view_logs'              => true,
 				'merchboard_manage_creator_pricing' => true,
 				'merchboard_delete_order_history'   => true,
+				'merchboard_manage_payouts'         => true,
+				'merchboard_view_payout_details'    => true,
 			),
 			$roles->capabilities( 'administrator' )
 		);
@@ -256,7 +258,7 @@ final class RoleManagerTest extends TestCase {
 
 		// Capabilities the plugin does not (yet) define are granted to nobody.
 		foreach ( array( $admin, $creator, $subscriber ) as $user_roles ) {
-			self::assertFalse( $roles->user_with_roles_can( $user_roles, 'merchboard_manage_payouts' ) );
+			self::assertFalse( $roles->user_with_roles_can( $user_roles, 'merchboard_manage_settlements' ) );
 			self::assertFalse( $roles->user_with_roles_can( $user_roles, 'merchboard_view_reports' ) );
 		}
 

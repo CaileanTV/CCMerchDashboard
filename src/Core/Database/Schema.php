@@ -11,12 +11,15 @@ namespace MerchBoard\Core\Database;
 
 use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
 use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
+use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
+use MerchBoard\Core\Database\Migrations\CreatePayoutTables;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
+use MerchBoard\Core\Database\Migrations\CreateSettlementTables;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,14 +38,17 @@ final class Schema {
 	 */
 	public static function migrations(): array {
 		return array(
-			1 => new CreateCreatorsTable(),
-			2 => new CreateAuditLogTable(),
-			3 => new CreateCreatorMetaTable(),
-			4 => new CreateCreatorCategoriesTable(),
-			5 => new CreateSalesLedgerTables(),
-			6 => new CreateCreatorPricingTables(),
-			7 => new AddCreatorVatAndSalesTax(),
-			8 => new AddCreatorShareModel(),
+			1  => new CreateCreatorsTable(),
+			2  => new CreateAuditLogTable(),
+			3  => new CreateCreatorMetaTable(),
+			4  => new CreateCreatorCategoriesTable(),
+			5  => new CreateSalesLedgerTables(),
+			6  => new CreateCreatorPricingTables(),
+			7  => new AddCreatorVatAndSalesTax(),
+			8  => new AddCreatorShareModel(),
+			9  => new CreatePayoutTables(),
+			10 => new AddPayoutGiftCards(),
+			11 => new CreateSettlementTables(),
 		);
 	}
 }

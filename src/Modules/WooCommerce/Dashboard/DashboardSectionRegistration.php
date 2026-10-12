@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * WooCommerce module hooks it, so without WooCommerce the sections are not
  * sent to the dashboard (ADR-039 P11). DashboardSections still validates every
  * entry. Right after the overview: Sales (phase 20, ADR-040), Products and
- * Orders (phase 19).
+ * Orders (phase 19) and Payouts (phase 23, ADR-054–056).
  */
 final class DashboardSectionRegistration {
 
@@ -32,7 +32,7 @@ final class DashboardSectionRegistration {
 	}
 
 	/**
-	 * The sections with Sales, Products and Orders after the overview (or at the end
+	 * The sections with Sales, Products, Orders and Payouts after the overview (or at the end
 	 * when there is no overview entry). Anything that is not a list is passed
 	 * on untouched for DashboardSections to reject.
 	 *
@@ -61,6 +61,12 @@ final class DashboardSectionRegistration {
 				'id'         => 'orders',
 				'label'      => __( 'Orders', 'merchboard' ),
 				'path'       => 'orders',
+				'capability' => Capabilities::ACCESS_DASHBOARD,
+			),
+			array(
+				'id'         => 'payouts',
+				'label'      => __( 'Payouts', 'merchboard' ),
+				'path'       => 'payouts',
 				'capability' => Capabilities::ACCESS_DASHBOARD,
 			),
 		);

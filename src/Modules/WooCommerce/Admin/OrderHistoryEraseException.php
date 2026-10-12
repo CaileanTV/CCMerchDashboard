@@ -25,6 +25,7 @@ final class OrderHistoryEraseException extends DomainException {
 	public const NO_HISTORY     = 'no_history';
 	public const BUSY           = 'busy';
 	public const FAILED         = 'failed';
+	public const SETTLED        = 'settled';
 
 	/**
 	 * Constructor.

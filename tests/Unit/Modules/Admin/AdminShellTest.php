@@ -56,7 +56,7 @@ final class AdminShellTest extends TestCase {
 		$this->set_up_creator_admin();
 		$this->options = InMemoryOptions::install(
 			array(
-				Migrator::VERSION_OPTION    => 8,
+				Migrator::VERSION_OPTION    => 11,
 				RoleManager::VERSION_OPTION => RoleManager::VERSION,
 			)
 		);
@@ -134,7 +134,7 @@ final class AdminShellTest extends TestCase {
 		self::assertStringContainsString( '<th scope="row">Inactive</th><td>2</td>', $html );
 		self::assertStringContainsString( '<th scope="row">Total</th><td>3</td>', $html );
 		self::assertStringContainsString( '<th scope="row">Linked to a WordPress user</th><td>2</td>', $html );
-		self::assertStringContainsString( 'Up to date (version 8)', $html );
+		self::assertStringContainsString( 'Up to date (version 11)', $html );
 		self::assertStringContainsString( '<th scope="row">Transaction support</th><td>Available</td>', $html );
 		self::assertStringContainsString( '<th scope="row">Roles and capabilities</th><td>Up to date</td>', $html );
 		self::assertStringContainsString( 'Not active (optional for now)', $html );
@@ -158,7 +158,7 @@ final class AdminShellTest extends TestCase {
 		$html = $this->render();
 
 		self::assertStringContainsString( '1 creator is linked to a WordPress user that no longer exists.', $html );
-		self::assertStringContainsString( 'Update pending (version 1 of 8)', $html );
+		self::assertStringContainsString( 'Update pending (version 1 of 11)', $html );
 		self::assertStringContainsString( 'Not available: creator changes are disabled', $html );
 		self::assertStringContainsString( '<th scope="row">Roles and capabilities</th><td>Update pending</td>', $html );
 		self::assertStringContainsString( 'DELETED when the plugin is deleted', $html );

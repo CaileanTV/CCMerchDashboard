@@ -462,6 +462,7 @@ final class OrderHistoryPage {
 			OrderHistoryEraseException::ORDER_ACTIVE   => __( 'Nothing was deleted: the WooCommerce order is not in the trash or deleted.', 'merchboard' ),
 			OrderHistoryEraseException::NO_HISTORY     => __( 'Nothing was deleted: Merch Dashboard has no stored history for the order.', 'merchboard' ),
 			OrderHistoryEraseException::BUSY           => __( 'Nothing was deleted: the order is being synchronized right now. Please try again.', 'merchboard' ),
+			OrderHistoryEraseException::SETTLED        => __( 'Nothing was deleted: the order is part of a settlement document, so its history is kept.', 'merchboard' ),
 			OrderHistoryEraseException::NOT_AUTHORIZED => __( 'Sorry, you are not allowed to delete order history.', 'merchboard' ),
 			default                                    => __( 'Nothing was deleted: the order history could not be deleted. Please try again later.', 'merchboard' ),
 		};

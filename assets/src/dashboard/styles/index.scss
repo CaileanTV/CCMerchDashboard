@@ -716,3 +716,76 @@
 	color: var(--merchboard-text-muted);
 	list-style: none;
 }
+
+// Phase 23: Payouts section --------------------------------------------------
+
+.merchboard-payouts__facts {
+	padding-left: var(--merchboard-space-4);
+	margin: 0 0 var(--merchboard-space-4);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-payouts__methods {
+	padding: 0;
+	margin: 0 0 var(--merchboard-space-4);
+	border: 0;
+}
+
+.merchboard-payouts__check {
+	display: block;
+	margin-bottom: var(--merchboard-space-2);
+}
+
+.merchboard-payouts__hint,
+.merchboard-payouts__reason {
+	color: var(--merchboard-text-muted);
+	overflow-wrap: anywhere;
+}
+
+.merchboard-payouts__confirm {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+}
+
+.merchboard-settlement {
+	padding: var(--merchboard-space-4);
+	margin: var(--merchboard-space-2) 0;
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+	background: var(--merchboard-surface);
+}
+
+.merchboard-settlement__address {
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-settlement__rows {
+	width: 100%;
+	margin: var(--merchboard-space-4) 0;
+}
+
+// The settlement document prints on its own (060-5): everything else is hidden.
+@media print {
+
+	body * {
+		visibility: hidden;
+	}
+
+	.merchboard-settlement,
+	.merchboard-settlement * {
+		visibility: visible;
+	}
+
+	.merchboard-settlement {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		border: 0;
+	}
+
+	.merchboard-settlement__actions {
+		display: none;
+	}
+}

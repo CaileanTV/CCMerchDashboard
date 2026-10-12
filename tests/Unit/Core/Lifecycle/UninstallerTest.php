@@ -107,6 +107,26 @@ final class UninstallerTest extends TestCase {
 				),
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_payouts' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_payout_secrets' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_settlement_documents' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_settlement_document_rows' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_settlement_counters' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
 					'args'  => array( 'wp_3_merchboard_item_pricing' ),
 				),
 			),

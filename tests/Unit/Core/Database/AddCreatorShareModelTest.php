@@ -23,8 +23,8 @@ final class AddCreatorShareModelTest extends TestCase {
 	private const CHARSET = 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci';
 
 	public function test_schema_version_8_is_the_share_migration(): void {
+		self::assertSame( AddCreatorShareModel::class, Schema::migrations()[8]::class );
 		self::assertInstanceOf( AddCreatorShareModel::class, Schema::migrations()[8] );
-		self::assertSame( 8, max( array_keys( Schema::migrations() ) ) );
 	}
 
 	public function test_product_markups_schema_has_one_percentage_per_parent_and_no_amount(): void {

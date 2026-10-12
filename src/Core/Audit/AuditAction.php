@@ -173,4 +173,69 @@ enum AuditAction: string {
 	 * customer data. The WooCommerce order itself is never changed.
 	 */
 	case OrderHistoryDeleted = 'order_history_deleted';
+
+	/**
+	 * A creator requested a payout (ADR-055). Context: payout id, amount,
+	 * currency and method; never the bank or PayPal details.
+	 */
+	case PayoutRequested = 'payout_requested';
+
+	/**
+	 * A creator cancelled their pending payout; the reservation is released
+	 * (ADR-055). Context: payout id, amount, currency and method.
+	 */
+	case PayoutCancelled = 'payout_cancelled';
+
+	/**
+	 * An admin rejected a pending payout; the reservation is released
+	 * (ADR-055). Context: payout id, amount, currency, method and `has_reason`;
+	 * never the reason text.
+	 */
+	case PayoutRejected = 'payout_rejected';
+
+	/**
+	 * An admin registered a pending bank or PayPal payout as transferred
+	 * (ADR-055). Context: payout id, amount, currency, method and
+	 * `has_reference`; never the reference or the details.
+	 */
+	case PayoutCompleted = 'payout_completed';
+
+	/**
+	 * An admin registered a gift card on a pending gift card payout, which is
+	 * then completed (ADR-057). Context: payout id, amount, currency, method,
+	 * `provider` (provider id) and `external_id` (the card's id in it); never
+	 * the code.
+	 */
+	case PayoutGiftCardRegistered = 'payout_gift_card_registered';
+
+	/**
+	 * An admin viewed the full details of a pending payout (ADR-056, ADR-058).
+	 * Context: payout id and method; never the details.
+	 */
+	case PayoutDetailsViewed = 'payout_details_viewed';
+
+	/**
+	 * A creator's settlement start was set, changed or removed (D3, ADR-054).
+	 * Context: previous and new start (UTC, null = the whole history).
+	 */
+	case PayoutStartChanged = 'payout_start_changed';
+
+	/**
+	 * The payout holding period was changed (planning decision 2). Context:
+	 * setting, previous and new value.
+	 */
+	case PayoutSettingsChanged = 'payout_settings_changed';
+
+	/**
+	 * A settlement document was issued with a completed payout (ADR-060).
+	 * Context: document id and number, payout id, number of rows, currency.
+	 */
+	case SettlementDocumentIssued = 'settlement_document_issued';
+
+	/**
+	 * A correction document was issued for a settlement document (ADR-060,
+	 * D11). Context: document id and number, the corrected number, payout id
+	 * and `has_reason`; never the reason text.
+	 */
+	case SettlementDocumentCorrected = 'settlement_document_corrected';
 }

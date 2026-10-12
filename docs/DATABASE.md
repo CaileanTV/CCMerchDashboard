@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 8.** `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Fra fase 22 findes også creator pricing (ADR-049): `merchboard_creators.default_markup_bps`, `merchboard_pricing_overrides` (produkt-markup) og `merchboard_sales_line_pricing`; `merchboard_item_pricing` blev oprettet i version 6 og droppet i version 8. Øvrige tabeller er planlagte. Schema-version 1–5 er verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)). Fra version 7 (fase 22, ADR-048) også `merchboard_creators.vat_registered`, `merchboard_sales_line_pricing.vat_registered` og `merchboard_sales_tax`. Version 8 (ADR-049) tilføjer andelen i snapshottet, genopretter produkt-markup-tabellen og dropper `merchboard_item_pricing`. Schema-version 6–8 er indtil videre kun verificeret lokalt mod MariaDB 10.11.19 (integrationstests); CI mod MySQL følger ved næste push.
+> Status: **Schema-version 11.** Version 11 (fase 23, ADR-060) tilføjer afregningsbilag (`merchboard_settlement_documents`, `merchboard_settlement_document_rows`, `merchboard_settlement_counters`); version 10 (ADR-057) gavekortkolonnerne på `merchboard_payouts`. Version 9 (fase 23, ADR-054–056) tilføjer `merchboard_payouts`, `merchboard_payout_secrets` og `merchboard_creators.payout_start_at` (se [Payouts](#payouts--schema-version-9-fase-23-adr-054056)). `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Fra fase 22 findes også creator pricing (ADR-049): `merchboard_creators.default_markup_bps`, `merchboard_pricing_overrides` (produkt-markup) og `merchboard_sales_line_pricing`; `merchboard_item_pricing` blev oprettet i version 6 og droppet i version 8. Øvrige tabeller er planlagte. Schema-version 1–5 er verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)). Fra version 7 (fase 22, ADR-048) også `merchboard_creators.vat_registered`, `merchboard_sales_line_pricing.vat_registered` og `merchboard_sales_tax`. Version 8 (ADR-049) tilføjer andelen i snapshottet, genopretter produkt-markup-tabellen og dropper `merchboard_item_pricing`. Schema-version 6–8 er indtil videre kun verificeret lokalt mod MariaDB 10.11.19 (integrationstests); CI mod MySQL følger ved næste push.
 
 ## Placering af data
 
@@ -82,6 +82,7 @@ Creator som forretningsenhed. Indeholder **ingen** kundedata og er **ikke** en k
 | `created_at` | `datetime NOT NULL` | UTC |
 | `updated_at` | `datetime NOT NULL` | UTC |
 | `vat_registered` | `tinyint(1) unsigned NOT NULL DEFAULT 0` | ✅ Schema-version 7 (ADR-048). 1 = momsregistreret, 0 = ikke (standard for eksisterende og nye creators). Skrives kun af `CreatorVatRepository` via `CreatorPricingSettings` (audit `creator_vat_status_changed`) |
+| `payout_start_at` | `datetime DEFAULT NULL` | ✅ Schema-version 9 (fase 23, D6, ADR-054). Creatorens afregningsstart i UTC; NULL = hele historikken. Afgrænser kun vinduet for optjent payout; ingen ledger-række ændres eller udfyldes. Skrives kun af `PayoutRepository` via `PayoutSettings` under creatorens payout-lås (audit `payout_start_changed`) |
 | `default_markup_bps` | `int(10) unsigned NOT NULL DEFAULT 0` | ✅ Schema-version 6 (fase 22, ADR-049). Creatorens markup = andel af WooCommerce-salgsprisen i basis points, 0–10 000 (10 000 = 100 %). Eksisterende og nye creators får 0. Intervallet håndhæves af `MarkupBps` ved skrivning og læsning (ingen CHECK) |
 
 Indexes: `PRIMARY KEY (id)`, `UNIQUE KEY user_id (user_id)`, `KEY status (status)`.
@@ -331,12 +332,85 @@ Indexes: `PRIMARY KEY (event_key)`, `KEY order_id (order_id)`.
 
 **Læsning:** `SalesTaxRepository` (payout).
 
+### Payouts ✅ (schema-version 9 og 10, fase 23, ADR-054–057)
+
+#### `merchboard_payouts`
+
+Én række pr. payout-anmodning (ADR-055). Beløb, metode og creator ændres aldrig; status ændres kun fra `pending` med en betinget UPDATE. Rækker slettes aldrig.
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `id` | `bigint(20) unsigned NOT NULL AUTO_INCREMENT` PK | Payout-ID |
+| `creator_id` | `bigint(20) unsigned NOT NULL` | Creatoren (fra `CreatorContext`) |
+| `currency`, `amount`, `price_decimals` | `char(3)`, `decimal(19,4)`, `tinyint(3) unsigned`, alle `NOT NULL` | Beløb med højst butikkens decimaler på anmodningstidspunktet |
+| `method` | `varchar(20) NOT NULL` | `bank`, `paypal` eller `gift_card` (ADR-057; ingen række i `merchboard_payout_secrets`) |
+| `status` | `varchar(20) NOT NULL` | `pending` (= reservation), `completed`, `rejected`, `cancelled` |
+| `destination_hint` | `varchar(191) NOT NULL DEFAULT ''` | Maskeret: "•••• 1234" (aldrig reg.nr.) eller "j•••@g•••.com" |
+| `idempotency_key` | `varchar(64) NOT NULL` | Klientens nøgle; `UNIQUE(creator_id, idempotency_key)` |
+| `requested_by`, `requested_at` | `bigint(20) unsigned NULL`, `datetime NOT NULL` | Bruger og tid (UTC) |
+| `decided_by`, `decided_at` | `bigint(20) unsigned NULL`, `datetime NULL` | Hvem der gennemførte, afviste eller annullerede |
+| `decision_reason` | `varchar(500) NULL` | Afvisningens begrundelse (vises for creatoren, aldrig i audit) |
+| `reference` | `varchar(191) NULL` | Valgfri bank-/PayPal-reference ved `completed` (aldrig i audit) |
+| `updated_at` | `datetime NOT NULL` | UTC |
+| `gift_card_provider`, `gift_card_external_id` | `varchar(32) NULL`, `varchar(64) NULL` | Schema-version 10 (`AddPayoutGiftCards`, ADR-057): udbyder-ID (fx `yith-wcgc`) og kortets ID i pluginet, sat når et valideret gavekort registreres; aldrig koden. NULL for bank og PayPal |
+
+Indexes: `PRIMARY KEY (id)`, `UNIQUE KEY creator_idempotency (creator_id, idempotency_key)`, `KEY creator_status (creator_id, status, currency)`, `KEY status_requested (status, requested_at)`, `UNIQUE KEY gift_card (gift_card_provider, gift_card_external_id)` (ét kort på højst én payout, også ved samtidige requests; NULL-par tæller ikke).
+
+#### `merchboard_payout_secrets`
+
+Krypterede bank- og PayPal-oplysninger (ADR-056), adskilt fra `merchboard_payouts`, så en læsning af anmodninger aldrig læser dem.
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `payout_id` | `bigint(20) unsigned NOT NULL` PK | Payouten |
+| `kind` | `varchar(20) NOT NULL` | Metoden |
+| `ciphertext` | `text NULL` | base64(nonce ‖ sodium `secretbox`) med `MERCHBOARD_PAYOUT_KEY`; NULL, når payouten ikke længere venter |
+| `key_id` | `varchar(32) NOT NULL` | Nøglens ID (hash-præfiks, ikke hemmeligt) til senere nøgleskift |
+| `created_at`, `purged_at` | `datetime NOT NULL`, `datetime NULL` | UTC; `purged_at` sættes, når ciphertext fjernes |
+
+**Skrivning og samtidighed:** kun `PayoutRepository`, under en `GET_LOCK` pr. creator og i projektets `Transaction`, med `CONNECTION_ID()`-vagt på hver skrivning og forbindelseskontrol før COMMIT (samme mønster som ledgeren, ADR-038 pkt. 18). Audit skrives i samme transaktion.
+
+**Uninstall:** tabellerne er i `Tables::all()` og slettes kun ved opt-in-uninstall (ADR-025). En særskilt opbevaringsbeslutning (ADR-059) skal træffes før rigtige payouts.
+
+### Afregningsbilag ✅ (schema-version 11, fase 23, ADR-060)
+
+> **Foreløbig:** omvendt fakturering efter brugeroplyst mundtlig vejledning fra SKAT; intet er juridisk eller regnskabsmæssigt godkendt (R1–R4). Opbevaring: ADR-059 er uafklaret.
+
+#### `merchboard_settlement_documents`  (kun indsættelse)
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `id` | `bigint(20) unsigned` PK | Internt bilags-ID |
+| `document_number`, `document_series` | `varchar(32)`, `varchar(10)` | `AFR-000001` (D9: én fortløbende serie `AFR` for afregningsbilag og korrigerende bilag); `UNIQUE` |
+| `document_type` | `varchar(12)` | `settlement` eller `correction` |
+| `creator_id`, `payout_id` | `bigint(20) unsigned` | Creator og payout |
+| `settlement_payout_id` | `bigint(20) unsigned NULL`, `UNIQUE` | Payouten for et afregningsbilag (D8: ét pr. payout); NULL for korrektioner |
+| `corrects_document_id` | `bigint(20) unsigned NULL`, `UNIQUE` | Det bilag, en korrektion retter (D11: én korrektion pr. bilag, kæde) |
+| `currency`, `period_from`, `period_to` | `char(3)`, `datetime NULL`, `datetime` | Payoutens valuta; perioden fra forrige bilag (eller afregningsstarten; NULL = hele historikken) til udstedelsen (UTC) |
+| `profit_amount`, `commission_amount`, `opening_balance`, `payout_amount`, `closing_balance` | `decimal(19,4)` | Profit og kommission (Σ payout, ADR-049) for de afregnede rækker, overført saldo, udbetalt beløb og saldo efter bilaget (= overført + kommission − udbetalt); 0 for korrektioner |
+| `vat_registered` | `tinyint(1) unsigned NULL` | Creatorens momsstatus ved udstedelsen (NULL = ukendt) |
+| `calculation_version`, `template_version` | `varchar(32)`, `smallint(5) unsigned` | Beregnings- og skabelonversion |
+| `snapshot` | `longtext` (JSON) | Creatorens ID, visningsnavn og momsstatus, butikkens navn og WooCommerce-adresse, payoutens metode og maskerede modtager eller gavekortets udbyder og ID, karens og afregningsstart; for korrektioner også begrundelse og rettet bilagsnummer (D10: kun eksisterende data). Aldrig fulde konti, e-mails eller gavekortkoder |
+| `issued_by`, `issued_at` | `bigint(20) unsigned NULL`, `datetime` | Bruger og tid (UTC) |
+
+Indexes: `PRIMARY`, `UNIQUE document_number`, `UNIQUE settlement_payout`, `UNIQUE corrects_document`, `KEY creator_currency (creator_id, currency, id)`, `KEY payout_id`.
+
+#### `merchboard_settlement_document_rows` (kun indsættelse)
+
+Én række pr. afregnet ledger-række som snapshot: `event_key` (PK = `UNIQUE`, så en række højst afregnes én gang), `document_id`, `order_id`, `order_item_id`, `product_id`, `variation_id`, `item_name`, `type`, `quantity`, `net_amount`, `tax_amount`, `share_bps`, `vat_registered`, `price_decimals`, `profit_amount`, `payout_amount`, `occurred_at`. Indexes: `KEY document_id`, `KEY order_id` (D5: ADR-052-sletning afvises for ordrer med afregnede rækker).
+
+#### `merchboard_settlement_counters`
+
+`series` (PK) og `next_value`: tællerrækken låses (`FOR UPDATE`) og øges i samme transaktion som udstedelsen; en rollback giver nummeret tilbage, og samtidige udstedelser kan ikke få samme nummer.
+
+**Skrivning:** kun `SettlementRepository` via `SettlementDocuments::issue()`, i samme transaktion og under samme creator-lås som payoutens overgang til `completed` (manuel overførsel og gavekortregistrering), med `CONNECTION_ID()`-vagt. Rækkerne læses med `LOCK IN SHARE MODE` (`LedgerCreatorPayouts::unsettled_rows()`, samme D1/D2-regler som saldoen; en ukendt række afviser gennemførelsen). Ingen bilag med tilbagevirkende kraft (060-8). **Uninstall:** i `Tables::all()`, slettes kun ved opt-in-uninstall (060-7 a, ADR-025); ADR-059 er uafklaret.
+
 ### Fremtidige (ikke designet i detaljer)
 
 - `merchboard_creator_members` – hvis flere brugere (fx en manager) skal have adgang til samme creator. Erstatter `user_id`-kolonnen. Ændringen bliver lokal, fordi al opslag af "nuværende creator" går gennem `CreatorContext`.
 - `merchboard_product_creators` – hvis produkter skal kunne deles mellem creators med procentvis split.
 - `merchboard_sales_daily` – præ-aggregeret statistik, **kun** hvis målinger viser, at queries på `merchboard_sales` bliver for langsomme.
-- `merchboard_payouts`, `merchboard_payout_items` – afregning.
+- Afregningsbilag (fase 23, trin 23.8, ADR-060).
 - `merchboard_integrations_*` – synkroniseringsstatus for eksterne tjenester.
 
 ## Schemaversion og migrationer ✅ (ADR-019)

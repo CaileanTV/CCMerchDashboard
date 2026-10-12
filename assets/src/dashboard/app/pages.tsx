@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { EmptyState } from '../components/EmptyState';
 import { OrdersSection } from '../sections/orders/OrdersSection';
 import { OverviewSection } from '../sections/overview/OverviewSection';
+import { PayoutsSection } from '../sections/payouts/PayoutsSection';
 import { ProductsSection } from '../sections/products/ProductsSection';
 import { ProfileSection } from '../sections/profile/ProfileSection';
 import { SalesSection } from '../sections/sales/SalesSection';
@@ -21,6 +22,7 @@ const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	sales: () => <SalesSection />,
 	products: () => <ProductsSection />,
 	orders: () => <OrdersSection />,
+	payouts: () => <PayoutsSection />,
 	profile: () => <ProfileSection />,
 };
 

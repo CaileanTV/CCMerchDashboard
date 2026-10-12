@@ -251,6 +251,7 @@ final class SalesRepository {
 	 * @return array{ledger_rows: int, cycle_events: int, tax_rows: int, snapshots: int, creator_ids: list<int>}
 	 * @throws DatabaseException When the lock is not held or a statement fails (rolled back).
 	 * @throws SalesConnectionChangedException When the connection changed (rolled back; after COMMIT the outcome is unknown).
+	 * @throws SalesOrderSettledException When a settlement document settled a row of the order (D5; rolled back).
 	 * @throws Throwable Whatever $audit throws (rolled back).
 	 */
 	public function erase_order( int $order_id, callable $audit ): array {
@@ -263,6 +264,18 @@ final class SalesRepository {
 
 				if ( '' !== $wpdb->last_error ) {
 					throw new DatabaseException( 'Could not read the order\'s sales ledger.', array( 'order_id' => $order_id ) );
+				}
+
+				// D5 (ADR-060): never when a settlement document settled a row of the order. A
+				// locking read, so a document being issued now is waited for and then seen.
+				$settled = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE order_id = %d LOCK IN SHARE MODE', $this->table( Tables::SETTLEMENT_ROWS ), $order_id ) );
+
+				if ( ! is_numeric( $settled ) ) {
+					throw new DatabaseException( 'Could not read the order\'s settlement rows.', array( 'order_id' => $order_id ) );
+				}
+
+				if ( (int) $settled > 0 ) {
+					throw new SalesOrderSettledException();
 				}
 
 				$counts = array(

@@ -71,6 +71,30 @@ final class Settings {
 	public const LOGO_ATTACHMENT_ID = 'logo_attachment_id';
 
 	/**
+	 * Payout holding period in days (planning decision 2, ADR-054): a ledger
+	 * row with a payout ≥ 0 counts when it is older than this.
+	 */
+	public const PAYOUT_HOLDING_DAYS = 'payout_holding_days';
+
+	/**
+	 * Default holding period in days.
+	 */
+	public const DEFAULT_PAYOUT_HOLDING_DAYS = 14;
+
+	/**
+	 * Longest holding period in days.
+	 */
+	public const MAX_PAYOUT_HOLDING_DAYS = 365;
+
+	/**
+	 * The gift card provider chosen for payout gift cards (ADR-057): a
+	 * provider id, '' for none (the default). Merch Dashboard never chooses a
+	 * provider by itself because a plugin is installed; whether the id belongs
+	 * to a registered, available provider is checked where it is used.
+	 */
+	public const PAYOUT_GIFT_CARD_PROVIDER = 'payout_gift_card_provider';
+
+	/**
 	 * Slugs WordPress, WooCommerce or common setups already use for their own
 	 * URLs; the dashboard must never shadow them.
 	 */
@@ -108,14 +132,16 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string}
 	 */
 	public static function defaults(): array {
 		return array(
-			self::DELETE_DATA_ON_UNINSTALL => false,
-			self::DASHBOARD_SLUG           => self::DEFAULT_DASHBOARD_SLUG,
-			self::COUNTED_ORDER_STATUSES   => self::DEFAULT_COUNTED_ORDER_STATUSES,
-			self::LOGO_ATTACHMENT_ID       => 0,
+			self::DELETE_DATA_ON_UNINSTALL  => false,
+			self::DASHBOARD_SLUG            => self::DEFAULT_DASHBOARD_SLUG,
+			self::COUNTED_ORDER_STATUSES    => self::DEFAULT_COUNTED_ORDER_STATUSES,
+			self::LOGO_ATTACHMENT_ID        => 0,
+			self::PAYOUT_HOLDING_DAYS       => self::DEFAULT_PAYOUT_HOLDING_DAYS,
+			self::PAYOUT_GIFT_CARD_PROVIDER => '',
 		);
 	}
 
@@ -126,17 +152,21 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug = $values[ self::DASHBOARD_SLUG ] ?? null;
 		$logo = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
+		$days = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
+		$card = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
 
 		return array(
-			self::DELETE_DATA_ON_UNINSTALL => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
-			self::DASHBOARD_SLUG           => is_string( $slug ) && self::valid_slug( $slug ) ? $slug : self::DEFAULT_DASHBOARD_SLUG,
-			self::COUNTED_ORDER_STATUSES   => self::status_list( $values[ self::COUNTED_ORDER_STATUSES ] ?? null ),
-			self::LOGO_ATTACHMENT_ID       => is_int( $logo ) && $logo > 0 ? $logo : 0,
+			self::DELETE_DATA_ON_UNINSTALL  => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
+			self::DASHBOARD_SLUG            => is_string( $slug ) && self::valid_slug( $slug ) ? $slug : self::DEFAULT_DASHBOARD_SLUG,
+			self::COUNTED_ORDER_STATUSES    => self::status_list( $values[ self::COUNTED_ORDER_STATUSES ] ?? null ),
+			self::LOGO_ATTACHMENT_ID        => is_int( $logo ) && $logo > 0 ? $logo : 0,
+			self::PAYOUT_HOLDING_DAYS       => is_int( $days ) && self::valid_holding_days( $days ) ? $days : self::DEFAULT_PAYOUT_HOLDING_DAYS,
+			self::PAYOUT_GIFT_CARD_PROVIDER => is_string( $card ) && self::valid_provider_id( $card ) ? $card : '',
 		);
 	}
 
@@ -156,7 +186,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -214,6 +244,39 @@ final class Settings {
 		}
 
 		return array() === $statuses ? self::DEFAULT_COUNTED_ORDER_STATUSES : $statuses;
+	}
+
+	/**
+	 * Whether a holding period is allowed (0 … MAX_PAYOUT_HOLDING_DAYS days).
+	 *
+	 * @param int $days Days.
+	 */
+	public static function valid_holding_days( int $days ): bool {
+		return $days >= 0 && $days <= self::MAX_PAYOUT_HOLDING_DAYS;
+	}
+
+	/**
+	 * The payout holding period in days.
+	 */
+	public static function payout_holding_days(): int {
+		return self::all()[ self::PAYOUT_HOLDING_DAYS ];
+	}
+
+	/**
+	 * Whether a string is a well-formed gift card provider id: '' (none) or
+	 * 1–32 lowercase letters, digits and hyphens.
+	 *
+	 * @param string $id Provider id.
+	 */
+	public static function valid_provider_id( string $id ): bool {
+		return '' === $id || 1 === preg_match( '/^[a-z0-9-]{1,32}$/', $id );
+	}
+
+	/**
+	 * The chosen payout gift card provider id, '' for none.
+	 */
+	public static function payout_gift_card_provider(): string {
+		return self::all()[ self::PAYOUT_GIFT_CARD_PROVIDER ];
 	}
 
 	/**

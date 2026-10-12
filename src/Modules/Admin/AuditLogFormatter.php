@@ -90,6 +90,16 @@ final class AuditLogFormatter {
 			AuditAction::ProductMarkupSet          => __( 'Product markup set', 'merchboard' ),
 			AuditAction::ProductMarkupRemoved      => __( 'Product markup removed', 'merchboard' ),
 			AuditAction::OrderHistoryDeleted       => __( 'Order history deleted', 'merchboard' ),
+			AuditAction::PayoutRequested           => __( 'Payout requested', 'merchboard' ),
+			AuditAction::PayoutCancelled           => __( 'Payout cancelled', 'merchboard' ),
+			AuditAction::PayoutRejected            => __( 'Payout rejected', 'merchboard' ),
+			AuditAction::PayoutCompleted           => __( 'Payout completed', 'merchboard' ),
+			AuditAction::PayoutGiftCardRegistered  => __( 'Payout gift card registered', 'merchboard' ),
+			AuditAction::PayoutDetailsViewed       => __( 'Payout details viewed', 'merchboard' ),
+			AuditAction::PayoutStartChanged        => __( 'Settlement start changed', 'merchboard' ),
+			AuditAction::PayoutSettingsChanged     => __( 'Payout settings changed', 'merchboard' ),
+			AuditAction::SettlementDocumentIssued  => __( 'Settlement document issued', 'merchboard' ),
+			AuditAction::SettlementDocumentCorrected => __( 'Settlement document corrected', 'merchboard' ),
 		};
 	}
 

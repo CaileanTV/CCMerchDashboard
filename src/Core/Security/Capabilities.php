@@ -90,6 +90,19 @@ final class Capabilities {
 	public const DELETE_ORDER_HISTORY = 'merchboard_delete_order_history';
 
 	/**
+	 * May handle payouts: see requests and history, reject, register a
+	 * completed payout, set a creator's settlement start and the holding
+	 * period (ADR-058). Never shows full bank or PayPal details.
+	 */
+	public const MANAGE_PAYOUTS = 'merchboard_manage_payouts';
+
+	/**
+	 * May see the full bank or PayPal details of a pending payout, together
+	 * with MANAGE_PAYOUTS (ADR-058, planning decision 7). Every view is audited.
+	 */
+	public const VIEW_PAYOUT_DETAILS = 'merchboard_view_payout_details';
+
+	/**
 	 * WordPress' capability for editorial work. Not owned by the plugin and never
 	 * granted by it; only checked to tell editors apart from pure creators
 	 * (ADR-026).
@@ -147,6 +160,8 @@ final class Capabilities {
 			self::VIEW_LOGS,
 			self::MANAGE_CREATOR_PRICING,
 			self::DELETE_ORDER_HISTORY,
+			self::MANAGE_PAYOUTS,
+			self::VIEW_PAYOUT_DETAILS,
 		);
 	}
 

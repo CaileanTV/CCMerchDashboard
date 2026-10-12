@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\WooCommerce;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
@@ -26,6 +28,22 @@ use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryActions;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsActions;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsSections;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\YithGiftCardProvider;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutDecisions;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutGiftCards;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Sales\OrderHistory;
 use MerchBoard\Modules\WooCommerce\Sales\OrderHistoryDetails;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorPricingActions;
@@ -63,6 +81,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesProfit;
 use MerchBoard\Modules\WooCommerce\Pricing\WooCommercePricingProductStore;
 use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
+use MerchBoard\Modules\WooCommerce\Rest\MePayoutsController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
@@ -509,6 +528,121 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): SalesLedgerSettingsSection => new SalesLedgerSettingsSection( $c->get( CountedOrderStatusSettings::class ) )
 		);
 
+		// Payouts (phase 23, ADR-054–056, ADR-058): balances, requests,
+		// decisions and settings as services; one repository instance, so its
+		// creator lock is shared. Creator routes: /me/payouts; admin page Payouts.
+		$clock = static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+		$container->set(
+			PayoutRepository::class,
+			static fn( Container $c ): PayoutRepository => new PayoutRepository( $c->get( wpdb::class ) )
+		);
+		$container->set(
+			PayoutCipher::class,
+			static fn(): PayoutCipher => PayoutCipher::from_config()
+		);
+		$container->set(
+			PayoutBalances::class,
+			static fn( Container $c ): PayoutBalances => new PayoutBalances( new LedgerCreatorPayouts( $c->get( wpdb::class ) ), $c->get( PayoutRepository::class ), $clock )
+		);
+		// Settlement documents (ADR-060): issued with every completion.
+		$container->set(
+			SettlementDocuments::class,
+			static fn( Container $c ): SettlementDocuments => new SettlementDocuments(
+				new SettlementRepository( $c->get( wpdb::class ) ),
+				$c->get( PayoutRepository::class ),
+				new LedgerCreatorPayouts( $c->get( wpdb::class ) ),
+				$c->get( CreatorRepository::class ),
+				new CreatorVatRepository( $c->get( wpdb::class ) ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$clock
+			)
+		);
+		// Payout gift cards (ADR-057): the registered adapters (only YITH WooCommerce
+		// Gift Cards 4.38.x, read only) and the one chosen in Settings.
+		$container->set(
+			GiftCardProviders::class,
+			static fn( Container $c ): GiftCardProviders => new GiftCardProviders( array( new YithGiftCardProvider( $c->get( wpdb::class ), $c->get( PricingProductStore::class ), $clock ) ) )
+		);
+		$container->set(
+			PayoutGiftCards::class,
+			static fn( Container $c ): PayoutGiftCards => new PayoutGiftCards(
+				$c->get( PayoutRepository::class ),
+				$c->get( PayoutBalances::class ),
+				$c->get( GiftCardProviders::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( Logger::class ),
+				$clock,
+				$c->get( SettlementDocuments::class )
+			)
+		);
+		$container->set(
+			PayoutRequests::class,
+			static fn( Container $c ): PayoutRequests => new PayoutRequests(
+				$c->get( PayoutRepository::class ),
+				$c->get( PayoutBalances::class ),
+				$c->get( PayoutCipher::class ),
+				$c->get( PricingProductStore::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$clock,
+				$c->get( GiftCardProviders::class )
+			)
+		);
+		$container->set(
+			PayoutDecisions::class,
+			static fn( Container $c ): PayoutDecisions => new PayoutDecisions(
+				$c->get( PayoutRepository::class ),
+				$c->get( PayoutBalances::class ),
+				$c->get( PayoutCipher::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$clock,
+				$c->get( SettlementDocuments::class )
+			)
+		);
+		$container->set(
+			PayoutSettings::class,
+			static fn( Container $c ): PayoutSettings => new PayoutSettings( $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock )
+		);
+		$container->set(
+			MePayoutsController::class,
+			static fn( Container $c ): MePayoutsController => new MePayoutsController(
+				$c->get( CreatorContext::class ),
+				$c->get( PayoutRequests::class ),
+				$c->get( PayoutBalances::class ),
+				$c->get( PayoutRepository::class ),
+				$c->get( Logger::class ),
+				$c->get( PayoutGiftCards::class ),
+				$c->get( SettlementDocuments::class )
+			)
+		);
+		$container->set(
+			PayoutsPage::class,
+			static fn( Container $c ): PayoutsPage => new PayoutsPage(
+				$c->get( PayoutRepository::class ),
+				$c->get( PayoutDecisions::class ),
+				$c->get( PayoutCipher::class ),
+				$c->get( CreatorRepository::class ),
+				$c->get( Logger::class ),
+				$c->get( GiftCardProviders::class ),
+				$c->get( SettlementDocuments::class )
+			)
+		);
+		$container->set(
+			PayoutActions::class,
+			static fn( Container $c ): PayoutActions => new PayoutActions( $c->get( PayoutDecisions::class ), $c->get( Logger::class ), $c->get( PayoutGiftCards::class ) )
+		);
+		$container->set(
+			PayoutSettingsActions::class,
+			static fn( Container $c ): PayoutSettingsActions => new PayoutSettingsActions( $c->get( PayoutSettings::class ), $c->get( Logger::class ), $c->get( GiftCardProviders::class ) )
+		);
+		$container->set(
+			PayoutSettingsSections::class,
+			static fn( Container $c ): PayoutSettingsSections => new PayoutSettingsSections( $c->get( PayoutSettings::class ), $c->get( GiftCardProviders::class ) )
+		);
+
 		// Creator dashboard (phase 19, ADR-039): read-only product and order
 		// data for the creator-scope REST routes. Registered only with
 		// WooCommerce, so without it the routes do not exist.
@@ -586,6 +720,7 @@ final class WooCommerceModule implements Module {
 				$container->get( MeProductsController::class )->register_routes();
 				$container->get( MeOrdersController::class )->register_routes();
 				$container->get( MeSalesController::class )->register_routes();
+				$container->get( MePayoutsController::class )->register_routes();
 			}
 		);
 		// The dashboard sections that need WooCommerce (Products).
@@ -600,11 +735,19 @@ final class WooCommerceModule implements Module {
 			},
 			OrderHistoryPage::PRIORITY
 		);
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( PayoutsPage::class )->add_menu();
+			},
+			PayoutsPage::PRIORITY
+		);
 
 		// Only wp-admin: the product category column in the Creators list, the
 		// product category and product links on the
 		// creator's edit page and the read-only column and filter in the
-		// product list, and the "Sales ledger" settings section. Nothing is
+		// product list, the "Sales ledger" and "Payouts" settings sections
+		// and the creator's payout settlement start. Nothing is
 		// hooked into WooCommerce's product editor (ADR-032).
 		add_action(
 			'admin_init',
@@ -623,6 +766,9 @@ final class WooCommerceModule implements Module {
 				$container->get( ProductListCreators::class )->register();
 				$container->get( SalesLedgerSettingsActions::class )->register();
 				$container->get( SalesLedgerSettingsSection::class )->register();
+				$container->get( PayoutSettingsActions::class )->register();
+				$container->get( PayoutActions::class )->register();
+				$container->get( PayoutSettingsSections::class )->register();
 			}
 		);
 	}

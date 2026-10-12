@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-10T10:46:37+00:00\n"
+"POT-Creation-Date: 2026-10-12T10:12:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -159,358 +159,402 @@ msgstr ""
 msgid "Order history deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:183
+#: src/Modules/Admin/AuditLogFormatter.php:93
+msgid "Payout requested"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:94
+msgid "Payout cancelled"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:95
+msgid "Payout rejected"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:96
+msgid "Payout completed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:97
+msgid "Payout gift card registered"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:98
+msgid "Payout details viewed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:99
+msgid "Settlement start changed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:100
+msgid "Payout settings changed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:101
+msgid "Settlement document issued"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:102
+msgid "Settlement document corrected"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:193
 msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:185
+#: src/Modules/Admin/AuditLogFormatter.php:195
 #, php-format
 msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:188
+#: src/Modules/Admin/AuditLogFormatter.php:198
 #, php-format
 msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:191
+#: src/Modules/Admin/AuditLogFormatter.php:201
 #, php-format
 msgid "Status: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:194
+#: src/Modules/Admin/AuditLogFormatter.php:204
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:197
+#: src/Modules/Admin/AuditLogFormatter.php:207
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:200
+#: src/Modules/Admin/AuditLogFormatter.php:210
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:202
+#: src/Modules/Admin/AuditLogFormatter.php:212
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:205
+#: src/Modules/Admin/AuditLogFormatter.php:215
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:208
+#: src/Modules/Admin/AuditLogFormatter.php:218
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:209
+#: src/Modules/Admin/AuditLogFormatter.php:219
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:210
+#: src/Modules/Admin/AuditLogFormatter.php:220
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:211
+#: src/Modules/Admin/AuditLogFormatter.php:221
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:213
+#: src/Modules/Admin/AuditLogFormatter.php:223
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:217
+#: src/Modules/Admin/AuditLogFormatter.php:227
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:220
+#: src/Modules/Admin/AuditLogFormatter.php:230
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:222
+#: src/Modules/Admin/AuditLogFormatter.php:232
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:222
+#: src/Modules/Admin/AuditLogFormatter.php:232
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:225
+#: src/Modules/Admin/AuditLogFormatter.php:235
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:228
+#: src/Modules/Admin/AuditLogFormatter.php:238
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:231
+#: src/Modules/Admin/AuditLogFormatter.php:241
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:234
+#: src/Modules/Admin/AuditLogFormatter.php:244
 msgid "Previous creator: none"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:236
+#: src/Modules/Admin/AuditLogFormatter.php:246
 #, php-format
 msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:239
+#: src/Modules/Admin/AuditLogFormatter.php:249
 #, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:242
+#: src/Modules/Admin/AuditLogFormatter.php:252
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:245
+#: src/Modules/Admin/AuditLogFormatter.php:255
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:248
+#: src/Modules/Admin/AuditLogFormatter.php:258
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:260
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:253
+#: src/Modules/Admin/AuditLogFormatter.php:263
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:256
+#: src/Modules/Admin/AuditLogFormatter.php:266
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/Admin/AuditLogFormatter.php:269
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:271
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:271
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:264
+#: src/Modules/Admin/AuditLogFormatter.php:274
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:267
+#: src/Modules/Admin/AuditLogFormatter.php:277
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:280
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:271
+#: src/Modules/Admin/AuditLogFormatter.php:281
 msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:274
+#: src/Modules/Admin/AuditLogFormatter.php:284
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:277
+#: src/Modules/Admin/AuditLogFormatter.php:287
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:280
+#: src/Modules/Admin/AuditLogFormatter.php:290
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:283
+#: src/Modules/Admin/AuditLogFormatter.php:293
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:286
+#: src/Modules/Admin/AuditLogFormatter.php:296
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:337
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:329
+#: src/Modules/Admin/AuditLogFormatter.php:339
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:331
+#: src/Modules/Admin/AuditLogFormatter.php:341
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:344
+#: src/Modules/Admin/AuditLogFormatter.php:354
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:345
+#: src/Modules/Admin/AuditLogFormatter.php:355
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:346
+#: src/Modules/Admin/AuditLogFormatter.php:356
 #: build/dashboard.js:2
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:347
+#: src/Modules/Admin/AuditLogFormatter.php:357
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:358
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:349
+#: src/Modules/Admin/AuditLogFormatter.php:359
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:350
+#: src/Modules/Admin/AuditLogFormatter.php:360
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:360
-#: src/Modules/Admin/AuditLogFormatter.php:386
-#: src/Modules/Admin/AuditLogFormatter.php:445
+#: src/Modules/Admin/AuditLogFormatter.php:370
+#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:455
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:373
+#: src/Modules/Admin/AuditLogFormatter.php:383
+#: build/dashboard.js:8
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:374
+#: src/Modules/Admin/AuditLogFormatter.php:384
+#: build/dashboard.js:8
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:375
+#: src/Modules/Admin/AuditLogFormatter.php:385
+#: build/dashboard.js:8
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/Admin/AuditLogFormatter.php:386
+#: build/dashboard.js:8
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:404
+#: src/Modules/Admin/AuditLogFormatter.php:414
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:428
+#: src/Modules/Admin/AuditLogFormatter.php:438
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:429
+#: src/Modules/Admin/AuditLogFormatter.php:439
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:430
+#: src/Modules/Admin/AuditLogFormatter.php:440
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:431
+#: src/Modules/Admin/AuditLogFormatter.php:441
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:432
-#: src/Modules/Admin/AuditLogFormatter.php:580
+#: src/Modules/Admin/AuditLogFormatter.php:442
+#: src/Modules/Admin/AuditLogFormatter.php:590
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:433
+#: src/Modules/Admin/AuditLogFormatter.php:443
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:434
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:444
+#: src/Modules/Admin/AuditLogFormatter.php:650
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:4
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:435
+#: src/Modules/Admin/AuditLogFormatter.php:445
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:474
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:479
+#: src/Modules/Admin/AuditLogFormatter.php:489
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -519,7 +563,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:548
+#: src/Modules/Admin/AuditLogFormatter.php:558
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:402
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -528,102 +572,103 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:548
+#: src/Modules/Admin/AuditLogFormatter.php:558
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:558
+#: src/Modules/Admin/AuditLogFormatter.php:568
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:559
+#: src/Modules/Admin/AuditLogFormatter.php:569
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:560
+#: src/Modules/Admin/AuditLogFormatter.php:570
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:561
+#: src/Modules/Admin/AuditLogFormatter.php:571
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:562
+#: src/Modules/Admin/AuditLogFormatter.php:572
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:563
+#: src/Modules/Admin/AuditLogFormatter.php:573
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:564
+#: src/Modules/Admin/AuditLogFormatter.php:574
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:565
+#: src/Modules/Admin/AuditLogFormatter.php:575
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:566
+#: src/Modules/Admin/AuditLogFormatter.php:576
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:567
+#: src/Modules/Admin/AuditLogFormatter.php:577
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:568
+#: src/Modules/Admin/AuditLogFormatter.php:578
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:581
+#: src/Modules/Admin/AuditLogFormatter.php:591
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:593
+#: src/Modules/Admin/AuditLogFormatter.php:603
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:594
+#: src/Modules/Admin/AuditLogFormatter.php:604
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:606
+#: src/Modules/Admin/AuditLogFormatter.php:616
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:607
+#: src/Modules/Admin/AuditLogFormatter.php:617
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:618
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:650
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
 #: build/dashboard.js:4
+#: build/dashboard.js:5
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:659
+#: src/Modules/Admin/AuditLogFormatter.php:669
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:660
+#: src/Modules/Admin/AuditLogFormatter.php:670
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:661
+#: src/Modules/Admin/AuditLogFormatter.php:671
 msgid "social links"
 msgstr ""
 
@@ -643,6 +688,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:254
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:313
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:395
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:305
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:470
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
 msgid "Creator"
@@ -710,12 +758,12 @@ msgid "All events"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:250
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "From"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:256
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "To"
 msgstr ""
 
@@ -837,6 +885,7 @@ msgid "Transaction support"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:192
+#: build/dashboard.js:13
 msgid "Available"
 msgstr ""
 
@@ -893,6 +942,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorPricingActions.php:115
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:345
 #: src/Modules/WooCommerce/Admin/OrderHistoryActions.php:80
+#: src/Modules/WooCommerce/Admin/PayoutActions.php:103
+#: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:219
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:99
 msgid "The link you followed has expired. Please try again."
 msgstr ""
@@ -935,6 +986,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:89
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:105
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:59
 msgid "The creator does not exist."
 msgstr ""
 
@@ -978,7 +1030,7 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:267
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Display name"
 msgstr ""
 
@@ -986,8 +1038,11 @@ msgstr ""
 #: src/Modules/Creators/Admin/CreatorsListTable.php:77
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:309
 #: build/dashboard.js:2
 #: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "Status"
 msgstr ""
 
@@ -1352,7 +1407,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:395
 #: build/dashboard.js:2
-#: build/dashboard.js:5
+#: build/dashboard.js:12
+#: build/dashboard.js:16
 msgid "Product"
 msgstr ""
 
@@ -1578,6 +1634,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
+#: build/dashboard.js:16
 msgid "Actions"
 msgstr ""
 
@@ -1781,6 +1838,8 @@ msgid "A product markup can only be set for a simple or variable product; variat
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:94
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:72
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr ""
 
@@ -1803,7 +1862,7 @@ msgid "Product #%1$d: %2$s"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:152
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:569
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:570
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:31
 msgid "Creator markup"
 msgstr ""
@@ -1822,15 +1881,19 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:174
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:177
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:563
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:564
 msgid "VAT registered"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:178
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: build/dashboard.js:9
 msgid "Yes"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:179
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: build/dashboard.js:9
 msgid "No"
 msgstr ""
 
@@ -1851,7 +1914,7 @@ msgid "Changing the VAT status changes no product prices and no earlier order li
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:195
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:569
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:570
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:31
 msgid "Product markup"
 msgstr ""
@@ -2020,7 +2083,7 @@ msgstr ""
 #. translators: 1: product label, 2: outcome message.
 #. translators: 1: period, 2: net sales with currency.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr ""
@@ -2183,7 +2246,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
 #: build/dashboard.js:3
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 msgid "Units"
 msgstr ""
 
@@ -2191,34 +2254,34 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:164
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
 #: build/dashboard.js:3
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 msgid "Orders"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Sales per day (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Net sales per day"
 msgstr ""
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:9
+#: build/dashboard.js:20
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 msgid "Day"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryActions.php:73
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:465
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:466
 msgid "Sorry, you are not allowed to delete order history."
 msgstr ""
 
@@ -2275,6 +2338,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:254
 #: build/dashboard.js:2
+#: build/dashboard.js:12
 msgid "Order"
 msgstr ""
 
@@ -2283,6 +2347,7 @@ msgid "Ledger dates"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:254
+#: build/dashboard.js:8
 msgid "Currency"
 msgstr ""
 
@@ -2306,10 +2371,12 @@ msgid "Profit data"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:272
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:275
 msgid "&laquo; Previous"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:273
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
 msgid "Next &raquo;"
 msgstr ""
 
@@ -2422,19 +2489,22 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:395
 #: build/dashboard.js:2
 #: build/dashboard.js:3
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Profit"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:413
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:554
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:555
 msgid "Missing"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:415
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:521
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:522
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
 #: build/dashboard.js:2
-#: build/dashboard.js:7
+#: build/dashboard.js:9
+#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Unknown"
 msgstr ""
 
@@ -2473,91 +2543,95 @@ msgstr ""
 msgid "Nothing was deleted: the order is being synchronized right now. Please try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:466
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:465
+msgid "Nothing was deleted: the order is part of a settlement document, so its history is kept."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:467
 msgid "Nothing was deleted: the order history could not be deleted. Please try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:474
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:475
 msgid "About the profit data"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
 msgid "Complete: every ledger row of the order has its profit snapshot and its stored tax, so the creator profit can be calculated (ADR-049)."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:479
 msgid "Incomplete: some rows have the data, others do not. Unknown: no row has it. Missing history is never filled in, recalculated from current settings or shown as 0."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:481
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:482
 msgid "The sales ledger, profit snapshots and stored tax are append-only. The one exception: an administrator can delete the stored history of one order once the WooCommerce order is in the trash or deleted, e.g. a test order. That removes the order from the creator's sales and profit and is recorded in the audit log."
 msgstr ""
 
 #. translators: 1: rows with known profit, 2: rows without the data.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:505
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:506
 #, php-format
 msgid "%1$d known, %2$d without data"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:518
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:519
 msgid "With profit data (complete or incomplete)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:519
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:520
 msgid "Complete"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:520
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:521
 #: build/dashboard.js:2
 msgid "Incomplete"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:532
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:533
 msgid "No profit snapshot: snapshots are taken when an order line is created and only if its product then has a creator. Order lines created before Merch Dashboard recorded snapshots, or before their product was linked to the creator, never have one."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:533
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:534
 msgid "The stored profit snapshot of this order line cannot be read."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:534
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:535
 msgid "The snapshot is from the withdrawn pricing model and has no share of the sale price."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:535
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:536
 msgid "The snapshot belongs to another creator, product, variation, order or currency than this ledger row."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:536
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:537
 msgid "No stored tax: ledger rows registered before Merch Dashboard stored the actual tax have none, so the amount paid incl. VAT is unknown."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:537
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:538
 msgid "The stored tax is in another currency than the ledger row."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:538
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:539
 msgid "The profit cannot be calculated from the stored data."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:550
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:551
 msgid "Unreadable"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:558
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:559
 msgid "Withdrawn model (no share)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:562
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:563
 msgid "VAT status unknown"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:563
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:564
 msgid "Not VAT registered"
 msgstr ""
 
 #. translators: 1: share in percent, 2: source of the share, 3: VAT status.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:567
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:568
 #, php-format
 msgid "%1$s (%2$s) · %3$s"
 msgstr ""
@@ -2570,10 +2644,577 @@ msgstr ""
 msgid "Trash"
 msgstr ""
 
+#: src/Modules/WooCommerce/Admin/PayoutActions.php:94
+#: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:213
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:181
+msgid "Sorry, you are not allowed to manage payouts."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:56
+msgid "Saved. Available payout amounts are calculated with the new value from now on."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:57
+msgid "Nothing was changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:58
+msgid "You are not allowed to manage payouts."
+msgstr ""
+
+#. translators: %d: maximum number of days.
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:63
+#, php-format
+msgid "Not saved: enter a whole number of days between 0 and %d."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:68
+msgid "Not saved: enter a valid date that is not in the future, or leave the field empty for the whole history."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:69
+msgid "Not saved: the creator already has a settlement document, so the settlement start can no longer be changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:70
+msgid "Not saved: a payout of this creator is being processed. Try again in a moment."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:71
+msgid "Not saved: choose one of the listed gift card plugins, or none."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:85
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:121
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:194
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
+msgid "Payouts"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:91
+msgid "Holding period (days)"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:98
+msgid "A sale counts towards the available payout amount when it is older than this. Refunds and other negative amounts count at once. Changing it changes no sales history."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:100
+msgid "Save holding period"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:114
+msgid "Payout gift cards"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:115
+msgid "Creators can choose a gift card as payout only when a gift card plugin is chosen here and available. You create each card by hand in that plugin and register it on the payout. Bank transfer and PayPal do not depend on this."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:120
+msgid "Status: available."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:121
+msgid "Status: the chosen gift card plugin is not supported. Gift cards are not available."
+msgstr ""
+
+#. translators: %s: reason code, e.g. inactive.
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:124
+#, php-format
+msgid "Status: not available (%s). Gift cards cannot be requested or registered."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:135
+msgid "Gift card plugin"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:137
+msgid "None (gift cards off)"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:144
+msgid "Save gift card plugin"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:158
+msgid "Payout settlement start"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:164
+msgid "The settlement start could not be read."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:169
+msgid "Only sales on or after this date count towards the creator's payouts; refunds and corrections follow their sale. Leave it empty to count the whole history. Older sales are never changed or filled in."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:175
+msgid "Settlement start"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:182
+msgid "Save settlement start"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:120
+msgid "Merch Dashboard Payouts"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:145
+msgid "The request was rejected. The reservation is released and the creator sees your reason."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:146
+msgid "The payout was registered as transferred."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:147
+msgid "Not registered: confirm that you have made the transfer outside Merch Dashboard."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:148
+msgid "Not rejected: enter a reason of at most 500 characters. The creator sees it."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:149
+msgid "Not registered: the reference may have at most 191 characters."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:150
+msgid "This request has already been handled; nothing was changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:151
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:297
+msgid "The payout does not exist."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:152
+msgid "Not registered: the creator's balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:153
+msgid "Not registered: the creator's balance is unknown, because some sales lack the data needed. Handle it manually; nothing is completed automatically."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:154
+msgid "The payment details cannot be decrypted (MERCHBOARD_PAYOUT_KEY is missing or was changed). This request can only be rejected."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:155
+msgid "You are not allowed to do this."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:156
+msgid "Another payout of this creator is being processed. Please try again in a moment."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:157
+msgid "The gift card was validated and registered. The payout is completed, and the creator can now see the card."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
+msgid "This action does not fit the payout method; nothing was changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
+msgid "Not registered: no available gift card plugin is chosen in Settings → Payouts."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
+msgid "Not registered: enter the gift card code."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
+msgid "Not registered: no gift card has this code."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
+msgid "Not registered: several gift cards have this code. Give the card a unique code in the gift card plugin."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
+msgid "Not registered: the gift card's amount, balance, currency or expiry cannot be read exactly. Enter the amount with a decimal point and at most the shop's decimals."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
+msgid "Not registered: the gift card could not be validated. Nothing was changed; try again later."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
+msgid "Not registered: the gift card is not active."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
+msgid "Not registered: the gift card has expired."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
+msgid "Not registered: the gift card has another currency than the payout."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
+msgid "Not registered: the gift card's amount is not the payout amount."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
+msgid "Not registered: the gift card's balance is not its full amount, so it has been used."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
+msgid "Not registered: this gift card is already registered on another payout."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:195
+msgid "Payout requests of creators. Merch Dashboard never sends money: you transfer the amount yourself, outside Merch Dashboard, and then register it here."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:198
+msgid "No valid MERCHBOARD_PAYOUT_KEY is configured in wp-config.php. Creators cannot request bank or PayPal payouts, and pending requests can only be rejected."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:215
+msgid "The payouts could not be read. Please try again later."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:232
+msgid "Payout views"
+msgstr ""
+
+#. translators: %s: number of requests.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:234
+#, php-format
+msgid "Queue (%s)"
+msgstr ""
+
+#. translators: %s: number of requests.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:236
+#, php-format
+msgid "History (%s)"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:244
+msgid "No handled payouts yet."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:244
+msgid "No pending payout requests."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+msgid "Payout"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:306
+#: build/dashboard.js:8
+#: build/dashboard.js:16
+msgid "Amount"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:307
+#: build/dashboard.js:16
+msgid "Method"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:308
+msgid "Destination"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:310
+#: build/dashboard.js:16
+msgid "Requested"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:311
+#: build/dashboard.js:16
+msgid "Handled"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:293
+msgid "← All payouts"
+msgstr ""
+
+#. translators: %d: payout id.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:302
+#, php-format
+msgid "Payout #%d"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:315
+msgid "Reason"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:319
+msgid "Reference"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:323
+msgid "Payout reference"
+msgstr ""
+
+#. translators: 1: gift card plugin, 2: the card's id in it.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:329
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:620
+#: build/dashboard.js:6
+msgid "Gift card"
+msgstr ""
+
+#. translators: 1: gift card plugin, 2: the card's id in it.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:329
+#, php-format
+msgid "%1$s, card #%2$s"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:367
+msgid "Register gift card"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:371
+msgid "No available gift card plugin is chosen in Settings → Payouts, so no gift card can be registered. The request can be rejected."
+msgstr ""
+
+#. translators: 1: gift card plugin, 2: amount with currency, 3: payout reference.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:377
+#, php-format
+msgid "Create a gift card in %1$s with exactly this amount and balance: %2$s (no VAT added or deducted). Note the reference %3$s in its internal notes."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:378
+msgid "Do not send or use the card. Enter its code below: Merch Dashboard checks that it is one unused, active card of this amount and currency, then completes the payout and shows the card to the creator."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:383
+msgid "Create gift card in the plugin"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:390
+msgid "Gift card code"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:392
+msgid "Validate and register gift card"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:409
+msgid "Gift card in the plugin now"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:414
+msgid "The gift card cannot be read now: the plugin is not available, or the card was deleted."
+msgstr ""
+
+#. translators: 1: status, 2: balance with currency.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:417
+#, php-format
+msgid "Status: %1$s. Balance: %2$s."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:422
+msgid "The gift card cannot be read now."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:429
+msgid "Open the card in the plugin"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:445
+msgid "Settlement document"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:451
+msgid "The settlement document cannot be shown. Please try again later."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:456
+msgid "This payout has no settlement document: it was completed before settlement documents were introduced."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:464
+#: build/dashboard.js:10
+msgid "Preliminary, not approved by an auditor or SKAT."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:467
+msgid "Document number"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:468
+#: build/dashboard.js:12
+msgid "Issued"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:469
+#: build/dashboard.js:12
+#: build/dashboard.js:19
+msgid "Period"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:469
+#: build/dashboard.js:12
+msgid "Whole history"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: build/dashboard.js:12
+msgid "VAT registered at issue"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:472
+#: build/dashboard.js:12
+msgid "Commission in the period"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:473
+#: build/dashboard.js:12
+msgid "Carried from earlier"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:474
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:632
+#: build/dashboard.js:6
+#: build/dashboard.js:12
+#: build/dashboard.js:13
+msgid "Paid out"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:475
+#: build/dashboard.js:12
+msgid "Carried forward"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:476
+msgid "Settled sales rows"
+msgstr ""
+
+#. translators: 1: number of the correction document, 2: date.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:487
+#, php-format
+msgid "Corrected by %1$s (%2$s)."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:498
+msgid "active"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:499
+msgid "disabled"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:500
+msgid "expired"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:501
+msgid "other"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:514
+msgid "Full payment details"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:517
+msgid "Only users allowed to see full payment details can view them. Ask an administrator who can."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:523
+msgid "The details are shown only on request, and every view is recorded in the audit log."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:524
+msgid "Show full payment details"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:531
+msgid "The details cannot be shown."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:536
+msgid "The details cannot be shown. Please try again later."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:543
+#: build/dashboard.js:8
+msgid "Registration number"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:544
+#: build/dashboard.js:8
+msgid "Account number"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:546
+#: build/dashboard.js:8
+msgid "PayPal email address"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:550
+msgid "This view was recorded in the audit log. The details are deleted when the request has been handled."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:559
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:568
+msgid "Register as paid out"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:560
+msgid "Transfer the amount yourself (bank or PayPal) first. Registering it here sends no money; it only records that the transfer has been made. The creator's balance is checked again, and a payout it no longer covers is refused for manual handling."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:565
+msgid "Reference (optional)"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:567
+msgid "The transfer has been made outside Merch Dashboard"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:578
+msgid "Reject"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:583
+msgid "Reason (shown to the creator)"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:585
+msgid "Reject request"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:618
+#: build/dashboard.js:6
+msgid "Bank transfer"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:619
+#: build/dashboard.js:6
+msgid "PayPal"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:631
+#: build/dashboard.js:6
+msgid "Pending"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:633
+#: build/dashboard.js:6
+msgid "Rejected"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:634
+#: build/dashboard.js:6
+msgid "Cancelled"
+msgstr ""
+
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:48
-#: build/dashboard.js:6
+#: build/dashboard.js:17
 #, php-format,js-format
 msgid "%1$s %2$s"
 msgstr ""
@@ -2835,6 +3476,18 @@ msgstr ""
 msgid "The creator of a product can only be changed in Merch Dashboard."
 msgstr ""
 
+#: src/Modules/WooCommerce/Rest/MePayoutsController.php:435
+msgid "Some payout fields are missing or invalid."
+msgstr ""
+
+#: src/Modules/WooCommerce/Rest/MePayoutsController.php:497
+msgid "The payout could not be found."
+msgstr ""
+
+#: src/Modules/WooCommerce/Rest/MePayoutsController.php:507
+msgid "The payout request was not accepted."
+msgstr ""
+
 #: src/Modules/WooCommerce/Rest/MeSalesController.php:123
 msgid "Use a date in the format YYYY-MM-DD."
 msgstr ""
@@ -2874,7 +3527,7 @@ msgid "Log out"
 msgstr ""
 
 #: templates/dashboard/shell.php:47
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Loading your dashboard…"
 msgstr ""
 
@@ -2891,7 +3544,7 @@ msgid "Please try again later."
 msgstr ""
 
 #: build/dashboard.js:1
-#: build/dashboard.js:7
+#: build/dashboard.js:5
 msgid "Error:"
 msgstr ""
 
@@ -2936,7 +3589,7 @@ msgid "This page could not be displayed."
 msgstr ""
 
 #: build/dashboard.js:1
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Please reload the page."
 msgstr ""
 
@@ -3101,7 +3754,7 @@ msgid "(opens in a new tab)"
 msgstr ""
 
 #: build/dashboard.js:4
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Loading your profile…"
 msgstr ""
 
@@ -3128,261 +3781,581 @@ msgid "Key figures"
 msgstr ""
 
 #: build/dashboard.js:5
+msgid "Success:"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Warning:"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Note:"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Disabled"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Expired"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Not usable"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "The gift card cannot be shown right now. Please try again later."
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Show gift card"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Code"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Value"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Balance now"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Expires"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Hide code"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Show code"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "The code was copied."
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "The code could not be copied. Show it and copy it by hand."
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Copy code"
+msgstr ""
+
+#: build/dashboard.js:5
+msgid "Hide gift card"
+msgstr ""
+
+#. translators: %s: payout id.
+#: build/dashboard.js:6
+#, js-format
+msgid "Gift card of payout #%s. Anyone who has the code can use it; keep it to yourself."
+msgstr ""
+
+#: build/dashboard.js:6
+msgid "Fill in all fields of the request."
+msgstr ""
+
+#: build/dashboard.js:6
+msgid "Enter an amount greater than 0 with at most as many decimals as the shop uses."
+msgstr ""
+
+#: build/dashboard.js:6
+msgid "The amount is more than you can request right now."
+msgstr ""
+
+#: build/dashboard.js:6
+msgid "Your balance cannot be calculated right now, because some sales lack the data needed. No payout can be requested until it is known."
+msgstr ""
+
+#. translators: %d: maximum number of pending requests.
+#: build/dashboard.js:7
+#, js-format
+msgid "You already have %d pending requests. Wait until one is handled, or cancel one."
+msgstr ""
+
+#. translators: %d: maximum number of requests per 24 hours.
+#: build/dashboard.js:8
+#, js-format
+msgid "You have made %d requests in the last 24 hours. Please try again later."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "This payout method is not available right now."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Check the payment details: a registration number has 4 digits, an account number 1–10 digits, and PayPal needs a valid email address."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Another payout of yours is being processed. Please try again in a moment."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "The request has already been handled, so it can no longer be cancelled."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "The request was not accepted."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Request a payout"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "No payout method is available right now, so no payout can be requested. Please contact us."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "There is nothing to request yet. Your balance appears here once your sales have passed the holding period."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Your request has been sent. It is reserved until it is handled."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Available:"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Request the full available amount"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Payout method"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "4 digits"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "1–10 digits"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "You receive a gift card for the shop of the requested amount, without VAT. It appears here when we have created it. Treat its code like cash: anyone who has it can use it."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Your payment details are encrypted, used only for this payout and deleted when it has been handled. Afterwards only a masked version is shown."
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Sending…"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Request payout"
+msgstr ""
+
+#. translators: %s: document number.
+#: build/dashboard.js:9
+#: build/dashboard.js:10
+#: build/dashboard.js:11
+#, js-format
+msgid "Settlement document %s"
+msgstr ""
+
+#: build/dashboard.js:9
+msgid "The settlement document cannot be shown right now. Please try again later."
+msgstr ""
+
+#. translators: 1: company name, 2: creator name.
+#: build/dashboard.js:12
+#, js-format
+msgid "Self-billing: issued by %1$s on behalf of %2$s."
+msgstr ""
+
+#: build/dashboard.js:12
+msgid "Settled sales"
+msgstr ""
+
+#: build/dashboard.js:12
+msgid "Type"
+msgstr ""
+
+#: build/dashboard.js:12
+msgid "Net"
+msgstr ""
+
+#: build/dashboard.js:12
+msgid "VAT"
+msgstr ""
+
+#: build/dashboard.js:12
+msgid "Commission"
+msgstr ""
+
+#. translators: 1: number of the correction document, 2: date, 3: reason.
+#: build/dashboard.js:13
+#, js-format
+msgid "Corrected by %1$s (%2$s): %3$s"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Print or save as PDF"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Close"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Requested, pending"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Earned after the holding period"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Outstanding"
+msgstr ""
+
+#. translators: %d: number of sales.
+#: build/dashboard.js:14
+#, js-format
+msgid "Your balance is unknown: %d sales lack the data needed to calculate your payout. No payout can be requested until this is resolved."
+msgstr ""
+
+#: build/dashboard.js:14
+msgid "Your balance"
+msgstr ""
+
+#. translators: %d: number of days.
+#: build/dashboard.js:15
+#, js-format
+msgid "Sales count after a holding period of %d days. Refunds count at once."
+msgstr ""
+
+#: build/dashboard.js:15
+msgid "All your sales count."
+msgstr ""
+
+#. translators: %s: date.
+#: build/dashboard.js:16
+#, js-format
+msgid "Sales from %s count."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Payout methods: bank transfer and PayPal."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Bank transfer and PayPal are not available right now."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "You can also choose a gift card for the shop."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "You have no earnings to pay out yet."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "This request could not be found."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "The request could not be cancelled. Please try again in a moment."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Confirm cancellation"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Keep"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Cancel request"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Not yet"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "The request has been cancelled."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Your payout requests"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Loading your balance…"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Loading payout requests…"
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "There are no payout requests on this page."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "You have no payout requests yet."
+msgstr ""
+
+#: build/dashboard.js:16
+msgid "Payout request pages"
+msgstr ""
+
+#: build/dashboard.js:16
 msgid "No image"
 msgstr ""
 
-#: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "No sales"
 msgstr ""
 
-#: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "Your products"
 msgstr ""
 
-#: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "Published"
 msgstr ""
 
-#: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "Private"
 msgstr ""
 
-#: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "Price"
 msgstr ""
 
-#: build/dashboard.js:5
+#: build/dashboard.js:16
 msgid "No price"
 msgstr ""
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Stock"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "In stock"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Out of stock"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "On backorder"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Loading products…"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "There are no products on this page."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "You have no products yet."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Products linked to you in the shop will appear here."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Product pages"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Dismiss"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Light"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Dark black"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Dark green"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Dark blue"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Dark red"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Dark pink"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Theme saved."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Appearance"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Theme"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "System default follows the light or dark setting of your device."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "System default"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "No changes to save."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Profile saved."
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "About you"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Bio"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Links"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Password"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Change your password"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Saving…"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Save profile"
 msgstr ""
 
-#: build/dashboard.js:7
-msgid "Success:"
-msgstr ""
-
-#: build/dashboard.js:7
-msgid "Warning:"
-msgstr ""
-
-#: build/dashboard.js:7
-msgid "Note:"
-msgstr ""
-
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Sales per week (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Sales per month (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Net sales per week"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "Net sales per month"
 msgstr ""
 
-#: build/dashboard.js:7
+#: build/dashboard.js:18
 msgid "(the table below has the same figures)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 msgid "Week"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 msgid "Month"
 msgstr ""
 
-#: build/dashboard.js:8
-msgid "Period"
-msgstr ""
-
-#: build/dashboard.js:8
+#: build/dashboard.js:19
 msgid "Your sales"
 msgstr ""
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "No sales in this period."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Choose another period, or check back after your next sale."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Loading sales…"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "The end date must be on or after the start date."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Choose period"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Interval"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Show"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "This section is not available yet."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Page not found"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "This page does not exist."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "Go to the start page"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:21
 msgid "The dashboard could not be started."
 msgstr ""

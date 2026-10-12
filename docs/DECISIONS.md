@@ -2925,6 +2925,8 @@ Ingen migration, ingen nye tabeller, kolonner eller indexes. `RoleManager::VERSI
 ## Related
 ADR-023, ADR-037, ADR-038, ADR-040, ADR-047, ADR-048, ADR-049, ADR-050, ADR-051.
 
+**Note 2026-10-11 (D5, ADR-060):** sletning afvises nu, når ordrens historik indgår i et afregningsbilag (fejlkode `settled`); ellers uændret.
+
 ---
 
 # ADR-053: Salg vises inkl. moms (fase 22)
@@ -2965,3 +2967,267 @@ Ingen migration. Statistikforespørgslerne joiner `merchboard_sales_tax` på `ev
 
 ## Related
 ADR-037, ADR-040, ADR-041, ADR-048, ADR-049, ADR-050.
+
+---
+
+# ADR-054: Optjent payout og disponibelt beløb (fase 23)
+
+## Date
+2026-10-10
+
+## Status
+Accepteret. Godkendt af projektejeren 2026-10-10 sammen med D1 og D2 (rapporten [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 3, 15.2, 15.3 og 16.1). Bygger på planlægningsbeslutning 2, 3 og 12 (afsnit 1). Trin 23.2 implementerer optjent payout; reservationer og gennemførte payouts (ADR-055) er ikke besluttet. **Note 2026-10-10:** D6 (afregningsstarten gemmes i `merchboard_creators.payout_start_at`) og D3 (afregningsstarten kan ændres med audit, indtil creatoren har et afregningsbilag, og er derefter låst; låsen følger med bilagene i trin 23.8) er godkendt af projektejeren; ADR-055 er accepteret samme dag.
+
+## Context
+Creatorer skal kunne anmode om udbetaling af det, de har optjent efter ADR-049. Beløbet skal kunne beregnes deterministisk fra ledgeren uden at gætte på ukendte data, uden at udbetale for meget ved refunds og uden at medregne historik fra før en eksplicit afregningsstart.
+
+## Decision
+1. **Optjent payout** pr. creator og valuta = Σ `RealizedPayout` (ADR-049) over ledger-rækker, der er i vinduet og frigivet. Heltal i 1/10 000; valutaer summeres og omregnes aldrig på tværs.
+2. **Afregningsstart (D1):** uden afregningsstart tæller hele historikken. Med afregningsstart hører en række til vinduet, når **salgsrækken for samme ordrelinje og cyklus** (`s:<linje>:<cyklus>`) er sket på eller efter afregningsstarten. Et salg fra før afregningsstarten og dets refunds, reversals og korrektioner udelukkes derfor sammen. Mangler salgsrækken, kan rækken ikke placeres og er ukendt (blokerer). Afregningsstarten gives til aggregeringen som parameter; hvor den gemmes og hvornår den kan ændres, er ikke besluttet (D3, D6).
+3. **Karens (D2):** en række med payout **< 0** tæller fra sin egen `occurred_at`; en række med payout **≥ 0** tæller, når `occurred_at < nu − karens` (standard 14 dage, planlægningsbeslutning 2). Disponibelt kan derfor midlertidigt være lavere, når et salg i karens refunderes, men aldrig for højt.
+4. **Ukendt blokerer:** en række i vinduet uden kendt payout (intet snapshot med andel, prisdecimaler eller momsstatus, ingen gemt moms i rækkens valuta, eller ingen salgsrække med afregningsstart) tælles som ukendt, uanset fortegn og karens. Én ukendt række gør valutaens beløb ukendt (`null`); den behandles aldrig som 0 og springes aldrig over.
+5. **Saldo** (når ADR-055 er besluttet) = optjent − gennemført − reserveret; disponibelt = saldo, hvis > 0 og kendt, ellers 0; negativ saldo vises som udestående og modregnes i fremtidig optjening (planlægningsbeslutning 12).
+6. **Implementering:** én SQL-aggregering (`LedgerCreatorPayouts`) på pluginets egne tabeller med de samme rækkebetingelser og den samme profitformel som `LedgerCreatorProfits` (ADR-050) plus payout-reglen; resultatet har samme form som profit (`ProfitSummary`: `complete`, `incomplete`, `unknown`). Ingen cache.
+
+## Alternatives considered
+- **D1 b) ordrelinjens første salg:** behandler et nyt salg i en senere cyklus efter en gammel dato. Fravalgt.
+- **D1 c) rækkens egen dato:** en refund efter afregningsstart af et salg fra før ville trække saldoen ned for et salg, der aldrig indgik. Fravalgt.
+- **D2: alle rækker venter på karens:** kan reservere beløb, som en kendt refund allerede har fjernet. Fravalgt.
+- **D2: negative rækker følger deres salgs karens:** mere kompleks uden at forhindre for højt disponibelt. Fravalgt.
+
+## Reason
+Beregningen bruger kun eksisterende, uforanderlige ledger-data, kan aldrig udbetale for meget på grund af en kendt refund og gætter aldrig på ukendte data.
+
+## Security
+Kun creatorens egne rækker (`creator_id`), kun pluginets egne tabeller, ingen kundedata. Adgang og visning følger med ADR-055/058.
+
+## Migration/data implications
+Ingen migration og ingen nye indexes: salgsrækken findes via ordre, ordrelinje og cyklus (indexet på `order_id`).
+
+## Consequences
+- En række, der ikke kan beregnes, blokerer valutaens beløb, indtil den er afklaret, eller afregningsstarten udelukker den.
+- Ledger-skader (en manglende salgsrække) blokerer kun, når der er en afregningsstart.
+
+## Related
+ADR-037, ADR-038, ADR-047, ADR-048, ADR-049, ADR-050.
+
+---
+
+# ADR-055: Payout-statusser, reservation og idempotens (fase 23)
+
+## Date
+2026-10-10
+
+## Status
+Accepteret. Godkendt af projektejeren 2026-10-10 (rapporten [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 4, 5, 14.5 og 19.1). Bygger på planlægningsbeslutning 8, 9 og 10. Gavekort følger samme statusser, når ADR-057 er besluttet.
+
+## Context
+En creator skal kunne anmode om udbetaling af sit disponible beløb (ADR-054), og admin skal kunne behandle anmodningen. Samme beløb må aldrig reserveres eller udbetales to gange, heller ikke ved gensendte eller samtidige requests.
+
+## Decision
+1. **Statusser** for alle metoder: `pending` (anmodet og reserveret), `completed`, `rejected` og `cancelled`. Intet separat godkendelsestrin; ingen `issuing`.
+2. **Overgange** kun fremad og kun fra `pending`: `completed` eller `rejected` (admin), `cancelled` (creatoren). Beløb, metode og creator ændres aldrig; rækker slettes aldrig. Hver overgang er en betinget UPDATE efter en læsning `FOR UPDATE`.
+3. **Lås og transaktion:** anmodning, annullering, afvisning og gennemførelse kører under `GET_LOCK` pr. creator og i én `Transaction` med audit; hver skrivning har `CONNECTION_ID()`-vagt, og forbindelsen kontrolleres før COMMIT (mønstret fra ADR-024/038).
+4. **Reservation:** `pending` er reservationen. Saldo = optjent − gennemført − reserveret (ADR-054); `completed`, `rejected` og `cancelled` frigiver reservationen. Saldoen beregnes på ny under låsen ved anmodning og ved gennemførelse.
+5. **Idempotens:** creatorens anmodning bærer en nøgle (`UNIQUE(creator_id, idempotency_key)`); en gensendt anmodning returnerer den gemte. En gentaget adminhandling, der allerede er sket, svarer "allerede behandlet" uden ny audit; en anden handling på en afsluttet payout afvises.
+6. **Validering:** beløb > 0, ≤ disponibelt og med højst butikkens decimaler; "hele beløbet" rundes ned til butikkens præcision. Ukendt saldo blokerer og er aldrig 0.
+7. **Loft:** højst 3 ventende og 10 nye anmodninger (uanset senere status) pr. creator i 24 timer. Intet minimum.
+8. **Gennemførelse:** dækker saldoen uden payoutens egen reservation ikke længere beløbet (fx efter en refund), eller er den ukendt, afvises gennemførelsen til manuel behandling; payouten forbliver `pending` og kan afvises.
+
+## Alternatives considered
+- **Separat godkendelsesstatus før udbetaling:** et ekstra trin uden gevinst; behandlingen er godkendelsen. Fravalgt.
+- **Reservation af bestemte ledger-rækker:** kompleks og unødvendig med en saldomodel. Fravalgt.
+- **Kun databasens unikke nøgler uden lås:** forhindrer ikke, at to anmodninger tilsammen overskrider saldoen. Fravalgt.
+
+## Reason
+Ingen dobbelt reservation eller udbetaling, også ved timeout, dobbeltklik og samtidige requests, og ingen beslutning på grundlag af ukendte data.
+
+## Security
+Creatoren identificeres kun via `CreatorContext` af kalderen; fremmede payout-ID'er giver "ikke fundet". Admin-handlinger kræver `merchboard_manage_payouts` (ADR-058).
+
+## Migration/data implications
+Schema-version 9: `merchboard_payouts` (se DATABASE.md).
+
+## Consequences
+- REST (trin 23.4), dashboard (23.5) og admin-sider (23.6) bygger på disse services.
+- En refund under behandling kan kræve, at admin afviser en anmodning.
+- **Note 2026-10-11:** gavekort (ADR-057) følger de samme statusser; en gavekort-payout bliver kun `completed` ved registrering af et valideret kort, aldrig ved manuel gennemførelse.
+
+## Related
+ADR-024, ADR-038, ADR-049, ADR-054, ADR-056, ADR-058.
+
+---
+
+# ADR-056: Kryptering af bank- og PayPal-oplysninger (fase 23)
+
+## Date
+2026-10-10
+
+## Status
+Accepteret. Godkendt af projektejeren 2026-10-10. Bygger på planlægningsbeslutning 6 og 11.
+
+## Context
+Bank- og PayPal-oplysninger er nødvendige, mens en udbetaling venter, og må hverken lække via databasen, logs, audit eller lister.
+
+## Decision
+1. **Nøgle:** `MERCHBOARD_PAYOUT_KEY` i `wp-config.php`: 32 tilfældige bytes i base64. Nøglen afledes aldrig af WordPress' salts, gemmes aldrig i databasen og logges aldrig.
+2. **Algoritme:** sodium `secretbox` (fra PHP's ext-sodium eller WordPress' sodium_compat); ciphertext = base64(nonce ‖ secretbox) med et `key_id` (hash-præfiks af nøglen) til senere nøgleskift.
+3. **Lagring:** i `merchboard_payout_secrets`, adskilt fra `merchboard_payouts`. Ciphertext fjernes (`purged_at`), når payouten bliver `completed`, `rejected` eller `cancelled`. Oplysninger gemmes ikke til senere anmodninger.
+4. **Uden gyldig nøgle** er bank og PayPal utilgængelige og afvises server-side. En ventende anmodning, der ikke kan dekrypteres, kan kun afvises.
+5. **Visning:** overalt kun et maskeret hint ("•••• 1234", aldrig reg.nr.; "j•••@g•••.com"). Fulde oplysninger kun for en ventende payout og kun med `merchboard_view_payout_details` (ADR-058), audit-logget før visning.
+
+## Alternatives considered
+- **Nøgle afledt af WordPress' salts:** en rotation af salts ville gøre data ulæselige, og nøglen ville afhænge af hemmeligheder til andre formål. Fravalgt.
+- **Kryptering i samme tabel:** enhver læsning af anmodninger ville også læse hemmeligheder. Fravalgt.
+- **Ekstern hemmelighedstjeneste:** en ekstern service (ADR-016). Fravalgt.
+
+## Reason
+Følsomme oplysninger findes kun krypteret og kun så længe, de er nødvendige.
+
+## Security
+Kun administratorer med begge payout-capabilities kan se fulde oplysninger; ingen REST-route returnerer dem.
+
+## Migration/data implications
+Schema-version 9: `merchboard_payout_secrets` (se DATABASE.md). Ingen ny afhængighed (ADR-004).
+
+## Consequences
+- Et site uden nøgle kan ikke bruge bank eller PayPal, før administratoren har sat den.
+- Nøgleskift kræver en senere procedure (genkryptering af ventende rækker).
+
+## Related
+ADR-004, ADR-016, ADR-055, ADR-058.
+
+---
+
+# ADR-058: Payout-capabilities og audit (fase 23)
+
+## Date
+2026-10-10
+
+## Status
+Accepteret. Godkendt af projektejeren 2026-10-10. Bygger på planlægningsbeslutning 7.
+
+## Context
+Payouts flytter penge og indeholder følsomme oplysninger. Adgangen skal være afgrænset, og hver ændring skal kunne spores uden at gemme hemmeligheder i audit.
+
+## Decision
+1. **Capabilities** (kun administratorer, `RoleManager::VERSION` 5; creators får dem aldrig):
+   - `merchboard_manage_payouts`: afvise, registrere en gennemført udbetaling, sætte creatorens afregningsstart og karensperioden; senere køen og historikken.
+   - `merchboard_view_payout_details`: sammen med den første, se fulde bank- og PayPal-oplysninger for en ventende payout.
+2. **Audit-actions** (i samme transaktion som ændringen): `payout_requested`, `payout_cancelled`, `payout_rejected`, `payout_completed`, `payout_details_viewed`, `payout_start_changed` og `payout_settings_changed`. Gavekortets `payout_gift_card_registered` følger med ADR-057.
+3. **Audit-indhold:** kun ID'er, beløb, valuta, metode og flag (`has_reason`, `has_reference`), samt gammel og ny værdi for indstillinger og afregningsstart. Aldrig konti, e-mails, hints, referencer, begrundelsestekst eller gavekortkoder.
+
+## Alternatives considered
+- **Genbruge `merchboard_manage` eller `merchboard_manage_creators`:** for bred; alle med creator-administration ville kunne udbetale. Fravalgt.
+- **Én capability til både håndtering og fulde oplysninger:** strider mod planlægningsbeslutning 7. Fravalgt.
+
+## Reason
+Mindst mulig adgang til penge og følsomme data, og fuld sporbarhed uden at audit selv bliver en kilde til lækager.
+
+## Security
+Kontrolleres både i admin-handlingen (før nonce og input) og i servicen.
+
+## Migration/data implications
+Rolle-synkronisering ved næste request (ADR-022); opt-in-uninstall fjerner capabilities som de øvrige (ADR-025).
+
+## Consequences
+- Andre administratorroller end `administrator` skal have capabilities tildelt eksplicit.
+
+## Related
+ADR-022, ADR-023, ADR-025, ADR-055, ADR-056.
+
+**Note 2026-10-11 (ADR-057 accepteret):** audit-actionen `payout_gift_card_registered` er indført med trin 23.7. Kontekst: payout-ID, beløb, valuta, metode, `provider` og `external_id` (kortets ID i pluginet); aldrig koden. Nøglerne indeholder bevidst ikke ordet "card", fordi logsanitizeren (`LogContext`) redigerer sådanne nøgler. Valget af gavekortplugin auditeres som `payout_settings_changed` med `setting = payout_gift_card_provider`.
+
+---
+
+# ADR-057: Payout-gavekort: manuel oprettelse, registrering bag `GiftCardProvider` (fase 23)
+
+## Date
+2026-10-11
+
+## Status
+Accepteret. Godkendt af projektejeren (057-1 til 057-4) som grundlag for trin 23.7 (rapporten [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 8, 18 og 19.2). 057-2: payout-referencen i pluginets interne note er **ikke** et krav nu. 057-3: en adapter uden `reveal_code` er utilgængelig; ingen krypteret kopi af koden. 057-4: omfang = kontrakt, `FakeGiftCardProvider` (kun tests), registrering, creatorens visning og YITH-adapteren som kode; YITH-adapteren accepteres kun efter bestået runtime-test (bestået 2026-10-11 for registreringen, se Consequences). **Ikke godkendt til produktion:** G1–G3, R1 og ADR-059 er uafklarede.
+
+## Context
+Creators skal kunne vælge et gavekort til butikken som udbetaling. Kortet oprettes manuelt af en administrator i et gavekortplugin (YITH WooCommerce Gift Cards 4.38.0 er den anbefalede første integration), og Merch Dashboard må ikke blive afhængig af ét plugins interne klasser i payout-logikken (ADR-016: et plugin er en valgfri tredjepartsintegration, ikke en ekstern service).
+
+## Decision
+1. **Kontrakt `GiftCardProvider`** (kun læsning): `id()`, `label()`, `availability()` (`not_installed`, `inactive`, `unsupported_version`, `self_test_failed`), `find_by_code()` og `find_by_id()` (`null` = findes ikke), `reveal_code()` og `admin_url()`. `GiftCardSnapshot` indeholder ID, beløb og saldo i heltal (1/10 000), valuta, status (`active`, `disabled`, `expired`, `other`), udløb og `can_reveal_code`, aldrig koden. Fejl er `GiftCardProviderException` (`unavailable`, `ambiguous`, `invalid_data`, `read_failed`); ulæselige data er aldrig 0.
+2. **Valg i Settings:** `payout_gift_card_provider` (standard: ingen). `GiftCardProviders` giver `not_configured`, `unknown_provider`, `unavailable` eller `available`. Gavekort kan kun anmodes om og registreres ved `available`; bank og PayPal er uafhængige. Merch Dashboard installerer, aktiverer eller konfigurerer aldrig et plugin.
+3. **Anmodning:** metoden `gift_card` har ingen betalingsoplysninger og ingen række i `merchboard_payout_secrets`; ellers som ADR-055.
+4. **Registrering** (admin-post, nonce bundet til payout og handling, `merchboard_manage_payouts`, kodefelt med `autocomplete="off"`): under creator-låsen og i én transaktion genlæses payouten `FOR UPDATE`, kortet læses ved koden og skal være præcis ét kort, ikke knyttet til en anden payout, aktivt, ikke udløbet, i payoutens valuta, med beløb = saldo = payout-beløbet (uden moms); creatorens saldo kontrolleres som ved manuel gennemførelse. Derefter `completed` med udbyder-ID og eksternt ID og audit `payout_gift_card_registered`. Samme kort på samme payout igen er "allerede registreret"; alt andet på en afsluttet payout afvises. `UNIQUE(gift_card_provider, gift_card_external_id)` håndhæver ét kort pr. payout også ved samtidige requests.
+5. **Creatorens visning:** `GET /me/payouts/{id}/gift-card` (`no-store, private`), kun for creatorens egen gennemførte gavekort-payout, læst live (`find_by_id` + `reveal_code`); ellers 404, og 503 når kortet ikke kan vises nu (payouten forbliver `completed`).
+6. **Koden** gemmes aldrig i Merch Dashboard: ikke i payouts, secrets, audit, logs, options, URL'er eller admin-lister.
+7. **YITH-adapteren** (`YithGiftCardProvider`, id `yith-wcgc`): kun gratisversionen 4.38.x; selvtest af post-type og meta-nøgler; læser databasen direkte (pluginets egen klasse skriver meta ved læsning og ser kun publicerede kort); kode = posttitel; `publish` = aktiv, `ywgc-disabled`/`ywgc-dismissed` = deaktiveret; beløb kun som præcise decimaltal med højst butikkens decimaler (komma, float-rester, negative eller manglende værdier giver `invalid_data`); mangler `_ywgc_currency`, er kortet i butikkens valuta, og mangler `_ywgc_expiration`, udløber det ikke (verificeret: pluginets "Create Code" gemmer ingen af delene).
+
+## Alternatives considered
+- **Automatisk udstedelse via pluginets klasser:** trukket tilbage (planlægningsbeslutning 4).
+- **WooCommerce-kupon som gavekort:** restværdien kan gå tabt. Fravalgt.
+- **Krypteret kopi af koden:** unødvendig, når adapteren kan hente koden (057-3).
+
+## Reason
+Én lille, udskiftelig kontrakt; reglerne ligger i payout-logikken og gælder for enhver adapter; intet kort uden validering og ingen kode uden for pluginet og creatorens private visning.
+
+## Security
+Koden er en ihændehaverkode (G2): runtime-testen viste, at en gæst kan indløse den via Store API. YITH viser koder for alle med produktrettigheder. Kortets saldo kan ændres i pluginet uden for Merch Dashboards lås mellem læsning og COMMIT (kendt restrisiko).
+
+## Migration/data implications
+Schema-version 10 (`AddPayoutGiftCards`): `gift_card_provider`, `gift_card_external_id` og den unikke nøgle `gift_card` på `merchboard_payouts`. Eksisterende rækker ændres ikke.
+
+## Consequences
+- Runtime-test 2026-10-10/11 på Merch Dashboard Local (rapporten, afsnit 16.5): registrering, validering, idempotens, samtidighed og lækagesøgning bestået mod YITH 4.38.0.
+- **G1 er ikke opfyldt (16.3):** admin-oprettede ordrer og REST-ordrer med kortet som kupon får rabat uden at saldoen fratrækkes eller ordren registreres på kortet. Payout-gavekort må ikke bruges i produktion, før det er løst eller håndhævet.
+- **G3:** ved annullering og refund af ordrer betalt via kuponfeltet (klassisk og blokcheckout) gendanner YITH ikke saldoen; kun YITH's egen formular gendanner.
+- Kodeændringer i et andet gavekortplugin kræver en ny adapter og en ny runtime-test.
+
+## Related
+ADR-004, ADR-016, ADR-049, ADR-054, ADR-055, ADR-056, ADR-058, ADR-059.
+
+---
+
+# ADR-060: Afregningsbilag ved omvendt fakturering (fase 23)
+
+## Date
+2026-10-11
+
+## Status
+Accepteret. Godkendt af projektejeren 2026-10-11 (060-1 til 060-9, 060-7 = a) sammen med D5, D8 a, D9 a (præfiks `AFR-`), D10 a og D11 a (rapporten [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13 og register 16.1). **Foreløbig:** intet er juridisk eller regnskabsmæssigt godkendt; R1–R4 og ADR-059 er uafklarede og blokerer produktionsbrug.
+
+## Context
+Afregningen skal ifølge projektejerens oplysning fra SKAT (mundtlig) håndteres som omvendt fakturering: Merch Dashboard danner et afregningsbilag på creatorens vegne for kommissionen. Bilaget skal være sporbart til ordrer, beregning og payout og må aldrig ændres efter udstedelsen.
+
+## Decision
+1. **060-1 Udstedelse:** i samme transaktion og under samme creator-lås, som gør payouten `completed` (manuel overførsel og registrering af gavekort). Ingen gennemført payout uden bilag og intet bilag uden payout; en fejl ruller tæller, bilag, rækker og payoutens status tilbage. `UNIQUE(settlement_payout_id)`; en gentagen handling returnerer det eksisterende bilag.
+2. **060-2 Indhold (D8 a: ét bilag pr. payout):** alle endnu ikke afregnede ledger-rækker for creatoren og payoutens valuta, som er frigivet efter D1/D2 på udstedelsestidspunktet; hver række højst i ét bilag (`UNIQUE(event_key)`). Periode fra forrige bilag (eller afregningsstarten) til udstedelsen. Bilaget viser kommission (Σ payout pr. række, ADR-049), overført saldo fra forrige bilag, udbetalt beløb og saldo efter bilaget; resten overføres til næste bilag. En ukendt række gør saldoen ukendt, og gennemførelsen afvises (ADR-054); den bliver aldrig 0.
+3. **060-3 Datamodel (schema-version 11):** `merchboard_settlement_documents`, `merchboard_settlement_document_rows` (snapshot af hver rækkes værdier) og `merchboard_settlement_counters` (tællerrække pr. serie, låst og øget i transaktionen).
+4. **060-4 Uforanderlighed:** bilag og rækker opdateres og slettes aldrig (undtagen opt-in-uninstall, 060-7) og genberegnes aldrig. "Korrigeret" afledes af et korrigerende bilag. D3: afregningsstarten låses, når creatoren har et bilag.
+5. **060-5 Adgang:** creatoren ser og udskriver egne bilag (`GET /me/payouts/{id}/settlement-document`, `no-store`; udskriftsvenlig visning, ingen PDF-afhængighed); admin ser dem på payout-siden med `merchboard_manage_payouts`. Aldrig fulde konti, e-mails eller gavekortkoder.
+6. **060-6 Audit:** `settlement_document_issued` og `settlement_document_corrected` med ID'er, bilagsnummer og payout.
+7. **060-7 Uninstall (a):** tabellerne følger ADR-025 og slettes kun ved opt-in-uninstall. ADR-059 er uafklaret og en produktionsblokering.
+8. **060-8:** ingen bilag med tilbagevirkende kraft for payouts gennemført før schema-version 11.
+9. **060-9:** bilaget mærkes "Foreløbigt, ikke godkendt af revisor/SKAT".
+10. **Nummerering (D9 a):** én fortløbende serie `AFR-000001` for afregningsbilag og korrigerende bilag, uden årlig nulstilling; tildeles først ved udstedelse.
+11. **Indhold (D10 a):** kun eksisterende data: creatorens ID, visningsnavn og momsstatus; butikkens navn og WooCommerce-butiksadresse; payout-ID, metode og maskeret modtager eller gavekortets udbyder og ID; ingen nye personoplysninger.
+12. **Rettelser (D11 a):** refunds og korrektioner efter et bilag indgår i næste bilag (fremadrettet modregning); fejl i et bilag rettes med et korrigerende bilag med henvisning (`UNIQUE(corrects_document_id)`, en ny rettelse retter det seneste korrigerende bilag). Datamodel og service i 23.8; admin-formularen kommer senere. Regnskabsreglen afventer R1.
+13. **D5:** sletning af en ordres historik (ADR-052) afvises, når ordrens rækker indgår i et bilag.
+
+## Alternatives considered
+Periodiske bilag (D8 b), separate eller årlige nummerserier (D9 b/c), indsamling af nye stamdata nu (D10 b), kreditnota for hver refund (D11 c), undtagelse fra opt-in-uninstall nu (060-7 b). Fravalgt foreløbigt af projektejeren.
+
+## Reason
+Ét uforanderligt bilag pr. betaling er let at afstemme og spore; transaktionen og de unikke nøgler gør dobbelt afregning og dobbelte bilag umulige.
+
+## Security
+Creator-isolation via `CreatorContext` og ejerskab i SQL; admin kræver `merchboard_manage_payouts`; ingen hemmeligheder i bilag eller audit.
+
+## Migration/data implications
+Schema-version 11 (`CreateSettlementTables`). Ledgeren og payouts ændres ikke.
+
+## Consequences
+- Afregningsstarten kan ikke ændres, når creatoren har et bilag.
+- En testordre, der indgår i et bilag, kan ikke længere slettes efter ADR-052.
+- **Implementeret 2026-10-11 (trin 23.8):** `SettlementDocuments`/`SettlementRepository`, `LedgerCreatorPayouts::unsettled_rows()` (læses med `LOCK IN SHARE MODE`, så en samtidig ADR-052-sletning enten venter og afvises eller sker først), schema-version 11, `GET /me/payouts/{id}/settlement-document`, admin- og dashboardvisning. Korrigerende bilag bærer ingen beløb; beløbsændringer går fremad via ledgeren (D11). Hvis karensperioden ændres efter et bilag, kan bilagskædens overførte saldo afvige fra den aktuelle ADR-054-saldo; bilagene ændres ikke (kendt begrænsning).
+- Afregningsbilag er ikke godkendt af revisor eller SKAT; R1–R4 og ADR-059 blokerer produktionsbrug.
+
+## Related
+ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058, ADR-059.

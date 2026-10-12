@@ -154,17 +154,17 @@ describe( 'dashboard app', () => {
 	} );
 
 	it( 'shows a known section the server allows but this build does not have yet', async () => {
-		setUrl( '/creator-dashboard/payouts/' );
+		setUrl( '/creator-dashboard/settings/' );
 		const container = await renderApp( {
 			...CONFIG,
 			sections: [
 				...CONFIG.sections,
-				{ id: 'payouts', label: 'Payouts', path: 'payouts' },
+				{ id: 'settings', label: 'Settings', path: 'settings' },
 			],
 		} );
 
 		expect( container.querySelector( 'h1' )?.textContent ).toBe(
-			'Payouts'
+			'Settings'
 		);
 		expect( container.textContent ).toContain(
 			'This section is not available yet.'

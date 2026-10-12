@@ -154,6 +154,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - Aldrig sendt til frontend. Aldrig logget.
 - Webhooks verificeres med HMAC (`hash_equals()`), og der er tidsstempel-tolerance.
 - Hvis følsomme creator-data (fx bankoplysninger til payouts) nogensinde skal gemmes: foretræk at payout-udbyderen opbevarer dem. Ellers krypteres med `sodium_crypto_secretbox` og en nøgle fra `wp-config.php` (kræver ADR).
+- **Payouts (fase 23, ADR-056):** bank- og PayPal-oplysninger krypteres med sodium `secretbox` og `MERCHBOARD_PAYOUT_KEY` (32 bytes, base64, i `wp-config.php`) i `merchboard_payout_secrets` og slettes, når payouten ikke længere venter. Uden gyldig nøgle er bank og PayPal utilgængelige. Fulde oplysninger vises kun med `merchboard_view_payout_details` og audit-logges før visning; audit, logs og bilag indeholder kun maskerede hints. Gavekortkoder gemmes aldrig i Merch Dashboard (ADR-057), og logsanitizeren redigerer nøgler med "card" i navnet.
 
 ### Dependencies
 

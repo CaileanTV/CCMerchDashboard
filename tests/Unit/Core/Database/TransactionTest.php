@@ -173,6 +173,31 @@ final class TransactionTest extends TestCase {
 				'engine'       => 'InnoDB',
 				'transactions' => 'YES',
 			),
+			array(
+				'name'         => 'wp_merchboard_payouts',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_payout_secrets',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_settlement_documents',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_settlement_document_rows',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_settlement_counters',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
 		);
 
 		return new Transaction( $wpdb, new TransactionSupport( $wpdb ) );
