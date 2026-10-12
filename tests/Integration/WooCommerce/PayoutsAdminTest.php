@@ -176,6 +176,101 @@ final class PayoutsAdminTest extends IntegrationTestCase {
 		}
 	}
 
+	public function test_balances_list_each_amount_per_creator_and_currency_and_unknown_never_as_zero(): void {
+		$this->earn( 3 );
+		$this->request( '10', 'key-admin-0011' );
+		$paid = $this->request( '15', 'key-admin-0012' );
+		$this->actions->handle( $this->complete_input( $paid->id ) );
+		( new CreatorRepository( $this->wpdb ) )->create( 'Payout Admin Beta', CreatorStatus::Active );
+
+		$html = $this->render( array( 'view' => 'balances' ) );
+		self::assertStringContainsString( 'nav-tab nav-tab-active" href="' . esc_url( PayoutsPage::url( array( 'view' => 'balances' ) ) ) . '" aria-current="page">Balances</a>', $html );
+		self::assertStringContainsString( '<tr><td>Payout Admin Alpha</td><td>DKK</td><td>60.00 DKK</td><td>10.00 DKK</td><td>15.00 DKK</td><td>35.00 DKK</td><td>35.00 DKK</td><td>0.00 DKK</td></tr>', $html, 'Released 60.00 − paid out 15.00 − reserved 10.00.' );
+		self::assertStringContainsString( '<tr><td>Payout Admin Beta</td><td colspan="7">No earnings or payouts yet.</td></tr>', $html );
+		self::assertStringNotContainsString( self::ACCOUNT, $html );
+		self::assertStringNotContainsString( '•••• 5678', $html, 'No payment details in the balances.' );
+
+		// A sale without a pricing snapshot: its payout cannot be calculated.
+		$this->reader->orders[8100] = array(
+			'status'    => 'processing',
+			'currency'  => 'DKK',
+			'date_paid' => '2026-09-01 10:05:00',
+			'lines'     => array( new OrderLineSnapshot( 9100, $this->product, 0, 'MB-PAY line', 1, SalesAmount::parse( '80' ), $this->creator, SalesAmount::parse( '20' ) ) ),
+			'refunds'   => array(),
+		);
+		$this->sync->sync( 8100 );
+
+		$html = $this->render( array( 'view' => 'balances' ) );
+		self::assertStringContainsString( '<tr><td>Payout Admin Alpha</td><td>DKK</td><td><strong>Unknown</strong><br><span class="description">1 ledger row cannot be calculated</span></td><td>10.00 DKK</td><td>15.00 DKK</td><td><strong>Unknown</strong></td><td><strong>Unknown</strong></td><td><strong>Unknown</strong></td></tr>', $html );
+		self::assertStringNotContainsString( '35.00 DKK', $html );
+		self::assertStringNotContainsString( '60.00 DKK', $html );
+	}
+
+	public function test_balances_show_one_row_per_currency(): void {
+		$this->earn( 1 );
+		$order = $this->next_order++;
+		$item  = 1000 + $order;
+		$this->recorder->record( $item, $order, $this->product, 0, 'EUR' );
+		$this->reader->orders[ $order ] = array(
+			'status'    => 'processing',
+			'currency'  => 'EUR',
+			'date_paid' => '2026-09-01 10:05:00',
+			'lines'     => array( new OrderLineSnapshot( $item, $this->product, 0, 'MB-PAY line', 1, SalesAmount::parse( '80' ), $this->creator, SalesAmount::parse( '20' ) ) ),
+			'refunds'   => array(),
+		);
+		$this->sync->sync( $order );
+
+		$html = $this->render( array( 'view' => 'balances' ) );
+		self::assertStringContainsString( '<tr><td>Payout Admin Alpha</td><td>DKK</td><td>20.00 DKK</td><td>0.00 DKK</td><td>0.00 DKK</td><td>20.00 DKK</td><td>20.00 DKK</td><td>0.00 DKK</td></tr>', $html );
+		self::assertStringContainsString( '<tr><td>Payout Admin Alpha</td><td>EUR</td><td>20.00 EUR</td><td>0.00 EUR</td><td>0.00 EUR</td><td>20.00 EUR</td><td>20.00 EUR</td><td>0.00 EUR</td></tr>', $html, 'Each currency on its own row, never summed.' );
+	}
+
+	public function test_a_balances_page_beyond_the_last_shows_the_last_page(): void {
+		$creators = new CreatorRepository( $this->wpdb );
+
+		for ( $i = 1; $i <= 20; $i++ ) {
+			$creators->create( sprintf( 'Payout Admin Z%02d', $i ), CreatorStatus::Active );
+		}
+
+		// 21 creators by name: Alpha and Z01–Z19 on page 1, Z20 alone on page 2.
+		$html = $this->render(
+			array(
+				'view'  => 'balances',
+				'paged' => '99',
+			)
+		);
+		self::assertStringNotContainsString( 'No creators yet.', $html );
+		self::assertStringContainsString( '<tr><td>Payout Admin Z20</td>', $html );
+		self::assertStringNotContainsString( 'Payout Admin Alpha', $html );
+		self::assertSame(
+			$this->render(
+				array(
+					'view'  => 'balances',
+					'paged' => '2',
+				)
+			),
+			$html,
+			'The same as the last page.'
+		);
+	}
+
+	public function test_without_balances_there_is_no_balances_view(): void {
+		$decisions = ( new \ReflectionProperty( PayoutsPage::class, 'decisions' ) )->getValue( $this->page );
+		$cipher    = ( new \ReflectionProperty( PayoutsPage::class, 'cipher' ) )->getValue( $this->page );
+
+		if ( ! $decisions instanceof PayoutDecisions || ! $cipher instanceof PayoutCipher ) {
+			self::fail( 'The page\'s services.' );
+		}
+
+		$this->page = new PayoutsPage( $this->repository, $decisions, $cipher, new CreatorRepository( $this->wpdb ), $this->service( Logger::class ) );
+		$this->earn( 1 );
+
+		$html = $this->render( array( 'view' => 'balances' ) );
+		self::assertStringNotContainsString( 'view=balances', $html, 'No balances tab.' );
+		self::assertStringNotContainsString( 'merchboard-payout-balances-table', $html );
+		self::assertStringContainsString( 'nav-tab nav-tab-active" href="' . esc_url( PayoutsPage::url() ) . '" aria-current="page">Queue (', $html, 'The queue instead.' );
+	}
+
 	public function test_nonces_are_bound_to_the_action_and_the_payout(): void {
 		$this->earn( 2 );
 		$payout = $this->request( '5', 'key-admin-0004' );
@@ -291,7 +386,7 @@ final class PayoutsAdminTest extends IntegrationTestCase {
 		$balances         = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
 		$decisions        = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock ) );
 		$this->requests   = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock );
-		$this->page       = new PayoutsPage( $this->repository, $decisions, $cipher, new CreatorRepository( $this->wpdb ), $this->service( Logger::class ) );
+		$this->page       = new PayoutsPage( $this->repository, $decisions, $cipher, new CreatorRepository( $this->wpdb ), $this->service( Logger::class ), null, null, $balances );
 		$this->actions    = new PayoutActions( $decisions, $this->service( Logger::class ) );
 	}
 

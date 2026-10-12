@@ -23,6 +23,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 ### Authorization
 
 - **Admin:** `current_user_can( '<specifik cap>' )` i *hver* handler og page-callback, ikke kun i menuregistreringen.
+- **Afregning og saldi i admin (trin 24.2, ADR-060):** ordrehistorikken viser bilagsnummer og antal afregnede rækker til alle med `merchboard_manage_creators` (bevidst valg 2026-10-13); bilagets indhold og linket til udbetalingen kræver `merchboard_manage_payouts`. Saldi pr. creator vises kun på Payouts-siden (`merchboard_manage_payouts`) og indeholder ingen betalingsoplysninger.
 - **Creator:** `CreatorContext::current()` (✅ fase 8, se [USER-ROLES.md](USER-ROLES.md#adgangsregel-for-creator-dashboard)) i hver controller og REST-permission callback. Adgang = capability `merchboard_access_dashboard` **og** en aktiv creator-record, der er koblet til brugeren. Rollen alene giver aldrig adgang. Services, der modtager et ressource-ID, tjekker ejerskab mod den aktuelle creator.
 - **Direkte filadgang:** Hver PHP-fil i `src/` og `templates/` starter med `defined( 'ABSPATH' ) || exit;`, bortset fra rene klassefiler, der ikke eksekverer kode ved include. Dem kræver PHPCS ikke guard for, men vi tilføjer den for konsistens.
 

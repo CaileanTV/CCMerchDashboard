@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\WooCommerce;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditAction;
+use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
@@ -56,6 +57,7 @@ use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use wpdb;
 
 /**
  * Sales of 100.00 incl. VAT (20 %, VAT registered: payout 20.00 each) dated
@@ -95,6 +97,22 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 	private int $next_order = 9101;
 
+	private string $key;
+
+	/**
+	 * Second database connection of the concurrency tests (closed in tearDown()).
+	 *
+	 * @var wpdb|null
+	 */
+	private ?wpdb $second = null;
+
+	/**
+	 * Seconds the last while_waiting() work ran.
+	 *
+	 * @var float
+	 */
+	private float $waited = 0.0;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
@@ -119,7 +137,8 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$clock            = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
 		$audit            = $this->service( AuditTrail::class );
-		$cipher           = new PayoutCipher( base64_encode( random_bytes( 32 ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A test key.
+		$this->key        = base64_encode( random_bytes( 32 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A test key.
+		$cipher           = new PayoutCipher( $this->key );
 		$this->repository = new PayoutRepository( $this->wpdb );
 		$balances         = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
 		$this->documents  = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $creators, $this->vat, $audit, $transaction, $clock );
@@ -129,6 +148,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 	}
 
 	protected function tearDown(): void {
+		$this->second?->close();
 		$this->posts->remove_all();
 		parent::tearDown();
 	}
@@ -305,6 +325,229 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		$this->refused( PayoutException::NOT_AUTHORIZED, fn() => $this->documents->correct( $second->id, 'No.' ) );
 	}
 
+	public function test_concurrent_issues_on_two_connections_get_unique_numbers_and_the_waiting_one_rolls_back(): void {
+		$creators = new CreatorRepository( $this->wpdb );
+		$beta     = $creators->create( 'Settlement Beta', CreatorStatus::Active )->id;
+		$this->markups->save( $beta, new MarkupBps( 2000 ) );
+		$this->vat->save( $beta, true );
+		$product = $this->posts->add( 'MB-SET product B', 'publish', array( (string) $beta ) );
+		$this->posts->meta( $product, '_price', '100' );
+		$this->earn( 2 );
+		$this->earn( 2, '2026-09-01 10:05:00', $beta, $product );
+		$alpha_payout = $this->request( '10', 'key-set-0101' );
+		$beta_payout  = $this->requests->request( $beta, 'DKK', '10', 'bank', array( 'registration' => '1234', 'account' => '0012345678' ), 'key-set-0102', 1 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$main         = $this->stack( $this->wpdb, 0 );
+		$refused      = null;
+
+		// Connection 2 completes Alpha's payout. Right after its first settled row (document
+		// AFR-000001 and the number counter written, not committed), connection 1 completes
+		// Beta's payout: a different creator lock, so it gets as far as the shared counter.
+		$second = $this->second_connection(
+			'INSERT',
+			$this->table( Tables::SETTLEMENT_ROWS ),
+			function () use ( $main, $beta_payout, &$refused ): void {
+				$refused = $this->while_waiting( fn() => $main->complete( $beta_payout->id ) );
+			}
+		);
+		$this->stack( $second, 0 )->complete( $alpha_payout->id );
+
+		self::assertInstanceOf( DatabaseException::class, $refused, 'The waiting issue times out instead of taking a number twice.' );
+		self::assertGreaterThanOrEqual( 0.9, $this->waited, 'It really waited for the other connection\'s lock.' );
+		self::assertSame( PayoutStatus::Completed, $this->repository->find( $alpha_payout->id )?->status );
+		self::assertSame( PayoutStatus::Pending, $this->repository->find( $beta_payout->id )?->status, 'Rolled back: no completion without its document.' );
+		self::assertNull( $this->documents->for_payout( $beta_payout->id ) );
+		self::assertSame( 'AFR-000001', $this->documents->for_payout( $alpha_payout->id )['document']->number ?? null );
+		self::assertCount( 1, $this->audit( AuditAction::PayoutCompleted ) );
+
+		$this->decisions->complete( $beta_payout->id );
+		self::assertSame( 'AFR-000002', $this->documents->for_payout( $beta_payout->id )['document']->number ?? null, 'The next free number; none was lost or taken twice.' );
+		self::assertSame( array( 2, 4 ), $this->settlement_counts(), 'Two sales of each creator.' );
+		self::assertSame( 2, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(DISTINCT document_number) FROM %i', $this->table( Tables::SETTLEMENT_DOCUMENTS ) ) ) );
+	}
+
+	public function test_a_concurrent_completion_of_the_same_creator_is_refused_and_settles_nothing_twice(): void {
+		$this->earn( 3 );
+		$first   = $this->request( '10', 'key-set-0103' );
+		$other   = $this->request( '5', 'key-set-0104' );
+		$main    = $this->stack( $this->wpdb, 0 );
+		$refused = null;
+
+		$second = $this->second_connection(
+			'INSERT',
+			$this->table( Tables::SETTLEMENT_ROWS ),
+			function () use ( $main, $other, &$refused ): void {
+				$refused = $this->while_waiting( fn() => $main->complete( $other->id ) );
+			}
+		);
+		$this->stack( $second, 0 )->complete( $first->id );
+
+		self::assertInstanceOf( PayoutException::class, $refused );
+		self::assertSame( PayoutException::BUSY, $refused->reason(), 'The creator lock is held by the other connection.' );
+		self::assertSame( PayoutStatus::Pending, $this->repository->find( $other->id )?->status );
+		self::assertSame( array( 1, 3 ), $this->settlement_counts() );
+
+		$this->decisions->complete( $other->id );
+		$shown = $this->documents->for_payout( $other->id );
+		self::assertSame( 'AFR-000002', $shown['document']->number ?? null );
+		self::assertSame( array(), $shown['rows'] ?? null, 'Every released row is already in AFR-000001.' );
+		self::assertSame( array( 2, 3 ), $this->settlement_counts() );
+	}
+
+	public function test_a_row_settled_on_another_connection_is_never_settled_twice_and_the_waiting_issue_rolls_back(): void {
+		$this->earn( 3 );
+		$payout = $this->request( '10', 'key-set-0105' );
+		$keys   = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT event_key FROM %i ORDER BY id', $this->table( Tables::SALES ) ) );
+		self::assertCount( 3, $keys );
+
+		// Past the creator lock (a defect or a manual write): connection 2 holds an uncommitted
+		// settled row for the first sale; the unique event key is the last guard.
+		$second = $this->second_connection( '', '', null );
+		$second->query( 'START TRANSACTION' );
+		self::assertSame( 1, $second->insert( $this->table( Tables::SETTLEMENT_ROWS ), $this->settled_row( (string) $keys[0] ) ) );
+
+		$refused = $this->while_waiting( fn() => $this->stack( $this->wpdb, 0 )->complete( $payout->id ) );
+
+		self::assertInstanceOf( DatabaseException::class, $refused );
+		self::assertGreaterThanOrEqual( 0.9, $this->waited, 'It really waited for the other connection\'s row lock.' );
+		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
+		self::assertSame( array( 0, 0 ), $this->settlement_counts(), 'Fully rolled back.' );
+		self::assertSame( 0, $this->count_rows( Tables::SETTLEMENT_COUNTERS ), 'The number is given back.' );
+		self::assertSame( array(), $this->audit( AuditAction::SettlementDocumentIssued ) );
+
+		$second->query( 'COMMIT' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertSame( 'AFR-000001', $shown['document']->number ?? null );
+		self::assertSame( array_slice( $keys, 1 ), array_map( static fn( array $row ): string => (string) $row['event_key'], $shown['rows'] ?? array() ), 'Only the rows not yet settled.' );
+		self::assertSame( 3, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(DISTINCT event_key) FROM %i', $this->table( Tables::SETTLEMENT_ROWS ) ) ) );
+		self::assertSame( 3, $this->count_rows( Tables::SETTLEMENT_ROWS ), 'Every ledger row once.' );
+	}
+
+	/**
+	 * Payout services on a database connection (the test's key and clock).
+	 *
+	 * @param wpdb $db           Connection.
+	 * @param int  $lock_timeout Seconds to wait for a creator lock.
+	 */
+	private function stack( wpdb $db, int $lock_timeout ): PayoutDecisions {
+		$clock       = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+		$transaction = new Transaction( $db, new TransactionSupport( $db ) );
+		$audit       = new AuditTrail( new AuditRepository( $db ) );
+		$repository  = new PayoutRepository( $db, $lock_timeout );
+		$documents   = new SettlementDocuments( new SettlementRepository( $db ), $repository, new LedgerCreatorPayouts( $db ), new CreatorRepository( $db ), new CreatorVatRepository( $db ), $audit, $transaction, $clock );
+
+		return new PayoutDecisions( $repository, new PayoutBalances( new LedgerCreatorPayouts( $db ), $repository, $clock ), new PayoutCipher( $this->key ), $audit, $transaction, $clock, $documents );
+	}
+
+	/**
+	 * A second, real database connection (own session, locks and
+	 * transactions) with the test's table prefix. It runs $hook once, right
+	 * after its first query that contains both needles, while its own
+	 * transaction is still open.
+	 *
+	 * @param string        $verb  First needle ('' = no hook).
+	 * @param string        $table Second needle.
+	 * @param callable|null $hook  Work of the other connection.
+	 */
+	private function second_connection( string $verb, string $table, ?callable $hook ): wpdb {
+		$second = new class( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST ) extends wpdb {
+
+			/**
+			 * Hook and its needles.
+			 *
+			 * @var array{0: string, 1: string, 2: callable}|null
+			 */
+			public ?array $after = null;
+
+			/**
+			 * Runs the query, then the hook once.
+			 *
+			 * @param string $query Query.
+			 * @return int|bool
+			 */
+			public function query( $query ) {
+				$result = parent::query( $query );
+				$after  = $this->after;
+
+				if ( null !== $after && str_starts_with( ltrim( $query ), $after[0] ) && str_contains( $query, $after[1] ) ) {
+					$this->after = null;
+					( $after[2] )();
+				}
+
+				return $result;
+			}
+		};
+		$second->set_prefix( $this->wpdb->prefix );
+		$second->after = null === $hook ? null : array( $verb, $table, $hook );
+		$this->second  = $second;
+		self::assertNotSame( $this->wpdb->get_var( 'SELECT CONNECTION_ID()' ), $second->get_var( 'SELECT CONNECTION_ID()' ), 'Two real connections.' );
+
+		return $second;
+	}
+
+	/**
+	 * Runs work on the test's connection with a 1-second InnoDB lock wait
+	 * and returns what it threw (null when it returned).
+	 *
+	 * @param callable $work Work.
+	 */
+	private function while_waiting( callable $work ): ?\Throwable {
+		$previous = (int) $this->wpdb->get_var( 'SELECT @@SESSION.innodb_lock_wait_timeout' );
+		$this->wpdb->query( 'SET SESSION innodb_lock_wait_timeout = 1' );
+		$this->wpdb->suppress_errors( true );
+		$start = microtime( true );
+
+		try {
+			$work();
+			return null;
+		} catch ( \Throwable $e ) {
+			return $e;
+		} finally {
+			$this->waited = microtime( true ) - $start;
+			$this->wpdb->suppress_errors( false );
+			$restore = $this->wpdb->prepare( 'SET SESSION innodb_lock_wait_timeout = %d', $previous );
+
+			if ( null !== $restore ) {
+				$this->wpdb->query( $restore );
+			}
+		}
+	}
+
+	/**
+	 * Numbers of settlement documents and settled rows.
+	 *
+	 * @return array{0: int, 1: int}
+	 */
+	private function settlement_counts(): array {
+		return array( $this->count_rows( Tables::SETTLEMENT_DOCUMENTS ), $this->count_rows( Tables::SETTLEMENT_ROWS ) );
+	}
+
+	/**
+	 * A settled row of a stray document (raw, for the unique-key guard).
+	 *
+	 * @param string $event_key Ledger event.
+	 * @return array<string, int|string>
+	 */
+	private function settled_row( string $event_key ): array {
+		return array(
+			'event_key'      => $event_key,
+			'document_id'    => 999999,
+			'order_id'       => 9101,
+			'order_item_id'  => 10101,
+			'product_id'     => $this->product,
+			'type'           => 'sale',
+			'quantity'       => 1,
+			'net_amount'     => '80',
+			'tax_amount'     => '20',
+			'share_bps'      => 2000,
+			'vat_registered' => 1,
+			'price_decimals' => 2,
+			'profit_amount'  => '20',
+			'payout_amount'  => '20',
+			'occurred_at'    => '2026-09-01 10:05:00',
+		);
+	}
+
 	/**
 	 * A bank request of the creator, as user 1.
 	 *
@@ -318,18 +561,20 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 	/**
 	 * Sales of 100.00 incl. VAT (payout 20.00 each).
 	 *
-	 * @param int    $count Number of sales.
-	 * @param string $paid  Payment time (UTC).
+	 * @param int      $count   Number of sales.
+	 * @param string   $paid    Payment time (UTC).
+	 * @param int|null $creator Creator (null = the test's creator).
+	 * @param int|null $product Product of that creator (null = the test's product).
 	 * @return list<int> Order item ids.
 	 */
-	private function earn( int $count, string $paid = '2026-09-01 10:05:00' ): array {
+	private function earn( int $count, string $paid = '2026-09-01 10:05:00', ?int $creator = null, ?int $product = null ): array {
 		$items = array();
 
 		for ( $i = 0; $i < $count; $i++ ) {
 			$order = $this->next_order++;
 			$item  = 1000 + $order;
-			$this->recorder->record( $item, $order, $this->product, 0, 'DKK' );
-			$this->order( $item, $order, array(), $paid );
+			$this->recorder->record( $item, $order, $product ?? $this->product, 0, 'DKK' );
+			$this->order( $item, $order, array(), $paid, $creator, $product );
 			$items[] = $item;
 		}
 
@@ -346,13 +591,15 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 	 * @param int              $order_id Order.
 	 * @param RefundSnapshot[] $refunds  Refunds.
 	 * @param string           $paid     Payment time (UTC).
+	 * @param int|null         $creator  Creator (null = the test's creator).
+	 * @param int|null         $product  Product (null = the test's product).
 	 */
-	private function order( int $item, int $order_id, array $refunds = array(), string $paid = '2026-09-01 10:05:00' ): void {
+	private function order( int $item, int $order_id, array $refunds = array(), string $paid = '2026-09-01 10:05:00', ?int $creator = null, ?int $product = null ): void {
 		$this->reader->orders[ $order_id ] = array(
 			'status'    => 'processing',
 			'currency'  => 'DKK',
 			'date_paid' => $paid,
-			'lines'     => array( new OrderLineSnapshot( $item, $this->product, 0, 'MB-SET line', 1, SalesAmount::parse( '80' ), $this->creator, SalesAmount::parse( '20' ) ) ),
+			'lines'     => array( new OrderLineSnapshot( $item, $product ?? $this->product, 0, 'MB-SET line', 1, SalesAmount::parse( '80' ), $creator ?? $this->creator, SalesAmount::parse( '20' ) ) ),
 			'refunds'   => $refunds,
 		);
 		$this->sync->sync( $order_id );

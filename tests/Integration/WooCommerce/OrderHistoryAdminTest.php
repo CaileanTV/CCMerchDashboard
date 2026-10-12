@@ -26,6 +26,8 @@ use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraseException;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
@@ -319,6 +321,92 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 		self::assertSame( $before, $this->counts(), 'Rendering writes nothing.' );
 	}
 
+	public function test_settled_rows_show_their_stored_document_and_link_the_payout_only_with_the_payout_capability(): void {
+		$keys = array_map( 'strval', $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT event_key FROM %i WHERE order_id = 3001 ORDER BY id', $this->table( Tables::SALES ) ) ) );
+		self::assertCount( 3, $keys );
+		$this->settle( 'AFR-000001', 77, array_slice( $keys, 0, 2 ), 3001 );
+		$before = $this->counts();
+		$link   = '<a href="' . esc_url( PayoutsPage::url( array( 'payout' => 77 ) ) ) . '">AFR-000001</a>';
+
+		$list = $this->render( array( 'status' => 'all' ) );
+		self::assertStringContainsString( '<th scope="col">Settlement</th>', $list );
+		self::assertStringContainsString( '<td>2 of 3 rows<br>' . $link . '</td></tr>', $list, 'Order 3001: two of its three rows are in the document.' );
+		self::assertSame( 3, substr_count( $list, '<td>Not settled</td></tr>' ), 'The other three orders.' );
+
+		$order = $this->render( array( 'order' => '3001' ) );
+		self::assertSame( 2, substr_count( $order, '<td>' . $link . '</td></tr>' ) );
+		self::assertSame( 1, substr_count( $order, '<td>Not settled</td></tr>' ), 'The refund is not settled yet.' );
+
+		$manager = $this->create_user( 'mb-history-manager' );
+		( new WP_User( $manager ) )->add_cap( Capabilities::MANAGE_CREATORS );
+		wp_set_current_user( $manager );
+
+		foreach ( array( $this->render( array( 'status' => 'all' ) ), $this->render( array( 'order' => '3001' ) ) ) as $html ) {
+			self::assertStringContainsString( 'AFR-000001', $html, 'The document number is visible.' );
+			self::assertStringNotContainsString( 'page=' . PayoutsPage::SLUG, $html, 'No payout link without merchboard_manage_payouts.' );
+		}
+
+		self::assertSame( $before, $this->counts(), 'Rendering writes nothing.' );
+	}
+
+	public function test_with_a_creator_filter_the_settlement_column_counts_only_that_creators_rows(): void {
+		// 3005: one line of each creator, each settled in its creator's own document.
+		$tee = $this->product( 'Tee 3005', $this->alpha );
+		$mug = $this->product( 'Mug 3005', $this->beta );
+		$this->recorder->record( 30051, 3005, $tee, 0, 'DKK' );
+		$this->recorder->record( 30052, 3005, $mug, 0, 'DKK' );
+		$this->order( 3005, array( $this->line( 30051, $tee, 1, '80', '20', $this->alpha ), $this->line( 30052, $mug, 1, '80', '20', $this->beta ) ) );
+		$key = fn( int $creator ): string => (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT event_key FROM %i WHERE order_id = 3005 AND creator_id = %d', $this->table( Tables::SALES ), $creator ) );
+		$this->settle( 'AFR-000001', 77, array( $key( $this->alpha ) ), 3005 );
+		$this->settle( 'AFR-000002', 78, array( $key( $this->beta ) ), 3005, $this->beta );
+		$row = static fn( string $html ): string => 1 === preg_match( '/#3005<\/a>.*?<\/tr>/s', $html, $match ) ? $match[0] : '';
+
+		$all = $row( $this->render( array( 'status' => 'all' ) ) );
+		self::assertStringContainsString( '<td>2 of 2 rows<br>', $all, 'Both creators\' rows without a filter.' );
+		self::assertStringContainsString( 'AFR-000001', $all );
+		self::assertStringContainsString( 'AFR-000002', $all );
+
+		foreach ( array( array( $this->alpha, 'AFR-000001', 'AFR-000002' ), array( $this->beta, 'AFR-000002', 'AFR-000001' ) ) as list( $creator, $own, $other ) ) {
+			$html = $row(
+				$this->render(
+					array(
+						'status'  => 'all',
+						'creator' => (string) $creator,
+					)
+				)
+			);
+			self::assertStringContainsString( '<td>1 of 1 rows<br>', $html, 'Only the filtered creator\'s row, never "2 of 1".' );
+			self::assertStringContainsString( $own, $html );
+			self::assertStringNotContainsString( $other, $html, 'Not the other creator\'s document.' );
+		}
+	}
+
+	public function test_without_settlement_data_the_settlement_column_is_not_shown(): void {
+		$page = new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger() );
+
+		$views = array(
+			'#3001'         => array( 'status' => 'all' ),
+			'Ledger events' => array( 'order' => '3001' ),
+		);
+
+		foreach ( $views as $shown => $get ) {
+			$_GET = $get;
+			$html = '';
+			ob_start();
+
+			try {
+				$page->render();
+			} finally {
+				$html = (string) ob_get_clean();
+				$_GET = array();
+			}
+
+			self::assertStringContainsString( $shown, $html, 'The view is rendered.' );
+			self::assertStringNotContainsString( '>Settlement</th>', $html );
+			self::assertStringNotContainsString( 'Not settled', $html );
+		}
+	}
+
 	public function test_the_page_offers_no_deletion_or_other_write_action(): void {
 		$before = $this->counts();
 
@@ -601,7 +689,72 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	 * The page with a lookup that does not need WooCommerce.
 	 */
 	private function page(): OrderHistoryPage {
-		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger() );
+		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger(), new SettlementRepository( $this->wpdb ) );
+	}
+
+	/**
+	 * Stores a settlement document with rows for ledger events (synthetic;
+	 * the issuing itself is tested in SettlementDocumentsTest).
+	 *
+	 * @phpstan-param list<string> $event_keys
+	 *
+	 * @param string   $number     Document number.
+	 * @param int      $payout_id  Payout.
+	 * @param string[] $event_keys Settled events.
+	 * @param int      $order_id   Their order.
+	 * @param int|null $creator_id The document's creator; null = creator A.
+	 */
+	private function settle( string $number, int $payout_id, array $event_keys, int $order_id, ?int $creator_id = null ): void {
+		$this->wpdb->insert(
+			$this->table( Tables::SETTLEMENT_DOCUMENTS ),
+			array(
+				'document_number'      => $number,
+				'document_series'      => 'AFR',
+				'document_type'        => 'settlement',
+				'creator_id'           => $creator_id ?? $this->alpha,
+				'payout_id'            => $payout_id,
+				'settlement_payout_id' => $payout_id,
+				'currency'             => 'DKK',
+				'period_to'            => '2026-10-10 00:00:00',
+				'profit_amount'        => '0',
+				'commission_amount'    => '0',
+				'opening_balance'      => '0',
+				'payout_amount'        => '0',
+				'closing_balance'      => '0',
+				'calculation_version'  => 'test',
+				'template_version'     => 1,
+				'snapshot'             => '{}',
+				'issued_at'            => '2026-10-10 00:00:00',
+			)
+		);
+		$document = (int) $this->wpdb->insert_id;
+		self::assertGreaterThan( 0, $document );
+
+		foreach ( $event_keys as $i => $key ) {
+			self::assertSame(
+				1,
+				$this->wpdb->insert(
+					$this->table( Tables::SETTLEMENT_ROWS ),
+					array(
+						'event_key'      => $key,
+						'document_id'    => $document,
+						'order_id'       => $order_id,
+						'order_item_id'  => $i + 1,
+						'product_id'     => 1,
+						'type'           => 'sale',
+						'quantity'       => 1,
+						'net_amount'     => '0',
+						'tax_amount'     => '0',
+						'share_bps'      => 0,
+						'vat_registered' => 1,
+						'price_decimals' => 2,
+						'profit_amount'  => '0',
+						'payout_amount'  => '0',
+						'occurred_at'    => '2026-10-09 12:00:00',
+					)
+				)
+			);
+		}
 	}
 
 	/**

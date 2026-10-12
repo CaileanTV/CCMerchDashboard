@@ -3298,6 +3298,7 @@ Schema-version 11 (`CreateSettlementTables`). Ledgeren og payouts ændres ikke.
 - Afregningsstarten kan ikke ændres, når creatoren har et bilag.
 - En testordre, der indgår i et bilag, kan ikke længere slettes efter ADR-052.
 - **Implementeret 2026-10-11 (trin 23.8):** `SettlementDocuments`/`SettlementRepository`, `LedgerCreatorPayouts::unsettled_rows()` (læses med `LOCK IN SHARE MODE`, så en samtidig ADR-052-sletning enten venter og afvises eller sker først), schema-version 11, `GET /me/payouts/{id}/settlement-document`, admin- og dashboardvisning. Korrigerende bilag bærer ingen beløb; beløbsændringer går fremad via ledgeren (D11). Hvis karensperioden ændres efter et bilag, kan bilagskædens overførte saldo afvige fra den aktuelle ADR-054-saldo; bilagene ændres ikke (kendt begrænsning).
+- **Note 2026-10-13 (trin 24.2, adgang):** ordrehistorikken (`merchboard_manage_creators`) viser pr. ordre og ledger-række, om den er afregnet, og bilagsnummeret. Det er projektejerens bevidste valg og udvider 060-5 alene for nummer og optælling: bilagets indhold ses fortsat kun på payout-siden med `merchboard_manage_payouts`, og linket til udbetalingen vises kun med den capability.
 - Afregningsbilag er ikke godkendt af revisor eller SKAT; R1–R4 og ADR-059 blokerer produktionsbrug.
 
 ## Related

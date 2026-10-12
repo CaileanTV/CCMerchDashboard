@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitGap;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitSummary;
@@ -43,6 +44,10 @@ defined( 'ABSPATH' ) || exit;
  *   with their pricing snapshot and its cycles (OrderHistoryDetails), each
  *   event with its profit or the reason it is unknown (ProfitGap), plus the
  *   current WooCommerce status via CRUD.
+ * - **Settlement (ADR-060):** the list shows how many of an order's ledger
+ *   rows are settled and in which settlement documents; the order shows the
+ *   document of each event. Read from the stored documents, never
+ *   recalculated. Links to the payout only with `merchboard_manage_payouts`.
  *
  * No customer data and no item names (ADR-037 pkt. 10). Every request
  * parameter is validated; invalid values are ignored with a notice. The page
@@ -78,18 +83,20 @@ final class OrderHistoryPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param OrderHistory        $history  Unique orders of the ledger.
-	 * @param OrderHistoryDetails $details  One order's events, lines and cycles.
-	 * @param OrderStatusLookup   $orders   Current WooCommerce state (CRUD).
-	 * @param CreatorRepository   $creators Creator names.
-	 * @param Logger              $logger   Technical log.
+	 * @param OrderHistory              $history     Unique orders of the ledger.
+	 * @param OrderHistoryDetails       $details     One order's events, lines and cycles.
+	 * @param OrderStatusLookup         $orders      Current WooCommerce state (CRUD).
+	 * @param CreatorRepository         $creators    Creator names.
+	 * @param Logger                    $logger      Technical log.
+	 * @param SettlementRepository|null $settlements Settled ledger rows (ADR-060, read only); null = not shown.
 	 */
 	public function __construct(
 		private OrderHistory $history,
 		private OrderHistoryDetails $details,
 		private OrderStatusLookup $orders,
 		private CreatorRepository $creators,
-		private Logger $logger
+		private Logger $logger,
+		private ?SettlementRepository $settlements = null
 	) {
 	}
 
@@ -249,16 +256,23 @@ final class OrderHistoryPage {
 			return;
 		}
 
+		$settled = null === $this->settlements ? null : $this->settlements->settlements_for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ), $filter->creator_id );
 		echo '<table class="widefat striped merchboard-order-history-table"><thead><tr>';
 
-		foreach ( array( __( 'Order', 'merchboard' ), __( 'Ledger dates', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Currency', 'merchboard' ), __( 'Events / lines', 'merchboard' ), __( 'Stored net amount', 'merchboard' ), __( 'Tax data', 'merchboard' ), __( 'Profit data', 'merchboard' ) ) as $heading ) {
+		foreach ( array_merge( array( __( 'Order', 'merchboard' ), __( 'Ledger dates', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Currency', 'merchboard' ), __( 'Events / lines', 'merchboard' ), __( 'Stored net amount', 'merchboard' ), __( 'Tax data', 'merchboard' ), __( 'Profit data', 'merchboard' ) ), null === $settled ? array() : array( __( 'Settlement', 'merchboard' ) ) ) as $heading ) {
 			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
 
 		echo '</tr></thead><tbody>';
 
 		foreach ( $rows as $row ) {
-			$this->render_row( $row );
+			$this->render_row(
+				$row,
+				null === $settled ? null : ( $settled[ $row->order_id ] ?? array(
+					'rows'      => 0,
+					'documents' => array(),
+				) )
+			);
 		}
 
 		echo '</tbody></table>';
@@ -282,9 +296,10 @@ final class OrderHistoryPage {
 	/**
 	 * One order of the list.
 	 *
-	 * @param OrderHistoryRow $row Order.
+	 * @param OrderHistoryRow                                                                    $row     Order.
+	 * @param array{rows: int, documents: list<array{number: string, payout_id: int|null}>}|null $settled Its settled rows; null = not shown.
 	 */
-	private function render_row( OrderHistoryRow $row ): void {
+	private function render_row( OrderHistoryRow $row, ?array $settled = null ): void {
 		$order = $this->orders->find( $row->order_id );
 
 		echo '<tr><td><a href="' . esc_url( self::url( array( 'order' => $row->order_id ) ) ) . '">' . esc_html( sprintf( '#%d', $row->order_id ) ) . '</a>';
@@ -297,7 +312,18 @@ final class OrderHistoryPage {
 		echo '<td>' . esc_html( CreatorSalesSection::money( $row->net_amount, $row->currency ) ) . '</td>';
 		/* translators: 1: rows with stored tax, 2: all rows. */
 		echo '<td>' . esc_html( sprintf( __( '%1$d of %2$d rows', 'merchboard' ), $row->taxed_rows, $row->events ) ) . '</td>';
-		echo '<td>' . self::profit_cell( $row->profit ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in profit_cell().
+		echo '<td>' . self::profit_cell( $row->profit ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in profit_cell().
+
+		if ( null !== $settled ) {
+			if ( 0 === $settled['rows'] ) {
+				echo '<td>' . esc_html__( 'Not settled', 'merchboard' ) . '</td>';
+			} else {
+				/* translators: 1: settled ledger rows, 2: all ledger rows. */
+				echo '<td>' . esc_html( sprintf( __( '%1$d of %2$d rows', 'merchboard' ), $settled['rows'], $row->events ) ) . '<br>' . implode( ', ', array_map( array( self::class, 'document_link' ), $settled['documents'] ) ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in document_link().
+			}
+		}
+
+		echo '</tr>';
 	}
 
 	/**
@@ -392,7 +418,9 @@ final class OrderHistoryPage {
 		echo '<h3>' . esc_html__( 'Ledger events', 'merchboard' ) . '</h3>';
 		echo '<table class="widefat striped merchboard-order-history-events"><thead><tr>';
 
-		foreach ( array( __( 'Date', 'merchboard' ), __( 'Event', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Order line', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'Quantity', 'merchboard' ), __( 'Stored net amount', 'merchboard' ), __( 'Stored tax', 'merchboard' ), __( 'Profit', 'merchboard' ) ) as $heading ) {
+		$settled = null === $this->settlements ? null : $this->settlements->settlements_for_events( array_map( static fn( array $event ): string => $event['entry']->event_key, $details['events'] ) );
+
+		foreach ( array_merge( array( __( 'Date', 'merchboard' ), __( 'Event', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Order line', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'Quantity', 'merchboard' ), __( 'Stored net amount', 'merchboard' ), __( 'Stored tax', 'merchboard' ), __( 'Profit', 'merchboard' ) ), null === $settled ? array() : array( __( 'Settlement', 'merchboard' ) ) ) as $heading ) {
 			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
 
@@ -413,7 +441,14 @@ final class OrderHistoryPage {
 			echo '<td>' . esc_html( null === $event['tax'] ? __( 'Missing', 'merchboard' ) : CreatorSalesSection::money( SalesAmount::format( $event['tax']['tax'] ), $event['tax']['currency'] ) ) . '</td>';
 			echo '<td>' . ( null === $diagnosis->profit
 				? '<strong>' . esc_html__( 'Unknown', 'merchboard' ) . '</strong><br><span class="description">' . esc_html( self::gap_text( $diagnosis->gap ?? ProfitGap::Other ) ) . '</span>'
-				: esc_html( CreatorSalesSection::money( SalesAmount::format( $diagnosis->profit ), $entry->currency ) ) ) . '</td></tr>';
+				: esc_html( CreatorSalesSection::money( SalesAmount::format( $diagnosis->profit ), $entry->currency ) ) ) . '</td>';
+
+			if ( null !== $settled ) {
+				$document = $settled[ $entry->event_key ] ?? null;
+				echo '<td>' . ( null === $document ? esc_html__( 'Not settled', 'merchboard' ) : self::document_link( $document ) ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in document_link().
+			}
+
+			echo '</tr>';
 		}
 
 		echo '</tbody></table>';
@@ -507,6 +542,20 @@ final class OrderHistoryPage {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * A settlement document number, linked to its payout only for a user
+	 * with `merchboard_manage_payouts` (ADR-058). Escaped HTML.
+	 *
+	 * @param array{number: string, payout_id: int|null} $document Document.
+	 */
+	private static function document_link( array $document ): string {
+		if ( null === $document['payout_id'] || ! current_user_can( Capabilities::MANAGE_PAYOUTS ) ) {
+			return esc_html( $document['number'] );
+		}
+
+		return '<a href="' . esc_url( PayoutsPage::url( array( 'payout' => $document['payout_id'] ) ) ) . '">' . esc_html( $document['number'] ) . '</a>';
 	}
 
 	/**

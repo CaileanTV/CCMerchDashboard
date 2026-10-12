@@ -18,6 +18,8 @@ use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalance;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutDecisions;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
@@ -36,7 +38,11 @@ defined( 'ABSPATH' ) || exit;
  *
  * - **Queue:** pending requests (bank, PayPal, gift card), oldest first; **History:**
  *   every other status, newest decision first. Paginated on the server;
- *   only the masked destination is listed.
+ *   only the masked destination is listed. **Balances** (`?view=balances`):
+ *   per creator and currency the released earnings, the reserved and paid
+ *   out amounts and the resulting balance (PayoutBalances, ADR-054), 20
+ *   creators per page. An unknown earning is shown as unknown, never as 0.
+ *   No payment details.
  * - **Payout** (`?payout=<id>`): its data and, while pending, the forms to
  *   reject it with a reason or to register the transfer made outside Merch
  *   Dashboard (PayoutActions). The full bank or PayPal details are shown only
@@ -90,6 +96,7 @@ final class PayoutsPage {
 	 * @param Logger                   $logger    Technical log.
 	 * @param GiftCardProviders|null   $providers Gift card adapters (links and reconciliation); null = none.
 	 * @param SettlementDocuments|null $documents Settlement documents (ADR-060); null = none.
+	 * @param PayoutBalances|null      $balances  Balances per creator and currency (ADR-054); null = no balances view.
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -98,7 +105,8 @@ final class PayoutsPage {
 		private CreatorRepository $creators,
 		private Logger $logger,
 		private ?GiftCardProviders $providers = null,
-		private ?SettlementDocuments $documents = null
+		private ?SettlementDocuments $documents = null,
+		private ?PayoutBalances $balances = null
 	) {
 	}
 
@@ -184,12 +192,12 @@ final class PayoutsPage {
 
 		// Read-only parameters, validated here; the reveal is checked with its nonce below.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$input   = wp_unslash( $_GET );
-		$payout  = self::id( $input['payout'] ?? null );
-		$page    = self::id( $input['paged'] ?? null ) ?? 1;
-		$history = 'history' === ( $input['view'] ?? '' );
-		$result  = is_string( $input['result'] ?? null ) ? sanitize_key( $input['result'] ) : '';
-		$reveal  = is_string( $input['_wpnonce'] ?? null ) ? $input['_wpnonce'] : '';
+		$input  = wp_unslash( $_GET );
+		$payout = self::id( $input['payout'] ?? null );
+		$page   = self::id( $input['paged'] ?? null ) ?? 1;
+		$view   = in_array( $input['view'] ?? '', array( 'history', 'balances' ), true ) ? (string) $input['view'] : 'queue';
+		$result = is_string( $input['result'] ?? null ) ? sanitize_key( $input['result'] ) : '';
+		$reveal = is_string( $input['_wpnonce'] ?? null ) ? $input['_wpnonce'] : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		echo '<div class="wrap merchboard-payouts"><h1>' . esc_html__( 'Payouts', 'merchboard' ) . '</h1>';
@@ -209,7 +217,7 @@ final class PayoutsPage {
 			if ( null !== $payout ) {
 				$this->render_payout( $payout, $reveal );
 			} else {
-				$this->render_list( $history, min( $page, 1000000 ) );
+				$this->render_list( null === $this->balances && 'balances' === $view ? 'queue' : $view, min( $page, 1000000 ) );
 			}
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'The payouts could not be read.', array( 'error' => $e::class ) );
@@ -220,22 +228,39 @@ final class PayoutsPage {
 	}
 
 	/**
-	 * The queue or the history, paginated.
+	 * The queue, the history or the balances, paginated.
 	 *
-	 * @param bool $history History (true) or queue (false).
-	 * @param int  $page    Requested page.
+	 * @param string $view 'queue', 'history' or 'balances'.
+	 * @param int    $page Requested page.
 	 * @throws DatabaseException When the payouts cannot be read.
 	 */
-	private function render_list( bool $history, int $page ): void {
-		$queued = $this->payouts->count_for_admin( true );
-		$done   = $this->payouts->count_for_admin( false );
+	private function render_list( string $view, int $page ): void {
+		$history = 'history' === $view;
+		$queued  = $this->payouts->count_for_admin( true );
+		$done    = $this->payouts->count_for_admin( false );
+		$tabs    = array(
+			/* translators: %s: number of requests. */
+			'queue'   => array( self::url(), sprintf( __( 'Queue (%s)', 'merchboard' ), number_format_i18n( $queued ) ) ),
+			/* translators: %s: number of requests. */
+			'history' => array( self::url( array( 'view' => 'history' ) ), sprintf( __( 'History (%s)', 'merchboard' ), number_format_i18n( $done ) ) ),
+		);
+
+		if ( null !== $this->balances ) {
+			$tabs['balances'] = array( self::url( array( 'view' => 'balances' ) ), __( 'Balances', 'merchboard' ) );
+		}
 
 		echo '<nav class="nav-tab-wrapper" aria-label="' . esc_attr__( 'Payout views', 'merchboard' ) . '">';
-		/* translators: %s: number of requests. */
-		echo '<a class="nav-tab' . ( $history ? '' : ' nav-tab-active' ) . '" href="' . esc_url( self::url() ) . '"' . ( $history ? '' : ' aria-current="page"' ) . '>' . esc_html( sprintf( __( 'Queue (%s)', 'merchboard' ), number_format_i18n( $queued ) ) ) . '</a>';
-		/* translators: %s: number of requests. */
-		echo '<a class="nav-tab' . ( $history ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( array( 'view' => 'history' ) ) ) . '"' . ( $history ? ' aria-current="page"' : '' ) . '>' . esc_html( sprintf( __( 'History (%s)', 'merchboard' ), number_format_i18n( $done ) ) ) . '</a>';
+
+		foreach ( $tabs as $key => $tab ) {
+			echo '<a class="nav-tab' . ( $key === $view ? ' nav-tab-active' : '' ) . '" href="' . esc_url( $tab[0] ) . '"' . ( $key === $view ? ' aria-current="page"' : '' ) . '>' . esc_html( $tab[1] ) . '</a>';
+		}
+
 		echo '</nav>';
+
+		if ( 'balances' === $view && null !== $this->balances ) {
+			$this->render_balances( $this->balances, $page );
+			return;
+		}
 
 		$total = $history ? $done : $queued;
 		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
@@ -281,6 +306,106 @@ final class PayoutsPage {
 		if ( is_string( $links ) && '' !== $links ) {
 			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post( $links ) . '</div></div>';
 		}
+	}
+
+	/**
+	 * Balances per creator and currency (ADR-054), creators by name. An
+	 * unknown earning makes the balance unknown; it is never shown as 0.
+	 *
+	 * @param PayoutBalances $balances Balances.
+	 * @param int            $page     Requested page.
+	 * @throws DatabaseException When the creators or a balance cannot be read.
+	 */
+	private function render_balances( PayoutBalances $balances, int $page ): void {
+		$found = $this->creators->paginate( $page, self::PER_PAGE, null, 'display_name', 'asc' );
+		$pages = max( 1, (int) ceil( $found['total'] / self::PER_PAGE ) );
+
+		// A page beyond the last shows the last one, as the pagination below does.
+		if ( $page > $pages ) {
+			$page  = $pages;
+			$found = $this->creators->paginate( $page, self::PER_PAGE, null, 'display_name', 'asc' );
+		}
+
+		echo '<p class="description">' . esc_html__( 'Released earnings are the creator payouts of sales whose holding period has ended, counted from the settlement start; refunds count at once. Balance = released earnings − paid out − reserved. When a ledger row cannot be calculated, the earnings and the balance are unknown and nothing can be requested.', 'merchboard' ) . '</p>';
+
+		if ( array() === $found['items'] ) {
+			echo '<p>' . esc_html__( 'No creators yet.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped merchboard-payout-balances-table"><thead><tr>';
+
+		foreach ( array( __( 'Creator', 'merchboard' ), __( 'Currency', 'merchboard' ), __( 'Released earnings', 'merchboard' ), __( 'Reserved', 'merchboard' ), __( 'Paid out', 'merchboard' ), __( 'Balance', 'merchboard' ), __( 'Available', 'merchboard' ), __( 'Outstanding', 'merchboard' ) ) as $heading ) {
+			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
+		}
+
+		echo '</tr></thead><tbody>';
+
+		foreach ( $found['items'] as $creator ) {
+			try {
+				$rows = $balances->for_creator( $creator->id );
+			} catch ( PayoutException ) {
+				$rows = null;
+			}
+
+			if ( null === $rows || array() === $rows ) {
+				echo '<tr><td>' . esc_html( $creator->display_name ) . '</td><td colspan="7">' . ( null === $rows ? '<strong>' . esc_html__( 'Unknown', 'merchboard' ) . '</strong>' : esc_html__( 'No earnings or payouts yet.', 'merchboard' ) ) . '</td></tr>';
+				continue;
+			}
+
+			foreach ( $rows as $balance ) {
+				echo '<tr><td>' . esc_html( $creator->display_name ) . '</td>';
+				echo '<td>' . esc_html( $balance->currency ) . '</td>';
+				echo '<td>' . self::balance_cell( $balance->earned_units, $balance->currency ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in balance_cell().
+
+				if ( PayoutBalance::UNKNOWN === $balance->status() ) {
+					/* translators: %d: number of ledger rows. */
+					echo '<br><span class="description">' . esc_html( sprintf( _n( '%d ledger row cannot be calculated', '%d ledger rows cannot be calculated', $balance->unknown_rows, 'merchboard' ), $balance->unknown_rows ) ) . '</span>';
+				}
+
+				echo '</td>';
+
+				foreach ( array( $balance->reserved_units, $balance->completed_units, $balance->balance_units(), $balance->available_units(), $balance->outstanding_units() ) as $units ) {
+					echo '<td>' . self::balance_cell( $units, $balance->currency ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in balance_cell().
+				}
+
+				echo '</tr>';
+			}
+		}
+
+		echo '</tbody></table>';
+
+		$links = paginate_links(
+			array(
+				'base'      => self::url(
+					array(
+						'view'  => 'balances',
+						'paged' => '%#%',
+					)
+				),
+				'format'    => '',
+				'current'   => min( $page, $pages ),
+				'total'     => $pages,
+				'prev_text' => __( '&laquo; Previous', 'merchboard' ),
+				'next_text' => __( 'Next &raquo;', 'merchboard' ),
+			)
+		);
+
+		if ( is_string( $links ) && '' !== $links ) {
+			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post( $links ) . '</div></div>';
+		}
+	}
+
+	/**
+	 * An amount in units, or "Unknown" (never 0) when null. Escaped HTML.
+	 *
+	 * @param int|null $units    Amount, null when unknown.
+	 * @param string   $currency Currency.
+	 */
+	private static function balance_cell( ?int $units, string $currency ): string {
+		return null === $units
+			? '<strong>' . esc_html__( 'Unknown', 'merchboard' ) . '</strong>'
+			: esc_html( CreatorSalesSection::money( SalesAmount::format( $units ), $currency ) );
 	}
 
 	/**

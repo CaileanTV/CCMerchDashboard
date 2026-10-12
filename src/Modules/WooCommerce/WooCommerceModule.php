@@ -404,7 +404,8 @@ final class WooCommerceModule implements Module {
 				),
 				new OrderStatusLookup(),
 				$c->get( CreatorRepository::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				new SettlementRepository( $c->get( wpdb::class ) )
 			)
 		);
 
@@ -627,7 +628,8 @@ final class WooCommerceModule implements Module {
 				$c->get( CreatorRepository::class ),
 				$c->get( Logger::class ),
 				$c->get( GiftCardProviders::class ),
-				$c->get( SettlementDocuments::class )
+				$c->get( SettlementDocuments::class ),
+				$c->get( PayoutBalances::class )
 			)
 		);
 		$container->set(

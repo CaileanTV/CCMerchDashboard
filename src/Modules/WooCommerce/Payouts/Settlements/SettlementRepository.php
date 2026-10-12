@@ -256,6 +256,89 @@ final class SettlementRepository {
 	}
 
 	/**
+	 * How much of each order is settled (read only, for the order history):
+	 * the number of settled ledger rows and the documents they are in. With a
+	 * creator, only that creator's documents (a document belongs to one
+	 * creator, and so do the ledger rows it settles).
+	 *
+	 * @phpstan-param list<int> $order_ids
+	 *
+	 * @param int[]    $order_ids  Orders.
+	 * @param int|null $creator_id Only this creator's settled rows; null = every creator.
+	 * @return array<int, array{rows: int, documents: list<array{number: string, payout_id: int|null}>}> By order id; orders without settled rows are missing.
+	 * @throws DatabaseException When the read fails.
+	 */
+	public function settlements_for_orders( array $order_ids, ?int $creator_id = null ): array {
+		$ids = array_values( array_filter( array_map( 'intval', $order_ids ), static fn( int $id ): bool => $id > 0 ) );
+
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+		$args = array( $this->table( Tables::SETTLEMENT_ROWS ), $this->table( Tables::SETTLEMENT_DOCUMENTS ), ...$ids );
+
+		if ( null !== $creator_id ) {
+			$args[] = $creator_id;
+		}
+
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT r.order_id, d.document_number, d.payout_id, COUNT(*) AS settled FROM %i r JOIN %i d ON d.id = r.document_id WHERE r.order_id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ')' . ( null === $creator_id ? '' : ' AND d.creator_id = %d' ) . ' GROUP BY r.order_id, d.id, d.document_number, d.payout_id ORDER BY r.order_id, d.id', ...$args ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One %d per id, and one for the creator.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the settled orders.' );
+		}
+
+		$result = array();
+
+		foreach ( $rows as $row ) {
+			$order = (int) $row['order_id'];
+
+			$result[ $order ]['rows']        = ( $result[ $order ]['rows'] ?? 0 ) + (int) $row['settled'];
+			$result[ $order ]['documents'][] = array(
+				'number'    => (string) $row['document_number'],
+				'payout_id' => null === $row['payout_id'] ? null : (int) $row['payout_id'],
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * The settlement document of each settled ledger row (read only).
+	 *
+	 * @phpstan-param list<string> $event_keys
+	 *
+	 * @param string[] $event_keys Ledger event keys.
+	 * @return array<string, array{number: string, payout_id: int|null}> By event key; unsettled rows are missing.
+	 * @throws DatabaseException When the read fails.
+	 */
+	public function settlements_for_events( array $event_keys ): array {
+		$keys = array_values( array_unique( array_filter( array_map( 'strval', $event_keys ), static fn( string $key ): bool => '' !== $key ) ) );
+
+		if ( array() === $keys ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT r.event_key, d.document_number, d.payout_id FROM %i r JOIN %i d ON d.id = r.document_id WHERE r.event_key IN (' . implode( ', ', array_fill( 0, count( $keys ), '%s' ) ) . ')', $this->table( Tables::SETTLEMENT_ROWS ), $this->table( Tables::SETTLEMENT_DOCUMENTS ), ...$keys ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One %s per key.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the settled rows.' );
+		}
+
+		$result = array();
+
+		foreach ( $rows as $row ) {
+			$result[ (string) $row['event_key'] ] = array(
+				'number'    => (string) $row['document_number'],
+				'payout_id' => null === $row['payout_id'] ? null : (int) $row['payout_id'],
+			);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Runs a guarded write.
 	 *
 	 * @param string|null $sql         Result of $wpdb->prepare().
