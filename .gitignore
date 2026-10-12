@@ -30,3 +30,4 @@ desktop.ini
 /.idea/
 *.swp
 *.log
+.claude/config.json
