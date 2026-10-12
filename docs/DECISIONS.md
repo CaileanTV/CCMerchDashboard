@@ -3062,7 +3062,7 @@ Schema-version 9: `merchboard_payouts` (se DATABASE.md).
   - **Uden for:** `SettlementDocuments::correct()`, synkroniseringen og ændring af karensperioden.
   - **Fælles rækkeregel:** samtidig bruger `LedgerCreatorPayouts::earned()` og `unsettled_rows()` samme rækkeregel (ADR-054 D1, D2 og ukendte rækker) via fælles private hjælpere. Offentlige konstanter og signaturer er uændrede.
   - **Ingen skemaændring.**
-  - **Validering:** lokalt på MariaDB 10.11.19. MySQL 8 er ikke valideret, før CI har kørt.
+  - **Validering:** lokalt på MariaDB 10.11.19 og i CI på MySQL 8.0.46 (run `38281746123` for commit `015f4bb`, 2026-10-12: `PHP integration (MySQL)` grøn med 593 tests, 16397 assertions; alle fire jobs grønne).
 
 ## Related
 ADR-024, ADR-038, ADR-049, ADR-054, ADR-056, ADR-058.
@@ -3204,7 +3204,7 @@ ADR-004, ADR-016, ADR-049, ADR-054, ADR-055, ADR-056, ADR-058, ADR-059.
 ## Status
 Accepteret af projektejeren 2026-10-12 (B2, arkivering af creators, markøren `merchboard_restored_history` og afbrydelse af sletningen ved ventende payouts, mulighed 1). Supplerer ADR-025 og erstatter ADR-060 060-7 a.
 
-**Ikke afklaret:** det juridiske grundlag og opbevaringsperioden for de bevarede persondata afventer revisor/jurist (R3); der er ingen automatisk sletning. Runtime-test af afbrydelsen på Local kræver en særskilt godkendelse. MySQL 8 verificeres først i CI efter push.
+**Ikke afklaret:** det juridiske grundlag og opbevaringsperioden for de bevarede persondata afventer revisor/jurist (R3); der er ingen automatisk sletning. Runtime-test af afbrydelsen på Local kræver en særskilt godkendelse. MySQL 8.0.46 er valideret i CI-run `38295031014` for commit `c100a67` (605 tests, 16.892 assertions; alle fire jobs grønne).
 
 ## Context
 ADR-025 lod opt-in-afinstallationen slette alle pluginets tabeller, også payouts, afregningsbilag og audit-loggen. Bilag og udbetalinger er dokumentation, som ikke må forsvinde ved én handling. En geninstallation over bevarede data må hverken genaktivere gamle creator-konti eller vise historik til en forkert bruger. WordPress tilbyder ingen måde at afvise sletningen af ét plugin: `delete_plugins()` ignorerer, hvad `uninstall.php` returnerer, og sletter filerne bagefter (verificeret i WordPress 7.1's kode).

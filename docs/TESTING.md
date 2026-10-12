@@ -108,7 +108,7 @@ npm run test:integration -- --filter TransactionTest
     - Den tidligere bruger får ingen adgang, heller ikke med creator-rollen igen. En ny creator får et højere ID og ser ingen bevarede payouts.
     - Mangler creator-tabellen ved frisk installation, glemmes markøren.
   - **Ikke dækket:**
-    - MySQL 8 (først i CI efter push).
+    - MySQL 8 er ikke længere udækket: valideret i CI-run `38295031014` for commit `c100a67` på MySQL 8.0.46 (605 tests, 16.892 assertions; alle fire jobs grønne).
     - At beskederne faktisk vises i WordPress' brugerflader, og rigtig WP-CLI med flere plugins: kræver en runtime-test på Local, som ikke er godkendt endnu.
     - At beskederne fra fritekstvagten vises i en browser (se punktet nedenfor).
 - **Fritekstvagten (commit B, `PayoutFreeText`):**
@@ -267,5 +267,5 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
       - **Mens rækken holdes:** vejen venter ≥ 0,9 s og fejler med `DatabaseException`. Creators, payouts, hemmeligheder, audit, bilag, bilagsrækker og bilagstæller er uændrede, og den navngivne lås er frigivet.
       - **Efter den anden forbindelses COMMIT:** samme kald lykkes, og en gentagelse ændrer intet. Rækkelåsen er første sætning efter `START TRANSACTION` og holdes til COMMIT (prøvet under auditskrivningen).
       - `CreatorRowLock` afviser at låse uden den navngivne lås.
-    - **Ikke valideret:** MySQL 8, før CI har kørt.
+    - **MySQL 8 ✅ via CI:** run `38281746123` for commit `015f4bb` (2026-10-12): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 593 tests, 16397 assertions; alle fire jobs grønne.
   - **Ikke dækket:** MySQL 8 kun i CI; samtidige bilagsudstedelser fra to forbindelser; UI'et er ikke klikket igennem i en browser.
