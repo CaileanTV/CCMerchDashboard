@@ -48,7 +48,7 @@ msgstr ""
 msgid "Something went wrong. Please try again later."
 msgstr ""
 
-#: src/Core/Lifecycle/Installer.php:92
+#: src/Core/Lifecycle/Installer.php:99
 msgid "Merch Dashboard could not update its database tables. The update is retried automatically. Technical details are in the log (WooCommerce → Status → Logs, source \"merchboard\", or the server error log)."
 msgstr ""
 
@@ -574,7 +574,7 @@ msgstr ""
 #: src/Modules/Admin/AuditLogFormatter.php:444
 #: src/Modules/Admin/AuditLogFormatter.php:650
 #: src/Modules/Admin/OverviewPage.php:137
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:4
 msgid "Inactive"
 msgstr ""
@@ -690,7 +690,7 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:650
 #: src/Modules/Admin/OverviewPage.php:136
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:349
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:4
 #: build/dashboard.js:5
 msgid "Active"
@@ -724,9 +724,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:254
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:313
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:395
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:305
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:470
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:306
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
 msgid "Creator"
@@ -847,9 +847,9 @@ msgid "View audit log"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:121
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:84
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:232
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:86
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:233
 msgid "Creators"
 msgstr ""
 
@@ -946,7 +946,7 @@ msgid "WooCommerce"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:198
-#: src/Modules/Settings/Admin/SettingsPage.php:206
+#: src/Modules/Settings/Admin/SettingsPage.php:208
 msgid "Data on uninstall"
 msgstr ""
 
@@ -959,12 +959,12 @@ msgid "Kept when the plugin is deleted"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:206
-#: src/Modules/Settings/Admin/SettingsPage.php:94
+#: src/Modules/Settings/Admin/SettingsPage.php:96
 msgid "Settings"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:134
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:135
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
@@ -984,41 +984,41 @@ msgstr ""
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:149
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:150
 msgid "Creator changes are disabled: the Merch Dashboard database tables use a storage engine without transaction support (for example MyISAM), so a change and its audit record could not be saved together. Convert the tables to InnoDB. Details are in the log."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:158
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:159
 msgid "Creator not found"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:159
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:160
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:133
 msgid "Back to creators"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:186
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:187
 msgid "Creator created."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:187
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:188
 msgid "Creator updated."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:188
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:189
 msgid "Creator activated."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:189
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:190
 msgid "Creator deactivated."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:190
-#: src/Modules/Settings/Admin/SettingsPage.php:162
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:191
+#: src/Modules/Settings/Admin/SettingsPage.php:164
 msgid "No changes were made."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:191
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:192
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:89
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:105
@@ -1026,41 +1026,41 @@ msgstr ""
 msgid "The creator does not exist."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:192
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:193
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:85
 msgid "You are not allowed to manage creators."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:193
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:194
 msgid "Enter a display name of 1 to 191 characters."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:194
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:195
 msgid "Choose a valid status."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:195
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:196
 msgid "The selected WordPress user does not exist."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:196
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:197
 msgid "The selected WordPress user is already linked to another creator."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:197
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:198
 msgid "A technical error occurred. Please check the creator and try again later."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:233
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:258
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:234
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:259
 msgid "Add New Creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:258
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:259
 msgid "Edit Creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:259
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:260
 msgid "← Back to creators"
 msgstr ""
 
@@ -1072,62 +1072,62 @@ msgstr ""
 msgid "This creator is kept as historical documentation only. Reactivating it or linking a WordPress user is not supported: the sales ledger was rebuilt from the products' current creator links, so orders can be attributed to another creator than in its kept settlement documents, and its balance, payouts and documents would not match."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:267
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:274
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
 #: build/dashboard.js:18
 msgid "Display name"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:271
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:278
 #: src/Modules/Creators/Admin/CreatorsListTable.php:77
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:309
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:310
 #: build/dashboard.js:2
 #: build/dashboard.js:5
 #: build/dashboard.js:16
 msgid "Status"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:277
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:284
 msgid "Inactive creators keep their data but will not get dashboard access."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:280
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:287
 #: src/Modules/Creators/Admin/CreatorsListTable.php:76
 msgid "WordPress user"
 msgstr ""
 
 #. translators: %d: WordPress user id.
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:297
 #, php-format
 msgid "Linked to user #%d, which no longer exists. Clear the field to unlink."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:292
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:299
 msgid "Open WordPress user profile"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:295
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:302
 msgid "Type the login of the account that may use this creator (suggestions appear after two characters), or leave the field empty for no WordPress user. Linking adds the \"Merch Dashboard Creator\" role; unlinking removes it. Neither deletes the user."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:299
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:306
 #: src/Modules/Creators/Admin/CreatorsListTable.php:78
 msgid "Created"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:300
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:307
 #: src/Modules/Creators/Admin/CreatorsListTable.php:79
 msgid "Last updated"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:304
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:311
 msgid "Create creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:304
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:311
 msgid "Save changes"
 msgstr ""
 
@@ -1194,74 +1194,74 @@ msgid "Some profile fields are invalid."
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsActions.php:130
-#: src/Modules/Settings/Admin/SettingsPage.php:181
+#: src/Modules/Settings/Admin/SettingsPage.php:183
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:93
 msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:93
-#: src/Modules/Settings/Admin/SettingsPage.php:190
+#: src/Modules/Settings/Admin/SettingsPage.php:95
+#: src/Modules/Settings/Admin/SettingsPage.php:192
 msgid "Merch Dashboard Settings"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:136
+#: src/Modules/Settings/Admin/SettingsPage.php:138
 msgid "Choose the Merch Dashboard logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:137
+#: src/Modules/Settings/Admin/SettingsPage.php:139
 msgid "Use this logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:138
+#: src/Modules/Settings/Admin/SettingsPage.php:140
 msgid "Logo chosen. Save the logo to use it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:161
+#: src/Modules/Settings/Admin/SettingsPage.php:163
 msgid "Settings saved."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:163
+#: src/Modules/Settings/Admin/SettingsPage.php:165
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
 msgid "You are not allowed to change these settings."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:164
+#: src/Modules/Settings/Admin/SettingsPage.php:166
 msgid "Permanent deletion was not enabled: type DELETE in the confirmation field to enable it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:165
+#: src/Modules/Settings/Admin/SettingsPage.php:167
 msgid "The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:166
+#: src/Modules/Settings/Admin/SettingsPage.php:168
 msgid "The dashboard slug was not changed: a page, post, product or archive already uses it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:167
+#: src/Modules/Settings/Admin/SettingsPage.php:169
 msgid "The logo was not changed: choose an image from the Media Library."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:168
+#: src/Modules/Settings/Admin/SettingsPage.php:170
 msgid "The logo was not changed: use a PNG, JPEG or WebP image. SVG is not allowed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:169
+#: src/Modules/Settings/Admin/SettingsPage.php:171
 msgid "The logo was not changed: the image must be at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:170
+#: src/Modules/Settings/Admin/SettingsPage.php:172
 msgid "The logo was not changed: the image must be stored on this site, not on another domain."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:171
+#: src/Modules/Settings/Admin/SettingsPage.php:173
 msgid "A technical error occurred. The settings were not changed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:207
+#: src/Modules/Settings/Admin/SettingsPage.php:209
 msgid "Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:210
+#: src/Modules/Settings/Admin/SettingsPage.php:212
 msgid "Permanent deletion is ENABLED."
 msgstr ""
 
@@ -1269,7 +1269,7 @@ msgstr ""
 msgid "When the plugin is deleted from the Plugins screen, the Merch Dashboard data listed below is permanently removed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:213
+#: src/Modules/Settings/Admin/SettingsPage.php:216
 msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
 msgstr ""
 
@@ -1289,11 +1289,11 @@ msgstr ""
 msgid "While a payout is pending, deleting the plugin deletes nothing and is refused, so the pending payouts can still be handled."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:217
+#: src/Modules/Settings/Admin/SettingsPage.php:223
 msgid "Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:223
+#: src/Modules/Settings/Admin/SettingsPage.php:229
 msgid "Permanent deletion"
 msgstr ""
 
@@ -1301,17 +1301,17 @@ msgstr ""
 msgid "Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:229
+#: src/Modules/Settings/Admin/SettingsPage.php:235
 msgid "Confirmation"
 msgstr ""
 
 #. translators: %s: the word to type, "DELETE".
-#: src/Modules/Settings/Admin/SettingsPage.php:232
+#: src/Modules/Settings/Admin/SettingsPage.php:238
 #, php-format
 msgid "To enable permanent deletion, also type %s here."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:237
+#: src/Modules/Settings/Admin/SettingsPage.php:243
 msgid "Save settings"
 msgstr ""
 
@@ -1327,72 +1327,72 @@ msgid_plural "%d payouts are pending. Deleting the plugin now deletes nothing an
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:252
+#: src/Modules/Settings/Admin/SettingsPage.php:283
 msgid "Branding"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:253
+#: src/Modules/Settings/Admin/SettingsPage.php:284
 msgid "The logo is shown at the top of the creator dashboard and on the WordPress login page when creators log in to their dashboard. Other login pages are not changed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:256
+#: src/Modules/Settings/Admin/SettingsPage.php:287
 msgid "The chosen logo can no longer be used (deleted, changed or not on this site), so the default logo is shown."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:264
+#: src/Modules/Settings/Admin/SettingsPage.php:295
 msgid "Logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:267
+#: src/Modules/Settings/Admin/SettingsPage.php:298
 msgid "Current logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:270
+#: src/Modules/Settings/Admin/SettingsPage.php:301
 msgid "A custom logo is in use."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:270
+#: src/Modules/Settings/Admin/SettingsPage.php:301
 msgid "The default Merch Dashboard logo is in use."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:271
+#: src/Modules/Settings/Admin/SettingsPage.php:302
 msgid "Choose logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:272
+#: src/Modules/Settings/Admin/SettingsPage.php:303
 msgid "PNG, JPEG or WebP from the Media Library, at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high. SVG is not allowed. Use a logo that is readable on a light background; on dark dashboard themes it is shown on a light plate."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:275
+#: src/Modules/Settings/Admin/SettingsPage.php:306
 msgid "Save logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:279
+#: src/Modules/Settings/Admin/SettingsPage.php:310
 msgid "Use the default logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:293
+#: src/Modules/Settings/Admin/SettingsPage.php:324
 #: templates/dashboard/shell.php:35
 msgid "Creator dashboard"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:294
+#: src/Modules/Settings/Admin/SettingsPage.php:325
 msgid "Creators log in and use their dashboard at this address:"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:297
+#: src/Modules/Settings/Admin/SettingsPage.php:328
 msgid "Plain permalinks are active, so the slug is not used; the dashboard address above works regardless."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:304
+#: src/Modules/Settings/Admin/SettingsPage.php:335
 msgid "Dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:306
+#: src/Modules/Settings/Admin/SettingsPage.php:337
 msgid "Lowercase letters, digits and hyphens. Changing it moves the dashboard: the old address stops working and bookmarks must be updated. Pages, posts, products and archives that already use a slug cannot be chosen."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:308
+#: src/Modules/Settings/Admin/SettingsPage.php:339
 msgid "Save dashboard URL"
 msgstr ""
 
@@ -1913,7 +1913,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:94
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:72
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:172
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr ""
 
@@ -1960,13 +1960,13 @@ msgid "VAT registered"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:178
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:472
 #: build/dashboard.js:9
 msgid "Yes"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:179
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:472
 #: build/dashboard.js:9
 msgid "No"
 msgstr ""
@@ -2445,12 +2445,12 @@ msgid "Profit data"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:272
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:275
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
 msgid "&laquo; Previous"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:273
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:277
 msgid "Next &raquo;"
 msgstr ""
 
@@ -2574,7 +2574,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:415
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:522
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:472
 #: build/dashboard.js:2
 #: build/dashboard.js:9
 #: build/dashboard.js:13
@@ -2720,7 +2720,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutActions.php:94
 #: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:213
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:181
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:182
 msgid "Sorry, you are not allowed to manage payouts."
 msgstr ""
 
@@ -2760,7 +2760,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:85
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:121
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:194
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:195
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
 msgid "Payouts"
 msgstr ""
@@ -2859,392 +2859,392 @@ msgstr ""
 msgid "Not saved: the reference or reason must not contain bank or payment details, such as an account number, an IBAN or an e-mail address. Nothing was changed. Use the transaction ID from the bank or PayPal, or describe the reason without the details."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:150
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:151
 msgid "This request has already been handled; nothing was changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:151
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:297
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:152
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 msgid "The payout does not exist."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:152
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:153
 msgid "Not registered: the creator's balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:153
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:154
 msgid "Not registered: the creator's balance is unknown, because some sales lack the data needed. Handle it manually; nothing is completed automatically."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:154
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:155
 msgid "The payment details cannot be decrypted (MERCHBOARD_PAYOUT_KEY is missing or was changed). This request can only be rejected."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:155
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:156
 msgid "You are not allowed to do this."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:156
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:157
 msgid "Another payout of this creator is being processed. Please try again in a moment."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:157
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
 msgid "The gift card was validated and registered. The payout is completed, and the creator can now see the card."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
 msgid "This action does not fit the payout method; nothing was changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
 msgid "Not registered: no available gift card plugin is chosen in Settings → Payouts."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
 msgid "Not registered: enter the gift card code."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
 msgid "Not registered: no gift card has this code."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
 msgid "Not registered: several gift cards have this code. Give the card a unique code in the gift card plugin."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
 msgid "Not registered: the gift card's amount, balance, currency or expiry cannot be read exactly. Enter the amount with a decimal point and at most the shop's decimals."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
 msgid "Not registered: the gift card could not be validated. Nothing was changed; try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
 msgid "Not registered: the gift card is not active."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
 msgid "Not registered: the gift card has expired."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
 msgid "Not registered: the gift card has another currency than the payout."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
 msgid "Not registered: the gift card's amount is not the payout amount."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
 msgid "Not registered: the gift card's balance is not its full amount, so it has been used."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
 msgid "Not registered: this gift card is already registered on another payout."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:195
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:196
 msgid "Payout requests of creators. Merch Dashboard never sends money: you transfer the amount yourself, outside Merch Dashboard, and then register it here."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:198
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:199
 msgid "No valid MERCHBOARD_PAYOUT_KEY is configured in wp-config.php. Creators cannot request bank or PayPal payouts, and pending requests can only be rejected."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:215
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:216
 msgid "The payouts could not be read. Please try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:232
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:233
 msgid "Payout views"
 msgstr ""
 
 #. translators: %s: number of requests.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:234
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:235
 #, php-format
 msgid "Queue (%s)"
 msgstr ""
 
 #. translators: %s: number of requests.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:236
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:237
 #, php-format
 msgid "History (%s)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:244
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:245
 msgid "No handled payouts yet."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:244
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:245
 msgid "No pending payout requests."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
 msgid "Payout"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:306
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:307
 #: build/dashboard.js:8
 #: build/dashboard.js:16
 msgid "Amount"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:307
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:308
 #: build/dashboard.js:16
 msgid "Method"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:308
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:309
 msgid "Destination"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:310
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:311
 #: build/dashboard.js:16
 msgid "Requested"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:311
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:251
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:312
 #: build/dashboard.js:16
 msgid "Handled"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:293
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:294
 msgid "← All payouts"
 msgstr ""
 
 #. translators: %d: payout id.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:302
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:303
 #, php-format
 msgid "Payout #%d"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:315
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:316
 msgid "Reason"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:319
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:320
 msgid "Reference"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:323
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:324
 msgid "Payout reference"
 msgstr ""
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:329
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:620
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:330
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:623
 #: build/dashboard.js:6
 msgid "Gift card"
 msgstr ""
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:329
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:330
 #, php-format
 msgid "%1$s, card #%2$s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:367
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:368
 msgid "Register gift card"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:371
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:372
 msgid "No available gift card plugin is chosen in Settings → Payouts, so no gift card can be registered. The request can be rejected."
 msgstr ""
 
 #. translators: 1: gift card plugin, 2: amount with currency, 3: payout reference.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:377
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:378
 #, php-format
 msgid "Create a gift card in %1$s with exactly this amount and balance: %2$s (no VAT added or deducted). Note the reference %3$s in its internal notes."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:378
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:379
 msgid "Do not send or use the card. Enter its code below: Merch Dashboard checks that it is one unused, active card of this amount and currency, then completes the payout and shows the card to the creator."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:383
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:384
 msgid "Create gift card in the plugin"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:390
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:391
 msgid "Gift card code"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:392
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:393
 msgid "Validate and register gift card"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:409
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:410
 msgid "Gift card in the plugin now"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:414
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:415
 msgid "The gift card cannot be read now: the plugin is not available, or the card was deleted."
 msgstr ""
 
 #. translators: 1: status, 2: balance with currency.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:417
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:418
 #, php-format
 msgid "Status: %1$s. Balance: %2$s."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:422
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:423
 msgid "The gift card cannot be read now."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:429
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:430
 msgid "Open the card in the plugin"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:445
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:446
 msgid "Settlement document"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:451
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:452
 msgid "The settlement document cannot be shown. Please try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:456
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:457
 msgid "This payout has no settlement document: it was completed before settlement documents were introduced."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:464
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:465
 #: build/dashboard.js:10
 msgid "Preliminary, not approved by an auditor or SKAT."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:467
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:468
 msgid "Document number"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:468
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:469
 #: build/dashboard.js:12
 msgid "Issued"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:469
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:470
 #: build/dashboard.js:12
 #: build/dashboard.js:19
 msgid "Period"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:469
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:470
 #: build/dashboard.js:12
 msgid "Whole history"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:471
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:472
 #: build/dashboard.js:12
 msgid "VAT registered at issue"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:472
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:473
 #: build/dashboard.js:12
 msgid "Commission in the period"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:473
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:474
 #: build/dashboard.js:12
 msgid "Carried from earlier"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:474
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:632
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:475
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:635
 #: build/dashboard.js:6
 #: build/dashboard.js:12
 #: build/dashboard.js:13
 msgid "Paid out"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:475
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:476
 #: build/dashboard.js:12
 msgid "Carried forward"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:476
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
 msgid "Settled sales rows"
 msgstr ""
 
 #. translators: 1: number of the correction document, 2: date.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:487
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:488
 #, php-format
 msgid "Corrected by %1$s (%2$s)."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:498
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:499
 msgid "active"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:499
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:500
 msgid "disabled"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:500
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:501
 msgid "expired"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:501
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:502
 msgid "other"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:514
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:515
 msgid "Full payment details"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:517
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:518
 msgid "Only users allowed to see full payment details can view them. Ask an administrator who can."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:523
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:524
 msgid "The details are shown only on request, and every view is recorded in the audit log."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:524
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:525
 msgid "Show full payment details"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:531
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:532
 msgid "The details cannot be shown."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:536
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:537
 msgid "The details cannot be shown. Please try again later."
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:543
-#: build/dashboard.js:8
-msgid "Registration number"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:544
 #: build/dashboard.js:8
+msgid "Registration number"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:545
+#: build/dashboard.js:8
 msgid "Account number"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:546
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:547
 #: build/dashboard.js:8
 msgid "PayPal email address"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:550
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:551
 msgid "This view was recorded in the audit log. The details are deleted when the request has been handled."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:559
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:568
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:560
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:570
 msgid "Register as paid out"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:560
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:561
 msgid "Transfer the amount yourself (bank or PayPal) first. Registering it here sends no money; it only records that the transfer has been made. The creator's balance is checked again, and a payout it no longer covers is refused for manual handling."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:565
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:566
 msgid "Reference (optional)"
 msgstr ""
 
@@ -3252,15 +3252,15 @@ msgstr ""
 msgid "For example the transaction ID from the bank or PayPal. Never enter an account number, IBAN or e-mail address: the reference is kept with the payout history."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:567
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:569
 msgid "The transfer has been made outside Merch Dashboard"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:578
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:580
 msgid "Reject"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:583
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:585
 msgid "Reason (shown to the creator)"
 msgstr ""
 
@@ -3268,31 +3268,31 @@ msgstr ""
 msgid "Never enter an account number, IBAN or e-mail address: the reason is shown to the creator and kept with the payout history."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:585
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:588
 msgid "Reject request"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:618
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
 #: build/dashboard.js:6
 msgid "Bank transfer"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:619
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:622
 #: build/dashboard.js:6
 msgid "PayPal"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:631
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:634
 #: build/dashboard.js:6
 msgid "Pending"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:633
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:636
 #: build/dashboard.js:6
 msgid "Rejected"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:634
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:637
 #: build/dashboard.js:6
 msgid "Cancelled"
 msgstr ""
