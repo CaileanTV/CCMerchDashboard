@@ -125,6 +125,22 @@ final class Tables {
 	);
 
 	/**
+	 * Tables the opt-in uninstall keeps (ADR-059, B2): the creators (archived
+	 * by the uninstall), the audit log, the payout history and the settlement
+	 * documents with their rows and number counters, as historical
+	 * documentation. Everything else, including the encrypted payout details,
+	 * is dropped.
+	 */
+	private const RETAINED_ON_UNINSTALL = array(
+		self::CREATORS,
+		self::AUDIT_LOG,
+		self::PAYOUTS,
+		self::SETTLEMENT_DOCUMENTS,
+		self::SETTLEMENT_ROWS,
+		self::SETTLEMENT_COUNTERS,
+	);
+
+	/**
 	 * Tables of earlier schema versions that a later migration dropped. They
 	 * are not part of all(), but may still exist on a site whose migrations
 	 * have not run yet, so uninstall drops them too.
@@ -164,5 +180,14 @@ final class Tables {
 	 */
 	public static function retired(): array {
 		return self::RETIRED;
+	}
+
+	/**
+	 * Unprefixed names of the tables the opt-in uninstall keeps (ADR-059).
+	 *
+	 * @return list<string>
+	 */
+	public static function retained_on_uninstall(): array {
+		return self::RETAINED_ON_UNINSTALL;
 	}
 }

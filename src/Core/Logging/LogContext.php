@@ -48,7 +48,7 @@ final class LogContext {
 	 * Keys whose values are never logged (matched case-insensitively anywhere
 	 * in the key): credentials, session data and personal/payment data.
 	 */
-	private const SENSITIVE_KEY_PATTERN = '/pass|pwd|secret|token|api[_-]?key|private[_-]?key|auth|cookie|session|nonce|salt|credential|card|cvv|iban|email|phone|address/i';
+	private const SENSITIVE_KEY_PATTERN = '/pass|pwd|secret|token|api[_-]?key|private[_-]?key|auth|cookie|session|nonce|salt|credential|card|cvv|iban|account|registration|email|phone|address/i';
 
 	/**
 	 * Namespace whose exception messages may be logged.

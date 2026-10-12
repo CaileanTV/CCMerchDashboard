@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Creators\Admin;
 
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Core\Lifecycle\RestoredHistory;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\Creator;
@@ -257,6 +258,12 @@ final class CreatorsAdminPage {
 
 		echo '<h1>' . esc_html( null === $creator ? __( 'Add New Creator', 'merchboard' ) : __( 'Edit Creator', 'merchboard' ) ) . '</h1>';
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← Back to creators', 'merchboard' ) . '</a></p>';
+
+		if ( null !== $creator && RestoredHistory::is_archived( $creator->id ) ) {
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Archived when Merch Dashboard was deleted.', 'merchboard' ) . '</strong> ';
+			echo esc_html__( 'This creator is kept as historical documentation only. Reactivating it or linking a WordPress user is not supported: the sales ledger was rebuilt from the products\' current creator links, so orders can be attributed to another creator than in its kept settlement documents, and its balance, payouts and documents would not match.', 'merchboard' ) . '</p></div>';
+		}
+
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( CreatorAdminActions::SAVE_ACTION ) . '">';
 		echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator_id ) . '">';
@@ -347,6 +354,19 @@ final class CreatorsAdminPage {
 	 */
 	public static function status_label( CreatorStatus $status ): string {
 		return CreatorStatus::Active === $status ? __( 'Active', 'merchboard' ) : __( 'Inactive', 'merchboard' );
+	}
+
+	/**
+	 * Status label in the list, marking a creator archived by an uninstall
+	 * (ADR-059; also after a manual reactivation, which is not supported).
+	 *
+	 * @param Creator $creator Creator.
+	 */
+	public static function list_status_label( Creator $creator ): string {
+		$label = self::status_label( $creator->status );
+
+		/* translators: %s: status, e.g. "Inactive". */
+		return RestoredHistory::is_archived( $creator->id ) ? sprintf( __( '%s (archived on uninstall)', 'merchboard' ), $label ) : $label;
 	}
 
 	/**

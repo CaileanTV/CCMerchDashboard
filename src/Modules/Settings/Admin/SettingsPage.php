@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Settings\Admin;
 
+use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Admin\AdminMenu;
@@ -18,6 +19,7 @@ use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Settings\SettingsException;
 use MerchBoard\Modules\Settings\SettingsService;
+use wpdb;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -208,12 +210,16 @@ final class SettingsPage {
 
 		if ( $enabled ) {
 			echo '<div class="notice notice-error inline"><p><strong>' . esc_html__( 'Permanent deletion is ENABLED.', 'merchboard' ) . '</strong> ';
-			echo esc_html__( 'When the plugin is deleted from the Plugins screen, all Merch Dashboard data is permanently removed.', 'merchboard' ) . '</p></div>';
+			echo esc_html__( 'When the plugin is deleted from the Plugins screen, the Merch Dashboard data listed below is permanently removed.', 'merchboard' ) . '</p></div>';
+			$this->render_pending_payouts();
 		} else {
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data.', 'merchboard' ) . '</p></div>';
 		}
 
-		echo '<p>' . esc_html__( 'If enabled, deleting the plugin permanently removes: all creators, the audit log, the Merch Dashboard settings and schema state, the "Merch Dashboard Creator" role and all merchboard_ capabilities. This cannot be undone.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'If enabled, deleting the plugin permanently removes: the sales ledger, pricing and VAT data, creator metadata and categories, the encrypted payment details of payout requests, the creators\' links to products and WordPress users, the Merch Dashboard settings and schema state, the "Merch Dashboard Creator" role and all merchboard_ capabilities. This cannot be undone.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Kept as historical documentation: the payout history, the settlement documents with their rows and numbering, the audit log and the creators. Every creator is archived: set to inactive and unlinked from its WordPress user, so no one gets dashboard access. Payment details are only kept masked (e.g. the last four digits of an account).', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Installing the plugin again shows this history, but only as documentation: reactivating an archived creator and normal payouts for it are not supported. The sales ledger is then rebuilt from the products\' current creator links, so orders can be attributed to another creator than in the kept settlement documents, and balances, payouts and documents would not match.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'While a payout is pending, deleting the plugin deletes nothing and is refused, so the pending payouts can still be handled.', 'merchboard' ) . '</p>';
 		echo '<p>' . esc_html__( 'Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers.', 'merchboard' ) . '</p>';
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -222,7 +228,7 @@ final class SettingsPage {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		echo '<tr><th scope="row">' . esc_html__( 'Permanent deletion', 'merchboard' ) . '</th><td>';
 		echo '<label><input type="checkbox" name="' . esc_attr( self::FIELD_DELETE ) . '" value="1"' . checked( $enabled, true, false ) . '> ';
-		echo esc_html__( 'Delete all Merch Dashboard data when the plugin is deleted', 'merchboard' ) . '</label>';
+		echo esc_html__( 'Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)', 'merchboard' ) . '</label>';
 		echo '</td></tr>';
 
 		if ( ! $enabled ) {
@@ -236,6 +242,31 @@ final class SettingsPage {
 		echo '</tbody></table>';
 		submit_button( __( 'Save settings', 'merchboard' ) );
 		echo '</form></div>';
+	}
+
+	/**
+	 * With permanent deletion on: the pending payouts that would refuse a
+	 * deletion now (ADR-059), or that they cannot be counted.
+	 */
+	private function render_pending_payouts(): void {
+		$wpdb = $GLOBALS['wpdb'] ?? null;
+
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
+
+		$pending = Uninstaller::pending_payouts( $wpdb );
+
+		if ( 0 === $pending ) {
+			return;
+		}
+
+		$text = null === $pending
+			? __( 'Whether payouts are pending cannot be checked right now. Deleting the plugin is refused until it can.', 'merchboard' )
+			/* translators: %d: number of pending payouts. */
+			: sprintf( _n( '%d payout is pending. Deleting the plugin now deletes nothing and is refused; handle it under Payouts first.', '%d payouts are pending. Deleting the plugin now deletes nothing and is refused; handle them under Payouts first.', $pending, 'merchboard' ), $pending );
+
+		echo '<div class="notice notice-warning inline"><p>' . esc_html( $text ) . '</p></div>';
 	}
 
 	/**

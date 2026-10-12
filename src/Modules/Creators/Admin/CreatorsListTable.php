@@ -245,7 +245,7 @@ final class CreatorsListTable extends WP_List_Table {
 	 * @param Creator $item Creator.
 	 */
 	protected function column_status( $item ): string {
-		return esc_html( CreatorsAdminPage::status_label( $item->status ) );
+		return esc_html( CreatorsAdminPage::list_status_label( $item ) );
 	}
 
 	/**

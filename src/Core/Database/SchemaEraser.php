@@ -16,9 +16,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Drops exactly the tables in Tables::all() and Tables::retired() for the
- * current site's prefix, by full name (never by pattern), so no table of
- * WordPress, another plugin or another site of a multisite network can be
- * affected. Used only by the opt-in uninstall (ADR-025).
+ * current site's prefix, except Tables::retained_on_uninstall() (ADR-059),
+ * by full name (never by pattern), so no table of WordPress, another plugin
+ * or another site of a multisite network can be affected. Used only by the
+ * opt-in uninstall (ADR-025).
  *
  * DROP TABLE commits implicitly, so this cannot be transactional. It is
  * idempotent instead (IF EXISTS) and reports failures, so the caller can stop
@@ -36,7 +37,7 @@ final class SchemaEraser {
 	}
 
 	/**
-	 * Drops all plugin tables that exist.
+	 * Drops all plugin tables that exist and are not kept.
 	 *
 	 * @return bool False when a table could not be dropped (logged); the
 	 *              remaining tables are then left alone.
@@ -44,7 +45,7 @@ final class SchemaEraser {
 	public function erase(): bool {
 		$wpdb = $this->wpdb;
 
-		foreach ( array_merge( Tables::all(), Tables::retired() ) as $table ) {
+		foreach ( array_diff( array_merge( Tables::all(), Tables::retired() ), Tables::retained_on_uninstall() ) as $table ) {
 			$name = Tables::name( $wpdb, $table );
 			$sql  = $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $name );
 

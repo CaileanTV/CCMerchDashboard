@@ -707,7 +707,7 @@ Konsistensgarantien i ADR-023 bliver ægte på alle engines, i stedet for at afh
 2026-09-24
 
 ## Status
-Accepteret (fase 9). Suppleret af ADR-030: pluginets egen product meta `_merchboard_creator_id` slettes også ved opt-in-uninstall. Anden WooCommerce-data røres fortsat ikke. Suppleret af ADR-044 (2026-10-07): user meta-nøglen `merchboard_dashboard_theme` slettes også ved opt-in-uninstall (præcist navn).
+Accepteret (fase 9). Suppleret af ADR-030: pluginets egen product meta `_merchboard_creator_id` slettes også ved opt-in-uninstall. Anden WooCommerce-data røres fortsat ikke. Suppleret af ADR-044 (2026-10-07): user meta-nøglen `merchboard_dashboard_theme` slettes også ved opt-in-uninstall (præcist navn). Suppleret af ADR-059 (2026-10-12): creators (arkiveret), audit-log, payouts og afregningsbilag bevares; ventende payouts afbryder sletningen; reglen "ingen audit ved uninstall" gælder uændret.
 
 ## Context
 Uninstall bevarede indtil nu alle data (fase 3-8), fordi creators og audit er forretningsdata. Pluginet skal kunne fjernes helt, men permanent datatab må aldrig ske ved et uheld. Det må heller ikke ramme WordPress-, WooCommerce- eller andre plugins' data, eller andre sites i et multisite-netværk. `DROP TABLE` kan ikke indgå i en transaktion.
@@ -882,6 +882,7 @@ v0.1.0 skal verificeres på staging. Den nuværende, testede adfærd er tilstræ
 - Audit-tabellen vokser uden grænse i v0.1.0. Det er acceptabelt på staging (få records).
 - Produktionsbrug er blokeret, indtil der er besluttet en retention-politik. Beslutningen står under "Next recommended steps" i PROJECT-STATUS.md.
 - Indføres automatisk sletning senere, skal den respektere append-only-princippet (ADR-023). Sletning sker kun efter politikken og aldrig via admin-UI for enkelte records.
+- **Note 2026-10-12 (ADR-059):** audit-loggen bevares nu også ved opt-in-afinstallation. Opbevaringsperioden er fortsat ikke besluttet (R3).
 
 ---
 
@@ -3195,6 +3196,66 @@ ADR-004, ADR-016, ADR-049, ADR-054, ADR-055, ADR-056, ADR-058, ADR-059.
 
 ---
 
+# ADR-059: Opbevaring ved afinstallation: bevaret historik (B2) og afbrydelse ved ventende payouts
+
+## Date
+2026-10-12
+
+## Status
+Accepteret af projektejeren 2026-10-12 (B2, arkivering af creators, markøren `merchboard_restored_history` og afbrydelse af sletningen ved ventende payouts, mulighed 1). Supplerer ADR-025 og erstatter ADR-060 060-7 a.
+
+**Ikke afklaret:** det juridiske grundlag og opbevaringsperioden for de bevarede persondata afventer revisor/jurist (R3); der er ingen automatisk sletning. Runtime-test af afbrydelsen på Local kræver en særskilt godkendelse. MySQL 8 verificeres først i CI efter push.
+
+## Context
+ADR-025 lod opt-in-afinstallationen slette alle pluginets tabeller, også payouts, afregningsbilag og audit-loggen. Bilag og udbetalinger er dokumentation, som ikke må forsvinde ved én handling. En geninstallation over bevarede data må hverken genaktivere gamle creator-konti eller vise historik til en forkert bruger. WordPress tilbyder ingen måde at afvise sletningen af ét plugin: `delete_plugins()` ignorerer, hvad `uninstall.php` returnerer, og sletter filerne bagefter (verificeret i WordPress 7.1's kode).
+
+## Decision
+1. **Bevares ved opt-in-afinstallation** (`Tables::retained_on_uninstall()`): `merchboard_creators`, `merchboard_audit_log`, `merchboard_payouts`, `merchboard_settlement_documents`, `merchboard_settlement_document_rows` og `merchboard_settlement_counters`.
+2. **Slettes altid** med opt-in: `merchboard_payout_secrets` (de krypterede betalingsoplysninger), ledgeren, pricing- og momsdata, creator-meta og -kategorier, product- og ordremeta, roller, capabilities og options, inklusive schema-versionen. En geninstallation kører derfor alle migrationer igen hen over de bevarede tabeller.
+3. **Arkivering:** før tabellerne droppes, sættes alle creators til `inactive` med `user_id = NULL`. Fejler det, droppes intet, og opt-in'en bevares. Der skrives ingen audit (ADR-025 gælder uændret).
+4. **Markør:** afinstallationen skriver option'en `merchboard_restored_history` (`archived_at`, `max_creator_id`) efter arkiveringen og før tabellerne droppes. Det er den eneste option, der bevares.
+   - Creators med ID til og med `max_creator_id` er arkiverede.
+   - `Installer` udleder aldrig markøren. Ved frisk installation (schema-version 0) sletter den den kun, hvis creator-tabellen mangler. En opgradering rører den aldrig.
+5. **Geninstallation understøtter kun historisk dokumentation.**
+   - Genaktivering af arkiverede creators og normal payout-drift for dem er ikke understøttet.
+   - Det er ikke blokeret teknisk (ingen migration, ingen hård blokering).
+   - Det advares i Settings, på creator-redigeringssiden og i creator-listen ("archived on uninstall"): ledgeren genopbygges ud fra de nuværende produktkoblinger, så ordrer kan blive tilskrevet en anden creator end i de bevarede bilag.
+6. **Ventende payouts (fail closed):**
+   - Med opt-in tælles de ventende payouts (alle metoder) før enhver ændring.
+   - Er der én, eller fejler optællingen, ændres intet, og `uninstall.php` afslutter slette-requesten, så WordPress beholder filerne. Mekanismen afhænger af requesten:
+     - Plugins-skærmen: `wp_send_json_error()` med WordPress' egne felter.
+     - WP-CLI: `WP_CLI::error()`.
+     - Ellers: `wp_die()` med tilbagelink.
+   - **Sideeffekt:** ved sletning uden JavaScript og i WP-CLI med flere plugins i samme request behandles plugins efter Merch Dashboard ikke.
+   - **Forhåndsvarsel:** på Plugins-skærmen og ved opt-in-indstillingen i Settings, samt teknisk log.
+   - At beskeden når frem, er ikke garanteret.
+7. **Logfiltret** redigerer også nøgler med `account` og `registration`.
+
+## Alternatives considered
+- **A: slet alt som ADR-025:** uigenkaldeligt tab af bilag og udbetalingshistorik, og dubletter af bilagsnumre efter en geninstallation. Fravalgt.
+- **B uden creators:** et nyt creator-ID kunne genbruge et arkiveret og arve dets payouts og bilag. Fravalgt til fordel for B2.
+- **Bevare schema-versionen:** ville efterlade de slettede tabeller ugenskabte, fordi `Migrator` kun kører nyere versioner. Fravalgt.
+- **Lade filerne slette ved ventende payouts og vise et varsel efter geninstallation:** varslet ses måske aldrig, og de krypterede oplysninger ville ligge tilbage uden plugin. Fravalgt.
+
+## Reason
+Dokumentationen for udbetalinger og afregninger bevares, uden at en geninstallation kan genskabe adgang eller vise historik til en forkert bruger, og uden at ventende udbetalinger efterlades uden plugin.
+
+## Security
+Bevarede data indeholder ingen fulde kontonumre eller PayPal-adresser (kun den maskerede angivelse, se SECURITY.md). De fritekstfelter, en administrator udfylder (`reference`, afvisningsbegrundelse), får en vagt i et senere commit. Adgang efter geninstallation kræver capability, en koblet record og status `active` (ADR-007); arkiveringen fjerner koblingen.
+
+## Migration/data implications
+Ingen ny migration. Migration 1–11 skriver ingen data og ændrer ingen bevarede rækker, når de køres igen (`dbDelta()` og betingede `ALTER ... ADD`); testet på MariaDB 10.11 med byte-sammenligning og sammenligning af tabeldefinitionerne med en frisk installation (`ReinstallAfterUninstallTest`).
+
+## Consequences
+- Bevarede persondata (creatornavne, bruger-ID'er i payouts og audit, maskerede angivelser) ligger i databasen, indtil de fjernes manuelt; grundlag og periode afventer R3.
+- Multisite: kun det aktuelle site (uændret).
+- Fritekstvagten, hjælpeteksterne til den og oversættelserne følger i et senere commit efter afklaring af 24.2/G1.
+
+## Related
+ADR-007, ADR-023, ADR-025, ADR-029, ADR-054, ADR-055, ADR-056, ADR-057, ADR-058, ADR-060.
+
+---
+
 # ADR-060: Afregningsbilag ved omvendt fakturering (fase 23)
 
 ## Date
@@ -3213,7 +3274,7 @@ Afregningen skal ifølge projektejerens oplysning fra SKAT (mundtlig) håndteres
 4. **060-4 Uforanderlighed:** bilag og rækker opdateres og slettes aldrig (undtagen opt-in-uninstall, 060-7) og genberegnes aldrig. "Korrigeret" afledes af et korrigerende bilag. D3: afregningsstarten låses, når creatoren har et bilag.
 5. **060-5 Adgang:** creatoren ser og udskriver egne bilag (`GET /me/payouts/{id}/settlement-document`, `no-store`; udskriftsvenlig visning, ingen PDF-afhængighed); admin ser dem på payout-siden med `merchboard_manage_payouts`. Aldrig fulde konti, e-mails eller gavekortkoder.
 6. **060-6 Audit:** `settlement_document_issued` og `settlement_document_corrected` med ID'er, bilagsnummer og payout.
-7. **060-7 Uninstall (a):** tabellerne følger ADR-025 og slettes kun ved opt-in-uninstall. ADR-059 er uafklaret og en produktionsblokering.
+7. **060-7 Uninstall (a):** tabellerne følger ADR-025 og slettes kun ved opt-in-uninstall. ADR-059 er uafklaret og en produktionsblokering. **Erstattet af ADR-059 (2026-10-12):** bilag, bilagsrækker og tællere bevares ved opt-in-uninstall, så nummerserien fortsætter efter en geninstallation.
 8. **060-8:** ingen bilag med tilbagevirkende kraft for payouts gennemført før schema-version 11.
 9. **060-9:** bilaget mærkes "Foreløbigt, ikke godkendt af revisor/SKAT".
 10. **Nummerering (D9 a):** én fortløbende serie `AFR-000001` for afregningsbilag og korrigerende bilag, uden årlig nulstilling; tildeles først ved udstedelse.

@@ -12,7 +12,11 @@ namespace MerchBoard\Tests\Integration\Lifecycle;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Lifecycle\RestoredHistory;
+use MerchBoard\Core\Lifecycle\UninstallBlocked;
+use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedMetaWrite;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -31,6 +35,8 @@ use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricing;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\SnapshotStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use PHPUnit\Framework\Attributes\DataProvider;
 use WP_User;
 
 final class UninstallTest extends IntegrationTestCase {
@@ -72,6 +78,7 @@ final class UninstallTest extends IntegrationTestCase {
 
 		delete_option( 'merchboard_test_unrelated' );
 		delete_option( Settings::OPTION );
+		delete_option( RestoredHistory::OPTION );
 		// Restore schema, roles and capabilities before the base class deletes the
 		// test users (the plugin stays loaded here; in production it is deleted).
 		$this->install();
@@ -106,13 +113,31 @@ final class UninstallTest extends IntegrationTestCase {
 
 	public function test_uninstall_with_opt_in_removes_only_merch_dashboard_data(): void {
 		$this->enable_deletion();
+		$audit_before = $this->rows( Tables::AUDIT_LOG );
+		$max_creator  = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MAX(id) FROM %i', $this->table( Tables::CREATORS ) ) );
 
 		$this->run_uninstall();
 
-		// Plugin data gone.
+		// Plugin data gone, except the history ADR-059 keeps.
 		foreach ( Tables::all() as $table ) {
-			self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( $table ) ) ) ), $table );
+			$found = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( $table ) ) ) );
+
+			if ( in_array( $table, Tables::retained_on_uninstall(), true ) ) {
+				self::assertNotNull( $found, $table . ' is kept.' );
+			} else {
+				self::assertNull( $found, $table . ' is dropped.' );
+			}
 		}
+
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( Tables::PAYOUT_SECRETS ) ) ) ), 'The encrypted payout details are always dropped.' );
+		self::assertSame( $audit_before, $this->rows( Tables::AUDIT_LOG ), 'The audit log is kept unchanged.' );
+
+		// Every creator archived: inactive and unlinked; the marker holds the highest id.
+		$creators = $this->rows( Tables::CREATORS );
+		self::assertCount( 3, $creators );
+		self::assertSame( array( 'inactive' ), array_values( array_unique( array_column( $creators, 'status' ) ) ) );
+		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
+		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
 		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
@@ -391,7 +416,7 @@ final class UninstallTest extends IntegrationTestCase {
 	public function test_failed_table_drop_keeps_the_opt_in_so_uninstall_can_be_retried(): void {
 		$this->enable_deletion();
 		$this->wpdb->suppress_errors( true );
-		$fail = static fn( string $query ): string => str_starts_with( $query, 'DROP TABLE IF EXISTS `mbtest_merchboard_audit_log`' ) ? 'DROP TABLE mbtest_this_table_does_not_exist' : $query;
+		$fail = static fn( string $query ): string => str_starts_with( $query, 'DROP TABLE IF EXISTS `mbtest_merchboard_creatormeta`' ) ? 'DROP TABLE mbtest_this_table_does_not_exist' : $query;
 		add_filter( 'query', $fail );
 
 		$this->run_uninstall();
@@ -403,7 +428,218 @@ final class UninstallTest extends IntegrationTestCase {
 		$this->run_uninstall();
 
 		self::assertNull( $this->raw_option( Settings::OPTION ) );
-		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( Tables::AUDIT_LOG ) ) ) ) );
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( Tables::CREATOR_META ) ) ) ) );
+	}
+
+	public function test_a_failed_archive_drops_nothing_and_keeps_the_opt_in(): void {
+		$this->enable_deletion();
+		$this->wpdb->suppress_errors( true );
+		$fail = static fn( string $query ): string => str_starts_with( $query, 'UPDATE `mbtest_merchboard_creators` SET status' ) ? 'UPDATE mbtest_this_table_does_not_exist SET x = 1' : $query;
+		add_filter( 'query', $fail );
+
+		try {
+			$this->run_uninstall();
+		} finally {
+			remove_filter( 'query', $fail );
+		}
+
+		self::assertTrue( Settings::delete_data_on_uninstall(), 'Opt-in kept for the retry.' );
+		self::assertNull( $this->raw_option( RestoredHistory::OPTION ), 'No marker without the archive.' );
+		self::assertNotNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->table( Tables::SALES ) ) ) ), 'No table dropped.' );
+		self::assertContains( 'active', array_column( $this->rows( Tables::CREATORS ), 'status' ) );
+
+		$this->run_uninstall();
+
+		self::assertNull( $this->raw_option( Settings::OPTION ), 'The retry finishes.' );
+		self::assertSame( array( 'inactive' ), array_values( array_unique( array_column( $this->rows( Tables::CREATORS ), 'status' ) ) ) );
+	}
+
+	/**
+	 * Pending payouts of each method, and of all three.
+	 *
+	 * @return array<string, array{0: list<string>}>
+	 */
+	public static function pending_methods(): array {
+		return array(
+			'bank'      => array( array( 'bank' ) ),
+			'PayPal'    => array( array( 'paypal' ) ),
+			'gift card' => array( array( 'gift_card' ) ),
+			'mixed'     => array( array( 'bank', 'paypal', 'gift_card' ) ),
+		);
+	}
+
+	/**
+	 * The Plugins screen deletes in an AJAX request: it ends with WordPress'
+	 * own JSON error and nothing is changed.
+	 *
+	 * @phpstan-param list<string> $methods
+	 *
+	 * @param string[] $methods Methods of the pending payouts.
+	 */
+	#[DataProvider( 'pending_methods' )]
+	public function test_a_pending_payout_ends_the_plugins_screen_deletion_and_changes_nothing( array $methods ): void {
+		$this->enable_deletion();
+
+		foreach ( $methods as $i => $method ) {
+			$this->pending_payout( $method, 'key-pending-' . $i );
+		}
+
+		$before = $this->everything();
+
+		$output = $this->run_process_raw( 'unloaded-ajax' );
+
+		$response = json_decode( $output, true );
+		self::assertIsArray( $response, 'Output: ' . $output );
+		self::assertFalse( $response['success'] ?? null );
+		self::assertSame( 'merchboard_pending_payouts', $response['data']['errorCode'] ?? null );
+		self::assertSame( plugin_basename( dirname( __DIR__, 3 ) . '/merchboard.php' ), $response['data']['plugin'] ?? null );
+		self::assertStringContainsString( count( $methods ) . ' payout', (string) ( $response['data']['errorMessage'] ?? '' ) );
+		self::assertArrayNotHasKey( 'uninstalled', $response, 'The fixture never got past uninstall.php.' );
+
+		wp_cache_flush();
+		$this->forget_table_metadata();
+		self::assertSame( $before, $this->everything(), 'Data, opt-in, roles, capabilities and meta unchanged.' );
+	}
+
+	public function test_a_pending_payout_ends_a_deletion_without_javascript_with_an_error_page(): void {
+		$this->enable_deletion();
+		$this->pending_payout( 'bank', 'key-pending-page' );
+		$before = $this->everything();
+
+		$output = $this->run_process_raw( 'unloaded' );
+
+		self::assertStringContainsString( 'Merch Dashboard was not deleted: 1 payout is still pending.', $output );
+		self::assertStringNotContainsString( '"uninstalled":true', $output );
+		wp_cache_flush();
+		$this->forget_table_metadata();
+		self::assertSame( $before, $this->everything() );
+	}
+
+	public function test_a_failed_count_blocks_before_anything_changes(): void {
+		$this->enable_deletion();
+		$before = $this->everything();
+		$this->wpdb->suppress_errors( true );
+		$fail = static fn( string $query ): string => str_starts_with( $query, 'SELECT COUNT(*) FROM `mbtest_merchboard_payouts`' ) ? 'SELECT COUNT(*) FROM mbtest_this_table_does_not_exist' : $query;
+		add_filter( 'query', $fail );
+
+		try {
+			( new Uninstaller( $this->wpdb, new SchemaEraser( $this->wpdb, new RecordingLogger() ), new RecordingLogger() ) )->run();
+			self::fail( 'A failed count must block (fail closed).' );
+		} catch ( UninstallBlocked $e ) {
+			self::assertNull( $e->pending );
+		} finally {
+			remove_filter( 'query', $fail );
+			$this->wpdb->suppress_errors( false );
+		}
+
+		wp_cache_flush();
+		self::assertSame( $before, $this->everything() );
+	}
+
+	public function test_without_a_payouts_table_the_uninstall_proceeds(): void {
+		$this->enable_deletion();
+		$this->execute( 'DROP TABLE %i', $this->table( Tables::PAYOUTS ) );
+		$this->forget_table_metadata();
+
+		$this->run_uninstall();
+
+		self::assertNull( $this->raw_option( Settings::OPTION ), 'Nothing pending: the uninstall ran.' );
+	}
+
+	public function test_once_the_pending_payout_is_handled_the_uninstall_completes(): void {
+		$this->enable_deletion();
+		$payout = $this->pending_payout( 'gift_card', 'key-pending-later' );
+
+		$this->run_process_raw( 'unloaded-ajax' );
+		wp_cache_flush();
+		self::assertTrue( Settings::delete_data_on_uninstall(), 'Blocked: the opt-in stays.' );
+
+		$this->wpdb->update( $this->table( Tables::PAYOUTS ), array( 'status' => 'cancelled' ), array( 'id' => $payout ) );
+		$this->run_uninstall();
+
+		self::assertNull( $this->raw_option( Settings::OPTION ) );
+		self::assertNotNull( $this->raw_option( RestoredHistory::OPTION ) );
+		self::assertSame( 'cancelled', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $this->table( Tables::PAYOUTS ), $payout ) ), 'The payout history is kept.' );
+	}
+
+	/**
+	 * A pending payout row as PayoutRequests stores it (bank and PayPal with
+	 * their encrypted details).
+	 *
+	 * @param string $method Method value.
+	 * @param string $key    Request key.
+	 * @return int Payout id.
+	 */
+	private function pending_payout( string $method, string $key ): int {
+		$creator = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MIN(id) FROM %i', $this->table( Tables::CREATORS ) ) );
+
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::PAYOUTS ),
+				array(
+					'creator_id'       => $creator,
+					'currency'         => 'DKK',
+					'amount'           => '10.0000',
+					'price_decimals'   => 2,
+					'method'           => $method,
+					'status'           => 'pending',
+					'destination_hint' => 'gift_card' === $method ? '' : '•••• 1234',
+					'idempotency_key'  => $key,
+					'requested_at'     => '2026-10-12 10:00:00',
+					'updated_at'       => '2026-10-12 10:00:00',
+				)
+			)
+		);
+		$id = (int) $this->wpdb->insert_id;
+
+		if ( 'gift_card' !== $method ) {
+			self::assertSame(
+				1,
+				$this->wpdb->insert(
+					$this->table( Tables::PAYOUT_SECRETS ),
+					array(
+						'payout_id'  => $id,
+						'kind'       => $method,
+						'ciphertext' => 'opaque',
+						'key_id'     => 'k1',
+						'created_at' => '2026-10-12 10:00:00',
+					)
+				)
+			);
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Everything a blocked uninstall must leave alone: every plugin table
+	 * (rows in a stable order), the plugin's options, roles, capabilities and
+	 * user, product and order meta.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function everything(): array {
+		$tables = array();
+
+		foreach ( array_merge( Tables::all(), Tables::retired() ) as $table ) {
+			$name = $this->table( $table );
+
+			if ( null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $name ) ) ) ) {
+				$tables[ $table ] = null;
+				continue;
+			}
+
+			$rows = array_map( 'wp_json_encode', (array) $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A ) );
+			sort( $rows );
+			$tables[ $table ] = $rows;
+		}
+
+		return array(
+			'tables'    => $tables,
+			'marker'    => $this->raw_option( RestoredHistory::OPTION ),
+			'protected' => $this->protected_rows(),
+		) + $this->snapshot();
 	}
 
 	/**
@@ -507,6 +743,20 @@ final class UninstallTest extends IntegrationTestCase {
 	 * @return array<string, mixed>
 	 */
 	private function run_process( string $mode ): array {
+		$output = $this->run_process_raw( $mode );
+		$result = json_decode( $output, true );
+		self::assertIsArray( $result, 'Process output: ' . $output );
+
+		return $result;
+	}
+
+	/**
+	 * The same, returning what the process printed (standard output, then
+	 * standard error).
+	 *
+	 * @param string $mode Fixture mode.
+	 */
+	private function run_process_raw( string $mode ): string {
 		$process = proc_open(
 			array( PHP_BINARY, dirname( __DIR__ ) . '/Fixtures/uninstall-process.php', $mode ),
 			array(
@@ -520,10 +770,7 @@ final class UninstallTest extends IntegrationTestCase {
 		$errors = (string) stream_get_contents( $pipes[2] );
 		proc_close( $process );
 
-		$result = json_decode( $output, true );
-		self::assertIsArray( $result, 'Process output: ' . $output . $errors );
-
-		return $result;
+		return $output . $errors;
 	}
 
 	private function enable_deletion(): void {

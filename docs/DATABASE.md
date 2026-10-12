@@ -174,7 +174,7 @@ En redigering, der både omdøber og deaktiverer, skriver `creator_updated` og `
 
 **Append-only:** `AuditRepository` har kun `append()` og `for_creator()` (læsning til tests og den kommende visning). Der er ingen update eller delete, og ingen admin-funktion ændrer records.
 
-**Retention og sletning:** Records bevares ubegrænset. De slettes kun ved opt-in "Slet alle data ved afinstallation" (✅ fase 9, ADR-025), hvor tabellen er med i `Tables::all()`. Uninstall skriver ingen audit-records. **v0.1.0 har bevidst ingen automatisk retention** (ADR-029): ingen cron og ingen sletning efter N år. En retention-politik for produktion skal besluttes før produktionsbrug.
+**Retention og sletning:** Records bevares ubegrænset. Fra ADR-059 (B2) bevares de også ved opt-in-afinstallation som historisk dokumentation (`Tables::retained_on_uninstall()`). Uninstall skriver ingen audit-records. **v0.1.0 har bevidst ingen automatisk retention** (ADR-029): ingen cron og ingen sletning efter N år. En retention-politik for produktion skal besluttes før produktionsbrug.
 
 ### `merchboard_sales` og `merchboard_sales_cycles` (fase 18, design-låst)
 
@@ -370,7 +370,7 @@ Krypterede bank- og PayPal-oplysninger (ADR-056), adskilt fra `merchboard_payout
 
 **Skrivning og samtidighed:** kun `PayoutRepository`, under en `GET_LOCK` pr. creator og i projektets `Transaction`, med `CONNECTION_ID()`-vagt på hver skrivning og forbindelseskontrol før COMMIT (samme mønster som ledgeren, ADR-038 pkt. 18). Audit skrives i samme transaktion.
 
-**Uninstall:** tabellerne er i `Tables::all()` og slettes kun ved opt-in-uninstall (ADR-025). En særskilt opbevaringsbeslutning (ADR-059) skal træffes før rigtige payouts.
+**Uninstall (ADR-059, B2):** `merchboard_payouts` bevares ved opt-in-uninstall som historisk dokumentation; `merchboard_payout_secrets` (de krypterede betalingsoplysninger) slettes altid. Findes der en ventende payout, eller kan de ikke tælles, sletter afinstallationen intet og afbryder sletningen (se [Afinstallation og datalivscyklus](#afinstallation-og-datalivscyklus)).
 
 ### Afregningsbilag ✅ (schema-version 11, fase 23, ADR-060)
 
@@ -403,7 +403,7 @@ Indexes: `PRIMARY`, `UNIQUE document_number`, `UNIQUE settlement_payout`, `UNIQU
 
 `series` (PK) og `next_value`: tællerrækken låses (`FOR UPDATE`) og øges i samme transaktion som udstedelsen; en rollback giver nummeret tilbage, og samtidige udstedelser kan ikke få samme nummer.
 
-**Skrivning:** kun `SettlementRepository` via `SettlementDocuments::issue()`, i samme transaktion og under samme creator-lås som payoutens overgang til `completed` (manuel overførsel og gavekortregistrering), med `CONNECTION_ID()`-vagt. Rækkerne læses med `LOCK IN SHARE MODE` (`LedgerCreatorPayouts::unsettled_rows()`, samme D1/D2-regler som saldoen; en ukendt række afviser gennemførelsen). Ingen bilag med tilbagevirkende kraft (060-8). **Uninstall:** i `Tables::all()`, slettes kun ved opt-in-uninstall (060-7 a, ADR-025); ADR-059 er uafklaret.
+**Skrivning:** kun `SettlementRepository` via `SettlementDocuments::issue()`, i samme transaktion og under samme creator-lås som payoutens overgang til `completed` (manuel overførsel og gavekortregistrering), med `CONNECTION_ID()`-vagt. Rækkerne læses med `LOCK IN SHARE MODE` (`LedgerCreatorPayouts::unsettled_rows()`, samme D1/D2-regler som saldoen; en ukendt række afviser gennemførelsen). Ingen bilag med tilbagevirkende kraft (060-8). **Uninstall:** bevares ved opt-in-uninstall som historisk dokumentation (ADR-059, B2; erstatter 060-7 a), så nummerserien fortsætter efter en geninstallation.
 
 ### Fremtidige (ikke designet i detaljer)
 
@@ -498,7 +498,7 @@ MySQL-kolonnen: CI-jobbet `PHP integration (MySQL)` kører de samme integrations
 | --- | --- |
 | **Deaktivering** | Ingen data slettes. Data, tabeller og options bevares. `Deactivator` (✅ fase 12) sletter kun WordPress' gemte `rewrite_rules`, så dashboard-routen forsvinder. De genopbygges ved næste request. |
 | **Afinstallation** (`uninstall.php`) | **Ingen, som standard.** Alle tabeller, options, rollen og capabilities bevares. Creator-data er forretningsdata, som fremtidig salgshistorik og payouts refererer til. |
-| **Permanent sletning** ✅ fase 9 | Kun med eksplicit opt-in under Merch Dashboard → Settings (se [ADMIN.md](ADMIN.md#settings)). Så sletter `Core\Lifecycle\Uninstaller` pluginets egne data for det aktuelle site, se inventory nedenfor (ADR-025). |
+| **Permanent sletning** ✅ fase 9 | Kun med eksplicit opt-in under Merch Dashboard → Settings (se [ADMIN.md](ADMIN.md#settings)). Så sletter `Core\Lifecycle\Uninstaller` pluginets egne data for det aktuelle site, se inventory nedenfor (ADR-025), undtagen den historik, ADR-059 bevarer. Er en payout ventende, slettes intet, og sletningen afbrydes (ADR-059). |
 | **Creator "slettes"** | Status `inactive` (soft). Admin-UI'et har bevidst **ingen** "Delete"-funktion (fase 6). Hard delete er ikke understøttet, fordi audit trail og fremtidig salgshistorik refererer til creator-ID'et. Permanent sletning af alle data er opt-in (✅ fase 9, ADR-025). |
 | **WordPress-bruger slettes** | Se relationen ovenfor (✅ fase 8). Creator-record, creator-data og audit bevares. Creator'en frakobles og deaktiveres. |
 
@@ -509,16 +509,20 @@ Deaktivering
 Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
-Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og `_merchboard_creator_link_source` (ADR-033)
+Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugin is deleted")
+→ ventende payout (enhver metode) eller fejl ved optællingen: intet slettes, og sletningen af pluginet afbrydes (ADR-059)
+→ ellers slettes Merch Dashboards egne data, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og `_merchboard_creator_link_source` (ADR-033)
+→ bevares som historisk dokumentation (ADR-059): creators (arkiveret), audit-loggen, payouts, afregningsbilag, bilagsrækker og bilagstællere
 → alle andre WordPress- og WooCommerce-data bevares
 ```
 
-| Plugin-ejet state (fuld inventory, fase 9) | Slettes ved opt-in-uninstall |
+| Plugin-ejet state (fuld inventory, fase 9; ADR-059) | Slettes ved opt-in-uninstall |
 | --- | --- |
-| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_creatormeta`, `{prefix}merchboard_creator_categories`, `{prefix}merchboard_sales`, `{prefix}merchboard_sales_cycles`, `{prefix}merchboard_pricing_overrides`, `{prefix}merchboard_sales_line_pricing` og `{prefix}merchboard_sales_tax` (`Tables::all()`; `default_markup_bps` og `vat_registered` forsvinder med creator-tabellen), samt den udgåede `{prefix}merchboard_item_pricing`, hvis den stadig findes (`Tables::retired()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Tabeller `{prefix}merchboard_creatormeta`, `{prefix}merchboard_creator_categories`, `{prefix}merchboard_sales`, `{prefix}merchboard_sales_cycles`, `{prefix}merchboard_pricing_overrides`, `{prefix}merchboard_sales_line_pricing`, `{prefix}merchboard_sales_tax` og `{prefix}merchboard_payout_secrets` (de krypterede betalingsoplysninger), samt den udgåede `{prefix}merchboard_item_pricing`, hvis den stadig findes (`Tables::retired()`) | Ja: `DROP TABLE IF EXISTS` med præcise navne for det aktuelle sites prefix (`SchemaEraser`) |
+| Tabeller `{prefix}merchboard_creators`, `{prefix}merchboard_audit_log`, `{prefix}merchboard_payouts`, `{prefix}merchboard_settlement_documents`, `{prefix}merchboard_settlement_document_rows` og `{prefix}merchboard_settlement_counters` (`Tables::retained_on_uninstall()`) | **Nej** (ADR-059, B2): historisk dokumentation. Før sletningen arkiveres alle creators (`status = inactive`, `user_id = NULL`), så ingen bevaret record kan give adgang. Betalingsoplysninger findes kun maskeret (fx `•••• 1234`). Ingen automatisk sletning; opbevaringsperioden afventer revisor (R3) |
+| Option `merchboard_restored_history` (`archived_at`, `max_creator_id`) | **Nej**: skrives efter arkiveringen og før tabellerne droppes. Creators med ID til og med `max_creator_id` er arkiverede og vises med advarsel efter en geninstallation. `Installer` udleder den aldrig; ved frisk installation sletter den den kun, hvis creator-tabellen mangler |
 | Ordremeta `_merchboard_ledger_failure` (fejlmarkøren, ADR-038) | Ja: legacy-postmeta via `delete_post_meta_by_key()`; HPOS-ordremeta kun via WooCommerce CRUD (ordrerne findes med `meta_key` + `meta_compare => EXISTS`), mens WooCommerce er aktivt (ellers bliver den liggende, ADR-038 Q3). Ingen direkte SQL mod WooCommerce-tabeller. |
-| Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja |
+| Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja (også når tabeller bevares: en geninstallation kører alle migrationer igen hen over de bevarede tabeller; de skriver ingen data og ændrer ingen bevarede rækker; testet på MariaDB 10.11 i `ReinstallAfterUninstallTest`, MySQL 8 afventer CI) |
 | Transient `merchboard_db_migration_failed` | Ja |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |
 | Rollen `merchboard_creator` | Ja: fjernes fra brugere (andre roller bevares) og derefter som rolle |
@@ -529,6 +533,13 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 | WooCommerce-priser (regular price, sale price, `_price`) | **Aldrig**: Merch Dashboard skriver dem ikke (ADR-049), og de nulstilles og slettes ikke. Kun pluginets egne pricing-tabeller slettes (testet i `UninstallTest`) |
 
 **Strategi (ADR-025):** `DROP TABLE` committer implicit og kan ikke indgå i en transaktion, så der er ingen falsk atomicitet. Rækkefølgen er i stedet: brugere → roller → tabeller → options → `merchboard_settings` **sidst**. Fra fase 17 slettes product meta `_merchboard_creator_id` (og fra ADR-033 `_merchboard_creator_link_source`) efter roller og før tabeller (ADR-030). Hvert trin er idempotent (`IF EXISTS`, manglende roller og options ignoreres). Fejler et tabel-drop, logges det, og der slettes ingen options. Opt-in'en bevares derfor, og den næste afinstallation fortsætter. Gentagen afinstallation er sikker. Uninstall skriver ingen audit-records.
+
+**ADR-059 (B2):** Med opt-in tælles de ventende payouts først (alle metoder). Er der én, eller fejler optællingen, ændres intet (heller ikke backfill-jobs), og `uninstall.php` afslutter slette-requesten, så WordPress beholder pluginets filer: `wp_send_json_error()` på Plugins-skærmen (et AJAX-request pr. plugin), `WP_CLI::error()` i WP-CLI og `wp_die()` ellers. **Sideeffekt:** ved sletning uden JavaScript og i WP-CLI med flere plugins i samme request behandles plugins efter Merch Dashboard ikke. Ellers arkiveres creators efter meta-trinnene og før tabellerne (fejler arkiveringen, droppes intet, og opt-in'en bevares). En geninstallation understøtter kun historisk dokumentation: genaktivering af arkiverede creators og normal payout-drift for dem er ikke understøttet (ledgeren genopbygges ud fra de nuværende produktkoblinger, så ordrer kan blive tilskrevet en anden creator end i de bevarede bilag). Det er dokumenteret og advaret, ikke blokeret.
+
+**ADR-059, kendte fejltilstande og forudsætninger:**
+- **Fejlet arkivering:** fejler arkiveringen af creators, droppes ingen tabeller, og ingen options slettes, inklusive opt-in'en og schema-versionen. Afinstallationen afbrydes ikke af den grund: `uninstall.php` returnerer normalt, og WordPress kan stadig slette pluginets filer. Alle data bliver så liggende, inklusive `payout_secrets` og ledgeren, mens roller, capabilities og meta allerede kan være fjernet (de trin kører før arkiveringen). En senere geninstallation og afinstallation fortsætter forløbet. Det svarer til en fejlet `DROP`.
+- **Fejlet skrivning af markøren (sjælden):** fejler skrivningen af `merchboard_restored_history` efter en vellykket arkivering, droppes ingen tabeller, men creators er allerede arkiveret uden markør. Efter en geninstallation vises advarslen om arkiverede creators så ikke, før en ny afinstallation har skrevet markøren.
+- **Afbrydelsen ved ventende payouts** forudsætter, at WordPress' afslutningshandlere (`wp_send_json_error()`, `wp_die()` og `WP_CLI::error()`) faktisk afslutter requesten, som WordPress' og WP-CLI's egne handlere gør. En handler fra tredjepart, der ikke afslutter, ville lade WordPress slette filerne. Data er stadig uberørte, fordi blokeringen sker før enhver ændring.
 
 **Multisite (verificeret i WordPress 7.1.2's kildekode, ikke officielt understøttet):** `delete_plugins()` kalder `uninstall_plugin()` én gang uden `switch_to_blog()`. Tabelnavne bygges med det aktuelle sites `$wpdb->prefix`, roller ligger i det aktuelle sites `{prefix}user_roles`, og options og brugernes capabilities er pr. site. Afinstallation kan derfor kun slette det aktuelle sites data, og kun hvis opt-in'en er sat på det site. Andre sites' tabeller, roller og options røres ikke (testet med en tabel med lignende navn for et andet site). Data på andre sites i netværket bliver dermed liggende, selv hvis opt-in er sat der. Multisite-oprydning kræver en senere beslutning.
 | **GDPR** | Integration med WordPress' personal data exporter/eraser for creator-data (fase efter MVP). |

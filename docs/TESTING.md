@@ -92,6 +92,25 @@ npm run test:integration -- --filter TransactionTest
 
 - Unit: `Settings` (default fra, forfalskede værdier som `"1"`, `"yes"` og `1` aktiverer ikke, korrupt option ignoreres), `SettingsService` (bekræftelse påkrævet for at slå til, ikke for at slå fra, audit, rollback ved fejlet option-skrivning, uændret skriver intet, fire typer uautoriserede brugere), `SettingsActions` (403 uden capability, manglende/forfalsket/fremmed nonce, kun checkbox-værdien `1`, ekstra felter ignoreres, teknisk fejl logges neutralt), `SettingsPage` (tydelig advarsel, bekræftelsesfelt kun når fra, 403, whitelistede notices), `Uninstaller` (uden opt-in eller med forfalsket opt-in røres intet) og `SchemaEraser` (præcise tabelnavne for prefix, stopper og logger ved fejl, opt-in bevares til genforsøg).
 - Integration (MariaDB, rigtig `uninstall.php`): deaktivering ændrer intet, uninstall uden opt-in og med forfalsket opt-in bevarer alt, og uninstall med opt-in fjerner kun pluginets data. Brugere med creator-, subscriber- og custom-rolle samt direkte capabilities bevares, og det samme gør administratorens øvrige caps, custom-rolle, posts, post meta, fremmede options og en tabel med lignende navn for et andet site. Der skrives ingen audit under uninstall, gentagen uninstall er sikker, og et fejlet tabel-drop bevarer opt-in'en til genforsøg.
+- **ADR-059 (B2, bevaret historik og afbrydelse ved ventende payouts):**
+  - **Unit:**
+    - `UninstallerTest`: kun de ikke-bevarede tabeller droppes (`payout_secrets` altid). En ventende payout eller en fejlet optælling kaster `UninstallBlocked`, før noget ændres (ingen backfill-annullering, ingen meta, roller, UPDATE eller DROP; opt-in og schema-version uændrede). Uden opt-in tælles intet, og uden payout-tabel er der 0 ventende. Core-konstanterne er lig `PayoutStatus::Pending` og `CreatorStatus::Inactive`.
+    - `UninstallHaltTest`: Plugins-skærmen får `wp_send_json_error()` med felterne fra WordPress' egen `wp_ajax_delete_plugin()`. Andre requests får `wp_die()` (409, tilbagelink). WP-CLI får `WP_CLI::error()` med exitkode 1 via WP-CLI's egen `capture_exit` i en separat proces. Testen dækker også beskeden.
+    - `RestoredHistoryTest` og `InstallerTest`: markøren gælder præcis ID'er til og med det højeste arkiverede. Ved frisk installation slettes den kun, når creator-tabellen mangler, og den beholdes ved læsefejl. En opgradering rører den aldrig, og en gentagen installation giver samme resultat.
+    - `LogContextTest`: `account` og `registration` redigeres.
+  - **Integration (MariaDB 10.11, rigtig `uninstall.php`):**
+    - `UninstallTest`: de seks tabeller bevares, og audit-loggen er uændret. Creators arkiveres, og markøren får det højeste ID. En fejlet arkivering dropper intet og bevarer opt-in'en.
+    - En ventende payout af hver metode (bank, PayPal, gavekort og blandet) afbryder Plugins-skærmens AJAX-sletning i en separat proces med WordPress' JSON-fejl. Alle 14 tabeller, options, roller, capabilities og meta er uændrede.
+    - Sletning uden JavaScript giver fejlsiden.
+    - En fejlet optælling blokerer, og uden payout-tabel fortsætter afinstallationen.
+    - Når payouten er behandlet, gennemføres afinstallationen.
+    - `ReinstallAfterUninstallTest`: historik fra de rigtige services (3 salg, en gennemført bankudbetaling med AFR-000001). Efter afinstallation og geninstallation kører migration 1–11 igen. De bevarede rækker er byte-identiske, og `SHOW CREATE TABLE` for de bevarede tabeller er lig en frisk installation.
+    - Den tidligere bruger får ingen adgang, heller ikke med creator-rollen igen. En ny creator får et højere ID og ser ingen bevarede payouts.
+    - Mangler creator-tabellen ved frisk installation, glemmes markøren.
+  - **Ikke dækket:**
+    - MySQL 8 (først i CI efter push).
+    - At beskederne faktisk vises i WordPress' brugerflader, og rigtig WP-CLI med flere plugins: kræver en runtime-test på Local, som ikke er godkendt endnu.
+    - Fritekstvagten (senere commit).
 
 **Fase 10 (admin-shell, brugervalg og profil):**
 

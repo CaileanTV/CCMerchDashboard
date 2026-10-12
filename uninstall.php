@@ -9,8 +9,12 @@
  * - Only if an administrator explicitly enabled "Delete all Merch Dashboard
  *   data when the plugin is deleted" (Merch Dashboard → Settings) does
  *   MerchBoard\Core\Lifecycle\Uninstaller remove the plugin's own tables,
- *   options, role and capabilities for the current site. WordPress users,
- *   other roles/capabilities, content and WooCommerce data are never touched.
+ *   options, role and capabilities for the current site, except the history
+ *   it keeps (ADR-059). WordPress users, other roles/capabilities, content and
+ *   WooCommerce data are never touched.
+ * - With the opt-in and a pending payout (or a failed count), nothing is
+ *   deleted and this request is ended (UninstallHalt), so WordPress keeps the
+ *   plugin's files (ADR-059).
  *
  * WordPress defines WP_UNINSTALL_PLUGIN only inside uninstall_plugin(), after
  * checking that the user may delete plugins; a direct request exits here.
@@ -40,8 +44,15 @@ require_once __DIR__ . '/src/Core/Autoloader.php';
 
 $merchboard_logger = \MerchBoard\Core\Logging\PluginLogger::for_wordpress();
 
-( new \MerchBoard\Core\Lifecycle\Uninstaller(
+$merchboard_uninstaller = new \MerchBoard\Core\Lifecycle\Uninstaller(
 	$GLOBALS['wpdb'],
 	new \MerchBoard\Core\Database\SchemaEraser( $GLOBALS['wpdb'], $merchboard_logger ),
 	$merchboard_logger
-) )->run();
+);
+
+try {
+	$merchboard_uninstaller->run();
+} catch ( \MerchBoard\Core\Lifecycle\UninstallBlocked $merchboard_blocked ) {
+	// Keep the plugin's files: end the deletion request before WordPress removes them.
+	\MerchBoard\Core\Lifecycle\UninstallHalt::respond( $merchboard_blocked, WP_UNINSTALL_PLUGIN );
+}

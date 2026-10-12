@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\RoleManager;
+use wpdb;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,6 +23,10 @@ defined( 'ABSPATH' ) || exit;
  * and on normal requests when a stored version is behind (plugin updates do
  * not fire the activation hook). Both are independent: a failing migration
  * does not block the role sync, and vice versa.
+ *
+ * It never derives RestoredHistory (ADR-059): on a fresh install (schema
+ * version 0), before the migrations, it only removes a marker whose creators
+ * table is missing. An upgrade never touches the marker.
  */
 final class Installer {
 
@@ -43,11 +48,13 @@ final class Installer {
 	 * @param Migrator    $migrator Schema migrator.
 	 * @param RoleManager $roles    Role/capability synchronisation.
 	 * @param Logger      $logger   Technical log.
+	 * @param wpdb|null   $wpdb     Database for the RestoredHistory check; null skips it.
 	 */
 	public function __construct(
 		private Migrator $migrator,
 		private RoleManager $roles,
-		private Logger $logger
+		private Logger $logger,
+		private ?wpdb $wpdb = null
 	) {
 	}
 
@@ -98,6 +105,10 @@ final class Installer {
 	 */
 	private function run(): void {
 		$from = $this->migrator->installed_version();
+
+		if ( 0 === $from && null !== $this->wpdb && RestoredHistory::forget_without_creators( $this->wpdb ) ) {
+			$this->logger->warning( 'Removed the record of archived creators: the creators table was missing on a fresh install.' );
+		}
 
 		try {
 			$completed = $this->migrator->migrate();

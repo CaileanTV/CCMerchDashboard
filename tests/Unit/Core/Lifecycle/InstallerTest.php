@@ -13,6 +13,7 @@ use ArrayObject;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Lifecycle\RestoredHistory;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\InMemoryRoles;
@@ -284,19 +285,98 @@ final class InstallerTest extends TestCase {
 		$this->installer()->render_failure_notice();
 	}
 
+	public function test_a_fresh_install_without_the_creators_table_forgets_the_archive_marker(): void {
+		$options = InMemoryOptions::install( array( RestoredHistory::OPTION => self::marker() ) );
+
+		$this->installer( false, true )->install();
+
+		self::assertArrayNotHasKey( RestoredHistory::OPTION, $options->options, 'New creators would start at id 1 again.' );
+		self::assertSame( array( 'SHOW TABLES LIKE %s', array( 'wp\_merchboard\_creators' ) ), array( $this->wpdb->prepared[0]['query'], $this->wpdb->prepared[0]['args'] ), 'Checked before the migrations.' );
+		self::assertContains( 'warning', array_column( $this->logger->entries, 'level' ) );
+	}
+
+	public function test_a_fresh_install_over_the_kept_creators_table_keeps_the_marker(): void {
+		$options                  = InMemoryOptions::install( array( RestoredHistory::OPTION => self::marker() ) );
+		$this->wpdb->tables_exist = true;
+
+		$this->installer( false, true )->install();
+
+		self::assertSame( self::marker(), $options->options[ RestoredHistory::OPTION ] );
+		self::assertSame( 1, $options->options[ Migrator::VERSION_OPTION ], 'The migrations ran as usual.' );
+	}
+
+	public function test_an_upgrade_never_touches_the_marker(): void {
+		$options = InMemoryOptions::install(
+			array(
+				Migrator::VERSION_OPTION    => 1,
+				RoleManager::VERSION_OPTION => RoleManager::VERSION,
+				RestoredHistory::OPTION     => self::marker(),
+			)
+		);
+
+		$installer = $this->installer( false, true );
+		$installer->install();
+		$installer->maybe_upgrade();
+
+		self::assertSame( self::marker(), $options->options[ RestoredHistory::OPTION ] );
+		self::assertNotContains( 'SHOW TABLES LIKE %s', array_column( $this->wpdb->prepared, 'query' ), 'No table check outside a fresh install.' );
+	}
+
+	public function test_a_fresh_install_without_a_marker_checks_nothing(): void {
+		InMemoryOptions::install();
+
+		$this->installer( false, true )->install();
+
+		self::assertNotContains( 'SHOW TABLES LIKE %s', array_column( $this->wpdb->prepared, 'query' ) );
+	}
+
+	public function test_a_failed_table_check_keeps_the_marker(): void {
+		$options = InMemoryOptions::install( array( RestoredHistory::OPTION => self::marker() ) );
+
+		// The double keeps last_error for every query: the check and the migration fail.
+		$this->installer( true, true )->install();
+
+		self::assertSame( self::marker(), $options->options[ RestoredHistory::OPTION ], 'A warning too many is safer than none.' );
+	}
+
+	public function test_a_repeated_fresh_install_gives_the_same_result(): void {
+		$options = InMemoryOptions::install( array( RestoredHistory::OPTION => self::marker() ) );
+
+		$this->installer( false, true )->install();
+		$this->installer( false, true )->install();
+
+		self::assertArrayNotHasKey( RestoredHistory::OPTION, $options->options );
+		self::assertSame( 1, $options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( array( 'm1' ), $this->log->getArrayCopy() );
+	}
+
+	/**
+	 * A marker as the uninstall writes it.
+	 *
+	 * @return array{archived_at: string, max_creator_id: int}
+	 */
+	private static function marker(): array {
+		return array(
+			'archived_at'    => '2026-10-12 12:00:00',
+			'max_creator_id' => 7,
+		);
+	}
+
 	/**
 	 * Installer with a single schema version 1.
 	 *
 	 * @param bool $failing Whether the migration fails.
+	 * @param bool $history Whether it gets the database for the RestoredHistory check.
 	 */
-	private function installer( bool $failing = false ): Installer {
+	private function installer( bool $failing = false, bool $history = false ): Installer {
 		$wpdb             = $this->wpdb;
 		$wpdb->last_error = $failing ? "Can't create table" : '';
 
 		return new Installer(
 			new Migrator( $wpdb, array( 1 => new RecordingMigration( 'm1', $this->log, $failing ) ) ),
 			new RoleManager( $this->logger ),
-			$this->logger
+			$this->logger,
+			$history ? $wpdb : null
 		);
 	}
 }

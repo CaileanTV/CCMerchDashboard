@@ -11,6 +11,7 @@ namespace MerchBoard\Core\Lifecycle;
 
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\SchemaEraser;
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -25,9 +26,13 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Runs from uninstall.php when WordPress deletes the plugin (ADR-025).
  *
- * Always cancels pending sales ledger backfill jobs (ScheduledJobs; jobs,
- * not data). Deletes nothing unless "delete all data on uninstall" is
- * exactly true.
+ * Deletes nothing unless "delete all data on uninstall" is exactly true.
+ * With the opt-in it first counts the pending payouts (every method; ADR-059):
+ * when one is pending, or the count fails, it throws UninstallBlocked before
+ * anything is changed (fail closed), and uninstall.php ends the deletion
+ * request so the plugin stays installed. Otherwise, and always without the
+ * opt-in, it cancels pending sales ledger backfill jobs (ScheduledJobs; jobs,
+ * not data).
  * With the opt-in it removes only what the plugin owns, for the current site:
  *
  * 1. from users: the `merchboard_creator` role and the plugin's capabilities
@@ -56,8 +61,16 @@ defined( 'ABSPATH' ) || exit;
  *    HPOS order meta only through WooCommerce CRUD while WooCommerce is loaded.
  *    With WooCommerce inactive, markers in HPOS' meta table stay (accepted).
  *    Never direct SQL against WooCommerce tables. Orders themselves stay;
- * 4. the plugin tables (SchemaEraser, by exact name);
- * 5. the plugin options and transient, and the settings option LAST.
+ * 3b. it archives the creators (ADR-059): every creator becomes inactive and
+ *    is unlinked from its WordPress user, so no kept record can give access
+ *    again; then it writes RestoredHistory with the highest archived id;
+ * 4. the plugin tables (SchemaEraser, by exact name), except the ones kept
+ *    as historical documentation (Tables::retained_on_uninstall(): creators,
+ *    audit log, payouts, settlement documents, their rows and counters); the
+ *    encrypted payout details are always dropped;
+ * 5. the plugin options and transient, including the schema version (a
+ *    reinstall runs every migration again over the kept tables), and the
+ *    settings option LAST. Only RestoredHistory stays.
  *
  * DROP TABLE cannot be part of a transaction, so there is no pretend
  * atomicity. Every step is idempotent, and the opt-in is removed last: if a
@@ -80,6 +93,18 @@ final class Uninstaller {
 	 * equal, so core does not depend on the module).
 	 */
 	public const USER_META_KEYS = array( 'merchboard_dashboard_theme' );
+
+	/**
+	 * The status of a pending payout (Modules\WooCommerce\Payouts\PayoutStatus::Pending;
+	 * a test keeps both equal, so core does not depend on the module).
+	 */
+	public const PENDING_PAYOUT_STATUS = 'pending';
+
+	/**
+	 * The status of an archived creator (Modules\Creators\CreatorStatus::Inactive;
+	 * a test keeps both equal).
+	 */
+	public const ARCHIVED_CREATOR_STATUS = 'inactive';
 
 	/**
 	 * WooCommerce' HPOS filter deciding whether an order is saved after a meta change.
@@ -106,13 +131,25 @@ final class Uninstaller {
 	/**
 	 * Deletes the plugin's data if (and only if) the opt-in is enabled.
 	 *
-	 * @return bool Whether all plugin data was deleted.
+	 * @return bool Whether all plugin data that is not kept was deleted.
+	 * @throws UninstallBlocked With the opt-in, before any change, when payouts are pending or cannot be counted.
 	 */
 	public function run(): bool {
+		$opted_in = Settings::delete_data_on_uninstall();
+
+		if ( $opted_in ) {
+			$pending = self::pending_payouts( $this->wpdb );
+
+			if ( 0 !== $pending ) {
+				$this->logger->warning( 'Merch Dashboard data was not deleted on uninstall: payouts are pending or could not be counted.', array( 'pending_payouts' => $pending ) );
+				throw new UninstallBlocked( $pending );
+			}
+		}
+
 		// Not data: pending backfill pages are cancelled with or without the opt-in.
 		ScheduledJobs::cancel_sales_backfill();
 
-		if ( ! Settings::delete_data_on_uninstall() ) {
+		if ( ! $opted_in ) {
 			return false;
 		}
 
@@ -121,6 +158,11 @@ final class Uninstaller {
 		$this->remove_from_roles();
 		$this->remove_product_meta();
 		$this->remove_order_meta();
+
+		if ( ! $this->archive_creators() ) {
+			// Nothing is dropped; the opt-in survives so a later uninstall can finish.
+			return false;
+		}
 
 		if ( ! $this->schema->erase() ) {
 			// Keep the options (including the opt-in) so a later uninstall can finish.
@@ -133,7 +175,107 @@ final class Uninstaller {
 		delete_transient( Installer::FAILURE_TRANSIENT );
 		delete_option( Settings::OPTION );
 
-		$this->logger->info( 'Merch Dashboard data deleted on uninstall.' );
+		$this->logger->info( 'Merch Dashboard data deleted on uninstall.', array( 'kept_tables' => implode( ', ', Tables::retained_on_uninstall() ) ) );
+
+		return true;
+	}
+
+	/**
+	 * Pending payouts of every method, 0 when the payouts table does not
+	 * exist (a schema before payouts), or null when the count fails.
+	 *
+	 * @param wpdb $wpdb WordPress database object (site prefix).
+	 */
+	public static function pending_payouts( wpdb $wpdb ): ?int {
+		$table = Tables::name( $wpdb, Tables::PAYOUTS );
+		$found = self::read( $wpdb, $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+
+		if ( ! $found['ok'] ) {
+			return null;
+		}
+
+		if ( null === $found['value'] ) {
+			return 0;
+		}
+
+		$count = self::read( $wpdb, $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status = %s', $table, self::PENDING_PAYOUT_STATUS ) );
+
+		return $count['ok'] && is_numeric( $count['value'] ) ? (int) $count['value'] : null;
+	}
+
+	/**
+	 * One value from the database, telling a failed read from NULL (wpdb
+	 * resets last_error on every query). Live state; never cached.
+	 *
+	 * @param wpdb        $wpdb WordPress database object.
+	 * @param string|null $sql  Prepared query.
+	 * @return array{ok: bool, value: mixed}
+	 */
+	private static function read( wpdb $wpdb, ?string $sql ): array {
+		if ( null === $sql ) {
+			return array(
+				'ok'    => false,
+				'value' => null,
+			);
+		}
+
+		$value = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared by the caller; live state of the plugin's own tables.
+
+		return array(
+			'ok'    => '' === $wpdb->last_error,
+			'value' => $value,
+		);
+	}
+
+	/**
+	 * Runs one write, true when it succeeded.
+	 *
+	 * @param wpdb        $wpdb WordPress database object.
+	 * @param string|null $sql  Prepared statement.
+	 */
+	private static function write( wpdb $wpdb, ?string $sql ): bool {
+		return null !== $sql && false !== $wpdb->query( $sql ) && '' === $wpdb->last_error; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared by the caller; one-time uninstall of the plugin's own table.
+	}
+
+	/**
+	 * Archives every creator (inactive, no WordPress user) and records the
+	 * highest archived id (RestoredHistory). Idempotent; a creators table that
+	 * does not exist has nothing to archive.
+	 *
+	 * @return bool False when a write or read failed (logged).
+	 */
+	private function archive_creators(): bool {
+		$wpdb   = $this->wpdb;
+		$table  = Tables::name( $wpdb, Tables::CREATORS );
+		$exists = self::read( $wpdb, $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+
+		if ( ! $exists['ok'] ) {
+			$this->logger->error( 'Could not archive the creators during uninstall.' );
+			return false;
+		}
+
+		if ( null === $exists['value'] ) {
+			return true;
+		}
+
+		$now = gmdate( 'Y-m-d H:i:s' );
+
+		if ( ! self::write( $wpdb, $wpdb->prepare( 'UPDATE %i SET status = %s, user_id = NULL, updated_at = %s WHERE status <> %s OR user_id IS NOT NULL', $table, self::ARCHIVED_CREATOR_STATUS, $now, self::ARCHIVED_CREATOR_STATUS ) ) ) {
+			$this->logger->error( 'Could not archive the creators during uninstall.' );
+			return false;
+		}
+
+		$max = self::read( $wpdb, $wpdb->prepare( 'SELECT MAX(id) FROM %i', $table ) );
+
+		if ( ! $max['ok'] ) {
+			$this->logger->error( 'Could not read the archived creators during uninstall.' );
+			return false;
+		}
+
+		if ( is_numeric( $max['value'] ) && (int) $max['value'] > 0 && ! RestoredHistory::record( (int) $max['value'], $now ) ) {
+			$this->logger->error( 'Could not record the archived creators during uninstall.' );
+			return false;
+		}
 
 		return true;
 	}

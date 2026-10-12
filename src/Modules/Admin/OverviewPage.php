@@ -197,7 +197,7 @@ final class OverviewPage {
 		self::row(
 			__( 'Data on uninstall', 'merchboard' ),
 			Settings::delete_data_on_uninstall()
-				? __( 'DELETED when the plugin is deleted', 'merchboard' )
+				? __( 'DELETED when the plugin is deleted (payout history, settlement documents, audit log and archived creators are kept)', 'merchboard' )
 				: __( 'Kept when the plugin is deleted', 'merchboard' )
 		);
 		echo '</tbody></table>';

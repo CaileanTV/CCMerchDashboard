@@ -221,6 +221,17 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Delvis sletning:** Rækkefølgen og det, at opt-in'en slettes sidst, gør et afbrudt forløb genoptageligt. Der er ingen farlig mellemtilstand: pluginet er deaktiveret under uninstall.
 - **Multisite:** Kun det aktuelle sites data (se [DATABASE.md](DATABASE.md#afinstallation-og-datalivscyklus)).
 - **Ingen output:** Fejl logges via `Logger` (tabelnavn) og vises aldrig.
+- **Bevaret historik (ADR-059, B2):**
+  - Creators, audit-log, payouts, afregningsbilag, bilagsrækker og bilagstællere bevares ved opt-in-afinstallation. De krypterede betalingsoplysninger slettes altid.
+  - Bevarede data indeholder ingen fulde kontonumre eller PayPal-adresser: de fulde oplysninger findes kun krypteret, mens en payout er ventende, og tømmes ved enhver afgørelse. Payouts og bilagssnapshots har kun den maskerede angivelse (`•••• 1234` uden reg.nr., `j•••@g•••.com`), og audit har kun ID'er, beløb, valuta og metode.
+  - **Undtagelse:** fritekstfelterne `reference` og afvisningsbegrundelsen kan indeholde, hvad en administrator skriver. En vagt følger i et senere commit.
+- **Ingen adgang efter geninstallation:**
+  - Afinstallationen arkiverer alle creators (`inactive`, `user_id = NULL`) og fjerner rollen og capabilities fra alle brugere.
+  - Adgang kræver capability, en koblet record og status `active` (ADR-007), så en geninstallation giver ingen bruger adgang til den bevarede historik.
+  - Den bevarede creator-tabel lader AUTO_INCREMENT fortsætte: et nyt creator-ID genbruger aldrig et arkiveret.
+  - Manuel genaktivering af en arkiveret creator er ikke understøttet, men kun advaret (risiko for forkert tilskrivning, se DATABASE.md).
+- **Ventende payouts (fail closed):** med opt-in afbryder en ventende payout eller en fejlet optælling afinstallationen, før noget ændres. WordPress beholder pluginets filer, så de ventende payouts kan behandles (ADR-059).
+- **Logfilter:** `LogContext` redigerer også nøgler med `account` og `registration`.
 
 ### Audit log (fase 11)
 

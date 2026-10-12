@@ -18,6 +18,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Lifecycle\Deactivator;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Lifecycle\UninstallNotice;
 use MerchBoard\Core\Logging\LazyLogger;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
@@ -159,6 +160,7 @@ final class Plugin {
 		$installer = $this->container->get( Installer::class );
 		$installer->maybe_upgrade();
 		add_action( 'admin_notices', array( $installer, 'render_failure_notice' ) );
+		add_action( 'admin_notices', array( new UninstallNotice( $this->container->get( wpdb::class ) ), 'render' ) );
 
 		/**
 		 * Filters the modules to boot.
@@ -244,7 +246,8 @@ final class Plugin {
 			static fn( Container $c ): Installer => new Installer(
 				$c->get( Migrator::class ),
 				$c->get( RoleManager::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( wpdb::class )
 			)
 		);
 	}

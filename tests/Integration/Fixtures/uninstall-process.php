@@ -6,6 +6,9 @@
  * Usage: php uninstall-process.php <mode>
  * - unloaded:     WordPress without the plugin (the wp-admin flow: the plugin
  *                 is deactivated before it is deleted), then uninstall.php.
+ * - unloaded-ajax: the same inside an AJAX request, as the Plugins screen
+ *                 deletes a plugin (`delete-plugin`); a blocked uninstall
+ *                 prints WordPress' JSON error instead of this script's result.
  * - loaded-other: the plugin is loaded (its guard is registered) while
  *                 WordPress uninstalls another plugin; tries to delete the
  *                 link meta of every post.
@@ -38,11 +41,15 @@ if ( in_array( $merchboard_mode, array( 'loaded-other', 'loaded-none' ), true ) 
 	);
 }
 
+if ( 'unloaded-ajax' === $merchboard_mode ) {
+	define( 'DOING_AJAX', true );
+}
+
 require ABSPATH . 'wp-settings.php';
 
 $merchboard_result = array( 'guard' => false !== has_filter( 'delete_post_metadata' ) );
 
-if ( 'unloaded' === $merchboard_mode ) {
+if ( in_array( $merchboard_mode, array( 'unloaded', 'unloaded-ajax' ), true ) ) {
 	define( 'WP_UNINSTALL_PLUGIN', plugin_basename( $merchboard_file ) );
 	include dirname( __DIR__, 3 ) . '/uninstall.php';
 	$merchboard_result['uninstalled'] = true;
