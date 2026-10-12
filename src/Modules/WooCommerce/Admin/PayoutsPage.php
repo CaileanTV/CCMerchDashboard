@@ -147,6 +147,7 @@ final class PayoutsPage {
 			PayoutActions::NOT_CONFIRMED          => array( __( 'Not registered: confirm that you have made the transfer outside Merch Dashboard.', 'merchboard' ), 'error' ),
 			PayoutException::INVALID_REASON       => array( __( 'Not rejected: enter a reason of at most 500 characters. The creator sees it.', 'merchboard' ), 'error' ),
 			PayoutException::INVALID_REFERENCE    => array( __( 'Not registered: the reference may have at most 191 characters.', 'merchboard' ), 'error' ),
+			PayoutException::PAYMENT_DETAILS_IN_TEXT => array( __( 'Not saved: the reference or reason must not contain bank or payment details, such as an account number, an IBAN or an e-mail address. Nothing was changed. Use the transaction ID from the bank or PayPal, or describe the reason without the details.', 'merchboard' ), 'error' ),
 			PayoutException::NOT_PENDING          => array( __( 'This request has already been handled; nothing was changed.', 'merchboard' ), 'warning' ),
 			PayoutException::NOT_FOUND            => array( __( 'The payout does not exist.', 'merchboard' ), 'error' ),
 			PayoutException::INSUFFICIENT_BALANCE => array( __( 'Not registered: the creator\'s balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid.', 'merchboard' ), 'error' ),
@@ -564,6 +565,7 @@ final class PayoutsPage {
 		wp_nonce_field( PayoutActions::nonce_action( PayoutActions::COMPLETE_ACTION, $payout->id ) );
 		echo '<p><label for="merchboard-payout-reference">' . esc_html__( 'Reference (optional)', 'merchboard' ) . '</label><br>';
 		echo '<input type="text" id="merchboard-payout-reference" name="reference" class="regular-text" maxlength="191" autocomplete="off"></p>';
+		echo '<p class="description">' . esc_html__( 'For example the transaction ID from the bank or PayPal. Never enter an account number, IBAN or e-mail address: the reference is kept with the payout history.', 'merchboard' ) . '</p>';
 		echo '<p><label><input type="checkbox" name="confirm_transfer" value="1" required> ' . esc_html__( 'The transfer has been made outside Merch Dashboard', 'merchboard' ) . '</label></p>';
 		submit_button( __( 'Register as paid out', 'merchboard' ), 'primary', 'submit', false );
 		echo '</form>';
@@ -582,6 +584,7 @@ final class PayoutsPage {
 		wp_nonce_field( PayoutActions::nonce_action( PayoutActions::REJECT_ACTION, $payout->id ) );
 		echo '<p><label for="merchboard-payout-reason">' . esc_html__( 'Reason (shown to the creator)', 'merchboard' ) . '</label><br>';
 		echo '<textarea id="merchboard-payout-reason" name="reason" rows="3" class="large-text" maxlength="500" required></textarea></p>';
+		echo '<p class="description">' . esc_html__( 'Never enter an account number, IBAN or e-mail address: the reason is shown to the creator and kept with the payout history.', 'merchboard' ) . '</p>';
 		submit_button( __( 'Reject request', 'merchboard' ), 'secondary', 'submit', false );
 		echo '</form>';
 	}

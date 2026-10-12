@@ -3241,7 +3241,7 @@ ADR-025 lod opt-in-afinstallationen slette alle pluginets tabeller, også payout
 Dokumentationen for udbetalinger og afregninger bevares, uden at en geninstallation kan genskabe adgang eller vise historik til en forkert bruger, og uden at ventende udbetalinger efterlades uden plugin.
 
 ## Security
-Bevarede data indeholder ingen fulde kontonumre eller PayPal-adresser (kun den maskerede angivelse, se SECURITY.md). De fritekstfelter, en administrator udfylder (`reference`, afvisningsbegrundelse), får en vagt i et senere commit. Adgang efter geninstallation kræver capability, en koblet record og status `active` (ADR-007); arkiveringen fjerner koblingen.
+Bevarede data indeholder ingen fulde kontonumre eller PayPal-adresser (kun den maskerede angivelse, se SECURITY.md). De fritekstfelter, en administrator udfylder (`reference`, afvisningsbegrundelse), afviser betalingsoplysninger (`PayoutFreeText`, se SECURITY.md). Adgang efter geninstallation kræver capability, en koblet record og status `active` (ADR-007); arkiveringen fjerner koblingen.
 
 ## Migration/data implications
 Ingen ny migration. Migration 1–11 skriver ingen data og ændrer ingen bevarede rækker, når de køres igen (`dbDelta()` og betingede `ALTER ... ADD`); testet på MariaDB 10.11 med byte-sammenligning og sammenligning af tabeldefinitionerne med en frisk installation (`ReinstallAfterUninstallTest`).
@@ -3249,7 +3249,7 @@ Ingen ny migration. Migration 1–11 skriver ingen data og ændrer ingen bevared
 ## Consequences
 - Bevarede persondata (creatornavne, bruger-ID'er i payouts og audit, maskerede angivelser) ligger i databasen, indtil de fjernes manuelt; grundlag og periode afventer R3.
 - Multisite: kun det aktuelle site (uændret).
-- Fritekstvagten, hjælpeteksterne til den og oversættelserne følger i et senere commit efter afklaring af 24.2/G1.
+- Fritekstvagten (`PayoutFreeText`), dens hjælpetekster og fejlbesked kom i et separat commit efter ADR-059 (commit B). De danske oversættelser af ADR-059's og vagtens tekster følger i et senere commit.
 
 ## Related
 ADR-007, ADR-023, ADR-025, ADR-029, ADR-054, ADR-055, ADR-056, ADR-057, ADR-058, ADR-060.

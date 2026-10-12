@@ -35,6 +35,12 @@ final class PayoutException extends DomainException {
 
 	public const INVALID_REFERENCE = 'invalid_reference';
 
+	/**
+	 * The reference or reason contains payment details (an account number,
+	 * IBAN or e-mail address; PayoutFreeText). The text is never echoed.
+	 */
+	public const PAYMENT_DETAILS_IN_TEXT = 'payment_details_in_text';
+
 	public const INVALID_START = 'invalid_start';
 
 	/**

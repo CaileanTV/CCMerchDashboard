@@ -195,7 +195,9 @@ final class PayoutsAdminTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'result=invalid_reason', $this->actions->handle( $this->reject_input( $payout->id, '   ' ) ) );
 		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
 
-		self::assertStringContainsString( 'result=rejected', $this->actions->handle( $this->reject_input( $payout->id, 'Account 0012345678 is closed.' ) ) );
+		self::assertStringContainsString( 'result=payment_details_in_text', $this->actions->handle( $this->reject_input( $payout->id, 'Account 0012345678 is closed.' ) ) );
+		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
+		self::assertStringContainsString( 'result=rejected', $this->actions->handle( $this->reject_input( $payout->id, 'The account is closed at the bank.' ) ) );
 		self::assertSame( PayoutStatus::Rejected, $this->repository->find( $payout->id )?->status );
 		self::assertSame( array( array( 'payout_id' => $payout->id, 'amount' => '5.0000', 'currency' => 'DKK', 'method' => 'bank', 'has_reason' => true ) ), $this->audit( AuditAction::PayoutRejected ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertStringContainsString( 'result=not_pending', $this->actions->handle( $this->complete_input( $payout->id ) ) );

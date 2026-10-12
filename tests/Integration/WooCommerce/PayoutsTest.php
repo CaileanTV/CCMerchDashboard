@@ -280,9 +280,10 @@ final class PayoutsTest extends IntegrationTestCase {
 		wp_set_current_user( 1 );
 
 		$this->refused( PayoutException::INVALID_REASON, fn() => $this->decisions->reject( $payout->id, '   ' ) );
-		$rejected = $this->decisions->reject( $payout->id, 'Account number 0012345678 is closed.' );
+		$this->refused( PayoutException::PAYMENT_DETAILS_IN_TEXT, fn() => $this->decisions->reject( $payout->id, 'Account number 0012345678 is closed.' ) );
+		$rejected = $this->decisions->reject( $payout->id, 'The account is closed at the bank.' );
 
-		self::assertSame( array( PayoutStatus::Rejected, 'Account number 0012345678 is closed.', 1 ), array( $rejected->status, $rejected->decision_reason, $rejected->decided_by ) );
+		self::assertSame( array( PayoutStatus::Rejected, 'The account is closed at the bank.', 1 ), array( $rejected->status, $rejected->decision_reason, $rejected->decided_by ) );
 		self::assertSame( 400000, $this->available() );
 		self::assertSame( array( 'payout_id' => $payout->id, 'amount' => '10.0000', 'currency' => 'DKK', 'method' => 'bank', 'has_reason' => true ), $this->audit_rows( AuditAction::PayoutRejected )[0] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( PayoutStatus::Rejected, $this->decisions->reject( $payout->id, 'Again.' )->status, 'Already rejected.' );

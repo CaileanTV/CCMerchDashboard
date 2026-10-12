@@ -39,6 +39,13 @@ defined( 'ABSPATH' ) || exit;
  * 14.3 scenario 2). Pending details that cannot be decrypted can only be
  * rejected (planning decision 6). A failed read or write is a
  * DatabaseException; the transaction is rolled back.
+ *
+ * The completion reference and the rejection reason are kept with the
+ * payout (ADR-059) and the reason is shown to the creator, so neither may
+ * contain payment details (PayoutFreeText: an e-mail address, an IBAN, or
+ * the payout's own account number when its details can be read). Such a
+ * text is refused before anything is written; it is never logged, audited
+ * or echoed.
  */
 final class PayoutDecisions {
 
@@ -95,6 +102,11 @@ final class PayoutDecisions {
 			$payout_id,
 			PayoutStatus::Rejected,
 			function ( Payout $payout ) use ( $reason ): void {
+				// The creator sees the reason and it is kept (ADR-059): never payment details.
+				if ( PayoutFreeText::contains_payment_details( $reason, $this->details_if_readable( $payout ) ) ) {
+					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
+				}
+
 				$this->payouts->finish( $payout, PayoutStatus::Rejected, self::user(), ( $this->clock )(), $reason, null );
 				$this->payouts->assert_same_connection( $payout->creator_id );
 				$this->audit->record( AuditAction::PayoutRejected, $payout->creator_id, PayoutAudit::context( $payout, array( 'has_reason' => true ) ) );
@@ -127,7 +139,11 @@ final class PayoutDecisions {
 					throw new PayoutException( PayoutException::WRONG_METHOD );
 				}
 
-				$this->readable_details( $payout );
+				// The reference is kept (ADR-059): never the payout's own or other payment details.
+				if ( PayoutFreeText::contains_payment_details( $reference, $this->readable_details( $payout ) ) ) {
+					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
+				}
+
 				$balance = $this->balances->in_currency( $payout->creator_id, $payout->currency )->balance_units();
 
 				if ( null === $balance ) {
@@ -257,6 +273,25 @@ final class PayoutDecisions {
 		}
 
 		return $destination;
+	}
+
+	/**
+	 * The decrypted details of a pending bank or PayPal payout, or null when
+	 * there are none (gift card) or they cannot be read: a rejection must stay
+	 * possible then (planning decision 6).
+	 *
+	 * @param Payout $payout Payout.
+	 */
+	private function details_if_readable( Payout $payout ): ?PayoutDestination {
+		if ( PayoutMethod::GiftCard === $payout->method ) {
+			return null;
+		}
+
+		try {
+			return $this->readable_details( $payout );
+		} catch ( PayoutException ) {
+			return null;
+		}
 	}
 
 	/**

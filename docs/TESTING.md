@@ -110,7 +110,17 @@ npm run test:integration -- --filter TransactionTest
   - **Ikke dækket:**
     - MySQL 8 (først i CI efter push).
     - At beskederne faktisk vises i WordPress' brugerflader, og rigtig WP-CLI med flere plugins: kræver en runtime-test på Local, som ikke er godkendt endnu.
-    - Fritekstvagten (senere commit).
+    - At beskederne fra fritekstvagten vises i en browser (se punktet nedenfor).
+- **Fritekstvagten (commit B, `PayoutFreeText`):**
+  - **Unit, `PayoutFreeTextTest`:**
+    - Tilladt: tom tekst, bank- og PayPal-transaktions-ID'er, datoer (også før et transaktions-ID), beløb, ordre- og bilagsnumre (også i en liste), telefonnumre, reg.nr. alene, en del af kontonummeret, andre lange tal (også tal, telefonnumre, beløb og referencer, der ender på kontonummeret, og kontonummeret med andre cifre eller et andet reg.nr. skrevet sammen foran), IBAN-lignende tekst med forkert checksum (også med tekst efter), gyldig checksum med ukendt landekode eller forkert længde, bogstav-ciffer-referencer (også i grupper), "@" alene og en almindelig dansk begrundelse.
+    - Afvist: kontonummeret med og uden foranstillede nuller (også adskilt), med mellemrum, dobbelte mellemrum, bindestreger og punktummer, med payoutens eget reg.nr. foran (bindestreg, mellemrum eller samlet, med og uden nuller, også et reg.nr., der starter med nuller), med et andet reg.nr. adskilt foran og med en dato eller et langt tal før eller efter, e-mailadresser (også store bogstaver) samt danske og udenlandske IBAN'er med gyldig checksum (grupperet, samlet, med små bogstaver, med bindestreger, punktummer eller dobbelte mellemrum, med et ord, en sætning eller et tal efter, efter en anden reference, den korteste (NO) og en lang (MT)).
+    - Uden læsbare oplysninger findes kun e-mail og IBAN (også med tekst efter). Kontonumre under 6 betydende cifre tjekkes ikke. PayPal-payouts tjekkes for enhver e-mailadresse.
+  - **Integration (MariaDB), `PayoutFreeTextGuardTest`:**
+    - Gennemførelse og afvisning med betalingsoplysninger afvises med `payment_details_in_text`. Payoutens række, de krypterede oplysninger, audit og bilag er uændrede, og teksten findes ikke i audit.
+    - Bagefter går en almindelig reference eller begrundelse igennem.
+    - Kan oplysningerne ikke dekrypteres, kan payouten stadig afvises, mens e-mail og IBAN fortsat afvises.
+    - `PayoutActions` redirecter kun med koden, uden værdien, og logger intet. Fejlbeskeden gengiver ikke værdien.
 
 **Fase 10 (admin-shell, brugervalg og profil):**
 

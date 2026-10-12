@@ -87,9 +87,17 @@ Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), 
 
 ✅ **Fase 9:** `Modules/Settings`: `SettingsPage` (submenu "Settings", capability `merchboard_manage_settings`), `SettingsActions` (`admin-post.php?action=merchboard_save_settings`) og `SettingsService`. Samme mønster som creator-administrationen: capability → nonce → whitelistede felter → service (tjekker capability igen) → Post/Redirect/Get med whitelistede notice-koder. WordPress' Settings API (`options.php`) bruges bevidst ikke, fordi den som standard kræver `manage_options`. Pluginet autoriserer med sin egen `merchboard_manage_settings`.
 
-**"Delete all Merch Dashboard data when the plugin is deleted"** (default fra):
+**"Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)"** (default fra; før ADR-059 "Delete all Merch Dashboard data when the plugin is deleted"):
 
 - Siden viser tydeligt, om permanent sletning er slået til (rød advarsel) eller fra, hvad der slettes, og hvad der aldrig slettes.
+- **Fra ADR-059** viser siden desuden:
+  - hvad der bevares som historisk dokumentation: payout-historik, afregningsbilag med rækker og nummerering, audit-loggen og de arkiverede creators;
+  - at en geninstallation kun understøtter historisk dokumentation, med advarslen om forkert tilskrivning ved genaktivering af en arkiveret creator;
+  - antallet af ventende payouts, når sletning er slået til. Sletning af pluginet afvises, så længe en payout er ventende.
+- **Creators** viser "(archived on uninstall)" i listen og en advarsel på redigeringssiden for arkiverede creators.
+- **Plugins-skærmen** viser en advarsel, mens pluginet er aktivt, sletning er slået til, og der findes ventende payouts.
+- **Overview** angiver, hvad der bevares.
+- De danske oversættelser af de nye tekster (`npm run i18n`) følger i et senere commit.
 - **Slå til:** afkryds **og** skriv `DELETE` i bekræftelsesfeltet. Det tjekkes server-side i `SettingsService`, ikke kun i formularen.
 - **Slå fra:** kræver ingen bekræftelse, fordi det altid er sikkert.
 - Hver ændring skriver en `settings_updated`-audit-record (actor = administratoren). Audit og option skrives i én transaktion.
@@ -109,8 +117,10 @@ Deaktivering
 Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
-Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030)
+Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugin is deleted")
+→ ventende payout eller fejl ved optællingen: intet slettes, og sletningen af pluginet afvises (ADR-059)
+→ ellers slettes Merch Dashboards egne data, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og de krypterede betalingsoplysninger
+→ bevares (ADR-059): creators (arkiveret), audit-loggen, payouts, afregningsbilag, bilagsrækker og bilagstællere
 → alle andre WordPress- og WooCommerce-data bevares
 ```
 
@@ -214,6 +224,9 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
   - **Kø og historik:** faner "Kø" (ventende, ældste først) og "Historik" (øvrige statusser, nyeste behandling først), 20 pr. side: payout-ID, creator, beløb, metode, maskeret modtager, status og datoer. Fulde oplysninger vises aldrig i listerne.
   - **Detalje** (`&payout=<id>`): payoutens data inkl. begrundelse og reference. For en ventende: "Vis fulde betalingsoplysninger" (et nonce-beskyttet link pr. payout; hver visning skrives som `payout_details_viewed` før visning, uden oplysningerne), "Registrér som udbetalt" (kræver afkrydsning af, at overførslen er gennemført uden for Merch Dashboard, valgfri reference) og "Afvis" (begrundelse påkrævet, vises for creatoren). Merch Dashboard sender aldrig penge.
   - **Handlinger:** `admin-post.php` (`PayoutActions`): capability → nonce bundet til handling og payout → input → `PayoutDecisions` (lås, transaktion, audit). Post/Redirect/Get med en fast resultatkode. Dækker saldoen ikke længere beløbet, eller er den ukendt, afvises registreringen til manuel behandling; payouten forbliver ventende. Uden gyldig `MERCHBOARD_PAYOUT_KEY` viser siden en advarsel, og ventende anmodninger kan kun afvises.
+    - **Fritekst (`PayoutFreeText`):**
+      - Referencen ved "Registrér som udbetalt" og begrundelsen ved "Afvis" afvises, hvis de indeholder betalingsoplysninger: en e-mailadresse, en IBAN med landets længde og gyldig checksum (samlet eller i grupper, også med tekst efter) eller payoutens eget kontonummer (når oplysningerne kan læses; med eller uden mellemrum, punktum eller bindestreg, evt. efter payoutens eget reg.nr. og også ved siden af en dato eller et andet tal; andre cifre skrevet sammen med kontonummeret regnes ikke som kontonummeret). Grænserne står i SECURITY.md.
+      - Intet gemmes, og resultatkoden `payment_details_in_text` viser en fejl uden at gengive værdien. Felterne har en hjælpetekst.
   - **Gavekort (✅ trin 23.7, ADR-057):** en ventende gavekort-payout viser beløbet, payout-referencen `MB-PAYOUT-<id>`, et link til pluginets oprettelsesside og formularen "Registrér gavekort" (kodefelt med `autocomplete="off"`, POST, nonce bundet til payout og handling); ingen "Vis fulde betalingsoplysninger" eller "Registrér som udbetalt". `PayoutGiftCards` validerer under creator-låsen og gennemfører payouten; resultatkoden i redirectet, aldrig koden. En gennemført gavekort-payout viser udbyder og kortets ID samt kortets aktuelle status og saldo i pluginet (afstemning), aldrig koden. Uden et valgt og tilgængeligt gavekortplugin kan gavekort ikke registreres (kun afvises).
   - **Afregningsbilag (✅ trin 23.8, ADR-060):** en gennemført payout viser sit afregningsbilag som udstedt: mærket "Foreløbigt, ikke godkendt af revisor/SKAT.", bilagsnummer, udstedelse, periode, creator, momsstatus ved udstedelsen, kommission, overført saldo, udbetalt, saldo efter bilaget, antal afregnede rækker og eventuelle korrigerende bilag. Bilaget dannes automatisk i samme transaktion som "Registrér som udbetalt" eller gavekortregistreringen; fejler det, gennemføres payouten ikke. Payouts gennemført før schema-version 11 har intet bilag. Afregningsstarten kan ikke ændres, når creatoren har et bilag (D3), og en ordre i et bilag kan ikke slettes under Order history (D5, resultatkode `settled`). Admin-formular til korrigerende bilag findes ikke endnu (D11).
   - **Settings → Payouts → Payout-gavekort:** valg af gavekortplugin (standard "Intet"; i dag kun YITH WooCommerce Gift Cards) med status (tilgængelig eller årsagskode); ændringen auditeres som `payout_settings_changed`. Valget installerer, aktiverer eller konfigurerer intet plugin.

@@ -94,7 +94,9 @@ Indexes: `KEY(creator_id, status, currency)`, `KEY(status, requested_at)`. Belø
 
 **Historik og korrektioner:** status- og beløbsændringer spores via audit (afsnit 6) og rækkens faste felter. En gennemført payout kan ikke ændres; en fejl rettes med en ny, eksplicit post i en senere fase (kræver egen beslutning).
 
-**Uninstall:** payout-tabellerne er **ikke** med i den nuværende opt-in-sletning, før ADR-059 er besluttet (afsnit 9).
+**Uninstall (rettet 2026-10-12):**
+- **Før ADR-059:** opt-in-afinstallationen slettede også payout- og bilagstabellerne (ADR-025, ADR-060 060-7 a). Den tidligere formulering her var forkert.
+- **Fra ADR-059 (B2, commit `c100a67`):** bevares creators (arkiveret), audit-log, payouts, afregningsbilag, bilagsrækker og bilagstællere. `merchboard_payout_secrets` (de krypterede betalingsoplysninger) slettes altid, og en ventende payout afbryder sletningen. Se DATABASE.md, "Afinstallation og datalivscyklus".
 
 ## 5. Arbejdsgang
 
@@ -282,7 +284,7 @@ Kilder: pluginets kode (`includes/class-yith-ywgc-gift-card.php`, `includes/clas
 
 ## 9. ADR-udkast
 
-Alle har status **Foreslået**, undtagen ADR-054, ADR-055, ADR-056 og ADR-058 (accepteret 2026-10-10) samt ADR-057 og ADR-060 (accepteret 2026-10-11), som står i [DECISIONS.md](../DECISIONS.md). ADR-059 er fortsat Foreslået.
+Alle har status **Foreslået**, undtagen ADR-054, ADR-055, ADR-056 og ADR-058 (accepteret 2026-10-10) samt ADR-057 og ADR-060 (accepteret 2026-10-11), som står i [DECISIONS.md](../DECISIONS.md). ADR-059 er fortsat Foreslået. **Opdatering 2026-10-12:** ADR-059 er accepteret og implementeret (B2, commit `c100a67`), se DECISIONS.md.
 
 | ADR | Indhold | Forholdet til eksisterende ADR'er |
 | --- | --- | --- |
@@ -459,7 +461,7 @@ Den tidligere foreslåede `merchboard_settlement_documents` dækkede creator, pa
 
 **`merchboard_settlement_document_rows`** (forslag): `document_id`, `event_key` med `UNIQUE(event_key)`, så hver ledger-række indgår i højst ét bilag (afregningsbilag eller korrigerende bilag), samt et snapshot pr. række (ordre-ID, ordrelinje, type, netto, gemt moms, andel, profit, payout). Rækkens værdier gemmes, så et bilag aldrig skal genberegnes, og en senere ændring af beregningslogikken ikke ændrer det.
 
-**Uforanderlighed:** bilag og bilagsrækker indsættes kun; de opdateres og slettes aldrig (heller ikke ved opt-in-uninstall, ADR-059). Om et bilag er korrigeret, afledes af, om et korrigerende bilag henviser til det; der skrives ikke en ny status på det oprindelige.
+**Uforanderlighed:** bilag og bilagsrækker indsættes kun; de opdateres og slettes aldrig (fra ADR-059, 2026-10-12, heller ikke ved opt-in-uninstall; indtil da slettede opt-in-uninstall dem efter ADR-060 060-7 a). Om et bilag er korrigeret, afledes af, om et korrigerende bilag henviser til det; der skrives ikke en ny status på det oprindelige.
 
 **Hvad der er snapshot på udstedelsestidspunktet:** bilagsnummer og -type, alle beløb, momsstatus, beregnings- og skabelonversion, perioden, creatorens og virksomhedens stamdata, den maskerede betalingsmetode og hver bilagsrækkes værdier. Ændres creatorens stamdata, markup, momsstatus eller beregningslogikken senere, ændrer det intet på et udstedt bilag.
 
@@ -788,7 +790,7 @@ Kategorier: **1** kan forberedes nu · **2** kræver ejerens beslutning · **3**
 | YITH-adapter | 4 | Aktivering af YITH på Local (ejeren), `MB-T23`-testdata (D7) | Kun-læse-adapter, versionstjek | Runtime-tests (8.9, 15.6) | Payout-gavekort |
 | Gavekortbetalte ordrer (G1) | 2 + 4 | Runtime-test af indløsningsveje | Valgt model (A/B/C) og evt. ny læsemetode | Test af begge indløsningsveje | Produktion af payout-gavekort |
 | Udestående (D4) | 1 (visning) / 5 (opkrævning) | Aggregering | Visning af udestående | Ingen automatisk opkrævning | – |
-| Opbevaring og uninstall | 1 (bevar altid) / 2 + 3 (ADR-059, ADR-025) | – | Payout- og bilagstabeller slettes ikke | Uninstall-test | Produktion |
+| Opbevaring og uninstall | 1 (bevar altid) / 2 + 3 (ADR-059, ADR-025) | – | Payout- og bilagstabeller slettes ikke (implementeret med ADR-059 2026-10-12; `payout_secrets` slettes altid) | Uninstall-test (`UninstallTest`, `ReinstallAfterUninstallTest`) | Produktion |
 | 20 %-regel og moms | 3 | Revisor | Skriftlig validering | – | Produktion |
 | Aftalegrundlag | 3 (uden for pluginet) | Ejer, revisor | Dokumenteret aftalegrundlag | – | Produktion |
 | Tests og runtime | 1 + 4 | Alt ovenfor | Afsnit 11 og runtime på Local | Grøn CI; oprydning | Release |
@@ -1242,7 +1244,7 @@ Kun et beslutningsgrundlag. Intet er godkendt, ingen status er ændret, og ADR-0
 | --- | --- | --- |
 | Tabellen `merchboard_payouts` (en migration, schema-version 8 → 9) | Godkendelse af datamodellen i afsnit 4 som en del af ADR-055 | **Nødvendig.** Statusser, betingede overgange og `UNIQUE(gift_card_provider, gift_card_external_id)` kan ikke testes mod en rigtig database uden tabellen. Kun `merchboard_payouts`; `merchboard_payout_secrets`, `payout_start_at` og bilagstabellerne er ikke med. Migrationen kører på ethvert site, der opdaterer pluginet, men tabellen forbliver tom, fordi intet kan oprette payouts |
 | Capability for registreringen og audit-handlingen `payout_gift_card_registered` | **ADR-058** (delvist) | **Nødvendig.** Registreringen er en skrivende adminhandling; projektets regler (ADR-022, ADR-023) kræver en capability-kontrol og audit i samme transaktion. At genbruge en eksisterende capability (fx `merchboard_manage`) ville være en adgangsbeslutning uden ADR, som senere skal laves om. Kun `merchboard_manage_payouts` (rolleversion 5) og den ene audit-handling er nødvendige; `merchboard_view_payout_details` og de øvrige audit-handlinger kan vente |
-| Uninstall af den nye tabel | ADR-025 (accepteret) eller ADR-059 (forslag) | **Ikke nødvendig at afgøre nu.** Følger den accepterede ADR-025: en ny tabel i `Tables::all()` slettes kun ved opt-in-uninstall. Det afviger fra afsnit 4's forslag om at bevare payout-tabeller, men er uskadeligt, så længe der kun findes testdata. **ADR-059 skal besluttes, før der kan oprettes rigtige payouts** |
+| Uninstall af den nye tabel | ADR-025 (accepteret) eller ADR-059 (forslag) | **Ikke nødvendig at afgøre nu.** Følger den accepterede ADR-025: en ny tabel i `Tables::all()` slettes kun ved opt-in-uninstall. Det afviger fra afsnit 4's forslag om at bevare payout-tabeller, men er uskadeligt, så længe der kun findes testdata. **ADR-059 skal besluttes, før der kan oprettes rigtige payouts**. **Opdatering 2026-10-12:** besluttet og implementeret i ADR-059 (B2); payout- og bilagstabellerne bevares nu ved opt-in-uninstall |
 | Saldo, D1–D11, ADR-054, ADR-056, ADR-060 | – | Ikke nødvendige; indgår ikke |
 
 ### 19.4 Risici og acceptkriterier
