@@ -374,7 +374,7 @@ Krypterede bank- og PayPal-oplysninger (ADR-056), adskilt fra `merchboard_payout
 
 ### Afregningsbilag ✅ (schema-version 11, fase 23, ADR-060)
 
-> **Foreløbig:** omvendt fakturering efter brugeroplyst mundtlig vejledning fra SKAT; intet er juridisk eller regnskabsmæssigt godkendt (R1–R4). Opbevaring: ADR-059 er uafklaret.
+> **Foreløbig:** omvendt fakturering efter brugeroplyst mundtlig vejledning fra SKAT; intet er juridisk eller regnskabsmæssigt godkendt (R1–R4). Opbevaring ved opt-in-afinstallation: bevares efter ADR-059 (B2); opbevaringsperioden er uafklaret (R3).
 
 #### `merchboard_settlement_documents`  (kun indsættelse)
 

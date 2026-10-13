@@ -3249,7 +3249,7 @@ Ingen ny migration. Migration 1–11 skriver ingen data og ændrer ingen bevared
 ## Consequences
 - Bevarede persondata (creatornavne, bruger-ID'er i payouts og audit, maskerede angivelser) ligger i databasen, indtil de fjernes manuelt; grundlag og periode afventer R3.
 - Multisite: kun det aktuelle site (uændret).
-- Fritekstvagten (`PayoutFreeText`), dens hjælpetekster og fejlbesked kom i et separat commit efter ADR-059 (commit B). De danske oversættelser af ADR-059's og vagtens tekster følger i et senere commit.
+- Fritekstvagten (`PayoutFreeText`), dens hjælpetekster og fejlbesked kom i et separat commit efter ADR-059 (commit B, `84f6f0c`). De danske oversættelser af ADR-059's og vagtens tekster kom i `121efd7`.
 
 ## Related
 ADR-007, ADR-023, ADR-025, ADR-029, ADR-054, ADR-055, ADR-056, ADR-057, ADR-058, ADR-060.

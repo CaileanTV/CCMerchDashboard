@@ -121,6 +121,7 @@ npm run test:integration -- --filter TransactionTest
     - Bagefter går en almindelig reference eller begrundelse igennem.
     - Kan oplysningerne ikke dekrypteres, kan payouten stadig afvises, mens e-mail og IBAN fortsat afvises.
     - `PayoutActions` redirecter kun med koden, uden værdien, og logger intet. Fejlbeskeden gengiver ikke værdien.
+  - **MySQL 8 ✅ via CI:** run `38306023884` for commit `84f6f0c` (2026-10-12): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 609 tests, 16982 assertions; alle fire jobs grønne.
 
 **Fase 10 (admin-shell, brugervalg og profil):**
 
@@ -262,6 +263,7 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
     - `SettlementDocumentsTest` har tre samtidighedstests med en rigtig anden `wpdb`-forbindelse (eget `CONNECTION_ID()`), som midt i sin åbne transaktion (efter første afregnede række) lader testens forbindelse forsøge en udstedelse med `innodb_lock_wait_timeout = 1`: to creators får unikke bilagsnumre (den ventende venter ≥ 0,9 s på tællerlåsen, får `DatabaseException` og rulles helt tilbage; næste forsøg får `AFR-000002`), samme creator afvises med `busy`, og en række, som den anden forbindelse har afregnet uden om creator-låsen, giver fuld rollback og afregnes aldrig to gange.
     - `PayoutsAdminTest`: fanen "Saldi" (alle beløb, "Ukendt" aldrig 0, ingen betalingsoplysninger), én række pr. valuta, en side ud over den sidste viser den sidste side, og uden `PayoutBalances` er der ingen fane (`&view=balances` viser køen).
     - `OrderHistoryAdminTest`: afregningskolonnerne, linket til udbetalingen kun med `merchboard_manage_payouts`, creator-filteret på en ordre med to creators (kun den valgte creators rækker og bilag) og ingen kolonne uden `SettlementRepository`.
+    - **MySQL 8 ✅ via CI:** run `38324833930` for commit `a65169a` (2026-10-13): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 619 tests, 17209 assertions, herunder de tre samtidighedstests og creator-filteret; alle fire jobs grønne.
   - **K6.1, fælles rækkeregel og låseprotokol (MariaDB):**
     - **`PayoutRowRuleTest` (karakterisering):** testen blev skrevet og kørt grøn på den uændrede kode, før refaktoreringen begyndte, og er grøn efter den.
       - Ledgeren indeholder salg, refunds, en reversal med anden cyklus, en korrektion for en slettet refund og en linjekorrektion. Den har rækker på og omkring karens- og startgrænserne til sekundet, en ukendt linje og en række uden salgsrække, to valutaer, to creators og ét afregningsbilag.
@@ -272,4 +274,4 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
       - **Efter den anden forbindelses COMMIT:** samme kald lykkes, og en gentagelse ændrer intet. Rækkelåsen er første sætning efter `START TRANSACTION` og holdes til COMMIT (prøvet under auditskrivningen).
       - `CreatorRowLock` afviser at låse uden den navngivne lås.
     - **MySQL 8 ✅ via CI:** run `38281746123` for commit `015f4bb` (2026-10-12): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 593 tests, 16397 assertions; alle fire jobs grønne.
-  - **Ikke dækket:** MySQL 8 kun i CI (trin 24.2's samtidighedstests og afregningsforespørgsler er endnu ikke kørt på MySQL 8); samtidighed under webserverens egne requests; UI'et, herunder fanen "Saldi" og afregningskolonnen, er ikke klikket igennem i en browser.
+  - **Ikke dækket:** MySQL 8 kun i CI (trin 24.2 er kørt der, se ovenfor); samtidighed under webserverens egne requests; UI'et, herunder fanen "Saldi" og afregningskolonnen, er ikke klikket igennem i en browser.

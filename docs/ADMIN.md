@@ -97,7 +97,7 @@ Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), 
 - **Creators** viser "(archived on uninstall)" i listen og en advarsel på redigeringssiden for arkiverede creators.
 - **Plugins-skærmen** viser en advarsel, mens pluginet er aktivt, sletning er slået til, og der findes ventende payouts.
 - **Overview** angiver, hvad der bevares.
-- De danske oversættelser af de nye tekster (`npm run i18n`) følger i et senere commit.
+- De danske oversættelser af de nye tekster kom i et separat commit (`121efd7`).
 - **Slå til:** afkryds **og** skriv `DELETE` i bekræftelsesfeltet. Det tjekkes server-side i `SettingsService`, ikke kun i formularen.
 - **Slå fra:** kræver ingen bekræftelse, fordi det altid er sikkert.
 - Hver ændring skriver en `settings_updated`-audit-record (actor = administratoren). Audit og option skrives i én transaktion.
