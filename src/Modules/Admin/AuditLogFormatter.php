@@ -100,6 +100,7 @@ final class AuditLogFormatter {
 			AuditAction::PayoutSettingsChanged     => __( 'Payout settings changed', 'merchboard' ),
 			AuditAction::SettlementDocumentIssued  => __( 'Settlement document issued', 'merchboard' ),
 			AuditAction::SettlementDocumentCorrected => __( 'Settlement document corrected', 'merchboard' ),
+			AuditAction::G1Activated               => __( 'Gift card commission rule activated', 'merchboard' ),
 		};
 	}
 

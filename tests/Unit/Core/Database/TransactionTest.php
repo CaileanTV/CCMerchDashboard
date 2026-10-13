@@ -89,6 +89,86 @@ final class TransactionTest extends TestCase {
 		self::assertSame( 2, $transaction->run( static fn(): int => 2 ), 'Usable again after a rollback.' );
 	}
 
+	public function test_a_failed_rollback_after_the_work_is_recorded_and_the_original_error_kept(): void {
+		$wpdb                            = new RecordingWpdb();
+		$wpdb->query_results['ROLLBACK'] = false;
+		$transaction                     = self::transaction( $wpdb );
+		$error                           = new RuntimeException( 'boom' );
+		$caught                          = null;
+
+		try {
+			$transaction->run(
+				static function () use ( $error ): void {
+					throw $error;
+				}
+			);
+		} catch ( RuntimeException $e ) {
+			$caught = $e;
+		}
+
+		self::assertSame( $error, $caught, 'The original error, no new exception.' );
+		self::assertTrue( $transaction->rollback_failed() );
+		self::assertSame( array( 'START TRANSACTION', 'ROLLBACK' ), $wpdb->raw_queries, 'Same statements as before.' );
+	}
+
+	public function test_a_failed_rollback_after_a_failed_commit_is_recorded(): void {
+		$wpdb                            = new RecordingWpdb();
+		$wpdb->query_results['COMMIT']   = false;
+		$wpdb->query_results['ROLLBACK'] = false;
+		$transaction                     = self::transaction( $wpdb );
+
+		try {
+			$transaction->run( static fn(): int => 1 );
+			self::fail( 'Expected DatabaseException.' );
+		} catch ( DatabaseException $e ) {
+			self::assertSame( 'Could not commit the database transaction.', $e->getMessage() );
+		}
+
+		self::assertTrue( $transaction->rollback_failed() );
+	}
+
+	public function test_rollback_status_is_reset_by_the_next_run_and_untouched_by_a_rejected_nested_one(): void {
+		$wpdb                            = new RecordingWpdb();
+		$wpdb->query_results['ROLLBACK'] = false;
+		$transaction                     = self::transaction( $wpdb );
+
+		self::assertFalse( $transaction->rollback_failed(), 'Nothing rolled back yet.' );
+
+		try {
+			$transaction->run(
+				static function (): void {
+					throw new RuntimeException( 'boom' );
+				}
+			);
+		} catch ( RuntimeException ) {
+			self::assertTrue( $transaction->rollback_failed() );
+		}
+
+		self::assertSame( 1, $transaction->run( static fn(): int => 1 ) );
+		self::assertFalse( $transaction->rollback_failed(), 'Reset at the start of the next run().' );
+
+		unset( $wpdb->query_results['ROLLBACK'] );
+		$status = null;
+
+		try {
+			$transaction->run(
+				static function () use ( $transaction, &$status ): void {
+					try {
+						$transaction->run( static fn(): int => 1 );
+					} catch ( DatabaseException ) {
+						$status = $transaction->rollback_failed();
+					}
+
+					throw new RuntimeException( 'outer' );
+				}
+			);
+		} catch ( RuntimeException ) {
+			self::assertFalse( $transaction->rollback_failed(), 'The outer ROLLBACK succeeded.' );
+		}
+
+		self::assertFalse( $status, 'The rejected nested call did not change the status.' );
+	}
+
 	public function test_refuses_to_start_when_a_table_cannot_roll_back(): void {
 		$wpdb = new RecordingWpdb();
 		$ran  = false;

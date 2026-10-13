@@ -148,6 +148,42 @@ final class RepeatableReadTransactionTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_a_failing_first_engine_check_refuses_before_set_transaction_and_start(): void {
+		$helper       = $this->helper();
+		$checks       = 0;
+		$this->filter = function ( string $sql ) use ( &$checks ): string {
+			$this->statements[] = $sql;
+
+			// Only the first engine check fails; a later one would pass.
+			if ( str_contains( $sql, 'information_schema.TABLES t LEFT JOIN' ) && 1 === ++$checks ) {
+				return 'SELECT * FROM merchboard_t1_no_such_table';
+			}
+
+			return $sql;
+		};
+		add_filter( 'query', $this->filter );
+		$this->wpdb->suppress_errors( true );
+		$ran = false;
+
+		try {
+			$helper->run(
+				static function () use ( &$ran ): void {
+					$ran = true;
+				},
+				7
+			);
+			self::fail( 'Expected DatabaseException.' );
+		} catch ( DatabaseException $e ) {
+			self::assertSame( 'Database tables do not support transactions; write refused.', $e->getMessage() );
+		}
+
+		self::assertFalse( $ran, 'The work did not run.' );
+		self::assertSame( 1, $checks, 'Refused at the first check; run() did not check again.' );
+		self::assertNotContains( 'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ', $this->statements );
+		self::assertNotContains( 'START TRANSACTION', $this->statements );
+		self::assertSame( $this->session_timeout, $this->timeout(), 'The timeout is restored.' );
+	}
+
 	public function test_an_open_transaction_refuses_set_transaction_and_stays_open(): void {
 		$this->wpdb->suppress_errors( true );
 		$this->wpdb->query( 'START TRANSACTION' );

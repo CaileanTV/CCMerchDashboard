@@ -38,6 +38,13 @@ final class Transaction {
 	private bool $active = false;
 
 	/**
+	 * Whether a ROLLBACK of the last run() failed (E3, F-4).
+	 *
+	 * @var bool
+	 */
+	private bool $rollback_failed = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb               $wpdb    WordPress database object.
@@ -59,6 +66,8 @@ final class Transaction {
 		if ( $this->active ) {
 			throw new DatabaseException( 'Nested transactions are not supported.' );
 		}
+
+		$this->rollback_failed = false;
 
 		$unsupported = $this->support->unsupported_tables();
 
@@ -88,18 +97,29 @@ final class Transaction {
 			$result = $work();
 		} catch ( Throwable $e ) {
 			// Roll back, then let the caller handle the original error.
-			$this->wpdb->query( 'ROLLBACK' );
-			$this->active = false;
+			$this->rollback_failed = false === $this->wpdb->query( 'ROLLBACK' );
+			$this->active          = false;
 			throw $e;
 		}
 
 		$this->active = false;
 
 		if ( false === $this->wpdb->query( 'COMMIT' ) ) {
-			$this->wpdb->query( 'ROLLBACK' );
+			$this->rollback_failed = false === $this->wpdb->query( 'ROLLBACK' );
 			throw new DatabaseException( 'Could not commit the database transaction.' );
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Whether the ROLLBACK of the last run() failed, read from its return
+	 * value (never from `$wpdb->last_error`). Reset at the start of every
+	 * run() that is not rejected as nested. A failed ROLLBACK may leave the
+	 * transaction open; the caller then reports an unknown outcome and runs
+	 * no SQL that can write or commit (E3.6, F-4).
+	 */
+	public function rollback_failed(): bool {
+		return $this->rollback_failed;
 	}
 }

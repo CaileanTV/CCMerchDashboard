@@ -238,4 +238,10 @@ enum AuditAction: string {
 	 * and `has_reason`; never the reason text.
 	 */
 	case SettlementDocumentCorrected = 'settlement_document_corrected';
+
+	/**
+	 * G1 was activated: the cut-off from which orders paid with a payout
+	 * gift card are assessed was stored, once (E3 T3). Context: `cutoff_utc`.
+	 */
+	case G1Activated = 'g1_activated';
 }

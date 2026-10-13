@@ -26,10 +26,14 @@ defined( 'ABSPATH' ) || exit;
  * information_schema (TransactionSupport); that check is run here before
  * SET TRANSACTION, and its positive result is cached, so run() starts at
  * once. $support must be the instance $transaction uses (the container's
- * shared service).
+ * shared service). A check that fails or finds a table that cannot roll
+ * back refuses here, before SET TRANSACTION and START: a negative result
+ * is not cached, so run() would check again and, if that check passed,
+ * start without REPEATABLE READ.
  *
- * A failing timeout read or setup, or SET TRANSACTION itself (1568 while a
- * transaction is already open), throws before START, and $work never runs.
+ * A failing timeout read or setup, the engine check, or SET TRANSACTION
+ * itself (1568 while a transaction is already open) throws before START,
+ * and $work never runs.
  * A failing restore is logged; the result or exception of the transaction
  * is kept.
  */
@@ -72,12 +76,17 @@ final class RepeatableReadTransaction {
 		}
 
 		try {
-			// Before SET TRANSACTION: the check may read information_schema.
-			if ( array() === $this->support->unsupported_tables() && false === $wpdb->query( 'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ' ) ) {
+			// Before SET TRANSACTION: the check may read information_schema. A
+			// failed or negative check refuses here, before START: run() would
+			// check again and could start without REPEATABLE READ.
+			if ( array() !== $this->support->unsupported_tables() ) {
+				throw new DatabaseException( 'Database tables do not support transactions; write refused.' );
+			}
+
+			if ( false === $wpdb->query( 'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ' ) ) {
 				throw new DatabaseException( 'Could not set the transaction isolation level.' );
 			}
 
-			// With unsupported tables, run() refuses before START, as without this class.
 			return $this->transaction->run( $work );
 		} finally {
 			if ( ! $this->set_timeout( (int) $previous ) ) {
