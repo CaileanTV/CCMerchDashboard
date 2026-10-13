@@ -30,7 +30,10 @@ defined( 'ABSPATH' ) || exit;
  *   `_ywgc_expiration`, and the plugin applies a card in the cart's currency
  *   without conversion: a card without a currency is in the store's
  *   currency; a card without an expiry does not expire;
- * - `publish` is usable, `ywgc-disabled` and `ywgc-dismissed` are disabled.
+ * - `publish` is usable, `ywgc-disabled` and `ywgc-dismissed` are disabled;
+ * - `_ywgc_orders` lists the orders paid with the card through the coupon
+ *   field or the plugin's form; it is only ever appended to (read of the
+ *   plugin's code, 4.38.0; runtime test 16.5 for the paths).
  *
  * It reads the database directly instead of through the plugin's
  * `YITH_YWGC_Gift_Card`: constructing that class writes amount and balance
@@ -58,6 +61,11 @@ final class YithGiftCardProvider implements GiftCardProvider {
 	private const CURRENCY = '_ywgc_currency';
 
 	private const EXPIRATION = '_ywgc_expiration';
+
+	/**
+	 * The orders the plugin recorded on a card (`YWGC_META_GIFT_CARD_ORDERS`).
+	 */
+	private const ORDERS = '_ywgc_orders';
 
 	/**
 	 * Post statuses that are no card.
@@ -172,6 +180,105 @@ final class YithGiftCardProvider implements GiftCardProvider {
 		}
 
 		return $code;
+	}
+
+	/**
+	 * The orders recorded on each card in `_ywgc_orders`. The plugin writes
+	 * that list only through `register_order()` and never removes from it:
+	 * at checkout for the coupon field (classic and Store API) and for its
+	 * own gift card form. An order created in the admin or through the REST
+	 * API with the card as a coupon is not recorded there; Merch Dashboard
+	 * refuses payout cards on those orders (PayoutGiftCardCouponGuard).
+	 *
+	 * @phpstan-param list<string> $external_ids
+	 *
+	 * @param string[] $external_ids The cards' post ids.
+	 * @return array<string, list<int>>
+	 * @throws GiftCardProviderException When a list is not exact or the read fails.
+	 */
+	public function orders_paid_with( array $external_ids ): array {
+		$this->require_active();
+		$ids = array_values( array_unique( array_filter( $external_ids, static fn( string $id ): bool => 1 === preg_match( '/^[1-9]\d{0,18}$/', $id ) ) ) );
+
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$wpdb         = $this->wpdb;
+		$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+		$sql          = 'SELECT p.ID, m.meta_value FROM %i p LEFT JOIN %i m ON m.post_id = p.ID AND m.meta_key = %s WHERE p.post_type = %s AND p.post_status NOT IN (' . self::NO_CARD . ') AND p.ID IN (' . $placeholders . ')';
+		$rows         = $wpdb->get_results( $wpdb->prepare( $sql, $wpdb->posts, $wpdb->postmeta, self::ORDERS, self::POST_TYPE, ...array_map( 'intval', $ids ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery -- Constant status list and %d placeholders; the plugin's live data, never cached.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new GiftCardProviderException( GiftCardProviderException::READ_FAILED );
+		}
+
+		$result = array();
+
+		foreach ( $rows as $row ) {
+			$id = (string) $row['ID'];
+
+			// A list stored twice is not exact.
+			if ( isset( $result[ $id ] ) ) {
+				throw new GiftCardProviderException( GiftCardProviderException::INVALID_DATA );
+			}
+
+			$orders = self::registered_orders( $row['meta_value'] );
+
+			if ( null === $orders ) {
+				throw new GiftCardProviderException( GiftCardProviderException::INVALID_DATA );
+			}
+
+			$result[ $id ] = $orders;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Parses the plugin's stored order list: missing or empty is no order; a
+	 * serialized array of positive order ids is the list (sorted, unique);
+	 * anything else is null, never an empty list.
+	 *
+	 * @param mixed $value Stored meta value (null when the card has none).
+	 * @return list<int>|null
+	 */
+	public static function registered_orders( mixed $value ): ?array {
+		if ( null === $value || '' === $value ) {
+			return array();
+		}
+
+		if ( ! is_string( $value ) || ! is_serialized( $value ) ) {
+			return null;
+		}
+
+		// Damaged data is "not exact", without a PHP warning.
+		set_error_handler( static fn(): bool => true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Restored right below.
+
+		try {
+			$list = unserialize( $value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- The plugin's own meta; no objects are created.
+		} finally {
+			restore_error_handler();
+		}
+
+		if ( ! is_array( $list ) ) {
+			return null;
+		}
+
+		$orders = array();
+
+		foreach ( $list as $order ) {
+			if ( ( ! is_int( $order ) && ! is_string( $order ) ) || 1 !== preg_match( '/^[1-9]\d{0,18}$/', (string) $order ) ) {
+				return null;
+			}
+
+			$orders[] = (int) $order;
+		}
+
+		$orders = array_values( array_unique( $orders ) );
+		sort( $orders );
+
+		return $orders;
 	}
 
 	/**
@@ -310,7 +417,8 @@ final class YithGiftCardProvider implements GiftCardProvider {
 
 		if ( ! post_type_exists( self::POST_TYPE ) || ! class_exists( 'YITH_YWGC_Gift_Card' )
 			|| self::AMOUNT !== $constant( 'META_AMOUNT_TOTAL' ) || self::BALANCE !== $constant( 'META_BALANCE_TOTAL' )
-			|| self::CURRENCY !== $constant( 'META_CURRENCY' ) || self::EXPIRATION !== $constant( 'META_EXPIRATION' ) ) {
+			|| self::CURRENCY !== $constant( 'META_CURRENCY' ) || self::EXPIRATION !== $constant( 'META_EXPIRATION' )
+			|| ! defined( 'YWGC_META_GIFT_CARD_ORDERS' ) || self::ORDERS !== (string) constant( 'YWGC_META_GIFT_CARD_ORDERS' ) ) {
 			return false;
 		}
 

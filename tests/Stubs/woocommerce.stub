@@ -108,6 +108,51 @@ abstract class WC_Abstract_Order extends WC_Data {
 }
 
 /**
+ * Coupon (class-wc-coupon.php).
+ */
+class WC_Coupon extends WC_Data {
+
+	/**
+	 * @param mixed $data Code, id or coupon.
+	 */
+	public function __construct( $data = '' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_code( $context = 'view' ) {}
+}
+
+/**
+ * Cart (class-wc-cart.php).
+ */
+class WC_Cart {
+}
+
+/**
+ * Discounts of a cart or an order (class-wc-discounts.php).
+ */
+class WC_Discounts {
+
+	/**
+	 * @param WC_Cart|WC_Abstract_Order|null $object Cart or order.
+	 */
+	public function __construct( $object = null ) {}
+
+	/**
+	 * @param WC_Coupon $coupon Coupon.
+	 * @return bool|WP_Error
+	 */
+	public function is_coupon_valid( $coupon ) {}
+
+	/**
+	 * @return WC_Cart|WC_Abstract_Order|array<mixed>
+	 */
+	public function get_object() {}
+}
+
+/**
  * Order (class-wc-order.php).
  */
 class WC_Order extends WC_Abstract_Order {

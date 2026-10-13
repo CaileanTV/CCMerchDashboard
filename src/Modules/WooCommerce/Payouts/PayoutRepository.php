@@ -330,6 +330,32 @@ final class PayoutRepository {
 	}
 
 	/**
+	 * Every gift card registered on a completed payout (G1): payout, creator,
+	 * provider and the card's id, oldest payout first.
+	 *
+	 * @return list<array{payout_id: int, creator_id: int, provider: string, external_id: string}>
+	 * @throws DatabaseException When the read fails.
+	 */
+	public function registered_gift_cards(): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, creator_id, gift_card_provider, gift_card_external_id FROM %i WHERE method = %s AND status = %s AND gift_card_provider IS NOT NULL AND gift_card_external_id IS NOT NULL ORDER BY id', $this->table( Tables::PAYOUTS ), PayoutMethod::GiftCard->value, PayoutStatus::Completed->value ), ARRAY_A );
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the registered gift cards.' );
+		}
+
+		return array_map(
+			static fn( array $row ): array => array(
+				'payout_id'   => (int) $row['id'],
+				'creator_id'  => (int) $row['creator_id'],
+				'provider'    => (string) $row['gift_card_provider'],
+				'external_id' => (string) $row['gift_card_external_id'],
+			),
+			$rows
+		);
+	}
+
+	/**
 	 * Inserts a pending payout with its encrypted details (none for a gift
 	 * card). Requires the creator's lock, inside a transaction.
 	 *

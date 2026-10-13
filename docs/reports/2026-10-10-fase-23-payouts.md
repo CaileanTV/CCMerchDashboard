@@ -849,7 +849,7 @@ Status: *forslag* · *afventer ejerbeslutning* · *afventer test* · *afventer e
 | D9 | Foreløbig nummerserie fastsat af ejeren (13.8) | Format, serier, huller | Én serie / separate serier for korrektioner; pr. år | Bilagsnummer kan ikke færdiggøres | Implementering (bilag), produktion | Foreløbig ejergodkendelse; endelig validering hos revisor/SKAT | **Godkendt** 2026-10-11 (foreløbigt, a): én fortløbende serie ``AFR-000001`` for afregningsbilag og korrigerende bilag, uden årlig nulstilling; endelig validering hos revisor/SKAT |
 | D10 | Foreløbig feltliste efter 13.2 (T-felter nu, R-felter afventer revisor/SKAT) | Bilagets foreløbige indhold og hvilke creator- og virksomhedsstamdata der indsamles, hvordan og med hvilken beskyttelse | Færre eller flere felter | Bilag og stamdata kan ikke færdiggøres | Implementering (bilag, stamdata), produktion | Ejergodkendelse af den foreløbige feltliste; endelig liste hos revisor/SKAT | **Godkendt** 2026-10-11 (foreløbigt, a): kun eksisterende data (creatorens ID, visningsnavn og momsstatus; butikkens navn og WooCommerce-adresse; T-felter); ingen nye personoplysninger; R-felter afventer revisor/SKAT |
 | D11 | Uforanderlige bilag, korrigerende bilag med henvisning, fremadrettet modregning (13.9) | Den tekniske rettelsesmekanisme | Kreditnota for hver refund efter et bilag | Datamodellen for korrektioner kan ikke færdiggøres | Implementering (korrigerende bilag), produktion | Ejergodkendelse af mekanismen; regnskabsreglen hos revisor/SKAT (R1) | **Godkendt** 2026-10-11 (a): uforanderlige bilag, fremadrettet modregning, korrigerende bilag med henvisning (datamodel og service; admin-formular uden for 23.8); regnskabsreglen afventer R1 |
-| G1 | Model B (hele ordren udelukkes), **betinget af en bestået runtime-test** (16.3) | Kommissionsgrundlag for ordrer betalt med payout-gavekort | A almindeligt salg; C kun gavekortandelen | Payout-gavekort kan ikke bruges i produktion | Produktion af payout-gavekort; implementering af G1-logikken (ikke registrering og visning med fake-adapteren, 18.7) | Bestået G1-beslutningsregel (16.3), derefter ejergodkendelse; regnskabsbehandling eksternt | **Ikke opfyldt** ved runtime-testen 2026-10-11 (16.5): vej d og e registrerer intet på kortet. Forbliver produktionsblokering |
+| G1 | Model B (hele ordren udelukkes), **betinget af en bestået runtime-test** (16.3) | Kommissionsgrundlag for ordrer betalt med payout-gavekort | A almindeligt salg; C kun gavekortandelen | Payout-gavekort kan ikke bruges i produktion | Produktion af payout-gavekort; implementering af G1-logikken (ikke registrering og visning med fake-adapteren, 18.7) | Bestået G1-beslutningsregel (16.3), derefter ejergodkendelse; regnskabsbehandling eksternt | **Ikke opfyldt** ved runtime-testen 2026-10-11 (16.5): vej d og e registrerer intet på kortet. **2026-10-12 (24.4):** vej d og e er lukket i koden, og ordrer betalt med payout-gavekort identificeres fra pluginets registrering (16.8); ikke runtime-verificeret. Kommissionsgrundlaget (A/B/C) afventer ejerbeslutning og revisor; beslutningsnote i 16.8.1–16.8.9, ingen model valgt (anbefalingen B i 15.6 er et forslag, ikke en beslutning). Forbliver produktionsblokering |
 | G2 | Ihændehaverkode, indtil en sikker begrænsning er vist (bekræftet ved runtime-testen: en gæst indløste via Store API; filtertesten, D7-d, er ikke godkendt) | Om gavekort skal begrænses til creatoren | Begrænsning via YITH-filtre (`yith_ywgc_check_gift_card`, `ywgc_verify_coupon_code_condition`) | Kendt begrænsning bevares | Produktion, hvis ejeren kræver binding (ikke fake-adapter-arbejdet, 18.7) | Runtime-test af alle indløsningsveje (16.2, trin 9), derefter ejerbeslutning | Afventer test og ejerbeslutning |
 | G3 | Intet udløb; restværdi, annullering og refundering afklares eksternt (runtime-testen: kuponvejen gendanner ikke saldoen ved annullering/refund, 16.5) | Udløb, restværdi, annullering og refundering | Udløbsdato (felt findes i YITH, ingen UI i gratisversionen) | Ingen for implementeringen | Produktion | Revisor/jurist; runtime-test af YITH's adfærd (16.2, trin 4, 6, 7) | Afventer ekstern afklaring |
 
@@ -956,7 +956,154 @@ Udført på Merch Dashboard Local efter D7-a/b/c/e (D7-d ikke godkendt: trin 9 m
 
 **Oprydning:** ordrer, refund, produkt, creator, bruger, payouts, hemmeligheder, bilag, bilagsrækker og tæller slettet. Baseline efter: uændret undtagen schema-version 11 og 31 bevarede audit-rækker (13 fra 23.7, 18 fra 23.9; append-only). Creator 1, `dark-pink`, logo 198 og ordre 333 uberørt.
 
-**Ikke testet på Local:** gavekortregistrering med afregningsbilag (dækket af integrationstests; YITH blev ikke aktiveret igen), MySQL 8, samtidige bilagsudstedelser fra to forbindelser, browser-UI.
+**Ikke testet på Local i 23.9:** gavekortregistrering med afregningsbilag (testet i 24.3, se 16.7), samtidige bilagsudstedelser fra to forbindelser, browser-UI. **MySQL 8 er verificeret via CI** (CI for commit `14ddfd0` (run 38240753611, 2026-10-12): alle fire jobs grønne (PHP lint og statisk analyse, PHP-integration på MySQL 8.0.46 med 589 tests, PHP 7.2-syntakstjek, JS lint/typer/tests/build)). En grøn CI er ikke en produktionsgodkendelse: R1–R4, G1–G3 og ADR-059 er uafklarede.
+
+### 16.7 Runtime-test af gavekortregistrering med afregningsbilag (trin 24.3, 2026-10-12)
+
+Fase 24 har ingen egen rapport; resultatet står her ved de øvrige runtime-test af payouts.
+
+**Før:** skrivebeskyttet baseline på Local: schema-version 11, roller version 5, YITH WooCommerce Gift Cards 4.38.0 aktiv (aktiveret af projektejeren), ingen gavekort, payouts, bilag eller `MB-T23`-rester, karensperiode 14 og ingen gavekortudbyder, `MERCHBOARD_PAYOUT_KEY` ikke defineret, audit 439 rækker. Pluginet kører repo-koden via junction, inkl. de ikke-committede ændringer fra 24.2. Ingen kodeændringer; testen kørte som WP-CLI-scripts uden for repoet.
+
+**Fremgangsmåde:** syntetisk creator `MB-T23 Creator 243` (20 %, ikke momsregistreret) med en syntetisk bruger, et produkt til 100 kr. inkl. moms og 3 ordrer betalt for 30 dage siden (karensperioden uændret). Udgående e-mail blokeret i alle processer (6 WooCommerce-ordremails stoppet), `wp_die()` kastede en undtagelse. Den eneste indstilling, der blev ændret, var gavekortudbyderen (YITH via den auditerede indstillingshandling), som blev nulstillet bagefter. Gavekort oprettet som i 16.5 gennem YITH's egen gemmerutine med syntetiske koder `MB-T23-GC-243-*`. Fejlinjektionen var et `query`-filter kun i testprocessen.
+
+**Resultat (41/44 tjek bestået; de 3 øvrige var en fejl i testens audit-tæller, der talte fra id 0 og derfor medregnede de bevarede rækker fra 23.7 og 23.9; audit-loggen for kørslen er efterfølgende gennemgået række for række og bekræfter de forventede tal):**
+
+- **Anmodning:** gavekort kan først anmodes, når udbyderen er valgt. Saldo 48,00 (16,00 pr. salg). Bank/PayPal er utilgængelige uden nøgle. Anmodningen på 20,00 via REST giver 201, og samme nøgle igen giver samme payout. Ingen hemmeligheds-række.
+- **Fejlscenarier (intet ændres, ingen bilag, ingen tæller, ingen registrerings-audit):** ukendt kode `gift_card_not_found`, forkert beløb `gift_card_amount`, delvist brugt `gift_card_used`, deaktiveret `gift_card_not_active` og tom kode `invalid_gift_card_code`. Ugyldig nonce og en creator uden `merchboard_manage_payouts` afvises med 403.
+- **Gyldig registrering:** payouten er gennemført med udbyder og kortets ID. **AFR-000001** (kommission 48,00, overført 0, udbetalt 20,00, saldo efter 28,00, de 3 salg), foreløbigt, metode `gift_card`, ingen kode i snapshot.
+- **Idempotens:** samme kort på samme payout igen ændrer intet (stadig ét bilag, én `payout_gift_card_registered`, én `settlement_document_issued`). Samme kort på en anden payout giver `gift_card_linked`.
+- **Rollback:** en fejlende indsættelse af bilagsrækker under registreringen giver resultatet `error`. Payouten forbliver ventende uden kort, og der kommer intet bilag, ingen rækker, ingen tællerændring og ingen audit. Et nyt forsøg giver **AFR-000002** (intet nummer tabt; ingen nye rækker, kommission 0, overført 28,00, udbetalt 20,00, saldo 8,00).
+- **To reelt parallelle PHP-processer** (startet på samme tidspunkt, færdige inden for 0,04 s):
+  - Dobbeltindsendelse af samme kort på samme payout gennemfører payouten én gang; begge svar er "registreret".
+  - Ét kort på to forskellige payouts gennemfører præcis én; den anden får `gift_card_linked` og blev derefter afvist.
+  - Bilag AFR-000001–000004 er unikke, og tælleren står på 5. Ét bilag pr. gennemført payout, 4 registreringer og 4 udstedelser i audit, ingen række afregnet to gange, og saldoen er overført 8 → 6 → 4.
+- **Visninger (24.2):** payoutsiden viser AFR-000001 mærket foreløbigt uden kode. Fanen "Saldi" viser 48,00 frigivet, 44,00 udbetalt og saldo 4,00. Ordrehistorikken viser de 3 ordrer afregnet i AFR-000001 med link til payouten.
+- **Creatorens visning:** creatoren ser sit eget kort med kode (bevidst, ADR-057) og sit eget bilag (`no-store`); en anden creator får 404.
+- **Lækager:** gavekortkoden findes ikke i audit, payouts, bilag, bilagsrækker, options, andre posts' meta, ordrelinjer eller `debug.log` (findes ikke).
+
+**Sideeffekter:** ingen e-mails sendt. Ingen YITH-handlinger i Action Scheduler; de nye rækker der er WooCommerce' og Merch Dashboards egne rutinejob (ordreimport, produktopslag) og er efterladt som hos 23.9.
+
+**Oprydning:** de 3 ordrer, produktet, de 7 gavekort med meta, creatoren, brugeren, 5 payouts, 4 bilag, 3 bilagsrækker, tælleren, ledger-, cyklus-, moms- og snapshot-rækker samt kundeopslaget er slettet. Udbyderen er nulstillet via servicen, og indstillings-optionen er sat tilbage til den gemte værdi. Baseline efter: identisk med baseline før (inkl. YITH-options og `merchboard_settings`), undtagen 19 bevarede audit-rækker (append-only): `creator_created`, `creator_markup_changed`, `product_creator_linked`, 2 × `payout_settings_changed`, 5 × `payout_requested`, 4 × `settlement_document_issued`, 4 × `payout_gift_card_registered` og 1 × `payout_rejected`. Schema-version uændret (11). Creator 1 (16,67 %), `dark-pink`, logo 198 og ordre 333 er uberørte. YITH er fortsat aktiv som før testen.
+
+**Ikke verificeret:** browser-UI; G1–G3 (uændrede produktionsblokeringer; testen brugte kun admin-registrering, ikke indløsning af kortene); samtidighed på MySQL 8 og under webserverens egne requests (de parallelle processer var WP-CLI). Afregningsbilagene er fortsat foreløbige og ikke godkendt af revisor/SKAT (R1–R4).
+
+### 16.8 G1 i kode (trin 24.4, 2026-10-12)
+
+**Undersøgt (kode i WooCommerce 11.1.2 og YITH WooCommerce Gift Cards 4.38.0 på Merch Dashboard Local, kun læst):**
+
+| Vej | Hvordan kuponen anvendes | Registrering på kortet | Håndtering i 24.4 |
+| --- | --- | --- | --- |
+| a/b checkout (klassisk, Store API) med kuponfeltet | Kurvens `WC_Discounts`; YITH trækker saldoen og kalder `register_order()` ved `woocommerce_checkout_order_processed`/`woocommerce_store_api_checkout_order_processed` | Ja (`_ywgc_orders`) | Tilladt; identificeres |
+| c YITH's formular | Kurvens session; `register_gift_cards_usage` ved `woocommerce_new_order` | Ja | Tilladt; identificeres |
+| d admin `apply_coupon` | `WC_Order::apply_coupon()` → `WC_Discounts( $order )->is_coupon_valid()` | Nej | **Afvises** med besked |
+| e REST API v3 `coupon_lines` | `calculate_coupons()` → `WC_Discounts( $order )->is_coupon_valid()`; ved fejl 400, og den allerede gemte ordre efterlades som `checkout-draft` uden kupon | Nej | **Afvises** (400) |
+| REST API v1/v2 `coupon_lines` | Kode og rabat skrives direkte som ordrelinje, ingen validering, intet YITH | Nej (kortet bruges ikke) | Ikke en gavekortindløsning: kortets saldo ændres ikke, rabatten er klientens. Dokumenteret restrisiko |
+
+`_ywgc_orders` skrives kun af `register_order()` og udvides kun; den fjernes ikke ved refund eller annullering (16.3 pkt. 3), men forsvinder, hvis kortet slettes i pluginet.
+
+**Implementeret (ikke committet):**
+- `GiftCardProvider::orders_paid_with()` (ADR-057-note); YITH læser `_ywgc_orders` uden at læse koden, og alt andet end en liste af ordre-ID'er er `invalid_data`. Selvtesten kræver nu også `YWGC_META_GIFT_CARD_ORDERS`.
+- `PayoutGiftCardCouponGuard` på `woocommerce_coupon_is_valid` (prioritet 20): kun når rabatten beregnes for en ordre (vej d og e), aldrig for kurven. Kan kontrollen ikke gennemføres, afvises kuponen (fail closed). Intet skrives; koden logges aldrig, kun ordre-ID.
+- `PayoutGiftCardOrders`: om en kode er et kort på en gennemført payout, og hvilke ordrer pluginet har registreret på kortene. Kan registreringen ikke læses (plugin utilgængeligt, kort slettet, data ikke præcise), er svaret "ukendt", aldrig "ikke betalt med payout-gavekort". Intet gemmes.
+- Ordrehistorikken markerer ordren ("Betalt med payout-gavekort") og forklarer på ordren, at kommissionsgrundlaget ikke er besluttet; payouten viser de ordrer, kortet har betalt.
+- **Ledger, saldo og afregningsbilag er uændrede.** Gentagne hooks og forespørgsler kan ikke give dobbeltregistrering, fordi intet registreres i Merch Dashboard; ledgeren synkroniserer som hidtil idempotent.
+
+**Stoppet her (kræver beslutning, ingen kode):**
+1. **Kommissionsgrundlaget for ordrer betalt helt eller delvist med payout-gavekort (G1, model A/B/C, 15.6):** ejerbeslutning og revisorens bekræftelse (R1/R3). I dag er resultatet forskelligt efter vej: kuponfeltet (a/b) nedsætter linjebeløbene, så der kun er kommission af den kontante del (≈ C); YITH's formular (c) ændrer ikke linjerne, så der er fuld kommission (≈ A). Det ændres ikke uden en beslutning.
+2. **Hvis B eller C vælges:** behandling af allerede afregnede rækker (bilag er uforanderlige, D11) og af refunds; og en varig registrering i Merch Dashboard, så identifikationen ikke afhænger af, at kortet findes i pluginet. Det kræver en migration, som først beskrives og godkendes.
+
+**Ikke verificeret:** vejene a–e mod den rigtige WooCommerce og YITH efter ændringen (Local-runtime-test, ikke udført i dette trin); "pay for order"-siden; andre plugins eller egen kode, der tilføjer kuponlinjer direkte.
+
+**Videre implementering af G1 er standset (2026-10-12)**, indtil kommissionsgrundlaget er besluttet. Koden fra 24.4 er uændret og ikke committet. Beslutningsnoten nedenfor (16.8.1–16.8.9) er til projektejer og revisor. Den anbefaler ingen model, og ingen model er valgt eller godkendt.
+
+#### 16.8.1 Baggrund
+
+Et payout-gavekort er en udbetaling: creatoren får et gavekort til butikken i stedet for penge. Bruges kortet til at betale en ordre, er spørgsmålet, om og af hvilket beløb der skal optjenes kommission på ordren. Gældende regel (ADR-049): kommission = betalt beløb inkl. moms pr. ordrelinje × creatorens andel; uden momsregistrering udbetales 80 %. Rabatter og kuponer nedsætter grundlaget.
+
+#### 16.8.2 De tre modeller (uddyber 15.6)
+
+| | A: fuld kommission | B: ingen kommission | C: kun den kontante del |
+| --- | --- | --- | --- |
+| Grundlag | Hele ordren efter almindelige rabatter; gavekortet ses som betalingsmiddel | Ordren tæller ikke med | Ordren minus den del, gavekortet betalte |
+| Delvis gavekortbetaling | Fuld kommission | Ingen, heller ikke af den kontante del | Kommission af den kontante del |
+| Fuld gavekortbetaling | Fuld kommission | Ingen | Ingen |
+| Creatoren kan tjene på sin egen udbetaling | Ja | Nej | Nej |
+| Kræver data | Ingen nye | Hvilke ordrer kortet har betalt | Gavekortets beløb pr. ordre og en fordeling pr. ordrelinje |
+
+#### 16.8.3 Regneeksempel
+
+Antagelser: ét produkt til 500,00 kr. inkl. 25 % moms; almindelig butiksrabat 100,00 kr., så kunden betaler 400,00 kr. (320,00 + 80,00 moms); kommissionsandel 20 %. Kommissionen er vist for en momsregistreret creator; tallet i parentes gælder en creator uden momsregistrering (× 0,80).
+
+| Betaling | A | B | C |
+| --- | --- | --- | --- |
+| Delvis: gavekort 150 kr. + kontant 250 kr. | 400 × 20 % = **80,00** (64,00) | **0,00** | 250 × 20 % = **50,00** (40,00) |
+| Fuld: gavekort 400 kr. | **80,00** (64,00) | **0,00** | **0,00** |
+
+**Systemets adfærd i dag afhænger af indløsningsvejen (16.5):**
+- **Kuponfeltet i kassen** (klassisk og blokcheckout): WooCommerce behandler kortet som rabat og nedsætter linjebeløb og moms. Ledgeren gemmer 200 + 50 moms ved delvis og 0 ved fuld betaling; kommissionen bliver 50,00 eller 0,00 (≈ C).
+- **YITH's gavekortformular:** linjerne ændres ikke, kun ordretotalen. Ledgeren gemmer 320 + 80 moms; kommissionen bliver 80,00 (≈ A).
+
+Samme køb giver altså forskellig kommission og forskellig registreret moms efter indløsningsvejen. Det er hovedgrunden til, at der skal træffes en beslutning.
+
+#### 16.8.4 Refunderinger og annulleringer
+
+Ledgeren registrerer refunderinger og annulleringer med fortegn ud fra de linjebeløb, WooCommerce refunderer. Om kortets saldo genoprettes, afgør YITH: ved kuponfeltet nej, ved formularen ja ved annullering, fejlet betaling og fuld refundering (G3, selvstændig sag).
+
+| Model | Konsekvens |
+| --- | --- |
+| A | Som i dag: kommissionen reduceres med de refunderede linjebeløb. Er WooCommerce' refunderbare beløb lavere end linjebeløbet (formularvejen), kan der blive kommission tilbage; ikke verificeret |
+| B | Refunderinger og annulleringer af ordren skal også udelukkes, ellers giver de negativ kommission på en ordre, der aldrig gav kommission |
+| C | Hver refundering skal deles i en kontant del og en gavekortdel. WooCommerce registrerer ikke fordelingen, så der skal fastsættes en fordelingsregel |
+
+#### 16.8.5 Afregnede ordrer, historiske bilag og fremtidige saldi
+
+- **Historiske bilag** kan ikke ændres (ADR-060, D11); rettelser kun med korrigerende bilag, og admin-formularen til det findes endnu ikke.
+- **Eksisterende data:** i de miljøer, vi har adgang til, findes ingen udstedte bilag med ordrer betalt med payout-gavekort (payout-gavekort er ikke i produktion; testdata på Local er ryddet op). Produktionsdata er ikke set.
+- **Fremtidige saldi:** en model kan gælde fra en skæringsdato. Gælder den med tilbagevirkende kraft for ikke-afregnede ordrer, falder creatorens saldo og kan blive negativ (udestående), hvis beløbet allerede er udbetalt.
+
+**Systemet kan:** identificere ordrer betalt via kuponfeltet eller formularen ud fra YITH's registrering; anvende B eller C fra en skæringsdato; udelukke refunderinger symmetrisk (B); lave en fast fordeling pr. linje (C), når reglen er fastsat; gemme en varig registrering (kræver migration); udstede korrigerende bilag (kræver D11-formularen).
+
+**Kræver revisorens vurdering:** hvilken model der er regnskabs- og momsmæssigt korrekt (16.8.6). Det kan systemet ikke afgøre.
+
+#### 16.8.6 Spørgsmål til revisor
+
+1. **Kommissionsgrundlag:** skal creatoren optjene kommission på et salg, der helt eller delvist er betalt med et gavekort, som er creatorens egen udbetaling? Hvilken model (A, B eller C) er korrekt?
+2. **Moms ved salget:** er et payout-gavekort et flerfunktionsvoucher? Er det korrekt, at WooCommerce via kuponfeltet nedsætter salgets momsgrundlag, mens YITH's formular ikke gør, eller skal moms beregnes af den fulde salgspris ved indløsning?
+3. **Moms i afregningen:** skal kommissionsgrundlaget være inkl. eller ekskl. moms, når ordren er betalt med gavekort (i dag inkl. moms, ADR-049)? Hvordan påvirker det afregningsbilaget (omvendt fakturering, R1/R3)?
+4. **Refunderinger og annulleringer:** hvordan behandles en refundering, når kortets saldo genoprettes, og når den ikke gør? Hvordan fordeles den mellem kontant del og gavekortdel?
+5. **Tilbagevirkende kraft:** skal en valgt model gælde fra en skæringsdato eller med tilbagevirkende kraft? Kræves korrigerende bilag for udstedte bilag?
+6. **Bogføring:** hvordan bogføres payout-gavekortet som forpligtelse, ved indløsning og ved restværdi (R3, G3)?
+7. **Dokumentation:** skal afregningsbilaget vise, at en ordre er betalt med payout-gavekort, og i givet fald hvordan?
+
+#### 16.8.7 Teknisk restrisiko og nødvendig afgrænsning
+
+- **Lukket i koden (ikke runtime-verificeret):** kortet som kupon i admin og i REST API v3 afvises.
+- **Åbne veje:**
+  - REST API v1/v2 skriver kuponlinjer direkte uden validering og uden YITH; kortet bruges ikke, men en rabat kan bære kortets kode.
+  - Andre plugins (POS, ordreimport, abonnementer) og egen kode kan tilføje kuponlinjer direkte.
+  - "Pay for order"-siden er ikke undersøgt.
+  - YITH kan i en request, der opretter flere ordrer med en indlæst kurv, knytte en forkert ordre til et kort (16.5).
+  - YITH's registrering forsvinder, hvis kortet slettes.
+- **Før G1 kan erklæres færdig:**
+  1. En godkendt liste over understøttede ordrekanaler; for hver anden kanal besluttes, om den blokeres i kode eller håndteres som "ikke understøttet" med en manuel kontrolprocedure.
+  2. Runtime-test på Local af alle kanaler.
+  3. Varig registrering i Merch Dashboard (migration), så identifikationen ikke afhænger af, at kortet findes i YITH.
+  4. Beslutning om risikoen for, at YITH knytter forkerte ordrer til et kort.
+
+#### 16.8.8 Kontraktændring (ADR-057)
+
+`orders_paid_with()` udvider gavekort-kontrakten i ADR-057 med en læsemetode. Den er kun noteret i ADR-057 og **ikke godkendt**; det foreslås at behandle den sammen med den øvrige G1-godkendelse.
+
+#### 16.8.9 Manglende godkendelser, før G1 kan fortsætte
+
+1. Revisorens svar på spørgsmålene i 16.8.6.
+2. Ejerens valg af model (A, B eller C) og om den gælder fra en skæringsdato eller med tilbagevirkende kraft.
+3. Ved B eller C: en fordelingsregel for refunderinger og godkendelse af en migration til varig registrering.
+4. Den godkendte liste over understøttede ordrekanaler og håndteringen af resten (16.8.7).
+5. Godkendelse af kontraktudvidelsen `orders_paid_with()` (ADR-057).
+6. Godkendelse af en runtime-test på Local af kanalerne efter implementeringen.
+
+Indtil da er G1 uafsluttet, og payout-gavekort er ikke godkendt til produktion. Kommissionsberegning, ledger, saldi og historiske bilag er uændrede.
 
 ## 17. Kvalitetssikring og readiness (2026-10-10)
 

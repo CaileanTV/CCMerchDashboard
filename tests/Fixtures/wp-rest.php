@@ -33,6 +33,15 @@ class WP_Error {
 	}
 
 	/**
+	 * Error message.
+	 *
+	 * @return string
+	 */
+	public function get_error_message() {
+		return $this->message;
+	}
+
+	/**
 	 * Error data.
 	 *
 	 * @return mixed
