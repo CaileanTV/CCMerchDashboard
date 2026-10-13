@@ -12,6 +12,7 @@ namespace MerchBoard\Core\Audit;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use MerchBoard\Core\Database\ConnectionChangedException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use wpdb;
@@ -88,6 +89,65 @@ final class AuditRepository {
 		}
 
 		return (int) $this->wpdb->insert_id;
+	}
+
+	/**
+	 * Appends a record like append(), but only on the connection that holds
+	 * the caller's lock (E3.5(b)/(c)): `INSERT … SELECT … FROM DUAL WHERE
+	 * CONNECTION_ID() = %d`. After a silent reconnect the statement runs in
+	 * another session and writes nothing, so no audit record is committed
+	 * outside the caller's transaction. Same columns and JSON rules as
+	 * append().
+	 *
+	 * @param AuditAction          $action        Action.
+	 * @param int|null             $actor_user_id Actor; null for system actions.
+	 * @param int|null             $creator_id    Affected creator.
+	 * @param array<string, mixed> $context       Already sanitized context.
+	 * @param string               $created_at    UTC DATETIME ('Y-m-d H:i:s').
+	 * @param int                  $connection_id Connection that holds the caller's lock.
+	 * @return int Record id.
+	 * @throws InvalidArgumentException When an id is not positive.
+	 * @throws ConnectionChangedException When the statement ran on another connection (nothing written).
+	 * @throws DatabaseException When the insert fails or does not write exactly one row.
+	 */
+	public function insert_on_connection( AuditAction $action, ?int $actor_user_id, ?int $creator_id, array $context, string $created_at, int $connection_id ): int {
+		foreach ( array( $actor_user_id, $creator_id ) as $id ) {
+			if ( null !== $id && $id < 1 ) {
+				throw new InvalidArgumentException( 'Audit ids must be positive integers or null.' );
+			}
+		}
+
+		// The same encoding as append().
+		$json = array() === $context ? null : wp_json_encode( $context, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR );
+		$wpdb = $this->wpdb;
+
+		// NULLIF() writes NULL for a missing actor, creator (ids are positive) or context.
+		$sql = $wpdb->prepare(
+			"INSERT INTO %i (created_at, action, actor_user_id, creator_id, context) SELECT %s, %s, NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%s, '') FROM DUAL WHERE CONNECTION_ID() = %d",
+			Tables::name( $wpdb, Tables::AUDIT_LOG ),
+			$created_at,
+			$action->value,
+			$actor_user_id ?? 0,
+			$creator_id ?? 0,
+			is_string( $json ) ? $json : '',
+			$connection_id
+		);
+
+		if ( null === $sql ) {
+			throw new DatabaseException( 'Could not write audit record.', array( 'action' => $action->value ) );
+		}
+
+		$result = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is the result of $wpdb->prepare().
+
+		if ( 0 === $result ) {
+			throw new ConnectionChangedException( 'The database connection changed before the audit record was written.' );
+		}
+
+		if ( 1 !== $result ) {
+			throw new DatabaseException( 'Could not write audit record.', array( 'action' => $action->value ) );
+		}
+
+		return (int) $wpdb->insert_id;
 	}
 
 	/**

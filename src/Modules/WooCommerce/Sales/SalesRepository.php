@@ -156,6 +156,32 @@ final class SalesRepository {
 	}
 
 	/**
+	 * The connection that holds the order's lock, for connection-guarded
+	 * writes of other data in the same transaction (E3.5(a)).
+	 *
+	 * @param int $order_id WooCommerce order.
+	 * @throws DatabaseException When the order's lock is not held by this instance.
+	 */
+	public function lock_connection( int $order_id ): int {
+		$this->assert_locked( $order_id );
+
+		return $this->lock_connection;
+	}
+
+	/**
+	 * Requires the order's lock to be held by this instance, on the current
+	 * connection, right before COMMIT (E3.2 step 12).
+	 *
+	 * @param int $order_id WooCommerce order.
+	 * @throws DatabaseException When the order's lock is not held by this instance.
+	 * @throws SalesConnectionChangedException When the connection changed or the lock is lost.
+	 */
+	public function assert_order_lock( int $order_id ): void {
+		$this->assert_locked( $order_id );
+		$this->assert_same_connection( $order_id );
+	}
+
+	/**
 	 * Reads the order's ledger state, lets $plan decide the new rows and
 	 * appends them, all in one transaction. Must run inside with_order_lock()
 	 * for the same order.

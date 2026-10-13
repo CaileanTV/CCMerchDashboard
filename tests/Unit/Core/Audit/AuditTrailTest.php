@@ -195,6 +195,6 @@ final class AuditTrailTest extends TestCase {
 		);
 
 		// Only appending and reading; no update, delete or truncate (phase 11 adds a read).
-		self::assertSame( array( '__construct', 'append', 'for_creator', 'paginate' ), $public );
+		self::assertSame( array( '__construct', 'append', 'insert_on_connection', 'for_creator', 'paginate' ), $public );
 	}
 }

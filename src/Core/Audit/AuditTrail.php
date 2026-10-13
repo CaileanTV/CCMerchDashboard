@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Core\Audit;
 
+use MerchBoard\Core\Database\ConnectionChangedException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\LogContext;
 
@@ -62,6 +63,32 @@ final class AuditTrail {
 	 */
 	public function record_system( AuditAction $action, ?int $creator_id, array $context = array() ): int {
 		return $this->append( $action, null, $creator_id, $context );
+	}
+
+	/**
+	 * Appends an audit record like record(), written only on the connection
+	 * that holds the caller's lock (E3.5(c)); only for E3's own frames, while
+	 * their transaction runs (E3.5(i)).
+	 *
+	 * @param AuditAction          $action        What happened.
+	 * @param int|null             $creator_id    Affected creator.
+	 * @param array<string, mixed> $context       Minimal context (no personal data).
+	 * @param int                  $connection_id Connection that holds the caller's lock.
+	 * @return int Record id.
+	 * @throws ConnectionChangedException When the record was not written because the connection changed.
+	 * @throws DatabaseException When the record cannot be written.
+	 */
+	public function record_on_connection( AuditAction $action, ?int $creator_id, array $context, int $connection_id ): int {
+		$actor = get_current_user_id();
+
+		return $this->repository->insert_on_connection(
+			$action,
+			$actor > 0 ? $actor : null,
+			$creator_id,
+			LogContext::sanitize( $context ),
+			current_time( 'mysql', true ),
+			$connection_id
+		);
 	}
 
 	/**
