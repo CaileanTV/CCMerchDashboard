@@ -264,6 +264,7 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
     - `PayoutsAdminTest`: fanen "Saldi" (alle beløb, "Ukendt" aldrig 0, ingen betalingsoplysninger), én række pr. valuta, en side ud over den sidste viser den sidste side, og uden `PayoutBalances` er der ingen fane (`&view=balances` viser køen).
     - `OrderHistoryAdminTest`: afregningskolonnerne, linket til udbetalingen kun med `merchboard_manage_payouts`, creator-filteret på en ordre med to creators (kun den valgte creators rækker og bilag) og ingen kolonne uden `SettlementRepository`.
     - **MySQL 8 ✅ via CI:** run `38324833930` for commit `a65169a` (2026-10-13): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 619 tests, 17209 assertions, herunder de tre samtidighedstests og creator-filteret; alle fire jobs grønne.
+  - **Trin 24.5, opgørelse af skæringsdato (gennemgangsmateriale, ikke produktionslogik):** `CutoverReportTest` (MariaDB, syntetiske data) kvalitetssikrer det skrivebeskyttede script `bin/mb-245-cutover-report.php`: "før"-tallene er lig `LedgerCreatorPayouts::earned()` (også med afregningsstart); "efter"-tallene efter de foreløbige regler (løsning b, afregnede rækker uændrede, ordrer med flere creators, genåbnede ordrer, nyligt udækkede ventende payouts) og de tre datodefinitioner; betalingsdato fra HPOS og ordre-meta; afbrydelse ved læsefejl; `START TRANSACTION READ ONLY` afviser skrivninger. Ikke dækket: CLI-udskriften, MySQL 8 og produktionsdata.
   - **K6.1, fælles rækkeregel og låseprotokol (MariaDB):**
     - **`PayoutRowRuleTest` (karakterisering):** testen blev skrevet og kørt grøn på den uændrede kode, før refaktoreringen begyndte, og er grøn efter den.
       - Ledgeren indeholder salg, refunds, en reversal med anden cyklus, en korrektion for en slettet refund og en linjekorrektion. Den har rækker på og omkring karens- og startgrænserne til sekundet, en ukendt linje og en række uden salgsrække, to valutaer, to creators og ét afregningsbilag.
@@ -275,3 +276,50 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
       - `CreatorRowLock` afviser at låse uden den navngivne lås.
     - **MySQL 8 ✅ via CI:** run `38281746123` for commit `015f4bb` (2026-10-12): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 593 tests, 16397 assertions; alle fire jobs grønne.
   - **Ikke dækket:** MySQL 8 kun i CI (trin 24.2 er kørt der, se ovenfor); samtidighed under webserverens egne requests; UI'et, herunder fanen "Saldi" og afregningskolonnen, er ikke klikket igennem i en browser.
+
+## Kørselsvejledning: opgørelse af skæringsdato (trin 24.5)
+
+Rapporten `bin/mb-245-cutover-report.php` er gennemgangsmateriale til ejerbeslutningen A2 (skæringsdato), ikke produktionslogik. Den indgår ikke i plugin-pakken (`bin/` er udeladt).
+
+**Status:** rapporten er **ikke kørt mod Local eller produktion**. Den er kun testet med syntetiske data på integrationstestens engangsdatabase (`CutoverReportTest`, MariaDB 10.11). **MySQL 8 og en rigtig WP-CLI-kørsel er ikke verificeret, og produktionstallene mangler derfor stadig.** Ingen dato kan vælges forsvarligt, før rapporten er kørt på produktionsdata.
+
+**Hvad rapporten gør:**
+- Den læser ledger, afregningsbilag, payouts og WooCommerce' betalingsdato og simulerer de foreløbige, ikke-implementerede regler: ingen ordrer er markeret, løsning b for umarkerede ordrer, afregnede rækker uændrede, D1/D2 som i dag.
+- For hver af tre skæringsdatoer og tre datodefinitioner viser den optjent/frigivet beløb og disponibel saldo før og efter pr. valuta, ukendte saldi, nyligt udækkede ventende payouts med underskud samt refunderinger og negative nettobeløb på umarkerede ordrer.
+- Den skriver intet. Den kører kun SELECT i `START TRANSACTION READ ONLY` og slutter med ROLLBACK. Den indlæser ikke WooCommerce-ordrer; betalingsdatoen læses med SQL (HPOS `wc_order_operational_data.date_paid_gmt`, ellers ordre-meta `_date_paid`/`_paid_date`).
+
+**Forudsætninger:**
+1. Gennemgå scriptet først (afsnittet øverst i filen beskriver regler og begrænsninger).
+2. Kør helst på en gendannet kopi eller en read-replica af produktionsdatabasen, ikke på den levende produktion. Skal det være produktion, så uden for spidsbelastning.
+3. WP-CLI med adgang til sitet; Merch Dashboard aktivt med schema-version 11 eller senere. Selve rapporten bruger ikke WooCommerce' kode (betalingsdatoen læses med SQL).
+4. MySQL 5.6.5+ eller MariaDB 10.0+ (krav for `START TRANSACTION READ ONLY`).
+5. Scriptfilen kopieres til serveren uden for webroden (den følger ikke med plugin-pakken).
+
+**Kommando** (skæringsdato 1 = idriftsættelsesdagen, UTC; udelades datoen, bruges dags dato):
+
+```
+wp eval-file /sti/til/mb-245-cutover-report.php 2026-11-02 --path=/sti/til/wordpress > cutover-report.txt
+```
+
+Ved behov for mere hukommelse: `WP_CLI_PHP_ARGS='-d memory_limit=1024M' wp eval-file …` (ikke afprøvet her).
+
+**Ressourceforbrug:** alle ledger-rækker indlæses i PHP-hukommelsen sammen med betalingsdatoerne for ordrerne i ledgeren. Tjek størrelsen først med en læseforespørgsel, fx `wp db query "SELECT COUNT(*) FROM <prefix>merchboard_sales"`, og sæt hukommelsesgrænsen derefter.
+
+**Stopkriterier (kør ikke igen blindt; undersøg årsagen):**
+- `Error: Merch Dashboard with schema 11 or later must be active.`, `Error: The deploy date must be YYYY-MM-DD.` eller `Error: Could not start a read-only transaction; nothing was read.`: intet er læst.
+- `A read failed; the report is aborted: …` (ufanget `RuntimeException`, exitkode forskellig fra 0): rapporten er afbrudt uden delvist resultat; brug ikke tidligere output.
+- Hukommelses- eller tidsgrænse overskredet: stop, og kør igen med højere grænse eller på en kopi.
+- Exitkoden er ikke 0, eller outputtet slutter ikke med de tre datoafsnit: behandl resultatet som ufuldstændigt.
+
+**Output og følsomme oplysninger:**
+- Outputtet indeholder kun antal og beløb pr. valuta: ingen ordre-ID'er, navne, e-mails, betalingsoplysninger eller gavekortkoder.
+- Summerne er stadig interne forretningstal: gem filen med begrænset adgang, del den kun med projektejeren, og slet den, når beslutningen er truffet. Indsæt den ikke i offentlige kanaler eller issues.
+- WordPress og andre plugins kan skrive under WP-CLI's opstart og nedlukning, uden for rapportens transaktion (som ved enhver `wp`-kommando).
+
+**Sådan sammenlignes de tre skæringsdatoer:**
+- Rapporten har ét afsnit pr. dato: idriftsættelsesdagen (kommandoens argument), første dag i seneste afsluttede måned (site-tid) og seneste afregningsdato (det nyeste afregningsbilag, **én fælles dato for alle creators**; korrigerende bilag tæller ikke; uden bilag står "not applicable").
+- Under hver dato er der tre definitioner: 1a første salgsrække for hele ordren, 1b salgsrække pr. cyklus, 2 WooCommerce-betalingsdato. Outputtets anden linje viser antal ordrer i ledgeren, uden salgsrække, uden betalingsdato og genåbnede ordrer.
+- Sammenlign pr. valuta især: disponibel saldo før og efter, nyligt udækkede ventende payouts med underskud, antal berørte ordrer og creators samt ukendte saldi (de indgår ikke i summerne).
+- **Rapporten vælger ingen dato og ingen definition.** Den viser kun konsekvenserne; valget træffes af projektejeren.
+
+**Åbne ejerbeslutninger (ingen er godkendt):** skæringsdato; datodefinition; om ophævelse af en klar-markering afvises, når den gør en ventende payout udækket. Udviklingens forslag (ikke godkendelser) står i ROADMAP under 24.5.

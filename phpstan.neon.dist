@@ -9,6 +9,8 @@ parameters:
         - src
         - templates
         - tests
+        # Read-only review script of step 24.5 (not shipped); its test calls its functions.
+        - bin/mb-245-cutover-report.php
     excludePaths:
         # Unit-test stand-in for WordPress' wpdb; PHPStan uses the real stubs.
         - tests/Fixtures/wpdb.php
