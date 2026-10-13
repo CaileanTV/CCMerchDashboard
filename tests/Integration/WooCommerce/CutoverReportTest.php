@@ -13,6 +13,7 @@ namespace MerchBoard\Tests\Integration\WooCommerce;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -48,7 +49,12 @@ use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use PHPUnit\Framework\Attributes\DataProvider;
+use ReflectionProperty;
 use RuntimeException;
+use WP_CLI;
+use WP_CLI\ExitException;
+use WP_CLI\Loggers\Execution;
 
 if ( ! defined( 'MERCHBOARD_CUTOVER_NO_MAIN' ) ) {
 	define( 'MERCHBOARD_CUTOVER_NO_MAIN', true );
@@ -269,10 +275,10 @@ final class CutoverReportTest extends IntegrationTestCase {
 		$this->wpdb->suppress_errors( true );
 
 		try {
-			\merchboard_cutover_read( $this->wpdb, fn() => $this->wpdb->get_results( 'SELECT * FROM merchboard_cutover_missing_table' ) );
+			\merchboard_cutover_read( $this->wpdb, 2, fn() => $this->wpdb->get_results( 'SELECT * FROM merchboard_cutover_missing_table' ) );
 			self::fail( 'A read error must abort the report.' );
 		} catch ( RuntimeException $e ) {
-			self::assertStringContainsString( 'aborted', $e->getMessage() );
+			self::assertSame( 'Read 2 of 5 failed.', $e->getMessage(), 'The read only, not the query or the database message.' );
 		}
 
 		self::assertNotFalse( $this->wpdb->query( 'START TRANSACTION READ ONLY' ) );
@@ -301,6 +307,167 @@ final class CutoverReportTest extends IntegrationTestCase {
 		$this->wpdb->insert( $table, array( 'order_id' => 9302, 'date_paid_gmt' => null ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		update_option( 'woocommerce_custom_orders_table_enabled', 'yes' );
 		self::assertSame( array( 9301 => '2026-09-05 08:00:00' ), \merchboard_cutover_paid_dates( $this->wpdb, array( 9301, 9302 ) ), 'HPOS: date_paid_gmt only.' );
+	}
+
+	/**
+	 * The five reads in their order: the query that marks each, where a comma breaks it, and HPOS.
+	 *
+	 * @return array<string, array{int, string, string, bool}>
+	 */
+	public static function reads(): array {
+		return array(
+			'1 ledger rows'           => array( 1, 'AS known_row', 'SELECT ', false ),
+			'2 sale rows'             => array( 2, 'MIN(occurred_at)', 'SELECT ', false ),
+			'3 payout totals'         => array( 3, 'SUM(amount)', 'SELECT ', false ),
+			'4 latest settlement'     => array( 4, 'MAX(issued_at)', 'SELECT ', false ),
+			'5 paid dates, post meta' => array( 5, "meta_key IN ('_date_paid'", 'post_id IN (', false ),
+			'5 paid dates, HPOS'      => array( 5, 'date_paid_gmt IS NOT NULL', 'order_id IN (', true ),
+		);
+	}
+
+	#[DataProvider( 'reads' )]
+	public function test_a_failed_read_ends_the_report_with_exit_code_1_and_no_sql_order_ids_or_output( int $read, string $marker, string $needle, bool $hpos ): void {
+		$this->small_ledger();
+
+		if ( $hpos ) {
+			$table = $this->wpdb->prefix . 'wc_order_operational_data';
+			$this->execute( 'CREATE TABLE %i (id bigint(20) unsigned auto_increment primary key, order_id bigint(20) unsigned NULL, date_paid_gmt datetime NULL)', $table );
+			$this->wpdb->insert( $table, array( 'order_id' => 9401, 'date_paid_gmt' => '2020-05-01 10:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			update_option( 'woocommerce_custom_orders_table_enabled', 'yes' );
+		}
+
+		// Without the report's suppression, wpdb logs a failed query and prints it (WP_DEBUG_DISPLAY in this suite).
+		$this->wpdb->suppress_errors( false );
+		$probe = $this->capture( fn() => $this->wpdb->query( 'SELECT ,9401' ) );
+		self::assertStringContainsString( 'SELECT ,9401', $probe['log'], 'The error log probe works.' );
+		self::assertStringContainsString( 'SELECT ,9401', $probe['stdout'], 'The output probe works.' );
+
+		$before   = $this->checksums();
+		$breaking = static fn( string $query ): string => str_contains( $query, $marker ) ? str_replace( $needle, $needle . ',', $query ) : $query;
+		$run      = $this->run_report( array( '2020-06-01' ), $breaking );
+
+		self::assertSame( 1, $run['exit'] );
+		self::assertSame( "Error: Read {$read} of 5 failed. The report is aborted; nothing was printed.\n", $run['stderr'], 'Only the read: no SQL, no database message, no order id.' );
+		self::assertSame( '', $run['stdout'], 'No report line, and nothing printed by wpdb.' );
+		self::assertSame( '', $run['log'], 'Nothing in the error log.' );
+		self::assertFalse( $this->wpdb->suppress_errors, "wpdb's own setting is restored." );
+
+		// It was a real database error, and its message quotes the query (read 5: from the order ids on).
+		$errors = $GLOBALS['EZSQL_ERROR'] ?? null;
+		self::assertIsArray( $errors );
+		$error = end( $errors );
+		self::assertIsArray( $error );
+		self::assertStringContainsString( $marker, (string) $error['query'] );
+		self::assertStringContainsString( 5 === $read ? '9401, 9402, 9403)' : 'SQL syntax', (string) $error['error_str'] );
+
+		// The reads stop at the failed one; the transaction ends with ROLLBACK; nothing was written.
+		$markers = array( 'AS known_row', 'MIN(occurred_at)', 'SUM(amount)', 'MAX(issued_at)', $hpos ? 'date_paid_gmt IS NOT NULL' : "meta_key IN ('_date_paid'" );
+		self::assertSame( 'START TRANSACTION READ ONLY', $run['queries'][0] ?? null );
+		self::assertSame( 'ROLLBACK', end( $run['queries'] ) );
+
+		foreach ( array_slice( $markers, $read ) as $later ) {
+			self::assertSame( array(), array_values( array_filter( $run['queries'], static fn( string $query ): bool => str_contains( $query, $later ) ) ), "No read after read {$read}." );
+		}
+
+		self::assertSame( $before, $this->checksums(), 'Every table unchanged.' );
+		$this->assert_no_open_transaction();
+	}
+
+	public function test_an_invalid_date_or_an_older_schema_ends_with_exit_code_1_before_any_read(): void {
+		$date = $this->run_report( array( '2026/10/01' ) );
+		update_option( Migrator::VERSION_OPTION, '10' );
+		$schema = $this->run_report( array( '2026-10-01' ) );
+
+		self::assertSame( array( 1, '', "Error: The deploy date must be YYYY-MM-DD.\n" ), array( $date['exit'], $date['stdout'], $date['stderr'] ) );
+		self::assertSame( array( 1, '', "Error: Merch Dashboard with schema 11 or later must be active.\n" ), array( $schema['exit'], $schema['stdout'], $schema['stderr'] ) );
+
+		foreach ( array( $date, $schema ) as $run ) {
+			self::assertSame( array(), array_values( array_filter( $run['queries'], fn( string $query ): bool => ! str_contains( $query, $this->wpdb->options ) ) ), 'No transaction and no read; at most an option lookup.' );
+			self::assertSame( '', $run['log'] );
+		}
+	}
+
+	public function test_the_report_prints_every_section_and_changes_nothing(): void {
+		$this->small_ledger();
+		$this->wpdb->suppress_errors( true );
+		$before = $this->checksums();
+		$run    = $this->run_report( array( '2020-06-01' ) );
+
+		self::assertSame( array( 0, '', '' ), array( $run['exit'], $run['stderr'], $run['log'] ) );
+		self::assertTrue( $this->wpdb->suppress_errors, "wpdb's own setting is restored." );
+		self::assertSame( $before, $this->checksums(), 'Every table unchanged.' );
+		$this->assert_no_open_transaction();
+
+		// One transaction, the five reads in order, no write.
+		self::assertSame( 'START TRANSACTION READ ONLY', $run['queries'][0] ?? null );
+		self::assertSame( 'ROLLBACK', end( $run['queries'] ) );
+		$at = array();
+
+		foreach ( array( 'AS known_row', 'MIN(occurred_at)', 'SUM(amount)', 'MAX(issued_at)', "meta_key IN ('_date_paid'" ) as $marker ) {
+			$found = array_keys( array_filter( $run['queries'], static fn( string $query ): bool => str_contains( $query, $marker ) ) );
+			self::assertCount( 1, $found, $marker );
+			$at[] = $found[0];
+		}
+
+		$sorted = array_values( array_unique( $at ) );
+		sort( $sorted );
+		self::assertSame( $sorted, $at, 'Reads 1–5 in order.' );
+		self::assertSame( array(), array_values( array_filter( $run['queries'], static fn( string $query ): bool => 1 === preg_match( '/^\s*(INSERT|UPDATE|DELETE|REPLACE|CREATE|ALTER|DROP|TRUNCATE|RENAME|LOCK)\b/i', $query ) ) ), 'No write.' );
+
+		// The deploy day: 9402 and 9403 are unmarked; 9403's refund neutralises its sale (rule b).
+		$deploy = array_merge(
+			$this->report_block( '1a first sale row of the order', 2, 2, '20.0000', 1 ),
+			$this->report_block( '1b sale row of the cycle (reopened = new)', 2, 2, '20.0000', 1 ),
+			$this->report_block( '2  WooCommerce paid date (no date = unmarked)', 2, 2, '20.0000', 1 )
+		);
+		// Every later cut-over: nothing is unmarked, except 9403 without a paid date under definition 2.
+		$later = array_merge(
+			$this->report_block( '1a first sale row of the order', 0, 0, '50.0000', 0 ),
+			$this->report_block( '1b sale row of the cycle (reopened = new)', 0, 0, '50.0000', 0 ),
+			$this->report_block( '2  WooCommerce paid date (no date = unmarked)', 1, 1, '50.0000', 1 )
+		);
+		$lines = explode( "\n", $run['stdout'] );
+
+		self::assertMatchesRegularExpression( '/^Merch Dashboard 24\.5 cut-over report v2 \(read only\)\. Now \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC, holding period 14 days\.$/', $lines[0] );
+		self::assertMatchesRegularExpression( '/^== start of the last completed month \d{4}-\d\d-01 \(site time\): cut-over \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC$/', $lines[23] );
+		self::assertSame(
+			array_merge(
+				array( 'Orders in the ledger: 3, without a sale row: 0, without a WooCommerce paid date: 1, reopened (more than one cycle): 0', '', '== deploy day 2020-06-01 (UTC): cut-over 2020-06-01 00:00:00 UTC' ),
+				$deploy,
+				array( '' ),
+				$later,
+				array( '', '== latest settlement document: none, not applicable', '' )
+			),
+			array_merge( array_slice( $lines, 1, 22 ), array_slice( $lines, 24 ) ),
+			'Every section and definition; the last line ends with a newline.'
+		);
+		self::assertDoesNotMatchRegularExpression( '/\b94\d\d\b|Cutover [ABC]/', $run['stdout'], 'No order id and no creator name.' );
+
+		// With a settlement document, its section is printed in full.
+		$this->wpdb->insert(
+			$this->table( \MerchBoard\Core\Database\Tables::SETTLEMENT_DOCUMENTS ),
+			array(
+				'document_number'     => 'AFR-999998',
+				'document_series'     => 'AFR',
+				'document_type'       => 'settlement',
+				'creator_id'          => $this->creators['A'],
+				'currency'            => 'DKK',
+				'period_to'           => '2026-01-01 00:00:00',
+				'profit_amount'       => '0',
+				'commission_amount'   => '0',
+				'opening_balance'     => '0',
+				'payout_amount'       => '0',
+				'closing_balance'     => '0',
+				'calculation_version' => 'test',
+				'template_version'    => 1,
+				'snapshot'            => '{}',
+				'issued_at'           => '2026-01-01 00:00:00',
+			)
+		);
+		$run = $this->run_report( array( '2020-06-01' ) );
+
+		self::assertSame( array( 0, '' ), array( $run['exit'], $run['stderr'] ) );
+		self::assertSame( array_merge( array( '== latest settlement document: cut-over 2026-01-01 00:00:00 UTC' ), $later, array( '' ) ), array_slice( explode( "\n", $run['stdout'] ), 43 ) );
 	}
 
 	/**
@@ -357,5 +524,154 @@ final class CutoverReportTest extends IntegrationTestCase {
 	 */
 	private function refund( int $id, string $at, int $item, string $net, string $tax ): RefundSnapshot {
 		return new RefundSnapshot( $id, new DateTimeImmutable( $at, new DateTimeZone( 'UTC' ) ), array( new RefundLineSnapshot( $item, -1, SalesAmount::parse( $net ), SalesAmount::parse( $tax ) ) ) );
+	}
+
+	/**
+	 * 9401 (A, before the cut-over 2020-06-01), 9402 (A and B, after) and 9403 (A, after, refunded in full,
+	 * no WooCommerce paid date). A earns 40.00, B 10.00. Dates long past, so today's clock changes nothing.
+	 */
+	private function small_ledger(): void {
+		$this->order( 9401, array( 'A' ), '2020-05-01 10:00:00' );
+		$this->order( 9402, array( 'A', 'B' ), '2020-07-01 10:00:00' );
+		$i9403 = $this->order( 9403, array( 'A' ), '2020-07-01 10:00:00' );
+		$this->order( 9403, array( 'A' ), '2020-07-01 10:00:00', array( $this->refund( 7403, '2020-07-05 10:00:00', $i9403[0], '-80', '-20' ) ), $i9403 );
+
+		$paid_dates = array(
+			9401 => '2020-05-01 10:00:00',
+			9402 => '2020-07-01 10:00:00',
+			9403 => null,
+		);
+
+		foreach ( $paid_dates as $order => $paid ) {
+			delete_post_meta( $order, '_date_paid' );
+
+			if ( null !== $paid ) {
+				add_post_meta( $order, '_date_paid', (string) ( new DateTimeImmutable( $paid, new DateTimeZone( 'UTC' ) ) )->getTimestamp() );
+			}
+		}
+	}
+
+	/**
+	 * The lines of one definition with one currency (DKK, creators A and B, no payouts).
+	 *
+	 * @param string $name     Definition.
+	 * @param int    $orders   Unmarked orders.
+	 * @param int    $creators Their creators.
+	 * @param string $after    Earned and available after.
+	 * @param int    $refunds  Unmarked orders with 9403's refund (each neutralised).
+	 * @return list<string>
+	 */
+	private function report_block( string $name, int $orders, int $creators, string $after, int $refunds ): array {
+		return array(
+			"  -- {$name}: unmarked orders with unsettled rows {$orders}, creators {$creators}, currencies 1",
+			'     DKK: creators 2 (unknown balance 0, not in the sums)',
+			"       earned/released before 50.0000, after {$after}",
+			"       available before 50.0000, after {$after}",
+			'       pending payouts newly uncovered 0 (0.0000), shortfall 0.0000',
+			"       unmarked orders with refunds/reversals {$refunds} ({$refunds} rows, " . ( $refunds ? '-20.0000' : '0.0000' ) . "), of which neutralised by rule b {$refunds}; unmarked orders with a negative net 0 (0.0000)",
+		);
+	}
+
+	/**
+	 * Runs the report as `wp eval-file` does, with WP-CLI's own exit capture (as WP_CLI::runcommand()).
+	 *
+	 * @phpstan-param list<string> $args
+	 * @phpstan-param (callable(string): string)|null $alter
+	 *
+	 * @param string[]      $args  Arguments.
+	 * @param callable|null $alter Changes a query before it runs.
+	 * @return array{exit: int, stdout: string, stderr: string, log: string, queries: list<string>}
+	 */
+	private function run_report( array $args, ?callable $alter = null ): array {
+		$logger  = new Execution();
+		$slot    = new ReflectionProperty( WP_CLI::class, 'logger' );
+		$capture = new ReflectionProperty( WP_CLI::class, 'capture_exit' );
+		$queries = array();
+		$record  = static function ( string $query ) use ( &$queries, $alter ): string {
+			$query     = null === $alter ? $query : $alter( $query );
+			$queries[] = $query;
+
+			return $query;
+		};
+		$exit    = 0;
+
+		$slot->setValue( null, $logger );
+		$capture->setValue( null, true );
+		add_filter( 'query', $record );
+
+		try {
+			$output = $this->capture(
+				function () use ( $args, &$exit ): void {
+					try {
+						\merchboard_cutover_main( $this->wpdb, $args );
+					} catch ( ExitException $e ) {
+						$exit = $e->getCode();
+					}
+				}
+			);
+		} finally {
+			remove_filter( 'query', $record );
+			$capture->setValue( null, false );
+			$slot->setValue( null, null );
+		}
+
+		return array(
+			'exit'    => $exit,
+			'stdout'  => $output['stdout'],
+			'stderr'  => $logger->stderr,
+			'log'     => $output['log'],
+			'queries' => $queries,
+		);
+	}
+
+	/**
+	 * What a callback prints and writes to PHP's error log.
+	 *
+	 * @param callable $run Callback.
+	 * @return array{stdout: string, log: string}
+	 */
+	private function capture( callable $run ): array {
+		$log      = (string) tempnam( sys_get_temp_dir(), 'mb245' );
+		$previous = ini_set( 'error_log', $log ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- Test process only; restored below.
+		ob_start();
+
+		try {
+			$run();
+		} finally {
+			$stdout = (string) ob_get_clean();
+			ini_set( 'error_log', (string) $previous ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- Restores the test log.
+			$written = (string) file_get_contents( $log ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local temporary file.
+			wp_delete_file( $log );
+		}
+
+		return array(
+			'stdout' => $stdout,
+			'log'    => $written,
+		);
+	}
+
+	/**
+	 * CHECKSUM TABLE of every table of the test site.
+	 *
+	 * @return array<string, string>
+	 */
+	private function checksums(): array {
+		$sums = array();
+
+		foreach ( $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $this->wpdb->prefix ) . '%' ) ) as $table ) {
+			$sums[ (string) $table ] = (string) $this->wpdb->get_var( $this->wpdb->prepare( 'CHECKSUM TABLE %i', (string) $table ), 1 );
+		}
+
+		return $sums;
+	}
+
+	/**
+	 * No transaction is left open: a write is not refused (READ ONLY) and survives a ROLLBACK.
+	 */
+	private function assert_no_open_transaction(): void {
+		self::assertNotFalse( $this->wpdb->insert( $this->wpdb->options, array( 'option_name' => 'merchboard_cutover_probe', 'option_value' => 'x' ) ), 'No read-only transaction left open.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->wpdb->query( 'ROLLBACK' );
+		self::assertSame( 'x', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $this->wpdb->options, 'merchboard_cutover_probe' ) ), 'No transaction left open.' );
+		$this->wpdb->delete( $this->wpdb->options, array( 'option_name' => 'merchboard_cutover_probe' ) );
 	}
 }

@@ -10,7 +10,10 @@
  *
  * Read only:
  * - It issues SELECT statements only, inside `START TRANSACTION READ ONLY` (MySQL 5.6.5+ / MariaDB
- *   10.0+), and ends with ROLLBACK. Any query error aborts the whole report (no partial output).
+ *   10.0+), and ends with ROLLBACK. Any query error aborts the whole report (no partial output) with
+ *   "Read N of 5 failed" and exit code 1. wpdb's error log and display are suppressed meanwhile: they
+ *   would quote the failed query, and read 5 lists order ids. So does the database's own message,
+ *   which is therefore not shown either.
  * - It does not load WooCommerce orders: the paid date is read with SQL (HPOS
  *   `wc_order_operational_data.date_paid_gmt`, else post meta `_date_paid` / `_paid_date`).
  * - WordPress or other plugins may still write during WP-CLI bootstrap or shutdown, outside this
@@ -37,18 +40,19 @@ if ( ! function_exists( 'merchboard_cutover_collect' ) ) {
 
 	/**
 	 * Runs a read (wpdb resets `last_error` with every query) and fails on any database error or a
-	 * query that could not be prepared.
+	 * query that could not be prepared. The message names the read only (see the file header).
 	 *
-	 * @param wpdb     $wpdb Database.
-	 * @param callable $read The read.
+	 * @param wpdb     $wpdb   Database.
+	 * @param int      $number The read, 1–5.
+	 * @param callable $read   The read.
 	 * @return mixed
 	 * @throws RuntimeException On a database error.
 	 */
-	function merchboard_cutover_read( wpdb $wpdb, callable $read ): mixed {
+	function merchboard_cutover_read( wpdb $wpdb, int $number, callable $read ): mixed {
 		$result = $read();
 
 		if ( '' !== (string) $wpdb->last_error || null === $result ) {
-			throw new RuntimeException( 'A read failed; the report is aborted: ' . $wpdb->last_error );
+			throw new RuntimeException( "Read {$number} of 5 failed." );
 		}
 
 		return $result;
@@ -104,11 +108,11 @@ if ( ! function_exists( 'merchboard_cutover_collect' ) ) {
 			$t( Tables::SETTLEMENT_ROWS ),
 			$t( Tables::CREATORS )
 		);
-		$rows  = merchboard_cutover_read( $wpdb, static fn() => is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null ); // phpcs:ignore WordPress.DB
+		$rows  = merchboard_cutover_read( $wpdb, 1, static fn() => is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null ); // phpcs:ignore WordPress.DB
 
 		$first_sale = array();
 		$cycle_sale = array();
-		$orders     = merchboard_cutover_read( $wpdb, static fn() => $wpdb->get_results( $wpdb->prepare( "SELECT order_id, cycle, MIN(occurred_at) AS at FROM %i WHERE type = 'sale' GROUP BY order_id, cycle", $t( Tables::SALES ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB
+		$orders     = merchboard_cutover_read( $wpdb, 2, static fn() => $wpdb->get_results( $wpdb->prepare( "SELECT order_id, cycle, MIN(occurred_at) AS at FROM %i WHERE type = 'sale' GROUP BY order_id, cycle", $t( Tables::SALES ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB
 
 		foreach ( $orders as $row ) {
 			$order                                       = (int) $row['order_id'];
@@ -120,14 +124,14 @@ if ( ! function_exists( 'merchboard_cutover_collect' ) ) {
 
 		$totals = array();
 
-		foreach ( merchboard_cutover_read( $wpdb, static fn() => $wpdb->get_results( $wpdb->prepare( "SELECT creator_id, currency, status, COUNT(*) AS n, SUM(amount) AS amount FROM %i WHERE status IN ('pending', 'completed') GROUP BY creator_id, currency, status", $t( Tables::PAYOUTS ) ), ARRAY_A ) ) as $row ) { // phpcs:ignore WordPress.DB
+		foreach ( merchboard_cutover_read( $wpdb, 3, static fn() => $wpdb->get_results( $wpdb->prepare( "SELECT creator_id, currency, status, COUNT(*) AS n, SUM(amount) AS amount FROM %i WHERE status IN ('pending', 'completed') GROUP BY creator_id, currency, status", $t( Tables::PAYOUTS ) ), ARRAY_A ) ) as $row ) { // phpcs:ignore WordPress.DB
 			$key                                     = $row['creator_id'] . '|' . $row['currency'];
 			$totals[ $key ][ $row['status'] ]        = SalesAmount::parse( (string) $row['amount'] );
 			$totals[ $key ][ $row['status'] . '_n' ] = (int) $row['n'];
 		}
 
 		// The latest settlement across all creators; a correction document settles nothing and does not count.
-		$last = merchboard_cutover_read( $wpdb, static fn() => array( $wpdb->get_var( $wpdb->prepare( "SELECT MAX(issued_at) FROM %i WHERE document_type = 'settlement'", $t( Tables::SETTLEMENT_DOCUMENTS ) ) ) ) )[0]; // phpcs:ignore WordPress.DB
+		$last = merchboard_cutover_read( $wpdb, 4, static fn() => array( $wpdb->get_var( $wpdb->prepare( "SELECT MAX(issued_at) FROM %i WHERE document_type = 'settlement'", $t( Tables::SETTLEMENT_DOCUMENTS ) ) ) ) )[0]; // phpcs:ignore WordPress.DB
 
 		return array(
 			'rows'            => $rows,
@@ -161,7 +165,7 @@ if ( ! function_exists( 'merchboard_cutover_collect' ) ) {
 
 		if ( 'yes' === get_option( 'woocommerce_custom_orders_table_enabled' ) ) {
 			$hpos = 'SELECT order_id, date_paid_gmt FROM %i WHERE order_id IN (' . $in . ') AND date_paid_gmt IS NOT NULL';
-			$rows = merchboard_cutover_read( $wpdb, static fn() => $wpdb->get_results( $wpdb->prepare( $hpos, $wpdb->prefix . 'wc_order_operational_data', ...$order_ids ), ARRAY_A ) ); // phpcs:ignore WordPress.DB
+			$rows = merchboard_cutover_read( $wpdb, 5, static fn() => $wpdb->get_results( $wpdb->prepare( $hpos, $wpdb->prefix . 'wc_order_operational_data', ...$order_ids ), ARRAY_A ) ); // phpcs:ignore WordPress.DB
 
 			foreach ( $rows as $row ) {
 				$paid[ (int) $row['order_id'] ] = (string) $row['date_paid_gmt'];
@@ -171,7 +175,7 @@ if ( ! function_exists( 'merchboard_cutover_collect' ) ) {
 		}
 
 		$meta = "SELECT post_id, meta_key, meta_value FROM %i WHERE post_id IN ({$in}) AND meta_key IN ('_date_paid', '_paid_date') AND meta_value <> ''";
-		$rows = merchboard_cutover_read( $wpdb, static fn() => $wpdb->get_results( $wpdb->prepare( $meta, $wpdb->postmeta, ...$order_ids ), ARRAY_A ) ); // phpcs:ignore WordPress.DB
+		$rows = merchboard_cutover_read( $wpdb, 5, static fn() => $wpdb->get_results( $wpdb->prepare( $meta, $wpdb->postmeta, ...$order_ids ), ARRAY_A ) ); // phpcs:ignore WordPress.DB
 
 		foreach ( $rows as $row ) {
 			$value = (string) $row['meta_value'];
@@ -425,52 +429,64 @@ if ( ! function_exists( 'merchboard_cutover_collect' ) ) {
 			return;
 		}
 
+		// See the file header: a failed query would be logged (or printed) in full.
+		$suppressed = $wpdb->suppress_errors( true );
+
 		if ( false === $wpdb->query( 'START TRANSACTION READ ONLY' ) ) { // phpcs:ignore WordPress.DB
+			$wpdb->suppress_errors( $suppressed );
 			WP_CLI::error( 'Could not start a read-only transaction; nothing was read.' );
 			return;
 		}
 
+		// Every read happens here, before the first line is printed. WP_CLI::error() exits, so it comes
+		// after the inner finally (ROLLBACK).
 		try {
-			$holding  = Settings::payout_holding_days();
-			$until    = $now->format( 'Y-m-d H:i:s' );
-			$released = $now->sub( new DateInterval( 'P' . $holding . 'D' ) )->format( 'Y-m-d H:i:s' );
-			$data     = merchboard_cutover_collect( $wpdb );
-			$month    = new DateTimeImmutable( 'first day of last month 00:00:00', wp_timezone() );
-			$options  = array(
-				'deploy day ' . $deploy->format( 'Y-m-d' ) . ' (UTC)' => $deploy->format( 'Y-m-d H:i:s' ),
-				'start of the last completed month ' . $month->format( 'Y-m-d' ) . ' (site time)' => $month->setTimezone( $utc )->format( 'Y-m-d H:i:s' ),
-				'latest settlement document' => $data['last_settlement'],
-			);
-			$fmt      = static fn( int $units ): string => SalesAmount::format( $units );
+			try {
+				$holding  = Settings::payout_holding_days();
+				$until    = $now->format( 'Y-m-d H:i:s' );
+				$released = $now->sub( new DateInterval( 'P' . $holding . 'D' ) )->format( 'Y-m-d H:i:s' );
+				$data     = merchboard_cutover_collect( $wpdb );
+				$month    = new DateTimeImmutable( 'first day of last month 00:00:00', wp_timezone() );
+				$options  = array(
+					'deploy day ' . $deploy->format( 'Y-m-d' ) . ' (UTC)' => $deploy->format( 'Y-m-d H:i:s' ),
+					'start of the last completed month ' . $month->format( 'Y-m-d' ) . ' (site time)' => $month->setTimezone( $utc )->format( 'Y-m-d H:i:s' ),
+					'latest settlement document' => $data['last_settlement'],
+				);
+				$fmt      = static fn( int $units ): string => SalesAmount::format( $units );
+			} finally {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB
+				$wpdb->suppress_errors( $suppressed );
+			}
+		} catch ( RuntimeException $e ) {
+			WP_CLI::error( $e->getMessage() . ' The report is aborted; nothing was printed.' );
+			return;
+		}
 
-			WP_CLI::line( "Merch Dashboard 24.5 cut-over report v2 (read only). Now {$until} UTC, holding period {$holding} days." );
-			WP_CLI::line( 'Orders in the ledger: ' . count( $data['order_ids'] ) . ', without a sale row: ' . count( array_diff( $data['order_ids'], array_keys( $data['first_sale'] ) ) ) . ', without a WooCommerce paid date: ' . count( array_diff( $data['order_ids'], array_keys( $data['paid'] ) ) ) . ', reopened (more than one cycle): ' . count( array_filter( $data['cycle_sale'], static fn( array $c ): bool => count( $c ) > 1 ) ) );
+		WP_CLI::line( "Merch Dashboard 24.5 cut-over report v2 (read only). Now {$until} UTC, holding period {$holding} days." );
+		WP_CLI::line( 'Orders in the ledger: ' . count( $data['order_ids'] ) . ', without a sale row: ' . count( array_diff( $data['order_ids'], array_keys( $data['first_sale'] ) ) ) . ', without a WooCommerce paid date: ' . count( array_diff( $data['order_ids'], array_keys( $data['paid'] ) ) ) . ', reopened (more than one cycle): ' . count( array_filter( $data['cycle_sale'], static fn( array $c ): bool => count( $c ) > 1 ) ) );
 
-			foreach ( $options as $label => $at ) {
-				WP_CLI::line( '' );
+		foreach ( $options as $label => $at ) {
+			WP_CLI::line( '' );
 
-				if ( null === $at ) {
-					WP_CLI::line( "== {$label}: none, not applicable" );
-					continue;
-				}
+			if ( null === $at ) {
+				WP_CLI::line( "== {$label}: none, not applicable" );
+				continue;
+			}
 
-				WP_CLI::line( "== {$label}: cut-over {$at} UTC" );
+			WP_CLI::line( "== {$label}: cut-over {$at} UTC" );
 
-				foreach ( merchboard_cutover_definitions( $data, $at ) as $name => $unmarked ) {
-					$r = merchboard_cutover_option( $data, $until, $released, $unmarked );
-					WP_CLI::line( "  -- {$name}: unmarked orders with unsettled rows {$r['orders']}, creators {$r['creators']}, currencies " . count( $r['currencies'] ) );
+			foreach ( merchboard_cutover_definitions( $data, $at ) as $name => $unmarked ) {
+				$r = merchboard_cutover_option( $data, $until, $released, $unmarked );
+				WP_CLI::line( "  -- {$name}: unmarked orders with unsettled rows {$r['orders']}, creators {$r['creators']}, currencies " . count( $r['currencies'] ) );
 
-					foreach ( $r['currencies'] as $currency => $c ) {
-						WP_CLI::line( "     {$currency}: creators {$c['creators']} (unknown balance {$c['unknown']}, not in the sums)" );
-						WP_CLI::line( '       earned/released before ' . $fmt( $c['earned_before'] ) . ', after ' . $fmt( $c['earned_after'] ) );
-						WP_CLI::line( '       available before ' . $fmt( $c['available_before'] ) . ', after ' . $fmt( $c['available_after'] ) );
-						WP_CLI::line( "       pending payouts newly uncovered {$c['newly_uncovered_n']} (" . $fmt( $c['newly_uncovered'] ) . '), shortfall ' . $fmt( $c['shortfall'] ) );
-						WP_CLI::line( "       unmarked orders with refunds/reversals {$c['refund_orders']} ({$c['refund_rows']} rows, " . $fmt( $c['refund_amount'] ) . "), of which neutralised by rule b {$c['neutralised_orders']}; unmarked orders with a negative net {$c['negative_net_orders']} (" . $fmt( $c['negative_net_amount'] ) . ')' );
-					}
+				foreach ( $r['currencies'] as $currency => $c ) {
+					WP_CLI::line( "     {$currency}: creators {$c['creators']} (unknown balance {$c['unknown']}, not in the sums)" );
+					WP_CLI::line( '       earned/released before ' . $fmt( $c['earned_before'] ) . ', after ' . $fmt( $c['earned_after'] ) );
+					WP_CLI::line( '       available before ' . $fmt( $c['available_before'] ) . ', after ' . $fmt( $c['available_after'] ) );
+					WP_CLI::line( "       pending payouts newly uncovered {$c['newly_uncovered_n']} (" . $fmt( $c['newly_uncovered'] ) . '), shortfall ' . $fmt( $c['shortfall'] ) );
+					WP_CLI::line( "       unmarked orders with refunds/reversals {$c['refund_orders']} ({$c['refund_rows']} rows, " . $fmt( $c['refund_amount'] ) . "), of which neutralised by rule b {$c['neutralised_orders']}; unmarked orders with a negative net {$c['negative_net_orders']} (" . $fmt( $c['negative_net_amount'] ) . ')' );
 				}
 			}
-		} finally {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB
 		}
 	}
 }
