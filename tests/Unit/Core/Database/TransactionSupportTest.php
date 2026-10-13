@@ -27,7 +27,7 @@ final class TransactionSupportTest extends TestCase {
 	}
 
 	public function test_all_tables_on_a_transactional_engine_are_available(): void {
-		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES', 'wp_merchboard_creator_categories' => 'YES', 'wp_merchboard_sales' => 'YES', 'wp_merchboard_sales_cycles' => 'YES', 'wp_merchboard_pricing_overrides' => 'YES', 'wp_merchboard_sales_line_pricing' => 'YES', 'wp_merchboard_sales_tax' => 'YES', 'wp_merchboard_payouts' => 'YES', 'wp_merchboard_payout_secrets' => 'YES', 'wp_merchboard_settlement_documents' => 'YES', 'wp_merchboard_settlement_document_rows' => 'YES', 'wp_merchboard_settlement_counters' => 'YES', 'wp_merchboard_order_gift_card_assessments' => 'YES', 'wp_merchboard_order_gift_card_payouts' => 'YES', 'wp_merchboard_order_gift_card_attempts' => 'YES', 'wp_merchboard_g1_state' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES', 'wp_merchboard_creator_categories' => 'YES', 'wp_merchboard_sales' => 'YES', 'wp_merchboard_sales_cycles' => 'YES', 'wp_merchboard_pricing_overrides' => 'YES', 'wp_merchboard_sales_line_pricing' => 'YES', 'wp_merchboard_sales_tax' => 'YES', 'wp_merchboard_payouts' => 'YES', 'wp_merchboard_payout_secrets' => 'YES', 'wp_merchboard_settlement_documents' => 'YES', 'wp_merchboard_settlement_document_rows' => 'YES', 'wp_merchboard_settlement_counters' => 'YES', 'wp_merchboard_order_gift_card_assessments' => 'YES', 'wp_merchboard_order_gift_card_payouts' => 'YES', 'wp_merchboard_order_gift_card_attempts' => 'YES', 'wp_merchboard_g1_state' => 'YES', 'wp_merchboard_operations' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		$support = new TransactionSupport( $this->wpdb );
 
@@ -79,6 +79,7 @@ final class TransactionSupportTest extends TestCase {
 				'wp_merchboard_order_gift_card_payouts'  => 'missing',
 				'wp_merchboard_order_gift_card_attempts' => 'missing',
 				'wp_merchboard_g1_state'                 => 'missing',
+				'wp_merchboard_operations'               => 'missing',
 			),
 			$support->unsupported_tables()
 		);
@@ -176,6 +177,11 @@ final class TransactionSupportTest extends TestCase {
 				'engine'       => 'InnoDB',
 				'transactions' => 'YES',
 			),
+			array(
+				'name'         => 'wp_merchboard_operations',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
 		);
 
 		self::assertSame( array( 'wp_merchboard_creators' => 'unknown' ), ( new TransactionSupport( $this->wpdb ) )->unsupported_tables() );
@@ -189,7 +195,7 @@ final class TransactionSupportTest extends TestCase {
 
 	public function test_lower_cased_table_names_are_matched(): void {
 		$this->wpdb->prefix = 'WP_Shop_';
-		$this->tables( array( 'wp_shop_merchboard_creators' => 'YES', 'wp_shop_merchboard_audit_log' => 'YES', 'wp_shop_merchboard_creatormeta' => 'YES', 'wp_shop_merchboard_creator_categories' => 'YES', 'wp_shop_merchboard_sales' => 'YES', 'wp_shop_merchboard_sales_cycles' => 'YES', 'wp_shop_merchboard_pricing_overrides' => 'YES', 'wp_shop_merchboard_sales_line_pricing' => 'YES', 'wp_shop_merchboard_sales_tax' => 'YES', 'wp_shop_merchboard_payouts' => 'YES', 'wp_shop_merchboard_payout_secrets' => 'YES', 'wp_shop_merchboard_settlement_documents' => 'YES', 'wp_shop_merchboard_settlement_document_rows' => 'YES', 'wp_shop_merchboard_settlement_counters' => 'YES', 'wp_shop_merchboard_order_gift_card_assessments' => 'YES', 'wp_shop_merchboard_order_gift_card_payouts' => 'YES', 'wp_shop_merchboard_order_gift_card_attempts' => 'YES', 'wp_shop_merchboard_g1_state' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->tables( array( 'wp_shop_merchboard_creators' => 'YES', 'wp_shop_merchboard_audit_log' => 'YES', 'wp_shop_merchboard_creatormeta' => 'YES', 'wp_shop_merchboard_creator_categories' => 'YES', 'wp_shop_merchboard_sales' => 'YES', 'wp_shop_merchboard_sales_cycles' => 'YES', 'wp_shop_merchboard_pricing_overrides' => 'YES', 'wp_shop_merchboard_sales_line_pricing' => 'YES', 'wp_shop_merchboard_sales_tax' => 'YES', 'wp_shop_merchboard_payouts' => 'YES', 'wp_shop_merchboard_payout_secrets' => 'YES', 'wp_shop_merchboard_settlement_documents' => 'YES', 'wp_shop_merchboard_settlement_document_rows' => 'YES', 'wp_shop_merchboard_settlement_counters' => 'YES', 'wp_shop_merchboard_order_gift_card_assessments' => 'YES', 'wp_shop_merchboard_order_gift_card_payouts' => 'YES', 'wp_shop_merchboard_order_gift_card_attempts' => 'YES', 'wp_shop_merchboard_g1_state' => 'YES', 'wp_shop_merchboard_operations' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		self::assertTrue( ( new TransactionSupport( $this->wpdb ) )->available() );
 	}
@@ -200,7 +206,7 @@ final class TransactionSupportTest extends TestCase {
 		$this->tables( array( 'wp_merchboard_creators' => 'YES' ) );
 		self::assertFalse( $support->available() );
 
-		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES', 'wp_merchboard_creator_categories' => 'YES', 'wp_merchboard_sales' => 'YES', 'wp_merchboard_sales_cycles' => 'YES', 'wp_merchboard_pricing_overrides' => 'YES', 'wp_merchboard_sales_line_pricing' => 'YES', 'wp_merchboard_sales_tax' => 'YES', 'wp_merchboard_payouts' => 'YES', 'wp_merchboard_payout_secrets' => 'YES', 'wp_merchboard_settlement_documents' => 'YES', 'wp_merchboard_settlement_document_rows' => 'YES', 'wp_merchboard_settlement_counters' => 'YES', 'wp_merchboard_order_gift_card_assessments' => 'YES', 'wp_merchboard_order_gift_card_payouts' => 'YES', 'wp_merchboard_order_gift_card_attempts' => 'YES', 'wp_merchboard_g1_state' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->tables( array( 'wp_merchboard_creators' => 'YES', 'wp_merchboard_audit_log' => 'YES', 'wp_merchboard_creatormeta' => 'YES', 'wp_merchboard_creator_categories' => 'YES', 'wp_merchboard_sales' => 'YES', 'wp_merchboard_sales_cycles' => 'YES', 'wp_merchboard_pricing_overrides' => 'YES', 'wp_merchboard_sales_line_pricing' => 'YES', 'wp_merchboard_sales_tax' => 'YES', 'wp_merchboard_payouts' => 'YES', 'wp_merchboard_payout_secrets' => 'YES', 'wp_merchboard_settlement_documents' => 'YES', 'wp_merchboard_settlement_document_rows' => 'YES', 'wp_merchboard_settlement_counters' => 'YES', 'wp_merchboard_order_gift_card_assessments' => 'YES', 'wp_merchboard_order_gift_card_payouts' => 'YES', 'wp_merchboard_order_gift_card_attempts' => 'YES', 'wp_merchboard_g1_state' => 'YES', 'wp_merchboard_operations' => 'YES' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertTrue( $support->available(), 'A table created later in the request is picked up.' );
 
 		$this->tables( array() );

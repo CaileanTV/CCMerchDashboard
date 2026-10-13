@@ -127,6 +127,11 @@ final class Tables {
 	public const G1_STATE = 'merchboard_g1_state';
 
 	/**
+	 * The operation registry, schema version 13 (E3 T4, F-5). Insert-only.
+	 */
+	public const OPERATIONS = 'merchboard_operations';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -148,14 +153,16 @@ final class Tables {
 		self::ORDER_GIFT_CARD_PAYOUTS,
 		self::ORDER_GIFT_CARD_ATTEMPTS,
 		self::G1_STATE,
+		self::OPERATIONS,
 	);
 
 	/**
 	 * Tables the opt-in uninstall keeps (ADR-059, B2): the creators (archived
 	 * by the uninstall), the audit log, the payout history and the settlement
 	 * documents with their rows and number counters, as historical
-	 * documentation; and the G1 tables with the activation row (E3, F5), so a
-	 * reinstall finds the assessments and the activation again. Everything
+	 * documentation; the G1 tables with the activation row (E3, F5), so a
+	 * reinstall finds the assessments and the activation again; and the
+	 * operation registry (E3 T4, B-2). Everything
 	 * else, including the encrypted payout details, is dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
@@ -169,6 +176,7 @@ final class Tables {
 		self::ORDER_GIFT_CARD_PAYOUTS,
 		self::ORDER_GIFT_CARD_ATTEMPTS,
 		self::G1_STATE,
+		self::OPERATIONS,
 	);
 
 	/**

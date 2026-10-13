@@ -298,6 +298,11 @@ final class TransactionTest extends TestCase {
 				'engine'       => 'InnoDB',
 				'transactions' => 'YES',
 			),
+			array(
+				'name'         => 'wp_merchboard_operations',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
 		);
 
 		return new Transaction( $wpdb, new TransactionSupport( $wpdb ) );

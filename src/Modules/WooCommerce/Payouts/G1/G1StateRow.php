@@ -58,6 +58,70 @@ final class G1StateRow {
 	}
 
 	/**
+	 * Reads the row without a lock (E3.2 step 2b, before START).
+	 *
+	 * @param wpdb $wpdb WordPress database object.
+	 * @return array{cutoff_utc: string|null, activated_at: string|null, activated_by: int|null}|null Null when the row is missing.
+	 * @throws DatabaseException When the read fails.
+	 */
+	public static function read( wpdb $wpdb ): ?array {
+		return self::select( $wpdb, false );
+	}
+
+	/**
+	 * Reads the row with a shared lock inside the caller's transaction (R0,
+	 * E3.2 step 7): it waits for and blocks the activation's FOR UPDATE.
+	 *
+	 * @param wpdb $wpdb WordPress database object.
+	 * @return array{cutoff_utc: string|null, activated_at: string|null, activated_by: int|null}|null Null when the row is missing.
+	 * @throws DatabaseException When the read fails.
+	 */
+	public static function read_shared( wpdb $wpdb ): ?array {
+		return self::select( $wpdb, true );
+	}
+
+	/**
+	 * Reads the row, plain or with a shared lock.
+	 *
+	 * @param wpdb $wpdb   WordPress database object.
+	 * @param bool $shared Whether to take a shared lock.
+	 * @return array{cutoff_utc: string|null, activated_at: string|null, activated_by: int|null}|null
+	 * @throws DatabaseException When the read fails.
+	 */
+	private static function select( wpdb $wpdb, bool $shared ): ?array {
+		$table = Tables::name( $wpdb, Tables::G1_STATE );
+		$sql   = $shared
+			? $wpdb->prepare( 'SELECT cutoff_utc, activated_at, activated_by FROM %i WHERE id = %d LOCK IN SHARE MODE', $table, CreateGiftCardAssessmentTables::STATE_ROW )
+			: $wpdb->prepare( 'SELECT cutoff_utc, activated_at, activated_by FROM %i WHERE id = %d', $table, CreateGiftCardAssessmentTables::STATE_ROW );
+
+		if ( null === $sql ) {
+			throw new DatabaseException( 'Could not read the G1 activation row.' );
+		}
+
+		$row = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the result of $wpdb->prepare(); never cached.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the G1 activation row.' );
+		}
+
+		return is_array( $row ) ? self::hydrate( $row ) : null;
+	}
+
+	/**
+	 * The row's values.
+	 *
+	 * @param array<string, mixed> $row Row.
+	 * @return array{cutoff_utc: string|null, activated_at: string|null, activated_by: int|null}
+	 */
+	private static function hydrate( array $row ): array {
+		return array(
+			'cutoff_utc'   => is_string( $row['cutoff_utc'] ?? null ) ? $row['cutoff_utc'] : null,
+			'activated_at' => is_string( $row['activated_at'] ?? null ) ? $row['activated_at'] : null,
+			'activated_by' => is_numeric( $row['activated_by'] ?? null ) ? (int) $row['activated_by'] : null,
+		);
+	}
+
+	/**
 	 * Activates the inactive row, only on the given connection.
 	 *
 	 * @param wpdb   $wpdb          WordPress database object.

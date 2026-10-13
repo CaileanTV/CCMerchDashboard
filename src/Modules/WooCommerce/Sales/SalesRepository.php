@@ -156,6 +156,28 @@ final class SalesRepository {
 	}
 
 	/**
+	 * The creators of the order's ledger rows, ascending, read without a lock
+	 * before the transaction (E3.2 step 2c); stable while the order's lock is
+	 * held (G-3).
+	 *
+	 * @param int $order_id WooCommerce order.
+	 * @return list<int>
+	 * @throws DatabaseException When the order's lock is not held by this instance, or the read fails.
+	 */
+	public function creator_ids_for_order( int $order_id ): array {
+		$this->assert_locked( $order_id );
+
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT creator_id FROM %i WHERE order_id = %d ORDER BY creator_id', $this->table( Tables::SALES ), $order_id ) );
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the order\'s creators.', array( 'order_id' => $order_id ) );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * The connection that holds the order's lock, for connection-guarded
 	 * writes of other data in the same transaction (E3.5(a)).
 	 *
