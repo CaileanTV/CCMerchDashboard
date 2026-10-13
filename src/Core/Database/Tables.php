@@ -105,6 +105,28 @@ final class Tables {
 	public const SETTLEMENT_COUNTERS = 'merchboard_settlement_counters';
 
 	/**
+	 * The G1 assessment of an order paid with a payout gift card, schema
+	 * version 12 (E3 T2). Current state, one row per order.
+	 */
+	public const ORDER_GIFT_CARD_ASSESSMENTS = 'merchboard_order_gift_card_assessments';
+
+	/**
+	 * The payouts whose gift card paid an order, schema version 12 (E3 T2).
+	 * References only (payout, provider, external card id), never a code.
+	 */
+	public const ORDER_GIFT_CARD_PAYOUTS = 'merchboard_order_gift_card_payouts';
+
+	/**
+	 * Diagnostic data of failed G1 assessments, schema version 12 (E3 T2).
+	 */
+	public const ORDER_GIFT_CARD_ATTEMPTS = 'merchboard_order_gift_card_attempts';
+
+	/**
+	 * The single G1 activation row, schema version 12 (E3 T2).
+	 */
+	public const G1_STATE = 'merchboard_g1_state';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -122,14 +144,19 @@ final class Tables {
 		self::SETTLEMENT_DOCUMENTS,
 		self::SETTLEMENT_ROWS,
 		self::SETTLEMENT_COUNTERS,
+		self::ORDER_GIFT_CARD_ASSESSMENTS,
+		self::ORDER_GIFT_CARD_PAYOUTS,
+		self::ORDER_GIFT_CARD_ATTEMPTS,
+		self::G1_STATE,
 	);
 
 	/**
 	 * Tables the opt-in uninstall keeps (ADR-059, B2): the creators (archived
 	 * by the uninstall), the audit log, the payout history and the settlement
 	 * documents with their rows and number counters, as historical
-	 * documentation. Everything else, including the encrypted payout details,
-	 * is dropped.
+	 * documentation; and the G1 tables with the activation row (E3, F5), so a
+	 * reinstall finds the assessments and the activation again. Everything
+	 * else, including the encrypted payout details, is dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
 		self::CREATORS,
@@ -138,6 +165,10 @@ final class Tables {
 		self::SETTLEMENT_DOCUMENTS,
 		self::SETTLEMENT_ROWS,
 		self::SETTLEMENT_COUNTERS,
+		self::ORDER_GIFT_CARD_ASSESSMENTS,
+		self::ORDER_GIFT_CARD_PAYOUTS,
+		self::ORDER_GIFT_CARD_ATTEMPTS,
+		self::G1_STATE,
 	);
 
 	/**

@@ -52,7 +52,7 @@ final class TablesTest extends TestCase {
 	}
 
 	public function test_all_lists_every_plugin_table_with_prefix_convention(): void {
-		self::assertSame( array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_creatormeta', 'merchboard_creator_categories', 'merchboard_sales', 'merchboard_sales_cycles', 'merchboard_pricing_overrides', 'merchboard_sales_line_pricing', 'merchboard_sales_tax', 'merchboard_payouts', 'merchboard_payout_secrets', 'merchboard_settlement_documents', 'merchboard_settlement_document_rows', 'merchboard_settlement_counters' ), Tables::all() );
+		self::assertSame( array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_creatormeta', 'merchboard_creator_categories', 'merchboard_sales', 'merchboard_sales_cycles', 'merchboard_pricing_overrides', 'merchboard_sales_line_pricing', 'merchboard_sales_tax', 'merchboard_payouts', 'merchboard_payout_secrets', 'merchboard_settlement_documents', 'merchboard_settlement_document_rows', 'merchboard_settlement_counters', 'merchboard_order_gift_card_assessments', 'merchboard_order_gift_card_payouts', 'merchboard_order_gift_card_attempts', 'merchboard_g1_state' ), Tables::all() );
 		self::assertSame( 'wp_merchboard_audit_log', Tables::name( new RecordingWpdb(), Tables::AUDIT_LOG ) );
 
 		foreach ( Tables::all() as $table ) {

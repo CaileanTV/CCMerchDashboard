@@ -17,6 +17,7 @@ use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
+use MerchBoard\Core\Database\Migrations\CreateGiftCardAssessmentTables;
 use MerchBoard\Core\Database\Migrations\CreatePayoutTables;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Migrations\CreateSettlementTables;
@@ -49,6 +50,7 @@ final class Schema {
 			9  => new CreatePayoutTables(),
 			10 => new AddPayoutGiftCards(),
 			11 => new CreateSettlementTables(),
+			12 => new CreateGiftCardAssessmentTables(),
 		);
 	}
 }

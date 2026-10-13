@@ -198,6 +198,26 @@ final class TransactionTest extends TestCase {
 				'engine'       => 'InnoDB',
 				'transactions' => 'YES',
 			),
+			array(
+				'name'         => 'wp_merchboard_order_gift_card_assessments',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_order_gift_card_payouts',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_order_gift_card_attempts',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_g1_state',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
 		);
 
 		return new Transaction( $wpdb, new TransactionSupport( $wpdb ) );

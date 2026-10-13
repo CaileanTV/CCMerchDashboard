@@ -156,6 +156,15 @@ final class RecordingWpdb extends wpdb {
 	public array $dropped_tables = array();
 
 	/**
+	 * Tables whose single row (id 1) was inserted by the prepared "INSERT INTO
+	 * %i (id) SELECT %d FROM DUAL WHERE NOT EXISTS (…)" statement (the G1
+	 * activation row, schema version 12), name => true.
+	 *
+	 * @var array<string, true>
+	 */
+	public array $state_rows = array();
+
+	/**
 	 * No database connection (the real constructor connects to MySQL).
 	 */
 	public function __construct() {
@@ -227,6 +236,10 @@ final class RecordingWpdb extends wpdb {
 
 		if ( array_key_exists( (string) $query, $this->vars ) ) {
 			return $this->vars[ (string) $query ];
+		}
+
+		if ( null !== $prepared && 'SELECT id FROM %i WHERE id = %d' === $prepared['query'] ) {
+			return isset( $this->state_rows[ (string) $prepared['args'][0] ] ) ? (string) $prepared['args'][1] : null;
 		}
 
 		if ( null !== $prepared && 'SELECT option_value FROM %i WHERE option_name = %s' === $prepared['query'] ) {
@@ -310,6 +323,17 @@ final class RecordingWpdb extends wpdb {
 
 			if ( false !== $result ) {
 				$this->added_columns[ $prepared['args'][0] . '.' . $match[1] ] = true;
+			}
+
+			return $result;
+		}
+
+		if ( null !== $prepared && 'INSERT INTO %i (id) SELECT %d FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM %i WHERE id = %d)' === $prepared['query'] ) {
+			$table  = (string) $prepared['args'][0];
+			$result = $this->query_results[ $query ] ?? ( isset( $this->state_rows[ $table ] ) ? 0 : 1 );
+
+			if ( 1 === $result ) {
+				$this->state_rows[ $table ] = true;
 			}
 
 			return $result;
