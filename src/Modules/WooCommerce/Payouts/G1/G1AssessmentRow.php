@@ -20,7 +20,9 @@ defined( 'ABSPATH' ) || exit;
  * read without a lock before the transaction (E3.2 step 2c), and only a row
  * that exists is locked FOR UPDATE inside it (I4). Rows are only changed by
  * a path that holds the order's lock (I5), so a row read as existing and
- * then missing under the lock means I5 was broken.
+ * then missing under the lock means I5 was broken. The synchronization
+ * reads existence inside its own transaction after R0 (E3.3 step 4b, S2)
+ * and inserts a missing row as `pending` (step 6).
  */
 final class G1AssessmentRow {
 
@@ -65,5 +67,41 @@ final class G1AssessmentRow {
 			'reason_code' => is_string( $row['reason_code'] ?? null ) ? $row['reason_code'] : null,
 			'updated_at'  => (string) $row['updated_at'],
 		);
+	}
+
+	/**
+	 * Inserts the order's `pending` row, only on the given connection
+	 * (E3.3 step 6, E3.5(g')): no INSERT IGNORE, no ON DUPLICATE KEY UPDATE,
+	 * so an existing row is a failed statement (1062), never a silent no-op.
+	 * Every other column stays NULL; nothing is audited (E3.5(i)).
+	 *
+	 * @param wpdb   $wpdb          WordPress database object.
+	 * @param int    $order_id      WooCommerce order.
+	 * @param string $updated_at    Insert time (UTC, 'Y-m-d H:i:s').
+	 * @param int    $connection_id Connection that holds the order's lock and transaction.
+	 * @return int Rows inserted (1, or 0 on another connection).
+	 * @throws DatabaseException When the statement fails (e.g. 1062).
+	 */
+	public static function insert_pending( wpdb $wpdb, int $order_id, string $updated_at, int $connection_id ): int {
+		$sql = $wpdb->prepare(
+			'INSERT INTO %i (order_id, status, reason_code, source, assessed_at, assessed_by, decision_reason, updated_at) SELECT %d, %s, NULL, NULL, NULL, NULL, NULL, %s FROM DUAL WHERE CONNECTION_ID() = %d',
+			Tables::name( $wpdb, Tables::ORDER_GIFT_CARD_ASSESSMENTS ),
+			$order_id,
+			'pending',
+			$updated_at,
+			$connection_id
+		);
+
+		if ( null === $sql ) {
+			throw new DatabaseException( 'Could not store the pending G1 assessment.', array( 'order_id' => $order_id ) );
+		}
+
+		$result = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the result of $wpdb->prepare(); a guarded write.
+
+		if ( ! is_int( $result ) ) {
+			throw new DatabaseException( 'Could not store the pending G1 assessment.', array( 'order_id' => $order_id ) );
+		}
+
+		return $result;
 	}
 }

@@ -400,23 +400,27 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 				$this->repository->write(
 					$order_id,
-					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted ): SalesLedgerWrite {
+					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted ): ?SalesLedgerWrite {
+						// Null: the repository writes nothing, not even a G1 `pending` (D1, T5b).
 						if ( null !== $admit && ! $admit( $state ) ) {
 							$admitted = false;
 
-							return new SalesLedgerWrite();
+							return null;
 						}
 
 						$result  = $this->planner->plan( $order, $state, $now );
 						$failure = $result->failure;
-						$write   = $result->write ?? new SalesLedgerWrite();
 
-						if ( null !== $observe && null === $failure ) {
-							$observe( $write );
+						// A planning failure writes nothing (ADR-038 pkt. 23), not even `pending`.
+						if ( null !== $failure || null === $result->write ) {
+							return null;
 						}
 
-						// A planning failure writes nothing (ADR-038 pkt. 23).
-						return $write;
+						if ( null !== $observe ) {
+							$observe( $result->write );
+						}
+
+						return $result->write;
 					}
 				);
 

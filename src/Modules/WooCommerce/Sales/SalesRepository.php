@@ -16,6 +16,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\SchemaVersionRow;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Modules\WooCommerce\Payouts\G1\G1AssessmentRow;
 use MerchBoard\Modules\WooCommerce\Payouts\G1\G1StateRow;
 use Throwable;
 use wpdb;
@@ -231,6 +232,14 @@ final class SalesRepository {
 	 * so nothing is written. Isolation level, lock wait timeout and the
 	 * handling of 1205 and 1213 are unchanged.
 	 *
+	 * When G1 is active in R0 and the plan is not null, the order is G1-covered
+	 * when the earliest `occurred_at` of its cycle-1 sale rows (stored and
+	 * planned) is on or after R0's cut-off. Only then is its assessment read
+	 * (a plain read) and, when missing, inserted as `pending` after the ledger
+	 * rows, in the same transaction (E3.3 steps 4b and 6). No such sale row
+	 * means no date is guessed and nothing is assessed. A null plan (planner
+	 * failure, backfill over history) writes nothing at all.
+	 *
 	 * After COMMIT, the creators of the rows actually inserted (not skipped
 	 * duplicates, not cycle events, which the statistics do not read) get a
 	 * new cache generation, once per creator and write (ADR-040 pkt. 10). A
@@ -238,8 +247,8 @@ final class SalesRepository {
 	 * COMMIT fails, the outcome is unknown; the invalidation has already run,
 	 * which at worst costs a recomputation.
 	 *
-	 * @param int                                          $order_id WooCommerce order.
-	 * @param callable(SalesLedgerState): SalesLedgerWrite $plan     Decides the new rows from the stored state.
+	 * @param int                                                 $order_id WooCommerce order.
+	 * @param callable(SalesLedgerState): (SalesLedgerWrite|null) $plan     Decides the new rows from the stored state; null writes nothing, not even `pending`.
 	 * @throws DatabaseException When the lock is not held, R0 fails closed, or a read or write fails (rolled back).
 	 * @throws SalesConnectionChangedException When the connection changed (rolled back; after COMMIT the outcome is unknown).
 	 * @throws InvalidArgumentException When a planned row belongs to another order (rolled back).
@@ -251,15 +260,22 @@ final class SalesRepository {
 		$creators = array();
 		$result   = $this->transaction->run(
 			function () use ( $order_id, $plan, &$creators ): SalesWriteResult {
-				$this->take_r0();
-
-				$write = $plan( $this->state( $order_id ) );
+				$cutoff  = $this->take_r0();
+				$state   = $this->state( $order_id );
+				$planned = $plan( $state );
+				$write   = $planned ?? new SalesLedgerWrite();
 
 				foreach ( array_merge( $write->entries, $write->cycle_events ) as $row ) {
 					if ( $row->order_id !== $order_id ) {
 						throw new InvalidArgumentException( 'A planned sales ledger row belongs to another order.' );
 					}
 				}
+
+				// After the plan, before the ledger rows (E3.3 step 4b): a plain read, only for a covered order.
+				$pending = null !== $planned
+					&& null !== $cutoff
+					&& self::covered( $state, $write, $cutoff )
+					&& ! G1AssessmentRow::exists( $this->wpdb, $order_id );
 
 				$inserted_entries = array();
 				$skipped_entries  = array();
@@ -286,6 +302,11 @@ final class SalesRepository {
 					} else {
 						$skipped_entries[] = $entry->event_key;
 					}
+				}
+
+				// E3.3 step 6: the ledger rows first, then `pending`.
+				if ( $pending ) {
+					$this->insert_pending( $order_id );
 				}
 
 				// Before COMMIT: a changed connection means the transaction is gone.
@@ -747,9 +768,10 @@ final class SalesRepository {
 	 * version is at least the G1 schema, the G1 activation row LOCK IN SHARE
 	 * MODE. Below the G1 schema, no G1 table is read.
 	 *
-	 * @throws DatabaseException When the version row is missing or unreadable, its value is not a plain number of at most 9 digits, or (from the G1 schema on) the activation row is missing or unreadable.
+	 * @return DateTimeImmutable|null The cut-off (UTC) when G1 is active, else null.
+	 * @throws DatabaseException When the version row is missing or unreadable, its value is not a plain number of at most 9 digits, or (from the G1 schema on) the activation row is missing or unreadable, or an active row has no valid cut-off.
 	 */
-	private function take_r0(): void {
+	private function take_r0(): ?DateTimeImmutable {
 		$version = SchemaVersionRow::read_shared( $this->wpdb );
 
 		// Only digits, at most 9 of them, checked before the conversion: no silent 0.
@@ -758,11 +780,66 @@ final class SalesRepository {
 		}
 
 		if ( (int) $version < self::G1_SCHEMA_VERSION ) {
-			return;
+			return null;
 		}
 
-		if ( null === G1StateRow::read_shared( $this->wpdb ) ) {
+		$state = G1StateRow::read_shared( $this->wpdb );
+
+		if ( null === $state ) {
 			throw new DatabaseException( 'The G1 activation row is missing.' );
+		}
+
+		if ( null === $state['activated_at'] ) {
+			return null;
+		}
+
+		// An active row always has its cut-off; without a valid one no date is guessed (fail closed).
+		$cutoff = null === $state['cutoff_utc'] ? false : DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $state['cutoff_utc'], new DateTimeZone( 'UTC' ) );
+
+		if ( false === $cutoff || $cutoff->format( 'Y-m-d H:i:s' ) !== $state['cutoff_utc'] ) {
+			throw new DatabaseException( 'The G1 cut-off is not valid.' );
+		}
+
+		return $cutoff;
+	}
+
+	/**
+	 * Whether the order is G1-covered: the earliest `occurred_at` of its
+	 * cycle-1 sale rows, stored or planned, is on or after the cut-off.
+	 * Without such a row it is not covered (no date is guessed).
+	 *
+	 * @param SalesLedgerState  $state  Stored ledger state.
+	 * @param SalesLedgerWrite  $write  Planned rows.
+	 * @param DateTimeImmutable $cutoff Cut-off (UTC) from R0.
+	 */
+	private static function covered( SalesLedgerState $state, SalesLedgerWrite $write, DateTimeImmutable $cutoff ): bool {
+		$first = null;
+
+		foreach ( array_merge( $state->entries, $write->entries ) as $entry ) {
+			if ( SalesEntryType::Sale === $entry->type && 1 === $entry->cycle && ( null === $first || $entry->occurred_at < $first ) ) {
+				$first = $entry->occurred_at;
+			}
+		}
+
+		return null !== $first && $first >= $cutoff;
+	}
+
+	/**
+	 * Inserts the order's `pending` assessment on the lock's connection.
+	 *
+	 * @param int $order_id WooCommerce order.
+	 * @throws DatabaseException When the statement fails (e.g. 1062).
+	 * @throws SalesConnectionChangedException When it ran on another connection (nothing written).
+	 */
+	private function insert_pending( int $order_id ): void {
+		$inserted = G1AssessmentRow::insert_pending( $this->wpdb, $order_id, current_time( 'mysql', true ), $this->lock_connection );
+
+		if ( 0 === $inserted ) {
+			throw new SalesConnectionChangedException( 'The database connection changed while the sales ledger lock was held.' );
+		}
+
+		if ( 1 !== $inserted ) {
+			throw new DatabaseException( 'Could not store the pending G1 assessment.', array( 'order_id' => $order_id ) );
 		}
 	}
 

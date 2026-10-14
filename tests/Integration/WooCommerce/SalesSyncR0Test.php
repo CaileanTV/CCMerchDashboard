@@ -174,15 +174,25 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		self::assertSame( array(), $this->logger->at( 'error' ) );
 	}
 
-	public function test_active_g1_reads_no_assessment_and_writes_none(): void {
-		$this->execute( "UPDATE %i SET cutoff_utc = '2026-10-01 00:00:00', activated_at = '2026-10-01 00:00:00', activated_by = 1 WHERE id = 1", $this->table( Tables::G1_STATE ) );
+	public function test_active_g1_reads_the_assessment_once_and_writes_pending_for_a_covered_order(): void {
+		// The order's sale (2026-09-01 10:05:00) lies after the cut-off: covered (T5b).
+		$this->execute( "UPDATE %i SET cutoff_utc = '2026-09-01 00:00:00', activated_at = '2026-09-01 00:00:00', activated_by = 1 WHERE id = 1", $this->table( Tables::G1_STATE ) );
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 
-		$statements = $this->recorded( fn() => $this->sync->sync( self::ORDER ) );
+		$statements  = $this->recorded( fn() => $this->sync->sync( self::ORDER ) );
+		$assessments = '`' . $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ) . '`';
+		$touching    = array_values( array_filter( $statements, static fn( string $sql ): bool => str_contains( $sql, $assessments ) ) );
 
-		$this->assert_no_assessment_read( $statements );
+		self::assertCount( 2, $touching, 'One existence read and one insert.' );
+		self::assertStringStartsWith( 'SELECT order_id FROM ' . $assessments, $touching[0] );
+		self::assertStringNotContainsString( 'FOR UPDATE', $touching[0], 'A plain read.' );
+		self::assertStringNotContainsString( 'LOCK IN SHARE MODE', $touching[0] );
+		self::assertStringStartsWith( 'INSERT INTO ' . $assessments, $touching[1] );
+		self::assertStringContainsString( 'FROM DUAL WHERE CONNECTION_ID() = ', $touching[1] );
 		self::assertSame( array( 's:11:1' ), $this->keys() );
-		self::assertSame( 0, $this->count_rows( Tables::ORDER_GIFT_CARD_ASSESSMENTS ), 'No pending in T5a.' );
+		$rows = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT order_id, status, reason_code, source, assessed_at, assessed_by, decision_reason FROM %i', $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ) ), ARRAY_A );
+		self::assertIsArray( $rows );
+		self::assertSame( array( array( '7', 'pending', null, null, null, null, null ) ), array_map( 'array_values', $rows ) );
 		self::assertSame( array( 'clear:7' ), $this->marker->calls );
 	}
 
