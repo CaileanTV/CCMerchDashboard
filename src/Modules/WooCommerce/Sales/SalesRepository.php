@@ -13,8 +13,10 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Database\SchemaVersionRow;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Modules\WooCommerce\Payouts\G1\G1StateRow;
 use Throwable;
 use wpdb;
 
@@ -31,7 +33,10 @@ defined( 'ABSPATH' ) || exit;
  * 1. with_order_lock() takes a named lock with GET_LOCK() and notes the
  *    connection that holds it; the caller may then read WooCommerce data
  *    outside any transaction.
- * 2. write() runs in the project's Transaction: it reads the order's ledger
+ * 2. write() runs in the project's Transaction: it first takes R0 (E3.3, S2:
+ *    the schema version row and, from the G1 schema on, the G1 activation
+ *    row, both with a shared lock; a missing or invalid one fails closed),
+ *    then reads the order's ledger
  *    state, hands it to the planner, appends the planned rows and, before
  *    COMMIT, checks that the connection and lock are still the ones taken in
  *    step 1 (wpdb silently reconnects after "server has gone away", which
@@ -63,6 +68,16 @@ final class SalesRepository {
 	 * Prefix of the lock names.
 	 */
 	private const LOCK_PREFIX = 'merchboard_sales:';
+
+	/**
+	 * Schema version that created the G1 tables and the activation row.
+	 */
+	private const G1_SCHEMA_VERSION = 12;
+
+	/**
+	 * Most digits a valid stored schema version has (T5a).
+	 */
+	private const MAX_VERSION_DIGITS = 9;
 
 	/**
 	 * Columns of `merchboard_sales` read into a SalesEntry.
@@ -208,6 +223,14 @@ final class SalesRepository {
 	 * appends them, all in one transaction. Must run inside with_order_lock()
 	 * for the same order.
 	 *
+	 * The transaction first takes R0 (E3.3, S2), before any plain read: the
+	 * schema version row, and from the G1 schema on the G1 activation row,
+	 * both LOCK IN SHARE MODE. A missing version row, a stored version that is
+	 * not a plain number of at most 9 digits, or (from the G1 schema on) a
+	 * missing or unreadable activation row is a DatabaseException (db_error),
+	 * so nothing is written. Isolation level, lock wait timeout and the
+	 * handling of 1205 and 1213 are unchanged.
+	 *
 	 * After COMMIT, the creators of the rows actually inserted (not skipped
 	 * duplicates, not cycle events, which the statistics do not read) get a
 	 * new cache generation, once per creator and write (ADR-040 pkt. 10). A
@@ -217,7 +240,7 @@ final class SalesRepository {
 	 *
 	 * @param int                                          $order_id WooCommerce order.
 	 * @param callable(SalesLedgerState): SalesLedgerWrite $plan     Decides the new rows from the stored state.
-	 * @throws DatabaseException When the lock is not held, or a read or write fails (rolled back).
+	 * @throws DatabaseException When the lock is not held, R0 fails closed, or a read or write fails (rolled back).
 	 * @throws SalesConnectionChangedException When the connection changed (rolled back; after COMMIT the outcome is unknown).
 	 * @throws InvalidArgumentException When a planned row belongs to another order (rolled back).
 	 * @throws Throwable Whatever $plan throws (rolled back).
@@ -228,6 +251,8 @@ final class SalesRepository {
 		$creators = array();
 		$result   = $this->transaction->run(
 			function () use ( $order_id, $plan, &$creators ): SalesWriteResult {
+				$this->take_r0();
+
 				$write = $plan( $this->state( $order_id ) );
 
 				foreach ( array_merge( $write->entries, $write->cycle_events ) as $row ) {
@@ -714,6 +739,31 @@ final class SalesRepository {
 		}
 
 		return 1 === $result;
+	}
+
+	/**
+	 * R0 of the synchronization (E3.3, S2), inside its transaction and before
+	 * any plain read: the schema version row LOCK IN SHARE MODE and, when the
+	 * version is at least the G1 schema, the G1 activation row LOCK IN SHARE
+	 * MODE. Below the G1 schema, no G1 table is read.
+	 *
+	 * @throws DatabaseException When the version row is missing or unreadable, its value is not a plain number of at most 9 digits, or (from the G1 schema on) the activation row is missing or unreadable.
+	 */
+	private function take_r0(): void {
+		$version = SchemaVersionRow::read_shared( $this->wpdb );
+
+		// Only digits, at most 9 of them, checked before the conversion: no silent 0.
+		if ( ! ctype_digit( $version ) || strlen( $version ) > self::MAX_VERSION_DIGITS ) {
+			throw new DatabaseException( 'The stored schema version is not valid.' );
+		}
+
+		if ( (int) $version < self::G1_SCHEMA_VERSION ) {
+			return;
+		}
+
+		if ( null === G1StateRow::read_shared( $this->wpdb ) ) {
+			throw new DatabaseException( 'The G1 activation row is missing.' );
+		}
 	}
 
 	/**
