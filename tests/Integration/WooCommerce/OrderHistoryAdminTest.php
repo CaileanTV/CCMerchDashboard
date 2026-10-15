@@ -27,6 +27,12 @@ use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardAvailability;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardSnapshot;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
@@ -53,6 +59,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\SalesTaxRepository;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\FakeGiftCardProvider;
 use MerchBoard\Tests\Integration\Support\FakeOrderReader;
 use MerchBoard\Tests\Integration\Support\PostMetaPricingProductStore;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
@@ -103,6 +110,8 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	private int $alpha;
 
 	private int $beta;
+
+	private FakeGiftCardProvider $fake;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -156,6 +165,7 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 		$this->recorder->record( 30041, 3004, $mug, 0, 'DKK' );
 		$this->order( 3004, array( $this->line( 30041, $mug, 1, '80', '20', $this->beta ) ) );
 		$this->cache->calls = array();
+		$this->fake         = new FakeGiftCardProvider();
 	}
 
 	protected function tearDown(): void {
@@ -405,6 +415,37 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 			self::assertStringNotContainsString( '>Settlement</th>', $html );
 			self::assertStringNotContainsString( 'Not settled', $html );
 		}
+	}
+
+	public function test_g1_an_order_paid_with_a_payout_card_is_marked_and_explained_without_changing_the_ledger(): void {
+		$payout                               = $this->gift_card_payout( '601' );
+		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
+		$this->fake->orders                   = array( '601' => array( 3001 ) );
+		$before                               = $this->counts();
+		$rows                                 = $this->by_order( $this->history->page( new OrderHistoryFilter(), new Pagination( 1, 20 ) ) );
+
+		$list = $this->render( array( 'status' => 'all' ) );
+		self::assertSame( 1, substr_count( $list, 'Paid with a payout gift card' ), 'Only order 3001.' );
+		self::assertStringContainsString( '#3001</a><br><span class="description">Pending payment</span><br><strong>Paid with a payout gift card</strong>', $list );
+
+		$order = $this->render( array( 'order' => '3001' ) );
+		self::assertStringContainsString( 'paid wholly or partly with the gift card of payout <a href="' . esc_url( PayoutsPage::url( array( 'payout' => $payout ) ) ) . '">#' . $payout . '</a>', $order );
+		self::assertStringContainsString( 'not decided yet (G1)', $order );
+		self::assertStringNotContainsString( 'payout gift card', $this->render( array( 'order' => '3004' ) ), 'Another order.' );
+		self::assertStringNotContainsString( 'MB-HISTORY-CARD', $list . $order, 'Never the code.' );
+
+		$manager = $this->create_user( 'mb-history-g1' );
+		( new WP_User( $manager ) )->add_cap( Capabilities::MANAGE_CREATORS );
+		wp_set_current_user( $manager );
+		self::assertStringContainsString( 'gift card of payout #' . $payout . ' (recorded', $this->render( array( 'order' => '3001' ) ), 'The payout id without a link.' );
+		wp_set_current_user( 1 );
+
+		$this->fake->availability = GiftCardAvailability::unavailable( GiftCardAvailability::INACTIVE );
+		self::assertStringContainsString( 'cannot be determined right now', $this->render( array( 'status' => 'all' ) ) );
+		self::assertStringContainsString( 'Whether this order was paid with a payout gift card cannot be determined', $this->render( array( 'order' => '3001' ) ) );
+
+		self::assertSame( $before, $this->counts(), 'Rendering writes nothing.' );
+		self::assertEquals( $rows, $this->by_order( $this->history->page( new OrderHistoryFilter(), new Pagination( 1, 20 ) ) ), 'The ledger and its profit are unchanged.' );
 	}
 
 	public function test_the_page_offers_no_deletion_or_other_write_action(): void {
@@ -689,7 +730,38 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	 * The page with a lookup that does not need WooCommerce.
 	 */
 	private function page(): OrderHistoryPage {
-		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger(), new SettlementRepository( $this->wpdb ) );
+		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger(), new SettlementRepository( $this->wpdb ), new PayoutGiftCardOrders( new PayoutRepository( $this->wpdb ), new GiftCardProviders( array( $this->fake ) ), new RecordingLogger() ) );
+	}
+
+	/**
+	 * A completed gift card payout of creator A with a registered card (synthetic row).
+	 *
+	 * @param string $card Card id in the fake provider.
+	 * @return int Payout id.
+	 */
+	private function gift_card_payout( string $card ): int {
+		self::assertSame(
+			1,
+			$this->wpdb->insert(
+				$this->table( Tables::PAYOUTS ),
+				array(
+					'creator_id'            => $this->alpha,
+					'currency'              => 'DKK',
+					'amount'                => '20',
+					'price_decimals'        => 2,
+					'method'                => 'gift_card',
+					'status'                => 'completed',
+					'idempotency_key'       => 'key-history-g1',
+					'requested_at'          => '2026-10-10 10:00:00',
+					'decided_at'            => '2026-10-10 11:00:00',
+					'updated_at'            => '2026-10-10 11:00:00',
+					'gift_card_provider'    => 'fake',
+					'gift_card_external_id' => $card,
+				)
+			)
+		);
+
+		return (int) $this->wpdb->insert_id;
 	}
 
 	/**

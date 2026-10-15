@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitGap;
@@ -48,6 +49,10 @@ defined( 'ABSPATH' ) || exit;
  *   rows are settled and in which settlement documents; the order shows the
  *   document of each event. Read from the stored documents, never
  *   recalculated. Links to the payout only with `merchboard_manage_payouts`.
+ * - **Payout gift cards (G1):** an order the gift card plugin recorded as
+ *   paid with a card of a completed payout is marked in the list and
+ *   explained on the order; its commission basis is not decided, so the
+ *   ledger is unchanged. When the plugin cannot be read, that is said.
  *
  * No customer data and no item names (ADR-037 pkt. 10). Every request
  * parameter is validated; invalid values are ignored with a notice. The page
@@ -81,6 +86,13 @@ final class OrderHistoryPage {
 	private array $names = array();
 
 	/**
+	 * Orders of the current list paid with a payout gift card: payout ids by order (G1).
+	 *
+	 * @var array<int, list<int>>
+	 */
+	private array $paid_with_cards = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param OrderHistory              $history     Unique orders of the ledger.
@@ -89,6 +101,7 @@ final class OrderHistoryPage {
 	 * @param CreatorRepository         $creators    Creator names.
 	 * @param Logger                    $logger      Technical log.
 	 * @param SettlementRepository|null $settlements Settled ledger rows (ADR-060, read only); null = not shown.
+	 * @param PayoutGiftCardOrders|null $gift_cards  Orders paid with payout gift cards (G1, read only); null = not shown.
 	 */
 	public function __construct(
 		private OrderHistory $history,
@@ -96,7 +109,8 @@ final class OrderHistoryPage {
 		private OrderStatusLookup $orders,
 		private CreatorRepository $creators,
 		private Logger $logger,
-		private ?SettlementRepository $settlements = null
+		private ?SettlementRepository $settlements = null,
+		private ?PayoutGiftCardOrders $gift_cards = null
 	) {
 	}
 
@@ -257,6 +271,14 @@ final class OrderHistoryPage {
 		}
 
 		$settled = null === $this->settlements ? null : $this->settlements->settlements_for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ), $filter->creator_id );
+		$cards   = $this->gift_cards?->for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ) );
+
+		$this->paid_with_cards = $cards['paid'] ?? array();
+
+		if ( true === ( $cards['unknown'] ?? false ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Whether these orders were paid with a payout gift card cannot be determined right now: the gift card plugin\'s records cannot be read.', 'merchboard' ) . '</p></div>';
+		}
+
 		echo '<table class="widefat striped merchboard-order-history-table"><thead><tr>';
 
 		foreach ( array_merge( array( __( 'Order', 'merchboard' ), __( 'Ledger dates', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Currency', 'merchboard' ), __( 'Events / lines', 'merchboard' ), __( 'Stored net amount', 'merchboard' ), __( 'Tax data', 'merchboard' ), __( 'Profit data', 'merchboard' ) ), null === $settled ? array() : array( __( 'Settlement', 'merchboard' ) ) ) as $heading ) {
@@ -303,7 +325,13 @@ final class OrderHistoryPage {
 		$order = $this->orders->find( $row->order_id );
 
 		echo '<tr><td><a href="' . esc_url( self::url( array( 'order' => $row->order_id ) ) ) . '">' . esc_html( sprintf( '#%d', $row->order_id ) ) . '</a>';
-		echo '<br><span class="description">' . esc_html( $order['status'] ) . '</span></td>';
+		echo '<br><span class="description">' . esc_html( $order['status'] ) . '</span>';
+
+		if ( isset( $this->paid_with_cards[ $row->order_id ] ) ) {
+			echo '<br><strong>' . esc_html__( 'Paid with a payout gift card', 'merchboard' ) . '</strong>';
+		}
+
+		echo '</td>';
 		echo '<td>' . esc_html( self::date( $row->first_at ) ) . ( $row->first_at->getTimestamp() === $row->last_at->getTimestamp() ? '' : '<br>– ' . esc_html( self::date( $row->last_at ) ) ) . '</td>';
 		echo '<td>' . esc_html( implode( ', ', array_map( array( $this, 'creator_name' ), $row->creator_ids ) ) ) . '</td>';
 		echo '<td>' . esc_html( $row->currency ) . '</td>';
@@ -384,6 +412,7 @@ final class OrderHistoryPage {
 		}
 
 		echo '</p>';
+		$this->render_payout_card( $order_id );
 
 		$cycles = array_map(
 			static fn( $event ): string => sprintf(
@@ -542,6 +571,37 @@ final class OrderHistoryPage {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Whether the order was paid with a payout gift card (G1), from the gift
+	 * card plugin's own records. The payout is linked only for a user with
+	 * `merchboard_manage_payouts`.
+	 *
+	 * @param int $order_id Order.
+	 * @throws DatabaseException When the payouts cannot be read.
+	 */
+	private function render_payout_card( int $order_id ): void {
+		if ( null === $this->gift_cards ) {
+			return;
+		}
+
+		$cards   = $this->gift_cards->for_orders( array( $order_id ) );
+		$payouts = $cards['paid'][ $order_id ] ?? array();
+
+		if ( array() !== $payouts ) {
+			$links     = array_map(
+				static fn( int $id ): string => current_user_can( Capabilities::MANAGE_PAYOUTS )
+					? '<a href="' . esc_url( PayoutsPage::url( array( 'payout' => $id ) ) ) . '">' . esc_html( sprintf( '#%d', $id ) ) . '</a>'
+					: esc_html( sprintf( '#%d', $id ) ),
+				$payouts
+			);
+			$undecided = esc_html__( 'How such orders count towards the creator\'s commission is not decided yet (G1); the ledger, the balances and the settlement documents treat this order like any other order.', 'merchboard' );
+			/* translators: %s: payout ids. */
+			echo '<div class="notice notice-warning inline"><p>' . sprintf( esc_html__( 'This order was paid wholly or partly with the gift card of payout %s (recorded by the gift card plugin).', 'merchboard' ), implode( ', ', $links ) ) . ' ' . $undecided . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The links and $undecided are escaped above.
+		} elseif ( $cards['unknown'] ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Whether this order was paid with a payout gift card cannot be determined right now: the gift card plugin\'s records cannot be read.', 'merchboard' ) . '</p></div>';
+		}
 	}
 
 	/**

@@ -26,6 +26,9 @@ parameters:
         # Stand-in for WooCommerce order CRUD (isolated test processes only);
         # PHPStan uses tests/Stubs/woocommerce.stub instead.
         - tests/Fixtures/woocommerce-order.php
+        # Stand-in for WooCommerce coupon, cart and discounts (isolated test
+        # processes only); PHPStan uses tests/Stubs/woocommerce.stub instead.
+        - tests/Fixtures/woocommerce-coupon.php
         # Stand-in for Action Scheduler's action class (isolated test processes only);
         # PHPStan uses tests/Stubs/woocommerce.stub instead.
         - tests/Fixtures/action-scheduler-action.php
