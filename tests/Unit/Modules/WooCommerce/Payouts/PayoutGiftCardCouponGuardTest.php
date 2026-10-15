@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\WooCommerce\Payouts;
 
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviderException;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardCouponGuard;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\WcOrderStorage;
@@ -112,20 +113,39 @@ final class PayoutGiftCardCouponGuardTest extends TestCase {
 		self::assertSame( array( self::PAYOUT_CARD, 'SUMMER10', self::PAYOUT_CARD, 'SUMMER10', self::PAYOUT_CARD, 'SUMMER10' ), $this->lookups, 'Looked up every time; nothing cached.' );
 	}
 
-	public function test_a_failing_check_refuses_the_coupon_and_logs_without_the_code(): void {
+	public function test_a_check_that_cannot_be_done_refuses_the_coupon_as_not_checkable_and_logs_without_the_code(): void {
+		foreach ( array(
+			'unexpected'  => array( new RuntimeException( 'database gone' ), null ),
+			'unavailable' => array( new GiftCardProviderException( GiftCardProviderException::UNAVAILABLE ), 'unavailable' ),
+			'read failed' => array( new GiftCardProviderException( GiftCardProviderException::READ_FAILED ), 'read_failed' ),
+		) as $label => [ $failure, $reason ] ) {
+			$this->logger->entries             = array();
+			$guard                             = $this->guard(
+				static function () use ( $failure ): bool {
+					throw $failure;
+				}
+			);
+			$GLOBALS['wc_test_coupon_filters'] = array( array( $guard, 'coupon_is_valid' ) );
+
+			$result = ( new WC_Discounts( self::order( 505 ) ) )->is_coupon_valid( new WC_Coupon( 'ANY-CODE' ) );
+
+			self::assertInstanceOf( WP_Error::class, $result, $label . ': fail closed.' );
+			self::assertSame( 'Gift card order registration could not be checked', $result->get_error_message(), $label . ': not checkable, not "a payout card".' );
+			self::assertSame( array( array( 'error', 'A coupon on an order could not be checked against the payout gift cards.', array( 'order_id' => 505, 'error' => $failure::class, 'reason' => $reason ) ) ), self::entries( $this->logger ), $label ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			self::assertStringNotContainsString( 'ANY-CODE', var_export( $this->logger->entries, true ), $label ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Test assertion.
+		}
+	}
+
+	public function test_checkout_is_not_touched_even_when_the_check_would_fail(): void {
 		$guard                             = $this->guard(
 			static function (): bool {
-				throw new RuntimeException( 'database gone' );
+				throw new GiftCardProviderException( GiftCardProviderException::UNAVAILABLE );
 			}
 		);
 		$GLOBALS['wc_test_coupon_filters'] = array( array( $guard, 'coupon_is_valid' ) );
 
-		$result = ( new WC_Discounts( self::order( 505 ) ) )->is_coupon_valid( new WC_Coupon( 'ANY-CODE' ) );
-
-		self::assertInstanceOf( WP_Error::class, $result, 'Fail closed.' );
-		self::assertSame( array( 'error', 'warning' ), array_column( self::entries( $this->logger ), 0 ) );
-		self::assertSame( array( 'order_id' => 505, 'error' => RuntimeException::class ), self::entries( $this->logger )[0][2] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		self::assertStringNotContainsString( 'ANY-CODE', var_export( $this->logger->entries, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Test assertion.
+		self::assertTrue( ( new WC_Discounts( new WC_Cart() ) )->is_coupon_valid( new WC_Coupon( self::PAYOUT_CARD ) ) );
+		self::assertSame( array(), $this->logger->entries );
 	}
 
 	/**

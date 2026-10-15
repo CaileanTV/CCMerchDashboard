@@ -68,21 +68,6 @@ interface GiftCardProvider {
 	public function reveal_code( string $external_id ): string;
 
 	/**
-	 * The orders the plugin itself recorded as paid (wholly or partly) with
-	 * each card (G1, report 16.3): only the plugin's own registration, never
-	 * a guess from amounts, times or coupon texts. A card without recorded
-	 * orders maps to an empty list; a card that no longer exists is missing
-	 * from the result.
-	 *
-	 * @phpstan-param list<string> $external_ids
-	 *
-	 * @param string[] $external_ids The cards' ids in the plugin.
-	 * @return array<string, list<int>> Order ids by card id.
-	 * @throws GiftCardProviderException When a registration cannot be read exactly or the read fails.
-	 */
-	public function orders_paid_with( array $external_ids ): array;
-
-	/**
 	 * The plugin's own admin page: creating a card (null) or one card.
 	 *
 	 * @param string|null $external_id The card's id, null for "create".

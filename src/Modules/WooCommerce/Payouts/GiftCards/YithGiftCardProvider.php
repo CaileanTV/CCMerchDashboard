@@ -43,7 +43,7 @@ defined( 'ABSPATH' ) || exit;
  * amount or balance that is missing, has a comma, is negative or has more
  * decimals than the store is `invalid_data`, never 0.
  */
-final class YithGiftCardProvider implements GiftCardProvider {
+final class YithGiftCardProvider implements GiftCardProvider, GiftCardOrderRegistry {
 
 	public const ID = 'yith-wcgc';
 
@@ -183,6 +183,27 @@ final class YithGiftCardProvider implements GiftCardProvider {
 	}
 
 	/**
+	 * The order lookup (GiftCardOrderRegistry): available when the adapter
+	 * is, and the plugin declares `_ywgc_orders` as its order record
+	 * (`YWGC_META_GIFT_CARD_ORDERS`). Without that constant only the lookup is
+	 * unavailable; availability() and with it requests, registration and the
+	 * creator's view are unaffected (G1, owner decision B5 2026-10-16).
+	 */
+	public function order_registry_availability(): GiftCardAvailability {
+		$availability = $this->availability();
+
+		if ( ! $availability->available ) {
+			return $availability;
+		}
+
+		if ( ! defined( 'YWGC_META_GIFT_CARD_ORDERS' ) || self::ORDERS !== (string) constant( 'YWGC_META_GIFT_CARD_ORDERS' ) ) {
+			return GiftCardAvailability::unavailable( GiftCardAvailability::SELF_TEST_FAILED, $availability->version );
+		}
+
+		return $availability;
+	}
+
+	/**
 	 * The orders recorded on each card in `_ywgc_orders`. The plugin writes
 	 * that list only through `register_order()` and never removes from it:
 	 * at checkout for the coupon field (classic and Store API) and for its
@@ -194,10 +215,13 @@ final class YithGiftCardProvider implements GiftCardProvider {
 	 *
 	 * @param string[] $external_ids The cards' post ids.
 	 * @return array<string, list<int>>
-	 * @throws GiftCardProviderException When a list is not exact or the read fails.
+	 * @throws GiftCardProviderException When the lookup is not available, a list is not exact or the read fails.
 	 */
 	public function orders_paid_with( array $external_ids ): array {
-		$this->require_active();
+		if ( ! $this->order_registry_availability()->available ) {
+			throw new GiftCardProviderException( GiftCardProviderException::UNAVAILABLE );
+		}
+
 		$ids = array_values( array_unique( array_filter( $external_ids, static fn( string $id ): bool => 1 === preg_match( '/^[1-9]\d{0,18}$/', $id ) ) ) );
 
 		if ( array() === $ids ) {
@@ -417,8 +441,7 @@ final class YithGiftCardProvider implements GiftCardProvider {
 
 		if ( ! post_type_exists( self::POST_TYPE ) || ! class_exists( 'YITH_YWGC_Gift_Card' )
 			|| self::AMOUNT !== $constant( 'META_AMOUNT_TOTAL' ) || self::BALANCE !== $constant( 'META_BALANCE_TOTAL' )
-			|| self::CURRENCY !== $constant( 'META_CURRENCY' ) || self::EXPIRATION !== $constant( 'META_EXPIRATION' )
-			|| ! defined( 'YWGC_META_GIFT_CARD_ORDERS' ) || self::ORDERS !== (string) constant( 'YWGC_META_GIFT_CARD_ORDERS' ) ) {
+			|| self::CURRENCY !== $constant( 'META_CURRENCY' ) || self::EXPIRATION !== $constant( 'META_EXPIRATION' ) ) {
 			return false;
 		}
 

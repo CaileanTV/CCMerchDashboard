@@ -28,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardAvailability;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviderException;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardSnapshot;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
@@ -60,6 +61,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\SalesTaxRepository;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeGiftCardProvider;
+use MerchBoard\Tests\Integration\Support\FakeOrderRegistryGiftCardProvider;
 use MerchBoard\Tests\Integration\Support\FakeOrderReader;
 use MerchBoard\Tests\Integration\Support\PostMetaPricingProductStore;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
@@ -112,6 +114,13 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	private int $beta;
 
 	private FakeGiftCardProvider $fake;
+
+	/**
+	 * The fake with the optional order lookup (null = the plain fake is used).
+	 *
+	 * @var FakeOrderRegistryGiftCardProvider|null
+	 */
+	private ?FakeOrderRegistryGiftCardProvider $registry = null;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -417,35 +426,103 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 		}
 	}
 
-	public function test_g1_an_order_paid_with_a_payout_card_is_marked_and_explained_without_changing_the_ledger(): void {
+	public function test_g1_an_order_the_plugin_recorded_is_labelled_never_as_a_confirmed_payout_status(): void {
+		$registry                             = $this->with_registry();
 		$payout                               = $this->gift_card_payout( '601' );
 		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
-		$this->fake->orders                   = array( '601' => array( 3001 ) );
-		$before                               = $this->counts();
-		$rows                                 = $this->by_order( $this->history->page( new OrderHistoryFilter(), new Pagination( 1, 20 ) ) );
+		$registry->orders                     = array( '601' => array( 3001 ) );
+		// An E2 assessment exists; the plugin's record neither shows nor changes it.
+		$this->wpdb->insert( $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ), array( 'order_id' => 3001, 'status' => 'not_paid', 'updated_at' => '2026-10-10 12:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$before = $this->counts();
+		$rows   = $this->by_order( $this->history->page( new OrderHistoryFilter(), new Pagination( 1, 20 ) ) );
+		$label  = 'Registered by gift card plugin — payout status not confirmed';
 
 		$list = $this->render( array( 'status' => 'all' ) );
-		self::assertSame( 1, substr_count( $list, 'Paid with a payout gift card' ), 'Only order 3001.' );
-		self::assertStringContainsString( '#3001</a><br><span class="description">Pending payment</span><br><strong>Paid with a payout gift card</strong>', $list );
+		self::assertSame( 1, substr_count( $list, $label ), 'Only order 3001.' );
+		self::assertStringContainsString( '#3001</a><br><span class="description">Pending payment</span><br><strong>' . $label . '</strong>', $list );
+		self::assertStringNotContainsString( 'does not support', $list );
+		self::assertStringNotContainsString( 'could not be checked', $list );
 
 		$order = $this->render( array( 'order' => '3001' ) );
-		self::assertStringContainsString( 'paid wholly or partly with the gift card of payout <a href="' . esc_url( PayoutsPage::url( array( 'payout' => $payout ) ) ) . '">#' . $payout . '</a>', $order );
+		self::assertStringContainsString( '<strong>' . $label . '</strong>: <a href="' . esc_url( PayoutsPage::url( array( 'payout' => $payout ) ) ) . '">Payout #' . $payout . '</a>', $order );
 		self::assertStringContainsString( 'not decided yet (G1)', $order );
-		self::assertStringNotContainsString( 'payout gift card', $this->render( array( 'order' => '3004' ) ), 'Another order.' );
+		self::assertStringNotContainsString( 'not_paid', $order, 'The assessment is not mixed into the plugin record.' );
+		self::assertStringNotContainsString( $label, $this->render( array( 'order' => '3004' ) ), 'Another order.' );
 		self::assertStringNotContainsString( 'MB-HISTORY-CARD', $list . $order, 'Never the code.' );
 
 		$manager = $this->create_user( 'mb-history-g1' );
 		( new WP_User( $manager ) )->add_cap( Capabilities::MANAGE_CREATORS );
 		wp_set_current_user( $manager );
-		self::assertStringContainsString( 'gift card of payout #' . $payout . ' (recorded', $this->render( array( 'order' => '3001' ) ), 'The payout id without a link.' );
+		self::assertStringContainsString( '<strong>' . $label . '</strong>: Payout #' . $payout . '</p>', $this->render( array( 'order' => '3001' ) ), 'The payout id without a link.' );
 		wp_set_current_user( 1 );
-
-		$this->fake->availability = GiftCardAvailability::unavailable( GiftCardAvailability::INACTIVE );
-		self::assertStringContainsString( 'cannot be determined right now', $this->render( array( 'status' => 'all' ) ) );
-		self::assertStringContainsString( 'Whether this order was paid with a payout gift card cannot be determined', $this->render( array( 'order' => '3001' ) ) );
 
 		self::assertSame( $before, $this->counts(), 'Rendering writes nothing.' );
 		self::assertEquals( $rows, $this->by_order( $this->history->page( new OrderHistoryFilter(), new Pagination( 1, 20 ) ) ), 'The ledger and its profit are unchanged.' );
+	}
+
+	public function test_g1_an_adapter_without_the_order_lookup_is_shown_as_unsupported(): void {
+		$this->gift_card_payout( '601' );
+		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
+		$before                               = $this->counts();
+
+		$list  = $this->render( array( 'status' => 'all' ) );
+		$order = $this->render( array( 'order' => '3001' ) );
+
+		foreach ( array( $list, $order ) as $html ) {
+			self::assertStringContainsString( 'Gift card plugin does not support order registration lookup', $html );
+			self::assertStringNotContainsString( 'Gift card order registration could not be checked', $html );
+			self::assertStringNotContainsString( 'Registered by gift card plugin', $html );
+		}
+
+		self::assertStringContainsString( 'Events / lines', $list, 'The list itself is rendered.' );
+		self::assertSame( $before, $this->counts() );
+	}
+
+	public function test_g1_a_lookup_that_cannot_be_done_is_shown_as_not_checked(): void {
+		$this->gift_card_payout( '601' );
+		$registry                             = $this->with_registry();
+		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
+		$registry->orders                     = array( '601' => array( 3001 ) );
+
+		foreach ( array(
+			'plugin inactive' => function (): void {
+				$this->fake->availability = GiftCardAvailability::unavailable( GiftCardAvailability::INACTIVE );
+			},
+			'lookup failed'   => static function () use ( $registry ): void {
+				$registry->registry_fail = new GiftCardProviderException( GiftCardProviderException::READ_FAILED );
+			},
+		) as $label => $arrange ) {
+			$this->fake->availability = GiftCardAvailability::available( '1.0.0' );
+			$registry->registry_fail  = null;
+			$arrange();
+
+			foreach ( array( $this->render( array( 'status' => 'all' ) ), $this->render( array( 'order' => '3001' ) ) ) as $html ) {
+				self::assertStringContainsString( 'Gift card order registration could not be checked', $html, $label );
+				self::assertStringNotContainsString( 'does not support', $html, $label );
+				self::assertStringNotContainsString( 'Registered by gift card plugin', $html, $label );
+			}
+		}
+
+		$this->fake->availability = GiftCardAvailability::available( '1.0.0' );
+		$registry->registry_fail  = null;
+		$registry->registry       = GiftCardAvailability::unavailable( GiftCardAvailability::SELF_TEST_FAILED, '1.0.0' );
+		self::assertStringContainsString( 'Gift card plugin does not support order registration lookup', $this->render( array( 'order' => '3001' ) ), 'The plugin lacks the record: unsupported, not failed.' );
+	}
+
+	public function test_g1_the_history_does_not_depend_on_g1_activation_or_cut_off(): void {
+		$this->gift_card_payout( '601' );
+		$registry                             = $this->with_registry();
+		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
+		$registry->orders                     = array( '601' => array( 3001 ) );
+		$label                                = '<strong>Registered by gift card plugin — payout status not confirmed</strong>';
+
+		self::assertStringContainsString( $label, $this->render( array( 'status' => 'all' ) ), 'G1 not activated.' );
+		self::assertStringContainsString( $label, $this->render( array( 'order' => '3001' ) ), 'G1 not activated.' );
+
+		// Activated with a cut-off after the order (2026-10-09): the order is before the cut-off.
+		self::assertSame( 1, $this->execute( "UPDATE %i SET cutoff_utc = %s, activated_at = '2026-08-31 00:00:00', activated_by = 1 WHERE id = 1", $this->table( Tables::G1_STATE ), '2027-01-01 00:00:00' ) );
+		self::assertStringContainsString( $label, $this->render( array( 'status' => 'all' ) ), 'Activated, the order before the cut-off.' );
+		self::assertStringContainsString( $label, $this->render( array( 'order' => '3001' ) ), 'Activated, the order before the cut-off.' );
 	}
 
 	public function test_the_page_offers_no_deletion_or_other_write_action(): void {
@@ -730,7 +807,17 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	 * The page with a lookup that does not need WooCommerce.
 	 */
 	private function page(): OrderHistoryPage {
-		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger(), new SettlementRepository( $this->wpdb ), new PayoutGiftCardOrders( new PayoutRepository( $this->wpdb ), new GiftCardProviders( array( $this->fake ) ), new RecordingLogger() ) );
+		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger(), new SettlementRepository( $this->wpdb ), new PayoutGiftCardOrders( new PayoutRepository( $this->wpdb ), new GiftCardProviders( array( $this->registry ?? $this->fake ) ), new RecordingLogger() ) );
+	}
+
+	/**
+	 * Uses the fake with the optional order lookup from now on.
+	 */
+	private function with_registry(): FakeOrderRegistryGiftCardProvider {
+		$registry       = new FakeOrderRegistryGiftCardProvider( $this->fake );
+		$this->registry = $registry;
+
+		return $registry;
 	}
 
 	/**
@@ -965,7 +1052,7 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	 * @return list<int>
 	 */
 	private function counts(): array {
-		return array( $this->count_rows( Tables::SALES ), $this->count_rows( Tables::SALES_CYCLES ), $this->count_rows( Tables::SALES_TAX ), $this->count_rows( Tables::SALES_LINE_PRICING ), $this->count_rows( Tables::AUDIT_LOG ) );
+		return array( $this->count_rows( Tables::SALES ), $this->count_rows( Tables::SALES_CYCLES ), $this->count_rows( Tables::SALES_TAX ), $this->count_rows( Tables::SALES_LINE_PRICING ), $this->count_rows( Tables::AUDIT_LOG ), $this->count_rows( Tables::PAYOUTS ), $this->count_rows( Tables::ORDER_GIFT_CARD_ASSESSMENTS ), $this->count_rows( Tables::ORDER_GIFT_CARD_PAYOUTS ), $this->count_rows( Tables::ORDER_GIFT_CARD_ATTEMPTS ) );
 	}
 
 	/**

@@ -554,19 +554,22 @@ final class PayoutsPage {
 		echo '<p>' . esc_html( $text ) . '</p>';
 
 		if ( null !== $this->gift_card_orders ) {
-			// G1: the orders the plugin recorded as paid with this card.
+			// G1: the orders the plugin recorded as paid with this card; the
+			// plugin's record, never a confirmed payout status (B2).
 			try {
-				$orders = $this->gift_card_orders->for_payout( $payout->id );
+				$lookup = $this->gift_card_orders->for_payout( $payout->id );
 			} catch ( Throwable ) {
-				$orders = null;
+				$lookup = array(
+					'orders' => null,
+					'reason' => PayoutGiftCardOrders::FAILED,
+				);
 			}
 
-			if ( null === $orders ) {
-				echo '<p>' . esc_html__( 'Orders paid with this card: cannot be read now.', 'merchboard' ) . '</p>';
-			} elseif ( array() === $orders ) {
-				echo '<p>' . esc_html__( 'Orders paid with this card: none recorded.', 'merchboard' ) . '</p>';
+			if ( null === $lookup['orders'] ) {
+				echo '<p>' . esc_html( PayoutGiftCardOrders::UNSUPPORTED === $lookup['reason'] ? __( 'Gift card plugin does not support order registration lookup', 'merchboard' ) : __( 'Gift card order registration could not be checked', 'merchboard' ) ) . '</p>';
 			} else {
-				echo '<p>' . esc_html__( 'Orders paid with this card:', 'merchboard' ) . ' ' . implode( ', ', array_map( static fn( int $id ): string => '<a href="' . esc_url( OrderHistoryPage::url( array( 'order' => $id ) ) ) . '">' . esc_html( sprintf( '#%d', $id ) ) . '</a>', $orders ) ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in the map.
+				$orders = array() === $lookup['orders'] ? esc_html__( 'None', 'merchboard' ) : implode( ', ', array_map( static fn( int $id ): string => '<a href="' . esc_url( OrderHistoryPage::url( array( 'order' => $id ) ) ) . '">' . esc_html( sprintf( '#%d', $id ) ) . '</a>', $lookup['orders'] ) );
+				echo '<p><strong>' . esc_html__( 'Registered by gift card plugin — payout status not confirmed', 'merchboard' ) . '</strong><br>' . esc_html__( 'Orders', 'merchboard' ) . ': ' . $orders . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
 			}
 		}
 

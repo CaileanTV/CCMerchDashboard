@@ -38,13 +38,6 @@ final class FakeGiftCardProvider implements GiftCardProvider {
 	public ?Throwable $fail = null;
 
 	/**
-	 * Orders recorded on a card, by card id (G1; a numeric id becomes an int key).
-	 *
-	 * @var array<int|string, list<int>>
-	 */
-	public array $orders = array();
-
-	/**
 	 * Called before every read, e.g. to change a card meanwhile.
 	 *
 	 * @var callable|null
@@ -109,31 +102,6 @@ final class FakeGiftCardProvider implements GiftCardProvider {
 		}
 
 		throw new GiftCardProviderException( GiftCardProviderException::READ_FAILED );
-	}
-
-	/**
-	 * Orders recorded on the cards in $orders (a card in $cards without an
-	 * entry has none; an unknown id is missing).
-	 *
-	 * @phpstan-param list<string> $external_ids
-	 *
-	 * @param string[] $external_ids Card ids.
-	 * @return array<string, list<int>>
-	 */
-	public function orders_paid_with( array $external_ids ): array {
-		$result = array();
-
-		foreach ( $external_ids as $external_id ) {
-			$this->read( 'orders_paid_with', $external_id );
-
-			foreach ( $this->cards as $card ) {
-				if ( $card->external_id === $external_id ) {
-					$result[ $external_id ] = $this->orders[ $external_id ] ?? array();
-				}
-			}
-		}
-
-		return $result;
 	}
 
 	public function admin_url( ?string $external_id ): string {

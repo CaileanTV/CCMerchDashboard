@@ -37,6 +37,9 @@ parameters:
         - tests/Fixtures/wp-rest.php
         - tests/Fixtures/wp-term.php
         - tests/Fixtures/wp-post.php
+        # Stand-in for an active YITH WooCommerce Gift Cards (global constants,
+        # class and function; isolated test processes only).
+        - tests/Fixtures/yith-gift-cards.php
     # Declares the WooCommerce and WP-CLI API the plugin uses (no stubs package, ADR-030 D5).
     scanFiles:
         - tests/Stubs/woocommerce.stub

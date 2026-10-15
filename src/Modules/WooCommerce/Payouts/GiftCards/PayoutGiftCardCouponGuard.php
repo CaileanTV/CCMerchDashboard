@@ -36,8 +36,11 @@ defined( 'ABSPATH' ) || exit;
  * Throwing from the filter is how WooCommerce expects a custom message
  * (it turns the exception into a `WP_Error`); the admin sees the message,
  * the REST API answers 400 and leaves the order it created as a draft
- * without the coupon. When the check itself fails, the code is refused
- * (fail closed). Nothing is written; the code is never stored or logged.
+ * without the coupon. When the check itself fails (an unknown or unavailable
+ * provider of a registered payout card, a failed lookup, an unreadable
+ * payout table), the code is refused with its own message (fail closed,
+ * owner decision B5 2026-10-16). The check runs whatever G1's activation and
+ * cut-off are (B3). Nothing is written; the code is never stored or logged.
  *
  * Not covered: coupon lines written directly (REST API v1/v2 `coupon_lines`,
  * code that adds `WC_Order_Item_Coupon` items itself). WooCommerce applies
@@ -76,7 +79,7 @@ final class PayoutGiftCardCouponGuard {
 	 * @param mixed $coupon    WC_Coupon.
 	 * @param mixed $discounts WC_Discounts of a cart or an order.
 	 * @return mixed The unchanged value.
-	 * @throws Exception When a payout gift card is applied to an order.
+	 * @throws Exception When a payout gift card is applied to an order, or the code cannot be checked.
 	 */
 	public function coupon_is_valid( mixed $valid, mixed $coupon, mixed $discounts ): mixed {
 		if ( ! $valid || ! $coupon instanceof WC_Coupon || ! $discounts instanceof WC_Discounts ) {
@@ -98,14 +101,18 @@ final class PayoutGiftCardCouponGuard {
 		try {
 			$refuse = ( $this->is_payout_card )( $code );
 		} catch ( Throwable $e ) {
+			// Fail closed (owner decision B5, 2026-10-16): a card that cannot
+			// be checked is never let through as "not a payout card".
 			$this->logger->error(
 				'A coupon on an order could not be checked against the payout gift cards.',
 				array(
 					'order_id' => (int) $order->get_id(),
 					'error'    => $e::class,
+					'reason'   => $e instanceof GiftCardProviderException ? $e->reason() : null,
 				)
 			);
-			$refuse = true;
+
+			throw new Exception( esc_html__( 'Gift card order registration could not be checked', 'merchboard' ) );
 		}
 
 		if ( ! $refuse ) {
