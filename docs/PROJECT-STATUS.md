@@ -469,7 +469,7 @@ Se [ROADMAP.md](ROADMAP.md). Næste:
 
 ## Known bugs
 
-- **Ordrehistorikken, ordrens side (fundet 2026-10-16, ikke rettet):** en databasefejl ved læsning af ordrens ledger-rækker vises som "Merch Dashboard har ingen gemt historik for ordre #N." i stedet for en fejl. `SalesRepository::entries()` behandler et tomt svar fra `wpdb::get_results()` ved en SQL-fejl som ingen rækker. Listen viser fejlen korrekt. Fejlen findes også før PR #2 og er ikke rettet af den.
+- ✅ **Ordrehistorikken, ordrens side (fundet 2026-10-16, rettet 2026-10-16 i `77c659e`):** en databasefejl ved læsning af ordrens ledger-rækker blev vist som "Merch Dashboard har ingen gemt historik for ordre #N." i stedet for en fejl, fordi `SalesRepository::entries()` behandlede et tomt svar fra `wpdb::get_results()` ved en SQL-fejl som ingen rækker. Fejlen fandtes også før PR #2. **Rettelse:** `entries()` kontrollerer nu også `$wpdb->last_error` og kaster den eksisterende `DatabaseException`. Ordrens side viser derfor ordrehistorikkens fejlmeddelelse, og en synkronisering, hvis ledger-læsning fejler, rulles tilbage og registreres som `db_error` i stedet for at planlægge ud fra en tom ledger. Regressionstests med en simuleret SQL-fejl i det isolerede testmiljø: `SalesRepositoryTest` (repositoryet og synkroniseringen) og `OrderHistoryAdminTest` (ordrens side). Pushet til `main`; CI er grøn i alle fire jobs (run `38891031636`, MySQL 8.0.46). Ikke runtime-verificeret i Merch Dashboard Local. `cycle_state()` og `taxes_for_order()` er ikke ændret.
 
 Kendte begrænsninger står under Technical debt.
 
