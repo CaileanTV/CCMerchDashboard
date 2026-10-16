@@ -717,7 +717,8 @@ final class SalesRepository {
 	private function entries( ?string $sql ): array {
 		$rows = null === $sql ? null : $this->wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Callers pass the result of $wpdb->prepare().
 
-		if ( ! is_array( $rows ) ) {
+		// A failed query returns an empty array, not null: only last_error tells it from no rows.
+		if ( ! is_array( $rows ) || '' !== $this->wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the sales ledger.' );
 		}
 

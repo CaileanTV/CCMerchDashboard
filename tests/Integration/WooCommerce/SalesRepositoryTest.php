@@ -13,13 +13,17 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\WooCommerce;
 
+use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Modules\WooCommerce\Sales\OrderLineSnapshot;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCorrectionReason;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEvent;
 use MerchBoard\Modules\WooCommerce\Sales\SalesConnectionChangedException;
@@ -29,9 +33,14 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesEntryType;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerState;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerWrite;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLockTimeoutException;
+use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
+use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\SalesWriteResult;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\FakeOrderReader;
+use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use RuntimeException;
 use Throwable;
 use wpdb;
@@ -41,11 +50,37 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 	private const ORDER = 7;
 
 	/**
+	 * Start of the ledger's row SELECT, as SalesRepository::entries_for_*() prepare it (ENTRY_COLUMNS).
+	 */
+	private const LEDGER_SELECT = 'SELECT id, event_key, creator_id, order_id, order_item_id, cycle, refund_id, product_id, variation_id, item_name, type, correction_reason, quantity, net_amount, currency, occurred_at, created_at FROM ';
+
+	/**
 	 * Second database connection, when a test opened one.
 	 *
 	 * @var wpdb|null
 	 */
 	private ?wpdb $other = null;
+
+	/**
+	 * The `query` filter of fail_ledger_reads(), removed in tearDown().
+	 *
+	 * @var Closure|null
+	 */
+	private ?Closure $query_filter = null;
+
+	/**
+	 * Every statement while fail_ledger_reads() is active.
+	 *
+	 * @var list<string>
+	 */
+	private array $statements = array();
+
+	/**
+	 * Ledger SELECTs that fail_ledger_reads() made fail.
+	 *
+	 * @var int
+	 */
+	private int $failed_reads = 0;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -53,6 +88,11 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 	}
 
 	protected function tearDown(): void {
+		if ( null !== $this->query_filter ) {
+			remove_filter( 'query', $this->query_filter );
+			$this->query_filter = null;
+		}
+
 		$this->wpdb->query( 'DROP TRIGGER IF EXISTS merchboard_test_fail' );
 
 		if ( null !== $this->other ) {
@@ -304,6 +344,90 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 
 		self::assertSame( $before_sales, $this->rows( Tables::SALES ), 'Neither s:10:1 nor s:11:1 survived.' );
 		self::assertSame( $before_cycles, $this->rows( Tables::SALES_CYCLES ), 'No cycle event survived.' );
+	}
+
+	public function test_a_failed_ledger_read_is_a_database_error_not_an_empty_history(): void {
+		$refund = array(
+			'type'       => SalesEntryType::Refund,
+			'refund_id'  => 100,
+			'quantity'   => -1,
+			'net_amount' => '-30',
+		);
+		$this->write( self::ORDER, array( $this->entry( 's:10:1' ), $this->entry( 'r:10:100', $refund ) ) );
+		$before     = $this->rows( Tables::SALES );
+		$repository = $this->repository();
+		$this->fail_ledger_reads();
+
+		foreach ( array(
+			'order'      => static fn() => $repository->entries_for_order( self::ORDER ),
+			'order item' => static fn() => $repository->entries_for_order_item( self::ORDER, 10 ),
+			'refund'     => static fn() => $repository->entries_for_refund( 100 ),
+		) as $case => $read ) {
+			try {
+				$read();
+				self::fail( 'Expected DatabaseException: ' . $case );
+			} catch ( DatabaseException $e ) {
+				self::assertSame( 'Could not read the sales ledger.', $e->getMessage(), $case );
+			}
+		}
+
+		self::assertSame( 3, $this->failed_reads, 'Exactly the three ledger SELECTs failed.' );
+		self::assertSame( $before, $this->rows( Tables::SALES ), 'Nothing changed.' );
+	}
+
+	public function test_a_failed_ledger_read_in_the_synchronization_is_db_error_and_rolls_back(): void {
+		$reader = new FakeOrderReader();
+		$marker = new RecordingFailureMarker();
+		$logger = new RecordingLogger();
+		$sync   = new SalesSynchronizer( $this->repository(), new SalesPlanner(), $reader, $marker, $logger, static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-09-29 12:00:00', new DateTimeZone( 'UTC' ) ) );
+
+		$reader->orders[ self::ORDER ] = array(
+			'status'   => 'completed',
+			'currency' => 'DKK',
+			'lines'    => array( self::line( 11 ) ),
+			'refunds'  => array(),
+		);
+		$sync->sync( self::ORDER );
+		self::assertSame( array( 's:11:1' ), array_column( $this->rows( Tables::SALES ), 'event_key' ) );
+
+		// A new line: the next synchronization would write s:12:1.
+		$reader->orders[ self::ORDER ]['lines'][] = self::line( 12 );
+		$before                                   = array( $this->rows( Tables::SALES ), $this->rows( Tables::SALES_CYCLES ), $this->count_rows( Tables::SALES_TAX ) );
+		$this->fail_ledger_reads();
+
+		$sync->sync( self::ORDER );
+
+		// R0 ran first inside the transaction; the ledger read right after it failed.
+		$start = array_search( 'START TRANSACTION', $this->statements, true );
+		self::assertIsInt( $start );
+		self::assertStringContainsString( "option_name = '" . Migrator::VERSION_OPTION . "' LOCK IN SHARE MODE", $this->statements[ $start + 1 ], 'R0: the version row.' );
+		self::assertStringContainsString( '`' . $this->table( Tables::G1_STATE ) . '`', $this->statements[ $start + 2 ], 'R0: the activation row.' );
+		self::assertStringEndsWith( 'LOCK IN SHARE MODE', $this->statements[ $start + 2 ] );
+		self::assertStringStartsWith( self::LEDGER_SELECT . '`' . $this->table( Tables::SALES ) . '`', $this->statements[ $start + 3 ], 'Then the ledger read.' );
+		self::assertSame( 1, $this->failed_reads );
+		self::assertContains( 'ROLLBACK', array_slice( $this->statements, $start + 4 ) );
+		self::assertNotContains( 'COMMIT', array_slice( $this->statements, $start + 4 ) );
+
+		self::assertSame( $before, array( $this->rows( Tables::SALES ), $this->rows( Tables::SALES_CYCLES ), $this->count_rows( Tables::SALES_TAX ) ), 'Rolled back: no new row.' );
+		self::assertSame( array( 'clear:7', 'record:7:db_error' ), $marker->calls );
+		self::assertSame(
+			array(
+				array(
+					'order_id' => self::ORDER,
+					'code'     => 'db_error',
+				),
+			),
+			array_column( $logger->at( 'error' ), 'context' )
+		);
+
+		// Readable again: the next synchronization writes the new line.
+		self::assertNotNull( $this->query_filter );
+		remove_filter( 'query', $this->query_filter );
+		$this->query_filter = null;
+		$sync->sync( self::ORDER );
+
+		self::assertSame( array( 's:11:1', 's:12:1' ), array_column( $this->rows( Tables::SALES ), 'event_key' ) );
+		self::assertSame( array( 'clear:7', 'record:7:db_error', 'clear:7' ), $marker->calls );
 	}
 
 	public function test_planner_exception_and_row_of_another_order_roll_back(): void {
@@ -566,6 +690,37 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 	 */
 	private function repository( int $timeout = 5 ): SalesRepository {
 		return new SalesRepository( $this->wpdb, new Transaction( $this->wpdb, new TransactionSupport( $this->wpdb ) ), $timeout );
+	}
+
+	/**
+	 * From now on the ledger's row SELECT, and only it, fails with a real SQL
+	 * error (a table that does not exist); every statement is recorded. The
+	 * filter is removed in tearDown(), also when the test fails.
+	 */
+	private function fail_ledger_reads(): void {
+		$select             = self::LEDGER_SELECT . '`' . $this->table( Tables::SALES ) . '`';
+		$this->query_filter = function ( string $sql ) use ( $select ): string {
+			$this->statements[] = $sql;
+
+			if ( ! str_starts_with( $sql, $select ) ) {
+				return $sql;
+			}
+
+			++$this->failed_reads;
+
+			return 'SELECT * FROM merchboard_no_such_table';
+		};
+		add_filter( 'query', $this->query_filter );
+		$this->wpdb->suppress_errors( true );
+	}
+
+	/**
+	 * A line of product 20 by creator 3 (synchronizer tests).
+	 *
+	 * @param int $item Item id.
+	 */
+	private static function line( int $item ): OrderLineSnapshot {
+		return new OrderLineSnapshot( $item, 20, 0, 'Line ' . $item, 2, SalesAmount::parse( '100' ), 3 );
 	}
 
 	/**

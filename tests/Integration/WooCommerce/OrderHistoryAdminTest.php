@@ -585,6 +585,32 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'The order history could not be read. Please try again later.', $html );
 		self::assertStringNotContainsString( 'Gift card order registration could not be checked', $html );
 		self::assertSame( array( array( 'error', 'The order history could not be read.', array( 'error' => DatabaseException::class ) ) ), $this->page_log() );
+
+		// The order's page: only its ledger row SELECT (SalesRepository::entries_for_order()) fails.
+		remove_all_filters( 'query' );
+		$select = 'SELECT id, event_key, creator_id, order_id, order_item_id, cycle, refund_id, product_id, variation_id, item_name, type, correction_reason, quantity, net_amount, currency, occurred_at, created_at FROM `' . $ledger . '`';
+		$failed = 0;
+		add_filter(
+			'query',
+			static function ( string $query ) use ( $select, &$failed ): string {
+				if ( ! str_starts_with( $query, $select ) ) {
+					return $query;
+				}
+
+				++$failed;
+
+				return 'SELECT * FROM merchboard_no_such_table';
+			}
+		);
+
+		$order = $this->render( array( 'order' => '3001' ) );
+
+		self::assertSame( 1, $failed, 'Only the order\'s ledger read failed.' );
+		self::assertStringContainsString( 'The order history could not be read. Please try again later.', $order );
+		self::assertStringNotContainsString( 'has no stored history', $order, 'A read error is never shown as a missing history.' );
+		self::assertStringNotContainsString( 'Ledger events', $order );
+		self::assertStringNotContainsString( 'Gift card order registration could not be checked', $order );
+		self::assertSame( array_fill( 0, 2, array( 'error', 'The order history could not be read.', array( 'error' => DatabaseException::class ) ) ), $this->page_log() );
 	}
 
 	public function test_the_page_offers_no_deletion_or_other_write_action(): void {
