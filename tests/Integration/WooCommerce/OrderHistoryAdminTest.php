@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
@@ -121,6 +122,13 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	 * @var FakeOrderRegistryGiftCardProvider|null
 	 */
 	private ?FakeOrderRegistryGiftCardProvider $registry = null;
+
+	/**
+	 * Logger of the page, when a test reads it (null = a fresh one per page).
+	 *
+	 * @var RecordingLogger|null
+	 */
+	private ?RecordingLogger $page_logger = null;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -525,6 +533,60 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 		self::assertStringContainsString( $label, $this->render( array( 'order' => '3001' ) ), 'Activated, the order before the cut-off.' );
 	}
 
+	public function test_g1_unreadable_payouts_are_not_checked_and_the_ledger_is_still_shown(): void {
+		$this->gift_card_payout( '601' );
+		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
+		$logger                               = new RecordingLogger();
+		$this->page_logger                    = $logger;
+		// Only the read of the registered payout cards fails.
+		add_filter( 'query', static fn( string $query ): string => str_contains( $query, 'gift_card_provider IS NOT NULL' ) ? 'SELECT * FROM merchboard_no_such_table' : $query );
+		$this->wpdb->suppress_errors( true );
+
+		$list  = $this->render( array( 'status' => 'all' ) );
+		$order = $this->render( array( 'order' => '3001' ) );
+
+		self::assertStringContainsString( '#3001</a>', $list, 'The ledger list is shown.' );
+		self::assertStringContainsString( '#3004</a>', $list );
+		self::assertStringContainsString( 'Ledger events', $order, 'The order\'s ledger is shown.' );
+		$this->assert_not_checked( array( $list, $order ) );
+		self::assertSame( array_fill( 0, 2, array( 'error', 'The payout gift cards could not be read for the order history.', array( 'error' => DatabaseException::class ) ) ), $this->page_log() );
+		self::assertStringNotContainsString( 'MB-HISTORY-CARD', (string) wp_json_encode( $logger->entries ) );
+	}
+
+	public function test_g1_an_unexpected_adapter_error_is_not_checked_and_logged_by_class_only(): void {
+		$this->gift_card_payout( '601' );
+		$registry                             = $this->with_registry();
+		$this->fake->cards['MB-HISTORY-CARD'] = new GiftCardSnapshot( '601', 200000, 0, 'DKK', GiftCardStatus::Active, null, true );
+		$registry->orders                     = array( '601' => array( 3001 ) );
+		$registry->registry_fail              = new RuntimeException( 'boom MB-HISTORY-CARD 3001' );
+		$logger                               = new RecordingLogger();
+		$this->page_logger                    = $logger;
+
+		$list  = $this->render( array( 'status' => 'all' ) );
+		$order = $this->render( array( 'order' => '3001' ) );
+
+		self::assertStringContainsString( '#3001</a>', $list, 'The ledger list is shown.' );
+		self::assertStringContainsString( 'Ledger events', $order, 'The order\'s ledger is shown.' );
+		$this->assert_not_checked( array( $list, $order ) );
+		self::assertSame( array_fill( 0, 2, array( 'error', 'The payout gift cards could not be read for the order history.', array( 'error' => RuntimeException::class ) ) ), $this->page_log() );
+		self::assertStringNotContainsString( 'boom', (string) wp_json_encode( $logger->entries ), 'Never the exception\'s message.' );
+	}
+
+	public function test_a_ledger_error_is_still_shown_as_an_order_history_error(): void {
+		$this->gift_card_payout( '601' );
+		$this->page_logger = new RecordingLogger();
+		$ledger            = $this->table( Tables::SALES );
+		add_filter( 'query', static fn( string $query ): string => str_starts_with( ltrim( $query ), 'SELECT' ) && str_contains( $query, $ledger ) ? 'SELECT * FROM merchboard_no_such_table' : $query );
+		$this->wpdb->suppress_errors( true );
+
+		// The list (OrderHistory throws on a failed query); the gift card lookup is never reached.
+		$html = $this->render( array( 'status' => 'all' ) );
+
+		self::assertStringContainsString( 'The order history could not be read. Please try again later.', $html );
+		self::assertStringNotContainsString( 'Gift card order registration could not be checked', $html );
+		self::assertSame( array( array( 'error', 'The order history could not be read.', array( 'error' => DatabaseException::class ) ) ), $this->page_log() );
+	}
+
 	public function test_the_page_offers_no_deletion_or_other_write_action(): void {
 		$before = $this->counts();
 
@@ -807,7 +869,34 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 	 * The page with a lookup that does not need WooCommerce.
 	 */
 	private function page(): OrderHistoryPage {
-		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), new RecordingLogger(), new SettlementRepository( $this->wpdb ), new PayoutGiftCardOrders( new PayoutRepository( $this->wpdb ), new GiftCardProviders( array( $this->registry ?? $this->fake ) ), new RecordingLogger() ) );
+		return new OrderHistoryPage( $this->history, $this->details, $this->lookup(), new CreatorRepository( $this->wpdb ), $this->page_logger ?? new RecordingLogger(), new SettlementRepository( $this->wpdb ), new PayoutGiftCardOrders( new PayoutRepository( $this->wpdb ), new GiftCardProviders( array( $this->registry ?? $this->fake ) ), new RecordingLogger() ) );
+	}
+
+	/**
+	 * The page's log as [level, message, context].
+	 *
+	 * @return list<array{0: string, 1: string, 2: array<string, mixed>}>
+	 */
+	private function page_log(): array {
+		self::assertNotNull( $this->page_logger );
+
+		return array_map( static fn( array $entry ): array => array( $entry['level'], $entry['message'], $entry['context'] ), $this->page_logger->entries );
+	}
+
+	/**
+	 * Requires "could not be checked", never the plugin's record or "unsupported".
+	 *
+	 * @phpstan-param list<string> $views
+	 *
+	 * @param string[] $views Rendered HTML.
+	 */
+	private function assert_not_checked( array $views ): void {
+		foreach ( $views as $html ) {
+			self::assertStringContainsString( 'Gift card order registration could not be checked', $html );
+			self::assertStringNotContainsString( 'The order history could not be read', $html );
+			self::assertStringNotContainsString( 'Registered by gift card plugin', $html );
+			self::assertStringNotContainsString( 'does not support', $html );
+		}
 	}
 
 	/**

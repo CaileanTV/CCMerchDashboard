@@ -28,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Sales\OrderHistoryFilter;
 use MerchBoard\Modules\WooCommerce\Sales\OrderHistoryRow;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEventType;
+use Throwable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -271,7 +272,7 @@ final class OrderHistoryPage {
 		}
 
 		$settled = null === $this->settlements ? null : $this->settlements->settlements_for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ), $filter->creator_id );
-		$cards   = $this->gift_cards?->for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ) );
+		$cards   = $this->gift_card_lookup( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ) );
 
 		$this->paid_with_cards = $cards['paid'] ?? array();
 
@@ -578,6 +579,36 @@ final class OrderHistoryPage {
 	}
 
 	/**
+	 * The payout gift cards recorded on the orders (G1), or null when not
+	 * shown. A lookup that throws (the payouts cannot be read, an adapter
+	 * fails unexpectedly) is "could not be checked", never "not recorded" or
+	 * "not supported", and does not stop the readable ledger from being shown.
+	 * Only the exception's class is logged.
+	 *
+	 * @phpstan-param list<int> $order_ids
+	 *
+	 * @param int[] $order_ids Orders.
+	 * @return array{paid: array<int, list<int>>, unsupported: bool, failed: bool}|null
+	 */
+	private function gift_card_lookup( array $order_ids ): ?array {
+		if ( null === $this->gift_cards ) {
+			return null;
+		}
+
+		try {
+			return $this->gift_cards->for_orders( $order_ids );
+		} catch ( Throwable $e ) {
+			$this->logger->error( 'The payout gift cards could not be read for the order history.', array( 'error' => $e::class ) );
+
+			return array(
+				'paid'        => array(),
+				'unsupported' => false,
+				'failed'      => true,
+			);
+		}
+	}
+
+	/**
 	 * What the gift card plugin itself recorded about the order and payout
 	 * gift cards (G1). Shown as the plugin's record, never as a confirmed
 	 * payout status (owner decision B2, 2026-10-16), whatever G1's activation
@@ -585,14 +616,14 @@ final class OrderHistoryPage {
 	 * `merchboard_manage_payouts`.
 	 *
 	 * @param int $order_id Order.
-	 * @throws DatabaseException When the payouts cannot be read.
 	 */
 	private function render_payout_card( int $order_id ): void {
-		if ( null === $this->gift_cards ) {
+		$cards = $this->gift_card_lookup( array( $order_id ) );
+
+		if ( null === $cards ) {
 			return;
 		}
 
-		$cards   = $this->gift_cards->for_orders( array( $order_id ) );
 		$payouts = $cards['paid'][ $order_id ] ?? array();
 
 		if ( array() !== $payouts ) {
