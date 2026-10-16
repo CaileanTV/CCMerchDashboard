@@ -3302,6 +3302,54 @@ Schema-version 11 (`CreateSettlementTables`). Ledgeren og payouts ændres ikke.
 - **Note 2026-10-13 (trin 24.2, adgang):** ordrehistorikken (`merchboard_manage_creators`) viser pr. ordre og ledger-række, om den er afregnet, og bilagsnummeret. Det er projektejerens bevidste valg og udvider 060-5 alene for nummer og optælling: bilagets indhold ses fortsat kun på payout-siden med `merchboard_manage_payouts`, og linket til udbetalingen vises kun med den capability.
 - **Note 2026-10-16 (PDF og skabelonversion 2, projektejerens beslutning):** nye bilag udstedes med skabelonversion 2. Mærket "Foreløbigt, ikke godkendt af revisor/SKAT" (060-9) erstattes for dem af en neutral oplysning om skat og indberetning: creatoren er selv ansvarlig for at undersøge og opfylde sine forpligtelser over for Skattestyrelsen; bilaget er ikke skatterådgivning og ikke godkendt af en revisor eller Skattestyrelsen. Bilag med skabelonversion 1 bevarer deres mærkning og indhold. Som tillæg til 060-5 kan bilaget hentes som PDF (creator: `GET /me/payouts/{id}/settlement-document/pdf`; admin: "Hent PDF" på payout-siden via `admin-post.php`, `merchboard_manage_payouts` og nonce pr. payout). PDF'en dannes ved hver hentning ud fra det gemte, uforanderlige bilag og gemmes aldrig (ingen migration, ingen ny kolonne); samme bilag, skabelonversion og webstedsindstillinger giver samme bytes. Den laves af en minimal egen PDF-generator (`MerchBoard\Core\Pdf\PdfWriter`, standardfontene Helvetica med WinAnsi), så ADR-004 overholdes. Før PDF'en dannes, skal bilaget stemme med sine rækker (kommission, profit og saldo efter bilaget); ellers dannes ingen PDF. Gebyrer, tilbageholdelser og moms af kommissionen vises ikke, da datamodellen ikke har godkendte data for dem; rækkernes moms vises som "Moms på salget". Teksten er generel information, ikke juridisk rådgivning, og opfylder ikke i sig selv krav til selvfakturering; R1–R4 er fortsat uafklarede (formelle fakturakrav ved selvfakturering, moms af kommission, 20 %-reglen og aftalegrundlaget).
 - Afregningsbilag er ikke godkendt af revisor eller SKAT; R1–R4 og ADR-059 blokerer produktionsbrug.
+- **Note 2026-10-17 (R4):** aftalegrundlaget for omvendt fakturering er forretningsmæssigt afklaret med dokumenterede forbehold (ADR-061). Det er ikke en godkendelse af bilaget: bilaget og dets formuleringer er ikke gennemgået af SKAT, revisor eller advokat, og R1–R3 og ADR-059 er fortsat uafklarede og blokerer produktionsbrug.
 
 ## Related
-ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058, ADR-059.
+ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058, ADR-059, ADR-061.
+
+---
+
+# ADR-061: Aftalegrundlag for omvendt fakturering: forretningsmæssig afklaring med forbehold (R4)
+
+## Date
+2026-10-17
+
+## Status
+Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R4: forretningsmæssigt afklaret med dokumenterede forbehold.** Beslutningen er ikke en juridisk, momsmæssig eller regnskabsmæssig godkendelse af modellen og lukker ingen andre blokeringer (R1–R3, G1–G3 og ADR-059's åbne dele er uændrede). Supplerer ADR-060.
+
+## Context
+R4, aftalegrundlaget for omvendt fakturering ([reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13.6 punkt 11 og 13.7), afventede ekstern afklaring hos revisor eller jurist. Grundlaget for omvendt fakturering er projektejerens gengivelse af en mundtlig vejledning fra SKAT (rapportens afsnit 13; ADR-060). Vilkårene for samarbejdet med creators (streamere) er hidtil gennemgået mundtligt, og aftaler indgås uden for Merch Dashboard; pluginet har intet accept-flow (13.7).
+
+## Decision
+1. **Grundlag:** virksomheden baserer sin model for omvendt fakturering på den mundtlige vejledning fra SKAT. Ifølge projektejerens gengivelse af vejledningen skal udbetalingerne håndteres ved omvendt fakturering, og der må ikke beregnes moms på udbetalingen til en creator, der ikke er momsregistreret. SKAT har ikke stillet konkrete krav til standardaftalens indhold og har ikke gennemgået afregningsbilagene. Oplysningerne er projektejerens gengivelse af en mundtlig vejledning, ikke en verificeret skriftlig afgørelse.
+2. **Ingen yderligere vurdering:** virksomheden indhenter ikke yderligere skriftlig vurdering fra revisor eller advokat af R4.
+3. **Standardaftale (virksomhedens planlagte model):** en skriftlig standardaftale samler de vilkår, der hidtil er gennemgået mundtligt med creators, og bruges også som grundlag for nye samarbejder.
+   - Aftalen omfatter provision (kommission) fra produktsalg. Andre betalingstyper, fx bonusser og sponsorater, er ikke omfattet.
+   - Den individuelle provisionssats fastlægges særskilt for den enkelte creator; virksomheden beregner salg og provision ud fra den aftalte sats.
+   - Aftalen gælder som udgangspunkt, indtil samarbejdet afsluttes.
+   - Væsentlige ændringer skal accepteres skriftligt igen; mindre ændringer kan meddeles skriftligt.
+   - Ved samarbejdets afslutning foretages en endelig afregning af optjent provision.
+   - Afregningsbilaget sendes til creatoren, normalt på udbetalingsdatoen.
+4. **Overgang (virksomhedens valgte arbejdsgang og plan):** eksisterende creators skal acceptere standardaftalen før næste udbetaling; nye creators, før samarbejdet starter. Accepten dokumenteres skriftligt, så den kan findes igen. Det er en arbejdsgang, ikke en verificeret ret til at tilbageholde betalinger (forbehold 4 og 5).
+5. **Uden for pluginet:** standardaftalen og accepterne håndteres og opbevares uden for Merch Dashboard (13.7). Beslutningen ændrer ingen kode: pluginet registrerer og kontrollerer ikke accept, og det sender ikke bilag (bilaget gøres tilgængeligt for creatoren, når payouten gennemføres, ADR-060). Digital registrering af accept er fortsat kun en overvejelse (ROADMAP, "Senere").
+
+## Alternatives considered
+Skriftlig vurdering fra revisor eller advokat af aftalegrundlaget før produktionsbrug (rapportens afsnit 13.6, punkt 11). Fravalgt af projektejeren.
+
+## Reason
+Projektejerens forretningsbeslutning: modellen baseres på den modtagne mundtlige vejledning fra SKAT, og de hidtil mundtlige vilkår skriftliggøres i en standardaftale, uden yderligere skriftlig vurdering.
+
+## Consequences
+- R4 har status "forretningsmæssigt afklaret med dokumenterede forbehold" (rapportens register 16.1). R4 er ikke betinget af yderligere rådgivning; forbeholdene nedenfor bevares i dokumentationen.
+- **Forbehold (uafklarede forhold):**
+  1. De eksisterende mundtlige aftaler og beskeder er ikke konkret vurderet i forhold til kravene til omvendt fakturering.
+  2. Standardaftalens nødvendige indhold er ikke særskilt fagligt valideret.
+  3. Det eksisterende afregningsbilag og dets formuleringer (ADR-060, skabelonversion 1 og 2) er ikke gennemgået eller godkendt af SKAT, revisor eller advokat.
+  4. Det er ikke konkret afklaret, hvordan manglende accept håndteres i eksisterende samarbejder.
+  5. Det er ikke konkret afklaret, hvordan allerede optjent provision håndteres, hvis en creator ikke accepterer den nye aftale.
+  6. Momsbehandlingen af ikke-momsregistrerede creators (punkt 1) bygger på projektejerens gengivelse af SKAT's mundtlige vejledning og er ikke en selvstændig validering af den samlede regnskabsmodel.
+- **Andre blokeringer er uændrede:** R1 (moms, momstekst, dokumenttyper, formkrav, bogføring og gavekortbehandling), R2 (20 %-reglen, ADR-049), R3 (opbevaring), G1–G3 og ADR-059's åbne dele lukkes ikke. Forbehold 3 og 6 overlapper R1 og R2. R4's afklaring dokumenterer ikke, at juridiske, momsmæssige eller regnskabsmæssige krav er opfyldt.
+- Ingen kode-, schema- eller API-ændringer.
+
+## Related
+ADR-049, ADR-059, ADR-060; [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13.6, 13.7 og 16.1.
