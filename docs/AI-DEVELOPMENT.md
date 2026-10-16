@@ -88,6 +88,31 @@ Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper,
 - **Forbudt uden eksplicit instruktion:** `git push --force`, `git reset --hard` på brugerændringer, rebase/amend af pushede commits, sletning af branches, `--no-verify` og commit af `.env`, credentials, API-nøgler, passwords eller tokens.
 - **Branching:** Indtil videre committes direkte til `main` (én udvikler og CI på hvert push). Når projektet er i produktion eller har flere udviklere, skiftes til korte feature-branches (`phase/NN-navn`, `fix/…`) med PR og grøn CI før merge. Det registreres som ADR.
 
+### VS Code Source Control som overblik
+
+Arbejde på tværs af parallelle repositories, worktrees og branches har tidligere fjernet det normale overblik i VS Code. Derfor gælder fremover:
+
+- **Udgangspunktet:** VS Code Source Control i det primære repo (det, der er åbnet i VS Code) er det synlige overblik over ændringer, staged changes, commits og working tree-status. Arbejd som udgangspunkt i det primære repo.
+- **Parallelle repositories og worktrees:** undgå dem, medmindre der er en konkret, nødvendig grund, og det er godkendt på forhånd.
+- **Isoleret kopi:** arbejder Claude alligevel i en isoleret kopi, skal dens placering, branch og commit fremgå tydeligt. Ændringerne føres kontrolleret tilbage til det primære workflow, før overblikket i VS Code regnes for genoprettet.
+- **Før staging eller commit:** gennemgå ændringerne i VS Code Source Control. Det skal være tydeligt, hvilke filer der hører til den aktuelle opgave.
+- **Commit:** commit kun eksplicit gennemgåede filer. Brug aldrig `git add -A` eller `git commit -a` som genvej.
+- **Ændringer uden for opgaven:** bevar og undersøg dem. Kassér dem ikke, og commit dem ikke bare for at få Source Control til at se rent ud.
+- **Verifikation:** Source Control er det visuelle overblik, men `git status` og præcise diff-kontroller bruges fortsat som verifikation.
+
+**Status (2026-10-16, efter PR #2):**
+
+- PR #2 (G1-24.4 med B2–B5 og b1/b2-rettelsen) er squash-merget til `main` som `950890c` (parent `9b60b8a`). CI på merge-committen er grøn i alle fire jobs (PHP 8.2, MySQL 8.0.46). Merge er ikke en release.
+- Hovedrepoets arbejdstræ er bragt på linje med `main`. De tidligere 82 ikke-håndterede filer blev ikke committet; deres indhold er bevaret i branchen `backup/g1-24.4-wip-2026-10-14` (`5904db9`), lokalt og på GitHub.
+- Den isolerede kopi `C:\Users\jnn\MerchBoard-work\g1-trin-a-2026-10-15\tree` (branch `g1-trin-a-b2-b5-implementation-2026-10-16`, `31d33a7`) er ikke længere arbejdssted; dens indhold er i `main`. Arkivering kræver særskilt beslutning.
+
+**Kendt udestående:**
+
+- Merch Dashboard Local er stoppet. Næste start med `main`'s kode migrerer Local-databasen til schema 13 (sidst dokumenteret: 11); en dokumenteret og verificeret backup- og gendannelsesprocedure skal godkendes først.
+- Runtime-verifikation mod rigtig WooCommerce og YITH er ikke udført.
+- Fail closed-risikoen i staging og produktion er uafklaret.
+- G1-dokumentationen (ADMIN, DECISIONS, PROJECT-STATUS, ROADMAP, TESTING og fase 23-rapporten) er ikke opdateret til B2–B5.
+
 ## Kodekonventioner (kort)
 
 - **PHP:** WordPress Coding Standards: tabs, `snake_case` for funktioner, metoder og variabler. Klassenavne i PascalCase med PSR-4-filnavne (`CreatorService` i `src/Modules/Creators/CreatorService.php`). `declare( strict_types=1 );` i alle filer i `src/`. Typed properties, parametre og return types overalt. Readonly entities. Enums for faste værdisæt.
