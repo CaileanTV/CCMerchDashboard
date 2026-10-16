@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitGap;
@@ -27,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Sales\OrderHistoryFilter;
 use MerchBoard\Modules\WooCommerce\Sales\OrderHistoryRow;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEventType;
+use Throwable;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -48,6 +50,10 @@ defined( 'ABSPATH' ) || exit;
  *   rows are settled and in which settlement documents; the order shows the
  *   document of each event. Read from the stored documents, never
  *   recalculated. Links to the payout only with `merchboard_manage_payouts`.
+ * - **Payout gift cards (G1):** an order the gift card plugin recorded as
+ *   paid with a card of a completed payout is marked in the list and
+ *   explained on the order; its commission basis is not decided, so the
+ *   ledger is unchanged. When the plugin cannot be read, that is said.
  *
  * No customer data and no item names (ADR-037 pkt. 10). Every request
  * parameter is validated; invalid values are ignored with a notice. The page
@@ -81,6 +87,13 @@ final class OrderHistoryPage {
 	private array $names = array();
 
 	/**
+	 * Orders of the current list paid with a payout gift card: payout ids by order (G1).
+	 *
+	 * @var array<int, list<int>>
+	 */
+	private array $paid_with_cards = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param OrderHistory              $history     Unique orders of the ledger.
@@ -89,6 +102,7 @@ final class OrderHistoryPage {
 	 * @param CreatorRepository         $creators    Creator names.
 	 * @param Logger                    $logger      Technical log.
 	 * @param SettlementRepository|null $settlements Settled ledger rows (ADR-060, read only); null = not shown.
+	 * @param PayoutGiftCardOrders|null $gift_cards  Orders paid with payout gift cards (G1, read only); null = not shown.
 	 */
 	public function __construct(
 		private OrderHistory $history,
@@ -96,7 +110,8 @@ final class OrderHistoryPage {
 		private OrderStatusLookup $orders,
 		private CreatorRepository $creators,
 		private Logger $logger,
-		private ?SettlementRepository $settlements = null
+		private ?SettlementRepository $settlements = null,
+		private ?PayoutGiftCardOrders $gift_cards = null
 	) {
 	}
 
@@ -257,6 +272,18 @@ final class OrderHistoryPage {
 		}
 
 		$settled = null === $this->settlements ? null : $this->settlements->settlements_for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ), $filter->creator_id );
+		$cards   = $this->gift_card_lookup( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ) );
+
+		$this->paid_with_cards = $cards['paid'] ?? array();
+
+		if ( true === ( $cards['unsupported'] ?? false ) ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Gift card plugin does not support order registration lookup', 'merchboard' ) . '</p></div>';
+		}
+
+		if ( true === ( $cards['failed'] ?? false ) ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Gift card order registration could not be checked', 'merchboard' ) . '</p></div>';
+		}
+
 		echo '<table class="widefat striped merchboard-order-history-table"><thead><tr>';
 
 		foreach ( array_merge( array( __( 'Order', 'merchboard' ), __( 'Ledger dates', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Currency', 'merchboard' ), __( 'Events / lines', 'merchboard' ), __( 'Stored net amount', 'merchboard' ), __( 'Tax data', 'merchboard' ), __( 'Profit data', 'merchboard' ) ), null === $settled ? array() : array( __( 'Settlement', 'merchboard' ) ) ) as $heading ) {
@@ -303,7 +330,13 @@ final class OrderHistoryPage {
 		$order = $this->orders->find( $row->order_id );
 
 		echo '<tr><td><a href="' . esc_url( self::url( array( 'order' => $row->order_id ) ) ) . '">' . esc_html( sprintf( '#%d', $row->order_id ) ) . '</a>';
-		echo '<br><span class="description">' . esc_html( $order['status'] ) . '</span></td>';
+		echo '<br><span class="description">' . esc_html( $order['status'] ) . '</span>';
+
+		if ( isset( $this->paid_with_cards[ $row->order_id ] ) ) {
+			echo '<br><strong>' . esc_html__( 'Registered by gift card plugin — payout status not confirmed', 'merchboard' ) . '</strong>';
+		}
+
+		echo '</td>';
 		echo '<td>' . esc_html( self::date( $row->first_at ) ) . ( $row->first_at->getTimestamp() === $row->last_at->getTimestamp() ? '' : '<br>– ' . esc_html( self::date( $row->last_at ) ) ) . '</td>';
 		echo '<td>' . esc_html( implode( ', ', array_map( array( $this, 'creator_name' ), $row->creator_ids ) ) ) . '</td>';
 		echo '<td>' . esc_html( $row->currency ) . '</td>';
@@ -384,6 +417,7 @@ final class OrderHistoryPage {
 		}
 
 		echo '</p>';
+		$this->render_payout_card( $order_id );
 
 		$cycles = array_map(
 			static fn( $event ): string => sprintf(
@@ -542,6 +576,78 @@ final class OrderHistoryPage {
 		}
 
 		return $html;
+	}
+
+	/**
+	 * The payout gift cards recorded on the orders (G1), or null when not
+	 * shown. A lookup that throws (the payouts cannot be read, an adapter
+	 * fails unexpectedly) is "could not be checked", never "not recorded" or
+	 * "not supported", and does not stop the readable ledger from being shown.
+	 * Only the exception's class is logged.
+	 *
+	 * @phpstan-param list<int> $order_ids
+	 *
+	 * @param int[] $order_ids Orders.
+	 * @return array{paid: array<int, list<int>>, unsupported: bool, failed: bool}|null
+	 */
+	private function gift_card_lookup( array $order_ids ): ?array {
+		if ( null === $this->gift_cards ) {
+			return null;
+		}
+
+		try {
+			return $this->gift_cards->for_orders( $order_ids );
+		} catch ( Throwable $e ) {
+			$this->logger->error( 'The payout gift cards could not be read for the order history.', array( 'error' => $e::class ) );
+
+			return array(
+				'paid'        => array(),
+				'unsupported' => false,
+				'failed'      => true,
+			);
+		}
+	}
+
+	/**
+	 * What the gift card plugin itself recorded about the order and payout
+	 * gift cards (G1). Shown as the plugin's record, never as a confirmed
+	 * payout status (owner decision B2, 2026-10-16), whatever G1's activation
+	 * and cut-off are (B3). The payout is linked only for a user with
+	 * `merchboard_manage_payouts`.
+	 *
+	 * @param int $order_id Order.
+	 */
+	private function render_payout_card( int $order_id ): void {
+		$cards = $this->gift_card_lookup( array( $order_id ) );
+
+		if ( null === $cards ) {
+			return;
+		}
+
+		$payouts = $cards['paid'][ $order_id ] ?? array();
+
+		if ( array() !== $payouts ) {
+			$links     = array_map(
+				static function ( int $id ): string {
+					/* translators: %d: payout id. */
+					$label = esc_html( sprintf( __( 'Payout #%d', 'merchboard' ), $id ) );
+
+					return current_user_can( Capabilities::MANAGE_PAYOUTS ) ? '<a href="' . esc_url( PayoutsPage::url( array( 'payout' => $id ) ) ) . '">' . $label . '</a>' : $label;
+				},
+				$payouts
+			);
+			$undecided = esc_html__( 'How such orders count towards the creator\'s commission is not decided yet (G1); the ledger, the balances and the settlement documents treat this order like any other order.', 'merchboard' );
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Registered by gift card plugin — payout status not confirmed', 'merchboard' ) . '</strong>: ' . implode( ', ', $links ) . '</p><p>' . $undecided . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The links and $undecided are escaped above.
+			return;
+		}
+
+		if ( $cards['unsupported'] ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Gift card plugin does not support order registration lookup', 'merchboard' ) . '</p></div>';
+		}
+
+		if ( $cards['failed'] ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Gift card order registration could not be checked', 'merchboard' ) . '</p></div>';
+		}
 	}
 
 	/**

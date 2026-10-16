@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
@@ -23,10 +24,12 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardAvailability;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardOrderRegistry;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviderException;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardSnapshot;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\YithGiftCardProvider;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
@@ -55,6 +58,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeGiftCardProvider;
+use MerchBoard\Tests\Integration\Support\FakeOrderRegistryGiftCardProvider;
 use MerchBoard\Tests\Integration\Support\FakeOrderReader;
 use MerchBoard\Tests\Integration\Support\PostMetaPricingProductStore;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
@@ -94,7 +98,16 @@ final class PayoutGiftCardsTest extends IntegrationTestCase {
 
 	private PayoutActions $actions;
 
+	private PayoutGiftCardOrders $card_orders;
+
 	private FakeGiftCardProvider $fake;
+
+	/**
+	 * The fake with the optional order lookup (null = the plain fake is used).
+	 *
+	 * @var FakeOrderRegistryGiftCardProvider|null
+	 */
+	private ?FakeOrderRegistryGiftCardProvider $registry = null;
 
 	private RecordingLogger $logger;
 
@@ -223,6 +236,234 @@ final class PayoutGiftCardsTest extends IntegrationTestCase {
 		$this->card( '502', '20', null, 'OTHER-CODE' );
 		self::assertStringContainsString( 'result=not_pending', $this->actions->handle( $this->register_input( $payout->id, 'OTHER-CODE' ) ) );
 		self::assertSame( '501', $this->repository->find( $payout->id )?->gift_card_external_id );
+	}
+
+	public function test_g1_a_code_is_a_payout_card_only_when_registered_also_without_the_order_lookup(): void {
+		// The plain fake implements only GiftCardProvider (ADR-057), not the optional GiftCardOrderRegistry.
+		self::assertArrayNotHasKey( GiftCardOrderRegistry::class, (array) class_implements( $this->fake ) );
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-1' );
+		$this->card( '501', '20' );
+
+		$this->fake->availability = GiftCardAvailability::unavailable( GiftCardAvailability::INACTIVE );
+		self::assertFalse( $this->card_orders->is_payout_card( self::CODE ), 'No card registered on a payout: approved, even with the provider unavailable.' );
+		self::assertSame( array(), $this->fake->reads, 'Without registered payout cards no provider is contacted.' );
+		$this->fake->availability = GiftCardAvailability::available( '1.0.0' );
+
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+		$this->card( '502', '20', null, 'SHOP-GIFT-CARD' );
+		$before = $this->counts();
+		$reads  = count( $this->fake->reads );
+
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ) );
+		self::assertFalse( $this->card_orders->is_payout_card( 'SHOP-GIFT-CARD' ), 'An ordinary gift card of the shop.' );
+		self::assertFalse( $this->card_orders->is_payout_card( 'SUMMER10' ), 'Not a gift card at all.' );
+		self::assertFalse( $this->card_orders->is_payout_card( '  ' ) );
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'Asked again: the same answer.' );
+		self::assertSame( array_fill( 0, 4, array( 'find_by_code', '' ) ), array_slice( $this->fake->reads, $reads ), 'Only lookups by code; a blank code is not looked up.' );
+		self::assertSame( $before, $this->counts(), 'Checking codes writes nothing.' );
+	}
+
+	public function test_g1_the_coupon_check_fails_closed_when_a_registered_card_cannot_be_checked(): void {
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-2' );
+		$this->card( '501', '20' );
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+		$before = $this->counts();
+
+		$unknown = new PayoutGiftCardOrders( $this->repository, new GiftCardProviders( array() ), $this->logger );
+		$this->uncheckable( $unknown, 'SUMMER10', GiftCardProviderException::UNAVAILABLE, 'The provider of a registered card is unknown.' );
+
+		foreach ( array( GiftCardAvailability::NOT_INSTALLED, GiftCardAvailability::INACTIVE, GiftCardAvailability::UNSUPPORTED_VERSION, GiftCardAvailability::SELF_TEST_FAILED ) as $code ) {
+			$this->fake->availability = GiftCardAvailability::unavailable( $code );
+			$this->uncheckable( $this->card_orders, 'SUMMER10', GiftCardProviderException::UNAVAILABLE, 'Provider ' . $code . '.' );
+		}
+
+		$this->fake->availability = GiftCardAvailability::available( '1.0.0' );
+
+		foreach ( array( GiftCardProviderException::AMBIGUOUS, GiftCardProviderException::INVALID_DATA, GiftCardProviderException::READ_FAILED ) as $reason ) {
+			$this->failing( new GiftCardProviderException( $reason ) );
+			$this->uncheckable( $this->card_orders, 'ANY-CODE', $reason, 'Lookup ' . $reason . '.' );
+		}
+
+		$this->failing( new RuntimeException( 'Boom' ) );
+
+		try {
+			$this->card_orders->is_payout_card( 'ANY-CODE' );
+			self::fail( 'An unexpected error is not "no".' );
+		} catch ( RuntimeException $e ) {
+			self::assertSame( 'Boom', $e->getMessage() );
+		}
+
+		$this->fake->fail = null;
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'Readable again.' );
+		self::assertSame( $before, $this->counts(), 'Nothing is written.' );
+		self::assertStringNotContainsString( 'ANY-CODE', (string) wp_json_encode( $this->logger->entries ) );
+
+		// The payouts themselves cannot be read.
+		$this->wpdb->suppress_errors( true );
+		$this->execute( 'DROP TABLE %i', $this->table( Tables::PAYOUTS ) );
+		$this->forget_table_metadata();
+
+		try {
+			$this->card_orders->is_payout_card( 'SUMMER10' );
+			self::fail( 'A database error is not "no".' );
+		} catch ( DatabaseException ) {
+			$this->addToAssertionCount( 1 );
+		}
+	}
+
+	public function test_g1_an_adapter_without_the_order_lookup_is_unsupported_never_an_error_or_not_paid(): void {
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-3' );
+		$this->card( '501', '20' );
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+		$before = $this->counts();
+		$logged = count( $this->logger->entries );
+
+		$expected = array(
+			'paid'        => array(),
+			'unsupported' => true,
+			'failed'      => false,
+		);
+		self::assertSame( $expected, $this->card_orders->for_orders( array( 9101, 9102 ) ) );
+		self::assertSame( array( 'orders' => null, 'reason' => PayoutGiftCardOrders::UNSUPPORTED ), $this->card_orders->for_payout( $payout->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$html = $this->render( array( 'payout' => (string) $payout->id ) );
+		self::assertStringContainsString( 'Gift card plugin does not support order registration lookup', $html );
+		self::assertStringNotContainsString( 'Gift card order registration could not be checked', $html, 'Unsupported is not a failed lookup.' );
+		self::assertStringNotContainsString( 'Registered by gift card plugin', $html );
+		self::assertStringContainsString( 'Status: active.', $html, 'The rest of the page is unaffected.' );
+		self::assertCount( $logged, $this->logger->entries, 'Nothing to log: not an error.' );
+		self::assertSame( $before, $this->counts() );
+	}
+
+	public function test_g1_the_plugins_order_records_are_shown_labelled_and_change_nothing(): void {
+		$registry = $this->with_registry();
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-4' );
+		$this->card( '501', '20' );
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+		// Checkout (coupon field or the plugin's form) recorded two orders on the payout card;
+		// an ordinary card of the shop paid another order.
+		$this->card( '502', '50', null, 'SHOP-GIFT-CARD' );
+		$registry->orders = array(
+			'501' => array( 9101, 9103 ),
+			'502' => array( 9102 ),
+		);
+		// An E2 assessment exists for both orders; the plugin's record does not show or change it.
+		$this->wpdb->insert( $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ), array( 'order_id' => 9101, 'status' => 'not_paid', 'updated_at' => '2026-11-30 12:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->wpdb->insert( $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ), array( 'order_id' => 9103, 'status' => 'pending', 'updated_at' => '2026-11-30 12:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$assessments = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM %i ORDER BY order_id', $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ) ), ARRAY_A );
+		$before      = $this->counts();
+		$balance     = $this->balance();
+
+		$expected = array(
+			'paid'        => array(
+				9101 => array( $payout->id ),
+				9103 => array( $payout->id ),
+			),
+			'unsupported' => false,
+			'failed'      => false,
+		);
+		self::assertSame( $expected, $this->card_orders->for_orders( array( 9101, 9102, 9103, 9104 ) ) );
+		self::assertSame( $expected, $this->card_orders->for_orders( array( 9101, 9102, 9103, 9104 ) ), 'Repeated: the same answer, nothing registered twice.' );
+		self::assertSame( array( 'orders' => array( 9101, 9103 ), 'reason' => null ), $this->card_orders->for_payout( $payout->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'orders' => null, 'reason' => PayoutGiftCardOrders::FAILED ), $this->card_orders->for_payout( 999 ), 'No registered card.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array_fill( 0, 4, array( '501' ) ), $registry->lookups, 'Only cards registered on payouts are asked for, by id.' );
+
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ) );
+		self::assertCount( 4, $registry->lookups, 'The coupon check does not use the order lookup.' );
+
+		$html = $this->render( array( 'payout' => (string) $payout->id ) );
+		self::assertStringContainsString( '<strong>Registered by gift card plugin — payout status not confirmed</strong><br>Orders: <a', $html );
+		self::assertStringContainsString( '#9101</a>, <a', $html );
+		self::assertStringNotContainsString( '#9102', $html );
+		self::assertStringNotContainsString( 'not_paid', $html, 'The assessment is not shown as or mixed into the plugin record.' );
+		self::assertStringNotContainsString( 'does not support', $html );
+		self::assertStringNotContainsString( 'could not be checked', $html );
+		self::assertStringNotContainsString( self::CODE, $html );
+
+		$registry->orders = array();
+		self::assertStringContainsString( '<strong>Registered by gift card plugin — payout status not confirmed</strong><br>Orders: None', $this->render( array( 'payout' => (string) $payout->id ) ), 'No order recorded on the card.' );
+
+		self::assertSame( $before, $this->counts(), 'Nothing is written: no ledger row, payout, audit record, document or G1 row.' );
+		self::assertSame( $assessments, $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM %i ORDER BY order_id', $this->table( Tables::ORDER_GIFT_CARD_ASSESSMENTS ) ), ARRAY_A ), 'The assessments are unchanged.' );
+		self::assertSame( $balance, $this->balance(), 'The commission basis is not changed (G1 undecided).' );
+	}
+
+	public function test_g1_a_failed_lookup_is_distinguished_from_an_unsupported_one(): void {
+		$registry = $this->with_registry();
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-5' );
+		$this->card( '501', '20' );
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+		$registry->orders = array( '501' => array( 9101 ) );
+		$unsupported      = array(
+			'paid'        => array(),
+			'unsupported' => true,
+			'failed'      => false,
+		);
+		$failed           = array(
+			'paid'        => array(),
+			'unsupported' => false,
+			'failed'      => true,
+		);
+
+		// The plugin lacks the record (e.g. YITH without YWGC_META_GIFT_CARD_ORDERS) while the adapter is available.
+		$registry->registry = GiftCardAvailability::unavailable( GiftCardAvailability::SELF_TEST_FAILED, '1.0.0' );
+		self::assertSame( $unsupported, $this->card_orders->for_orders( array( 9101 ) ) );
+		self::assertStringContainsString( 'Gift card plugin does not support order registration lookup', $this->render( array( 'payout' => (string) $payout->id ) ) );
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'Still refused as a payout card, not as "cannot be checked".' );
+		self::assertSame( array(), $registry->lookups, 'An unavailable lookup is not called.' );
+		$registry->registry = GiftCardAvailability::available( '1.0.0' );
+
+		$registry->registry_fail = new GiftCardProviderException( GiftCardProviderException::INVALID_DATA );
+		self::assertSame( $failed, $this->card_orders->for_orders( array( 9101 ) ), 'Not exact.' );
+		self::assertSame( array( 'warning', 'The orders recorded on payout gift cards could not be read.', array( 'provider' => 'fake', 'reason' => 'invalid_data' ) ), array_values( (array) end( $this->logger->entries ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$html = $this->render( array( 'payout' => (string) $payout->id ) );
+		self::assertStringContainsString( 'Gift card order registration could not be checked', $html );
+		self::assertStringNotContainsString( 'does not support', $html );
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'The coupon check does not depend on the lookup.' );
+		$registry->registry_fail = null;
+
+		$this->fake->availability = GiftCardAvailability::unavailable( GiftCardAvailability::INACTIVE );
+		self::assertSame( $failed, $this->card_orders->for_orders( array( 9101 ) ), 'Plugin inactive: cannot be checked, not unsupported.' );
+		self::assertSame( array( 'orders' => null, 'reason' => PayoutGiftCardOrders::FAILED ), $this->card_orders->for_payout( $payout->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->fake->availability = GiftCardAvailability::available( '1.0.0' );
+
+		$this->fake->cards = array();
+		self::assertSame( $failed, $this->card_orders->for_orders( array( 9101 ) ), 'The card was deleted in the plugin.' );
+		self::assertStringNotContainsString( self::CODE, (string) wp_json_encode( $this->logger->entries ) );
+	}
+
+	public function test_g1_the_coupon_check_does_not_depend_on_g1_activation_or_cut_off(): void {
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-6' );
+		$this->card( '501', '20' );
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'G1 not activated.' );
+		$this->activate( '2027-01-01 00:00:00' );
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'Activated, the order before the cut-off.' );
+		$this->activate( '2026-01-01 00:00:00' );
+		self::assertTrue( $this->card_orders->is_payout_card( self::CODE ), 'Activated, the order after the cut-off.' );
+		self::assertFalse( $this->card_orders->is_payout_card( 'SUMMER10' ) );
+	}
+
+	public function test_g1_the_views_do_not_depend_on_g1_activation_or_cut_off(): void {
+		$registry = $this->with_registry();
+		$this->earn( 3 );
+		$payout = $this->request( '20', 'key-gc-g1-7' );
+		$this->card( '501', '20' );
+		$this->actions->handle( $this->register_input( $payout->id, self::CODE ) );
+		$registry->orders = array( '501' => array( 9101 ) );
+		$shown            = '<strong>Registered by gift card plugin — payout status not confirmed</strong><br>Orders: <a';
+
+		self::assertStringContainsString( $shown, $this->render( array( 'payout' => (string) $payout->id ) ), 'G1 not activated.' );
+		$this->activate( '2027-01-01 00:00:00' );
+		self::assertStringContainsString( $shown, $this->render( array( 'payout' => (string) $payout->id ) ), 'Activated, the order before the cut-off.' );
+		self::assertSame( array( 9101 ), $this->card_orders->for_payout( $payout->id )['orders'] );
 	}
 
 	public function test_cards_that_do_not_fit_are_refused_and_nothing_changes(): void {
@@ -431,12 +672,15 @@ final class PayoutGiftCardsTest extends IntegrationTestCase {
 		self::assertSame( 'yith-wcgc', $yith->id() );
 		self::assertFalse( $yith->availability()->available );
 		self::assertContains( $yith->availability()->code, array( GiftCardAvailability::NOT_INSTALLED, GiftCardAvailability::INACTIVE ) );
+		self::assertEquals( $yith->availability(), $yith->order_registry_availability(), 'The lookup is unavailable for the same reason.' );
 
-		try {
-			$yith->find_by_code( self::CODE );
-			self::fail( 'No read without the plugin.' );
-		} catch ( GiftCardProviderException $e ) {
-			self::assertSame( GiftCardProviderException::UNAVAILABLE, $e->reason() );
+		foreach ( array( fn() => $yith->find_by_code( self::CODE ), fn() => $yith->orders_paid_with( array( '501' ) ) ) as $read ) {
+			try {
+				$read();
+				self::fail( 'No read without the plugin.' );
+			} catch ( GiftCardProviderException $e ) {
+				self::assertSame( GiftCardProviderException::UNAVAILABLE, $e->reason() );
+			}
 		}
 	}
 
@@ -444,19 +688,20 @@ final class PayoutGiftCardsTest extends IntegrationTestCase {
 	 * Builds the services with the fake provider and a fixed clock.
 	 */
 	private function services(): void {
-		$clock            = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
-		$transaction      = new Transaction( $this->wpdb, new TransactionSupport( $this->wpdb ) );
-		$audit            = $this->service( AuditTrail::class );
-		$cipher           = new PayoutCipher( base64_encode( random_bytes( 32 ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A test key.
-		$providers        = new GiftCardProviders( array( $this->fake ) );
-		$this->repository = new PayoutRepository( $this->wpdb );
-		$balances         = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
-		$documents        = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock );
-		$this->decisions  = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, $documents );
-		$this->requests   = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock, $providers );
-		$this->gift_cards = new PayoutGiftCards( $this->repository, $balances, $providers, $audit, $transaction, $this->logger, $clock, $documents );
-		$this->page       = new PayoutsPage( $this->repository, $this->decisions, $cipher, $this->creators, $this->logger, $providers );
-		$this->actions    = new PayoutActions( $this->decisions, $this->logger, $this->gift_cards );
+		$clock             = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+		$transaction       = new Transaction( $this->wpdb, new TransactionSupport( $this->wpdb ) );
+		$audit             = $this->service( AuditTrail::class );
+		$cipher            = new PayoutCipher( base64_encode( random_bytes( 32 ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A test key.
+		$providers         = new GiftCardProviders( array( $this->registry ?? $this->fake ) );
+		$this->repository  = new PayoutRepository( $this->wpdb );
+		$balances          = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
+		$documents         = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock );
+		$this->decisions   = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, $documents );
+		$this->requests    = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock, $providers );
+		$this->gift_cards  = new PayoutGiftCards( $this->repository, $balances, $providers, $audit, $transaction, $this->logger, $clock, $documents );
+		$this->card_orders = new PayoutGiftCardOrders( $this->repository, $providers, $this->logger );
+		$this->page        = new PayoutsPage( $this->repository, $this->decisions, $cipher, $this->creators, $this->logger, $providers, null, null, $this->card_orders );
+		$this->actions     = new PayoutActions( $this->decisions, $this->logger, $this->gift_cards );
 	}
 
 	/**
@@ -592,6 +837,65 @@ final class PayoutGiftCardsTest extends IntegrationTestCase {
 			);
 			$this->sync->sync( $order );
 		}
+	}
+
+	/**
+	 * Rows of the tables a G1 read must never write.
+	 *
+	 * @return list<int>
+	 */
+	private function counts(): array {
+		return array_map( array( $this, 'count_rows' ), array( Tables::SALES, Tables::SALES_CYCLES, Tables::PAYOUTS, Tables::AUDIT_LOG, Tables::SETTLEMENT_DOCUMENTS, Tables::SETTLEMENT_ROWS, Tables::ORDER_GIFT_CARD_ASSESSMENTS, Tables::ORDER_GIFT_CARD_PAYOUTS, Tables::ORDER_GIFT_CARD_ATTEMPTS ) );
+	}
+
+	/**
+	 * Uses the fake with the optional order lookup from now on.
+	 */
+	private function with_registry(): FakeOrderRegistryGiftCardProvider {
+		$registry       = new FakeOrderRegistryGiftCardProvider( $this->fake );
+		$this->registry = $registry;
+		$this->services();
+
+		return $registry;
+	}
+
+	/**
+	 * Activates G1 directly on its row (test setup; nothing in G1's coupon
+	 * check or views may depend on it, owner decision B3).
+	 *
+	 * @param string $cutoff Cut-off (UTC).
+	 */
+	private function activate( string $cutoff ): void {
+		self::assertSame( 1, $this->execute( "UPDATE %i SET cutoff_utc = %s, activated_at = '2026-08-31 00:00:00', activated_by = 1 WHERE id = 1", $this->table( Tables::G1_STATE ), $cutoff ) );
+	}
+
+	/**
+	 * Requires the coupon check to be impossible (fail closed), never "no".
+	 *
+	 * @param PayoutGiftCardOrders $orders  The check.
+	 * @param string               $code    Code.
+	 * @param string               $reason  Expected provider reason.
+	 * @param string               $message Message.
+	 */
+	private function uncheckable( PayoutGiftCardOrders $orders, string $code, string $reason, string $message ): void {
+		try {
+			$orders->is_payout_card( $code );
+			self::fail( 'Expected the check to be impossible: ' . $message );
+		} catch ( GiftCardProviderException $e ) {
+			self::assertSame( $reason, $e->reason(), $message );
+		}
+	}
+
+	/**
+	 * The creator's DKK balance as [earned, completed, reserved].
+	 *
+	 * @return array{0: int|null, 1: int, 2: int}
+	 */
+	private function balance(): array {
+		$clock   = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+		$balance = ( new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock ) )->in_currency( $this->creator, 'DKK' );
+
+		return array( $balance->earned_units, $balance->completed_units, $balance->reserved_units );
 	}
 
 	/**

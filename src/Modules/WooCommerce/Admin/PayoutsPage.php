@@ -17,6 +17,7 @@ use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalance;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
@@ -89,14 +90,15 @@ final class PayoutsPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param PayoutRepository         $payouts   Payouts (read only).
-	 * @param PayoutDecisions          $decisions The audited view of full details.
-	 * @param PayoutCipher             $cipher    Whether a valid key is configured.
-	 * @param CreatorRepository        $creators  Creator names.
-	 * @param Logger                   $logger    Technical log.
-	 * @param GiftCardProviders|null   $providers Gift card adapters (links and reconciliation); null = none.
-	 * @param SettlementDocuments|null $documents Settlement documents (ADR-060); null = none.
-	 * @param PayoutBalances|null      $balances  Balances per creator and currency (ADR-054); null = no balances view.
+	 * @param PayoutRepository          $payouts   Payouts (read only).
+	 * @param PayoutDecisions           $decisions The audited view of full details.
+	 * @param PayoutCipher              $cipher    Whether a valid key is configured.
+	 * @param CreatorRepository         $creators  Creator names.
+	 * @param Logger                    $logger    Technical log.
+	 * @param GiftCardProviders|null    $providers Gift card adapters (links and reconciliation); null = none.
+	 * @param SettlementDocuments|null  $documents Settlement documents (ADR-060); null = none.
+	 * @param PayoutBalances|null       $balances  Balances per creator and currency (ADR-054); null = no balances view.
+	 * @param PayoutGiftCardOrders|null $gift_card_orders Orders paid with payout gift cards (G1); null = not shown.
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -106,7 +108,8 @@ final class PayoutsPage {
 		private Logger $logger,
 		private ?GiftCardProviders $providers = null,
 		private ?SettlementDocuments $documents = null,
-		private ?PayoutBalances $balances = null
+		private ?PayoutBalances $balances = null,
+		private ?PayoutGiftCardOrders $gift_card_orders = null
 	) {
 	}
 
@@ -549,6 +552,27 @@ final class PayoutsPage {
 		}
 
 		echo '<p>' . esc_html( $text ) . '</p>';
+
+		if ( null !== $this->gift_card_orders ) {
+			// G1: the orders the plugin recorded as paid with this card; the
+			// plugin's record, never a confirmed payout status (B2).
+			try {
+				$lookup = $this->gift_card_orders->for_payout( $payout->id );
+			} catch ( Throwable ) {
+				$lookup = array(
+					'orders' => null,
+					'reason' => PayoutGiftCardOrders::FAILED,
+				);
+			}
+
+			if ( null === $lookup['orders'] ) {
+				echo '<p>' . esc_html( PayoutGiftCardOrders::UNSUPPORTED === $lookup['reason'] ? __( 'Gift card plugin does not support order registration lookup', 'merchboard' ) : __( 'Gift card order registration could not be checked', 'merchboard' ) ) . '</p>';
+			} else {
+				$orders = array() === $lookup['orders'] ? esc_html__( 'None', 'merchboard' ) : implode( ', ', array_map( static fn( int $id ): string => '<a href="' . esc_url( OrderHistoryPage::url( array( 'order' => $id ) ) ) . '">' . esc_html( sprintf( '#%d', $id ) ) . '</a>', $lookup['orders'] ) );
+				echo '<p><strong>' . esc_html__( 'Registered by gift card plugin — payout status not confirmed', 'merchboard' ) . '</strong><br>' . esc_html__( 'Orders', 'merchboard' ) . ': ' . $orders . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+			}
+		}
+
 		$link = $provider->admin_url( $payout->gift_card_external_id );
 
 		if ( null !== $link ) {

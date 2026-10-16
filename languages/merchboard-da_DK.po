@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-13T19:21:00+00:00\n"
+"PO-Revision-Date: 2026-10-15T23:21:33+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -718,20 +718,20 @@ msgstr "Tidspunkt"
 
 #: src/Modules/Admin/AuditLogListTable.php:92
 #: src/Modules/Admin/AuditLogPage.php:235
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 msgid "Event"
 msgstr "Hændelse"
 
 #: src/Modules/Admin/AuditLogListTable.php:93
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:339
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:431
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:596
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:371
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:434
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:620
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
 msgid "Creator"
@@ -786,7 +786,7 @@ msgid "Business changes to creators and settings: who changed what, and when. Re
 msgstr "Forretningsændringer af creators og indstillinger: hvem ændrede hvad og hvornår. Poster kan ikke ændres eller slettes her."
 
 #: src/Modules/Admin/AuditLogPage.php:195
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:208
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:222
 msgid "Some filter values were invalid and have been ignored."
 msgstr "Nogle filterværdier var ugyldige og er ignoreret."
 
@@ -815,7 +815,7 @@ msgid "Creator #%s"
 msgstr "Creator #%s"
 
 #: src/Modules/Admin/AuditLogPage.php:267
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:354
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:386
 msgid "Filter"
 msgstr "Filtrér"
 
@@ -926,7 +926,7 @@ msgid "Transaction support"
 msgstr "Transaktionsunderstøttelse"
 
 #: src/Modules/Admin/OverviewPage.php:192
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
 #: build/dashboard.js:13
 msgid "Available"
 msgstr "Tilgængelig"
@@ -1088,8 +1088,8 @@ msgstr "Visningsnavn"
 #: src/Modules/Creators/Admin/CreatorsListTable.php:77
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:435
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:438
 #: build/dashboard.js:2
 #: build/dashboard.js:5
 #: build/dashboard.js:16
@@ -1485,7 +1485,7 @@ msgstr "Afstemningen afgør ikke disse produkter. Ret dem i WooCommerce (produkt
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 #: build/dashboard.js:2
 #: build/dashboard.js:12
 #: build/dashboard.js:16
@@ -1919,7 +1919,7 @@ msgstr "En produktmarkup kan kun sættes for et simpelt eller variabelt produkt;
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:94
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:72
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:180
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:183
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret; prøv igen senere."
 
@@ -1942,7 +1942,7 @@ msgid "Product #%1$d: %2$s"
 msgstr "Produkt #%1$d: %2$s"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:152
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:619
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:694
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:31
 msgid "Creator markup"
 msgstr "Creatorens markup"
@@ -1961,18 +1961,18 @@ msgstr "0–100 %, højst to decimaler. Eksempel: en salgspris på 100,00 med 20
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:174
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:177
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:613
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:688
 msgid "VAT registered"
 msgstr "Momsregistreret"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:178
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:597
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
 #: build/dashboard.js:9
 msgid "Yes"
 msgstr "Ja"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:179
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:597
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
 #: build/dashboard.js:9
 msgid "No"
 msgstr "Nej"
@@ -1994,7 +1994,7 @@ msgid "Changing the VAT status changes no product prices and no earlier order li
 msgstr "Ændring af momsstatus ændrer ingen produktpriser og ingen tidligere ordrelinjer eller udbetalinger: hver ordrelinje beholder den status, den havde, da den blev oprettet."
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:195
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:619
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:694
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:31
 msgid "Product markup"
 msgstr "Produktmarkup"
@@ -2274,6 +2274,7 @@ msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"
 
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:571
 #: build/dashboard.js:2
 msgid "None"
 msgstr "Ingen"
@@ -2332,6 +2333,7 @@ msgstr "Enheder"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:146
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:164
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:572
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
 #: build/dashboard.js:3
 #: build/dashboard.js:19
@@ -2361,243 +2363,262 @@ msgid "Day"
 msgstr "Dag"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryActions.php:73
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:501
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:534
 msgid "Sorry, you are not allowed to delete order history."
 msgstr "Du har ikke adgang til at slette ordrehistorik."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:110
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:124
 msgid "Merch Dashboard Order History"
 msgstr "Merch Dashboard ordrehistorik"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:111
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:195
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:125
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:209
 msgid "Order history"
 msgstr "Ordrehistorik"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:190
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:204
 msgid "Sorry, you are not allowed to view the order history."
 msgstr "Du har ikke adgang til at se ordrehistorikken."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:196
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:210
 msgid "What Merch Dashboard has stored in its sales ledger, per WooCommerce order. One row per order; open an order to see its ledger events, order lines and why its profit is complete or not. The stored history is append-only; only the history of an order that is in the WooCommerce trash or deleted (e.g. a test order) can be deleted, on the order's page."
 msgstr "Det, Merch Dashboard har gemt i sin salgsledger, pr. WooCommerce-ordre. Én række pr. ordre; åbn en ordre for at se dens ledger-hændelser, ordrelinjer og hvorfor profitten er komplet eller ej. Den gemte historik er append-only; kun historikken for en ordre, der ligger i WooCommerce-papirkurven eller er slettet (fx en testordre), kan slettes, på ordrens side."
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:200
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:214
 #, php-format
 msgid "The stored history of order #%d was deleted. The WooCommerce order was not changed."
 msgstr "Den gemte historik for ordre #%d er slettet. WooCommerce-ordren er ikke ændret."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:219
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:233
 msgid "The order history could not be read. Please try again later."
 msgstr "Ordrehistorikken kunne ikke læses. Prøv igen senere."
 
 #. translators: %s: number of orders.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:242
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:256
 #, php-format
 msgid "%s order without profit data is hidden: it was stored before Merch Dashboard saved profit snapshots and tax, or its lines had no creator when they were created. Nothing is deleted."
 msgid_plural "%s orders without profit data are hidden: they were stored before Merch Dashboard saved profit snapshots and tax, or their lines had no creator when they were created. Nothing is deleted."
 msgstr[0] "%s ordre uden profitdata er skjult: den blev gemt, før Merch Dashboard gemte profit-snapshots og moms, eller dens linjer havde ingen creator, da de blev oprettet. Intet er slettet."
 msgstr[1] "%s ordrer uden profitdata er skjult: de blev gemt, før Merch Dashboard gemte profit-snapshots og moms, eller deres linjer havde ingen creator, da de blev oprettet. Intet er slettet."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:243
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:257
 msgid "Show all orders"
 msgstr "Vis alle ordrer"
 
 #. translators: %s: number of orders.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:252
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:266
 #, php-format
 msgid "%s order"
 msgid_plural "%s orders"
 msgstr[0] "%s ordre"
 msgstr[1] "%s ordrer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:255
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:269
 msgid "No stored orders match the filter."
 msgstr "Ingen gemte ordrer matcher filteret."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:279
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:614
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:569
+msgid "Gift card plugin does not support order registration lookup"
+msgstr "Gavekort-pluginet understøtter ikke opslag af ordreregistreringer"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:283
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:618
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:569
+#: src/Modules/WooCommerce/Payouts/GiftCards/PayoutGiftCardCouponGuard.php:115
+msgid "Gift card order registration could not be checked"
+msgstr "Gavekortregistreringen kunne ikke kontrolleres"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
 #: build/dashboard.js:2
 #: build/dashboard.js:12
 msgid "Order"
 msgstr "Ordre"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
 msgid "Ledger dates"
 msgstr "Ledger-datoer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
 #: build/dashboard.js:8
 msgid "Currency"
 msgstr "Valuta"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
 msgid "Events / lines"
 msgstr "Hændelser / linjer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:403
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:436
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 msgid "Stored net amount"
 msgstr "Gemt nettobeløb"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
 msgid "Tax data"
 msgstr "Momsdata"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:347
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:379
 msgid "Profit data"
 msgstr "Profitdata"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:262
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:288
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 msgid "Settlement"
 msgstr "Afregning"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:286
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:301
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:389
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:312
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:304
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:392
 msgid "&laquo; Previous"
 msgstr "&laquo; Forrige"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:287
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:302
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:390
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:313
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:305
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:393
 msgid "Next &raquo;"
 msgstr "Næste &raquo;"
 
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:335
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:609
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:572
+msgid "Registered by gift card plugin — payout status not confirmed"
+msgstr "Registreret af gavekort-plugin — payout-status er ikke bekræftet"
+
 #. translators: 1: number of ledger events, 2: number of order lines.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:311
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:343
 #, php-format
 msgid "%1$d events / %2$d lines"
 msgstr "%1$d hændelser / %2$d linjer"
 
 #. translators: 1: rows with stored tax, 2: all rows.
 #. translators: 1: settled ledger rows, 2: all ledger rows.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:314
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:322
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:346
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:354
 #, php-format
 msgid "%1$d of %2$d rows"
 msgstr "%1$d af %2$d rækker"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:319
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:448
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:351
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:481
 msgid "Not settled"
 msgstr "Ikke afregnet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:337
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:369
 msgid "Order ID"
 msgstr "Ordre-ID"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:340
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:372
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:155
 msgid "All creators"
 msgstr "Alle creators"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:348
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:380
 msgid "All orders"
 msgstr "Alle ordrer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:355
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:387
 msgid "Reset"
 msgstr "Nulstil"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:366
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:398
 msgid "← All orders"
 msgstr "← Alle ordrer"
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:372
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:404
 #, php-format
 msgid "Merch Dashboard has no stored history for order #%d."
 msgstr "Merch Dashboard har ingen gemt historik for ordre #%d."
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:379
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:411
 #, php-format
 msgid "Order #%d"
 msgstr "Ordre #%d"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:380
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:412
 msgid "WooCommerce:"
 msgstr "WooCommerce:"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:383
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:415
 msgid "Open in WooCommerce"
 msgstr "Åbn i WooCommerce"
 
 #. translators: 1: cycle number, 2: open or closed, 3: date.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:391
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:424
 #, php-format
 msgid "Cycle %1$d %2$s %3$s"
 msgstr "Cyklus %1$d %2$s %3$s"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:393
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:426
 msgid "opened"
 msgstr "åbnet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:393
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:426
 msgid "closed"
 msgstr "lukket"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:398
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:431
 msgid "No cycle events."
 msgstr "Ingen cyklushændelser."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:400
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:433
 msgid "Order lines"
 msgstr "Ordrelinjer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:403
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:436
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 msgid "Order line"
 msgstr "Ordrelinje"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:403
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:436
 msgid "Events"
 msgstr "Hændelser"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:403
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:436
 msgid "Profit snapshot"
 msgstr "Profit-snapshot"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:418
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:451
 msgid "Ledger events"
 msgstr "Ledger-hændelser"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 #: build/dashboard.js:2
 msgid "Date"
 msgstr "Dato"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 #: build/dashboard.js:2
 msgid "Quantity"
 msgstr "Antal"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 msgid "Stored tax"
 msgstr "Gemt moms"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:423
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:456
 #: build/dashboard.js:2
 #: build/dashboard.js:3
 #: build/dashboard.js:18
 msgid "Profit"
 msgstr "Profit"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:441
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:604
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:474
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:679
 msgid "Missing"
 msgstr "Mangler"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:443
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:571
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:352
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:407
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:597
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:476
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:646
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:355
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:410
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
 #: build/dashboard.js:2
 #: build/dashboard.js:9
 #: build/dashboard.js:13
@@ -2605,130 +2626,141 @@ msgstr "Mangler"
 msgid "Unknown"
 msgstr "Ukendt"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:470
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:485
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:503
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:518
 msgid "Delete stored history"
 msgstr "Slet gemt historik"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:473
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:506
 msgid "The stored history can only be deleted when the WooCommerce order is in the trash or deleted, e.g. a test order. Move the order to the trash in WooCommerce first."
 msgstr "Den gemte historik kan kun slettes, når WooCommerce-ordren ligger i papirkurven eller er slettet, fx en testordre. Flyt først ordren til papirkurven i WooCommerce."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:510
 msgid "Permanently deletes what Merch Dashboard has stored for this order: its ledger rows, cycle events, stored tax and profit snapshots. The order disappears from the creator's sales, statistics and profit. The WooCommerce order is not changed. If it is restored from the trash later, it is registered again without profit data. This cannot be undone."
 msgstr "Sletter permanent det, Merch Dashboard har gemt for denne ordre: ledger-rækker, cyklushændelser, gemt moms og profit-snapshots. Ordren forsvinder fra creatorens salg, statistik og profit. WooCommerce-ordren ændres ikke. Gendannes den senere fra papirkurven, registreres den igen uden profitdata. Det kan ikke fortrydes."
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:483
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:516
 #, php-format
 msgid "Type the order ID (%d) to confirm"
 msgstr "Skriv ordre-ID'et (%d) for at bekræfte"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:496
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:529
 msgid "Nothing was deleted: the typed order ID did not match."
 msgstr "Intet blev slettet: det indtastede ordre-ID passede ikke."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:497
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:530
 msgid "Nothing was deleted: the WooCommerce order is not in the trash or deleted."
 msgstr "Intet blev slettet: WooCommerce-ordren ligger ikke i papirkurven og er ikke slettet."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:498
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:531
 msgid "Nothing was deleted: Merch Dashboard has no stored history for the order."
 msgstr "Intet blev slettet: Merch Dashboard har ingen gemt historik for ordren."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:499
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:532
 msgid "Nothing was deleted: the order is being synchronized right now. Please try again."
 msgstr "Intet blev slettet: ordren synkroniseres lige nu. Prøv igen."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:500
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:533
 msgid "Nothing was deleted: the order is part of a settlement document, so its history is kept."
 msgstr "Intet blev slettet: ordren indgår i et afregningsbilag, så dens historik bevares."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:502
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:535
 msgid "Nothing was deleted: the order history could not be deleted. Please try again later."
 msgstr "Intet blev slettet: ordrehistorikken kunne ikke slettes. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:510
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:543
 msgid "About the profit data"
 msgstr "Om profitdata"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:513
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:546
 msgid "Complete: every ledger row of the order has its profit snapshot and its stored tax, so the creator profit can be calculated (ADR-049)."
 msgstr "Komplet: alle ordrens ledger-rækker har deres profit-snapshot og gemte moms, så creator-profitten kan beregnes (ADR-049)."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:514
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:547
 msgid "Incomplete: some rows have the data, others do not. Unknown: no row has it. Missing history is never filled in, recalculated from current settings or shown as 0."
 msgstr "Ufuldstændig: nogle rækker har data, andre ikke. Ukendt: ingen række har dem. Manglende historik udfyldes aldrig, genberegnes aldrig ud fra nuværende indstillinger og vises aldrig som 0."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:517
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:550
 msgid "The sales ledger, profit snapshots and stored tax are append-only. The one exception: an administrator can delete the stored history of one order once the WooCommerce order is in the trash or deleted, e.g. a test order. That removes the order from the creator's sales and profit and is recorded in the audit log."
 msgstr "Salgsledgeren, profit-snapshots og gemt moms er append-only. Den eneste undtagelse: en administrator kan slette den gemte historik for én ordre, når WooCommerce-ordren ligger i papirkurven eller er slettet, fx en testordre. Det fjerner ordren fra creatorens salg og profit og registreres i audit-loggen."
 
 #. translators: 1: rows with known profit, 2: rows without the data.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:541
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:574
 #, php-format
 msgid "%1$d known, %2$d without data"
 msgstr "%1$d kendte, %2$d uden data"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:568
+#. translators: %d: payout id.
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:602
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:431
+#, php-format
+msgid "Payout #%d"
+msgstr "Udbetaling #%d"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:608
+msgid "How such orders count towards the creator's commission is not decided yet (G1); the ledger, the balances and the settlement documents treat this order like any other order."
+msgstr "Hvordan sådanne ordrer tæller med i creatorens kommission, er endnu ikke besluttet (G1); ledgeren, saldoen og afregningsbilagene behandler ordren som alle andre ordrer."
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:643
 msgid "With profit data (complete or incomplete)"
 msgstr "Med profitdata (komplet eller ufuldstændig)"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:569
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:644
 msgid "Complete"
 msgstr "Komplet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:570
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:645
 #: build/dashboard.js:2
 msgid "Incomplete"
 msgstr "Ufuldstændig"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:582
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:657
 msgid "No profit snapshot: snapshots are taken when an order line is created and only if its product then has a creator. Order lines created before Merch Dashboard recorded snapshots, or before their product was linked to the creator, never have one."
 msgstr "Intet profit-snapshot: snapshots tages, når en ordrelinje oprettes, og kun hvis produktet da har en creator. Ordrelinjer oprettet, før Merch Dashboard gemte snapshots, eller før produktet blev koblet til creatoren, får aldrig et."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:583
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:658
 msgid "The stored profit snapshot of this order line cannot be read."
 msgstr "Ordrelinjens gemte profit-snapshot kan ikke læses."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:584
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:659
 msgid "The snapshot is from the withdrawn pricing model and has no share of the sale price."
 msgstr "Snapshottet er fra den tilbagetrukne prismodel og har ingen andel af salgsprisen."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:585
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:660
 msgid "The snapshot belongs to another creator, product, variation, order or currency than this ledger row."
 msgstr "Snapshottet hører til en anden creator, et andet produkt, en anden variation, ordre eller valuta end denne ledger-række."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:586
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:661
 msgid "No stored tax: ledger rows registered before Merch Dashboard stored the actual tax have none, so the amount paid incl. VAT is unknown."
 msgstr "Ingen gemt moms: ledger-rækker registreret, før Merch Dashboard gemte den faktiske moms, har ingen, så det betalte beløb inkl. moms er ukendt."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:587
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:662
 msgid "The stored tax is in another currency than the ledger row."
 msgstr "Den gemte moms er i en anden valuta end ledger-rækken."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:588
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:663
 msgid "The profit cannot be calculated from the stored data."
 msgstr "Profitten kan ikke beregnes ud fra de gemte data."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:600
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:675
 msgid "Unreadable"
 msgstr "Ulæselig"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:608
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:683
 msgid "Withdrawn model (no share)"
 msgstr "Tilbagetrukket model (ingen andel)"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:612
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:687
 msgid "VAT status unknown"
 msgstr "Momsstatus ukendt"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:613
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:688
 msgid "Not VAT registered"
 msgstr "Ikke momsregistreret"
 
 #. translators: 1: share in percent, 2: source of the share, 3: VAT status.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:617
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:692
 #, php-format
 msgid "%1$s (%2$s) · %3$s"
 msgstr "%1$s (%2$s) · %3$s"
@@ -2743,7 +2775,7 @@ msgstr "Papirkurv"
 
 #: src/Modules/WooCommerce/Admin/PayoutActions.php:94
 #: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:213
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:190
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:193
 msgid "Sorry, you are not allowed to manage payouts."
 msgstr "Du har desværre ikke tilladelse til at administrere udbetalinger."
 
@@ -2782,8 +2814,8 @@ msgid "Not saved: choose one of the listed gift card plugins, or none."
 msgstr "Ikke gemt: vælg et af de viste gavekortplugins eller ingen."
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:85
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:129
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:203
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:132
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:206
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
 msgid "Payouts"
 msgstr "Udbetalinger"
@@ -2854,510 +2886,504 @@ msgstr "Afregningsstart"
 msgid "Save settlement start"
 msgstr "Gem afregningsstart"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:128
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:131
 msgid "Merch Dashboard Payouts"
 msgstr "Merch Dashboard udbetalinger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:153
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:156
 msgid "The request was rejected. The reservation is released and the creator sees your reason."
 msgstr "Anmodningen er afvist. Reservationen er frigivet, og creatoren kan se din begrundelse."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:154
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:157
 msgid "The payout was registered as transferred."
 msgstr "Udbetalingen er registreret som overført."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:155
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
 msgid "Not registered: confirm that you have made the transfer outside Merch Dashboard."
 msgstr "Ikke registreret: bekræft, at du har foretaget overførslen uden for Merch Dashboard."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:156
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
 msgid "Not rejected: enter a reason of at most 500 characters. The creator sees it."
 msgstr "Ikke afvist: angiv en begrundelse på højst 500 tegn. Creatoren kan se den."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:157
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
 msgid "Not registered: the reference may have at most 191 characters."
 msgstr "Ikke registreret: referencen må højst have 191 tegn."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
 msgid "Not saved: the reference or reason must not contain bank or payment details, such as an account number, an IBAN or an e-mail address. Nothing was changed. Use the transaction ID from the bank or PayPal, or describe the reason without the details."
 msgstr "Ikke gemt: referencen eller begrundelsen må ikke indeholde bank- eller betalingsoplysninger som et kontonummer, en IBAN eller en e-mailadresse. Intet blev ændret. Brug transaktions-ID'et fra banken eller PayPal, eller beskriv begrundelsen uden oplysningerne."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
 msgid "This request has already been handled; nothing was changed."
 msgstr "Anmodningen er allerede behandlet; intet blev ændret."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:423
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:426
 msgid "The payout does not exist."
 msgstr "Udbetalingen findes ikke."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
 msgid "Not registered: the creator's balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid."
 msgstr "Ikke registreret: creatorens saldo dækker ikke længere denne udbetaling, fx efter en refundering. Behandl den manuelt: overfør ikke beløbet, og afvis anmodningen, hvis den ikke kan betales."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
 msgid "Not registered: the creator's balance is unknown, because some sales lack the data needed. Handle it manually; nothing is completed automatically."
 msgstr "Ikke registreret: creatorens saldo er ukendt, fordi nogle salg mangler de nødvendige oplysninger. Behandl den manuelt; intet gennemføres automatisk."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
 msgid "The payment details cannot be decrypted (MERCHBOARD_PAYOUT_KEY is missing or was changed). This request can only be rejected."
 msgstr "Betalingsoplysningerne kan ikke dekrypteres (MERCHBOARD_PAYOUT_KEY mangler eller er ændret). Anmodningen kan kun afvises."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
 msgid "You are not allowed to do this."
 msgstr "Du har ikke tilladelse til dette."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
 msgid "Another payout of this creator is being processed. Please try again in a moment."
 msgstr "En anden udbetaling for denne creator behandles lige nu. Prøv igen om et øjeblik."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
 msgid "The gift card was validated and registered. The payout is completed, and the creator can now see the card."
 msgstr "Gavekortet er valideret og registreret. Udbetalingen er gennemført, og creatoren kan nu se kortet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
 msgid "This action does not fit the payout method; nothing was changed."
 msgstr "Handlingen passer ikke til udbetalingsmetoden; intet blev ændret."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
 msgid "Not registered: no available gift card plugin is chosen in Settings → Payouts."
 msgstr "Ikke registreret: der er ikke valgt et tilgængeligt gavekortplugin under Settings → Payouts."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:172
 msgid "Not registered: enter the gift card code."
 msgstr "Ikke registreret: angiv gavekortets kode."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:173
 msgid "Not registered: no gift card has this code."
 msgstr "Ikke registreret: intet gavekort har denne kode."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:174
 msgid "Not registered: several gift cards have this code. Give the card a unique code in the gift card plugin."
 msgstr "Ikke registreret: flere gavekort har denne kode. Giv kortet en entydig kode i gavekortpluginet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:172
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:175
 msgid "Not registered: the gift card's amount, balance, currency or expiry cannot be read exactly. Enter the amount with a decimal point and at most the shop's decimals."
 msgstr "Ikke registreret: gavekortets beløb, saldo, valuta eller udløb kan ikke læses præcist. Angiv beløbet med punktum som decimaltegn og højst butikkens antal decimaler."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:173
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:176
 msgid "Not registered: the gift card could not be validated. Nothing was changed; try again later."
 msgstr "Ikke registreret: gavekortet kunne ikke valideres. Intet blev ændret; prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:174
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:177
 msgid "Not registered: the gift card is not active."
 msgstr "Ikke registreret: gavekortet er ikke aktivt."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:175
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:178
 msgid "Not registered: the gift card has expired."
 msgstr "Ikke registreret: gavekortet er udløbet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:176
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:179
 msgid "Not registered: the gift card has another currency than the payout."
 msgstr "Ikke registreret: gavekortet har en anden valuta end udbetalingen."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:177
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:180
 msgid "Not registered: the gift card's amount is not the payout amount."
 msgstr "Ikke registreret: gavekortets beløb er ikke udbetalingens beløb."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:178
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:181
 msgid "Not registered: the gift card's balance is not its full amount, so it has been used."
 msgstr "Ikke registreret: gavekortets saldo er ikke hele beløbet, så det er blevet brugt."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:179
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:182
 msgid "Not registered: this gift card is already registered on another payout."
 msgstr "Ikke registreret: gavekortet er allerede registreret på en anden udbetaling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:204
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:207
 msgid "Payout requests of creators. Merch Dashboard never sends money: you transfer the amount yourself, outside Merch Dashboard, and then register it here."
 msgstr "Creatorernes anmodninger om udbetaling. Merch Dashboard sender aldrig penge: du overfører selv beløbet uden for Merch Dashboard og registrerer det derefter her."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:207
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:210
 msgid "No valid MERCHBOARD_PAYOUT_KEY is configured in wp-config.php. Creators cannot request bank or PayPal payouts, and pending requests can only be rejected."
 msgstr "Der er ingen gyldig MERCHBOARD_PAYOUT_KEY i wp-config.php. Creators kan ikke anmode om udbetaling via bank eller PayPal, og ventende anmodninger kan kun afvises."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:224
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:227
 msgid "The payouts could not be read. Please try again later."
 msgstr "Udbetalingerne kunne ikke læses. Prøv igen senere."
 
 #. translators: %s: number of requests.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:243
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:246
 #, php-format
 msgid "Queue (%s)"
 msgstr "Kø (%s)"
 
 #. translators: %s: number of requests.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:245
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:248
 #, php-format
 msgid "History (%s)"
 msgstr "Historik (%s)"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:249
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:252
 msgid "Balances"
 msgstr "Saldi"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:252
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:255
 msgid "Payout views"
 msgstr "Visninger af udbetalinger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:270
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:273
 msgid "No handled payouts yet."
 msgstr "Ingen behandlede udbetalinger endnu."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:270
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:273
 msgid "No pending payout requests."
 msgstr "Ingen ventende anmodninger om udbetaling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
 msgid "Payout"
 msgstr "Udbetaling"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:432
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:435
 #: build/dashboard.js:8
 #: build/dashboard.js:16
 msgid "Amount"
 msgstr "Beløb"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:433
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:436
 #: build/dashboard.js:16
 msgid "Method"
 msgstr "Metode"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:434
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:437
 msgid "Destination"
 msgstr "Modtager"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:436
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:439
 #: build/dashboard.js:16
 msgid "Requested"
 msgstr "Anmodet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:276
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:437
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:279
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:440
 #: build/dashboard.js:16
 msgid "Handled"
 msgstr "Behandlet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:329
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:332
 msgid "Released earnings are the creator payouts of sales whose holding period has ended, counted from the settlement start; refunds count at once. Balance = released earnings − paid out − reserved. When a ledger row cannot be calculated, the earnings and the balance are unknown and nothing can be requested."
 msgstr "Frigivet optjening er creator-udbetalingen af salg, hvis karensperiode er udløbet, regnet fra afregningsstarten; refunderinger tæller med det samme. Saldo = frigivet optjening − udbetalt − reserveret. Kan en ledger-række ikke beregnes, er optjeningen og saldoen ukendte, og der kan ikke anmodes om udbetaling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:332
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:335
 msgid "No creators yet."
 msgstr "Ingen creators endnu."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
 msgid "Released earnings"
 msgstr "Frigivet optjening"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
 msgid "Reserved"
 msgstr "Reserveret"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:600
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:760
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:624
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:784
 #: build/dashboard.js:6
 #: build/dashboard.js:12
 #: build/dashboard.js:13
 msgid "Paid out"
 msgstr "Udbetalt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
 msgid "Balance"
 msgstr "Saldo"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:338
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:341
 #: build/dashboard.js:13
 msgid "Outstanding"
 msgstr "Udestående"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:352
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:355
 msgid "No earnings or payouts yet."
 msgstr "Ingen optjening eller udbetalinger endnu."
 
 #. translators: %d: number of ledger rows.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:366
 #, php-format
 msgid "%d ledger row cannot be calculated"
 msgid_plural "%d ledger rows cannot be calculated"
 msgstr[0] "%d ledger-række kan ikke beregnes"
 msgstr[1] "%d ledger-rækker kan ikke beregnes"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:419
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:422
 msgid "← All payouts"
 msgstr "← Alle udbetalinger"
 
-#. translators: %d: payout id.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:428
-#, php-format
-msgid "Payout #%d"
-msgstr "Udbetaling #%d"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:441
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:444
 msgid "Reason"
 msgstr "Begrundelse"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:445
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:448
 msgid "Reference"
 msgstr "Reference"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:449
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:452
 msgid "Payout reference"
 msgstr "Udbetalingsreference"
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:748
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:458
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:772
 #: build/dashboard.js:6
 msgid "Gift card"
 msgstr "Gavekort"
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:458
 #, php-format
 msgid "%1$s, card #%2$s"
 msgstr "%1$s, kort #%2$s"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:493
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:496
 msgid "Register gift card"
 msgstr "Registrér gavekort"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:497
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:500
 msgid "No available gift card plugin is chosen in Settings → Payouts, so no gift card can be registered. The request can be rejected."
 msgstr "Der er ikke valgt et tilgængeligt gavekortplugin under Settings → Payouts, så der kan ikke registreres et gavekort. Anmodningen kan afvises."
 
 #. translators: 1: gift card plugin, 2: amount with currency, 3: payout reference.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:503
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:506
 #, php-format
 msgid "Create a gift card in %1$s with exactly this amount and balance: %2$s (no VAT added or deducted). Note the reference %3$s in its internal notes."
 msgstr "Opret et gavekort i %1$s med præcis dette beløb og denne saldo: %2$s (uden tillæg eller fradrag af moms). Skriv referencen %3$s i kortets interne note."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:504
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:507
 msgid "Do not send or use the card. Enter its code below: Merch Dashboard checks that it is one unused, active card of this amount and currency, then completes the payout and shows the card to the creator."
 msgstr "Send eller brug ikke kortet. Angiv dets kode nedenfor: Merch Dashboard kontrollerer, at det er ét ubrugt, aktivt kort med dette beløb og denne valuta, gennemfører derefter udbetalingen og viser kortet for creatoren."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:509
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:512
 msgid "Create gift card in the plugin"
 msgstr "Opret gavekort i pluginet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:516
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:519
 msgid "Gift card code"
 msgstr "Gavekortkode"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:518
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:521
 msgid "Validate and register gift card"
 msgstr "Validér og registrér gavekort"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:535
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:538
 msgid "Gift card in the plugin now"
 msgstr "Gavekortet i pluginet nu"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:540
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:543
 msgid "The gift card cannot be read now: the plugin is not available, or the card was deleted."
 msgstr "Gavekortet kan ikke læses nu: pluginet er ikke tilgængeligt, eller kortet er slettet."
 
 #. translators: 1: status, 2: balance with currency.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:543
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:546
 #, php-format
 msgid "Status: %1$s. Balance: %2$s."
 msgstr "Status: %1$s. Saldo: %2$s."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:548
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:551
 msgid "The gift card cannot be read now."
 msgstr "Gavekortet kan ikke læses nu."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:555
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:579
 msgid "Open the card in the plugin"
 msgstr "Åbn kortet i pluginet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:571
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:595
 msgid "Settlement document"
 msgstr "Afregningsbilag"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:577
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:601
 msgid "The settlement document cannot be shown. Please try again later."
 msgstr "Afregningsbilaget kan ikke vises. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:582
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:606
 msgid "This payout has no settlement document: it was completed before settlement documents were introduced."
 msgstr "Denne udbetaling har intet afregningsbilag: den blev gennemført, før afregningsbilag blev indført."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:614
 #: build/dashboard.js:10
 msgid "Preliminary, not approved by an auditor or SKAT."
 msgstr "Foreløbigt, ikke godkendt af revisor/SKAT."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:593
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:617
 msgid "Document number"
 msgstr "Bilagsnummer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:594
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:618
 #: build/dashboard.js:12
 msgid "Issued"
 msgstr "Udstedt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:595
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:619
 #: build/dashboard.js:12
 #: build/dashboard.js:19
 msgid "Period"
 msgstr "Periode"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:595
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:619
 #: build/dashboard.js:12
 msgid "Whole history"
 msgstr "Hele historikken"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:597
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
 #: build/dashboard.js:12
 msgid "VAT registered at issue"
 msgstr "Momsregistreret ved udstedelsen"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:598
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:622
 #: build/dashboard.js:12
 msgid "Commission in the period"
 msgstr "Kommission i perioden"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:599
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:623
 #: build/dashboard.js:12
 msgid "Carried from earlier"
 msgstr "Overført fra tidligere"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:601
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:625
 #: build/dashboard.js:12
 msgid "Carried forward"
 msgstr "Overføres til næste bilag"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:602
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:626
 msgid "Settled sales rows"
 msgstr "Afregnede salgsrækker"
 
 #. translators: 1: number of the correction document, 2: date.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:613
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:637
 #, php-format
 msgid "Corrected by %1$s (%2$s)."
 msgstr "Korrigeret af %1$s (%2$s)."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:624
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:648
 msgid "active"
 msgstr "aktivt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:625
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:649
 msgid "disabled"
 msgstr "deaktiveret"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:626
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:650
 msgid "expired"
 msgstr "udløbet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:627
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:651
 msgid "other"
 msgstr "andet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:640
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:664
 msgid "Full payment details"
 msgstr "Fulde betalingsoplysninger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:667
 msgid "Only users allowed to see full payment details can view them. Ask an administrator who can."
 msgstr "Kun brugere, der har tilladelse til at se fulde betalingsoplysninger, kan se dem. Spørg en administrator, der har."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:649
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:673
 msgid "The details are shown only on request, and every view is recorded in the audit log."
 msgstr "Oplysningerne vises kun på anmodning, og hver visning registreres i audit-loggen."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:650
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:674
 msgid "Show full payment details"
 msgstr "Vis fulde betalingsoplysninger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:657
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:681
 msgid "The details cannot be shown."
 msgstr "Oplysningerne kan ikke vises."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:662
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:686
 msgid "The details cannot be shown. Please try again later."
 msgstr "Oplysningerne kan ikke vises. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:669
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:693
 #: build/dashboard.js:8
 msgid "Registration number"
 msgstr "Registreringsnummer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:670
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:694
 #: build/dashboard.js:8
 msgid "Account number"
 msgstr "Kontonummer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:672
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:696
 #: build/dashboard.js:8
 msgid "PayPal email address"
 msgstr "E-mailadresse til PayPal"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:676
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:700
 msgid "This view was recorded in the audit log. The details are deleted when the request has been handled."
 msgstr "Denne visning er registreret i audit-loggen. Oplysningerne slettes, når anmodningen er behandlet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:685
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:695
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:709
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:719
 msgid "Register as paid out"
 msgstr "Registrér som udbetalt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:686
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:710
 msgid "Transfer the amount yourself (bank or PayPal) first. Registering it here sends no money; it only records that the transfer has been made. The creator's balance is checked again, and a payout it no longer covers is refused for manual handling."
 msgstr "Overfør først selv beløbet (bank eller PayPal). En registrering her sender ingen penge; den registrerer kun, at overførslen er foretaget. Creatorens saldo kontrolleres igen, og en udbetaling, den ikke længere dækker, afvises til manuel behandling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:715
 msgid "Reference (optional)"
 msgstr "Reference (valgfri)"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:693
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:717
 msgid "For example the transaction ID from the bank or PayPal. Never enter an account number, IBAN or e-mail address: the reference is kept with the payout history."
 msgstr "Fx transaktions-ID'et fra banken eller PayPal. Skriv aldrig et kontonummer, en IBAN eller en e-mailadresse: referencen gemmes i udbetalingshistorikken."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:694
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:718
 msgid "The transfer has been made outside Merch Dashboard"
 msgstr "Overførslen er gennemført uden for Merch Dashboard"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:705
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:729
 msgid "Reject"
 msgstr "Afvis"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:710
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:734
 msgid "Reason (shown to the creator)"
 msgstr "Begrundelse (vises for creatoren)"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:712
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:736
 msgid "Never enter an account number, IBAN or e-mail address: the reason is shown to the creator and kept with the payout history."
 msgstr "Skriv aldrig et kontonummer, en IBAN eller en e-mailadresse: begrundelsen vises for creatoren og gemmes i udbetalingshistorikken."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:713
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:737
 msgid "Reject request"
 msgstr "Afvis anmodning"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:770
 #: build/dashboard.js:6
 msgid "Bank transfer"
 msgstr "Bankoverførsel"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:747
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:771
 #: build/dashboard.js:6
 msgid "PayPal"
 msgstr "PayPal"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:759
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:783
 #: build/dashboard.js:6
 msgid "Pending"
 msgstr "Afventer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:761
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:785
 #: build/dashboard.js:6
 msgid "Rejected"
 msgstr "Afvist"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:786
 #: build/dashboard.js:6
 msgid "Cancelled"
 msgstr "Annulleret"
@@ -3621,6 +3647,10 @@ msgstr "Slettet"
 #: src/Modules/WooCommerce/Dashboard/WooCommerceOrderLineEnricher.php:97
 msgid "Trashed"
 msgstr "I papirkurven"
+
+#: src/Modules/WooCommerce/Payouts/GiftCards/PayoutGiftCardCouponGuard.php:124
+msgid "This gift card was issued as a creator payout. It can only be redeemed at checkout, not added to an order here."
+msgstr "Dette gavekort er udstedt som udbetaling til en creator. Det kan kun indløses i kassen, ikke tilføjes til en ordre her."
 
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182

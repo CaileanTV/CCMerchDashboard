@@ -35,6 +35,8 @@ use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardCouponGuard;
+use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\YithGiftCardProvider;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutDecisions;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutGiftCards;
@@ -405,7 +407,8 @@ final class WooCommerceModule implements Module {
 				new OrderStatusLookup(),
 				$c->get( CreatorRepository::class ),
 				$c->get( Logger::class ),
-				new SettlementRepository( $c->get( wpdb::class ) )
+				new SettlementRepository( $c->get( wpdb::class ) ),
+				$c->get( PayoutGiftCardOrders::class )
 			)
 		);
 
@@ -565,6 +568,17 @@ final class WooCommerceModule implements Module {
 			GiftCardProviders::class,
 			static fn( Container $c ): GiftCardProviders => new GiftCardProviders( array( new YithGiftCardProvider( $c->get( wpdb::class ), $c->get( PricingProductStore::class ), $clock ) ) )
 		);
+		// G1 (report 16.3): orders paid with payout gift cards (read only) and the
+		// guard that refuses those cards as coupons on admin and REST API orders.
+		$container->set(
+			PayoutGiftCardOrders::class,
+			static fn( Container $c ): PayoutGiftCardOrders => new PayoutGiftCardOrders( $c->get( PayoutRepository::class ), $c->get( GiftCardProviders::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			PayoutGiftCardCouponGuard::class,
+			static fn( Container $c ): PayoutGiftCardCouponGuard => new PayoutGiftCardCouponGuard( static fn( string $code ): bool => $c->get( PayoutGiftCardOrders::class )->is_payout_card( $code ), $c->get( Logger::class ) )
+		);
+		$container->get( PayoutGiftCardCouponGuard::class )->register();
 		$container->set(
 			PayoutGiftCards::class,
 			static fn( Container $c ): PayoutGiftCards => new PayoutGiftCards(
@@ -629,7 +643,8 @@ final class WooCommerceModule implements Module {
 				$c->get( Logger::class ),
 				$c->get( GiftCardProviders::class ),
 				$c->get( SettlementDocuments::class ),
-				$c->get( PayoutBalances::class )
+				$c->get( PayoutBalances::class ),
+				$c->get( PayoutGiftCardOrders::class )
 			)
 		);
 		$container->set(
