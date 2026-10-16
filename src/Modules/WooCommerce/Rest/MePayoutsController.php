@@ -27,6 +27,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use WP_Error;
 use WP_REST_Request;
@@ -50,7 +51,10 @@ defined( 'ABSPATH' ) || exit;
  *   gift card payout with its code, read live from the gift card plugin
  *   (ADR-057); never part of a list;
  * - `GET /me/payouts/{id}/settlement-document`: the settlement document of
- *   the creator's own completed payout (ADR-060), preliminary.
+ *   the creator's own completed payout (ADR-060);
+ * - `GET /me/payouts/{id}/settlement-document/pdf`: the same document as a
+ *   PDF download (SettlementPdf), made from the stored document on every
+ *   request and never stored.
  *
  * The creator comes only from CreatorContext (permission callback and again
  * in each endpoint, ADR-007); no creator id is read from the request. All
@@ -74,6 +78,11 @@ final class MePayoutsController extends RestController {
 	public const REFUSED = 'merchboard_payout_refused';
 
 	/**
+	 * The PDF route below the namespace (as registered).
+	 */
+	public const PDF_ROUTE = '/' . self::NAMESPACE . self::ROUTE . '/(?P<id>\d+)/settlement-document/pdf';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CreatorContext           $context    Creator access policy.
@@ -83,6 +92,7 @@ final class MePayoutsController extends RestController {
 	 * @param Logger                   $logger     Technical log.
 	 * @param PayoutGiftCards|null     $gift_cards The creator's view of gift cards; null = none.
 	 * @param SettlementDocuments|null $documents The creator's settlement documents; null = none.
+	 * @param SettlementPdf|null       $pdf       PDFs of settlement documents; null = none.
 	 */
 	public function __construct(
 		private CreatorContext $context,
@@ -91,7 +101,8 @@ final class MePayoutsController extends RestController {
 		private PayoutRepository $payouts,
 		Logger $logger,
 		private ?PayoutGiftCards $gift_cards = null,
-		private ?SettlementDocuments $documents = null
+		private ?SettlementDocuments $documents = null,
+		private ?SettlementPdf $pdf = null
 	) {
 		parent::__construct( $logger );
 	}
@@ -145,6 +156,24 @@ final class MePayoutsController extends RestController {
 				),
 			)
 		);
+		register_rest_route(
+			self::NAMESPACE,
+			self::ROUTE . '/(?P<id>\d+)/settlement-document/pdf',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_settlement_document_pdf' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(
+						'id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+					),
+				),
+			)
+		);
+		add_filter( 'rest_pre_serve_request', array( $this, 'serve_pdf' ), 10, 3 );
 		register_rest_route(
 			self::NAMESPACE,
 			self::ROUTE . '/(?P<id>\d+)/gift-card',
@@ -270,6 +299,80 @@ final class MePayoutsController extends RestController {
 	}
 
 	/**
+	 * `GET /me/payouts/{id}/settlement-document/pdf`: the settlement document
+	 * of the creator's own completed payout as a PDF (SettlementPdf). Another
+	 * creator's id, or a payout without a document, is 404; a document that
+	 * does not add up gives no PDF but a 500 (logged), and nothing is
+	 * changed. The body is the PDF; serve_pdf() sends it as it is.
+	 *
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 *
+	 * @param WP_REST_Request $request Request.
+	 */
+	public function get_settlement_document_pdf( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->run(
+			self::ROUTE . '/{id}/settlement-document/pdf',
+			function () use ( $request ): WP_REST_Response|WP_Error {
+				$creator = $this->require_creator( $this->context );
+
+				if ( $creator instanceof WP_Error ) {
+					return $creator;
+				}
+
+				$id = $request->get_param( 'id' );
+
+				try {
+					if ( null === $this->documents || null === $this->pdf ) {
+						throw new PayoutException( PayoutException::NOT_FOUND );
+					}
+
+					$shown = $this->documents->for_creator( $creator->id, is_numeric( $id ) ? (int) $id : 0 );
+				} catch ( PayoutException $e ) {
+					return self::refused( $e );
+				}
+
+				$pdf      = $this->pdf->render( $shown );
+				$response = new WP_REST_Response( $pdf, 200 );
+
+				foreach ( SettlementPdf::headers( $shown['document'] ) as $name => $value ) {
+					$response->header( $name, $value );
+				}
+
+				return $response;
+			}
+		);
+	}
+
+	/**
+	 * `rest_pre_serve_request`: sends a successful response of the PDF route
+	 * as the PDF itself instead of JSON. The REST server has already sent the
+	 * response's headers (`application/pdf`, attachment, `no-store`,
+	 * `nosniff`); every other response is left to the server.
+	 *
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 *
+	 * @param bool            $served  Whether the request was already served.
+	 * @param mixed           $result  The response.
+	 * @param WP_REST_Request $request Request.
+	 */
+	public function serve_pdf( bool $served, mixed $result, WP_REST_Request $request ): bool {
+		if ( $served || ! $result instanceof WP_REST_Response || 'GET' !== $request->get_method() || 200 !== $result->get_status()
+			|| self::PDF_ROUTE !== $result->get_matched_route() || 'application/pdf' !== ( $result->get_headers()['Content-Type'] ?? null ) ) {
+			return $served;
+		}
+
+		$body = $result->get_data();
+
+		if ( ! is_string( $body ) || ! str_starts_with( $body, '%PDF-' ) ) {
+			return $served;
+		}
+
+		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A PDF file, sent as application/pdf with nosniff.
+
+		return true;
+	}
+
+	/**
 	 * A settlement document as shown to its creator.
 	 *
 	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown Document, rows and corrections.
@@ -287,7 +390,7 @@ final class MePayoutsController extends RestController {
 		return array(
 			'number'          => $document->number,
 			'type'            => $document->type,
-			'preliminary'     => true,
+			'preliminary'     => SettlementPdf::preliminary( $document ),
 			'issued_at'       => self::time( $document->issued_at ),
 			'period_from'     => self::time( $document->period_from ),
 			'period_to'       => self::time( $document->period_to ),

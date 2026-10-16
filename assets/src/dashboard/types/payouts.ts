@@ -109,13 +109,17 @@ export interface SettlementDocumentRow {
 
 /**
  * A settlement document (afregningsbilag) as issued, from
- * `GET /me/payouts/{id}/settlement-document` (ADR-060). Preliminary: not
- * approved by an auditor or SKAT. Never recalculated by the dashboard.
+ * `GET /me/payouts/{id}/settlement-document` (ADR-060). Not approved by an
+ * auditor or the Danish Tax Agency. Never recalculated by the dashboard.
  */
 export interface SettlementDocument {
 	readonly number: string;
 	readonly type: 'settlement' | 'correction';
-	readonly preliminary: true;
+	/**
+	 * True for documents of template version 1, marked preliminary (060-9);
+	 * later documents carry the note on tax and reporting instead.
+	 */
+	readonly preliminary: boolean;
 	/** ISO 8601 UTC. */
 	readonly issuedAt: string;
 	/** ISO 8601 UTC, null for the whole history. */

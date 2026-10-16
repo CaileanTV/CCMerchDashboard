@@ -11,6 +11,7 @@ export interface FakeResponse {
 	readonly ok: boolean;
 	readonly headers: { get: ( name: string ) => string | null };
 	json: () => Promise< unknown >;
+	blob?: () => Promise< Blob >;
 }
 
 export interface RecordedRequest {

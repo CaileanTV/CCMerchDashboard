@@ -1,7 +1,10 @@
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { getSettlementDocument } from '../../api/payouts';
+import {
+	downloadSettlementPdf,
+	getSettlementDocument,
+} from '../../api/payouts';
 import { Alert } from '../../components/Alert';
 import { Button } from '../../components/Button';
 import type { Payout, SettlementDocument } from '../../types/payouts';
@@ -32,10 +35,31 @@ function rowTypeLabel( type: string ): string {
 }
 
 /**
+ * Saves a file in the browser under a name. The link is in the document
+ * while it is clicked, and the blob URL is revoked only after the browser
+ * has had time to start the download.
+ *
+ * @param file File.
+ * @param name File name.
+ */
+function saveFile( file: Blob, name: string ): void {
+	const url = window.URL.createObjectURL( file );
+	const link = window.document.createElement( 'a' );
+	link.href = url;
+	link.download = name;
+	link.hidden = true;
+	window.document.body.appendChild( link );
+	link.click();
+	link.remove();
+	window.setTimeout( () => window.URL.revokeObjectURL( url ), 1000 );
+}
+
+/**
  * The settlement document of a completed payout (ADR-060), loaded only when
- * the creator asks for it and shown as issued; nothing is recalculated. It
- * is always marked as preliminary (060-9) and can be printed or saved as PDF
- * with the browser.
+ * the creator asks for it and shown as issued; nothing is recalculated.
+ * Documents of template version 1 keep their preliminary mark (060-9); later
+ * ones carry the note on tax and reporting. The PDF is made by the server
+ * from the stored document; the page can also be printed.
  */
 export function SettlementDocumentView( {
 	payout,
@@ -49,10 +73,26 @@ export function SettlementDocumentView( {
 	);
 	const [ busy, setBusy ] = useState( false );
 	const [ failed, setFailed ] = useState( false );
+	const [ downloading, setDownloading ] = useState( false );
+	const [ downloadFailed, setDownloadFailed ] = useState( false );
 
 	if ( payout.settlementDocument === null ) {
 		return null;
 	}
+
+	const download = async ( number: string ) => {
+		setDownloading( true );
+		setDownloadFailed( false );
+		const result = await downloadSettlementPdf( payout.id );
+		setDownloading( false );
+
+		if ( result.ok ) {
+			saveFile( result.data, `${ number }.pdf` );
+			return;
+		}
+
+		setDownloadFailed( true );
+	};
 
 	const load = async () => {
 		setBusy( true );
@@ -115,12 +155,14 @@ export function SettlementDocumentView( {
 				document.number
 			) }
 		>
-			<Alert tone="warning">
-				{ __(
-					'Preliminary, not approved by an auditor or SKAT.',
-					'merchboard'
-				) }
-			</Alert>
+			{ document.preliminary && (
+				<Alert tone="warning">
+					{ __(
+						'Preliminary, not approved by an auditor or SKAT.',
+						'merchboard'
+					) }
+				</Alert>
+			) }
 			<h3 className="merchboard-settlement__title">
 				{ sprintf(
 					/* translators: %s: document number. */
@@ -212,7 +254,26 @@ export function SettlementDocumentView( {
 					) }
 				</p>
 			) ) }
+			{ ! document.preliminary && (
+				<section className="merchboard-settlement__tax-note">
+					<h4>{ __( 'Tax and reporting', 'merchboard' ) }</h4>
+					<p>
+						{ __(
+							'You are responsible for finding out about and meeting your own tax and reporting obligations to the Danish Tax Agency. Depending on your situation, this may include whether the amount must be included in your taxable income and whether you have VAT obligations. This document shows the payout and its basis according to the information registered in the system. It is not tax advice and has not been approved by an auditor or the Danish Tax Agency.',
+							'merchboard'
+						) }
+					</p>
+				</section>
+			) }
 			<p className="merchboard-settlement__actions">
+				<Button
+					variant="primary"
+					size="sm"
+					isBusy={ downloading }
+					onClick={ () => download( document.number ) }
+				>
+					{ __( 'Download PDF', 'merchboard' ) }
+				</Button>{ ' ' }
 				<Button
 					variant="secondary"
 					size="sm"
@@ -227,6 +288,15 @@ export function SettlementDocumentView( {
 				>
 					{ __( 'Close', 'merchboard' ) }
 				</Button>
+				{ downloadFailed && (
+					<span className="merchboard-payouts__reason" role="status">
+						{ ' ' }
+						{ __(
+							'The PDF cannot be downloaded right now. Please try again later.',
+							'merchboard'
+						) }
+					</span>
+				) }
 			</p>
 		</article>
 	);

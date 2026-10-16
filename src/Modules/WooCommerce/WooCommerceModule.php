@@ -32,6 +32,7 @@ use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsSections;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
+use MerchBoard\Modules\WooCommerce\Admin\SettlementPdfDownload;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
@@ -44,6 +45,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Sales\OrderHistory;
@@ -562,6 +564,15 @@ final class WooCommerceModule implements Module {
 				$clock
 			)
 		);
+		// Their PDF, made from the stored document on every download (never stored).
+		$container->set(
+			SettlementPdf::class,
+			static fn(): SettlementPdf => new SettlementPdf()
+		);
+		$container->set(
+			SettlementPdfDownload::class,
+			static fn( Container $c ): SettlementPdfDownload => new SettlementPdfDownload( $c->get( SettlementDocuments::class ), $c->get( SettlementPdf::class ), $c->get( Logger::class ) )
+		);
 		// Payout gift cards (ADR-057): the registered adapters (only YITH WooCommerce
 		// Gift Cards 4.38.x, read only) and the one chosen in Settings.
 		$container->set(
@@ -630,7 +641,8 @@ final class WooCommerceModule implements Module {
 				$c->get( PayoutRepository::class ),
 				$c->get( Logger::class ),
 				$c->get( PayoutGiftCards::class ),
-				$c->get( SettlementDocuments::class )
+				$c->get( SettlementDocuments::class ),
+				$c->get( SettlementPdf::class )
 			)
 		);
 		$container->set(
@@ -785,6 +797,7 @@ final class WooCommerceModule implements Module {
 				$container->get( SalesLedgerSettingsSection::class )->register();
 				$container->get( PayoutSettingsActions::class )->register();
 				$container->get( PayoutActions::class )->register();
+				$container->get( SettlementPdfDownload::class )->register();
 				$container->get( PayoutSettingsSections::class )->register();
 			}
 		);

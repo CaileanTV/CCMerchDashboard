@@ -28,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 
@@ -581,9 +582,10 @@ final class PayoutsPage {
 	}
 
 	/**
-	 * The settlement document of a completed payout as issued (ADR-060):
-	 * preliminary, never recalculated. Payouts completed before schema
-	 * version 11 have none (060-8).
+	 * The settlement document of a completed payout as issued (ADR-060),
+	 * never recalculated, with a link to its PDF. Template version 1 keeps its
+	 * preliminary mark (060-9); later versions show the note on tax and
+	 * reporting. Payouts completed before schema version 11 have none (060-8).
 	 *
 	 * @param Payout $payout Completed payout.
 	 */
@@ -611,7 +613,11 @@ final class PayoutsPage {
 		$money    = static fn( int $units ): string => CreatorSalesSection::money( SalesAmount::format( $units ), $document->currency );
 		$creator  = is_array( $document->snapshot['creator'] ?? null ) ? $document->snapshot['creator'] : array();
 
-		echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Preliminary, not approved by an auditor or SKAT.', 'merchboard' ) . '</strong></p></div>';
+		if ( SettlementPdf::preliminary( $document ) ) {
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Preliminary, not approved by an auditor or SKAT.', 'merchboard' ) . '</strong></p></div>';
+		}
+
+		echo '<p><a class="button" href="' . esc_url( SettlementPdfDownload::url( $payout->id ) ) . '">' . esc_html__( 'Download PDF', 'merchboard' ) . '</a></p>';
 		echo '<table class="form-table merchboard-settlement-document" role="presentation"><tbody>';
 		$fields = array(
 			__( 'Document number', 'merchboard' )          => $document->number,
@@ -635,6 +641,11 @@ final class PayoutsPage {
 		foreach ( $shown['corrections'] as $correction ) {
 			/* translators: 1: number of the correction document, 2: date. */
 			echo '<p>' . esc_html( sprintf( __( 'Corrected by %1$s (%2$s).', 'merchboard' ), $correction->number, self::date( $correction->issued_at ) ) ) . '</p>';
+		}
+
+		if ( ! SettlementPdf::preliminary( $document ) ) {
+			list( $heading, $note ) = SettlementPdf::tax_note();
+			echo '<h4>' . esc_html( $heading ) . '</h4><p class="description merchboard-settlement-tax-note">' . esc_html( $note ) . '</p>';
 		}
 	}
 

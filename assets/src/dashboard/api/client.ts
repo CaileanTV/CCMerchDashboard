@@ -102,6 +102,7 @@ interface ResponseLike {
 	readonly ok: boolean;
 	readonly headers?: { get: ( name: string ) => string | null };
 	json: () => Promise< unknown >;
+	blob?: () => Promise< Blob >;
 }
 
 function isResponseLike( value: unknown ): value is ResponseLike {
@@ -313,6 +314,38 @@ export async function request< T >(
 	return data === null
 		? failure( 'invalid_response', sent.response.status )
 		: { ok: true, data };
+}
+
+/**
+ * Requests a file (e.g. a PDF) and returns its body. Only a successful
+ * response of exactly the expected content type is accepted; anything else
+ * is `invalid_response`, and errors are reduced like every other request.
+ *
+ * @param options     Request.
+ * @param contentType Expected media type, e.g. "application/pdf".
+ */
+export async function requestFile(
+	options: ApiRequest,
+	contentType: string
+): Promise< ApiResult< Blob > > {
+	const sent = await send( options );
+
+	if ( ! sent.ok ) {
+		return sent;
+	}
+
+	const header = sent.response.headers?.get( 'Content-Type' ) ?? '';
+	const type = ( header.split( ';' )[ 0 ] ?? '' ).trim().toLowerCase();
+
+	if ( type !== contentType || typeof sent.response.blob !== 'function' ) {
+		return failure( 'invalid_response', sent.response.status );
+	}
+
+	try {
+		return { ok: true, data: await sent.response.blob() };
+	} catch {
+		return failure( 'invalid_response', sent.response.status );
+	}
 }
 
 const COUNT = /^(0|[1-9][0-9]{0,8})$/;

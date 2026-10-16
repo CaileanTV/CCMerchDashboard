@@ -544,8 +544,9 @@ describe( 'PayoutsSection', () => {
 				'.merchboard-settlement__rows tbody tr'
 			)
 		).toHaveLength( 1 );
+		expect( text ).not.toContain( 'Tax and reporting' );
 		expect(
-			parseSettlementDocument( { ...document, preliminary: false } )
+			parseSettlementDocument( { ...document, preliminary: 'yes' } )
 		).toBeNull();
 		expect(
 			parseSettlementDocument( { ...document, payout: 25.5 } )
@@ -555,6 +556,128 @@ describe( 'PayoutsSection', () => {
 		expect(
 			container.querySelector( '.merchboard-settlement' )
 		).toBeNull();
+	} );
+
+	it( 'shows a new document with the note on tax and reporting and downloads its PDF', async () => {
+		const completed = {
+			...PENDING,
+			id: 34,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000003',
+		};
+		const document = {
+			number: 'AFR-000003',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: '2026-11-01T00:00:00Z',
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '20.0000',
+			commission: '20.0000',
+			opening_balance: '0.0000',
+			payout: '20.0000',
+			closing_balance: '0.0000',
+			vat_registered: null,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			method: 'paypal',
+			destination: 'j•••@g•••.com',
+			rows: [],
+			corrections: [],
+		};
+		const pdf = new Blob( [ '%PDF-1.4' ], { type: 'application/pdf' } );
+		let pdfType = 'application/pdf';
+		const createObjectURL = jest.fn< ( file: Blob ) => string >(
+			() => 'blob:merchboard/1'
+		);
+		const revokeObjectURL = jest.fn< ( url: string ) => void >();
+		const seen: { attached: boolean; href: string; name: string }[] = [];
+		const clicked = jest
+			.spyOn( HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( function ( this: HTMLAnchorElement ) {
+				seen.push( {
+					attached: this.isConnected,
+					href: this.getAttribute( 'href' ) ?? '',
+					name: this.download,
+				} );
+			} );
+		Object.assign( window.URL, { createObjectURL, revokeObjectURL } );
+
+		try {
+			const { container, requests } = await show( {
+				[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+				[ `GET /merchboard/v1/me/payouts/34/settlement-document` ]:
+					() => response( 200, document ),
+				[ `GET /merchboard/v1/me/payouts/34/settlement-document/pdf` ]:
+					() => ( {
+						...response( 200, null, { 'Content-Type': pdfType } ),
+						blob: () => Promise.resolve( pdf ),
+					} ),
+			} );
+			const button = ( label: string ) =>
+				Array.from( container.querySelectorAll( 'button' ) ).find(
+					( candidate ) => candidate.textContent === label
+				) ?? null;
+
+			click( button( 'Settlement document AFR-000003' ) );
+			await flush();
+			await flush();
+
+			const text = plain( container.textContent );
+			expect( text ).toContain( 'Tax and reporting' );
+			expect( text ).toContain(
+				'You are responsible for finding out about and meeting your own tax and reporting obligations to the Danish Tax Agency.'
+			);
+			expect( text ).toContain( 'It is not tax advice' );
+			expect( text ).not.toContain( 'Preliminary' );
+
+			jest.useFakeTimers();
+			click( button( 'Download PDF' ) );
+			await flush();
+			await flush();
+
+			expect(
+				requests.filter( ( r ) =>
+					r.path.endsWith( '/settlement-document/pdf' )
+				)
+			).toHaveLength( 1 );
+			expect( createObjectURL ).toHaveBeenCalledWith( pdf );
+			expect( seen ).toEqual( [
+				{
+					attached: true,
+					href: 'blob:merchboard/1',
+					name: 'AFR-000003.pdf',
+				},
+			] );
+			expect( window.document.querySelector( 'a[download]' ) ).toBeNull();
+			expect( revokeObjectURL ).not.toHaveBeenCalled();
+
+			jest.advanceTimersByTime( 1000 );
+
+			expect( revokeObjectURL ).toHaveBeenCalledWith(
+				'blob:merchboard/1'
+			);
+			jest.useRealTimers();
+			expect( text ).not.toContain( 'The PDF cannot be downloaded' );
+
+			// Anything but a PDF is never saved.
+			pdfType = 'text/html';
+			click( button( 'Download PDF' ) );
+			await flush();
+			await flush();
+
+			expect( clicked ).toHaveBeenCalledTimes( 1 );
+			expect( plain( container.textContent ) ).toContain(
+				'The PDF cannot be downloaded right now. Please try again later.'
+			);
+		} finally {
+			// Also when an expectation failed while the fake timers were on.
+			jest.useRealTimers();
+			clicked.mockRestore();
+		}
 	} );
 
 	it( 'sends a request once with a key, empties the details and reloads balance and list', async () => {

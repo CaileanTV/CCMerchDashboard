@@ -18,9 +18,12 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Core\Pdf\PdfWriter;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
+use MerchBoard\Modules\WooCommerce\Admin\SettlementPdfDownload;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
@@ -32,6 +35,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
@@ -42,6 +46,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRecorder;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\Rest\MePayoutsController;
 use MerchBoard\Modules\WooCommerce\Sales\OrderLineSnapshot;
 use MerchBoard\Modules\WooCommerce\Sales\RefundLineSnapshot;
 use MerchBoard\Modules\WooCommerce\Sales\RefundSnapshot;
@@ -57,13 +62,15 @@ use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use UnexpectedValueException;
 use wpdb;
 
 /**
  * Sales of 100.00 incl. VAT (20 %, VAT registered: payout 20.00 each) dated
  * 2026-09-01; a fixed clock (2026-11-30 12:00 UTC) and a 14-day holding
  * period. No WooCommerce is loaded. Synthetic data only. The documents are
- * preliminary (060-9): a passing test is no accounting approval.
+ * not approved by an auditor or the Danish Tax Agency (R1–R4): a passing
+ * test is no accounting approval.
  */
 final class SettlementDocumentsTest extends IntegrationTestCase {
 
@@ -153,7 +160,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		parent::tearDown();
 	}
 
-	public function test_a_completion_issues_one_preliminary_document_with_the_released_rows(): void {
+	public function test_a_completion_issues_one_document_with_the_released_rows(): void {
 		$items  = $this->earn( 3 );
 		$payout = $this->request( '25', 'key-set-0001' );
 
@@ -171,7 +178,8 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertTrue( $document->vat_registered );
 		self::assertNull( $document->period_from, 'Without a settlement start: the whole history.' );
 		self::assertSame( '2026-11-30 12:00:00', $document->period_to->format( 'Y-m-d H:i:s' ) );
-		self::assertTrue( $document->snapshot['preliminary'] ?? null );
+		self::assertSame( 2, $document->template_version, 'New documents carry the note on tax and reporting.' );
+		self::assertFalse( $document->snapshot['preliminary'] ?? null );
 		self::assertSame( 'Settlement Alpha', $document->snapshot['creator']['name'] ?? null );
 		self::assertSame( '•••• 5678', $document->snapshot['payout']['destination_hint'] ?? null );
 		self::assertStringNotContainsString( '0012345678', (string) wp_json_encode( $document->snapshot ), 'Never the full account.' );
@@ -323,6 +331,138 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		$user = $this->create_user( 'mb-set-subscriber' );
 		wp_set_current_user( $user );
 		$this->refused( PayoutException::NOT_AUTHORIZED, fn() => $this->documents->correct( $second->id, 'No.' ) );
+	}
+
+	public function test_the_pdf_is_made_from_the_stored_document_and_changes_nothing(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0201' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$before = $this->state();
+
+		$first = ( new SettlementPdf() )->render( $shown );
+
+		self::assertStringStartsWith( '%PDF-1.4', $first );
+
+		foreach ( array( 'AFR-000001', 'Settlement Alpha', '40.00 DKK', '10.00 DKK', '30.00 DKK', 'Tax and reporting', '•••• 5678' ) as $text ) {
+			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $first, $text );
+		}
+
+		self::assertStringNotContainsString( 'Preliminary', $first );
+		self::assertStringNotContainsString( '0012345678', $first, 'Never the full account.' );
+
+		$again = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $again );
+		self::assertSame( $first, ( new SettlementPdf() )->render( $again ), 'The same document gives the same bytes.' );
+		self::assertSame( $before, $this->state(), 'Making the PDF writes nothing.' );
+	}
+
+	public function test_a_document_that_does_not_add_up_gives_no_pdf_and_changes_nothing(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0202' );
+		$this->decisions->complete( $payout->id );
+		// A stored document that no longer matches its rows (made inconsistent by the test).
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'commission_amount' => '41.0000' ), array( 'settlement_payout_id' => $payout->id ) );
+		$before   = $this->state();
+		$logger   = new RecordingLogger();
+		$download = new SettlementPdfDownload( $this->documents, new SettlementPdf(), $logger );
+
+		$response = $download->response(
+			array(
+				'payout_id' => (string) $payout->id,
+				'_wpnonce'  => wp_create_nonce( SettlementPdfDownload::nonce_action( $payout->id ) ),
+			)
+		);
+
+		self::assertSame( 500, $response['status'] );
+		self::assertSame( array(), $response['headers'] );
+		self::assertStringNotContainsString( '%PDF', $response['body'] );
+		self::assertSame( array( array( 'error', 'The settlement document PDF could not be made.', array( 'payout_id' => $payout->id, 'error' => UnexpectedValueException::class ) ) ), array_map( static fn( array $entry ): array => array( $entry['level'], $entry['message'], $entry['context'] ), $logger->entries ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( $before, $this->state(), 'Nothing written: payout, rows, number counter and audit unchanged.' );
+	}
+
+	public function test_the_admin_download_needs_the_capability_and_a_nonce_for_the_payout(): void {
+		$this->earn( 2 );
+		$payout  = $this->request( '10', 'key-set-0203' );
+		$pending = $this->request( '5', 'key-set-0204' );
+		$this->decisions->complete( $payout->id );
+		$shown    = $this->documents->for_payout( $payout->id );
+		$download = new SettlementPdfDownload( $this->documents, new SettlementPdf(), new RecordingLogger() );
+		$input    = static fn( int $id, string $nonce ): array => array(
+			'payout_id' => (string) $id,
+			'_wpnonce'  => $nonce,
+		);
+		$nonce    = wp_create_nonce( SettlementPdfDownload::nonce_action( $payout->id ) );
+		self::assertNotNull( $shown );
+
+		$ok = $download->response( $input( $payout->id, $nonce ) );
+
+		self::assertSame( 200, $ok['status'] );
+		self::assertSame( ( new SettlementPdf() )->render( $shown ), $ok['body'] );
+		self::assertSame(
+			array(
+				'Content-Type'           => 'application/pdf',
+				'Content-Disposition'    => 'attachment; filename="AFR-000001.pdf"',
+				'Cache-Control'          => 'no-store, private',
+				'X-Content-Type-Options' => 'nosniff',
+			),
+			$ok['headers']
+		);
+		self::assertSame( 403, $download->response( $input( $payout->id, '' ) )['status'], 'No nonce.' );
+		self::assertSame( 403, $download->response( $input( $payout->id, wp_create_nonce( SettlementPdfDownload::nonce_action( $pending->id ) ) ) )['status'], 'The nonce of another payout.' );
+		self::assertSame( 403, $download->response( array( 'payout_id' => '1x', '_wpnonce' => $nonce ) )['status'], 'Not a payout id.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 404, $download->response( $input( $pending->id, wp_create_nonce( SettlementPdfDownload::nonce_action( $pending->id ) ) ) )['status'], 'A pending payout has no document.' );
+		self::assertStringContainsString( 'action=' . SettlementPdfDownload::ACTION, SettlementPdfDownload::url( $payout->id ) );
+		self::assertStringContainsString( '_wpnonce=', SettlementPdfDownload::url( $payout->id ) );
+
+		wp_set_current_user( $this->create_user( 'mb-set-pdf-subscriber' ) );
+		self::assertSame( 403, $download->response( $input( $payout->id, $nonce ) )['status'], 'Without merchboard_manage_payouts.' );
+	}
+
+	public function test_a_template_1_document_keeps_its_preliminary_mark(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0205' );
+		$this->decisions->complete( $payout->id );
+		$issued = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $issued );
+		// A document as issued before template version 2 (made by the test).
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'template_version' => 1, 'snapshot' => (string) wp_json_encode( array( 'preliminary' => true ) + $issued['document']->snapshot ) ), array( 'id' => $issued['document']->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+
+		self::assertSame( 1, $shown['document']->template_version );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Preliminary, not approved by an auditor or SKAT.' ) ), $pdf );
+		self::assertStringNotContainsString( 'Tax and reporting', $pdf );
+		self::assertTrue( MePayoutsController::settlement_document( $shown )['preliminary'] );
+		self::assertFalse( MePayoutsController::settlement_document( $issued )['preliminary'] );
+	}
+
+	public function test_the_admin_page_shows_the_note_or_the_original_mark_and_links_the_pdf(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0206' );
+		$this->decisions->complete( $payout->id );
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+
+		$html = $this->page_html( $page, $payout->id );
+
+		self::assertStringContainsString( 'Tax and reporting', $html );
+		self::assertStringContainsString( esc_html( SettlementPdf::tax_note()[1] ), $html );
+		self::assertStringNotContainsString( 'Preliminary, not approved', $html );
+		self::assertStringContainsString( 'Download PDF', $html );
+		self::assertStringContainsString( esc_url( SettlementPdfDownload::url( $payout->id ) ), $html );
+
+		$document = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $document );
+		// A document as issued before template version 2 (made by the test).
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'template_version' => 1 ), array( 'id' => $document->id ) );
+		$html = $this->page_html( $page, $payout->id );
+
+		self::assertStringContainsString( 'Preliminary, not approved by an auditor or SKAT.', $html );
+		self::assertStringNotContainsString( 'Tax and reporting', $html );
+		self::assertStringContainsString( 'Download PDF', $html );
 	}
 
 	public function test_concurrent_issues_on_two_connections_get_unique_numbers_and_the_waiting_one_rolls_back(): void {
@@ -511,6 +651,44 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 				$this->wpdb->query( $restore );
 			}
 		}
+	}
+
+	/**
+	 * The admin page of one payout.
+	 *
+	 * @param PayoutsPage $page      Page.
+	 * @param int         $payout_id Payout.
+	 */
+	private function page_html( PayoutsPage $page, int $payout_id ): string {
+		$_GET = array( 'payout' => (string) $payout_id );
+		ob_start();
+
+		try {
+			$page->render();
+		} finally {
+			$html = (string) ob_get_clean();
+			$_GET = array();
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Everything a settlement or its PDF could change: documents, settled
+	 * rows, the number counters, payouts and the audit log.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function state(): array {
+		$wpdb = $this->wpdb;
+
+		return array(
+			'documents' => $wpdb->get_results( (string) $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', $this->table( Tables::SETTLEMENT_DOCUMENTS ) ), ARRAY_A ),
+			'rows'      => $wpdb->get_results( (string) $wpdb->prepare( 'SELECT * FROM %i ORDER BY event_key', $this->table( Tables::SETTLEMENT_ROWS ) ), ARRAY_A ),
+			'counters'  => $wpdb->get_results( (string) $wpdb->prepare( 'SELECT * FROM %i ORDER BY series', $this->table( Tables::SETTLEMENT_COUNTERS ) ), ARRAY_A ),
+			'payouts'   => $wpdb->get_results( (string) $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', $this->table( Tables::PAYOUTS ) ), ARRAY_A ),
+			'audit'     => $wpdb->get_results( (string) $wpdb->prepare( 'SELECT id, action FROM %i ORDER BY id', $this->table( Tables::AUDIT_LOG ) ), ARRAY_A ),
+		);
 	}
 
 	/**

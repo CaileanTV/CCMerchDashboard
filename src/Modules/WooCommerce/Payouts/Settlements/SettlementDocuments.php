@@ -30,8 +30,11 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Afregningsbilag on the creator's behalf (ADR-060). Preliminary: not
- * approved by an auditor or SKAT (R1–R4 open).
+ * Afregningsbilag on the creator's behalf (ADR-060). Not approved by an
+ * auditor or the Danish Tax Agency (R1–R4 open). Documents of template
+ * version 1 are marked preliminary (060-9); from version 2 they carry a
+ * neutral note on tax and reporting instead (SettlementPdf::tax_note()).
+ * Issued documents keep the version they were issued with.
  *
  * **Issue** runs inside the transaction and under the creator's payout lock
  * that completes the payout (PayoutDecisions, PayoutGiftCards), so a
@@ -69,9 +72,10 @@ final class SettlementDocuments {
 	public const CALCULATION_VERSION = 'adr049-adr054-v1';
 
 	/**
-	 * Version of the document template (texts and layout).
+	 * Version of the document template (texts and layout) of new documents:
+	 * 1 = marked preliminary (060-9), 2 = note on tax and reporting.
 	 */
-	public const TEMPLATE_VERSION = 1;
+	public const TEMPLATE_VERSION = 2;
 
 	/**
 	 * Longest reason of a correction.
@@ -367,7 +371,8 @@ final class SettlementDocuments {
 		$method     = $payout?->method;
 
 		return array(
-			'preliminary'      => true,
+			// Template version 2: the note on tax and reporting replaces the preliminary mark.
+			'preliminary'      => false,
 			'creator'          => array(
 				'id'             => $creator_id,
 				'name'           => null === $creator ? '' : $creator->display_name,

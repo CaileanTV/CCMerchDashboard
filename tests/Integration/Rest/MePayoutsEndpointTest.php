@@ -54,6 +54,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\FakeGiftCardProvider;
@@ -99,6 +100,13 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 	 */
 	private $register = null;
 
+	/**
+	 * The registered controller.
+	 *
+	 * @var MePayoutsController|null
+	 */
+	private ?MePayoutsController $controller = null;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
@@ -136,7 +144,7 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 	public function test_the_routes_are_registered_with_permission_callbacks(): void {
 		$routes = rest_get_server()->get_routes( 'merchboard/v1' );
 
-		foreach ( array( self::ROUTE => array( 'GET', 'POST' ), self::ROUTE . '/balance' => array( 'GET' ), self::ROUTE . '/(?P<id>\d+)/cancel' => array( 'POST' ), self::ROUTE . '/(?P<id>\d+)/gift-card' => array( 'GET' ) ) as $route => $methods ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		foreach ( array( self::ROUTE => array( 'GET', 'POST' ), self::ROUTE . '/balance' => array( 'GET' ), self::ROUTE . '/(?P<id>\d+)/cancel' => array( 'POST' ), self::ROUTE . '/(?P<id>\d+)/gift-card' => array( 'GET' ), self::ROUTE . '/(?P<id>\d+)/settlement-document/pdf' => array( 'GET' ) ) as $route => $methods ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			self::assertArrayHasKey( $route, $routes );
 			self::assertCount( count( $methods ), $routes[ $route ] );
 
@@ -443,7 +451,7 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		$data     = (array) $response->get_data();
 		self::assertSame( 200, $response->get_status() );
 		self::assertSame( 'no-store, private', $response->get_headers()['Cache-Control'] ?? null );
-		self::assertSame( array( 'AFR-000001', 'settlement', true, 'DKK', '40.0000', '0.0000', '15.0000', '25.0000', true, 'Mine' ), array( $data['number'], $data['type'], $data['preliminary'], $data['currency'], $data['commission'], $data['opening_balance'], $data['payout'], $data['closing_balance'], $data['vat_registered'], $data['creator_name'] ) );
+		self::assertSame( array( 'AFR-000001', 'settlement', false, 'DKK', '40.0000', '0.0000', '15.0000', '25.0000', true, 'Mine' ), array( $data['number'], $data['type'], $data['preliminary'], $data['currency'], $data['commission'], $data['opening_balance'], $data['payout'], $data['closing_balance'], $data['vat_registered'], $data['creator_name'] ) );
 		self::assertCount( 2, $data['rows'] );
 		self::assertSame( array( 'order_id', 'item_name', 'type', 'quantity', 'net', 'tax', 'payout' ), array_keys( $data['rows'][0] ) );
 		self::assertSame( '•••• 5678', $data['destination'] );
@@ -454,6 +462,55 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 404, $this->get( '/' . $id . '/settlement-document' )->get_status(), 'Another creator: as if missing.' );
 		wp_set_current_user( 0 );
 		self::assertSame( 401, $this->get( '/' . $id . '/settlement-document' )->get_status() );
+	}
+
+	public function test_the_settlement_pdf_is_sent_only_to_its_creator_as_a_private_attachment(): void {
+		$mine  = $this->creator_user( 'mine', 'Mine' );
+		$other = $this->creator_user( 'other', 'Other' );
+		$this->earn( $mine, 2 );
+		wp_set_current_user( $mine );
+		$id    = (int) ( (array) $this->create( '15', 'key-pdf-0001' )->get_data() )['id'];
+		$route = '/' . $id . '/settlement-document/pdf';
+
+		self::assertSame( 404, $this->get( $route )->get_status(), 'Pending: no document yet.' );
+
+		wp_set_current_user( 1 );
+		$this->decisions()->complete( $id );
+		wp_set_current_user( $mine );
+
+		$response = $this->get( $route );
+		$body     = $response->get_data();
+		self::assertSame( 200, $response->get_status() );
+		self::assertIsString( $body );
+		self::assertStringStartsWith( '%PDF-1.4', $body );
+		self::assertStringNotContainsString( self::ACCOUNT, $body, 'Never the full account.' );
+		self::assertSame(
+			array(
+				'Content-Type'           => 'application/pdf',
+				'Content-Disposition'    => 'attachment; filename="AFR-000001.pdf"',
+				'Cache-Control'          => 'no-store, private',
+				'X-Content-Type-Options' => 'nosniff',
+			),
+			$response->get_headers()
+		);
+		self::assertSame( $body, $this->get( $route )->get_data(), 'The same document gives the same bytes.' );
+
+		// Sent as the PDF itself, never as JSON; nothing else is taken over.
+		self::assertNotNull( $this->controller );
+		ob_start();
+		$served = $this->controller->serve_pdf( false, $response, new WP_REST_Request( 'GET', self::ROUTE . $route ) );
+		self::assertSame( $body, ob_get_clean() );
+		self::assertTrue( $served );
+		ob_start();
+		self::assertFalse( $this->controller->serve_pdf( false, $this->get( '/' . $id . '/settlement-document' ), new WP_REST_Request( 'GET', self::ROUTE . '/' . $id . '/settlement-document' ) ) );
+		self::assertFalse( $this->controller->serve_pdf( false, $response, new WP_REST_Request( 'HEAD', self::ROUTE . $route ) ) );
+		self::assertTrue( $this->controller->serve_pdf( true, $response, new WP_REST_Request( 'GET', self::ROUTE . $route ) ), 'Already served by someone else.' );
+		self::assertSame( '', ob_get_clean() );
+
+		wp_set_current_user( $other );
+		self::assertSame( 404, $this->get( $route )->get_status(), 'Another creator: as if missing.' );
+		wp_set_current_user( 0 );
+		self::assertSame( 401, $this->get( $route )->get_status() );
 	}
 
 	public function test_the_gift_card_is_shown_only_to_its_creator_and_never_cached(): void {
@@ -541,7 +598,8 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		$audit            = $this->service( AuditTrail::class );
 		$documents        = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock );
 		$this->gift_cards = new PayoutGiftCards( $this->repository, $balances, $providers, $audit, $transaction, new RecordingLogger(), $clock, $documents );
-		$controller       = new MePayoutsController( $this->service( CreatorContext::class ), $requests, $balances, $this->repository, $this->service( Logger::class ), $this->gift_cards, $documents );
+		$controller       = new MePayoutsController( $this->service( CreatorContext::class ), $requests, $balances, $this->repository, $this->service( Logger::class ), $this->gift_cards, $documents, new SettlementPdf() );
+		$this->controller = $controller;
 		$this->register   = static function () use ( $controller ): void {
 			$controller->register_routes();
 		};

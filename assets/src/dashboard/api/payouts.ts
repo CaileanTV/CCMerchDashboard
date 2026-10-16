@@ -16,7 +16,7 @@ import type {
 	PayoutRequestInput,
 	PayoutStatus,
 } from '../types/payouts';
-import { request, requestList } from './client';
+import { request, requestFile, requestList } from './client';
 import type { ApiResult } from './client';
 import { isRecord } from './validate';
 
@@ -371,8 +371,9 @@ function parseDocumentRow( body: unknown ): SettlementDocumentRow | null {
 
 /**
  * Validates `GET /me/payouts/{id}/settlement-document`. Exactly the
- * documented fields are read; a document that is not marked preliminary is
- * rejected (ADR-060, 060-9).
+ * documented fields are read. `preliminary` is true for documents of
+ * template version 1 (060-9) and false for later ones, which carry the note
+ * on tax and reporting instead.
  *
  * @param body Response body.
  */
@@ -442,7 +443,7 @@ export function parseSettlementDocument(
 		typeof number !== 'string' ||
 		! DOCUMENT_NUMBER.test( number ) ||
 		( type !== 'settlement' && type !== 'correction' ) ||
-		preliminary !== true ||
+		typeof preliminary !== 'boolean' ||
 		! isTime( issuedAt ) ||
 		( periodFrom !== null && ! isTime( periodFrom ) ) ||
 		! isTime( periodTo ) ||
@@ -500,6 +501,25 @@ export function getSettlementDocument(
 	return request(
 		{ path: `/merchboard/v1/me/payouts/${ id }/settlement-document` },
 		parseSettlementDocument
+	);
+}
+
+/**
+ * The settlement document of the creator's own completed payout as a PDF,
+ * made by the server from the stored document.
+ *
+ * @param id Payout id.
+ */
+export function downloadSettlementPdf(
+	id: number
+): Promise< ApiResult< Blob > > {
+	if ( ! Number.isInteger( id ) || id < 1 ) {
+		throw new Error( 'A payout id is a positive integer.' );
+	}
+
+	return requestFile(
+		{ path: `/merchboard/v1/me/payouts/${ id }/settlement-document/pdf` },
+		'application/pdf'
 	);
 }
 
