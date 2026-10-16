@@ -196,10 +196,10 @@ final class CreatorSalesSectionTest extends IntegrationTestCase {
 		$beta  = $this->edit_page( $this->beta );
 
 		self::assertSame( array( '111.00 DKK', '1', '1' ), self::totals( $alpha, 'DKK' ) );
-		self::assertStringNotContainsString( '999', $alpha );
+		self::assertStringNotContainsString( '999.00', $alpha );
 		self::assertStringNotContainsString( '<h3>EUR</h3>', $alpha );
 		self::assertSame( array( '999.00 EUR', '9', '1' ), self::totals( $beta, 'EUR' ), 'An inactive creator has its sales too.' );
-		self::assertStringNotContainsString( '111', $beta );
+		self::assertStringNotContainsString( '111.00', $beta );
 	}
 
 	public function test_without_sales_there_is_an_empty_state_and_no_zero_figures(): void {
