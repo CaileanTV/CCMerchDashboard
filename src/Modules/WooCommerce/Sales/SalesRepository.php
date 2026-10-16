@@ -580,7 +580,8 @@ final class SalesRepository {
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT event_key, tax_amount FROM %i WHERE order_id = %d', $this->table( Tables::SALES_TAX ), $order_id ), ARRAY_A );
 
-		if ( ! is_array( $rows ) ) {
+		// A failed query returns an empty array, not null: only last_error tells it from no rows.
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the sales tax.' );
 		}
 
@@ -686,7 +687,8 @@ final class SalesRepository {
 			ARRAY_A
 		);
 
-		if ( ! is_array( $rows ) ) {
+		// A failed query returns an empty array, not null: only last_error tells it from no rows.
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the sales cycles.' );
 		}
 

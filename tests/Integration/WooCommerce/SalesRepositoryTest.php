@@ -24,12 +24,14 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Modules\WooCommerce\Sales\OrderLineSnapshot;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
+use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillStatus;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCorrectionReason;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEvent;
 use MerchBoard\Modules\WooCommerce\Sales\SalesConnectionChangedException;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCycleEventType;
 use MerchBoard\Modules\WooCommerce\Sales\SalesEntry;
 use MerchBoard\Modules\WooCommerce\Sales\SalesEntryType;
+use MerchBoard\Modules\WooCommerce\Sales\SalesFailureCode;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerState;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerWrite;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLockTimeoutException;
@@ -53,6 +55,16 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 	 * Start of the ledger's row SELECT, as SalesRepository::entries_for_*() prepare it (ENTRY_COLUMNS).
 	 */
 	private const LEDGER_SELECT = 'SELECT id, event_key, creator_id, order_id, order_item_id, cycle, refund_id, product_id, variation_id, item_name, type, correction_reason, quantity, net_amount, currency, occurred_at, created_at FROM ';
+
+	/**
+	 * Start of the cycle SELECT, as SalesRepository::cycle_state() prepares it.
+	 */
+	private const CYCLES_SELECT = 'SELECT id, order_id, cycle, event, occurred_at, created_at FROM ';
+
+	/**
+	 * Start of the tax SELECT, as SalesRepository::taxes_for_order() prepares it.
+	 */
+	private const TAX_SELECT = 'SELECT event_key, tax_amount FROM ';
 
 	/**
 	 * Second database connection, when a test opened one.
@@ -430,6 +442,213 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 		self::assertSame( array( 'clear:7', 'record:7:db_error', 'clear:7' ), $marker->calls );
 	}
 
+	public function test_failed_cycle_and_tax_reads_are_database_errors_and_empty_reads_still_work(): void {
+		$reader = new FakeOrderReader();
+		self::order( $reader, 'completed', array( self::line( 11, '25' ) ) );
+		$this->synchronizer( $reader, new RecordingFailureMarker(), new RecordingLogger() )->sync( self::ORDER );
+		self::assertSame( 1, $this->count_rows( Tables::SALES_CYCLES ) );
+		self::assertSame( 1, $this->count_rows( Tables::SALES_TAX ) );
+		$repository = $this->repository();
+		$before     = $this->ledger_tables();
+
+		foreach ( array(
+			'cycles' => array( self::CYCLES_SELECT . '`' . $this->table( Tables::SALES_CYCLES ) . '`', static fn() => $repository->cycle_state( self::ORDER ), 'Could not read the sales cycles.' ),
+			'tax'    => array( self::TAX_SELECT . '`' . $this->table( Tables::SALES_TAX ) . '`', static fn() => $repository->taxes_for_order( self::ORDER ), 'Could not read the sales tax.' ),
+		) as $case => list( $select, $read, $message ) ) {
+			$this->fail_reads( $select );
+
+			try {
+				$read();
+				self::fail( 'Expected DatabaseException: ' . $case );
+			} catch ( DatabaseException $e ) {
+				self::assertSame( $message, $e->getMessage(), $case );
+			}
+
+			self::assertSame( 1, $this->failed_reads, $case );
+			$this->allow_reads();
+		}
+
+		self::assertSame( $before, $this->ledger_tables(), 'Nothing changed.' );
+
+		// Readable again; an order without rows is an empty state, not an error.
+		self::assertSame( 1, $repository->cycle_state( self::ORDER )->active_cycle() );
+		self::assertSame( array( 's:11:1' => 250000 ), $repository->taxes_for_order( self::ORDER ) );
+		self::assertSame( 0, $repository->cycle_state( 8 )->latest_cycle() );
+		self::assertSame( array(), $repository->taxes_for_order( 8 ) );
+	}
+
+	public function test_a_failed_cycle_read_before_the_lock_is_db_error_not_a_new_order(): void {
+		$reader = new FakeOrderReader();
+		$marker = new RecordingFailureMarker();
+		$logger = new RecordingLogger();
+		$sync   = $this->synchronizer( $reader, $marker, $logger );
+		self::order( $reader, 'completed', array( self::line( 11 ) ) );
+		$sync->sync( self::ORDER );
+
+		// Cancelled: the synchronization would close cycle 1.
+		self::order( $reader, 'cancelled', array( self::line( 11 ) ) );
+		$before = $this->ledger_tables();
+		$this->fail_reads( self::CYCLES_SELECT . '`' . $this->table( Tables::SALES_CYCLES ) . '`' );
+
+		$sync->sync( self::ORDER );
+
+		self::assertSame( 1, $this->failed_reads, 'Only the preflight read ran.' );
+		self::assertNotContains( 'START TRANSACTION', $this->statements, 'Stopped before the lock and the transaction.' );
+		self::assertSame( $before, $this->ledger_tables() );
+		self::assertSame( array( 'clear:7', 'record:7:db_error' ), $marker->calls, 'Recorded, never cleared as a success.' );
+		self::assertSame(
+			array(
+				array(
+					'order_id' => self::ORDER,
+					'code'     => 'db_error',
+				),
+			),
+			array_column( $logger->at( 'error' ), 'context' )
+		);
+
+		$this->allow_reads();
+		$sync->sync( self::ORDER );
+
+		self::assertSame( array( 's:11:1', 'v:11:1' ), array_column( $this->rows( Tables::SALES ), 'event_key' ) );
+		self::assertSame( array( '1:open', '1:close' ), $this->cycle_events() );
+		self::assertSame( array( 'clear:7', 'record:7:db_error', 'clear:7' ), $marker->calls );
+	}
+
+	public function test_a_failed_cycle_read_in_the_transaction_is_db_error_and_rolls_back(): void {
+		$reader = new FakeOrderReader();
+		$marker = new RecordingFailureMarker();
+		$logger = new RecordingLogger();
+		$sync   = $this->synchronizer( $reader, $marker, $logger );
+		self::order( $reader, 'completed', array( self::line( 11 ) ) );
+		$sync->sync( self::ORDER );
+
+		// A new line: the next synchronization would write s:12:1.
+		self::order( $reader, 'completed', array( self::line( 11 ), self::line( 12 ) ) );
+		$before = $this->ledger_tables();
+		$this->fail_reads( self::CYCLES_SELECT . '`' . $this->table( Tables::SALES_CYCLES ) . '`', true );
+
+		$sync->sync( self::ORDER );
+
+		$start = $this->start_after_r0();
+		self::assertStringStartsWith( self::LEDGER_SELECT, $this->statements[ $start + 3 ], 'state(): the rows first.' );
+		self::assertStringStartsWith( self::CYCLES_SELECT, $this->statements[ $start + 4 ], 'Then the cycles, which fail.' );
+		self::assertSame( 1, $this->failed_reads );
+		self::assertContains( 'ROLLBACK', array_slice( $this->statements, $start + 5 ) );
+		self::assertNotContains( 'COMMIT', array_slice( $this->statements, $start + 5 ) );
+		self::assertSame( $before, $this->ledger_tables(), 'Rolled back: no new row.' );
+		self::assertSame( array( 'clear:7', 'record:7:db_error' ), $marker->calls );
+		self::assertSame( array( 'db_error' ), array_column( array_column( $logger->at( 'error' ), 'context' ), 'code' ) );
+
+		$this->allow_reads();
+		$sync->sync( self::ORDER );
+
+		self::assertSame( array( 's:11:1', 's:12:1' ), array_column( $this->rows( Tables::SALES ), 'event_key' ) );
+	}
+
+	public function test_a_failed_tax_read_in_the_transaction_writes_no_row_without_its_tax(): void {
+		$reader = new FakeOrderReader();
+		$marker = new RecordingFailureMarker();
+		$logger = new RecordingLogger();
+		$sync   = $this->synchronizer( $reader, $marker, $logger );
+		self::order( $reader, 'completed', array( self::line( 11, '25' ) ) );
+		$sync->sync( self::ORDER );
+
+		// Cancelled: the reversal's tax comes from the stored tax.
+		self::order( $reader, 'cancelled', array( self::line( 11, '25' ) ) );
+		$before = $this->ledger_tables();
+		$this->fail_reads( self::TAX_SELECT . '`' . $this->table( Tables::SALES_TAX ) . '`', true );
+
+		$sync->sync( self::ORDER );
+
+		$start = $this->start_after_r0();
+		self::assertStringStartsWith( self::LEDGER_SELECT, $this->statements[ $start + 3 ] );
+		self::assertStringStartsWith( self::CYCLES_SELECT, $this->statements[ $start + 4 ] );
+		self::assertStringStartsWith( self::TAX_SELECT, $this->statements[ $start + 5 ], 'Then the tax, which fails.' );
+		self::assertSame( 1, $this->failed_reads );
+		self::assertContains( 'ROLLBACK', array_slice( $this->statements, $start + 6 ) );
+		self::assertNotContains( 'COMMIT', array_slice( $this->statements, $start + 6 ) );
+		self::assertSame( $before, $this->ledger_tables(), 'Rolled back: no reversal, no cycle event, no tax row.' );
+		self::assertSame( array( 'clear:7', 'record:7:db_error' ), $marker->calls );
+		self::assertSame( array( 'db_error' ), array_column( array_column( $logger->at( 'error' ), 'context' ), 'code' ) );
+
+		$this->allow_reads();
+		$sync->sync( self::ORDER );
+
+		self::assertSame( array( 's:11:1', 'v:11:1' ), array_column( $this->rows( Tables::SALES ), 'event_key' ) );
+		self::assertSame(
+			array(
+				's:11:1' => 250000,
+				'v:11:1' => -250000,
+			),
+			$this->repository()->taxes_for_order( self::ORDER ),
+			'The reversal has its tax.'
+		);
+	}
+
+	public function test_a_failed_cycle_read_when_the_order_is_deleted_is_logged_without_a_marker(): void {
+		$reader = new FakeOrderReader();
+		$marker = new RecordingFailureMarker();
+		$logger = new RecordingLogger();
+		$sync   = $this->synchronizer( $reader, $marker, $logger );
+		self::order( $reader, 'completed', array( self::line( 11 ) ) );
+		$sync->sync( self::ORDER );
+		$before = $this->ledger_tables();
+		$this->fail_reads( self::CYCLES_SELECT . '`' . $this->table( Tables::SALES_CYCLES ) . '`' );
+
+		$sync->order_deleting( self::ORDER );
+
+		self::assertSame( 1, $this->failed_reads );
+		self::assertNotContains( 'START TRANSACTION', $this->statements );
+		self::assertSame( $before, $this->ledger_tables() );
+		self::assertSame( array( 'clear:7' ), $marker->calls, 'No marker for an order being deleted.' );
+		self::assertSame(
+			array(
+				array(
+					'order_id' => self::ORDER,
+					'code'     => 'db_error',
+				),
+			),
+			array_column( $logger->at( 'error' ), 'context' )
+		);
+
+		$this->allow_reads();
+		$sync->order_deleting( self::ORDER );
+
+		self::assertSame( array( 's:11:1', 'v:11:1' ), array_column( $this->rows( Tables::SALES ), 'event_key' ) );
+		self::assertSame( array( '1:open', '1:close' ), $this->cycle_events() );
+	}
+
+	public function test_a_failed_cycle_read_in_backfill_and_preview_is_db_error(): void {
+		$reader = new FakeOrderReader();
+		$marker = new RecordingFailureMarker();
+		$logger = new RecordingLogger();
+		$sync   = $this->synchronizer( $reader, $marker, $logger );
+		self::order( $reader, 'completed', array( self::line( 11 ) ) );
+		$sync->sync( self::ORDER );
+		$before = $this->ledger_tables();
+		$this->fail_reads( self::CYCLES_SELECT . '`' . $this->table( Tables::SALES_CYCLES ) . '`' );
+
+		$preview = $sync->preview( self::ORDER );
+
+		self::assertSame( SalesBackfillStatus::Failed, $preview->status );
+		self::assertSame( SalesFailureCode::DbError, $preview->failure );
+		self::assertSame( array( 'clear:7' ), $marker->calls, 'The dry run records nothing.' );
+		self::assertSame( array(), $logger->at( 'error' ) );
+
+		$backfill = $sync->backfill( self::ORDER );
+
+		self::assertSame( SalesBackfillStatus::Failed, $backfill->status );
+		self::assertSame( SalesFailureCode::DbError, $backfill->failure );
+		self::assertNotContains( 'START TRANSACTION', $this->statements );
+		self::assertSame( $before, $this->ledger_tables() );
+		self::assertSame( array( 'clear:7', 'record:7:db_error' ), $marker->calls );
+		self::assertSame( array( 'db_error' ), array_column( array_column( $logger->at( 'error' ), 'context' ), 'code' ) );
+
+		$this->allow_reads();
+
+		self::assertSame( SalesBackfillStatus::HasHistory, $sync->backfill( self::ORDER )->status, 'Readable again: the order has history.' );
+	}
+
 	public function test_planner_exception_and_row_of_another_order_roll_back(): void {
 		$repository = $this->repository();
 
@@ -698,11 +917,31 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 	 * filter is removed in tearDown(), also when the test fails.
 	 */
 	private function fail_ledger_reads(): void {
-		$select             = self::LEDGER_SELECT . '`' . $this->table( Tables::SALES ) . '`';
-		$this->query_filter = function ( string $sql ) use ( $select ): string {
+		$this->fail_reads( self::LEDGER_SELECT . '`' . $this->table( Tables::SALES ) . '`' );
+	}
+
+	/**
+	 * From now on every statement that starts with $select (and only those)
+	 * fails with a real SQL error (a table that does not exist); with
+	 * $in_transaction, only inside a transaction (after START TRANSACTION,
+	 * before COMMIT or ROLLBACK). Every statement is recorded. The filter is
+	 * removed in tearDown(), also when the test fails.
+	 *
+	 * @param string $select         Start of the statement to fail.
+	 * @param bool   $in_transaction Whether to fail it only inside a transaction.
+	 */
+	private function fail_reads( string $select, bool $in_transaction = false ): void {
+		$open               = false;
+		$this->query_filter = function ( string $sql ) use ( $select, $in_transaction, &$open ): string {
 			$this->statements[] = $sql;
 
-			if ( ! str_starts_with( $sql, $select ) ) {
+			if ( 'START TRANSACTION' === $sql ) {
+				$open = true;
+			} elseif ( 'COMMIT' === $sql || 'ROLLBACK' === $sql ) {
+				$open = false;
+			}
+
+			if ( ! str_starts_with( $sql, $select ) || ( $in_transaction && ! $open ) ) {
 				return $sql;
 			}
 
@@ -715,12 +954,89 @@ final class SalesRepositoryTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * Removes the filter of fail_reads() and resets what it recorded.
+	 */
+	private function allow_reads(): void {
+		self::assertNotNull( $this->query_filter );
+		remove_filter( 'query', $this->query_filter );
+		$this->query_filter = null;
+		$this->statements   = array();
+		$this->failed_reads = 0;
+	}
+
+	/**
+	 * A synchronizer on the test connection with a fixed clock.
+	 *
+	 * @param FakeOrderReader        $reader Reader.
+	 * @param RecordingFailureMarker $marker Marker.
+	 * @param RecordingLogger        $logger Logger.
+	 */
+	private function synchronizer( FakeOrderReader $reader, RecordingFailureMarker $marker, RecordingLogger $logger ): SalesSynchronizer {
+		return new SalesSynchronizer( $this->repository(), new SalesPlanner(), $reader, $marker, $logger, static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-09-29 12:00:00', new DateTimeZone( 'UTC' ) ) );
+	}
+
+	/**
+	 * Order 7 in the reader with the given status and lines.
+	 *
+	 * @phpstan-param list<OrderLineSnapshot> $lines
+	 *
+	 * @param FakeOrderReader     $reader Reader.
+	 * @param string              $status Status.
+	 * @param OrderLineSnapshot[] $lines  Lines.
+	 */
+	private static function order( FakeOrderReader $reader, string $status, array $lines ): void {
+		$reader->orders[ self::ORDER ] = array(
+			'status'   => $status,
+			'currency' => 'DKK',
+			'lines'    => $lines,
+			'refunds'  => array(),
+		);
+	}
+
+	/**
+	 * Every row of the ledger, cycle and tax tables (read with statements fail_reads() never matches).
+	 *
+	 * @return array{sales: list<array<string, string|null>>, cycles: list<array<string, string|null>>, tax: mixed}
+	 */
+	private function ledger_tables(): array {
+		return array(
+			'sales'  => $this->rows( Tables::SALES ),
+			'cycles' => $this->rows( Tables::SALES_CYCLES ),
+			'tax'    => $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT event_key, tax_amount, currency FROM %i ORDER BY event_key', $this->table( Tables::SALES_TAX ) ), ARRAY_A ),
+		);
+	}
+
+	/**
+	 * Cycle events as "cycle:event" in insertion order.
+	 *
+	 * @return list<string>
+	 */
+	private function cycle_events(): array {
+		return array_map( static fn( array $row ): string => $row['cycle'] . ':' . $row['event'], $this->rows( Tables::SALES_CYCLES ) );
+	}
+
+	/**
+	 * Index of START TRANSACTION in the recorded statements, after asserting
+	 * that R0 (version row, then activation row) came right after it.
+	 */
+	private function start_after_r0(): int {
+		$start = array_search( 'START TRANSACTION', $this->statements, true );
+		self::assertIsInt( $start );
+		self::assertStringContainsString( "option_name = '" . Migrator::VERSION_OPTION . "' LOCK IN SHARE MODE", $this->statements[ $start + 1 ], 'R0: the version row.' );
+		self::assertStringContainsString( '`' . $this->table( Tables::G1_STATE ) . '`', $this->statements[ $start + 2 ], 'R0: the activation row.' );
+		self::assertStringEndsWith( 'LOCK IN SHARE MODE', $this->statements[ $start + 2 ] );
+
+		return $start;
+	}
+
+	/**
 	 * A line of product 20 by creator 3 (synchronizer tests).
 	 *
-	 * @param int $item Item id.
+	 * @param int         $item Item id.
+	 * @param string|null $tax  Actual line tax, null when unknown.
 	 */
-	private static function line( int $item ): OrderLineSnapshot {
-		return new OrderLineSnapshot( $item, 20, 0, 'Line ' . $item, 2, SalesAmount::parse( '100' ), 3 );
+	private static function line( int $item, ?string $tax = null ): OrderLineSnapshot {
+		return new OrderLineSnapshot( $item, 20, 0, 'Line ' . $item, 2, SalesAmount::parse( '100' ), 3, null === $tax ? null : SalesAmount::parse( $tax ) );
 	}
 
 	/**

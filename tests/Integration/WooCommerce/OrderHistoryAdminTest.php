@@ -613,6 +613,35 @@ final class OrderHistoryAdminTest extends IntegrationTestCase {
 		self::assertSame( array_fill( 0, 2, array( 'error', 'The order history could not be read.', array( 'error' => DatabaseException::class ) ) ), $this->page_log() );
 	}
 
+	public function test_a_cycle_read_error_is_shown_as_an_order_history_error_not_as_no_cycles(): void {
+		$this->page_logger = new RecordingLogger();
+		$select            = 'SELECT id, order_id, cycle, event, occurred_at, created_at FROM `' . $this->table( Tables::SALES_CYCLES ) . '`';
+		$failed            = 0;
+		add_filter(
+			'query',
+			static function ( string $query ) use ( $select, &$failed ): string {
+				if ( ! str_starts_with( $query, $select ) ) {
+					return $query;
+				}
+
+				++$failed;
+
+				return 'SELECT * FROM merchboard_no_such_table';
+			}
+		);
+		$this->wpdb->suppress_errors( true );
+
+		// The order's rows are read; only its cycles (SalesRepository::cycle_state()) fail.
+		$order = $this->render( array( 'order' => '3001' ) );
+
+		self::assertSame( 1, $failed, 'Only the order\'s cycle read failed.' );
+		self::assertStringContainsString( 'The order history could not be read. Please try again later.', $order );
+		self::assertStringNotContainsString( 'No cycle events.', $order, 'A read error is never shown as an order without cycles.' );
+		self::assertStringNotContainsString( 'Ledger events', $order );
+		self::assertStringNotContainsString( 'has no stored history', $order );
+		self::assertSame( array( array( 'error', 'The order history could not be read.', array( 'error' => DatabaseException::class ) ) ), $this->page_log() );
+	}
+
 	public function test_the_page_offers_no_deletion_or_other_write_action(): void {
 		$before = $this->counts();
 
