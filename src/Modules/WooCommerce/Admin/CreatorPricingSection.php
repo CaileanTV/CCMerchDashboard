@@ -9,10 +9,13 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\WooCommerce\Admin;
 
+use DateTimeImmutable;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorShare;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatHistoryRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\EffectiveMarkup;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupResolver;
@@ -45,18 +48,20 @@ final class CreatorPricingSection {
 	/**
 	 * Constructor.
 	 *
-	 * @param ProductStore              $products Linked products of the creator.
-	 * @param PricingProductStore       $units    WooCommerce prices (read only).
-	 * @param MarkupResolver            $resolver The share that applies to a product.
-	 * @param CreatorMarkupRepository   $markups  Default markups.
-	 * @param CreatorVatRepository|null $vat      Creators' VAT status (ADR-048).
+	 * @param ProductStore                     $products Linked products of the creator.
+	 * @param PricingProductStore              $units    WooCommerce prices (read only).
+	 * @param MarkupResolver                   $resolver The share that applies to a product.
+	 * @param CreatorMarkupRepository          $markups  Default markups.
+	 * @param CreatorVatRepository|null        $vat      Creators' VAT status (ADR-048).
+	 * @param CreatorVatHistoryRepository|null $history  History of the VAT status (ADR-062 K06).
 	 */
 	public function __construct(
 		private ProductStore $products,
 		private PricingProductStore $units,
 		private MarkupResolver $resolver,
 		private CreatorMarkupRepository $markups,
-		private ?CreatorVatRepository $vat = null
+		private ?CreatorVatRepository $vat = null,
+		private ?CreatorVatHistoryRepository $history = null
 	) {
 	}
 
@@ -77,9 +82,14 @@ final class CreatorPricingSection {
 		return match ( $code ) {
 			'markup_saved'                            => array( __( 'Creator markup saved. It applies to order lines created from now on; no WooCommerce price and no earlier order line was changed.', 'merchboard' ), 'success' ),
 			'markup_unchanged'                        => array( __( 'The creator markup was not changed.', 'merchboard' ), 'info' ),
-			'vat_saved'                               => array( __( 'VAT status saved. It applies to order lines created from now on; prices, earlier order lines and earlier payouts are not changed.', 'merchboard' ), 'success' ),
-			'vat_unchanged'                           => array( __( 'The VAT status was not changed.', 'merchboard' ), 'info' ),
+			'vat_saved'                               => array( __( 'VAT status registered; it is the current status. It applies to order lines created from now on; prices, earlier order lines, settlement documents and payouts are not changed.', 'merchboard' ), 'success' ),
+			'vat_recorded'                            => array( __( 'VAT status registered in the history. The current status is unchanged, because another registration applies today. Nothing earlier was changed.', 'merchboard' ), 'success' ),
+			'vat_unchanged'                           => array( __( 'Nothing was registered: it is the same as the last registration.', 'merchboard' ), 'info' ),
 			CreatorPricingActions::INVALID_VAT_STATUS => array( __( 'Not saved: choose Yes or No.', 'merchboard' ), 'error' ),
+			PricingException::INVALID_EFFECTIVE_DATE  => array( __( 'Not saved: enter the date the status applies from; it cannot be in the future.', 'merchboard' ), 'error' ),
+			PricingException::INVALID_CHECK_DATE      => array( __( 'Not saved: enter the date the status was checked; it cannot be in the future.', 'merchboard' ), 'error' ),
+			PricingException::INVALID_REFERENCE       => array( __( 'Not saved: enter a documentation reference of at most 191 characters.', 'merchboard' ), 'error' ),
+			PricingException::INVALID_REASON          => array( __( 'Not saved: enter a reason of at most 500 characters.', 'merchboard' ), 'error' ),
 			'product_markup_saved'                    => array( __( 'Product markup saved. It applies to order lines created from now on; the WooCommerce price was not changed.', 'merchboard' ), 'success' ),
 			'product_markup_unchanged'                => array( __( 'The product markup was not changed.', 'merchboard' ), 'info' ),
 			'product_markup_removed'                  => array( __( 'Product markup removed: the creator markup applies again to order lines created from now on.', 'merchboard' ), 'success' ),
@@ -160,7 +170,9 @@ final class CreatorPricingSection {
 	}
 
 	/**
-	 * The creator's VAT status (ADR-048, ADR-049).
+	 * The creator's VAT status (ADR-048, ADR-049) and its history (ADR-062
+	 * K06): every change is a registration with the date it applies from, the
+	 * check date, a documentation reference and a reason, never overwritten.
 	 *
 	 * @param Creator $creator Creator.
 	 */
@@ -170,18 +182,79 @@ final class CreatorPricingSection {
 		}
 
 		$registered = $this->vat->find( $creator->id ) ?? false;
+		$today      = ( new DateTimeImmutable( 'now', wp_timezone() ) )->format( 'Y-m-d' );
 
 		echo '<h3>' . esc_html__( 'VAT registered', 'merchboard' ) . '</h3>';
+		/* translators: %s: Yes or No. */
+		echo '<p>' . esc_html( sprintf( __( 'Current VAT status: %s. New order lines get this status.', 'merchboard' ), $registered ? __( 'Yes', 'merchboard' ) : __( 'No', 'merchboard' ) ) ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="merchboard-pricing-vat">';
 		self::hidden( CreatorPricingActions::VAT_ACTION, $creator->id );
 		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'VAT registered', 'merchboard' ) . '</legend>';
 		echo '<label><input type="radio" name="vat_registered" value="1"' . checked( $registered, true, false ) . '> ' . esc_html__( 'Yes', 'merchboard' ) . '</label> ';
-		echo '<label><input type="radio" name="vat_registered" value="0"' . checked( $registered, false, false ) . '> ' . esc_html__( 'No', 'merchboard' ) . '</label> ';
-		echo '<button type="submit" class="button">' . esc_html__( 'Save VAT status', 'merchboard' ) . '</button></fieldset>';
+		echo '<label><input type="radio" name="vat_registered" value="0"' . checked( $registered, false, false ) . '> ' . esc_html__( 'No', 'merchboard' ) . '</label></fieldset>';
+		echo '<p><label>' . esc_html__( 'Applies from', 'merchboard' ) . ' <input type="date" name="effective_from" required min="2000-01-01" max="' . esc_attr( $today ) . '"></label> ';
+		echo '<label>' . esc_html__( 'Checked on', 'merchboard' ) . ' <input type="date" name="checked_on" required min="2000-01-01" max="' . esc_attr( $today ) . '" value="' . esc_attr( $today ) . '"></label></p>';
+		echo '<p><label>' . esc_html__( 'Documentation reference', 'merchboard' ) . '<br><input type="text" name="documentation_reference" class="regular-text" required maxlength="' . esc_attr( (string) CreatorPricingSettings::MAX_REFERENCE ) . '"></label></p>';
+		echo '<p><label>' . esc_html__( 'Reason', 'merchboard' ) . '<br><textarea name="reason" rows="2" cols="60" required maxlength="' . esc_attr( (string) CreatorPricingSettings::MAX_REASON ) . '"></textarea></label></p>';
+		echo '<p><button type="submit" class="button">' . esc_html__( 'Register VAT status', 'merchboard' ) . '</button></p>';
 		echo '<p class="description">' . esc_html__( 'Yes: the creator is paid the full creator profit.', 'merchboard' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'No: the creator is also paid the full creator profit.', 'merchboard' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Changing the VAT status changes no product prices and no earlier order lines or payouts: each order line keeps the status it had when it was created.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( '"Applies from" is the date the status applies from; "Checked on" is the date it was checked, for example in the CVR register. Neither may be in the future. Each registration is kept unchanged; to correct one, register again with a reason. A registration with an earlier date changes no order lines, settlement documents or payouts made before it.', 'merchboard' ) . '</p>';
 		echo '</form>';
+
+		$this->render_vat_history( $creator, $today );
+	}
+
+	/**
+	 * The history of the creator's VAT status (ADR-062 K06), most recently
+	 * recorded first; the registration that applies today is marked.
+	 *
+	 * @param Creator $creator Creator.
+	 * @param string  $today   Today (Y-m-d, site calendar).
+	 */
+	private function render_vat_history( Creator $creator, string $today ): void {
+		if ( null === $this->history ) {
+			return;
+		}
+
+		echo '<h4>' . esc_html__( 'VAT status history', 'merchboard' ) . '</h4>';
+		$entries = $this->history->for_creator( $creator->id );
+
+		if ( array() === $entries ) {
+			echo '<p class="description">' . esc_html__( 'No VAT status has been registered in the history yet. The current status was set before the history was introduced; earlier changes are in the audit log.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		$in_force = $this->history->at( $creator->id, $today );
+
+		echo '<table class="widefat striped merchboard-vat-history"><thead><tr>';
+
+		foreach ( array( __( 'Applies from', 'merchboard' ), __( 'VAT registered', 'merchboard' ), __( 'Checked on', 'merchboard' ), __( 'Documentation reference', 'merchboard' ), __( 'Reason', 'merchboard' ), __( 'Registered by', 'merchboard' ), __( 'Registered', 'merchboard' ) ) as $heading ) {
+			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
+		}
+
+		echo '</tr></thead><tbody>';
+
+		foreach ( $entries as $entry ) {
+			$user = null === $entry->recorded_by ? false : get_userdata( $entry->recorded_by );
+			$by   = false === $user ? ( null === $entry->recorded_by ? '–' : '#' . $entry->recorded_by ) : $user->display_name;
+
+			echo '<tr><td>' . esc_html( $entry->effective_from );
+
+			if ( $in_force?->id === $entry->id ) {
+				echo '<br><span class="description">' . esc_html__( 'Applies today', 'merchboard' ) . '</span>';
+			}
+
+			echo '</td><td>' . esc_html( $entry->vat_registered ? __( 'Yes', 'merchboard' ) : __( 'No', 'merchboard' ) ) . '</td>';
+			echo '<td>' . esc_html( $entry->checked_on ) . '</td>';
+			echo '<td>' . esc_html( $entry->reference ) . '</td>';
+			echo '<td>' . nl2br( esc_html( $entry->reason ) ) . '</td>';
+			echo '<td>' . esc_html( $by ) . '</td>';
+			echo '<td>' . esc_html( (string) wp_date( 'Y-m-d H:i', $entry->recorded_at->getTimestamp() ) ) . '</td></tr>';
+		}
+
+		echo '</tbody></table>';
 	}
 
 	/**

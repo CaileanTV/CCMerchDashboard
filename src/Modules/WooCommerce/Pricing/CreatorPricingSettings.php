@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\WooCommerce\Pricing;
 
+use Closure;
+use DateTimeImmutable;
+use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -23,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The only write path of the pricing configuration (ADR-048, ADR-049): a
  * creator's default markup (share of the WooCommerce sale price) and VAT
- * status, and a parent product's own share. Nothing here reads or writes a
+ * status (through its history, ADR-062 K06), and a parent product's own share. Nothing here reads or writes a
  * WooCommerce price, and sales snapshots are never touched: a change applies
  * to order lines created afterwards only.
  *
@@ -42,16 +45,35 @@ defined( 'ABSPATH' ) || exit;
 final class CreatorPricingSettings {
 
 	/**
+	 * Most characters of a documentation reference in the VAT status history.
+	 */
+	public const MAX_REFERENCE = 191;
+
+	/**
+	 * Most characters of a reason in the VAT status history.
+	 */
+	public const MAX_REASON = 500;
+
+	/**
+	 * The earliest date of the VAT status history.
+	 */
+	private const EARLIEST_DATE = '2000-01-01';
+
+	/**
 	 * Constructor.
 	 *
-	 * @param CreatorRepository         $creators    Creators.
-	 * @param CreatorMarkupRepository   $markups     Default markups.
-	 * @param ProductMarkupRepository   $products    Product shares.
-	 * @param ProductCreatorLink        $links       Product ownership (read only).
-	 * @param PricingProductStore       $store       WooCommerce access (read only).
-	 * @param AuditTrail                $audit       Audit trail.
-	 * @param Transaction               $transaction Database transaction.
-	 * @param CreatorVatRepository|null $vat         Creators' VAT status.
+	 * @phpstan-param (Closure(): DateTimeImmutable)|null $clock
+	 *
+	 * @param CreatorRepository                $creators    Creators.
+	 * @param CreatorMarkupRepository          $markups     Default markups.
+	 * @param ProductMarkupRepository          $products    Product shares.
+	 * @param ProductCreatorLink               $links       Product ownership (read only).
+	 * @param PricingProductStore              $store       WooCommerce access (read only).
+	 * @param AuditTrail                       $audit       Audit trail.
+	 * @param Transaction                      $transaction Database transaction.
+	 * @param CreatorVatRepository|null        $vat         Creators' current VAT status.
+	 * @param CreatorVatHistoryRepository|null $history     History of the VAT status (ADR-062 K06).
+	 * @param Closure|null                     $clock       Current time; null = now.
 	 */
 	public function __construct(
 		private CreatorRepository $creators,
@@ -61,49 +83,143 @@ final class CreatorPricingSettings {
 		private PricingProductStore $store,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private ?CreatorVatRepository $vat = null
+		private ?CreatorVatRepository $vat = null,
+		private ?CreatorVatHistoryRepository $history = null,
+		private ?Closure $clock = null
 	) {
 	}
 
 	/**
-	 * Sets whether a creator is VAT registered (ADR-048, ADR-049). It changes
-	 * no WooCommerce price, no snapshot and no past payout. A storage failure
-	 * throws a DatabaseException; nothing is stored then.
+	 * Records a registration of a creator's VAT status in its history
+	 * (ADR-062 K06; ADR-048, ADR-049): the status, the date it applies from,
+	 * the date it was checked, a documentation reference and a reason. The
+	 * registration is never changed afterwards; a correction is a new one.
 	 *
-	 * @param int  $creator_id     Creator.
-	 * @param bool $vat_registered VAT registered.
-	 * @return bool Whether the status changed.
-	 * @throws PricingException When not authorized or the creator is unknown.
+	 * The creator's current status (`merchboard_creators.vat_registered`,
+	 * which new order lines snapshot) becomes the status the history gives
+	 * for today. A registration with an earlier date may therefore leave it
+	 * unchanged. Nothing earlier is recalculated: order lines, settlement
+	 * documents (also their VAT on the commission), payouts and adjustments
+	 * keep the status they were made with. A date in the future is refused.
+	 *
+	 * In one transaction under a lock of the creator: the registration, the
+	 * current status and the audit records. A registration identical to the
+	 * last one writes nothing. A storage failure throws a DatabaseException;
+	 * nothing is stored then.
+	 *
+	 * @param int    $creator_id     Creator.
+	 * @param bool   $vat_registered VAT registered.
+	 * @param string $effective_from Date the status applies from (Y-m-d).
+	 * @param string $checked_on     Date the status was checked (Y-m-d).
+	 * @param string $reference      Documentation reference (1–191 characters).
+	 * @param string $reason         Reason (1–500 characters).
+	 * @return string `vat_saved` (current status changed), `vat_recorded` (recorded, current status unchanged) or `vat_unchanged` (nothing recorded).
+	 * @throws PricingException When not authorized, the creator is unknown or an input is invalid.
 	 */
-	public function set_vat_registered( int $creator_id, bool $vat_registered ): bool {
+	public function record_vat_status( int $creator_id, bool $vat_registered, string $effective_from, string $checked_on, string $reference, string $reason ): string {
 		self::authorize();
 
-		$vat      = $this->vat;
-		$previous = $creator_id > 0 && null !== $vat ? $vat->find( $creator_id ) : null;
+		$vat     = $this->vat;
+		$history = $this->history;
 
-		if ( null === $vat || null === $previous ) {
+		if ( $creator_id < 1 || null === $vat || null === $history || null === $vat->find( $creator_id ) ) {
 			throw new PricingException( PricingException::CREATOR_NOT_FOUND );
 		}
 
-		if ( $previous === $vat_registered ) {
-			return false;
-		}
+		$now            = null === $this->clock ? new DateTimeImmutable( 'now', wp_timezone() ) : ( $this->clock )();
+		$today          = $now->setTimezone( wp_timezone() )->format( 'Y-m-d' );
+		$effective_from = self::history_date( $effective_from, $today, PricingException::INVALID_EFFECTIVE_DATE );
+		$checked_on     = self::history_date( $checked_on, $today, PricingException::INVALID_CHECK_DATE );
+		$reference      = self::history_text( $reference, self::MAX_REFERENCE, false, PricingException::INVALID_REFERENCE );
+		$reason         = self::history_text( $reason, self::MAX_REASON, true, PricingException::INVALID_REASON );
 
-		$this->transaction->run(
-			function () use ( $vat, $creator_id, $vat_registered, $previous ): void {
-				$vat->save( $creator_id, $vat_registered );
+		return $this->transaction->run(
+			function () use ( $vat, $history, $creator_id, $vat_registered, $effective_from, $checked_on, $reference, $reason, $now, $today ): string {
+				if ( ! $history->lock_creator( $creator_id ) ) {
+					throw new PricingException( PricingException::CREATOR_NOT_FOUND );
+				}
+
+				$previous = $vat->find( $creator_id ) ?? throw new PricingException( PricingException::CREATOR_NOT_FOUND );
+				$latest   = $history->latest( $creator_id );
+
+				if ( null !== $latest && $latest->records( $vat_registered, $effective_from, $checked_on, $reference, $reason ) ) {
+					return 'vat_unchanged';
+				}
+
+				$user    = get_current_user_id();
+				$id      = $history->insert( $creator_id, $vat_registered, $effective_from, $checked_on, $reference, $reason, $user > 0 ? $user : null, $now );
+				$current = $history->at( $creator_id, $today )->vat_registered ?? $previous;
+
+				if ( $current !== $previous ) {
+					$vat->save( $creator_id, $current );
+					$this->audit->record(
+						AuditAction::CreatorVatStatusChanged,
+						$creator_id,
+						array(
+							'previous_vat_registered' => $previous,
+							'vat_registered'          => $current,
+						)
+					);
+				}
+
 				$this->audit->record(
-					AuditAction::CreatorVatStatusChanged,
+					AuditAction::CreatorVatHistoryRecorded,
 					$creator_id,
 					array(
-						'previous_vat_registered' => $previous,
-						'vat_registered'          => $vat_registered,
+						'entry_id'               => $id,
+						'vat_registered'         => $vat_registered,
+						'effective_from'         => $effective_from,
+						'checked_on'             => $checked_on,
+						'has_reference'          => true,
+						'has_reason'             => true,
+						'current_vat_registered' => $current,
+						'current_changed'        => $current !== $previous,
 					)
 				);
+
+				return $current !== $previous ? 'vat_saved' : 'vat_recorded';
 			}
 		);
+	}
 
-		return true;
+	/**
+	 * A date of the VAT status history: Y-m-d, from 2000-01-01 to today.
+	 *
+	 * @param string $value Submitted date.
+	 * @param string $today Today (Y-m-d, site calendar).
+	 * @param string $code  Exception code when invalid.
+	 * @throws PricingException When the date is invalid.
+	 */
+	private static function history_date( string $value, string $today, string $code ): string {
+		$value  = trim( $value );
+		$parsed = DateTimeImmutable::createFromFormat( '!Y-m-d', $value, new DateTimeZone( 'UTC' ) );
+
+		if ( false === $parsed || $parsed->format( 'Y-m-d' ) !== $value || $value < self::EARLIEST_DATE || $value > $today ) {
+			throw new PricingException( $code );
+		}
+
+		return $value;
+	}
+
+	/**
+	 * A text of the VAT status history: trimmed, 1 to $max characters,
+	 * without control characters (line breaks only where allowed).
+	 *
+	 * @param string $value       Submitted text.
+	 * @param int    $max         Most characters.
+	 * @param bool   $line_breaks Whether line breaks are allowed.
+	 * @param string $code        Exception code when invalid.
+	 * @throws PricingException When the text is invalid.
+	 */
+	private static function history_text( string $value, int $max, bool $line_breaks, string $code ): string {
+		$value    = trim( str_replace( "\r\n", "\n", $value ) );
+		$controls = $line_breaks ? '/[\x00-\x09\x0B-\x1F\x7F]/' : '/[\x00-\x1F\x7F]/';
+
+		if ( '' === $value || mb_strlen( $value ) > $max || 1 === preg_match( $controls, $value ) || 1 !== preg_match( '//u', $value ) ) {
+			throw new PricingException( $code );
+		}
+
+		return $value;
 	}
 
 	/**

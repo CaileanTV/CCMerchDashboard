@@ -40,6 +40,8 @@ use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatHistoryRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupBps;
@@ -162,6 +164,27 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		$this->posts->remove_all();
 		parent::tearDown();
+	}
+
+	public function test_a_later_vat_status_registration_changes_no_recalculation_basis(): void {
+		$this->earn( $this->alpha, 2 );
+		$this->legacy( $this->pay( $this->alpha, '10' ) );
+		$id       = $this->recalculations->preview();
+		$computed = $this->recalculations->compute();
+		$before   = $this->state();
+		$pricing  = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM %i ORDER BY order_item_id', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
+		$links    = new ProductCreatorLink( new PostMetaProductStore(), $this->creators, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( ProtectedProductMeta::class ) );
+		$settings = new CreatorPricingSettings( $this->creators, new CreatorMarkupRepository( $this->wpdb ), new ProductMarkupRepository( $this->wpdb ), $links, new PostMetaPricingProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), new CreatorVatRepository( $this->wpdb ), new CreatorVatHistoryRepository( $this->wpdb ), static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) ) );
+
+		// ADR-062 K06: registered as VAT registered from before the sales, after the fact.
+		self::assertSame( 'vat_saved', $settings->record_vat_status( $this->alpha, true, '2026-01-01', '2026-11-30', 'CVR 12345678', 'Registered retroactively.' ) );
+
+		self::assertSame( $computed, $this->recalculations->compute(), 'The stored rows decide, never the history.' );
+		self::assertSame( $before, $this->state(), 'Documents, rows, payouts and adjustments are unchanged.' );
+		self::assertSame( $pricing, $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM %i ORDER BY order_item_id', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A ), 'The sales keep the status they were made with.' );
+
+		$this->recalculations->approve( $id );
+		self::assertSame( 1, $this->recalculations->execute( $id ), 'The approved basis is not stale.' );
 	}
 
 	public function test_the_preview_shows_only_the_removed_deduction_and_changes_nothing(): void {
@@ -423,7 +446,7 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 		self::assertSame( array( 'reference' => Recalculation::reference_of( $id ), 'status' => Recalculation::EXECUTED ), array_intersect_key( $manifest['recalculation'], array_flip( array( 'reference', 'status' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( array( true, 1, 1, 2 ), array( $manifest['scope']['complete'], $manifest['scope']['items_total'], $manifest['scope']['items_exported'], $manifest['scope']['rows_exported'] ) );
 		self::assertSame( array( 'group' => null, 'creator_id' => null ), $manifest['scope']['filters'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		self::assertSame( '15', $manifest['versions']['schema'] );
+		self::assertSame( '16', $manifest['versions']['schema'] );
 		self::assertSame( array( 'adr063-remove-20', 'adr049-adr054-v1' ), array( $manifest['versions']['recalculation'], $manifest['versions']['legacy_payouts'] ) );
 		self::assertNull( $manifest['previous_export'] );
 		self::assertStringContainsString( 'sha256sum -c SHA256SUMS', $manifest['verification'] );

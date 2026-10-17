@@ -150,6 +150,15 @@ enum AuditAction: string {
 	case CreatorVatStatusChanged = 'creator_vat_status_changed';
 
 	/**
+	 * A registration of the creator's VAT status was recorded in its history
+	 * (ADR-062 K06; context: entry id, status, the date it applies
+	 * from, the check date, whether a documentation reference and a reason
+	 * were given (never their text), and the current status afterwards and
+	 * whether it changed). Nothing earlier is recalculated.
+	 */
+	case CreatorVatHistoryRecorded = 'creator_vat_history_recorded';
+
+	/**
 	 * A product-specific share was set or changed for a parent product of the
 	 * creator (context: product id, markup and the previous markup or null,
 	 * in basis points; ADR-049). No WooCommerce price and no snapshot is

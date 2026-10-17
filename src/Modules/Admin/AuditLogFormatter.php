@@ -87,6 +87,7 @@ final class AuditLogFormatter {
 			AuditAction::ProductFixedProfitSet   => __( 'Fixed profit set', 'merchboard' ),
 			AuditAction::ProductFixedProfitRemoved => __( 'Fixed profit removed', 'merchboard' ),
 			AuditAction::CreatorVatStatusChanged   => __( 'VAT status changed', 'merchboard' ),
+			AuditAction::CreatorVatHistoryRecorded => __( 'VAT status registered in the history', 'merchboard' ),
 			AuditAction::ProductMarkupSet          => __( 'Product markup set', 'merchboard' ),
 			AuditAction::ProductMarkupRemoved      => __( 'Product markup removed', 'merchboard' ),
 			AuditAction::OrderHistoryDeleted       => __( 'Order history deleted', 'merchboard' ),

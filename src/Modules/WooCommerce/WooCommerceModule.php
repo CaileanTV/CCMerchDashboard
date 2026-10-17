@@ -83,6 +83,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatHistoryRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupResolver;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
@@ -363,7 +364,8 @@ final class WooCommerceModule implements Module {
 				$c->get( PricingProductStore::class ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
-				new CreatorVatRepository( $c->get( wpdb::class ) )
+				new CreatorVatRepository( $c->get( wpdb::class ) ),
+				new CreatorVatHistoryRepository( $c->get( wpdb::class ) )
 			)
 		);
 
@@ -382,7 +384,8 @@ final class WooCommerceModule implements Module {
 				$c->get( PricingProductStore::class ),
 				$c->get( MarkupResolver::class ),
 				new CreatorMarkupRepository( $c->get( wpdb::class ) ),
-				new CreatorVatRepository( $c->get( wpdb::class ) )
+				new CreatorVatRepository( $c->get( wpdb::class ) ),
+				new CreatorVatHistoryRepository( $c->get( wpdb::class ) )
 			)
 		);
 

@@ -108,7 +108,7 @@ final class ReinstallAfterUninstallTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( '15', (string) get_option( Migrator::VERSION_OPTION ), 'Every migration ran again.' );
+		self::assertSame( '16', (string) get_option( Migrator::VERSION_OPTION ), 'Every migration ran again.' );
 		self::assertSame( $archived, $this->kept_rows(), 'The migrations changed no kept row.' );
 		self::assertSame( $this->fresh, $this->definitions(), 'Columns and indexes of the kept tables are those of a fresh install.' );
 		self::assertSame( 0, $this->count_rows( Tables::SALES ), 'The dropped tables start empty.' );

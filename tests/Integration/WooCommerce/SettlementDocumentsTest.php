@@ -39,6 +39,8 @@ use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatHistoryRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupBps;
@@ -540,6 +542,40 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertSame( $api, MePayoutsController::settlement_document( $again ) );
 		self::assertSame( $pdf, ( new SettlementPdf() )->render( $again ), 'The same bytes.' );
 		self::assertSame( array_diff_key( $before, array( 'audit' => true ) ), array_diff_key( $this->state(), array( 'audit' => true ) ), 'Nothing of the document, its rows, the counter or the payouts changed.' );
+	}
+
+	public function test_a_vat_history_registration_changes_no_issued_document_and_applies_to_new_sales_only(): void {
+		// VAT registered at the first sales: 2 × 20.00 commission incl. 25 % VAT.
+		$this->earn( 2 );
+		$first = $this->request( '10', 'key-set-0305' );
+		$this->decisions->complete( $first->id );
+		$issued = $this->documents->for_payout( $first->id );
+		self::assertNotNull( $issued );
+		$api = MePayoutsController::settlement_document( $issued );
+		$pdf = ( new SettlementPdf() )->render( $issued );
+
+		$creators = new CreatorRepository( $this->wpdb );
+		$links    = new ProductCreatorLink( new PostMetaProductStore(), $creators, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( ProtectedProductMeta::class ) );
+		$settings = new CreatorPricingSettings( $creators, $this->markups, new ProductMarkupRepository( $this->wpdb ), $links, new PostMetaPricingProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->vat, new CreatorVatHistoryRepository( $this->wpdb ), static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) ) );
+
+		// ADR-062 K06: registered after the fact as not VAT registered since before those sales.
+		self::assertSame( 'vat_saved', $settings->record_vat_status( $this->creator, false, '2026-08-01', '2026-11-30', 'CVR 12345678', 'Deregistered; found at a later check.' ) );
+		$again = $this->documents->for_payout( $first->id );
+		self::assertNotNull( $again );
+
+		self::assertSame( $issued['document']->snapshot, $again['document']->snapshot, 'The issued document keeps its VAT on the commission.' );
+		self::assertSame( $api, MePayoutsController::settlement_document( $again ) );
+		self::assertSame( $pdf, ( new SettlementPdf() )->render( $again ) );
+		self::assertSame( '8.0000', $api['commission_vat']['vat'] ?? null );
+
+		// A sale after the registration gets the new status; the next document has no VAT on its commission.
+		$this->earn( 1, '2026-11-01 10:00:00' );
+		$second = $this->request( '5', 'key-set-0306' );
+		$this->decisions->complete( $second->id );
+		$next = $this->documents->for_payout( $second->id );
+		self::assertNotNull( $next );
+		self::assertSame( array( '0.0000', '20.0000' ), array( $next['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ]['vat'] ?? null, $next['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ]['untaxed'] ?? null ) );
+		self::assertNull( MePayoutsController::settlement_document( $next )['commission_vat'] );
 	}
 
 	public function test_no_vat_on_the_commission_for_sales_while_not_vat_registered(): void {

@@ -21,6 +21,7 @@ use MerchBoard\Modules\WooCommerce\Admin\CreatorPricingActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorPricingSection;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatHistoryRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupResolver;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
@@ -33,6 +34,7 @@ use MerchBoard\Tests\Integration\Support\PostMetaPricingProductStore;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use DateTimeImmutable;
 use RuntimeException;
 use WP_User;
 
@@ -80,10 +82,10 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		$vat            = new CreatorVatRepository( $this->wpdb );
 		$this->resolver = new MarkupResolver( $links, $markups, $products );
 		$this->actions  = new CreatorPricingActions(
-			new CreatorPricingSettings( $creators, $markups, $products, $links, $store, $audit, $transaction, $vat ),
+			new CreatorPricingSettings( $creators, $markups, $products, $links, $store, $audit, $transaction, $vat, new CreatorVatHistoryRepository( $this->wpdb ) ),
 			new RecordingLogger()
 		);
-		$this->section  = new CreatorPricingSection( $link_store, $store, $this->resolver, $markups, $vat );
+		$this->section  = new CreatorPricingSection( $link_store, $store, $this->resolver, $markups, $vat, new CreatorVatHistoryRepository( $this->wpdb ) );
 		$this->recorder = new SalesLinePricingRecorder( $store, $this->resolver, new SalesLinePricingRepository( $this->wpdb ), new RecordingLogger(), $vat );
 	}
 
@@ -201,7 +203,7 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 
 		self::assertStringContainsString( '<td>20.00 DKK</td><td>20.00 DKK</td>', $html, 'Example: profit 20.00, payout 20.00 when not VAT registered (ADR-063).' );
 
-		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, array( 'vat_registered' => '1' ) );
+		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, self::vat( '1' ) );
 		self::assertStringContainsString( '<td>20.00 DKK</td><td>20.00 DKK</td>', $this->render( $this->alpha ), 'VAT registered: payout = profit.' );
 
 		foreach ( array( 'Apply', 'Base price', 'Creator price', 'drift', 'Fixed profit' ) as $withdrawn ) {
@@ -224,7 +226,7 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		$before    = array( $this->prices_of( $product ), $this->prices_of( $variation ) );
 
 		$this->post( CreatorPricingActions::MARKUP_ACTION, $this->alpha, 0, array( 'markup' => '50' ) );
-		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, array( 'vat_registered' => '1' ) );
+		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, self::vat( '1' ) );
 		$this->post( CreatorPricingActions::PRODUCT_MARKUP_ACTION, $this->alpha, $product, array( 'product_markup' => '100' ) );
 		$this->post( CreatorPricingActions::PRODUCT_MARKUP_ACTION, $this->alpha, $parent, array( 'product_markup' => '25' ) );
 		$this->post( CreatorPricingActions::REMOVE_PRODUCT_MARKUP_ACTION, $this->alpha, $product );
@@ -321,7 +323,7 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		$snapshot = $this->snapshot_row( 801 );
 
 		$this->post( CreatorPricingActions::MARKUP_ACTION, $this->alpha, 0, array( 'markup' => '50' ) );
-		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, array( 'vat_registered' => '1' ) );
+		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, self::vat( '1' ) );
 		$this->post( CreatorPricingActions::PRODUCT_MARKUP_ACTION, $this->alpha, $product, array( 'product_markup' => '99' ) );
 
 		self::assertSame( $snapshot, $this->snapshot_row( 801 ) );
@@ -330,6 +332,55 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		self::assertSame( '0', $snapshot['vat_registered'] );
 		self::assertSame( 1, $this->count_rows( Tables::SALES_LINE_PRICING ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
+	}
+
+	public function test_the_vat_status_is_registered_in_its_history_through_the_form(): void {
+		self::assertStringContainsString( esc_html( 'No VAT status has been registered in the history yet. The current status was set before the history was introduced; earlier changes are in the audit log.' ), $this->render( $this->alpha ) );
+
+		$fields = self::vat(
+			'1',
+			array(
+				'documentation_reference' => 'CVR <b>12345678</b>',
+				'reason'                  => "Registered at SKAT.\nChecked in the CVR register.",
+			)
+		);
+		self::assertSame( array( 0 => 'vat_saved' ), $this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, $fields ) );
+		self::assertTrue( ( new CreatorVatRepository( $this->wpdb ) )->find( $this->alpha ) );
+
+		$html = $this->render( $this->alpha );
+		self::assertStringContainsString( 'VAT status history', $html );
+		self::assertStringContainsString( 'Applies today', $html );
+		self::assertStringContainsString( 'CVR 12345678', $html, 'Tags are removed by sanitize_text_field().' );
+		self::assertStringNotContainsString( '<b>12345678</b>', $html );
+		self::assertStringContainsString( 'Registered at SKAT.<br />', $html, 'Line breaks of the reason are kept and shown.' );
+		self::assertStringContainsString( esc_html( 'Current VAT status: Yes. New order lines get this status.' ), $html );
+
+		self::assertSame( array( 0 => 'vat_unchanged' ), $this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, $fields ), 'A double submit records nothing.' );
+
+		$tomorrow = ( new DateTimeImmutable( 'tomorrow', wp_timezone() ) )->format( 'Y-m-d' );
+		$refused  = array(
+			'invalid_vat_status'         => self::vat( '2' ),
+			'invalid_vat_effective_date' => self::vat( '1', array( 'effective_from' => '2026-02-30' ) ),
+			'invalid_vat_check_date'     => self::vat( '1', array( 'checked_on' => $tomorrow ) ),
+			'invalid_vat_reference'      => self::vat( '1', array( 'documentation_reference' => '' ) ),
+			'invalid_vat_reason'         => self::vat( '1', array( 'reason' => '   ' ) ),
+		);
+
+		foreach ( $refused as $code => $input ) {
+			self::assertSame( array( 0 => $code ), $this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, $input ), $code );
+			self::assertNotNull( CreatorPricingSection::result_message( $code ), 'A message for ' . $code );
+		}
+
+		self::assertSame( 1, $this->count_rows( Tables::CREATOR_VAT_HISTORY ), 'Refused registrations write nothing.' );
+		self::assertCount( 1, $this->audit_rows( 'creator_vat_history_recorded' ) );
+
+		// Without the pricing capability: refused before anything is read.
+		$editor = $this->create_user( 'mb-k06-editor' );
+		( new WP_User( $editor ) )->set_role( 'editor' );
+		wp_set_current_user( $editor );
+		$this->assert_dies( 'not allowed to manage creator pricing', $this->signed( CreatorPricingActions::VAT_ACTION, $this->alpha ) + self::vat( '0' ) );
+		self::assertSame( '', $this->render( $this->alpha ) );
+		self::assertSame( 1, $this->count_rows( Tables::CREATOR_VAT_HISTORY ) );
 	}
 
 	public function test_no_price_filters_and_no_pricing_rest_routes(): void {
@@ -342,6 +393,26 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		foreach ( array_keys( rest_get_server()->get_routes() ) as $route ) {
 			self::assertStringNotContainsString( 'pricing', (string) $route );
 		}
+	}
+
+	/**
+	 * The fields of a VAT status registration (ADR-062 K06) with past dates.
+	 *
+	 * @param string               $value    "1" or "0".
+	 * @param array<string, mixed> $override Fields to replace.
+	 * @return array<string, mixed>
+	 */
+	private static function vat( string $value, array $override = array() ): array {
+		return array_merge(
+			array(
+				'vat_registered'          => $value,
+				'effective_from'          => '2026-01-01',
+				'checked_on'              => '2026-01-02',
+				'documentation_reference' => 'CVR 12345678',
+				'reason'                  => 'Registered at SKAT.',
+			),
+			$override
+		);
 	}
 
 	/**

@@ -29,6 +29,30 @@ final class PricingException extends DomainException {
 	public const UNSUPPORTED_PRODUCT = 'unsupported_product';
 
 	/**
+	 * VAT status history (ADR-062 K06): the date the status applies from is
+	 * not a valid date between 2000-01-01 and today.
+	 */
+	public const INVALID_EFFECTIVE_DATE = 'invalid_vat_effective_date';
+
+	/**
+	 * VAT status history: the check date is not a valid date between
+	 * 2000-01-01 and today.
+	 */
+	public const INVALID_CHECK_DATE = 'invalid_vat_check_date';
+
+	/**
+	 * VAT status history: the documentation reference is empty, too long or
+	 * contains control characters.
+	 */
+	public const INVALID_REFERENCE = 'invalid_vat_reference';
+
+	/**
+	 * VAT status history: the reason is empty, too long or contains control
+	 * characters.
+	 */
+	public const INVALID_REASON = 'invalid_vat_reason';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $code_name One of the class constants.

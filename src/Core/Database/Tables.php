@@ -162,6 +162,12 @@ final class Tables {
 	public const RECALCULATION_EXPORTS = 'merchboard_payout_recalculation_exports';
 
 	/**
+	 * History of the creators' VAT status, schema version 16 (ADR-062 K06):
+	 * insert-only, never changed or deleted.
+	 */
+	public const CREATOR_VAT_HISTORY = 'merchboard_creator_vat_history';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -189,6 +195,7 @@ final class Tables {
 		self::PAYOUT_ADJUSTMENTS,
 		self::PAYOUT_ADJUSTMENT_ROWS,
 		self::RECALCULATION_EXPORTS,
+		self::CREATOR_VAT_HISTORY,
 	);
 
 	/**
@@ -198,8 +205,10 @@ final class Tables {
 	 * documentation; the G1 tables with the activation row (E3, F5), so a
 	 * reinstall finds the assessments and the activation again; and the
 	 * operation registry (E3 T4, B-2); and the recalculations with their
-	 * adjustments (ADR-063), which explain amounts on settlement documents. Everything
-	 * else, including the encrypted payout details, is dropped.
+	 * adjustments (ADR-063), which explain amounts on settlement documents; and
+	 * the history of the creators' VAT status (ADR-062 K06), which explains the
+	 * status of historical sales and documents. Everything else, including the
+	 * encrypted payout details, is dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
 		self::CREATORS,
@@ -218,6 +227,7 @@ final class Tables {
 		self::PAYOUT_ADJUSTMENTS,
 		self::PAYOUT_ADJUSTMENT_ROWS,
 		self::RECALCULATION_EXPORTS,
+		self::CREATOR_VAT_HISTORY,
 	);
 
 	/**

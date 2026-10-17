@@ -121,7 +121,7 @@ final class CreatorPricingActions {
 		try {
 			$code = match ( $action ) {
 				self::MARKUP_ACTION         => $this->settings->set_markup( $creator_id, sanitize_text_field( self::scalar( $input, 'markup' ) ) ) ? 'markup_saved' : 'markup_unchanged',
-				self::VAT_ACTION            => $this->save_vat( $creator_id, self::scalar( $input, 'vat_registered' ) ),
+				self::VAT_ACTION            => $this->save_vat( $creator_id, $input ),
 				self::PRODUCT_MARKUP_ACTION => $this->settings->set_product_markup( $id, $creator_id, sanitize_text_field( self::scalar( $input, 'product_markup' ) ) ) ? 'product_markup_saved' : 'product_markup_unchanged',
 				default                     => $this->settings->remove_product_markup( $id, $creator_id ) ? 'product_markup_removed' : 'product_markup_none',
 			};
@@ -144,19 +144,31 @@ final class CreatorPricingActions {
 	}
 
 	/**
-	 * Saves the creator's VAT status from "1" (yes) or "0" (no).
+	 * Records a registration of the creator's VAT status in its history
+	 * (ADR-062 K06): "1" (yes) or "0" (no), the date it applies from, the
+	 * check date, the documentation reference and the reason. The service
+	 * validates every value.
 	 *
-	 * @param int    $creator_id Creator.
-	 * @param string $value      Submitted value.
+	 * @param int          $creator_id Creator.
+	 * @param array<mixed> $input      Request data.
 	 * @return string Outcome code.
 	 * @throws PricingException When the service rejects the request.
 	 */
-	private function save_vat( int $creator_id, string $value ): string {
+	private function save_vat( int $creator_id, array $input ): string {
+		$value = self::scalar( $input, 'vat_registered' );
+
 		if ( '1' !== $value && '0' !== $value ) {
 			return self::INVALID_VAT_STATUS;
 		}
 
-		return $this->settings->set_vat_registered( $creator_id, '1' === $value ) ? 'vat_saved' : 'vat_unchanged';
+		return $this->settings->record_vat_status(
+			$creator_id,
+			'1' === $value,
+			sanitize_text_field( self::scalar( $input, 'effective_from' ) ),
+			sanitize_text_field( self::scalar( $input, 'checked_on' ) ),
+			sanitize_text_field( self::scalar( $input, 'documentation_reference' ) ),
+			sanitize_textarea_field( self::scalar( $input, 'reason' ) )
+		);
 	}
 
 	/**

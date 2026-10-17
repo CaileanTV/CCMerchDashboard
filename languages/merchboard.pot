@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T16:23:30+00:00\n"
+"POT-Creation-Date: 2026-10-17T19:30:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -184,461 +184,466 @@ msgid "VAT status changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:90
-msgid "Product markup set"
+msgid "VAT status registered in the history"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:91
-msgid "Product markup removed"
+msgid "Product markup set"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:92
-msgid "Order history deleted"
+msgid "Product markup removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:93
-msgid "Payout requested"
+msgid "Order history deleted"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:94
-msgid "Payout cancelled"
+msgid "Payout requested"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:95
-msgid "Payout rejected"
+msgid "Payout cancelled"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:96
-msgid "Payout completed"
+msgid "Payout rejected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:97
-msgid "Payout gift card registered"
+msgid "Payout completed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:98
-msgid "Payout details viewed"
+msgid "Payout gift card registered"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:99
-msgid "Settlement start changed"
+msgid "Payout details viewed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:100
-msgid "Payout settings changed"
+msgid "Settlement start changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:101
-msgid "Settlement document issued"
+msgid "Payout settings changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:102
-msgid "Settlement document corrected"
+msgid "Settlement document issued"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:103
-msgid "Gift card commission rule activated"
+msgid "Settlement document corrected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:104
-msgid "Payout recalculation previewed"
+msgid "Gift card commission rule activated"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:105
-msgid "Payout recalculation approved"
+msgid "Payout recalculation previewed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:106
-msgid "Payout recalculation rejected"
+msgid "Payout recalculation approved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:107
-msgid "Payout recalculation reopened"
+msgid "Payout recalculation rejected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:108
-msgid "Payout adjustment executed"
+msgid "Payout recalculation reopened"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:109
-msgid "Payout recalculation item failed"
+msgid "Payout adjustment executed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:110
-msgid "Payout recalculation executed"
+msgid "Payout recalculation item failed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:111
-msgid "Payout recalculation closed"
+msgid "Payout recalculation executed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:112
-msgid "Payout recalculation exported"
+msgid "Payout recalculation closed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:113
+msgid "Payout recalculation exported"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:114
 msgid "Payout recalculation export downloaded"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:204
+#: src/Modules/Admin/AuditLogFormatter.php:205
 msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:206
+#: src/Modules/Admin/AuditLogFormatter.php:207
 #, php-format
 msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:209
+#: src/Modules/Admin/AuditLogFormatter.php:210
 #, php-format
 msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:212
+#: src/Modules/Admin/AuditLogFormatter.php:213
 #, php-format
 msgid "Status: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:215
+#: src/Modules/Admin/AuditLogFormatter.php:216
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:218
+#: src/Modules/Admin/AuditLogFormatter.php:219
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:221
+#: src/Modules/Admin/AuditLogFormatter.php:222
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:223
+#: src/Modules/Admin/AuditLogFormatter.php:224
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:226
+#: src/Modules/Admin/AuditLogFormatter.php:227
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:229
+#: src/Modules/Admin/AuditLogFormatter.php:230
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:230
+#: src/Modules/Admin/AuditLogFormatter.php:231
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:231
+#: src/Modules/Admin/AuditLogFormatter.php:232
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:232
+#: src/Modules/Admin/AuditLogFormatter.php:233
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:234
+#: src/Modules/Admin/AuditLogFormatter.php:235
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:238
+#: src/Modules/Admin/AuditLogFormatter.php:239
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:241
+#: src/Modules/Admin/AuditLogFormatter.php:242
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:243
+#: src/Modules/Admin/AuditLogFormatter.php:244
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:243
+#: src/Modules/Admin/AuditLogFormatter.php:244
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:246
+#: src/Modules/Admin/AuditLogFormatter.php:247
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:249
+#: src/Modules/Admin/AuditLogFormatter.php:250
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:252
+#: src/Modules/Admin/AuditLogFormatter.php:253
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:255
+#: src/Modules/Admin/AuditLogFormatter.php:256
 msgid "Previous creator: none"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:258
 #, php-format
 msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:261
 #, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:264
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:266
+#: src/Modules/Admin/AuditLogFormatter.php:267
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:269
+#: src/Modules/Admin/AuditLogFormatter.php:270
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:271
+#: src/Modules/Admin/AuditLogFormatter.php:272
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:274
+#: src/Modules/Admin/AuditLogFormatter.php:275
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:277
+#: src/Modules/Admin/AuditLogFormatter.php:278
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:280
+#: src/Modules/Admin/AuditLogFormatter.php:281
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:283
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:283
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:285
+#: src/Modules/Admin/AuditLogFormatter.php:286
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:288
+#: src/Modules/Admin/AuditLogFormatter.php:289
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:291
+#: src/Modules/Admin/AuditLogFormatter.php:292
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:292
+#: src/Modules/Admin/AuditLogFormatter.php:293
 msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:296
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:299
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:302
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:304
+#: src/Modules/Admin/AuditLogFormatter.php:305
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogFormatter.php:308
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:349
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:350
+#: src/Modules/Admin/AuditLogFormatter.php:351
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:352
+#: src/Modules/Admin/AuditLogFormatter.php:353
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:365
+#: src/Modules/Admin/AuditLogFormatter.php:366
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:366
+#: src/Modules/Admin/AuditLogFormatter.php:367
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:367
+#: src/Modules/Admin/AuditLogFormatter.php:368
 #: build/dashboard.js:2
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:368
+#: src/Modules/Admin/AuditLogFormatter.php:369
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:369
+#: src/Modules/Admin/AuditLogFormatter.php:370
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:370
+#: src/Modules/Admin/AuditLogFormatter.php:371
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:371
+#: src/Modules/Admin/AuditLogFormatter.php:372
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:381
-#: src/Modules/Admin/AuditLogFormatter.php:407
-#: src/Modules/Admin/AuditLogFormatter.php:466
+#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:408
+#: src/Modules/Admin/AuditLogFormatter.php:467
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:395
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:804
 #: build/dashboard.js:8
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:396
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:805
 #: build/dashboard.js:8
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:397
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:806
 #: build/dashboard.js:8
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:398
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:807
 #: build/dashboard.js:8
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:425
+#: src/Modules/Admin/AuditLogFormatter.php:426
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:449
+#: src/Modules/Admin/AuditLogFormatter.php:450
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:450
+#: src/Modules/Admin/AuditLogFormatter.php:451
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:451
+#: src/Modules/Admin/AuditLogFormatter.php:452
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:452
+#: src/Modules/Admin/AuditLogFormatter.php:453
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:453
-#: src/Modules/Admin/AuditLogFormatter.php:601
+#: src/Modules/Admin/AuditLogFormatter.php:454
+#: src/Modules/Admin/AuditLogFormatter.php:602
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:454
+#: src/Modules/Admin/AuditLogFormatter.php:455
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:455
-#: src/Modules/Admin/AuditLogFormatter.php:661
+#: src/Modules/Admin/AuditLogFormatter.php:456
+#: src/Modules/Admin/AuditLogFormatter.php:662
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:4
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:456
+#: src/Modules/Admin/AuditLogFormatter.php:457
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:485
+#: src/Modules/Admin/AuditLogFormatter.php:486
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:500
+#: src/Modules/Admin/AuditLogFormatter.php:501
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -647,96 +652,96 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:569
+#: src/Modules/Admin/AuditLogFormatter.php:570
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:388
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:461
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
 #, php-format
 msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:569
+#: src/Modules/Admin/AuditLogFormatter.php:570
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:385
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:458
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:579
+#: src/Modules/Admin/AuditLogFormatter.php:580
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:580
+#: src/Modules/Admin/AuditLogFormatter.php:581
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:581
+#: src/Modules/Admin/AuditLogFormatter.php:582
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:582
+#: src/Modules/Admin/AuditLogFormatter.php:583
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:583
+#: src/Modules/Admin/AuditLogFormatter.php:584
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:584
+#: src/Modules/Admin/AuditLogFormatter.php:585
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:585
+#: src/Modules/Admin/AuditLogFormatter.php:586
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:586
+#: src/Modules/Admin/AuditLogFormatter.php:587
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:587
+#: src/Modules/Admin/AuditLogFormatter.php:588
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:588
+#: src/Modules/Admin/AuditLogFormatter.php:589
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:589
+#: src/Modules/Admin/AuditLogFormatter.php:590
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:602
+#: src/Modules/Admin/AuditLogFormatter.php:603
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:614
+#: src/Modules/Admin/AuditLogFormatter.php:615
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:615
+#: src/Modules/Admin/AuditLogFormatter.php:616
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:627
+#: src/Modules/Admin/AuditLogFormatter.php:628
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:628
+#: src/Modules/Admin/AuditLogFormatter.php:629
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:629
+#: src/Modules/Admin/AuditLogFormatter.php:630
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:661
+#: src/Modules/Admin/AuditLogFormatter.php:662
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:4
@@ -744,15 +749,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:680
+#: src/Modules/Admin/AuditLogFormatter.php:681
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:681
+#: src/Modules/Admin/AuditLogFormatter.php:682
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:682
+#: src/Modules/Admin/AuditLogFormatter.php:683
 msgid "social links"
 msgstr ""
 
@@ -1076,7 +1081,7 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:192
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:89
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:99
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:105
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:59
 msgid "The creator does not exist."
@@ -1538,7 +1543,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
@@ -1581,7 +1586,7 @@ msgstr ""
 #. translators: %d: number of products shown.
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:261
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:298
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:220
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:293
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:225
 #, php-format
 msgid "Only the first %d products are shown."
@@ -1769,7 +1774,7 @@ msgid "Published products directly in the category"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
 #: build/dashboard.js:18
 msgid "Actions"
@@ -1914,241 +1919,315 @@ msgstr ""
 msgid "Sorry, you are not allowed to manage creator pricing."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:78
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:83
 msgid "Creator markup saved. It applies to order lines created from now on; no WooCommerce price and no earlier order line was changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:79
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:84
 msgid "The creator markup was not changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:80
-msgid "VAT status saved. It applies to order lines created from now on; prices, earlier order lines and earlier payouts are not changed."
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:81
-msgid "The VAT status was not changed."
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:82
-msgid "Not saved: choose Yes or No."
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:83
-msgid "Product markup saved. It applies to order lines created from now on; the WooCommerce price was not changed."
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:84
-msgid "The product markup was not changed."
-msgstr ""
-
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:85
-msgid "Product markup removed: the creator markup applies again to order lines created from now on."
+msgid "VAT status registered; it is the current status. It applies to order lines created from now on; prices, earlier order lines, settlement documents and payouts are not changed."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:86
-msgid "The product has no product markup."
+msgid "VAT status registered in the history. The current status is unchanged, because another registration applies today. Nothing earlier was changed."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:87
-msgid "You are not allowed to change the pricing of this product."
+msgid "Nothing was registered: it is the same as the last registration."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:88
+msgid "Not saved: choose Yes or No."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:89
+msgid "Not saved: enter the date the status applies from; it cannot be in the future."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:90
+msgid "Not saved: enter the date the status was checked; it cannot be in the future."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:91
+msgid "Not saved: enter a documentation reference of at most 191 characters."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:92
+msgid "Not saved: enter a reason of at most 500 characters."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:93
+msgid "Product markup saved. It applies to order lines created from now on; the WooCommerce price was not changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:94
+msgid "The product markup was not changed."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:95
+msgid "Product markup removed: the creator markup applies again to order lines created from now on."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:96
+msgid "The product has no product markup."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:97
+msgid "You are not allowed to change the pricing of this product."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:98
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:102
 msgid "The product does not exist."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:90
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:100
 msgid "Not saved: enter a markup between 0 and 100 with at most two decimals."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:91
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:101
 msgid "The product has no creator."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:92
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:102
 msgid "The product does not belong to this creator, so nothing was changed here."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:93
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:103
 msgid "A product markup can only be set for a simple or variable product; variations use their parent's markup."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:94
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:104
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:105
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:72
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:185
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:109
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:119
 msgid "Pricing"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:110
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:120
 msgid "The WooCommerce sale price is the final customer price and already includes the creator profit and VAT. Creator profit = sale price × markup %. Merch Dashboard never adds anything to the price and never changes WooCommerce prices."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:111
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:121
 msgid "For each order line, the profit is calculated from the amount the customer actually paid including VAT, with the markup and VAT status that applied when the order line was created."
 msgstr ""
 
 #. translators: 1: product id, 2: outcome message.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:138
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:148
 #, php-format
 msgid "Product #%1$d: %2$s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:152
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:162
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:725
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:31
 msgid "Creator markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:155
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:165
 msgid "Creator share of the sale price (%)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:157
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:167
 msgid "Save markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:158
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:168
 msgid "0–100 %, at most two decimals. Example: a sale price of 100.00 at 20 % gives a creator profit of 20.00. It applies to products without their own product markup."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:174
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:177
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:187
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:192
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:719
 msgid "VAT registered"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:178
+#. translators: %s: Yes or No.
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
+#, php-format
+msgid "Current VAT status: %s. New order lines get this status."
+msgstr ""
+
+#. translators: %s: Yes or No.
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:342
 #: build/dashboard.js:9
 msgid "Yes"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:179
+#. translators: %s: Yes or No.
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:343
 #: build/dashboard.js:9
 msgid "No"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:180
-msgid "Save VAT status"
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:195
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+msgid "Applies from"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:181
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:196
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+msgid "Checked on"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:197
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+msgid "Documentation reference"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:446
+msgid "Reason"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:199
+msgid "Register VAT status"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:200
 msgid "Yes: the creator is paid the full creator profit."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:182
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:201
 msgid "No: the creator is also paid the full creator profit."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:183
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:202
 msgid "Changing the VAT status changes no product prices and no earlier order lines or payouts: each order line keeps the status it had when it was created."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:195
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:203
+msgid "\"Applies from\" is the date the status applies from; \"Checked on\" is the date it was checked, for example in the CVR register. Neither may be in the future. Each registration is kept unchanged; to correct one, register again with a reason. A registration with an earlier date changes no order lines, settlement documents or payouts made before it."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:221
+msgid "VAT status history"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:225
+msgid "No VAT status has been registered in the history yet. The current status was set before the history was introduced; earlier changes are in the audit log."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+msgid "Registered by"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:246
+msgid "Applies today"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:268
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:725
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:31
 msgid "Product markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:271
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:177
 msgid "No products are linked to this creator yet."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:202
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:275
 msgid "The examples use the current WooCommerce price as stored and the creator's current VAT status. Actual profit and payout are calculated per order line from the amount paid."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 msgid "Markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 msgid "WooCommerce prices"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 msgid "Example profit"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 msgid "Example payout"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:254
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:327
 msgid "Variable product: one markup for all variations"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:272
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:345
 msgid "Parent markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:310
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:383
 msgid "Edit markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:313
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:386
 msgid "Product markup (%)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:314
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:387
 msgid "Replaces the creator markup for this product and all its variations. It does not change the WooCommerce price."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:315
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:388
 msgid "Save product markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:320
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:393
 msgid "A product markup set for a previous creator is ignored."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:325
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:398
 msgid "Use creator markup"
 msgstr ""
 
 #. translators: %s: price.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:351
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:424
 #, php-format
 msgid "Regular: %s"
 msgstr ""
 
 #. translators: %s: price.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:354
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:427
 #, php-format
 msgid "Sale: %s"
 msgstr ""
 
 #. translators: %s: price.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:357
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:430
 #, php-format
 msgid "Active: %s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:398
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:471
 msgid "Simple product"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:472
 msgid "Variation"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:400
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:473
 msgid "Variable product without variations"
 msgstr ""
 
 #. translators: %s: WooCommerce product type.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:402
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:475
 #, php-format
 msgid "Product type: %s"
 msgstr ""
@@ -3569,10 +3648,6 @@ msgstr[1] ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:424
 msgid "← All payouts"
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:446
-msgid "Reason"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
