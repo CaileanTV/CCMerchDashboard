@@ -2725,7 +2725,7 @@ Migration 8 (`AddCreatorShareModel`):
 - Audit-actions `creator_pricing_applied`, `creator_pricing_drift_overwritten` og `product_fixed_profit_set`/`_removed` skrives ikke længere, men bevares til historikken. Nye: `product_markup_set`/`_removed`.
 - **Åbent spørgsmål (moms og bogføring):** et fradrag på 20 % af en profit beregnet af et beløb inkl. 25 % moms svarer præcis til momsandelen (20/1,25 = 16). For linjer med en anden sats eller 0 % (fx momsfritaget salg eller eksport) afviger fradraget fra den faktiske moms. Reglen er implementeret som besluttet; om fradraget skal være momsandelen ved andre satser, skal afklares med projektejeren og eventuelt revisor, før payout bruges til afregning.
 - Rækker uden gemt moms (registreret før schema-version 7) har ukendt profit; der sker ingen backfill.
-- **Statusnote 2026-10-17:** projektejeren har besluttet at fjerne 20 %-reduktionen i pkt. 3 og regulere historiske afregninger (ADR-063). Ikke implementeret; koden anvender pkt. 3 uændret, indtil ændringen er implementeret.
+- **Statusnote 2026-10-17:** projektejeren har besluttet at fjerne 20 %-reduktionen i pkt. 3 og regulere historiske afregninger (ADR-063). Reduktionen er fjernet fra beregningen 2026-10-17 (ADR-063, trin 1); genberegning, regulering og eksport er implementeret (trin 2–3) og runtime-verificeret på Local 2026-10-17 (ADR-063).
 
 ## Related
 ADR-007, ADR-019, ADR-022, ADR-030, ADR-037, ADR-038, ADR-045, ADR-046, ADR-047, ADR-048, ADR-063.
@@ -3304,7 +3304,7 @@ Schema-version 11 (`CreateSettlementTables`). Ledgeren og payouts ændres ikke.
 - **Note 2026-10-16 (PDF og skabelonversion 2, projektejerens beslutning):** nye bilag udstedes med skabelonversion 2. Mærket "Foreløbigt, ikke godkendt af revisor/SKAT" (060-9) erstattes for dem af en neutral oplysning om skat og indberetning: creatoren er selv ansvarlig for at undersøge og opfylde sine forpligtelser over for Skattestyrelsen; bilaget er ikke skatterådgivning og ikke godkendt af en revisor eller Skattestyrelsen. Bilag med skabelonversion 1 bevarer deres mærkning og indhold. Som tillæg til 060-5 kan bilaget hentes som PDF (creator: `GET /me/payouts/{id}/settlement-document/pdf`; admin: "Hent PDF" på payout-siden via `admin-post.php`, `merchboard_manage_payouts` og nonce pr. payout). PDF'en dannes ved hver hentning ud fra det gemte, uforanderlige bilag og gemmes aldrig (ingen migration, ingen ny kolonne); samme bilag, skabelonversion og webstedsindstillinger giver samme bytes. Den laves af en minimal egen PDF-generator (`MerchBoard\Core\Pdf\PdfWriter`, standardfontene Helvetica med WinAnsi), så ADR-004 overholdes. Før PDF'en dannes, skal bilaget stemme med sine rækker (kommission, profit og saldo efter bilaget); ellers dannes ingen PDF. Gebyrer, tilbageholdelser og moms af kommissionen vises ikke, da datamodellen ikke har godkendte data for dem; rækkernes moms vises som "Moms på salget". Teksten er generel information, ikke juridisk rådgivning, og opfylder ikke i sig selv krav til selvfakturering; R1–R4 er fortsat uafklarede (formelle fakturakrav ved selvfakturering, moms af kommission, 20 %-reglen og aftalegrundlaget).
 - Afregningsbilag er ikke godkendt af revisor eller SKAT; R1–R4 og ADR-059 blokerer produktionsbrug.
 - **Note 2026-10-17 (R4):** aftalegrundlaget for omvendt fakturering er forretningsmæssigt afklaret med dokumenterede forbehold (ADR-061). Det er ikke en godkendelse af bilaget: bilaget og dets formuleringer er ikke gennemgået af SKAT, revisor eller advokat, og R1–R3 og ADR-059 er fortsat uafklarede og blokerer produktionsbrug.
-- **Note 2026-10-17 (R1 og R2):** R1 er forretningsmæssigt afklaret med dokumenterede forbehold (ADR-062), og 20 %-reduktionen fjernes (ADR-063). Ved implementeringen erstattes D9 a for korrigerende bilag (nummer med suffiks til originalen), D10 a (manglende stamdata indsamles) og D11 a's korrigerende bilag uden beløb (rettelsesbilag med beløb) fremadrettet; udstedte bilag ændres ikke. Ikke implementeret: bilag udstedes fortsat efter reglerne ovenfor, og R1 og R2 blokerer produktionsbrug, indtil ændringerne er implementeret.
+- **Note 2026-10-17 (R1 og R2):** R1 er forretningsmæssigt afklaret med dokumenterede forbehold (ADR-062), og 20 %-reduktionen fjernes (ADR-063). Ved implementeringen erstattes D9 a for korrigerende bilag (nummer med suffiks til originalen), D10 a (manglende stamdata indsamles) og D11 a's korrigerende bilag uden beløb (rettelsesbilag med beløb) fremadrettet; udstedte bilag ændres ikke. Ændringerne af D9 a, D10 a og D11 a er ikke implementeret; bilag udstedes fortsat efter de regler. R2 trin 1 er implementeret: nye bilag beregnes uden 20 %-reduktionen (`calculation_version` `adr063-adr054-v1`). R1 og R2 blokerer produktionsbrug, indtil den besluttede implementering er gennemført.
 
 ## Related
 ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058, ADR-059, ADR-061, ADR-062, ADR-063.
@@ -3410,7 +3410,7 @@ Projektejerens forretningsbeslutning: R1 afklares på grundlag af den modtagne m
   - K12: ikke implementeret. Bilaget viser "Moms på salget" pr. række og den neutrale skatteoplysning (ADR-060, note 2026-10-16).
   - K15: delvist. Refunds efter et bilag indgår automatisk i næste bilag via ledgeren. Korrigerende bilag findes som service uden beløb og uden admin-UI (`SettlementDocuments::correct()` kaldes ikke fra UI eller REST). Der er ingen manuel regulering med forklaring.
   - K21: delvist. Metoden `gift_card` findes. En gavekort-payout gennemføres kun, når kortet er valideret (beløb = saldo = payout-beløbet), adapteren udsteder aldrig kort, og ulæselige data afvises (ADR-057). Bilagets snapshot har udbyder og eksternt ID; der er intet særskilt gavekortdokument.
-  - Punkt 9: auditloggen er append-only uden opdaterings- og slettemetoder (`AuditRepository`, ADR-023). Der findes ingen eksportfunktion.
+  - Punkt 9: auditloggen er append-only uden opdaterings- og slettemetoder (`AuditRepository`, ADR-023). Eksport med manifest, versionsreferencer, tidslinje, checksums og sammenligning findes for genberegninger (ADR-063, trin 3); andre eksporter findes ikke.
 - **Resterende teknisk arbejde** (kræver særskilt plan og godkendelse; intet er påbegyndt):
   - moms af kommissionen (data, beregning og visning);
   - historik over momsstatus;
@@ -3443,7 +3443,7 @@ ADR-023, ADR-048, ADR-049, ADR-057, ADR-060, ADR-061, ADR-063; [reports/2026-10-
 2026-10-17
 
 ## Status
-Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R2: forretningsmæssigt afklaret: reduktionen fjernes.** **Ikke implementeret:** koden anvender fortsat ADR-049 pkt. 3 (payout = profit × 80 % for ikke-momsregistrerede), og R2 blokerer produktionsbrug, indtil ændringen og reguleringen er implementeret og testet. Ændrer ADR-049 pkt. 3 ved implementeringen. Ikke juridisk eller regnskabsmæssigt valideret.
+Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R2: forretningsmæssigt afklaret: reduktionen fjernes.** **Implementeret (trin 1–3) og runtime-verificeret på Local 2026-10-17** (Consequences, "Runtime-verifikation"): reduktionen er fjernet fra beregningen (punkt 1); genberegning, regulering og modregning er implementeret som særskilte, auditerede trin (punkt 2–5); eksport med manifest og checksums (ADR-062 punkt 9) er implementeret. CI på MySQL 8.0.46 afventer push. Erstatter ADR-049 pkt. 3. Ikke juridisk eller regnskabsmæssigt valideret; forbeholdene nedenfor bevares, og produktionsbrug er fortsat blokeret af R1, R3, G1–G3 og ADR-059.
 
 ## Context
 ADR-049 fradrager 20 % af profitten for ikke-momsregistrerede creators. Det åbne spørgsmål var, om fradraget er korrekt ved andre momssatser end 25 % (R2). Efter ADR-062 punkt 2 beregnes der ingen moms af kommissionen til ikke-momsregistrerede creators. Projektejeren har besluttet at fjerne reduktionen (givet direkte 2026-10-17 som sammenfatning af svar i en samtale uden for repoet).
@@ -3465,14 +3465,33 @@ At bevare 20 %-reglen og få den valideret af revisor (R2 som oprindeligt beskre
 Projektejerens forretningsbeslutning: uden moms af kommissionen til ikke-momsregistrerede creators (ADR-062 punkt 2) fjernes reduktionen.
 
 ## Consequences
-- **Implementering i dag** (kontrolleret 2026-10-17): reduktionen findes stadig (`CreatorShare::NOT_VAT_REGISTERED_PAYOUT_BPS = 8000`, testet i `CreatorShareTest`). Der findes hverken genberegning, reguleringsforslag eller eksport.
-- **Resterende teknisk arbejde** (kræver særskilt plan og godkendelse):
-  - ny beregningsregel og ny beregningsversion for nye bilag;
-  - opgørelse af historiske forskelle;
-  - reguleringsforslag med adskilt godkendelse og udførelse;
-  - rapport over tidligere creators;
-  - modregning af negative forskelle;
-  - forløbet i punkt 5.
+- **Implementeret (trin 1, 2026-10-17):**
+  - Payout = profit for begge momsstatusser i `CreatorShare::payout()`, `RealizedPayout` og saldo-SQL'en i `LedgerCreatorPayouts`.
+  - En række, der indgår i et udstedt afregningsbilag, tæller i saldoen med sin gemte payout (`merchboard_settlement_document_rows.payout_amount`). Udstedte bilag og saldokæden ændres derfor ikke, og historiske afregninger reguleres ikke automatisk.
+  - Ikke-afregnede rækker, også fra salg før ændringen, beregnes uden reduktion.
+  - Nye bilag får `calculation_version` `adr063-adr054-v1`; udstedte bilag beholder `adr049-adr054-v1`.
+  - En snapshot uden momsstatus giver fortsat ukendt payout (ADR-049 pkt. 7). Ingen migration.
+- **Implementeret (trin 2, 2026-10-17, schema-version 14):** admin-siden "Genberegninger" (`merchboard_manage_payouts`) og `PayoutRecalculations`.
+  - **Genberegning:** afregnede rækker på bilag med `adr049-adr054-v1` for creators, der ikke var momsregistrerede, genberegnes af `RecalculationRule`. Rækkens gemte profit og payout skal kunne genskabes af dens gemte input; ellers vurderes posten manuelt og gættes aldrig. Gennemførte payouts uden bilag (før ADR-060) vurderes også manuelt.
+  - **Forhåndsvisning:** én post pr. creator, valuta og gruppe (aktiv, tidligere eller manuel) med oprindeligt beløb, genberegnet beløb, forskel, rækker, bilag og fingeraftryk. Den gemmes som en ny genberegning med entydig reference (`R2-000001`) og ændrer intet andet. Kun én genberegning er åben ad gangen, og tidligere genberegninger og deres afgørelser bevares.
+  - **Godkendelse og afvisning:** godkendelse kræver uændret grundlag (samme fingeraftryk). Afvisning kræver en begrundelse. En afvist genberegning genåbnes aldrig automatisk; "genåbn" opretter en ny forhåndsvisning med henvisning til den.
+  - **Udførelse:** et særskilt, bekræftet trin. Først kontrolleres hver ventende post mod sit godkendte fingeraftryk (beløb, rækker, bilag, gruppe og metode); er noget ændret, udføres intet. Hver post udføres derefter under creatorens lås i sin egen transaktion med audit. En regulering pr. post (`UNIQUE`) og en registrering pr. række og regel (primærnøgle) forhindrer dobbeltregulering. En fejl ruller posten tilbage, markerer den fejlet og stopper udførelsen; en ny udførelse er en eksplicit handling og kontrollerer alt igen.
+  - **Afslutning:** eksplicit, med note, når poster ikke er udført.
+  - **Saldo og bilag:** en udført regulering indgår i saldoen (`PayoutBalances`) og afregnes af creatorens næste afregningsbilag (`adjustment_amount`, referencer i snapshottet; bilaget, PDF'en, admin og dashboardet viser linjen "Reguleringer"). En negativ regulering modregnes i det disponible beløb, og resten står som udestående (ADR-054). Tidligere creators rapporteres kun. Udstedte bilag og payouts ændres aldrig.
+- **Implementeret (trin 3, 2026-10-17): eksport (ADR-062 punkt 9)** på admin-siden "Recalculations" (`PayoutRecalculationExports`, `merchboard_payout_recalculation_exports` i schema-version 15).
+  - En eksport af én genberegning, eventuelt filtreret på gruppe eller creator, består af `items.csv`, `rows.csv` og `timeline.csv` (genberegningens auditerede forløb) og `manifest.json` med reference, tidspunkt, bruger, filtre, `complete`, antal poster og rækker, periode, versioner (plugin, schema, regel, beregning), checksums af datafilerne, sammenligning med forrige eksport med samme filtre og kendte begrænsninger. En filtreret eksport er markeret som ikke komplet.
+  - `SHA256SUMS` indeholder SHA-256 af datafilerne og manifestet i formatet til `sha256sum -c`; manifestet indeholder ikke sin egen checksum, så intet er cirkulært. Vejledning til kontrol med almindelige værktøjer står i manifestet og på admin-siden.
+  - En eksport oprettes i én transaktion med audit og gemmes uændret; en ny eksport erstatter aldrig en tidligere. Før en fil udleveres, kontrolleres hele eksporten mod manifest og checksums; en ændret eller manglende fil udleveres aldrig. Hver download auditeres. Kræver `merchboard_manage_payouts` og nonce pr. eksport og fil.
+- **Runtime-verifikation (2026-10-17):**
+  - Automatiske tests på den endelige kode: integration 800 tests og 29.903 assertions (MariaDB 10.11.19), PHPUnit 2.040 tests og Jest 368 tests; lint og `git diff --check` er grønne.
+  - Merch Dashboard Local (MariaDB 10.11.18): migration 15 er kørt (schema-version 15, eksporttabellen findes), kontrolleret read-only. En fuld backup og en isoleret prøvegendannelse blev verificeret før testen.
+  - Genberegningen `R2-000001` (udført af projektejeren): én aktiv post med 12 rækker, 17,12 → 21,36 DKK, regulering +4,24 DKK. Reguleringen er afregnet på `AFR-000010` for payout 24 (5,52 DKK): primo 1,28 + regulering 4,24 − udbetaling 5,52 = ultimo 0,00. Krydstjekket read-only.
+  - Visningen af `R2-000001` i wp-admin ændrede ingen data i Merch Dashboards tabeller.
+  - Eksport: én komplet eksport `R2-000001-E000001` (`complete: true`, 1 af 1 poster, 12 rækker, schema 15, ingen tidligere eksport). De fem filer blev downloadet; de er byte-identiske med de gemte filer og stemmer med `SHA256SUMS` og manifestet. Auditposterne 502 (`payout_recalculation_exported`) og 503–507 (`payout_recalculation_export_downloaded`, én pr. fil) er de eneste nye; ingen andre data i Merch Dashboards tabeller er ændret.
+  - Adgang: et downloadlink uden login gav HTTP 400 (WordPress' fejlside, ingen fil, ingen audit). Et ændret filnavn og et ændret export-id i et gyldigt link gav "Linket, du fulgte, er udløbet. Prøv igen." uden fil og uden audit; den præcise HTTP-status blev ikke aflæst manuelt.
+  - Kun dækket af automatiske tests, ikke verificeret manuelt på Local: 409 ved en manipuleret eksport og 403 for en bruger uden `merchboard_manage_payouts`. Download af en ikke-eksisterende eksport (404) er hverken testet automatisk eller på Local.
+  - `R2-000001` er udført og ikke lukket; lukning er en særskilt handling.
+- **Kendt begrænsning:** rækker, der blev udbetalt med payouts uden bilag (før ADR-060), har ingen gemt payout og beregnes siden trin 1 uden reduktion i saldoen; de vurderes manuelt og reguleres ikke af genberegningen.
 - **Overlap:** punkt 4 overlapper D4 (udestående uden nyt salg, rapportens register 16.1); D4's status er ikke ændret.
 - **Forbehold:**
   - Den juridiske ret til modregning (punkt 4) er ikke valideret.

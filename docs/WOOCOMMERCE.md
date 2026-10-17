@@ -113,11 +113,11 @@ Cyklus 1 og senere cyklusser er bevidst asymmetriske (brutto + refunds mod reste
 | --- | --- |
 | Creator-profit | salgspris × markup % |
 | Udbetaling, momsregistreret | = creator-profit |
-| Udbetaling, ikke momsregistreret | creator-profit × 80 % (20 % fradrag af profitten) |
+| Udbetaling, ikke momsregistreret | = creator-profit (20 %-fradraget er fjernet, ADR-063) |
 
-**Forudsætninger:** WooCommerce-prisen, kunden betaler, er inkl. moms; profitten beregnes af det faktisk betalte beløb inkl. moms. Fradraget for ikke-momsregistrerede er et fast fradrag på 20 % af creator-profitten. Det er ikke en beregning af linjens faktiske WooCommerce-moms og afhænger ikke af momssatsen. Mangler data, er profit og udbetaling ukendte, aldrig 0.
+**Forudsætninger:** WooCommerce-prisen, kunden betaler, er inkl. moms; profitten beregnes af det faktisk betalte beløb inkl. moms. Mangler data, er profit og udbetaling ukendte, aldrig 0. Rækker, der allerede indgår i et afregningsbilag, beholder den udbetaling, der er gemt i bilaget (ADR-060); historiske afregninger efter ADR-049's fradrag reguleres ikke automatisk, kun via genberegningen (ADR-063) (ADR-063).
 
-Eksempler: 100,00 / 20 % → profit 20,00, udbetaling 16,00 (Nej) eller 20,00 (Ja). 200,00 / 10 % → 20,00 og 16,00 eller 20,00. 100,00 / 0 % → 0,00.
+Eksempler: 100,00 / 20 % → profit og udbetaling 20,00. 200,00 / 10 % → 20,00. 100,00 / 0 % → 0,00.
 
 **Data og ejerskab:**
 
@@ -160,7 +160,7 @@ Afsnittet "Pricing" på creatorens redigeringsside; se ADMIN.md. WooCommerces pr
 
 - **Salgspris pr. ledger-række** = rækkens `net_amount` (efter alle rabatter, ekskl. moms) + rækkens faktiske moms fra `merchboard_sales_tax` = det beløb, kunden betalte inkl. moms. Momsen bruges kun til at genskabe det betalte beløb, aldrig som sats eller som separat profitformel.
 - **Profit** (`RealizedProfit`, via `SalesProfit::for_entry()`) = `round_half_away(salgspris × share_bps / 10 000)` til snapshottets prisdecimaler.
-- **Udbetaling** (`RealizedPayout`, via `SalesProfit::payout_for_entry()`) = profit (momsregistreret) eller `round_half_away(profit × 80 %)` (ikke momsregistreret), med momsstatus fra snapshottet.
+- **Udbetaling** (`RealizedPayout`, via `SalesProfit::payout_for_entry()`) = profit for begge momsstatusser (ADR-063); uden momsstatus i snapshottet er den ukendt (ADR-049 pkt. 7).
 - Heltal i 1/10 000-enheder (`CreatorShare`, `PricingMath::share`), half away from zero, ingen floats. Afrundes pr. række.
 - Rækkens beløb er linjebeløbet, så antallet ganges aldrig igen. Udsalg, kuponer og manuelle rabatter er indeholdt i det betalte beløb.
 - Refunds, reversals og korrektioner (fx slettet refund) har fortegn og egen moms, så profit og udbetaling følger med fortegn; en fuldt refunderet linje summerer til 0.
@@ -173,7 +173,7 @@ Afsnittet "Pricing" på creatorens redigeringsside; se ADMIN.md. WooCommerces pr
 
 **Afgrænsning:** der er endnu intet creator-API og ingen `/me/payout`.
 
-**Åbent spørgsmål:** se ADR-049 (20 %-fradraget ved andre momssatser end 25 %).
+**20 %-fradraget:** fjernet efter ADR-063 (erstatter ADR-049's åbne spørgsmål om andre momssatser). Historiske afregninger reguleres kun via admin-siden "Recalculations" med forhåndsvisning, godkendelse og udførelse som særskilte trin (ADR-063, R2 trin 2).
 
 ## Dashboard-data og privacy
 
