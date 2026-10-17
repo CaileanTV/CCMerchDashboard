@@ -10,6 +10,7 @@ import type {
 	Payout,
 	PayoutBalance,
 	PayoutGiftCard,
+	SettlementCommissionVat,
 	SettlementDocument,
 	SettlementDocumentRow,
 	PayoutCurrencyBalance,
@@ -370,10 +371,53 @@ function parseDocumentRow( body: unknown ): SettlementDocumentRow | null {
 }
 
 /**
+ * Validates the VAT on the commission of a settlement document: null, or
+ * the rate in basis points and four amounts with incl = excl + vat (in
+ * units, so no floating point is involved).
+ *
+ * @param value Value of `commission_vat`.
+ */
+function parseCommissionVat(
+	value: unknown
+): SettlementCommissionVat | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if ( ! isRecord( value ) ) {
+		return undefined;
+	}
+
+	const { rate_bps: rateBps, excl, vat, incl, untaxed } = value;
+
+	if (
+		typeof rateBps !== 'number' ||
+		! Number.isInteger( rateBps ) ||
+		rateBps < 1 ||
+		rateBps > 10000 ||
+		! isAmount( excl ) ||
+		! isAmount( vat ) ||
+		! isAmount( incl ) ||
+		! isAmount( untaxed )
+	) {
+		return undefined;
+	}
+
+	const units = ( amount: string ) => BigInt( amount.replace( '.', '' ) );
+
+	if ( units( excl ) + units( vat ) !== units( incl ) ) {
+		return undefined;
+	}
+
+	return { rateBps, excl, vat, incl, untaxed };
+}
+
+/**
  * Validates `GET /me/payouts/{id}/settlement-document`. Exactly the
  * documented fields are read. `preliminary` is true for documents of
  * template version 1 (060-9) and false for later ones, which carry the note
- * on tax and reporting instead.
+ * on tax and reporting instead. `commission_vat` is null or the VAT on the
+ * commission (template version 3).
  *
  * @param body Response body.
  */
@@ -441,8 +485,10 @@ export function parseSettlementDocument(
 
 	const address = body.company_address as unknown[];
 	const references = body.adjustment_refs as unknown[];
+	const commissionVat = parseCommissionVat( body.commission_vat );
 
 	if (
+		commissionVat === undefined ||
 		typeof number !== 'string' ||
 		! DOCUMENT_NUMBER.test( number ) ||
 		( type !== 'settlement' && type !== 'correction' ) ||
@@ -477,6 +523,7 @@ export function parseSettlementDocument(
 		periodTo,
 		currency,
 		commission,
+		commissionVat,
 		adjustment,
 		adjustmentReferences: references as string[],
 		openingBalance,

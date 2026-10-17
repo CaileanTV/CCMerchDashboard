@@ -27,6 +27,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -632,11 +633,28 @@ final class PayoutsPage {
 			__( 'Settled sales rows', 'merchboard' )       => number_format_i18n( count( $shown['rows'] ) ),
 		);
 
+		// After the commission: its VAT (template version 3, ADR-062 K05 and K12), then the adjustments.
+		$after = array();
+		$split = CommissionVat::shown( $document );
+
+		if ( null !== $split ) {
+			$after[ __( 'Commission excl. VAT', 'merchboard' ) ] = $money( $split['excl_units'] );
+			/* translators: %s: VAT rate in percent, e.g. 25. */
+			$after[ sprintf( __( 'VAT (%s %%)', 'merchboard' ), CommissionVat::percent_for_locale( $split['rate_bps'] ) ) ] = $money( $split['vat_units'] );
+			$after[ __( 'Commission incl. VAT', 'merchboard' ) ] = $money( $split['incl_units'] );
+
+			if ( 0 !== $split['untaxed_units'] ) {
+				$after[ __( 'Commission without VAT (not VAT registered when sold)', 'merchboard' ) ] = $money( $split['untaxed_units'] );
+			}
+		}
+
 		if ( 0 !== $document->adjustment_units ) {
 			// ADR-063: adjustments this document settled, with their recalculations.
 			/* translators: %s: references of the recalculations, e.g. R2-000001. */
-			$fields = array_slice( $fields, 0, 6, true ) + array( sprintf( __( 'Adjustments (%s)', 'merchboard' ), implode( ', ', SettlementPdf::adjustment_references( $document ) ) ) => $money( $document->adjustment_units ) ) + array_slice( $fields, 6, null, true );
+			$after[ sprintf( __( 'Adjustments (%s)', 'merchboard' ), implode( ', ', SettlementPdf::adjustment_references( $document ) ) ) ] = $money( $document->adjustment_units );
 		}
+
+		$fields = array_slice( $fields, 0, 6, true ) + $after + array_slice( $fields, 6, null, true );
 
 		foreach ( $fields as $label => $value ) {
 			echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . esc_html( $value ) . '</td></tr>';

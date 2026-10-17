@@ -3364,7 +3364,7 @@ ADR-049, ADR-059, ADR-060; [reports/2026-10-10-fase-23-payouts.md](reports/2026-
 2026-10-17
 
 ## Status
-Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R1: forretningsmæssigt afklaret med dokumenterede forbehold.** Der indhentes ingen yderligere skriftlig vurdering fra revisor eller advokat, og en sådan vurdering er ikke en betingelse for afklaringen. Beslutningen er ikke en juridisk, skattemæssig eller bogføringsmæssig validering. **Ikke implementeret:** beslutningerne kræver tekniske ændringer (Consequences); indtil de er implementeret og testet, blokerer R1 fortsat produktionsbrug. Supplerer ADR-048 og ADR-061 og erstatter fremadrettet, ved implementeringen, ADR-060 D9 a for korrigerende bilag, D10 a og D11 a's korrigerende bilag uden beløb. Udstedte bilag ændres ikke.
+Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R1: forretningsmæssigt afklaret med dokumenterede forbehold.** Der indhentes ingen yderligere skriftlig vurdering fra revisor eller advokat, og en sådan vurdering er ikke en betingelse for afklaringen. Beslutningen er ikke en juridisk, skattemæssig eller bogføringsmæssig validering. **Delvist implementeret:** K05 og K12 (moms af kommissionen og visningen på bilaget) er implementeret 2026-10-17 og testet automatisk, ikke runtime-verificeret og ikke committet; de øvrige beslutninger kræver tekniske ændringer (Consequences). Indtil de er implementeret og testet, blokerer R1 fortsat produktionsbrug. Supplerer ADR-048 og ADR-061 og erstatter fremadrettet, ved implementeringen, ADR-060 D9 a for korrigerende bilag, D10 a og D11 a's korrigerende bilag uden beløb. Udstedte bilag ændres ikke.
 
 ## Context
 R1 ([reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13.6, 15.8 og 16.1) omfattede moms, momstekst, dokumenttyper, bogføring og gavekortbehandling og afventede revisor eller SKAT. Projektejeren har besvaret afklaringsspørgsmålene i en samtale uden for repoet; beslutningerne nedenfor er projektejerens sammenfatning, givet direkte 2026-10-17. Grundlaget for momsbehandlingen er projektejerens gengivelse af SKAT's mundtlige vejledning (rapportens afsnit 13; ADR-061 punkt 1), ikke en verificeret skriftlig afgørelse. Krav-ID'erne K05–K21 stammer fra R1-revisionen 2026-10-17.
@@ -3403,24 +3403,23 @@ Projektejerens forretningsbeslutning: R1 afklares på grundlag af den modtagne m
 
 ## Consequences
 - **Implementering i dag** (kontrolleret i koden 2026-10-17):
-  - K05: ikke implementeret. Datamodellen har ingen moms af kommissionen, og bilaget viser den aldrig (`SettlementPdf`).
+  - K05: **implementeret 2026-10-17** (`CommissionVat`, skabelonversion 3; ingen migration). Kommissionen (Σ payout) er uændret og er inklusive moms for salg, hvor creatoren var momsregistreret; momsen er sats ÷ (100 % + sats) af den del, rundet halvt væk fra nul til butikkens præcision én gang pr. bilag, og kommission ekskl. moms er resten (ved 25 %: 1.000,00 = 800,00 + 200,00). Salg, mens creatoren ikke var momsregistreret, har ingen moms af kommissionen. Saldo og udbetalinger er uændrede. Opdelingen gemmes i bilagets snapshot (`commission_vat`: sats, inkl., moms, ekskl. og kommission uden moms), så en senere ændring af momsstatus eller sats aldrig ændrer et udstedt bilag; PDF'en kontrollerer den mod de afregnede rækker (fail closed). Bilag med skabelonversion 1 og 2 har ingen moms af kommissionen og ændres ikke. **Implementeringsvalg (de uafklarede detaljer nedenfor):** momsstatussen tages pr. afregnet række fra salgstidspunktet (punkt 3), ikke fra udstedelsen; satsen er fast 25 % (`CommissionVat::RATE_BPS`) og gemmes pr. bilag; reguleringer (ADR-063) har ingen moms af kommissionen, fordi de kun regulerer rækker for creators, der ikke var momsregistrerede. Andre momssatser, udenlandske creators og omvendt betalingspligt håndteres ikke.
   - K06: delvist. Rækkerne beregnes med status fra salgstidspunktet (snapshot, ADR-048), og bilaget viser "Momsregistreret ved udstedelsen". Kun den aktuelle status gemmes; ændringer auditeres med tidligere og ny værdi (`creator_vat_status_changed`). Gyldighedsdato, kontroldato, dokumentationsreference og begrundelse findes ikke.
   - K09: ikke implementeret. Bilaget har kun creatorens ID, visningsnavn og momsstatus samt butikkens navn og WooCommerce-adresse (D10 a); ingen CVR og ingen creatoradresse.
   - K10: delvist. `AFR`-serien findes (`AFR-` + seks cifre). Korrigerende bilag tager i dag næste nummer i samme serie (D9 a). Der findes ingen gavekortdokumenter og ingen `GAV`-serie.
-  - K12: ikke implementeret. Bilaget viser "Moms på salget" pr. række og den neutrale skatteoplysning (ADR-060, note 2026-10-16).
+  - K12: **implementeret 2026-10-17.** Bilag med skabelonversion 3 viser i PDF'en, i admin og i creatorens dashboard "Kommission ekskl. moms", "Moms (25 %)", "Kommission inkl. moms" og, når bilaget også har salg uden moms, "Kommission uden moms (ikke momsregistreret ved salget)"; `GET /me/payouts/{id}/settlement-document` har feltet `commission_vat`. Moms på salget står fortsat pr. række ("Moms på salget"). Er der ingen moms af kommissionen (ikke-momsregistreret creator), vises intet om moms af kommissionen.
   - K15: delvist. Refunds efter et bilag indgår automatisk i næste bilag via ledgeren. Korrigerende bilag findes som service uden beløb og uden admin-UI (`SettlementDocuments::correct()` kaldes ikke fra UI eller REST). Der er ingen manuel regulering med forklaring.
   - K21: delvist. Metoden `gift_card` findes. En gavekort-payout gennemføres kun, når kortet er valideret (beløb = saldo = payout-beløbet), adapteren udsteder aldrig kort, og ulæselige data afvises (ADR-057). Bilagets snapshot har udbyder og eksternt ID; der er intet særskilt gavekortdokument.
   - Punkt 9: auditloggen er append-only uden opdaterings- og slettemetoder (`AuditRepository`, ADR-023). Eksport med manifest, versionsreferencer, tidslinje, checksums og sammenligning findes for genberegninger (ADR-063, trin 3); andre eksporter findes ikke.
 - **Resterende teknisk arbejde** (kræver særskilt plan og godkendelse; intet er påbegyndt):
-  - moms af kommissionen (data, beregning og visning);
   - historik over momsstatus;
   - indsamling af stamdata;
   - nummerering af rettelsesbilag med suffiks;
   - rettelsesbilag med beløb samt regulering med forklaring;
   - gavekortdokument med `GAV`-serie;
-  - en ny skabelonversion;
+  - en ny skabelonversion for stamdata, rettelsesbilag og gavekortdokumenter (version 3 dækker kun K05 og K12);
   - eksport med manifest og checksums;
-  - tests af bilag for begge momsstatusser.
+  - tests af bilag for begge momsstatusser for de øvrige krav (for moms af kommissionen findes de).
 - **Forbehold** (bevares, indtil projektejeren beslutter andet):
   1. Momsbehandlingen bygger på projektejerens gengivelse af SKAT's mundtlige vejledning og er hverken uafhængigt verificeret eller skattefagligt valideret (jf. ADR-061, forbehold 6).
   2. Momsmodellen i punkt 2 og visningen i punkt 6 er projektejerens valg, ikke en validering af den samlede regnskabsmodel.
@@ -3428,8 +3427,8 @@ Projektejerens forretningsbeslutning: R1 afklares på grundlag af den modtagne m
   4. Rettelsesreglen og administratorens vurdering af væsentlighed (punkt 7) er ikke valideret.
   5. Payout-gavekortets regnskabs- og momsmæssige klassifikation er ikke afklaret.
   6. Bogføringen sker uden for pluginet og er ikke vurderet. Merch Dashboard har ingen bogføringsfunktion.
-  7. Bilaget og dets formuleringer er ikke gennemgået af SKAT, revisor eller advokat (ADR-061, forbehold 3).
-- **Uafklarede detaljer:** den konkrete feltliste for stamdata, talformatet for `-K`-suffikser og `GAV`-serien, hvilke eksporter der skal findes, og hvordan momssatsen for kommissionen fastlægges og gemmes. De fastlægges ved implementeringen inden for beslutningerne ovenfor.
+  7. Bilaget og dets formuleringer er ikke gennemgået af SKAT, revisor eller advokat (ADR-061, forbehold 3); det gælder også skabelonversion 3 med moms af kommissionen.
+- **Uafklarede detaljer:** den konkrete feltliste for stamdata, talformatet for `-K`-suffikser og `GAV`-serien og hvilke eksporter der skal findes. De fastlægges ved implementeringen inden for beslutningerne ovenfor. Momssatsen for kommissionen er fastlagt ved implementeringen af K05 (fast 25 %, gemt pr. bilag).
 - **Andre blokeringer:** R3, G1–G3 og ADR-059 er uændrede; R2 er beskrevet i ADR-063.
 
 ## Related

@@ -26,14 +26,19 @@ defined( 'ABSPATH' ) || exit;
  * from the ledger, the settings or the creator.
  *
  * Before anything is drawn the document must add up (fail closed): the
- * settled rows' commission and profit must equal the document's, and the
- * closing balance must equal opening + commission − paid out. Otherwise, or
- * for an unknown template version, no PDF is made.
+ * settled rows' commission and profit must equal the document's, the
+ * closing balance must equal opening + commission − paid out, and from
+ * template version 3 the stored VAT on the commission must equal the one the
+ * settled rows give at the stored rate. Otherwise, or for an unknown template
+ * version, no PDF is made.
  *
  * The template version decides the texts: version 1 keeps its original mark
  * "Preliminary, not approved by an auditor or SKAT." (060-9); version 2
- * carries the neutral note on tax and reporting instead. Fees, withholdings
- * and VAT on the commission are never shown: the data model has none.
+ * carries the neutral note on tax and reporting instead; version 3 also shows
+ * the VAT on the commission (CommissionVat, ADR-062 K05 and K12) when VAT was
+ * calculated on part of it, separate from the VAT on the sale. Documents of
+ * versions 1 and 2 never show VAT on the commission. Fees and withholdings
+ * are never shown: the data model has none.
  *
  * Texts are in the site's language, so a document reads the same for the
  * creator and for an administrator; dates are in the site's time zone. The
@@ -44,7 +49,7 @@ final class SettlementPdf {
 	/**
 	 * Template versions this renderer knows.
 	 */
-	public const TEMPLATES = array( 1, 2 );
+	public const TEMPLATES = array( 1, 2, 3 );
 
 	private const MARGIN = 48.0;
 
@@ -181,7 +186,7 @@ final class SettlementPdf {
 	 *
 	 * @param SettlementDocument         $document Document.
 	 * @param list<array<string, mixed>> $rows     Settled rows as stored.
-	 * @return array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int}
+	 * @return array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int, commission_vat: array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int}|null}
 	 * @throws UnexpectedValueException When anything does not add up.
 	 */
 	private static function verify( SettlementDocument $document, array $rows ): array {
@@ -231,10 +236,18 @@ final class SettlementPdf {
 			throw new UnexpectedValueException( 'The settlement document does not add up.' );
 		}
 
+		// Template version 3: the stored VAT on the commission must be the one the rows give.
+		$commission_vat = CommissionVat::of_document( $document );
+
+		if ( null !== $commission_vat && CommissionVat::of_stored_rows( $rows, $commission_vat['rate_bps'] ) !== $commission_vat ) {
+			throw new UnexpectedValueException( 'The VAT on the commission of the settlement document does not add up.' );
+		}
+
 		return array(
-			'rows' => $parsed,
-			'net'  => $net,
-			'tax'  => $tax,
+			'rows'           => $parsed,
+			'net'            => $net,
+			'tax'            => $tax,
+			'commission_vat' => $commission_vat,
 		);
 	}
 
@@ -243,9 +256,11 @@ final class SettlementPdf {
 	 *
 	 * @phpstan-param list<SettlementDocument> $corrections
 	 *
-	 * @param SettlementDocument                                                                                                                           $document    Document.
-	 * @param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int} $verified    Verified rows and totals.
-	 * @param SettlementDocument[]                                                                                                                         $corrections Corrections, oldest first.
+	 * @phpstan-param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int, commission_vat: array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int}|null} $verified
+	 *
+	 * @param SettlementDocument   $document    Document.
+	 * @param array<string, mixed> $verified    Verified rows, totals and VAT on the commission (verify()).
+	 * @param SettlementDocument[] $corrections Corrections, oldest first.
 	 */
 	private function layout( SettlementDocument $document, array $verified, array $corrections ): string {
 		global $wp_locale;
@@ -266,6 +281,11 @@ final class SettlementPdf {
 		$this->parties( $document );
 		$this->details( $document );
 		$this->summary( $document );
+
+		if ( null !== $verified['commission_vat'] && 0 !== $verified['commission_vat']['incl_units'] ) {
+			$this->commission_vat( $document, $verified['commission_vat'] );
+		}
+
 		$this->rows( $document, $verified );
 		$this->corrections( $corrections );
 
@@ -451,10 +471,57 @@ final class SettlementPdf {
 	}
 
 	/**
+	 * VAT on the commission (template version 3, ADR-062 K05 and K12), shown
+	 * only when VAT was calculated on part of the commission: commission excl.
+	 * VAT, the rate, the VAT and the commission incl. VAT, and the commission
+	 * without VAT from sales while the creator was not VAT registered. Separate
+	 * from the VAT on the sale in the rows table.
+	 *
+	 * @param SettlementDocument                                                                         $document Document.
+	 * @param array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int} $split    Verified split.
+	 */
+	private function commission_vat( SettlementDocument $document, array $split ): void {
+		$lines = array(
+			array( __( 'Commission excl. VAT', 'merchboard' ), $split['excl_units'], false ),
+			/* translators: %s: VAT rate in percent, e.g. 25. */
+			array( sprintf( __( 'VAT (%s %%)', 'merchboard' ), CommissionVat::percent( $split['rate_bps'], $this->decimal_point ) ), $split['vat_units'], false ),
+			array( __( 'Commission incl. VAT', 'merchboard' ), $split['incl_units'], true ),
+		);
+
+		if ( 0 !== $split['untaxed_units'] ) {
+			$lines[] = array( __( 'Commission without VAT (not VAT registered when sold)', 'merchboard' ), $split['untaxed_units'], false );
+		}
+
+		$note = $this->pdf->wrap( __( 'The commission in the period includes this VAT. It is separate from the VAT on the sale.', 'merchboard' ), self::RIGHT - self::MARGIN - 20, self::SMALL );
+
+		$this->ensure( count( $lines ) * 15 + count( $note ) * 10 + 46 );
+		$this->pdf->text( self::MARGIN, $this->y, __( 'VAT on the commission', 'merchboard' ), 11, true );
+		$this->y += 8;
+		$height   = count( $lines ) * 15 + count( $note ) * 10 + 14;
+		$this->pdf->rect( self::MARGIN, $this->y, self::RIGHT - self::MARGIN, $height, 0.94 );
+		$y = $this->y + 16;
+
+		foreach ( $lines as list( $label, $units, $bold ) ) {
+			$this->pdf->text( self::MARGIN + 10, $y, $label, self::BODY, $bold );
+			$this->pdf->text( self::RIGHT - 10, $y, $this->money( $units, $document->currency ), self::BODY, $bold, PdfWriter::RIGHT );
+			$y += 15;
+		}
+
+		foreach ( $note as $line ) {
+			$this->pdf->text( self::MARGIN + 10, $y, $line, self::SMALL );
+			$y += 10;
+		}
+
+		$this->y += $height + 22;
+	}
+
+	/**
 	 * The settled rows with totals; the header repeats on every page.
 	 *
-	 * @param SettlementDocument                                                                                                                           $document Document.
-	 * @param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int} $verified Verified rows and totals.
+	 * @phpstan-param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int, commission_vat: array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int}|null} $verified
+	 *
+	 * @param SettlementDocument   $document Document.
+	 * @param array<string, mixed> $verified Verified rows and totals.
 	 */
 	private function rows( SettlementDocument $document, array $verified ): void {
 		$this->ensure( 60 );
@@ -679,11 +746,17 @@ final class SettlementPdf {
 	/**
 	 * 2 when every amount of the document is whole cents, else 4.
 	 *
-	 * @param SettlementDocument                                                                                                                           $document Document.
-	 * @param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int} $verified Verified rows and totals.
+	 * @phpstan-param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int, commission_vat: array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int}|null} $verified
+	 *
+	 * @param SettlementDocument   $document Document.
+	 * @param array<string, mixed> $verified Verified rows, totals and VAT on the commission.
 	 */
 	private static function decimals( SettlementDocument $document, array $verified ): int {
 		$amounts = array( $document->opening_units, $document->commission_units, $document->payout_units, $document->closing_units, $verified['net'], $verified['tax'] );
+
+		if ( null !== $verified['commission_vat'] ) {
+			array_push( $amounts, $verified['commission_vat']['incl_units'], $verified['commission_vat']['vat_units'], $verified['commission_vat']['excl_units'], $verified['commission_vat']['untaxed_units'] );
+		}
 
 		foreach ( $verified['rows'] as $row ) {
 			array_push( $amounts, $row['net'], $row['tax'], $row['payout'] );

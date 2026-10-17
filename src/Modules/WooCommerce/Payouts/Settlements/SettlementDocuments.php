@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\WooCommerce\Payouts\Settlements;
 
 use Closure;
 use DateTimeImmutable;
+use InvalidArgumentException;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
@@ -28,6 +29,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\Recalculation;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
+use OverflowException;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,7 +37,8 @@ defined( 'ABSPATH' ) || exit;
  * Afregningsbilag on the creator's behalf (ADR-060). Not approved by an
  * auditor or the Danish Tax Agency (R1–R4 open). Documents of template
  * version 1 are marked preliminary (060-9); from version 2 they carry a
- * neutral note on tax and reporting instead (SettlementPdf::tax_note()).
+ * neutral note on tax and reporting instead (SettlementPdf::tax_note()); from
+ * version 3 they also carry the VAT on the commission (CommissionVat).
  * Issued documents keep the version they were issued with.
  *
  * **Issue** runs inside the transaction and under the creator's payout lock
@@ -50,7 +53,8 @@ defined( 'ABSPATH' ) || exit;
  * payout adjustments not settled yet (ADR-063, settled by this document with
  * their references in the snapshot); closing = opening + commission +
  * adjustment − payout. Rows and parties are stored as a snapshot and never
- * recalculated (060-4).
+ * recalculated (060-4), and so is the split of the commission into VAT and
+ * commission excl. VAT (CommissionVat, ADR-062 K05).
  *
  * **Correct** (D11) issues a correction document that refers to the latest
  * document of a chain, with a new snapshot of the parties and a reason. It
@@ -79,9 +83,10 @@ final class SettlementDocuments {
 
 	/**
 	 * Version of the document template (texts and layout) of new documents:
-	 * 1 = marked preliminary (060-9), 2 = note on tax and reporting.
+	 * 1 = marked preliminary (060-9), 2 = note on tax and reporting, 3 = also
+	 * VAT on the commission (CommissionVat, ADR-062 K05 and K12).
 	 */
-	public const TEMPLATE_VERSION = 2;
+	public const TEMPLATE_VERSION = 3;
 
 	/**
 	 * Longest reason of a correction.
@@ -125,6 +130,7 @@ final class SettlementDocuments {
 	 * @param DateTimeImmutable $now    Time of the completion.
 	 * @param int|null          $user   WordPress user.
 	 * @throws PayoutException `balance_unknown` when a row in the window is unknown; a failed read or write is a DatabaseException (the caller rolls back).
+	 * @throws DatabaseException When a settled row's precision does not match the schema.
 	 */
 	public function issue( Payout $payout, DateTimeImmutable $now, ?int $user ): SettlementDocument {
 		$connection = $this->payouts->lock_connection( $payout->creator_id );
@@ -159,8 +165,15 @@ final class SettlementDocuments {
 			$adjustment = SalesAmount::add( $adjustment, $entry['amount_units'] );
 		}
 
+		try {
+			// ADR-062 K05: VAT on the commission by each row's VAT status at the sale.
+			$commission_vat = CommissionVat::snapshot( CommissionVat::split( $rows ) );
+		} catch ( InvalidArgumentException | OverflowException ) {
+			throw new DatabaseException( 'A ledger row does not match the schema.' );
+		}
+
 		$vat                     = $this->vat->find( $payout->creator_id );
-		$snapshot                = $this->snapshot( $payout, $vat, $start );
+		$snapshot                = $this->snapshot( $payout, $vat, $start ) + array( CommissionVat::SNAPSHOT_KEY => $commission_vat );
 		$snapshot['adjustments'] = array_map(
 			static fn( array $entry ): array => array(
 				'reference' => Recalculation::reference_of( $entry['recalculation_id'] ),

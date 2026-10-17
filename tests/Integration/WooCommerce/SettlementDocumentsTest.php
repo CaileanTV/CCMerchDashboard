@@ -33,6 +33,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
@@ -178,7 +179,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertTrue( $document->vat_registered );
 		self::assertNull( $document->period_from, 'Without a settlement start: the whole history.' );
 		self::assertSame( '2026-11-30 12:00:00', $document->period_to->format( 'Y-m-d H:i:s' ) );
-		self::assertSame( 2, $document->template_version, 'New documents carry the note on tax and reporting.' );
+		self::assertSame( 3, $document->template_version, 'New documents carry the note on tax and reporting and the VAT on the commission.' );
 		self::assertFalse( $document->snapshot['preliminary'] ?? null );
 		self::assertSame( 'Settlement Alpha', $document->snapshot['creator']['name'] ?? null );
 		self::assertSame( '•••• 5678', $document->snapshot['payout']['destination_hint'] ?? null );
@@ -479,6 +480,136 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( 'Tax and reporting', $pdf );
 		self::assertTrue( MePayoutsController::settlement_document( $shown )['preliminary'] );
 		self::assertFalse( MePayoutsController::settlement_document( $issued )['preliminary'] );
+	}
+
+	public function test_vat_on_the_commission_is_stored_shown_and_never_changed_by_a_later_vat_status(): void {
+		// VAT registered at the sales: 3 × 20.00 commission incl. VAT, 25 %.
+		$this->earn( 3 );
+		$payout = $this->request( '25', 'key-set-0301' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$document = $shown['document'];
+
+		self::assertSame( 3, $document->template_version );
+		self::assertSame(
+			array(
+				'version'  => 1,
+				'rate_bps' => 2500,
+				'incl'     => '60.0000',
+				'vat'      => '12.0000',
+				'excl'     => '48.0000',
+				'untaxed'  => '0.0000',
+			),
+			$document->snapshot[ CommissionVat::SNAPSHOT_KEY ] ?? null
+		);
+		self::assertSame( array( '60.0000', '35.0000' ), array( SalesAmount::format( $document->commission_units ), SalesAmount::format( $document->closing_units ) ), 'Commission and balance unchanged: the commission includes the VAT.' );
+
+		$api = MePayoutsController::settlement_document( $shown );
+		self::assertSame(
+			array(
+				'rate_bps' => 2500,
+				'excl'     => '48.0000',
+				'vat'      => '12.0000',
+				'incl'     => '60.0000',
+				'untaxed'  => '0.0000',
+			),
+			$api['commission_vat']
+		);
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+
+		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', '48.00 DKK', 'VAT (25 %)', '12.00 DKK', 'Commission incl. VAT', '60.00 DKK', 'VAT on the sale', 'Template version 3.' ) as $text ) {
+			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
+		}
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$html = $this->page_html( $page, $payout->id );
+
+		foreach ( array( 'Commission excl. VAT', 'VAT (25 %)', 'Commission incl. VAT' ) as $text ) {
+			self::assertStringContainsString( esc_html( $text ), $html, $text );
+		}
+
+		// A later change of the creator's VAT status changes nothing on the issued document.
+		$before = $this->state();
+		$this->vat->save( $this->creator, false );
+		$again = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $again );
+
+		self::assertSame( $document->snapshot, $again['document']->snapshot );
+		self::assertSame( $api, MePayoutsController::settlement_document( $again ) );
+		self::assertSame( $pdf, ( new SettlementPdf() )->render( $again ), 'The same bytes.' );
+		self::assertSame( array_diff_key( $before, array( 'audit' => true ) ), array_diff_key( $this->state(), array( 'audit' => true ) ), 'Nothing of the document, its rows, the counter or the payouts changed.' );
+	}
+
+	public function test_no_vat_on_the_commission_for_sales_while_not_vat_registered(): void {
+		$this->vat->save( $this->creator, false );
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0302' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+
+		self::assertSame(
+			array(
+				'version'  => 1,
+				'rate_bps' => 2500,
+				'incl'     => '0.0000',
+				'vat'      => '0.0000',
+				'excl'     => '0.0000',
+				'untaxed'  => '40.0000',
+			),
+			$shown['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ] ?? null
+		);
+		self::assertNull( MePayoutsController::settlement_document( $shown )['commission_vat'], 'K12: nothing that could be read as VAT on the commission.' );
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 3.' ) ), $pdf );
+
+		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', 'Commission incl. VAT' ) as $text ) {
+			self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
+		}
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		self::assertStringNotContainsString( 'Commission excl. VAT', $this->page_html( $page, $payout->id ) );
+	}
+
+	public function test_each_row_uses_the_vat_status_at_its_sale(): void {
+		$this->earn( 1 );
+		$this->vat->save( $this->creator, false );
+		$this->earn( 1 );
+		$payout = $this->request( '10', 'key-set-0303' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+
+		self::assertFalse( $shown['document']->vat_registered, 'The status at issue.' );
+		self::assertSame( array( '20.0000', '4.0000', '16.0000', '20.0000' ), array_map( static fn( string $key ): mixed => $shown['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ][ $key ] ?? null, array( 'incl', 'vat', 'excl', 'untaxed' ) ), 'The sale while registered carries VAT; the later one none.' );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Commission without VAT (not VAT registered when sold)' ) ), ( new SettlementPdf() )->render( $shown ) );
+	}
+
+	public function test_an_earlier_document_never_shows_vat_on_the_commission(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0304' );
+		$this->decisions->complete( $payout->id );
+		$issued = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $issued );
+		// A document as issued with template version 2, before the VAT on the commission (made by the test).
+		$legacy = $issued['document']->snapshot;
+		unset( $legacy[ CommissionVat::SNAPSHOT_KEY ] );
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'template_version' => 2, 'snapshot' => (string) wp_json_encode( $legacy ) ), array( 'id' => $issued['document']->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 2.' ) ), $pdf );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Tax and reporting' ) ), $pdf );
+		self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( 'VAT on the commission' ) ), $pdf );
+		self::assertNull( MePayoutsController::settlement_document( $shown )['commission_vat'] );
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		self::assertStringNotContainsString( 'Commission excl. VAT', $this->page_html( $page, $payout->id ) );
 	}
 
 	public function test_the_admin_page_shows_the_note_or_the_original_mark_and_links_the_pdf(): void {

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-17T12:08:37+00:00\n"
+"PO-Revision-Date: 2026-10-17T16:23:31+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -564,25 +564,25 @@ msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
 #: src/Modules/Admin/AuditLogFormatter.php:394
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:731
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:804
 #: build/dashboard.js:8
 msgid "Sale"
 msgstr "Salg"
 
 #: src/Modules/Admin/AuditLogFormatter.php:395
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:732
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:805
 #: build/dashboard.js:8
 msgid "Refund"
 msgstr "Refundering"
 
 #: src/Modules/Admin/AuditLogFormatter.php:396
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:733
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:806
 #: build/dashboard.js:8
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
 #: src/Modules/Admin/AuditLogFormatter.php:397
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:734
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:807
 #: build/dashboard.js:8
 msgid "Correction"
 msgstr "Korrektion"
@@ -773,10 +773,10 @@ msgstr "Hændelse"
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:372
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:326
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:435
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:626
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:436
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:627
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
 msgid "Creator"
@@ -845,12 +845,12 @@ msgid "All events"
 msgstr "Alle hændelser"
 
 #: src/Modules/Admin/AuditLogPage.php:250
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "From"
 msgstr "Fra"
 
 #: src/Modules/Admin/AuditLogPage.php:256
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "To"
 msgstr "Til"
 
@@ -910,7 +910,7 @@ msgstr "Creator-data kunne ikke læses. Se den tekniske log."
 
 #: src/Modules/Admin/OverviewPage.php:138
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:188
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:496
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:563
 msgid "Total"
 msgstr "I alt"
 
@@ -973,8 +973,8 @@ msgid "Transaction support"
 msgstr "Transaktionsunderstøttelse"
 
 #: src/Modules/Admin/OverviewPage.php:192
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
-#: build/dashboard.js:14
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
+#: build/dashboard.js:15
 msgid "Available"
 msgstr "Tilgængelig"
 
@@ -1130,7 +1130,7 @@ msgstr "Denne creator bevares kun som historisk dokumentation. Det understøttes
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:274
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Display name"
 msgstr "Visningsnavn"
 
@@ -1141,11 +1141,11 @@ msgstr "Visningsnavn"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:174
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:210
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:326
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:439
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:440
 #: build/dashboard.js:2
 #: build/dashboard.js:5
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Status"
 msgstr "Status"
 
@@ -1542,10 +1542,10 @@ msgstr "Afstemningen afgør ikke disse produkter. Ret dem i WooCommerce (produkt
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:521
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:588
 #: build/dashboard.js:2
-#: build/dashboard.js:13
-#: build/dashboard.js:17
+#: build/dashboard.js:14
+#: build/dashboard.js:18
 msgid "Product"
 msgstr "Produkt"
 
@@ -1771,7 +1771,7 @@ msgstr "Udgivne produkter direkte i kategorien"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Actions"
 msgstr "Handlinger"
 
@@ -1978,7 +1978,7 @@ msgstr "En produktmarkup kan kun sættes for et simpelt eller variabelt produkt;
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:94
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:105
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:72
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:184
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:185
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret; prøv igen senere."
 
@@ -2025,15 +2025,15 @@ msgid "VAT registered"
 msgstr "Momsregistreret"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:178
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:627
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:322
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:342
 #: build/dashboard.js:9
 msgid "Yes"
 msgstr "Ja"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:179
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:627
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:323
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:343
 #: build/dashboard.js:9
 msgid "No"
 msgstr "Nej"
@@ -2224,7 +2224,7 @@ msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger admini
 #. translators: 1: product label, 2: outcome message.
 #. translators: 1: period, 2: net sales with currency.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr "%1$s: %2$s"
@@ -2335,7 +2335,7 @@ msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"
 
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:572
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:573
 #: build/dashboard.js:2
 msgid "None"
 msgstr "Ingen"
@@ -2388,38 +2388,38 @@ msgstr "Momsen mangler for nogle ældre salg i perioden, så beløbene vises eks
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
 #: build/dashboard.js:3
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Units"
 msgstr "Enheder"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:146
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:164
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:573
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:574
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
 #: build/dashboard.js:3
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Orders"
 msgstr "Ordrer"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Sales per day (incl. VAT)"
 msgstr "Salg pr. dag (inkl. moms)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Net sales per day"
 msgstr "Nettosalg pr. dag"
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:21
+#: build/dashboard.js:22
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr "Salg, enheder og ordrer pr. periode (%s)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Day"
 msgstr "Dag"
 
@@ -2481,22 +2481,22 @@ msgstr "Ingen gemte ordrer matcher filteret."
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:280
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:645
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:570
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:571
 msgid "Gift card plugin does not support order registration lookup"
 msgstr "Gavekort-pluginet understøtter ikke opslag af ordreregistreringer"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:284
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:649
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:570
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:571
 #: src/Modules/WooCommerce/Payouts/GiftCards/PayoutGiftCardCouponGuard.php:115
 msgid "Gift card order registration could not be checked"
 msgstr "Gavekortregistreringen kunne ikke kontrolleres"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:289
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:374
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:520
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:587
 #: build/dashboard.js:2
-#: build/dashboard.js:13
+#: build/dashboard.js:14
 msgid "Order"
 msgstr "Ordre"
 
@@ -2506,8 +2506,8 @@ msgstr "Ledger-datoer"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:289
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:326
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:368
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:388
 #: build/dashboard.js:8
 msgid "Currency"
 msgstr "Valuta"
@@ -2537,20 +2537,20 @@ msgid "Settlement"
 msgstr "Afregning"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:313
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:305
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:393
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:306
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:394
 msgid "&laquo; Previous"
 msgstr "&laquo; Forrige"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:314
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:306
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:394
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:307
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:395
 msgid "Next &raquo;"
 msgstr "Næste &raquo;"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:336
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:640
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:573
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:574
 msgid "Registered by gift card plugin — payout status not confirmed"
 msgstr "Registreret af gavekort-plugin — payout-status er ikke bekræftet"
 
@@ -2659,7 +2659,7 @@ msgid "Date"
 msgstr "Dato"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:523
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:590
 #: build/dashboard.js:2
 msgid "Quantity"
 msgstr "Antal"
@@ -2672,7 +2672,7 @@ msgstr "Gemt moms"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:374
 #: build/dashboard.js:2
 #: build/dashboard.js:3
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Profit"
 msgstr "Profit"
 
@@ -2683,15 +2683,15 @@ msgstr "Mangler"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:677
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:356
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:411
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:627
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:324
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:720
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:357
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:412
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:344
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:793
 #: build/dashboard.js:2
 #: build/dashboard.js:9
-#: build/dashboard.js:14
-#: build/dashboard.js:19
+#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Unknown"
 msgstr "Ukendt"
 
@@ -2762,7 +2762,7 @@ msgstr "%1$d kendte, %2$d uden data"
 
 #. translators: %d: payout id.
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:633
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:432
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:433
 #, php-format
 msgid "Payout #%d"
 msgstr "Udbetaling #%d"
@@ -2849,7 +2849,7 @@ msgstr "Papirkurv"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationExportDownload.php:123
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:115
 #: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:213
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:194
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:195
 #: src/Modules/WooCommerce/Admin/SettlementPdfDownload.php:105
 msgid "Sorry, you are not allowed to manage payouts."
 msgstr "Du har desværre ikke tilladelse til at administrere udbetalinger."
@@ -2938,7 +2938,7 @@ msgid "The recalculation does not exist."
 msgstr "Genberegningen findes ikke."
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:103
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
 msgid "You are not allowed to do this."
 msgstr "Du har ikke tilladelse til dette."
 
@@ -2967,7 +2967,7 @@ msgid "No recalculations yet."
 msgstr "Ingen genberegninger endnu."
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:174
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:449
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:450
 msgid "Reference"
 msgstr "Reference"
 
@@ -3114,8 +3114,8 @@ msgid "Document"
 msgstr "Bilag"
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:374
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:522
-#: build/dashboard.js:13
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:589
+#: build/dashboard.js:14
 msgid "Type"
 msgstr "Type"
 
@@ -3133,7 +3133,7 @@ msgstr "Jeg har gennemgået forhåndsvisningen. Godkendelsen udfører intet."
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:409
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:413
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:764
 msgid "Reject"
 msgstr "Afvis"
 
@@ -3155,7 +3155,7 @@ msgstr "Udfør de poster, der endnu ikke er udført. Udførte poster udføres al
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:417
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:420
-#: build/dashboard.js:14
+#: build/dashboard.js:15
 msgid "Close"
 msgstr "Luk"
 
@@ -3186,7 +3186,7 @@ msgid "Approved"
 msgstr "Godkendt"
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:493
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:802
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:820
 #: build/dashboard.js:6
 msgid "Rejected"
 msgstr "Afvist"
@@ -3265,8 +3265,8 @@ msgid "Not saved: choose one of the listed gift card plugins, or none."
 msgstr "Ikke gemt: vælg et af de viste gavekortplugins eller ingen."
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:85
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:133
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:207
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:134
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:208
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
 msgid "Payouts"
 msgstr "Udbetalinger"
@@ -3337,514 +3337,540 @@ msgstr "Afregningsstart"
 msgid "Save settlement start"
 msgstr "Gem afregningsstart"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:132
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:133
 msgid "Merch Dashboard Payouts"
 msgstr "Merch Dashboard udbetalinger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:157
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
 msgid "The request was rejected. The reservation is released and the creator sees your reason."
 msgstr "Anmodningen er afvist. Reservationen er frigivet, og creatoren kan se din begrundelse."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:158
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
 msgid "The payout was registered as transferred."
 msgstr "Udbetalingen er registreret som overført."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:159
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
 msgid "Not registered: confirm that you have made the transfer outside Merch Dashboard."
 msgstr "Ikke registreret: bekræft, at du har foretaget overførslen uden for Merch Dashboard."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:160
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
 msgid "Not rejected: enter a reason of at most 500 characters. The creator sees it."
 msgstr "Ikke afvist: angiv en begrundelse på højst 500 tegn. Creatoren kan se den."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:161
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
 msgid "Not registered: the reference may have at most 191 characters."
 msgstr "Ikke registreret: referencen må højst have 191 tegn."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:162
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
 msgid "Not saved: the reference or reason must not contain bank or payment details, such as an account number, an IBAN or an e-mail address. Nothing was changed. Use the transaction ID from the bank or PayPal, or describe the reason without the details."
 msgstr "Ikke gemt: referencen eller begrundelsen må ikke indeholde bank- eller betalingsoplysninger som et kontonummer, en IBAN eller en e-mailadresse. Intet blev ændret. Brug transaktions-ID'et fra banken eller PayPal, eller beskriv begrundelsen uden oplysningerne."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:163
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
 msgid "This request has already been handled; nothing was changed."
 msgstr "Anmodningen er allerede behandlet; intet blev ændret."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:164
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:427
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:428
 msgid "The payout does not exist."
 msgstr "Udbetalingen findes ikke."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:165
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
 msgid "Not registered: the creator's balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid."
 msgstr "Ikke registreret: creatorens saldo dækker ikke længere denne udbetaling, fx efter en refundering. Behandl den manuelt: overfør ikke beløbet, og afvis anmodningen, hvis den ikke kan betales."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:166
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
 msgid "Not registered: the creator's balance is unknown, because some sales lack the data needed. Handle it manually; nothing is completed automatically."
 msgstr "Ikke registreret: creatorens saldo er ukendt, fordi nogle salg mangler de nødvendige oplysninger. Behandl den manuelt; intet gennemføres automatisk."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:167
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:168
 msgid "The payment details cannot be decrypted (MERCHBOARD_PAYOUT_KEY is missing or was changed). This request can only be rejected."
 msgstr "Betalingsoplysningerne kan ikke dekrypteres (MERCHBOARD_PAYOUT_KEY mangler eller er ændret). Anmodningen kan kun afvises."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:169
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
 msgid "Another payout of this creator is being processed. Please try again in a moment."
 msgstr "En anden udbetaling for denne creator behandles lige nu. Prøv igen om et øjeblik."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:170
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
 msgid "The gift card was validated and registered. The payout is completed, and the creator can now see the card."
 msgstr "Gavekortet er valideret og registreret. Udbetalingen er gennemført, og creatoren kan nu se kortet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:171
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:172
 msgid "This action does not fit the payout method; nothing was changed."
 msgstr "Handlingen passer ikke til udbetalingsmetoden; intet blev ændret."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:172
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:173
 msgid "Not registered: no available gift card plugin is chosen in Settings → Payouts."
 msgstr "Ikke registreret: der er ikke valgt et tilgængeligt gavekortplugin under Settings → Payouts."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:173
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:174
 msgid "Not registered: enter the gift card code."
 msgstr "Ikke registreret: angiv gavekortets kode."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:174
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:175
 msgid "Not registered: no gift card has this code."
 msgstr "Ikke registreret: intet gavekort har denne kode."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:175
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:176
 msgid "Not registered: several gift cards have this code. Give the card a unique code in the gift card plugin."
 msgstr "Ikke registreret: flere gavekort har denne kode. Giv kortet en entydig kode i gavekortpluginet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:176
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:177
 msgid "Not registered: the gift card's amount, balance, currency or expiry cannot be read exactly. Enter the amount with a decimal point and at most the shop's decimals."
 msgstr "Ikke registreret: gavekortets beløb, saldo, valuta eller udløb kan ikke læses præcist. Angiv beløbet med punktum som decimaltegn og højst butikkens antal decimaler."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:177
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:178
 msgid "Not registered: the gift card could not be validated. Nothing was changed; try again later."
 msgstr "Ikke registreret: gavekortet kunne ikke valideres. Intet blev ændret; prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:178
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:179
 msgid "Not registered: the gift card is not active."
 msgstr "Ikke registreret: gavekortet er ikke aktivt."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:179
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:180
 msgid "Not registered: the gift card has expired."
 msgstr "Ikke registreret: gavekortet er udløbet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:180
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:181
 msgid "Not registered: the gift card has another currency than the payout."
 msgstr "Ikke registreret: gavekortet har en anden valuta end udbetalingen."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:181
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:182
 msgid "Not registered: the gift card's amount is not the payout amount."
 msgstr "Ikke registreret: gavekortets beløb er ikke udbetalingens beløb."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:182
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:183
 msgid "Not registered: the gift card's balance is not its full amount, so it has been used."
 msgstr "Ikke registreret: gavekortets saldo er ikke hele beløbet, så det er blevet brugt."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:183
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:184
 msgid "Not registered: this gift card is already registered on another payout."
 msgstr "Ikke registreret: gavekortet er allerede registreret på en anden udbetaling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:208
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:209
 msgid "Payout requests of creators. Merch Dashboard never sends money: you transfer the amount yourself, outside Merch Dashboard, and then register it here."
 msgstr "Creatorernes anmodninger om udbetaling. Merch Dashboard sender aldrig penge: du overfører selv beløbet uden for Merch Dashboard og registrerer det derefter her."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:211
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:212
 msgid "No valid MERCHBOARD_PAYOUT_KEY is configured in wp-config.php. Creators cannot request bank or PayPal payouts, and pending requests can only be rejected."
 msgstr "Der er ingen gyldig MERCHBOARD_PAYOUT_KEY i wp-config.php. Creators kan ikke anmode om udbetaling via bank eller PayPal, og ventende anmodninger kan kun afvises."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:228
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:229
 msgid "The payouts could not be read. Please try again later."
 msgstr "Udbetalingerne kunne ikke læses. Prøv igen senere."
 
 #. translators: %s: number of requests.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:247
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:248
 #, php-format
 msgid "Queue (%s)"
 msgstr "Kø (%s)"
 
 #. translators: %s: number of requests.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:249
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:250
 #, php-format
 msgid "History (%s)"
 msgstr "Historik (%s)"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:253
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:254
 msgid "Balances"
 msgstr "Saldi"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:256
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:257
 msgid "Payout views"
 msgstr "Visninger af udbetalinger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:274
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:275
 msgid "No handled payouts yet."
 msgstr "Ingen behandlede udbetalinger endnu."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:274
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:275
 msgid "No pending payout requests."
 msgstr "Ingen ventende anmodninger om udbetaling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
 msgid "Payout"
 msgstr "Udbetaling"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:436
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:437
 #: build/dashboard.js:8
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Amount"
 msgstr "Beløb"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:437
-#: build/dashboard.js:17
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:438
+#: build/dashboard.js:18
 msgid "Method"
 msgstr "Metode"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:438
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:439
 msgid "Destination"
 msgstr "Modtager"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:440
-#: build/dashboard.js:17
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:441
+#: build/dashboard.js:18
 msgid "Requested"
 msgstr "Anmodet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:280
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:441
-#: build/dashboard.js:17
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:281
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:442
+#: build/dashboard.js:18
 msgid "Handled"
 msgstr "Behandlet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:333
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:334
 msgid "Released earnings are the creator payouts of sales whose holding period has ended, counted from the settlement start; refunds count at once. Balance = released earnings − paid out − reserved. When a ledger row cannot be calculated, the earnings and the balance are unknown and nothing can be requested."
 msgstr "Frigivet optjening er creator-udbetalingen af salg, hvis karensperiode er udløbet, regnet fra afregningsstarten; refunderinger tæller med det samme. Saldo = frigivet optjening − udbetalt − reserveret. Kan en ledger-række ikke beregnes, er optjeningen og saldoen ukendte, og der kan ikke anmodes om udbetaling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:336
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:337
 msgid "No creators yet."
 msgstr "Ingen creators endnu."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
 msgid "Released earnings"
 msgstr "Frigivet optjening"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
 msgid "Reserved"
 msgstr "Reserveret"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:630
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:801
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:408
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:631
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:819
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:428
 #: build/dashboard.js:6
-#: build/dashboard.js:13
 #: build/dashboard.js:14
+#: build/dashboard.js:15
 msgid "Paid out"
 msgstr "Udbetalt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
 msgid "Balance"
 msgstr "Saldo"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:342
-#: build/dashboard.js:14
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:343
+#: build/dashboard.js:15
 msgid "Outstanding"
 msgstr "Udestående"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:356
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:357
 msgid "No earnings or payouts yet."
 msgstr "Ingen optjening eller udbetalinger endnu."
 
 #. translators: %d: number of ledger rows.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:367
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:368
 #, php-format
 msgid "%d ledger row cannot be calculated"
 msgid_plural "%d ledger rows cannot be calculated"
 msgstr[0] "%d ledger-række kan ikke beregnes"
 msgstr[1] "%d ledger-rækker kan ikke beregnes"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:423
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:424
 msgid "← All payouts"
 msgstr "← Alle udbetalinger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:445
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:446
 msgid "Reason"
 msgstr "Begrundelse"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:453
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
 msgid "Payout reference"
 msgstr "Udbetalingsreference"
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:459
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:789
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:719
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:460
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:807
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:792
 #: build/dashboard.js:6
 msgid "Gift card"
 msgstr "Gavekort"
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:459
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:460
 #, php-format
 msgid "%1$s, card #%2$s"
 msgstr "%1$s, kort #%2$s"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:497
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:498
 msgid "Register gift card"
 msgstr "Registrér gavekort"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:501
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:502
 msgid "No available gift card plugin is chosen in Settings → Payouts, so no gift card can be registered. The request can be rejected."
 msgstr "Der er ikke valgt et tilgængeligt gavekortplugin under Settings → Payouts, så der kan ikke registreres et gavekort. Anmodningen kan afvises."
 
 #. translators: 1: gift card plugin, 2: amount with currency, 3: payout reference.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:507
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:508
 #, php-format
 msgid "Create a gift card in %1$s with exactly this amount and balance: %2$s (no VAT added or deducted). Note the reference %3$s in its internal notes."
 msgstr "Opret et gavekort i %1$s med præcis dette beløb og denne saldo: %2$s (uden tillæg eller fradrag af moms). Skriv referencen %3$s i kortets interne note."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:508
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:509
 msgid "Do not send or use the card. Enter its code below: Merch Dashboard checks that it is one unused, active card of this amount and currency, then completes the payout and shows the card to the creator."
 msgstr "Send eller brug ikke kortet. Angiv dets kode nedenfor: Merch Dashboard kontrollerer, at det er ét ubrugt, aktivt kort med dette beløb og denne valuta, gennemfører derefter udbetalingen og viser kortet for creatoren."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:513
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:514
 msgid "Create gift card in the plugin"
 msgstr "Opret gavekort i pluginet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:520
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:521
 msgid "Gift card code"
 msgstr "Gavekortkode"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:522
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:523
 msgid "Validate and register gift card"
 msgstr "Validér og registrér gavekort"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:539
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:540
 msgid "Gift card in the plugin now"
 msgstr "Gavekortet i pluginet nu"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:544
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:545
 msgid "The gift card cannot be read now: the plugin is not available, or the card was deleted."
 msgstr "Gavekortet kan ikke læses nu: pluginet er ikke tilgængeligt, eller kortet er slettet."
 
 #. translators: 1: status, 2: balance with currency.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:547
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:548
 #, php-format
 msgid "Status: %1$s. Balance: %2$s."
 msgstr "Status: %1$s. Saldo: %2$s."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:552
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:553
 msgid "The gift card cannot be read now."
 msgstr "Gavekortet kan ikke læses nu."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:580
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:581
 msgid "Open the card in the plugin"
 msgstr "Åbn kortet i pluginet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:597
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:291
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:598
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:311
 msgid "Settlement document"
 msgstr "Afregningsbilag"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:603
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:604
 #: src/Modules/WooCommerce/Admin/SettlementPdfDownload.php:133
 msgid "The settlement document cannot be shown. Please try again later."
 msgstr "Afregningsbilaget kan ikke vises. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:608
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:609
 msgid "This payout has no settlement document: it was completed before settlement documents were introduced."
 msgstr "Denne udbetaling har intet afregningsbilag: den blev gennemført, før afregningsbilag blev indført."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:617
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:297
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:618
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:317
 #: build/dashboard.js:10
 msgid "Preliminary, not approved by an auditor or SKAT."
 msgstr "Foreløbigt, ikke godkendt af revisor/SKAT."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:620
-#: build/dashboard.js:14
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
+#: build/dashboard.js:15
 msgid "Download PDF"
 msgstr "Hent PDF"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:623
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:624
 msgid "Document number"
 msgstr "Bilagsnummer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:624
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:293
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:625
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:313
 #: build/dashboard.js:12
 msgid "Issued"
 msgstr "Udstedt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:625
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:367
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:626
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:387
 #: build/dashboard.js:12
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Period"
 msgstr "Periode"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:625
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:365
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:626
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:385
 #: build/dashboard.js:12
 msgid "Whole history"
 msgstr "Hele historikken"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:627
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:331
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:351
 #: build/dashboard.js:12
 msgid "VAT registered at issue"
 msgstr "Momsregistreret ved udstedelsen"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:628
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:400
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:629
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:420
 #: build/dashboard.js:12
 msgid "Commission in the period"
 msgstr "Kommission i perioden"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:629
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:399
-#: build/dashboard.js:13
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:630
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:419
+#: build/dashboard.js:14
 msgid "Carried from earlier"
 msgstr "Overført fra tidligere"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:631
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:426
-#: build/dashboard.js:13
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:632
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:446
+#: build/dashboard.js:14
 msgid "Carried forward"
 msgstr "Overføres til næste bilag"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:632
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:633
 msgid "Settled sales rows"
 msgstr "Afregnede salgsrækker"
 
-#. translators: %s: references of the recalculations, e.g. R2-000001.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:638
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:405
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:641
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:485
+#: build/dashboard.js:12
+msgid "Commission excl. VAT"
+msgstr "Kommission ekskl. moms"
+
+#. translators: %s: VAT rate in percent, e.g. 25.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:487
 #: build/dashboard.js:13
+#, php-format,js-format
+msgid "VAT (%s %%)"
+msgstr "Moms (%s %%)"
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:644
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:488
+#: build/dashboard.js:13
+msgid "Commission incl. VAT"
+msgstr "Kommission inkl. moms"
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:647
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:492
+#: build/dashboard.js:13
+msgid "Commission without VAT (not VAT registered when sold)"
+msgstr "Kommission uden moms (ikke momsregistreret ved salget)"
+
+#. translators: %s: references of the recalculations, e.g. R2-000001.
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:654
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:425
+#: build/dashboard.js:14
 #, php-format,js-format
 msgid "Adjustments (%s)"
 msgstr "Reguleringer (%s)"
 
 #. translators: 1: number of the correction document, 2: date.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:649
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:667
 #, php-format
 msgid "Corrected by %1$s (%2$s)."
 msgstr "Korrigeret af %1$s (%2$s)."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:665
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:683
 msgid "active"
 msgstr "aktivt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:666
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:684
 msgid "disabled"
 msgstr "deaktiveret"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:667
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:685
 msgid "expired"
 msgstr "udløbet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:668
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:686
 msgid "other"
 msgstr "andet"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:681
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:699
 msgid "Full payment details"
 msgstr "Fulde betalingsoplysninger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:684
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:702
 msgid "Only users allowed to see full payment details can view them. Ask an administrator who can."
 msgstr "Kun brugere, der har tilladelse til at se fulde betalingsoplysninger, kan se dem. Spørg en administrator, der har."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:690
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:708
 msgid "The details are shown only on request, and every view is recorded in the audit log."
 msgstr "Oplysningerne vises kun på anmodning, og hver visning registreres i audit-loggen."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:709
 msgid "Show full payment details"
 msgstr "Vis fulde betalingsoplysninger"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:698
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:716
 msgid "The details cannot be shown."
 msgstr "Oplysningerne kan ikke vises."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:703
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:721
 msgid "The details cannot be shown. Please try again later."
 msgstr "Oplysningerne kan ikke vises. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:710
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:728
 #: build/dashboard.js:8
 msgid "Registration number"
 msgstr "Registreringsnummer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:711
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:729
 #: build/dashboard.js:8
 msgid "Account number"
 msgstr "Kontonummer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:713
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:731
 #: build/dashboard.js:8
 msgid "PayPal email address"
 msgstr "E-mailadresse til PayPal"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:717
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:735
 msgid "This view was recorded in the audit log. The details are deleted when the request has been handled."
 msgstr "Denne visning er registreret i audit-loggen. Oplysningerne slettes, når anmodningen er behandlet."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:726
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:736
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:744
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:754
 msgid "Register as paid out"
 msgstr "Registrér som udbetalt"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:727
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:745
 msgid "Transfer the amount yourself (bank or PayPal) first. Registering it here sends no money; it only records that the transfer has been made. The creator's balance is checked again, and a payout it no longer covers is refused for manual handling."
 msgstr "Overfør først selv beløbet (bank eller PayPal). En registrering her sender ingen penge; den registrerer kun, at overførslen er foretaget. Creatorens saldo kontrolleres igen, og en udbetaling, den ikke længere dækker, afvises til manuel behandling."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:732
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:750
 msgid "Reference (optional)"
 msgstr "Reference (valgfri)"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:734
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:752
 msgid "For example the transaction ID from the bank or PayPal. Never enter an account number, IBAN or e-mail address: the reference is kept with the payout history."
 msgstr "Fx transaktions-ID'et fra banken eller PayPal. Skriv aldrig et kontonummer, en IBAN eller en e-mailadresse: referencen gemmes i udbetalingshistorikken."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:735
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
 msgid "The transfer has been made outside Merch Dashboard"
 msgstr "Overførslen er gennemført uden for Merch Dashboard"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:751
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:769
 msgid "Reason (shown to the creator)"
 msgstr "Begrundelse (vises for creatoren)"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:771
 msgid "Never enter an account number, IBAN or e-mail address: the reason is shown to the creator and kept with the payout history."
 msgstr "Skriv aldrig et kontonummer, en IBAN eller en e-mailadresse: begrundelsen vises for creatoren og gemmes i udbetalingshistorikken."
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:754
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:772
 msgid "Reject request"
 msgstr "Afvis anmodning"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:787
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:717
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:805
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:790
 #: build/dashboard.js:6
 msgid "Bank transfer"
 msgstr "Bankoverførsel"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:788
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:718
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:806
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:791
 #: build/dashboard.js:6
 msgid "PayPal"
 msgstr "PayPal"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:800
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:818
 #: build/dashboard.js:6
 msgid "Pending"
 msgstr "Afventer"
 
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:803
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:821
 #: build/dashboard.js:6
 msgid "Cancelled"
 msgstr "Annulleret"
@@ -3852,7 +3878,7 @@ msgstr "Annulleret"
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:48
-#: build/dashboard.js:18
+#: build/dashboard.js:19
 #, js-format,php-format
 msgid "%1$s %2$s"
 msgstr "%1$s %2$s"
@@ -4117,18 +4143,18 @@ msgstr "I papirkurven"
 msgid "This gift card was issued as a creator payout. It can only be redeemed at checkout, not added to an order here."
 msgstr "Dette gavekort er udstedt som udbetaling til en creator. Det kan kun indløses i kassen, ikke tilføjes til en ordre her."
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:174
-#: build/dashboard.js:14
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:179
+#: build/dashboard.js:15
 msgid "Tax and reporting"
 msgstr "Skat og indberetning"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:175
-#: build/dashboard.js:14
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:180
+#: build/dashboard.js:15
 msgid "You are responsible for finding out about and meeting your own tax and reporting obligations to the Danish Tax Agency. Depending on your situation, this may include whether the amount must be included in your taxable income and whether you have VAT obligations. This document shows the payout and its basis according to the information registered in the system. It is not tax advice and has not been approved by an auditor or the Danish Tax Agency."
 msgstr "Du er selv ansvarlig for at undersøge og opfylde dine skatte- og indberetningsforpligtelser over for Skattestyrelsen. Det kan blandt andet afhænge af din situation, om beløbet skal medregnes i din skattepligtige indkomst, og om du har momsforpligtelser. Dette bilag viser udbetalingen og grundlaget for den ud fra de oplysninger, der er registreret i systemet. Bilaget er ikke skatterådgivning og er ikke godkendt af en revisor eller Skattestyrelsen."
 
 #. translators: %s: document number.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:258
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:273
 #: build/dashboard.js:9
 #: build/dashboard.js:10
 #: build/dashboard.js:11
@@ -4137,87 +4163,96 @@ msgid "Settlement document %s"
 msgstr "Afregningsbilag %s"
 
 #. translators: %s: title of the document.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:260
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:275
 #, php-format
 msgid "%s (continued)"
 msgstr "%s (fortsat)"
 
 #. translators: 1: company name, 2: creator name.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:304
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:324
 #: build/dashboard.js:12
 #, js-format,php-format
 msgid "Self-billing: issued by %1$s on behalf of %2$s."
 msgstr "Omvendt fakturering: udstedt af %1$s på vegne af %2$s."
 
 #. translators: %d: creator id.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:328
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:348
 #, php-format
 msgid "Creator ID: %d"
 msgstr "Creator-ID: %d"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:330
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:350
 msgid "Issued by"
 msgstr "Udstedt af"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:331
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:351
 msgid "Recipient"
 msgstr "Modtager"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:369
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:389
 msgid "Payment method"
 msgstr "Betalingsmetode"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:374
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:394
 msgid "Paid to"
 msgstr "Udbetalt til"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:378
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:398
 msgid "Payout ID"
 msgstr "Udbetalings-ID"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:461
-#: build/dashboard.js:13
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:495
+msgid "The commission in the period includes this VAT. It is separate from the VAT on the sale."
+msgstr "Kommissionen i perioden er inklusive denne moms. Den er adskilt fra momsen på salget."
+
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:498
+msgid "VAT on the commission"
+msgstr "Moms af kommissionen"
+
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:528
+#: build/dashboard.js:14
 msgid "Settled sales"
 msgstr "Afregnede salg"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:466
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:533
 msgid "No sales rows were settled with this document."
 msgstr "Der er ikke afregnet nogen salgsrækker med dette bilag."
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:524
-#: build/dashboard.js:13
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:591
+#: build/dashboard.js:14
 msgid "Net"
 msgstr "Netto"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:525
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:592
+#: build/dashboard.js:14
 msgid "VAT on the sale"
 msgstr "Moms på salget"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:526
-#: build/dashboard.js:13
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:593
+#: build/dashboard.js:14
 msgid "Commission"
 msgstr "Kommission"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:564
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:631
 msgid "Corrections"
 msgstr "Korrektioner"
 
 #. translators: 1: number of the correction document, 2: date, 3: reason.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:570
-#: build/dashboard.js:14
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:637
+#: build/dashboard.js:15
 #, js-format,php-format
 msgid "Corrected by %1$s (%2$s): %3$s"
 msgstr "Korrigeret af %1$s (%2$s): %3$s"
 
 #. translators: %d: template version of the document.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:604
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:671
 #, php-format
 msgid "Created automatically from the data registered in the system. Template version %d."
 msgstr "Dannet automatisk ud fra de oplysninger, der er registreret i systemet. Skabelonversion %d."
 
 #. translators: 1: page number, 2: number of pages.
 #. translators: 1: current page number, 2: number of pages.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:611
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:678
 #: build/dashboard.js:2
 #, js-format,php-format
 msgid "Page %1$d of %2$d"
@@ -4228,15 +4263,15 @@ msgstr "Side %1$d af %2$d"
 msgid "The creator of a product can only be changed in Merch Dashboard."
 msgstr "Et produkts creator kan kun ændres i Merch Dashboard."
 
-#: src/Modules/WooCommerce/Rest/MePayoutsController.php:540
+#: src/Modules/WooCommerce/Rest/MePayoutsController.php:563
 msgid "Some payout fields are missing or invalid."
 msgstr "Nogle felter i udbetalingen mangler eller er ugyldige."
 
-#: src/Modules/WooCommerce/Rest/MePayoutsController.php:602
+#: src/Modules/WooCommerce/Rest/MePayoutsController.php:625
 msgid "The payout could not be found."
 msgstr "Udbetalingen blev ikke fundet."
 
-#: src/Modules/WooCommerce/Rest/MePayoutsController.php:612
+#: src/Modules/WooCommerce/Rest/MePayoutsController.php:635
 msgid "The payout request was not accepted."
 msgstr "Anmodningen om udbetaling blev ikke accepteret."
 
@@ -4279,7 +4314,7 @@ msgid "Log out"
 msgstr "Log ud"
 
 #: templates/dashboard/shell.php:47
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Loading your dashboard…"
 msgstr "Indlæser dit dashboard …"
 
@@ -4341,7 +4376,7 @@ msgid "This page could not be displayed."
 msgstr "Siden kunne ikke vises."
 
 #: build/dashboard.js:1
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Please reload the page."
 msgstr "Genindlæs siden."
 
@@ -4500,7 +4535,7 @@ msgid "(opens in a new tab)"
 msgstr "(åbner i en ny fane)"
 
 #: build/dashboard.js:4
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Loading your profile…"
 msgstr "Indlæser din profil …"
 
@@ -4708,360 +4743,356 @@ msgstr "Anmod om udbetaling"
 msgid "The settlement document cannot be shown right now. Please try again later."
 msgstr "Afregningsbilaget kan ikke vises lige nu. Prøv igen senere."
 
-#: build/dashboard.js:13
-msgid "VAT"
-msgstr "Moms"
-
-#: build/dashboard.js:14
+#: build/dashboard.js:15
 msgid "Print or save as PDF"
 msgstr "Udskriv eller gem som PDF"
 
-#: build/dashboard.js:14
+#: build/dashboard.js:15
 msgid "The PDF cannot be downloaded right now. Please try again later."
 msgstr "PDF'en kan ikke hentes lige nu. Prøv igen senere."
 
-#: build/dashboard.js:14
+#: build/dashboard.js:15
 msgid "Requested, pending"
 msgstr "Anmodet, afventer"
 
-#: build/dashboard.js:14
+#: build/dashboard.js:15
 msgid "Earned after the holding period"
 msgstr "Optjent efter karensperioden"
 
 #. translators: %d: number of sales.
-#: build/dashboard.js:15
+#: build/dashboard.js:16
 #, js-format
 msgid "Your balance is unknown: %d sales lack the data needed to calculate your payout. No payout can be requested until this is resolved."
 msgstr "Din saldo er ukendt: %d salg mangler de oplysninger, der skal til for at beregne din udbetaling. Der kan ikke anmodes om udbetaling, før det er løst."
 
-#: build/dashboard.js:15
+#: build/dashboard.js:16
 msgid "Your balance"
 msgstr "Din saldo"
 
 #. translators: %d: number of days.
-#: build/dashboard.js:16
+#: build/dashboard.js:17
 #, js-format
 msgid "Sales count after a holding period of %d days. Refunds count at once."
 msgstr "Salg tæller med efter en karensperiode på %d dage. Refunderinger tæller med det samme."
 
-#: build/dashboard.js:16
+#: build/dashboard.js:17
 msgid "All your sales count."
 msgstr "Alle dine salg tæller med."
 
 #. translators: %s: date.
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 #, js-format
 msgid "Sales from %s count."
 msgstr "Salg fra %s tæller med."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Payout methods: bank transfer and PayPal."
 msgstr "Udbetalingsmetoder: bankoverførsel og PayPal."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Bank transfer and PayPal are not available right now."
 msgstr "Bankoverførsel og PayPal er ikke tilgængelige lige nu."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "You can also choose a gift card for the shop."
 msgstr "Du kan også vælge et gavekort til butikken."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "You have no earnings to pay out yet."
 msgstr "Du har endnu ingen indtjening at udbetale."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "This request could not be found."
 msgstr "Anmodningen blev ikke fundet."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "The request could not be cancelled. Please try again in a moment."
 msgstr "Anmodningen kunne ikke annulleres. Prøv igen om et øjeblik."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Confirm cancellation"
 msgstr "Bekræft annullering"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Keep"
 msgstr "Behold"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Cancel request"
 msgstr "Annullér anmodning"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Not yet"
 msgstr "Ikke endnu"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "The request has been cancelled."
 msgstr "Anmodningen er annulleret."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Your payout requests"
 msgstr "Dine anmodninger om udbetaling"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Loading your balance…"
 msgstr "Indlæser din saldo…"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Loading payout requests…"
 msgstr "Indlæser anmodninger om udbetaling…"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "There are no payout requests on this page."
 msgstr "Der er ingen anmodninger om udbetaling på denne side."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "You have no payout requests yet."
 msgstr "Du har endnu ingen anmodninger om udbetaling."
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Payout request pages"
 msgstr "Sider med anmodninger om udbetaling"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "No image"
 msgstr "Intet billede"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "No sales"
 msgstr "Intet salg"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Your products"
 msgstr "Dine produkter"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Published"
 msgstr "Udgivet"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Private"
 msgstr "Privat"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "Price"
 msgstr "Pris"
 
-#: build/dashboard.js:17
+#: build/dashboard.js:18
 msgid "No price"
 msgstr "Ingen pris"
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr "%1$s–%2$s %3$s"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Stock"
 msgstr "Lager"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "In stock"
 msgstr "På lager"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Out of stock"
 msgstr "Udsolgt"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "On backorder"
 msgstr "I restordre"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Loading products…"
 msgstr "Indlæser produkter…"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "There are no products on this page."
 msgstr "Der er ingen produkter på denne side."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "You have no products yet."
 msgstr "Du har ingen produkter endnu."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Products linked to you in the shop will appear here."
 msgstr "Produkter, der er koblet til dig i butikken, vises her."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Product pages"
 msgstr "Produktsider"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Dismiss"
 msgstr "Luk"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Light"
 msgstr "Lys"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Dark black"
 msgstr "Mørk sort"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Dark green"
 msgstr "Mørk grøn"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Dark blue"
 msgstr "Mørk blå"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Dark red"
 msgstr "Mørk rød"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Dark pink"
 msgstr "Mørk pink"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Theme saved."
 msgstr "Temaet er gemt."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Appearance"
 msgstr "Udseende"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Theme"
 msgstr "Tema"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "System default follows the light or dark setting of your device."
 msgstr "Systemstandard følger den lyse eller mørke indstilling på din enhed."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "System default"
 msgstr "Systemstandard"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "No changes to save."
 msgstr "Ingen ændringer at gemme."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Profile saved."
 msgstr "Profilen er gemt."
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "About you"
 msgstr "Om dig"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Bio"
 msgstr "Bio"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Links"
 msgstr "Links"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Password"
 msgstr "Adgangskode"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Change your password"
 msgstr "Skift din adgangskode"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Saving…"
 msgstr "Gemmer …"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Save profile"
 msgstr "Gem profil"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Sales per week (incl. VAT)"
 msgstr "Salg pr. uge (inkl. moms)"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Sales per month (incl. VAT)"
 msgstr "Salg pr. måned (inkl. moms)"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Net sales per week"
 msgstr "Nettosalg pr. uge"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "Net sales per month"
 msgstr "Nettosalg pr. måned"
 
-#: build/dashboard.js:19
+#: build/dashboard.js:20
 msgid "(the table below has the same figures)"
 msgstr "(tabellen nedenfor har de samme tal)"
 
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Week"
 msgstr "Uge"
 
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Month"
 msgstr "Måned"
 
-#: build/dashboard.js:20
+#: build/dashboard.js:21
 msgid "Your sales"
 msgstr "Dit salg"
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr "Periode: %1$s – %2$s · Interval: %3$s"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "No sales in this period."
 msgstr "Intet salg i denne periode."
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Choose another period, or check back after your next sale."
 msgstr "Vælg en anden periode, eller kig igen efter dit næste salg."
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Loading sales…"
 msgstr "Indlæser salg…"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr "Perioden kan ikke vises. Vælg højst 366 dage, uger eller måneder og højst fem år."
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "The end date must be on or after the start date."
 msgstr "Slutdatoen skal være samme dag som eller efter startdatoen."
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Choose period"
 msgstr "Vælg periode"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Interval"
 msgstr "Interval"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Show"
 msgstr "Vis"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "This section is not available yet."
 msgstr "Denne sektion er ikke tilgængelig endnu."
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Page not found"
 msgstr "Siden blev ikke fundet"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "This page does not exist."
 msgstr "Siden findes ikke."
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "Go to the start page"
 msgstr "Gå til forsiden"
 
-#: build/dashboard.js:22
+#: build/dashboard.js:23
 msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."

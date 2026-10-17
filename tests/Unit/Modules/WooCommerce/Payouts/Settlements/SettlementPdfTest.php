@@ -13,6 +13,7 @@ use Brain\Monkey\Functions;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Pdf\PdfWriter;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -75,6 +76,96 @@ final class SettlementPdfTest extends TestCase {
 		self::assertFalse( SettlementPdf::preliminary( $this->shown()['document'] ) );
 	}
 
+	public function test_a_template_3_document_shows_the_vat_on_the_commission_apart_from_the_vat_on_the_sale(): void {
+		$pdf = ( new SettlementPdf() )->render( $this->vat_document( array( '1', '1' ) ) );
+
+		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', '32,00 DKK', 'VAT (25 %)', '8,00 DKK', 'Commission incl. VAT', '40,00 DKK', 'The commission in the period includes this VAT. It is separate from the VAT on the sale.', 'VAT on the sale', 'Tax and reporting', 'Template version 3.' ) as $text ) {
+			$this->assert_pdf_contains( $text, $pdf );
+		}
+
+		$this->assert_pdf_lacks( 'Commission without VAT (not VAT registered when sold)', $pdf );
+	}
+
+	public function test_no_vat_on_the_commission_is_shown_for_sales_while_not_vat_registered(): void {
+		$pdf = ( new SettlementPdf() )->render( $this->vat_document( array( '0', '0' ) ) );
+
+		$this->assert_pdf_contains( 'Template version 3.', $pdf );
+		$this->assert_pdf_contains( 'VAT on the sale', $pdf );
+
+		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', 'Commission incl. VAT', 'VAT (25 %)' ) as $text ) {
+			$this->assert_pdf_lacks( $text, $pdf );
+		}
+	}
+
+	public function test_a_mixed_document_shows_the_commission_without_vat_apart(): void {
+		$pdf = ( new SettlementPdf() )->render( $this->vat_document( array( '1', '0' ) ) );
+
+		foreach ( array( 'Commission excl. VAT', '16,00 DKK', '4,00 DKK', 'Commission incl. VAT', '20,00 DKK', 'Commission without VAT (not VAT registered when sold)' ) as $text ) {
+			$this->assert_pdf_contains( $text, $pdf );
+		}
+	}
+
+	public function test_earlier_template_versions_never_show_vat_on_the_commission(): void {
+		foreach ( array( 1, 2 ) as $version ) {
+			$shown = $this->vat_document( array( '1', '1' ) );
+			$pdf   = ( new SettlementPdf() )->render( $this->shown( array( 'template_version' => $version ), null, $shown['rows'] ) );
+
+			$this->assert_pdf_contains( 'Template version ' . $version . '.', $pdf );
+			$this->assert_pdf_lacks( 'VAT on the commission', $pdf );
+			$this->assert_pdf_lacks( 'Commission excl. VAT', $pdf );
+		}
+	}
+
+	public function test_a_template_3_document_whose_vat_on_the_commission_does_not_add_up_gives_no_pdf(): void {
+		$tampered = CommissionVat::snapshot( CommissionVat::split( array( self::split_row( '20', true ), self::split_row( '20', true ) ) ) );
+		$cases    = array(
+			'no split'           => $this->shown( array( 'template_version' => 3 ), null, $this->vat_document( array( '1', '1' ) )['rows'] ),
+			'other vat'          => $this->shown(
+				array(
+					'template_version' => 3,
+					'commission_vat'   => array(
+						'vat'  => '9.0000',
+						'excl' => '31.0000',
+					) + $tampered,
+				),
+				null,
+				$this->vat_document( array( '1', '1' ) )['rows']
+			),
+			'row status changed' => $this->shown(
+				array(
+					'template_version' => 3,
+					'commission_vat'   => $tampered,
+				),
+				null,
+				$this->vat_document( array( '1', '0' ) )['rows']
+			),
+			'other rate'         => $this->shown(
+				array(
+					'template_version' => 3,
+					'commission_vat'   => array( 'rate_bps' => 2000 ) + $tampered,
+				),
+				null,
+				$this->vat_document( array( '1', '1' ) )['rows']
+			),
+			'row without status' => $this->shown(
+				array(
+					'template_version' => 3,
+					'commission_vat'   => $tampered,
+				),
+				array( 'vat_registered' => null )
+			),
+		);
+
+		foreach ( $cases as $case => $shown ) {
+			try {
+				( new SettlementPdf() )->render( $shown );
+				self::fail( 'Expected no PDF: ' . $case );
+			} catch ( UnexpectedValueException $e ) {
+				self::assertStringNotContainsString( '40', $e->getMessage(), 'No amounts in the message: ' . $case );
+			}
+		}
+	}
+
 	public function test_the_same_document_always_gives_the_same_bytes(): void {
 		$renderer = new SettlementPdf();
 
@@ -89,7 +180,7 @@ final class SettlementPdfTest extends TestCase {
 			'closing'      => $this->shown( array( 'closing' => '1021' ) ),
 			'invalid row'  => $this->shown( array(), array( 'payout_amount' => '20,00' ) ),
 			'missing row'  => $this->shown( array(), array( 'payout_amount' => null ) ),
-			'template 3'   => $this->shown( array( 'template_version' => 3 ) ),
+			'template 4'   => $this->shown( array( 'template_version' => 4 ) ),
 			'correction'   => $this->shown( array( 'type' => SettlementDocument::TYPE_CORRECTION ) ),
 			'bad currency' => $this->shown( array( 'currency' => 'dkk' ) ),
 		);
@@ -233,6 +324,10 @@ final class SettlementPdfTest extends TestCase {
 			),
 		);
 
+		if ( array_key_exists( 'commission_vat', $o ) ) {
+			$snapshot[ CommissionVat::SNAPSHOT_KEY ] = $o['commission_vat'];
+		}
+
 		$document = new SettlementDocument(
 			7,
 			'AFR-000007',
@@ -267,6 +362,55 @@ final class SettlementPdfTest extends TestCase {
 	}
 
 	/**
+	 * A template version 3 document of the two default rows (20.00 commission
+	 * each) with the VAT statuses at the sale given and the split they give.
+	 *
+	 * @param array{0: string, 1: string} $statuses VAT status at the sale of the two rows ('1' or '0').
+	 * @return array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>}
+	 */
+	private function vat_document( array $statuses ): array {
+		$rows = array(
+			self::row(
+				array(
+					'item_name'      => 'Hættetrøje (sort)',
+					'vat_registered' => $statuses[0],
+				)
+			),
+			self::row(
+				array(
+					'type'           => 'refund',
+					'order_id'       => '9102',
+					'vat_registered' => $statuses[1],
+				)
+			),
+		);
+
+		return $this->shown(
+			array(
+				'template_version' => 3,
+				'commission_vat'   => CommissionVat::snapshot( CommissionVat::of_stored_rows( $rows, CommissionVat::RATE_BPS ) ),
+			),
+			null,
+			$rows
+		);
+	}
+
+	/**
+	 * A row for CommissionVat::split().
+	 *
+	 * @param string $payout Commission.
+	 * @param bool   $vat    VAT status at the sale.
+	 * @return array{payout_units: int, vat_registered: bool, price_decimals: int}
+	 */
+	private static function split_row( string $payout, bool $vat ): array {
+		return array(
+			'payout_units'   => SalesAmount::parse( $payout ),
+			'vat_registered' => $vat,
+			'price_decimals' => 2,
+		);
+	}
+
+	/**
 	 * A settled row as stored (strings), 20.00 commission and profit.
 	 *
 	 * @param array<string, mixed> $o Overrides.
@@ -275,16 +419,18 @@ final class SettlementPdfTest extends TestCase {
 	private static function row( array $o = array() ): array {
 		$row = array_merge(
 			array(
-				'event_key'     => 's:1:1',
-				'order_id'      => '9101',
-				'order_item_id' => '1',
-				'item_name'     => 'Tee',
-				'type'          => 'sale',
-				'quantity'      => '1',
-				'net_amount'    => '80.0000',
-				'tax_amount'    => '20.0000',
-				'profit_amount' => '20.0000',
-				'payout_amount' => '20.0000',
+				'event_key'      => 's:1:1',
+				'order_id'       => '9101',
+				'order_item_id'  => '1',
+				'item_name'      => 'Tee',
+				'type'           => 'sale',
+				'quantity'       => '1',
+				'net_amount'     => '80.0000',
+				'tax_amount'     => '20.0000',
+				'profit_amount'  => '20.0000',
+				'payout_amount'  => '20.0000',
+				'vat_registered' => '1',
+				'price_decimals' => '2',
 			),
 			$o
 		);

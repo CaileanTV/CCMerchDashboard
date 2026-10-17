@@ -452,6 +452,17 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 200, $response->get_status() );
 		self::assertSame( 'no-store, private', $response->get_headers()['Cache-Control'] ?? null );
 		self::assertSame( array( 'AFR-000001', 'settlement', false, 'DKK', '40.0000', '0.0000', '15.0000', '25.0000', true, 'Mine' ), array( $data['number'], $data['type'], $data['preliminary'], $data['currency'], $data['commission'], $data['opening_balance'], $data['payout'], $data['closing_balance'], $data['vat_registered'], $data['creator_name'] ) );
+		self::assertSame(
+			array(
+				'rate_bps' => 2500,
+				'excl'     => '32.0000',
+				'vat'      => '8.0000',
+				'incl'     => '40.0000',
+				'untaxed'  => '0.0000',
+			),
+			$data['commission_vat'],
+			'ADR-062 K05: the commission of sales while VAT registered includes 25 % VAT.'
+		);
 		self::assertCount( 2, $data['rows'] );
 		self::assertSame( array( 'order_id', 'item_name', 'type', 'quantity', 'net', 'tax', 'payout' ), array_keys( $data['rows'][0] ) );
 		self::assertSame( '•••• 5678', $data['destination'] );

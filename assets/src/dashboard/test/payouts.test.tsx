@@ -482,6 +482,7 @@ describe( 'PayoutsSection', () => {
 			currency: 'DKK',
 			profit: '60.0000',
 			commission: '60.0000',
+			commission_vat: null,
 			adjustment: '4.0000',
 			adjustment_refs: [ 'R2-000001' ],
 			opening_balance: '0.0000',
@@ -549,8 +550,15 @@ describe( 'PayoutsSection', () => {
 			)
 		).toHaveLength( 1 );
 		expect( text ).not.toContain( 'Tax and reporting' );
+		expect( text ).not.toContain( 'Commission excl. VAT' );
 		expect(
 			parseSettlementDocument( { ...document, preliminary: 'yes' } )
+		).toBeNull();
+		expect(
+			parseSettlementDocument( {
+				...document,
+				commission_vat: undefined,
+			} )
 		).toBeNull();
 		expect(
 			parseSettlementDocument( { ...document, payout: 25.5 } )
@@ -571,6 +579,109 @@ describe( 'PayoutsSection', () => {
 		).toBeNull();
 	} );
 
+	it( 'shows the VAT on the commission apart from the VAT on the sale', async () => {
+		const completed = {
+			...PENDING,
+			id: 35,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000004',
+		};
+		const vat = {
+			rate_bps: 2500,
+			excl: '16.0000',
+			vat: '4.0000',
+			incl: '20.0000',
+			untaxed: '10.0000',
+		};
+		const document = {
+			number: 'AFR-000004',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: null,
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '30.0000',
+			commission: '30.0000',
+			commission_vat: vat,
+			adjustment: '0.0000',
+			adjustment_refs: [],
+			opening_balance: '0.0000',
+			payout: '30.0000',
+			closing_balance: '0.0000',
+			vat_registered: false,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			method: 'bank',
+			destination: '•••• 5678',
+			rows: [
+				{
+					order_id: 101,
+					item_name: 'Tee',
+					type: 'sale',
+					quantity: 1,
+					net: '80.0000',
+					tax: '20.0000',
+					payout: '20.0000',
+				},
+			],
+			corrections: [],
+		};
+		const { container } = await show( {
+			[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+			[ `GET /merchboard/v1/me/payouts/35/settlement-document` ]: () =>
+				response( 200, document ),
+		} );
+
+		click(
+			Array.from( container.querySelectorAll( 'button' ) ).find(
+				( candidate ) =>
+					candidate.textContent === 'Settlement document AFR-000004'
+			) ?? null
+		);
+		await flush();
+		await flush();
+
+		const text = plain( container.textContent );
+		expect( text ).toContain( 'Commission excl. VAT' );
+		expect( text ).toContain( plain( money( '16' ) ) );
+		expect( text ).toMatch( /VAT \(25 %\)/ );
+		expect( text ).toContain( plain( money( '4' ) ) );
+		expect( text ).toContain( 'Commission incl. VAT' );
+		expect( text ).toContain(
+			'Commission without VAT (not VAT registered when sold)'
+		);
+		expect( text ).toContain( plain( money( '10' ) ) );
+		expect(
+			container.querySelector( '.merchboard-settlement__rows thead' )
+				?.textContent
+		).toContain( 'VAT on the sale' );
+		expect( parseSettlementDocument( document )?.commissionVat ).toEqual( {
+			rateBps: 2500,
+			excl: '16.0000',
+			vat: '4.0000',
+			incl: '20.0000',
+			untaxed: '10.0000',
+		} );
+
+		for ( const broken of [
+			{ ...vat, vat: '5.0000' },
+			{ ...vat, rate_bps: 0 },
+			{ ...vat, rate_bps: 25.5 },
+			{ ...vat, untaxed: 10 },
+			'25',
+		] ) {
+			expect(
+				parseSettlementDocument( {
+					...document,
+					commission_vat: broken,
+				} )
+			).toBeNull();
+		}
+	} );
+
 	it( 'shows a new document with the note on tax and reporting and downloads its PDF', async () => {
 		const completed = {
 			...PENDING,
@@ -589,6 +700,7 @@ describe( 'PayoutsSection', () => {
 			currency: 'DKK',
 			profit: '20.0000',
 			commission: '20.0000',
+			commission_vat: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',

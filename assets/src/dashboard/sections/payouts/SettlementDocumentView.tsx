@@ -21,6 +21,16 @@ function dateText( iso: string, locale: string ): string {
 	}
 }
 
+function percentText( rateBps: number, locale: string ): string {
+	try {
+		return new Intl.NumberFormat( locale.replace( '_', '-' ), {
+			maximumFractionDigits: 2,
+		} ).format( rateBps / 100 );
+	} catch {
+		return String( rateBps / 100 );
+	}
+}
+
 function rowTypeLabel( type: string ): string {
 	switch ( type ) {
 		case 'sale':
@@ -201,6 +211,38 @@ export function SettlementDocumentView( {
 				<dd>{ vat }</dd>
 				<dt>{ __( 'Commission in the period', 'merchboard' ) }</dt>
 				<dd>{ money( document.commission ) }</dd>
+				{ document.commissionVat !== null && (
+					<>
+						<dt>{ __( 'Commission excl. VAT', 'merchboard' ) }</dt>
+						<dd>{ money( document.commissionVat.excl ) }</dd>
+						<dt>
+							{ sprintf(
+								/* translators: %s: VAT rate in percent, e.g. 25. */
+								__( 'VAT (%s %%)', 'merchboard' ),
+								percentText(
+									document.commissionVat.rateBps,
+									locale
+								)
+							) }
+						</dt>
+						<dd>{ money( document.commissionVat.vat ) }</dd>
+						<dt>{ __( 'Commission incl. VAT', 'merchboard' ) }</dt>
+						<dd>{ money( document.commissionVat.incl ) }</dd>
+						{ document.commissionVat.untaxed !== '0.0000' && (
+							<>
+								<dt>
+									{ __(
+										'Commission without VAT (not VAT registered when sold)',
+										'merchboard'
+									) }
+								</dt>
+								<dd>
+									{ money( document.commissionVat.untaxed ) }
+								</dd>
+							</>
+						) }
+					</>
+				) }
 				{ document.adjustment !== '0.0000' && (
 					<>
 						<dt>
@@ -236,7 +278,9 @@ export function SettlementDocumentView( {
 						<th scope="col">{ __( 'Product', 'merchboard' ) }</th>
 						<th scope="col">{ __( 'Type', 'merchboard' ) }</th>
 						<th scope="col">{ __( 'Net', 'merchboard' ) }</th>
-						<th scope="col">{ __( 'VAT', 'merchboard' ) }</th>
+						<th scope="col">
+							{ __( 'VAT on the sale', 'merchboard' ) }
+						</th>
 						<th scope="col">
 							{ __( 'Commission', 'merchboard' ) }
 						</th>

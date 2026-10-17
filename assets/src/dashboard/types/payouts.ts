@@ -108,6 +108,21 @@ export interface SettlementDocumentRow {
 }
 
 /**
+ * VAT on the commission of a settlement document as issued: the commission
+ * of sales while the creator was VAT registered includes VAT (ADR-062 K05).
+ * Decimal strings with four decimals; incl = excl + vat.
+ */
+export interface SettlementCommissionVat {
+	/** VAT rate in basis points, e.g. 2500 for 25 %. */
+	readonly rateBps: number;
+	readonly excl: string;
+	readonly vat: string;
+	readonly incl: string;
+	/** Commission of sales while the creator was not VAT registered: no VAT. */
+	readonly untaxed: string;
+}
+
+/**
  * A settlement document (afregningsbilag) as issued, from
  * `GET /me/payouts/{id}/settlement-document` (ADR-060). Not approved by an
  * auditor or the Danish Tax Agency. Never recalculated by the dashboard.
@@ -127,6 +142,13 @@ export interface SettlementDocument {
 	readonly periodTo: string;
 	readonly currency: string;
 	readonly commission: string;
+	/**
+	 * VAT on the commission (template version 3, ADR-062 K05 and K12), null
+	 * when none was calculated: earlier documents, and commission of sales
+	 * while the creator was not VAT registered. Separate from the VAT on the
+	 * sale in the rows.
+	 */
+	readonly commissionVat: SettlementCommissionVat | null;
 	/**
 	 * Payout adjustments the document settled (ADR-063), "0.0000" when none.
 	 */

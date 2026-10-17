@@ -25,6 +25,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
@@ -397,6 +398,7 @@ final class MePayoutsController extends RestController {
 			'currency'        => $document->currency,
 			'profit'          => SalesAmount::format( $document->profit_units ),
 			'commission'      => SalesAmount::format( $document->commission_units ),
+			'commission_vat'  => self::commission_vat( $document ),
 			'adjustment'      => SalesAmount::format( $document->adjustment_units ),
 			'adjustment_refs' => SettlementPdf::adjustment_references( $document ),
 			'opening_balance' => SalesAmount::format( $document->opening_units ),
@@ -428,6 +430,27 @@ final class MePayoutsController extends RestController {
 				),
 				$shown['corrections']
 			),
+		);
+	}
+
+	/**
+	 * The VAT on the commission of a document (template version 3, ADR-062
+	 * K05 and K12), or null when none was calculated: documents of earlier
+	 * template versions, and commission of sales while the creator was not
+	 * VAT registered (CommissionVat::shown()).
+	 *
+	 * @param SettlementDocument $document Document.
+	 * @return array{rate_bps: int, excl: string, vat: string, incl: string, untaxed: string}|null
+	 */
+	private static function commission_vat( SettlementDocument $document ): ?array {
+		$split = CommissionVat::shown( $document );
+
+		return null === $split ? null : array(
+			'rate_bps' => $split['rate_bps'],
+			'excl'     => SalesAmount::format( $split['excl_units'] ),
+			'vat'      => SalesAmount::format( $split['vat_units'] ),
+			'incl'     => SalesAmount::format( $split['incl_units'] ),
+			'untaxed'  => SalesAmount::format( $split['untaxed_units'] ),
 		);
 	}
 
