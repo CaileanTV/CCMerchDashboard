@@ -132,6 +132,36 @@ final class Tables {
 	public const OPERATIONS = 'merchboard_operations';
 
 	/**
+	 * Recalculations of settled payouts, schema version 14 (ADR-063): one row
+	 * per preview with its decision, execution and closing.
+	 */
+	public const RECALCULATIONS = 'merchboard_payout_recalculations';
+
+	/**
+	 * The items of a recalculation: one per creator, currency and group.
+	 */
+	public const RECALCULATION_ITEMS = 'merchboard_payout_recalculation_items';
+
+	/**
+	 * Executed payout adjustments (ADR-063): counted in the balance and
+	 * settled by the next settlement document. Insert-only, except the
+	 * document that settles them.
+	 */
+	public const PAYOUT_ADJUSTMENTS = 'merchboard_payout_adjustments';
+
+	/**
+	 * The settled rows an adjustment regulated; the primary key regulates a
+	 * row at most once per rule.
+	 */
+	public const PAYOUT_ADJUSTMENT_ROWS = 'merchboard_payout_adjustment_rows';
+
+	/**
+	 * Exports of recalculations, schema version 15 (ADR-062 pkt. 9, ADR-063):
+	 * files with manifest and checksums, kept unchanged.
+	 */
+	public const RECALCULATION_EXPORTS = 'merchboard_payout_recalculation_exports';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -154,6 +184,11 @@ final class Tables {
 		self::ORDER_GIFT_CARD_ATTEMPTS,
 		self::G1_STATE,
 		self::OPERATIONS,
+		self::RECALCULATIONS,
+		self::RECALCULATION_ITEMS,
+		self::PAYOUT_ADJUSTMENTS,
+		self::PAYOUT_ADJUSTMENT_ROWS,
+		self::RECALCULATION_EXPORTS,
 	);
 
 	/**
@@ -162,7 +197,8 @@ final class Tables {
 	 * documents with their rows and number counters, as historical
 	 * documentation; the G1 tables with the activation row (E3, F5), so a
 	 * reinstall finds the assessments and the activation again; and the
-	 * operation registry (E3 T4, B-2). Everything
+	 * operation registry (E3 T4, B-2); and the recalculations with their
+	 * adjustments (ADR-063), which explain amounts on settlement documents. Everything
 	 * else, including the encrypted payout details, is dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
@@ -177,6 +213,11 @@ final class Tables {
 		self::ORDER_GIFT_CARD_ATTEMPTS,
 		self::G1_STATE,
 		self::OPERATIONS,
+		self::RECALCULATIONS,
+		self::RECALCULATION_ITEMS,
+		self::PAYOUT_ADJUSTMENTS,
+		self::PAYOUT_ADJUSTMENT_ROWS,
+		self::RECALCULATION_EXPORTS,
 	);
 
 	/**

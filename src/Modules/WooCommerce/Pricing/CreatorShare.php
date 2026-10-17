@@ -20,13 +20,11 @@ defined( 'ABSPATH' ) || exit;
  * nothing is ever added to it:
  *
  * - creator_profit = sale_price × markup % (rounded to the store precision);
- * - creator_payout = creator_profit for a VAT-registered creator;
- * - creator_payout = creator_profit × 80 % for a creator who is not VAT
- *   registered (a 20 % deduction from the profit; no VAT rate is assumed or
- *   read).
+ * - creator_payout = creator_profit, whether or not the creator is VAT
+ *   registered (ADR-063 removed ADR-049's 20 % deduction for creators who
+ *   are not VAT registered; no VAT rate is assumed or read).
  *
- * Example: 100.00 at 20 % → profit 20.00; payout 20.00 (VAT registered) or
- * 16.00 (not VAT registered).
+ * Example: 100.00 at 20 % → profit 20.00; payout 20.00.
  *
  * Exact integer arithmetic in 1/10 000 units, rounded half away from zero
  * (PricingMath::share()); signed, so refunds and reversals give negative
@@ -34,11 +32,6 @@ defined( 'ABSPATH' ) || exit;
  * read or written here.
  */
 final class CreatorShare {
-
-	/**
-	 * Share of the profit paid to a creator who is not VAT registered (80 %).
-	 */
-	public const NOT_VAT_REGISTERED_PAYOUT_BPS = 8000;
 
 	/**
 	 * The creator's profit of a sale price.
@@ -54,21 +47,15 @@ final class CreatorShare {
 	}
 
 	/**
-	 * The creator's payout of a profit.
+	 * The creator's payout of a profit: the whole profit (ADR-063).
 	 *
-	 * @param int  $profit_units   Creator profit in units, signed.
-	 * @param bool $vat_registered Whether the creator is VAT registered.
-	 * @param int  $decimals       Store price decimals, 0–4.
+	 * @param int $profit_units Creator profit in units, signed.
+	 * @param int $decimals     Store price decimals, 0–4.
 	 * @throws InvalidArgumentException When the precision is out of range.
-	 * @throws OverflowException When the result does not fit into an integer.
 	 */
-	public static function payout( int $profit_units, bool $vat_registered, int $decimals ): int {
-		if ( $vat_registered ) {
-			PricingMath::step( $decimals );
+	public static function payout( int $profit_units, int $decimals ): int {
+		PricingMath::step( $decimals );
 
-			return $profit_units;
-		}
-
-		return PricingMath::share( $profit_units, self::NOT_VAT_REGISTERED_PAYOUT_BPS, $decimals );
+		return $profit_units;
 	}
 }

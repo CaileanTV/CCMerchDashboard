@@ -46,11 +46,15 @@ defined( 'ABSPATH' ) || exit;
  * (window(), known() and RELEASED), so the balance and a settlement document
  * can never apply different rules (K6.1).
  *
- * The non-VAT-registered payout is ROUND( profit × 0.8, price_decimals ):
- * exact DECIMAL arithmetic rounding half away from zero, the same as
- * CreatorShare::payout() (PricingMath::share() with 8 000 bps). Integration
- * tests check that every sum equals the sum of RealizedPayout::for_entry()
- * over the same rows.
+ * A row's payout is its profit, whether or not the creator is VAT registered
+ * (ADR-063 removed ADR-049's 20 % deduction), the same as
+ * CreatorShare::payout(). A row that a settlement document has settled
+ * counts with the payout stored in its document row instead (ADR-060 060-4:
+ * issued documents are never recalculated), so the balance stays in step
+ * with the documents and earlier settlements are not regulated
+ * automatically (ADR-063 pkt. 2–3 is a separate workflow). Integration tests
+ * check that every sum of unsettled rows equals the sum of
+ * RealizedPayout::for_entry() over the same rows.
  */
 final class LedgerCreatorPayouts {
 
@@ -78,21 +82,23 @@ final class LedgerCreatorPayouts {
 	public const KNOWN = '( ' . LedgerCreatorProfits::KNOWN . ' AND p.vat_registered IN ( 0, 1 ) )';
 
 	/**
-	 * A row's payout (ADR-049), rounded to the snapshot's store precision.
+	 * A row's payout as calculated now (ADR-063): its profit, already rounded
+	 * to the snapshot's store precision.
 	 */
-	public const PAYOUT = 'CASE WHEN p.vat_registered = 1 THEN ' . LedgerCreatorProfits::PROFIT . ' ELSE CASE p.price_decimals
-		WHEN 0 THEN ROUND( ( ' . LedgerCreatorProfits::PROFIT . ' ) * 0.8, 0 )
-		WHEN 1 THEN ROUND( ( ' . LedgerCreatorProfits::PROFIT . ' ) * 0.8, 1 )
-		WHEN 2 THEN ROUND( ( ' . LedgerCreatorProfits::PROFIT . ' ) * 0.8, 2 )
-		WHEN 3 THEN ROUND( ( ' . LedgerCreatorProfits::PROFIT . ' ) * 0.8, 3 )
-		WHEN 4 THEN ROUND( ( ' . LedgerCreatorProfits::PROFIT . ' ) * 0.8, 4 )
-	END END';
+	public const PAYOUT = LedgerCreatorProfits::PROFIT;
+
+	/**
+	 * A row's payout for the balance: the payout stored in its settlement
+	 * document row when it is settled (ADR-060 060-4), otherwise PAYOUT.
+	 * Needs the settlement rows joined as `d` on the row's event key.
+	 */
+	private const SETTLED_OR_PAYOUT = 'COALESCE( d.payout_amount, ' . self::PAYOUT . ' )';
 
 	/**
 	 * D2: when a row is released. Placeholders: now, then now minus the
 	 * holding period (release_times()).
 	 */
-	private const RELEASED = '( ( ( ' . self::PAYOUT . ' ) < 0 AND r.occurred_at <= %s ) OR ( ( ' . self::PAYOUT . ' ) >= 0 AND r.occurred_at < %s ) )';
+	private const RELEASED = '( ( ( ' . self::SETTLED_OR_PAYOUT . ' ) < 0 AND r.occurred_at <= %s ) OR ( ( ' . self::SETTLED_OR_PAYOUT . ' ) >= 0 AND r.occurred_at < %s ) )';
 
 	/**
 	 * Constructor.
@@ -129,12 +135,12 @@ final class LedgerCreatorPayouts {
 		$known   = self::known( $start );
 		$times   = self::release_times( $now, $holding_days );
 		$columns = 'r.currency,
-			SUM( CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN ' . self::PAYOUT . ' ELSE 0 END ) AS earned,
+			SUM( CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN ' . self::SETTLED_OR_PAYOUT . ' ELSE 0 END ) AS earned,
 			SUM( CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN 1 ELSE 0 END ) AS known_rows,
 			SUM( CASE WHEN ' . $known . ' THEN 0 ELSE 1 END ) AS unknown_rows';
 		$wpdb    = $this->wpdb;
-		$sql     = $wpdb->prepare(
-			"SELECT {$columns} " . self::FROM . ' WHERE r.creator_id = %d' . self::window( $start ) . ' GROUP BY r.currency HAVING known_rows + unknown_rows > 0 ORDER BY r.currency', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times twice (earned, known rows), the table names, the creator, then the window's values.
+		$sql     = $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- The replacements are spread from array_merge() below.
+			"SELECT {$columns} " . self::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key WHERE r.creator_id = %d' . self::window( $start ) . ' GROUP BY r.currency HAVING known_rows + unknown_rows > 0 ORDER BY r.currency', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times twice (earned, known rows), the table names, the creator, then the window's values.
 			...array_merge(
 				$times,
 				$times,
@@ -143,6 +149,7 @@ final class LedgerCreatorPayouts {
 					Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
 					Tables::name( $wpdb, Tables::SALES_TAX ),
 					Tables::name( $wpdb, Tables::SALES ),
+					Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
 					$creator_id,
 				),
 				self::window_args( $start )

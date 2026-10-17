@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for the realized creator profit and payout of stored ledger rows (ADR-049).
+ * Tests for the realized creator profit and payout of stored ledger rows (ADR-049, ADR-063).
  *
  * @package MerchBoard
  */
@@ -36,20 +36,20 @@ final class RealizedProfitTest extends TestCase {
 	public static function examples(): array {
 		return array(
 			// Sale price 100.00 incl. 25 % VAT = 80.00 + 20.00.
-			'100 / 20 % / not VAT registered' => array( '80.0000', '20.0000', 2000, false, '20.0000', '16.0000' ),
+			'100 / 20 % / not VAT registered' => array( '80.0000', '20.0000', 2000, false, '20.0000', '20.0000' ),
 			'100 / 20 % / VAT registered'     => array( '80.0000', '20.0000', 2000, true, '20.0000', '20.0000' ),
-			'200 / 10 % / not VAT registered' => array( '160.0000', '40.0000', 1000, false, '20.0000', '16.0000' ),
+			'200 / 10 % / not VAT registered' => array( '160.0000', '40.0000', 1000, false, '20.0000', '20.0000' ),
 			'200 / 10 % / VAT registered'     => array( '160.0000', '40.0000', 1000, true, '20.0000', '20.0000' ),
 			'100 / 0 % / not VAT registered'  => array( '80.0000', '20.0000', 0, false, '0.0000', '0.0000' ),
 			// A store without taxes: the sale price is the net amount.
-			'no tax: 100 / 20 %'              => array( '100.0000', '0.0000', 2000, false, '20.0000', '16.0000' ),
+			'no tax: 100 / 20 %'              => array( '100.0000', '0.0000', 2000, false, '20.0000', '20.0000' ),
 			// Another tax rate changes nothing: the share is of the paid amount.
-			'12 % tax: 100 / 20 %'            => array( '89.2857', '10.7143', 2000, false, '20.0000', '16.0000' ),
+			'12 % tax: 100 / 20 %'            => array( '89.2857', '10.7143', 2000, false, '20.0000', '20.0000' ),
 		);
 	}
 
 	/**
-	 * Profit = (net + tax) × share; payout = profit or profit × 80 %.
+	 * Profit = (net + tax) × share; payout = profit for both VAT statuses (ADR-063).
 	 *
 	 * @param string $net            Net amount.
 	 * @param string $tax            Actual tax.
@@ -73,13 +73,13 @@ final class RealizedProfitTest extends TestCase {
 
 		// Sale of 3 × 100.00 incl. VAT.
 		self::assertSame( 600000, RealizedProfit::for_entry( self::entry( SalesEntryType::Sale, 3, '240.0000' ), $snapshot, self::tax( '60.0000' ) ), 'The amount already is the line amount.' );
-		self::assertSame( 480000, RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 3, '240.0000' ), $snapshot, self::tax( '60.0000' ) ) );
+		self::assertSame( 600000, RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 3, '240.0000' ), $snapshot, self::tax( '60.0000' ) ) );
 		// Refund of 1 unit.
 		self::assertSame( -200000, RealizedProfit::for_entry( self::entry( SalesEntryType::Refund, -1, '-80.0000', 7001 ), $snapshot, self::tax( '-20.0000' ) ) );
-		self::assertSame( -160000, RealizedPayout::for_entry( self::entry( SalesEntryType::Refund, -1, '-80.0000', 7001 ), $snapshot, self::tax( '-20.0000' ) ) );
+		self::assertSame( -200000, RealizedPayout::for_entry( self::entry( SalesEntryType::Refund, -1, '-80.0000', 7001 ), $snapshot, self::tax( '-20.0000' ) ) );
 		// Reversal of the remaining 2 units.
 		self::assertSame( -400000, RealizedProfit::for_entry( self::entry( SalesEntryType::Reversal, -2, '-160.0000' ), $snapshot, self::tax( '-40.0000' ) ) );
-		self::assertSame( -320000, RealizedPayout::for_entry( self::entry( SalesEntryType::Reversal, -2, '-160.0000' ), $snapshot, self::tax( '-40.0000' ) ) );
+		self::assertSame( -400000, RealizedPayout::for_entry( self::entry( SalesEntryType::Reversal, -2, '-160.0000' ), $snapshot, self::tax( '-40.0000' ) ) );
 		// A deleted refund restores its amount.
 		self::assertSame( 200000, RealizedProfit::for_entry( self::entry( SalesEntryType::Correction, 0, '80.0000', 7001, SalesCorrectionReason::RefundDeleted ), $snapshot, self::tax( '20.0000' ) ) );
 	}
@@ -111,8 +111,20 @@ final class RealizedProfitTest extends TestCase {
 
 		// The line was sold at 20 % while not VAT registered; the creator's
 		// markup and status changed afterwards. Only the snapshot counts.
-		self::assertSame( 160000, RealizedPayout::for_entry( $entry, self::snapshot( bps: 2000, vat_registered: false ), $tax ) );
+		self::assertSame( 200000, RealizedPayout::for_entry( $entry, self::snapshot( bps: 2000, vat_registered: false ), $tax ) );
 		self::assertSame( 250000, RealizedPayout::for_entry( $entry, self::snapshot( bps: 2500, vat_registered: true ), $tax ), 'Only a line created after the change has the new values.' );
+	}
+
+	public function test_the_vat_status_no_longer_reduces_the_payout(): void {
+		$entry = self::entry( SalesEntryType::Sale, 1, '80.0000' );
+		$tax   = self::tax( '20.0000' );
+
+		// ADR-063: no 20 % deduction for a creator who is not VAT registered.
+		self::assertSame(
+			RealizedPayout::for_entry( $entry, self::snapshot( vat_registered: true ), $tax ),
+			RealizedPayout::for_entry( $entry, self::snapshot( vat_registered: false ), $tax )
+		);
+		self::assertSame( 200000, RealizedPayout::for_entry( $entry, self::snapshot( vat_registered: false ), $tax ) );
 	}
 
 	public function test_unknown_cases(): void {

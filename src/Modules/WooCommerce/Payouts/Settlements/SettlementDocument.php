@@ -16,8 +16,10 @@ defined( 'ABSPATH' ) || exit;
 /**
  * A row of `merchboard_settlement_documents` (ADR-060): never changed after
  * it was issued. Amounts are units (1/10 000). For a settlement document:
- * closing = opening + commission − payout. A correction document carries no
- * amounts (D11: amounts are corrected forward through the ledger).
+ * closing = opening + commission + adjustment − payout, where the adjustment
+ * is the sum of the payout adjustments it settled (ADR-063; 0 for documents
+ * without any). A correction document carries no amounts (D11: amounts are
+ * corrected forward through the ledger).
  */
 final readonly class SettlementDocument {
 
@@ -48,6 +50,7 @@ final readonly class SettlementDocument {
 	 * @param array<string, mixed>   $snapshot             Parties, payout and notes as they were at issue.
 	 * @param int|null               $issued_by            WordPress user.
 	 * @param DateTimeImmutable      $issued_at            Time of issue (UTC).
+	 * @param int                    $adjustment_units     Payout adjustments it settled (ADR-063).
 	 */
 	public function __construct(
 		public int $id,
@@ -69,7 +72,8 @@ final readonly class SettlementDocument {
 		public int $template_version,
 		public array $snapshot,
 		public ?int $issued_by,
-		public DateTimeImmutable $issued_at
+		public DateTimeImmutable $issued_at,
+		public int $adjustment_units = 0
 	) {
 	}
 }

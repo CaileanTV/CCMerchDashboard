@@ -127,6 +127,12 @@ export interface SettlementDocument {
 	readonly periodTo: string;
 	readonly currency: string;
 	readonly commission: string;
+	/**
+	 * Payout adjustments the document settled (ADR-063), "0.0000" when none.
+	 */
+	readonly adjustment: string;
+	/** References of the recalculations of those adjustments, e.g. R2-000001. */
+	readonly adjustmentReferences: readonly string[];
 	readonly openingBalance: string;
 	readonly payout: string;
 	readonly closingBalance: string;

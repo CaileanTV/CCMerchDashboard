@@ -128,6 +128,46 @@ final class PayoutException extends DomainException {
 	public const GIFT_CARD_LINKED = 'gift_card_linked';
 
 	/**
+	 * A recalculation is still open (preview, approved or partly executed);
+	 * only one may be open at a time (ADR-063).
+	 */
+	public const RECALCULATION_OPEN = 'recalculation_open';
+
+	/**
+	 * The recalculation's basis changed after its preview or approval
+	 * (amounts, rows, documents, groups): a new preview and approval are
+	 * needed (ADR-063).
+	 */
+	public const RECALCULATION_STALE = 'recalculation_stale';
+
+	/**
+	 * The action does not fit the recalculation's status.
+	 */
+	public const RECALCULATION_STATE = 'recalculation_state';
+
+	/**
+	 * A required note of at most 500 characters is missing or too long.
+	 */
+	public const INVALID_NOTE = 'invalid_note';
+
+	/**
+	 * An item could not be executed; it is marked failed and the execution
+	 * stopped. Nothing of the item was written.
+	 */
+	public const RECALCULATION_ITEM_FAILED = 'recalculation_item_failed';
+
+	/**
+	 * An export's file does not match its manifest or checksums (changed or
+	 * missing); it is not delivered.
+	 */
+	public const EXPORT_INTEGRITY = 'export_integrity';
+
+	/**
+	 * An export filter (group or creator) is invalid.
+	 */
+	public const INVALID_FILTER = 'invalid_filter';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the class constants.

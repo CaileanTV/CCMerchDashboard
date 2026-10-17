@@ -482,6 +482,8 @@ describe( 'PayoutsSection', () => {
 			currency: 'DKK',
 			profit: '60.0000',
 			commission: '60.0000',
+			adjustment: '4.0000',
+			adjustment_refs: [ 'R2-000001' ],
 			opening_balance: '0.0000',
 			payout: '25.5000',
 			closing_balance: '34.5000',
@@ -539,6 +541,8 @@ describe( 'PayoutsSection', () => {
 		);
 		expect( text ).toContain( plain( money( '34.5' ) ) );
 		expect( text ).toContain( 'Corrected by AFR-000002' );
+		expect( text ).toContain( 'Adjustments (R2-000001)' );
+		expect( text ).toContain( plain( money( '4' ) ) );
 		expect(
 			container.querySelectorAll(
 				'.merchboard-settlement__rows tbody tr'
@@ -550,6 +554,15 @@ describe( 'PayoutsSection', () => {
 		).toBeNull();
 		expect(
 			parseSettlementDocument( { ...document, payout: 25.5 } )
+		).toBeNull();
+		expect(
+			parseSettlementDocument( { ...document, adjustment: 4 } )
+		).toBeNull();
+		expect(
+			parseSettlementDocument( {
+				...document,
+				adjustment_refs: undefined,
+			} )
 		).toBeNull();
 
 		click( button( 'Close' ) );
@@ -576,6 +589,8 @@ describe( 'PayoutsSection', () => {
 			currency: 'DKK',
 			profit: '20.0000',
 			commission: '20.0000',
+			adjustment: '0.0000',
+			adjustment_refs: [],
 			opening_balance: '0.0000',
 			payout: '20.0000',
 			closing_balance: '0.0000',

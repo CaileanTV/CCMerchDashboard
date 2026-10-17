@@ -214,7 +214,7 @@ final class CreatorPayoutAggregationTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->payouts->earned( $this->creator, null, self::at( '2026-10-15 08:00:00' ), 14 ), 'Before the sale: nothing.' );
 	}
 
-	public function test_the_payout_rule_rounds_like_creator_share(): void {
+	public function test_the_payout_is_the_rounded_profit_like_creator_share(): void {
 		$product = $this->product( '100' );
 		$this->configure( '20', false );
 		$this->recorder->record( 3311, 3301, $product, 0, 'DKK' );
@@ -224,9 +224,9 @@ final class CreatorPayoutAggregationTest extends IntegrationTestCase {
 		$this->recorder->record( 3313, 3301, $product, 0, 'DKK' );
 		$this->order( 3301, array( $this->line( 3311, $product, 1, '80', '20' ), $this->line( 3312, $product, 1, '80', '20' ), $this->line( 3313, $product, 1, '0.4', '0.1' ) ), '2026-09-01 10:05:00' );
 
-		// 20 × 0.8 = 16, 20, and 0.50 × 16.67 % = 0.08335 → 0.08, × 0.8 = 0.064 → 0.06.
+		// ADR-063: payout = profit for both VAT statuses: 20, 20, and 0.50 × 16.67 % = 0.08335 → 0.08.
 		$earned = $this->payouts->earned( $this->creator, null, self::at( '2026-11-30 12:00:00' ), 14 )['DKK'];
-		self::assertSame( '36.0600', $earned->to_array()['amount'] );
+		self::assertSame( '40.0800', $earned->to_array()['amount'] );
 		self::assertSame( self::expected( $this->ledger_rows(), null, self::at( '2026-11-30 12:00:00' ), 14 ), $earned->amount_units() );
 	}
 

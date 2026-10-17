@@ -14,20 +14,19 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesEntry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Realized payout (ADR-049): what the creator is owed for one ledger row,
- * from the realized profit and the creator's VAT status in the line's
- * snapshot (the status when the line was created, ADR-048):
- *
- * - VAT registered: payout = profit;
- * - not VAT registered: payout = profit × 80 % (a 20 % deduction from the
- *   profit), rounded to the snapshot's store precision.
+ * Realized payout (ADR-049, ADR-063): what the creator is owed for one
+ * ledger row as calculated now: the realized profit, whether or not the
+ * creator was VAT registered (ADR-063 removed the 20 % deduction). A row
+ * that a settlement document has settled keeps the payout stored there
+ * (ADR-060), see LedgerCreatorPayouts.
  *
  * No VAT rate is assumed or read, and the row's tax plays no other role
  * than in the profit's sale price (RealizedProfit). Signs follow the row.
  *
  * Unknown (null) when the profit is unknown, or when the snapshot has no
- * VAT status (taken before schema version 7). Never derived from the
- * creator's current status, current prices or tax settings.
+ * VAT status (taken before schema version 7; ADR-049 pkt. 7 is unchanged).
+ * Never derived from the creator's current status, current prices or tax
+ * settings.
  */
 final class RealizedPayout {
 
@@ -45,6 +44,6 @@ final class RealizedPayout {
 			return null;
 		}
 
-		return CreatorShare::payout( $profit, $snapshot->vat_registered, $snapshot->price_decimals );
+		return CreatorShare::payout( $profit, $snapshot->price_decimals );
 	}
 }

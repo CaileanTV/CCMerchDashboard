@@ -397,6 +397,8 @@ final class MePayoutsController extends RestController {
 			'currency'        => $document->currency,
 			'profit'          => SalesAmount::format( $document->profit_units ),
 			'commission'      => SalesAmount::format( $document->commission_units ),
+			'adjustment'      => SalesAmount::format( $document->adjustment_units ),
+			'adjustment_refs' => SettlementPdf::adjustment_references( $document ),
 			'opening_balance' => SalesAmount::format( $document->opening_units ),
 			'payout'          => SalesAmount::format( $document->payout_units ),
 			'closing_balance' => SalesAmount::format( $document->closing_units ),

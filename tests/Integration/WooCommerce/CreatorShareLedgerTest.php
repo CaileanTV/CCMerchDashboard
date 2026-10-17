@@ -149,7 +149,7 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		);
 
 		self::assertSame( array( '20.0000', '20.0000', '20.0000', '20.0000', '0.0000' ), $this->formatted( $this->profits() ) );
-		self::assertSame( array( '16.0000', '20.0000', '16.0000', '20.0000', '0.0000' ), $this->formatted( $this->payouts() ) );
+		self::assertSame( array( '20.0000', '20.0000', '20.0000', '20.0000', '0.0000' ), $this->formatted( $this->payouts() ), 'ADR-063: payout = profit for both VAT statuses.' );
 		self::assertSame( array( '100', '', '100' ), $this->prices_of( $product ), 'The WooCommerce price is never changed.' );
 		self::assertSame( array( '200', '', '200' ), $this->prices_of( $cheap ) );
 	}
@@ -165,10 +165,10 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		self::assertNull( $row['rule'] );
 		self::assertNull( $row['price_unit'], 'No price is stored: the sale price comes from the ledger row.' );
 
-		// 99.99 incl. VAT × 16.67 % = 16.668333 → 16.67; × 80 % = 13.336 → 13.34.
+		// 99.99 incl. VAT × 16.67 % = 16.668333 → 16.67; payout = profit (ADR-063).
 		$this->sell( array( $this->line( 976, $product, 1, '79.992', '19.998' ) ) );
 		self::assertSame( array( '16.6700' ), $this->formatted( $this->profits() ) );
-		self::assertSame( array( '13.3400' ), $this->formatted( $this->payouts() ) );
+		self::assertSame( array( '16.6700' ), $this->formatted( $this->payouts() ) );
 	}
 
 	public function test_a_product_markup_replaces_the_creator_markup_for_simple_products_and_variations(): void {
@@ -192,7 +192,7 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		self::assertSame( MarkupSource::Product, $this->snapshots->find( 977 )?->share_source );
 		self::assertSame( $variation, $this->snapshots->find( 978 )?->variation_id );
 		self::assertSame( array( '50.0000', '20.0000' ), $this->formatted( $this->profits() ) );
-		self::assertSame( array( '40.0000', '16.0000' ), $this->formatted( $this->payouts() ) );
+		self::assertSame( array( '50.0000', '20.0000' ), $this->formatted( $this->payouts() ) );
 	}
 
 	public function test_history_never_changes_when_markup_vat_status_price_or_owner_change(): void {
@@ -220,7 +220,7 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		self::assertSame( $profits, $this->profits() );
 		self::assertSame( $payouts, $this->payouts() );
 		self::assertSame( array( '20.0000' ), $this->formatted( $profits ) );
-		self::assertSame( array( '16.0000' ), $this->formatted( $payouts ) );
+		self::assertSame( array( '20.0000' ), $this->formatted( $payouts ) );
 	}
 
 	public function test_refunds_corrections_reversals_and_deletion_have_the_right_signs(): void {
@@ -232,19 +232,19 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		$this->sell( array( $line ) );
 		$this->sell( array( $line ), array( self::refund( 7201, 980, -1, '-80', '-20' ) ) );
 		self::assertSame( array( '60.0000', '-20.0000' ), $this->formatted( $this->profits() ) );
-		self::assertSame( array( '48.0000', '-16.0000' ), $this->formatted( $this->payouts() ) );
+		self::assertSame( array( '60.0000', '-20.0000' ), $this->formatted( $this->payouts() ) );
 
 		// A partial amount refund of 25.00 incl. VAT.
 		$refunds = array( self::refund( 7201, 980, -1, '-80', '-20' ), self::refund( 7202, 980, 0, '-20', '-5' ) );
 		$this->sell( array( $line ), $refunds );
 		self::assertSame( '-5.0000', $this->formatted( $this->profits() )[2] );
-		self::assertSame( '-4.0000', $this->formatted( $this->payouts() )[2] );
+		self::assertSame( '-5.0000', $this->formatted( $this->payouts() )[2] );
 
 		// The partial refund is deleted: the correction restores it.
 		$this->set_order( array( $line ), array( $refunds[0] ) );
 		$this->sync->sync( self::ORDER, 7202 );
-		self::assertSame( '4.0000', $this->formatted( $this->payouts() )[3] );
-		self::assertSame( 320000, array_sum( $this->payouts() ), '2 units remain: 2 × 16.00.' );
+		self::assertSame( '5.0000', $this->formatted( $this->payouts() )[3] );
+		self::assertSame( 400000, array_sum( $this->payouts() ), '2 units remain: 2 × 20.00.' );
 
 		// Cancelled: the reversal mirrors the remaining amount and tax.
 		$this->sell( array( $line ), array( $refunds[0] ), 'cancelled' );
@@ -273,7 +273,7 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 
 		self::assertCount( 4, $this->entries(), 'Two sales and two refunds.' );
 		self::assertSame( array( 166700, 166700, -166700, -166700 ), $this->profits() );
-		self::assertSame( array( 133400, 166700, -133400, -166700 ), $this->payouts() );
+		self::assertSame( array( 166700, 166700, -166700, -166700 ), $this->payouts() );
 
 		self::assertSame( 0, array_sum( $this->profits() ) );
 		self::assertSame( 0, array_sum( $this->payouts() ) );
@@ -288,7 +288,7 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		$this->sell( array( $this->line( 983, $product, 1, '100', '0' ) ) );
 
 		self::assertSame( array( '20.0000' ), $this->formatted( $this->profits() ) );
-		self::assertSame( array( '16.0000' ), $this->formatted( $this->payouts() ) );
+		self::assertSame( array( '20.0000' ), $this->formatted( $this->payouts() ) );
 	}
 
 	public function test_unknown_cases(): void {
@@ -339,8 +339,8 @@ final class CreatorShareLedgerTest extends IntegrationTestCase {
 		self::assertSame( array( 's:995:1', 'r:995:7205', 'c-rd:995:7205', 'v:995:1' ), $keys );
 		self::assertNull( $profits['s:995:1'], 'Sale without tax: unknown, never 0.' );
 		self::assertNull( $payouts['s:995:1'] );
-		self::assertSame( -160000, $payouts['r:995:7205'], 'The refund has its own known tax.' );
-		self::assertSame( 160000, $payouts['c-rd:995:7205'], 'The correction mirrors it with the opposite sign.' );
+		self::assertSame( -200000, $payouts['r:995:7205'], 'The refund has its own known tax.' );
+		self::assertSame( 200000, $payouts['c-rd:995:7205'], 'The correction mirrors it with the opposite sign.' );
 		self::assertNull( $profits['v:995:1'], 'The reversal of an unknown tax balance is unknown, never 0.' );
 		self::assertNull( $payouts['v:995:1'] );
 

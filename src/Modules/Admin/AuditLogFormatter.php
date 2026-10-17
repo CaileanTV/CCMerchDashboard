@@ -101,6 +101,16 @@ final class AuditLogFormatter {
 			AuditAction::SettlementDocumentIssued  => __( 'Settlement document issued', 'merchboard' ),
 			AuditAction::SettlementDocumentCorrected => __( 'Settlement document corrected', 'merchboard' ),
 			AuditAction::G1Activated               => __( 'Gift card commission rule activated', 'merchboard' ),
+			AuditAction::PayoutRecalculationPreviewed => __( 'Payout recalculation previewed', 'merchboard' ),
+			AuditAction::PayoutRecalculationApproved => __( 'Payout recalculation approved', 'merchboard' ),
+			AuditAction::PayoutRecalculationRejected => __( 'Payout recalculation rejected', 'merchboard' ),
+			AuditAction::PayoutRecalculationReopened => __( 'Payout recalculation reopened', 'merchboard' ),
+			AuditAction::PayoutAdjustmentExecuted  => __( 'Payout adjustment executed', 'merchboard' ),
+			AuditAction::PayoutRecalculationItemFailed => __( 'Payout recalculation item failed', 'merchboard' ),
+			AuditAction::PayoutRecalculationExecuted => __( 'Payout recalculation executed', 'merchboard' ),
+			AuditAction::PayoutRecalculationClosed => __( 'Payout recalculation closed', 'merchboard' ),
+			AuditAction::PayoutRecalculationExported => __( 'Payout recalculation exported', 'merchboard' ),
+			AuditAction::PayoutRecalculationExportDownloaded => __( 'Payout recalculation export downloaded', 'merchboard' ),
 		};
 	}
 

@@ -201,6 +201,18 @@ export function SettlementDocumentView( {
 				<dd>{ vat }</dd>
 				<dt>{ __( 'Commission in the period', 'merchboard' ) }</dt>
 				<dd>{ money( document.commission ) }</dd>
+				{ document.adjustment !== '0.0000' && (
+					<>
+						<dt>
+							{ sprintf(
+								/* translators: %s: references of the recalculations, e.g. R2-000001. */
+								__( 'Adjustments (%s)', 'merchboard' ),
+								document.adjustmentReferences.join( ', ' )
+							) }
+						</dt>
+						<dd>{ money( document.adjustment ) }</dd>
+					</>
+				) }
 				<dt>{ __( 'Carried from earlier', 'merchboard' ) }</dt>
 				<dd>{ money( document.openingBalance ) }</dd>
 				<dt>{ __( 'Paid out', 'merchboard' ) }</dt>

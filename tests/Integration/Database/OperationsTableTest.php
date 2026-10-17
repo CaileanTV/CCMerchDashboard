@@ -48,7 +48,7 @@ final class OperationsTableTest extends IntegrationTestCase {
 	public function test_a_fresh_install_creates_the_registry(): void {
 		$this->install();
 
-		self::assertSame( '13', (string) get_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '15', (string) get_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( Tables::OPERATIONS ) ) ) );
 		self::assertSame(
 			array( 'operation_id' ),
@@ -73,7 +73,7 @@ final class OperationsTableTest extends IntegrationTestCase {
 
 	public function test_a_failing_table_keeps_the_schema_version_at_12(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[13] );
+		unset( $migrations[13], $migrations[14], $migrations[15] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		self::assertSame( '12', (string) get_option( Migrator::VERSION_OPTION ) );
 
@@ -111,7 +111,7 @@ final class OperationsTableTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( '13', (string) get_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '15', (string) get_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( array( self::ROW ), $this->registry(), 'Migration 13 changed no kept row.' );
 	}
 

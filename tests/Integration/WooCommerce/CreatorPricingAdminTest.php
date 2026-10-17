@@ -191,7 +191,7 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		foreach ( array(
 			'The WooCommerce sale price is the final customer price and already includes the creator profit and VAT. Creator profit = sale price × markup %. Merch Dashboard never adds anything to the price and never changes WooCommerce prices.',
 			'Yes: the creator is paid the full creator profit.',
-			'No: the creator is paid the creator profit minus 20 %, i.e. 80 % of the profit.',
+			'No: the creator is also paid the full creator profit.',
 			'Active: 100.00 DKK',
 			'20.00 %',
 			'Creator markup',
@@ -199,7 +199,7 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 			self::assertStringContainsString( esc_html( $text ), $html, $text );
 		}
 
-		self::assertStringContainsString( '<td>20.00 DKK</td><td>16.00 DKK</td>', $html, 'Example: profit 20.00, payout 16.00 when not VAT registered.' );
+		self::assertStringContainsString( '<td>20.00 DKK</td><td>20.00 DKK</td>', $html, 'Example: profit 20.00, payout 20.00 when not VAT registered (ADR-063).' );
 
 		$this->post( CreatorPricingActions::VAT_ACTION, $this->alpha, 0, array( 'vat_registered' => '1' ) );
 		self::assertStringContainsString( '<td>20.00 DKK</td><td>20.00 DKK</td>', $this->render( $this->alpha ), 'VAT registered: payout = profit.' );
@@ -213,7 +213,7 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		$this->post( CreatorPricingActions::MARKUP_ACTION, $this->alpha, 0, array( 'markup' => '10' ) );
 		$product = $this->product( $this->alpha, '250', '200' );
 
-		self::assertStringContainsString( '<td>20.00 DKK</td><td>16.00 DKK</td>', $this->render( $this->alpha ), '200.00 × 10 % = 20.00; × 80 % = 16.00.' );
+		self::assertStringContainsString( '<td>20.00 DKK</td><td>20.00 DKK</td>', $this->render( $this->alpha ), '200.00 × 10 % = 20.00; payout = profit.' );
 		self::assertSame( array( '250', '200', '200' ), $this->prices_of( $product ) );
 	}
 
@@ -294,8 +294,8 @@ final class CreatorPricingAdminTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'Variable product: one markup for all variations', $html );
 		self::assertSame( 2, substr_count( $html, 'Parent markup' ) );
 		self::assertSame( 1, substr_count( $html, '<summary>Edit markup</summary>' ), 'The markup is edited on the parent only.' );
-		self::assertStringContainsString( '<td>20.00 DKK</td><td>16.00 DKK</td>', $html, '100.00 × 20 %.' );
-		self::assertStringContainsString( '<td>30.00 DKK</td><td>24.00 DKK</td>', $html, 'Sale price 150.00 × 20 %.' );
+		self::assertStringContainsString( '<td>20.00 DKK</td><td>20.00 DKK</td>', $html, '100.00 × 20 %.' );
+		self::assertStringContainsString( '<td>30.00 DKK</td><td>30.00 DKK</td>', $html, 'Sale price 150.00 × 20 %.' );
 		self::assertStringContainsString( 'Sale: 150.00 DKK', $html );
 	}
 

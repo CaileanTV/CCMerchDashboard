@@ -179,7 +179,7 @@ final class CreatorPricingSection {
 		echo '<label><input type="radio" name="vat_registered" value="0"' . checked( $registered, false, false ) . '> ' . esc_html__( 'No', 'merchboard' ) . '</label> ';
 		echo '<button type="submit" class="button">' . esc_html__( 'Save VAT status', 'merchboard' ) . '</button></fieldset>';
 		echo '<p class="description">' . esc_html__( 'Yes: the creator is paid the full creator profit.', 'merchboard' ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'No: the creator is paid the creator profit minus 20 %, i.e. 80 % of the profit.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'No: the creator is also paid the full creator profit.', 'merchboard' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Changing the VAT status changes no product prices and no earlier order lines or payouts: each order line keeps the status it had when it was created.', 'merchboard' ) . '</p>';
 		echo '</form>';
 	}
@@ -209,10 +209,8 @@ final class CreatorPricingSection {
 
 		echo '</tr></thead><tbody>';
 
-		$vat_registered = $this->vat?->find( $creator->id ) ?? false;
-
 		foreach ( $linked as $product ) {
-			$this->render_product( $creator, $product, $vat_registered );
+			$this->render_product( $creator, $product );
 		}
 
 		echo '</tbody></table></div>';
@@ -227,11 +225,10 @@ final class CreatorPricingSection {
 	 * One parent product: its markup and form, then one row per sellable
 	 * unit (the product, or each variation).
 	 *
-	 * @param Creator       $creator        Creator.
-	 * @param ProductRecord $product        Parent product.
-	 * @param bool          $vat_registered The creator's current VAT status (examples only).
+	 * @param Creator       $creator Creator.
+	 * @param ProductRecord $product Parent product.
 	 */
-	private function render_product( Creator $creator, ProductRecord $product, bool $vat_registered ): void {
+	private function render_product( Creator $creator, ProductRecord $product ): void {
 		$parent = $this->units->find( $product->id );
 		$markup = $this->resolver->resolve( $product->id );
 
@@ -269,7 +266,7 @@ final class CreatorPricingSection {
 
 			$price  = $unit->active_units() ?? $unit->regular_units();
 			$profit = self::example_profit( $price, $markup, $decimals );
-			$payout = null === $profit ? null : self::example_payout( $profit, $vat_registered, $decimals );
+			$payout = null === $profit ? null : CreatorShare::payout( $profit, $decimals );
 
 			echo '<tr><td>' . ( $variable ? '— ' : '' ) . esc_html( $name ) . '<br><span class="description">' . esc_html( self::type_label( $unit->type ) ) . '</span></td>';
 			echo '<td>' . ( $variable ? esc_html__( 'Parent markup', 'merchboard' ) : self::markup_cell( $markup ) ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in markup_cell().
@@ -298,17 +295,6 @@ final class CreatorPricingSection {
 		}
 
 		return CreatorShare::profit( $price, $markup->markup->bps, $decimals );
-	}
-
-	/**
-	 * Example payout of a profit.
-	 *
-	 * @param int  $profit         Profit in units.
-	 * @param bool $vat_registered VAT status.
-	 * @param int  $decimals       Store price decimals (already checked).
-	 */
-	private static function example_payout( int $profit, bool $vat_registered, int $decimals ): int {
-		return CreatorShare::payout( $profit, $vat_registered, $decimals );
 	}
 
 	/**

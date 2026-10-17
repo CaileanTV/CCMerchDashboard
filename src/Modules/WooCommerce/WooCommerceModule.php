@@ -29,11 +29,19 @@ use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationActions;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationExportDownload;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationsPage;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsSections;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
 use MerchBoard\Modules\WooCommerce\Admin\SettlementPdfDownload;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutRecalculationExportRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutRecalculationExports;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutRecalculationRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutRecalculations;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardCouponGuard;
@@ -546,9 +554,14 @@ final class WooCommerceModule implements Module {
 			PayoutCipher::class,
 			static fn(): PayoutCipher => PayoutCipher::from_config()
 		);
+		// Executed payout adjustments (ADR-063): in the balance and on the next settlement document.
+		$container->set(
+			PayoutAdjustmentRepository::class,
+			static fn( Container $c ): PayoutAdjustmentRepository => new PayoutAdjustmentRepository( $c->get( wpdb::class ) )
+		);
 		$container->set(
 			PayoutBalances::class,
-			static fn( Container $c ): PayoutBalances => new PayoutBalances( new LedgerCreatorPayouts( $c->get( wpdb::class ) ), $c->get( PayoutRepository::class ), $clock )
+			static fn( Container $c ): PayoutBalances => new PayoutBalances( new LedgerCreatorPayouts( $c->get( wpdb::class ) ), $c->get( PayoutRepository::class ), $clock, $c->get( PayoutAdjustmentRepository::class ) )
 		);
 		// Settlement documents (ADR-060): issued with every completion.
 		$container->set(
@@ -561,8 +574,56 @@ final class WooCommerceModule implements Module {
 				new CreatorVatRepository( $c->get( wpdb::class ) ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
+				$clock,
+				$c->get( PayoutAdjustmentRepository::class )
+			)
+		);
+		// Recalculation of settled payouts without the 20 % deduction (ADR-063):
+		// preview, approval, execution and closing as separate admin steps.
+		$container->set(
+			PayoutRecalculationRepository::class,
+			static fn( Container $c ): PayoutRecalculationRepository => new PayoutRecalculationRepository( $c->get( wpdb::class ) )
+		);
+		$container->set(
+			PayoutRecalculations::class,
+			static fn( Container $c ): PayoutRecalculations => new PayoutRecalculations(
+				$c->get( PayoutRecalculationRepository::class ),
+				$c->get( PayoutAdjustmentRepository::class ),
+				$c->get( PayoutRepository::class ),
+				$c->get( CreatorRepository::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( wpdb::class ),
 				$clock
 			)
+		);
+		// Exports of recalculations with manifest and checksums (ADR-062 pkt. 9).
+		$container->set(
+			PayoutRecalculationExportRepository::class,
+			static fn( Container $c ): PayoutRecalculationExportRepository => new PayoutRecalculationExportRepository( $c->get( wpdb::class ) )
+		);
+		$container->set(
+			PayoutRecalculationExports::class,
+			static fn( Container $c ): PayoutRecalculationExports => new PayoutRecalculationExports(
+				$c->get( PayoutRecalculationRepository::class ),
+				$c->get( PayoutRecalculationExportRepository::class ),
+				$c->get( CreatorRepository::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$clock
+			)
+		);
+		$container->set(
+			PayoutRecalculationExportDownload::class,
+			static fn( Container $c ): PayoutRecalculationExportDownload => new PayoutRecalculationExportDownload( $c->get( PayoutRecalculationExports::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			PayoutRecalculationsPage::class,
+			static fn( Container $c ): PayoutRecalculationsPage => new PayoutRecalculationsPage( $c->get( PayoutRecalculationRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ), $c->get( PayoutRecalculationExportRepository::class ) )
+		);
+		$container->set(
+			PayoutRecalculationActions::class,
+			static fn( Container $c ): PayoutRecalculationActions => new PayoutRecalculationActions( $c->get( PayoutRecalculations::class ), $c->get( Logger::class ), $c->get( PayoutRecalculationExports::class ) )
 		);
 		// Their PDF, made from the stored document on every download (never stored).
 		$container->set(
@@ -771,6 +832,13 @@ final class WooCommerceModule implements Module {
 			},
 			PayoutsPage::PRIORITY
 		);
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( PayoutRecalculationsPage::class )->add_menu();
+			},
+			PayoutRecalculationsPage::PRIORITY
+		);
 
 		// Only wp-admin: the product category column in the Creators list, the
 		// product category and product links on the
@@ -797,6 +865,8 @@ final class WooCommerceModule implements Module {
 				$container->get( SalesLedgerSettingsSection::class )->register();
 				$container->get( PayoutSettingsActions::class )->register();
 				$container->get( PayoutActions::class )->register();
+				$container->get( PayoutRecalculationActions::class )->register();
+				$container->get( PayoutRecalculationExportDownload::class )->register();
 				$container->get( SettlementPdfDownload::class )->register();
 				$container->get( PayoutSettingsSections::class )->register();
 			}

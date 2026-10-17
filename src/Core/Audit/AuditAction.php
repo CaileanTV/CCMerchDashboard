@@ -244,4 +244,66 @@ enum AuditAction: string {
 	 * gift card are assessed was stored, once (E3 T3). Context: `cutoff_utc`.
 	 */
 	case G1Activated = 'g1_activated';
+
+	/**
+	 * A recalculation of settled payouts was previewed (ADR-063). Context:
+	 * reference, reopened reference, numbers of items per group, rows.
+	 */
+	case PayoutRecalculationPreviewed = 'payout_recalculation_previewed';
+
+	/**
+	 * A previewed recalculation was approved (ADR-063). Context: reference,
+	 * active items and their total difference per currency, `has_note`.
+	 */
+	case PayoutRecalculationApproved = 'payout_recalculation_approved';
+
+	/**
+	 * A recalculation was rejected (ADR-063). Context: reference, previous
+	 * status, `has_note`; never the note.
+	 */
+	case PayoutRecalculationRejected = 'payout_recalculation_rejected';
+
+	/**
+	 * A rejected recalculation was reopened as a new preview (ADR-063).
+	 * Context: the rejected and the new reference.
+	 */
+	case PayoutRecalculationReopened = 'payout_recalculation_reopened';
+
+	/**
+	 * An approved recalculation item was executed as an adjustment of the
+	 * creator's balance (ADR-063). Context: reference, item and adjustment
+	 * id, currency, amount, rows.
+	 */
+	case PayoutAdjustmentExecuted = 'payout_adjustment_executed';
+
+	/**
+	 * The execution of a recalculation item failed and stopped the
+	 * execution; nothing of the item was written (ADR-063). Context:
+	 * reference, item id, failure code.
+	 */
+	case PayoutRecalculationItemFailed = 'payout_recalculation_item_failed';
+
+	/**
+	 * Every active item of a recalculation is executed (ADR-063). Context:
+	 * reference, executed items.
+	 */
+	case PayoutRecalculationExecuted = 'payout_recalculation_executed';
+
+	/**
+	 * A recalculation was closed explicitly (ADR-063). Context: reference,
+	 * previous status, `has_note`.
+	 */
+	case PayoutRecalculationClosed = 'payout_recalculation_closed';
+
+	/**
+	 * A recalculation was exported (ADR-062 pkt. 9). Context: reference,
+	 * export reference, filters, `complete`, items and rows exported.
+	 */
+	case PayoutRecalculationExported = 'payout_recalculation_exported';
+
+	/**
+	 * A file of a recalculation export was downloaded after its integrity
+	 * check. Context: export reference and file name.
+	 */
+	case PayoutRecalculationExportDownloaded = 'payout_recalculation_export_downloaded';
 }

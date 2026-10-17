@@ -632,6 +632,12 @@ final class PayoutsPage {
 			__( 'Settled sales rows', 'merchboard' )       => number_format_i18n( count( $shown['rows'] ) ),
 		);
 
+		if ( 0 !== $document->adjustment_units ) {
+			// ADR-063: adjustments this document settled, with their recalculations.
+			/* translators: %s: references of the recalculations, e.g. R2-000001. */
+			$fields = array_slice( $fields, 0, 6, true ) + array( sprintf( __( 'Adjustments (%s)', 'merchboard' ), implode( ', ', SettlementPdf::adjustment_references( $document ) ) ) => $money( $document->adjustment_units ) ) + array_slice( $fields, 6, null, true );
+		}
+
 		foreach ( $fields as $label => $value ) {
 			echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . esc_html( $value ) . '</td></tr>';
 		}

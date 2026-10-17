@@ -13,14 +13,18 @@ use Closure;
 use DateTimeImmutable;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Balances per currency (ADR-054): earned payout from the ledger with the
  * creator's settlement start and the holding period from the settings,
- * minus completed and pending payouts. Server-side only; never cached.
+ * plus executed payout adjustments (ADR-063; a negative one lowers the
+ * balance and is offset like any outstanding amount), minus completed and
+ * pending payouts. Server-side only; never cached.
  * Requests and completions read it under the creator's payout lock, so two
  * requests can never reserve the same amount.
  */
@@ -31,11 +35,12 @@ final class PayoutBalances {
 	 *
 	 * @phpstan-param Closure(): DateTimeImmutable $clock
 	 *
-	 * @param LedgerCreatorPayouts $earned  Earned payout.
-	 * @param PayoutRepository     $payouts Payouts and settlement start.
-	 * @param Closure              $clock   Current time (`Closure(): DateTimeImmutable`).
+	 * @param LedgerCreatorPayouts            $earned      Earned payout.
+	 * @param PayoutRepository                $payouts     Payouts and settlement start.
+	 * @param Closure                         $clock       Current time (`Closure(): DateTimeImmutable`).
+	 * @param PayoutAdjustmentRepository|null $adjustments Executed adjustments (ADR-063); null = none.
 	 */
-	public function __construct( private LedgerCreatorPayouts $earned, private PayoutRepository $payouts, private Closure $clock ) {
+	public function __construct( private LedgerCreatorPayouts $earned, private PayoutRepository $payouts, private Closure $clock, private ?PayoutAdjustmentRepository $adjustments = null ) {
 	}
 
 	/**
@@ -50,15 +55,19 @@ final class PayoutBalances {
 		$start  = $this->payouts->settlement_start( $creator_id );
 		$earned = $this->earned->earned( $creator_id, $start, ( $this->clock )(), Settings::payout_holding_days() );
 		$totals = $this->payouts->totals( $creator_id );
+		$adjust = null === $this->adjustments ? array() : $this->adjustments->totals( $creator_id );
 		$result = array();
 
-		foreach ( array_unique( array_merge( array_keys( $earned ), array_keys( $totals ) ) ) as $currency ) {
+		foreach ( array_unique( array_merge( array_keys( $earned ), array_keys( $totals ), array_keys( $adjust ) ) ) as $currency ) {
 			$currency = (string) $currency;
 			$summary  = $earned[ $currency ] ?? null;
 			// No row in the window is a known 0; any unknown row makes it unknown.
+			$units = null === $summary ? 0 : $summary->amount_units();
+			// Executed adjustments count as earned (ADR-063); an unknown stays unknown.
+			$units               = null === $units ? null : SalesAmount::add( $units, $adjust[ $currency ] ?? 0 );
 			$result[ $currency ] = new PayoutBalance(
 				$currency,
-				null === $summary ? 0 : $summary->amount_units(),
+				$units,
 				null === $summary ? 0 : $summary->unknown_rows,
 				$totals[ $currency ]['completed'] ?? 0,
 				$totals[ $currency ]['reserved'] ?? 0

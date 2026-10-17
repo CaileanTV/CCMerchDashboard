@@ -222,7 +222,7 @@ final class SettlementPdf {
 				$parsed[]   = $item;
 			}
 
-			$closing = SalesAmount::add( SalesAmount::add( $document->opening_units, $document->commission_units ), SalesAmount::negate( $document->payout_units ) );
+			$closing = SalesAmount::add( SalesAmount::add( SalesAmount::add( $document->opening_units, $document->commission_units ), $document->adjustment_units ), SalesAmount::negate( $document->payout_units ) );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			throw new UnexpectedValueException( 'A settled row of the settlement document is invalid.' );
 		}
@@ -388,18 +388,26 @@ final class SettlementPdf {
 	}
 
 	/**
-	 * The settlement: carried in + commission − paid out = carried forward.
+	 * The settlement: carried in + commission (+ adjustments) − paid out =
+	 * carried forward. The adjustments line (ADR-063) is shown only when the
+	 * document settled any, with the references of their recalculations.
 	 *
 	 * @param SettlementDocument $document Document.
 	 */
 	private function summary( SettlementDocument $document ): void {
-		$lines  = array(
+		$lines = array(
 			array( '', __( 'Carried from earlier', 'merchboard' ), $document->opening_units ),
 			array( '+', __( 'Commission in the period', 'merchboard' ), $document->commission_units ),
-			array( '-', __( 'Paid out', 'merchboard' ), $document->payout_units ),
 		);
-		$height = 4 * 15 + 18;
-		$left   = 300.0;
+
+		if ( 0 !== $document->adjustment_units ) {
+			/* translators: %s: references of the recalculations, e.g. R2-000001. */
+			$lines[] = array( '+', sprintf( __( 'Adjustments (%s)', 'merchboard' ), implode( ', ', self::adjustment_references( $document ) ) ), $document->adjustment_units );
+		}
+
+		$lines[] = array( '-', __( 'Paid out', 'merchboard' ), $document->payout_units );
+		$height  = ( count( $lines ) + 1 ) * 15 + 18;
+		$left    = 300.0;
 
 		$this->ensure( $height + 10 );
 		$this->pdf->rect( $left, $this->y, self::RIGHT - $left, $height, 0.94 );
@@ -419,6 +427,27 @@ final class SettlementPdf {
 		$this->pdf->text( self::RIGHT - 10, $y, $this->money( $document->closing_units, $document->currency ), self::BODY, true, PdfWriter::RIGHT );
 
 		$this->y += $height + 22;
+	}
+
+	/**
+	 * The distinct references of the adjustments a document settled.
+	 *
+	 * @param SettlementDocument $document Document.
+	 * @return list<string>
+	 */
+	public static function adjustment_references( SettlementDocument $document ): array {
+		$entries    = is_array( $document->snapshot['adjustments'] ?? null ) ? $document->snapshot['adjustments'] : array();
+		$references = array();
+
+		foreach ( $entries as $entry ) {
+			$reference = is_array( $entry ) && is_string( $entry['reference'] ?? null ) ? self::text( $entry['reference'] ) : '';
+
+			if ( '' !== $reference ) {
+				$references[ $reference ] = true;
+			}
+		}
+
+		return array_keys( $references );
 	}
 
 	/**

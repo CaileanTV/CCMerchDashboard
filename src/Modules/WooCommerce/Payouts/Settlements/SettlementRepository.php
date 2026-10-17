@@ -33,7 +33,7 @@ final class SettlementRepository {
 	/**
 	 * Columns of a document row.
 	 */
-	private const COLUMNS = 'id, document_number, document_type, creator_id, payout_id, corrects_document_id, currency, period_from, period_to, profit_amount, commission_amount, opening_balance, payout_amount, closing_balance, vat_registered, calculation_version, template_version, snapshot, issued_by, issued_at';
+	private const COLUMNS = 'id, document_number, document_type, creator_id, payout_id, corrects_document_id, currency, period_from, period_to, profit_amount, commission_amount, adjustment_amount, opening_balance, payout_amount, closing_balance, vat_registered, calculation_version, template_version, snapshot, issued_by, issued_at';
 
 	/**
 	 * Constructor.
@@ -86,8 +86,8 @@ final class SettlementRepository {
 
 		$this->write(
 			$wpdb->prepare(
-				"INSERT INTO %i (document_number, document_series, document_type, creator_id, payout_id, settlement_payout_id, corrects_document_id, currency, period_from, period_to, profit_amount, commission_amount, opening_balance, payout_amount, closing_balance, vat_registered, calculation_version, template_version, snapshot, issued_by, issued_at)
-				SELECT %s, %s, %s, %d, NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), %s, NULLIF(%s, ''), %s, %s, %s, %s, %s, %s, NULLIF(%d, -1), %s, %d, %s, NULLIF(%d, 0), %s FROM DUAL WHERE CONNECTION_ID() = %d",
+				"INSERT INTO %i (document_number, document_series, document_type, creator_id, payout_id, settlement_payout_id, corrects_document_id, currency, period_from, period_to, profit_amount, commission_amount, adjustment_amount, opening_balance, payout_amount, closing_balance, vat_registered, calculation_version, template_version, snapshot, issued_by, issued_at)
+				SELECT %s, %s, %s, %d, NULLIF(%d, 0), NULLIF(%d, 0), NULLIF(%d, 0), %s, NULLIF(%s, ''), %s, %s, %s, %s, %s, %s, %s, NULLIF(%d, -1), %s, %d, %s, NULLIF(%d, 0), %s FROM DUAL WHERE CONNECTION_ID() = %d",
 				$this->table( Tables::SETTLEMENT_DOCUMENTS ),
 				(string) $values['number'],
 				(string) $values['series'],
@@ -101,6 +101,7 @@ final class SettlementRepository {
 				self::utc( $values['period_to'] ),
 				SalesAmount::format( (int) $values['profit_units'] ),
 				SalesAmount::format( (int) $values['commission_units'] ),
+				SalesAmount::format( (int) ( $values['adjustment_units'] ?? 0 ) ),
 				SalesAmount::format( (int) $values['opening_units'] ),
 				SalesAmount::format( (int) $values['payout_units'] ),
 				SalesAmount::format( (int) $values['closing_units'] ),
@@ -407,7 +408,8 @@ final class SettlementRepository {
 				(int) $row['template_version'],
 				is_array( $snapshot ) ? $snapshot : array(),
 				null === $row['issued_by'] ? null : (int) $row['issued_by'],
-				self::time( $row['issued_at'] )
+				self::time( $row['issued_at'] ),
+				SalesAmount::parse( (string) $row['adjustment_amount'] )
 			);
 		} catch ( DatabaseException $e ) {
 			throw $e;

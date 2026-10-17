@@ -23,6 +23,8 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\Recalculation;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -44,8 +46,10 @@ defined( 'ABSPATH' ) || exit;
  * D1/D2 rules (060-2); an unknown row refuses the completion (never 0). The
  * document number comes from the series counter in the same transaction
  * (D9). Amounts: commission = Σ payout of the settled rows; opening =
- * closing of the previous document in the currency; closing = opening +
- * commission − payout. Rows and parties are stored as a snapshot and never
+ * closing of the previous document in the currency; adjustment = Σ executed
+ * payout adjustments not settled yet (ADR-063, settled by this document with
+ * their references in the snapshot); closing = opening + commission +
+ * adjustment − payout. Rows and parties are stored as a snapshot and never
  * recalculated (060-4).
  *
  * **Correct** (D11) issues a correction document that refers to the latest
@@ -67,9 +71,11 @@ final class SettlementDocuments {
 	public const DIGITS = 6;
 
 	/**
-	 * The calculation the documents are made with (ADR-049, ADR-054 D1/D2).
+	 * The calculation new documents are made with: ADR-049's share without
+	 * the 20 % deduction (ADR-063), ADR-054 D1/D2. Documents issued before
+	 * keep `adr049-adr054-v1`.
 	 */
-	public const CALCULATION_VERSION = 'adr049-adr054-v1';
+	public const CALCULATION_VERSION = 'adr063-adr054-v1';
 
 	/**
 	 * Version of the document template (texts and layout) of new documents:
@@ -87,14 +93,15 @@ final class SettlementDocuments {
 	 *
 	 * @phpstan-param Closure(): DateTimeImmutable $clock
 	 *
-	 * @param SettlementRepository $documents   Documents.
-	 * @param PayoutRepository     $payouts     Lock, its connection, settlement start.
-	 * @param LedgerCreatorPayouts $ledger      Unsettled released rows.
-	 * @param CreatorRepository    $creators    Creator names.
-	 * @param CreatorVatRepository $vat         The creator's VAT status.
-	 * @param AuditTrail           $audit       Audit trail.
-	 * @param Transaction          $transaction Transactions (corrections).
-	 * @param Closure              $clock       Current time (`Closure(): DateTimeImmutable`).
+	 * @param SettlementRepository            $documents   Documents.
+	 * @param PayoutRepository                $payouts     Lock, its connection, settlement start.
+	 * @param LedgerCreatorPayouts            $ledger      Unsettled released rows.
+	 * @param CreatorRepository               $creators    Creator names.
+	 * @param CreatorVatRepository            $vat         The creator's VAT status.
+	 * @param AuditTrail                      $audit       Audit trail.
+	 * @param Transaction                     $transaction Transactions (corrections).
+	 * @param Closure                         $clock       Current time (`Closure(): DateTimeImmutable`).
+	 * @param PayoutAdjustmentRepository|null $adjustments Payout adjustments to settle (ADR-063); null = none.
 	 */
 	public function __construct(
 		private SettlementRepository $documents,
@@ -104,7 +111,8 @@ final class SettlementDocuments {
 		private CreatorVatRepository $vat,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private Closure $clock
+		private Closure $clock,
+		private ?PayoutAdjustmentRepository $adjustments = null
 	) {
 	}
 
@@ -143,8 +151,24 @@ final class SettlementDocuments {
 			$profit     = SalesAmount::add( $profit, $row['profit_units'] );
 		}
 
-		$vat      = $this->vat->find( $payout->creator_id );
-		$document = $this->insert(
+		// Executed payout adjustments not settled yet (ADR-063), locked until the commit.
+		$adjustments = null === $this->adjustments ? array() : $this->adjustments->unsettled_for_update( $payout->creator_id, $payout->currency );
+		$adjustment  = 0;
+
+		foreach ( $adjustments as $entry ) {
+			$adjustment = SalesAmount::add( $adjustment, $entry['amount_units'] );
+		}
+
+		$vat                     = $this->vat->find( $payout->creator_id );
+		$snapshot                = $this->snapshot( $payout, $vat, $start );
+		$snapshot['adjustments'] = array_map(
+			static fn( array $entry ): array => array(
+				'reference' => Recalculation::reference_of( $entry['recalculation_id'] ),
+				'amount'    => SalesAmount::format( $entry['amount_units'] ),
+			),
+			$adjustments
+		);
+		$document                = $this->insert(
 			array(
 				'type'                 => SettlementDocument::TYPE_SETTLEMENT,
 				'creator_id'           => $payout->creator_id,
@@ -156,11 +180,12 @@ final class SettlementDocuments {
 				'period_to'            => $now,
 				'profit_units'         => $profit,
 				'commission_units'     => $commission,
+				'adjustment_units'     => $adjustment,
 				'opening_units'        => $opening,
 				'payout_units'         => $payout->amount_units,
-				'closing_units'        => SalesAmount::add( SalesAmount::add( $opening, $commission ), SalesAmount::negate( $payout->amount_units ) ),
+				'closing_units'        => SalesAmount::add( SalesAmount::add( SalesAmount::add( $opening, $commission ), $adjustment ), SalesAmount::negate( $payout->amount_units ) ),
 				'vat_registered'       => $vat,
-				'snapshot'             => $this->snapshot( $payout, $vat, $start ),
+				'snapshot'             => $snapshot,
 				'issued_by'            => (int) $user,
 				'issued_at'            => $now,
 			),
@@ -171,6 +196,7 @@ final class SettlementDocuments {
 			$this->documents->insert_row( $document->id, $row, $connection );
 		}
 
+		$this->adjustments?->mark_settled( array_column( $adjustments, 'id' ), $document->id, $connection );
 		$this->payouts->assert_same_connection( $payout->creator_id );
 		$this->audit->record(
 			AuditAction::SettlementDocumentIssued,
@@ -180,6 +206,7 @@ final class SettlementDocuments {
 				'document_number' => $document->number,
 				'payout_id'       => $payout->id,
 				'rows'            => count( $rows ),
+				'adjustments'     => count( $adjustments ),
 				'currency'        => $payout->currency,
 			)
 		);

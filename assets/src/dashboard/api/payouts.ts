@@ -384,7 +384,8 @@ export function parseSettlementDocument(
 		! isRecord( body ) ||
 		! Array.isArray( body.rows ) ||
 		! Array.isArray( body.corrections ) ||
-		! Array.isArray( body.company_address )
+		! Array.isArray( body.company_address ) ||
+		! Array.isArray( body.adjustment_refs )
 	) {
 		return null;
 	}
@@ -398,6 +399,7 @@ export function parseSettlementDocument(
 		period_to: periodTo,
 		currency,
 		commission,
+		adjustment,
 		opening_balance: openingBalance,
 		payout,
 		closing_balance: closingBalance,
@@ -438,6 +440,7 @@ export function parseSettlementDocument(
 	}
 
 	const address = body.company_address as unknown[];
+	const references = body.adjustment_refs as unknown[];
 
 	if (
 		typeof number !== 'string' ||
@@ -450,6 +453,8 @@ export function parseSettlementDocument(
 		typeof currency !== 'string' ||
 		! CURRENCY.test( currency ) ||
 		! isAmount( commission ) ||
+		! isAmount( adjustment ) ||
+		! references.every( ( reference ) => typeof reference === 'string' ) ||
 		! isAmount( openingBalance ) ||
 		! isAmount( payout ) ||
 		! isAmount( closingBalance ) ||
@@ -472,6 +477,8 @@ export function parseSettlementDocument(
 		periodTo,
 		currency,
 		commission,
+		adjustment,
+		adjustmentReferences: references as string[],
 		openingBalance,
 		payout,
 		closingBalance,

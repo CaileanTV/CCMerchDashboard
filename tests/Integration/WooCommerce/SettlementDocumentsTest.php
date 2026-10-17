@@ -185,7 +185,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( '0012345678', (string) wp_json_encode( $document->snapshot ), 'Never the full account.' );
 		self::assertSame( $items, array_map( static fn( array $row ): int => (int) $row['order_item_id'], $shown['rows'] ?? array() ) );
 		self::assertSame( PayoutStatus::Completed, $this->repository->find( $payout->id )?->status );
-		self::assertSame( array( array( 'document_id' => $document->id, 'document_number' => 'AFR-000001', 'payout_id' => $payout->id, 'rows' => 3, 'currency' => 'DKK' ) ), $this->audit( AuditAction::SettlementDocumentIssued ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( array( 'document_id' => $document->id, 'document_number' => 'AFR-000001', 'payout_id' => $payout->id, 'rows' => 3, 'adjustments' => 0, 'currency' => 'DKK' ) ), $this->audit( AuditAction::SettlementDocumentIssued ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		// Again (double click): the completed payout and its document unchanged, no new document.
 		$this->decisions->complete( $payout->id, 'Bank 42' );
@@ -213,6 +213,47 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertSame( array( '35.0000', '0.0000', '5.0000', '30.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $shown['document']->opening_units, $shown['document']->commission_units, $shown['document']->payout_units, $shown['document']->closing_units ) ), '−20 + 20 = 0 commission; 35 carried.' );
 		self::assertSame( '2026-11-30 12:00:00', $shown['document']->period_from?->format( 'Y-m-d H:i:s' ), 'From the end of the previous document.' );
 		self::assertSame( 5, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(DISTINCT event_key) FROM %i', $this->table( Tables::SETTLEMENT_ROWS ) ) ), 'Every settled row once.' );
+	}
+
+	public function test_a_settled_row_keeps_its_stored_payout_and_new_rows_have_no_deduction(): void {
+		// ADR-063: not VAT registered, no 20 % deduction any more.
+		$this->vat->save( $this->creator, false );
+		$ledger = new LedgerCreatorPayouts( $this->wpdb );
+		$now    = new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+
+		$this->earn( 2 );
+		self::assertSame( '40.0000', SalesAmount::format( (int) $ledger->earned( $this->creator, null, $now, 14 )['DKK']->amount_units() ), '2 × 20.00: the whole profit.' );
+
+		$first = $this->request( '10', 'key-set-0063' );
+		$this->decisions->complete( $first->id );
+		self::assertSame( array( '20.0000', '20.0000' ), array_map( static fn( array $row ): string => (string) $row['payout_amount'], $this->documents->for_payout( $first->id )['rows'] ?? array() ) );
+
+		// A document issued under ADR-049's 20 % deduction keeps its stored payouts:
+		// the balance follows the document, nothing is regulated automatically.
+		$old = $this->documents->for_payout( $first->id )['document'] ?? null;
+		self::assertNotNull( $old );
+		self::assertSame( 2, $this->wpdb->update( $this->table( Tables::SETTLEMENT_ROWS ), array( 'payout_amount' => '16.0000' ), array( 'document_id' => $old->id ) ) );
+		$totals = array(
+			'commission_amount' => '32.0000',
+			'closing_balance'   => '22.0000',
+		);
+		self::assertSame( 1, $this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), $totals, array( 'id' => $old->id ) ) );
+		$this->earn( 1 );
+
+		self::assertSame( '52.0000', SalesAmount::format( (int) $ledger->earned( $this->creator, null, $now, 14 )['DKK']->amount_units() ), '16 + 16 stored, + 20 for the new row.' );
+		$unsettled = $ledger->unsettled_rows( $this->creator, 'DKK', null, $now, 14 );
+		self::assertNotNull( $unsettled );
+		self::assertSame( array( '20.0000' ), array_map( static fn( array $row ): string => SalesAmount::format( $row['payout_units'] ), $unsettled ), 'Only the new row, at the whole profit.' );
+
+		$second = $this->request( '5', 'key-set-0064' );
+		$this->decisions->complete( $second->id );
+		$shown = $this->documents->for_payout( $second->id );
+
+		self::assertNotNull( $shown );
+		self::assertSame( 'adr063-adr054-v1', $shown['document']->calculation_version, 'New documents name the calculation without the deduction.' );
+		// Opening 22 (32 − 10) + commission 20 − paid 5 = 37 = earned 52 − paid 15: chain and balance agree.
+		self::assertSame( array( '22.0000', '20.0000', '5.0000', '37.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $shown['document']->opening_units, $shown['document']->commission_units, $shown['document']->payout_units, $shown['document']->closing_units ) ) );
+		self::assertSame( array( '16.0000', '16.0000' ), array_map( static fn( array $row ): string => (string) $row['payout_amount'], $this->documents->for_payout( $first->id )['rows'] ?? array() ), 'The earlier document is unchanged.' );
 	}
 
 	public function test_an_unknown_row_refuses_the_completion_and_nothing_is_issued(): void {
