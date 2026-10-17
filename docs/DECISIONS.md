@@ -2725,9 +2725,10 @@ Migration 8 (`AddCreatorShareModel`):
 - Audit-actions `creator_pricing_applied`, `creator_pricing_drift_overwritten` og `product_fixed_profit_set`/`_removed` skrives ikke længere, men bevares til historikken. Nye: `product_markup_set`/`_removed`.
 - **Åbent spørgsmål (moms og bogføring):** et fradrag på 20 % af en profit beregnet af et beløb inkl. 25 % moms svarer præcis til momsandelen (20/1,25 = 16). For linjer med en anden sats eller 0 % (fx momsfritaget salg eller eksport) afviger fradraget fra den faktiske moms. Reglen er implementeret som besluttet; om fradraget skal være momsandelen ved andre satser, skal afklares med projektejeren og eventuelt revisor, før payout bruges til afregning.
 - Rækker uden gemt moms (registreret før schema-version 7) har ukendt profit; der sker ingen backfill.
+- **Statusnote 2026-10-17:** projektejeren har besluttet at fjerne 20 %-reduktionen i pkt. 3 og regulere historiske afregninger (ADR-063). Ikke implementeret; koden anvender pkt. 3 uændret, indtil ændringen er implementeret.
 
 ## Related
-ADR-007, ADR-019, ADR-022, ADR-030, ADR-037, ADR-038, ADR-045, ADR-046, ADR-047, ADR-048.
+ADR-007, ADR-019, ADR-022, ADR-030, ADR-037, ADR-038, ADR-045, ADR-046, ADR-047, ADR-048, ADR-063.
 
 ### Præcisering 2026-10-09: review før afslutning af fase 22
 Beslutningerne er uændrede. Præciseret:
@@ -3303,9 +3304,10 @@ Schema-version 11 (`CreateSettlementTables`). Ledgeren og payouts ændres ikke.
 - **Note 2026-10-16 (PDF og skabelonversion 2, projektejerens beslutning):** nye bilag udstedes med skabelonversion 2. Mærket "Foreløbigt, ikke godkendt af revisor/SKAT" (060-9) erstattes for dem af en neutral oplysning om skat og indberetning: creatoren er selv ansvarlig for at undersøge og opfylde sine forpligtelser over for Skattestyrelsen; bilaget er ikke skatterådgivning og ikke godkendt af en revisor eller Skattestyrelsen. Bilag med skabelonversion 1 bevarer deres mærkning og indhold. Som tillæg til 060-5 kan bilaget hentes som PDF (creator: `GET /me/payouts/{id}/settlement-document/pdf`; admin: "Hent PDF" på payout-siden via `admin-post.php`, `merchboard_manage_payouts` og nonce pr. payout). PDF'en dannes ved hver hentning ud fra det gemte, uforanderlige bilag og gemmes aldrig (ingen migration, ingen ny kolonne); samme bilag, skabelonversion og webstedsindstillinger giver samme bytes. Den laves af en minimal egen PDF-generator (`MerchBoard\Core\Pdf\PdfWriter`, standardfontene Helvetica med WinAnsi), så ADR-004 overholdes. Før PDF'en dannes, skal bilaget stemme med sine rækker (kommission, profit og saldo efter bilaget); ellers dannes ingen PDF. Gebyrer, tilbageholdelser og moms af kommissionen vises ikke, da datamodellen ikke har godkendte data for dem; rækkernes moms vises som "Moms på salget". Teksten er generel information, ikke juridisk rådgivning, og opfylder ikke i sig selv krav til selvfakturering; R1–R4 er fortsat uafklarede (formelle fakturakrav ved selvfakturering, moms af kommission, 20 %-reglen og aftalegrundlaget).
 - Afregningsbilag er ikke godkendt af revisor eller SKAT; R1–R4 og ADR-059 blokerer produktionsbrug.
 - **Note 2026-10-17 (R4):** aftalegrundlaget for omvendt fakturering er forretningsmæssigt afklaret med dokumenterede forbehold (ADR-061). Det er ikke en godkendelse af bilaget: bilaget og dets formuleringer er ikke gennemgået af SKAT, revisor eller advokat, og R1–R3 og ADR-059 er fortsat uafklarede og blokerer produktionsbrug.
+- **Note 2026-10-17 (R1 og R2):** R1 er forretningsmæssigt afklaret med dokumenterede forbehold (ADR-062), og 20 %-reduktionen fjernes (ADR-063). Ved implementeringen erstattes D9 a for korrigerende bilag (nummer med suffiks til originalen), D10 a (manglende stamdata indsamles) og D11 a's korrigerende bilag uden beløb (rettelsesbilag med beløb) fremadrettet; udstedte bilag ændres ikke. Ikke implementeret: bilag udstedes fortsat efter reglerne ovenfor, og R1 og R2 blokerer produktionsbrug, indtil ændringerne er implementeret.
 
 ## Related
-ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058, ADR-059, ADR-061.
+ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058, ADR-059, ADR-061, ADR-062, ADR-063.
 
 ---
 
@@ -3353,3 +3355,128 @@ Projektejerens forretningsbeslutning: modellen baseres på den modtagne mundtlig
 
 ## Related
 ADR-049, ADR-059, ADR-060; [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13.6, 13.7 og 16.1.
+
+---
+
+# ADR-062: Moms, afregningsbilag, rettelser og payout-gavekort: forretningsmæssig afklaring med forbehold (R1)
+
+## Date
+2026-10-17
+
+## Status
+Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R1: forretningsmæssigt afklaret med dokumenterede forbehold.** Der indhentes ingen yderligere skriftlig vurdering fra revisor eller advokat, og en sådan vurdering er ikke en betingelse for afklaringen. Beslutningen er ikke en juridisk, skattemæssig eller bogføringsmæssig validering. **Ikke implementeret:** beslutningerne kræver tekniske ændringer (Consequences); indtil de er implementeret og testet, blokerer R1 fortsat produktionsbrug. Supplerer ADR-048 og ADR-061 og erstatter fremadrettet, ved implementeringen, ADR-060 D9 a for korrigerende bilag, D10 a og D11 a's korrigerende bilag uden beløb. Udstedte bilag ændres ikke.
+
+## Context
+R1 ([reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13.6, 15.8 og 16.1) omfattede moms, momstekst, dokumenttyper, bogføring og gavekortbehandling og afventede revisor eller SKAT. Projektejeren har besvaret afklaringsspørgsmålene i en samtale uden for repoet; beslutningerne nedenfor er projektejerens sammenfatning, givet direkte 2026-10-17. Grundlaget for momsbehandlingen er projektejerens gengivelse af SKAT's mundtlige vejledning (rapportens afsnit 13; ADR-061 punkt 1), ikke en verificeret skriftlig afgørelse. Krav-ID'erne K05–K21 stammer fra R1-revisionen 2026-10-17.
+
+## Decision
+1. **Lukkevej:** R1 afklares forretningsmæssigt med dokumenterede forbehold, som R4 (ADR-061).
+2. **K05, moms af kommissionen:** den aftalte kommission er inklusive moms, hvor der beregnes moms. Ved 25 % er 1.000 kr. inkl. moms lig 800 kr. ekskl. moms plus 200 kr. moms. For ikke-momsregistrerede creators beregnes ingen moms af kommissionen. Det er projektejerens valgte forretningsmodel.
+3. **K06, momsstatus:**
+   - Den historiske salgsberegning bruger creatorens momsstatus på salgstidspunktet. Bilaget viser også status ved udstedelsen.
+   - Historikken over momsstatus bevares: status, gyldighedsdato, registrerings- eller kontroldato, dokumentationsreference, administrator, tidspunkt og begrundelse. Statusændringer kan spores og gennemgås særskilt.
+   - En ændring eller rettelse af historisk status ændrer aldrig automatisk historiske beregninger, bilag eller payouts.
+4. **K09, stamdata:** relevante manglende virksomheds- og creatoroplysninger indsamles og tilføjes bilaget. Udgangspunktet er kandidaterne i rapportens afsnit 13.2 (creatorens navn, adresse og CVR/SE-nr.; virksomhedens navn, adresse og CVR). Den konkrete feltliste fastlægges ved implementeringen.
+5. **K10, dokumenter og nummerering:**
+   - Ét afregningsbilag pr. payout i `AFR`-serien (uændret, D8).
+   - Et rettelsesbilag refererer til originalen og nummereres ud fra den, fx `AFR-001-K1` og `AFR-001-K2`.
+   - Et payout-gavekort får et særskilt gavekortdokument i en egen serie, fx `GAV-001`.
+   - Det præcise talformat for suffikser og den nye serie fastlægges ved implementeringen. Udstedte numre (`AFR-000001` …) ændres ikke.
+6. **K12, moms på bilaget:** moms på produktsalget holdes adskilt fra moms af kommissionen. Når der beregnes moms af kommissionen, vises kommission ekskl. moms, momssats, momsbeløb og kommission inkl. moms. For en ikke-momsregistreret creator vises intet momsbeløb af kommissionen, der kan misforstås.
+7. **K15, rettelser:**
+   - Små fejl kan reguleres på en senere afregning med en tydelig forklaring.
+   - Væsentlige fejl kræver et særskilt rettelsesbilag med de oprindelige beløb, de korrigerede beløb, forskellen, årsagen og en reference til originalen.
+   - Administrator vurderer konkret, om en fejl er væsentlig; der er ingen fast beløbsgrænse.
+   - Originaler bevares, og sporbarheden er fuld.
+8. **K21, payout-gavekort:**
+   - Gavekort er en særskilt afregningsmetode, og afregningsbilaget og gavekortdokumentet er forbundet.
+   - Gavekortdokumentet angiver værdi, modtager, dato og den relevante udstedelses- eller afregningsreference.
+   - Udstedelsen markeres kun som gennemført, når den er bekræftet. En ukendt udstedelsesstatus kræver afklaring og må aldrig udløse en blind genudstedelse.
+9. **Fælles sporbarhed:** eksporter har manifest, versionsreferencer, tidslinje og checksums, hvor det er teknisk muligt, og kan sammenlignes med tidligere eksporter. Eksport og download logges. Sikkerheds- og auditlogs kan ikke redigeres eller slettes via almindelige administratorfunktioner.
+10. **Afgrænsning:** gavekortets saldo, udløb og restværdi hører under G3; kommissionsgrundlaget for ordrer betalt med payout-gavekort under G1; opbevaring under R3; 20 %-reglen under R2 (ADR-063).
+
+## Alternatives considered
+Skriftlig bekræftelse fra revisor eller SKAT før produktionsbrug (rapportens afsnit 13.6). Ét fælles løbenummer for afregningsbilag og korrigerende bilag (ADR-060 D9 a), kun eksisterende data på bilaget (D10 a) og korrigerende bilag uden beløb (D11 a). Fravalgt af projektejeren.
+
+## Reason
+Projektejerens forretningsbeslutning: R1 afklares på grundlag af den modtagne mundtlige vejledning og projektejerens egne valg, uden yderligere skriftlig vurdering.
+
+## Consequences
+- **Implementering i dag** (kontrolleret i koden 2026-10-17):
+  - K05: ikke implementeret. Datamodellen har ingen moms af kommissionen, og bilaget viser den aldrig (`SettlementPdf`).
+  - K06: delvist. Rækkerne beregnes med status fra salgstidspunktet (snapshot, ADR-048), og bilaget viser "Momsregistreret ved udstedelsen". Kun den aktuelle status gemmes; ændringer auditeres med tidligere og ny værdi (`creator_vat_status_changed`). Gyldighedsdato, kontroldato, dokumentationsreference og begrundelse findes ikke.
+  - K09: ikke implementeret. Bilaget har kun creatorens ID, visningsnavn og momsstatus samt butikkens navn og WooCommerce-adresse (D10 a); ingen CVR og ingen creatoradresse.
+  - K10: delvist. `AFR`-serien findes (`AFR-` + seks cifre). Korrigerende bilag tager i dag næste nummer i samme serie (D9 a). Der findes ingen gavekortdokumenter og ingen `GAV`-serie.
+  - K12: ikke implementeret. Bilaget viser "Moms på salget" pr. række og den neutrale skatteoplysning (ADR-060, note 2026-10-16).
+  - K15: delvist. Refunds efter et bilag indgår automatisk i næste bilag via ledgeren. Korrigerende bilag findes som service uden beløb og uden admin-UI (`SettlementDocuments::correct()` kaldes ikke fra UI eller REST). Der er ingen manuel regulering med forklaring.
+  - K21: delvist. Metoden `gift_card` findes. En gavekort-payout gennemføres kun, når kortet er valideret (beløb = saldo = payout-beløbet), adapteren udsteder aldrig kort, og ulæselige data afvises (ADR-057). Bilagets snapshot har udbyder og eksternt ID; der er intet særskilt gavekortdokument.
+  - Punkt 9: auditloggen er append-only uden opdaterings- og slettemetoder (`AuditRepository`, ADR-023). Der findes ingen eksportfunktion.
+- **Resterende teknisk arbejde** (kræver særskilt plan og godkendelse; intet er påbegyndt):
+  - moms af kommissionen (data, beregning og visning);
+  - historik over momsstatus;
+  - indsamling af stamdata;
+  - nummerering af rettelsesbilag med suffiks;
+  - rettelsesbilag med beløb samt regulering med forklaring;
+  - gavekortdokument med `GAV`-serie;
+  - en ny skabelonversion;
+  - eksport med manifest og checksums;
+  - tests af bilag for begge momsstatusser.
+- **Forbehold** (bevares, indtil projektejeren beslutter andet):
+  1. Momsbehandlingen bygger på projektejerens gengivelse af SKAT's mundtlige vejledning og er hverken uafhængigt verificeret eller skattefagligt valideret (jf. ADR-061, forbehold 6).
+  2. Momsmodellen i punkt 2 og visningen i punkt 6 er projektejerens valg, ikke en validering af den samlede regnskabsmodel.
+  3. Det er ikke valideret, at feltlisten (punkt 4), dokumentbetegnelserne og nummereringen (punkt 5) opfylder formkravene til selvfakturering.
+  4. Rettelsesreglen og administratorens vurdering af væsentlighed (punkt 7) er ikke valideret.
+  5. Payout-gavekortets regnskabs- og momsmæssige klassifikation er ikke afklaret.
+  6. Bogføringen sker uden for pluginet og er ikke vurderet. Merch Dashboard har ingen bogføringsfunktion.
+  7. Bilaget og dets formuleringer er ikke gennemgået af SKAT, revisor eller advokat (ADR-061, forbehold 3).
+- **Uafklarede detaljer:** den konkrete feltliste for stamdata, talformatet for `-K`-suffikser og `GAV`-serien, hvilke eksporter der skal findes, og hvordan momssatsen for kommissionen fastlægges og gemmes. De fastlægges ved implementeringen inden for beslutningerne ovenfor.
+- **Andre blokeringer:** R3, G1–G3 og ADR-059 er uændrede; R2 er beskrevet i ADR-063.
+
+## Related
+ADR-023, ADR-048, ADR-049, ADR-057, ADR-060, ADR-061, ADR-063; [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13 og 16.1.
+
+---
+
+# ADR-063: Fjernelse af 20 %-reduktionen og regulering af historiske afregninger (R2)
+
+## Date
+2026-10-17
+
+## Status
+Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R2: forretningsmæssigt afklaret: reduktionen fjernes.** **Ikke implementeret:** koden anvender fortsat ADR-049 pkt. 3 (payout = profit × 80 % for ikke-momsregistrerede), og R2 blokerer produktionsbrug, indtil ændringen og reguleringen er implementeret og testet. Ændrer ADR-049 pkt. 3 ved implementeringen. Ikke juridisk eller regnskabsmæssigt valideret.
+
+## Context
+ADR-049 fradrager 20 % af profitten for ikke-momsregistrerede creators. Det åbne spørgsmål var, om fradraget er korrekt ved andre momssatser end 25 % (R2). Efter ADR-062 punkt 2 beregnes der ingen moms af kommissionen til ikke-momsregistrerede creators. Projektejeren har besluttet at fjerne reduktionen (givet direkte 2026-10-17 som sammenfatning af svar i en samtale uden for repoet).
+
+## Decision
+1. **Reduktionen fjernes:** payout = creator-profit for alle creators. Markup, salgsprisen og momsstatus på salgstidspunktet er uændrede (ADR-049, ADR-062 punkt 3).
+2. **Historiske afregninger:** de genberegnes alene ved at fjerne reduktionen, og forskellene opgøres. Ingen andre historiske input ændres i denne korrektion.
+3. **Regulering:**
+   - For aktive creators kan reguleringsforslag oprettes automatisk; godkendelse og udførelse er adskilte handlinger.
+   - Tidligere dokumenter, versioner, afgørelser og auditspor bevares. Udstedte bilag ændres ikke.
+   - Tidligere creators uden en kommende afregning rapporteres særskilt og betales eller reguleres ikke automatisk.
+4. **Negative forskelle** modregnes i kommende afregninger op til det tilgængelige beløb; resten videreføres uden en fast samlet grænse.
+5. **Forløb for genberegning:** versioner, forhåndsvisning, særskilt gennemgang, godkendelse og udførelse, dubletkontrol, håndtering af delvise fejl, eksplicit afslutning og mulighed for genåbning med fuld historik. Eksport og logs følger ADR-062 punkt 9.
+
+## Alternatives considered
+At bevare 20 %-reglen og få den valideret af revisor (R2 som oprindeligt beskrevet). Fravalgt af projektejeren.
+
+## Reason
+Projektejerens forretningsbeslutning: uden moms af kommissionen til ikke-momsregistrerede creators (ADR-062 punkt 2) fjernes reduktionen.
+
+## Consequences
+- **Implementering i dag** (kontrolleret 2026-10-17): reduktionen findes stadig (`CreatorShare::NOT_VAT_REGISTERED_PAYOUT_BPS = 8000`, testet i `CreatorShareTest`). Der findes hverken genberegning, reguleringsforslag eller eksport.
+- **Resterende teknisk arbejde** (kræver særskilt plan og godkendelse):
+  - ny beregningsregel og ny beregningsversion for nye bilag;
+  - opgørelse af historiske forskelle;
+  - reguleringsforslag med adskilt godkendelse og udførelse;
+  - rapport over tidligere creators;
+  - modregning af negative forskelle;
+  - forløbet i punkt 5.
+- **Overlap:** punkt 4 overlapper D4 (udestående uden nyt salg, rapportens register 16.1); D4's status er ikke ændret.
+- **Forbehold:**
+  - Den juridiske ret til modregning (punkt 4) er ikke valideret.
+  - Momsmodellen bag beslutningen har forbeholdene i ADR-062.
+
+## Related
+ADR-049, ADR-054, ADR-060, ADR-062; [reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 16.1.
