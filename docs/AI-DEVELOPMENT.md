@@ -16,6 +16,8 @@ Projektet må **kun** bruge:
 
 Alt andet er **off-limits**. Det omfatter andre WordPress-projekter, LocalWP-sites, WooCommerce-sites, Git-repositories, tidligere projekter, testprojekter, plugins, themes, kundeprojekter, lokale databaser, udviklingsmiljøer, cloud storage, connectors og eksterne konti. Intet af dette må bruges som datakilde eller inspirationskilde uden projektejerens eksplicitte tilladelse.
 
+**Undtagelse (projektejerens tilladelse 2026-10-18, ADR-065):** GitHub-repoet `github.com/CaileanTV/MerchAlert` må **læses** som funktionel reference til integrationen af alerts (fase 25). Det må kun læses via GitHub (`gh api`), ikke klones til eller kopieres ind i andre mapper, og det må ikke ændres. Kode porteres efter projektets egne konventioner og kopieres ikke ukritisk. Undtagelsen gælder ikke en lokal kopi af MerchAlert, andre repos eller MerchAlert-installationer på andre sites.
+
 ### Eksterne services og connectors
 
 At en connector eller integration er *tilgængelig* i udviklingsmiljøet (fx MCP-/claude.ai-connectors), betyder **ikke**, at projektet må bruge den. Connectors må hverken bruges, aktiveres eller godkendes på projektets vegne. En ekstern service bliver først en del af projektet, når projektejeren eksplicit har godkendt en konkret integration, og beslutningen er registreret som ADR.

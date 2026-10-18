@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065).
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -443,7 +443,7 @@ Nul runtime-afhængighed af `vendor/`, ingen dev-kode i WordPress-runtime, enkle
 2026-09-24
 
 ## Status
-Accepteret. Låst før roadmap-fase 3.
+Accepteret. Låst før roadmap-fase 3. **Statusnote 2026-10-18:** ADR-065 pkt. 5 giver en afgrænset undtagelse for MerchAlert-integrationen: legacy-routes `/ccmerch-alert/creator-overlay/{id}/` og `/ccmerch-alert/overlay/{id}/`, læsning af MerchAlerts `ccmerch_*`-data ved import og læsning af ordre-meta `_ccmerch_username`. Ny kode og nye data bruger fortsat kun `merchboard`.
 
 ## Context
 Fase 1 og 2 brugte en **midlertidig** konvention (`CC Merch Dashboard`, prefix `ccmerch`, namespace `CCMerch\`, slug og text domain `ccmerch-dashboard`), mens navnet stod som åbent spørgsmål. Fra fase 3 bliver prefixet en del af persistente identifiers (tabelnavne, options, meta-keys, roller og capabilities), hvorefter et navneskift kræver datamigration. Der findes endnu ingen persistent plugin-data, så skiftet er gratis nu.
@@ -3557,3 +3557,138 @@ Projektejerens forretningsbeslutning: en creator, der ikke er momsregistreret, m
 
 ## Related
 ADR-049, ADR-054, ADR-060, ADR-062, ADR-063.
+
+---
+
+# ADR-065: Integration af MerchAlert (alerts) i Merch Dashboard
+
+## Date
+2026-10-18
+
+## Status
+Accepteret af projektejeren 2026-10-18 (plan for fase 25 godkendt). **Ikke implementeret**; implementeringen sker trinvis i fase 25 (25.2–25.10), og hvert trin godkendes særskilt.
+
+## Context
+Projektejeren har et ældre plugin, **MerchAlert** ("CCMerch Alert", Beta 2.0.2, `github.com/CaileanTV/MerchAlert`), som kører i produktion. Når en WooCommerce-ordre bliver betalt (`processing` eller `completed`), viser det en alert pr. ordrelinje i overlayet i OBS (browser source på en hemmelig URL) hos den creator, der ejer produktets kategori, med lyd og en valgfri Twitch-chatbesked. Creators administrerer deres overlay i en portal uden WordPress-login, kun beskyttet af et hemmeligt token i URL'en ("Creator ID"). MerchAlert har sine egne creator-profiler, kategori-tildelinger, tabeller og options med prefixet `ccmerch_`.
+
+Projektejeren vil have alert-systemet fuldt integreret i Merch Dashboard: den kategori, der sættes på en creator i dashboardet, skal aktivere alerts; alerts skal være en undermenu i creator-dashboardet; **alle** funktioner fra creator-portalen skal bevares; alt om Creator ID kan fjernes; og resten af dashboardet skal ændres så lidt som muligt. Projektejeren har givet eksplicit tilladelse til at bruge MerchAlert-repoet som kilde (undtagelse fra Project Isolation, AI-DEVELOPMENT.md). Projektejerens valg 2026-10-18: Twitch-chatbotten kommer med (ADR-066), Google Fonts som i dag (ADR-067), eksisterende data migreres, og brugernavn i checkout, globalt overlay og ordrelog-oversigt kommer med; changelog/releases og MerchAlerts egen oversættelsesside udelades.
+
+## Decision
+1. **Modul:** nyt modul `Alerts` (`src/Modules/Alerts/`, `AlertsModule`), som kun registreres sammen med WooCommerce-modulet. Koden skrives om efter projektets konventioner (namespace `MerchBoard\`, egen autoloader, WPCS, PHPStan level 8, strict TypeScript, ingen tredjepartsafhængigheder; ADR-004 og ADR-017). MerchAlerts kode er en funktionel reference og kopieres ikke ukritisk.
+2. **Routing:** en ordrelinjes creator findes med `ProductCreatorLink::creator_id()`, altså den samme tilskrivning som sales ledgeren. Kategori-mappingen (`CreatorCategoryService`) sætter produktets link via afstemningen, så kategorien aktiverer alerts; et manuelt produkt-link giver også alerts. Kun aktive creators med et overlay får alerts. Én alert pr. ordrelinje og overlay (`UNIQUE (order_item_id, overlay_id)`), også når ordren går fra `processing` til `completed`.
+3. **Creator ID udgår:** token-portalen og MerchAlerts creator-profiler, -tokens og kategori-tildelinger erstattes af dashboardets creators og kategori-mapping. Creator-funktionerne flyttes til dashboard-sektionen **"Alerts"** (filteret `merchboard_dashboard_sections`, capability `merchboard_access_dashboard`) med REST-endpoints under `merchboard/v1/me/alerts`; creatoren findes kun via `CreatorContext` (ADR-007). Alle portalens funktioner bevares: browser source-URL (kopiér, åbn, nyt overlay-ID med advarsel), testalert, alle tekst-, boks- og timingindstillinger, designeren (1920×1080, træk og størrelse, snap-to-grid, opdater preview), fontvalg blandt godkendte fonte, lyd (til/fra, standardlyd med upload, erstat, slet og afspil, lyd pr. egen kategori), historik (10 pr. side, detaljer, anonymisering af navne, gensend af alert eller ordre) og chatbot-fanen (vejledning, til/fra, skabelon, preview, testbesked).
+4. **Overlay-siden:** offentlig side, fordi OBS ikke kan logge ind, beskyttet af et hemmeligt overlay-ID (128 bit). ID'et sammenlignes med `hash_equals`, der er rate-limit pr. overlay-ID, siden er `noindex`, har sin egen CSP, og CSS-værdier valideres strengt. Nye alerts hentes med long-poll og short-poll som fallback; MerchAlerts SSE, der holder en PHP-worker i 25 sekunder, bruges ikke. Testalerts og gensendte alerts går gennem en kortlivet kø pr. overlay.
+5. **Legacy-URL'er (undtagelse fra ADR-018):** for at migrerede OBS-URL'er virker videre, besvarer modulet også `/ccmerch-alert/creator-overlay/{id}/` og `/ccmerch-alert/overlay/{id}/`. Undtagelsen omfatter kun disse to routes, læsning af MerchAlerts `ccmerch_*`-data ved importen og læsning af ordre-meta `_ccmerch_username` for historiske ordrer. Al ny kode og alle nye data bruger `merchboard`.
+6. **Kill switch og dobbeltvagt:** alerts er slået fra som standard (`alerts_enabled` i `merchboard_settings`), også efter en opdatering i produktion; en administrator slår dem til. Så længe MerchAlert er aktivt, sender modulet ingen alerts og viser en admin-notice, så alerts ikke sendes dobbelt og rewrite-reglerne ikke kolliderer.
+7. **Admin:** undermenuen **"Alerts"** under Merch Dashboard med fanerne Ordrelog (statuskort og alert-ordrer med filtrene i dag, seneste 24 timer og alle), Globalt overlay (URL, testalert, replay af seneste ordre, designer og lyd), Chatbot (ADR-066), Fontbibliotek (ADR-067) og Import. Settings får sektionen "Alerts". Ny capability `merchboard_manage_alerts` til administratorer (`RoleManager::VERSION` hæves). Audit-actions for skift af overlay-ID, ændringer af chatbot og credentials, fontgodkendelse og import, uden persondata i context.
+8. **Data:** nye tabeller via migrationer fra 17: `merchboard_alert_overlays`, `merchboard_alert_events` (historikken; erstatter MerchAlerts ordrelog-tabeller), `merchboard_alert_chatbot`, `merchboard_alert_chat_messages` og `merchboard_alert_fonts`. Indstillinger i `merchboard_settings`; hemmeligheder i separate options uden autoload. Baggrundsarbejde via Action Scheduler (`JobQueue`), ikke WP-Cron. Tabellerne følger pluginets opt-in-sletning ved afinstallation (ADR-025).
+9. **Brugernavn i checkout:** et valgfrit felt i både klassisk checkout og blok-checkout, gemt som ordre-meta `_merchboard_alert_username` via WooCommerce CRUD (HPOS). Templatevariablen `$UserName` falder tilbage til `_ccmerch_username` og derefter til "Anonymous".
+10. **Migrering fra MerchAlert:** et admin-værktøj (fanen Import) med tørkørsel, påkrævet bekræftelse, én transaktion pr. creator, idempotens og audit. MerchAlert-creatorens kategori matches mod `merchboard_creator_categories`; creators uden match vises og springes over. Overlay-ID'er (uændrede), indstillinger (valideret), lydvedhæftninger, alert-historik, chatbot-kanal, til/fra, skabelon og beskedlog, det globale overlay, godkendte fonte, Google-API-nøglen og grænserne fra indstillingerne flyttes. Twitch-tokens og app-secret migreres ikke (ADR-066). Importen forudsætter en backup, og at MerchAlert er deaktiveret, men ikke afinstalleret (MerchAlerts afinstallation sletter dens tabeller).
+11. **Fravalgt fra MerchAlert:** changelog/releases (inkl. REST `ccmerch/v1/releases`), oversættelsessiden, den skjulte kanal-autorisation pr. creator (`channel:bot`), SSE og den ubrugte alert-engine.
+
+## Alternatives considered
+- **Beholde MerchAlert som separat plugin med en bro:** to creator-modeller og to sæt kategori-tildelinger, der skal holdes i sync, og token-portalen uden login består. Fravalgt.
+- **Indlejre MerchAlerts vanilla-JS-portal uændret (iframe eller mount):** virker ikke under dashboardets CSP (inline `onclick`), og token-adgangen skulle bevares. Fravalgt.
+- **Routing direkte på produktets kategori (MerchAlerts model):** kan give en anden creator end salgets tilskrivning ved manuelle links. Fravalgt til fordel for én kilde.
+- **Ny start uden migrering:** creators skulle sætte alt op igen og ændre OBS-URL'er. Fravalgt af projektejeren.
+
+## Reason
+Én creator-model, én kategori-mapping og én login-beskyttet creator-adgang i stedet for to systemer; alert-funktionerne bevares, og eksisterende OBS-opsætninger virker videre.
+
+## Security
+- Creator-adgang flyttes fra et token i URL'en til WordPress-login, `CreatorContext` og REST-nonces; creatoren kan kun se og ændre sit eget overlay, sin historik og sin chatbot.
+- Overlay-ID'et er det eneste offentlige hemmelige element: 128 bit, `hash_equals`, rate-limit, `noindex`, og et nyt ID gør det gamle ugyldigt med det samme.
+- Lyd-upload: kun creatorens egne filer, MIME-, størrelses- og længdekontrol; kun ejeren kan slette.
+- MerchAlerts kendte svagheder rettes: CSS-injektion i overlayet, debug-logning ved hvert kald, dobbelte chatbeskeder og manglende rate-limit.
+- **Personoplysninger:** alert-events gemmer kundens fornavn og frivillige brugernavn, som MerchAlert gør i dag, og de vises i creatorens historik og i overlayet. En retention-politik for alert-data er ikke besluttet (åbent punkt).
+
+## Migration/data implications
+Nye tabeller (migrationer fra 17) og nye nøgler i `merchboard_settings`. MerchAlerts data læses kun af importen og ændres ikke. Efter en vellykket import kan projektejeren afinstallere MerchAlert. Lyd-vedhæftninger beholder deres filer; kun deres meta overføres.
+
+## Consequences
+- Fase 25 i ROADMAP med trinene 25.1–25.10.
+- Dashboardets eneste generelle ændring er CSP'en for Google Fonts (ADR-067); resten er nye sektioner, sider, routes og tabeller.
+- Produktionsprocedure: backup → deaktivér MerchAlert → opdatér Merch Dashboard → import → slå alerts til. Udføres af projektejeren.
+
+## Related
+ADR-004, ADR-007, ADR-016, ADR-017, ADR-018, ADR-025, ADR-033, ADR-066, ADR-067.
+
+---
+
+# ADR-066: Twitch som godkendt ekstern service (alert-chatbot)
+
+## Date
+2026-10-18
+
+## Status
+Accepteret af projektejeren 2026-10-18. **Ikke implementeret** (fase 25, trin 25.8). Godkender Twitch som ekstern service efter ADR-016.
+
+## Context
+MerchAlert sender en chatbesked i creatorens Twitch-kanal, når en ordre med creatorens produkter bliver betalt. Projektejeren vil beholde chatbotten i integrationen (ADR-065). ADR-016 kræver en ADR for hver ekstern service.
+
+## Decision
+1. **Godkendte endpoints:** `https://id.twitch.tv/oauth2/authorize`, `/oauth2/token` og `/oauth2/validate`, `https://api.twitch.tv/helix/users` og `https://api.twitch.tv/helix/chat/messages`. Andre Twitch-endpoints kræver en ny ADR.
+2. **Model:** én central bot-konto, forbundet af en administrator med `merchboard_manage_alerts` via projektejerens egen Twitch-app (Client ID og Secret) og OAuth med scopes `user:write:chat user:bot`. Administratoren sætter creatorens kanal; creatoren slår beskeder til og fra og redigerer skabelonen. Der er ingen kanal-autorisation pr. creator.
+3. **Afsendelse:** ét baggrundsjob pr. creator og ordre via Action Scheduler (`JobQueue`), ikke WP-Cron og ingen `usleep` i web-requests. Beskedloggen (`UNIQUE (creator_id, order_item_id)`) kontrolleres før afsendelse, så en ordre, der går fra `processing` til `completed`, ikke giver dobbelte beskeder. Testbeskeder og gensendelser sendes kun ved en eksplicit handling.
+4. **Tokens:** gyldigheden kontrolleres og fornyes af et tilbagevendende job; OAuth-flowet bruger et engangs-`state`. Kald har timeout, og fejl logges uden tokens eller secrets.
+5. **Kryptering:** app-secret og tokens krypteres med sodium `secretbox`. Nøglen afledes af `wp_salt('auth')` med et alerts-specifikt domæne og er adskilt fra `MERCHBOARD_PAYOUT_KEY` (ADR-056). Skiftes saltene, kan de gemte værdier ikke længere læses, og botten skal forbindes igen.
+6. **Ingen migrering af hemmeligheder:** MerchAlerts tokens og app-secret (AES-256-CBC uden MAC) migreres ikke; administratoren forbinder botten igen efter importen. Kanal, til/fra og skabelon migreres (ADR-065).
+
+## Alternatives considered
+- **Kanal-autorisation pr. creator (`channel:bot`):** findes skjult i MerchAlert uden UI. Fravalgt; kan tilføjes senere med en ny beslutning.
+- **Tredjeparts Twitch-SDK:** strider mod ADR-004. Fravalgt.
+- **Genbruge `MERCHBOARD_PAYOUT_KEY`:** blander formål og øger konsekvensen af et læk. Fravalgt.
+
+## Reason
+Projektejeren vil bevare chatbotten; Twitch er den eneste mulige modtager.
+
+## Security
+- Twitch-secrets og -tokens forlader aldrig serveren og vises ikke i UI efter gemning.
+- **Personoplysninger sendes til Twitch og vises offentligt i chatten:** beskeden kan indeholde kundens fornavn (`$Name`), frivillige brugernavn (`$UserName`), produkt og beløb, afhængigt af creatorens skabelon. Det svarer til MerchAlert i dag. Projektejeren er ansvarlig for at informere kunderne (fx i checkout eller privatlivspolitikken); det er ikke juridisk vurderet.
+
+## Migration/data implications
+Tabellerne `merchboard_alert_chatbot` og `merchboard_alert_chat_messages` (ADR-065) og options uden autoload til krypterede credentials og tokens.
+
+## Consequences
+Twitch er en godkendt ekstern service for projektet, kun til denne funktion. Efter importen skal botten forbindes igen i admin.
+
+## Related
+ADR-004, ADR-016, ADR-056, ADR-065.
+
+---
+
+# ADR-067: Google Fonts som godkendt ekstern service (alert-overlay)
+
+## Date
+2026-10-18
+
+## Status
+Accepteret af projektejeren 2026-10-18 med GDPR-forbehold. **Ikke implementeret** (fase 25, trin 25.5). Godkender Google Fonts som ekstern service efter ADR-016.
+
+## Context
+MerchAlerts overlay-designer lader creatoren vælge en skrifttype blandt fonte, som administratoren har godkendt fra Google Fonts-kataloget. Projektejeren har valgt at bevare Google Fonts som i dag frem for selvhostede fonte eller systemfonte (2026-10-18).
+
+## Decision
+1. **Katalog:** administratoren synkroniserer kataloget fra `https://www.googleapis.com/webfonts/v1/webfonts` med en Google API-nøgle og godkender fonte i fanen Fontbibliotek. Nøglen gemmes i en option uden autoload og vises ikke igen efter gemning.
+2. **Indlæsning:** fonte indlæses i browseren fra `https://fonts.googleapis.com` (CSS) og `https://fonts.gstatic.com` (fontfiler), kun i creator-dashboardet og på overlay-siden.
+3. **CSP:** dashboard-shellens politik (`ShellController`) udvides med `https://fonts.googleapis.com` i `style-src` og `https://fonts.gstatic.com` i `font-src`; overlay-sidens egen CSP får det samme. Det er den eneste generelle ændring af dashboardet i fase 25.
+4. **Validering:** kun godkendte fontfamilier fra kataloget kan vælges og gemmes, og navnet valideres, før det bruges i CSS eller en URL.
+
+## Alternatives considered
+- **Selvhostede fonte (anbefalet af udviklingen):** ingen eksterne kald ved runtime og intet GDPR-problem. Fravalgt af projektejeren.
+- **Kun systemfonte:** simplest, men begrænser designet. Fravalgt.
+
+## Reason
+Projektejerens valg: creators beholder det fontudvalg, de har i dag.
+
+## Security
+**GDPR-forbehold:** når en font hentes fra Googles servere, sender browseren brugerens IP-adresse til Google. Det rammer creators i dashboardet og den computer, der kører OBS, ikke butikkens kunder. En tysk domstol (LG München I, januar 2022) har anset dynamisk indlejring af Google Fonts uden samtykke for en overtrædelse af GDPR. Projektejeren har accepteret risikoen; det er ikke juridisk vurderet. Overgang til selvhostede fonte kræver en ny beslutning.
+
+## Migration/data implications
+Tabellen `merchboard_alert_fonts` (ADR-065). Godkendte fonte og API-nøglen migreres fra MerchAlert.
+
+## Consequences
+Google Fonts er en godkendt ekstern service for projektet, kun til denne funktion.
+
+## Related
+ADR-016, ADR-065.

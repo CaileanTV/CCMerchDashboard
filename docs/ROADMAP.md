@@ -19,6 +19,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Branding & Themes | 21 | Admin-styret logo, seks dashboard-temaer og branded login (i gang) |
 | Creator pricing | 22 | Creator-profit = WooCommerce-salgspris × markup %, udbetaling efter momsstatus (× 80 % uden momsregistrering), produktmarkup og historiske snapshots; Merch Dashboard skriver aldrig priser (i gang) |
 | Payouts og gavekort | 23 | Creator-anmodninger om udbetaling (bank, PayPal, manuelt oprettet gavekort valideret via en udskiftelig pluginadapter; YITH WooCommerce Gift Cards anbefalet), reservation, admin-behandling og sikker opbevaring (planlægning) |
+| Alerts | 25 | MerchAlert integreres: købs-alerts i creatorens OBS-overlay med lyd og Twitch-chatbot, aktiveret af creatorens kategori, som sektion i creator-dashboardet (planlagt, ADR-065–067) |
 | Senere | – | Notifications, integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -496,6 +497,23 @@ Mål: admin kan markere ordrer klar til payout fra ordrehistorikken og se frigiv
 - **Produktionsblokeringer:** R3, G1–G3 og ADR-059 er uafklarede. R1 og R2 er forretningsmæssigt afklaret. R1 blokerer produktionsbrug, indtil den besluttede implementering er gennemført og testet. R2's implementering er gennemført og runtime-verificeret på Local (ADR-063); CI er grøn på MySQL 8.0.46 (run `39137073798`), og R2's forbehold (modregningsret og momsmodel) bevares. En blokering fjernes kun, når det konkrete krav er dokumenteret opfyldt; en grøn testkørsel eller CI er ikke en produktionsgodkendelse.
 - **Ikke verificeret:** browserbaseret UI-test af bl.a. de nye visninger fra 24.2 (afventer valg) og samtidighed under webserverens egne requests (24.3 brugte to parallelle WP-CLI-processer); G1-kuponværnet og -visningerne mod rigtig WooCommerce og YITH (backup- og gendannelsesproceduren er verificeret, og Local kører med schema-version 16, 2026-10-18; runtime-testen af G1 kræver fortsat særskilt godkendelse).
 - **Kendt fejl (ikke rettet af PR #2):** en databasefejl ved læsning af ledgeren vises på ordrens side i ordrehistorikken som manglende historik (PROJECT-STATUS.md, Known bugs).
+
+## Fase 25 – Alerts: integration af MerchAlert 📝 (plan godkendt 2026-10-18)
+
+Mål: projektejerens ældre plugin MerchAlert integreres fuldt i Merch Dashboard ([ADR-065](DECISIONS.md), [ADR-066](DECISIONS.md), [ADR-067](DECISIONS.md); [features/alerts.md](features/alerts.md)). Når en ordre bliver betalt, får den creator, som produktet er tilskrevet via sin kategori, en alert i sit OBS-overlay med lyd og en valgfri Twitch-chatbesked. Creator-portalens funktioner flyttes til sektionen "Alerts" i creator-dashboardet, og alt om Creator ID udgår. Fokus er kun alert-systemet; resten af dashboardet ændres så lidt som muligt. Hvert trin godkendes særskilt, og der stoppes efter hvert trin.
+
+- **25.1 Beslutninger og docs ✅ (2026-10-18; ingen kode):** ADR-065–067, statusnoter på ADR-016 og ADR-018, undtagelsen fra Project Isolation for MerchAlert-repoet (AI-DEVELOPMENT.md), denne fase, [features/alerts.md](features/alerts.md) og MODULES.md.
+- **25.2 Fundament:** modulet `Alerts`, migrationer fra 17, settings med kill switch (`alerts_enabled`, slået fra som standard), capability `merchboard_manage_alerts`, vagt mod samtidigt aktivt MerchAlert, og routing ved betalt ordre til `merchboard_alert_events` via `ProductCreatorLink::creator_id()` med duplikatvagt.
+- **25.3 Overlay-siden:** offentlige routes (ny og legacy `/ccmerch-alert/...`), long-poll og poll med `hash_equals` og rate-limit, template-engine (`$FirstName`, `$OrderNumber`, `$Product`, `$Quantity`, `$Category`, `$Variation`, `$UserName`) og overlay-scriptet i TypeScript.
+- **25.4 Dashboard-sektionen "Alerts", overlay:** browser source-URL, nyt overlay-ID, testalert, indstillingsformular og REST `merchboard/v1/me/alerts`.
+- **25.5 Designer og fonte:** layout-editoren, admin-fontbiblioteket, Google Fonts API og CSP (ADR-067).
+- **25.6 Lyde:** upload og sletning (MIME, størrelse og længde), standardlyd, lyd pr. kategori og afspilning i overlayet.
+- **25.7 Historik og gensend:** pagineret historik, detaljer, anonymisering af navne og gensend af alert eller ordre.
+- **25.8 Twitch-chatbot (ADR-066):** admin-forbindelse og kanal-mapping, creatorens chatbot-fane, afsendelse via Action Scheduler og token-kontrol.
+- **25.9 Admin-ekstra:** globalt overlay, ordrelog-oversigt og brugernavn i checkout (klassisk og blok-checkout, HPOS).
+- **25.10 Import fra MerchAlert, slutreview og release:** importværktøjet (tørkørsel, bekræftelse, idempotens), danske oversættelser, docs, runtime-test på Local og produktionsproceduren (backup → deaktivér MerchAlert → opdatér → import → slå alerts til; udføres af projektejeren).
+- **Åbne punkter:** retention for alert-data med kundens fornavn og brugernavn; information til kunderne om, at navne kan vises i overlay og Twitch-chat; GDPR-forbeholdet for Google Fonts (ADR-067).
+
 ---
 
 ## Senere (uprioriteret)
