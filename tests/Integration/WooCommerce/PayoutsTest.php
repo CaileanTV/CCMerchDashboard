@@ -19,6 +19,7 @@ use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
@@ -47,6 +48,7 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetailsStore;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
@@ -57,6 +59,7 @@ use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsActions;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsSections;
 use RuntimeException;
 use WP_User;
 use wpdb;
@@ -145,6 +148,7 @@ final class PayoutsTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		$this->posts->remove_all();
 		$this->second?->close();
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -445,6 +449,146 @@ final class PayoutsTest extends IntegrationTestCase {
 		self::assertSame( ( new DateTimeImmutable( '2026-10-01', wp_timezone() ) )->getTimestamp(), $this->settings->settlement_start( $this->creator )?->getTimestamp(), 'Midnight in the site\'s time zone.' );
 	}
 
+	public function test_the_master_data_forms_check_capability_and_nonce_and_audit_no_values(): void {
+		add_filter( 'wp_die_handler', array( CreatorPricingAdminTest::class, 'die_handler' ) );
+		$actions = new PayoutSettingsActions( $this->settings, new RecordingLogger() );
+		$billing = array(
+			'creator_id'         => (string) $this->creator,
+			'billing_legal_name' => 'Payout Alpha ApS',
+			'billing_address_1'  => 'Nørregade 2',
+			'billing_address_2'  => '',
+			'billing_postcode'   => '8000',
+			'billing_city'       => 'Aarhus C',
+			'billing_country'    => 'Danmark',
+			'billing_cvr'        => '8765 4321',
+		);
+		$nonce   = fn( int $creator ): array => array( '_wpnonce' => wp_create_nonce( PayoutSettingsActions::billing_nonce_action( $creator ) ) );
+
+		$this->dies( fn() => $actions->save_company_cvr( array( '_wpnonce' => 'x', PayoutSettingsActions::FIELD_COMPANY_CVR => '12345678' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->dies( fn() => $actions->save_billing( $billing + array( '_wpnonce' => 'x' ) ) );
+		$this->dies( fn() => $actions->save_billing( $billing + $nonce( $this->other ) ), 'A nonce of another creator.' );
+
+		wp_set_current_user( $this->create_user( 'mb-pay-subscriber-4' ) );
+		$this->dies( fn() => $actions->save_company_cvr( array( '_wpnonce' => wp_create_nonce( PayoutSettingsActions::COMPANY_CVR_ACTION ), PayoutSettingsActions::FIELD_COMPANY_CVR => '12345678' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->dies( fn() => $actions->save_billing( $billing + $nonce( $this->creator ) ) );
+		$this->refused( PayoutException::NOT_AUTHORIZED, fn() => $this->settings->set_billing_details( $this->creator, array( 'legal_name' => 'X' ) ), 'Also without the form.' );
+		wp_set_current_user( 1 );
+
+		self::assertSame( '', Settings::company_cvr() );
+		self::assertSame( array(), $this->settings->billing_details( $this->creator )->to_stored() );
+		self::assertSame( array(), $this->audit_rows( AuditAction::PayoutSettingsChanged ) );
+		self::assertSame( array(), $this->audit_rows( AuditAction::CreatorBillingDetailsChanged ) );
+
+		// The issuer's CVR number: eight digits (spaces removed), a public business number.
+		$cvr = fn( string $value ): string => $actions->save_company_cvr( array( '_wpnonce' => wp_create_nonce( PayoutSettingsActions::COMPANY_CVR_ACTION ), PayoutSettingsActions::FIELD_COMPANY_CVR => $value ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( PayoutSettingsActions::RESULT_ARG . '=invalid_cvr', $cvr( '1234567' ) );
+		self::assertStringContainsString( PayoutSettingsActions::RESULT_ARG . '=saved', $cvr( '1234 5678' ) );
+		self::assertStringContainsString( PayoutSettingsActions::RESULT_ARG . '=unchanged', $cvr( '12345678' ) );
+		self::assertSame( '12345678', Settings::company_cvr() );
+		self::assertSame(
+			array(
+				array(
+					'setting'        => 'company_cvr',
+					'previous_value' => '',
+					'value'          => '12345678',
+				),
+			),
+			$this->audit_rows( AuditAction::PayoutSettingsChanged )
+		);
+
+		// The creator's master data: the audit names the changed fields, never their values.
+		self::assertStringContainsString( PayoutSettingsActions::BILLING_RESULT_ARG . '=invalid_cvr', $actions->save_billing( array( 'billing_cvr' => '1234' ) + $billing + $nonce( $this->creator ) ) );
+		self::assertStringContainsString( PayoutSettingsActions::BILLING_RESULT_ARG . '=invalid_billing_details', $actions->save_billing( array( 'billing_city' => str_repeat( 'x', 101 ) ) + $billing + $nonce( $this->creator ) ) );
+		self::assertStringContainsString( PayoutSettingsActions::BILLING_RESULT_ARG . '=not_found', $actions->save_billing( array( 'creator_id' => '999999' ) + $billing + $nonce( 999999 ) ) );
+		self::assertSame( array(), $this->audit_rows( AuditAction::CreatorBillingDetailsChanged ) );
+
+		$saved = $actions->save_billing( $billing + $nonce( $this->creator ) );
+		self::assertStringContainsString( PayoutSettingsActions::BILLING_RESULT_ARG . '=saved', $saved );
+		self::assertStringEndsWith( '#merchboard-billing-details', $saved );
+		self::assertStringContainsString( PayoutSettingsActions::BILLING_RESULT_ARG . '=unchanged', $actions->save_billing( $billing + $nonce( $this->creator ) ) );
+		self::assertSame(
+			array(
+				'legal_name' => 'Payout Alpha ApS',
+				'address_1'  => 'Nørregade 2',
+				'address_2'  => '',
+				'postcode'   => '8000',
+				'city'       => 'Aarhus C',
+				'country'    => 'Danmark',
+				'cvr'        => '87654321',
+			),
+			$this->settings->billing_details( $this->creator )->values()
+		);
+		self::assertSame( array(), $this->settings->billing_details( $this->other )->to_stored(), 'Only this creator.' );
+
+		self::assertTrue( $this->settings->set_billing_details( $this->creator, array( 'legal_name' => 'Payout Alpha ApS' ) ), 'Emptied fields are removed.' );
+		self::assertSame( array( 'legal_name' => 'Payout Alpha ApS' ), $this->settings->billing_details( $this->creator )->to_stored() );
+
+		$audit = $this->audit_rows( AuditAction::CreatorBillingDetailsChanged );
+		self::assertSame(
+			array(
+				array( 'changed_fields' => array( 'legal_name', 'address_1', 'postcode', 'city', 'country', 'cvr' ) ),
+				array( 'changed_fields' => array( 'address_1', 'postcode', 'city', 'country', 'cvr' ) ),
+			),
+			$audit
+		);
+		self::assertStringNotContainsString( 'Nørregade', (string) wp_json_encode( $audit ) );
+		self::assertStringNotContainsString( '87654321', (string) wp_json_encode( $audit ) );
+	}
+
+	public function test_the_admin_sections_show_the_master_data_and_what_is_not_registered(): void {
+		$sections = new PayoutSettingsSections( $this->settings );
+		$creator  = ( new CreatorRepository( $this->wpdb ) )->find( $this->creator );
+		self::assertNotNull( $creator );
+
+		$html = $this->rendered( fn() => $sections->render_settings() );
+		self::assertStringContainsString( 'CVR number on settlement documents', $html );
+		self::assertStringContainsString( 'Not registered: new settlement documents show the CVR number as not registered.', $html );
+		self::assertStringContainsString( 'value="' . PayoutSettingsActions::COMPANY_CVR_ACTION . '"', $html );
+
+		$html = $this->rendered( fn() => $sections->render_creator( $creator ) );
+		self::assertStringContainsString( 'id="merchboard-billing-details"', $html );
+		self::assertStringContainsString( 'Not registered: legal name, address, CVR/SE number.', $html );
+		self::assertStringContainsString( 'value="' . PayoutSettingsActions::BILLING_ACTION . '"', $html );
+
+		$this->settings->set_company_cvr( '12345678' );
+		$this->settings->set_billing_details(
+			$this->creator,
+			array(
+				'legal_name' => 'Payout <Alpha> ApS',
+				'city'       => 'Aarhus C',
+			)
+		);
+
+		self::assertStringNotContainsString( 'Not registered:', $this->rendered( fn() => $sections->render_settings() ) );
+		self::assertStringContainsString( 'value="12345678"', $this->rendered( fn() => $sections->render_settings() ) );
+
+		$html = $this->rendered( fn() => $sections->render_creator( $creator ) );
+		self::assertStringContainsString( 'Not registered: CVR/SE number.', $html );
+		self::assertStringContainsString( 'value="Payout &lt;Alpha&gt; ApS"', $html, 'Escaped.' );
+		self::assertStringNotContainsString( '<Alpha>', $html );
+
+		wp_set_current_user( $this->create_user( 'mb-pay-subscriber-5' ) );
+		self::assertSame( '', $this->rendered( fn() => $sections->render_creator( $creator ) ), 'Nothing without the capability.' );
+		wp_set_current_user( 1 );
+	}
+
+	/**
+	 * Output of a render call.
+	 *
+	 * @param callable $render Render call.
+	 */
+	private function rendered( callable $render ): string {
+		ob_start();
+
+		try {
+			$render();
+		} finally {
+			$html = (string) ob_get_clean();
+		}
+
+		return $html;
+	}
+
 	/**
 	 * Requires a call to end in wp_die() (the test's die handler throws).
 	 *
@@ -475,7 +619,7 @@ final class PayoutsTest extends IntegrationTestCase {
 		$this->balances   = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
 		$this->requests   = new PayoutRequests( $this->repository, $this->balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock );
 		$this->decisions  = new PayoutDecisions( $this->repository, $this->balances, $cipher, $audit, $transaction, $clock, new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock ) );
-		$this->settings   = new PayoutSettings( $this->repository, $audit, $transaction, $clock );
+		$this->settings   = new PayoutSettings( $this->repository, $audit, $transaction, $clock, new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) ) );
 	}
 
 	/**

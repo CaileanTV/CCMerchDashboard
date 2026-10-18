@@ -21,6 +21,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutFreeText;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
@@ -30,6 +31,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
+use UnexpectedValueException;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,7 +40,10 @@ defined( 'ABSPATH' ) || exit;
  * auditor or the Danish Tax Agency (R1–R4 open). Documents of template
  * version 1 are marked preliminary (060-9); from version 2 they carry a
  * neutral note on tax and reporting instead (SettlementPdf::tax_note()); from
- * version 3 they also carry the VAT on the commission (CommissionVat).
+ * version 3 they also carry the VAT on the commission (CommissionVat), and
+ * from version 4 the master data of both parties (ADR-062 K09): the
+ * creator's legal name, address and CVR/SE number and the issuing business'
+ * CVR number, copied at issue and '' or [] when not registered.
  * Issued documents keep the version they were issued with.
  *
  * **Issue** runs inside the transaction and under the creator's payout lock
@@ -56,10 +61,15 @@ defined( 'ABSPATH' ) || exit;
  * recalculated (060-4), and so is the split of the commission into VAT and
  * commission excl. VAT (CommissionVat, ADR-062 K05).
  *
- * **Correct** (D11) issues a correction document that refers to the latest
- * document of a chain, with a new snapshot of the parties and a reason. It
- * carries no amounts: changes of amounts reach the next settlement document
- * through the ledger.
+ * **Correct** (ADR-062 K10 and K15) issues a correction document
+ * (rettelsesbilag) for a material error, as assessed by the administrator:
+ * it corrects the latest document of a chain, is numbered after the original
+ * (`AFR-000007-K1`) and states the amounts in force, the corrected amounts,
+ * the difference and the reason, with a new snapshot of the parties
+ * (SettlementCorrection, template version 5). It changes no issued document,
+ * payout, ledger row or balance, and the difference is not settled.
+ * Correction documents issued before (D11 a) carry no amounts and a number
+ * of the series; they are kept and shown as they were.
  */
 final class SettlementDocuments {
 
@@ -84,9 +94,10 @@ final class SettlementDocuments {
 	/**
 	 * Version of the document template (texts and layout) of new documents:
 	 * 1 = marked preliminary (060-9), 2 = note on tax and reporting, 3 = also
-	 * VAT on the commission (CommissionVat, ADR-062 K05 and K12).
+	 * VAT on the commission (CommissionVat, ADR-062 K05 and K12), 4 = also the
+	 * master data of both parties (ADR-062 K09).
 	 */
-	public const TEMPLATE_VERSION = 3;
+	public const TEMPLATE_VERSION = 4;
 
 	/**
 	 * Longest reason of a correction.
@@ -107,6 +118,7 @@ final class SettlementDocuments {
 	 * @param Transaction                     $transaction Transactions (corrections).
 	 * @param Closure                         $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param PayoutAdjustmentRepository|null $adjustments Payout adjustments to settle (ADR-063); null = none.
+	 * @param CreatorBillingDetailsStore|null $billing     Creators' master data (ADR-062 K09); null = none registered.
 	 */
 	public function __construct(
 		private SettlementRepository $documents,
@@ -117,7 +129,8 @@ final class SettlementDocuments {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private Closure $clock,
-		private ?PayoutAdjustmentRepository $adjustments = null
+		private ?PayoutAdjustmentRepository $adjustments = null,
+		private ?CreatorBillingDetailsStore $billing = null
 	) {
 	}
 
@@ -228,64 +241,132 @@ final class SettlementDocuments {
 	}
 
 	/**
-	 * Issues a correction document for the latest document of a chain (D11).
+	 * Issues a correction document (rettelsesbilag, ADR-062 K10 and K15) for
+	 * a material error, as assessed by the administrator, in the settlement
+	 * document of a payout. It corrects the latest document of the chain
+	 * (the original or its latest correction), which the caller names, so a
+	 * repeated or stale request is refused. It is numbered after the
+	 * original (`AFR-000007-K1`, `-K2`, …; no number of the series is used)
+	 * and states the amounts in force, the corrected amounts, the difference
+	 * and the reason (SettlementCorrection), with the parties as they are
+	 * now. Nothing else changes: not the original or earlier corrections,
+	 * the payout, the ledger, the balance or later documents; the difference
+	 * is not settled. One transaction under the creator's payout lock with
+	 * audit; any failure writes nothing.
 	 *
-	 * @param int    $document_id The document to correct (the latest of its chain).
+	 * @param int    $payout_id   The payout whose settlement document is corrected.
+	 * @param int    $document_id The document to correct: the latest of the chain.
 	 * @param string $reason      Why (shown on the document, never audited).
-	 * @throws PayoutException When not allowed, the reason is invalid, or the document cannot be corrected.
+	 * @param string $incl        Corrected commission of sales with VAT, incl. VAT, as entered.
+	 * @param string $untaxed     Corrected commission of sales without VAT, as entered.
+	 * @throws PayoutException When not allowed, an input is invalid, nothing would change, or the document cannot be corrected; a failed read or write is a DatabaseException (nothing is written).
 	 */
-	public function correct( int $document_id, string $reason ): SettlementDocument {
+	public function correct( int $payout_id, int $document_id, string $reason, string $incl, string $untaxed ): SettlementDocument {
 		if ( ! current_user_can( Capabilities::MANAGE_PAYOUTS ) ) {
 			throw new PayoutException( PayoutException::NOT_AUTHORIZED );
 		}
 
 		$reason = trim( $reason );
 
-		if ( '' === $reason || mb_strlen( $reason ) > self::MAX_REASON_LENGTH ) {
-			throw new PayoutException( PayoutException::INVALID_REASON );
+		if ( '' === $reason || mb_strlen( $reason ) > self::MAX_REASON_LENGTH || 1 === preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $reason ) || 1 !== preg_match( '//u', $reason ) ) {
+			throw new PayoutException( PayoutException::INVALID_CORRECTION_REASON );
 		}
 
-		$found = $this->documents->find( $document_id ) ?? throw new PayoutException( PayoutException::DOCUMENT_NOT_CORRECTABLE );
+		// Shown to the creator and on the document: never bank or payment details (as rejection reasons).
+		if ( PayoutFreeText::contains_payment_details( $reason, null ) ) {
+			throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
+		}
+
+		// Format only; the store precision is checked under the lock.
+		SettlementCorrection::amount( $incl, SalesAmount::DECIMALS );
+		SettlementCorrection::amount( $untaxed, SalesAmount::DECIMALS );
+
+		$found = $this->documents->find( $document_id );
+
+		if ( null === $found || $found->payout_id !== $payout_id || $payout_id < 1 ) {
+			throw new PayoutException( PayoutException::DOCUMENT_NOT_CORRECTABLE );
+		}
 
 		return $this->payouts->with_creator_lock(
 			$found->creator_id,
 			fn(): SettlementDocument => $this->transaction->run(
-				function () use ( $document_id, $reason ): SettlementDocument {
-					$original = $this->documents->find( $document_id, true );
+				function () use ( $payout_id, $document_id, $reason, $incl, $untaxed ): SettlementDocument {
+					$corrected = $this->documents->find( $document_id, true );
 
-					if ( null === $original || null !== $this->documents->correction_of( $document_id ) ) {
+					// The latest of its chain, still: a repeated or stale request corrects nothing.
+					if ( null === $corrected || $corrected->payout_id !== $payout_id || null !== $this->documents->correction_of( $document_id ) ) {
 						throw new PayoutException( PayoutException::DOCUMENT_NOT_CORRECTABLE );
 					}
 
+					$chain = $this->chain_to( $corrected );
+
+					// At most MAX_CHAIN corrections, so every issued one can be read and shown again.
+					if ( count( $chain ) > SettlementCorrection::MAX_CHAIN ) {
+						throw new PayoutException( PayoutException::CORRECTION_LIMIT );
+					}
+
+					$original = $chain[0];
+					$rows     = $this->documents->rows( $original->id );
+
+					try {
+						$before = SettlementCorrection::in_force( $chain, $rows );
+						// The VAT status at the sale of the original's rows, never the creator's current status.
+						$categories = SettlementCorrection::categories( $rows );
+					} catch ( UnexpectedValueException ) {
+						throw new PayoutException( PayoutException::DOCUMENT_NOT_CORRECTABLE );
+					}
+
+					$decimals = SettlementCorrection::decimals( $rows );
+
+					try {
+						$after = SettlementCorrection::corrected( $before['rate_bps'], SettlementCorrection::amount( $incl, $decimals ), SettlementCorrection::amount( $untaxed, $decimals ), $decimals );
+					} catch ( UnexpectedValueException ) {
+						throw new PayoutException( PayoutException::INVALID_CORRECTION_AMOUNT );
+					}
+
+					// No VAT on the commission of sales while not VAT registered, and none removed from sales while registered.
+					if ( ! SettlementCorrection::within( $categories, $after ) ) {
+						throw new PayoutException( PayoutException::CORRECTION_VAT_STATUS );
+					}
+
 					$connection = $this->payouts->lock_connection( $original->creator_id );
-					$payout     = null === $original->payout_id ? null : $this->payouts->find( $original->payout_id );
+					$payout     = $this->payouts->find( $payout_id );
 					$vat        = $this->vat->find( $original->creator_id );
-					$now        = ( $this->clock )();
-					$user       = get_current_user_id();
-					$snapshot   = $this->snapshot( $payout, $vat, $this->payouts->settlement_start( $original->creator_id ) )
-						+ array(
-							'corrects'          => $original->number,
-							'correction_reason' => $reason,
-						);
+					$snapshot   = $this->snapshot( $payout, $vat, $this->payouts->settlement_start( $original->creator_id ) );
+
+					// Something must change: an amount, or the master data of the parties (K09); never only the current VAT status or display name.
+					if ( SettlementCorrection::unchanged( $before, $after ) && SettlementCorrection::same_parties( $corrected->snapshot, $snapshot ) ) {
+						throw new PayoutException( PayoutException::CORRECTION_UNCHANGED );
+					}
+
+					$sequence   = count( $chain );
+					$correction = SettlementCorrection::snapshot( $original->number, $corrected->number, $sequence, $decimals, $before, $after, $original->payout_units );
 					$document   = $this->insert(
 						array(
+							'number'               => $original->number . '-K' . $sequence,
+							'template_version'     => SettlementCorrection::TEMPLATE,
 							'type'                 => SettlementDocument::TYPE_CORRECTION,
 							'creator_id'           => $original->creator_id,
-							'payout_id'            => (int) $original->payout_id,
+							'payout_id'            => $payout_id,
 							'settlement_payout_id' => 0,
-							'corrects_document_id' => $original->id,
+							'corrects_document_id' => $corrected->id,
 							'currency'             => $original->currency,
 							'period_from'          => $original->period_from,
 							'period_to'            => $original->period_to,
+							// The amounts are in the snapshot only: no balance or sum ever counts a correction.
 							'profit_units'         => 0,
 							'commission_units'     => 0,
 							'opening_units'        => 0,
 							'payout_units'         => 0,
 							'closing_units'        => 0,
 							'vat_registered'       => $vat,
-							'snapshot'             => $snapshot,
-							'issued_by'            => $user,
-							'issued_at'            => $now,
+							'snapshot'             => $snapshot + array(
+								'corrects'          => $corrected->number,
+								'correction_reason' => $reason,
+								SettlementCorrection::SNAPSHOT_KEY => $correction,
+							),
+							'issued_by'            => get_current_user_id(),
+							'issued_at'            => ( $this->clock )(),
 						),
 						$connection
 					);
@@ -295,11 +376,16 @@ final class SettlementDocuments {
 						AuditAction::SettlementDocumentCorrected,
 						$original->creator_id,
 						array(
-							'document_id'     => $document->id,
-							'document_number' => $document->number,
-							'corrects'        => $original->number,
-							'payout_id'       => $original->payout_id,
-							'has_reason'      => true,
+							'document_id'           => $document->id,
+							'document_number'       => $document->number,
+							'original'              => $original->number,
+							'corrects'              => $corrected->number,
+							'payout_id'             => $payout_id,
+							'currency'              => $original->currency,
+							'commission_before'     => $correction['before']['commission'],
+							'commission_after'      => $correction['after']['commission'],
+							'commission_difference' => $correction['difference']['commission'],
+							'has_reason'            => true,
 						)
 					);
 					$this->payouts->assert_same_connection( $original->creator_id );
@@ -308,6 +394,30 @@ final class SettlementDocuments {
 				}
 			)
 		);
+	}
+
+	/**
+	 * The chain of a document back to its original settlement document: the
+	 * original first, the document last.
+	 *
+	 * @param SettlementDocument $document Document.
+	 * @return non-empty-list<SettlementDocument>
+	 * @throws PayoutException `document_not_correctable` for a broken or too long chain; a failed read is a DatabaseException.
+	 */
+	private function chain_to( SettlementDocument $document ): array {
+		$chain = array( $document );
+
+		while ( SettlementDocument::TYPE_CORRECTION === $chain[0]->type ) {
+			$previous = null === $chain[0]->corrects_document_id ? null : $this->documents->find( $chain[0]->corrects_document_id );
+
+			if ( null === $previous || $previous->payout_id !== $document->payout_id || count( $chain ) > SettlementCorrection::MAX_CHAIN ) {
+				throw new PayoutException( PayoutException::DOCUMENT_NOT_CORRECTABLE );
+			}
+
+			array_unshift( $chain, $previous );
+		}
+
+		return $chain;
 	}
 
 	/**
@@ -362,7 +472,7 @@ final class SettlementDocuments {
 		$next        = $this->documents->correction_of( $document->id );
 
 		// The chain of corrections; each corrects the previous one (D11).
-		for ( $i = 0; null !== $next && $i < 100; $i++ ) {
+		for ( $i = 0; null !== $next && $i < SettlementCorrection::MAX_CHAIN; $i++ ) {
 			$corrections[] = $next;
 			$next          = $this->documents->correction_of( $next->id );
 		}
@@ -382,7 +492,8 @@ final class SettlementDocuments {
 	 * @throws DatabaseException When a write fails.
 	 */
 	private function insert( array $values, int $connection ): SettlementDocument {
-		$number = self::SERIES . '-' . str_pad( (string) $this->documents->next_number( self::SERIES, $connection ), self::DIGITS, '0', STR_PAD_LEFT );
+		// A correction document is numbered after its original (K10); only settlement documents take the next number.
+		$number = isset( $values['number'] ) ? (string) $values['number'] : self::SERIES . '-' . str_pad( (string) $this->documents->next_number( self::SERIES, $connection ), self::DIGITS, '0', STR_PAD_LEFT );
 		$id     = $this->documents->insert_document(
 			$values + array(
 				'number'              => $number,
@@ -409,6 +520,8 @@ final class SettlementDocuments {
 		$creator_id = null === $payout ? 0 : $payout->creator_id;
 		$creator    = $creator_id > 0 ? $this->creators->find( $creator_id ) : null;
 		$method     = $payout?->method;
+		// Template version 4 (ADR-062 K09): the master data as registered now; '' and [] when not registered.
+		$billing = $creator_id > 0 && null !== $this->billing ? $this->billing->find( $creator_id ) : new CreatorBillingDetails();
 
 		return array(
 			// Template version 2: the note on tax and reporting replaces the preliminary mark.
@@ -417,9 +530,13 @@ final class SettlementDocuments {
 				'id'             => $creator_id,
 				'name'           => null === $creator ? '' : $creator->display_name,
 				'vat_registered' => $vat,
+				'legal_name'     => $billing->legal_name,
+				'address'        => $billing->address_lines(),
+				'cvr'            => $billing->cvr,
 			),
 			'company'          => array(
 				'name'    => (string) get_bloginfo( 'name' ),
+				'cvr'     => Settings::company_cvr(),
 				'address' => array_values(
 					array_filter(
 						array(

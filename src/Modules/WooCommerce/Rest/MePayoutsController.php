@@ -26,6 +26,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
@@ -55,7 +56,9 @@ defined( 'ABSPATH' ) || exit;
  *   the creator's own completed payout (ADR-060);
  * - `GET /me/payouts/{id}/settlement-document/pdf`: the same document as a
  *   PDF download (SettlementPdf), made from the stored document on every
- *   request and never stored.
+ *   request and never stored; with `?correction=K1` one of its correction
+ *   documents with amounts (ADR-062 K10 and K15), whose amounts are part of
+ *   the document's `corrections`.
  *
  * The creator comes only from CreatorContext (permission callback and again
  * in each endpoint, ADR-007); no creator id is read from the request. All
@@ -166,9 +169,13 @@ final class MePayoutsController extends RestController {
 					'callback'            => array( $this, 'get_settlement_document_pdf' ),
 					'permission_callback' => array( $this, 'permission' ),
 					'args'                => array(
-						'id' => array(
+						'id'         => array(
 							'type'    => 'integer',
 							'minimum' => 1,
+						),
+						'correction' => array(
+							'type'    => 'string',
+							'pattern' => '^K[1-9][0-9]{0,2}$',
 						),
 					),
 				),
@@ -332,10 +339,25 @@ final class MePayoutsController extends RestController {
 					return self::refused( $e );
 				}
 
-				$pdf      = $this->pdf->render( $shown );
+				$suffix   = $request->get_param( 'correction' );
+				$document = $shown['document'];
+
+				if ( is_string( $suffix ) && '' !== $suffix ) {
+					// A correction document with amounts of this payout's chain (ADR-062 K10 and K15).
+					$document = SettlementPdf::correction( $shown, $suffix );
+
+					if ( null === $document ) {
+						return self::refused( new PayoutException( PayoutException::NOT_FOUND ) );
+					}
+
+					$pdf = $this->pdf->render_correction( $shown, $document );
+				} else {
+					$pdf = $this->pdf->render( $shown );
+				}
+
 				$response = new WP_REST_Response( $pdf, 200 );
 
-				foreach ( SettlementPdf::headers( $shown['document'] ) as $name => $value ) {
+				foreach ( SettlementPdf::headers( $document ) as $name => $value ) {
 					$response->header( $name, $value );
 				}
 
@@ -408,6 +430,7 @@ final class MePayoutsController extends RestController {
 			'creator_name'    => $text( $creator['name'] ?? '' ),
 			'company_name'    => $text( $company['name'] ?? '' ),
 			'company_address' => array_values( array_map( $text, is_array( $company['address'] ?? null ) ? $company['address'] : array() ) ),
+			'master_data'     => self::master_data( $document ),
 			'method'          => $text( $payout['method'] ?? '' ),
 			'destination'     => $text( $payout['destination_hint'] ?? '' ),
 			'rows'            => array_map(
@@ -424,12 +447,55 @@ final class MePayoutsController extends RestController {
 			),
 			'corrections'     => array_map(
 				static fn( SettlementDocument $correction ): array => array(
-					'number'    => $correction->number,
-					'issued_at' => self::time( $correction->issued_at ),
-					'reason'    => is_scalar( $correction->snapshot['correction_reason'] ?? null ) ? (string) $correction->snapshot['correction_reason'] : '',
+					'number'      => $correction->number,
+					'issued_at'   => self::time( $correction->issued_at ),
+					'reason'      => is_scalar( $correction->snapshot['correction_reason'] ?? null ) ? (string) $correction->snapshot['correction_reason'] : '',
+					'amounts'     => self::correction_amounts( $shown, $correction ),
+					'master_data' => SettlementPdf::correction_master_data( $shown, $correction ),
 				),
 				$shown['corrections']
 			),
+		);
+	}
+
+	/**
+	 * The amounts of a correction document (template version 5, ADR-062 K10
+	 * and K15): the suffix of its PDF, the original and the corrected
+	 * document, the VAT rate and the amounts before, after and the difference.
+	 * Null for a correction document without amounts (D11 a), and for one
+	 * whose amounts do not add up or do not match its chain (it has no PDF
+	 * either).
+	 *
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown      The original with its rows and corrections.
+	 * @param SettlementDocument                                                                                           $correction Correction document.
+	 * @return array<string, mixed>|null
+	 */
+	private static function correction_amounts( array $shown, SettlementDocument $correction ): ?array {
+		$stored = SettlementPdf::verified_correction( $shown, $correction );
+
+		if ( null === $stored ) {
+			return null;
+		}
+
+		$format = static function ( array $amounts ): array {
+			$result = array();
+
+			foreach ( SettlementCorrection::AMOUNTS as $key ) {
+				$result[ $key ] = SalesAmount::format( $amounts[ $key ] );
+			}
+
+			return $result;
+		};
+
+		return array(
+			'suffix'     => 'K' . $stored['sequence'],
+			'original'   => $stored['original'],
+			'corrects'   => $stored['corrects'],
+			'rate_bps'   => $stored['rate_bps'],
+			'before'     => $format( $stored['before'] ),
+			'after'      => $format( $stored['after'] ),
+			'difference' => $format( $stored['difference'] ),
+			'payout'     => SalesAmount::format( $stored['payout'] ),
 		);
 	}
 
@@ -451,6 +517,25 @@ final class MePayoutsController extends RestController {
 			'vat'      => SalesAmount::format( $split['vat_units'] ),
 			'incl'     => SalesAmount::format( $split['incl_units'] ),
 			'untaxed'  => SalesAmount::format( $split['untaxed_units'] ),
+		);
+	}
+
+	/**
+	 * The master data of both parties as issued (template version 4, ADR-062
+	 * K09), or null for earlier documents. '' and [] mean not registered at
+	 * issue.
+	 *
+	 * @param SettlementDocument $document Document.
+	 * @return array{creator_legal_name: string, creator_address: list<string>, creator_cvr: string, company_cvr: string}|null
+	 */
+	private static function master_data( SettlementDocument $document ): ?array {
+		$master = SettlementPdf::master_data( $document );
+
+		return null === $master ? null : array(
+			'creator_legal_name' => $master['creator_legal_name'],
+			'creator_address'    => $master['creator_address'],
+			'creator_cvr'        => $master['creator_cvr'],
+			'company_cvr'        => $master['company_cvr'],
 		);
 	}
 

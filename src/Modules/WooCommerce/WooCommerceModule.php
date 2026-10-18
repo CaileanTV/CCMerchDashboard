@@ -18,6 +18,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
@@ -52,6 +53,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutGiftCards;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetailsStore;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
@@ -578,7 +580,8 @@ final class WooCommerceModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$clock,
-				$c->get( PayoutAdjustmentRepository::class )
+				$c->get( PayoutAdjustmentRepository::class ),
+				new CreatorBillingDetailsStore( new CreatorMetaStore( $c->get( wpdb::class ) ) )
 			)
 		);
 		// Recalculation of settled payouts without the 20 % deduction (ADR-063):
@@ -694,7 +697,7 @@ final class WooCommerceModule implements Module {
 		);
 		$container->set(
 			PayoutSettings::class,
-			static fn( Container $c ): PayoutSettings => new PayoutSettings( $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock )
+			static fn( Container $c ): PayoutSettings => new PayoutSettings( $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock, new CreatorBillingDetailsStore( new CreatorMetaStore( $c->get( wpdb::class ) ) ) )
 		);
 		$container->set(
 			MePayoutsController::class,
@@ -725,7 +728,7 @@ final class WooCommerceModule implements Module {
 		);
 		$container->set(
 			PayoutActions::class,
-			static fn( Container $c ): PayoutActions => new PayoutActions( $c->get( PayoutDecisions::class ), $c->get( Logger::class ), $c->get( PayoutGiftCards::class ) )
+			static fn( Container $c ): PayoutActions => new PayoutActions( $c->get( PayoutDecisions::class ), $c->get( Logger::class ), $c->get( PayoutGiftCards::class ), $c->get( SettlementDocuments::class ) )
 		);
 		$container->set(
 			PayoutSettingsActions::class,

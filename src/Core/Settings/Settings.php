@@ -95,6 +95,13 @@ final class Settings {
 	public const PAYOUT_GIFT_CARD_PROVIDER = 'payout_gift_card_provider';
 
 	/**
+	 * The CVR number of the business that issues the settlement documents
+	 * (ADR-062 K09): eight digits, '' when not registered (the default). Copied
+	 * into each settlement document when it is issued.
+	 */
+	public const COMPANY_CVR = 'company_cvr';
+
+	/**
 	 * Slugs WordPress, WooCommerce or common setups already use for their own
 	 * URLs; the dashboard must never shadow them.
 	 */
@@ -132,7 +139,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -142,6 +149,7 @@ final class Settings {
 			self::LOGO_ATTACHMENT_ID        => 0,
 			self::PAYOUT_HOLDING_DAYS       => self::DEFAULT_PAYOUT_HOLDING_DAYS,
 			self::PAYOUT_GIFT_CARD_PROVIDER => '',
+			self::COMPANY_CVR               => '',
 		);
 	}
 
@@ -152,13 +160,14 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug = $values[ self::DASHBOARD_SLUG ] ?? null;
 		$logo = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
 		$days = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
 		$card = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
+		$cvr  = $values[ self::COMPANY_CVR ] ?? null;
 
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL  => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
@@ -167,6 +176,7 @@ final class Settings {
 			self::LOGO_ATTACHMENT_ID        => is_int( $logo ) && $logo > 0 ? $logo : 0,
 			self::PAYOUT_HOLDING_DAYS       => is_int( $days ) && self::valid_holding_days( $days ) ? $days : self::DEFAULT_PAYOUT_HOLDING_DAYS,
 			self::PAYOUT_GIFT_CARD_PROVIDER => is_string( $card ) && self::valid_provider_id( $card ) ? $card : '',
+			self::COMPANY_CVR               => is_string( $cvr ) && self::valid_cvr( $cvr ) ? $cvr : '',
 		);
 	}
 
@@ -186,7 +196,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -277,6 +287,24 @@ final class Settings {
 	 */
 	public static function payout_gift_card_provider(): string {
 		return self::all()[ self::PAYOUT_GIFT_CARD_PROVIDER ];
+	}
+
+	/**
+	 * Whether a string is a valid stored CVR number: '' (not registered) or
+	 * eight digits.
+	 *
+	 * @param string $cvr CVR number.
+	 */
+	public static function valid_cvr( string $cvr ): bool {
+		return '' === $cvr || 1 === preg_match( '/^\d{8}$/', $cvr );
+	}
+
+	/**
+	 * The CVR number of the business that issues the settlement documents,
+	 * '' when not registered.
+	 */
+	public static function company_cvr(): string {
+		return self::all()[ self::COMPANY_CVR ];
 	}
 
 	/**

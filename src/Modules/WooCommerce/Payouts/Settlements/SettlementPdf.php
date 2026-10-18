@@ -37,8 +37,21 @@ defined( 'ABSPATH' ) || exit;
  * carries the neutral note on tax and reporting instead; version 3 also shows
  * the VAT on the commission (CommissionVat, ADR-062 K05 and K12) when VAT was
  * calculated on part of it, separate from the VAT on the sale. Documents of
- * versions 1 and 2 never show VAT on the commission. Fees and withholdings
- * are never shown: the data model has none.
+ * versions 1 and 2 never show VAT on the commission. Version 4 also shows the
+ * master data of both parties (ADR-062 K09): the issuer's CVR number and the
+ * creator's legal name, address and CVR/SE number, each "Not registered"
+ * when missing at issue; earlier versions never show them. Fees and
+ * withholdings are never shown: the data model has none.
+ *
+ * A correction document with amounts (template version 5, ADR-062 K10 and
+ * K15) has its own PDF (render_correction()): the reference to the original
+ * and to the document it corrects (it must match its chain and stay within
+ * the VAT categories of the original's rows), the parties as at the correction, the
+ * amounts before and after and the difference, the unchanged amount paid
+ * out, the reason and the note that nothing else changes and the difference
+ * is not settled automatically. The original's PDF lists its corrections
+ * with the corrected commission. Correction documents without amounts (D11 a)
+ * have no PDF.
  *
  * Texts are in the site's language, so a document reads the same for the
  * creator and for an administrator; dates are in the site's time zone. The
@@ -49,7 +62,13 @@ final class SettlementPdf {
 	/**
 	 * Template versions this renderer knows.
 	 */
-	public const TEMPLATES = array( 1, 2, 3 );
+	public const TEMPLATES = array( 1, 2, 3, 4 );
+
+	/**
+	 * The first template version with the master data of both parties
+	 * (ADR-062 K09).
+	 */
+	public const MASTER_DATA_TEMPLATE = 4;
 
 	private const MARGIN = 48.0;
 
@@ -131,12 +150,66 @@ final class SettlementPdf {
 		$switched = switch_to_locale( get_locale() );
 
 		try {
-			return $this->layout( $document, $verified, $shown['corrections'] );
+			// Corrections with amounts are listed with them only when they match the chain.
+			$corrections = array_map(
+				static fn( SettlementDocument $correction ): array => array(
+					'document' => $correction,
+					'amounts'  => self::verified_correction( $shown, $correction ),
+				),
+				$shown['corrections']
+			);
+
+			return $this->layout( $document, $verified, $corrections );
 		} finally {
 			if ( $switched ) {
 				restore_previous_locale();
 			}
 		}
+	}
+
+	/**
+	 * The PDF of a correction document with amounts (rettelsesbilag, ADR-062
+	 * K10 and K15, template version 5) of a settlement document's chain.
+	 * Before anything is drawn its stored correction must add up, the amounts
+	 * before must be the ones in force at the document it corrects, and its
+	 * references must match the chain (fail closed).
+	 *
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown      The original with its rows and corrections (SettlementDocuments::for_payout()).
+	 * @param SettlementDocument                                                                                           $correction One of its corrections.
+	 * @throws UnexpectedValueException When the correction does not add up or does not match the chain.
+	 */
+	public function render_correction( array $shown, SettlementDocument $correction ): string {
+		$verified = self::verify_correction( $shown, $correction );
+		$switched = switch_to_locale( get_locale() );
+
+		try {
+			return $this->correction_layout( $shown['document'], $correction, $verified );
+		} finally {
+			if ( $switched ) {
+				restore_previous_locale();
+			}
+		}
+	}
+
+	/**
+	 * The correction document with amounts of a chain by its suffix (`K1`),
+	 * or null when there is none (also for a correction without amounts).
+	 *
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown  The original with its corrections.
+	 * @param string                                                                                                       $suffix Suffix, e.g. K1.
+	 */
+	public static function correction( array $shown, string $suffix ): ?SettlementDocument {
+		if ( 1 !== preg_match( '/^K[1-9]\d{0,2}$/', $suffix ) ) {
+			return null;
+		}
+
+		foreach ( $shown['corrections'] as $correction ) {
+			if ( $correction->number === $shown['document']->number . '-' . $suffix && $correction->template_version >= SettlementCorrection::TEMPLATE ) {
+				return $correction;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -147,7 +220,7 @@ final class SettlementPdf {
 	 * @return array<string, string>
 	 */
 	public static function headers( SettlementDocument $document ): array {
-		$name = 1 === preg_match( '/^[A-Z]{1,10}-\d{1,12}$/', $document->number ) ? $document->number : 'settlement-document';
+		$name = 1 === preg_match( '/^[A-Z]{1,10}-\d{1,12}(?:-K[1-9]\d{0,2})?$/', $document->number ) ? $document->number : 'settlement-document';
 
 		return array(
 			'Content-Type'           => 'application/pdf',
@@ -254,13 +327,13 @@ final class SettlementPdf {
 	/**
 	 * Lays the document out.
 	 *
-	 * @phpstan-param list<SettlementDocument> $corrections
+	 * @phpstan-param list<array{document: SettlementDocument, amounts: array{before: array{commission: int}, after: array{commission: int}, difference: array{commission: int}}|null}> $corrections
 	 *
 	 * @phpstan-param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int, commission_vat: array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int}|null} $verified
 	 *
 	 * @param SettlementDocument   $document    Document.
 	 * @param array<string, mixed> $verified    Verified rows, totals and VAT on the commission (verify()).
-	 * @param SettlementDocument[] $corrections Corrections, oldest first.
+	 * @param array<mixed>         $corrections Corrections, oldest first, with their verified amounts.
 	 */
 	private function layout( SettlementDocument $document, array $verified, array $corrections ): string {
 		global $wp_locale;
@@ -268,7 +341,7 @@ final class SettlementPdf {
 		$format              = is_object( $wp_locale ) && is_array( $wp_locale->number_format ?? null ) ? $wp_locale->number_format : array();
 		$this->decimal_point = self::separator( $format['decimal_point'] ?? '.', '.' );
 		$this->thousands     = self::separator( $format['thousands_sep'] ?? ',', '' );
-		$this->decimals      = self::decimals( $document, $verified );
+		$this->decimals      = self::decimals( $document, $verified, $corrections );
 		/* translators: %s: document number. */
 		$title = sprintf( __( 'Settlement document %s', 'merchboard' ), $document->number );
 		/* translators: %s: title of the document. */
@@ -299,16 +372,252 @@ final class SettlementPdf {
 	}
 
 	/**
+	 * The verified correction of a correction document with amounts, or null
+	 * when it has none or does not match its chain (then it is shown nowhere
+	 * with amounts and has no PDF).
+	 *
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown      The original with its rows and corrections.
+	 * @param SettlementDocument                                                                                           $correction One of its corrections.
+	 * @return array{original: string, corrects: string, sequence: int, rate_bps: int, decimals: int, before: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, after: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, difference: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, payout: int}|null
+	 */
+	public static function verified_correction( array $shown, SettlementDocument $correction ): ?array {
+		try {
+			return self::verify_correction( $shown, $correction );
+		} catch ( UnexpectedValueException ) {
+			return null;
+		}
+	}
+
+	/**
+	 * The master data of both parties on a correction document with amounts
+	 * (ADR-062 K09 and K15), from its own snapshot as issued, never the
+	 * creator's current data: the creator's legal name, address and CVR/SE
+	 * number and the issuer's name, address and CVR number ('' and [] = not
+	 * registered), and whether they differ from the document it corrects
+	 * (`changed`, SettlementCorrection::same_parties()). Null for a
+	 * correction document without amounts (D11 a) and for one that does not
+	 * match its chain (fail closed, as its amounts).
+	 *
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown      The original with its rows and corrections.
+	 * @param SettlementDocument                                                                                           $correction One of its corrections.
+	 * @return array{creator_legal_name: string, creator_address: list<string>, creator_cvr: string, company_name: string, company_address: list<string>, company_cvr: string, changed: bool}|null
+	 */
+	public static function correction_master_data( array $shown, SettlementDocument $correction ): ?array {
+		$master = self::master_data( $correction );
+
+		if ( null === $master || null === self::verified_correction( $shown, $correction ) ) {
+			return null;
+		}
+
+		$previous = $shown['document'];
+
+		foreach ( $shown['corrections'] as $item ) {
+			if ( $item->id === $correction->id ) {
+				break;
+			}
+
+			$previous = $item;
+		}
+
+		$company = is_array( $correction->snapshot['company'] ?? null ) ? $correction->snapshot['company'] : array();
+		$address = is_array( $company['address'] ?? null ) ? array_values( array_filter( array_map( static fn( mixed $line ): string => self::text( $line ), $company['address'] ), static fn( string $line ): bool => '' !== $line ) ) : array();
+
+		return array(
+			'creator_legal_name' => $master['creator_legal_name'],
+			'creator_address'    => $master['creator_address'],
+			'creator_cvr'        => $master['creator_cvr'],
+			'company_name'       => self::text( $company['name'] ?? '' ),
+			'company_address'    => $address,
+			'company_cvr'        => $master['company_cvr'],
+			'changed'            => ! SettlementCorrection::same_parties( $previous->snapshot, $correction->snapshot ),
+		);
+	}
+
+	/**
+	 * Checks a correction document against its chain (fail closed).
+	 *
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown      The original with its rows and corrections.
+	 * @param SettlementDocument                                                                                           $correction One of its corrections.
+	 * @return array{original: string, corrects: string, sequence: int, rate_bps: int, decimals: int, before: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, after: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, difference: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, payout: int}
+	 * @throws UnexpectedValueException When anything does not match.
+	 */
+	private static function verify_correction( array $shown, SettlementDocument $correction ): array {
+		$original = $shown['document'];
+
+		if ( SettlementDocument::TYPE_SETTLEMENT !== $original->type || SettlementDocument::TYPE_CORRECTION !== $correction->type
+			|| SettlementCorrection::TEMPLATE !== $correction->template_version || $correction->currency !== $original->currency
+			|| 1 !== preg_match( '/^[A-Z]{3}$/', $correction->currency ) ) {
+			throw new UnexpectedValueException( 'Not a correction document of this template version.' );
+		}
+
+		$chain = array( $original );
+		$found = false;
+
+		foreach ( $shown['corrections'] as $item ) {
+			if ( $item->id === $correction->id ) {
+				$found = true;
+				break;
+			}
+
+			$chain[] = $item;
+		}
+
+		$stored      = SettlementCorrection::of_document( $correction );
+		$predecessor = $chain[ count( $chain ) - 1 ];
+
+		if ( ! $found || null === $stored ) {
+			throw new UnexpectedValueException( 'The correction document does not belong to the chain.' );
+		}
+
+		$before = SettlementCorrection::in_force( $chain, $shown['rows'] );
+		$rate   = $before['rate_bps'];
+		unset( $before['rate_bps'] );
+
+		if ( $stored['original'] !== $original->number || $stored['corrects'] !== $predecessor->number || $correction->corrects_document_id !== $predecessor->id
+			|| count( $chain ) !== $stored['sequence'] || $original->payout_units !== $stored['payout'] || $rate !== $stored['rate_bps'] || $before !== $stored['before'] ) {
+			throw new UnexpectedValueException( 'The correction document does not match its chain.' );
+		}
+
+		// Only the VAT categories of the original's rows (their VAT status at the sale).
+		$categories = SettlementCorrection::categories( $shown['rows'] );
+
+		if ( ! SettlementCorrection::within( $categories, $stored['before'] ) || ! SettlementCorrection::within( $categories, $stored['after'] ) ) {
+			throw new UnexpectedValueException( 'The correction document has VAT categories its original does not have.' );
+		}
+
+		return $stored;
+	}
+
+	/**
+	 * Lays a correction document out.
+	 *
+	 * @phpstan-param array{original: string, corrects: string, sequence: int, rate_bps: int, decimals: int, before: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, after: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, difference: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, payout: int} $stored
+	 *
+	 * @param SettlementDocument   $original   The original settlement document.
+	 * @param SettlementDocument   $correction The correction document.
+	 * @param array<string, mixed> $stored     Its verified correction.
+	 */
+	private function correction_layout( SettlementDocument $original, SettlementDocument $correction, array $stored ): string {
+		global $wp_locale;
+
+		$format              = is_object( $wp_locale ) && is_array( $wp_locale->number_format ?? null ) ? $wp_locale->number_format : array();
+		$this->decimal_point = self::separator( $format['decimal_point'] ?? '.', '.' );
+		$this->thousands     = self::separator( $format['thousands_sep'] ?? ',', '' );
+		$this->decimals      = 2;
+
+		foreach ( array_merge( array_values( $stored['before'] ), array_values( $stored['after'] ), array_values( $stored['difference'] ), array( $stored['payout'] ) ) as $units ) {
+			if ( 0 !== $units % 100 ) {
+				$this->decimals = 4;
+			}
+		}
+
+		/* translators: %s: document number. */
+		$title = sprintf( __( 'Correction document %s', 'merchboard' ), $correction->number );
+		/* translators: %s: title of the document. */
+		$this->continued = sprintf( __( '%s (continued)', 'merchboard' ), $title );
+		$this->pdf       = new PdfWriter( $title, $correction->issued_at, $correction->number );
+		$this->pdf->add_page();
+		$this->y = self::MARGIN;
+
+		$this->header( $correction, __( 'Correction document', 'merchboard' ) );
+		/* translators: 1: number of the original settlement document, 2: its date of issue. */
+		$this->paragraph( sprintf( __( 'Corrects settlement document %1$s of %2$s.', 'merchboard' ), $original->number, self::date( $original->issued_at ) ), self::BODY );
+
+		if ( $stored['corrects'] !== $stored['original'] ) {
+			/* translators: %s: number of the previous correction document. */
+			$this->paragraph( sprintf( __( 'Replaces the corrected amounts of correction document %s.', 'merchboard' ), $stored['corrects'] ), self::BODY );
+		}
+
+		$this->y += 16;
+		$this->parties( $correction );
+		$this->details( $correction );
+		$this->correction_amounts( $correction, $stored );
+
+		$this->ensure( 40 );
+		$this->pdf->text( self::MARGIN, $this->y, __( 'Reason', 'merchboard' ), 11, true );
+		$this->y += 2;
+		$this->paragraph( self::text( $correction->snapshot['correction_reason'] ?? '' ), self::BODY );
+		$this->y += 16;
+
+		$this->note();
+		$this->footers( $correction );
+
+		return $this->pdf->output();
+	}
+
+	/**
+	 * The amounts before and after the correction and the difference.
+	 *
+	 * @phpstan-param array{original: string, corrects: string, sequence: int, rate_bps: int, decimals: int, before: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, after: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, difference: array{commission: int, excl: int, vat: int, incl: int, untaxed: int}, payout: int} $stored
+	 *
+	 * @param SettlementDocument   $correction The correction document.
+	 * @param array<string, mixed> $stored     Its verified correction.
+	 */
+	private function correction_amounts( SettlementDocument $correction, array $stored ): void {
+		$lines = array( array( 'commission', __( 'Commission in the period', 'merchboard' ), true ) );
+
+		if ( 0 !== $stored['before']['incl'] || 0 !== $stored['after']['incl'] ) {
+			$lines[] = array( 'excl', __( 'Commission excl. VAT', 'merchboard' ), false );
+			/* translators: %s: VAT rate in percent, e.g. 25. */
+			$lines[] = array( 'vat', sprintf( __( 'VAT (%s %%)', 'merchboard' ), CommissionVat::percent( $stored['rate_bps'], $this->decimal_point ) ), false );
+			$lines[] = array( 'incl', __( 'Commission incl. VAT', 'merchboard' ), false );
+		}
+
+		if ( 0 !== $stored['before']['untaxed'] || 0 !== $stored['after']['untaxed'] ) {
+			$lines[] = array( 'untaxed', __( 'Commission without VAT (not VAT registered when sold)', 'merchboard' ), false );
+		}
+
+		/* translators: 1: amount paid out, 2: currency. */
+		$paid    = sprintf( __( 'Paid out with the original document (unchanged): %1$s %2$s', 'merchboard' ), $this->amount( $stored['payout'] ), $correction->currency );
+		$note    = $this->pdf->wrap( __( 'This correction document does not change the original document, earlier correction documents or the completed payout. The difference is not settled automatically.', 'merchboard' ) . ' ' . __( 'The VAT follows the creator\'s VAT status at each sale the original settled, not the current status.', 'merchboard' ), self::RIGHT - self::MARGIN - 20, self::SMALL );
+		$height  = ( count( $lines ) + 1 ) * 15 + count( $note ) * 10 + 30;
+		$columns = array( 330.0, 420.0, self::RIGHT - 10 );
+
+		$this->ensure( $height + 30 );
+		$this->pdf->text( self::MARGIN, $this->y, __( 'Correction of the amounts', 'merchboard' ), 11, true );
+		$this->y += 8;
+		$this->pdf->rect( self::MARGIN, $this->y, self::RIGHT - self::MARGIN, $height, 0.94 );
+		$y = $this->y + 16;
+
+		foreach ( array( __( 'Before', 'merchboard' ), __( 'Corrected', 'merchboard' ), __( 'Difference', 'merchboard' ) ) as $i => $heading ) {
+			$this->pdf->text( $columns[ $i ], $y, $heading . ' (' . $correction->currency . ')', self::SMALL, true, PdfWriter::RIGHT );
+		}
+
+		$y += 15;
+
+		foreach ( $lines as list( $key, $label, $bold ) ) {
+			$this->pdf->text( self::MARGIN + 10, $y, $label, self::BODY, $bold );
+
+			foreach ( array( 'before', 'after', 'difference' ) as $i => $column ) {
+				$this->pdf->text( $columns[ $i ], $y, $this->amount( $stored[ $column ][ $key ] ), self::BODY, $bold, PdfWriter::RIGHT );
+			}
+
+			$y += 15;
+		}
+
+		$this->pdf->text( self::MARGIN + 10, $y + 4, $paid, self::BODY );
+		$y += 19;
+
+		foreach ( $note as $line ) {
+			$this->pdf->text( self::MARGIN + 10, $y, $line, self::SMALL );
+			$y += 10;
+		}
+
+		$this->y += $height + 22;
+	}
+
+	/**
 	 * Title, number, date, the preliminary mark of version 1 and the self-billing line.
 	 *
 	 * @param SettlementDocument $document Document.
+	 * @param string|null        $heading  Title instead of "Settlement document".
 	 */
-	private function header( SettlementDocument $document ): void {
+	private function header( SettlementDocument $document, ?string $heading = null ): void {
 		$company = is_array( $document->snapshot['company'] ?? null ) ? $document->snapshot['company'] : array();
 		$creator = is_array( $document->snapshot['creator'] ?? null ) ? $document->snapshot['creator'] : array();
 		$pdf     = $this->pdf;
 
-		$pdf->text( self::MARGIN, $this->y + 18, __( 'Settlement document', 'merchboard' ), 20, true );
+		$pdf->text( self::MARGIN, $this->y + 18, $heading ?? __( 'Settlement document', 'merchboard' ), 20, true );
 		$pdf->text( self::RIGHT, $this->y + 10, $document->number, 12, true, PdfWriter::RIGHT );
 		$pdf->text( self::RIGHT, $this->y + 24, __( 'Issued', 'merchboard' ) . ': ' . self::date( $document->issued_at ), self::BODY, false, PdfWriter::RIGHT );
 		$this->y += 40;
@@ -320,8 +629,10 @@ final class SettlementPdf {
 			$this->y += 30;
 		}
 
+		$master = self::master_data( $document );
+		$name   = null === $master ? self::text( $creator['name'] ?? '' ) : $master['creator_name'];
 		/* translators: 1: company name, 2: creator name. */
-		$line = sprintf( __( 'Self-billing: issued by %1$s on behalf of %2$s.', 'merchboard' ), self::text( $company['name'] ?? '' ), self::text( $creator['name'] ?? '' ) );
+		$line = sprintf( __( 'Self-billing: issued by %1$s on behalf of %2$s.', 'merchboard' ), self::text( $company['name'] ?? '' ), $name );
 		$this->paragraph( $line, self::BODY );
 		$this->y += 4;
 		$pdf->line( self::MARGIN, $this->y, self::RIGHT, $this->y, 0.75, 0.6 );
@@ -329,16 +640,21 @@ final class SettlementPdf {
 	}
 
 	/**
-	 * The issuer and the recipient side by side.
+	 * The issuer and the recipient side by side. A correction document's VAT
+	 * status is the creator's when it was issued, not at the sales: it is
+	 * labelled so (the VAT on its amounts follows the original's rows).
 	 *
 	 * @param SettlementDocument $document Document.
 	 */
 	private function parties( SettlementDocument $document ): void {
-		$snapshot = $document->snapshot;
-		$company  = is_array( $snapshot['company'] ?? null ) ? $snapshot['company'] : array();
-		$creator  = is_array( $snapshot['creator'] ?? null ) ? $snapshot['creator'] : array();
-		$address  = is_array( $company['address'] ?? null ) ? array_map( static fn( mixed $line ): string => self::text( $line ), $company['address'] ) : array();
-		$vat      = match ( $document->vat_registered ) {
+		$vat_label = SettlementDocument::TYPE_CORRECTION === $document->type
+			? __( 'VAT registered when this correction was issued', 'merchboard' )
+			: __( 'VAT registered at issue', 'merchboard' );
+		$snapshot  = $document->snapshot;
+		$company   = is_array( $snapshot['company'] ?? null ) ? $snapshot['company'] : array();
+		$creator   = is_array( $snapshot['creator'] ?? null ) ? $snapshot['creator'] : array();
+		$address   = is_array( $company['address'] ?? null ) ? array_map( static fn( mixed $line ): string => self::text( $line ), $company['address'] ) : array();
+		$vat       = match ( $document->vat_registered ) {
 			true    => __( 'Yes', 'merchboard' ),
 			false   => __( 'No', 'merchboard' ),
 			default => __( 'Unknown', 'merchboard' ),
@@ -347,10 +663,71 @@ final class SettlementPdf {
 		/* translators: %d: creator id. */
 		$creator_id = sprintf( __( 'Creator ID: %d', 'merchboard' ), $id );
 
-		$left  = $this->block( self::MARGIN, __( 'Issued by', 'merchboard' ), array_merge( array( self::text( $company['name'] ?? '' ) ), $address ) );
-		$right = $this->block( 310.0, __( 'Recipient', 'merchboard' ), array( self::text( $creator['name'] ?? '' ), $creator_id, __( 'VAT registered at issue', 'merchboard' ) . ': ' . $vat ) );
+		$issuer    = array_merge( array( self::text( $company['name'] ?? '' ) ), $address );
+		$recipient = array( self::text( $creator['name'] ?? '' ), $creator_id, $vat_label . ': ' . $vat );
+		$master    = self::master_data( $document );
+
+		// Template version 4 (ADR-062 K09): the master data of both parties; missing data is said to be missing.
+		if ( null !== $master ) {
+			$missing  = __( 'Not registered', 'merchboard' );
+			$issuer[] = sprintf(
+				/* translators: %s: CVR number or "Not registered". */
+				__( 'CVR no.: %s', 'merchboard' ),
+				'' === $master['company_cvr'] ? $missing : $master['company_cvr']
+			);
+			$recipient = array( $master['creator_name'] );
+
+			if ( '' !== $master['creator_legal_name'] && $master['creator_legal_name'] !== $master['creator_display_name'] ) {
+				/* translators: %s: the creator's display name. */
+				$recipient[] = sprintf( __( 'Display name: %s', 'merchboard' ), $master['creator_display_name'] );
+			}
+
+			/* translators: %s: "Not registered". */
+			$recipient   = array_merge( $recipient, array() === $master['creator_address'] ? array( sprintf( __( 'Address: %s', 'merchboard' ), $missing ) ) : $master['creator_address'] );
+			$recipient[] = sprintf(
+				/* translators: %s: CVR or SE number or "Not registered". */
+				__( 'CVR/SE no.: %s', 'merchboard' ),
+				'' === $master['creator_cvr'] ? $missing : $master['creator_cvr']
+			);
+			$recipient[] = $creator_id;
+			$recipient[] = $vat_label . ': ' . $vat;
+		}
+
+		$left  = $this->block( self::MARGIN, __( 'Issued by', 'merchboard' ), $issuer );
+		$right = $this->block( 310.0, __( 'Recipient', 'merchboard' ), $recipient );
 
 		$this->y += max( $left, $right ) + 26;
+	}
+
+	/**
+	 * The master data of both parties as issued (template version 4,
+	 * ADR-062 K09), or null for documents of earlier template versions, which
+	 * never show it. The creator's name is the legal name when one was
+	 * registered, else the display name. '' and [] mean not registered at
+	 * issue; nothing is filled in from current data.
+	 *
+	 * @param SettlementDocument $document Document.
+	 * @return array{creator_name: string, creator_display_name: string, creator_legal_name: string, creator_address: list<string>, creator_cvr: string, company_cvr: string}|null
+	 */
+	public static function master_data( SettlementDocument $document ): ?array {
+		if ( $document->template_version < self::MASTER_DATA_TEMPLATE ) {
+			return null;
+		}
+
+		$creator = is_array( $document->snapshot['creator'] ?? null ) ? $document->snapshot['creator'] : array();
+		$company = is_array( $document->snapshot['company'] ?? null ) ? $document->snapshot['company'] : array();
+		$display = self::text( $creator['name'] ?? '' );
+		$legal   = self::text( $creator['legal_name'] ?? '' );
+		$address = is_array( $creator['address'] ?? null ) ? array_values( array_filter( array_map( static fn( mixed $line ): string => self::text( $line ), $creator['address'] ), static fn( string $line ): bool => '' !== $line ) ) : array();
+
+		return array(
+			'creator_name'         => '' === $legal ? $display : $legal,
+			'creator_display_name' => $display,
+			'creator_legal_name'   => $legal,
+			'creator_address'      => $address,
+			'creator_cvr'          => self::text( $creator['cvr'] ?? '' ),
+			'company_cvr'          => self::text( $company['cvr'] ?? '' ),
+		);
 	}
 
 	/**
@@ -618,9 +995,9 @@ final class SettlementPdf {
 	/**
 	 * The correction documents of the chain, if any.
 	 *
-	 * @phpstan-param list<SettlementDocument> $corrections
+	 * @phpstan-param list<array{document: SettlementDocument, amounts: array{before: array{commission: int}, after: array{commission: int}, difference: array{commission: int}}|null}> $corrections
 	 *
-	 * @param SettlementDocument[] $corrections Corrections, oldest first.
+	 * @param array<mixed> $corrections Corrections, oldest first, with their verified amounts (null = listed without).
 	 */
 	private function corrections( array $corrections ): void {
 		if ( array() === $corrections ) {
@@ -631,10 +1008,18 @@ final class SettlementPdf {
 		$this->pdf->text( self::MARGIN, $this->y, __( 'Corrections', 'merchboard' ), 11, true );
 		$this->y += 16;
 
-		foreach ( $corrections as $correction ) {
-			$reason = self::text( $correction->snapshot['correction_reason'] ?? '' );
+		foreach ( $corrections as $entry ) {
+			$correction = $entry['document'];
+			$stored     = $entry['amounts'];
+			$reason     = self::text( $correction->snapshot['correction_reason'] ?? '' );
 			/* translators: 1: number of the correction document, 2: date, 3: reason. */
 			$this->paragraph( sprintf( __( 'Corrected by %1$s (%2$s): %3$s', 'merchboard' ), $correction->number, self::date( $correction->issued_at ), $reason ), self::BODY );
+
+			if ( null !== $stored ) {
+				/* translators: 1: commission before the correction, 2: corrected commission, 3: difference, 4: currency. */
+				$this->paragraph( sprintf( __( 'Commission in the period corrected from %1$s to %2$s %4$s (difference %3$s %4$s); see the correction document.', 'merchboard' ), $this->amount( $stored['before']['commission'] ), $this->amount( $stored['after']['commission'] ), $this->amount( $stored['difference']['commission'] ), $correction->currency ), self::SMALL );
+			}
+
 			$this->y += 4;
 		}
 
@@ -748,14 +1133,25 @@ final class SettlementPdf {
 	 *
 	 * @phpstan-param array{rows: list<array{order_id: int, item_name: string, type: string, quantity: int, net: int, tax: int, payout: int}>, net: int, tax: int, commission_vat: array{rate_bps: int, incl_units: int, vat_units: int, excl_units: int, untaxed_units: int}|null} $verified
 	 *
-	 * @param SettlementDocument   $document Document.
-	 * @param array<string, mixed> $verified Verified rows, totals and VAT on the commission.
+	 * @phpstan-param list<array{document: SettlementDocument, amounts: array{before: array{commission: int}, after: array{commission: int}, difference: array{commission: int}}|null}> $corrections
+	 *
+	 * @param SettlementDocument   $document    Document.
+	 * @param array<string, mixed> $verified    Verified rows, totals and VAT on the commission.
+	 * @param array<mixed>         $corrections Its corrections with their verified amounts (their commission is listed).
 	 */
-	private static function decimals( SettlementDocument $document, array $verified ): int {
+	private static function decimals( SettlementDocument $document, array $verified, array $corrections = array() ): int {
 		$amounts = array( $document->opening_units, $document->commission_units, $document->payout_units, $document->closing_units, $verified['net'], $verified['tax'] );
 
 		if ( null !== $verified['commission_vat'] ) {
 			array_push( $amounts, $verified['commission_vat']['incl_units'], $verified['commission_vat']['vat_units'], $verified['commission_vat']['excl_units'], $verified['commission_vat']['untaxed_units'] );
+		}
+
+		foreach ( $corrections as $entry ) {
+			$stored = $entry['amounts'];
+
+			if ( null !== $stored ) {
+				array_push( $amounts, $stored['before']['commission'], $stored['after']['commission'], $stored['difference']['commission'] );
+			}
 		}
 
 		foreach ( $verified['rows'] as $row ) {

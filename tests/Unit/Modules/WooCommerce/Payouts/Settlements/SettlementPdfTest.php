@@ -116,6 +116,84 @@ final class SettlementPdfTest extends TestCase {
 		}
 	}
 
+	public function test_a_template_4_document_identifies_both_parties_with_their_master_data(): void {
+		$shown = $this->master_document(
+			array(
+				'legal_name' => 'Søren Ærø ApS',
+				'address'    => array( 'Nørregade 2', '1. th.', '8000 Aarhus C', 'Danmark' ),
+				'cvr'        => '87654321',
+			),
+			'12345678'
+		);
+		$pdf   = ( new SettlementPdf() )->render( $shown );
+
+		foreach ( array( 'Self-billing: issued by CCMerch ApS on behalf of Søren Ærø ApS.', 'CVR no.: 12345678', 'Søren Ærø ApS', 'Display name: Søren Ærø', 'Nørregade 2', '1. th.', '8000 Aarhus C', 'Danmark', 'CVR/SE no.: 87654321', 'Creator ID: 3', 'VAT registered at issue: Yes', 'Commission incl. VAT', 'Template version 4.' ) as $text ) {
+			$this->assert_pdf_contains( $text, $pdf );
+		}
+
+		$this->assert_pdf_lacks( 'Not registered', $pdf );
+		self::assertSame(
+			array(
+				'creator_name'         => 'Søren Ærø ApS',
+				'creator_display_name' => 'Søren Ærø',
+				'creator_legal_name'   => 'Søren Ærø ApS',
+				'creator_address'      => array( 'Nørregade 2', '1. th.', '8000 Aarhus C', 'Danmark' ),
+				'creator_cvr'          => '87654321',
+				'company_cvr'          => '12345678',
+			),
+			SettlementPdf::master_data( $shown['document'] )
+		);
+	}
+
+	public function test_missing_master_data_of_a_template_4_document_is_shown_as_not_registered(): void {
+		$shown = $this->master_document(
+			array(
+				'legal_name' => '',
+				'address'    => array(),
+				'cvr'        => '',
+			),
+			''
+		);
+		$pdf   = ( new SettlementPdf() )->render( $shown );
+
+		foreach ( array( 'Self-billing: issued by CCMerch ApS on behalf of Søren Ærø.', 'CVR no.: Not registered', 'Address: Not registered', 'CVR/SE no.: Not registered', 'Creator ID: 3', 'Template version 4.' ) as $text ) {
+			$this->assert_pdf_contains( $text, $pdf );
+		}
+
+		$this->assert_pdf_lacks( 'Display name:', $pdf );
+		self::assertSame( 'Søren Ærø', SettlementPdf::master_data( $shown['document'] )['creator_name'] ?? null, 'The display name when no legal name was registered.' );
+
+		$keys = $this->master_document( null, null );
+		$pdf  = ( new SettlementPdf() )->render( $keys );
+
+		$this->assert_pdf_contains( 'CVR no.: Not registered', $pdf );
+		$this->assert_pdf_contains( 'Address: Not registered', $pdf );
+		$this->assert_pdf_contains( 'CVR/SE no.: Not registered', $pdf, 'Also when the keys are missing altogether.' );
+	}
+
+	public function test_earlier_template_versions_never_show_master_data(): void {
+		foreach ( array( 1, 2, 3 ) as $version ) {
+			$shown = $this->master_document(
+				array(
+					'legal_name' => 'Søren Ærø ApS',
+					'address'    => array( 'Nørregade 2' ),
+					'cvr'        => '87654321',
+				),
+				'12345678',
+				$version
+			);
+			$pdf   = ( new SettlementPdf() )->render( $shown );
+
+			self::assertNull( SettlementPdf::master_data( $shown['document'] ) );
+			$this->assert_pdf_contains( 'Template version ' . $version . '.', $pdf );
+			$this->assert_pdf_contains( 'Self-billing: issued by CCMerch ApS on behalf of Søren Ærø.', $pdf );
+
+			foreach ( array( 'CVR no.:', 'CVR/SE no.:', 'Display name:', 'Nørregade 2', 'Not registered', 'Søren Ærø ApS' ) as $text ) {
+				$this->assert_pdf_lacks( $text, $pdf );
+			}
+		}
+	}
+
 	public function test_a_template_3_document_whose_vat_on_the_commission_does_not_add_up_gives_no_pdf(): void {
 		$tampered = CommissionVat::snapshot( CommissionVat::split( array( self::split_row( '20', true ), self::split_row( '20', true ) ) ) );
 		$cases    = array(
@@ -180,7 +258,7 @@ final class SettlementPdfTest extends TestCase {
 			'closing'      => $this->shown( array( 'closing' => '1021' ) ),
 			'invalid row'  => $this->shown( array(), array( 'payout_amount' => '20,00' ) ),
 			'missing row'  => $this->shown( array(), array( 'payout_amount' => null ) ),
-			'template 4'   => $this->shown( array( 'template_version' => 4 ) ),
+			'template 5'   => $this->shown( array( 'template_version' => 5 ) ),
 			'correction'   => $this->shown( array( 'type' => SettlementDocument::TYPE_CORRECTION ) ),
 			'bad currency' => $this->shown( array( 'currency' => 'dkk' ) ),
 		);
@@ -389,6 +467,50 @@ final class SettlementPdfTest extends TestCase {
 			array(
 				'template_version' => 3,
 				'commission_vat'   => CommissionVat::snapshot( CommissionVat::of_stored_rows( $rows, CommissionVat::RATE_BPS ) ),
+			),
+			null,
+			$rows
+		);
+	}
+
+	/**
+	 * A document of the two default rows (VAT registered at both sales) with
+	 * the master data given, of template version 4 unless another is given.
+	 *
+	 * @param array<string, mixed>|null $creator     Master data of the creator, null for none of the keys.
+	 * @param string|null               $company_cvr The issuer's CVR number, null for no key.
+	 * @param int                       $version     Template version.
+	 * @return array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>}
+	 */
+	private function master_document( ?array $creator, ?string $company_cvr, int $version = 4 ): array {
+		$rows    = $this->vat_document( array( '1', '1' ) )['rows'];
+		$company = array(
+			'name'    => 'CCMerch ApS',
+			'address' => array( 'Strandvejen 1', '2900 Hellerup', 'DK' ),
+		);
+
+		if ( null !== $company_cvr ) {
+			$company['cvr'] = $company_cvr;
+		}
+
+		return $this->shown(
+			array(
+				'template_version' => $version,
+				'commission_vat'   => CommissionVat::snapshot( CommissionVat::of_stored_rows( $rows, CommissionVat::RATE_BPS ) ),
+				'snapshot'         => array(
+					'preliminary' => false,
+					'creator'     => array(
+						'id'             => 3,
+						'name'           => 'Søren Ærø',
+						'vat_registered' => true,
+					) + ( $creator ?? array() ),
+					'company'     => $company,
+					'payout'      => array(
+						'id'               => 41,
+						'method'           => 'bank',
+						'destination_hint' => '•••• 5678',
+					),
+				),
 			),
 			null,
 			$rows

@@ -492,6 +492,7 @@ describe( 'PayoutsSection', () => {
 			creator_name: 'Mine',
 			company_name: 'CCMerch',
 			company_address: [ 'Street 1', '1000 København' ],
+			master_data: null,
 			method: 'bank',
 			destination: '•••• 5678',
 			rows: [
@@ -510,6 +511,8 @@ describe( 'PayoutsSection', () => {
 					number: 'AFR-000002',
 					issued_at: '2026-12-02T10:00:00Z',
 					reason: 'Name misspelled.',
+					amounts: null,
+					master_data: null,
 				},
 			],
 		};
@@ -551,8 +554,13 @@ describe( 'PayoutsSection', () => {
 		).toHaveLength( 1 );
 		expect( text ).not.toContain( 'Tax and reporting' );
 		expect( text ).not.toContain( 'Commission excl. VAT' );
+		expect( text ).not.toContain( 'Not registered' );
+		expect( text ).not.toContain( 'Issuer CVR no.' );
 		expect(
 			parseSettlementDocument( { ...document, preliminary: 'yes' } )
+		).toBeNull();
+		expect(
+			parseSettlementDocument( { ...document, master_data: undefined } )
 		).toBeNull();
 		expect(
 			parseSettlementDocument( {
@@ -614,6 +622,7 @@ describe( 'PayoutsSection', () => {
 			creator_name: 'Mine',
 			company_name: 'CCMerch',
 			company_address: [],
+			master_data: null,
 			method: 'bank',
 			destination: '•••• 5678',
 			rows: [
@@ -682,6 +691,492 @@ describe( 'PayoutsSection', () => {
 		}
 	} );
 
+	it( 'shows the master data of both parties as issued and what was not registered', async () => {
+		const completed = {
+			...PENDING,
+			id: 36,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000005',
+		};
+		const master = {
+			creator_legal_name: 'Mine ApS',
+			creator_address: [ 'Nørregade 2', '8000 Aarhus C' ],
+			creator_cvr: '',
+			company_cvr: '12345678',
+		};
+		const document = {
+			number: 'AFR-000005',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: null,
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '20.0000',
+			commission: '20.0000',
+			commission_vat: null,
+			adjustment: '0.0000',
+			adjustment_refs: [],
+			opening_balance: '0.0000',
+			payout: '20.0000',
+			closing_balance: '0.0000',
+			vat_registered: false,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			master_data: master,
+			method: 'bank',
+			destination: '•••• 5678',
+			rows: [],
+			corrections: [],
+		};
+		const { container } = await show( {
+			[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+			[ `GET /merchboard/v1/me/payouts/36/settlement-document` ]: () =>
+				response( 200, document ),
+		} );
+
+		click(
+			Array.from( container.querySelectorAll( 'button' ) ).find(
+				( candidate ) =>
+					candidate.textContent === 'Settlement document AFR-000005'
+			) ?? null
+		);
+		await flush();
+		await flush();
+
+		const facts = Array.from(
+			container.querySelectorAll( '.merchboard-settlement dt' )
+		).map( ( term ) => [
+			term.textContent,
+			term.nextElementSibling?.textContent,
+		] );
+		expect( plain( container.textContent ) ).toContain(
+			'Self-billing: issued by CCMerch on behalf of Mine ApS.'
+		);
+		expect( facts ).toEqual(
+			expect.arrayContaining( [
+				[ 'Issuer CVR no.', '12345678' ],
+				[ 'Legal name', 'Mine ApS' ],
+				[ 'Address', 'Nørregade 2, 8000 Aarhus C' ],
+				[ 'CVR/SE no.', 'Not registered' ],
+			] )
+		);
+		expect( parseSettlementDocument( document )?.masterData ).toEqual( {
+			creatorLegalName: 'Mine ApS',
+			creatorAddress: [ 'Nørregade 2', '8000 Aarhus C' ],
+			creatorCvr: '',
+			companyCvr: '12345678',
+		} );
+
+		for ( const broken of [
+			{ ...master, creator_cvr: 12345678 },
+			{ ...master, creator_address: 'Nørregade 2' },
+			{ ...master, creator_address: [ 2 ] },
+			{ ...master, company_cvr: undefined },
+			'Mine ApS',
+		] ) {
+			expect(
+				parseSettlementDocument( { ...document, master_data: broken } )
+			).toBeNull();
+		}
+	} );
+
+	it( 'shows a correction document with its amounts and downloads its PDF', async () => {
+		const completed = {
+			...PENDING,
+			id: 38,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000007',
+		};
+		const amounts = {
+			suffix: 'K1',
+			original: 'AFR-000007',
+			corrects: 'AFR-000007',
+			rate_bps: 2500,
+			before: {
+				commission: '60.0000',
+				excl: '48.0000',
+				vat: '12.0000',
+				incl: '60.0000',
+				untaxed: '0.0000',
+			},
+			after: {
+				commission: '50.0000',
+				excl: '40.0000',
+				vat: '10.0000',
+				incl: '50.0000',
+				untaxed: '0.0000',
+			},
+			difference: {
+				commission: '-10.0000',
+				excl: '-8.0000',
+				vat: '-2.0000',
+				incl: '-10.0000',
+				untaxed: '0.0000',
+			},
+			payout: '25.0000',
+		};
+		const document = {
+			number: 'AFR-000007',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: null,
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '60.0000',
+			commission: '60.0000',
+			commission_vat: null,
+			adjustment: '0.0000',
+			adjustment_refs: [],
+			opening_balance: '0.0000',
+			payout: '25.0000',
+			closing_balance: '35.0000',
+			vat_registered: true,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			master_data: null,
+			method: 'bank',
+			destination: '•••• 5678',
+			rows: [],
+			corrections: [
+				{
+					number: 'AFR-000007-K1',
+					issued_at: '2026-12-03T10:00:00Z',
+					reason: 'The markup was wrong.',
+					amounts,
+					master_data: {
+						creator_legal_name: '',
+						creator_address: [],
+						creator_cvr: '',
+						company_name: 'CCMerch',
+						company_address: [],
+						company_cvr: '',
+						changed: false,
+					},
+				},
+			],
+		};
+		const pdf = new Blob( [ '%PDF-1.4' ], { type: 'application/pdf' } );
+		const seen: string[] = [];
+		const clicked = jest
+			.spyOn( HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( function ( this: HTMLAnchorElement ) {
+				seen.push( this.download );
+			} );
+		Object.assign( window.URL, {
+			createObjectURL: () => 'blob:merchboard/2',
+			revokeObjectURL: () => undefined,
+		} );
+
+		try {
+			const { container, requests } = await show( {
+				[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+				[ `GET /merchboard/v1/me/payouts/38/settlement-document` ]:
+					() => response( 200, document ),
+				[ `GET /merchboard/v1/me/payouts/38/settlement-document/pdf?correction=K1` ]:
+					() => ( {
+						...response( 200, null, {
+							'Content-Type': 'application/pdf',
+						} ),
+						blob: () => Promise.resolve( pdf ),
+					} ),
+			} );
+			const button = ( label: string ) =>
+				Array.from( container.querySelectorAll( 'button' ) ).filter(
+					( candidate ) => candidate.textContent === label
+				);
+
+			click( button( 'Settlement document AFR-000007' )[ 0 ] ?? null );
+			await flush();
+			await flush();
+
+			const rows = Array.from(
+				container.querySelectorAll(
+					'.merchboard-settlement__correction-amounts tbody tr'
+				)
+			).map( ( row ) =>
+				Array.from( row.children ).map( ( cell ) =>
+					plain( cell.textContent )
+				)
+			);
+			expect( plain( container.textContent ) ).toContain(
+				'Corrected by AFR-000007-K1'
+			);
+			expect( rows ).toHaveLength( 4 );
+			expect( rows[ 0 ] ).toEqual( [
+				'Commission in the period',
+				plain( money( '60' ) ),
+				plain( money( '50' ) ),
+				plain( money( '-10' ) ),
+			] );
+			expect( plain( container.textContent ) ).toContain(
+				'The difference is not settled automatically.'
+			);
+			expect( plain( container.textContent ) ).not.toContain(
+				'Commission without VAT'
+			);
+			expect(
+				container.querySelector(
+					'.merchboard-settlement__correction-master-data'
+				)
+			).toBeNull();
+
+			const downloads = button( 'Download PDF' );
+			expect( downloads ).toHaveLength( 2 );
+			click( downloads[ 0 ] ?? null );
+			await flush();
+			await flush();
+
+			expect(
+				requests.filter( ( r ) => r.path.endsWith( '?correction=K1' ) )
+			).toHaveLength( 1 );
+			expect( seen ).toEqual( [ 'AFR-000007-K1.pdf' ] );
+			expect(
+				parseSettlementDocument( {
+					...document,
+					corrections: [
+						{
+							...document.corrections[ 0 ],
+							amounts: undefined,
+						},
+					],
+				} )
+			).toBeNull();
+
+			for ( const broken of [
+				{ ...amounts, suffix: 'AFR-000007-K1' },
+				{
+					...amounts,
+					difference: {
+						...amounts.difference,
+						commission: '-9.0000',
+					},
+				},
+				{ ...amounts, after: { ...amounts.after, vat: '9.0000' } },
+				{ ...amounts, rate_bps: 0 },
+			] ) {
+				expect(
+					parseSettlementDocument( {
+						...document,
+						corrections: [
+							{
+								...document.corrections[ 0 ],
+								amounts: broken,
+							},
+						],
+					} )
+				).toBeNull();
+			}
+		} finally {
+			clicked.mockRestore();
+		}
+	} );
+
+	it( 'shows the corrected master data of a correction document as issued', async () => {
+		const completed = {
+			...PENDING,
+			id: 39,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000008',
+		};
+		const values = {
+			commission: '40.0000',
+			excl: '32.0000',
+			vat: '8.0000',
+			incl: '40.0000',
+			untaxed: '0.0000',
+		};
+		const zero = {
+			commission: '0.0000',
+			excl: '0.0000',
+			vat: '0.0000',
+			incl: '0.0000',
+			untaxed: '0.0000',
+		};
+		const master = {
+			creator_legal_name: 'Mine ApS',
+			creator_address: [ 'Nørregade 2', '8000 Aarhus C' ],
+			creator_cvr: '',
+			company_name: 'CCMerch',
+			company_address: [],
+			company_cvr: '12345678',
+			changed: true,
+		};
+		const document = {
+			number: 'AFR-000008',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: null,
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '40.0000',
+			commission: '40.0000',
+			commission_vat: null,
+			adjustment: '0.0000',
+			adjustment_refs: [],
+			opening_balance: '0.0000',
+			payout: '40.0000',
+			closing_balance: '0.0000',
+			vat_registered: true,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			master_data: null,
+			method: 'bank',
+			destination: '•••• 5678',
+			rows: [],
+			corrections: [
+				{
+					number: 'AFR-000008-K1',
+					issued_at: '2026-12-03T10:00:00Z',
+					reason: 'The legal name was missing.',
+					amounts: {
+						suffix: 'K1',
+						original: 'AFR-000008',
+						corrects: 'AFR-000008',
+						rate_bps: 2500,
+						before: values,
+						after: values,
+						difference: zero,
+						payout: '40.0000',
+					},
+					master_data: master,
+				},
+			],
+		};
+		const { container } = await show( {
+			[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+			[ `GET /merchboard/v1/me/payouts/39/settlement-document` ]: () =>
+				response( 200, document ),
+		} );
+
+		click(
+			Array.from( container.querySelectorAll( 'button' ) ).find(
+				( candidate ) =>
+					candidate.textContent === 'Settlement document AFR-000008'
+			) ?? null
+		);
+		await flush();
+		await flush();
+
+		const block = container.querySelector(
+			'.merchboard-settlement__correction-master-data'
+		);
+		const facts = Array.from( block?.querySelectorAll( 'dt' ) ?? [] ).map(
+			( term ) => [
+				term.textContent,
+				term.nextElementSibling?.textContent,
+			]
+		);
+		expect( facts ).toEqual( [
+			[ 'Legal name', 'Mine ApS' ],
+			[ 'Address', 'Nørregade 2, 8000 Aarhus C' ],
+			[ 'CVR/SE no.', 'Not registered' ],
+			[ 'Issued by', 'CCMerch' ],
+			[ 'Issuer address', 'Not registered' ],
+			[ 'Issuer CVR no.', '12345678' ],
+		] );
+		expect(
+			parseSettlementDocument( document )?.corrections[ 0 ]?.masterData
+		).toEqual( {
+			creatorLegalName: 'Mine ApS',
+			creatorAddress: [ 'Nørregade 2', '8000 Aarhus C' ],
+			creatorCvr: '',
+			companyName: 'CCMerch',
+			companyAddress: [],
+			companyCvr: '12345678',
+			changed: true,
+		} );
+
+		for ( const broken of [
+			undefined,
+			{ ...master, changed: 'yes' },
+			{ ...master, creator_address: 'Nørregade 2' },
+			{ ...master, company_address: [ 1 ] },
+			{ ...master, company_cvr: 12345678 },
+		] ) {
+			expect(
+				parseSettlementDocument( {
+					...document,
+					corrections: [
+						{ ...document.corrections[ 0 ], master_data: broken },
+					],
+				} )
+			).toBeNull();
+		}
+	} );
+
+	it( 'shows missing master data as not registered and the display name', async () => {
+		const completed = {
+			...PENDING,
+			id: 37,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000006',
+		};
+		const document = {
+			number: 'AFR-000006',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: null,
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '0.0000',
+			commission: '0.0000',
+			commission_vat: null,
+			adjustment: '0.0000',
+			adjustment_refs: [],
+			opening_balance: '0.0000',
+			payout: '0.0000',
+			closing_balance: '0.0000',
+			vat_registered: null,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			master_data: {
+				creator_legal_name: '',
+				creator_address: [],
+				creator_cvr: '',
+				company_cvr: '',
+			},
+			method: 'bank',
+			destination: '',
+			rows: [],
+			corrections: [],
+		};
+		const { container } = await show( {
+			[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+			[ `GET /merchboard/v1/me/payouts/37/settlement-document` ]: () =>
+				response( 200, document ),
+		} );
+
+		click(
+			Array.from( container.querySelectorAll( 'button' ) ).find(
+				( candidate ) =>
+					candidate.textContent === 'Settlement document AFR-000006'
+			) ?? null
+		);
+		await flush();
+		await flush();
+
+		expect( plain( container.textContent ) ).toContain(
+			'Self-billing: issued by CCMerch on behalf of Mine.'
+		);
+		expect(
+			Array.from(
+				container.querySelectorAll( '.merchboard-settlement dd' )
+			).filter( ( value ) => value.textContent === 'Not registered' )
+		).toHaveLength( 4 );
+	} );
+
 	it( 'shows a new document with the note on tax and reporting and downloads its PDF', async () => {
 		const completed = {
 			...PENDING,
@@ -710,6 +1205,7 @@ describe( 'PayoutsSection', () => {
 			creator_name: 'Mine',
 			company_name: 'CCMerch',
 			company_address: [],
+			master_data: null,
 			method: 'paypal',
 			destination: 'j•••@g•••.com',
 			rows: [],

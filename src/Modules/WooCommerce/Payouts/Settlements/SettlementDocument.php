@@ -18,8 +18,11 @@ defined( 'ABSPATH' ) || exit;
  * it was issued. Amounts are units (1/10 000). For a settlement document:
  * closing = opening + commission + adjustment − payout, where the adjustment
  * is the sum of the payout adjustments it settled (ADR-063; 0 for documents
- * without any). A correction document carries no amounts (D11: amounts are
- * corrected forward through the ledger).
+ * without any). A correction document carries no amounts in these columns
+ * (all 0), so no balance or sum ever counts it; from template version 5 it
+ * states the amounts before and after the correction and the difference in
+ * its snapshot (SettlementCorrection, ADR-062 K10 and K15). Earlier
+ * correction documents (D11 a) carry no amounts at all.
  */
 final readonly class SettlementDocument {
 
@@ -31,7 +34,7 @@ final readonly class SettlementDocument {
 	 * Constructor.
 	 *
 	 * @param int                    $id                   Internal id.
-	 * @param string                 $number               Document number, e.g. AFR-000001.
+	 * @param string                 $number               Document number, e.g. AFR-000001 (a correction from template version 5: AFR-000001-K1).
 	 * @param string                 $type                 TYPE_SETTLEMENT or TYPE_CORRECTION.
 	 * @param int                    $creator_id           Creator.
 	 * @param int|null               $payout_id            The payout it belongs to.

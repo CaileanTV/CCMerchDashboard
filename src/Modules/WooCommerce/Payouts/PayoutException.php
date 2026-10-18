@@ -50,8 +50,9 @@ final class PayoutException extends DomainException {
 	public const START_LOCKED = 'start_locked';
 
 	/**
-	 * A settlement document cannot be corrected: it does not exist, or it is
-	 * not the latest in its chain (D11, ADR-060).
+	 * A settlement document cannot be corrected: it does not exist, does not
+	 * belong to the payout, is not the latest in its chain (D11, ADR-060) or
+	 * its amounts cannot be read.
 	 */
 	public const DOCUMENT_NOT_CORRECTABLE = 'document_not_correctable';
 
@@ -166,6 +167,47 @@ final class PayoutException extends DomainException {
 	 * An export filter (group or creator) is invalid.
 	 */
 	public const INVALID_FILTER = 'invalid_filter';
+
+	/**
+	 * A CVR or SE number is not eight digits (ADR-062 K09).
+	 */
+	public const INVALID_CVR = 'invalid_cvr';
+
+	/**
+	 * A text of the creator's master data is too long or has control
+	 * characters (ADR-062 K09).
+	 */
+	public const INVALID_BILLING_DETAILS = 'invalid_billing_details';
+
+	/**
+	 * The reason of a correction document is missing, longer than 500
+	 * characters or has control characters (ADR-062 K10/K15).
+	 */
+	public const INVALID_CORRECTION_REASON = 'invalid_correction_reason';
+
+	/**
+	 * A corrected amount is not a decimal amount with at most the store's
+	 * decimals (ADR-062 K10/K15).
+	 */
+	public const INVALID_CORRECTION_AMOUNT = 'invalid_correction_amount';
+
+	/**
+	 * A correction document would change neither an amount nor the parties
+	 * (ADR-062 K10/K15).
+	 */
+	public const CORRECTION_UNCHANGED = 'correction_unchanged';
+
+	/**
+	 * A corrected amount is in a VAT category the original's settled rows do
+	 * not have (their VAT status at the sale, ADR-062 K05 and K15).
+	 */
+	public const CORRECTION_VAT_STATUS = 'correction_vat_status';
+
+	/**
+	 * The chain already has the most correction documents (100,
+	 * SettlementCorrection::MAX_CHAIN).
+	 */
+	public const CORRECTION_LIMIT = 'correction_limit';
 
 	/**
 	 * Constructor.

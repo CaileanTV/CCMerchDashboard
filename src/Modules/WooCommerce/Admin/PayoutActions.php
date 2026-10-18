@@ -14,19 +14,25 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutDecisions;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutGiftCards;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Rejects a pending payout, registers it as transferred (ADR-055) or
- * registers the gift card of a gift card payout (ADR-057).
+ * Rejects a pending payout, registers it as transferred (ADR-055),
+ * registers the gift card of a gift card payout (ADR-057) or issues a
+ * correction document for the settlement document of a completed payout
+ * (ADR-062 K10 and K15).
  * Order of checks: capability `merchboard_manage_payouts` (403) → nonce
  * bound to the action and the payout (403) → input → PayoutDecisions,
  * which checks the capability again and runs the decision under the
  * creator's lock, in one transaction with audit. Completing requires the
  * confirmation that the transfer was made outside Merch Dashboard; nothing
- * here pays anything. Post/Redirect/Get to the payout with a whitelisted
+ * here pays anything. A correction document requires the administrator's
+ * confirmation that the error was assessed as material (nothing decides
+ * that automatically); SettlementDocuments checks the capability again and
+ * refuses a stale or repeated request. Post/Redirect/Get to the payout with a whitelisted
  * outcome code. No AJAX, REST or `nopriv` route.
  */
 final class PayoutActions {
@@ -46,13 +52,24 @@ final class PayoutActions {
 	public const NOT_CONFIRMED = 'not_confirmed';
 
 	/**
+	 * Issues a correction document (ADR-062 K10 and K15).
+	 */
+	public const CORRECT_ACTION = 'merchboard_correct_settlement_document';
+
+	/**
+	 * Outcome code when the material error was not confirmed.
+	 */
+	public const NOT_ASSESSED = 'correction_not_assessed';
+
+	/**
 	 * Constructor.
 	 *
-	 * @param PayoutDecisions      $decisions  Decisions.
-	 * @param Logger               $logger     Technical log.
-	 * @param PayoutGiftCards|null $gift_cards Gift card registration; null = not available.
+	 * @param PayoutDecisions          $decisions  Decisions.
+	 * @param Logger                   $logger     Technical log.
+	 * @param PayoutGiftCards|null     $gift_cards Gift card registration; null = not available.
+	 * @param SettlementDocuments|null $documents  Correction documents; null = not available.
 	 */
-	public function __construct( private PayoutDecisions $decisions, private Logger $logger, private ?PayoutGiftCards $gift_cards = null ) {
+	public function __construct( private PayoutDecisions $decisions, private Logger $logger, private ?PayoutGiftCards $gift_cards = null, private ?SettlementDocuments $documents = null ) {
 	}
 
 	/**
@@ -72,6 +89,7 @@ final class PayoutActions {
 		add_action( 'admin_post_' . self::REJECT_ACTION, array( $this, 'handle_request' ) );
 		add_action( 'admin_post_' . self::COMPLETE_ACTION, array( $this, 'handle_request' ) );
 		add_action( 'admin_post_' . self::GIFT_CARD_ACTION, array( $this, 'handle_request' ) );
+		add_action( 'admin_post_' . self::CORRECT_ACTION, array( $this, 'handle_request' ) );
 	}
 
 	/**
@@ -98,7 +116,7 @@ final class PayoutActions {
 		$payout_id = 1 === preg_match( '/^[1-9]\d{0,18}$/', self::scalar( $input, 'payout_id' ) ) ? (int) self::scalar( $input, 'payout_id' ) : 0;
 		$nonce     = self::scalar( $input, '_wpnonce' );
 
-		if ( ! in_array( $action, array( self::REJECT_ACTION, self::COMPLETE_ACTION, self::GIFT_CARD_ACTION ), true ) || 0 === $payout_id
+		if ( ! in_array( $action, array( self::REJECT_ACTION, self::COMPLETE_ACTION, self::GIFT_CARD_ACTION, self::CORRECT_ACTION ), true ) || 0 === $payout_id
 			|| '' === $nonce || 1 !== wp_verify_nonce( $nonce, self::nonce_action( $action, $payout_id ) ) ) {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
@@ -107,8 +125,18 @@ final class PayoutActions {
 			return PayoutsPage::url( array( 'payout' => $payout_id, 'result' => self::NOT_CONFIRMED ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		}
 
+		if ( self::CORRECT_ACTION === $action && '1' !== self::scalar( $input, 'confirm_material' ) ) {
+			return PayoutsPage::url( array( 'payout' => $payout_id, 'result' => self::NOT_ASSESSED ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+
 		try {
-			if ( self::REJECT_ACTION === $action ) {
+			if ( self::CORRECT_ACTION === $action ) {
+				$document_id = 1 === preg_match( '/^[1-9]\d{0,18}$/', self::scalar( $input, 'document_id' ) ) ? (int) self::scalar( $input, 'document_id' ) : 0;
+				$code        = null === $this->documents ? PayoutException::DOCUMENT_NOT_CORRECTABLE : 'corrected';
+				// A VAT category the original does not have is not in the form: 0 (SettlementDocuments checks the categories).
+				$amount = static fn( string $field ): string => array_key_exists( $field, $input ) ? sanitize_text_field( self::scalar( $input, $field ) ) : '0';
+				$this->documents?->correct( $payout_id, $document_id, sanitize_textarea_field( self::scalar( $input, 'reason' ) ), $amount( 'commission_incl' ), $amount( 'commission_untaxed' ) );
+			} elseif ( self::REJECT_ACTION === $action ) {
 				$this->decisions->reject( $payout_id, sanitize_textarea_field( self::scalar( $input, 'reason' ) ) );
 				$code = 'rejected';
 			} elseif ( self::GIFT_CARD_ACTION === $action ) {

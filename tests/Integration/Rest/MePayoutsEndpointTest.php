@@ -24,6 +24,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -53,6 +54,8 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetails;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetailsStore;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
@@ -438,6 +441,9 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		$mine  = $this->creator_user( 'mine', 'Mine' );
 		$other = $this->creator_user( 'other', 'Other' );
 		$this->earn( $mine, 2 );
+		$creator = ( new CreatorRepository( $this->wpdb ) )->find_by_user_id( $mine );
+		self::assertNotNull( $creator );
+		( new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) ) )->save( $creator->id, new CreatorBillingDetails( 'Mine ApS', 'Nørregade 2', '', '8000', 'Aarhus C' ) );
 		wp_set_current_user( $mine );
 		$id = (int) ( (array) $this->create( '15', 'key-doc-0001' )->get_data() )['id'];
 
@@ -463,6 +469,16 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 			$data['commission_vat'],
 			'ADR-062 K05: the commission of sales while VAT registered includes 25 % VAT.'
 		);
+		self::assertSame(
+			array(
+				'creator_legal_name' => 'Mine ApS',
+				'creator_address'    => array( 'Nørregade 2', '8000 Aarhus C' ),
+				'creator_cvr'        => '',
+				'company_cvr'        => '',
+			),
+			$data['master_data'],
+			'ADR-062 K09: as issued; not registered is empty, never filled in.'
+		);
 		self::assertCount( 2, $data['rows'] );
 		self::assertSame( array( 'order_id', 'item_name', 'type', 'quantity', 'net', 'tax', 'payout' ), array_keys( $data['rows'][0] ) );
 		self::assertSame( '•••• 5678', $data['destination'] );
@@ -473,6 +489,86 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 404, $this->get( '/' . $id . '/settlement-document' )->get_status(), 'Another creator: as if missing.' );
 		wp_set_current_user( 0 );
 		self::assertSame( 401, $this->get( '/' . $id . '/settlement-document' )->get_status() );
+	}
+
+	public function test_a_correction_document_is_shown_to_its_creator_with_its_amounts_and_pdf(): void {
+		$mine  = $this->creator_user( 'mine', 'Mine' );
+		$other = $this->creator_user( 'other', 'Other' );
+		$this->earn( $mine, 2 );
+		wp_set_current_user( $mine );
+		$id    = (int) ( (array) $this->create( '15', 'key-doc-0101' )->get_data() )['id'];
+		$route = '/' . $id . '/settlement-document/pdf';
+
+		wp_set_current_user( 1 );
+		$this->decisions()->complete( $id );
+		$documents = $this->documents();
+		$shown     = $documents->for_payout( $id );
+		self::assertNotNull( $shown );
+		$fixed = $documents->correct( $id, $shown['document']->id, 'The markup was wrong.', '30', '0' );
+		wp_set_current_user( $mine );
+
+		$data = (array) $this->get( '/' . $id . '/settlement-document' )->get_data();
+		self::assertSame( '40.0000', $data['commission'], 'The original as issued.' );
+		self::assertSame( array( 'AFR-000001-K1', 'The markup was wrong.' ), array( $data['corrections'][0]['number'] ?? null, $data['corrections'][0]['reason'] ?? null ) );
+		self::assertSame(
+			array(
+				'suffix'     => 'K1',
+				'original'   => 'AFR-000001',
+				'corrects'   => 'AFR-000001',
+				'rate_bps'   => 2500,
+				'before'     => array(
+					'commission' => '40.0000',
+					'excl'       => '32.0000',
+					'vat'        => '8.0000',
+					'incl'       => '40.0000',
+					'untaxed'    => '0.0000',
+				),
+				'after'      => array(
+					'commission' => '30.0000',
+					'excl'       => '24.0000',
+					'vat'        => '6.0000',
+					'incl'       => '30.0000',
+					'untaxed'    => '0.0000',
+				),
+				'difference' => array(
+					'commission' => '-10.0000',
+					'excl'       => '-8.0000',
+					'vat'        => '-2.0000',
+					'incl'       => '-10.0000',
+					'untaxed'    => '0.0000',
+				),
+				'payout'     => '15.0000',
+			),
+			$data['corrections'][0]['amounts'] ?? null
+		);
+
+		$response = $this->get( $route, array( 'correction' => 'K1' ) );
+		$fresh    = $documents->for_payout( $id );
+		self::assertNotNull( $fresh );
+		self::assertSame( 200, $response->get_status() );
+		self::assertSame( ( new SettlementPdf() )->render_correction( $fresh, $fixed ), $response->get_data() );
+		self::assertSame( 'attachment; filename="AFR-000001-K1.pdf"', $response->get_headers()['Content-Disposition'] ?? null );
+		self::assertSame( 404, $this->get( $route, array( 'correction' => 'K2' ) )->get_status(), 'No such correction.' );
+		self::assertSame( 400, $this->get( $route, array( 'correction' => 'AFR-000001' ) )->get_status(), 'Only a suffix.' );
+		self::assertFalse( $data['corrections'][0]['master_data']['changed'] ?? null, 'K1 corrected only the amounts.' );
+
+		// K2 corrects the master data (no CVR/SE number registered): shown from its snapshot, also after a later change.
+		$creator = ( new CreatorRepository( $this->wpdb ) )->find_by_user_id( $mine );
+		self::assertNotNull( $creator );
+		$billing = new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) );
+		$billing->save( $creator->id, new CreatorBillingDetails( 'Mine ApS', 'Nørregade 2', '', '8000', 'Aarhus C' ) );
+		wp_set_current_user( 1 );
+		$documents->correct( $id, $fixed->id, 'The legal name was missing.', '30', '0' );
+		wp_set_current_user( $mine );
+		$billing->save( $creator->id, new CreatorBillingDetails( 'Later ApS', '', '', '', '', '', '87654321' ) );
+
+		$master = ( (array) $this->get( '/' . $id . '/settlement-document' )->get_data() )['corrections'][1]['master_data'] ?? null;
+		self::assertIsArray( $master );
+		self::assertSame( array( 'Mine ApS', array( 'Nørregade 2', '8000 Aarhus C' ), '', true ), array( $master['creator_legal_name'] ?? null, $master['creator_address'] ?? null, $master['creator_cvr'] ?? null, $master['changed'] ?? null ) );
+
+		wp_set_current_user( $other );
+		self::assertSame( 404, $this->get( '/' . $id . '/settlement-document' )->get_status(), 'Another creator gets neither the correction nor its master data.' );
+		self::assertSame( 404, $this->get( $route, array( 'correction' => 'K1' ) )->get_status(), 'Another creator: as if missing.' );
 	}
 
 	public function test_the_settlement_pdf_is_sent_only_to_its_creator_as_a_private_attachment(): void {
@@ -607,7 +703,7 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		$transaction      = new Transaction( $this->wpdb, new TransactionSupport( $this->wpdb ) );
 		$requests         = new PayoutRequests( $this->repository, $balances, new PayoutCipher( $key ), new PostMetaPricingProductStore(), $this->service( AuditTrail::class ), $transaction, $clock, $providers );
 		$audit            = $this->service( AuditTrail::class );
-		$documents        = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock );
+		$documents        = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock, null, new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) ) );
 		$this->gift_cards = new PayoutGiftCards( $this->repository, $balances, $providers, $audit, $transaction, new RecordingLogger(), $clock, $documents );
 		$controller       = new MePayoutsController( $this->service( CreatorContext::class ), $requests, $balances, $this->repository, $this->service( Logger::class ), $this->gift_cards, $documents, new SettlementPdf() );
 		$this->controller = $controller;
@@ -628,7 +724,17 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		$audit       = $this->service( AuditTrail::class );
 		$transaction = new Transaction( $this->wpdb, new TransactionSupport( $this->wpdb ) );
 
-		return new PayoutDecisions( $this->repository, new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock ), new PayoutCipher( $this->key ), $audit, $transaction, $clock, new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $audit, $transaction, $clock ) );
+		return new PayoutDecisions( $this->repository, new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock ), new PayoutCipher( $this->key ), $audit, $transaction, $clock, $this->documents() );
+	}
+
+	/**
+	 * The admin's settlement documents on the same repository.
+	 */
+	private function documents(): SettlementDocuments {
+		$clock       = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+		$transaction = new Transaction( $this->wpdb, new TransactionSupport( $this->wpdb ) );
+
+		return new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), new CreatorRepository( $this->wpdb ), new CreatorVatRepository( $this->wpdb ), $this->service( AuditTrail::class ), $transaction, $clock, null, new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) ) );
 	}
 
 	/**

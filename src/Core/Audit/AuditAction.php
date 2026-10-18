@@ -159,6 +159,13 @@ enum AuditAction: string {
 	case CreatorVatHistoryRecorded = 'creator_vat_history_recorded';
 
 	/**
+	 * The creator's master data for settlement documents changed (ADR-062
+	 * K09; context: names of the changed fields, no values). Issued
+	 * documents keep the master data of their snapshot.
+	 */
+	case CreatorBillingDetailsChanged = 'creator_billing_details_changed';
+
+	/**
 	 * A product-specific share was set or changed for a parent product of the
 	 * creator (context: product id, markup and the previous markup or null,
 	 * in basis points; ADR-049). No WooCommerce price and no snapshot is

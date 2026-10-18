@@ -19,9 +19,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * `admin-post.php?action=merchboard_settlement_pdf&payout_id=…&_wpnonce=…`:
- * the settlement document of a completed payout as a PDF (SettlementPdf).
- * Read only. Order of checks: capability `merchboard_manage_payouts` (403)
- * → nonce bound to the payout (403) → a document for the payout (404). A
+ * the settlement document of a completed payout as a PDF (SettlementPdf);
+ * with `&correction=K1` one of its correction documents with amounts
+ * (ADR-062 K10 and K15). Read only. Order of checks: capability
+ * `merchboard_manage_payouts` (403) → nonce bound to the payout (403) → a
+ * document (or that correction document) of the payout (404). A
  * document that does not add up gives no PDF (500, logged by class only);
  * nothing is changed. No AJAX, REST or `nopriv` route.
  */
@@ -49,21 +51,23 @@ final class SettlementPdfDownload {
 	}
 
 	/**
-	 * The download link of a payout's document.
+	 * The download link of a payout's document, or of one of its correction
+	 * documents with amounts.
 	 *
-	 * @param int $payout_id Payout id.
+	 * @param int    $payout_id  Payout id.
+	 * @param string $correction Suffix of a correction document (e.g. K1), '' = the settlement document.
 	 */
-	public static function url( int $payout_id ): string {
-		return wp_nonce_url(
-			add_query_arg(
-				array(
-					'action'    => self::ACTION,
-					'payout_id' => $payout_id,
-				),
-				admin_url( 'admin-post.php' )
-			),
-			self::nonce_action( $payout_id )
+	public static function url( int $payout_id, string $correction = '' ): string {
+		$args = array(
+			'action'    => self::ACTION,
+			'payout_id' => $payout_id,
 		);
+
+		if ( '' !== $correction ) {
+			$args['correction'] = $correction;
+		}
+
+		return wp_nonce_url( add_query_arg( $args, admin_url( 'admin-post.php' ) ), self::nonce_action( $payout_id ) );
 	}
 
 	/**
@@ -113,6 +117,8 @@ final class SettlementPdfDownload {
 			return self::failure( 403, __( 'The link you followed has expired. Please try again.', 'merchboard' ) );
 		}
 
+		$suffix = is_scalar( $input['correction'] ?? null ) ? (string) $input['correction'] : '';
+
 		try {
 			$shown = $this->documents->for_payout( $payout_id );
 
@@ -120,7 +126,19 @@ final class SettlementPdfDownload {
 				return self::failure( 404, __( 'This payout has no settlement document.', 'merchboard' ) );
 			}
 
-			$pdf = $this->pdf->render( $shown );
+			$document = $shown['document'];
+
+			if ( '' === $suffix ) {
+				$pdf = $this->pdf->render( $shown );
+			} else {
+				$document = SettlementPdf::correction( $shown, $suffix );
+
+				if ( null === $document ) {
+					return self::failure( 404, __( 'This payout has no such correction document.', 'merchboard' ) );
+				}
+
+				$pdf = $this->pdf->render_correction( $shown, $document );
+			}
 		} catch ( Throwable $e ) {
 			$this->logger->error(
 				'The settlement document PDF could not be made.',
@@ -135,7 +153,7 @@ final class SettlementPdfDownload {
 
 		return array(
 			'status'  => 200,
-			'headers' => SettlementPdf::headers( $shown['document'] ),
+			'headers' => SettlementPdf::headers( $document ),
 			'body'    => $pdf,
 		);
 	}

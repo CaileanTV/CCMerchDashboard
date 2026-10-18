@@ -7,7 +7,12 @@ import {
 } from '../../api/payouts';
 import { Alert } from '../../components/Alert';
 import { Button } from '../../components/Button';
-import type { Payout, SettlementDocument } from '../../types/payouts';
+import type {
+	Payout,
+	SettlementCorrectionAmounts,
+	SettlementCorrectionValues,
+	SettlementDocument,
+} from '../../types/payouts';
 import { moneyText } from '../sales/format';
 import { methodLabel } from './texts';
 
@@ -42,6 +47,103 @@ function rowTypeLabel( type: string ): string {
 		default:
 			return __( 'Correction', 'merchboard' );
 	}
+}
+
+/**
+ * The amounts of a correction document (rettelsesbilag, ADR-062 K10 and
+ * K15) as issued: before, corrected and the difference, with the VAT split
+ * when VAT applies, and its PDF. Nothing is recalculated.
+ *
+ * @param props             Props.
+ * @param props.amounts     The correction's amounts.
+ * @param props.money       Formats an amount with the document's currency.
+ * @param props.locale      Locale.
+ * @param props.downloading Whether a PDF is being downloaded.
+ * @param props.onDownload  Downloads the correction's PDF.
+ */
+function CorrectionAmountsView( {
+	amounts,
+	money,
+	locale,
+	downloading,
+	onDownload,
+}: {
+	readonly amounts: SettlementCorrectionAmounts;
+	readonly money: ( amount: string ) => string;
+	readonly locale: string;
+	readonly downloading: boolean;
+	readonly onDownload: () => void;
+} ) {
+	const zero = ( amount: string ) => /^-?0\.0000$/.test( amount );
+	const lines: [ keyof SettlementCorrectionValues, string ][] = [
+		[ 'commission', __( 'Commission in the period', 'merchboard' ) ],
+	];
+
+	if ( ! zero( amounts.before.incl ) || ! zero( amounts.after.incl ) ) {
+		lines.push(
+			[ 'excl', __( 'Commission excl. VAT', 'merchboard' ) ],
+			[
+				'vat',
+				sprintf(
+					/* translators: %s: VAT rate in percent, e.g. 25. */
+					__( 'VAT (%s %%)', 'merchboard' ),
+					percentText( amounts.rateBps, locale )
+				),
+			],
+			[ 'incl', __( 'Commission incl. VAT', 'merchboard' ) ]
+		);
+	}
+
+	if ( ! zero( amounts.before.untaxed ) || ! zero( amounts.after.untaxed ) ) {
+		lines.push( [
+			'untaxed',
+			__(
+				'Commission without VAT (not VAT registered when sold)',
+				'merchboard'
+			),
+		] );
+	}
+
+	return (
+		<>
+			<table className="merchboard-table merchboard-settlement__correction-amounts">
+				<thead>
+					<tr>
+						<th scope="col">{ __( 'Amount', 'merchboard' ) }</th>
+						<th scope="col">{ __( 'Before', 'merchboard' ) }</th>
+						<th scope="col">{ __( 'Corrected', 'merchboard' ) }</th>
+						<th scope="col">
+							{ __( 'Difference', 'merchboard' ) }
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{ lines.map( ( [ key, label ] ) => (
+						<tr key={ key }>
+							<th scope="row">{ label }</th>
+							<td>{ money( amounts.before[ key ] ) }</td>
+							<td>{ money( amounts.after[ key ] ) }</td>
+							<td>{ money( amounts.difference[ key ] ) }</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+			<p className="merchboard-payouts__reason">
+				{ __(
+					'The correction document does not change the original document or the completed payout. The difference is not settled automatically.',
+					'merchboard'
+				) }{ ' ' }
+				<Button
+					variant="secondary"
+					size="sm"
+					isBusy={ downloading }
+					onClick={ onDownload }
+				>
+					{ __( 'Download PDF', 'merchboard' ) }
+				</Button>
+			</p>
+		</>
+	);
 }
 
 /**
@@ -90,10 +192,10 @@ export function SettlementDocumentView( {
 		return null;
 	}
 
-	const download = async ( number: string ) => {
+	const download = async ( number: string, correction = '' ) => {
 		setDownloading( true );
 		setDownloadFailed( false );
-		const result = await downloadSettlementPdf( payout.id );
+		const result = await downloadSettlementPdf( payout.id, correction );
 		setDownloading( false );
 
 		if ( result.ok ) {
@@ -148,6 +250,9 @@ export function SettlementDocumentView( {
 
 	const money = ( amount: string ) =>
 		moneyText( amount, document.currency, locale );
+	const master = document.masterData;
+	const known = ( value: string ) =>
+		value === '' ? __( 'Not registered', 'merchboard' ) : value;
 	let vat: string = __( 'Unknown', 'merchboard' );
 
 	if ( document.vatRegistered !== null ) {
@@ -188,7 +293,9 @@ export function SettlementDocumentView( {
 						'merchboard'
 					),
 					document.companyName,
-					document.creatorName
+					master !== null && master.creatorLegalName !== ''
+						? master.creatorLegalName
+						: document.creatorName
 				) }
 			</p>
 			{ document.companyAddress.length > 0 && (
@@ -197,6 +304,18 @@ export function SettlementDocumentView( {
 				</p>
 			) }
 			<dl className="merchboard-payouts__gift-card-facts">
+				{ master !== null && (
+					<>
+						<dt>{ __( 'Issuer CVR no.', 'merchboard' ) }</dt>
+						<dd>{ known( master.companyCvr ) }</dd>
+						<dt>{ __( 'Legal name', 'merchboard' ) }</dt>
+						<dd>{ known( master.creatorLegalName ) }</dd>
+						<dt>{ __( 'Address', 'merchboard' ) }</dt>
+						<dd>{ known( master.creatorAddress.join( ', ' ) ) }</dd>
+						<dt>{ __( 'CVR/SE no.', 'merchboard' ) }</dt>
+						<dd>{ known( master.creatorCvr ) }</dd>
+					</>
+				) }
 				<dt>{ __( 'Issued', 'merchboard' ) }</dt>
 				<dd>{ dateText( document.issuedAt, locale ) }</dd>
 				<dt>{ __( 'Period', 'merchboard' ) }</dt>
@@ -300,15 +419,75 @@ export function SettlementDocumentView( {
 				</tbody>
 			</table>
 			{ document.corrections.map( ( correction ) => (
-				<p key={ correction.number }>
-					{ sprintf(
-						/* translators: 1: number of the correction document, 2: date, 3: reason. */
-						__( 'Corrected by %1$s (%2$s): %3$s', 'merchboard' ),
-						correction.number,
-						dateText( correction.issuedAt, locale ),
-						correction.reason
+				<div
+					key={ correction.number }
+					className="merchboard-settlement__correction"
+				>
+					<p>
+						{ sprintf(
+							/* translators: 1: number of the correction document, 2: date, 3: reason. */
+							__(
+								'Corrected by %1$s (%2$s): %3$s',
+								'merchboard'
+							),
+							correction.number,
+							dateText( correction.issuedAt, locale ),
+							correction.reason
+						) }
+					</p>
+					{ correction.amounts !== null && (
+						<CorrectionAmountsView
+							amounts={ correction.amounts }
+							money={ money }
+							locale={ locale }
+							downloading={ downloading }
+							onDownload={ () =>
+								download(
+									correction.number,
+									correction.amounts?.suffix ?? ''
+								)
+							}
+						/>
 					) }
-				</p>
+					{ correction.masterData?.changed === true && (
+						<dl className="merchboard-payouts__gift-card-facts merchboard-settlement__correction-master-data">
+							<dt>{ __( 'Legal name', 'merchboard' ) }</dt>
+							<dd>
+								{ known(
+									correction.masterData.creatorLegalName
+								) }
+							</dd>
+							<dt>{ __( 'Address', 'merchboard' ) }</dt>
+							<dd>
+								{ known(
+									correction.masterData.creatorAddress.join(
+										', '
+									)
+								) }
+							</dd>
+							<dt>{ __( 'CVR/SE no.', 'merchboard' ) }</dt>
+							<dd>
+								{ known( correction.masterData.creatorCvr ) }
+							</dd>
+							<dt>{ __( 'Issued by', 'merchboard' ) }</dt>
+							<dd>
+								{ known( correction.masterData.companyName ) }
+							</dd>
+							<dt>{ __( 'Issuer address', 'merchboard' ) }</dt>
+							<dd>
+								{ known(
+									correction.masterData.companyAddress.join(
+										', '
+									)
+								) }
+							</dd>
+							<dt>{ __( 'Issuer CVR no.', 'merchboard' ) }</dt>
+							<dd>
+								{ known( correction.masterData.companyCvr ) }
+							</dd>
+						</dl>
+					) }
+				</div>
 			) ) }
 			{ ! document.preliminary && (
 				<section className="merchboard-settlement__tax-note">

@@ -32,9 +32,16 @@ final class CreatorMetaStore {
 	public const SOCIAL_LINKS = 'social_links';
 
 	/**
+	 * Master data for settlement documents (ADR-062 K09): legal name,
+	 * address and CVR/SE number, as one array. Written by PayoutSettings only;
+	 * never part of the creator's own profile.
+	 */
+	public const BILLING_DETAILS = 'billing_details';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BIO, self::SOCIAL_LINKS );
+	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS );
 
 	/**
 	 * Constructor.

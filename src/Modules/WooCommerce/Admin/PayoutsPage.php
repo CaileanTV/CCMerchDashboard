@@ -28,10 +28,13 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
+use UnexpectedValueException;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -65,6 +68,11 @@ defined( 'ABSPATH' ) || exit;
  * (PayoutGiftCards validates and registers it). A completed one shows the
  * card's provider, id and its current status and balance in the plugin,
  * never its code.
+ *
+ * A completed payout shows its settlement document (ADR-060) with its
+ * correction documents and the form to issue a correction document
+ * (rettelsesbilag, ADR-062 K10 and K15) for an error the administrator has
+ * assessed as material; nothing is assessed automatically.
  */
 final class PayoutsPage {
 
@@ -182,6 +190,14 @@ final class PayoutsPage {
 			PayoutException::GIFT_CARD_AMOUNT     => array( __( 'Not registered: the gift card\'s amount is not the payout amount.', 'merchboard' ), 'error' ),
 			PayoutException::GIFT_CARD_USED       => array( __( 'Not registered: the gift card\'s balance is not its full amount, so it has been used.', 'merchboard' ), 'error' ),
 			PayoutException::GIFT_CARD_LINKED     => array( __( 'Not registered: this gift card is already registered on another payout.', 'merchboard' ), 'error' ),
+			'corrected'                           => array( __( 'The correction document was issued. The original document, the payout and the balance are unchanged.', 'merchboard' ), 'success' ),
+			PayoutActions::NOT_ASSESSED           => array( __( 'Not issued: confirm that you have assessed the error as material. Minor errors are not corrected with a correction document.', 'merchboard' ), 'error' ),
+			PayoutException::INVALID_CORRECTION_REASON => array( __( 'Not issued: enter a reason of at most 500 characters.', 'merchboard' ), 'error' ),
+			PayoutException::INVALID_CORRECTION_AMOUNT => array( __( 'Not issued: enter the corrected amounts as numbers with at most the shop\'s decimals, e.g. 1250.00.', 'merchboard' ), 'error' ),
+			PayoutException::CORRECTION_VAT_STATUS => array( __( 'Not issued: a corrected amount is in a VAT category the original does not have. By the creator\'s VAT status at each sale, VAT on the commission is only for sales while VAT registered, and commission without VAT only for sales while not.', 'merchboard' ), 'error' ),
+			PayoutException::CORRECTION_LIMIT     => array( __( 'Not issued: this settlement document already has 100 correction documents, the most one document can have.', 'merchboard' ), 'error' ),
+			PayoutException::CORRECTION_UNCHANGED => array( __( 'Not issued: the correction would change neither an amount nor the master data of the parties. A changed display name or current VAT status alone is no error of the document.', 'merchboard' ), 'error' ),
+			PayoutException::DOCUMENT_NOT_CORRECTABLE => array( __( 'Not issued: the document was corrected in the meantime or cannot be corrected. Nothing was changed; check the latest document below.', 'merchboard' ), 'error' ),
 			'error'                               => array( __( 'A technical error occurred. Nothing was changed; try again later.', 'merchboard' ), 'error' ),
 			default                               => null,
 		};
@@ -655,6 +671,19 @@ final class PayoutsPage {
 		}
 
 		$fields = array_slice( $fields, 0, 6, true ) + $after + array_slice( $fields, 6, null, true );
+		$master = SettlementPdf::master_data( $document );
+
+		// After the creator: the master data of both parties (template version 4, ADR-062 K09).
+		if ( null !== $master ) {
+			$missing = __( 'Not registered', 'merchboard' );
+			$parties = array(
+				__( 'Legal name', 'merchboard' )     => '' === $master['creator_legal_name'] ? $missing : $master['creator_legal_name'],
+				__( 'Address', 'merchboard' )        => array() === $master['creator_address'] ? $missing : implode( ', ', $master['creator_address'] ),
+				__( 'CVR/SE no.', 'merchboard' )     => '' === $master['creator_cvr'] ? $missing : $master['creator_cvr'],
+				__( 'Issuer CVR no.', 'merchboard' ) => '' === $master['company_cvr'] ? $missing : $master['company_cvr'],
+			);
+			$fields  = array_slice( $fields, 0, 4, true ) + $parties + array_slice( $fields, 4, null, true );
+		}
 
 		foreach ( $fields as $label => $value ) {
 			echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . esc_html( $value ) . '</td></tr>';
@@ -663,14 +692,171 @@ final class PayoutsPage {
 		echo '</tbody></table>';
 
 		foreach ( $shown['corrections'] as $correction ) {
-			/* translators: 1: number of the correction document, 2: date. */
-			echo '<p>' . esc_html( sprintf( __( 'Corrected by %1$s (%2$s).', 'merchboard' ), $correction->number, self::date( $correction->issued_at ) ) ) . '</p>';
+			$this->render_correction( $payout, $shown, $correction );
 		}
 
 		if ( ! SettlementPdf::preliminary( $document ) ) {
 			list( $heading, $note ) = SettlementPdf::tax_note();
 			echo '<h4>' . esc_html( $heading ) . '</h4><p class="description merchboard-settlement-tax-note">' . esc_html( $note ) . '</p>';
 		}
+
+		$this->render_correct( $payout, $shown );
+	}
+
+	/**
+	 * One correction document of the chain: with amounts and its PDF
+	 * (template version 5, ADR-062 K10 and K15), or as issued before (D11 a).
+	 *
+	 * @param Payout                                                                                                       $payout     Completed payout.
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown      Its document, rows and corrections.
+	 * @param SettlementDocument                                                                                           $correction Correction document.
+	 */
+	private function render_correction( Payout $payout, array $shown, SettlementDocument $correction ): void {
+		if ( $correction->template_version < SettlementCorrection::TEMPLATE ) {
+			/* translators: 1: number of the correction document, 2: date. */
+			echo '<p>' . esc_html( sprintf( __( 'Corrected by %1$s (%2$s).', 'merchboard' ), $correction->number, self::date( $correction->issued_at ) ) ) . '</p>';
+			return;
+		}
+
+		$stored = SettlementPdf::verified_correction( $shown, $correction );
+
+		if ( null === $stored ) {
+			/* translators: %s: number of the correction document. */
+			echo '<div class="notice notice-error inline"><p>' . esc_html( sprintf( __( 'The correction document %s cannot be shown: its amounts do not add up or do not match its original.', 'merchboard' ), $correction->number ) ) . '</p></div>';
+			return;
+		}
+
+		$money  = static fn( int $units ): string => CreatorSalesSection::money( SalesAmount::format( $units ), $correction->currency );
+		$reason = is_scalar( $correction->snapshot['correction_reason'] ?? null ) ? (string) $correction->snapshot['correction_reason'] : '';
+
+		/* translators: 1: number of the correction document, 2: date. */
+		echo '<h4>' . esc_html( sprintf( __( 'Correction document %1$s (%2$s)', 'merchboard' ), $correction->number, self::date( $correction->issued_at ) ) ) . '</h4>';
+		/* translators: 1: number of the corrected document, 2: number of the original settlement document. */
+		echo '<p>' . esc_html( sprintf( __( 'Corrects %1$s (original: %2$s).', 'merchboard' ), $stored['corrects'], $stored['original'] ) ) . ' <a class="button button-small" href="' . esc_url( SettlementPdfDownload::url( $payout->id, 'K' . $stored['sequence'] ) ) . '">' . esc_html__( 'Download PDF', 'merchboard' ) . '</a></p>';
+		echo '<table class="widefat striped merchboard-settlement-correction"><thead><tr><th scope="col">' . esc_html__( 'Amount', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Before', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Corrected', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Difference', 'merchboard' ) . '</th></tr></thead><tbody>';
+
+		foreach ( self::correction_lines( $stored ) as $key => $label ) {
+			echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . esc_html( $money( $stored['before'][ $key ] ) ) . '</td><td>' . esc_html( $money( $stored['after'][ $key ] ) ) . '</td><td>' . esc_html( $money( $stored['difference'][ $key ] ) ) . '</td></tr>';
+		}
+
+		echo '</tbody></table>';
+		echo '<p><strong>' . esc_html__( 'Reason', 'merchboard' ) . ':</strong> ' . esc_html( $reason ) . '</p>';
+
+		// The corrected master data (K09) from the correction's own snapshot, only when it changed them.
+		$master = SettlementPdf::correction_master_data( $shown, $correction );
+
+		if ( null === $master || ! $master['changed'] ) {
+			return;
+		}
+
+		$missing = __( 'Not registered', 'merchboard' );
+		$value   = static fn( string $text ): string => '' === $text ? $missing : $text;
+		$fields  = array(
+			__( 'Legal name', 'merchboard' )     => $value( $master['creator_legal_name'] ),
+			__( 'Address', 'merchboard' )        => $value( implode( ', ', $master['creator_address'] ) ),
+			__( 'CVR/SE no.', 'merchboard' )     => $value( $master['creator_cvr'] ),
+			__( 'Issued by', 'merchboard' )      => $value( $master['company_name'] ),
+			__( 'Issuer address', 'merchboard' ) => $value( implode( ', ', $master['company_address'] ) ),
+			__( 'Issuer CVR no.', 'merchboard' ) => $value( $master['company_cvr'] ),
+		);
+
+		echo '<table class="form-table merchboard-settlement-correction-master-data" role="presentation"><caption>' . esc_html__( 'Corrected master data', 'merchboard' ) . '</caption><tbody>';
+
+		foreach ( $fields as $label => $text ) {
+			echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . esc_html( $text ) . '</td></tr>';
+		}
+
+		echo '</tbody></table>';
+	}
+
+	/**
+	 * The lines of a correction's amounts: the commission, its VAT split when
+	 * VAT applies before or after, and the commission without VAT when any.
+	 *
+	 * @param array{rate_bps: int, before: array{incl: int, untaxed: int}, after: array{incl: int, untaxed: int}} $stored Verified correction.
+	 * @return array<string, string> Label by amount key.
+	 */
+	private static function correction_lines( array $stored ): array {
+		$lines = array( 'commission' => __( 'Commission in the period', 'merchboard' ) );
+
+		if ( 0 !== $stored['before']['incl'] || 0 !== $stored['after']['incl'] ) {
+			$lines['excl'] = __( 'Commission excl. VAT', 'merchboard' );
+			/* translators: %s: VAT rate in percent, e.g. 25. */
+			$lines['vat']  = sprintf( __( 'VAT (%s %%)', 'merchboard' ), CommissionVat::percent_for_locale( $stored['rate_bps'] ) );
+			$lines['incl'] = __( 'Commission incl. VAT', 'merchboard' );
+		}
+
+		if ( 0 !== $stored['before']['untaxed'] || 0 !== $stored['after']['untaxed'] ) {
+			$lines['untaxed'] = __( 'Commission without VAT (not VAT registered when sold)', 'merchboard' );
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * The form to issue a correction document for the latest document of the
+	 * chain (ADR-062 K10 and K15). The administrator assesses whether the
+	 * error is material; minor errors are not corrected here.
+	 *
+	 * @param Payout                                                                                                       $payout Completed payout.
+	 * @param array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>} $shown  Its document, rows and corrections.
+	 */
+	private function render_correct( Payout $payout, array $shown ): void {
+		echo '<h3 id="merchboard-settlement-correction">' . esc_html__( 'Issue a correction document', 'merchboard' ) . '</h3>';
+		$latest = array() === $shown['corrections'] ? $shown['document'] : $shown['corrections'][ count( $shown['corrections'] ) - 1 ];
+
+		if ( count( $shown['corrections'] ) >= SettlementCorrection::MAX_CHAIN ) {
+			echo '<p class="description">' . esc_html__( 'This settlement document already has 100 correction documents, the most one document can have.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		try {
+			$in_force = SettlementCorrection::in_force( array_merge( array( $shown['document'] ), $shown['corrections'] ), $shown['rows'] );
+			// Only the VAT categories of the original's rows (their status at the sale); the server checks them again.
+			$categories = SettlementCorrection::categories( $shown['rows'] );
+		} catch ( UnexpectedValueException ) {
+			echo '<p class="description">' . esc_html__( 'This settlement document cannot be corrected here: its amounts cannot be read.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		$decimals = SettlementCorrection::decimals( $shown['rows'] );
+		$value    = static function ( int $units ) use ( $decimals ): string {
+			$text = SalesAmount::format( $units );
+
+			return match ( $decimals ) {
+				0       => substr( $text, 0, -5 ),
+				4       => $text,
+				default => substr( $text, 0, $decimals - 4 ),
+			};
+		};
+
+		/* translators: %s: number of the document that is corrected. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'Only for an error you have assessed as material. The correction document corrects %s, the latest document of this payout.', 'merchboard' ), $latest->number ) ) . ' ' . esc_html__( 'It refers to the original, states the amounts before and after the correction, the difference and the reason, and shows the parties as registered now. It changes neither the original document, earlier correction documents, the completed payout nor the balance, and the difference is not settled automatically. The VAT is calculated from the corrected commission with VAT at the rate of the document.', 'merchboard' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( PayoutActions::CORRECT_ACTION ) . '">';
+		echo '<input type="hidden" name="payout_id" value="' . esc_attr( (string) $payout->id ) . '">';
+		echo '<input type="hidden" name="document_id" value="' . esc_attr( (string) $latest->id ) . '">';
+		wp_nonce_field( PayoutActions::nonce_action( PayoutActions::CORRECT_ACTION, $payout->id ) );
+		echo '<table class="form-table" role="presentation"><tbody>';
+
+		if ( $categories['vat'] ) {
+			echo '<tr><th scope="row"><label for="merchboard-correction-incl">' . esc_html__( 'Corrected commission of sales with VAT, incl. VAT', 'merchboard' ) . ' (' . esc_html( $payout->currency ) . ')</label></th><td>';
+			echo '<input type="text" id="merchboard-correction-incl" name="commission_incl" value="' . esc_attr( $value( $in_force['incl'] ) ) . '" inputmode="decimal" class="regular-text" required></td></tr>';
+		}
+
+		if ( $categories['untaxed'] ) {
+			echo '<tr><th scope="row"><label for="merchboard-correction-untaxed">' . esc_html__( 'Corrected commission of sales without VAT', 'merchboard' ) . ' (' . esc_html( $payout->currency ) . ')</label></th><td>';
+			echo '<input type="text" id="merchboard-correction-untaxed" name="commission_untaxed" value="' . esc_attr( $value( $in_force['untaxed'] ) ) . '" inputmode="decimal" class="regular-text" required></td></tr>';
+		}
+
+		echo '<tr><td colspan="2"><p class="description">' . esc_html__( 'Filled in with the amounts in force. Only the VAT categories of the sales the original settled are offered, by the creator\'s VAT status at each sale: no VAT is ever added to the commission of sales while the creator was not VAT registered, or removed from sales while registered. In a document with both, the division between them is your responsibility. A wrong historical VAT status is not corrected here.', 'merchboard' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-correction-reason">' . esc_html__( 'Reason', 'merchboard' ) . '</label></th><td>';
+		echo '<textarea id="merchboard-correction-reason" name="reason" rows="3" maxlength="' . esc_attr( (string) SettlementDocuments::MAX_REASON_LENGTH ) . '" class="large-text" required></textarea>';
+		echo '<p class="description">' . esc_html__( 'Shown on the correction document and to the creator.', 'merchboard' ) . '</p></td></tr>';
+		echo '</tbody></table>';
+		echo '<p><label><input type="checkbox" name="confirm_material" value="1"> ' . esc_html__( 'I have assessed the error as material, so it requires a separate correction document.', 'merchboard' ) . '</label></p>';
+		submit_button( __( 'Issue correction document', 'merchboard' ), 'secondary' );
+		echo '</form>';
 	}
 
 	/**

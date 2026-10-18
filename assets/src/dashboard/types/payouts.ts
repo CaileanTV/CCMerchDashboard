@@ -123,6 +123,64 @@ export interface SettlementCommissionVat {
 }
 
 /**
+ * Master data of a settlement document as issued (ADR-062 K09). An empty
+ * string or list means it was not registered when the document was issued.
+ */
+export interface SettlementMasterData {
+	readonly creatorLegalName: string;
+	readonly creatorAddress: readonly string[];
+	readonly creatorCvr: string;
+	readonly companyCvr: string;
+}
+
+/** Amounts of a correction document; decimal strings with four decimals. */
+export interface SettlementCorrectionValues {
+	readonly commission: string;
+	readonly excl: string;
+	readonly vat: string;
+	readonly incl: string;
+	readonly untaxed: string;
+}
+
+/**
+ * The amounts of a correction document (rettelsesbilag, template version 5,
+ * ADR-062 K10 and K15): before (in force), corrected and the difference
+ * (corrected − before). It changes neither the original nor the payout, and
+ * the difference is not settled automatically.
+ */
+export interface SettlementCorrectionAmounts {
+	/** Suffix of its number and PDF, e.g. "K1". */
+	readonly suffix: string;
+	/** Number of the original settlement document. */
+	readonly original: string;
+	/** Number of the document it corrects (the original or a correction). */
+	readonly corrects: string;
+	/** VAT rate in basis points, e.g. 2500 for 25 %. */
+	readonly rateBps: number;
+	readonly before: SettlementCorrectionValues;
+	readonly after: SettlementCorrectionValues;
+	readonly difference: SettlementCorrectionValues;
+	/** Paid out with the original, unchanged. */
+	readonly payout: string;
+}
+
+/**
+ * The master data of both parties on a correction document, from its own
+ * snapshot as issued (ADR-062 K09 and K15). An empty string or list means
+ * not registered. `changed` is whether they differ from the document it
+ * corrects (the master data were corrected).
+ */
+export interface SettlementCorrectionMasterData {
+	readonly creatorLegalName: string;
+	readonly creatorAddress: readonly string[];
+	readonly creatorCvr: string;
+	readonly companyName: string;
+	readonly companyAddress: readonly string[];
+	readonly companyCvr: string;
+	readonly changed: boolean;
+}
+
+/**
  * A settlement document (afregningsbilag) as issued, from
  * `GET /me/payouts/{id}/settlement-document` (ADR-060). Not approved by an
  * auditor or the Danish Tax Agency. Never recalculated by the dashboard.
@@ -163,6 +221,11 @@ export interface SettlementDocument {
 	readonly creatorName: string;
 	readonly companyName: string;
 	readonly companyAddress: readonly string[];
+	/**
+	 * Master data of both parties as issued (template version 4, ADR-062
+	 * K09), null for earlier documents. Empty values were not registered.
+	 */
+	readonly masterData: SettlementMasterData | null;
 	readonly method: string;
 	readonly destination: string;
 	readonly rows: readonly SettlementDocumentRow[];
@@ -170,6 +233,10 @@ export interface SettlementDocument {
 		readonly number: string;
 		readonly issuedAt: string;
 		readonly reason: string;
+		/** Null for correction documents without amounts (issued before K10). */
+		readonly amounts: SettlementCorrectionAmounts | null;
+		/** Its master data as issued; null when it has no amounts. */
+		readonly masterData: SettlementCorrectionMasterData | null;
 	}[];
 }
 

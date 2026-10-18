@@ -11,8 +11,12 @@ import type {
 	PayoutBalance,
 	PayoutGiftCard,
 	SettlementCommissionVat,
+	SettlementCorrectionAmounts,
+	SettlementCorrectionMasterData,
+	SettlementCorrectionValues,
 	SettlementDocument,
 	SettlementDocumentRow,
+	SettlementMasterData,
 	PayoutCurrencyBalance,
 	PayoutRequestInput,
 	PayoutStatus,
@@ -413,6 +417,191 @@ function parseCommissionVat(
 }
 
 /**
+ * Validates the master data of a settlement document: null (documents before
+ * template version 4), or the creator's legal name, address lines and CVR/SE
+ * number and the issuer's CVR number as strings ('' = not registered).
+ *
+ * @param value Value of `master_data`.
+ */
+function parseMasterData(
+	value: unknown
+): SettlementMasterData | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if ( ! isRecord( value ) || ! Array.isArray( value.creator_address ) ) {
+		return undefined;
+	}
+
+	const {
+		creator_legal_name: creatorLegalName,
+		creator_cvr: creatorCvr,
+		company_cvr: companyCvr,
+	} = value;
+	const address = value.creator_address as unknown[];
+
+	if (
+		typeof creatorLegalName !== 'string' ||
+		typeof creatorCvr !== 'string' ||
+		typeof companyCvr !== 'string' ||
+		! address.every( ( line ) => typeof line === 'string' )
+	) {
+		return undefined;
+	}
+
+	return {
+		creatorLegalName,
+		creatorAddress: address as string[],
+		creatorCvr,
+		companyCvr,
+	};
+}
+
+/**
+ * Validates the amounts of a correction document: null (correction
+ * documents without amounts), or the suffix, the references, the rate and
+ * the amounts before, after and the difference, which must add up (in
+ * units, so no floating point is involved).
+ *
+ * @param value Value of `amounts`.
+ */
+function parseCorrectionAmounts(
+	value: unknown
+): SettlementCorrectionAmounts | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if ( ! isRecord( value ) ) {
+		return undefined;
+	}
+
+	const values = ( entry: unknown ): SettlementCorrectionValues | null => {
+		if ( ! isRecord( entry ) ) {
+			return null;
+		}
+
+		const { commission, excl, vat, incl, untaxed } = entry;
+
+		return isAmount( commission ) &&
+			isAmount( excl ) &&
+			isAmount( vat ) &&
+			isAmount( incl ) &&
+			isAmount( untaxed )
+			? { commission, excl, vat, incl, untaxed }
+			: null;
+	};
+	const { suffix, original, corrects, rate_bps: rateBps, payout } = value;
+	const before = values( value.before );
+	const after = values( value.after );
+	const difference = values( value.difference );
+
+	if (
+		typeof suffix !== 'string' ||
+		! /^K[1-9]\d{0,2}$/.test( suffix ) ||
+		typeof original !== 'string' ||
+		typeof corrects !== 'string' ||
+		typeof rateBps !== 'number' ||
+		! Number.isInteger( rateBps ) ||
+		rateBps < 1 ||
+		rateBps > 10000 ||
+		! isAmount( payout ) ||
+		before === null ||
+		after === null ||
+		difference === null
+	) {
+		return undefined;
+	}
+
+	const units = ( amount: string ) => BigInt( amount.replace( '.', '' ) );
+	const keys = [ 'commission', 'excl', 'vat', 'incl', 'untaxed' ] as const;
+	const addsUp = ( entry: SettlementCorrectionValues ) =>
+		units( entry.incl ) + units( entry.untaxed ) ===
+			units( entry.commission ) &&
+		units( entry.excl ) + units( entry.vat ) === units( entry.incl );
+
+	if (
+		! addsUp( before ) ||
+		! addsUp( after ) ||
+		keys.some(
+			( key ) =>
+				units( after[ key ] ) - units( before[ key ] ) !==
+				units( difference[ key ] )
+		)
+	) {
+		return undefined;
+	}
+
+	return {
+		suffix,
+		original,
+		corrects,
+		rateBps,
+		before,
+		after,
+		difference,
+		payout,
+	};
+}
+
+/**
+ * Validates the master data of a correction document: null, or the strings
+ * and address lines of both parties and whether they were corrected.
+ *
+ * @param value Value of `master_data` of a correction.
+ */
+function parseCorrectionMasterData(
+	value: unknown
+): SettlementCorrectionMasterData | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		! Array.isArray( value.creator_address ) ||
+		! Array.isArray( value.company_address )
+	) {
+		return undefined;
+	}
+
+	const {
+		creator_legal_name: creatorLegalName,
+		creator_cvr: creatorCvr,
+		company_name: companyName,
+		company_cvr: companyCvr,
+		changed,
+	} = value;
+	const creatorAddress = value.creator_address as unknown[];
+	const companyAddress = value.company_address as unknown[];
+	const lines = ( entries: unknown[] ) =>
+		entries.every( ( line ) => typeof line === 'string' );
+
+	if (
+		typeof creatorLegalName !== 'string' ||
+		typeof creatorCvr !== 'string' ||
+		typeof companyName !== 'string' ||
+		typeof companyCvr !== 'string' ||
+		typeof changed !== 'boolean' ||
+		! lines( creatorAddress ) ||
+		! lines( companyAddress )
+	) {
+		return undefined;
+	}
+
+	return {
+		creatorLegalName,
+		creatorAddress: creatorAddress as string[],
+		creatorCvr,
+		companyName,
+		companyAddress: companyAddress as string[],
+		companyCvr,
+		changed,
+	};
+}
+
+/**
  * Validates `GET /me/payouts/{id}/settlement-document`. Exactly the
  * documented fields are read. `preliminary` is true for documents of
  * template version 1 (060-9) and false for later ones, which carry the note
@@ -467,8 +656,17 @@ export function parseSettlementDocument(
 	}
 
 	for ( const entry of body.corrections as unknown[] ) {
+		const amounts = isRecord( entry )
+			? parseCorrectionAmounts( entry.amounts )
+			: undefined;
+		const correctionMaster = isRecord( entry )
+			? parseCorrectionMasterData( entry.master_data )
+			: undefined;
+
 		if (
 			! isRecord( entry ) ||
+			amounts === undefined ||
+			correctionMaster === undefined ||
 			typeof entry.number !== 'string' ||
 			! isTime( entry.issued_at ) ||
 			typeof entry.reason !== 'string'
@@ -480,15 +678,19 @@ export function parseSettlementDocument(
 			number: entry.number,
 			issuedAt: entry.issued_at,
 			reason: entry.reason,
+			amounts,
+			masterData: correctionMaster,
 		} );
 	}
 
 	const address = body.company_address as unknown[];
 	const references = body.adjustment_refs as unknown[];
 	const commissionVat = parseCommissionVat( body.commission_vat );
+	const masterData = parseMasterData( body.master_data );
 
 	if (
 		commissionVat === undefined ||
+		masterData === undefined ||
 		typeof number !== 'string' ||
 		! DOCUMENT_NUMBER.test( number ) ||
 		( type !== 'settlement' && type !== 'correction' ) ||
@@ -533,6 +735,7 @@ export function parseSettlementDocument(
 		creatorName,
 		companyName,
 		companyAddress: address as string[],
+		masterData,
 		method,
 		destination,
 		rows,
@@ -560,19 +763,30 @@ export function getSettlementDocument(
 
 /**
  * The settlement document of the creator's own completed payout as a PDF,
- * made by the server from the stored document.
+ * made by the server from the stored document; with a suffix (e.g. "K1")
+ * one of its correction documents with amounts.
  *
- * @param id Payout id.
+ * @param id         Payout id.
+ * @param correction Suffix of a correction document, '' for the settlement document.
  */
 export function downloadSettlementPdf(
-	id: number
+	id: number,
+	correction = ''
 ): Promise< ApiResult< Blob > > {
 	if ( ! Number.isInteger( id ) || id < 1 ) {
 		throw new Error( 'A payout id is a positive integer.' );
 	}
 
+	if ( correction !== '' && ! /^K[1-9]\d{0,2}$/.test( correction ) ) {
+		throw new Error( 'A correction suffix is K followed by a number.' );
+	}
+
+	const query = correction === '' ? '' : `?correction=${ correction }`;
+
 	return requestFile(
-		{ path: `/merchboard/v1/me/payouts/${ id }/settlement-document/pdf` },
+		{
+			path: `/merchboard/v1/me/payouts/${ id }/settlement-document/pdf${ query }`,
+		},
 		'application/pdf'
 	);
 }

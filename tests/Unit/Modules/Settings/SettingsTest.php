@@ -130,6 +130,7 @@ final class SettingsTest extends TestCase {
 				Settings::LOGO_ATTACHMENT_ID        => 0,
 				Settings::PAYOUT_HOLDING_DAYS       => 14,
 				Settings::PAYOUT_GIFT_CARD_PROVIDER => '',
+				Settings::COMPANY_CVR               => '',
 			),
 			Settings::all()
 		);
@@ -155,6 +156,32 @@ final class SettingsTest extends TestCase {
 
 		$this->options->options[ Settings::OPTION ] = array( Settings::PAYOUT_GIFT_CARD_PROVIDER => 7 );
 		self::assertSame( '', Settings::payout_gift_card_provider() );
+	}
+
+	/**
+	 * The issuer's CVR number is not registered by default; only eight digits
+	 * are kept, never a guess (ADR-062 K09).
+	 */
+	public function test_company_cvr_defaults_to_not_registered_and_keeps_only_eight_digits(): void {
+		self::assertSame( '', Settings::company_cvr() );
+		self::assertSame( '', Settings::defaults()[ Settings::COMPANY_CVR ] );
+
+		foreach ( array(
+			'12345678'   => '12345678',
+			'1234567'    => '',
+			'123456789'  => '',
+			'1234 5678'  => '',
+			'DK12345678' => '',
+			''           => '',
+		) as $stored => $expected ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::COMPANY_CVR => (string) $stored );
+			self::assertSame( $expected, Settings::company_cvr(), (string) $stored );
+		}
+
+		$this->options->options[ Settings::OPTION ] = array( Settings::COMPANY_CVR => 12345678 );
+		self::assertSame( '', Settings::company_cvr(), 'Only a string.' );
+		self::assertTrue( Settings::valid_cvr( '' ) );
+		self::assertFalse( Settings::valid_cvr( ' 12345678' ) );
 	}
 
 	/**

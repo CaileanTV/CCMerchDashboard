@@ -18,6 +18,8 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetails;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetailsStore;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -28,6 +30,9 @@ defined( 'ABSPATH' ) || exit;
  *
  * - the holding period in days (planning decision 2, default 14);
  * - the payout gift card provider (ADR-057, default none);
+ * - the master data of settlement documents (ADR-062 K09): the issuing
+ *   business' CVR number and each creator's legal name, address and CVR/SE
+ *   number. They move nothing earned; issued documents keep their snapshot;
  * - a creator's settlement start (D3, D6, ADR-054): set, changed or removed
  *   under the creator's payout lock and row lock (CreatorRowLock), so no
  *   request runs against the old window meanwhile. It only bounds the
@@ -45,12 +50,104 @@ final class PayoutSettings {
 	 *
 	 * @phpstan-param Closure(): DateTimeImmutable $clock
 	 *
-	 * @param PayoutRepository $payouts     Settlement start storage and lock.
-	 * @param AuditTrail       $audit       Audit trail.
-	 * @param Transaction      $transaction Transactions.
-	 * @param Closure          $clock       Current time (`Closure(): DateTimeImmutable`).
+	 * @param PayoutRepository                $payouts     Settlement start storage and lock.
+	 * @param AuditTrail                      $audit       Audit trail.
+	 * @param Transaction                     $transaction Transactions.
+	 * @param Closure                         $clock       Current time (`Closure(): DateTimeImmutable`).
+	 * @param CreatorBillingDetailsStore|null $billing     Creators' master data (ADR-062 K09); null = none.
 	 */
-	public function __construct( private PayoutRepository $payouts, private AuditTrail $audit, private Transaction $transaction, private Closure $clock ) {
+	public function __construct( private PayoutRepository $payouts, private AuditTrail $audit, private Transaction $transaction, private Closure $clock, private ?CreatorBillingDetailsStore $billing = null ) {
+	}
+
+	/**
+	 * Sets the CVR number of the business that issues the settlement
+	 * documents (ADR-062 K09): eight digits (spaces removed) or '' for none.
+	 * New documents copy it when they are issued; issued documents keep theirs.
+	 *
+	 * @param string $cvr CVR number.
+	 * @return bool Whether it changed.
+	 * @throws PayoutException When not allowed or not eight digits.
+	 */
+	public function set_company_cvr( string $cvr ): bool {
+		self::authorize();
+		$cvr = preg_replace( '/\s+/', '', $cvr ) ?? '';
+
+		if ( ! Settings::valid_cvr( $cvr ) ) {
+			throw new PayoutException( PayoutException::INVALID_CVR );
+		}
+
+		$settings = Settings::all();
+		$previous = $settings[ Settings::COMPANY_CVR ];
+
+		if ( $previous === $cvr ) {
+			return false;
+		}
+
+		$settings[ Settings::COMPANY_CVR ] = $cvr;
+
+		$this->transaction->run(
+			function () use ( $settings, $previous, $cvr ): void {
+				$this->audit->record(
+					AuditAction::PayoutSettingsChanged,
+					null,
+					array(
+						'setting'        => Settings::COMPANY_CVR,
+						'previous_value' => $previous,
+						'value'          => $cvr,
+					)
+				);
+
+				if ( ! Settings::save( $settings ) ) {
+					throw new DatabaseException( 'Could not save the payout settings.' );
+				}
+			}
+		);
+
+		return true;
+	}
+
+	/**
+	 * The creator's master data for settlement documents (ADR-062 K09).
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	public function billing_details( int $creator_id ): CreatorBillingDetails {
+		return null === $this->billing ? new CreatorBillingDetails() : $this->billing->find( $creator_id );
+	}
+
+	/**
+	 * Sets the creator's master data for settlement documents (ADR-062 K09):
+	 * legal name, address and CVR/SE number, each optional. Under the
+	 * creator's row lock in one transaction with the audit record (names of
+	 * the changed fields, never values). New documents copy it when they are
+	 * issued; issued documents keep theirs.
+	 *
+	 * @param int                   $creator_id Creator.
+	 * @param array<string, string> $values     Field => submitted value (CreatorBillingDetails::FIELDS).
+	 * @return bool Whether it changed.
+	 * @throws PayoutException When not allowed, the creator does not exist or a value is invalid.
+	 */
+	public function set_billing_details( int $creator_id, array $values ): bool {
+		self::authorize();
+		$details = CreatorBillingDetails::from_input( $values );
+		$billing = $this->billing ?? throw new PayoutException( PayoutException::NOT_FOUND );
+
+		return $this->transaction->run(
+			function () use ( $billing, $creator_id, $details ): bool {
+				// Locks the creator's row (and refuses an unknown creator) until the commit.
+				$this->payouts->settlement_start( $creator_id, true );
+				$changed = $details->changed_fields( $billing->find( $creator_id ) );
+
+				if ( array() === $changed ) {
+					return false;
+				}
+
+				$billing->save( $creator_id, $details );
+				$this->audit->record( AuditAction::CreatorBillingDetailsChanged, $creator_id, array( 'changed_fields' => $changed ) );
+
+				return true;
+			}
+		);
 	}
 
 	/**

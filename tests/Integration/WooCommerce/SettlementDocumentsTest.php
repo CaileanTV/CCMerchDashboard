@@ -20,8 +20,11 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Pdf\PdfWriter;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
 use MerchBoard\Modules\WooCommerce\Admin\SettlementPdfDownload;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
@@ -34,6 +37,8 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetailsStore;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
@@ -126,6 +131,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
+		delete_option( Settings::OPTION );
 
 		$creators      = new CreatorRepository( $this->wpdb );
 		$this->creator = $creators->create( 'Settlement Alpha', CreatorStatus::Active )->id;
@@ -151,15 +157,17 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		$cipher           = new PayoutCipher( $this->key );
 		$this->repository = new PayoutRepository( $this->wpdb );
 		$balances         = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
-		$this->documents  = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $creators, $this->vat, $audit, $transaction, $clock );
+		$billing          = new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) );
+		$this->documents  = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $creators, $this->vat, $audit, $transaction, $clock, null, $billing );
 		$this->decisions  = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, $this->documents );
 		$this->requests   = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock );
-		$this->settings   = new PayoutSettings( $this->repository, $audit, $transaction, $clock );
+		$this->settings   = new PayoutSettings( $this->repository, $audit, $transaction, $clock, $billing );
 	}
 
 	protected function tearDown(): void {
 		$this->second?->close();
 		$this->posts->remove_all();
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -181,7 +189,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertTrue( $document->vat_registered );
 		self::assertNull( $document->period_from, 'Without a settlement start: the whole history.' );
 		self::assertSame( '2026-11-30 12:00:00', $document->period_to->format( 'Y-m-d H:i:s' ) );
-		self::assertSame( 3, $document->template_version, 'New documents carry the note on tax and reporting and the VAT on the commission.' );
+		self::assertSame( 4, $document->template_version, 'New documents carry the note on tax and reporting, the VAT on the commission and the master data.' );
 		self::assertFalse( $document->snapshot['preliminary'] ?? null );
 		self::assertSame( 'Settlement Alpha', $document->snapshot['creator']['name'] ?? null );
 		self::assertSame( '•••• 5678', $document->snapshot['payout']['destination_hint'] ?? null );
@@ -352,29 +360,543 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertSame( 1, $result['ledger_rows'], 'An unsettled order can still be erased.' );
 	}
 
-	public function test_a_correction_refers_to_the_latest_document_of_its_chain(): void {
+	public function test_a_correction_document_states_the_amounts_and_changes_nothing_else(): void {
+		// VAT registered at the sales: 3 × 20.00 commission incl. VAT (25 %): 48.00 + 12.00.
+		$this->earn( 3 );
+		$payout = $this->request( '25', 'key-set-0501' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+		$before = $this->state();
+
+		$first = $this->documents->correct( $payout->id, $original->id, 'The markup of the product was wrong.', '50', '0' );
+
+		self::assertSame( array( 'AFR-000001-K1', SettlementDocument::TYPE_CORRECTION, 5, $original->id, $payout->id ), array( $first->number, $first->type, $first->template_version, $first->corrects_document_id, $first->payout_id ) );
+		self::assertSame( array( 0, 0, 0, 0, 0, 0 ), array( $first->profit_units, $first->commission_units, $first->adjustment_units, $first->opening_units, $first->payout_units, $first->closing_units ), 'No balance or sum ever counts a correction.' );
+		self::assertSame( array( 'AFR-000001', 'The markup of the product was wrong.' ), array( $first->snapshot['corrects'] ?? null, $first->snapshot['correction_reason'] ?? null ) );
+		self::assertSame(
+			array(
+				'version'    => 1,
+				'original'   => 'AFR-000001',
+				'corrects'   => 'AFR-000001',
+				'sequence'   => 1,
+				'rate_bps'   => 2500,
+				'decimals'   => 2,
+				'before'     => array(
+					'commission' => '60.0000',
+					'excl'       => '48.0000',
+					'vat'        => '12.0000',
+					'incl'       => '60.0000',
+					'untaxed'    => '0.0000',
+				),
+				'after'      => array(
+					'commission' => '50.0000',
+					'excl'       => '40.0000',
+					'vat'        => '10.0000',
+					'incl'       => '50.0000',
+					'untaxed'    => '0.0000',
+				),
+				'difference' => array(
+					'commission' => '-10.0000',
+					'excl'       => '-8.0000',
+					'vat'        => '-2.0000',
+					'incl'       => '-10.0000',
+					'untaxed'    => '0.0000',
+				),
+				'payout'     => '25.0000',
+			),
+			$first->snapshot['correction'] ?? null
+		);
+
+		// The original, its rows, the number counter and the payout are unchanged.
+		$after = $this->state();
+		self::assertSame( $before['documents'], array_slice( $after['documents'], 0, count( $before['documents'] ) ), 'The original is never changed.' );
+		self::assertSame( array( $before['rows'], $before['counters'], $before['payouts'] ), array( $after['rows'], $after['counters'], $after['payouts'] ) );
+		self::assertSame(
+			array(
+				array(
+					'document_id'           => $first->id,
+					'document_number'       => 'AFR-000001-K1',
+					'original'              => 'AFR-000001',
+					'corrects'              => 'AFR-000001',
+					'payout_id'             => $payout->id,
+					'currency'              => 'DKK',
+					'commission_before'     => '60.0000',
+					'commission_after'      => '50.0000',
+					'commission_difference' => '-10.0000',
+					'has_reason'            => true,
+				),
+			),
+			$this->audit( AuditAction::SettlementDocumentCorrected ),
+			'Audited without the reason.'
+		);
+
+		// Repeated or stale: the original is no longer the latest of the chain.
+		$this->refused( PayoutException::DOCUMENT_NOT_CORRECTABLE, fn() => $this->documents->correct( $payout->id, $original->id, 'Again.', '50', '0' ), 'Only the latest of a chain.' );
+
+		// A second correction corrects the first: the amounts before are the first one's corrected amounts.
+		// Moving commission to sales without VAT would remove VAT the original's rows carry: refused, nothing written.
+		$state = $this->state();
+		$this->refused( PayoutException::CORRECTION_VAT_STATUS, fn() => $this->documents->correct( $payout->id, $first->id, 'One sale was without VAT.', '40', '10' ) );
+		self::assertSame( $state, $this->state() );
+		$second = $this->documents->correct( $payout->id, $first->id, 'The markup was still wrong.', '45', '0' );
+		self::assertSame( array( 'AFR-000001-K2', $first->id ), array( $second->number, $second->corrects_document_id ) );
+		self::assertSame( array( 'AFR-000001', 'AFR-000001-K1', 2 ), array( $second->snapshot['correction']['original'] ?? null, $second->snapshot['correction']['corrects'] ?? null, $second->snapshot['correction']['sequence'] ?? null ) );
+		self::assertSame( '50.0000', $second->snapshot['correction']['before']['commission'] ?? null );
+		self::assertSame( array( '45.0000', '36.0000', '9.0000', '45.0000', '0.0000' ), array_values( $second->snapshot['correction']['after'] ?? array() ) );
+		self::assertSame( array( '-5.0000', '-4.0000', '-1.0000', '-5.0000', '0.0000' ), array_values( $second->snapshot['correction']['difference'] ?? array() ) );
+
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		self::assertSame( 'AFR-000001', $shown['document']->number );
+		self::assertSame( array( 'AFR-000001-K1', 'AFR-000001-K2' ), array_map( static fn( SettlementDocument $doc ): string => $doc->number, $shown['corrections'] ) );
+
+		// The next settlement document takes the next number and carries the original's balance.
+		$this->earn( 1 );
+		$next = $this->request( '5', 'key-set-0502' );
+		$this->decisions->complete( $next->id );
+		$later = $this->documents->for_payout( $next->id )['document'] ?? null;
+		self::assertNotNull( $later );
+		self::assertSame( array( 'AFR-000002', '35.0000' ), array( $later->number, SalesAmount::format( $later->opening_units ) ), 'The difference is not settled automatically.' );
+
+		// Shown in the PDFs and to the creator.
+		$pdf  = new SettlementPdf();
+		$text = static fn( string $value ): string => PdfWriter::escape( PdfWriter::encode( $value ) );
+		$body = $pdf->render_correction( $shown, $shown['corrections'][1] );
+
+		foreach ( array( 'Correction document', 'AFR-000001-K2', 'Corrects settlement document AFR-000001 of 2026-11-30.', 'Replaces the corrected amounts of correction document AFR-000001-K1.', 'Before (DKK)', 'Corrected (DKK)', 'Difference (DKK)', 'Commission in the period', 'VAT (25 %)', '-1.00', '45.00', 'Paid out with the original document (unchanged): 25.00 DKK', 'The markup was still wrong.', 'is not settled automatically.', 'Tax and reporting', 'Template version 5.' ) as $expected ) {
+			self::assertStringContainsString( $text( $expected ), $body, $expected );
+		}
+
+		self::assertStringNotContainsString( $text( 'Commission without VAT (not VAT registered when sold)' ), $body, 'No category the original does not have.' );
+		self::assertSame( 'attachment; filename="AFR-000001-K2.pdf"', SettlementPdf::headers( $shown['corrections'][1] )['Content-Disposition'] );
+		self::assertSame( $shown['corrections'][1], SettlementPdf::correction( $shown, 'K2' ) );
+		self::assertNull( SettlementPdf::correction( $shown, 'K3' ) );
+		self::assertStringContainsString( $text( 'Commission in the period corrected from 60.00 to 50.00 DKK (difference -10.00 DKK); see the correction document.' ), $pdf->render( $shown ), 'The original lists its corrections.' );
+
+		$api = MePayoutsController::settlement_document( $shown );
+		self::assertSame( array( 'suffix', 'original', 'corrects', 'rate_bps', 'before', 'after', 'difference', 'payout' ), array_keys( $api['corrections'][0]['amounts'] ?? array() ) );
+		self::assertSame( array( 'K2', 'AFR-000001-K1', '-5.0000', '25.0000' ), array( $api['corrections'][1]['amounts']['suffix'] ?? null, $api['corrections'][1]['amounts']['corrects'] ?? null, $api['corrections'][1]['amounts']['difference']['incl'] ?? null, $api['corrections'][1]['amounts']['payout'] ?? null ) );
+		self::assertSame( '60.0000', $api['commission'], 'The original as issued.' );
+	}
+
+	public function test_invalid_or_unchanged_corrections_are_refused_and_write_nothing(): void {
 		$this->earn( 2 );
-		$payout = $this->request( '10', 'key-set-0009' );
+		$payout = $this->request( '10', 'key-set-0503' );
+		$other  = $this->request( '5', 'key-set-0504' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+		$before = $this->state();
+		$fix    = fn( string $reason, string $incl, string $untaxed = '0', ?int $payout_id = null, ?int $document_id = null ) => $this->documents->correct( $payout_id ?? $payout->id, $document_id ?? $original->id, $reason, $incl, $untaxed );
+
+		foreach ( array( '', '   ', str_repeat( 'x', 501 ), "Line\x01break", "Invalid \xC3" ) as $reason ) {
+			$this->refused( PayoutException::INVALID_CORRECTION_REASON, fn() => $fix( $reason, '30' ), 'Reason ' . bin2hex( substr( $reason, 0, 12 ) ) );
+		}
+
+		foreach ( array( '', 'abc', '1e3', '30.005', '1.234.5', '+30', '30 kr', '1234567890123' ) as $amount ) {
+			$this->refused( PayoutException::INVALID_CORRECTION_AMOUNT, fn() => $fix( 'Wrong.', $amount ), 'Amount ' . $amount );
+		}
+
+		foreach ( array( 'Paid to jane.doe@example.com instead.', 'Wrong account DK50 0040 0440 1162 43.' ) as $reason ) {
+			$this->refused( PayoutException::PAYMENT_DETAILS_IN_TEXT, fn() => $fix( $reason, '30' ), 'No payment details in the reason.' );
+		}
+
+		$this->refused( PayoutException::INVALID_CORRECTION_AMOUNT, fn() => $fix( 'Wrong.', '30', '0.001' ), 'More decimals than the shop.' );
+		$this->refused( PayoutException::DOCUMENT_NOT_CORRECTABLE, fn() => $fix( 'Wrong.', '30', '0', $other->id ), 'The document of another payout.' );
+		$this->refused( PayoutException::DOCUMENT_NOT_CORRECTABLE, fn() => $fix( 'Wrong.', '30', '0', null, 999999 ), 'An unknown document.' );
+		$this->refused( PayoutException::CORRECTION_UNCHANGED, fn() => $fix( 'Nothing.', '40', '0' ), 'The amounts in force and the same parties.' );
+		$this->refused( PayoutException::CORRECTION_UNCHANGED, fn() => $fix( 'Nothing.', '40,00', '0,00' ), 'Also with a decimal comma.' );
+
+		wp_set_current_user( $this->create_user( 'mb-set-correct-subscriber' ) );
+		$this->refused( PayoutException::NOT_AUTHORIZED, fn() => $fix( 'No.', '30' ) );
+		wp_set_current_user( 1 );
+
+		self::assertSame( $before, $this->state(), 'Nothing written, not even an audit record.' );
+
+		// Corrected master data (K09) with unchanged amounts: a correction with no difference.
+		$this->settings->set_billing_details( $this->creator, array( 'legal_name' => 'Alpha Merch ApS' ) );
+		$fixed = $fix( 'The legal name was missing.', '40,00', '0' );
+		self::assertSame( array( '0.0000', 'Alpha Merch ApS' ), array( $fixed->snapshot['correction']['difference']['commission'] ?? null, $fixed->snapshot['creator']['legal_name'] ?? null ) );
+		self::assertSame( '', $original->snapshot['creator']['legal_name'] ?? null, 'The original keeps its parties.' );
+	}
+
+	public function test_documents_issued_before_keep_working_in_a_chain_of_corrections(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0505' );
+		$this->decisions->complete( $payout->id );
+		$issued = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $issued );
+		$original = $issued['document'];
+		// The original as issued with template version 2 (no VAT split), and a correction without amounts (D11 a), both made by the test.
+		$legacy = $original->snapshot;
+		unset( $legacy[ CommissionVat::SNAPSHOT_KEY ] );
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'template_version' => 2, 'snapshot' => (string) wp_json_encode( $legacy ) ), array( 'id' => $original->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->wpdb->insert( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'document_number' => 'AFR-000002', 'document_series' => 'AFR', 'document_type' => 'correction', 'creator_id' => $this->creator, 'payout_id' => $payout->id, 'corrects_document_id' => $original->id, 'currency' => 'DKK', 'period_to' => '2026-11-30 12:00:00', 'profit_amount' => '0', 'commission_amount' => '0', 'opening_balance' => '0', 'payout_amount' => '0', 'closing_balance' => '0', 'calculation_version' => 'adr063-adr054-v1', 'template_version' => 4, 'snapshot' => (string) wp_json_encode( array( 'corrects' => 'AFR-000001', 'correction_reason' => 'Name misspelled.' ) + $legacy ), 'issued_at' => '2026-11-30 12:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$old = (int) $this->wpdb->insert_id;
+
+		$this->refused( PayoutException::DOCUMENT_NOT_CORRECTABLE, fn() => $this->documents->correct( $payout->id, $original->id, 'Wrong.', '30', '0' ), 'The old correction is the latest.' );
+		$fixed = $this->documents->correct( $payout->id, $old, 'The markup was wrong.', '30', '0' );
+
+		self::assertSame( array( 'AFR-000001-K2', 'AFR-000002', 'AFR-000001' ), array( $fixed->number, $fixed->snapshot['correction']['corrects'] ?? null, $fixed->snapshot['correction']['original'] ?? null ) );
+		self::assertSame( array( '40.0000', '32.0000', '8.0000', '40.0000', '0.0000' ), array_values( $fixed->snapshot['correction']['before'] ?? array() ), 'The split of the original\'s rows; the old correction has no amounts.' );
+
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$api = MePayoutsController::settlement_document( $shown );
+		self::assertNull( $api['corrections'][0]['amounts'], 'The old correction as it was.' );
+		self::assertNull( $api['corrections'][0]['master_data'], 'No master data block for a correction without amounts.' );
+		self::assertNotNull( $api['corrections'][1]['master_data'] ?? null );
+		self::assertSame( 'Name misspelled.', $api['corrections'][0]['reason'] );
+		self::assertNull( SettlementPdf::correction( $shown, 'K1' ), 'No PDF for a correction without amounts.' );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 5.' ) ), ( new SettlementPdf() )->render_correction( $shown, $shown['corrections'][1] ) );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 2.' ) ), ( new SettlementPdf() )->render( $shown ), 'The original keeps its template.' );
+	}
+
+	public function test_a_correction_document_that_does_not_match_its_chain_gives_no_pdf(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0506' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+		$fixed    = $this->documents->correct( $payout->id, $original->id, 'Wrong markup.', '30', '0' );
+		$snapshot = $fixed->snapshot;
+		$cases    = array(
+			'other before'     => array( 'before' => array( 'commission' => '41.0000', 'incl' => '41.0000', 'excl' => '32.8000', 'vat' => '8.2000', 'untaxed' => '0.0000' ) ) + $snapshot['correction'], // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'other difference' => array( 'difference' => array( 'commission' => '-9.0000' ) + $snapshot['correction']['difference'] ) + $snapshot['correction'], // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'other vat'        => array( 'after' => array( 'excl' => '25.0000', 'vat' => '5.0000' ) + $snapshot['correction']['after'] ) + $snapshot['correction'], // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			'other payout'     => array( 'payout' => '11.0000' ) + $snapshot['correction'],
+			'other original'   => array( 'corrects' => 'AFR-000009' ) + $snapshot['correction'],
+		);
+
+		foreach ( $cases as $case => $correction ) {
+			$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'snapshot' => (string) wp_json_encode( array( 'correction' => $correction ) + $snapshot ) ), array( 'id' => $fixed->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$shown = $this->documents->for_payout( $payout->id );
+			self::assertNotNull( $shown );
+
+			try {
+				( new SettlementPdf() )->render_correction( $shown, $shown['corrections'][0] );
+				self::fail( 'Expected no PDF: ' . $case );
+			} catch ( UnexpectedValueException ) {
+				$this->addToAssertionCount( 1 );
+			}
+
+			self::assertNull( MePayoutsController::settlement_document( $shown )['corrections'][0]['amounts'] ?? null, 'Not shown with amounts that do not add up: ' . $case . '.' );
+		}
+	}
+
+	public function test_a_correction_for_sales_while_not_vat_registered_never_adds_vat(): void {
+		$this->vat->save( $this->creator, false );
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0508' );
+		$this->decisions->complete( $payout->id );
+		$issued = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $issued );
+		$original = $issued['document'];
+
+		// The creator is VAT registered now: the categories still come from the rows' status at the sale.
+		$this->vat->save( $this->creator, true );
+		$before = $this->state();
+		$this->refused( PayoutException::CORRECTION_VAT_STATUS, fn() => $this->documents->correct( $payout->id, $original->id, 'Wrong.', '10', '30' ), 'Part with VAT.' );
+		$this->refused( PayoutException::CORRECTION_VAT_STATUS, fn() => $this->documents->correct( $payout->id, $original->id, 'Wrong.', '40', '0' ), 'All with VAT.' );
+		self::assertSame( $before, $this->state(), 'Refused before any write, also of the audit log.' );
+
+		$fixed = $this->documents->correct( $payout->id, $original->id, 'The markup was wrong.', '0', '30' );
+		self::assertSame( array( '30.0000', '0.0000', '0.0000', '0.0000', '30.0000' ), array_values( $fixed->snapshot['correction']['after'] ?? array() ) );
+		self::assertSame( array( '-10.0000', '0.0000', '0.0000', '0.0000', '-10.0000' ), array_values( $fixed->snapshot['correction']['difference'] ?? array() ) );
+
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		self::assertSame( $original->snapshot, $shown['document']->snapshot, 'The original and its VAT split are unchanged.' );
+		self::assertSame( $issued['rows'], $shown['rows'] );
+		$pdf = ( new SettlementPdf() )->render_correction( $shown, $shown['corrections'][0] );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Commission without VAT (not VAT registered when sold)' ) ), $pdf );
+
+		foreach ( array( 'Commission incl. VAT', 'Commission excl. VAT', 'VAT (25 %)' ) as $text ) {
+			self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
+		}
+
+		// The form offers only the category the original has; a field it does not send is 0.
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$html = $this->page_html( $page, $payout->id );
+		self::assertStringNotContainsString( 'name="commission_incl"', $html );
+		self::assertStringContainsString( 'name="commission_untaxed" value="30.00"', $html );
+
+		$actions = new PayoutActions( $this->decisions, new RecordingLogger(), null, $this->documents );
+		$url     = $actions->handle(
+			array(
+				'action'             => PayoutActions::CORRECT_ACTION,
+				'payout_id'          => (string) $payout->id,
+				'document_id'        => (string) $shown['corrections'][0]->id,
+				'reason'             => 'The markup was still wrong.',
+				'commission_untaxed' => '25.00',
+				'confirm_material'   => '1',
+				'_wpnonce'           => wp_create_nonce( PayoutActions::nonce_action( PayoutActions::CORRECT_ACTION, $payout->id ) ),
+			)
+		);
+		self::assertStringContainsString( 'result=corrected', $url );
+		self::assertSame( '0.0000', $this->documents->for_payout( $payout->id )['corrections'][1]->snapshot['correction']['after']['incl'] ?? null );
+		self::assertStringContainsString( 'result=' . PayoutException::CORRECTION_VAT_STATUS, $actions->handle( array( 'commission_incl' => '5' ) + array( 'document_id' => (string) ( $this->documents->for_payout( $payout->id )['corrections'][1]->id ?? 0 ) ) + array( 'action' => PayoutActions::CORRECT_ACTION, 'payout_id' => (string) $payout->id, 'reason' => 'Wrong.', 'commission_untaxed' => '25', 'confirm_material' => '1', '_wpnonce' => wp_create_nonce( PayoutActions::nonce_action( PayoutActions::CORRECT_ACTION, $payout->id ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	public function test_a_mixed_document_keeps_both_vat_categories_and_vat_only_on_the_part_with_vat(): void {
+		// One sale while VAT registered (20.00 incl. 4.00 VAT), one while not (20.00).
+		$this->earn( 1 );
+		$this->vat->save( $this->creator, false );
+		$this->earn( 1 );
+		$payout = $this->request( '10', 'key-set-0509' );
 		$this->decisions->complete( $payout->id );
 		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
 		self::assertNotNull( $original );
 
-		$first = $this->documents->correct( $original->id, 'The creator name was misspelled.' );
-		self::assertSame( array( 'AFR-000002', SettlementDocument::TYPE_CORRECTION, $original->id, 0 ), array( $first->number, $first->type, $first->corrects_document_id, $first->commission_units ) );
-		self::assertSame( 'AFR-000001', $first->snapshot['corrects'] ?? null );
+		$fixed = $this->documents->correct( $payout->id, $original->id, 'Wrong markup.', '15', '25' );
+		self::assertSame( array( '40.0000', '12.0000', '3.0000', '15.0000', '25.0000' ), array_values( $fixed->snapshot['correction']['after'] ?? array() ) );
+		self::assertSame( array( '0.0000', '-4.0000', '-1.0000', '-5.0000', '5.0000' ), array_values( $fixed->snapshot['correction']['difference'] ?? array() ) );
 
-		$this->refused( PayoutException::DOCUMENT_NOT_CORRECTABLE, fn() => $this->documents->correct( $original->id, 'Again.' ), 'Only the latest of a chain.' );
-		$second = $this->documents->correct( $first->id, 'Second fix.' );
-		$this->refused( PayoutException::INVALID_REASON, fn() => $this->documents->correct( $second->id, '  ' ) );
+		// Both categories exist, so the division between them is the administrator's responsibility.
+		$moved = $this->documents->correct( $payout->id, $fixed->id, 'The division was wrong.', '40', '0' );
+		self::assertSame( array( '40.0000', '32.0000', '8.0000', '40.0000', '0.0000' ), array_values( $moved->snapshot['correction']['after'] ?? array() ) );
 
 		$shown = $this->documents->for_payout( $payout->id );
-		self::assertSame( 'AFR-000001', $shown['document']->number ?? null, 'The original is never changed.' );
-		self::assertSame( array( 'AFR-000002', 'AFR-000003' ), array_map( static fn( SettlementDocument $doc ): string => $doc->number, $shown['corrections'] ?? array() ) );
-		self::assertSame( array( array( 'document_id' => $first->id, 'document_number' => 'AFR-000002', 'corrects' => 'AFR-000001', 'payout_id' => $payout->id, 'has_reason' => true ), array( 'document_id' => $second->id, 'document_number' => 'AFR-000003', 'corrects' => 'AFR-000002', 'payout_id' => $payout->id, 'has_reason' => true ) ), $this->audit( AuditAction::SettlementDocumentCorrected ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertNotNull( $shown );
+		self::assertNotNull( SettlementPdf::verified_correction( $shown, $shown['corrections'][0] ) );
+		self::assertNotNull( SettlementPdf::verified_correction( $shown, $shown['corrections'][1] ) );
+		self::assertSame( $original->snapshot[ CommissionVat::SNAPSHOT_KEY ], $shown['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ] ?? null, 'The original\'s VAT split is unchanged.' );
+	}
 
-		$user = $this->create_user( 'mb-set-subscriber' );
-		wp_set_current_user( $user );
-		$this->refused( PayoutException::NOT_AUTHORIZED, fn() => $this->documents->correct( $second->id, 'No.' ) );
+	public function test_a_stored_correction_outside_the_vat_categories_gives_no_pdf_and_shows_no_amounts(): void {
+		$this->vat->save( $this->creator, false );
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0510' );
+		$this->decisions->complete( $payout->id );
+		$issued = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $issued );
+		$fixed = $this->documents->correct( $payout->id, $issued['document']->id, 'Wrong markup.', '0', '30' );
+		// Made by the test: a correction that adds up in itself, with VAT on the commission of sales while not VAT registered.
+		$before                 = SettlementCorrection::in_force( array( $issued['document'] ), $issued['rows'] );
+		$snapshot               = $fixed->snapshot;
+		$snapshot['correction'] = SettlementCorrection::snapshot( 'AFR-000001', 'AFR-000001', 1, 2, $before, SettlementCorrection::corrected( 2500, SalesAmount::parse( '10' ), SalesAmount::parse( '20' ), 2 ), $issued['document']->payout_units );
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'snapshot' => (string) wp_json_encode( $snapshot ) ), array( 'id' => $fixed->id ) );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$correction = $shown['corrections'][0];
+
+		self::assertNotNull( SettlementCorrection::of_document( $correction ), 'It adds up in itself.' );
+		self::assertNull( SettlementPdf::verified_correction( $shown, $correction ) );
+		self::assertNull( MePayoutsController::settlement_document( $shown )['corrections'][0]['amounts'] ?? null );
+
+		try {
+			( new SettlementPdf() )->render_correction( $shown, $correction );
+			self::fail( 'Expected no PDF.' );
+		} catch ( UnexpectedValueException ) {
+			$this->addToAssertionCount( 1 );
+		}
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		self::assertStringContainsString( 'cannot be shown', $this->page_html( $page, $payout->id ) );
+	}
+
+	public function test_a_changed_current_vat_status_or_name_alone_is_no_correction_and_is_labelled_as_such(): void {
+		$this->vat->save( $this->creator, false );
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0511' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+
+		// Since the issue the creator became VAT registered and was renamed: no error of the document.
+		$this->vat->save( $this->creator, true );
+		( new CreatorRepository( $this->wpdb ) )->rename( $this->creator, 'Settlement Renamed' );
+		$before = $this->state();
+		$this->refused( PayoutException::CORRECTION_UNCHANGED, fn() => $this->documents->correct( $payout->id, $original->id, 'Nothing.', '0', '40' ), 'The same amounts.' );
+		self::assertSame( $before, $this->state(), 'Refused before any write, also of the audit log.' );
+
+		$fixed = $this->documents->correct( $payout->id, $original->id, 'The markup was wrong.', '0', '30' );
+		self::assertTrue( $fixed->vat_registered, 'The status when the correction was issued.' );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$text = static fn( string $value ): string => PdfWriter::escape( PdfWriter::encode( $value ) );
+		$pdf  = ( new SettlementPdf() )->render_correction( $shown, $shown['corrections'][0] );
+
+		foreach ( array( 'VAT registered when this correction was issued: Yes', 'Commission without VAT (not VAT registered when sold)', 'The VAT follows the creator\'s VAT status at each sale the original settled, not the current status.' ) as $expected ) {
+			self::assertStringContainsString( $text( $expected ), $pdf, $expected );
+		}
+
+		foreach ( array( 'VAT registered at issue', 'Commission incl. VAT', 'VAT (25 %)' ) as $unexpected ) {
+			self::assertStringNotContainsString( $text( $unexpected ), $pdf, $unexpected );
+		}
+
+		self::assertStringContainsString( $text( 'VAT registered at issue: No' ), ( new SettlementPdf() )->render( $shown ), 'The original keeps its status at issue.' );
+		self::assertSame( $original->snapshot, $shown['document']->snapshot );
+	}
+
+	public function test_a_chain_has_at_most_100_corrections_and_every_issued_one_can_be_read(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0512' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+		$previous = $original->id;
+
+		// 99 corrections without amounts (D11 a), made by the test.
+		for ( $i = 1; $i <= 99; $i++ ) {
+			$this->wpdb->insert( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'document_number' => 'AFR-' . ( 900000 + $i ), 'document_series' => 'AFR', 'document_type' => 'correction', 'creator_id' => $this->creator, 'payout_id' => $payout->id, 'corrects_document_id' => $previous, 'currency' => 'DKK', 'period_to' => '2026-11-30 12:00:00', 'profit_amount' => '0', 'commission_amount' => '0', 'opening_balance' => '0', 'payout_amount' => '0', 'closing_balance' => '0', 'calculation_version' => 'adr063-adr054-v1', 'template_version' => 4, 'snapshot' => (string) wp_json_encode( array( 'corrects' => 'x', 'correction_reason' => 'Old.' ) + $original->snapshot ), 'issued_at' => '2026-11-30 12:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$previous = (int) $this->wpdb->insert_id;
+		}
+
+		$last = $this->documents->correct( $payout->id, $previous, 'The markup was wrong.', '30', '0' );
+		self::assertSame( 'AFR-000001-K100', $last->number );
+
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		self::assertCount( 100, $shown['corrections'], 'Every issued correction is read.' );
+		self::assertSame( $last->id, $shown['corrections'][99]->id );
+		self::assertNotNull( SettlementPdf::verified_correction( $shown, $shown['corrections'][99] ) );
+		self::assertSame( $shown['corrections'][99], SettlementPdf::correction( $shown, 'K100' ) );
+		self::assertStringStartsWith( '%PDF-1.4', ( new SettlementPdf() )->render_correction( $shown, $shown['corrections'][99] ) );
+		self::assertNotNull( MePayoutsController::settlement_document( $shown )['corrections'][99]['amounts'] ?? null );
+
+		// A 101st is refused before any write.
+		$before = $this->state();
+		$this->refused( PayoutException::CORRECTION_LIMIT, fn() => $this->documents->correct( $payout->id, $last->id, 'Again.', '20', '0' ) );
+		self::assertSame( $before, $this->state(), 'No document, no change of the chain and no audit record.' );
+		self::assertNull( $this->documents->for_payout( $payout->id )['corrections'][100] ?? null );
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$html = $this->page_html( $page, $payout->id );
+		self::assertStringContainsString( 'already has 100 correction documents', $html );
+		self::assertStringNotContainsString( 'name="confirm_material"', $html, 'No form.' );
+	}
+
+	public function test_corrected_master_data_are_shown_from_the_correction_snapshot_in_admin_and_api(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0513' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+
+		// K1 corrects the master data (no CVR/SE number registered), K2 only the amounts.
+		$this->settings->set_company_cvr( '12345678' );
+		$this->settings->set_billing_details(
+			$this->creator,
+			array(
+				'legal_name' => 'Alpha Merch ApS',
+				'address_1'  => 'Nørregade 2',
+				'postcode'   => '8000',
+				'city'       => 'Aarhus C',
+			)
+		);
+		$first = $this->documents->correct( $payout->id, $original->id, 'The legal name was missing.', '40', '0' );
+		$this->documents->correct( $payout->id, $first->id, 'Wrong markup.', '30', '0' );
+
+		// Later master data never change the corrections.
+		$this->settings->set_company_cvr( '11112222' );
+		$this->settings->set_billing_details(
+			$this->creator,
+			array(
+				'legal_name' => 'Other Name ApS',
+				'cvr'        => '87654321',
+			)
+		);
+		$before = $this->state();
+		$shown  = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$api      = MePayoutsController::settlement_document( $shown );
+		$expected = array(
+			'creator_legal_name' => 'Alpha Merch ApS',
+			'creator_address'    => array( 'Nørregade 2', '8000 Aarhus C' ),
+			'creator_cvr'        => '',
+			'company_name'       => (string) ( $first->snapshot['company']['name'] ?? '' ),
+			'company_address'    => $first->snapshot['company']['address'] ?? array(),
+			'company_cvr'        => '12345678',
+		);
+
+		self::assertSame( $expected + array( 'changed' => true ), $api['corrections'][0]['master_data'] ?? null, 'From the snapshot of K1.' );
+		self::assertSame( $expected + array( 'changed' => false ), $api['corrections'][1]['master_data'] ?? null, 'K2 kept the parties of K1.' );
+		self::assertSame( '', $api['master_data']['creator_legal_name'] ?? null, 'The original as issued: nothing was registered.' );
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$html = $this->page_html( $page, $payout->id );
+
+		self::assertSame( 1, substr_count( $html, 'Corrected master data' ), 'Only for the correction that changed them.' );
+
+		foreach ( array( 'Alpha Merch ApS', esc_html( 'Nørregade 2, 8000 Aarhus C' ), 'Issuer CVR no.', '12345678' ) as $text ) {
+			self::assertStringContainsString( $text, $html, $text );
+		}
+
+		$block = (string) strstr( $html, 'Corrected master data' );
+		self::assertStringContainsString( '<th scope="row">CVR/SE no.</th><td>Not registered</td>', $block );
+
+		foreach ( array( 'Other Name ApS', '87654321', '11112222' ) as $current ) {
+			self::assertStringNotContainsString( $current, $html, 'Never the current master data: ' . $current );
+		}
+
+		self::assertSame( $before, $this->state(), 'Showing changes no document, row, counter, payout or audit record.' );
+		self::assertSame( array( '30.0000', '0.0000' ), array( $shown['corrections'][1]->snapshot['correction']['after']['commission'] ?? null, $shown['corrections'][1]->snapshot['correction']['after']['untaxed'] ?? null ) );
+	}
+
+	public function test_the_admin_form_issues_a_correction_only_when_confirmed_and_once(): void {
+		add_filter( 'wp_die_handler', array( CreatorPricingAdminTest::class, 'die_handler' ) );
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0507' );
+		$this->decisions->complete( $payout->id );
+		$original = $this->documents->for_payout( $payout->id )['document'] ?? null;
+		self::assertNotNull( $original );
+		$actions = new PayoutActions( $this->decisions, new RecordingLogger(), null, $this->documents );
+		$page    = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$input   = fn( array $fields = array() ): array => $fields + array(
+			'action'             => PayoutActions::CORRECT_ACTION,
+			'payout_id'          => (string) $payout->id,
+			'document_id'        => (string) $original->id,
+			'reason'             => 'The markup was wrong.',
+			'commission_incl'    => '30.00',
+			'commission_untaxed' => '0.00',
+			'confirm_material'   => '1',
+			'_wpnonce'           => wp_create_nonce( PayoutActions::nonce_action( PayoutActions::CORRECT_ACTION, $payout->id ) ),
+		);
+
+		$html = $this->page_html( $page, $payout->id );
+		self::assertStringContainsString( 'Issue a correction document', $html );
+		self::assertStringContainsString( 'name="document_id" value="' . $original->id . '"', $html );
+		self::assertStringContainsString( 'name="commission_incl" value="40.00"', $html, 'Filled in with the amounts in force.' );
+
+		try {
+			foreach ( array( array( '_wpnonce' => 'x' ), array( '_wpnonce' => wp_create_nonce( PayoutActions::nonce_action( PayoutActions::REJECT_ACTION, $payout->id ) ) ) ) as $fields ) {
+				try {
+					$actions->handle( $input( $fields ) );
+					self::fail( 'Expected wp_die().' );
+				} catch ( \RuntimeException ) {
+					$this->addToAssertionCount( 1 );
+				}
+			}
+
+			self::assertStringContainsString( 'result=' . PayoutActions::NOT_ASSESSED, $actions->handle( $input( array( 'confirm_material' => '' ) ) ) );
+			self::assertSame( array(), $this->documents->for_payout( $payout->id )['corrections'] ?? null, 'Nothing without the assessment.' );
+			self::assertStringContainsString( 'result=corrected', $actions->handle( $input() ) );
+			self::assertStringContainsString( 'result=' . PayoutException::DOCUMENT_NOT_CORRECTABLE, $actions->handle( $input() ), 'The same form again.' );
+		} finally {
+			remove_filter( 'wp_die_handler', array( CreatorPricingAdminTest::class, 'die_handler' ) );
+		}
+
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		self::assertCount( 1, $shown['corrections'] );
+		$html = $this->page_html( $page, $payout->id );
+
+		foreach ( array( 'Correction document AFR-000001-K1', 'Corrects AFR-000001 (original: AFR-000001).', 'Before', 'Corrected', 'Difference', 'The markup was wrong.', 'correction=K1', 'name="document_id" value="' . $shown['corrections'][0]->id . '"', 'name="commission_incl" value="30.00"' ) as $expected ) {
+			self::assertStringContainsString( $expected, $html, $expected );
+		}
+
+		$download = new SettlementPdfDownload( $this->documents, new SettlementPdf(), new RecordingLogger() );
+		$nonce    = wp_create_nonce( SettlementPdfDownload::nonce_action( $payout->id ) );
+		$ok       = $download->response( array( 'payout_id' => (string) $payout->id, '_wpnonce' => $nonce, 'correction' => 'K1' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( 200, $ok['status'] );
+		self::assertSame( ( new SettlementPdf() )->render_correction( $shown, $shown['corrections'][0] ), $ok['body'] );
+		self::assertSame( 'attachment; filename="AFR-000001-K1.pdf"', $ok['headers']['Content-Disposition'] ?? null );
+		self::assertSame( 404, $download->response( array( 'payout_id' => (string) $payout->id, '_wpnonce' => $nonce, 'correction' => 'K2' ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 404, $download->response( array( 'payout_id' => (string) $payout->id, '_wpnonce' => $nonce, 'correction' => '../K1' ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( 'correction=K1', SettlementPdfDownload::url( $payout->id, 'K1' ) );
 	}
 
 	public function test_the_pdf_is_made_from_the_stored_document_and_changes_nothing(): void {
@@ -493,7 +1015,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertNotNull( $shown );
 		$document = $shown['document'];
 
-		self::assertSame( 3, $document->template_version );
+		self::assertSame( 4, $document->template_version );
 		self::assertSame(
 			array(
 				'version'  => 1,
@@ -521,7 +1043,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$pdf = ( new SettlementPdf() )->render( $shown );
 
-		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', '48.00 DKK', 'VAT (25 %)', '12.00 DKK', 'Commission incl. VAT', '60.00 DKK', 'VAT on the sale', 'Template version 3.' ) as $text ) {
+		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', '48.00 DKK', 'VAT (25 %)', '12.00 DKK', 'Commission incl. VAT', '60.00 DKK', 'VAT on the sale', 'Template version 4.' ) as $text ) {
 			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
 		}
 
@@ -600,7 +1122,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertNull( MePayoutsController::settlement_document( $shown )['commission_vat'], 'K12: nothing that could be read as VAT on the commission.' );
 
 		$pdf = ( new SettlementPdf() )->render( $shown );
-		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 3.' ) ), $pdf );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 4.' ) ), $pdf );
 
 		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', 'Commission incl. VAT' ) as $text ) {
 			self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
@@ -646,6 +1168,165 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
 		self::assertStringNotContainsString( 'Commission excl. VAT', $this->page_html( $page, $payout->id ) );
+	}
+
+	public function test_master_data_is_stored_at_issue_and_never_changed_by_later_master_data(): void {
+		$this->settings->set_company_cvr( '12345678' );
+		$this->settings->set_billing_details(
+			$this->creator,
+			array(
+				'legal_name' => 'Alpha Merch ApS',
+				'address_1'  => 'Nørregade 2',
+				'postcode'   => '8000',
+				'city'       => 'Aarhus C',
+				'country'    => 'Danmark',
+				'cvr'        => '87654321',
+			)
+		);
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0401' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$document = $shown['document'];
+
+		self::assertSame( 4, $document->template_version );
+		self::assertSame(
+			array(
+				'id'             => $this->creator,
+				'name'           => 'Settlement Alpha',
+				'vat_registered' => true,
+				'legal_name'     => 'Alpha Merch ApS',
+				'address'        => array( 'Nørregade 2', '8000 Aarhus C', 'Danmark' ),
+				'cvr'            => '87654321',
+			),
+			$document->snapshot['creator'] ?? null
+		);
+		self::assertSame( '12345678', $document->snapshot['company']['cvr'] ?? null );
+
+		$api = MePayoutsController::settlement_document( $shown );
+		self::assertSame(
+			array(
+				'creator_legal_name' => 'Alpha Merch ApS',
+				'creator_address'    => array( 'Nørregade 2', '8000 Aarhus C', 'Danmark' ),
+				'creator_cvr'        => '87654321',
+				'company_cvr'        => '12345678',
+			),
+			$api['master_data']
+		);
+		self::assertSame( 'Settlement Alpha', $api['creator_name'], 'The display name as before.' );
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+
+		foreach ( array( 'on behalf of Alpha Merch ApS.', 'CVR no.: 12345678', 'Display name: Settlement Alpha', 'Nørregade 2', '8000 Aarhus C', 'CVR/SE no.: 87654321', 'Template version 4.' ) as $text ) {
+			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
+		}
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$html = $this->page_html( $page, $payout->id );
+
+		foreach ( array( 'Legal name', 'Alpha Merch ApS', 'Nørregade 2, 8000 Aarhus C, Danmark', 'CVR/SE no.', '87654321', 'Issuer CVR no.', '12345678' ) as $text ) {
+			self::assertStringContainsString( esc_html( $text ), $html, $text );
+		}
+
+		// Later master data of both parties changes nothing on the issued document.
+		$before = $this->state();
+		$this->settings->set_company_cvr( '11112222' );
+		$this->settings->set_billing_details( $this->creator, array( 'legal_name' => 'Other Name ApS' ) );
+		( new CreatorRepository( $this->wpdb ) )->rename( $this->creator, 'Settlement Renamed' );
+		$again = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $again );
+
+		self::assertSame( $document->snapshot, $again['document']->snapshot );
+		self::assertSame( $api, MePayoutsController::settlement_document( $again ) );
+		self::assertSame( $pdf, ( new SettlementPdf() )->render( $again ), 'The same bytes.' );
+		self::assertStringNotContainsString( 'Other Name ApS', $this->page_html( $page, $payout->id ) );
+		self::assertSame( array_diff_key( $before, array( 'audit' => true ) ), array_diff_key( $this->state(), array( 'audit' => true ) ), 'Nothing of the document, its rows, the counter or the payouts changed.' );
+
+		// The next document has the new master data.
+		$this->earn( 1 );
+		$next = $this->request( '5', 'key-set-0402' );
+		$this->decisions->complete( $next->id );
+		$later = $this->documents->for_payout( $next->id );
+		self::assertNotNull( $later );
+		self::assertSame( 'Other Name ApS', $later['document']->snapshot['creator']['legal_name'] ?? null );
+		self::assertSame( array(), $later['document']->snapshot['creator']['address'] ?? null );
+		self::assertSame( '11112222', $later['document']->snapshot['company']['cvr'] ?? null );
+	}
+
+	public function test_missing_master_data_is_stored_as_not_registered_and_never_invented(): void {
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0403' );
+		$this->decisions->complete( $payout->id );
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+		$snapshot = $shown['document']->snapshot;
+
+		self::assertSame( '', Settings::company_cvr() );
+		self::assertSame( array( '', array(), '' ), array( $snapshot['creator']['legal_name'] ?? null, $snapshot['creator']['address'] ?? null, $snapshot['creator']['cvr'] ?? null ) );
+		self::assertSame( '', $snapshot['company']['cvr'] ?? null );
+		self::assertSame(
+			array(
+				'creator_legal_name' => '',
+				'creator_address'    => array(),
+				'creator_cvr'        => '',
+				'company_cvr'        => '',
+			),
+			MePayoutsController::settlement_document( $shown )['master_data']
+		);
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+
+		foreach ( array( 'on behalf of Settlement Alpha.', 'CVR no.: Not registered', 'Address: Not registered', 'CVR/SE no.: Not registered' ) as $text ) {
+			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
+		}
+
+		self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( 'Display name:' ) ), $pdf );
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		self::assertSame( 4, substr_count( $this->page_html( $page, $payout->id ), 'Not registered' ), 'Legal name, address, CVR/SE number and the issuer\'s CVR number.' );
+
+		// Master data registered later is never filled into the issued document.
+		$this->settings->set_company_cvr( '12345678' );
+		$this->settings->set_billing_details( $this->creator, array( 'cvr' => '87654321' ) );
+		$again = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $again );
+		self::assertSame( $snapshot, $again['document']->snapshot );
+		self::assertSame( $pdf, ( new SettlementPdf() )->render( $again ) );
+	}
+
+	public function test_an_earlier_document_never_shows_master_data(): void {
+		$this->settings->set_company_cvr( '12345678' );
+		$this->settings->set_billing_details( $this->creator, array( 'legal_name' => 'Alpha Merch ApS' ) );
+		$this->earn( 2 );
+		$payout = $this->request( '10', 'key-set-0404' );
+		$this->decisions->complete( $payout->id );
+		$issued = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $issued );
+		// A document as issued with template version 3, before the master data (made by the test).
+		$legacy = $issued['document']->snapshot;
+		unset( $legacy['creator']['legal_name'], $legacy['creator']['address'], $legacy['creator']['cvr'], $legacy['company']['cvr'] );
+		$this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), array( 'template_version' => 3, 'snapshot' => (string) wp_json_encode( $legacy ) ), array( 'id' => $issued['document']->id ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$shown = $this->documents->for_payout( $payout->id );
+		self::assertNotNull( $shown );
+
+		$pdf = ( new SettlementPdf() )->render( $shown );
+
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 3.' ) ), $pdf );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'on behalf of Settlement Alpha.' ) ), $pdf );
+
+		foreach ( array( 'CVR no.:', 'CVR/SE no.:', 'Not registered', 'Alpha Merch ApS', '12345678' ) as $text ) {
+			self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
+		}
+
+		self::assertNull( MePayoutsController::settlement_document( $shown )['master_data'] );
+
+		$page = new PayoutsPage( $this->repository, $this->decisions, new PayoutCipher( $this->key ), new CreatorRepository( $this->wpdb ), new RecordingLogger(), null, $this->documents );
+		$html = $this->page_html( $page, $payout->id );
+
+		foreach ( array( 'Issuer CVR no.', 'Not registered', 'Alpha Merch ApS' ) as $text ) {
+			self::assertStringNotContainsString( $text, $html, $text );
+		}
 	}
 
 	public function test_the_admin_page_shows_the_note_or_the_original_mark_and_links_the_pdf(): void {
