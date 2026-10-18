@@ -30,6 +30,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\VatDeduction;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use WP_Error;
 use WP_REST_Request;
@@ -421,6 +422,7 @@ final class MePayoutsController extends RestController {
 			'profit'          => SalesAmount::format( $document->profit_units ),
 			'commission'      => SalesAmount::format( $document->commission_units ),
 			'commission_vat'  => self::commission_vat( $document ),
+			'vat_deduction'   => self::vat_deduction( $document ),
 			'adjustment'      => SalesAmount::format( $document->adjustment_units ),
 			'adjustment_refs' => SettlementPdf::adjustment_references( $document ),
 			'opening_balance' => SalesAmount::format( $document->opening_units ),
@@ -517,6 +519,24 @@ final class MePayoutsController extends RestController {
 			'vat'      => SalesAmount::format( $split['vat_units'] ),
 			'incl'     => SalesAmount::format( $split['incl_units'] ),
 			'untaxed'  => SalesAmount::format( $split['untaxed_units'] ),
+		);
+	}
+
+	/**
+	 * The VAT deducted from the payout of sales while the creator was not VAT
+	 * registered (template version 6, ADR-064), or null when none was
+	 * deducted or the document is older (VatDeduction::shown()).
+	 *
+	 * @param SettlementDocument $document Document.
+	 * @return array{gross: string, deduction: string, net: string}|null
+	 */
+	private static function vat_deduction( SettlementDocument $document ): ?array {
+		$deduction = VatDeduction::shown( $document );
+
+		return null === $deduction ? null : array(
+			'gross'     => SalesAmount::format( $deduction['gross_units'] ),
+			'deduction' => SalesAmount::format( $deduction['deduction_units'] ),
+			'net'       => SalesAmount::format( $deduction['net_units'] ),
 		);
 	}
 

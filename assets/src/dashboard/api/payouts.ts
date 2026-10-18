@@ -17,6 +17,7 @@ import type {
 	SettlementDocument,
 	SettlementDocumentRow,
 	SettlementMasterData,
+	SettlementVatDeduction,
 	PayoutCurrencyBalance,
 	PayoutRequestInput,
 	PayoutStatus,
@@ -417,6 +418,39 @@ function parseCommissionVat(
 }
 
 /**
+ * Validates the VAT deducted from the payout of a settlement document: null,
+ * or three amounts with net = gross − deduction (in units, so no floating
+ * point is involved).
+ *
+ * @param value Value of `vat_deduction`.
+ */
+function parseVatDeduction(
+	value: unknown
+): SettlementVatDeduction | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if ( ! isRecord( value ) ) {
+		return undefined;
+	}
+
+	const { gross, deduction, net } = value;
+
+	if ( ! isAmount( gross ) || ! isAmount( deduction ) || ! isAmount( net ) ) {
+		return undefined;
+	}
+
+	const units = ( amount: string ) => BigInt( amount.replace( '.', '' ) );
+
+	if ( units( gross ) - units( deduction ) !== units( net ) ) {
+		return undefined;
+	}
+
+	return { gross, deduction, net };
+}
+
+/**
  * Validates the master data of a settlement document: null (documents before
  * template version 4), or the creator's legal name, address lines and CVR/SE
  * number and the issuer's CVR number as strings ('' = not registered).
@@ -686,10 +720,12 @@ export function parseSettlementDocument(
 	const address = body.company_address as unknown[];
 	const references = body.adjustment_refs as unknown[];
 	const commissionVat = parseCommissionVat( body.commission_vat );
+	const vatDeduction = parseVatDeduction( body.vat_deduction );
 	const masterData = parseMasterData( body.master_data );
 
 	if (
 		commissionVat === undefined ||
+		vatDeduction === undefined ||
 		masterData === undefined ||
 		typeof number !== 'string' ||
 		! DOCUMENT_NUMBER.test( number ) ||
@@ -726,6 +762,7 @@ export function parseSettlementDocument(
 		currency,
 		commission,
 		commissionVat,
+		vatDeduction,
 		adjustment,
 		adjustmentReferences: references as string[],
 		openingBalance,

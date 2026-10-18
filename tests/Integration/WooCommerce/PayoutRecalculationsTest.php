@@ -96,6 +96,13 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 
 	private PayoutRecalculations $recalculations;
 
+	/**
+	 * The service as wired since ADR-064: no new recalculation.
+	 *
+	 * @var PayoutRecalculations
+	 */
+	private PayoutRecalculations $disabled;
+
 	private PayoutRecalculationRepository $runs;
 
 	private PayoutRecalculationExports $exports;
@@ -146,17 +153,19 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 			$this->products[ $creator ] = $product;
 		}
 
-		$clock                = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
-		$audit                = $this->service( AuditTrail::class );
-		$adjustments          = new PayoutAdjustmentRepository( $this->wpdb );
-		$cipher               = new PayoutCipher( base64_encode( random_bytes( 32 ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A test key.
-		$this->repository     = new PayoutRepository( $this->wpdb );
-		$this->balances       = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock, $adjustments );
-		$this->documents      = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $this->creators, $vat, $audit, $transaction, $clock, $adjustments );
-		$this->decisions      = new PayoutDecisions( $this->repository, $this->balances, $cipher, $audit, $transaction, $clock, $this->documents );
-		$this->requests       = new PayoutRequests( $this->repository, $this->balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock );
-		$this->runs           = new PayoutRecalculationRepository( $this->wpdb );
-		$this->recalculations = new PayoutRecalculations( $this->runs, $adjustments, $this->repository, $this->creators, $audit, $transaction, $this->wpdb, $clock );
+		$clock            = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+		$audit            = $this->service( AuditTrail::class );
+		$adjustments      = new PayoutAdjustmentRepository( $this->wpdb );
+		$cipher           = new PayoutCipher( base64_encode( random_bytes( 32 ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A test key.
+		$this->repository = new PayoutRepository( $this->wpdb );
+		$this->balances   = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock, $adjustments );
+		$this->documents  = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $this->creators, $vat, $audit, $transaction, $clock, $adjustments );
+		$this->decisions  = new PayoutDecisions( $this->repository, $this->balances, $cipher, $audit, $transaction, $clock, $this->documents );
+		$this->requests   = new PayoutRequests( $this->repository, $this->balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock );
+		$this->runs       = new PayoutRecalculationRepository( $this->wpdb );
+		// New runs enabled: these tests stand for recalculations made before ADR-064 disabled them.
+		$this->recalculations = new PayoutRecalculations( $this->runs, $adjustments, $this->repository, $this->creators, $audit, $transaction, $this->wpdb, $clock, true );
+		$this->disabled       = new PayoutRecalculations( $this->runs, $adjustments, $this->repository, $this->creators, $audit, $transaction, $this->wpdb, $clock );
 		$this->exports        = new PayoutRecalculationExports( $this->runs, new PayoutRecalculationExportRepository( $this->wpdb ), $this->creators, $audit, $transaction, $clock );
 		$this->download       = new PayoutRecalculationExportDownload( $this->exports, new RecordingLogger() );
 	}
@@ -164,6 +173,31 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		$this->posts->remove_all();
 		parent::tearDown();
+	}
+
+	public function test_no_new_recalculation_can_be_started_since_adr_064_but_an_existing_one_can_be_finished(): void {
+		$this->earn( $this->alpha, 2 );
+		$this->legacy( $this->pay( $this->alpha, '10' ) );
+		// A recalculation made before ADR-064, then rejected.
+		$rejected = $this->recalculations->preview();
+		$this->recalculations->reject( $rejected, 'Made before ADR-064.' );
+		$open   = $this->recalculations->reopen( $rejected );
+		$before = $this->state();
+		$runs   = $this->count_rows( Tables::RECALCULATIONS );
+		$audit  = $this->count_rows( Tables::AUDIT_LOG );
+
+		$this->refused( PayoutException::RECALCULATION_DISABLED, fn() => $this->disabled->preview(), 'No new preview.' );
+		$this->refused( PayoutException::RECALCULATION_DISABLED, fn() => $this->disabled->reopen( $rejected ), 'No reopening.' );
+
+		self::assertSame( $before, $this->state(), 'Nothing written.' );
+		self::assertSame( array( $runs, $audit ), array( $this->count_rows( Tables::RECALCULATIONS ), $this->count_rows( Tables::AUDIT_LOG ) ) );
+
+		// The open recalculation made before ADR-064 is finished as before, with ADR-063's rule.
+		self::assertSame( array( '32.0000', '40.0000', '8.0000' ), self::amounts( $this->runs->items( $open )[0] ) );
+		$this->disabled->approve( $open );
+		self::assertSame( 1, $this->disabled->execute( $open ) );
+		$this->disabled->close( $open );
+		self::assertSame( Recalculation::CLOSED, $this->runs->find( $open )?->status );
 	}
 
 	public function test_a_later_vat_status_registration_changes_no_recalculation_basis(): void {
@@ -235,16 +269,16 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 		self::assertSame( $before['payouts'], $this->state()['payouts'] );
 		self::assertCount( 1, $this->audit( AuditAction::PayoutAdjustmentExecuted ) );
 
-		// The next document settles the adjustment: 22 + 20 + 8 − 5 = 45 = 40 + 8 + 20 − 15.
+		// The next document settles the adjustment; the new sale is paid excl. VAT (ADR-064): 22 + 16 + 8 − 5 = 41.
 		$this->earn( $this->alpha, 1 );
 		$second = $this->pay( $this->alpha, '5' );
 		$shown  = $this->documents->for_payout( $second->id );
 
 		self::assertNotNull( $shown );
 		$document = $shown['document'];
-		self::assertSame( array( '22.0000', '20.0000', '8.0000', '5.0000', '45.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $document->opening_units, $document->commission_units, $document->adjustment_units, $document->payout_units, $document->closing_units ) ) );
+		self::assertSame( array( '22.0000', '16.0000', '8.0000', '5.0000', '41.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $document->opening_units, $document->commission_units, $document->adjustment_units, $document->payout_units, $document->closing_units ) ) );
 		self::assertSame( array( 'R2-' . str_pad( (string) $id, 6, '0', STR_PAD_LEFT ) ), SettlementPdf::adjustment_references( $document ) );
-		self::assertSame( '45.0000', $this->balance( $this->alpha ), 'The chain and the balance agree.' );
+		self::assertSame( '41.0000', $this->balance( $this->alpha ), 'The chain and the balance agree.' );
 		self::assertSame( $document->id, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT settled_document_id FROM %i', $this->table( Tables::PAYOUT_ADJUSTMENTS ) ) ) );
 		self::assertStringStartsWith( '%PDF-', ( new SettlementPdf() )->render( $shown ), 'The document adds up with its adjustment.' );
 
@@ -355,15 +389,15 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 	}
 
 	public function test_a_negative_difference_is_offset_and_the_rest_is_carried_forward(): void {
-		// Sales settled without the deduction; then two refunds settled under ADR-049 (−16 each instead of −20).
+		// Three sales settled (16.00 each excl. VAT, ADR-064); then two refunds settled under ADR-049 (−16 each instead of R2's −20).
 		$items = $this->earn( $this->alpha, 3 );
 		$this->pay( $this->alpha, '1' );
 		$this->refund( $this->alpha, $items[0], 9701 );
 		$this->refund( $this->alpha, $items[1], 9702 );
-		$this->legacy( $this->pay( $this->alpha, '19' ) );
-		// The creator then withdraws everything available: 60 − 32 − 20 = 8.
-		self::assertSame( '8.0000', $this->balance( $this->alpha ) );
-		$this->pay( $this->alpha, '8' );
+		// The creator withdraws everything available: 48 − 1 − 32 = 15.
+		self::assertSame( '15.0000', $this->balance( $this->alpha ) );
+		$this->legacy( $this->pay( $this->alpha, '15' ) );
+		self::assertSame( '0.0000', $this->balance( $this->alpha ) );
 
 		$id = $this->recalculations->preview();
 		self::assertSame( array( '-32.0000', '-40.0000', '-8.0000' ), self::amounts( $this->runs->items( $id )[0] ) );
@@ -373,12 +407,12 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 		$balance = $this->balances->in_currency( $this->alpha, 'DKK' );
 		self::assertSame( array( 0, 80000 ), array( $balance->available_units(), $balance->outstanding_units() ), 'Nothing available to offset now: 8.00 is carried forward as outstanding.' );
 
-		// A new sale is offset against the outstanding amount first.
+		// A new sale (16.00 excl. VAT) is offset against the outstanding amount first.
 		$this->earn( $this->alpha, 1 );
-		self::assertSame( '12.0000', $this->balance( $this->alpha ), '20 − 8.' );
-		$document = $this->documents->for_payout( $this->pay( $this->alpha, '12' )->id )['document'] ?? null;
+		self::assertSame( '8.0000', $this->balance( $this->alpha ), '16 − 8.' );
+		$document = $this->documents->for_payout( $this->pay( $this->alpha, '8' )->id )['document'] ?? null;
 		self::assertNotNull( $document );
-		self::assertSame( array( '0.0000', '20.0000', '-8.0000', '12.0000', '0.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $document->opening_units, $document->commission_units, $document->adjustment_units, $document->payout_units, $document->closing_units ) ) );
+		self::assertSame( array( '0.0000', '16.0000', '-8.0000', '8.0000', '0.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $document->opening_units, $document->commission_units, $document->adjustment_units, $document->payout_units, $document->closing_units ) ) );
 	}
 
 	public function test_a_failed_item_stops_the_execution_and_a_retry_never_regulates_twice(): void {

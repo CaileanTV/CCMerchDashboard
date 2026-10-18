@@ -42,6 +42,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\VatDeduction;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
@@ -189,7 +190,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertTrue( $document->vat_registered );
 		self::assertNull( $document->period_from, 'Without a settlement start: the whole history.' );
 		self::assertSame( '2026-11-30 12:00:00', $document->period_to->format( 'Y-m-d H:i:s' ) );
-		self::assertSame( 4, $document->template_version, 'New documents carry the note on tax and reporting, the VAT on the commission and the master data.' );
+		self::assertSame( 6, $document->template_version, 'New documents carry the note on tax and reporting, the VAT on the commission, the master data and the VAT deduction.' );
 		self::assertFalse( $document->snapshot['preliminary'] ?? null );
 		self::assertSame( 'Settlement Alpha', $document->snapshot['creator']['name'] ?? null );
 		self::assertSame( '•••• 5678', $document->snapshot['payout']['destination_hint'] ?? null );
@@ -226,45 +227,57 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertSame( 5, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(DISTINCT event_key) FROM %i', $this->table( Tables::SETTLEMENT_ROWS ) ) ), 'Every settled row once.' );
 	}
 
-	public function test_a_settled_row_keeps_its_stored_payout_and_new_rows_have_no_deduction(): void {
-		// ADR-063: not VAT registered, no 20 % deduction any more.
+	public function test_a_settled_row_keeps_its_stored_payout_and_new_rows_have_the_vat_deducted(): void {
+		// ADR-064: not VAT registered, so the payout is the share of the sale price excl. VAT.
 		$this->vat->save( $this->creator, false );
 		$ledger = new LedgerCreatorPayouts( $this->wpdb );
 		$now    = new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
 
 		$this->earn( 2 );
-		self::assertSame( '40.0000', SalesAmount::format( (int) $ledger->earned( $this->creator, null, $now, 14 )['DKK']->amount_units() ), '2 × 20.00: the whole profit.' );
+		self::assertSame( '32.0000', SalesAmount::format( (int) $ledger->earned( $this->creator, null, $now, 14 )['DKK']->amount_units() ), '2 × 16.00: 80.00 excl. VAT × 20 %.' );
 
 		$first = $this->request( '10', 'key-set-0063' );
 		$this->decisions->complete( $first->id );
-		self::assertSame( array( '20.0000', '20.0000' ), array_map( static fn( array $row ): string => (string) $row['payout_amount'], $this->documents->for_payout( $first->id )['rows'] ?? array() ) );
+		self::assertSame( array( '16.0000', '16.0000' ), array_map( static fn( array $row ): string => (string) $row['payout_amount'], $this->documents->for_payout( $first->id )['rows'] ?? array() ) );
 
-		// A document issued under ADR-049's 20 % deduction keeps its stored payouts:
+		// A document issued under ADR-063 (no deduction) keeps its stored payouts:
 		// the balance follows the document, nothing is regulated automatically.
 		$old = $this->documents->for_payout( $first->id )['document'] ?? null;
 		self::assertNotNull( $old );
-		self::assertSame( 2, $this->wpdb->update( $this->table( Tables::SETTLEMENT_ROWS ), array( 'payout_amount' => '16.0000' ), array( 'document_id' => $old->id ) ) );
+		self::assertSame( 2, $this->wpdb->update( $this->table( Tables::SETTLEMENT_ROWS ), array( 'payout_amount' => '20.0000' ), array( 'document_id' => $old->id ) ) );
 		$totals = array(
-			'commission_amount' => '32.0000',
-			'closing_balance'   => '22.0000',
+			'commission_amount' => '40.0000',
+			'closing_balance'   => '30.0000',
 		);
 		self::assertSame( 1, $this->wpdb->update( $this->table( Tables::SETTLEMENT_DOCUMENTS ), $totals, array( 'id' => $old->id ) ) );
 		$this->earn( 1 );
 
-		self::assertSame( '52.0000', SalesAmount::format( (int) $ledger->earned( $this->creator, null, $now, 14 )['DKK']->amount_units() ), '16 + 16 stored, + 20 for the new row.' );
+		self::assertSame( '56.0000', SalesAmount::format( (int) $ledger->earned( $this->creator, null, $now, 14 )['DKK']->amount_units() ), '20 + 20 stored, + 16 for the new row.' );
 		$unsettled = $ledger->unsettled_rows( $this->creator, 'DKK', null, $now, 14 );
 		self::assertNotNull( $unsettled );
-		self::assertSame( array( '20.0000' ), array_map( static fn( array $row ): string => SalesAmount::format( $row['payout_units'] ), $unsettled ), 'Only the new row, at the whole profit.' );
+		self::assertSame( array( '16.0000' ), array_map( static fn( array $row ): string => SalesAmount::format( $row['payout_units'] ), $unsettled ), 'Only the new row, excl. VAT.' );
+		self::assertSame( array( '20.0000' ), array_map( static fn( array $row ): string => SalesAmount::format( $row['profit_units'] ), $unsettled ), 'Its profit is unchanged.' );
 
 		$second = $this->request( '5', 'key-set-0064' );
 		$this->decisions->complete( $second->id );
 		$shown = $this->documents->for_payout( $second->id );
 
 		self::assertNotNull( $shown );
-		self::assertSame( 'adr063-adr054-v1', $shown['document']->calculation_version, 'New documents name the calculation without the deduction.' );
-		// Opening 22 (32 − 10) + commission 20 − paid 5 = 37 = earned 52 − paid 15: chain and balance agree.
-		self::assertSame( array( '22.0000', '20.0000', '5.0000', '37.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $shown['document']->opening_units, $shown['document']->commission_units, $shown['document']->payout_units, $shown['document']->closing_units ) ) );
-		self::assertSame( array( '16.0000', '16.0000' ), array_map( static fn( array $row ): string => (string) $row['payout_amount'], $this->documents->for_payout( $first->id )['rows'] ?? array() ), 'The earlier document is unchanged.' );
+		self::assertSame( 'adr064-adr054-v1', $shown['document']->calculation_version, 'New documents name the calculation with the VAT deducted.' );
+		// Opening 30 (40 − 10) + commission 16 − paid 5 = 41 = earned 56 − paid 15: chain and balance agree.
+		self::assertSame( array( '30.0000', '16.0000', '5.0000', '41.0000' ), array_map( array( SalesAmount::class, 'format' ), array( $shown['document']->opening_units, $shown['document']->commission_units, $shown['document']->payout_units, $shown['document']->closing_units ) ) );
+		self::assertSame( array( '20.0000', '20.0000' ), array_map( static fn( array $row ): string => (string) $row['payout_amount'], $this->documents->for_payout( $first->id )['rows'] ?? array() ), 'The earlier document is unchanged.' );
+		self::assertSame(
+			array(
+				'version'   => VatDeduction::VERSION,
+				'gross'     => '20.0000',
+				'deduction' => '4.0000',
+				'net'       => '16.0000',
+			),
+			$shown['document']->snapshot[ VatDeduction::SNAPSHOT_KEY ] ?? null,
+			'The deduction is stored with the new document.'
+		);
+		self::assertStringStartsWith( '%PDF-', ( new SettlementPdf() )->render( $shown ), 'The document adds up with its deduction.' );
 	}
 
 	public function test_an_unknown_row_refuses_the_completion_and_nothing_is_issued(): void {
@@ -603,7 +616,8 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$fixed = $this->documents->correct( $payout->id, $original->id, 'The markup was wrong.', '0', '30' );
 		self::assertSame( array( '30.0000', '0.0000', '0.0000', '0.0000', '30.0000' ), array_values( $fixed->snapshot['correction']['after'] ?? array() ) );
-		self::assertSame( array( '-10.0000', '0.0000', '0.0000', '0.0000', '-10.0000' ), array_values( $fixed->snapshot['correction']['difference'] ?? array() ) );
+		// The original paid 2 × 16.00 excl. VAT (ADR-064): 30.00 − 32.00.
+		self::assertSame( array( '-2.0000', '0.0000', '0.0000', '0.0000', '-2.0000' ), array_values( $fixed->snapshot['correction']['difference'] ?? array() ) );
 
 		$shown = $this->documents->for_payout( $payout->id );
 		self::assertNotNull( $shown );
@@ -640,7 +654,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 	}
 
 	public function test_a_mixed_document_keeps_both_vat_categories_and_vat_only_on_the_part_with_vat(): void {
-		// One sale while VAT registered (20.00 incl. 4.00 VAT), one while not (20.00).
+		// One sale while VAT registered (20.00 incl. 4.00 VAT), one while not (16.00 excl. VAT, ADR-064).
 		$this->earn( 1 );
 		$this->vat->save( $this->creator, false );
 		$this->earn( 1 );
@@ -651,7 +665,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$fixed = $this->documents->correct( $payout->id, $original->id, 'Wrong markup.', '15', '25' );
 		self::assertSame( array( '40.0000', '12.0000', '3.0000', '15.0000', '25.0000' ), array_values( $fixed->snapshot['correction']['after'] ?? array() ) );
-		self::assertSame( array( '0.0000', '-4.0000', '-1.0000', '-5.0000', '5.0000' ), array_values( $fixed->snapshot['correction']['difference'] ?? array() ) );
+		self::assertSame( array( '4.0000', '-4.0000', '-1.0000', '-5.0000', '9.0000' ), array_values( $fixed->snapshot['correction']['difference'] ?? array() ) );
 
 		// Both categories exist, so the division between them is the administrator's responsibility.
 		$moved = $this->documents->correct( $payout->id, $fixed->id, 'The division was wrong.', '40', '0' );
@@ -708,7 +722,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		$this->vat->save( $this->creator, true );
 		( new CreatorRepository( $this->wpdb ) )->rename( $this->creator, 'Settlement Renamed' );
 		$before = $this->state();
-		$this->refused( PayoutException::CORRECTION_UNCHANGED, fn() => $this->documents->correct( $payout->id, $original->id, 'Nothing.', '0', '40' ), 'The same amounts.' );
+		$this->refused( PayoutException::CORRECTION_UNCHANGED, fn() => $this->documents->correct( $payout->id, $original->id, 'Nothing.', '0', '32' ), 'The same amounts (2 × 16.00 excl. VAT).' );
 		self::assertSame( $before, $this->state(), 'Refused before any write, also of the audit log.' );
 
 		$fixed = $this->documents->correct( $payout->id, $original->id, 'The markup was wrong.', '0', '30' );
@@ -1015,7 +1029,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertNotNull( $shown );
 		$document = $shown['document'];
 
-		self::assertSame( 4, $document->template_version );
+		self::assertSame( 6, $document->template_version );
 		self::assertSame(
 			array(
 				'version'  => 1,
@@ -1043,7 +1057,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$pdf = ( new SettlementPdf() )->render( $shown );
 
-		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', '48.00 DKK', 'VAT (25 %)', '12.00 DKK', 'Commission incl. VAT', '60.00 DKK', 'VAT on the sale', 'Template version 4.' ) as $text ) {
+		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', '48.00 DKK', 'VAT (25 %)', '12.00 DKK', 'Commission incl. VAT', '60.00 DKK', 'VAT on the sale', 'Template version 6.' ) as $text ) {
 			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
 		}
 
@@ -1096,7 +1110,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		$this->decisions->complete( $second->id );
 		$next = $this->documents->for_payout( $second->id );
 		self::assertNotNull( $next );
-		self::assertSame( array( '0.0000', '20.0000' ), array( $next['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ]['vat'] ?? null, $next['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ]['untaxed'] ?? null ) );
+		self::assertSame( array( '0.0000', '16.0000' ), array( $next['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ]['vat'] ?? null, $next['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ]['untaxed'] ?? null ), 'Not VAT registered: 16.00 excl. VAT (ADR-064).' );
 		self::assertNull( MePayoutsController::settlement_document( $next )['commission_vat'] );
 	}
 
@@ -1115,14 +1129,24 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 				'incl'     => '0.0000',
 				'vat'      => '0.0000',
 				'excl'     => '0.0000',
-				'untaxed'  => '40.0000',
+				'untaxed'  => '32.0000',
 			),
 			$shown['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ] ?? null
 		);
 		self::assertNull( MePayoutsController::settlement_document( $shown )['commission_vat'], 'K12: nothing that could be read as VAT on the commission.' );
 
 		$pdf = ( new SettlementPdf() )->render( $shown );
-		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 4.' ) ), $pdf );
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Template version 6.' ) ), $pdf );
+		// ADR-064: the VAT deducted from the payout is shown instead.
+		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'VAT deducted (not VAT registered when sold)' ) ), $pdf );
+		self::assertSame(
+			array(
+				'gross'     => '40.0000',
+				'deduction' => '8.0000',
+				'net'       => '32.0000',
+			),
+			MePayoutsController::settlement_document( $shown )['vat_deduction']
+		);
 
 		foreach ( array( 'VAT on the commission', 'Commission excl. VAT', 'Commission incl. VAT' ) as $text ) {
 			self::assertStringNotContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
@@ -1142,7 +1166,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertNotNull( $shown );
 
 		self::assertFalse( $shown['document']->vat_registered, 'The status at issue.' );
-		self::assertSame( array( '20.0000', '4.0000', '16.0000', '20.0000' ), array_map( static fn( string $key ): mixed => $shown['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ][ $key ] ?? null, array( 'incl', 'vat', 'excl', 'untaxed' ) ), 'The sale while registered carries VAT; the later one none.' );
+		self::assertSame( array( '20.0000', '4.0000', '16.0000', '16.0000' ), array_map( static fn( string $key ): mixed => $shown['document']->snapshot[ CommissionVat::SNAPSHOT_KEY ][ $key ] ?? null, array( 'incl', 'vat', 'excl', 'untaxed' ) ), 'The sale while registered carries VAT; the later one is paid excl. VAT (ADR-064).' );
 		self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( 'Commission without VAT (not VAT registered when sold)' ) ), ( new SettlementPdf() )->render( $shown ) );
 	}
 
@@ -1190,7 +1214,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 		self::assertNotNull( $shown );
 		$document = $shown['document'];
 
-		self::assertSame( 4, $document->template_version );
+		self::assertSame( 6, $document->template_version );
 		self::assertSame(
 			array(
 				'id'             => $this->creator,
@@ -1218,7 +1242,7 @@ final class SettlementDocumentsTest extends IntegrationTestCase {
 
 		$pdf = ( new SettlementPdf() )->render( $shown );
 
-		foreach ( array( 'on behalf of Alpha Merch ApS.', 'CVR no.: 12345678', 'Display name: Settlement Alpha', 'Nørregade 2', '8000 Aarhus C', 'CVR/SE no.: 87654321', 'Template version 4.' ) as $text ) {
+		foreach ( array( 'on behalf of Alpha Merch ApS.', 'CVR no.: 12345678', 'Display name: Settlement Alpha', 'Nørregade 2', '8000 Aarhus C', 'CVR/SE no.: 87654321', 'Template version 6.' ) as $text ) {
 			self::assertStringContainsString( PdfWriter::escape( PdfWriter::encode( $text ) ), $pdf, $text );
 		}
 

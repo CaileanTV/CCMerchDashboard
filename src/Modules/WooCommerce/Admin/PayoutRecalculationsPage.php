@@ -95,6 +95,7 @@ final class PayoutRecalculationsPage {
 			PayoutException::EXPORT_INTEGRITY          => array( __( 'The export does not match its manifest and checksums. It is not delivered; nothing was changed.', 'merchboard' ), 'error' ),
 			PayoutRecalculationActions::NOT_CONFIRMED  => array( __( 'Nothing was done: tick the confirmation first.', 'merchboard' ), 'error' ),
 			PayoutException::RECALCULATION_OPEN        => array( __( 'Another recalculation is still open. Reject or close it first.', 'merchboard' ), 'error' ),
+			PayoutException::RECALCULATION_DISABLED    => array( __( 'Nothing was done: new recalculations are disabled (ADR-064).', 'merchboard' ), 'error' ),
 			PayoutException::RECALCULATION_STALE       => array( __( 'Nothing was done: the data changed after the preview or approval (amounts, rows, documents or groups). Reject this recalculation and create a new preview.', 'merchboard' ), 'error' ),
 			PayoutException::RECALCULATION_STATE       => array( __( 'This step does not fit the recalculation\'s status; nothing was changed.', 'merchboard' ), 'warning' ),
 			PayoutException::RECALCULATION_ITEM_FAILED => array( __( 'An item could not be executed and was marked as failed; the execution stopped. Items executed before it are kept. Check the cause, then execute again or close the recalculation with a note.', 'merchboard' ), 'error' ),
@@ -154,11 +155,8 @@ final class PayoutRecalculationsPage {
 	 * @throws DatabaseException When a read fails.
 	 */
 	private function render_list( int $page ): void {
-		if ( null === $this->recalculations->open() ) {
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-			self::hidden( PayoutRecalculationActions::PREVIEW_ACTION, 0 );
-			echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create preview', 'merchboard' ) . '</button></p></form>';
-		}
+		// ADR-064: no new recalculation can be started; existing ones and their steps are kept.
+		echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'New recalculations are disabled (ADR-064): the VAT is deducted again from the payout of sales while the creator was not VAT registered, so the deduction is no longer removed. Existing recalculations, their adjustments, exports and history are kept, and their remaining steps can still be completed.', 'merchboard' ) . '</p></div>';
 
 		$total = $this->recalculations->count();
 		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
@@ -420,7 +418,8 @@ final class PayoutRecalculationsPage {
 				self::form( $run->id, PayoutRecalculationActions::CLOSE_ACTION, __( 'Close', 'merchboard' ), null, false );
 				break;
 			case Recalculation::REJECTED:
-				self::form( $run->id, PayoutRecalculationActions::REOPEN_ACTION, __( 'Reopen as a new preview', 'merchboard' ), null, null );
+				// ADR-064: no new recalculation, so a rejected one cannot be reopened.
+				echo '<p>' . esc_html__( 'This recalculation is rejected. New recalculations are disabled (ADR-064), so it cannot be reopened.', 'merchboard' ) . '</p>';
 				break;
 			default:
 				echo '<p>' . esc_html__( 'This recalculation is closed.', 'merchboard' ) . '</p>';

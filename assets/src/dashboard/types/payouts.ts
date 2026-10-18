@@ -123,6 +123,18 @@ export interface SettlementCommissionVat {
 }
 
 /**
+ * VAT deducted from the payout of sales while the creator was not VAT
+ * registered, as issued (template version 6, ADR-064): the commission of those
+ * sales incl. VAT, the VAT deducted and what was paid out. Decimal strings
+ * with four decimals; net = gross − deduction.
+ */
+export interface SettlementVatDeduction {
+	readonly gross: string;
+	readonly deduction: string;
+	readonly net: string;
+}
+
+/**
  * Master data of a settlement document as issued (ADR-062 K09). An empty
  * string or list means it was not registered when the document was issued.
  */
@@ -207,6 +219,12 @@ export interface SettlementDocument {
 	 * sale in the rows.
 	 */
 	readonly commissionVat: SettlementCommissionVat | null;
+	/**
+	 * VAT deducted from the payout (template version 6, ADR-064), null when
+	 * none was deducted: earlier documents, and documents with only sales while
+	 * the creator was VAT registered.
+	 */
+	readonly vatDeduction: SettlementVatDeduction | null;
 	/**
 	 * Payout adjustments the document settled (ADR-063), "0.0000" when none.
 	 */

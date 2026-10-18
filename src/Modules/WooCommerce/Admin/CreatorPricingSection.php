@@ -197,8 +197,8 @@ final class CreatorPricingSection {
 		echo '<p><label>' . esc_html__( 'Documentation reference', 'merchboard' ) . '<br><input type="text" name="documentation_reference" class="regular-text" required maxlength="' . esc_attr( (string) CreatorPricingSettings::MAX_REFERENCE ) . '"></label></p>';
 		echo '<p><label>' . esc_html__( 'Reason', 'merchboard' ) . '<br><textarea name="reason" rows="2" cols="60" required maxlength="' . esc_attr( (string) CreatorPricingSettings::MAX_REASON ) . '"></textarea></label></p>';
 		echo '<p><button type="submit" class="button">' . esc_html__( 'Register VAT status', 'merchboard' ) . '</button></p>';
-		echo '<p class="description">' . esc_html__( 'Yes: the creator is paid the full creator profit.', 'merchboard' ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'No: the creator is also paid the full creator profit.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Yes: the creator is paid the full creator profit, including VAT.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'No: the creator is paid the same share of the sale price excluding VAT; the VAT of the sale is not paid out.', 'merchboard' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Changing the VAT status changes no product prices and no earlier order lines or payouts: each order line keeps the status it had when it was created.', 'merchboard' ) . '</p>';
 		echo '<p class="description">' . esc_html__( '"Applies from" is the date the status applies from; "Checked on" is the date it was checked, for example in the CVR register. Neither may be in the future. Each registration is kept unchanged; to correct one, register again with a reason. A registration with an earlier date changes no order lines, settlement documents or payouts made before it.', 'merchboard' ) . '</p>';
 		echo '</form>';
@@ -282,8 +282,10 @@ final class CreatorPricingSection {
 
 		echo '</tr></thead><tbody>';
 
+		$registered = $this->vat?->find( $creator->id ) ?? false;
+
 		foreach ( $linked as $product ) {
-			$this->render_product( $creator, $product );
+			$this->render_product( $creator, $product, $registered );
 		}
 
 		echo '</tbody></table></div>';
@@ -298,10 +300,11 @@ final class CreatorPricingSection {
 	 * One parent product: its markup and form, then one row per sellable
 	 * unit (the product, or each variation).
 	 *
-	 * @param Creator       $creator Creator.
-	 * @param ProductRecord $product Parent product.
+	 * @param Creator       $creator    Creator.
+	 * @param ProductRecord $product    Parent product.
+	 * @param bool          $registered The creator's current VAT status.
 	 */
-	private function render_product( Creator $creator, ProductRecord $product ): void {
+	private function render_product( Creator $creator, ProductRecord $product, bool $registered ): void {
 		$parent = $this->units->find( $product->id );
 		$markup = $this->resolver->resolve( $product->id );
 
@@ -339,13 +342,16 @@ final class CreatorPricingSection {
 
 			$price  = $unit->active_units() ?? $unit->regular_units();
 			$profit = self::example_profit( $price, $markup, $decimals );
-			$payout = null === $profit ? null : CreatorShare::payout( $profit, $decimals );
+			// Without VAT registration the payout excludes the sale's actual VAT (ADR-064), which the product price does not tell: no rate is assumed.
+			$payout = $registered
+				? esc_html( PricingLabels::money( $profit, $currency, $decimals ) )
+				: '<span class="description">' . esc_html__( 'Excluding VAT; calculated per order line', 'merchboard' ) . '</span>';
 
 			echo '<tr><td>' . ( $variable ? '— ' : '' ) . esc_html( $name ) . '<br><span class="description">' . esc_html( self::type_label( $unit->type ) ) . '</span></td>';
 			echo '<td>' . ( $variable ? esc_html__( 'Parent markup', 'merchboard' ) : self::markup_cell( $markup ) ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in markup_cell().
 			echo '<td>' . self::woocommerce_prices( $unit, $currency, $decimals ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in woocommerce_prices().
 			echo '<td>' . esc_html( PricingLabels::money( $profit, $currency, $decimals ) ) . '</td>';
-			echo '<td>' . esc_html( PricingLabels::money( $payout, $currency, $decimals ) ) . '</td><td>';
+			echo '<td>' . $payout . '</td><td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped when built above.
 
 			if ( ! $variable ) {
 				self::render_markup_form( $creator, $product->id, $markup );

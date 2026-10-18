@@ -46,9 +46,9 @@ defined( 'ABSPATH' ) || exit;
  * (window(), known() and RELEASED), so the balance and a settlement document
  * can never apply different rules (K6.1).
  *
- * A row's payout is its profit, whether or not the creator is VAT registered
- * (ADR-063 removed ADR-049's 20 % deduction), the same as
- * CreatorShare::payout(). A row that a settlement document has settled
+ * A row's payout is its profit when the creator was VAT registered at the
+ * sale, otherwise the share of its amount excluding VAT (ADR-064), the same
+ * as CreatorShare::payout(). A row that a settlement document has settled
  * counts with the payout stored in its document row instead (ADR-060 060-4:
  * issued documents are never recalculated), so the balance stays in step
  * with the documents and earlier settlements are not regulated
@@ -82,10 +82,25 @@ final class LedgerCreatorPayouts {
 	public const KNOWN = '( ' . LedgerCreatorProfits::KNOWN . ' AND p.vat_registered IN ( 0, 1 ) )';
 
 	/**
-	 * A row's payout as calculated now (ADR-063): its profit, already rounded
-	 * to the snapshot's store precision.
+	 * A row's payout as calculated now (ADR-064, CreatorShare::payout()): its
+	 * profit when the creator was VAT registered at the sale, otherwise the
+	 * share of the row's amount excluding VAT, each rounded once to the
+	 * snapshot's store precision. Like PROFIT, a multiplication only, so no
+	 * session setting can shorten the scale.
 	 */
-	public const PAYOUT = LedgerCreatorProfits::PROFIT;
+	public const PAYOUT = 'CASE WHEN p.vat_registered = 1 THEN ' . LedgerCreatorProfits::PROFIT . ' ELSE ' . self::NET_SHARE . ' END';
+
+	/**
+	 * The share of a row's amount excluding VAT, rounded to the snapshot's
+	 * store precision (the payout of a sale while not VAT registered).
+	 */
+	private const NET_SHARE = 'CASE p.price_decimals
+		WHEN 0 THEN ROUND( r.net_amount * p.share_bps * 0.0001, 0 )
+		WHEN 1 THEN ROUND( r.net_amount * p.share_bps * 0.0001, 1 )
+		WHEN 2 THEN ROUND( r.net_amount * p.share_bps * 0.0001, 2 )
+		WHEN 3 THEN ROUND( r.net_amount * p.share_bps * 0.0001, 3 )
+		WHEN 4 THEN ROUND( r.net_amount * p.share_bps * 0.0001, 4 )
+	END';
 
 	/**
 	 * A row's payout for the balance: the payout stored in its settlement

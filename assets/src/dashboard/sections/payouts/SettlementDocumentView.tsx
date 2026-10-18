@@ -36,6 +36,19 @@ function percentText( rateBps: number, locale: string ): string {
 	}
 }
 
+/**
+ * A decimal amount string with the opposite sign ("0.0000" stays as it is).
+ *
+ * @param amount Amount, e.g. "28.4100".
+ */
+function negated( amount: string ): string {
+	if ( /^-?0\.0000$/.test( amount ) ) {
+		return '0.0000';
+	}
+
+	return amount.startsWith( '-' ) ? amount.slice( 1 ) : `-${ amount }`;
+}
+
 function rowTypeLabel( type: string ): string {
 	switch ( type ) {
 		case 'sale':
@@ -360,6 +373,35 @@ export function SettlementDocumentView( {
 								</dd>
 							</>
 						) }
+					</>
+				) }
+				{ document.vatDeduction !== null && (
+					<>
+						<dt>
+							{ __(
+								'Commission of sales while not VAT registered, incl. VAT',
+								'merchboard'
+							) }
+						</dt>
+						<dd>{ money( document.vatDeduction.gross ) }</dd>
+						<dt>
+							{ __(
+								'VAT deducted (not VAT registered when sold)',
+								'merchboard'
+							) }
+						</dt>
+						<dd>
+							{ money(
+								negated( document.vatDeduction.deduction )
+							) }
+						</dd>
+						<dt>
+							{ __(
+								'Commission of sales while not VAT registered, paid out',
+								'merchboard'
+							) }
+						</dt>
+						<dd>{ money( document.vatDeduction.net ) }</dd>
 					</>
 				) }
 				{ document.adjustment !== '0.0000' && (

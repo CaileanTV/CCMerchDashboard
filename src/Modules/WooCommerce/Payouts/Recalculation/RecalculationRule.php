@@ -26,7 +26,10 @@ defined( 'ABSPATH' ) || exit;
  * gives for its stored inputs: profit = (net + tax) × share at the row's
  * precision, and payout = profit × 80 % (not VAT registered). A row that
  * does not reproduce is never guessed: it needs a manual assessment. The
- * recalculated payout is the stored profit (CreatorShare::payout()).
+ * recalculated payout is the stored profit (ADR-063's rule, kept as it was
+ * when R2 was executed). New recalculations are disabled since ADR-064
+ * (PayoutRecalculations), which deducts the VAT again while not VAT
+ * registered.
  */
 final class RecalculationRule {
 
@@ -64,7 +67,8 @@ final class RecalculationRule {
 				return null;
 			}
 
-			$recalculated = CreatorShare::payout( $profit, $decimals );
+			// ADR-063's target: the whole profit. Fixed here, so ADR-064 (VAT deducted while not VAT registered) never changes R2's meaning.
+			$recalculated = $profit;
 
 			return array(
 				'original'     => $legacy,

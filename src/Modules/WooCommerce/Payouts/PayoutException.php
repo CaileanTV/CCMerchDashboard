@@ -147,6 +147,12 @@ final class PayoutException extends DomainException {
 	public const RECALCULATION_STATE = 'recalculation_state';
 
 	/**
+	 * No new recalculation may be started: ADR-064 deducts the VAT again from
+	 * the payout of sales while not VAT registered, which R2 would pay out.
+	 */
+	public const RECALCULATION_DISABLED = 'recalculation_disabled';
+
+	/**
 	 * A required note of at most 500 characters is missing or too long.
 	 */
 	public const INVALID_NOTE = 'invalid_note';

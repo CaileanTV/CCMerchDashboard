@@ -43,8 +43,10 @@ defined( 'ABSPATH' ) || exit;
  * version 3 they also carry the VAT on the commission (CommissionVat), and
  * from version 4 the master data of both parties (ADR-062 K09): the
  * creator's legal name, address and CVR/SE number and the issuing business'
- * CVR number, copied at issue and '' or [] when not registered.
- * Issued documents keep the version they were issued with.
+ * CVR number, copied at issue and '' or [] when not registered; from version
+ * 6 also the VAT deducted from the payout of sales while the creator was not
+ * VAT registered (VatDeduction, ADR-064). Issued documents keep the version
+ * they were issued with.
  *
  * **Issue** runs inside the transaction and under the creator's payout lock
  * that completes the payout (PayoutDecisions, PayoutGiftCards), so a
@@ -85,19 +87,22 @@ final class SettlementDocuments {
 	public const DIGITS = 6;
 
 	/**
-	 * The calculation new documents are made with: ADR-049's share without
-	 * the 20 % deduction (ADR-063), ADR-054 D1/D2. Documents issued before
-	 * keep `adr049-adr054-v1`.
+	 * The calculation new documents are made with: ADR-049's share, with the
+	 * VAT deducted from the payout of sales while not VAT registered
+	 * (ADR-064), ADR-054 D1/D2. Documents issued before keep
+	 * `adr049-adr054-v1` (20 % deduction) or `adr063-adr054-v1` (no deduction).
 	 */
-	public const CALCULATION_VERSION = 'adr063-adr054-v1';
+	public const CALCULATION_VERSION = 'adr064-adr054-v1';
 
 	/**
 	 * Version of the document template (texts and layout) of new documents:
 	 * 1 = marked preliminary (060-9), 2 = note on tax and reporting, 3 = also
 	 * VAT on the commission (CommissionVat, ADR-062 K05 and K12), 4 = also the
-	 * master data of both parties (ADR-062 K09).
+	 * master data of both parties (ADR-062 K09), 6 = also the VAT deducted
+	 * from the payout of sales while not VAT registered (VatDeduction,
+	 * ADR-064). Version 5 is the correction document (SettlementCorrection).
 	 */
-	public const TEMPLATE_VERSION = 4;
+	public const TEMPLATE_VERSION = 6;
 
 	/**
 	 * Longest reason of a correction.
@@ -181,12 +186,17 @@ final class SettlementDocuments {
 		try {
 			// ADR-062 K05: VAT on the commission by each row's VAT status at the sale.
 			$commission_vat = CommissionVat::snapshot( CommissionVat::split( $rows ) );
+			// ADR-064: the VAT deducted from the payout of the sales while not VAT registered.
+			$vat_deduction = VatDeduction::snapshot( VatDeduction::of_rows( $rows ) );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			throw new DatabaseException( 'A ledger row does not match the schema.' );
 		}
 
 		$vat                     = $this->vat->find( $payout->creator_id );
-		$snapshot                = $this->snapshot( $payout, $vat, $start ) + array( CommissionVat::SNAPSHOT_KEY => $commission_vat );
+		$snapshot                = $this->snapshot( $payout, $vat, $start ) + array(
+			CommissionVat::SNAPSHOT_KEY => $commission_vat,
+			VatDeduction::SNAPSHOT_KEY  => $vat_deduction,
+		);
 		$snapshot['adjustments'] = array_map(
 			static fn( array $entry ): array => array(
 				'reference' => Recalculation::reference_of( $entry['recalculation_id'] ),

@@ -160,7 +160,7 @@ Afsnittet "Pricing" på creatorens redigeringsside; se ADMIN.md. WooCommerces pr
 
 - **Salgspris pr. ledger-række** = rækkens `net_amount` (efter alle rabatter, ekskl. moms) + rækkens faktiske moms fra `merchboard_sales_tax` = det beløb, kunden betalte inkl. moms. Momsen bruges kun til at genskabe det betalte beløb, aldrig som sats eller som separat profitformel.
 - **Profit** (`RealizedProfit`, via `SalesProfit::for_entry()`) = `round_half_away(salgspris × share_bps / 10 000)` til snapshottets prisdecimaler.
-- **Udbetaling** (`RealizedPayout`, via `SalesProfit::payout_for_entry()`) = profit for begge momsstatusser (ADR-063); uden momsstatus i snapshottet er den ukendt (ADR-049 pkt. 7).
+- **Udbetaling** (`RealizedPayout`, via `SalesProfit::payout_for_entry()`) = profit, når creatoren var momsregistreret ved salget, ellers andelen af rækkens beløb ekskl. moms (ADR-064, 2026-10-18; ADR-063 havde fjernet 20 %-fradraget); uden momsstatus i snapshottet er den ukendt (ADR-049 pkt. 7).
 - Heltal i 1/10 000-enheder (`CreatorShare`, `PricingMath::share`), half away from zero, ingen floats. Afrundes pr. række.
 - Rækkens beløb er linjebeløbet, så antallet ganges aldrig igen. Udsalg, kuponer og manuelle rabatter er indeholdt i det betalte beløb.
 - Refunds, reversals og korrektioner (fx slettet refund) har fortegn og egen moms, så profit og udbetaling følger med fortegn; en fuldt refunderet linje summerer til 0.

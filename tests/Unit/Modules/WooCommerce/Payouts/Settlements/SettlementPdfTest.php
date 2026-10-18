@@ -16,6 +16,7 @@ use MerchBoard\Core\Pdf\PdfWriter;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\VatDeduction;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Tests\Unit\TestCase;
 use UnexpectedValueException;
@@ -114,6 +115,86 @@ final class SettlementPdfTest extends TestCase {
 			$this->assert_pdf_lacks( 'VAT on the commission', $pdf );
 			$this->assert_pdf_lacks( 'Commission excl. VAT', $pdf );
 		}
+	}
+
+	public function test_a_template_6_document_shows_the_vat_deducted_while_not_vat_registered(): void {
+		$pdf = ( new SettlementPdf() )->render( $this->deduction_document( array( '0', '0' ) ) );
+
+		foreach ( array( 'VAT deducted from the payout', 'Commission of sales while not VAT registered, incl. VAT', '40,00 DKK', 'VAT deducted (not VAT registered when sold)', '-8,00 DKK', 'Commission of sales while not VAT registered, paid out', '32,00 DKK', 'Commission in the period', '16,00', 'Template version 6.' ) as $text ) {
+			$this->assert_pdf_contains( $text, $pdf );
+		}
+
+		$this->assert_pdf_contains( 'The creator was not VAT registered when these sales were made.', $pdf );
+		$this->assert_pdf_lacks( 'VAT on the commission', $pdf );
+	}
+
+	public function test_a_template_6_document_without_sales_while_not_vat_registered_shows_no_deduction(): void {
+		$pdf = ( new SettlementPdf() )->render( $this->deduction_document( array( '1', '1' ) ) );
+
+		$this->assert_pdf_contains( 'Commission incl. VAT', $pdf );
+		$this->assert_pdf_contains( 'Template version 6.', $pdf );
+		$this->assert_pdf_lacks( 'VAT deducted', $pdf );
+	}
+
+	public function test_a_mixed_template_6_document_shows_the_vat_on_the_commission_and_the_deduction(): void {
+		$pdf = ( new SettlementPdf() )->render( $this->deduction_document( array( '1', '0' ) ) );
+
+		// VAT registered: 20.00 incl. VAT = 16.00 + 4.00; not registered: 20.00 − 4.00 = 16.00 paid out.
+		foreach ( array( 'Commission incl. VAT', '20,00 DKK', 'Commission without VAT (not VAT registered when sold)', '16,00 DKK', 'VAT deducted (not VAT registered when sold)', '-4,00 DKK', '36,00 DKK' ) as $text ) {
+			$this->assert_pdf_contains( $text, $pdf );
+		}
+	}
+
+	public function test_earlier_template_versions_never_show_a_vat_deduction(): void {
+		foreach ( array( 2, 3, 4 ) as $version ) {
+			$pdf = ( new SettlementPdf() )->render( $this->deduction_document( array( '0', '0' ), $version ) );
+
+			$this->assert_pdf_contains( 'Template version ' . $version . '.', $pdf );
+			$this->assert_pdf_lacks( 'VAT deducted', $pdf );
+		}
+	}
+
+	public function test_a_template_6_document_whose_deduction_does_not_match_its_rows_gives_no_pdf(): void {
+		$cases = array(
+			'missing'         => $this->deduction_document( array( '0', '0' ), 6, array( 'vat_deduction' => null ) ),
+			'other amounts'   => $this->deduction_document(
+				array( '0', '0' ),
+				6,
+				array(
+					'vat_deduction' => array(
+						'version'   => VatDeduction::VERSION,
+						'gross'     => '40.0000',
+						'deduction' => '7.0000',
+						'net'       => '33.0000',
+					),
+				)
+			),
+			'does not add up' => $this->deduction_document(
+				array( '0', '0' ),
+				6,
+				array(
+					'vat_deduction' => array(
+						'version'   => VatDeduction::VERSION,
+						'gross'     => '40.0000',
+						'deduction' => '8.0000',
+						'net'       => '33.0000',
+					),
+				)
+			),
+		);
+
+		foreach ( $cases as $case => $shown ) {
+			try {
+				( new SettlementPdf() )->render( $shown );
+				self::fail( 'Expected no PDF: ' . $case );
+			} catch ( UnexpectedValueException $e ) {
+				self::assertStringNotContainsString( '40', $e->getMessage(), 'No amounts in the message: ' . $case );
+			}
+		}
+
+		// Like the VAT on the commission, a snapshot that is not valid in itself is shown nowhere.
+		self::assertNull( VatDeduction::shown( $cases['missing']['document'] ) );
+		self::assertNull( VatDeduction::shown( $cases['does not add up']['document'] ) );
 	}
 
 	public function test_a_template_4_document_identifies_both_parties_with_their_master_data(): void {
@@ -406,6 +487,10 @@ final class SettlementPdfTest extends TestCase {
 			$snapshot[ CommissionVat::SNAPSHOT_KEY ] = $o['commission_vat'];
 		}
 
+		if ( array_key_exists( 'vat_deduction', $o ) ) {
+			$snapshot[ VatDeduction::SNAPSHOT_KEY ] = $o['vat_deduction'];
+		}
+
 		$document = new SettlementDocument(
 			7,
 			'AFR-000007',
@@ -467,6 +552,49 @@ final class SettlementPdfTest extends TestCase {
 			array(
 				'template_version' => 3,
 				'commission_vat'   => CommissionVat::snapshot( CommissionVat::of_stored_rows( $rows, CommissionVat::RATE_BPS ) ),
+			),
+			null,
+			$rows
+		);
+	}
+
+	/**
+	 * A document of two rows of a sale of 100.00 incl. 20.00 VAT at 20 %
+	 * (profit 20.00): payout 20.00 while VAT registered, 16.00 while not
+	 * (ADR-064), with the split and the deduction the rows give, of template
+	 * version 6 unless another is given. Opening 1005, paid out 25.
+	 *
+	 * @param array{0: string, 1: string} $statuses VAT status at the sale of the two rows ('1' or '0').
+	 * @param int                         $version  Template version.
+	 * @param array<string, mixed>        $o        Overrides of the document.
+	 * @return array{document: SettlementDocument, rows: list<array<string, mixed>>, corrections: list<SettlementDocument>}
+	 */
+	private function deduction_document( array $statuses, int $version = 6, array $o = array() ): array {
+		$rows       = array(
+			self::row(
+				array(
+					'item_name'      => 'Hættetrøje (sort)',
+					'vat_registered' => $statuses[0],
+					'payout_amount'  => '1' === $statuses[0] ? '20.0000' : '16.0000',
+				)
+			),
+			self::row(
+				array(
+					'order_id'       => '9102',
+					'vat_registered' => $statuses[1],
+					'payout_amount'  => '1' === $statuses[1] ? '20.0000' : '16.0000',
+				)
+			),
+		);
+		$commission = SalesAmount::add( SalesAmount::parse( (string) $rows[0]['payout_amount'] ), SalesAmount::parse( (string) $rows[1]['payout_amount'] ) );
+
+		return $this->shown(
+			$o + array(
+				'template_version' => $version,
+				'commission'       => SalesAmount::format( $commission ),
+				'closing'          => SalesAmount::format( SalesAmount::add( SalesAmount::parse( '980' ), $commission ) ),
+				'commission_vat'   => CommissionVat::snapshot( CommissionVat::of_stored_rows( $rows, CommissionVat::RATE_BPS ) ),
+				'vat_deduction'    => VatDeduction::snapshot( VatDeduction::of_stored_rows( $rows ) ),
 			),
 			null,
 			$rows

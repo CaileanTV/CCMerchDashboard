@@ -20,7 +20,6 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
-use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 use wpdb;
@@ -53,6 +52,12 @@ defined( 'ABSPATH' ) || exit;
  *    or row is regulated twice.
  * 4. **Closing** (close()) after the execution, explicitly.
  *
+ * Since ADR-064 (the VAT is deducted again from the payout of sales while not
+ * VAT registered) no new recalculation can be started: preview() and
+ * reopen() refuse with `recalculation_disabled`. Existing recalculations, their
+ * adjustments, exports and history are kept, and their remaining steps
+ * (approval, rejection, execution, closing, export) still work.
+ *
  * An executed adjustment counts in the balance (PayoutBalances): a negative
  * one is offset against what is available and the rest is carried forward
  * as outstanding (ADR-054). The legal right to offset is not validated
@@ -64,9 +69,10 @@ defined( 'ABSPATH' ) || exit;
 final class PayoutRecalculations {
 
 	/**
-	 * The calculation of the recalculated amounts (as new documents).
+	 * The calculation of the recalculated amounts: ADR-063's rule (the whole
+	 * profit), fixed when ADR-064 changed the calculation of new documents.
 	 */
-	public const CALCULATION_VERSION = SettlementDocuments::CALCULATION_VERSION;
+	public const CALCULATION_VERSION = 'adr063-adr054-v1';
 
 	/**
 	 * How an approved difference is regulated (part of the fingerprint).
@@ -96,6 +102,7 @@ final class PayoutRecalculations {
 	 * @param Transaction                   $transaction    Transactions.
 	 * @param wpdb                          $wpdb           Database (the named lock).
 	 * @param Closure                       $clock          Current time (`Closure(): DateTimeImmutable`).
+	 * @param bool                          $new_runs       Whether new recalculations may be started; false since ADR-064 (only tests that stand for recalculations made before it pass true).
 	 */
 	public function __construct(
 		private PayoutRecalculationRepository $recalculations,
@@ -105,7 +112,8 @@ final class PayoutRecalculations {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private wpdb $wpdb,
-		private Closure $clock
+		private Closure $clock,
+		private bool $new_runs = false
 	) {
 	}
 
@@ -214,13 +222,18 @@ final class PayoutRecalculations {
 
 	/**
 	 * Makes a preview: a new recalculation with the items as computed now.
+	 * Disabled since ADR-064 (`recalculation_disabled`): R2 pays out the VAT
+	 * that ADR-064 deducts again while not VAT registered.
 	 *
 	 * @return int Recalculation id.
-	 * @throws PayoutException When not authorized or another recalculation is open.
-	 * @throws DatabaseException When a read or write fails.
+	 * @throws PayoutException When not authorized, disabled (ADR-064) or another recalculation is open; a failed read or write is a DatabaseException.
 	 */
 	public function preview(): int {
 		self::authorize();
+
+		if ( ! $this->new_runs ) {
+			throw new PayoutException( PayoutException::RECALCULATION_DISABLED );
+		}
 
 		return $this->locked( fn(): int => $this->create( null ) );
 	}
@@ -329,15 +342,18 @@ final class PayoutRecalculations {
 
 	/**
 	 * Reopens a rejected recalculation as a new preview of the current data.
-	 * The rejected one stays rejected.
+	 * Disabled since ADR-064, like preview(); the rejected one stays rejected.
 	 *
 	 * @param int $id Rejected recalculation.
 	 * @return int The new recalculation's id.
-	 * @throws PayoutException When not authorized, not rejected or another recalculation is open.
-	 * @throws DatabaseException When a read or write fails.
+	 * @throws PayoutException When not authorized, disabled (ADR-064), not rejected or another recalculation is open; a failed read or write is a DatabaseException.
 	 */
 	public function reopen( int $id ): int {
 		self::authorize();
+
+		if ( ! $this->new_runs ) {
+			throw new PayoutException( PayoutException::RECALCULATION_DISABLED );
+		}
 
 		return $this->locked(
 			function () use ( $id ): int {

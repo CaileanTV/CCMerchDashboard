@@ -483,6 +483,7 @@ describe( 'PayoutsSection', () => {
 			profit: '60.0000',
 			commission: '60.0000',
 			commission_vat: null,
+			vat_deduction: null,
 			adjustment: '4.0000',
 			adjustment_refs: [ 'R2-000001' ],
 			opening_balance: '0.0000',
@@ -569,6 +570,12 @@ describe( 'PayoutsSection', () => {
 			} )
 		).toBeNull();
 		expect(
+			parseSettlementDocument( {
+				...document,
+				vat_deduction: undefined,
+			} )
+		).toBeNull();
+		expect(
 			parseSettlementDocument( { ...document, payout: 25.5 } )
 		).toBeNull();
 		expect(
@@ -613,6 +620,7 @@ describe( 'PayoutsSection', () => {
 			profit: '30.0000',
 			commission: '30.0000',
 			commission_vat: vat,
+			vat_deduction: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',
@@ -691,6 +699,108 @@ describe( 'PayoutsSection', () => {
 		}
 	} );
 
+	it( 'shows the VAT deducted from the payout of sales while not VAT registered', async () => {
+		const completed = {
+			...PENDING,
+			id: 37,
+			status: 'completed',
+			decided_at: '2026-12-01T10:00:00Z',
+			settlement_document: 'AFR-000006',
+		};
+		const deduction = {
+			gross: '40.0000',
+			deduction: '8.0000',
+			net: '32.0000',
+		};
+		const document = {
+			number: 'AFR-000006',
+			type: 'settlement',
+			preliminary: false,
+			issued_at: '2026-12-01T10:00:00Z',
+			period_from: null,
+			period_to: '2026-12-01T10:00:00Z',
+			currency: 'DKK',
+			profit: '40.0000',
+			commission: '32.0000',
+			commission_vat: null,
+			vat_deduction: deduction,
+			adjustment: '0.0000',
+			adjustment_refs: [],
+			opening_balance: '0.0000',
+			payout: '32.0000',
+			closing_balance: '0.0000',
+			vat_registered: false,
+			creator_name: 'Mine',
+			company_name: 'CCMerch',
+			company_address: [],
+			master_data: null,
+			method: 'bank',
+			destination: '•••• 5678',
+			rows: [
+				{
+					order_id: 101,
+					item_name: 'Tee',
+					type: 'sale',
+					quantity: 2,
+					net: '160.0000',
+					tax: '40.0000',
+					payout: '32.0000',
+				},
+			],
+			corrections: [],
+		};
+		const { container } = await show( {
+			[ `GET ${ LIST }` ]: () => listResponse( [ completed ], 1, 1 ),
+			[ `GET /merchboard/v1/me/payouts/37/settlement-document` ]: () =>
+				response( 200, document ),
+		} );
+
+		click(
+			Array.from( container.querySelectorAll( 'button' ) ).find(
+				( candidate ) =>
+					candidate.textContent === 'Settlement document AFR-000006'
+			) ?? null
+		);
+		await flush();
+		await flush();
+
+		const text = plain( container.textContent );
+		expect( text ).toContain(
+			'Commission of sales while not VAT registered, incl. VAT'
+		);
+		expect( text ).toContain( plain( money( '40' ) ) );
+		expect( text ).toContain(
+			'VAT deducted (not VAT registered when sold)'
+		);
+		expect( text ).toContain( plain( money( '-8' ) ) );
+		expect( text ).toContain(
+			'Commission of sales while not VAT registered, paid out'
+		);
+		expect( text ).toContain( plain( money( '32' ) ) );
+		expect( text ).not.toContain( 'Commission excl. VAT' );
+		expect( parseSettlementDocument( document )?.vatDeduction ).toEqual(
+			deduction
+		);
+		expect(
+			parseSettlementDocument( { ...document, vat_deduction: null } )
+				?.vatDeduction
+		).toBeNull();
+
+		for ( const broken of [
+			{ ...deduction, net: '33.0000' },
+			{ ...deduction, deduction: 8 },
+			{ gross: '40.0000', net: '32.0000' },
+			'8',
+		] ) {
+			expect(
+				parseSettlementDocument( {
+					...document,
+					vat_deduction: broken,
+				} )
+			).toBeNull();
+		}
+	} );
+
 	it( 'shows the master data of both parties as issued and what was not registered', async () => {
 		const completed = {
 			...PENDING,
@@ -716,6 +826,7 @@ describe( 'PayoutsSection', () => {
 			profit: '20.0000',
 			commission: '20.0000',
 			commission_vat: null,
+			vat_deduction: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',
@@ -830,6 +941,7 @@ describe( 'PayoutsSection', () => {
 			profit: '60.0000',
 			commission: '60.0000',
 			commission_vat: null,
+			vat_deduction: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',
@@ -1019,6 +1131,7 @@ describe( 'PayoutsSection', () => {
 			profit: '40.0000',
 			commission: '40.0000',
 			commission_vat: null,
+			vat_deduction: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',
@@ -1132,6 +1245,7 @@ describe( 'PayoutsSection', () => {
 			profit: '0.0000',
 			commission: '0.0000',
 			commission_vat: null,
+			vat_deduction: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',
@@ -1196,6 +1310,7 @@ describe( 'PayoutsSection', () => {
 			profit: '20.0000',
 			commission: '20.0000',
 			commission_vat: null,
+			vat_deduction: null,
 			adjustment: '0.0000',
 			adjustment_refs: [],
 			opening_balance: '0.0000',

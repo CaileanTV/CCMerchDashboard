@@ -79,6 +79,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Sletning af beskyttet produktmeta ved opt-in-uninstall (ADR-036):** vagten tillader kun sletning af de to nøgler, og kun når WordPress afinstallerer Merch Dashboard med opt-in til sletning af data. `Uninstaller` sletter dem via WordPress' meta-API før tabellerne og opt-in.
 
 ### Changed
+- **Moms fratrækkes udbetalingen til ikke-momsregistrerede creators (ADR-064, 2026-10-18):**
+  - For salg, hvor creatoren ikke var momsregistreret (ordrelinjens snapshot), er udbetalingen creatorens andel af salgsprisen ekskl. salgets faktiske moms; momsregistrerede creators får fortsat hele profitten inkl. moms. Gælder alle ikke-afregnede rækker, saldoen, payout-anmodninger og nye afregningsbilag (`calculation_version` `adr064-adr054-v1`). Udstedte bilag og udførte reguleringer ændres ikke. Ingen migration.
+  - Nye afregningsbilag har skabelonversion 6: når der er trukket moms fra, viser PDF'en, admin og creatorens dashboard kommissionen af disse salg inkl. moms, den fratrukne moms og det udbetalte beløb (snapshot `vat_deduction`, felt `vat_deduction` i `GET /me/payouts/{id}/settlement-document`).
+  - Nye genberegninger (R2, ADR-063) er spærret (`recalculation_disabled`); eksisterende kan afsluttes. Admin-teksten om momsstatus og eksemplet på udbetaling er opdateret.
 - **20 %-reduktionen er fjernet (ADR-063, R2 trin 1):**
   - Udbetalingen er nu hele creator-profitten, også for ikke-momsregistrerede creators. Det gælder saldoen, nye afregningsbilag (`calculation_version` `adr063-adr054-v1`) og eksemplerne i admin.
   - Rækker, der allerede indgår i et afregningsbilag, tæller fortsat med den udbetaling, der er gemt i bilaget. Udstedte bilag ændres ikke, og historiske afregninger reguleres ikke automatisk, kun via genberegningen (R2 trin 2, se Added).

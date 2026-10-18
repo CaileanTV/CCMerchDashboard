@@ -32,6 +32,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocument;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\VatDeduction;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 use UnexpectedValueException;
@@ -662,6 +663,15 @@ final class PayoutsPage {
 			if ( 0 !== $split['untaxed_units'] ) {
 				$after[ __( 'Commission without VAT (not VAT registered when sold)', 'merchboard' ) ] = $money( $split['untaxed_units'] );
 			}
+		}
+
+		// The VAT deducted from the payout of sales while not VAT registered (template version 6, ADR-064).
+		$deduction = VatDeduction::shown( $document );
+
+		if ( null !== $deduction ) {
+			$after[ __( 'Commission of sales while not VAT registered, incl. VAT', 'merchboard' ) ] = $money( $deduction['gross_units'] );
+			$after[ __( 'VAT deducted (not VAT registered when sold)', 'merchboard' ) ]             = $money( SalesAmount::negate( $deduction['deduction_units'] ) );
+			$after[ __( 'Commission of sales while not VAT registered, paid out', 'merchboard' ) ]  = $money( $deduction['net_units'] );
 		}
 
 		if ( 0 !== $document->adjustment_units ) {
