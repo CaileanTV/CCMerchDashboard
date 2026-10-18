@@ -196,6 +196,12 @@ class WC_Order extends WC_Abstract_Order {
 	 * @return string
 	 */
 	public function get_edit_order_url() {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_billing_first_name( $context = 'view' ) {}
 }
 
 /**
@@ -419,6 +425,23 @@ class WC_Product_Variable extends WC_Product {
 	 */
 	public function get_variation_prices( $for_display = false ) {}
 }
+
+/**
+ * Product variation (class-wc-product-variation.php).
+ */
+class WC_Product_Variation extends WC_Product {
+}
+
+/**
+ * The variation's attributes as text (wc-formatting-functions.php).
+ *
+ * @param array<mixed>|WC_Product_Variation $variation  Variation or attributes.
+ * @param bool                              $flat       Plain list instead of a definition list.
+ * @param bool                              $include_names Whether to include the attribute names.
+ * @param bool                              $skip_attributes_in_name Whether to skip attributes in the name.
+ * @return string
+ */
+function wc_get_formatted_variation( $variation, $flat = false, $include_names = true, $skip_attributes_in_name = false ) {}
 
 /**
  * @return string Store currency code (ISO 4217).

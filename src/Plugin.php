@@ -27,6 +27,7 @@ use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Admin\AdminModule;
+use MerchBoard\Modules\Alerts\AlertsModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
@@ -253,8 +254,9 @@ final class Plugin {
 	}
 
 	/**
-	 * Built-in modules. The WooCommerce module is only included with a
-	 * supported WooCommerce; an older one gets a notice instead (ADR-030).
+	 * Built-in modules. The WooCommerce module, and the Alerts module that
+	 * depends on it, are only included with a supported WooCommerce; an older
+	 * one gets a notice instead (ADR-030).
 	 *
 	 * @return Module[]
 	 */
@@ -271,6 +273,8 @@ final class Plugin {
 
 		if ( $woocommerce->is_supported() ) {
 			$modules[] = new WooCommerceModule();
+			// Purchase alerts use the WooCommerce module's product attribution (ADR-065).
+			$modules[] = new AlertsModule();
 		}
 
 		$woocommerce->register_notice();

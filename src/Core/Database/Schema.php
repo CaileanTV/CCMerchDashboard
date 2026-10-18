@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Core\Database;
 
 use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
+use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
 use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
 use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
@@ -61,6 +62,7 @@ final class Schema {
 			15 => new CreatePayoutRecalculationExportsTable(),
 			16 => new CreateCreatorVatHistoryTable(),
 			17 => new CreateCreatorCodeTables(),
+			18 => new CreateAlertEventsTable(),
 		);
 	}
 }

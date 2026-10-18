@@ -276,6 +276,13 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Momsstatus (ADR-048):** ændres kun med `merchboard_manage_creator_pricing` (capability før nonce, domænetjek og audit `creator_vat_status_changed`). `merchboard_sales_tax` indeholder kun ledger-nøgle, ordre- og linje-ID, beløb og valuta, aldrig kundedata.
 - **Snapshots (trin 5):** `merchboard_sales_line_pricing` indeholder kun ID'er, valuta, status og årsag samt enhedspriser (forretningsdata), aldrig kundens navn, e-mail, adresse, land eller andre checkout-data. Snapshottet tages som systemarbejde i kundens request uden capability-tjek og kaster aldrig; det kan ikke ændres bagefter, og der er ingen API til det.
 
+### Købs-alerts (fase 25, ADR-065)
+
+- **Kill switch:** alerts registreres kun, når `alerts_enabled` er slået til af en bruger med `merchboard_manage_alerts` (capability før nonce, domænetjek og audit `settings_updated`), og aldrig mens MerchAlert er aktivt.
+- **Ingen tillid til input:** creatoren for en ordrelinje er altid produktets tilknytning (`ProductCreatorLink`) på det tidspunkt, ordren betales, og kun aktive creators får alerts. Routeren kører som systemarbejde uden capability og kaster aldrig.
+- **Personoplysninger:** `merchboard_alert_events` gemmer kundens fornavn og frivillige brugernavn, som MerchAlert gør i dag. Fejl logges kun med ordre-ID og fejltype, aldrig med navne. Der er ingen retention-politik endnu (åbent punkt i ROADMAP, fase 25); tabellen slettes ved opt-in-afinstallation.
+- **Senere trin:** overlay-siden, REST under `/me/alerts`, lyd-upload, Twitch (ADR-066) og Google Fonts (ADR-067) dokumenteres her, når de implementeres.
+
 ## Tjekliste pr. ændring
 
 - [ ] Hvert nyt endpoint/handler har capability- eller `CreatorContext`-tjek **server-side**.

@@ -28,6 +28,7 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Settings\SettingsModule;
+use MerchBoard\Modules\Alerts\AlertsModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
 use MerchBoard\Plugin;
@@ -304,10 +305,11 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creator_vat_history \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_creator_codes \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_order_exclusions \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_events \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 17, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 18, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {
@@ -447,13 +449,13 @@ final class PluginTest extends TestCase {
 
 	#[RunInSeparateProcess]
 	#[PreserveGlobalState( false )]
-	public function test_supported_woocommerce_boots_the_woocommerce_module_without_notice(): void {
+	public function test_supported_woocommerce_boots_the_woocommerce_and_alerts_modules_without_notice(): void {
 		$merchboard_test_wc_version = '10.3.8';
 		require_once dirname( __DIR__ ) . '/Fixtures/woocommerce-active.php';
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 6 === count( $modules ) && $modules[5] instanceof WooCommerceModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 7 === count( $modules ) && $modules[5] instanceof WooCommerceModule && $modules[6] instanceof AlertsModule ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 
@@ -470,7 +472,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 5 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule ) ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 5 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule ) ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 

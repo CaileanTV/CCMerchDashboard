@@ -182,6 +182,12 @@ final class Tables {
 	public const ORDER_EXCLUSIONS = 'merchboard_order_exclusions';
 
 	/**
+	 * Purchase alerts, schema version 18 (ADR-065): one row per order line
+	 * and creator, the alert history of the creator's overlay.
+	 */
+	public const ALERT_EVENTS = 'merchboard_alert_events';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -212,6 +218,7 @@ final class Tables {
 		self::CREATOR_VAT_HISTORY,
 		self::CREATOR_CODES,
 		self::ORDER_EXCLUSIONS,
+		self::ALERT_EVENTS,
 	);
 
 	/**

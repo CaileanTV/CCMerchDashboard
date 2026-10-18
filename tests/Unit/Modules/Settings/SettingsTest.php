@@ -131,6 +131,7 @@ final class SettingsTest extends TestCase {
 				Settings::PAYOUT_HOLDING_DAYS       => 14,
 				Settings::PAYOUT_GIFT_CARD_PROVIDER => '',
 				Settings::COMPANY_CVR               => '',
+				Settings::ALERTS_ENABLED            => false,
 			),
 			Settings::all()
 		);
@@ -156,6 +157,29 @@ final class SettingsTest extends TestCase {
 
 		$this->options->options[ Settings::OPTION ] = array( Settings::PAYOUT_GIFT_CARD_PROVIDER => 7 );
 		self::assertSame( '', Settings::payout_gift_card_provider() );
+	}
+
+	/**
+	 * Purchase alerts are off by default and only exactly true switches them
+	 * on (ADR-065 pkt. 6).
+	 */
+	public function test_alerts_are_off_by_default_and_only_exactly_true_enables_them(): void {
+		self::assertFalse( Settings::alerts_enabled() );
+		self::assertFalse( Settings::defaults()[ Settings::ALERTS_ENABLED ] );
+
+		foreach ( array(
+			'int 1'      => 1,
+			'string 1'   => '1',
+			'yes'        => 'yes',
+			'true text'  => 'true',
+			'true array' => array( true ),
+		) as $label => $stored ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::ALERTS_ENABLED => $stored );
+			self::assertFalse( Settings::alerts_enabled(), $label );
+		}
+
+		$this->options->options[ Settings::OPTION ] = array( Settings::ALERTS_ENABLED => true );
+		self::assertTrue( Settings::alerts_enabled() );
 	}
 
 	/**

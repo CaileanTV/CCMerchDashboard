@@ -70,6 +70,7 @@ final class RoleManagerTest extends TestCase {
 				'merchboard_delete_order_history'   => true,
 				'merchboard_manage_payouts'         => true,
 				'merchboard_view_payout_details'    => true,
+				'merchboard_manage_alerts'          => true,
 			),
 			$roles->capabilities( 'administrator' )
 		);

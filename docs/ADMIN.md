@@ -16,7 +16,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   ├── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger; fase 17 (WooCommerce): afsnittene "Product category" og "Products"
 │   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
-├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo). Tabs General · Access · Advanced kommer, når de får indhold
+├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo); ✅ fase 25, trin 25.2: "Alerts" (kill switch for købs-alerts, kun med WooCommerce, ADR-065). Tabs General · Access · Advanced kommer, når de får indhold
 ├── Payouts                    ✅ fase 23, trin 23.6 (WooCommerce, ADR-055/056/058): kø og historik for creatorernes payout-anmodninger, afvisning og registrering af manuel overførsel; kræver merchboard_manage_payouts; fulde bank-/PayPal-oplysninger kræver desuden merchboard_view_payout_details
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
 ├── Order history              ✅ fase 22 (WooCommerce, ADR-051/052): ordrehistorik for sales ledgeren pr. ordre; kræver merchboard_manage_creators; sletning af en testordres historik kræver merchboard_delete_order_history
@@ -148,6 +148,13 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 - Én afkrydsning pr. registreret status fra `wc_get_order_statuses()` (gemt uden `wc-`), undtagen `pending`, `failed`, `cancelled`, `refunded`, `checkout-draft` og `trash`. Gemte statusser, der ikke længere er registreret, vises som "ikke registreret" og kan beholdes eller fravælges, men ikke tilføjes på ny. Registrerede statusser, der ikke kan understøttes (nøgle uden `wc-`, ugyldigt format som store bogstaver, eller slug over 17 tegn), vises under "Not supported" med årsag og uden afkrydsning (ADR-038, statusnote 2026-09-30). Mindst én status kræves; standard `processing` + `completed`.
 - Forklaring i UI: Ændringen gælder for synkroniseringer efter ændringen – også af eksisterende ordrer, ikke kun nye ordrer. Der sker ingen masse-genberegning og ingen backfill; en ordre vurderes efter den aktuelle liste, næste gang den synkroniseres, og kan så få reversal og lukning eller en ny cyklus med behandlingstidspunktet som `occurred_at` (følger af den tilstandsbaserede synkronisering, ADR-038 pkt. 13). Historiske rækker ændres aldrig.
 - En ændring skriver `settings_updated` med `setting` = `counted_order_statuses`, `previous_value` og `value` som lister (vises som `a, b`), i samme transaktion som option'en.
+
+**"Alerts"** (✅ fase 25, trin 25.2, ADR-065 pkt. 6; ikke runtime-verificeret):
+
+- Tilføjes af Alerts-modulet via `merchboard_settings_sections` og vises kun for brugere med `merchboard_manage_alerts` og kun med WooCommerce (modulet startes sammen med WooCommerce-modulet).
+- Én afkrydsning, "Record purchase alerts for creators", slået fra som standard, også efter en opdatering. Status vises som "Off", "On" eller "Switched on, but paused while MerchAlert is active".
+- Er MerchAlert aktivt (konstanten `CCMERCH_ALERT_VERSION` er defineret), vises en advarsel: der sendes ingen alerts, før MerchAlert er deaktiveret, og MerchAlert må ikke slettes, fordi dets data skal kunne importeres (trin 25.10).
+- Egen formular og nonce (`merchboard_save_alerts_settings`); capability før nonce; notices via `merchboard_alerts_result`. `AlertSettings` tjekker capability igen og skriver `settings_updated` (`setting` = `alerts_enabled`) i samme transaktion som option'en; en uændret værdi skriver intet.
 
 **Planlagte settings** (når de får indhold):
 

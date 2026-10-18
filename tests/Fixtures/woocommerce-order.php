@@ -148,6 +148,10 @@ class WC_Order extends WC_Abstract_Order {
 	public function get_order_number() {
 		return $this->data['number'] ?? $this->id;
 	}
+
+	public function get_billing_first_name( $context = 'view' ) {
+		return 'edit' === $context ? ( $this->data['billing_first_name'] ?? '' ) : 'Filtered';
+	}
 }
 
 /**

@@ -4,6 +4,12 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+- **Købs-alerts, fundament (fase 25, trin 25.2, ADR-065, schema-version 18):** nyt modul `Alerts` (integrationen af MerchAlert), som startes sammen med WooCommerce-modulet. Når en ordre bliver betalt (`processing` eller `completed`), registreres én alert pr. produktlinje for den aktive creator, produktet er tilknyttet (`ProductCreatorLink`; kategori-mappingen slår dermed alerts til), i den nye tabel `merchboard_alert_events` (migration 18; unik pr. ordrelinje og creator, så status-skiftet fra processing til completed ikke giver dubletter). Alerten gemmer ordrenummer, produkt, variation, antal, billede, kategorier og kundens fornavn og frivillige brugernavn (`_merchboard_alert_username`, med MerchAlerts `_ccmerch_username` som fallback). **Slået fra som standard:** en administrator med den nye capability `merchboard_manage_alerts` (`RoleManager::VERSION` 6) slår alerts til under Settings → Alerts (audit `settings_updated`), og der registreres intet, mens MerchAlert er aktivt. Endnu intet overlay, ingen dashboard-sektion og ingen chatbot (trin 25.3–25.10). Danske oversættelser. Testet automatisk, ikke runtime-verificeret.
+
+### Changed
+- PHPCS kører med `memory_limit` 512M (`phpcs.xml.dist`), fordi cachen for hele kodebasen ikke længere kan gemmes inden for PHP's standard på 128M.
+
 ## [1.0.1] - 2026-10-18
 
 Rettelse: ordrer, som en creator købte med sin egen rabatkode, talte som almindelige salg. Creatoren fik salg, fortjeneste og kommission af den rabatterede pris. Implementeret efter projektejerens tilladelse 2026-10-18 (trin a og b af det godkendte design; ADR-068). Testet automatisk; runtime-test på Merch Dashboard Local udestår og skal gennemføres før produktion.

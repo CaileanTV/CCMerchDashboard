@@ -19,7 +19,7 @@ final class WcOrderStorage {
 	/**
 	 * Orders and refunds by id.
 	 *
-	 * @var array<int, array{type: string, status: string, currency: string, created: string, paid: string|null, parent: int, items: list<array<string, mixed>>, number?: string|int, billing?: array<string, string>}>
+	 * @var array<int, array{type: string, status: string, currency: string, created: string, paid: string|null, parent: int, items: list<array<string, mixed>>, number?: string|int, billing?: array<string, string>, billing_first_name?: string}>
 	 */
 	public static array $orders = array();
 

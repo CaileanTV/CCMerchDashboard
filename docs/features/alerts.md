@@ -6,7 +6,7 @@
 Når en kunde køber en creators merch, skal creatoren kunne vise det live på sin stream: en alert i OBS-overlayet med billede, tekst og lyd og eventuelt en besked i Twitch-chatten. Funktionen kom fra projektejerens ældre plugin MerchAlert og samles nu i Merch Dashboard, så creators kun har ét login og én kategori-mapping.
 
 ## Current status
-Planlagt (fase 25, plan godkendt 2026-10-18). Intet er implementeret. Alerts vil være slået fra som standard, indtil en administrator slår dem til.
+I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Overlay, dashboard-sektion, lyde, historik-UI, chatbot, admin-ekstra og import mangler.
 
 ## User-facing functionality
 Creatoren får sektionen **"Alerts"** i creator-dashboardet med undersiderne:
@@ -41,19 +41,22 @@ Settings får sektionen **"Alerts"**: slå alerts til og fra, poll-interval, gr�
 - **Vagter:** kill switch (`alerts_enabled`) og ingen alerts, mens MerchAlert er aktivt.
 
 ## Relevant files
-Planlagt: `src/Modules/Alerts/…`, `assets/src/dashboard/sections/alerts/…`, et separat overlay-script og tests under `tests/Unit/Alerts` og `tests/Integration/Alerts`.
+- ✅ `src/Modules/Alerts/`: `AlertsModule`, `AlertsAvailability` (kill switch og MerchAlert-vagt), `AlertHooks`, `AlertRouter`, `PaidOrderReader`/`WooCommercePaidOrderReader`, `PaidOrder`/`PaidOrderLine`, `AlertEvent`/`AlertEventRepository`, `AlertSettings`/`AlertSettingsException` og `Admin/AlertsSettingsSection`/`AlertsSettingsActions`.
+- ✅ `src/Core/Database/Migrations/CreateAlertEventsTable.php` (migration 18).
+- ✅ Tests: `tests/Unit/Modules/Alerts/`, `tests/Integration/Alerts/` og `tests/Integration/Database/MigrationTest.php`.
+- Planlagt: `assets/src/dashboard/sections/alerts/…` og et separat overlay-script.
 
 ## Database/data used
-Planlagt (migrationer fra 17; detaljer i DATABASE.md ved implementeringen):
+Planlagt (migrationer fra 18; detaljer i DATABASE.md ved implementeringen):
 
 | Data | Indhold |
 | --- | --- |
-| `merchboard_alert_overlays` | Overlay pr. creator: `overlay_id`, indstillinger (JSON) |
-| `merchboard_alert_events` | Én række pr. ordrelinje og overlay; historikken (kundens fornavn og brugernavn) |
+| `merchboard_alert_events` ✅ | Schema-version 18: én række pr. ordrelinje og creator (`UNIQUE (order_item_id, creator_id)`); historikken (kundens fornavn og brugernavn) |
+| `merchboard_alert_overlays` | Planlagt (25.3/25.4): overlay pr. creator, `overlay_id`, indstillinger (JSON) |
 | `merchboard_alert_chatbot` | Twitch-kanal, til/fra og skabelon pr. creator |
 | `merchboard_alert_chat_messages` | Log over sendte chatbeskeder; hindrer dobbelte beskeder |
 | `merchboard_alert_fonts` | Google Fonts-katalog med godkendelse |
-| `merchboard_settings` | `alerts_enabled`, poll-interval, lydgrænser, checkout-brugernavn, globalt overlay |
+| `merchboard_settings` | `alerts_enabled` ✅ (default `false`); planlagt: poll-interval, lydgrænser, checkout-brugernavn, globalt overlay |
 | Options uden autoload | Krypterede Twitch-credentials og -tokens, Google API-nøgle |
 | Ordre-meta | `_merchboard_alert_username` (fallback: `_ccmerch_username`) |
 | Vedhæftnings-meta | Ejer af uploadede lyde |

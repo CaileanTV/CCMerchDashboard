@@ -102,6 +102,12 @@ final class Settings {
 	public const COMPANY_CVR = 'company_cvr';
 
 	/**
+	 * Whether purchase alerts are sent (ADR-065 pkt. 6). Off by default, also
+	 * after an update; enabled only by exactly boolean true.
+	 */
+	public const ALERTS_ENABLED = 'alerts_enabled';
+
+	/**
 	 * Slugs WordPress, WooCommerce or common setups already use for their own
 	 * URLs; the dashboard must never shadow them.
 	 */
@@ -139,7 +145,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, alerts_enabled: bool}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -150,6 +156,7 @@ final class Settings {
 			self::PAYOUT_HOLDING_DAYS       => self::DEFAULT_PAYOUT_HOLDING_DAYS,
 			self::PAYOUT_GIFT_CARD_PROVIDER => '',
 			self::COMPANY_CVR               => '',
+			self::ALERTS_ENABLED            => false,
 		);
 	}
 
@@ -160,7 +167,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, alerts_enabled: bool}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -177,6 +184,7 @@ final class Settings {
 			self::PAYOUT_HOLDING_DAYS       => is_int( $days ) && self::valid_holding_days( $days ) ? $days : self::DEFAULT_PAYOUT_HOLDING_DAYS,
 			self::PAYOUT_GIFT_CARD_PROVIDER => is_string( $card ) && self::valid_provider_id( $card ) ? $card : '',
 			self::COMPANY_CVR               => is_string( $cvr ) && self::valid_cvr( $cvr ) ? $cvr : '',
+			self::ALERTS_ENABLED            => true === ( $values[ self::ALERTS_ENABLED ] ?? false ),
 		);
 	}
 
@@ -196,7 +204,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, alerts_enabled: bool}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -305,6 +313,13 @@ final class Settings {
 	 */
 	public static function company_cvr(): string {
 		return self::all()[ self::COMPANY_CVR ];
+	}
+
+	/**
+	 * Whether purchase alerts are switched on (ADR-065).
+	 */
+	public static function alerts_enabled(): bool {
+		return self::all()[ self::ALERTS_ENABLED ];
 	}
 
 	/**

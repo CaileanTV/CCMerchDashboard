@@ -103,6 +103,13 @@ final class Capabilities {
 	public const VIEW_PAYOUT_DETAILS = 'merchboard_view_payout_details';
 
 	/**
+	 * May manage purchase alerts: switch them on and off and, in later steps,
+	 * the global overlay, the chatbot, the font library and the import from
+	 * MerchAlert (ADR-065).
+	 */
+	public const MANAGE_ALERTS = 'merchboard_manage_alerts';
+
+	/**
 	 * WordPress' capability for editorial work. Not owned by the plugin and never
 	 * granted by it; only checked to tell editors apart from pure creators
 	 * (ADR-026).
@@ -162,6 +169,7 @@ final class Capabilities {
 			self::DELETE_ORDER_HISTORY,
 			self::MANAGE_PAYOUTS,
 			self::VIEW_PAYOUT_DETAILS,
+			self::MANAGE_ALERTS,
 		);
 	}
 
