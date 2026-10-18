@@ -25,6 +25,9 @@ defined( 'ABSPATH' ) || exit;
  *   (ADR-038, B6).
  * - A deleted order (deleted()) has no WooCommerce data; the planner then
  *   works from the ledger alone (ADR-038 pkt. 21).
+ * - `coupon_codes`: the order's coupon codes, normalized (CouponCode), for
+ *   the creator code exclusion (ADR-068); not used by the planner. Null when
+ *   not read, which the exclusion treats as unknown, never as "no codes".
  */
 final readonly class OrderSnapshot {
 
@@ -33,6 +36,7 @@ final readonly class OrderSnapshot {
 	 *
 	 * @phpstan-param list<OrderLineSnapshot> $lines
 	 * @phpstan-param list<RefundSnapshot> $refunds
+	 * @phpstan-param list<string>|null $coupon_codes
 	 *
 	 * @param int                    $order_id          Order id.
 	 * @param bool                   $exists            False for a permanently deleted order.
@@ -43,6 +47,7 @@ final readonly class OrderSnapshot {
 	 * @param OrderLineSnapshot[]    $lines             Product lines.
 	 * @param RefundSnapshot[]       $refunds           Refunds.
 	 * @param int|null               $deleted_refund_id Refund known to be deleted, or null.
+	 * @param string[]|null          $coupon_codes      Normalized coupon codes, null when not read.
 	 * @throws InvalidArgumentException When the data is inconsistent.
 	 */
 	public function __construct(
@@ -54,7 +59,8 @@ final readonly class OrderSnapshot {
 		public ?DateTimeImmutable $date_paid,
 		public array $lines,
 		public array $refunds,
-		public ?int $deleted_refund_id = null
+		public ?int $deleted_refund_id = null,
+		public ?array $coupon_codes = null
 	) {
 		if ( $order_id < 1 || ( null !== $deleted_refund_id && $deleted_refund_id < 1 ) ) {
 			throw new InvalidArgumentException( 'Invalid order snapshot id.' );

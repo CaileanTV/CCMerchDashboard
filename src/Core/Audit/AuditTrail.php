@@ -92,6 +92,32 @@ final class AuditTrail {
 	}
 
 	/**
+	 * Appends a record for a system action like record_system(), written only
+	 * on the connection that holds the caller's lock, like
+	 * record_on_connection(); e.g. an order exclusion decided by the sales
+	 * ledger synchronization (ADR-068), whose request may belong to the
+	 * customer who placed the order.
+	 *
+	 * @param AuditAction          $action        What happened.
+	 * @param int|null             $creator_id    Affected creator.
+	 * @param array<string, mixed> $context       Minimal context (no personal data).
+	 * @param int                  $connection_id Connection that holds the caller's lock.
+	 * @return int Record id.
+	 * @throws ConnectionChangedException When the record was not written because the connection changed.
+	 * @throws DatabaseException When the record cannot be written.
+	 */
+	public function record_system_on_connection( AuditAction $action, ?int $creator_id, array $context, int $connection_id ): int {
+		return $this->repository->insert_on_connection(
+			$action,
+			null,
+			$creator_id,
+			LogContext::sanitize( $context ),
+			current_time( 'mysql', true ),
+			$connection_id
+		);
+	}
+
+	/**
 	 * Writes the record with server-side time and sanitized context.
 	 *
 	 * @param AuditAction          $action     What happened.

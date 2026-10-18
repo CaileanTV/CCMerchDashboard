@@ -29,7 +29,7 @@ final class FakeOrderReader implements OrderSnapshotReader {
 	/**
 	 * Orders by id.
 	 *
-	 * @var array<int, array{status: string, currency: string, lines: list<OrderLineSnapshot>, refunds: list<RefundSnapshot>, date_paid?: string}>
+	 * @var array<int, array{status: string, currency: string, lines: list<OrderLineSnapshot>, refunds: list<RefundSnapshot>, date_paid?: string, date_created?: string, coupons?: list<string>|null}>
 	 */
 	public array $orders = array();
 
@@ -97,11 +97,13 @@ final class FakeOrderReader implements OrderSnapshotReader {
 			true,
 			$counts,
 			$order['currency'],
-			new DateTimeImmutable( '2026-09-01 10:00:00', $utc ),
+			new DateTimeImmutable( $order['date_created'] ?? '2026-09-01 10:00:00', $utc ),
 			new DateTimeImmutable( $order['date_paid'] ?? '2026-09-01 10:05:00', $utc ),
 			$order['lines'],
 			$order['refunds'],
-			$deleted_refund_id
+			$deleted_refund_id,
+			// Unknown coupon data (ADR-068) only when a test says so.
+			array_key_exists( 'coupons', $order ) ? $order['coupons'] : array()
 		);
 	}
 }

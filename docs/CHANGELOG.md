@@ -4,6 +4,30 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-18
+
+Rettelse: ordrer, som en creator købte med sin egen rabatkode, talte som almindelige salg. Creatoren fik salg, fortjeneste og kommission af den rabatterede pris. Implementeret efter projektejerens tilladelse 2026-10-18 (trin a og b af det godkendte design; ADR-068). Testet automatisk; runtime-test på Merch Dashboard Local udestår og skal gennemføres før produktion.
+
+### Added
+- **Creatorens egen rabatkode (ADR-068, schema-version 17):** nye tabeller `merchboard_creator_codes` (registreringer, bevares permanent) og `merchboard_order_exclusions` (én afgørelse pr. ordre) i migration 17. Begge bevares ved opt-in-afinstallation.
+- **Admin:**
+  - Afsnittet "Rabatkode" på creatorens side (`merchboard_manage_creator_pricing`) registrerer, skifter og afslutter koden.
+  - Kuponen skal findes og må ikke være en gavekortkode. Den behøver ikke at være begrænset til en e-mailadresse, så alle ordrer med koden udelukkes, uanset hvem der køber.
+  - Afsnittet viser historik og advarer ved afvigelser.
+  - Audit: `creator_code_registered` og `creator_code_ended`.
+- **Creator:** kortet "Din rabatkode" i profilen. Koden er skjult, indtil creatoren trykker "Vis rabatkode", og hentes først da (`GET /me/discount-code`).
+- **Ordrehistorik:** markering "Udelukket – creator-rabatkode" eller "Åben sag – creator-rabatkode", en liste over alle udelukkede ordrer med filter på åbne sager og en forklaring på ordrens side.
+
+### Changed
+- **Synkroniseringen af sales ledgeren:**
+  - En ordre, hvis kuponkode matcher en registrering, der gjaldt, da ordren blev oprettet, udelukkes helt og varigt. Den får ingen ledger-rækker, uanset antal creators.
+  - Eksisterende rækker ændres ikke. Salgsstatistik, fortjeneste, creatorens ordreliste, payout-saldo og nye afregningsbilag udelader dem gennem ét fælles filter; afregnede rækker tæller fortsat i saldoen.
+  - En ordre med afregnede rækker bliver en åben sag uden automatisk tilbageholdelse (trin c er ikke bygget).
+  - Ukendte kupondata giver en fejlet synkronisering (fail closed). Audit: `order_excluded_by_creator_code` (uden aktør).
+- **Ældre ordrer:** ordrer oprettet før en kodes registrering omfattes ikke.
+- **Backfill:** rapporterer en udelukket ordre som "Skipped, not counted".
+- `AuditTrail::record_system_on_connection()` skriver systemhændelser på låsens forbindelse.
+
 ## [1.0.0] - 2026-10-18
 
 Version 1.0.0 er valgt af projektejeren 2026-10-18. Den samler faserne 17–24 siden v0.1.0 (schema-version 16). Afregningsbilaget med skabelonversion 6 er valideret efter en samtale med SKAT og er tilladt, og Payouts med bank og PayPal må bruges i produktion (projektejerens beslutning 2026-10-18, ADR-062). **Fortsat uafklaret:** G1–G3 (payout-gavekort), R3 og ADR-059 samt en retention-politik for audit-records (se PROJECT-STATUS.md); bilagene er ikke vurderet af revisor eller advokat. Kræver PHP ≥ 8.2 og WordPress ≥ 6.7; WooCommerce ≥ 10.3 er valgfrit.

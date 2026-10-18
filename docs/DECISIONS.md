@@ -3692,3 +3692,64 @@ Google Fonts er en godkendt ekstern service for projektet, kun til denne funktio
 
 ## Related
 ADR-016, ADR-065.
+---
+
+# ADR-068: Creatorens egen rabatkode udelukker ordren (trin a og b)
+
+## Date
+2026-10-18
+
+## Status
+Accepteret af projektejeren 2026-10-18: implementeringstilladelse til trin a og b af creator-rabatkodefunktionen, hvis design blev godkendt 2026-10-12 (designbeslutning 1–7, låseprotokollen og K1–K6 i ROADMAP.md, fase 24). **Implementeret i version 1.0.1** (schema-version 17); testet automatisk, ikke runtime-verificeret. Trin c er ikke implementeret: tilbageholdelse, "Bekræft"/"Ophæv" og spejlrækker (K2).
+
+## Context
+Hver creator får en WooCommerce-kupon fra virksomheden, så creatoren kan købe sit eget merchandise uden at betale for sin fortjeneste. Indtil 1.0.1 talte sådanne ordrer som almindelige salg. Creatoren fik salg, fortjeneste og kommission af den rabatterede pris (ADR-049), og koden var ikke registreret nogen steder i Merch Dashboard. Projektejeren har 2026-10-18 givet tilladelse til at implementere funktionen i tre trin og først bygge trin a og b. Beslutningerne samme dag:
+- koden skal kunne ses af creatoren, men være skjult, indtil creatoren aktivt vælger at vise den;
+- ældre ordrer skal ikke med;
+- arbejdet udgives som 1.0.1 før fase 25.
+
+## Decision
+1. **Registrering (trin a, K1, K4, K5):**
+   - Ny tabel `merchboard_creator_codes`. En registrering består af creatoren, den normaliserede kode (som WooCommerce: `wc_format_coupon_code()` + `wc_strtolower()`), kuponens ID, gyldig fra (registreringen) og gyldig til (tom = aktiv), oprettet af og afsluttet af.
+   - Registreringer bevares permanent; et skift afslutter den gamle og opretter en ny.
+   - Højst én aktiv kode pr. creator og én aktiv creator pr. kode. Det håndhæves af navngivne låse (creator, derefter kode), en ny kontrol i transaktionen og UNIQUE-nøgler på kolonner, der kun er udfyldt, mens registreringen er aktiv.
+   - Kuponen skal findes og må ikke være en gavekortkode; kan det ikke kontrolleres, afvises registreringen. **Ændring af K5 (projektejeren, 2026-10-18):** kuponen behøver ikke at være begrænset til en e-mailadresse, og creatoren behøver ingen koblet bruger. Alle ordrer med koden udelukkes derfor, uanset hvem der køber.
+   - Rettigheden er `merchboard_manage_creator_pricing`; der er ingen ny capability og derfor ingen ny rolleversion. Registrering og afslutning auditeres.
+2. **Creatorens visning (trin a):**
+   - `GET /me/discount-code` (kun `CreatorContext`) returnerer den aktive kode eller null.
+   - Profilen viser kortet "Din rabatkode" med forklaringen. Koden hentes og vises først, når creatoren trykker "Vis rabatkode", og kan skjules igen. Koden indgår ikke i andre svar eller i siden.
+3. **Udelukkelse (trin b, M2, designbeslutning 5):**
+   - Ny tabel `merchboard_order_exclusions` med én afgørelse pr. ordre (`excluded` eller `open`), gemt ved første vurdering i synkroniseringen og aldrig slettet automatisk.
+   - En ordre er omfattet, når en af dens kuponkoder matcher en registrering, hvis periode [fra, til) indeholder ordrens WooCommerce-oprettelsestidspunkt. Udløseren er brugen af koden, og hele ordren udelukkes, uanset antal creators.
+   - En udelukket ordre får ingen ledger-rækker, heller ikke senere. Har den allerede rækker, ændres de ikke; alle læsemodeller udelader dem gennem ét fælles filter. Afregnede rækker tæller fortsat med deres gemte værdi i saldoen.
+   - En ordre med rækker i et udstedt bilag bliver `open` (K2). Afgørelsen tages under ordrens lås, med creator-rækkerne låst `FOR UPDATE` i stigende ID-orden (låseprotokollen), i samme transaktion som audit-posten (`order_excluded_by_creator_code`, uden aktør).
+   - Ukendte kupondata læses aldrig som "ingen kode": synkroniseringen fejler og skriver intet.
+4. **Admin:**
+   - Sektionen "Rabatkode" på creatorens side med historik og en advarsel ved afvigelser fra K5. En afvigelse afslutter aldrig registreringen; afgørelsen gemmer et afvigelsesflag.
+   - Ordrehistorikken markerer ordrer og viser alle afgørelser med filter på åbne sager.
+5. **Ældre ordrer:** omfattes ikke (projektejerens beslutning 2026-10-18; K1).
+6. **Migration og version:** migration 17 (`CreateCreatorCodeTables`), version 1.0.1. Fase 25's migration (alert-tabellen) flyttes til 18 efter projektejerens beslutning 2026-10-18.
+
+## Alternatives considered
+- **Tilbageførsler i ledgeren for allerede synkroniserede ordrer** (udviklingens første forslag 2026-10-12): fravalgt med M2 (designbeslutning 1), fordi "Ophæv" (trin c) så skulle genskabe rækker.
+- **Gemme koden som creator-meta:** ingen historik og ingen databasegaranti for unikhed. Fravalgt.
+- **Ny capability:** fravalgt (K4).
+- **E-mailbegrænsning på kuponen (K5 som godkendt 2026-10-12):** fravalgt af projektejeren 2026-10-18. Den ville have forhindret, at en delt kode udelukker andres køb, men koden behøver ikke være låst til én e-mailadresse.
+- **Ny backfill-status "udelukket":** den ville ændre formatet på gemte jobs og audit-poster. En udelukket ordre tæller ikke og rapporteres derfor som "not counted".
+
+## Reason
+Projektejerens krav og godkendte design. Ét fælles filter gør det umuligt, at salg, fortjeneste, saldo og bilag anvender reglen forskelligt.
+
+## Security
+Server-side capability-kontrol og en nonce bundet til handlingen og creatoren; creator-API'et er `/me`-scoped. Audit-nøglerne undgår ordet "registration", som LogContext maskerer (derfor `creator_code_id`).
+
+## Migration/data implications
+Schema-version 17 tilføjer to tabeller (dbDelta, idempotent). Der ændres intet eksisterende, og der dannes ingen rækker for eksisterende ordrer. Begge tabeller bevares ved opt-in-afinstallation (ADR-059), fordi de forklarer, hvorfor en ordre mangler i salg og bilag.
+
+## Consequences
+- Creatorens egne køb med koden tæller ikke længere fra registreringen og frem.
+- En åben sag (koden tilføjet efter afregning) holder endnu ikke det afregnede beløb tilbage; det kommer i trin c. Sagen vises tydeligt for administratoren.
+- Skæringsdatorapporten (`bin/`) kender ikke udelukkelserne.
+
+## Related
+ADR-007, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-059, ADR-060, ADR-064.

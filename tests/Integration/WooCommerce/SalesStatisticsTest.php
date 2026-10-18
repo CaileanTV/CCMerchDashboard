@@ -417,8 +417,8 @@ final class SalesStatisticsTest extends IntegrationTestCase {
 		foreach ( $queries as $query ) {
 			preg_match_all( '/`?(' . preg_quote( $prefix, '/' ) . '\w+)`?/', $query, $tables );
 			self::assertNotSame( array(), $tables[1], $query );
-			// The ledger and its stored tax (ADR-053), Merch Dashboard's own tables only.
-			self::assertSame( array( $this->table( Tables::SALES ), $this->table( Tables::SALES_TAX ) ), array_values( array_unique( $tables[1] ) ), $query );
+			// The ledger, its stored tax (ADR-053) and the order exclusions (ADR-068), Merch Dashboard's own tables only.
+			self::assertSame( array( $this->table( Tables::SALES ), $this->table( Tables::SALES_TAX ), $this->table( Tables::ORDER_EXCLUSIONS ) ), array_values( array_unique( $tables[1] ) ), $query );
 			self::assertStringNotContainsStringIgnoringCase( 'CONVERT_TZ', $query );
 		}
 	}

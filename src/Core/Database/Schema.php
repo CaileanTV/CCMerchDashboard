@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
 use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
 use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
+use MerchBoard\Core\Database\Migrations\CreateCreatorCodeTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorVatHistoryTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
@@ -59,6 +60,7 @@ final class Schema {
 			14 => new CreatePayoutRecalculationTables(),
 			15 => new CreatePayoutRecalculationExportsTable(),
 			16 => new CreateCreatorVatHistoryTable(),
+			17 => new CreateCreatorCodeTables(),
 		);
 	}
 }

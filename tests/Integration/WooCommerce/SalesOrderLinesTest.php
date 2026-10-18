@@ -321,7 +321,7 @@ final class SalesOrderLinesTest extends IntegrationTestCase {
 			self::assertNotSame( array(), $tables[1], $query );
 
 			foreach ( $tables[1] as $table ) {
-				self::assertContains( $table, array( $this->table( Tables::SALES ), $this->table( Tables::SALES_CYCLES ) ), $query );
+				self::assertContains( $table, array( $this->table( Tables::SALES ), $this->table( Tables::SALES_CYCLES ), $this->table( Tables::ORDER_EXCLUSIONS ) ), $query );
 			}
 		}
 	}

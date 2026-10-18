@@ -113,6 +113,9 @@ final class AuditLogFormatter {
 			AuditAction::PayoutRecalculationClosed => __( 'Payout recalculation closed', 'merchboard' ),
 			AuditAction::PayoutRecalculationExported => __( 'Payout recalculation exported', 'merchboard' ),
 			AuditAction::PayoutRecalculationExportDownloaded => __( 'Payout recalculation export downloaded', 'merchboard' ),
+			AuditAction::CreatorCodeRegistered     => __( 'Creator discount code registered', 'merchboard' ),
+			AuditAction::CreatorCodeEnded          => __( 'Creator discount code ended', 'merchboard' ),
+			AuditAction::OrderExcludedByCreatorCode => __( 'Order excluded (creator discount code)', 'merchboard' ),
 		};
 	}
 

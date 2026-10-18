@@ -5556,3 +5556,228 @@ msgstr "Gå til forsiden"
 #: build/dashboard.js:24
 msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."
+
+#: src/Modules/Admin/AuditLogFormatter.php:116
+msgid "Creator discount code registered"
+msgstr "Creator-rabatkode registreret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:117
+msgid "Creator discount code ended"
+msgstr "Creator-rabatkode afsluttet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:118
+msgid "Order excluded (creator discount code)"
+msgstr "Ordre udelukket (creator-rabatkode)"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeActions.php:92
+msgid "Sorry, you are not allowed to manage creator discount codes."
+msgstr "Du har ikke tilladelse til at administrere creator-rabatkoder."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:59
+msgid "Discount code registered. It applies to orders created from now on; earlier orders are not changed."
+msgstr "Rabatkoden er registreret. Den gælder for ordrer, der oprettes fra nu af; tidligere ordrer ændres ikke."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:60
+msgid "Discount code changed. The earlier code was ended; orders created before now keep their decision."
+msgstr "Rabatkoden er skiftet. Den tidligere kode er afsluttet; ordrer oprettet før nu beholder deres afgørelse."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:61
+msgid "Discount code ended. Orders created from now on with this code count normally; earlier orders keep their decision."
+msgstr "Rabatkoden er afsluttet. Ordrer, der oprettes med koden fra nu af, tæller normalt; tidligere ordrer beholder deres afgørelse."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:62
+msgid "Nothing was changed: this code is already the creator's active code."
+msgstr "Intet blev ændret: koden er allerede creatorens aktive kode."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:63
+msgid "Not saved: enter a coupon code of at most 191 characters."
+msgstr "Ikke gemt: indtast en kuponkode på højst 191 tegn."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:64
+msgid "Not saved: there is no WooCommerce coupon with this code."
+msgstr "Ikke gemt: der findes ingen WooCommerce-kupon med denne kode."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:65
+msgid "Not saved: this is a gift card code, not a discount code."
+msgstr "Ikke gemt: det er en gavekortkode, ikke en rabatkode."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:66
+msgid "Not saved: it could not be checked whether this is a gift card code. Try again later."
+msgstr "Ikke gemt: det kunne ikke kontrolleres, om det er en gavekortkode. Prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:67
+msgid "Not saved: this code is the active code of another creator."
+msgstr "Ikke gemt: koden er en anden creators aktive kode."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:68
+msgid "The creator has no active discount code."
+msgstr "Creatoren har ingen aktiv rabatkode."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:69
+msgid "Another change of this code is in progress. Nothing was changed; try again."
+msgstr "En anden ændring af koden er i gang. Intet blev ændret; prøv igen."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:70
+msgid "You are not allowed to manage creator discount codes."
+msgstr "Du har ikke tilladelse til at administrere creator-rabatkoder."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:84
+msgid "The WooCommerce coupon with this code no longer exists."
+msgstr "WooCommerce-kuponen med denne kode findes ikke længere."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:85
+msgid "The code now belongs to another WooCommerce coupon than the registered one."
+msgstr "Koden tilhører nu en anden WooCommerce-kupon end den registrerede."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:98
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:614
+msgid "Discount code"
+msgstr "Rabatkode"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:99
+msgid "The creator's own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. Orders that use it do not count in the creator's sales, profit or payouts, whichever creators' products they contain. Every order with the code counts nowhere, whoever placed it. A code applies to orders created from its registration on; earlier orders are never changed."
+msgstr "Creatorens egen WooCommerce-kupon, som lader creatoren købe sit eget merchandise uden at betale for sin fortjeneste. Ordrer, der bruger den, tæller ikke med i creatorens salg, fortjeneste eller udbetalinger, uanset hvilke creators produkter de indeholder. Alle ordrer med koden tæller ingen steder, uanset hvem der har købt. En kode gælder for ordrer, der oprettes fra registreringen og frem; tidligere ordrer ændres aldrig."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:114
+msgid "The discount codes could not be read. Please try again later."
+msgstr "Rabatkoderne kunne ikke læses. Prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:139
+msgid "No active discount code."
+msgstr "Ingen aktiv rabatkode."
+
+#. translators: 1: discount code, 2: date.
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:146
+#, php-format
+msgid "Active code: %1$s, since %2$s."
+msgstr "Aktiv kode: %1$s, siden %2$s."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:149
+msgid "Open the coupon in WooCommerce"
+msgstr "Åbn kuponen i WooCommerce"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:155
+msgid "Check the coupon:"
+msgstr "Kontrollér kuponen:"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:155
+msgid "Orders with the registered code are still excluded and are marked with a deviation. The registration is not ended automatically."
+msgstr "Ordrer med den registrerede kode udelukkes fortsat og markeres med en afvigelse. Registreringen afsluttes ikke automatisk."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:162
+msgid "End code"
+msgstr "Afslut kode"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:162
+msgid "Orders created from then on with this code count normally."
+msgstr "Ordrer, der derefter oprettes med koden, tæller normalt."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:177
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:179
+msgid "Register code"
+msgstr "Registrér kode"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:177
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:179
+msgid "Change code"
+msgstr "Skift kode"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:180
+msgid "The code of an existing WooCommerce coupon. A change ends the current code now and registers the new one from now on."
+msgstr "Koden på en eksisterende WooCommerce-kupon. Et skift afslutter den nuværende kode nu og registrerer den nye fra nu af."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:196
+msgid "Discount code history"
+msgstr "Historik over rabatkoder"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+msgid "Coupon ID"
+msgstr "Kupon-ID"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+msgid "Ended by"
+msgstr "Afsluttet af"
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:225
+msgid "Unknown user"
+msgstr "Ukendt bruger"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:568
+msgid "Open case – creator discount code"
+msgstr "Åben sag – creator-rabatkode"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:569
+msgid "Excluded – creator discount code"
+msgstr "Udelukket – creator-rabatkode"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:594
+msgid "Orders excluded by creator discount codes"
+msgstr "Ordrer udelukket af creator-rabatkoder"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:595
+msgid "An order that used a creator's own discount code counts nowhere: not in sales, profit, payouts or new settlement documents. The decision is made once and is permanent. An open case is an order that was already settled; its settled rows and documents are not changed, and the case is not resolved automatically."
+msgstr "En ordre, der brugte en creators egen rabatkode, tæller ingen steder: hverken i salg, fortjeneste, udbetalinger eller nye afregningsbilag. Afgørelsen træffes én gang og er varig. En åben sag er en ordre, der allerede var afregnet; dens afregnede rækker og bilag ændres ikke, og sagen afgøres ikke automatisk."
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:597
+msgid "All excluded orders"
+msgstr "Alle udelukkede ordrer"
+
+#. translators: %s: number of open cases.
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:600
+#, php-format
+msgid "Open cases (%s)"
+msgstr "Åbne sager (%s)"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:608
+msgid "No orders are excluded."
+msgstr "Ingen ordrer er udelukket."
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:614
+msgid "Order created"
+msgstr "Ordre oprettet"
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:625
+msgid "The coupon deviated from the registration when the order was decided."
+msgstr "Kuponen afveg fra registreringen, da ordren blev afgjort."
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:668
+msgid "The order already had rows in a settlement document. Those rows and documents are not changed; the order's other rows do not count. The case is not resolved automatically."
+msgstr "Ordren havde allerede rækker i et afregningsbilag. De rækker og bilag ændres ikke; ordrens øvrige rækker tæller ikke. Sagen afgøres ikke automatisk."
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:669
+msgid "None of the order's rows count in sales, profit, payouts or new settlement documents, and no new ledger events are stored for it."
+msgstr "Ingen af ordrens rækker tæller i salg, fortjeneste, udbetalinger eller nye afregningsbilag, og der gemmes ingen nye ledger-hændelser for den."
+
+#. translators: 1: creator name, 2: discount code, 3: date.
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:672
+#, php-format
+msgid "the order used the discount code of %1$s (%2$s); decided %3$s."
+msgstr "ordren brugte rabatkoden fra %1$s (%2$s); afgjort %3$s."
+
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:675
+msgid "The coupon deviated from the registration when the order was decided (it was missing or had another ID). The order is excluded all the same."
+msgstr "Kuponen afveg fra registreringen, da ordren blev afgjort (den manglede eller havde et andet ID). Ordren er udelukket alligevel."
+
+#: build/dashboard.js:21
+msgid "Your discount code"
+msgstr "Din rabatkode"
+
+#: build/dashboard.js:21
+msgid "With your own discount code you can buy your own merchandise without paying for your profit. Orders bought with your own discount code do not count in your sales and your profit."
+msgstr "Med din egen rabatkode kan du købe dit eget merchandise uden at betale for din fortjeneste. Ordrer købt med din egen rabatkode tæller ikke med i dit salg og din fortjeneste."
+
+#: build/dashboard.js:21
+msgid "You have no discount code yet."
+msgstr "Du har endnu ingen rabatkode."
+
+#: build/dashboard.js:21
+msgid "Code:"
+msgstr "Kode:"
+
+#: build/dashboard.js:21
+msgid "Hide discount code"
+msgstr "Skjul rabatkode"
+
+#: build/dashboard.js:21
+msgid "Show discount code"
+msgstr "Vis rabatkode"

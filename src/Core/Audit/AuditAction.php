@@ -322,4 +322,25 @@ enum AuditAction: string {
 	 * check. Context: export reference and file name.
 	 */
 	case PayoutRecalculationExportDownloaded = 'payout_recalculation_export_downloaded';
+
+	/**
+	 * A creator's own discount code was registered (ADR-068, K1). Context:
+	 * registration id, coupon id, the ended registration it replaces, and the
+	 * validation result; never an e-mail address.
+	 */
+	case CreatorCodeRegistered = 'creator_code_registered';
+
+	/**
+	 * A creator's discount code registration was ended (ADR-068, K1).
+	 * Context: registration id and coupon id.
+	 */
+	case CreatorCodeEnded = 'creator_code_ended';
+
+	/**
+	 * An order was excluded because a creator's own discount code was used
+	 * (ADR-068, M2), recorded by the sales ledger synchronization. Context:
+	 * order id, registration id, decision (excluded or open), whether the
+	 * order had settled rows and ledger rows, and the coupon deviation flag.
+	 */
+	case OrderExcludedByCreatorCode = 'order_excluded_by_creator_code';
 }

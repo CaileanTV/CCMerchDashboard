@@ -15,6 +15,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 use wpdb;
@@ -43,8 +44,11 @@ defined( 'ABSPATH' ) || exit;
  *   is null), so nothing can be requested against it.
  *
  * earned() and unsettled_rows() select rows with the same private helpers
- * (window(), known() and RELEASED), so the balance and a settlement document
- * can never apply different rules (K6.1).
+ * (window(), known(), RELEASED and COUNTED), so the balance and a settlement
+ * document can never apply different rules (K6.1).
+ * - Creator codes (M2, ADR-068): the rows of an order excluded by a
+ *   creator's own discount code do not count, are not unknown and are never
+ *   settled; rows already settled keep counting with their stored payout.
  *
  * A row's payout is its profit when the creator was VAT registered at the
  * sale, otherwise the share of its amount excluding VAT (ADR-064), the same
@@ -110,6 +114,13 @@ final class LedgerCreatorPayouts {
 	private const SETTLED_OR_PAYOUT = 'COALESCE( d.payout_amount, ' . self::PAYOUT . ' )';
 
 	/**
+	 * M2 (ADR-068): a row counts in the balance when it is settled (issued
+	 * documents are never changed) or its order is not excluded by a
+	 * creator code. Needs `d` and OrderExclusionRepository::JOIN.
+	 */
+	private const COUNTED = '( d.event_key IS NOT NULL OR ' . OrderExclusionRepository::COUNTS . ' )';
+
+	/**
 	 * D2: when a row is released. Placeholders: now, then now minus the
 	 * holding period (release_times()).
 	 */
@@ -155,7 +166,7 @@ final class LedgerCreatorPayouts {
 			SUM( CASE WHEN ' . $known . ' THEN 0 ELSE 1 END ) AS unknown_rows';
 		$wpdb    = $this->wpdb;
 		$sql     = $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- The replacements are spread from array_merge() below.
-			"SELECT {$columns} " . self::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key WHERE r.creator_id = %d' . self::window( $start ) . ' GROUP BY r.currency HAVING known_rows + unknown_rows > 0 ORDER BY r.currency', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times twice (earned, known rows), the table names, the creator, then the window's values.
+			"SELECT {$columns} " . self::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key' . OrderExclusionRepository::JOIN . ' WHERE r.creator_id = %d AND ' . self::COUNTED . self::window( $start ) . ' GROUP BY r.currency HAVING known_rows + unknown_rows > 0 ORDER BY r.currency', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times twice (earned, known rows), the table names, the creator, then the window's values.
 			...array_merge(
 				$times,
 				$times,
@@ -165,6 +176,7 @@ final class LedgerCreatorPayouts {
 					Tables::name( $wpdb, Tables::SALES_TAX ),
 					Tables::name( $wpdb, Tables::SALES ),
 					Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
+					OrderExclusionRepository::table_name( $wpdb ),
 					$creator_id,
 				),
 				self::window_args( $start )
@@ -236,7 +248,7 @@ final class LedgerCreatorPayouts {
 			CASE WHEN ' . $known . ' AND ' . self::RELEASED . ' THEN 1 ELSE 0 END AS released_row,
 			CASE WHEN ' . $known . ' THEN ' . LedgerCreatorProfits::PROFIT . ' ELSE NULL END AS profit,
 			CASE WHEN ' . $known . ' THEN ' . self::PAYOUT . ' ELSE NULL END AS payout '
-			. self::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key WHERE r.creator_id = %d AND r.currency = %s AND d.event_key IS NULL' . self::window( $start ) . ' ORDER BY r.occurred_at, r.id' . ( $lock ? ' LOCK IN SHARE MODE' : '' );
+			. self::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key' . OrderExclusionRepository::JOIN . ' WHERE r.creator_id = %d AND r.currency = %s AND d.event_key IS NULL AND ' . self::COUNTED . self::window( $start ) . ' ORDER BY r.occurred_at, r.id' . ( $lock ? ' LOCK IN SHARE MODE' : '' );
 		$sql   = $wpdb->prepare(
 			$query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only: the two release times, the table names, the creator and currency, then the window's values.
 			...array_merge(
@@ -247,6 +259,7 @@ final class LedgerCreatorPayouts {
 					Tables::name( $wpdb, Tables::SALES_TAX ),
 					Tables::name( $wpdb, Tables::SALES ),
 					Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
+					OrderExclusionRepository::table_name( $wpdb ),
 					$creator_id,
 					$currency,
 				),

@@ -14,6 +14,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
 use OverflowException;
 use wpdb;
 
@@ -73,6 +74,7 @@ final class LedgerSalesStatistics implements SalesStatistics {
 
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; caching is a separate layer (ADR-040 pkt. 10).
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only (the exclusion join, ADR-068): the tables, then the creator and interval.
 			$wpdb->prepare(
 				"SELECT r.currency,
 					COALESCE( SUM( CASE WHEN r.type = 'sale' THEN r.net_amount END ), 0 ) AS sales,
@@ -82,16 +84,18 @@ final class LedgerSalesStatistics implements SalesStatistics {
 					SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN 0 ELSE 1 END ) AS missing_vat_rows,
 					SUM( r.quantity ) AS units,
 					COUNT( DISTINCT CASE WHEN r.type = 'sale' THEN r.order_id END ) AS orders
-				FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key
-				WHERE r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
+				FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key" . OrderExclusionRepository::JOIN . '
+				WHERE ' . OrderExclusionRepository::COUNTS . ' AND r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
 				GROUP BY r.currency
-				ORDER BY r.currency ASC",
+				ORDER BY r.currency ASC',
 				$this->table(),
 				$this->tax_table(),
+				$this->exclusions_table(),
 				$creator_id,
 				self::utc( $from ),
 				self::utc( $to )
 			),
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 			ARRAY_A
 		);
 
@@ -147,7 +151,8 @@ final class LedgerSalesStatistics implements SalesStatistics {
 		$starts = array_map( static fn( SalesPeriod $period ): string => self::utc( $period->start ), $periods );
 		$marks  = implode( ', ', array_fill( 0, count( $starts ), 'TO_SECONDS( %s )' ) );
 		$rows   = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; caching is a separate layer (ADR-040 pkt. 10).
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One %s per period start, then the table, creator and interval.
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Constant SQL fragments with placeholders only (the exclusion join, ADR-068).
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One %s per period start, then the tables, creator and interval.
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $marks holds only %s placeholders, one per period.
 				"SELECT INTERVAL( TO_SECONDS( r.occurred_at ), {$marks} ) - 1 AS period, r.currency,
 					SUM( r.net_amount ) AS net_sales,
@@ -155,12 +160,13 @@ final class LedgerSalesStatistics implements SalesStatistics {
 					SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN 0 ELSE 1 END ) AS missing_vat_rows,
 					SUM( r.quantity ) AS units,
 					COUNT( DISTINCT CASE WHEN r.type = 'sale' THEN r.order_id END ) AS orders
-				FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key
-				WHERE r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
+				FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key" . OrderExclusionRepository::JOIN . '
+				WHERE ' . OrderExclusionRepository::COUNTS . ' AND r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
 				GROUP BY period, r.currency
-				ORDER BY period ASC, r.currency ASC",
-				...array_merge( $starts, array( $this->table(), $this->tax_table(), $creator_id, self::utc( $from ), self::utc( $to ) ) )
+				ORDER BY period ASC, r.currency ASC',
+				...array_merge( $starts, array( $this->table(), $this->tax_table(), $this->exclusions_table(), $creator_id, self::utc( $from ), self::utc( $to ) ) )
 			),
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 			ARRAY_A
 		);
 
@@ -205,6 +211,7 @@ final class LedgerSalesStatistics implements SalesStatistics {
 		$wpdb  = $this->wpdb;
 		$table = $this->table();
 		$rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; caching is a separate layer (ADR-040 pkt. 10).
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only (the exclusion join, ADR-068): the tables, the creator and interval, then the sales table.
 			$wpdb->prepare(
 				'SELECT g.currency, g.product_id, g.net_sales, g.net_sales_incl_vat, g.missing_vat_rows, g.units, s.item_name
 				FROM (
@@ -212,19 +219,21 @@ final class LedgerSalesStatistics implements SalesStatistics {
 						COALESCE( SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN r.net_amount + t.tax_amount END ), 0 ) AS net_sales_incl_vat,
 						SUM( CASE WHEN ( t.event_key IS NOT NULL AND t.currency = r.currency ) THEN 0 ELSE 1 END ) AS missing_vat_rows,
 						SUM( r.quantity ) AS units, MAX( r.id ) AS last_id
-					FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key
-					WHERE r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
+					FROM %i r LEFT JOIN %i t ON t.event_key = r.event_key' . OrderExclusionRepository::JOIN . '
+					WHERE ' . OrderExclusionRepository::COUNTS . ' AND r.creator_id = %d AND r.occurred_at >= %s AND r.occurred_at < %s
 					GROUP BY r.currency, r.product_id
 				) g
 				INNER JOIN %i s ON s.id = g.last_id
 				ORDER BY g.currency ASC, g.net_sales DESC, g.product_id ASC',
 				$table,
 				$this->tax_table(),
+				$this->exclusions_table(),
 				$creator_id,
 				self::utc( $from ),
 				self::utc( $to ),
 				$table
 			),
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 			ARRAY_A
 		);
 
@@ -358,5 +367,12 @@ final class LedgerSalesStatistics implements SalesStatistics {
 	 */
 	private function tax_table(): string {
 		return Tables::name( $this->wpdb, Tables::SALES_TAX );
+	}
+
+	/**
+	 * Full name of the order exclusions table (M2, ADR-068).
+	 */
+	private function exclusions_table(): string {
+		return OrderExclusionRepository::table_name( $this->wpdb );
 	}
 }

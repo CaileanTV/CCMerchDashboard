@@ -294,6 +294,23 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
     - **MySQL 8 ✅ via CI:** run `38281746123` for commit `015f4bb` (2026-10-12): `PHP integration (MySQL)` på MySQL 8.0.46 grøn med 593 tests, 16397 assertions; alle fire jobs grønne.
   - **Ikke dækket:** MySQL 8 kun i CI (trin 24.2 er kørt der, se ovenfor); samtidighed under webserverens egne requests; UI'et, herunder fanen "Saldi" og afregningskolonnen, er ikke klikket igennem i en browser.
 
+## Creator-rabatkoder (version 1.0.1, ADR-068)
+
+- **Integration (MariaDB 10.11, `tests/Integration/WooCommerce/CreatorCodesTest.php`, testdoubler `FakeCouponLookup` og `FakeOrderReader` med kuponkoder og oprettelsesdato):**
+  - registrering med normalisering, periode og audit, og afvisning efter K5 og K4 (tom eller for lang kode, ingen kupon, gavekortkode, gavekortkontrol fejler, ingen capability), og at kuponen hverken kræver en e-mailbegrænsning eller en koblet bruger;
+  - én aktiv kode pr. creator og pr. kode, også direkte mod UNIQUE-nøglerne;
+  - serialisering med to databaseforbindelser (lås pr. kode og pr. creator giver `busy`, og intet gemmes);
+  - skift og afslutning med historik, og afvigelser (afslutter aldrig registreringen);
+  - udelukkelse af hele ordren uden ledger-rækker, en varig afgørelse (fjernet kupon og refund giver ingen rækker) og audit uden aktør;
+  - perioden [fra, til) og koder fra andre registreringer;
+  - ukendte kupondata (fejlmarkør, ingen rækker og ingen afgørelse);
+  - en ordre med eksisterende rækker forsvinder fra statistik, profit, payout-saldo, ikke-afregnede rækker og ordrelinjer, uden at rækkerne ændres;
+  - en åben sag ved afregnede rækker, hvor den afregnede række fortsat tæller i saldoen;
+  - backfill og dry run rapporterer "not counted".
+- **Unit:** tabel-, retention- og migrationslister, audit-handlinger og bindingen i `SalesOrderLines`.
+- **Jest (`discount-code.test.tsx`):** validering af svaret, at koden hverken hentes eller vises før klik, at den kan skjules igen, ingen kode, og fejl med "Prøv igen" uden servermeddelelser.
+- **Ikke udført:** runtime-test på Merch Dashboard Local med rigtig WooCommerce (kupon, checkout med koden, HPOS og legacy) og en test med to forbindelser af en udelukkelse samtidig med et afregningsbilag (låseprotokollen genbruger `CreatorRowLocks`, som er testet i `CreatorRowLocksTest`).
+
 ## Kørselsvejledning: opgørelse af skæringsdato (trin 24.5)
 
 Rapporten `bin/mb-245-cutover-report.php` er gennemgangsmateriale til ejerbeslutningen A2 (skæringsdato), ikke produktionslogik. Den indgår ikke i plugin-pakken (`bin/` er udeladt).

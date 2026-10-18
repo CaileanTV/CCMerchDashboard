@@ -1,6 +1,6 @@
 # Database og datamodel
 
-> Status: **Schema-version 16.** Version 16 (ADR-062 K06) tilføjer historikken over creatorens momsstatus (se [Historik over momsstatus](#historik-over-momsstatus--schema-version-16-adr-062-k06)). Version 15 (ADR-062 punkt 9) tilføjer eksporttabellen for genberegninger, og version 14 (ADR-063) genberegninger og reguleringer af payouts (se [Genberegning og regulering](#genberegning-og-regulering--schema-version-14-og-15-adr-063)); versionerne 12 og 13 (G1-tabellerne og `merchboard_operations`) er ikke beskrevet i denne fil. Version 11 (fase 23, ADR-060) tilføjer afregningsbilag (`merchboard_settlement_documents`, `merchboard_settlement_document_rows`, `merchboard_settlement_counters`); version 10 (ADR-057) gavekortkolonnerne på `merchboard_payouts`. Version 9 (fase 23, ADR-054–056) tilføjer `merchboard_payouts`, `merchboard_payout_secrets` og `merchboard_creators.payout_start_at` (se [Payouts](#payouts--schema-version-9-fase-23-adr-054056)). `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Fra fase 22 findes også creator pricing (ADR-049): `merchboard_creators.default_markup_bps`, `merchboard_pricing_overrides` (produkt-markup) og `merchboard_sales_line_pricing`; `merchboard_item_pricing` blev oprettet i version 6 og droppet i version 8. Øvrige tabeller er planlagte. Schema-version 1–5 er verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)). Fra version 7 (fase 22, ADR-048) også `merchboard_creators.vat_registered`, `merchboard_sales_line_pricing.vat_registered` og `merchboard_sales_tax`. Version 8 (ADR-049) tilføjer andelen i snapshottet, genopretter produkt-markup-tabellen og dropper `merchboard_item_pricing`. Schema-version 6–8 er indtil videre kun verificeret lokalt mod MariaDB 10.11.19 (integrationstests); CI mod MySQL følger ved næste push.
+> Status: **Schema-version 17.** Version 17 (ADR-068) tilføjer creator-rabatkoder (se [Creator-rabatkoder](#creator-rabatkoder--schema-version-17-adr-068)). Version 16 (ADR-062 K06) tilføjer historikken over creatorens momsstatus (se [Historik over momsstatus](#historik-over-momsstatus--schema-version-16-adr-062-k06)). Version 15 (ADR-062 punkt 9) tilføjer eksporttabellen for genberegninger, og version 14 (ADR-063) genberegninger og reguleringer af payouts (se [Genberegning og regulering](#genberegning-og-regulering--schema-version-14-og-15-adr-063)); versionerne 12 og 13 (G1-tabellerne og `merchboard_operations`) er ikke beskrevet i denne fil. Version 11 (fase 23, ADR-060) tilføjer afregningsbilag (`merchboard_settlement_documents`, `merchboard_settlement_document_rows`, `merchboard_settlement_counters`); version 10 (ADR-057) gavekortkolonnerne på `merchboard_payouts`. Version 9 (fase 23, ADR-054–056) tilføjer `merchboard_payouts`, `merchboard_payout_secrets` og `merchboard_creators.payout_start_at` (se [Payouts](#payouts--schema-version-9-fase-23-adr-054056)). `merchboard_creators` (fase 3), `merchboard_audit_log` (fase 6), `merchboard_creatormeta` (fase 14), `merchboard_creator_categories` (fase 17) samt `merchboard_sales` og `merchboard_sales_cycles` (fase 18, endnu uden registrering) findes, med migrationssystem og transaktioner. Fra fase 22 findes også creator pricing (ADR-049): `merchboard_creators.default_markup_bps`, `merchboard_pricing_overrides` (produkt-markup) og `merchboard_sales_line_pricing`; `merchboard_item_pricing` blev oprettet i version 6 og droppet i version 8. Øvrige tabeller er planlagte. Schema-version 1–5 er verificeret mod **MariaDB 10.11.19**, **MySQL 8.0.46** (CI) og SQLite (Playground) (se [nedenfor](#mysqlmariadb-vs-playground-sqlite)). Fra version 7 (fase 22, ADR-048) også `merchboard_creators.vat_registered`, `merchboard_sales_line_pricing.vat_registered` og `merchboard_sales_tax`. Version 8 (ADR-049) tilføjer andelen i snapshottet, genopretter produkt-markup-tabellen og dropper `merchboard_item_pricing`. Schema-version 6–8 er indtil videre kun verificeret lokalt mod MariaDB 10.11.19 (integrationstests); CI mod MySQL følger ved næste push.
 
 ## Placering af data
 
@@ -439,6 +439,41 @@ Migration 16 (`CreateCreatorVatHistoryTable`) tilføjer `merchboard_creator_vat_
 Indexes: `PRIMARY`, `KEY creator_effective (creator_id, effective_from, id)`.
 
 **Opslag:** status på en dato er registreringen med den seneste `effective_from` på eller før datoen og, ved samme dato, den senest registrerede (`CreatorVatHistoryRepository::at()`). **Skrivning:** kun `CreatorVatHistoryRepository::insert()` via `CreatorPricingSettings::record_vat_status()` (`merchboard_manage_creator_pricing`) i én transaktion under en lås af creatorens række: registreringen, `merchboard_creators.vat_registered` sat til den status, historikken giver for i dag, og audit (`creator_vat_history_recorded`, og `creator_vat_status_changed`, når den nuværende status ændres). Ordrelinjernes snapshot (`merchboard_sales_line_pricing.vat_registered`), afregningsbilag (også `commission_vat`), payouts og reguleringer genberegnes aldrig.
+
+### Creator-rabatkoder ✅ (schema-version 17, ADR-068)
+
+Migration 17 (`CreateCreatorCodeTables`) tilføjer to tabeller til creatorens egen rabatkode. Der ændres intet eksisterende, og der dannes ingen rækker for eksisterende ordrer: en kode gælder fra sin registrering og frem (K1). Begge tabeller bevares ved opt-in-afinstallation (ADR-059), fordi de forklarer, hvorfor en ordre mangler i salg og bilag.
+
+#### `merchboard_creator_codes` (registreringer, bevares permanent)
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `id` | `bigint(20) unsigned` PK | Registreringen |
+| `creator_id` | `bigint(20) unsigned` | Creator |
+| `code` | `varchar(191)` | Normaliseret kuponkode (`wc_format_coupon_code()` + `wc_strtolower()`) |
+| `coupon_id` | `bigint(20) unsigned` | WooCommerce-kuponens ID ved registreringen |
+| `valid_from`, `valid_to` | `datetime`, `datetime NULL` | Perioden [fra, til) i UTC; `valid_to` NULL = aktiv |
+| `active_creator_id`, `active_code` | `bigint(20) unsigned NULL`, `varchar(191) NULL` | Creator og kode, kun mens registreringen er aktiv (ellers NULL) |
+| `created_by`, `ended_by` | `bigint(20) unsigned NULL` | Brugerne, der registrerede og afsluttede |
+
+Indexes: `PRIMARY`, `UNIQUE active_creator (active_creator_id)` og `UNIQUE active_code (active_code)` (højst én aktiv kode pr. creator og én aktiv creator pr. kode; flere NULL er tilladt), `KEY code_period (code, valid_from)`, `KEY creator (creator_id, id)`.
+
+**Skrivning:** kun `CreatorCodeRepository::insert()` og `end()` via `CreatorCodeService`, under navngivne låse (creator, derefter kode) og i en transaktion med audit. En registrering ændres kun ved at blive afsluttet og slettes aldrig.
+
+#### `merchboard_order_exclusions` (én afgørelse pr. ordre)
+
+| Kolonne | Type | Noter |
+| --- | --- | --- |
+| `order_id` | `bigint(20) unsigned` PK | WooCommerce-ordren |
+| `status` | `varchar(20)` | `excluded`, eller `open` (ordren havde rækker i et udstedt bilag, K2) |
+| `reason` | `varchar(20)` | `creator_code` |
+| `code_id`, `creator_id`, `code` | `bigint(20) unsigned NULL`, `bigint(20) unsigned NULL`, `varchar(191)` | Den matchede registrering, dens creator og kode |
+| `coupon_deviation` | `tinyint(1) unsigned` | 1 = kuponen afveg fra K5 ved afgørelsen |
+| `order_created_at`, `assessed_at` | `datetime` | Ordrens WooCommerce-oprettelse og afgørelsen (UTC) |
+
+Indexes: `PRIMARY (order_id)`, `KEY status_assessed (status, assessed_at)`, `KEY creator (creator_id)`.
+
+**Skrivning:** kun `OrderExclusionRepository::insert_on_connection()` fra synkroniseringen, under ordrens lås, på låsens forbindelse og i samme transaktion som audit-posten. **Læsning (M2):** alle læsemodeller af `merchboard_sales` udelader en udelukket ordres rækker med `OrderExclusionRepository::JOIN`/`COUNTS` eller `SALES_NOT_EXCLUDED`. Afregnede rækker tæller fortsat i payout-saldoen. Ledger-rækker ændres eller slettes aldrig.
 
 ### Fremtidige (ikke designet i detaljer)
 

@@ -125,6 +125,25 @@ class WC_Coupon extends WC_Data {
 }
 
 /**
+ * @param string $code       Coupon code.
+ * @param int    $exclude_id Coupon to exclude.
+ * @return int Coupon id, 0 when none.
+ */
+function wc_get_coupon_id_by_code( $code, $exclude_id = 0 ) {}
+
+/**
+ * @param string $value Coupon code.
+ * @return string
+ */
+function wc_format_coupon_code( $value ) {}
+
+/**
+ * @param string $value String.
+ * @return string
+ */
+function wc_strtolower( $value ) {}
+
+/**
  * Cart (class-wc-cart.php).
  */
 class WC_Cart {
@@ -233,6 +252,18 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	 * @return string|int|float
 	 */
 	public function get_total_tax( $context = 'view' ) {}
+}
+
+/**
+ * Coupon line of an order (class-wc-order-item-coupon.php).
+ */
+class WC_Order_Item_Coupon extends WC_Order_Item {
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_code( $context = 'view' ) {}
 }
 
 /**

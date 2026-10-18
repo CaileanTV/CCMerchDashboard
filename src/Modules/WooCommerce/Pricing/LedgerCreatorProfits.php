@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 use wpdb;
@@ -195,10 +196,11 @@ final class LedgerCreatorProfits implements CreatorProfits {
 			SUM( CASE WHEN ' . self::KNOWN . ' THEN 0 ELSE 1 END ) AS unknown_rows';
 		$by      = $group . ( null === $extra ? '' : ', ' . $extra ) . ', r.currency';
 		$sql     = $wpdb->prepare(
-			"SELECT {$columns} " . self::FROM . " WHERE {$where} GROUP BY {$by} ORDER BY {$by}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only; the table names, then the filter's values.
+			"SELECT {$columns} " . self::FROM . OrderExclusionRepository::JOIN . ' WHERE ' . OrderExclusionRepository::COUNTS . " AND {$where} GROUP BY {$by} ORDER BY {$by}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments with placeholders only; the table names, then the filter's values.
 			Tables::name( $wpdb, Tables::SALES ),
 			Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
 			Tables::name( $wpdb, Tables::SALES_TAX ),
+			OrderExclusionRepository::table_name( $wpdb ),
 			...$args
 		);
 		$rows    = is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; read model of the ledger, cached by its callers where they cache (ADR-040 pkt. 10).

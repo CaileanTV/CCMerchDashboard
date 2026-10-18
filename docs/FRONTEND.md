@@ -77,7 +77,7 @@ assets/src/dashboard/
 ├── types/                   # config.ts (DashboardConfig, DashboardSection), creator.ts (Me, Profile, SocialLinks, grænser),
 │                            # products.ts (Product), orders.ts (OrderLine), assets.d.ts
 ├── api/                     # client.ts (eneste sted med apiFetch; request() og requestList()), creator.ts (getMe, getProfile,
-│                            # updateProfile + validatorer), products.ts (getProducts, parseProduct), sales.ts (getDefaultSales, getSales, salesPath, parseSalesSummary, parseSalesReport), orders.ts (getOrders,
+│                            # updateProfile + validatorer), discountCode.ts (getDiscountCode, parseDiscountCode), products.ts (getProducts, parseProduct), sales.ts (getDefaultSales, getSales, salesPath, parseSalesSummary, parseSalesReport), orders.ts (getOrders,
 │                            # parseOrderLine), validate.ts
 ├── hooks/                   # useApi.ts (loading/success/error, retry, abort), usePagedApi.ts (side + useApi)
 ├── app/                     # App, config-context, creator-context (GET /me), router (RouterProvider, useRouter, Link), routes.ts,
@@ -90,7 +90,7 @@ assets/src/dashboard/
 ├── sections/products/       # ProductsSection (GET /me/products, fase 19)
 ├── sections/orders/         # OrdersSection (GET /me/orders, fase 19)
 ├── sections/payouts/        # PayoutsSection, PayoutRequestForm, GiftCardReveal, SettlementDocumentView, texts.ts (/me/payouts, fase 23)
-├── sections/profile/        # ProfileSection (formular), ThemeSettings (temavælger, fase 21), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
+├── sections/profile/        # ProfileSection (formular), DiscountCodeCard (creatorens egen rabatkode, skjult indtil "Vis rabatkode"; GET /me/discount-code, ADR-068), ThemeSettings (temavælger, fase 21), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
 ├── theme/                   # themes.ts: de seks temaer, navne (i18n), læs/sæt data-theme på <html> (fase 21)
 ├── styles/                  # _tokens.scss, index.scss (kun .merchboard-*-selektorer)
 ├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures), api.ts (apiFetch-dobbelt: mockApi, response)

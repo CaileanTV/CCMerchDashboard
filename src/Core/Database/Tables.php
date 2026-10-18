@@ -168,6 +168,20 @@ final class Tables {
 	public const CREATOR_VAT_HISTORY = 'merchboard_creator_vat_history';
 
 	/**
+	 * Registrations of the creators' own discount codes, schema version 17
+	 * (ADR-068, K1): kept permanently; a change ends a registration and
+	 * creates a new one.
+	 */
+	public const CREATOR_CODES = 'merchboard_creator_codes';
+
+	/**
+	 * Orders excluded because a creator's own discount code was used, schema
+	 * version 17 (ADR-068, M2): one decision per order, stored at the first
+	 * assessment and never deleted automatically.
+	 */
+	public const ORDER_EXCLUSIONS = 'merchboard_order_exclusions';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -196,6 +210,8 @@ final class Tables {
 		self::PAYOUT_ADJUSTMENT_ROWS,
 		self::RECALCULATION_EXPORTS,
 		self::CREATOR_VAT_HISTORY,
+		self::CREATOR_CODES,
+		self::ORDER_EXCLUSIONS,
 	);
 
 	/**
@@ -207,8 +223,10 @@ final class Tables {
 	 * operation registry (E3 T4, B-2); and the recalculations with their
 	 * adjustments (ADR-063), which explain amounts on settlement documents; and
 	 * the history of the creators' VAT status (ADR-062 K06), which explains the
-	 * status of historical sales and documents. Everything else, including the
-	 * encrypted payout details, is dropped.
+	 * status of historical sales and documents; and the creators' discount
+	 * code registrations with the order exclusions (ADR-068, K2), which explain
+	 * why an order is missing from sales and settlement documents. Everything
+	 * else, including the encrypted payout details, is dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
 		self::CREATORS,
@@ -228,6 +246,8 @@ final class Tables {
 		self::PAYOUT_ADJUSTMENT_ROWS,
 		self::RECALCULATION_EXPORTS,
 		self::CREATOR_VAT_HISTORY,
+		self::CREATOR_CODES,
+		self::ORDER_EXCLUSIONS,
 	);
 
 	/**

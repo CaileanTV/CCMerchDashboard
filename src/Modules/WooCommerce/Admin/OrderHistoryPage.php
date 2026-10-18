@@ -16,6 +16,9 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusion;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
@@ -94,15 +97,23 @@ final class OrderHistoryPage {
 	private array $paid_with_cards = array();
 
 	/**
+	 * Decisions of the current list's orders excluded by a creator code (ADR-068).
+	 *
+	 * @var array<int, OrderExclusion>
+	 */
+	private array $excluded = array();
+
+	/**
 	 * Constructor.
 	 *
-	 * @param OrderHistory              $history     Unique orders of the ledger.
-	 * @param OrderHistoryDetails       $details     One order's events, lines and cycles.
-	 * @param OrderStatusLookup         $orders      Current WooCommerce state (CRUD).
-	 * @param CreatorRepository         $creators    Creator names.
-	 * @param Logger                    $logger      Technical log.
-	 * @param SettlementRepository|null $settlements Settled ledger rows (ADR-060, read only); null = not shown.
-	 * @param PayoutGiftCardOrders|null $gift_cards  Orders paid with payout gift cards (G1, read only); null = not shown.
+	 * @param OrderHistory                  $history     Unique orders of the ledger.
+	 * @param OrderHistoryDetails           $details     One order's events, lines and cycles.
+	 * @param OrderStatusLookup             $orders      Current WooCommerce state (CRUD).
+	 * @param CreatorRepository             $creators    Creator names.
+	 * @param Logger                        $logger      Technical log.
+	 * @param SettlementRepository|null     $settlements Settled ledger rows (ADR-060, read only); null = not shown.
+	 * @param PayoutGiftCardOrders|null     $gift_cards  Orders paid with payout gift cards (G1, read only); null = not shown.
+	 * @param OrderExclusionRepository|null $exclusions  Orders excluded by a creator code (ADR-068, read only); null = not shown.
 	 */
 	public function __construct(
 		private OrderHistory $history,
@@ -111,7 +122,8 @@ final class OrderHistoryPage {
 		private CreatorRepository $creators,
 		private Logger $logger,
 		private ?SettlementRepository $settlements = null,
-		private ?PayoutGiftCardOrders $gift_cards = null
+		private ?PayoutGiftCardOrders $gift_cards = null,
+		private ?OrderExclusionRepository $exclusions = null
 	) {
 	}
 
@@ -228,6 +240,7 @@ final class OrderHistoryPage {
 				$this->render_order( $params['order'] );
 			} else {
 				$this->render_list( $params['filter'], $params['page'], $params['values'] );
+				$this->render_exclusions();
 			}
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'The order history could not be read.', array( 'error' => $e::class ) );
@@ -275,6 +288,7 @@ final class OrderHistoryPage {
 		$cards   = $this->gift_card_lookup( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ) );
 
 		$this->paid_with_cards = $cards['paid'] ?? array();
+		$this->excluded        = null === $this->exclusions ? array() : $this->exclusions->for_orders( array_map( static fn( OrderHistoryRow $row ): int => $row->order_id, $rows ) );
 
 		if ( true === ( $cards['unsupported'] ?? false ) ) {
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Gift card plugin does not support order registration lookup', 'merchboard' ) . '</p></div>';
@@ -334,6 +348,10 @@ final class OrderHistoryPage {
 
 		if ( isset( $this->paid_with_cards[ $row->order_id ] ) ) {
 			echo '<br><strong>' . esc_html__( 'Registered by gift card plugin — payout status not confirmed', 'merchboard' ) . '</strong>';
+		}
+
+		if ( isset( $this->excluded[ $row->order_id ] ) ) {
+			echo '<br><strong>' . esc_html( self::exclusion_label( $this->excluded[ $row->order_id ] ) ) . '</strong>';
 		}
 
 		echo '</td>';
@@ -397,6 +415,9 @@ final class OrderHistoryPage {
 	 */
 	private function render_order( int $order_id ): void {
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← All orders', 'merchboard' ) . '</a></p>';
+
+		// Also for an excluded order without ledger rows (ADR-068).
+		$this->render_exclusion_notice( $order_id );
 
 		$details = $this->details->for_order( $order_id );
 
@@ -535,6 +556,126 @@ final class OrderHistoryPage {
 			OrderHistoryEraseException::NOT_AUTHORIZED => __( 'Sorry, you are not allowed to delete order history.', 'merchboard' ),
 			default                                    => __( 'Nothing was deleted: the order history could not be deleted. Please try again later.', 'merchboard' ),
 		};
+	}
+
+	/**
+	 * The status label of an exclusion (ADR-068, design decision 3).
+	 *
+	 * @param OrderExclusion $exclusion Decision.
+	 */
+	private static function exclusion_label( OrderExclusion $exclusion ): string {
+		return OrderExclusionStatus::Open === $exclusion->status
+			? __( 'Open case – creator discount code', 'merchboard' )
+			: __( 'Excluded – creator discount code', 'merchboard' );
+	}
+
+	/**
+	 * The orders excluded by a creator's own discount code (ADR-068, K3),
+	 * newest first, filtered on open cases with `?exclusions=open`. Also lists
+	 * excluded orders that have no ledger rows. Read only.
+	 *
+	 * @throws DatabaseException When the decisions cannot be read.
+	 */
+	private function render_exclusions(): void {
+		if ( null === $this->exclusions ) {
+			return;
+		}
+
+		// Read-only display parameters, whitelisted; nothing is changed by this request.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$open = isset( $_GET['exclusions'] ) && 'open' === sanitize_key( wp_unslash( $_GET['exclusions'] ) );
+		$page = isset( $_GET['exclusions_page'] ) ? max( 1, absint( wp_unslash( $_GET['exclusions_page'] ) ) ) : 1;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$status     = $open ? OrderExclusionStatus::Open : null;
+		$total      = $this->exclusions->count( $status );
+		$open_count = $open ? $total : $this->exclusions->count( OrderExclusionStatus::Open );
+
+		echo '<h2 id="merchboard-exclusions">' . esc_html__( 'Orders excluded by creator discount codes', 'merchboard' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'An order that used a creator\'s own discount code counts nowhere: not in sales, profit, payouts or new settlement documents. The decision is made once and is permanent. An open case is an order that was already settled; its settled rows and documents are not changed, and the case is not resolved automatically.', 'merchboard' ) . '</p>';
+		echo '<p>';
+		echo $open ? '<a href="' . esc_url( self::url() . '#merchboard-exclusions' ) . '">' . esc_html__( 'All excluded orders', 'merchboard' ) . '</a>' : '<strong>' . esc_html__( 'All excluded orders', 'merchboard' ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in the expression.
+		echo ' | ';
+		/* translators: %s: number of open cases. */
+		$open_text = sprintf( __( 'Open cases (%s)', 'merchboard' ), number_format_i18n( $open_count ) );
+		echo $open ? '<strong>' . esc_html( $open_text ) . '</strong>' : '<a href="' . esc_url( self::url( array( 'exclusions' => 'open' ) ) . '#merchboard-exclusions' ) . '">' . esc_html( $open_text ) . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in the expression.
+		echo '</p>';
+
+		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
+		$rows  = $total > 0 && $page <= $pages ? $this->exclusions->page( $status, new Pagination( $page, self::PER_PAGE ) ) : array();
+
+		if ( array() === $rows ) {
+			echo '<p>' . esc_html__( 'No orders are excluded.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped merchboard-exclusions-table"><thead><tr>';
+
+		foreach ( array( __( 'Order', 'merchboard' ), __( 'Status', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Discount code', 'merchboard' ), __( 'Order created', 'merchboard' ), __( 'Decided', 'merchboard' ) ) as $heading ) {
+			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
+		}
+
+		echo '</tr></thead><tbody>';
+
+		foreach ( $rows as $exclusion ) {
+			echo '<tr><td><a href="' . esc_url( self::url( array( 'order' => $exclusion->order_id ) ) ) . '">' . esc_html( sprintf( '#%d', $exclusion->order_id ) ) . '</a></td>';
+			echo '<td><strong>' . esc_html( self::exclusion_label( $exclusion ) ) . '</strong>';
+
+			if ( $exclusion->coupon_deviation ) {
+				echo '<br><span class="description">' . esc_html__( 'The coupon deviated from the registration when the order was decided.', 'merchboard' ) . '</span>';
+			}
+
+			echo '</td>';
+			echo '<td>' . esc_html( null === $exclusion->creator_id ? '—' : $this->creator_name( $exclusion->creator_id ) ) . '</td>';
+			echo '<td><code>' . esc_html( $exclusion->code ) . '</code></td>';
+			echo '<td>' . esc_html( self::date( $exclusion->order_created_at ) ) . '</td>';
+			echo '<td>' . esc_html( self::date( $exclusion->assessed_at ) ) . '</td></tr>';
+		}
+
+		echo '</tbody></table>';
+
+		$links = paginate_links(
+			array(
+				'base'      => self::url( ( $open ? array( 'exclusions' => 'open' ) : array() ) + array( 'exclusions_page' => '%#%' ) ) . '#merchboard-exclusions',
+				'format'    => '',
+				'current'   => min( $page, $pages ),
+				'total'     => $pages,
+				'prev_text' => __( '&laquo; Previous', 'merchboard' ),
+				'next_text' => __( 'Next &raquo;', 'merchboard' ),
+			)
+		);
+
+		if ( is_string( $links ) && '' !== $links ) {
+			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post( $links ) . '</div></div>';
+		}
+	}
+
+	/**
+	 * The exclusion of one order, if any (ADR-068).
+	 *
+	 * @param int $order_id Order.
+	 * @throws DatabaseException When the decision cannot be read.
+	 */
+	private function render_exclusion_notice( int $order_id ): void {
+		$exclusion = null === $this->exclusions ? null : $this->exclusions->find( $order_id );
+
+		if ( null === $exclusion ) {
+			return;
+		}
+
+		$creator = null === $exclusion->creator_id ? '—' : $this->creator_name( $exclusion->creator_id );
+		$text    = OrderExclusionStatus::Open === $exclusion->status
+			? __( 'The order already had rows in a settlement document. Those rows and documents are not changed; the order\'s other rows do not count. The case is not resolved automatically.', 'merchboard' )
+			: __( 'None of the order\'s rows count in sales, profit, payouts or new settlement documents, and no new ledger events are stored for it.', 'merchboard' );
+
+		/* translators: 1: creator name, 2: discount code, 3: date. */
+		echo '<div class="notice notice-warning inline"><p><strong>' . esc_html( self::exclusion_label( $exclusion ) ) . '</strong>: ' . esc_html( sprintf( __( 'the order used the discount code of %1$s (%2$s); decided %3$s.', 'merchboard' ), $creator, $exclusion->code, self::date( $exclusion->assessed_at ) ) ) . '</p><p>' . esc_html( $text ) . '</p>';
+
+		if ( $exclusion->coupon_deviation ) {
+			echo '<p>' . esc_html__( 'The coupon deviated from the registration when the order was decided (it was missing or had another ID). The order is excluded all the same.', 'merchboard' ) . '</p>';
+		}
+
+		echo '</div>';
 	}
 
 	/**

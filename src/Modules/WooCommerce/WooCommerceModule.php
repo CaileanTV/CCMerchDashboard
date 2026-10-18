@@ -24,7 +24,18 @@ use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesActions;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorCategoriesSection;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorCodeActions;
+use MerchBoard\Modules\WooCommerce\Admin\CreatorCodeSection;
 use MerchBoard\Modules\WooCommerce\Admin\CreatorListCategories;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponLookup;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeDeviations;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeService;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessor;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\WooCommerceCouponLookup;
+use MerchBoard\Modules\WooCommerce\Payouts\CreatorRowLocks;
+use MerchBoard\Modules\WooCommerce\Rest\MeDiscountCodeController;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryActions;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
@@ -288,6 +299,48 @@ final class WooCommerceModule implements Module {
 		// Object cache of the sales statistics (ADR-040 pkt. 10): the repository
 		// invalidates it after every committed write.
 		$container->set( SalesCache::class, static fn(): SalesCache => new SalesCache() );
+		// The creators' own discount codes (ADR-068): registrations, the order
+		// decisions, and the assessment in the synchronization.
+		$container->set( CreatorCodeRepository::class, static fn( Container $c ): CreatorCodeRepository => new CreatorCodeRepository( $c->get( wpdb::class ) ) );
+		$container->set( OrderExclusionRepository::class, static fn( Container $c ): OrderExclusionRepository => new OrderExclusionRepository( $c->get( wpdb::class ) ) );
+		$container->set( CouponLookup::class, static fn( Container $c ): CouponLookup => new WooCommerceCouponLookup( static fn(): GiftCardProviders => $c->get( GiftCardProviders::class ) ) );
+		$container->set(
+			CreatorCodeDeviations::class,
+			static fn( Container $c ): CreatorCodeDeviations => new CreatorCodeDeviations( $c->get( CouponLookup::class ) )
+		);
+		$container->set(
+			CreatorCodeService::class,
+			static fn( Container $c ): CreatorCodeService => new CreatorCodeService(
+				$c->get( CreatorRepository::class ),
+				$c->get( CreatorCodeRepository::class ),
+				$c->get( CouponLookup::class ),
+				$c->get( Transaction::class ),
+				$c->get( AuditTrail::class )
+			)
+		);
+		$container->set(
+			OrderExclusionAssessor::class,
+			static fn( Container $c ): OrderExclusionAssessor => new OrderExclusionAssessor(
+				$c->get( CreatorCodeRepository::class ),
+				$c->get( OrderExclusionRepository::class ),
+				new CreatorRowLocks( $c->get( wpdb::class ) ),
+				$c->get( CreatorCodeDeviations::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( SalesCache::class )
+			)
+		);
+		$container->set(
+			CreatorCodeSection::class,
+			static fn( Container $c ): CreatorCodeSection => new CreatorCodeSection( $c->get( CreatorCodeRepository::class ), $c->get( CreatorCodeDeviations::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			CreatorCodeActions::class,
+			static fn( Container $c ): CreatorCodeActions => new CreatorCodeActions( $c->get( CreatorCodeService::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			MeDiscountCodeController::class,
+			static fn( Container $c ): MeDiscountCodeController => new MeDiscountCodeController( $c->get( CreatorContext::class ), $c->get( CreatorCodeRepository::class ), $c->get( Logger::class ) )
+		);
 		$container->set(
 			SalesSynchronizer::class,
 			static fn( Container $c ): SalesSynchronizer => new SalesSynchronizer(
@@ -295,7 +348,9 @@ final class WooCommerceModule implements Module {
 				new SalesPlanner(),
 				new WooCommerceOrderSnapshotReader( $c->get( ProductCreatorLink::class ), $c->get( CountedOrderStatuses::class ) ),
 				new WooCommerceSalesFailureMarker(),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				null,
+				$c->get( OrderExclusionAssessor::class )
 			)
 		);
 		$container->set(
@@ -423,7 +478,8 @@ final class WooCommerceModule implements Module {
 				$c->get( CreatorRepository::class ),
 				$c->get( Logger::class ),
 				new SettlementRepository( $c->get( wpdb::class ) ),
-				$c->get( PayoutGiftCardOrders::class )
+				$c->get( PayoutGiftCardOrders::class ),
+				$c->get( OrderExclusionRepository::class )
 			)
 		);
 
@@ -817,6 +873,7 @@ final class WooCommerceModule implements Module {
 				$container->get( MeOrdersController::class )->register_routes();
 				$container->get( MeSalesController::class )->register_routes();
 				$container->get( MePayoutsController::class )->register_routes();
+				$container->get( MeDiscountCodeController::class )->register_routes();
 			}
 		);
 		// The dashboard sections that need WooCommerce (Products).
@@ -864,6 +921,8 @@ final class WooCommerceModule implements Module {
 				$container->get( CreatorProductsSection::class )->register();
 				$container->get( CreatorPricingActions::class )->register();
 				$container->get( CreatorPricingSection::class )->register();
+				$container->get( CreatorCodeActions::class )->register();
+				$container->get( CreatorCodeSection::class )->register();
 				$container->get( CreatorSalesSection::class )->register();
 				$container->get( OrderHistoryActions::class )->register();
 				$container->get( ProductListCreators::class )->register();

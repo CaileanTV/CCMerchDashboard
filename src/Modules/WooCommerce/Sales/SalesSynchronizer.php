@@ -14,6 +14,8 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessment;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessor;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
@@ -28,6 +30,12 @@ defined( 'ABSPATH' ) || exit;
  * 3. Under the order's lock (SalesRepository::with_order_lock()): read the
  *    snapshot outside the transaction, then plan and append in one transaction.
  * 4. Failure marker and technical log: set on failure, removed on success.
+ *
+ * Creator codes (ADR-068): inside the transaction, before the planner, the
+ * OrderExclusionAssessor decides whether the order is excluded by a
+ * creator's own discount code; an excluded order gets no ledger rows (its
+ * existing rows stay, and the read models leave them out). The backfill
+ * reports such an order as not counted.
  *
  * Never throws: every error becomes a failure code (lock_timeout,
  * connection_changed, db_error, a planner code, or unexpected), is logged
@@ -72,6 +80,13 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 	private ?SalesPlanFailure $failed_plan = null;
 
 	/**
+	 * Whether the last locked() found the order excluded (ADR-068).
+	 *
+	 * @var bool
+	 */
+	private bool $excluded = false;
+
+	/**
 	 * Processing clock.
 	 *
 	 * @var Closure(): DateTimeImmutable
@@ -83,12 +98,13 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 	 *
 	 * @phpstan-param (Closure(): DateTimeImmutable)|null $clock
 	 *
-	 * @param SalesRepository     $repository Ledger storage, lock and transaction.
-	 * @param SalesPlanner        $planner    State transition.
-	 * @param OrderSnapshotReader $reader     WooCommerce data.
-	 * @param SalesFailureMarker  $marker     Failure marker.
-	 * @param Logger              $logger     Technical log.
-	 * @param Closure|null        $clock      Processing time; UTC now by default.
+	 * @param SalesRepository             $repository Ledger storage, lock and transaction.
+	 * @param SalesPlanner                $planner    State transition.
+	 * @param OrderSnapshotReader         $reader     WooCommerce data.
+	 * @param SalesFailureMarker          $marker     Failure marker.
+	 * @param Logger                      $logger     Technical log.
+	 * @param Closure|null                $clock      Processing time; UTC now by default.
+	 * @param OrderExclusionAssessor|null $exclusions Creator code exclusion (ADR-068); null assesses nothing.
 	 */
 	public function __construct(
 		private SalesRepository $repository,
@@ -96,7 +112,8 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 		private OrderSnapshotReader $reader,
 		private SalesFailureMarker $marker,
 		private Logger $logger,
-		?Closure $clock = null
+		?Closure $clock = null,
+		private ?OrderExclusionAssessor $exclusions = null
 	) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 	}
@@ -256,6 +273,11 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 				return $order;
 			}
 
+			// Excluded by a creator code (ADR-068): it would not count.
+			if ( null !== $this->exclusions && $this->exclusions->would_exclude( $order ) ) {
+				return SalesBackfillOutcome::of( SalesBackfillStatus::NotCounted );
+			}
+
 			$result = $this->planner->plan( $order, $this->repository->state( $order_id ), ( $this->clock )() );
 
 			return null !== $result->failure
@@ -308,6 +330,11 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 		if ( $history ) {
 			return SalesBackfillOutcome::of( SalesBackfillStatus::HasHistory );
+		}
+
+		// Excluded by a creator code (ADR-068): it does not count.
+		if ( $this->excluded ) {
+			return SalesBackfillOutcome::of( SalesBackfillStatus::NotCounted );
 		}
 
 		return true === $result && $planned instanceof SalesLedgerWrite
@@ -394,17 +421,27 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 					return false;
 				}
 
-				$now      = ( $this->clock )();
-				$failure  = null;
-				$admitted = true;
+				$now        = ( $this->clock )();
+				$failure    = null;
+				$admitted   = true;
+				$assessment = null;
+
+				$this->excluded = false;
 
 				$this->repository->write(
 					$order_id,
-					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted ): ?SalesLedgerWrite {
+					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted, &$assessment ): ?SalesLedgerWrite {
 						// Null: the repository writes nothing, not even a G1 `pending` (D1, T5b).
 						if ( null !== $admit && ! $admit( $state ) ) {
 							$admitted = false;
 
+							return null;
+						}
+
+						// ADR-068: an excluded order gets no ledger rows (not even `pending`).
+						$assessment = $this->exclusions?->assess( $order, $state, $this->repository, $now );
+
+						if ( null !== $assessment ) {
 							return null;
 						}
 
@@ -426,6 +463,12 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 				if ( ! $admitted ) {
 					return false;
+				}
+
+				// Committed: write() returning means COMMIT.
+				if ( $assessment instanceof OrderExclusionAssessment ) {
+					$this->excluded = true;
+					$this->exclusions?->committed( $assessment );
 				}
 
 				return $failure ?? true;

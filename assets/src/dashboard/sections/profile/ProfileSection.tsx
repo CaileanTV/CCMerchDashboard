@@ -16,6 +16,7 @@ import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 import { PROFILE_LIMITS, SOCIAL_PLATFORMS } from '../../types/creator';
 import type { Profile, SocialLinks, SocialPlatform } from '../../types/creator';
+import { DiscountCodeCard } from './DiscountCodeCard';
 import { platformLabel } from './platforms';
 import { ThemeSettings } from './ThemeSettings';
 import { errorMessage, validateProfile } from './validation';
@@ -233,13 +234,15 @@ function ProfileContent() {
 
 /**
  * Profile section (phase 14): the creator's own display name, bio and links,
- * and (phase 21) the personal dashboard theme. The theme is saved on its own,
- * outside the profile form, and does not wait for the profile to load.
+ * the creator's own discount code, hidden until shown (ADR-068), and (phase
+ * 21) the personal dashboard theme. The code and the theme are on their own,
+ * outside the profile form, and do not wait for the profile to load.
  */
 export function ProfileSection() {
 	return (
 		<>
 			<ProfileContent />
+			<DiscountCodeCard />
 			<ThemeSettings />
 		</>
 	);

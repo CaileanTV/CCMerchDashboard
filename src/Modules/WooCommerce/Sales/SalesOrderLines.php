@@ -15,6 +15,7 @@ use Exception;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Http\Pagination;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -32,8 +33,10 @@ defined( 'ABSPATH' ) || exit;
  * `order_item_id`). Every row of a line carries the same creator snapshot
  * (ADR-038 B2/B3). A line is listed when its first sale row exists: the row
  * `s:{order_item_id}:{cycle}` of the lowest cycle with a sale, which also
- * gives the date and the product snapshot. count() and page() share this
- * selection (LINES).
+ * gives the date and the product snapshot. Orders excluded by a creator's
+ * own discount code are left out (M2, ADR-068; the creator sees no order
+ * details of exclusions, K3). count() and page() share this selection
+ * (COUNTED_LINES).
  *
  * Per line (P2):
  * - quantity: the sum of all its rows' `quantity` (the ledger balance).
@@ -50,14 +53,15 @@ defined( 'ABSPATH' ) || exit;
 final class SalesOrderLines {
 
 	/**
-	 * The creator's lines with their first sale row. Placeholders: sales
-	 * table, creator id, sales table.
+	 * The creator's lines with their first sale row, without the orders
+	 * excluded by a creator code (M2, ADR-068). Placeholders: sales table,
+	 * exclusions table, creator id, sales table.
 	 */
-	private const LINES = "FROM (
+	private const COUNTED_LINES = "FROM (
 			SELECT order_item_id, MAX(order_id) AS order_id, SUM(quantity) AS quantity,
 				MIN(CASE WHEN type = 'sale' THEN cycle END) AS first_cycle
-			FROM %i
-			WHERE creator_id = %d
+			FROM %i sales
+			WHERE " . OrderExclusionRepository::SALES_NOT_EXCLUDED . " AND creator_id = %d
 			GROUP BY order_item_id
 		) l
 		INNER JOIN %i s ON s.event_key = CONCAT('s:', l.order_item_id, ':', l.first_cycle)";
@@ -96,7 +100,7 @@ final class SalesOrderLines {
 		$wpdb  = $this->wpdb;
 		$sales = $this->table( Tables::SALES );
 		$total = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; no caching in phase 19 (ADR-039 P12).
-			$wpdb->prepare( 'SELECT COUNT(*) ' . self::LINES, $sales, $creator_id, $sales ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- LINES is a constant with placeholders only.
+			$wpdb->prepare( 'SELECT COUNT(*) ' . self::COUNTED_LINES, $sales, OrderExclusionRepository::table_name( $wpdb ), $creator_id, $sales ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- COUNTED_LINES is a constant with placeholders only.
 		);
 
 		if ( '' !== $wpdb->last_error ) {
@@ -122,11 +126,12 @@ final class SalesOrderLines {
 		$wpdb  = $this->wpdb;
 		$sales = $this->table( Tables::SALES );
 		$rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the ledger; no caching in phase 19 (ADR-039 P12).
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- PAGE_COLUMNS' two placeholders, LINES' three, then LIMIT and OFFSET.
-				self::PAGE_COLUMNS . self::LINES . ' ORDER BY s.occurred_at DESC, l.order_item_id DESC LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Constants with placeholders only.
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- PAGE_COLUMNS' two placeholders, COUNTED_LINES' four, then LIMIT and OFFSET.
+				self::PAGE_COLUMNS . self::COUNTED_LINES . ' ORDER BY s.occurred_at DESC, l.order_item_id DESC LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Constants with placeholders only.
 				$sales,
 				$sales,
 				$sales,
+				OrderExclusionRepository::table_name( $wpdb ),
 				$creator_id,
 				$sales,
 				$pagination->per_page,

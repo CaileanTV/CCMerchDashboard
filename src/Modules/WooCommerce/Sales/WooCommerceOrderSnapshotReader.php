@@ -12,9 +12,11 @@ namespace MerchBoard\Modules\WooCommerce\Sales;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use WC_DateTime;
 use WC_Order;
+use WC_Order_Item_Coupon;
 use WC_Order_Item_Product;
 use WC_Order_Refund;
 
@@ -97,8 +99,36 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			$date_paid instanceof WC_DateTime ? self::utc( $date_paid ) : null,
 			$lines,
 			array_map( array( $this, 'refund' ), $this->refunds( $order_id ) ),
-			null !== $deleted_refund_id && $deleted_refund_id > 0 ? $deleted_refund_id : null
+			null !== $deleted_refund_id && $deleted_refund_id > 0 ? $deleted_refund_id : null,
+			self::coupon_codes( $order )
 		);
+	}
+
+	/**
+	 * The order's coupon codes, normalized and unique (ADR-068). A coupon
+	 * item that is not a WC_Order_Item_Coupon is unknown data: the snapshot
+	 * fails rather than leave a code out.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return list<string>
+	 * @throws InvalidArgumentException When a coupon item cannot be read.
+	 */
+	private static function coupon_codes( WC_Order $order ): array {
+		$codes = array();
+
+		foreach ( $order->get_items( 'coupon' ) as $item ) {
+			if ( ! $item instanceof WC_Order_Item_Coupon ) {
+				throw new InvalidArgumentException( 'Unreadable coupon item.' );
+			}
+
+			$code = CouponCode::normalize( (string) $item->get_code( 'edit' ) );
+
+			if ( '' !== $code ) {
+				$codes[ $code ] = $code;
+			}
+		}
+
+		return array_values( $codes );
 	}
 
 	/**

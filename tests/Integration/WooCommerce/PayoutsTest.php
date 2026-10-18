@@ -157,7 +157,7 @@ final class PayoutsTest extends IntegrationTestCase {
 		self::assertSame( 0, $this->count_rows( Tables::PAYOUTS ) );
 		self::assertSame( 0, $this->count_rows( Tables::PAYOUT_SECRETS ) );
 		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT payout_start_at FROM %i WHERE id = %d', $this->table( Tables::CREATORS ), $this->creator ) ), 'NULL = the whole history.' );
-		self::assertTrue( current_user_can( Capabilities::MANAGE_PAYOUTS ) && current_user_can( Capabilities::VIEW_PAYOUT_DETAILS ), 'Administrators get both (role version 5).' );
+		self::assertTrue( current_user_can( Capabilities::MANAGE_PAYOUTS ) && current_user_can( Capabilities::VIEW_PAYOUT_DETAILS ), 'Administrators get both (role version 5 and later).' );
 	}
 
 	public function test_a_request_reserves_the_amount_and_stores_the_details_only_encrypted(): void {
