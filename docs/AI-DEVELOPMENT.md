@@ -42,11 +42,28 @@ Det gælder også, selvom et andet projekt ser relateret eller nyttigt ud. Antag
 
 **LocalWP:** Projektets eneste LocalWP-site er **Merch Dashboard Local** (`http://merchboard.local`, mappen `Local Sites\merch-dashboard-local`), udpeget af projektejeren og dokumenteret i [DEVELOPMENT.md](DEVELOPMENT.md#lokal-wordpress-localwp-merch-dashboard-local). Kun det site må bruges. Find det ud fra dets egen mappe og konfiguration (`app\.envrc`), aldrig ved at liste LocalWP's sites. Andre sites må hverken startes, ændres, listes eller læses, og deres data og konfiguration må ikke kopieres. Hvis det er uklart, om noget hører til Merch Dashboard Local: **STOP og spørg**, før du gør noget, der kan påvirke en WordPress-installation eller database.
 
+**Samtidig manuel test på Local (projektejeren, 2026-10-18):** projektejeren tester aktivt manuelt på Merch Dashboard Local, mens AI-agenten arbejder.
+
+- Nye WooCommerce-ordrer, salgsrækker og runtime-ændringer er forventelig aktivitet, ikke automatisk fejl. Nye ordrer må aldrig ændres, annulleres eller slettes. Ordre 428 er projektejerens aktive testordre og forbliver urørt.
+- En kontrol tager en frisk før-status tæt på testens start og klassificerer forskelle som **ACTIVITY** (WooCommerce-ordrer og salgsledgeren), **RUNTIME** (fx cron, sessioner og Action Scheduler) eller **CRITICAL** (bilag og bilagsrækker, tællere, payouts, reguleringer og genberegninger, momshistorik, audit, creator-data og pluginindstillinger).
+- Nye kritiske rækker rapporteres og vurderes; de antages ikke at være projektejerens. En ændring i eksisterende kritiske data kan stoppe den berørte test. Uafhængige, sikre opgaver fortsætter, og intet repareres automatisk.
+- Eksisterende bilag, payouts, audit og tællere ændres ikke uden projektejerens udtrykkelige godkendelse.
+
 **Staging og produktion:** AI-agenter må ikke tilgå staging (`devpage.ccmerch.dk`) eller produktion (ingen login, credentials, SSH, fjern-WP-CLI eller databaseadgang), heller ikke som erstatning for det lokale testmiljø. Test på staging udføres af projektejeren.
 
 **Hvis du finder noget relevant uden for projektet**, må du kun skrive: *"Jeg har identificeret noget uden for projektets scope, som potentielt kunne være relevant, men jeg har ikke brugt det."* Vent derefter på eksplicit instruktion.
 
 Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper, som værktøjer som Playground og npm bruger internt, og npm/Composer-caches. De må ikke bruges til at overføre data mellem projekter.
+
+## Arbejdsartefakter og runtime-data
+
+**Kritisk, permanent regel (projektejeren, 2026-10-18).** Arbejdsfiler må ikke spredes. Ligger scripts og resultater i tilfældige mapper, mister både projektejeren og AI-agenten overblikket og kan ikke finde den autoritative version.
+
+- **Ingen nye arbejdsartefakter uden for den godkendte struktur:** scripts, rapporter, state-filer, JSON-resultater, manifests, noter og andre arbejdsfiler oprettes ikke i `%TEMP%`, i Claude Code-scratchpads (`AppData\Local\Temp\claude\…`) eller på andre ikke-godkendte placeringer. Der oprettes heller ikke nye mapper dér som workaround. Undtagelse: en midlertidig fil, som et værktøj uundgåeligt danner, må kun bruges som kortlivet teknisk mellemresultat og bliver aldrig den autoritative kopi. Undgå undtagelsen, når opgaven kan løses uden.
+- **Repo eller runtime:** kildekode og projektdokumentation hører til i repoet. Repoet er via en junction også Merch Dashboard Locals pluginmappe, så runtime-data, databasedumps, persondata, logfiler og testresultater må aldrig ligge i repoet, heller ikke i gitignorerede mapper (de kan hentes over HTTP).
+- **Runtime-artefakter:** backups, gendannelsesprøver og test- og kontrolresultater hører til i `C:\Users\jnn\MerchBoard-r2-runtime\`. FASE 2's dokumentation ligger i `runs\2026-10-18-fase2-trin1-5\` med `README.md` og `MANIFEST.csv`. Undersøg først, om noget hører til i den eksisterende struktur eller allerede findes, og genbrug eksisterende scripts og mapper. Tidligere resultater og backups overskrives aldrig.
+- **Ny struktur:** nye undermapper eller en ny struktur oprettes kun, når der er behov, og projektejeren har godkendt det. Passer den eksisterende struktur ikke, foreslås én konkret placering, og der ventes på godkendelse.
+- **Eksisterende scratchpads:** bevares. De slettes, flyttes og omdøbes ikke uden godkendelse og må fortsat læses, men nye autoritative resultater gemmes ikke dér.
 
 ## Før du starter
 
@@ -108,7 +125,7 @@ Arbejde på tværs af parallelle repositories, worktrees og branches har tidlige
 
 **Kendt udestående:**
 
-- Merch Dashboard Local er stoppet. Næste start med `main`'s kode migrerer Local-databasen til schema 13 (sidst dokumenteret: 11); en dokumenteret og verificeret backup- og gendannelsesprocedure skal godkendes først.
+- Merch Dashboard Local er stoppet. Næste start med `main`'s kode migrerer Local-databasen til schema 13 (sidst dokumenteret: 11); en dokumenteret og verificeret backup- og gendannelsesprocedure skal godkendes først. *(Forældet 2026-10-18: backup- og gendannelsesproceduren er verificeret, og Local kører med schema-version 16; se ROADMAP fase 24.)*
 - Runtime-verifikation mod rigtig WooCommerce og YITH er ikke udført.
 - Fail closed-risikoen i staging og produktion er uafklaret.
 - G1-dokumentationen (ADMIN, DECISIONS, PROJECT-STATUS, ROADMAP, TESTING og fase 23-rapporten) er ikke opdateret til B2–B5.
