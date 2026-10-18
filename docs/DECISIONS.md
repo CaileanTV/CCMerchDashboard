@@ -3700,7 +3700,7 @@ ADR-016, ADR-065.
 2026-10-18
 
 ## Status
-Accepteret af projektejeren 2026-10-18: implementeringstilladelse til trin a og b af creator-rabatkodefunktionen, hvis design blev godkendt 2026-10-12 (designbeslutning 1–7, låseprotokollen og K1–K6 i ROADMAP.md, fase 24). **Implementeret i version 1.0.1** (schema-version 17); testet automatisk, ikke runtime-verificeret. Trin c er ikke implementeret: tilbageholdelse, "Bekræft"/"Ophæv" og spejlrækker (K2).
+Accepteret af projektejeren 2026-10-18: implementeringstilladelse til trin a og b af creator-rabatkodefunktionen, hvis design blev godkendt 2026-10-12 (designbeslutning 1–7, låseprotokollen og K1–K6 i ROADMAP.md, fase 24). **Implementeret i version 1.0.1** (schema-version 17; tag `v1.0.1` på `5822333`). Testet automatisk. **Statusnote 2026-10-19:** projektejeren har installeret 1.0.1 i produktion og oplyst, at den virker; det er ikke verificeret af AI-agenter, og Local-testen af præcis 1.0.1 er ikke gennemført. Trin c er ikke implementeret: tilbageholdelse, "Bekræft"/"Ophæv" og spejlrækker (K2).
 
 ## Context
 Hver creator får en WooCommerce-kupon fra virksomheden, så creatoren kan købe sit eget merchandise uden at betale for sin fortjeneste. Indtil 1.0.1 talte sådanne ordrer som almindelige salg. Creatoren fik salg, fortjeneste og kommission af den rabatterede pris (ADR-049), og koden var ikke registreret nogen steder i Merch Dashboard. Projektejeren har 2026-10-18 givet tilladelse til at implementere funktionen i tre trin og først bygge trin a og b. Beslutningerne samme dag:
