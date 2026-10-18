@@ -97,9 +97,9 @@ final class OrderHistoryPage {
 	private array $paid_with_cards = array();
 
 	/**
-	 * Decisions of the current list's orders excluded by a creator code (ADR-068).
+	 * Decisions of the current list's orders with lines excluded by a creator code (ADR-068).
 	 *
-	 * @var array<int, OrderExclusion>
+	 * @var array<int, list<OrderExclusion>>
 	 */
 	private array $excluded = array();
 
@@ -350,8 +350,8 @@ final class OrderHistoryPage {
 			echo '<br><strong>' . esc_html__( 'Registered by gift card plugin — payout status not confirmed', 'merchboard' ) . '</strong>';
 		}
 
-		if ( isset( $this->excluded[ $row->order_id ] ) ) {
-			echo '<br><strong>' . esc_html( self::exclusion_label( $this->excluded[ $row->order_id ] ) ) . '</strong>';
+		foreach ( $this->excluded[ $row->order_id ] ?? array() as $exclusion ) {
+			echo '<br><strong>' . esc_html( $this->exclusion_label_for( $exclusion ) ) . '</strong>';
 		}
 
 		echo '</td>';
@@ -570,6 +570,16 @@ final class OrderHistoryPage {
 	}
 
 	/**
+	 * The status label of an exclusion with the creator whose lines it excludes.
+	 *
+	 * @param OrderExclusion $exclusion Decision.
+	 */
+	private function exclusion_label_for( OrderExclusion $exclusion ): string {
+		/* translators: 1: status, 2: creator name. */
+		return sprintf( __( '%1$s (%2$s)', 'merchboard' ), self::exclusion_label( $exclusion ), $this->creator_name( $exclusion->creator_id ) );
+	}
+
+	/**
 	 * The orders excluded by a creator's own discount code (ADR-068, K3),
 	 * newest first, filtered on open cases with `?exclusions=open`. Also lists
 	 * excluded orders that have no ledger rows. Read only.
@@ -592,7 +602,7 @@ final class OrderHistoryPage {
 		$open_count = $open ? $total : $this->exclusions->count( OrderExclusionStatus::Open );
 
 		echo '<h2 id="merchboard-exclusions">' . esc_html__( 'Orders excluded by creator discount codes', 'merchboard' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'An order that used a creator\'s own discount code counts nowhere: not in sales, profit, payouts or new settlement documents. The decision is made once and is permanent. An open case is an order that was already settled; its settled rows and documents are not changed, and the case is not resolved automatically.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'When an order used a creator\'s own discount code, that creator\'s lines of the order count nowhere: not in sales, profit, payouts or new settlement documents. Other creators\' lines of the same order count normally. The decision is made once and is permanent. An open case is a creator whose lines of the order were already settled; those settled rows and documents are not changed, and the case is not resolved automatically.', 'merchboard' ) . '</p>';
 		echo '<p>';
 		echo $open ? '<a href="' . esc_url( self::url() . '#merchboard-exclusions' ) . '">' . esc_html__( 'All excluded orders', 'merchboard' ) . '</a>' : '<strong>' . esc_html__( 'All excluded orders', 'merchboard' ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in the expression.
 		echo ' | ';
@@ -626,7 +636,7 @@ final class OrderHistoryPage {
 			}
 
 			echo '</td>';
-			echo '<td>' . esc_html( null === $exclusion->creator_id ? '—' : $this->creator_name( $exclusion->creator_id ) ) . '</td>';
+			echo '<td>' . esc_html( $this->creator_name( $exclusion->creator_id ) ) . '</td>';
 			echo '<td><code>' . esc_html( $exclusion->code ) . '</code></td>';
 			echo '<td>' . esc_html( self::date( $exclusion->order_created_at ) ) . '</td>';
 			echo '<td>' . esc_html( self::date( $exclusion->assessed_at ) ) . '</td></tr>';
@@ -651,31 +661,27 @@ final class OrderHistoryPage {
 	}
 
 	/**
-	 * The exclusion of one order, if any (ADR-068).
+	 * The exclusions of one order, if any (ADR-068): one notice per creator
+	 * whose lines are excluded.
 	 *
 	 * @param int $order_id Order.
-	 * @throws DatabaseException When the decision cannot be read.
+	 * @throws DatabaseException When the decisions cannot be read.
 	 */
 	private function render_exclusion_notice( int $order_id ): void {
-		$exclusion = null === $this->exclusions ? null : $this->exclusions->find( $order_id );
+		foreach ( null === $this->exclusions ? array() : $this->exclusions->for_order( $order_id ) as $exclusion ) {
+			$text = OrderExclusionStatus::Open === $exclusion->status
+				? __( 'This creator\'s lines of the order were already in a settlement document. Those rows and documents are not changed; the creator\'s other rows of the order do not count. The case is not resolved automatically.', 'merchboard' )
+				: __( 'None of this creator\'s lines of the order count in sales, profit, payouts or new settlement documents, and no new ledger events are stored for them. Other creators\' lines count normally.', 'merchboard' );
 
-		if ( null === $exclusion ) {
-			return;
+			/* translators: 1: creator name, 2: discount code, 3: date. */
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html( self::exclusion_label( $exclusion ) ) . '</strong>: ' . esc_html( sprintf( __( 'the order used the discount code of %1$s (%2$s); decided %3$s.', 'merchboard' ), $this->creator_name( $exclusion->creator_id ), $exclusion->code, self::date( $exclusion->assessed_at ) ) ) . '</p><p>' . esc_html( $text ) . '</p>';
+
+			if ( $exclusion->coupon_deviation ) {
+				echo '<p>' . esc_html__( 'The coupon deviated from the registration when the order was decided (it was missing or had another ID). The creator\'s lines are excluded all the same.', 'merchboard' ) . '</p>';
+			}
+
+			echo '</div>';
 		}
-
-		$creator = null === $exclusion->creator_id ? '—' : $this->creator_name( $exclusion->creator_id );
-		$text    = OrderExclusionStatus::Open === $exclusion->status
-			? __( 'The order already had rows in a settlement document. Those rows and documents are not changed; the order\'s other rows do not count. The case is not resolved automatically.', 'merchboard' )
-			: __( 'None of the order\'s rows count in sales, profit, payouts or new settlement documents, and no new ledger events are stored for it.', 'merchboard' );
-
-		/* translators: 1: creator name, 2: discount code, 3: date. */
-		echo '<div class="notice notice-warning inline"><p><strong>' . esc_html( self::exclusion_label( $exclusion ) ) . '</strong>: ' . esc_html( sprintf( __( 'the order used the discount code of %1$s (%2$s); decided %3$s.', 'merchboard' ), $creator, $exclusion->code, self::date( $exclusion->assessed_at ) ) ) . '</p><p>' . esc_html( $text ) . '</p>';
-
-		if ( $exclusion->coupon_deviation ) {
-			echo '<p>' . esc_html__( 'The coupon deviated from the registration when the order was decided (it was missing or had another ID). The order is excluded all the same.', 'merchboard' ) . '</p>';
-		}
-
-		echo '</div>';
 	}
 
 	/**

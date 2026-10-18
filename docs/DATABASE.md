@@ -460,20 +460,21 @@ Indexes: `PRIMARY`, `UNIQUE active_creator (active_creator_id)` og `UNIQUE activ
 
 **Skrivning:** kun `CreatorCodeRepository::insert()` og `end()` via `CreatorCodeService`, under navngivne låse (creator, derefter kode) og i en transaktion med audit. En registrering ændres kun ved at blive afsluttet og slettes aldrig.
 
-#### `merchboard_order_exclusions` (én afgørelse pr. ordre)
+#### `merchboard_order_exclusions` (én afgørelse pr. ordre og creator)
 
 | Kolonne | Type | Noter |
 | --- | --- | --- |
 | `order_id` | `bigint(20) unsigned` PK | WooCommerce-ordren |
-| `status` | `varchar(20)` | `excluded`, eller `open` (ordren havde rækker i et udstedt bilag, K2) |
+| `status` | `varchar(20)` | `excluded`, eller `open` (creatorens rækker på ordren lå i et udstedt bilag, K2) |
 | `reason` | `varchar(20)` | `creator_code` |
-| `code_id`, `creator_id`, `code` | `bigint(20) unsigned NULL`, `bigint(20) unsigned NULL`, `varchar(191)` | Den matchede registrering, dens creator og kode |
+| `creator_id` | `bigint(20) unsigned` PK | Kodens creator, hvis linjer i ordren er udelukket |
+| `code_id`, `code` | `bigint(20) unsigned`, `varchar(191)` | Den matchede registrering og dens kode |
 | `coupon_deviation` | `tinyint(1) unsigned` | 1 = kuponen afveg fra K5 ved afgørelsen |
 | `order_created_at`, `assessed_at` | `datetime` | Ordrens WooCommerce-oprettelse og afgørelsen (UTC) |
 
-Indexes: `PRIMARY (order_id)`, `KEY status_assessed (status, assessed_at)`, `KEY creator (creator_id)`.
+Indexes: `PRIMARY (order_id, creator_id)`, `KEY status_assessed (status, assessed_at)`, `KEY creator (creator_id)`.
 
-**Skrivning:** kun `OrderExclusionRepository::insert_on_connection()` fra synkroniseringen, under ordrens lås, på låsens forbindelse og i samme transaktion som audit-posten. **Læsning (M2):** alle læsemodeller af `merchboard_sales` udelader en udelukket ordres rækker med `OrderExclusionRepository::JOIN`/`COUNTS` eller `SALES_NOT_EXCLUDED`. Afregnede rækker tæller fortsat i payout-saldoen. Ledger-rækker ændres eller slettes aldrig.
+**Skrivning:** kun `OrderExclusionRepository::insert_on_connection()` fra synkroniseringen, under ordrens lås, på låsens forbindelse og i samme transaktion som audit-posten. **Læsning (M2):** alle læsemodeller af `merchboard_sales` udelader rækker, hvis ordre og creator har en afgørelse, med `OrderExclusionRepository::JOIN`/`COUNTS` eller `SALES_NOT_EXCLUDED`. Andre creators' rækker i samme ordre tæller normalt. Afregnede rækker tæller fortsat i payout-saldoen. Ledger-rækker ændres eller slettes aldrig.
 
 ### Fremtidige (ikke designet i detaljer)
 

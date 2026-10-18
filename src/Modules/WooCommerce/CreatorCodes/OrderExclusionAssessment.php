@@ -12,22 +12,34 @@ namespace MerchBoard\Modules\WooCommerce\CreatorCodes;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * An order that gets no new ledger rows because it is excluded (ADR-068):
- * its decision (stored earlier or now) and, for a decision made now, the
- * creators whose existing rows of the order it takes out, whose cached
- * statistics must be invalidated after COMMIT.
+ * The exclusions of an order (ADR-068): every decision, stored earlier or
+ * now, whose creator's lines get no new ledger rows, and, for decisions made
+ * now, the creators whose existing rows of the order they take out, whose
+ * cached statistics must be invalidated after COMMIT.
  */
 final readonly class OrderExclusionAssessment {
 
 	/**
 	 * Constructor.
 	 *
+	 * @phpstan-param list<OrderExclusion> $exclusions
 	 * @phpstan-param list<int> $invalidate
 	 *
-	 * @param OrderExclusion $exclusion  The order's decision.
-	 * @param bool           $decided    Whether it was decided in this synchronization.
-	 * @param int[]          $invalidate Creators whose cached statistics change.
+	 * @param OrderExclusion[] $exclusions The order's decisions (at least one).
+	 * @param int[]            $invalidate Creators whose cached statistics change.
 	 */
-	public function __construct( public OrderExclusion $exclusion, public bool $decided, public array $invalidate = array() ) {
+	public function __construct( public array $exclusions, public array $invalidate = array() ) {
+	}
+
+	/**
+	 * The creators whose lines of the order are excluded, ascending.
+	 *
+	 * @return list<int>
+	 */
+	public function creator_ids(): array {
+		$ids = array_values( array_unique( array_map( static fn( OrderExclusion $exclusion ): int => $exclusion->creator_id, $this->exclusions ) ) );
+		sort( $ids );
+
+		return $ids;
 	}
 }

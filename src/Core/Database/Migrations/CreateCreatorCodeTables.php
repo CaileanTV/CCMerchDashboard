@@ -27,10 +27,12 @@ defined( 'ABSPATH' ) || exit;
  *   code only while the registration is active, so their UNIQUE keys allow
  *   at most one active code per creator and one active creator per code
  *   (several NULLs are allowed), also when two requests race.
- * - `merchboard_order_exclusions`: the decision for one order, stored at its
- *   first assessment (`excluded`, or `open` when the order has settled rows)
- *   and never deleted automatically. The rows of an order listed here do not
- *   count in sales, profit, payouts or new settlement documents.
+ * - `merchboard_order_exclusions`: the decision for one order and the
+ *   creator whose code it used, stored at its first assessment (`excluded`,
+ *   or `open` when that creator's rows of the order are settled) and never
+ *   deleted automatically. That creator's rows of the order do not count in
+ *   sales, profit, payouts or new settlement documents; other creators' rows
+ *   of the same order count normally.
  *
  * No existing data is changed and no row is made for existing orders: a code
  * applies from its registration on (K1). Idempotent: dbDelta().
@@ -99,13 +101,13 @@ KEY creator (creator_id,id)
 order_id bigint(20) unsigned NOT NULL,
 status varchar(20) NOT NULL,
 reason varchar(20) NOT NULL,
-code_id bigint(20) unsigned DEFAULT NULL,
-creator_id bigint(20) unsigned DEFAULT NULL,
+code_id bigint(20) unsigned NOT NULL,
+creator_id bigint(20) unsigned NOT NULL,
 code varchar(191) NOT NULL,
 coupon_deviation tinyint(1) unsigned NOT NULL DEFAULT 0,
 order_created_at datetime NOT NULL,
 assessed_at datetime NOT NULL,
-PRIMARY KEY  (order_id),
+PRIMARY KEY  (order_id,creator_id),
 KEY status_assessed (status,assessed_at),
 KEY creator (creator_id)
 ) {$charset_collate};";

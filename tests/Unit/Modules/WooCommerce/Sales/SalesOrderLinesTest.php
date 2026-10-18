@@ -46,7 +46,7 @@ final class SalesOrderLinesTest extends TestCase {
 
 		self::assertSame( array( 'wp_merchboard_sales', 'wp_merchboard_order_exclusions', 3, 'wp_merchboard_sales' ), $this->wpdb->prepared[0]['args'] );
 		self::assertSame( array( 'wp_merchboard_sales', 'wp_merchboard_sales', 'wp_merchboard_sales', 'wp_merchboard_order_exclusions', 3, 'wp_merchboard_sales', 25, 25 ), $this->wpdb->prepared[1]['args'] );
-		self::assertStringContainsString( "WHERE NOT EXISTS ( SELECT 1 FROM %i xo WHERE xo.order_id = sales.order_id AND xo.status IN ( 'excluded', 'open' ) ) AND creator_id = %d", $this->wpdb->prepared[1]['query'] );
+		self::assertStringContainsString( "WHERE NOT EXISTS ( SELECT 1 FROM %i xo WHERE xo.order_id = sales.order_id AND xo.creator_id = sales.creator_id AND xo.status IN ( 'excluded', 'open' ) ) AND creator_id = %d", $this->wpdb->prepared[1]['query'] );
 		self::assertStringContainsString( 'ORDER BY s.occurred_at DESC, l.order_item_id DESC LIMIT %d OFFSET %d', $this->wpdb->prepared[1]['query'] );
 	}
 

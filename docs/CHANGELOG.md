@@ -9,7 +9,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 Rettelse: ordrer, som en creator købte med sin egen rabatkode, talte som almindelige salg. Creatoren fik salg, fortjeneste og kommission af den rabatterede pris. Implementeret efter projektejerens tilladelse 2026-10-18 (trin a og b af det godkendte design; ADR-068). Testet automatisk; runtime-test på Merch Dashboard Local udestår og skal gennemføres før produktion.
 
 ### Added
-- **Creatorens egen rabatkode (ADR-068, schema-version 17):** nye tabeller `merchboard_creator_codes` (registreringer, bevares permanent) og `merchboard_order_exclusions` (én afgørelse pr. ordre) i migration 17. Begge bevares ved opt-in-afinstallation.
+- **Creatorens egen rabatkode (ADR-068, schema-version 17):** nye tabeller `merchboard_creator_codes` (registreringer, bevares permanent) og `merchboard_order_exclusions` (én afgørelse pr. ordre og creator) i migration 17. Begge bevares ved opt-in-afinstallation.
 - **Admin:**
   - Afsnittet "Rabatkode" på creatorens side (`merchboard_manage_creator_pricing`) registrerer, skifter og afslutter koden.
   - Kuponen skal findes og må ikke være en gavekortkode. Den behøver ikke at være begrænset til en e-mailadresse, så alle ordrer med koden udelukkes, uanset hvem der køber.
@@ -20,12 +20,12 @@ Rettelse: ordrer, som en creator købte med sin egen rabatkode, talte som almind
 
 ### Changed
 - **Synkroniseringen af sales ledgeren:**
-  - En ordre, hvis kuponkode matcher en registrering, der gjaldt, da ordren blev oprettet, udelukkes helt og varigt. Den får ingen ledger-rækker, uanset antal creators.
+  - Bruger en ordre en kode, hvis registrering gjaldt, da ordren blev oprettet, udelukkes kodens creators linjer varigt og får ingen ledger-rækker. Andre creators' linjer i samme ordre tæller normalt i salg, fortjeneste, payout og ordrehistorik.
   - Eksisterende rækker ændres ikke. Salgsstatistik, fortjeneste, creatorens ordreliste, payout-saldo og nye afregningsbilag udelader dem gennem ét fælles filter; afregnede rækker tæller fortsat i saldoen.
-  - En ordre med afregnede rækker bliver en åben sag uden automatisk tilbageholdelse (trin c er ikke bygget).
+  - Er den creators linjer allerede afregnet, bliver det en åben sag uden automatisk tilbageholdelse (trin c er ikke bygget).
   - Ukendte kupondata giver en fejlet synkronisering (fail closed). Audit: `order_excluded_by_creator_code` (uden aktør).
 - **Ældre ordrer:** ordrer oprettet før en kodes registrering omfattes ikke.
-- **Backfill:** rapporterer en udelukket ordre som "Skipped, not counted".
+- **Backfill:** rapporterer en ordre, hvor alle linjer er udelukket, som "Skipped, not counted"; andre creators' linjer registreres.
 - `AuditTrail::record_system_on_connection()` skriver systemhændelser på låsens forbindelse.
 
 ## [1.0.0] - 2026-10-18

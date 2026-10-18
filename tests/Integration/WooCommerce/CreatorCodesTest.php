@@ -267,16 +267,18 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertNotNull( $this->codes->active_for_creator( $this->creator ) );
 	}
 
-	public function test_an_order_with_the_code_gets_no_ledger_rows_and_a_permanent_decision(): void {
+	public function test_only_the_code_creators_lines_are_excluded_and_the_decision_is_permanent(): void {
 		$this->code_service()->register( $this->creator, 'nova10' );
 		$this->now = '2026-10-05 10:00:00';
-		$this->order( 41, '2026-10-05 09:00:00', array( 'nova10' ), array( $this->line( 11, $this->other ) ) );
+		$this->order( 41, '2026-10-05 09:00:00', array( 'nova10' ), array( $this->line( 4111, $this->creator ), $this->line( 4112, $this->other ) ) );
 
 		$this->sync->sync( 41 );
 
-		self::assertSame( 0, $this->ledger_rows( 41 ), 'Also another creator\'s line is not recorded (the whole order).' );
-		$decision = $this->exclusions->find( 41 );
-		self::assertNotNull( $decision );
+		self::assertSame( array( 's:4112:1' ), $this->keys( 41 ), "Creator B's line counts; creator A's line gets no row (owner decision 2026-10-18)." );
+		self::assertSame( array( $this->other ), $this->ledger_creators( 41 ) );
+		$decisions = $this->exclusions->for_order( 41 );
+		self::assertCount( 1, $decisions );
+		$decision = $decisions[0];
 		self::assertSame( OrderExclusionStatus::Excluded, $decision->status );
 		self::assertSame( $this->creator, $decision->creator_id );
 		self::assertSame( 'nova10', $decision->code );
@@ -289,15 +291,37 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( 'excluded', $audit[0]['decision'] );
 		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT actor_user_id FROM %i WHERE action = %s', $this->table( Tables::AUDIT_LOG ), AuditAction::OrderExcludedByCreatorCode->value ) ), 'A system decision, never the customer.' );
 
-		// Removing the coupon, a refund or a later save never brings it back.
-		$this->order( 41, '2026-10-05 09:00:00', array(), array( $this->line( 11, $this->other ) ), array( self::refund( 900, 11 ) ) );
+		// Removing the coupon, refunds or a later save never bring creator A's line back; B's refund is recorded.
+		$this->order( 41, '2026-10-05 09:00:00', array(), array( $this->line( 4111, $this->creator ), $this->line( 4112, $this->other ) ), array( self::refund( 900, 4111 ), self::refund( 901, 4112 ) ) );
 		$this->sync->sync( 41 );
 		$this->sync->sync( 41 );
 
-		self::assertSame( 0, $this->ledger_rows( 41 ) );
+		self::assertSame( array( 's:4112:1', 'r:4112:901' ), $this->keys( 41 ) );
 		self::assertCount( 1, $this->audit( AuditAction::OrderExcludedByCreatorCode ) );
 	}
 
+	public function test_a_code_without_lines_of_its_creator_excludes_nothing(): void {
+		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->order( 42, '2026-10-05 09:00:00', array( 'nova10' ), array( $this->line( 4211, $this->other ) ) );
+
+		$this->sync->sync( 42 );
+
+		self::assertSame( array( 's:4211:1' ), $this->keys( 42 ) );
+		self::assertSame( array(), $this->exclusions->for_order( 42 ) );
+	}
+
+	public function test_codes_of_two_creators_exclude_both_creators_lines(): void {
+		$this->coupons->add( 502, 'lux10' );
+		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->code_service()->register( $this->other, 'lux10' );
+		$this->order( 43, '2026-10-05 09:00:00', array( 'nova10', 'lux10' ), array( $this->line( 4311, $this->creator ), $this->line( 4312, $this->other ) ) );
+
+		$this->sync->sync( 43 );
+
+		self::assertSame( 0, $this->ledger_rows( 43 ) );
+		self::assertSame( array( $this->creator, $this->other ), array_map( static fn( $decision ): int => $decision->creator_id, $this->exclusions->for_order( 43 ) ) );
+		self::assertSame( 0, ( new SalesOrderLines( $this->wpdb ) )->count( $this->other ) );
+	}
 	public function test_only_orders_created_within_the_registration_period_are_covered(): void {
 		$this->code_service()->register( $this->creator, 'nova10' );
 		$this->now = '2026-10-10 08:00:00';
@@ -327,7 +351,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		$this->sync->sync( 60 );
 
 		self::assertSame( 0, $this->ledger_rows( 60 ) );
-		self::assertNull( $this->exclusions->find( 60 ) );
+		self::assertNull( $this->exclusions->for_order( 60 )[0] ?? null );
 		self::assertSame( array( 'record:60:unexpected' ), $this->marker->calls );
 	}
 
@@ -347,7 +371,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		$this->sync->sync( 70 );
 
 		self::assertSame( 1, $this->ledger_rows( 70 ), 'The existing rows are never changed or reversed (M2).' );
-		self::assertSame( OrderExclusionStatus::Excluded, $this->exclusions->find( 70 )?->status );
+		self::assertSame( OrderExclusionStatus::Excluded, $this->exclusions->for_order( 70 )[0]->status );
 		self::assertSame( array( 1, 1, 1, 1, 1 ), $this->read_models() );
 	}
 
@@ -360,7 +384,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		$this->order( 80, '2026-10-02 09:00:00', array( 'nova10' ) );
 		$this->sync->sync( 80 );
 
-		self::assertSame( OrderExclusionStatus::Open, $this->exclusions->find( 80 )?->status );
+		self::assertSame( OrderExclusionStatus::Open, $this->exclusions->for_order( 80 )[0]->status );
 		self::assertSame( 'open', $this->audit( AuditAction::OrderExcludedByCreatorCode )[0]['decision'] );
 		self::assertTrue( $this->audit( AuditAction::OrderExcludedByCreatorCode )[0]['settled_rows'] );
 
@@ -377,7 +401,14 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( SalesBackfillStatus::NotCounted, $this->sync->preview( 90 )->status );
 		self::assertSame( SalesBackfillStatus::NotCounted, $this->sync->backfill( 90 )->status );
 		self::assertSame( 0, $this->ledger_rows( 90 ) );
-		self::assertNotNull( $this->exclusions->find( 90 ) );
+		self::assertNotNull( $this->exclusions->for_order( 90 )[0] ?? null );
+
+		// With another creator's line, that line is registered.
+		$this->order( 91, '2026-10-05 09:00:00', array( 'nova10' ), array( $this->line( 9111, $this->creator ), $this->line( 9112, $this->other ) ) );
+
+		self::assertSame( SalesBackfillStatus::Registered, $this->sync->preview( 91 )->status );
+		self::assertSame( SalesBackfillStatus::Registered, $this->sync->backfill( 91 )->status );
+		self::assertSame( array( 's:9112:1' ), $this->keys( 91 ) );
 	}
 
 	/**
@@ -462,6 +493,26 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	 */
 	private static function refund( int $id, int $item ): RefundSnapshot {
 		return new RefundSnapshot( $id, self::at( '2026-10-06 09:00:00' ), array( new RefundLineSnapshot( $item, -1, SalesAmount::parse( '-100' ) ) ) );
+	}
+
+	/**
+	 * Event keys of an order's ledger rows, in insertion order.
+	 *
+	 * @param int $order Order.
+	 * @return list<string>
+	 */
+	private function keys( int $order ): array {
+		return array_map( 'strval', $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT event_key FROM %i WHERE order_id = %d ORDER BY id', $this->table( Tables::SALES ), $order ) ) );
+	}
+
+	/**
+	 * Creators of an order's ledger rows, ascending.
+	 *
+	 * @param int $order Order.
+	 * @return list<int>
+	 */
+	private function ledger_creators( int $order ): array {
+		return array_map( 'intval', $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT DISTINCT creator_id FROM %i WHERE order_id = %d ORDER BY creator_id', $this->table( Tables::SALES ), $order ) ) );
 	}
 
 	/**

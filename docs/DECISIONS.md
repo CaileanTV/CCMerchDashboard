@@ -3719,16 +3719,23 @@ Hver creator får en WooCommerce-kupon fra virksomheden, så creatoren kan købe
    - `GET /me/discount-code` (kun `CreatorContext`) returnerer den aktive kode eller null.
    - Profilen viser kortet "Din rabatkode" med forklaringen. Koden hentes og vises først, når creatoren trykker "Vis rabatkode", og kan skjules igen. Koden indgår ikke i andre svar eller i siden.
 3. **Udelukkelse (trin b, M2, designbeslutning 5):**
-   - Ny tabel `merchboard_order_exclusions` med én afgørelse pr. ordre (`excluded` eller `open`), gemt ved første vurdering i synkroniseringen og aldrig slettet automatisk.
-   - En ordre er omfattet, når en af dens kuponkoder matcher en registrering, hvis periode [fra, til) indeholder ordrens WooCommerce-oprettelsestidspunkt. Udløseren er brugen af koden, og hele ordren udelukkes, uanset antal creators.
-   - En udelukket ordre får ingen ledger-rækker, heller ikke senere. Har den allerede rækker, ændres de ikke; alle læsemodeller udelader dem gennem ét fælles filter. Afregnede rækker tæller fortsat med deres gemte værdi i saldoen.
-   - En ordre med rækker i et udstedt bilag bliver `open` (K2). Afgørelsen tages under ordrens lås, med creator-rækkerne låst `FOR UPDATE` i stigende ID-orden (låseprotokollen), i samme transaktion som audit-posten (`order_excluded_by_creator_code`, uden aktør).
+   - Ny tabel `merchboard_order_exclusions` med én afgørelse pr. ordre og creator (`excluded` eller `open`; primærnøgle `(order_id, creator_id)`), gemt ved første vurdering i synkroniseringen og aldrig slettet automatisk.
+   - En registrering omfatter en ordre, når en af ordrens kuponkoder matcher den, og dens periode [fra, til) indeholder ordrens WooCommerce-oprettelsestidspunkt. Udløseren er brugen af koden.
+   - **Pr. creator (projektejerens præcisering 2026-10-18, retter den første 1.0.1, der udelukkede hele ordren):** kun linjerne fra den creator, hvis kode er brugt, udelukkes. Andre creators' linjer i samme ordre tæller normalt i salg, fortjeneste, payout og ordrehistorik. Bruges flere creators' koder, udelukkes hver af deres linjer. En kode uden linjer fra sin creator i ordren udelukker intet.
+   - Den creators linjer får ingen ledger-rækker, heller ikke senere. Har de allerede rækker, ændres de ikke; alle læsemodeller udelader dem gennem ét fælles filter pr. ordre og creator. Afregnede rækker tæller fortsat med deres gemte værdi i saldoen.
+   - Har den creators linjer rækker i et udstedt bilag, bliver afgørelsen `open` (K2). Afgørelsen tages under ordrens lås, med creatorens række låst `FOR UPDATE` (låseprotokollen), i samme transaktion som audit-posten (`order_excluded_by_creator_code`, uden aktør).
    - Ukendte kupondata læses aldrig som "ingen kode": synkroniseringen fejler og skriver intet.
 4. **Admin:**
    - Sektionen "Rabatkode" på creatorens side med historik og en advarsel ved afvigelser fra K5. En afvigelse afslutter aldrig registreringen; afgørelsen gemmer et afvigelsesflag.
    - Ordrehistorikken markerer ordrer og viser alle afgørelser med filter på åbne sager.
 5. **Ældre ordrer:** omfattes ikke (projektejerens beslutning 2026-10-18; K1).
 6. **Migration og version:** migration 17 (`CreateCreatorCodeTables`), version 1.0.1. Fase 25's migration (alert-tabellen) flyttes til 18 efter projektejerens beslutning 2026-10-18.
+7. **Undtagelse fra reglerne for migrationer og tags (projektejerens udtrykkelige beslutning 2026-10-18):**
+   - Den første 1.0.1 (tag `v1.0.1` på `e8743f2` og en draft-release med 0 downloads, aldrig udgivet) udelukkede hele ordren.
+   - Rettelsen genbruger version 1.0.1: tagget og draft-releasen slettes og laves igen på den rettede commit.
+   - Migration 17 er ændret på stedet: `merchboard_order_exclusions` har nu nøglen `(order_id, creator_id)`. Det er sket, selvom DATABASE.md siger, at en udgivet migration aldrig ændres, og ADR-028 kun tillader sletning af et pushet tag efter projektejerens beslutning. Det er tilladt, fordi 1.0.1 ikke var udgivet eller installeret.
+   - Merch Dashboard Local havde kørt den gamle migration 17 og er rettet med en `ALTER TABLE`, så data er bevaret.
+   - Et site, der har kørt den gamle migration 17, får ikke den nye nøgle. Projektejeren bekræfter, at det kun er Local.
 
 ## Alternatives considered
 - **Tilbageførsler i ledgeren for allerede synkroniserede ordrer** (udviklingens første forslag 2026-10-12): fravalgt med M2 (designbeslutning 1), fordi "Ophæv" (trin c) så skulle genskabe rækker.

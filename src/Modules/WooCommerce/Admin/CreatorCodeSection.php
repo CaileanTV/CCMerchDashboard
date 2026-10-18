@@ -96,7 +96,7 @@ final class CreatorCodeSection {
 		}
 
 		echo '<hr><h2 id="merchboard-discount-code">' . esc_html__( 'Discount code', 'merchboard' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'The creator\'s own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. Orders that use it do not count in the creator\'s sales, profit or payouts, whichever creators\' products they contain. Every order with the code counts nowhere, whoever placed it. A code applies to orders created from its registration on; earlier orders are never changed.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'The creator\'s own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. In an order that uses it, the creator\'s own products do not count in the creator\'s sales, profit or payouts, whoever placed the order; other creators\' products in the same order count normally. A code applies to orders created from its registration on; earlier orders are never changed.', 'merchboard' ) . '</p>';
 
 		// Read-only display parameter; nothing is changed by this request.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended

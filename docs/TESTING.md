@@ -301,12 +301,12 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
   - én aktiv kode pr. creator og pr. kode, også direkte mod UNIQUE-nøglerne;
   - serialisering med to databaseforbindelser (lås pr. kode og pr. creator giver `busy`, og intet gemmes);
   - skift og afslutning med historik, og afvigelser (afslutter aldrig registreringen);
-  - udelukkelse af hele ordren uden ledger-rækker, en varig afgørelse (fjernet kupon og refund giver ingen rækker) og audit uden aktør;
+  - kun den kode-ejende creators linjer udelukkes, mens en anden creators linje og dens refundering registreres; afgørelsen er varig (fjernet kupon og refund giver ingen rækker for den udelukkede creator), og audit sker uden aktør; en kode uden linjer fra sin creator udelukker intet, og to creators' koder udelukker begges linjer;
   - perioden [fra, til) og koder fra andre registreringer;
   - ukendte kupondata (fejlmarkør, ingen rækker og ingen afgørelse);
   - en ordre med eksisterende rækker forsvinder fra statistik, profit, payout-saldo, ikke-afregnede rækker og ordrelinjer, uden at rækkerne ændres;
   - en åben sag ved afregnede rækker, hvor den afregnede række fortsat tæller i saldoen;
-  - backfill og dry run rapporterer "not counted".
+  - backfill og dry run rapporterer "not counted", når alle linjer er udelukket, og registrerer ellers de andre creators' linjer.
 - **Unit:** tabel-, retention- og migrationslister, audit-handlinger og bindingen i `SalesOrderLines`.
 - **Jest (`discount-code.test.tsx`):** validering af svaret, at koden hverken hentes eller vises før klik, at den kan skjules igen, ingen kode, og fejl med "Prøv igen" uden servermeddelelser.
 - **Ikke udført:** runtime-test på Merch Dashboard Local med rigtig WooCommerce (kupon, checkout med koden, HPOS og legacy) og en test med to forbindelser af en udelukkelse samtidig med et afregningsbilag (låseprotokollen genbruger `CreatorRowLocks`, som er testet i `CreatorRowLocksTest`).

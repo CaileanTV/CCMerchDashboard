@@ -15,6 +15,7 @@ use DateTimeZone;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessment;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionView;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessor;
 use Throwable;
 
@@ -32,10 +33,11 @@ defined( 'ABSPATH' ) || exit;
  * 4. Failure marker and technical log: set on failure, removed on success.
  *
  * Creator codes (ADR-068): inside the transaction, before the planner, the
- * OrderExclusionAssessor decides whether the order is excluded by a
- * creator's own discount code; an excluded order gets no ledger rows (its
- * existing rows stay, and the read models leave them out). The backfill
- * reports such an order as not counted.
+ * OrderExclusionAssessor decides which creators' lines the order excludes
+ * because it used their own discount code; those lines get no ledger rows
+ * (their existing rows stay, and the read models leave them out), and the
+ * other creators' lines are planned as usual (OrderExclusionView). The
+ * backfill reports an order whose lines are all excluded as not counted.
  *
  * Never throws: every error becomes a failure code (lock_timeout,
  * connection_changed, db_error, a planner code, or unexpected), is logged
@@ -80,7 +82,8 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 	private ?SalesPlanFailure $failed_plan = null;
 
 	/**
-	 * Whether the last locked() found the order excluded (ADR-068).
+	 * Whether the last locked() wrote nothing because all of the order's
+	 * lines are excluded (ADR-068).
 	 *
 	 * @var bool
 	 */
@@ -273,12 +276,25 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 				return $order;
 			}
 
-			// Excluded by a creator code (ADR-068): it would not count.
-			if ( null !== $this->exclusions && $this->exclusions->would_exclude( $order ) ) {
-				return SalesBackfillOutcome::of( SalesBackfillStatus::NotCounted );
+			$state = $this->repository->state( $order_id );
+
+			// Creator codes (ADR-068): the excluded creators' lines are left out.
+			if ( null !== $this->exclusions ) {
+				$excluded = $this->exclusions->excluded_creators( $order );
+
+				if ( array() !== $excluded ) {
+					$view = OrderExclusionView::without( $order, $state, $excluded );
+
+					if ( ! $view->has_lines() ) {
+						return SalesBackfillOutcome::of( SalesBackfillStatus::NotCounted );
+					}
+
+					$order = $view->order;
+					$state = $view->state;
+				}
 			}
 
-			$result = $this->planner->plan( $order, $this->repository->state( $order_id ), ( $this->clock )() );
+			$result = $this->planner->plan( $order, $state, ( $this->clock )() );
 
 			return null !== $result->failure
 				? SalesBackfillOutcome::failed( $result->failure->code )
@@ -332,7 +348,7 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 			return SalesBackfillOutcome::of( SalesBackfillStatus::HasHistory );
 		}
 
-		// Excluded by a creator code (ADR-068): it does not count.
+		// All lines excluded by creator codes (ADR-068): it does not count.
 		if ( $this->excluded ) {
 			return SalesBackfillOutcome::of( SalesBackfillStatus::NotCounted );
 		}
@@ -425,12 +441,13 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 				$failure    = null;
 				$admitted   = true;
 				$assessment = null;
+				$nothing    = false;
 
 				$this->excluded = false;
 
 				$this->repository->write(
 					$order_id,
-					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted, &$assessment ): ?SalesLedgerWrite {
+					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted, &$assessment, &$nothing ): ?SalesLedgerWrite {
 						// Null: the repository writes nothing, not even a G1 `pending` (D1, T5b).
 						if ( null !== $admit && ! $admit( $state ) ) {
 							$admitted = false;
@@ -438,11 +455,22 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 							return null;
 						}
 
-						// ADR-068: an excluded order gets no ledger rows (not even `pending`).
+						// ADR-068: the excluded creators' lines get no ledger rows; the other
+						// creators' lines of the order are planned as usual.
 						$assessment = $this->exclusions?->assess( $order, $state, $this->repository, $now );
 
 						if ( null !== $assessment ) {
-							return null;
+							$view = OrderExclusionView::without( $order, $state, $assessment->creator_ids() );
+
+							// Only excluded lines: nothing is written, not even `pending`.
+							if ( ! $view->has_lines() ) {
+								$nothing = true;
+
+								return null;
+							}
+
+							$order = $view->order;
+							$state = $view->state;
 						}
 
 						$result  = $this->planner->plan( $order, $state, $now );
@@ -467,7 +495,7 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 				// Committed: write() returning means COMMIT.
 				if ( $assessment instanceof OrderExclusionAssessment ) {
-					$this->excluded = true;
+					$this->excluded = $nothing;
 					$this->exclusions?->committed( $assessment );
 				}
 
