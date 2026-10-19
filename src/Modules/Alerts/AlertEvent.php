@@ -35,7 +35,6 @@ final readonly class AlertEvent {
 	 * @param int               $quantity            Quantity.
 	 * @param int               $image_id            Image attachment, 0 for none.
 	 * @param int[]             $category_ids        The product's direct `product_cat` terms.
-	 * @param string            $customer_first_name Billing first name, '' for none.
 	 * @param string            $customer_username   Voluntary username, '' for none.
 	 * @param DateTimeImmutable $created_at          When the alert was recorded (UTC).
 	 * @param int               $id                  Row id, 0 before it is stored.
@@ -52,7 +51,6 @@ final readonly class AlertEvent {
 		public int $quantity,
 		public int $image_id,
 		public array $category_ids,
-		public string $customer_first_name,
 		public string $customer_username,
 		public DateTimeImmutable $created_at,
 		public int $id = 0

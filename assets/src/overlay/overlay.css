@@ -1,0 +1,71 @@
+/*
+ * Alert overlay for OBS (ADR-065). The boxes are placed and sized by the
+ * page's inline style sheet (from the overlay settings) on a 1920 × 1080
+ * canvas; this file only adds the transparent page and the animation.
+ */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: transparent;
+}
+
+.merchboard-overlay__el {
+	position: fixed;
+	pointer-events: none;
+	transition:
+		opacity var(--merchboard-anim, 0.5s) ease,
+		transform var(--merchboard-anim, 0.5s) ease;
+}
+
+.merchboard-overlay__el--hidden {
+	opacity: 0;
+	transform: translateY(20px);
+}
+
+.merchboard-overlay__el--visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.merchboard-overlay__el--hiding {
+	opacity: 0;
+	transform: translateY(-20px);
+}
+
+.merchboard-overlay__thumb {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: var(--merchboard-img-border-radius, 4px);
+}
+
+.merchboard-overlay__text {
+	font-family: var(--merchboard-font-family, inherit);
+	font-size: var(--merchboard-font-size, 32px);
+	font-weight: var(--merchboard-font-weight, 700);
+	color: var(--merchboard-text-color, #fff);
+	text-shadow: var(--merchboard-text-shadow, 2px 2px 4px rgba(0, 0, 0, 0.8));
+	text-align: var(--merchboard-text-align, center);
+	line-height: 1.3;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+	overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.merchboard-overlay__el {
+		transform: none !important;
+	}
+}

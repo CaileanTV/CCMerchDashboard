@@ -32,7 +32,7 @@ final class AlertEventRepository {
 	 */
 	public const MAX_CATEGORIES = 40;
 
-	private const COLUMNS = 'id, creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_first_name, customer_username, created_at';
+	private const COLUMNS = 'id, creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_username, created_at';
 
 	/**
 	 * Constructor.
@@ -52,8 +52,8 @@ final class AlertEventRepository {
 	public function insert( AlertEvent $event ): bool {
 		$wpdb = $this->wpdb;
 		$sql  = $wpdb->prepare(
-			'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_first_name, customer_username, created_at)
-			VALUES (%d, %d, %s, %d, %d, %d, %s, %s, %d, %d, %s, %s, %s, %s)
+			'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_username, created_at)
+			VALUES (%d, %d, %s, %d, %d, %d, %s, %s, %d, %d, %s, %s, %s)
 			ON DUPLICATE KEY UPDATE id = id',
 			$this->table(),
 			$event->creator_id,
@@ -67,7 +67,6 @@ final class AlertEventRepository {
 			$event->quantity,
 			$event->image_id,
 			self::categories( $event->category_ids ),
-			self::cut( $event->customer_first_name, 191 ),
 			self::cut( $event->customer_username, 191 ),
 			$event->created_at->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' )
 		);
@@ -105,6 +104,47 @@ final class AlertEventRepository {
 	}
 
 	/**
+	 * The id of the creator's newest alert, 0 when there is none: the
+	 * overlay's starting cursor, so it only shows alerts from now on.
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function latest_id( int $creator_id ): int {
+		$wpdb = $this->wpdb;
+		$id   = $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(id) FROM %i WHERE creator_id = %d', $this->table(), $creator_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return is_numeric( $id ) ? (int) $id : 0;
+	}
+
+	/**
+	 * The creator's alerts after a cursor (row id), oldest first. Ids grow
+	 * with every insert, so a cursor never skips or repeats an alert.
+	 *
+	 * @param int $creator_id Creator.
+	 * @param int $after_id   Cursor: the last id already delivered.
+	 * @param int $limit      At most this many (1–50).
+	 * @return list<AlertEvent>
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function after( int $creator_id, int $after_id, int $limit ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id = %d AND id > %d ORDER BY id LIMIT %d', $this->table(), $creator_id, max( 0, $after_id ), max( 1, min( 50, $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
+
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( self::hydrate( ... ), $rows );
+	}
+
+	/**
 	 * An alert from a row.
 	 *
 	 * @param array<string, mixed> $row Row.
@@ -131,7 +171,6 @@ final class AlertEventRepository {
 			self::int( $row['quantity'] ?? null ),
 			self::int( $row['image_id'] ?? null ),
 			is_array( $categories ) ? array_values( array_filter( array_map( 'intval', $categories ), static fn( int $id ): bool => $id > 0 ) ) : array(),
-			(string) ( $row['customer_first_name'] ?? '' ),
 			(string) ( $row['customer_username'] ?? '' ),
 			$created,
 			self::int( $row['id'] ?? null )

@@ -60,7 +60,6 @@ final class WooCommercePaidOrderReader implements PaidOrderReader {
 		return new PaidOrder(
 			$order_id,
 			(string) $order->get_order_number(),
-			self::text( $order->get_billing_first_name( 'edit' ) ),
 			self::username( $order ),
 			$lines
 		);

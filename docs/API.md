@@ -94,6 +94,19 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 | `GET`/`POST` | `/admin/creators` | `merchboard_manage_creators` |
 | `GET`/`PATCH` | `/admin/creators/{id}` | `merchboard_manage_creators` |
 
+### Offentlig: alert-overlayets feed ✅ (fase 25, trin 25.3, ADR-065 pkt. 4)
+
+`GET /merchboard/v1/alerts/overlay/{overlay_id}/feed` er pluginets eneste offentlige route (`permission_callback` = `__return_true`, besluttet i ADR-065). OBS kan ikke logge ind, så det hemmelige overlay-ID i stien er adgangen (32 hex-tegn, 128 bit, sammenlignet med `hash_equals()`).
+
+| Parameter | Type | Betydning |
+| --- | --- | --- |
+| `after` | heltal ≥ 0, valgfri | Cursor: id'et på den sidste leverede alert. Uden `after` svares straks med creatorens nyeste alert-id som cursor og ingen alerts, så overlayet kun viser alerts fra nu af |
+| `wait` | boolean, standard `true` | Long-poll: serveren tjekker hvert sekund i op til 8 sekunder, før den svarer uden alerts |
+
+Svar `200`: `{ cursor, version, alerts: [ { id, image, text, secondary } ] }`, højst 20 alerts, ældste først. `text` og `secondary` er færdig tekst (skabelonen med variablerne udfyldt; `$FirstName` og `$UserName` giver kundens frivillige brugernavn eller "Anonymous"), `image` er en billed-URL på samme site eller `""`. `version` skifter, når indstillingerne eller ID'et ændres; siden genindlæses så. Ingen kunde- eller ordre-ID'er. Headers: `Cache-Control: no-store`, `X-Robots-Tag: noindex`.
+
+Fejl: `404 merchboard_overlay_not_found` (ukendt eller ugyldigt ID, eller inaktiv creator; samme svar for alle), `429 merchboard_too_many_requests` (mere end 60 forespørgsler pr. overlay pr. minut; kun eksisterende overlays tælles).
+
 ### Integrations: `/merchboard/v1/integrations/{provider}/webhook` (fremtid)
 
 Offentlige endpoints til eksterne tjenester. Permission består af **HMAC-signaturverifikation** med en secret fra `wp-config.php`, tidsstempel-/replay-check og streng payload-validering. Behandlingen er asynkron (Action Scheduler), og svaret kommer hurtigt.

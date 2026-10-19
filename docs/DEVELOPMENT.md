@@ -50,7 +50,7 @@ node bin/composer.mjs install
 | `npm test` | PHPUnit unit-tests (Brain Monkey) og Jest |
 | `npm run test:php` / `npm run test:js` | Kun PHPUnit / kun Jest (dashboardet) |
 | `npm run typecheck` | TypeScript strict-typetjek af `assets/src` (`tsc --noEmit`) |
-| `npm run build` / `npm run start` | Bygger dashboardet til `build/` (produktion) / bygger og overvåger (udvikling) |
+| `npm run build` / `npm run start` | Bygger dashboardet og alert-overlayet til `build/` (produktion) / bygger og overvåger (udvikling) |
 | `npm run i18n` | Bygger dashboardet og regenererer `languages/`: POT (PHP, templates og `build/`), opdaterer PO, kompilerer MO og JS-JSON (`wp-cli/i18n-command`) |
 | `npm run package` | Bygger dashboardet og den installérbare plugin-ZIP `dist/merchboard-<udgave>-<version>.zip` (se [Distributionspakke](#distributionspakke)) |
 | `npm run test:integration` | Integrationstests mod rigtig WordPress og MariaDB/MySQL (se [TESTING.md](TESTING.md#integrationstests-fase-7)) |
@@ -179,9 +179,9 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 | --- | --- |
 | `merchboard.php`, `uninstall.php` | Plugin-entry og opt-in-afinstallation |
 | `src/` | Al PHP-kode inkl. egen autoloader (ADR-017) |
-| `templates/` | Dashboard-shell og 403-side |
+| `templates/` | Dashboard-shell, 403-side og alert-overlayets side |
 | `assets/js/` | Admin-scripts uden build (brugersøgning i creator-formularen) |
-| `build/` | Dashboardets bundle: `dashboard.js`, `dashboard.css`, `dashboard-rtl.css` og `dashboard.asset.php`. Uden source maps |
+| `build/` | Dashboardets bundle: `dashboard.js`, `dashboard.css`, `dashboard-rtl.css` og `dashboard.asset.php`, og alert-overlayets: `overlay.js`, `overlay.css`, `overlay-rtl.css` og `overlay.asset.php`. Uden source maps |
 | `languages/` | `merchboard.pot`, `merchboard-da_DK.po`/`.mo` og JS-oversættelsen (`merchboard-da_DK-<md5(build/dashboard.js)>.json`) |
 
 **Aldrig med:** `vendor/` (ingen runtime-dependencies), `node_modules/`, `assets/src/` (TypeScript-kilder og Jest-tests), `tests/`, `docs/`, `bin/`, `.git*`, `.github/`, `.tools/`, konfiguration (`composer.*`, `package*.json`, `tsconfig.json`, `jest.config.js`, lint/test-konfiguration), caches, logs, databaser, `.env` og credentials. `.distignore` og `export-ignore` i `.gitattributes` er holdt i sync med allowlisten.

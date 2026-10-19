@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-18T21:49:00+00:00\n"
+"PO-Revision-Date: 2026-10-19T08:13:01+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1128,6 +1128,14 @@ msgstr "Slået til, men sat på pause, mens MerchAlert er aktivt."
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:114
 msgid "On. Alerts are recorded when orders are paid."
 msgstr "Slået til. Alerts registreres, når ordrer betales."
+
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:91
+msgid "Too many requests. Please try again later."
+msgstr "For mange forespørgsler. Prøv igen senere."
+
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:114
+msgid "This overlay does not exist."
+msgstr "Dette overlay findes ikke."
 
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:135

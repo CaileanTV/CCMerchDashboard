@@ -6,7 +6,7 @@
 Når en kunde køber en creators merch, skal creatoren kunne vise det live på sin stream: en alert i OBS-overlayet med billede, tekst og lyd og eventuelt en besked i Twitch-chatten. Funktionen kom fra projektejerens ældre plugin MerchAlert og samles nu i Merch Dashboard, så creators kun har ét login og én kategori-mapping.
 
 ## Current status
-I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Overlay, dashboard-sektion, lyde, historik-UI, chatbot, admin-ekstra og import mangler.
+I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Trin 25.3 (2026-10-19, ikke committet): den offentlige overlay-side for OBS med feed (ny og legacy URL); overlays kan først oprettes fra dashboardet i 25.4. Dashboard-sektion, designer og fonte, lyde, historik-UI, chatbot, admin-ekstra og import mangler.
 
 ## User-facing functionality
 Creatoren får sektionen **"Alerts"** i creator-dashboardet med undersiderne:
@@ -17,7 +17,7 @@ Creatoren får sektionen **"Alerts"** i creator-dashboardet med undersiderne:
 - **Historik:** ordrer med alerts, 10 pr. side, med detaljer pr. ordre, "Anonymisér kundenavne" (huskes i browseren) og gensend af en enkelt alert eller hele ordren (gensender også chatbeskeden).
 - **Chatbot:** vejledning (`/mod` og `/vip` til botten), slå beskeder til og fra, beskedskabelon, preview og testbesked i creatorens kanal. Creatoren kan ikke selv vælge kanal.
 
-Skabelonvariabler i overlayet: `$FirstName`, `$OrderNumber`, `$Product`, `$Quantity`, `$Category`, `$Variation` og `$UserName`. I chatbeskeder: `$UserName`, `$Name`, `$Product` og `$Amount`.
+Skabelonvariabler i overlayet: `$FirstName`, `$OrderNumber`, `$Product`, `$Quantity`, `$Category`, `$Variation` og `$UserName`. I chatbeskeder: `$UserName`, `$Name`, `$Product` og `$Amount`. **Ingen kundenavne (projektejerens beslutning 2026-10-19):** `$FirstName`, `$Name` og `$UserName` giver alle kundens frivillige brugernavn eller "Anonymous", så skabeloner fra MerchAlert virker uændret. Variablerne erstattes i ét gennemløb, så et produktnavn med fx `$Category` ikke udvides igen.
 
 Kunden kan i checkout angive et valgfrit brugernavn, som kan vises i alerts (`$UserName`).
 
@@ -35,24 +35,25 @@ Settings får sektionen **"Alerts"**: slå alerts til og fra, poll-interval, gr�
 ## Technical implementation
 - **Modul:** `src/Modules/Alerts/` (`AlertsModule`), registreret sammen med WooCommerce-modulet.
 - **Routing:** `woocommerce_order_status_processing`/`_completed` → creatoren pr. ordrelinje via `ProductCreatorLink::creator_id()` (samme tilskrivning som sales ledgeren; kategori-mappingen sætter linket) → én række i `merchboard_alert_events` pr. ordrelinje og overlay.
-- **Overlay-side:** offentlig, standalone HTML på et hemmeligt overlay-ID; long-poll med short-poll som fallback. Legacy-routes `/ccmerch-alert/creator-overlay/{id}/` og `/ccmerch-alert/overlay/{id}/` bevarer migrerede OBS-URL'er (ADR-065 pkt. 5).
+- **Overlay-side ✅ (25.3):** `OverlayRoute` (`/merchboard-alerts/overlay/{id}/`, legacy `/ccmerch-alert/creator-overlay/{id}/`, kun når MerchAlert ikke er aktivt; uden pretty permalinks `?merchboard_alert_overlay={id}`) → `OverlayPage` (standalone HTML i `templates/alerts/overlay.php`, egen CSP, `noindex`, `Referrer-Policy: no-referrer`) med `OverlaySettings` som validerede CSS-variabler og bokse og overlay-bundlet (`assets/src/overlay/`, `OverlayAssets`). Bundlet long-poller `GET merchboard/v1/alerts/overlay/{id}/feed` (`OverlayFeedController` → `OverlayFeed`: cursor på alert-id, op til 8 sekunders venten, `OverlayRateLimiter` 60 pr. minut) og viser alerts med MerchAlerts animation; teksterne bygges af `AlertTemplate`. Legacy-URL'en for det globale overlay (`/ccmerch-alert/overlay/{id}/`) kommer med det globale overlay i 25.9.
 - **Dashboard:** React-sektion registreret via `merchboard_dashboard_sections` og `assets/src/dashboard/app/pages.tsx`; REST under `merchboard/v1/me/alerts`.
 - **Chatbot:** Twitch Helix via `wp_remote_*`, afsendt af Action Scheduler-jobs (ADR-066).
 - **Vagter:** kill switch (`alerts_enabled`) og ingen alerts, mens MerchAlert er aktivt.
 
 ## Relevant files
 - ✅ `src/Modules/Alerts/`: `AlertsModule`, `AlertsAvailability` (kill switch og MerchAlert-vagt), `AlertHooks`, `AlertRouter`, `PaidOrderReader`/`WooCommercePaidOrderReader`, `PaidOrder`/`PaidOrderLine`, `AlertEvent`/`AlertEventRepository`, `AlertSettings`/`AlertSettingsException` og `Admin/AlertsSettingsSection`/`AlertsSettingsActions`.
-- ✅ `src/Core/Database/Migrations/CreateAlertEventsTable.php` (migration 18).
+- ✅ `src/Modules/Alerts/Overlay/`: `AlertOverlay`/`AlertOverlayRepository`, `OverlayId`, `OverlaySettings`, `AlertTemplate`, `OverlayFeed`, `OverlayFeedController`, `OverlayRateLimiter`, `OverlayRoute`, `OverlayPage` og `OverlayAssets`; `templates/alerts/overlay.php`; `assets/src/overlay/` (`feed.ts`, `player.ts`, `index.ts`, `overlay.css`).
+- ✅ `src/Core/Database/Migrations/CreateAlertEventsTable.php` (migration 18) og `CreateAlertOverlaysTable.php` (migration 19).
 - ✅ Tests: `tests/Unit/Modules/Alerts/`, `tests/Integration/Alerts/` og `tests/Integration/Database/MigrationTest.php`.
-- Planlagt: `assets/src/dashboard/sections/alerts/…` og et separat overlay-script.
+- Planlagt: `assets/src/dashboard/sections/alerts/…`.
 
 ## Database/data used
-Planlagt (migrationer fra 18; detaljer i DATABASE.md ved implementeringen):
+Migrationer fra 18 (detaljer i DATABASE.md):
 
 | Data | Indhold |
 | --- | --- |
-| `merchboard_alert_events` ✅ | Schema-version 18: én række pr. ordrelinje og creator (`UNIQUE (order_item_id, creator_id)`); historikken (kundens fornavn og brugernavn) |
-| `merchboard_alert_overlays` | Planlagt (25.3/25.4): overlay pr. creator, `overlay_id`, indstillinger (JSON) |
+| `merchboard_alert_events` ✅ | Schema-version 18: én række pr. ordrelinje og creator (`UNIQUE (order_item_id, creator_id)`); historikken (kundens frivillige brugernavn; fornavnet blev fjernet af migration 19) |
+| `merchboard_alert_overlays` ✅ | Schema-version 19: overlay pr. creator, hemmeligt `overlay_id` (32 hex), indstillinger (JSON) |
 | `merchboard_alert_chatbot` | Twitch-kanal, til/fra og skabelon pr. creator |
 | `merchboard_alert_chat_messages` | Log over sendte chatbeskeder; hindrer dobbelte beskeder |
 | `merchboard_alert_fonts` | Google Fonts-katalog med godkendelse |
@@ -67,7 +68,7 @@ Planlagt (migrationer fra 18; detaljer i DATABASE.md ved implementeringen):
 - Overlay-siden: hemmeligt overlay-ID, `hash_equals` og rate-limit.
 
 ## API endpoints
-Planlagt under `merchboard/v1/me/alerts`: overlay og indstillinger, nyt overlay-ID, testalert, preview-data, historik og detaljer, gensend, lyd (upload og sletning) og chatbot (indstillinger, preview og testbesked). Dokumenteres i API.md ved implementeringen.
+✅ Offentligt: `GET merchboard/v1/alerts/overlay/{overlay_id}/feed` (API.md, ADR-065 pkt. 4). Planlagt under `merchboard/v1/me/alerts`: overlay og indstillinger, nyt overlay-ID, testalert, preview-data, historik og detaljer, gensend, lyd (upload og sletning) og chatbot (indstillinger, preview og testbesked). Dokumenteres i API.md ved implementeringen.
 
 ## Hooks
 Lytter på `woocommerce_order_status_processing` og `woocommerce_order_status_completed`. Domæne-events og jobnavne følger `merchboard_alerts_<…>` (MODULES.md).
@@ -79,7 +80,9 @@ WooCommerce-modulet (`ProductCreatorLink`, kategori-mapping, `JobQueue`/Action S
 Planlagt: unit-tests for routing, skabeloner, validering af CSS-værdier, kryptering og import-mapping; integrationstests for migrationer, duplikatvagt, REST-adgang (kun egen creator), overlay-ID og import; Jest for sektionen og API-validators.
 
 ## Known limitations
-- Personoplysninger (kundens fornavn og brugernavn) gemmes i alert-historikken og kan vises i overlay og Twitch-chat; retention er ikke besluttet.
+- Kundens frivillige brugernavn gemmes i alert-historikken og vises i overlay og Twitch-chat; retention er ikke besluttet.
+- Overlayet viser kun produktbilleder fra sitet selv (CSP); billeder på et eksternt CDN vises ikke.
+- Feedets long-poll holder en PHP-proces i op til 8 sekunder pr. åbent overlay (som i MerchAlert).
 - Google Fonts sender brugerens IP-adresse til Google (GDPR-forbehold, ADR-067).
 - Twitch-tokens migreres ikke; botten skal forbindes igen efter importen.
 

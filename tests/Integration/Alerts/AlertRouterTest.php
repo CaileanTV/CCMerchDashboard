@@ -132,7 +132,6 @@ final class AlertRouterTest extends IntegrationTestCase {
 				new PaidOrderLine( 1002, $mug, 0, 'Mug', '', 1, 0 ),
 				new PaidOrderLine( 1003, $sticker, 0, 'Sticker', '', 1, 0 ),
 			),
-			'Anna',
 			'anna_streams'
 		);
 
@@ -150,7 +149,6 @@ final class AlertRouterTest extends IntegrationTestCase {
 		self::assertSame( 2, $hoodie_alert->quantity );
 		self::assertSame( 55, $hoodie_alert->image_id );
 		self::assertEqualsCanonicalizing( array( (int) $shirts['term_id'], (int) $clothing['term_id'] ), $hoodie_alert->category_ids );
-		self::assertSame( 'Anna', $hoodie_alert->customer_first_name );
 		self::assertSame( 'anna_streams', $hoodie_alert->customer_username );
 		self::assertSame( '2026-10-18 12:00:00', $hoodie_alert->created_at->format( 'Y-m-d H:i:s' ) );
 		self::assertSame( array(), $events[1]->category_ids );
@@ -198,7 +196,7 @@ final class AlertRouterTest extends IntegrationTestCase {
 	public function test_a_database_failure_is_logged_without_personal_data_and_never_thrown(): void {
 		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
 		$product = $this->posts->add( 'Hoodie', 'publish', array( (string) $creator->id ) );
-		$this->order( 101, array( $this->line( 1001, $product ) ), 'Anna', 'anna_streams' );
+		$this->order( 101, array( $this->line( 1001, $product ) ), 'anna_streams' );
 		$drop = $this->wpdb->prepare( 'DROP TABLE %i', Tables::name( $this->wpdb, Tables::ALERT_EVENTS ) );
 		self::assertIsString( $drop );
 		$this->wpdb->query( $drop );
@@ -208,7 +206,6 @@ final class AlertRouterTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->logger->entries );
 		self::assertSame( 'error', $this->logger->entries[0]['level'] );
 		self::assertSame( array( 101 ), array( $this->logger->entries[0]['context']['order_id'] ) );
-		self::assertStringNotContainsString( 'Anna', (string) wp_json_encode( $this->logger->entries ) );
 		self::assertStringNotContainsString( 'anna_streams', (string) wp_json_encode( $this->logger->entries ) );
 	}
 
@@ -216,14 +213,13 @@ final class AlertRouterTest extends IntegrationTestCase {
 		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
 		$product = $this->posts->add( 'Hoodie', 'publish', array( (string) $creator->id ) );
 		$long    = str_repeat( 'æ', 300 );
-		$this->order( 101, array( new PaidOrderLine( 1001, $product, 0, $long, $long, 1, 0 ) ), $long, $long );
+		$this->order( 101, array( new PaidOrderLine( 1001, $product, 0, $long, $long, 1, 0 ) ), $long );
 
 		self::assertSame( 1, $this->router()->order_paid( 101 ) );
 
 		$event = $this->repository()->for_order( 101 )[0];
 		self::assertSame( 255, mb_strlen( $event->product_name ) );
 		self::assertSame( 255, mb_strlen( $event->variation ) );
-		self::assertSame( 191, mb_strlen( $event->customer_first_name ) );
 		self::assertSame( 191, mb_strlen( $event->customer_username ) );
 	}
 
@@ -267,11 +263,10 @@ final class AlertRouterTest extends IntegrationTestCase {
 	 *
 	 * @param int             $order_id   Order id.
 	 * @param PaidOrderLine[] $lines      Lines.
-	 * @param string          $first_name First name.
 	 * @param string          $username   Username.
 	 */
-	private function order( int $order_id, array $lines, string $first_name = 'Anna', string $username = '' ): void {
-		$this->orders[ $order_id ] = new PaidOrder( $order_id, '#' . $order_id, $first_name, $username, $lines );
+	private function order( int $order_id, array $lines, string $username = '' ): void {
+		$this->orders[ $order_id ] = new PaidOrder( $order_id, '#' . $order_id, $username, $lines );
 	}
 
 	/**

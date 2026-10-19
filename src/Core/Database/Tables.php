@@ -188,6 +188,12 @@ final class Tables {
 	public const ALERT_EVENTS = 'merchboard_alert_events';
 
 	/**
+	 * Alert overlays, schema version 19 (ADR-065): one per creator, with the
+	 * secret overlay id of the OBS browser source and the settings (JSON).
+	 */
+	public const ALERT_OVERLAYS = 'merchboard_alert_overlays';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -219,6 +225,7 @@ final class Tables {
 		self::CREATOR_CODES,
 		self::ORDER_EXCLUSIONS,
 		self::ALERT_EVENTS,
+		self::ALERT_OVERLAYS,
 	);
 
 	/**

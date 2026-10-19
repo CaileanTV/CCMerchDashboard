@@ -149,6 +149,13 @@ final class RecordingWpdb extends wpdb {
 	public ?bool $columns_exist = null;
 
 	/**
+	 * Columns dropped by prepared "ALTER TABLE %i DROP COLUMN …" statements, "table.column" => true.
+	 *
+	 * @var array<string, true>
+	 */
+	public array $dropped_columns = array();
+
+	/**
 	 * Tables dropped by prepared "DROP TABLE IF EXISTS %i" statements, name => true.
 	 *
 	 * @var array<string, true>
@@ -230,6 +237,10 @@ final class RecordingWpdb extends wpdb {
 
 		if ( null !== $prepared && 'SHOW COLUMNS FROM %i LIKE %s' === $prepared['query'] && ! array_key_exists( (string) $query, $this->vars ) ) {
 			$column = (string) $prepared['args'][1];
+
+			if ( isset( $this->dropped_columns[ $prepared['args'][0] . '.' . $column ] ) ) {
+				return null;
+			}
 
 			return ( $this->columns_exist ?? $this->tables_exist ) || isset( $this->added_columns[ $prepared['args'][0] . '.' . $column ] ) ? $column : null;
 		}
@@ -334,6 +345,16 @@ final class RecordingWpdb extends wpdb {
 
 			if ( 1 === $result ) {
 				$this->state_rows[ $table ] = true;
+			}
+
+			return $result;
+		}
+
+		if ( null !== $prepared && 'ALTER TABLE %i DROP COLUMN customer_first_name' === $prepared['query'] ) {
+			$result = $this->query_results[ $query ] ?? true;
+
+			if ( false !== $result ) {
+				$this->dropped_columns[ $prepared['args'][0] . '.customer_first_name' ] = true;
 			}
 
 			return $result;

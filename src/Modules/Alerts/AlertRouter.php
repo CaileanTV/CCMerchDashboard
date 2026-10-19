@@ -118,7 +118,6 @@ final class AlertRouter {
 						$line->quantity,
 						$line->image_id,
 						$this->products->find( $line->product_id )->category_ids ?? array(),
-						$order->first_name,
 						$order->username,
 						$now
 					)

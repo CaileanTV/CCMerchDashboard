@@ -12,8 +12,9 @@ namespace MerchBoard\Modules\Alerts;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The order data alerts use: the order number, the customer's first name
- * and voluntary username (ADR-065 pkt. 9), and the product lines.
+ * The order data alerts use: the order number, the customer's voluntary
+ * username (ADR-065 pkt. 9) and the product lines. Never the customer's
+ * name: alerts show only the username (ADR-065, status note 2026-10-19).
  */
 final readonly class PaidOrder {
 
@@ -24,14 +25,12 @@ final readonly class PaidOrder {
 	 *
 	 * @param int             $order_id     Order id.
 	 * @param string          $order_number Order number as shown to the customer.
-	 * @param string          $first_name   Billing first name, '' when none.
 	 * @param string          $username     Voluntary username from checkout, '' when none.
 	 * @param PaidOrderLine[] $lines        Product lines with a product and a positive quantity.
 	 */
 	public function __construct(
 		public int $order_id,
 		public string $order_number,
-		public string $first_name,
 		public string $username,
 		public array $lines
 	) {

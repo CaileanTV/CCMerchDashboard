@@ -58,7 +58,6 @@ final class WooCommercePaidOrderReaderTest extends TestCase {
 		self::assertNotNull( $order );
 		self::assertSame( 7, $order->order_id );
 		self::assertSame( 'CC-1007', $order->order_number );
-		self::assertSame( 'Anna', $order->first_name, 'The edit value, trimmed (the view value is "Filtered").' );
 		self::assertSame( '', $order->username );
 		self::assertEquals(
 			array(
