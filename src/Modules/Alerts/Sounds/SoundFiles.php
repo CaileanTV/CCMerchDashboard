@@ -188,9 +188,11 @@ final class SoundFiles {
 			return null;
 		}
 
-		$meta = wp_get_attachment_metadata( $attachment );
+		$meta  = wp_get_attachment_metadata( $attachment );
+		$title = trim( (string) get_the_title( $attachment ) );
 
-		return new AlertSound( $attachment, $url, wp_basename( $url ), is_array( $meta ) && is_int( $meta['length'] ?? null ) ? $meta['length'] : 0, $library );
+		// A library sound shows its name (the administrator's, else the file's); a creator's sound its file name.
+		return new AlertSound( $attachment, $url, $library && '' !== $title ? $title : wp_basename( $url ), is_array( $meta ) && is_int( $meta['length'] ?? null ) ? $meta['length'] : 0, $library );
 	}
 
 	/**

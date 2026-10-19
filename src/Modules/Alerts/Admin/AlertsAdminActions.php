@@ -37,11 +37,12 @@ final class AlertsAdminActions {
 
 	public const SOUND_ADD_ACTION    = 'merchboard_alert_sound_library_add';
 	public const SOUND_REMOVE_ACTION = 'merchboard_alert_sound_library_remove';
+	public const SOUND_RENAME_ACTION = 'merchboard_alert_sound_library_rename';
 
 	/**
 	 * Every handled action.
 	 */
-	private const ACTIONS = array( self::KEY_ACTION, self::SYNC_ACTION, self::APPROVE_ACTION, self::REMOVE_ACTION, self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION );
+	private const ACTIONS = array( self::KEY_ACTION, self::SYNC_ACTION, self::APPROVE_ACTION, self::REMOVE_ACTION, self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION );
 
 	/**
 	 * Query argument: outcome code after a redirect.
@@ -104,17 +105,17 @@ final class AlertsAdminActions {
 		$nonce   = self::scalar( $input, '_wpnonce' );
 		$subject = match ( $action ) {
 			self::APPROVE_ACTION, self::REMOVE_ACTION => $family,
-			self::SOUND_REMOVE_ACTION => $sound,
+			self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION => $sound,
 			default => '',
 		};
-		$tab = in_array( $action, array( self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION ), true ) ? 'sounds' : 'fonts';
+		$tab = in_array( $action, array( self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION ), true ) ? 'sounds' : 'fonts';
 
 		if ( ! in_array( $action, self::ACTIONS, true ) || 1 !== wp_verify_nonce( $nonce, self::nonce_action( $action, $subject ) ) ) {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
 
 		try {
-			return AlertsAdminPage::url( $tab, 'sounds' === $tab ? $this->run_sounds( $action, $files, $sound ) : $this->run( $action, $input, $family ) );
+			return AlertsAdminPage::url( $tab, 'sounds' === $tab ? $this->run_sounds( $action, $files, $sound, self::scalar( $input, 'name' ) ) : $this->run( $action, $input, $family ) );
 		} catch ( AlertFontsException $e ) {
 			return AlertsAdminPage::url( $tab, $e->reason() );
 		} catch ( AlertSoundException $e ) {
@@ -137,19 +138,24 @@ final class AlertsAdminActions {
 	 *
 	 * @param string       $action Admin-post action.
 	 * @param array<mixed> $files  Uploaded files.
-	 * @param string       $sound  Sound id (remove).
+	 * @param string       $sound  Sound id (remove, rename).
+	 * @param string       $name   Name (add, rename).
 	 * @throws AlertSoundException When the library rejects the change.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function run_sounds( string $action, array $files, string $sound ): string {
+	private function run_sounds( string $action, array $files, string $sound, string $name ): string {
 		if ( null === $this->library ) {
 			return 'error';
 		}
 
 		if ( self::SOUND_ADD_ACTION === $action ) {
-			$this->library->add( is_array( $files['file'] ?? null ) ? $files['file'] : array() );
+			$this->library->add( is_array( $files['file'] ?? null ) ? $files['file'] : array(), $name );
 
 			return 'sound_added';
+		}
+
+		if ( self::SOUND_RENAME_ACTION === $action ) {
+			return $this->library->rename( absint( $sound ), $name ) ? 'sound_renamed' : 'no_changes';
 		}
 
 		return $this->library->remove( absint( $sound ) ) ? 'sound_removed' : 'no_changes';

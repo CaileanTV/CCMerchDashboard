@@ -263,7 +263,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		wp_set_current_user( $user );
 		$chosen = $this->data( $this->call( 'POST', self::ROUTE . '/sounds/default', array( 'library' => $chime->attachment_id ) ) )['overlay']['audio'];
 		self::assertSame( $chime->attachment_id, $chosen['default']['library_id'] );
-		self::assertSame( 'chime.wav', $chosen['library'][0]['name'] );
+		self::assertSame( 'chime', $chosen['library'][0]['name'] );
 		self::assertSame( array( 'library' => 'unknown_sound' ), $this->call( 'POST', self::ROUTE . '/sounds/default', array( 'library' => 1 ) )->get_data()['data']['fields'] ?? null );
 	}
 

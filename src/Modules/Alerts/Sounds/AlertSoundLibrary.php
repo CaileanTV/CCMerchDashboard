@@ -24,6 +24,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * - **Files:** attachments marked with LIBRARY_META, validated like the
  *   creators' uploads (SoundFiles). At most MAX_SOUNDS.
+ * - **Names:** each sound has a name creators see (step 6.7): the
+ *   administrator's, at most NAME_MAX characters, or the file name.
  * - **Changes:** only `merchboard_manage_alerts`; each is audited (the file
  *   name, never the file). A removed sound is no longer played anywhere:
  *   overlays that chose it fall back to their other sounds.
@@ -39,6 +41,11 @@ final class AlertSoundLibrary {
 	 * Most sounds in the library.
 	 */
 	public const MAX_SOUNDS = 50;
+
+	/**
+	 * Longest name in characters.
+	 */
+	public const NAME_MAX = 60;
 
 	/**
 	 * Constructor.
@@ -84,14 +91,26 @@ final class AlertSoundLibrary {
 	 * Adds an uploaded file to the library.
 	 *
 	 * @param array<mixed> $file Upload (one entry of $_FILES).
+	 * @param string       $name Name creators see; '' for the file name.
 	 * @throws AlertSoundException When not authorized, the library is full or the file is refused (nothing is kept).
 	 * @throws Throwable When the audit record cannot be written (DatabaseException; the file is deleted).
 	 */
-	public function add( array $file ): AlertSound {
+	public function add( array $file, string $name = '' ): AlertSound {
 		$this->authorize();
 		$this->check_room();
 
-		$id = $this->files->store( $file, self::LIBRARY_META, 1 );
+		$id    = $this->files->store( $file, self::LIBRARY_META, 1 );
+		$clean = self::clean_name( $name );
+
+		if ( '' !== $clean ) {
+			wp_update_post(
+				array(
+					'ID'         => $id,
+					'post_title' => $clean,
+				)
+			);
+		}
+
 		$this->audit_added( $id );
 
 		return $this->files->sound( $id, true ) ?? new AlertSound( $id, '', '', 0, true );
@@ -115,6 +134,78 @@ final class AlertSoundLibrary {
 
 			throw $e;
 		}
+	}
+
+	/**
+	 * Gives a library sound a new name ('' gives it its file name again).
+	 *
+	 * @param int    $attachment Attachment id.
+	 * @param string $name       New name.
+	 * @return bool Whether the name changed.
+	 * @throws AlertSoundException When not authorized or it is not a library sound.
+	 * @throws DatabaseException When it cannot be stored (nothing is changed).
+	 */
+	public function rename( int $attachment, string $name ): bool {
+		$this->authorize();
+		$sound = $this->library_sound( $attachment );
+		$clean = self::clean_name( $name );
+		$clean = '' === $clean ? sanitize_text_field( pathinfo( (string) get_attached_file( $attachment ), PATHINFO_FILENAME ) ) : $clean;
+
+		if ( $clean === $sound->name ) {
+			return false;
+		}
+
+		$this->transaction->run(
+			function () use ( $attachment, $clean, $sound ): void {
+				$this->audit->record(
+					AuditAction::AlertSoundLibraryRenamed,
+					null,
+					array(
+						'name'          => $clean,
+						'previous_name' => $sound->name,
+					)
+				);
+
+				$updated = wp_update_post(
+					array(
+						'ID'         => $attachment,
+						'post_title' => $clean,
+					),
+					true
+				);
+
+				if ( ! is_int( $updated ) ) {
+					throw new DatabaseException( 'Could not rename the library sound.' );
+				}
+			}
+		);
+
+		return true;
+	}
+
+	/**
+	 * A sound of the library.
+	 *
+	 * @param int $attachment Attachment id.
+	 * @throws AlertSoundException When it is not a library sound.
+	 */
+	private function library_sound( int $attachment ): AlertSound {
+		$sound = $this->find( $attachment );
+
+		if ( null === $sound ) {
+			throw new AlertSoundException( AlertSoundException::UNKNOWN_SOUND );
+		}
+
+		return $sound;
+	}
+
+	/**
+	 * A name as plain text of at most NAME_MAX characters.
+	 *
+	 * @param string $name Submitted name.
+	 */
+	private static function clean_name( string $name ): string {
+		return trim( mb_substr( sanitize_text_field( $name ), 0, self::NAME_MAX ) );
 	}
 
 	/**

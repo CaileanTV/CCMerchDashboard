@@ -14,6 +14,7 @@ use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
+use MerchBoard\Modules\Alerts\Sounds\AlertSound;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
@@ -104,6 +105,8 @@ final class AlertsAdminPage {
 			AlertFontsException::UNAVAILABLE         => array( __( 'Google Fonts could not be reached. Try again later.', 'merchboard' ), 'error' ),
 			AlertFontsException::UNKNOWN_FONT        => array( __( 'The font is not in the catalogue, or the limit of approved fonts is reached.', 'merchboard' ), 'error' ),
 			'sound_added'                            => array( __( 'The sound was added to the library. Creators can choose it now.', 'merchboard' ), 'success' ),
+			'sound_renamed'                          => array( __( 'The sound got its new name.', 'merchboard' ), 'success' ),
+			AlertSoundException::UNKNOWN_SOUND       => array( __( 'The sound is no longer in the library.', 'merchboard' ), 'error' ),
 			'sound_removed'                          => array( __( 'The sound was removed. Overlays that used it play their other sounds.', 'merchboard' ), 'success' ),
 			AlertSoundException::NO_FILE             => array( __( 'No file was received. Try again.', 'merchboard' ), 'error' ),
 			AlertSoundException::INVALID_TYPE        => array( __( 'Choose an MP3, WAV or OGG file.', 'merchboard' ), 'error' ),
@@ -182,8 +185,11 @@ final class AlertsAdminPage {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" enctype="multipart/form-data">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::SOUND_ADD_ACTION ) . '">';
 		wp_nonce_field( AlertsAdminActions::SOUND_ADD_ACTION );
-		echo '<label for="merchboard-alert-sound-file" class="screen-reader-text">' . esc_html__( 'Sound file', 'merchboard' ) . '</label>';
-		echo '<input type="file" id="merchboard-alert-sound-file" name="file" accept=".mp3,.wav,.ogg,.oga,audio/mpeg,audio/wav,audio/ogg" required> ';
+		echo '<p><label for="merchboard-alert-sound-file">' . esc_html__( 'Sound file', 'merchboard' ) . '</label><br>';
+		echo '<input type="file" id="merchboard-alert-sound-file" name="file" accept=".mp3,.wav,.ogg,.oga,audio/mpeg,audio/wav,audio/ogg" required></p>';
+		echo '<p><label for="merchboard-alert-sound-name">' . esc_html__( 'Name (optional)', 'merchboard' ) . '</label><br>';
+		echo '<input type="text" id="merchboard-alert-sound-name" name="name" class="regular-text" maxlength="' . esc_attr( (string) AlertSoundLibrary::NAME_MAX ) . '" aria-describedby="merchboard-alert-sound-name-help">';
+		echo '<span id="merchboard-alert-sound-name-help" class="description"> ' . esc_html__( 'Creators see this name. Without a name, the file name is used.', 'merchboard' ) . '</span></p>';
 		submit_button( __( 'Upload sound', 'merchboard' ), 'secondary', 'submit', false );
 		echo '</form>';
 
@@ -196,10 +202,12 @@ final class AlertsAdminPage {
 			return;
 		}
 
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Sound', 'merchboard' ) . '</th><th>' . esc_html__( 'Length', 'merchboard' ) . '</th><th>' . esc_html__( 'Play', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Name', 'merchboard' ) . '</th><th>' . esc_html__( 'Length', 'merchboard' ) . '</th><th>' . esc_html__( 'Play', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
 
 		foreach ( $sounds as $sound ) {
-			echo '<tr><td>' . esc_html( $sound->name ) . '</td><td>' . esc_html(
+			echo '<tr><td>';
+			$this->rename_form( $sound );
+			echo '</td><td>' . esc_html(
 				sprintf(
 					/* translators: %d: seconds. */
 					_n( '%d second', '%d seconds', $sound->seconds, 'merchboard' ),
@@ -215,6 +223,24 @@ final class AlertsAdminPage {
 		}
 
 		echo '</tbody></table>';
+	}
+
+	/**
+	 * The name of a library sound with a form to change it.
+	 *
+	 * @param AlertSound $sound Library sound.
+	 */
+	private function rename_form( AlertSound $sound ): void {
+		$field = 'merchboard-alert-sound-name-' . $sound->attachment_id;
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::SOUND_RENAME_ACTION ) . '">';
+		echo '<input type="hidden" name="sound" value="' . esc_attr( (string) $sound->attachment_id ) . '">';
+		wp_nonce_field( AlertsAdminActions::nonce_action( AlertsAdminActions::SOUND_RENAME_ACTION, (string) $sound->attachment_id ) );
+		echo '<label for="' . esc_attr( $field ) . '" class="screen-reader-text">' . esc_html__( 'Name', 'merchboard' ) . '</label>';
+		echo '<input type="text" id="' . esc_attr( $field ) . '" name="name" value="' . esc_attr( $sound->name ) . '" maxlength="' . esc_attr( (string) AlertSoundLibrary::NAME_MAX ) . '"> ';
+		submit_button( __( 'Rename', 'merchboard' ), 'small', 'submit', false );
+		echo '</form>';
 	}
 
 	/**

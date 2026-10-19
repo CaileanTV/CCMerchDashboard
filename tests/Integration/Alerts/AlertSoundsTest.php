@@ -318,7 +318,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 		$sound   = $library->add( self::wav_upload( 1, 'chime.wav' ) );
 
 		self::assertTrue( $sound->library );
-		self::assertSame( 'chime.wav', $sound->name );
+		self::assertSame( 'chime', $sound->name, 'Without a name: the file name.' );
 		self::assertSame( array( $sound->attachment_id ), array_map( static fn( $item ): int => $item->attachment_id, $library->all() ) );
 		self::assertNull( $library->find( 999999 ) );
 
@@ -344,13 +344,54 @@ final class AlertSoundsTest extends IntegrationTestCase {
 		self::assertSame( array( 'alert_sound_library_added', 'alert_sound_library_removed' ), array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) );
 	}
 
+	public function test_library_sounds_have_names_the_administrator_chooses(): void {
+		$library = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$named   = $library->add( self::wav_upload( 1, 'chime.wav' ), '  Kasse <b>ding</b>  ' );
+		$plain   = $library->add( self::wav_upload( 1, 'bell.wav' ) );
+
+		self::assertSame( 'Kasse ding', $named->name, 'Plain text, trimmed.' );
+		self::assertSame( 'bell', $plain->name, 'Without a name: the file name.' );
+
+		$name = static fn( int $id ): ?string => $library->find( $id )?->name;
+
+		self::assertTrue( $library->rename( $plain->attachment_id, 'Klokke' ) );
+		self::assertFalse( $library->rename( $plain->attachment_id, 'Klokke' ), 'Unchanged.' );
+		self::assertSame( 'Klokke', $name( $plain->attachment_id ) );
+		self::assertSame( str_repeat( 'x', AlertSoundLibrary::NAME_MAX ), $library->rename( $named->attachment_id, str_repeat( 'x', 80 ) ) ? $name( $named->attachment_id ) : null );
+
+		self::assertTrue( $library->rename( $plain->attachment_id, '' ) );
+		self::assertSame( 'bell', $name( $plain->attachment_id ), 'An empty name gives the file name again.' );
+
+		$renamed = array_values( array_filter( $this->rows( Tables::AUDIT_LOG ), static fn( array $row ): bool => 'alert_sound_library_renamed' === $row['action'] ) );
+		self::assertCount( 3, $renamed );
+		self::assertSame(
+			array(
+				'name'          => 'Klokke',
+				'previous_name' => 'bell',
+			),
+			json_decode( (string) $renamed[0]['context'], true )
+		);
+
+		try {
+			$library->rename( 999999, 'X' );
+			self::fail( 'Expected AlertSoundException.' );
+		} catch ( AlertSoundException $e ) {
+			self::assertSame( AlertSoundException::UNKNOWN_SOUND, $e->reason() );
+		}
+
+		// Creators see the name.
+		$this->overlay();
+		$sounds = self::sounds( $this->overlays, $library );
+		self::assertContains( 'bell', array_column( $sounds->describe( $this->overlay() )['library'], 'name' ) );
+	}
+
 	public function test_creators_choose_library_sounds_which_they_never_delete(): void {
 		$library = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
 		$sounds  = self::sounds( $this->overlays, $library );
 		$chime   = $library->add( self::wav_upload( 1, 'chime.wav' ) );
 		$this->overlay();
 
-		self::assertSame( array( 'id' => $chime->attachment_id, 'url' => $chime->url, 'name' => 'chime.wav', 'seconds' => 1 ), $sounds->describe( $this->overlay() )['library'][0] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short expectation.
+		self::assertSame( array( 'id' => $chime->attachment_id, 'url' => $chime->url, 'name' => 'chime', 'seconds' => 1 ), $sounds->describe( $this->overlay() )['library'][0] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short expectation.
 
 		$overlay = $sounds->choose( $this->creator, self::HOODIES, $chime->attachment_id );
 		self::assertNotNull( $overlay );
@@ -418,9 +459,20 @@ final class AlertSoundsTest extends IntegrationTestCase {
 		unset( $_GET['tab'] );
 
 		self::assertStringContainsString( 'enctype="multipart/form-data"', $html );
-		self::assertStringContainsString( '<td>chime.wav</td>', $html );
+		self::assertStringContainsString( 'name="name" value="chime"', $html, 'The name can be changed in place.' );
 		self::assertStringContainsString( 'value="' . AlertsAdminActions::SOUND_REMOVE_ACTION . '"', $html );
 		self::assertNotNull( AlertsAdminPage::result_message( 'library_full' ) );
+
+		$url = $actions->process(
+			array(
+				'action'   => AlertsAdminActions::SOUND_RENAME_ACTION,
+				'sound'    => (string) $sound->attachment_id,
+				'name'     => 'Kasse',
+				'_wpnonce' => wp_create_nonce( AlertsAdminActions::nonce_action( AlertsAdminActions::SOUND_RENAME_ACTION, (string) $sound->attachment_id ) ),
+			)
+		);
+		self::assertStringContainsString( AlertsAdminActions::RESULT_ARG . '=sound_renamed', $url );
+		self::assertSame( 'Kasse', $library->find( $sound->attachment_id )?->name );
 
 		$url = $actions->process(
 			array(

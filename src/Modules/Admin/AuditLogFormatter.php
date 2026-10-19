@@ -124,6 +124,7 @@ final class AuditLogFormatter {
 			AuditAction::AlertFontRemoved          => __( 'Alert font removed', 'merchboard' ),
 			AuditAction::AlertSoundLibraryAdded    => __( 'Sound added to the alert sound library', 'merchboard' ),
 			AuditAction::AlertSoundLibraryRemoved  => __( 'Sound removed from the alert sound library', 'merchboard' ),
+			AuditAction::AlertSoundLibraryRenamed  => __( 'Sound of the alert sound library renamed', 'merchboard' ),
 		};
 	}
 

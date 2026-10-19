@@ -386,4 +386,9 @@ enum AuditAction: string {
 	 * A sound was removed from the alert sound library. Context: file name.
 	 */
 	case AlertSoundLibraryRemoved = 'alert_sound_library_removed';
+
+	/**
+	 * A sound of the alert sound library got a new name (step 6.7). Context: name, previous name.
+	 */
+	case AlertSoundLibraryRenamed = 'alert_sound_library_renamed';
 }
