@@ -129,6 +129,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 					'font_size'      => 999,
 					'text_color'     => '#ABC',
 					'show_secondary' => true,
+					'text_fit'       => 'shrink',
 					'image_url'      => 'https://evil.example/x.png',
 				)
 			)
@@ -138,6 +139,8 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 200, $saved['overlay']['settings']['font_size'], 'Clamped to the maximum.' );
 		self::assertSame( '#aabbcc', $saved['overlay']['settings']['text_color'] );
 		self::assertTrue( $saved['overlay']['settings']['show_secondary'] );
+		self::assertSame( 'shrink', $saved['overlay']['settings']['text_fit'] );
+		self::assertSame( 'fixed', $this->data( $this->call( 'PATCH', self::ROUTE, array( 'text_fit' => 'stretch' ) ) )['overlay']['settings']['text_fit'], 'Unknown modes fall back to fixed.' );
 
 		$stored = $this->overlays->find_for_creator( $creator )?->settings->to_array();
 		self::assertIsArray( $stored );

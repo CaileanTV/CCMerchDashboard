@@ -37,6 +37,7 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame( '#ffffff', $values['text_color'] );
 		self::assertSame( '2px 2px 4px rgba(0,0,0,0.8)', $values['text_shadow'] );
 		self::assertSame( 'center', $values['text_align'] );
+		self::assertSame( 'fixed', $values['text_fit'], 'Fixed text size, as in MerchAlert.' );
 		self::assertSame( 120, $values['image_size'] );
 		self::assertSame( 80, $values['bg_opacity'] );
 		self::assertSame( 500, $values['anim_duration'] );
@@ -127,6 +128,7 @@ final class OverlaySettingsTest extends TestCase {
 			'color as a name'            => array( 'text_color', 'red', '#ffffff' ),
 			'color with expression'      => array( 'bg_color', '#000;}', '#000000' ),
 			'align outside the list'     => array( 'text_align', 'justify', 'center' ),
+			'fit outside the list'       => array( 'text_fit', 'stretch', 'fixed' ),
 			'weight outside the list'    => array( 'font_weight', '950', '700' ),
 			'size as text'               => array( 'font_size', '32px', 32 ),
 			'size above the maximum'     => array( 'font_size', 5000, 200 ),
@@ -180,6 +182,27 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame( 'left:176px;top:895px;width:700px;height:80px;background:rgba(16,32,48,0.45);border-radius:8px;padding:20px;', $settings->element_style( 'main_text' ) );
 		self::assertTrue( $settings->shows_secondary() );
 		self::assertStringNotContainsString( 'display:none', $settings->element_style( 'secondary_text' ) );
+	}
+
+	public function test_a_growing_box_keeps_its_height_as_the_least_and_grows_up_near_the_bottom(): void {
+		$top    = OverlaySettings::from_array(
+			array(
+				'text_fit' => 'grow',
+				'layout'   => array( 'elements' => array( 'main_text' => array( 'x' => 176, 'y' => 40, 'w' => 700, 'h' => 80 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short box.
+			)
+		);
+		$grow   = OverlaySettings::from_array( array( 'text_fit' => 'grow' ) );
+		$shrink = OverlaySettings::from_array( array( 'text_fit' => 'shrink' ) );
+
+		self::assertSame( 'grow', $grow->text_fit() );
+		self::assertTrue( $grow->grows_up( 'main_text' ), 'The default box is near the bottom.' );
+		self::assertStringStartsWith( 'left:176px;bottom:105px;width:700px;height:auto;min-height:80px;', $grow->element_style( 'main_text' ), 'It keeps its bottom edge (1080 - 895 - 80).' );
+		self::assertFalse( $top->grows_up( 'main_text' ) );
+		self::assertStringStartsWith( 'left:176px;top:40px;width:700px;height:auto;min-height:80px;', $top->element_style( 'main_text' ), 'Near the top it grows down.' );
+		self::assertFalse( $grow->grows_up( 'product_image' ) );
+		self::assertFalse( OverlaySettings::defaults()->grows_up( 'main_text' ), 'Only with grow.' );
+		self::assertSame( 'left:40px;top:880px;width:120px;height:120px;', $grow->element_style( 'product_image' ), 'The image never grows.' );
+		self::assertStringStartsWith( 'left:176px;top:895px;width:700px;height:80px;', $shrink->element_style( 'main_text' ), 'Shrinking happens in the overlay script.' );
 	}
 
 	public function test_the_secondary_text_needs_a_template_and_visibility(): void {

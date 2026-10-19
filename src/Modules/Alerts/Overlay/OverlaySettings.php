@@ -26,6 +26,16 @@ defined( 'ABSPATH' ) || exit;
 final class OverlaySettings {
 
 	/**
+	 * Ways text meets its box (text_fit()).
+	 */
+	public const TEXT_FITS = array( 'fixed', 'shrink', 'grow' );
+
+	/**
+	 * Canvas height in pixels (OBS' default browser source).
+	 */
+	public const CANVAS_HEIGHT = 1080;
+
+	/**
 	 * Default main template (MerchAlert's global default).
 	 */
 	public const DEFAULT_TEMPLATE = '$Product was purchased by $UserName!';
@@ -43,7 +53,7 @@ final class OverlaySettings {
 	/**
 	 * Normalized values.
 	 *
-	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
+	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
 	 */
 	private array $values;
 
@@ -65,6 +75,7 @@ final class OverlaySettings {
 			'text_color'          => self::hex( $input['text_color'] ?? null, '#ffffff' ),
 			'text_shadow'         => self::text_shadow( $input['text_shadow'] ?? null ),
 			'text_align'          => self::choice( $input['text_align'] ?? null, array( 'left', 'center', 'right' ), 'center' ),
+			'text_fit'            => self::choice( $input['text_fit'] ?? null, self::TEXT_FITS, 'fixed' ),
 			'image_size'          => self::int( $input['image_size'] ?? null, 32, 512, 120 ),
 			'bg_color'            => self::hex( $input['bg_color'] ?? null, '#000000' ),
 			'bg_opacity'          => self::int( $input['bg_opacity'] ?? null, 0, 100, 80 ),
@@ -109,7 +120,7 @@ final class OverlaySettings {
 	/**
 	 * The normalized values.
 	 *
-	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
+	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
 	 */
 	public function to_array(): array {
 		return $this->values;
@@ -148,6 +159,30 @@ final class OverlaySettings {
 	 */
 	public function image_size(): int {
 		return $this->values['image_size'];
+	}
+
+	/**
+	 * How text meets its box (phase 25, step 6.5): `fixed` (the font size;
+	 * longer text is cut off), `shrink` (the font size is the largest; the
+	 * overlay shrinks the text until it fits) or `grow` (the box keeps its
+	 * width and grows with the text; its height is the least; see grows_up()).
+	 */
+	public function text_fit(): string {
+		return $this->values['text_fit'];
+	}
+
+	/**
+	 * Whether a text box grows upward: with `grow`, a box whose middle is in
+	 * the lower half of the canvas keeps its bottom edge and grows up; others
+	 * keep their top and grow down. When the main text grows up, the overlay
+	 * moves the image up as much, so their distance stays (step 6.5).
+	 *
+	 * @param string $element One of ELEMENTS.
+	 */
+	public function grows_up( string $element ): bool {
+		$box = $this->values['layout']['elements'][ $element ] ?? null;
+
+		return 'product_image' !== $element && 'grow' === $this->values['text_fit'] && null !== $box && 2 * $box['y'] + $box['h'] > self::CANVAS_HEIGHT;
 	}
 
 	/**
@@ -191,8 +226,14 @@ final class OverlaySettings {
 	 * @param string $element One of ELEMENTS.
 	 */
 	public function element_style( string $element ): string {
-		$box   = $this->values['layout']['elements'][ $element ] ?? self::default_layout()['elements']['main_text'];
-		$style = sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $box['x'], $box['y'], $box['w'], $box['h'] );
+		$box = $this->values['layout']['elements'][ $element ] ?? self::default_layout()['elements']['main_text'];
+		if ( $this->grows_up( $element ) ) {
+			$style = sprintf( 'left:%dpx;bottom:%dpx;width:%dpx;height:auto;min-height:%dpx;', $box['x'], self::CANVAS_HEIGHT - $box['y'] - $box['h'], $box['w'], $box['h'] );
+		} elseif ( 'product_image' !== $element && 'grow' === $this->values['text_fit'] ) {
+			$style = sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:auto;min-height:%dpx;', $box['x'], $box['y'], $box['w'], $box['h'] );
+		} else {
+			$style = sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $box['x'], $box['y'], $box['w'], $box['h'] );
+		}
 
 		if ( 'product_image' !== $element ) {
 			$style .= sprintf( 'background:%s;border-radius:%dpx;padding:%dpx;', $this->background(), $this->values['border_radius'], $this->values['padding'] );

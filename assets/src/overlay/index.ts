@@ -16,6 +16,7 @@ import {
 	type OverlayConfig,
 } from './feed';
 import { AlertPlayer } from './player';
+import { fitText, followText } from './fit';
 import { playSound } from './sound';
 
 /** Wait after a 404 (the id was regenerated or the creator deactivated). */
@@ -141,7 +142,11 @@ function start(): void {
 			config,
 			undefined,
 			undefined,
-			( url ) => playSound( url )
+			( url ) => playSound( url ),
+			config.textFit === 'shrink' ? fitText : undefined,
+			config.imageFollows
+				? ( elements ) => followText( elements.image, elements.text )
+				: undefined
 		)
 	);
 }

@@ -3,6 +3,7 @@
  * always the one the server resolves; nothing here sends an id. Every
  * answer is validated before use; the overlay URL must be on this site.
  */
+import { isTextFit } from '../../overlay/fit';
 import { request } from './client';
 import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
@@ -313,6 +314,7 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		! isTemplate( value.secondary_template ) ||
 		! isFontWeight( value.font_weight ) ||
 		! isTextAlign( value.text_align ) ||
+		! isTextFit( value.text_fit ) ||
 		typeof value.text_color !== 'string' ||
 		! HEX_COLOR.test( value.text_color ) ||
 		typeof value.bg_color !== 'string' ||
@@ -333,6 +335,7 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		text_color: value.text_color,
 		text_shadow: value.text_shadow,
 		text_align: value.text_align,
+		text_fit: value.text_fit,
 		image_size: value.image_size as number,
 		bg_color: value.bg_color,
 		bg_opacity: value.bg_opacity as number,

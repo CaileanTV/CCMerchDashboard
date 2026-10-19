@@ -29,6 +29,7 @@ const SETTINGS = {
 	text_color: '#ffffff',
 	text_shadow: '2px 2px 4px rgba(0,0,0,0.8)',
 	text_align: 'center',
+	text_fit: 'fixed' as const,
 	image_size: 120,
 	bg_color: '#000000',
 	bg_opacity: 80,

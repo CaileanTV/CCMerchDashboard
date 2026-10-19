@@ -202,6 +202,8 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertStringContainsString( '<meta name="robots" content="noindex, nofollow">', $html );
 		self::assertStringNotContainsString( '<button', $html, 'Sounds play without a click (OBS allows autoplay).' );
 		self::assertMatchesRegularExpression( '#<script type="application/json" id="merchboard-overlay-config">\{.*"feed":"[^"]+/merchboard/v1/alerts/overlay/' . $id . '/feed".*\}</script>#', $html );
+		self::assertStringContainsString( '"textFit":"fixed"', $html, 'The overlay script knows how text meets its box.' );
+		self::assertStringContainsString( '"imageFollows":false', $html );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 
 		$headers = OverlayPage::security_headers( 'nonce123' );

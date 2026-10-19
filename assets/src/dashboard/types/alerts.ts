@@ -21,6 +21,11 @@ export const TEXT_ALIGNS = [ 'left', 'center', 'right' ] as const;
 export type FontWeight = ( typeof FONT_WEIGHTS )[ number ] | 'normal' | 'bold';
 export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 
+import type { TextFit } from '../../overlay/fit';
+
+export { TEXT_FITS } from '../../overlay/fit';
+export type { TextFit };
+
 /** Number fields with the server's ranges (OverlaySettings). */
 export const NUMBER_FIELDS = {
 	font_size: { min: 8, max: 200 },
@@ -45,6 +50,8 @@ export interface OverlaySettings {
 	readonly text_color: string;
 	readonly text_shadow: string;
 	readonly text_align: TextAlign;
+	/** How text meets its box: fixed size, shrink to fit, or the box grows. */
+	readonly text_fit: TextFit;
 	readonly image_size: number;
 	readonly bg_color: string;
 	readonly bg_opacity: number;

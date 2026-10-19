@@ -41,7 +41,10 @@ export class AlertPlayer {
 		) => void = ( callback, delay ) => {
 			window.setTimeout( callback, delay );
 		},
-		private readonly play: ( url: string ) => void = () => undefined
+		private readonly play: ( url: string ) => void = () => undefined,
+		private readonly fit: ( element: HTMLElement ) => void = () => undefined,
+		private readonly arrange: ( elements: OverlayElements ) => void = () =>
+			undefined
 	) {}
 
 	/** Number of alerts waiting. */
@@ -131,6 +134,9 @@ export class AlertPlayer {
 
 		text.textContent = alert.text;
 		secondary.textContent = alert.secondary;
+		this.fit( text );
+		this.fit( secondary );
+		this.arrange( this.elements );
 	}
 
 	private finish(): void {

@@ -15,6 +15,7 @@ import {
 	NUMBER_FIELDS,
 	TEMPLATE_MAX_LENGTH,
 	TEXT_ALIGNS,
+	TEXT_FITS,
 } from '../../types/alerts';
 import type {
 	AlertFontOption,
@@ -22,6 +23,7 @@ import type {
 	NumberField,
 	OverlaySettings,
 	TextAlign,
+	TextFit,
 } from '../../types/alerts';
 
 type Errors = Partial< Record< keyof OverlaySettings, string > >;
@@ -66,6 +68,17 @@ export function validateOverlaySettings( values: OverlaySettings ): Errors {
 	}
 
 	return errors;
+}
+
+function fitLabel( fit: TextFit ): string {
+	switch ( fit ) {
+		case 'shrink':
+			return __( 'Shrink the text to fit the box', 'merchboard' );
+		case 'grow':
+			return __( 'Let the box grow with the text', 'merchboard' );
+		default:
+			return __( 'Fixed text size', 'merchboard' );
+	}
 }
 
 function alignLabel( align: TextAlign ): string {
@@ -376,6 +389,32 @@ export function OverlaySettingsForm( {
 						) }
 					</Field>
 				</div>
+				<Field
+					label={ __( 'Text size in the boxes', 'merchboard' ) }
+					help={ __(
+						'Fixed: the font size above; longer text is cut off. Shrink: the font size above is the largest, and long text gets smaller until it fits. Grow: the box keeps its width and grows with the text: down from its top, or up from its bottom edge when it is in the lower half of the screen (the image then moves up with the main text). Its height in the designer is the least.',
+						'merchboard'
+					) }
+				>
+					{ ( control ) => (
+						<select
+							{ ...control }
+							className="merchboard-input"
+							value={ values.text_fit }
+							onChange={ ( event ) =>
+								set( {
+									text_fit: event.target.value as TextFit,
+								} )
+							}
+						>
+							{ TEXT_FITS.map( ( fit ) => (
+								<option key={ fit } value={ fit }>
+									{ fitLabel( fit ) }
+								</option>
+							) ) }
+						</select>
+					) }
+				</Field>
 				<Field
 					label={ __( 'Text shadow', 'merchboard' ) }
 					help={ __(

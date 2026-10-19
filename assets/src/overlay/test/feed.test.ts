@@ -20,13 +20,26 @@ describe( 'parseConfig', () => {
 				version: 'v1',
 				displayDuration: 5000,
 				animDuration: 500,
+				textFit: 'shrink',
+				imageFollows: true,
 			} )
 		).toEqual( {
 			feed: FEED,
 			version: 'v1',
 			displayDuration: 5000,
 			animDuration: 500,
+			textFit: 'shrink',
+			imageFollows: true,
 		} );
+		expect(
+			parseConfig( {
+				feed: FEED,
+				version: 'v1',
+				displayDuration: 5000,
+				animDuration: 500,
+				textFit: 'stretch',
+			} )?.textFit
+		).toBe( 'fixed' );
 	} );
 
 	it( 'rejects a feed on another origin and invalid values', () => {

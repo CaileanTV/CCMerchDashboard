@@ -110,6 +110,8 @@ final class OverlayPage {
 				'version'         => $overlay->version(),
 				'displayDuration' => $settings->display_duration(),
 				'animDuration'    => $settings->anim_duration(),
+				'textFit'         => $settings->text_fit(),
+				'imageFollows'    => $settings->grows_up( 'main_text' ),
 			),
 		);
 

@@ -44,7 +44,7 @@ final class AlertOverlays {
 	/**
 	 * Form fields a creator can change.
 	 */
-	public const EDITABLE = array( 'template', 'secondary_template', 'font_size', 'font_weight', 'text_color', 'text_shadow', 'text_align', 'image_size', 'bg_color', 'bg_opacity', 'border_radius', 'padding', 'anim_duration', 'display_duration' );
+	public const EDITABLE = array( 'template', 'secondary_template', 'font_size', 'font_weight', 'text_color', 'text_shadow', 'text_align', 'text_fit', 'image_size', 'bg_color', 'bg_opacity', 'border_radius', 'padding', 'anim_duration', 'display_duration' );
 
 	/**
 	 * Username shown by test alerts.

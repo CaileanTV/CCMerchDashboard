@@ -4,6 +4,8 @@
  * Pure functions without DOM or network access, so they can be tested alone.
  * Every value from the page or the server is validated before use.
  */
+import { isTextFit } from './fit';
+import type { TextFit } from './fit';
 
 /**
  * One alert as the server renders it: plain text, and an image and a sound
@@ -30,6 +32,10 @@ export interface OverlayConfig {
 	version: string;
 	displayDuration: number;
 	animDuration: number;
+	/** How text meets its box; anything unknown is "fixed". */
+	textFit: TextFit;
+	/** Whether the image follows the main text when it grows up. */
+	imageFollows: boolean;
 }
 
 /** Longest wait between retries after errors, in milliseconds. */
@@ -84,6 +90,8 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 		version: value.version,
 		displayDuration: value.displayDuration,
 		animDuration: value.animDuration,
+		textFit: isTextFit( value.textFit ) ? value.textFit : 'fixed',
+		imageFollows: value.imageFollows === true,
 	};
 }
 
