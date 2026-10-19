@@ -36,6 +36,28 @@ describe( 'parseConfig', () => {
 				main: DEFAULT_ANIMATION,
 				secondary: DEFAULT_ANIMATION,
 			},
+			fills: { main: null, secondary: null },
+		} );
+		expect(
+			parseConfig( {
+				feed: FEED,
+				version: 'v1',
+				displayDuration: 5000,
+				animDuration: 500,
+				fills: {
+					main: { kind: 'preset', preset: 'gold', motion: 'pan' },
+					secondary: {
+						kind: 'image',
+						url: 'https://evil.example/x.png',
+						width: 10,
+						height: 10,
+						motion: 'none',
+					},
+				},
+			} )?.fills
+		).toEqual( {
+			main: { kind: 'preset', preset: 'gold', motion: 'pan' },
+			secondary: null,
 		} );
 		expect(
 			parseConfig( {

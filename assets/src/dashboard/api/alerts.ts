@@ -4,6 +4,7 @@
  * answer is validated before use; the overlay URL must be on this site.
  */
 import { parseAnimation } from '../../overlay/animations';
+import { parseTextFill } from '../../overlay/textfill';
 import { isTextFit } from '../../overlay/fit';
 import { request } from './client';
 import type { ApiResult } from './client';
@@ -18,6 +19,8 @@ import {
 } from '../types/alerts';
 import type {
 	AlertFontOption,
+	AlertImageFile,
+	AlertsImages,
 	AlertSoundFile,
 	AlertsAudio,
 	LibrarySound,
@@ -271,6 +274,81 @@ export function parseAudio( value: unknown ): AlertsAudio | null | undefined {
 	};
 }
 
+function parseImageList( value: unknown ): AlertImageFile[] | null {
+	if ( ! Array.isArray( value ) ) {
+		return null;
+	}
+
+	const images: AlertImageFile[] = [];
+	const size = { min: 1, max: 100000 };
+
+	for ( const item of value as unknown[] ) {
+		const url = isRecord( item )
+			? readSameOriginUrl( item.url, window.location.origin )
+			: null;
+
+		if (
+			! isRecord( item ) ||
+			url === null ||
+			! isIntegerIn( item.id, {
+				min: 1,
+				max: Number.MAX_SAFE_INTEGER,
+			} ) ||
+			typeof item.name !== 'string' ||
+			! isIntegerIn( item.width, size ) ||
+			! isIntegerIn( item.height, size )
+		) {
+			return null;
+		}
+
+		images.push( {
+			id: item.id,
+			url,
+			name: item.name,
+			width: item.width,
+			height: item.height,
+		} );
+	}
+
+	return images;
+}
+
+/**
+ * Validates the text fill images of an answer; undefined when invalid.
+ *
+ * @param value Candidate.
+ */
+export function parseImages( value: unknown ): AlertsImages | null | undefined {
+	if ( value === null || value === undefined ) {
+		return null;
+	}
+
+	const own = isRecord( value ) ? parseImageList( value.own ) : null;
+	const library = isRecord( value ) ? parseImageList( value.library ) : null;
+
+	if (
+		! isRecord( value ) ||
+		own === null ||
+		library === null ||
+		! isIntegerIn( value.max_bytes, {
+			min: 1,
+			max: Number.MAX_SAFE_INTEGER,
+		} ) ||
+		! isIntegerIn( value.max_pixels, { min: 1, max: 100000 } ) ||
+		! isIntegerIn( value.max_own, { min: 0, max: 1000 } )
+	) {
+		return undefined;
+	}
+
+	return {
+		own,
+		library,
+		maxBytes: value.max_bytes,
+		maxPixels: value.max_pixels,
+		maxOwn: value.max_own,
+	};
+}
+
 function isFontWeight( value: unknown ): value is FontWeight {
 	return (
 		value === 'normal' ||
@@ -358,6 +436,16 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 					: null
 			),
 		},
+		text_fills: {
+			main_text: parseTextFill(
+				isRecord( value.text_fills ) ? value.text_fills.main_text : null
+			),
+			secondary_text: parseTextFill(
+				isRecord( value.text_fills )
+					? value.text_fills.secondary_text
+					: null
+			),
+		},
 		font_family: value.font_family,
 	};
 }
@@ -403,14 +491,19 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 	const layout = parseLayout( body.overlay.layout );
 	const fontApproved = body.overlay.font_approved;
 	const audio = parseAudio( body.overlay.audio );
+	const images = parseImages( body.overlay.images );
 
 	return url === null ||
 		settings === null ||
 		layout === null ||
 		typeof fontApproved !== 'boolean' ||
-		audio === undefined
+		audio === undefined ||
+		images === undefined
 		? null
-		: { overlay: { url, settings, layout, fontApproved, audio }, ...state };
+		: {
+				overlay: { url, settings, layout, fontApproved, audio, images },
+				...state,
+			};
 }
 
 /**
@@ -524,6 +617,37 @@ export function removeAlertSound(
 ): Promise< ApiResult< AlertsOverlayState > > {
 	return request(
 		{ path: soundPath( slot ), method: 'DELETE' },
+		parseAlertsOverlay
+	);
+}
+
+/**
+ * Uploads an own image that can fill the alert text.
+ *
+ * @param file PNG, JPG, GIF or WebP file.
+ */
+export function uploadAlertImage(
+	file: File
+): Promise< ApiResult< AlertsOverlayState > > {
+	const body = new FormData();
+	body.append( 'file', file );
+
+	return request(
+		{ path: `${ PATH }/images`, method: 'POST', body },
+		parseAlertsOverlay
+	);
+}
+
+/**
+ * Deletes an own image; the texts it filled lose their fill.
+ *
+ * @param imageId Image id.
+ */
+export function removeAlertImage(
+	imageId: number
+): Promise< ApiResult< AlertsOverlayState > > {
+	return request(
+		{ path: `${ PATH }/images/${ String( imageId ) }`, method: 'DELETE' },
 		parseAlertsOverlay
 	);
 }

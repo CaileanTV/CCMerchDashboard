@@ -922,6 +922,46 @@ input:focus-visible + .merchboard-sounds__upload {
 	outline-offset: 2px;
 }
 
+input:disabled + .merchboard-sounds__upload {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+// The creator's images for text fills (step 25.6.10).
+.merchboard-images {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+	gap: var(--merchboard-space-3);
+	padding: 0;
+	margin: 0 0 var(--merchboard-space-3);
+	list-style: none;
+}
+
+.merchboard-images__item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--merchboard-space-1);
+	align-items: flex-start;
+	min-width: 0;
+}
+
+.merchboard-images__thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+	background: var(--merchboard-inverse-surface);
+	border-radius: var(--merchboard-radius-sm);
+}
+
+.merchboard-images__name {
+	max-width: 100%;
+	overflow: hidden;
+	font-size: var(--merchboard-text-sm);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 /* Overlay designer (phase 25, step 5): the 1920 × 1080 canvas of OBS. */
 .merchboard-designer {
 	position: relative;

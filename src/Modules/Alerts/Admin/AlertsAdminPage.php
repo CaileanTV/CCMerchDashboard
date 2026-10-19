@@ -14,6 +14,10 @@ use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
+use MerchBoard\Modules\Alerts\Images\AlertImage;
+use MerchBoard\Modules\Alerts\Images\AlertImageException;
+use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
+use MerchBoard\Modules\Alerts\Images\ImageFiles;
 use MerchBoard\Modules\Alerts\Sounds\AlertSound;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
@@ -25,7 +29,8 @@ defined( 'ABSPATH' ) || exit;
  * "Merch Dashboard → Alerts" (ADR-065 pkt. 7), for `merchboard_manage_alerts`.
  * Phase 25 step 5 adds the tab "Fonts" (ADR-067): the Google Fonts API key,
  * the catalogue and the approved fonts. Step 6.3 adds the tab "Sounds": the
- * sound library creators can choose from. The other tabs (order log, global
+ * sound library creators can choose from; step 6.10 the tab "Images": the
+ * images creators can fill their alert text with. The other tabs (order log, global
  * overlay, chatbot, import) follow in later steps. Read-only rendering;
  * every change goes through AlertsAdminActions. Everything is escaped.
  */
@@ -48,8 +53,9 @@ final class AlertsAdminPage {
 	 *
 	 * @param AlertFonts             $fonts   Font library.
 	 * @param AlertSoundLibrary|null $library Sound library; null for none.
+	 * @param AlertImageLibrary|null $images  Image library; null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null ) {
 	}
 
 	/**
@@ -114,6 +120,17 @@ final class AlertsAdminPage {
 			AlertSoundException::TOO_LONG            => array( __( 'The sound is too long.', 'merchboard' ), 'error' ),
 			AlertSoundException::UNREADABLE          => array( __( 'The file could not be read as a sound. Choose another file.', 'merchboard' ), 'error' ),
 			AlertSoundException::LIBRARY_FULL        => array( __( 'The library is full. Remove a sound first.', 'merchboard' ), 'error' ),
+			'image_added'                            => array( __( 'The image was added to the library. Creators can choose it now.', 'merchboard' ), 'success' ),
+			'image_renamed'                          => array( __( 'The image got its new name.', 'merchboard' ), 'success' ),
+			'image_removed'                          => array( __( 'The image was removed. Texts it filled show their colour again.', 'merchboard' ), 'success' ),
+			'image_' . AlertImageException::UNKNOWN_IMAGE => array( __( 'The image is no longer in the library.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::NO_FILE  => array( __( 'No file was received. Try again.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::INVALID_TYPE => array( __( 'Choose a PNG, JPG, GIF or WebP image.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::TOO_LARGE => array( __( 'The file is too large.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::TOO_BIG  => array( __( 'The image is too big. Choose a smaller image.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::UNREADABLE => array( __( 'The file could not be read as an image. Choose another file.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::LIBRARY_FULL => array( __( 'The library is full. Remove an image first.', 'merchboard' ), 'error' ),
+			'image_' . AlertImageException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'                                  => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
 			default                                  => null,
 		};
@@ -130,7 +147,11 @@ final class AlertsAdminPage {
 		// Read-only parameters; nothing is changed by this request.
 		$code   = isset( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$search = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- A search of the view.
-		$tab    = isset( $_GET['tab'] ) && 'sounds' === $_GET['tab'] && null !== $this->library ? 'sounds' : 'fonts'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$tab    = match ( isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+			'sounds' => null === $this->library ? 'fonts' : 'sounds',
+			'images' => null === $this->images ? 'fonts' : 'images',
+			default  => 'fonts',
+		};
 		$notice = self::result_message( $code );
 
 		echo '<div class="wrap">';
@@ -140,6 +161,10 @@ final class AlertsAdminPage {
 
 		if ( null !== $this->library ) {
 			echo '<a class="nav-tab' . ( 'sounds' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'sounds' ) ) . '"' . ( 'sounds' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Sounds', 'merchboard' ) . '</a>';
+		}
+
+		if ( null !== $this->images ) {
+			echo '<a class="nav-tab' . ( 'images' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'images' ) ) . '"' . ( 'images' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Images', 'merchboard' ) . '</a>';
 		}
 
 		echo '</nav>';
@@ -152,6 +177,13 @@ final class AlertsAdminPage {
 
 		if ( null !== $library ) {
 			$this->render_sounds( $library );
+			echo '</div>';
+
+			return;
+		}
+
+		if ( 'images' === $tab && null !== $this->images ) {
+			$this->render_images( $this->images );
 			echo '</div>';
 
 			return;
@@ -223,6 +255,78 @@ final class AlertsAdminPage {
 		}
 
 		echo '</tbody></table>';
+	}
+
+	/**
+	 * The image library: upload and the list of images.
+	 *
+	 * @param AlertImageLibrary $library Image library.
+	 */
+	private function render_images( AlertImageLibrary $library ): void {
+		echo '<p>' . esc_html(
+			sprintf(
+				/* translators: 1: size in MB, 2: pixels, 3: number of images. */
+				__( 'Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving.', 'merchboard' ),
+				number_format_i18n( ImageFiles::max_bytes() / 1048576, 1 ),
+				ImageFiles::MAX_PIXELS,
+				AlertImageLibrary::MAX_IMAGES
+			)
+		) . '</p>';
+
+		echo '<h2>' . esc_html__( 'Add an image', 'merchboard' ) . '</h2>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" enctype="multipart/form-data">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::IMAGE_ADD_ACTION ) . '">';
+		wp_nonce_field( AlertsAdminActions::IMAGE_ADD_ACTION );
+		echo '<p><label for="merchboard-alert-image-file">' . esc_html__( 'Image file', 'merchboard' ) . '</label><br>';
+		echo '<input type="file" id="merchboard-alert-image-file" name="file" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" required></p>';
+		echo '<p><label for="merchboard-alert-image-name">' . esc_html__( 'Name (optional)', 'merchboard' ) . '</label><br>';
+		echo '<input type="text" id="merchboard-alert-image-name" name="name" class="regular-text" maxlength="' . esc_attr( (string) AlertImageLibrary::NAME_MAX ) . '" aria-describedby="merchboard-alert-image-name-help">';
+		echo '<span id="merchboard-alert-image-name-help" class="description"> ' . esc_html__( 'Creators see this name. Without a name, the file name is used.', 'merchboard' ) . '</span></p>';
+		submit_button( __( 'Upload image', 'merchboard' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		$images = $library->all();
+
+		echo '<h2>' . esc_html__( 'Image library', 'merchboard' ) . '</h2>';
+
+		if ( array() === $images ) {
+			echo '<p>' . esc_html__( 'The library is empty. Creators can only use their own images and the ready-made fills.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Image', 'merchboard' ) . '</th><th>' . esc_html__( 'Name', 'merchboard' ) . '</th><th>' . esc_html__( 'Size', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
+
+		foreach ( $images as $image ) {
+			echo '<tr><td><img src="' . esc_url( $image->url ) . '" alt="" width="96" height="54" style="object-fit:cover"></td><td>';
+			$this->rename_image_form( $image );
+			echo '</td><td>' . esc_html( $image->width . ' × ' . $image->height ) . '</td><td>';
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::IMAGE_REMOVE_ACTION ) . '">';
+			echo '<input type="hidden" name="image" value="' . esc_attr( (string) $image->attachment_id ) . '">';
+			wp_nonce_field( AlertsAdminActions::nonce_action( AlertsAdminActions::IMAGE_REMOVE_ACTION, (string) $image->attachment_id ) );
+			submit_button( __( 'Remove', 'merchboard' ), 'small', 'submit', false );
+			echo '</form></td></tr>';
+		}
+
+		echo '</tbody></table>';
+	}
+
+	/**
+	 * The name of a library image with a form to change it.
+	 *
+	 * @param AlertImage $image Library image.
+	 */
+	private function rename_image_form( AlertImage $image ): void {
+		$field = 'merchboard-alert-image-name-' . $image->attachment_id;
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::IMAGE_RENAME_ACTION ) . '">';
+		echo '<input type="hidden" name="image" value="' . esc_attr( (string) $image->attachment_id ) . '">';
+		wp_nonce_field( AlertsAdminActions::nonce_action( AlertsAdminActions::IMAGE_RENAME_ACTION, (string) $image->attachment_id ) );
+		echo '<label for="' . esc_attr( $field ) . '" class="screen-reader-text">' . esc_html__( 'Name', 'merchboard' ) . '</label>';
+		echo '<input type="text" id="' . esc_attr( $field ) . '" name="name" value="' . esc_attr( $image->name ) . '" maxlength="' . esc_attr( (string) AlertImageLibrary::NAME_MAX ) . '"> ';
+		submit_button( __( 'Rename', 'merchboard' ), 'small', 'submit', false );
+		echo '</form>';
 	}
 
 	/**

@@ -8,6 +8,8 @@ import { parseAnimation } from './animations';
 import type { TextAnimation } from './animations';
 import { isTextFit } from './fit';
 import type { TextFit } from './fit';
+import { parseFillLook } from './textfill';
+import type { FillLook } from './textfill';
 
 /**
  * One alert as the server renders it: plain text, and an image and a sound
@@ -44,6 +46,11 @@ export interface OverlayConfig {
 	animations: {
 		readonly main: TextAnimation;
 		readonly secondary: TextAnimation;
+	};
+	/** Text fills of the main and the secondary text (step 25.6.10); null for none. */
+	fills: {
+		readonly main: FillLook | null;
+		readonly secondary: FillLook | null;
 	};
 }
 
@@ -108,6 +115,16 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 			),
 			secondary: parseAnimation(
 				isRecord( value.animations ) ? value.animations.secondary : null
+			),
+		},
+		fills: {
+			main: parseFillLook(
+				isRecord( value.fills ) ? value.fills.main : null,
+				window.location.origin
+			),
+			secondary: parseFillLook(
+				isRecord( value.fills ) ? value.fills.secondary : null,
+				window.location.origin
 			),
 		},
 	};

@@ -14,6 +14,8 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
+use MerchBoard\Modules\Alerts\Images\AlertImageException;
+use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 
@@ -22,9 +24,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The font library (ADR-067): save or remove the Google Fonts API key,
  * fetch the catalogue, approve and remove fonts. The sound library (step
- * 6.3): upload and remove sounds. Order of checks: capability
- * `merchboard_manage_alerts` → nonce bound to the action (and the family or
- * the sound) → input → AlertFonts or AlertSoundLibrary (checks the
+ * 6.3): upload and remove sounds. The image library (step 6.10): upload,
+ * rename and remove images. Order of checks: capability
+ * `merchboard_manage_alerts` → nonce bound to the action (and the family,
+ * the sound or the image) → input → AlertFonts, AlertSoundLibrary or
+ * AlertImageLibrary (checks the
  * capability again, audits). Post/Redirect/Get to the page's tab with a
  * whitelisted outcome code.
  */
@@ -39,10 +43,19 @@ final class AlertsAdminActions {
 	public const SOUND_REMOVE_ACTION = 'merchboard_alert_sound_library_remove';
 	public const SOUND_RENAME_ACTION = 'merchboard_alert_sound_library_rename';
 
+	public const IMAGE_ADD_ACTION    = 'merchboard_alert_image_library_add';
+	public const IMAGE_REMOVE_ACTION = 'merchboard_alert_image_library_remove';
+	public const IMAGE_RENAME_ACTION = 'merchboard_alert_image_library_rename';
+
+	/**
+	 * Image library actions.
+	 */
+	private const IMAGE_ACTIONS = array( self::IMAGE_ADD_ACTION, self::IMAGE_REMOVE_ACTION, self::IMAGE_RENAME_ACTION );
+
 	/**
 	 * Every handled action.
 	 */
-	private const ACTIONS = array( self::KEY_ACTION, self::SYNC_ACTION, self::APPROVE_ACTION, self::REMOVE_ACTION, self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION );
+	private const ACTIONS = array( self::KEY_ACTION, self::SYNC_ACTION, self::APPROVE_ACTION, self::REMOVE_ACTION, self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION, self::IMAGE_ADD_ACTION, self::IMAGE_REMOVE_ACTION, self::IMAGE_RENAME_ACTION );
 
 	/**
 	 * Query argument: outcome code after a redirect.
@@ -55,8 +68,9 @@ final class AlertsAdminActions {
 	 * @param AlertFonts             $fonts   Font library.
 	 * @param Logger                 $logger  Technical log.
 	 * @param AlertSoundLibrary|null $library Sound library; null for none.
+	 * @param AlertImageLibrary|null $images  Image library; null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private Logger $logger, private ?AlertSoundLibrary $library = null ) {
+	public function __construct( private AlertFonts $fonts, private Logger $logger, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null ) {
 	}
 
 	/**
@@ -72,7 +86,7 @@ final class AlertsAdminActions {
 	 * The nonce action of a request.
 	 *
 	 * @param string $action  Admin-post action.
-	 * @param string $subject Font family or sound id ('' when the action has none).
+	 * @param string $subject Font family, sound or image id ('' when the action has none).
 	 */
 	public static function nonce_action( string $action, string $subject = '' ): string {
 		return '' === $subject ? $action : $action . ':' . $subject;
@@ -102,27 +116,43 @@ final class AlertsAdminActions {
 		$action  = self::scalar( $input, 'action' );
 		$family  = self::scalar( $input, 'family' );
 		$sound   = self::scalar( $input, 'sound' );
+		$image   = self::scalar( $input, 'image' );
 		$nonce   = self::scalar( $input, '_wpnonce' );
 		$subject = match ( $action ) {
 			self::APPROVE_ACTION, self::REMOVE_ACTION => $family,
 			self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION => $sound,
+			self::IMAGE_REMOVE_ACTION, self::IMAGE_RENAME_ACTION => $image,
 			default => '',
 		};
-		$tab = in_array( $action, array( self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION ), true ) ? 'sounds' : 'fonts';
+		$tab = match ( true ) {
+			in_array( $action, array( self::SOUND_ADD_ACTION, self::SOUND_REMOVE_ACTION, self::SOUND_RENAME_ACTION ), true ) => 'sounds',
+			in_array( $action, self::IMAGE_ACTIONS, true ) => 'images',
+			default => 'fonts',
+		};
 
 		if ( ! in_array( $action, self::ACTIONS, true ) || 1 !== wp_verify_nonce( $nonce, self::nonce_action( $action, $subject ) ) ) {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
 
 		try {
-			return AlertsAdminPage::url( $tab, 'sounds' === $tab ? $this->run_sounds( $action, $files, $sound, self::scalar( $input, 'name' ) ) : $this->run( $action, $input, $family ) );
+			return AlertsAdminPage::url(
+				$tab,
+				match ( $tab ) {
+					'sounds' => $this->run_sounds( $action, $files, $sound, self::scalar( $input, 'name' ) ),
+					'images' => $this->run_images( $action, $files, $image, self::scalar( $input, 'name' ) ),
+					default  => $this->run( $action, $input, $family ),
+				}
+			);
 		} catch ( AlertFontsException $e ) {
 			return AlertsAdminPage::url( $tab, $e->reason() );
 		} catch ( AlertSoundException $e ) {
 			return AlertsAdminPage::url( $tab, $e->reason() );
+		} catch ( AlertImageException $e ) {
+			// Prefixed: the sound tab uses some of the same codes with other messages.
+			return AlertsAdminPage::url( $tab, 'image_' . $e->reason() );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error(
-				'Changing the alert font or sound library failed.',
+				'Changing the alert font, sound or image library failed.',
 				array_merge(
 					$e->context(),
 					array( 'reason' => $e->getMessage() )
@@ -159,6 +189,34 @@ final class AlertsAdminActions {
 		}
 
 		return $this->library->remove( absint( $sound ) ) ? 'sound_removed' : 'no_changes';
+	}
+
+	/**
+	 * Runs an image library action; returns the outcome code.
+	 *
+	 * @param string       $action Admin-post action.
+	 * @param array<mixed> $files  Uploaded files.
+	 * @param string       $image  Image id (remove, rename).
+	 * @param string       $name   Name (add, rename).
+	 * @throws AlertImageException When the library rejects the change.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	private function run_images( string $action, array $files, string $image, string $name ): string {
+		if ( null === $this->images ) {
+			return 'error';
+		}
+
+		if ( self::IMAGE_ADD_ACTION === $action ) {
+			$this->images->add( is_array( $files['file'] ?? null ) ? $files['file'] : array(), $name );
+
+			return 'image_added';
+		}
+
+		if ( self::IMAGE_RENAME_ACTION === $action ) {
+			return $this->images->rename( absint( $image ), $name ) ? 'image_renamed' : 'no_changes';
+		}
+
+		return $this->images->remove( absint( $image ) ) ? 'image_removed' : 'no_changes';
 	}
 
 	/**

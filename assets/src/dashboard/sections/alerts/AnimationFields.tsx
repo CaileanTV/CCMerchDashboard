@@ -18,8 +18,25 @@ import type {
 	Speed,
 	TextAnimation,
 } from '../../../overlay/animations';
+import '../../../overlay/textfill.css';
+import {
+	FILL_MOTIONS,
+	FILL_PRESETS,
+	FILL_TYPES,
+	applyFill,
+	clearFill,
+	fillLook,
+} from '../../../overlay/textfill';
+import type {
+	FillLook,
+	FillMotion,
+	FillPreset,
+	FillType,
+	TextFill,
+} from '../../../overlay/textfill';
 import { Button } from '../../components/Button';
 import { Field } from '../../components/Field';
+import type { AlertsImages } from '../../types/alerts';
 
 /** In-animations and effects that use the colour. */
 const USES_COLOR: ReadonlySet< string > = new Set( [
@@ -138,6 +155,54 @@ function speedLabel( value: Speed ): string {
 	}
 }
 
+function fillTypeLabel( value: FillType ): string {
+	switch ( value ) {
+		case 'preset':
+			return __( 'Gradient or pattern', 'merchboard' );
+		case 'image':
+			return __( 'Image', 'merchboard' );
+		default:
+			return __( 'Text colour (no fill)', 'merchboard' );
+	}
+}
+
+/**
+ * The name of a ready-made fill.
+ *
+ * @param value Preset.
+ */
+export function presetLabel( value: FillPreset ): string {
+	switch ( value ) {
+		case 'aurora':
+			return __( 'Aurora', 'merchboard' );
+		case 'sunset':
+			return __( 'Sunset', 'merchboard' );
+		case 'ocean':
+			return __( 'Ocean', 'merchboard' );
+		case 'fire':
+			return __( 'Fire', 'merchboard' );
+		case 'gold':
+			return __( 'Gold', 'merchboard' );
+		case 'candy':
+			return __( 'Candy stripes', 'merchboard' );
+		case 'matrix':
+			return __( 'Matrix', 'merchboard' );
+		default:
+			return __( 'Rainbow', 'merchboard' );
+	}
+}
+
+function motionLabel( value: FillMotion ): string {
+	switch ( value ) {
+		case 'pan':
+			return __( 'Glides sideways', 'merchboard' );
+		case 'fall':
+			return __( 'Falls down', 'merchboard' );
+		default:
+			return __( 'Still', 'merchboard' );
+	}
+}
+
 /** How long the sample shows the effect before it leaves (ms). */
 const SAMPLE_SHOWN = 2500;
 
@@ -152,13 +217,16 @@ const SAMPLE_PAUSE = 600;
  * @param props           Props.
  * @param props.animation The animation.
  * @param props.duration  In/out time (ms).
+ * @param props.fill      The text fill; null for none.
  */
 export function AnimationSample( {
 	animation,
 	duration,
+	fill = null,
 }: {
 	readonly animation: TextAnimation;
 	readonly duration: number;
+	readonly fill?: FillLook | null;
 } ) {
 	const ref = useRef< HTMLSpanElement >( null );
 	// With reduced motion the sample waits until it is played on request.
@@ -168,7 +236,7 @@ export function AnimationSample( {
 			! window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches
 	);
 	const text = __( 'Thanks for the merch!', 'merchboard' );
-	const choice = JSON.stringify( animation );
+	const choice = JSON.stringify( [ animation, fill ] );
 
 	useEffect( () => {
 		const element = ref.current;
@@ -188,6 +256,8 @@ export function AnimationSample( {
 				true
 			);
 
+			applyFill( element, fill );
+
 			timer = window.setTimeout( () => {
 				leaveText( element );
 				timer = window.setTimeout(
@@ -202,14 +272,16 @@ export function AnimationSample( {
 		} else {
 			resetText( element );
 			element.textContent = text;
+			applyFill( element, fill );
 		}
 
 		return () => {
 			window.clearTimeout( timer );
 			resetText( element );
+			clearFill( element );
 			element.textContent = text;
 		};
-		// The animation is compared by value (choice).
+		// The animation and the fill are compared by value (choice).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ choice, duration, playing, text ] );
 
@@ -237,26 +309,45 @@ interface Props {
 	readonly onChange: ( value: TextAnimation ) => void;
 	/** In/out time (ms) for the sample. */
 	readonly duration: number;
+	/** The text fill (step 25.6.10). */
+	readonly fill: TextFill;
+	readonly onFillChange: ( fill: TextFill ) => void;
+	/** Images the text can be filled with; null when not available. */
+	readonly images: AlertsImages | null;
 }
 
 /**
  * The animation of one text (step 25.6.9): in, effect while shown, out,
- * colour (when the choice uses one) and speed.
+ * colour (when the choice uses one) and speed; and its fill (step 25.6.10):
+ * a ready-made gradient or pattern or an image, still or moving.
  *
- * @param props          Props.
- * @param props.legend   The text's name.
- * @param props.value    The animation.
- * @param props.onChange Called with the changed animation.
- * @param props.duration In/out time (ms) for the sample.
+ * @param props              Props.
+ * @param props.legend       The text's name.
+ * @param props.value        The animation.
+ * @param props.onChange     Called with the changed animation.
+ * @param props.duration     In/out time (ms) for the sample.
+ * @param props.fill         The text fill.
+ * @param props.onFillChange Called with the changed fill.
+ * @param props.images       Images the text can be filled with.
  */
 export function AnimationFields( {
 	legend,
 	value,
 	onChange,
 	duration,
+	fill,
+	onFillChange,
+	images,
 }: Props ) {
 	const set = ( change: Partial< TextAnimation > ) =>
 		onChange( { ...value, ...change } );
+	const setFill = ( change: Partial< TextFill > ) =>
+		onFillChange( { ...fill, ...change } );
+	const own = images?.own ?? [];
+	const library = images?.library ?? [];
+	const types = FILL_TYPES.filter(
+		( type ) => type !== 'image' || images !== null
+	);
 
 	const select = < T extends string >(
 		label: string,
@@ -340,7 +431,98 @@ export function AnimationFields( {
 					</Field>
 				) }
 			</div>
-			<AnimationSample animation={ value } duration={ duration } />
+			<div className="merchboard-alerts__grid">
+				{ select(
+					__( 'Text fill', 'merchboard' ),
+					fill.type,
+					types,
+					fillTypeLabel,
+					( option ) => setFill( { type: option } )
+				) }
+				{ fill.type === 'preset' &&
+					select(
+						__( 'Gradient or pattern', 'merchboard' ),
+						fill.preset,
+						FILL_PRESETS,
+						presetLabel,
+						( option ) => setFill( { preset: option } )
+					) }
+				{ fill.type === 'image' && (
+					<Field label={ __( 'Image', 'merchboard' ) }>
+						{ ( control ) => (
+							<select
+								{ ...control }
+								className="merchboard-input"
+								value={ String( fill.image ) }
+								onChange={ ( event ) =>
+									setFill( {
+										image: Number( event.target.value ),
+									} )
+								}
+							>
+								<option value="0" disabled>
+									{ own.length + library.length === 0
+										? __(
+												'Upload an image first',
+												'merchboard'
+											)
+										: __(
+												'Choose an image…',
+												'merchboard'
+											) }
+								</option>
+								{ own.length > 0 && (
+									<optgroup
+										label={ __(
+											'Your images',
+											'merchboard'
+										) }
+									>
+										{ own.map( ( image ) => (
+											<option
+												key={ image.id }
+												value={ String( image.id ) }
+											>
+												{ image.name }
+											</option>
+										) ) }
+									</optgroup>
+								) }
+								{ library.length > 0 && (
+									<optgroup
+										label={ __(
+											'Image library',
+											'merchboard'
+										) }
+									>
+										{ library.map( ( image ) => (
+											<option
+												key={ image.id }
+												value={ String( image.id ) }
+											>
+												{ image.name }
+											</option>
+										) ) }
+									</optgroup>
+								) }
+							</select>
+						) }
+					</Field>
+				) }
+				{ fill.type !== 'none' &&
+					select(
+						__( 'Fill motion', 'merchboard' ),
+						fill.motion,
+						FILL_MOTIONS,
+						motionLabel,
+						( option ) => setFill( { motion: option } )
+					) }
+			</div>
+			<AnimationSample
+				animation={ value }
+				duration={ duration }
+				fill={ fillLook( fill, [ ...own, ...library ] ) }
+			/>
 		</fieldset>
 	);
 }

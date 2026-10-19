@@ -18,6 +18,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use MerchBoard\Modules\Alerts\Images\AlertImages;
 use InvalidArgumentException;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 
@@ -31,9 +32,10 @@ defined( 'ABSPATH' ) || exit;
  * - **Set up** is explicit and idempotent, with an audit record.
  * - **Settings:** only the fields of the overlay form (EDITABLE and the
  *   visibility of the secondary text), the font (an approved font or the
- *   default, ADR-067), the designer's layout and whether sounds play change;
- *   the sound files change only through AlertSounds. Everything is
- *   normalized by OverlaySettings.
+ *   default, ADR-067), the designer's layout, the text animations and fills
+ *   and whether sounds play change; the sound and image files change only
+ *   through AlertSounds and AlertImages, and a text fill only keeps an image
+ *   the creator may use. Everything is normalized by OverlaySettings.
  * - **New id:** the old OBS URL stops working at once; audited without ids.
  * - **Test alert:** a random published product of the creator, shown by
  *   the overlay within a second (OverlayTestQueue); never stored as an
@@ -69,6 +71,7 @@ final class AlertOverlays {
 	 * @param Transaction              $transaction Database transaction.
 	 * @param (Closure(int): int)|null $image_id    Featured image lookup; defaults to get_post_thumbnail_id().
 	 * @param AlertFonts|null          $fonts       Approved fonts; null allows only the default font.
+	 * @param AlertImages|null         $images      Text fill images; null allows no images.
 	 */
 	public function __construct(
 		private AlertOverlayRepository $overlays,
@@ -78,7 +81,8 @@ final class AlertOverlays {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		?Closure $image_id = null,
-		private ?AlertFonts $fonts = null
+		private ?AlertFonts $fonts = null,
+		private ?AlertImages $images = null
 	) {
 		$this->image_id = $image_id ?? static function ( int $product_id ): int {
 			$id = get_post_thumbnail_id( $product_id );
@@ -159,6 +163,11 @@ final class AlertOverlays {
 			$values['animations'] = $input['animations'];
 		}
 
+		// The text fills of both texts (step 25.6.10).
+		if ( is_array( $input['text_fills'] ?? null ) ) {
+			$values['text_fills'] = $input['text_fills'];
+		}
+
 		if ( array_key_exists( 'show_secondary', $input ) ) {
 			$values['layout']['elements']['secondary_text']['visible'] = true === $input['show_secondary'];
 		}
@@ -170,7 +179,16 @@ final class AlertOverlays {
 			}
 		}
 
-		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
+		$settings = OverlaySettings::from_array( $values );
+
+		// A fill keeps only the creator's own image or a library image; any other is cleared.
+		if ( is_array( $input['text_fills'] ?? null ) ) {
+			$normalized               = $settings->to_array();
+			$normalized['text_fills'] = null === $this->images ? AlertImages::without_images( $normalized['text_fills'] ) : $this->images->clean( $creator_id, $normalized['text_fills'] );
+			$settings                 = OverlaySettings::from_array( $normalized );
+		}
+
+		$this->overlays->update_settings( $overlay->id, $settings );
 
 		return $this->overlays->find_for_creator( $creator_id );
 	}

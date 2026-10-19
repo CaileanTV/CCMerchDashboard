@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act } from 'react';
 
 import { DEFAULT_ANIMATION } from '../../overlay/animations';
+import { DEFAULT_FILL } from '../../overlay/textfill';
 import { parseAlertsOverlay } from '../api/alerts';
 import { ConfigContext } from '../app/config-context';
 import {
@@ -43,6 +44,10 @@ const SETTINGS = {
 	animations: {
 		main_text: DEFAULT_ANIMATION,
 		secondary_text: DEFAULT_ANIMATION,
+	},
+	text_fills: {
+		main_text: DEFAULT_FILL,
+		secondary_text: DEFAULT_FILL,
 	},
 	font_family: 'inherit',
 };
@@ -124,6 +129,37 @@ function body( url: string | null, extra: Record< string, unknown > = {} ) {
 		merchalert_active: false,
 		fonts: [ ROBOTO ],
 		...extra,
+	};
+}
+
+const IMAGE = {
+	id: 5,
+	url: `${ ORIGIN }/wp-content/uploads/2026/10/stars.gif`,
+	name: 'stars.gif',
+	width: 400,
+	height: 200,
+};
+
+/**
+ * An answer whose overlay has text fill images.
+ *
+ * @param own The creator's own images.
+ */
+function imageBody( own: unknown[] ) {
+	const base = body( URL_A );
+
+	return {
+		...base,
+		overlay: {
+			...base.overlay,
+			images: {
+				own,
+				library: [],
+				max_bytes: 5242880,
+				max_pixels: 4096,
+				max_own: 10,
+			},
+		},
 	};
 }
 
@@ -897,5 +933,153 @@ describe( 'AlertsSection', () => {
 			'typewriter'
 		);
 		expect( requests.some( ( r ) => r.method === 'PATCH' ) ).toBe( false );
+	} );
+	it( 'refuses text fill images of another site', () => {
+		expect(
+			parseAlertsOverlay( imageBody( [ IMAGE ] ) )?.overlay?.images?.own
+		).toHaveLength( 1 );
+		expect(
+			parseAlertsOverlay(
+				imageBody( [ { ...IMAGE, url: 'https://evil.example/a.gif' } ] )
+			)
+		).toBeNull();
+	} );
+
+	it( 'fills a text with a preset or an image, shows it and saves it', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, imageBody( [ IMAGE ] ) ),
+			[ `PATCH ${ PATH }` ]: () =>
+				response( 200, imageBody( [ IMAGE ] ) ),
+		} );
+
+		await show();
+
+		const field = ( label: string ) => {
+			const element = Array.from(
+				rendered?.container.querySelectorAll( 'label' ) ?? []
+			).find( ( item ) => item.textContent === label );
+			const control = element
+				? document.getElementById( element.htmlFor )
+				: null;
+
+			return control instanceof HTMLSelectElement ? control : null;
+		};
+		const change = ( select: HTMLSelectElement | null, value: string ) => {
+			expect( select ).not.toBeNull();
+			act( () => {
+				if ( select ) {
+					select.value = value;
+					select.dispatchEvent(
+						new Event( 'change', { bubbles: true } )
+					);
+				}
+			} );
+		};
+		const sample = () =>
+			rendered?.container.querySelector< HTMLElement >(
+				'.merchboard-animation__text'
+			) ?? null;
+
+		change( field( 'Text fill' ), 'preset' );
+		change( field( 'Gradient or pattern' ), 'gold' );
+		expect( sample()?.classList.contains( 'merchboard-fill' ) ).toBe(
+			true
+		);
+
+		change( field( 'Text fill' ), 'image' );
+		change( field( 'Image' ), '5' );
+		change( field( 'Fill motion' ), 'pan' );
+		expect(
+			sample()?.style.getPropertyValue( '--merchboard-fill-image' )
+		).toContain( 'stars.gif' );
+		expect(
+			rendered?.container
+				.querySelector( '.merchboard-designer .merchboard-fill' )
+				?.getAttribute( 'data-fill-motion' )
+		).toBe( 'pan' );
+
+		click( button( 'Save overlay settings' ) );
+		await flush();
+
+		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
+			text_fills: { main_text: unknown };
+		};
+		expect( patch.text_fills.main_text ).toEqual( {
+			type: 'image',
+			preset: 'gold',
+			image: 5,
+			motion: 'pan',
+		} );
+	} );
+
+	it( 'uploads and deletes own images for text fills', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, imageBody( [] ) ),
+			[ `POST ${ PATH }/images` ]: () =>
+				response( 200, imageBody( [ IMAGE ] ) ),
+			[ `DELETE ${ PATH }/images/5` ]: () =>
+				response( 200, imageBody( [] ) ),
+		} );
+		const confirm = jest.spyOn( window, 'confirm' ).mockReturnValue( true );
+
+		await show();
+
+		const imageInput = () =>
+			fileInputs().find( ( item ) =>
+				item.accept.includes( 'image/gif' )
+			);
+		const card = () =>
+			Array.from(
+				rendered?.container.querySelectorAll( 'h2, h3' ) ?? []
+			).some( ( heading ) => heading.textContent === 'Images for text' );
+
+		expect( card() ).toBe( false );
+		expect( imageInput() ).toBeUndefined();
+
+		// The card appears right below the text fill once a text is filled with an image.
+		const typeLabel = Array.from(
+			rendered?.container.querySelectorAll( 'label' ) ?? []
+		).find( ( item ) => item.textContent === 'Text fill' );
+		const typeSelect = typeLabel
+			? document.getElementById( typeLabel.htmlFor )
+			: null;
+		act( () => {
+			if ( typeSelect instanceof HTMLSelectElement ) {
+				typeSelect.value = 'image';
+				typeSelect.dispatchEvent(
+					new Event( 'change', { bubbles: true } )
+				);
+			}
+		} );
+		expect( card() ).toBe( true );
+
+		const headings = Array.from(
+			rendered?.container.querySelectorAll( 'h2, h3' ) ?? []
+		).map( ( heading ) => heading.textContent );
+		expect(
+			headings.indexOf( 'Images for text' ) -
+				headings.indexOf( 'Animations and text fill' )
+		).toBe( 1 );
+		const input = imageInput();
+		const file = new File( [ 'x' ], 'stars.gif', { type: 'image/gif' } );
+		choose( input as HTMLInputElement, file );
+		await flush();
+
+		const upload = requests.find( ( r ) => r.path === `${ PATH }/images` );
+		expect( upload?.method ).toBe( 'POST' );
+		expect( ( upload?.body as FormData ).get( 'file' ) ).toBe( file );
+		expect( rendered?.container.textContent ).toContain( 'stars.gif' );
+
+		click( button( 'Delete' ) );
+		await flush();
+
+		expect(
+			requests.some(
+				( r ) =>
+					r.method === 'DELETE' && r.path === `${ PATH }/images/5`
+			)
+		).toBe( true );
+		expect( rendered?.container.textContent ).toContain( 'Image deleted.' );
+		confirm.mockRestore();
 	} );
 } );

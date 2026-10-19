@@ -41,6 +41,15 @@ final class OverlaySettings {
 	public const ANIMATION_SPEEDS  = array( 'slow', 'normal', 'fast' );
 
 	/**
+	 * Text fills (step 6.10): what fills the letters (none, a preset gradient
+	 * or pattern, an image), the presets and how the fill moves. The same
+	 * lists as assets/src/overlay/textfill.ts.
+	 */
+	public const FILL_TYPES   = array( 'none', 'preset', 'image' );
+	public const FILL_PRESETS = array( 'rainbow', 'aurora', 'sunset', 'ocean', 'fire', 'gold', 'candy', 'matrix' );
+	public const FILL_MOTIONS = array( 'none', 'pan', 'fall' );
+
+	/**
 	 * Canvas height in pixels (OBS' default browser source).
 	 */
 	public const CANVAS_HEIGHT = 1080;
@@ -63,7 +72,7 @@ final class OverlaySettings {
 	/**
 	 * Normalized values.
 	 *
-	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}}
+	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}, text_fills: array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}}
 	 */
 	private array $values;
 
@@ -99,6 +108,7 @@ final class OverlaySettings {
 			'audio_category_map'  => self::category_map( $input['audio_category_map'] ?? null ),
 			'layout'              => self::layout( $input['layout'] ?? null ),
 			'animations'          => self::clean_animations( $input['animations'] ?? null ),
+			'text_fills'          => self::clean_fills( $input['text_fills'] ?? null ),
 		);
 	}
 
@@ -132,7 +142,7 @@ final class OverlaySettings {
 	/**
 	 * The normalized values.
 	 *
-	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}}
+	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}, text_fills: array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}}
 	 */
 	public function to_array(): array {
 		return $this->values;
@@ -166,6 +176,17 @@ final class OverlaySettings {
 	 */
 	public function animations(): array {
 		return $this->values['animations'];
+	}
+
+	/**
+	 * The text fills of the main and the secondary text (step 6.10). An
+	 * image is only an attachment id here; AlertImages decides whether the
+	 * creator may use it.
+	 *
+	 * @return array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}
+	 */
+	public function text_fills(): array {
+		return $this->values['text_fills'];
 	}
 
 	/**
@@ -392,6 +413,38 @@ final class OverlaySettings {
 			'out'    => self::choice( $value['out'] ?? null, self::ANIMATIONS_OUT, 'fade' ),
 			'color'  => self::hex( $value['color'] ?? null, '#ff2bd6' ),
 			'speed'  => self::choice( $value['speed'] ?? null, self::ANIMATION_SPEEDS, 'normal' ),
+		);
+	}
+
+	/**
+	 * Text fills of both texts; unknown values get the default (none).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}
+	 */
+	private static function clean_fills( mixed $value ): array {
+		$value = is_array( $value ) ? $value : array();
+
+		return array(
+			'main_text'      => self::clean_fill( $value['main_text'] ?? null ),
+			'secondary_text' => self::clean_fill( $value['secondary_text'] ?? null ),
+		);
+	}
+
+	/**
+	 * One text fill.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return array{type: string, preset: string, image: int, motion: string}
+	 */
+	private static function clean_fill( mixed $value ): array {
+		$value = is_array( $value ) ? $value : array();
+
+		return array(
+			'type'   => self::choice( $value['type'] ?? null, self::FILL_TYPES, 'none' ),
+			'preset' => self::choice( $value['preset'] ?? null, self::FILL_PRESETS, 'rainbow' ),
+			'image'  => self::int( $value['image'] ?? null, 0, PHP_INT_MAX, 0 ),
+			'motion' => self::choice( $value['motion'] ?? null, self::FILL_MOTIONS, 'none' ),
 		);
 	}
 

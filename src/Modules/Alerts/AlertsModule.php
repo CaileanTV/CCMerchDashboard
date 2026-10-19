@@ -20,6 +20,9 @@ use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
 use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
+use MerchBoard\Modules\Alerts\Images\AlertImages;
+use MerchBoard\Modules\Alerts\Images\ImageFiles;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
@@ -99,8 +102,8 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ) ) );
-		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
+		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
 		$container->set( AlertOverlayRepository::class, static fn( Container $c ): AlertOverlayRepository => new AlertOverlayRepository( $c->get( wpdb::class ) ) );
@@ -133,6 +136,16 @@ final class AlertsModule implements Module {
 				$c->get( AlertSoundLibrary::class )
 			)
 		);
+		// Images that fill the alert text (phase 25, step 6.10) and the administrator's library.
+		$container->set( ImageFiles::class, static fn(): ImageFiles => new ImageFiles() );
+		$container->set(
+			AlertImageLibrary::class,
+			static fn( Container $c ): AlertImageLibrary => new AlertImageLibrary( $c->get( ImageFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set(
+			AlertImages::class,
+			static fn( Container $c ): AlertImages => new AlertImages( $c->get( AlertOverlayRepository::class ), $c->get( ImageFiles::class ), $c->get( AlertImageLibrary::class ) )
+		);
 		$container->set(
 			OverlayFeed::class,
 			static fn( Container $c ): OverlayFeed => new OverlayFeed(
@@ -157,12 +170,13 @@ final class AlertsModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				null,
-				$c->get( AlertFonts::class )
+				$c->get( AlertFonts::class ),
+				$c->get( AlertImages::class )
 			)
 		);
 		$container->set(
 			MeAlertsController::class,
-			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ) )
+			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ) )
 		);
 		( new AlertsDashboardSection() )->register();
 		$container->set(
@@ -181,7 +195,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			OverlayPage::class,
-			static fn( Container $c ): OverlayPage => new OverlayPage( $c->get( OverlayRoute::class ), $c->get( OverlayFeed::class ), $c->get( OverlayAssets::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ) )
+			static fn( Container $c ): OverlayPage => new OverlayPage( $c->get( OverlayRoute::class ), $c->get( OverlayFeed::class ), $c->get( OverlayAssets::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertImages::class ) )
 		);
 
 		add_action(

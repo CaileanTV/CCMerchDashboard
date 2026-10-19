@@ -17,6 +17,8 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
+use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
@@ -43,6 +45,7 @@ use WP_REST_Response;
 #[CoversClass( AlertOverlays::class )]
 #[CoversClass( OverlayTestQueue::class )]
 #[CoversClass( AlertSounds::class )]
+#[CoversClass( AlertImages::class )]
 final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 	private const ROUTE = '/merchboard/v1/me/alerts/overlay';
@@ -69,8 +72,9 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		$sounds         = AlertSoundsTest::sounds( $this->overlays, AlertSoundsTest::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ) );
 		$this->feed     = new OverlayFeed( $this->overlays, new AlertEventRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue(), $sounds );
 		$fonts          = new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): mixed => null );
-		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0, $fonts );
-		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ), $fonts, $sounds );
+		$images         = new AlertImages( $this->overlays, AlertImagesTest::image_files(), new AlertImageLibrary( AlertImagesTest::image_files(), $this->service( AuditTrail::class ), $this->service( Transaction::class ) ) );
+		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0, $fonts, $images );
+		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ), $fonts, $sounds, $images );
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();
 		};
@@ -288,6 +292,58 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( 'library' => 'unknown_sound' ), $this->call( 'POST', self::ROUTE . '/sounds/default', array( 'library' => 1 ) )->get_data()['data']['fields'] ?? null );
 	}
 
+	public function test_text_fill_images_go_through_the_routes_and_stay_the_creators(): void {
+		$this->creator( 'orion' );
+		$this->call( 'POST', self::ROUTE );
+		$theirs = (int) ( $this->data( $this->upload_image( AlertImagesTest::upload( AlertImagesTest::png( 4, 2 ), 'theirs.png' ) ) )['overlay']['images']['own'][0]['id'] ?? 0 );
+		self::assertGreaterThan( 0, $theirs );
+
+		$this->creator( 'nova' );
+		self::assertSame( 404, $this->upload_image( AlertImagesTest::upload( AlertImagesTest::png( 4, 2 ) ) )->get_status(), 'Set up the overlay first.' );
+		$this->call( 'POST', self::ROUTE );
+
+		$images = $this->data( $this->upload_image( AlertImagesTest::upload( AlertImagesTest::png( 4, 2 ), 'stars.png' ) ) )['overlay']['images'];
+		self::assertSame( array( 'stars.png' ), array_column( $images['own'], 'name' ), 'Only the own images are listed.' );
+		$own = (int) $images['own'][0]['id'];
+
+		$refused = $this->upload_image( AlertImagesTest::upload( 'not an image', 'x.png' ) );
+		self::assertSame( 400, $refused->get_status() );
+		self::assertSame( array( 'file' => 'invalid_type' ), $refused->get_data()['data']['fields'] ?? null );
+
+		$fill  = static fn( int $image ): array => array(
+			'main_text' => array(
+				'type'   => 'image',
+				'image'  => $image,
+				'motion' => 'pan',
+			),
+		);
+		$saved = $this->data( $this->call( 'PATCH', self::ROUTE, array( 'text_fills' => $fill( $own ) ) ) )['overlay']['settings']['text_fills'];
+		self::assertSame(
+			array(
+				'type'   => 'image',
+				'preset' => 'rainbow',
+				'image'  => $own,
+				'motion' => 'pan',
+			),
+			$saved['main_text']
+		);
+
+		$foreign = $this->data( $this->call( 'PATCH', self::ROUTE, array( 'text_fills' => $fill( $theirs ) ) ) )['overlay']['settings']['text_fills'];
+		self::assertSame( 'none', $foreign['main_text']['type'], 'Another creator\'s image is cleared.' );
+		self::assertSame( 0, $foreign['main_text']['image'] );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'text_fills' => 'gold' ) )->get_status() );
+
+		$delete = $this->call( 'DELETE', self::ROUTE . '/images/' . $theirs );
+		self::assertSame( 400, $delete->get_status() );
+		self::assertSame( array( 'image' => 'unknown_image' ), $delete->get_data()['data']['fields'] ?? null );
+		self::assertNotNull( get_post( $theirs ), 'Orion\'s file is kept.' );
+
+		$this->call( 'PATCH', self::ROUTE, array( 'text_fills' => $fill( $own ) ) );
+		$after = $this->data( $this->call( 'DELETE', self::ROUTE . '/images/' . $own ) )['overlay'];
+		self::assertSame( array(), $after['images']['own'] );
+		self::assertSame( 'none', $after['settings']['text_fills']['main_text']['type'], 'The fill that used it is cleared.' );
+	}
+
 	public function test_a_new_url_kills_the_old_one_at_once(): void {
 		$creator = $this->creator( 'nova' );
 		$this->call( 'POST', self::ROUTE );
@@ -400,6 +456,20 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		if ( null !== $file ) {
 			$request->set_file_params( array( 'file' => $file ) );
 		}
+
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * Uploads a text fill image through the route.
+	 *
+	 * @phpstan-param array{name: non-empty-string, type: non-empty-string, tmp_name: non-empty-string, error: int<0, 8>, size: int<0, max>} $file
+	 *
+	 * @param array $file Upload.
+	 */
+	private function upload_image( array $file ): WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', self::ROUTE . '/images' );
+		$request->set_file_params( array( 'file' => $file ) );
 
 		return rest_do_request( $request );
 	}

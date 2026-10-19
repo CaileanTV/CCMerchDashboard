@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T16:33:06+00:00\n"
+"POT-Creation-Date: 2026-10-19T18:22:31+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -335,367 +335,379 @@ msgstr ""
 msgid "Sound of the alert sound library renamed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:218
-msgid "WordPress user: none"
+#: src/Modules/Admin/AuditLogFormatter.php:128
+msgid "Image added to the alert image library"
 msgstr ""
 
-#. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:220
-#, php-format
-msgid "WordPress user: %s"
+#: src/Modules/Admin/AuditLogFormatter.php:129
+msgid "Image removed from the alert image library"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:130
+msgid "Image of the alert image library renamed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:221
+msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:223
 #, php-format
-msgid "Triggered by: %s"
+msgid "WordPress user: %s"
 msgstr ""
 
-#. translators: %s: creator status.
+#. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:226
 #, php-format
-msgid "Status: %s"
+msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
 #: src/Modules/Admin/AuditLogFormatter.php:229
 #, php-format
+msgid "Status: %s"
+msgstr ""
+
+#. translators: %s: creator status.
+#: src/Modules/Admin/AuditLogFormatter.php:232
+#, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:232
+#: src/Modules/Admin/AuditLogFormatter.php:235
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:235
+#: src/Modules/Admin/AuditLogFormatter.php:238
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:237
+#: src/Modules/Admin/AuditLogFormatter.php:240
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:240
+#: src/Modules/Admin/AuditLogFormatter.php:243
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:243
+#: src/Modules/Admin/AuditLogFormatter.php:246
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:244
+#: src/Modules/Admin/AuditLogFormatter.php:247
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:245
+#: src/Modules/Admin/AuditLogFormatter.php:248
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:246
+#: src/Modules/Admin/AuditLogFormatter.php:249
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:248
+#: src/Modules/Admin/AuditLogFormatter.php:251
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:252
+#: src/Modules/Admin/AuditLogFormatter.php:255
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:255
+#: src/Modules/Admin/AuditLogFormatter.php:258
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:260
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:260
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:263
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:266
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:266
+#: src/Modules/Admin/AuditLogFormatter.php:269
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:269
+#: src/Modules/Admin/AuditLogFormatter.php:272
 msgid "Previous creator: none"
-msgstr ""
-
-#. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:271
-#, php-format
-msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:274
 #, php-format
+msgid "Previous creator: %s"
+msgstr ""
+
+#. translators: %s: creator name or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:277
+#, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:277
+#: src/Modules/Admin/AuditLogFormatter.php:280
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:280
+#: src/Modules/Admin/AuditLogFormatter.php:283
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:283
+#: src/Modules/Admin/AuditLogFormatter.php:286
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:285
+#: src/Modules/Admin/AuditLogFormatter.php:288
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:288
+#: src/Modules/Admin/AuditLogFormatter.php:291
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:291
+#: src/Modules/Admin/AuditLogFormatter.php:294
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:294
+#: src/Modules/Admin/AuditLogFormatter.php:297
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:299
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:299
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:299
+#: src/Modules/Admin/AuditLogFormatter.php:302
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:302
+#: src/Modules/Admin/AuditLogFormatter.php:305
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:305
+#: src/Modules/Admin/AuditLogFormatter.php:308
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:306
-msgid "WooCommerce order: deleted"
-msgstr ""
-
-#. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:309
-#, php-format
-msgid "Ledger rows deleted: %s"
+msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:312
 #, php-format
-msgid "Cycle events deleted: %s"
+msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
-msgid "Stored tax rows deleted: %s"
+msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
+msgid "Stored tax rows deleted: %s"
+msgstr ""
+
+#. translators: %s: number of rows.
+#: src/Modules/Admin/AuditLogFormatter.php:321
+#, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:324
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:362
+#: src/Modules/Admin/AuditLogFormatter.php:365
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:364
+#: src/Modules/Admin/AuditLogFormatter.php:367
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:366
+#: src/Modules/Admin/AuditLogFormatter.php:369
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:379
+#: src/Modules/Admin/AuditLogFormatter.php:382
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:380
+#: src/Modules/Admin/AuditLogFormatter.php:383
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:381
-#: build/dashboard.js:11
+#: src/Modules/Admin/AuditLogFormatter.php:384
+#: build/dashboard.js:16
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:385
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:383
+#: src/Modules/Admin/AuditLogFormatter.php:386
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:384
+#: src/Modules/Admin/AuditLogFormatter.php:387
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:388
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:395
-#: src/Modules/Admin/AuditLogFormatter.php:421
-#: src/Modules/Admin/AuditLogFormatter.php:480
+#: src/Modules/Admin/AuditLogFormatter.php:398
+#: src/Modules/Admin/AuditLogFormatter.php:424
+#: src/Modules/Admin/AuditLogFormatter.php:483
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:408
+#: src/Modules/Admin/AuditLogFormatter.php:411
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:412
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:410
+#: src/Modules/Admin/AuditLogFormatter.php:413
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:411
+#: src/Modules/Admin/AuditLogFormatter.php:414
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:439
+#: src/Modules/Admin/AuditLogFormatter.php:442
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:463
+#: src/Modules/Admin/AuditLogFormatter.php:466
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:467
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:465
+#: src/Modules/Admin/AuditLogFormatter.php:468
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:466
+#: src/Modules/Admin/AuditLogFormatter.php:469
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:467
-#: src/Modules/Admin/AuditLogFormatter.php:615
+#: src/Modules/Admin/AuditLogFormatter.php:470
+#: src/Modules/Admin/AuditLogFormatter.php:618
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:468
+#: src/Modules/Admin/AuditLogFormatter.php:471
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:469
-#: src/Modules/Admin/AuditLogFormatter.php:675
+#: src/Modules/Admin/AuditLogFormatter.php:472
+#: src/Modules/Admin/AuditLogFormatter.php:678
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:470
+#: src/Modules/Admin/AuditLogFormatter.php:473
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:499
+#: src/Modules/Admin/AuditLogFormatter.php:502
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:514
+#: src/Modules/Admin/AuditLogFormatter.php:517
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -704,7 +716,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:583
+#: src/Modules/Admin/AuditLogFormatter.php:586
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -713,104 +725,104 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:583
+#: src/Modules/Admin/AuditLogFormatter.php:586
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:593
+#: src/Modules/Admin/AuditLogFormatter.php:596
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:594
+#: src/Modules/Admin/AuditLogFormatter.php:597
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:595
+#: src/Modules/Admin/AuditLogFormatter.php:598
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:596
+#: src/Modules/Admin/AuditLogFormatter.php:599
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:597
+#: src/Modules/Admin/AuditLogFormatter.php:600
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:598
+#: src/Modules/Admin/AuditLogFormatter.php:601
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:599
+#: src/Modules/Admin/AuditLogFormatter.php:602
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:600
+#: src/Modules/Admin/AuditLogFormatter.php:603
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:601
+#: src/Modules/Admin/AuditLogFormatter.php:604
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:602
+#: src/Modules/Admin/AuditLogFormatter.php:605
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:603
+#: src/Modules/Admin/AuditLogFormatter.php:606
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:616
+#: src/Modules/Admin/AuditLogFormatter.php:619
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:628
+#: src/Modules/Admin/AuditLogFormatter.php:631
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:629
+#: src/Modules/Admin/AuditLogFormatter.php:632
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:641
+#: src/Modules/Admin/AuditLogFormatter.php:644
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:642
+#: src/Modules/Admin/AuditLogFormatter.php:645
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:643
+#: src/Modules/Admin/AuditLogFormatter.php:646
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:675
+#: src/Modules/Admin/AuditLogFormatter.php:678
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
-#: build/dashboard.js:13
-#: build/dashboard.js:14
+#: build/dashboard.js:18
+#: build/dashboard.js:19
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:697
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:695
+#: src/Modules/Admin/AuditLogFormatter.php:698
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:696
+#: src/Modules/Admin/AuditLogFormatter.php:699
 msgid "social links"
 msgstr ""
 
@@ -905,13 +917,13 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:250
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "From"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "To"
 msgstr ""
 
@@ -1035,7 +1047,7 @@ msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:192
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Available"
 msgstr ""
 
@@ -1077,13 +1089,13 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminActions.php:99
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
+#: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:144
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:87
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminActions.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminActions.php:134
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:93
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:136
@@ -1102,282 +1114,368 @@ msgstr ""
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:61
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:67
 msgid "Merch Dashboard Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:62
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:68
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:158
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:74
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:51
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:59
 msgid "Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:96
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:102
 msgid "The Google Fonts API key was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:97
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:103
 msgid "The Google Fonts API key was removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:98
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:104
 msgid "The Google Fonts catalogue was fetched."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:99
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:105
 msgid "The font was approved. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:100
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:106
 msgid "The font was removed. Overlays that used it show the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:101
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:107
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
 msgid "Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:102
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
 #: src/Modules/Settings/Admin/SettingsPage.php:165
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
 msgid "You are not allowed to change these settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:103
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
 msgid "Google did not accept the API key. Check the key and try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:104
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
 msgid "Save a Google Fonts API key first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:105
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
 msgid "Google Fonts could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:106
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
 msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:107
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
 msgid "The sound was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
 msgid "The sound got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
 msgid "The sound is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
 msgid "The sound was removed. Overlays that used it play their other sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
 #: build/dashboard.js:3
+#: build/dashboard.js:10
 msgid "No file was received. Try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
 #: build/dashboard.js:3
 msgid "Choose an MP3, WAV or OGG file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
 msgid "The file is too large."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 msgid "The sound is too long."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
 #: build/dashboard.js:3
 msgid "The file could not be read as a sound. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
 msgid "The library is full. Remove a sound first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
+msgid "The image was added to the library. Creators can choose it now."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+msgid "The image got its new name."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
+msgid "The image was removed. Texts it filled show their colour again."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
+msgid "The image is no longer in the library."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
+#: build/dashboard.js:10
+msgid "Choose a PNG, JPG, GIF or WebP image."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
+msgid "The image is too big. Choose a smaller image."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
+#: build/dashboard.js:10
+msgid "The file could not be read as an image. Choose another file."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
+msgid "The library is full. Remove an image first."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
 msgid "A technical error occurred. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:160
 msgid "Fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:163
 #: build/dashboard.js:5
 msgid "Sounds"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:160
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:167
+msgid "Images"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:192
 msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in the browser source, which sends the viewer's IP address to Google (ADR-067)."
 msgstr ""
 
 #. translators: 1: size in MB, 2: seconds, 3: number of sounds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:177
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:209
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s MB and %2$d seconds each; at most %3$d sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:184
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:216
 msgid "Add a sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:188
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:220
 msgid "Sound file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:190
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:222
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:282
 msgid "Name (optional)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:192
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:224
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:284
 msgid "Creators see this name. Without a name, the file name is used."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:193
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:225
 #: build/dashboard.js:3
 msgid "Upload sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:198
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:230
 msgid "Sound library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:201
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:233
 msgid "The library is empty. Creators can only use their own sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:240
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:237
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:297
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:326
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:344
 msgid "Name"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:237
 msgid "Length"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:237
 msgid "Play"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:329
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:237
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:297
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:383
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:433
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Actions"
 msgstr ""
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:213
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:245
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:221
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:283
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:253
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:307
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:387
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 msgid "Remove"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:242
+#. translators: 1: size in MB, 2: pixels, 3: number of images.
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:269
+#, php-format
+msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:276
+msgid "Add an image"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:280
+msgid "Image file"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:285
+#: build/dashboard.js:13
+msgid "Upload image"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:290
+#: build/dashboard.js:13
+msgid "Image library"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:293
+msgid "The library is empty. Creators can only use their own images and the ready-made fills."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:297
+#: build/dashboard.js:13
+msgid "Image"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:297
+msgid "Size"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:328
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:346
 msgid "Rename"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:250
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:354
 msgid "Google Fonts API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:251
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:355
 msgid "A key is saved. It is never shown again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:251
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:355
 msgid "No key is saved. The key is only needed to fetch the catalogue."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:255
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:359
 msgid "API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:257
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:361
 msgid "Save key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:260
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:364
 msgid "Remove key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:272
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:376
 msgid "Approved fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:275
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:379
 msgid "No fonts are approved. Creators can only use the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:329
-#: build/dashboard.js:10
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:383
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:433
+#: build/dashboard.js:15
 msgid "Font"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:329
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:383
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:433
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:296
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:400
 msgid "Google Fonts catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:300
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:404
 msgid "Fetch the catalogue again"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:300
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:404
 msgid "Fetch the catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:309
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:413
 msgid "Search fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:311
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:415
 msgid "Search"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:422
 msgid "No fonts match the search."
 msgstr ""
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:325
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:429
 #, php-format
 msgid "At most %d fonts, the most popular first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:335
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:439
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:337
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:441
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -1446,7 +1544,7 @@ msgstr ""
 msgid "History"
 msgstr ""
 
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:240
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:258
 msgid "Test product"
 msgstr ""
 
@@ -1458,19 +1556,27 @@ msgstr ""
 msgid "This overlay does not exist."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:171
+#: src/Modules/Alerts/Rest/MeAlertsController.php:204
 msgid "The overlay settings are invalid."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:177
+#: src/Modules/Alerts/Rest/MeAlertsController.php:210
 msgid "The font is not available."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:233
+#: src/Modules/Alerts/Rest/MeAlertsController.php:266
 msgid "The sound was not saved."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:412
+#: src/Modules/Alerts/Rest/MeAlertsController.php:311
+msgid "The image was not saved."
+msgstr ""
+
+#: src/Modules/Alerts/Rest/MeAlertsController.php:339
+msgid "The image was not deleted."
+msgstr ""
+
+#: src/Modules/Alerts/Rest/MeAlertsController.php:503
 msgid "Set up your overlay first."
 msgstr ""
 
@@ -1573,7 +1679,7 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:274
 #: src/Modules/Creators/Admin/CreatorsListTable.php:75
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Display name"
 msgstr ""
 
@@ -1587,9 +1693,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:457
-#: build/dashboard.js:11
-#: build/dashboard.js:14
-#: build/dashboard.js:28
+#: build/dashboard.js:16
+#: build/dashboard.js:19
+#: build/dashboard.js:33
 msgid "Status"
 msgstr ""
 
@@ -1982,9 +2088,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
-#: build/dashboard.js:11
-#: build/dashboard.js:24
-#: build/dashboard.js:28
+#: build/dashboard.js:16
+#: build/dashboard.js:29
+#: build/dashboard.js:33
 msgid "Product"
 msgstr ""
 
@@ -2456,7 +2562,7 @@ msgid "Discount code history"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Code"
 msgstr ""
 
@@ -2629,7 +2735,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:674
-#: build/dashboard.js:19
+#: build/dashboard.js:24
 msgid "Yes"
 msgstr ""
 
@@ -2639,7 +2745,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:675
-#: build/dashboard.js:19
+#: build/dashboard.js:24
 msgid "No"
 msgstr ""
 
@@ -2874,8 +2980,8 @@ msgstr ""
 #. translators: 1: period, 2: net sales with currency.
 #. translators: 1: menu group, e.g. "Alerts", 2: page in the group.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
-#: build/dashboard.js:31
-#: build/dashboard.js:34
+#: build/dashboard.js:36
+#: build/dashboard.js:39
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr ""
@@ -2983,7 +3089,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "None"
 msgstr ""
 
@@ -2998,7 +3104,7 @@ msgstr ""
 
 #. translators: 1: first day, 2: last day (both included).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:99
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 #, php-format,js-format
 msgid "Last 30 days: %1$s – %2$s"
 msgstr ""
@@ -3008,34 +3114,34 @@ msgid "The shop's sales of this creator's products after discounts, including VA
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:109
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "No sales in the last 30 days."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:115
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "The figures are shown per currency and never added together."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "Sales (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "Net sales (excl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:140
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "VAT is missing for some older sales in this period, so the amounts are shown excluding VAT."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
-#: build/dashboard.js:12
-#: build/dashboard.js:31
+#: build/dashboard.js:17
+#: build/dashboard.js:36
 msgid "Units"
 msgstr ""
 
@@ -3043,30 +3149,30 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:164
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:591
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
-#: build/dashboard.js:12
-#: build/dashboard.js:31
+#: build/dashboard.js:17
+#: build/dashboard.js:36
 msgid "Orders"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Sales per day (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Net sales per day"
 msgstr ""
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:32
+#: build/dashboard.js:37
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:31
+#: build/dashboard.js:36
 msgid "Day"
 msgstr ""
 
@@ -3143,8 +3249,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1017
-#: build/dashboard.js:11
-#: build/dashboard.js:24
+#: build/dashboard.js:16
+#: build/dashboard.js:29
 msgid "Order"
 msgstr ""
 
@@ -3156,7 +3262,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:781
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Currency"
 msgstr ""
 
@@ -3304,13 +3410,13 @@ msgid "Ledger events"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Date"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Quantity"
 msgstr ""
 
@@ -3320,9 +3426,9 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: build/dashboard.js:11
-#: build/dashboard.js:12
-#: build/dashboard.js:30
+#: build/dashboard.js:16
+#: build/dashboard.js:17
+#: build/dashboard.js:35
 msgid "Profit"
 msgstr ""
 
@@ -3338,10 +3444,10 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:676
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1246
-#: build/dashboard.js:11
-#: build/dashboard.js:19
-#: build/dashboard.js:25
+#: build/dashboard.js:16
+#: build/dashboard.js:24
 #: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Unknown"
 msgstr ""
 
@@ -3499,7 +3605,7 @@ msgid "Complete"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:823
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Incomplete"
 msgstr ""
 
@@ -3815,7 +3921,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:18
+#: build/dashboard.js:23
 msgid "Difference"
 msgstr ""
 
@@ -3835,7 +3941,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1019
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "Type"
 msgstr ""
 
@@ -3871,7 +3977,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:415
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:418
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Close"
 msgstr ""
 
@@ -3899,7 +4005,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:492
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1016
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Rejected"
 msgstr ""
 
@@ -4106,8 +4212,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:256
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:766
-#: build/dashboard.js:22
-#: build/dashboard.js:25
+#: build/dashboard.js:27
+#: build/dashboard.js:30
 msgid "Address"
 msgstr ""
 
@@ -4323,15 +4429,15 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
-#: build/dashboard.js:17
-#: build/dashboard.js:18
-#: build/dashboard.js:28
+#: build/dashboard.js:22
+#: build/dashboard.js:23
+#: build/dashboard.js:33
 msgid "Amount"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Method"
 msgstr ""
 
@@ -4342,13 +4448,13 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:458
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Requested"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:459
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Handled"
 msgstr ""
 
@@ -4372,9 +4478,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:648
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1015
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:821
-#: build/dashboard.js:15
-#: build/dashboard.js:24
-#: build/dashboard.js:25
+#: build/dashboard.js:20
+#: build/dashboard.js:29
+#: build/dashboard.js:30
 msgid "Paid out"
 msgstr ""
 
@@ -4383,7 +4489,7 @@ msgid "Balance"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Outstanding"
 msgstr ""
 
@@ -4411,7 +4517,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1003
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1245
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Gift card"
 msgstr ""
 
@@ -4489,15 +4595,15 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:635
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:642
-#: build/dashboard.js:20
+#: build/dashboard.js:25
 msgid "Preliminary, not approved by an auditor or SKAT."
 msgstr ""
 
 #. translators: 1: number of the corrected document, 2: number of the original settlement document.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:638
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:745
-#: build/dashboard.js:18
-#: build/dashboard.js:25
+#: build/dashboard.js:23
+#: build/dashboard.js:30
 msgid "Download PDF"
 msgstr ""
 
@@ -4507,26 +4613,26 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:642
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:638
-#: build/dashboard.js:22
+#: build/dashboard.js:27
 msgid "Issued"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:780
-#: build/dashboard.js:22
-#: build/dashboard.js:31
+#: build/dashboard.js:27
+#: build/dashboard.js:36
 msgid "Period"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:778
-#: build/dashboard.js:22
+#: build/dashboard.js:27
 msgid "Whole history"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:668
-#: build/dashboard.js:22
+#: build/dashboard.js:27
 msgid "VAT registered at issue"
 msgstr ""
 
@@ -4534,20 +4640,20 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:790
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:573
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:813
-#: build/dashboard.js:17
 #: build/dashboard.js:22
+#: build/dashboard.js:27
 msgid "Commission in the period"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:647
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:812
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "Carried from earlier"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:649
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:839
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "Carried forward"
 msgstr ""
 
@@ -4559,8 +4665,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:793
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:576
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:878
-#: build/dashboard.js:17
 #: build/dashboard.js:22
+#: build/dashboard.js:27
 msgid "Commission excl. VAT"
 msgstr ""
 
@@ -4569,8 +4675,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:795
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:578
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:880
-#: build/dashboard.js:18
 #: build/dashboard.js:23
+#: build/dashboard.js:28
 #, php-format,js-format
 msgid "VAT (%s %%)"
 msgstr ""
@@ -4579,8 +4685,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:796
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:579
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:881
-#: build/dashboard.js:18
 #: build/dashboard.js:23
+#: build/dashboard.js:28
 msgid "Commission incl. VAT"
 msgstr ""
 
@@ -4588,33 +4694,33 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:800
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:583
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:885
-#: build/dashboard.js:18
 #: build/dashboard.js:23
+#: build/dashboard.js:28
 msgid "Commission without VAT (not VAT registered when sold)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:672
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:921
-#: build/dashboard.js:23
+#: build/dashboard.js:28
 msgid "Commission of sales while not VAT registered, incl. VAT"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:673
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:922
-#: build/dashboard.js:23
+#: build/dashboard.js:28
 msgid "VAT deducted (not VAT registered when sold)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:674
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:923
-#: build/dashboard.js:23
+#: build/dashboard.js:28
 msgid "Commission of sales while not VAT registered, paid out"
 msgstr ""
 
 #. translators: %s: references of the recalculations, e.g. R2-000001.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:680
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:818
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 #, php-format,js-format
 msgid "Adjustments (%s)"
 msgstr ""
@@ -4622,28 +4728,28 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:688
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:688
-#: build/dashboard.js:19
+#: build/dashboard.js:24
 msgid "Not registered"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:690
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:765
-#: build/dashboard.js:22
-#: build/dashboard.js:25
+#: build/dashboard.js:27
+#: build/dashboard.js:30
 msgid "Legal name"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:692
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:767
-#: build/dashboard.js:22
-#: build/dashboard.js:25
+#: build/dashboard.js:27
+#: build/dashboard.js:30
 msgid "CVR/SE no."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:693
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:770
-#: build/dashboard.js:22
-#: build/dashboard.js:25
+#: build/dashboard.js:27
+#: build/dashboard.js:30
 msgid "Issuer CVR no."
 msgstr ""
 
@@ -4673,24 +4779,24 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:18
+#: build/dashboard.js:23
 msgid "Before"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:18
+#: build/dashboard.js:23
 msgid "Corrected"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:768
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:712
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Issued by"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:769
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Issuer address"
 msgstr ""
 
@@ -4786,17 +4892,17 @@ msgid "The details cannot be shown. Please try again later."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:924
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Registration number"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:925
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Account number"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:927
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "PayPal email address"
 msgstr ""
 
@@ -4839,30 +4945,30 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1001
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Bank transfer"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1002
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "PayPal"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1014
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Pending"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1017
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Cancelled"
 msgstr ""
 
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:48
-#: build/dashboard.js:29
+#: build/dashboard.js:34
 #, php-format,js-format
 msgid "%1$s %2$s"
 msgstr ""
@@ -5132,20 +5238,20 @@ msgid "This gift card was issued as a creator payout. It can only be redeemed at
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:256
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Tax and reporting"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:257
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "You are responsible for finding out about and meeting your own tax and reporting obligations to the Danish Tax Agency. Depending on your situation, this may include whether the amount must be included in your taxable income and whether you have VAT obligations. This document shows the payout and its basis according to the information registered in the system. It is not tax advice and has not been approved by an auditor or the Danish Tax Agency."
 msgstr ""
 
 #. translators: %s: document number.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:358
-#: build/dashboard.js:19
-#: build/dashboard.js:20
-#: build/dashboard.js:21
+#: build/dashboard.js:24
+#: build/dashboard.js:25
+#: build/dashboard.js:26
 #, php-format,js-format
 msgid "Settlement document %s"
 msgstr ""
@@ -5199,7 +5305,7 @@ msgstr ""
 
 #. translators: 1: company name, 2: creator name.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:651
-#: build/dashboard.js:22
+#: build/dashboard.js:27
 #, php-format,js-format
 msgid "Self-billing: issued by %1$s on behalf of %2$s."
 msgstr ""
@@ -5271,7 +5377,7 @@ msgid "VAT deducted from the payout"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:958
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "Settled sales"
 msgstr ""
 
@@ -5280,17 +5386,17 @@ msgid "No sales rows were settled with this document."
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1021
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "Net"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1022
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "VAT on the sale"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1023
-#: build/dashboard.js:24
+#: build/dashboard.js:29
 msgid "Commission"
 msgstr ""
 
@@ -5300,7 +5406,7 @@ msgstr ""
 
 #. translators: 1: number of the correction document, 2: date, 3: reason.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1069
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 #, php-format,js-format
 msgid "Corrected by %1$s (%2$s): %3$s"
 msgstr ""
@@ -5320,7 +5426,7 @@ msgstr ""
 #. translators: 1: page number, 2: number of pages.
 #. translators: 1: current page number, 2: number of pages.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1116
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 #, php-format,js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
@@ -5381,7 +5487,7 @@ msgid "Log out"
 msgstr ""
 
 #: templates/dashboard/shell.php:47
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "Loading your dashboard…"
 msgstr ""
 
@@ -5442,7 +5548,7 @@ msgid "This page could not be displayed."
 msgstr ""
 
 #: build/dashboard.js:1
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "Please reload the page."
 msgstr ""
 
@@ -5479,7 +5585,9 @@ msgid "Dismiss"
 msgstr ""
 
 #. translators: %s: size in MB, e.g. "10".
+#. translators: %s: size in MB, e.g. "5".
 #: build/dashboard.js:2
+#: build/dashboard.js:9
 #, js-format
 msgid "The file is larger than %s MB."
 msgstr ""
@@ -5503,6 +5611,7 @@ msgid "Replace sound"
 msgstr ""
 
 #: build/dashboard.js:3
+#: build/dashboard.js:13
 msgid "Uploading…"
 msgstr ""
 
@@ -5615,12 +5724,12 @@ msgid "Product image"
 msgstr ""
 
 #: build/dashboard.js:7
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Secondary text"
 msgstr ""
 
 #: build/dashboard.js:7
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Main text"
 msgstr ""
 
@@ -5695,7 +5804,8 @@ msgid "Layout saved."
 msgstr ""
 
 #: build/dashboard.js:8
-#: build/dashboard.js:30
+#: build/dashboard.js:13
+#: build/dashboard.js:35
 msgid "Saving…"
 msgstr ""
 
@@ -5719,1102 +5829,1232 @@ msgstr ""
 msgid "Play animation"
 msgstr ""
 
-#: build/dashboard.js:8
+#. translators: %d: pixels.
+#: build/dashboard.js:10
+#, js-format
+msgid "The image is wider or higher than %d pixels."
+msgstr ""
+
+#: build/dashboard.js:10
+msgid "You have the most images allowed. Delete one first."
+msgstr ""
+
+#: build/dashboard.js:10
+msgid "This image no longer exists."
+msgstr ""
+
+#: build/dashboard.js:10
+msgid "Images for text"
+msgstr ""
+
+#. translators: 1: size in MB, 2: pixels, 3: number of images.
+#: build/dashboard.js:11
+#, js-format
+msgid "Upload images to fill your alert text with. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high; at most %3$d images. An animated GIF keeps moving."
+msgstr ""
+
+#. translators: %d: number of images.
+#: build/dashboard.js:12
+#, js-format
+msgid "The image library has %d more image you can choose."
+msgid_plural "The image library has %d more images you can choose."
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/dashboard.js:12
+msgid "Delete this image? Texts it fills show their colour again."
+msgstr ""
+
+#: build/dashboard.js:12
+msgid "Image deleted."
+msgstr ""
+
+#. translators: %s: file name.
+#: build/dashboard.js:13
+#, js-format
+msgid "Delete %s"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Delete"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Image saved. Choose it in the image list above."
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Delete an image to upload another."
+msgstr ""
+
+#: build/dashboard.js:13
 msgid "Slide up"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Pop"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Typewriter"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Split (from both sides)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Wave (letter by letter)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Drop (letter by letter)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "3D spin"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "3D roll"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Blur in"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Wipe"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Shadow paint"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Fade"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Neon glow"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Glow pulse"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Heartbeat"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Glitch"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Dancing shadow"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Melting"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Wave"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "3D float"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Depth pulse"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Breathe (needs a variable font)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "No effect"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Slide down"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Typewriter (delete)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Split (to both sides)"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Blur out"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Slow"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Fast"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Normal"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
+msgid "Gradient or pattern"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Text colour (no fill)"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Aurora"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Sunset"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Ocean"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Fire"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Gold"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Candy stripes"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Matrix"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Rainbow"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Glides sideways"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Falls down"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Still"
+msgstr ""
+
+#: build/dashboard.js:13
 msgid "Thanks for the merch!"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Pause example"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Play example"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "In"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Effect while shown"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Out"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Speed"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Effect colour"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
+msgid "Text fill"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Upload an image first"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Choose an image…"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Your images"
+msgstr ""
+
+#: build/dashboard.js:13
+msgid "Fill motion"
+msgstr ""
+
+#: build/dashboard.js:13
 msgid "Shrink the text to fit the box"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Let the box grow with the text"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Fixed text size"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Left"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Right"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Center"
 msgstr ""
 
-#: build/dashboard.js:8
+#: build/dashboard.js:13
 msgid "Save overlay settings"
 msgstr ""
 
 #. translators: 1: minimum, 2: maximum.
-#: build/dashboard.js:9
+#: build/dashboard.js:14
 #, js-format
 msgid "Enter a whole number from %1$d to %2$d."
 msgstr ""
 
-#: build/dashboard.js:9
+#: build/dashboard.js:14
 msgid "Enter a text for the alert."
 msgstr ""
 
 #. translators: %d: maximum number of characters.
-#: build/dashboard.js:10
-#: build/dashboard.js:12
+#: build/dashboard.js:15
+#: build/dashboard.js:17
 #, js-format
 msgid "Use at most %d characters."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Overlay settings saved."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Alert text"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Text"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category and $OrderNumber. $UserName is the username the customer entered at checkout, or \"Anonymous\"; customer names are never shown."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Show the secondary text"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Text style"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Your font is no longer available. The overlay shows the default font until you choose another one."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Fonts approved by Merch Dashboard. They are loaded from Google Fonts."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Default font"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Font size (px)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Font weight"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Text color"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Alignment"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Text size in the boxes"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Fixed: the font size above; longer text is cut off. Shrink: the font size above is the largest, and long text gets smaller until it fits. Grow: the box keeps its width and grows with the text: down from its top, or up from its bottom edge when it is in the lower half of the screen (the image then moves up with the main text). Its height in the designer is the least."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Text shadow"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "For example 2px 2px 4px rgba(0,0,0,0.8). Leave empty for no shadow."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Box and image"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Background color"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Background opacity (%)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Corner radius (px)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Padding (px)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Image quality (px)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "The size of the product image that is loaded. The box size is set in the designer."
 msgstr ""
 
-#: build/dashboard.js:10
-msgid "Animations"
+#: build/dashboard.js:15
+msgid "Animations and text fill"
 msgstr ""
 
-#: build/dashboard.js:10
-msgid "How each text comes in, moves while it is shown and goes out. The animation time below sets how long the in- and out-animations take. Press \"Play animation\" in the designer to see it."
+#: build/dashboard.js:15
+msgid "How each text comes in, moves while it is shown and goes out, and what fills its letters: the text colour, a gradient or pattern, or an image (an animated GIF keeps moving). The animation time below sets how long the in- and out-animations take. The example shows your choice; press \"Play animation\" in the designer to see it on the overlay."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Timing"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Show the alert as long as its sound plays"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Just add a sound: an alert with a sound is shown for exactly as long as the sound lasts, then fades out. Alerts without a sound use the display time below."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Display time (ms)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Animation time (ms)"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Your stream overlay"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Show an alert on your stream when someone buys your merch. Set up your overlay to get the URL for a browser source in your streaming software."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Set up overlay"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Browser source"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Add a browser source in your streaming software with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts. It stays hidden until you show it, so it is safe on stream; copying and opening work without showing it."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Overlay URL"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "URL copied."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Copy the selected URL with Ctrl+C."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Copy URL"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Hide URL"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Show URL"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Open overlay"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Test alert sent. It appears in your open overlay within a few seconds."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Send test alert"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Create a new overlay URL? The current URL stops working at once, and you must paste the new one into your browser source."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "New overlay URL created. Paste it into your browser source."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Create new URL"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Alerts are being moved from the old alert plugin. New purchases do not show up here yet; test alerts work."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Purchase alerts are switched off for now. Test alerts work, so you can set up your overlay already."
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Loading your overlay…"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Pagination"
 msgstr ""
 
-#: build/dashboard.js:10
+#: build/dashboard.js:15
 msgid "Previous"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Next"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Not available"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Profit is your share of what customers paid, including VAT, with the markup that applied when each order line was created. It is not your payout."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Incomplete: some sales lack the historical data needed to calculate profit, so no total is shown."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Unknown: the sales lack the historical data needed to calculate profit."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Refund recorded"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Order total:"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Your order lines"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Unnamed product"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Notes"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Loading orders…"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "There are no order lines on this page."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "You have no orders yet."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Orders with your products will appear here."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Refund recorded: at least one refund applies to this order line."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Not counted: the order does not currently count as a sale."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Order pages"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "Website"
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "This field is required."
 msgstr ""
 
-#: build/dashboard.js:11
+#: build/dashboard.js:16
 msgid "This text is too long."
 msgstr ""
 
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "Enter a full address starting with https://"
 msgstr ""
 
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "This value is not valid."
 msgstr ""
 
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "The shop's sales of your products after discounts, including VAT, excluding shipping and fees. It is not your payout."
 msgstr ""
 
-#: build/dashboard.js:12
+#: build/dashboard.js:17
 msgid "Sales figures are not available."
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Sales of your products will appear here."
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Profit applies to the same 30 days as the sales figures."
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Loading key figures…"
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Your profile is still empty."
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Add a short bio and links to your channels."
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "Edit profile"
 msgstr ""
 
-#: build/dashboard.js:13
+#: build/dashboard.js:18
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: build/dashboard.js:13
-#: build/dashboard.js:30
+#: build/dashboard.js:18
+#: build/dashboard.js:35
 msgid "Loading your profile…"
 msgstr ""
 
 #. translators: %s: creator display name.
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 #, js-format
 msgid "Welcome, %s"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "This is your creator dashboard. Here you will follow your merch and keep your profile up to date."
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Account status:"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Your profile"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Key figures"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Disabled"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Expired"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Not usable"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "The gift card cannot be shown right now. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Show gift card"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Value"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Balance now"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Expires"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Hide code"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Show code"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "The code was copied."
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "The code could not be copied. Show it and copy it by hand."
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Copy code"
 msgstr ""
 
-#: build/dashboard.js:14
+#: build/dashboard.js:19
 msgid "Hide gift card"
 msgstr ""
 
 #. translators: %s: payout id.
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 #, js-format
 msgid "Gift card of payout #%s. Anyone who has the code can use it; keep it to yourself."
 msgstr ""
 
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Fill in all fields of the request."
 msgstr ""
 
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Enter an amount greater than 0 with at most as many decimals as the shop uses."
 msgstr ""
 
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "The amount is more than you can request right now."
 msgstr ""
 
-#: build/dashboard.js:15
+#: build/dashboard.js:20
 msgid "Your balance cannot be calculated right now, because some sales lack the data needed. No payout can be requested until it is known."
 msgstr ""
 
 #. translators: %d: maximum number of pending requests.
-#: build/dashboard.js:16
+#: build/dashboard.js:21
 #, js-format
 msgid "You already have %d pending requests. Wait until one is handled, or cancel one."
 msgstr ""
 
 #. translators: %d: maximum number of requests per 24 hours.
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 #, js-format
 msgid "You have made %d requests in the last 24 hours. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "This payout method is not available right now."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Check the payment details: a registration number has 4 digits, an account number 1–10 digits, and PayPal needs a valid email address."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Another payout of yours is being processed. Please try again in a moment."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "The request has already been handled, so it can no longer be cancelled."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "The request was not accepted."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Request a payout"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "No payout method is available right now, so no payout can be requested. Please contact us."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "There is nothing to request yet. Your balance appears here once your sales have passed the holding period."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Your request has been sent. It is reserved until it is handled."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Available:"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Request the full available amount"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Payout method"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "4 digits"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "1–10 digits"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "You receive a gift card for the shop of the requested amount, without VAT. It appears here when we have created it. Treat its code like cash: anyone who has it can use it."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Your payment details are encrypted, used only for this payout and deleted when it has been handled. Afterwards only a masked version is shown."
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Sending…"
 msgstr ""
 
-#: build/dashboard.js:17
+#: build/dashboard.js:22
 msgid "Request payout"
 msgstr ""
 
-#: build/dashboard.js:18
+#: build/dashboard.js:23
 msgid "The correction document does not change the original document or the completed payout. The difference is not settled automatically."
 msgstr ""
 
-#: build/dashboard.js:19
+#: build/dashboard.js:24
 msgid "The settlement document cannot be shown right now. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Print or save as PDF"
 msgstr ""
 
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "The PDF cannot be downloaded right now. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Requested, pending"
 msgstr ""
 
-#: build/dashboard.js:25
+#: build/dashboard.js:30
 msgid "Earned after the holding period"
 msgstr ""
 
 #. translators: %d: number of sales.
-#: build/dashboard.js:26
+#: build/dashboard.js:31
 #, js-format
 msgid "Your balance is unknown: %d sales lack the data needed to calculate your payout. No payout can be requested until this is resolved."
 msgstr ""
 
-#: build/dashboard.js:26
+#: build/dashboard.js:31
 msgid "Your balance"
 msgstr ""
 
 #. translators: %d: number of days.
-#: build/dashboard.js:27
+#: build/dashboard.js:32
 #, js-format
 msgid "Sales count after a holding period of %d days. Refunds count at once."
 msgstr ""
 
-#: build/dashboard.js:27
+#: build/dashboard.js:32
 msgid "All your sales count."
 msgstr ""
 
 #. translators: %s: date.
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 #, js-format
 msgid "Sales from %s count."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Payout methods: bank transfer and PayPal."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Bank transfer and PayPal are not available right now."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "You can also choose a gift card for the shop."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "You have no earnings to pay out yet."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "This request could not be found."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "The request could not be cancelled. Please try again in a moment."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Confirm cancellation"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Keep"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Cancel request"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Not yet"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "The request has been cancelled."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Your payout requests"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Loading your balance…"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Loading payout requests…"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "There are no payout requests on this page."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "You have no payout requests yet."
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Payout request pages"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "No image"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "No sales"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Your products"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Published"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Private"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "Price"
 msgstr ""
 
-#: build/dashboard.js:28
+#: build/dashboard.js:33
 msgid "No price"
 msgstr ""
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Stock"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "In stock"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Out of stock"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "On backorder"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Loading products…"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "There are no products on this page."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "You have no products yet."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Products linked to you in the shop will appear here."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Product pages"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Your discount code"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "With your own discount code you can buy your own merchandise without paying for your profit. Orders bought with your own discount code do not count in your sales and your profit."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "You have no discount code yet."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Code:"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Hide discount code"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Show discount code"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Light"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Dark black"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Dark green"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Dark blue"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Dark red"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Dark pink"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Theme saved."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Appearance"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Theme"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "System default follows the light or dark setting of your device."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "System default"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "No changes to save."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Profile saved."
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "About you"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Bio"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Links"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Password"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Change your password"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Save profile"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Sales per week (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Sales per month (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Net sales per week"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "Net sales per month"
 msgstr ""
 
-#: build/dashboard.js:30
+#: build/dashboard.js:35
 msgid "(the table below has the same figures)"
 msgstr ""
 
-#: build/dashboard.js:31
+#: build/dashboard.js:36
 msgid "Week"
 msgstr ""
 
-#: build/dashboard.js:31
+#: build/dashboard.js:36
 msgid "Month"
 msgstr ""
 
-#: build/dashboard.js:31
+#: build/dashboard.js:36
 msgid "Your sales"
 msgstr ""
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "No sales in this period."
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "Choose another period, or check back after your next sale."
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "Loading sales…"
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "The end date must be on or after the start date."
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "Choose period"
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "Interval"
 msgstr ""
 
-#: build/dashboard.js:33
+#: build/dashboard.js:38
 msgid "Show"
 msgstr ""
 
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "This section is not available yet."
 msgstr ""
 
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "Page not found"
 msgstr ""
 
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "This page does not exist."
 msgstr ""
 
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "Go to the start page"
 msgstr ""
 
-#: build/dashboard.js:34
+#: build/dashboard.js:39
 msgid "The dashboard could not be started."
 msgstr ""

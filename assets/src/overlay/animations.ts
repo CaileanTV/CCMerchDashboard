@@ -175,11 +175,12 @@ export function needsLetters( animation: TextAnimation ): boolean {
 }
 
 /**
- * The text as letter spans; spaces and line breaks stay plain text.
+ * The text as letter spans; spaces and line breaks stay plain text (also
+ * used by the text fills, textfill.ts).
  *
  * @param text Text.
  */
-function letters( text: string ): Node[] {
+export function splitLetters( text: string ): Node[] {
 	const characters = Array.from( text );
 	const count = characters.length;
 
@@ -246,7 +247,7 @@ export function renderText(
 	const outTotal = letterOut ? duration + count * step : duration;
 
 	if ( needsLetters( animation ) ) {
-		element.replaceChildren( ...letters( text ) );
+		element.replaceChildren( ...splitLetters( text ) );
 	} else {
 		element.textContent = text;
 	}

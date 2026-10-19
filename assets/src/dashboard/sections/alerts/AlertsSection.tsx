@@ -292,6 +292,7 @@ function AlertsContent( {
 							onSaved={ setState }
 							saveSlot={ saveSlot }
 							onDraft={ setDraft }
+							images={ state.overlay.images }
 						/>
 					</div>
 					{ /* The settings' save button, right above the designer, which is always last. */ }
@@ -302,6 +303,7 @@ function AlertsContent( {
 							layout={ state.overlay.layout }
 							settings={ state.overlay.settings }
 							preview={ draft }
+							images={ state.overlay.images }
 							fontFamily={
 								font === undefined
 									? 'inherit'

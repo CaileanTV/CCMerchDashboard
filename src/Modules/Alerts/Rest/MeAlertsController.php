@@ -19,6 +19,8 @@ use InvalidArgumentException;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
+use MerchBoard\Modules\Alerts\Images\AlertImageException;
+use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use WP_Error;
@@ -45,6 +47,10 @@ defined( 'ABSPATH' ) || exit;
  *   a library sound) and `DELETE …/sounds/{slot}`: the default sound
  *   (`default`) or the sound of one of the creator's categories (its term
  *   id); see AlertSounds.
+ * - `POST …/images` (multipart field `file`) and `DELETE …/images/{id}`:
+ *   the creator's own images that can fill the alert text (step 25.6.10);
+ *   see AlertImages. A text fill (`text_fills` in `PATCH`) keeps only the
+ *   creator's own image or a library image.
  *
  * The answer contains the OBS URL with the secret id, so it is only ever
  * sent to the creator it belongs to. Before the overlay is set up, the
@@ -63,8 +69,9 @@ final class MeAlertsController extends RestController {
 	 * @param Logger             $logger       Technical log.
 	 * @param AlertFonts|null    $fonts        Approved fonts; null for none.
 	 * @param AlertSounds|null   $sounds       Alert sounds; null for none.
+	 * @param AlertImages|null   $images       Text fill images; null for none.
 	 */
-	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null ) {
+	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -125,6 +132,32 @@ final class MeAlertsController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'remove_sound' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			self::ROUTE . '/images',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'upload_image' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			self::ROUTE . '/images/(?P<image>[1-9][0-9]{0,18})',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'remove_image' ),
 					'permission_callback' => array( $this, 'permission' ),
 					'args'                => array(),
 				),
@@ -256,6 +289,62 @@ final class MeAlertsController extends RestController {
 	}
 
 	/**
+	 * `POST /me/alerts/overlay/images`: stores the uploaded image `file`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function upload_image( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/images',
+			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
+				$files   = $request->get_file_params();
+				$overlay = $this->overlays->find( $creator_id );
+
+				if ( null === $this->images || null === $overlay ) {
+					return self::not_set_up();
+				}
+
+				try {
+					$this->images->upload( $creator_id, is_array( $files['file'] ?? null ) ? $files['file'] : array() );
+				} catch ( AlertImageException $e ) {
+					return self::error( 'merchboard_invalid_request', __( 'The image was not saved.', 'merchboard' ), 400, array( 'fields' => array( $e->field() => $e->reason() ) ) );
+				}
+
+				return $this->answer( $overlay );
+			}
+		);
+	}
+
+	/**
+	 * `DELETE /me/alerts/overlay/images/{id}`: deletes an own image; the texts
+	 * it filled lose their fill.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function remove_image( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/images',
+			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
+				$image = $request->get_param( 'image' );
+
+				if ( null === $this->images || null === $this->overlays->find( $creator_id ) ) {
+					return self::not_set_up();
+				}
+
+				try {
+					$this->images->remove( $creator_id, is_string( $image ) ? (int) $image : 0 );
+				} catch ( AlertImageException $e ) {
+					return self::error( 'merchboard_invalid_request', __( 'The image was not deleted.', 'merchboard' ), 400, array( 'fields' => array( $e->field() => $e->reason() ) ) );
+				}
+
+				return $this->answer( $this->overlays->find( $creator_id ) );
+			}
+		);
+	}
+
+	/**
 	 * The sound slot of a route: 0 for the default sound, else a term id.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -316,7 +405,7 @@ final class MeAlertsController extends RestController {
 	 * An overlay as the dashboard shows it.
 	 *
 	 * @param AlertOverlay $overlay Overlay.
-	 * @return array{url: string, settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>, audio: array<string, mixed>|null}
+	 * @return array{url: string, settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>, audio: array<string, mixed>|null, images: array<string, mixed>|null}
 	 */
 	private function overlay( AlertOverlay $overlay ): array {
 		$values   = $overlay->settings->to_array();
@@ -330,6 +419,7 @@ final class MeAlertsController extends RestController {
 		$settings['display_from_sound'] = $values['display_from_sound'];
 		$settings['font_family']        = $values['font_family'];
 		$settings['animations']         = $values['animations'];
+		$settings['text_fills']         = $values['text_fills'];
 
 		return array(
 			'url'           => OverlayRoute::url( $overlay->overlay_id ),
@@ -338,6 +428,7 @@ final class MeAlertsController extends RestController {
 			'font_approved' => 'inherit' === $values['font_family'] || null !== $this->fonts?->find( $values['font_family'] ),
 			'layout'        => $values['layout'],
 			'audio'         => null === $this->sounds ? null : $this->sounds->describe( $overlay ),
+			'images'        => $this->images?->describe( $overlay->creator_id ),
 		);
 	}
 
@@ -378,7 +469,7 @@ final class MeAlertsController extends RestController {
 			$input['font_family'] = $body['font_family'];
 		}
 
-		foreach ( array( 'layout', 'animations' ) as $key ) {
+		foreach ( array( 'layout', 'animations', 'text_fills' ) as $key ) {
 			if ( ! array_key_exists( $key, $body ) ) {
 				continue;
 			}

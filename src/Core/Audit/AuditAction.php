@@ -391,4 +391,19 @@ enum AuditAction: string {
 	 * A sound of the alert sound library got a new name (step 6.7). Context: name, previous name.
 	 */
 	case AlertSoundLibraryRenamed = 'alert_sound_library_renamed';
+
+	/**
+	 * An image was added to the alert image library (phase 25, step 6.10). Context: file name.
+	 */
+	case AlertImageLibraryAdded = 'alert_image_library_added';
+
+	/**
+	 * An image was removed from the alert image library. Context: file name.
+	 */
+	case AlertImageLibraryRemoved = 'alert_image_library_removed';
+
+	/**
+	 * An image of the alert image library got a new name. Context: name, previous name.
+	 */
+	case AlertImageLibraryRenamed = 'alert_image_library_renamed';
 }

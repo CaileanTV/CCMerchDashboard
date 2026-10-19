@@ -13,6 +13,14 @@ import '../../../overlay/animations.css';
 import { leaveText, renderText, resetText } from '../../../overlay/animations';
 import type { TextAnimation } from '../../../overlay/animations';
 import { fitText } from '../../../overlay/fit';
+import '../../../overlay/textfill.css';
+import {
+	applyFill,
+	clearFill,
+	fillLook,
+	layoutFill,
+} from '../../../overlay/textfill';
+import type { FillLook } from '../../../overlay/textfill';
 import { updateAlertsOverlay } from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
@@ -22,6 +30,7 @@ import { Field } from '../../components/Field';
 import { Toast } from '../../components/Toast';
 import { BOX_LIMITS, CANVAS, LAYOUT_ELEMENTS } from '../../types/alerts';
 import type {
+	AlertsImages,
 	AlertsOverlayState,
 	LayoutBox,
 	LayoutElement,
@@ -118,11 +127,13 @@ function elementLabel( element: LayoutElement ): string {
  * @param props.play        Increases each time the animation is played.
  * @param props.animTime    In/out time (ms).
  * @param props.displayTime Display time (ms; the preview shows at most 4 s).
+ * @param props.fill        The text fill (step 25.6.10); null for none.
  */
 function PreviewText( {
 	text,
 	style,
 	shrink,
+	fill,
 	size,
 	animation,
 	play,
@@ -138,8 +149,10 @@ function PreviewText( {
 	readonly play: number;
 	readonly animTime: number;
 	readonly displayTime: number;
+	readonly fill: FillLook | null;
 } ) {
 	const ref = useRef< HTMLSpanElement >( null );
+	const fillKey = JSON.stringify( fill );
 
 	// Compared by value: a re-render with the same look keeps a running preview.
 	const look = JSON.stringify( style );
@@ -154,13 +167,18 @@ function PreviewText( {
 
 		resetText( element );
 		element.textContent = text;
+		applyFill( element, fill );
 
 		if ( shrink ) {
 			fitText( element );
 		} else {
 			element.style.fontSize = '';
 		}
-	}, [ text, look, shrink, size ] );
+
+		layoutFill( element );
+		// The fill is compared by value (fillKey).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ text, look, shrink, size, fillKey ] );
 
 	// "Play animation": in, effect, out, as in the overlay (step 25.6.9).
 	useEffect( () => {
@@ -172,21 +190,32 @@ function PreviewText( {
 
 		const times = renderText( element, text, animation, animTime, true );
 		const timers: number[] = [];
+		// The text as it is shown when the preview has ended.
+		const still = () => {
+			resetText( element );
+			element.textContent = text;
+			applyFill( element, fill );
+
+			if ( shrink ) {
+				fitText( element );
+			}
+
+			layoutFill( element );
+		};
+
+		applyFill( element, fill );
 
 		if ( shrink ) {
 			fitText( element );
 		}
 
+		layoutFill( element );
+
 		timers.push(
 			window.setTimeout(
 				() => {
 					leaveText( element );
-					timers.push(
-						window.setTimeout( () => {
-							resetText( element );
-							element.textContent = text;
-						}, times.outTotal )
-					);
+					timers.push( window.setTimeout( still, times.outTotal ) );
 				},
 				Math.max(
 					times.inTotal,
@@ -197,8 +226,8 @@ function PreviewText( {
 
 		return () => {
 			timers.forEach( ( timer ) => window.clearTimeout( timer ) );
-			resetText( element );
-			element.textContent = text;
+			clearFill( element );
+			still();
 		};
 		// Only a new play starts the animation; the text and look follow on the next play.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -238,6 +267,8 @@ interface Props {
 	/** The CSS font-family of the preview (approved font or inherit). */
 	readonly fontFamily: string;
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
+	/** Images the texts can be filled with (step 25.6.10). */
+	readonly images?: AlertsImages | null;
 }
 
 /**
@@ -258,6 +289,7 @@ interface Props {
  * @param props.preview    The form's unsaved settings (look of the preview).
  * @param props.fontFamily CSS font-family of the preview.
  * @param props.onSaved    Called with the answer after saving.
+ * @param props.images     Images the texts can be filled with.
  */
 export function OverlayDesigner( {
 	layout: saved,
@@ -265,8 +297,13 @@ export function OverlayDesigner( {
 	preview = null,
 	fontFamily,
 	onSaved,
+	images = null,
 }: Props ) {
 	const look = preview ?? settings;
+	const fillImages = [
+		...( images?.own ?? [] ),
+		...( images?.library ?? [] ),
+	];
 	const id = useId();
 	const canvas = useRef< HTMLDivElement >( null );
 	const drag = useRef< Drag | null >( null );
@@ -516,17 +553,20 @@ export function OverlayDesigner( {
 	// Canvas pixels in container units, so the preview scales with the canvas.
 	const scaled = ( value: number ) =>
 		`${ ( value / CANVAS.width ) * 100 }cqw`;
-	const textStyle: CSSProperties = {
+	const textStyle = {
 		fontFamily,
 		fontWeight: look.font_weight,
 		color: look.text_color,
 		textShadow: look.text_shadow === '' ? 'none' : look.text_shadow,
+		// With a text fill, the shadow is drawn as a drop shadow (textfill.css).
+		'--merchboard-text-shadow':
+			look.text_shadow === '' ? 'none' : look.text_shadow,
 		textAlign: look.text_align,
 		background: background( look.bg_color, look.bg_opacity ),
 		borderRadius: scaled( look.border_radius ),
 		padding: scaled( look.padding ),
 		fontSize: scaled( look.font_size ),
-	};
+	} as CSSProperties;
 
 	const number = (
 		field: 'x' | 'y' | 'w' | 'h' | 'border_radius',
@@ -684,6 +724,12 @@ export function OverlayDesigner( {
 												: look.animations.main_text
 										}
 										play={ play }
+										fill={ fillLook(
+											element === 'secondary_text'
+												? look.text_fills.secondary_text
+												: look.text_fills.main_text,
+											fillImages
+										) }
 										animTime={ look.anim_duration }
 										displayTime={ look.display_duration }
 									/>

@@ -251,6 +251,61 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame( $default, $settings->animations()['secondary_text'] );
 	}
 
+	public function test_text_fills_default_to_none_and_are_normalized(): void {
+		$default = array(
+			'type'   => 'none',
+			'preset' => 'rainbow',
+			'image'  => 0,
+			'motion' => 'none',
+		);
+
+		self::assertSame(
+			array(
+				'main_text'      => $default,
+				'secondary_text' => $default,
+			),
+			OverlaySettings::defaults()->text_fills()
+		);
+
+		$settings = OverlaySettings::from_array(
+			array(
+				'text_fills' => array(
+					'main_text'      => array(
+						'type'   => 'image',
+						'preset' => 'lava',
+						'image'  => '42',
+						'motion' => 'fall',
+					),
+					'secondary_text' => array(
+						'type'   => 'preset',
+						'preset' => 'gold',
+						'image'  => -5,
+						'motion' => 'spin',
+					),
+				),
+			)
+		);
+
+		self::assertSame(
+			array(
+				'main_text'      => array(
+					'type'   => 'image',
+					'preset' => 'rainbow',
+					'image'  => 42,
+					'motion' => 'fall',
+				),
+				'secondary_text' => array(
+					'type'   => 'preset',
+					'preset' => 'gold',
+					'image'  => 0,
+					'motion' => 'none',
+				),
+			),
+			$settings->text_fills()
+		);
+		self::assertSame( $settings->text_fills(), OverlaySettings::from_json( $settings->to_json() )->text_fills(), 'Stored and read back unchanged.' );
+	}
+
 	public function test_the_secondary_text_needs_a_template_and_visibility(): void {
 		self::assertFalse( OverlaySettings::defaults()->shows_secondary() );
 		self::assertStringEndsWith( 'display:none;', OverlaySettings::defaults()->element_style( 'secondary_text' ) );

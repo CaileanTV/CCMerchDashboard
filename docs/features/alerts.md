@@ -13,6 +13,7 @@ Creatoren får menupunktet **"Alerts"** i creator-dashboardet, som åbner og luk
 
 - **Overlay:** browser source-URL til OBS (maskeret, indtil creatoren trykker "Show URL"; kopiér og åbn virker uden at vise den, 25.6.2), nyt overlay-ID (den gamle URL holder op med at virke med det samme), testalert med et tilfældigt produkt fra creatorens kategori, og indstillinger for tekst (skabelon, sekundær skabelon, font, størrelse, vægt, farve, skygge, justering), boks (billedstørrelse, baggrund, gennemsigtighed, hjørner, luft) og timing (animation og visningstid).
 - **Tekstanimationer ✅ (25.6.9):** ind-animation, effekt mens teksten vises og ud-animation for hoved- og sekundærteksten hver for sig, med farve og hastighed; et eksempel i kortet, der afspiller valget i loop, og "Afspil animation" i designeren (viser også ikke-gemte valg).
+- **Tekst med baggrund ✅ (25.6.10):** bogstaverne fyldes med en gradient eller et mønster (8 færdige), creatorens eget billede eller et billede fra administratorens bibliotek, stille, glidende eller faldende; virker sammen med animationerne. Kortet "Billeder til tekst" lige under, når en tekst fyldes med et billede (højst 10 egne billeder, PNG/JPG/GIF/WebP, højst 5 MB og 4096 px).
 - **Tekststørrelse ✅ (25.6.5):** fast størrelse, formindsk teksten så den passer i boksen, eller lad boksen vokse med teksten (nær bunden opad, og billedet følger med).
 - **Flere lag og justering ✅ (25.6.6):** vælg flere bokse og flyt dem sammen; justér til venstre, højre, top, bund eller centrér, i forhold til lærredet eller de valgte elementer; fortryd og gentag med Ctrl+Z og Ctrl+Shift+Z. Boksen til sekundær tekst vises kun, når den er slået til.
 - **Designer ✅ (25.5):** 1920×1080-lærred, hvor billede, hovedtekst og sekundær tekst trækkes og skaleres (fra nederste højre hjørne), med egenskabspanel (position, størrelse, synlighed, billedets hjørneradius og bevaret billedformat), snap-to-grid og en forhåndsvisning med eksempelværdier, der følger formularens gemte udseende. Fonte vælges i formularen blandt dem, administratoren har godkendt; er den valgte font fjernet, får creatoren en advarsel, og overlayet viser standardfonten.
@@ -31,6 +32,7 @@ Undermenuen **"Alerts"** under Merch Dashboard (capability `merchboard_manage_al
 - **Globalt overlay:** et overlay uafhængigt af creators med URL, testalert, replay af seneste ordre, designer og lyd.
 - **Chatbot:** Twitch Client ID og Secret, forbind og afbryd, kanal pr. creator, status, diagnostik og testbesked.
 - **Sounds ✅ (25.6.3):** lydbiblioteket: upload og fjern lyde (højst 50), som creators kan vælge imellem.
+- **Images ✅ (25.6.10):** billedbiblioteket til tekstfyld: upload, navngiv, omdøb og fjern billeder (højst 50), som creators kan vælge imellem; auditeret.
 - **Fonts ✅ (25.5):** Google Fonts API-nøgle (gem eller fjern; vises aldrig igen), hentning af kataloget (gemmes i 30 dage), søgning (højst 50 resultater, populæreste først), godkendelse og fjernelse af fonte (højst 100 godkendte).
 - **Import:** engangsimport fra MerchAlert med tørkørsel og bekræftelse.
 
@@ -53,6 +55,7 @@ Settings får sektionen **"Alerts"**: slå alerts til og fra, poll-interval, gr�
 - ✅ Tests: `tests/Unit/Modules/Alerts/`, `tests/Integration/Alerts/` og `tests/Integration/Database/MigrationTest.php`.
 - ✅ `src/Modules/Alerts/Overlay/AlertOverlays.php` og `OverlayTestQueue.php`, `src/Modules/Alerts/Rest/MeAlertsController.php`, `src/Modules/Alerts/Dashboard/AlertsDashboardSection.php`; `assets/src/dashboard/sections/alerts/` (`AlertsSection.tsx`, `OverlaySettingsForm.tsx`), `api/alerts.ts`, `types/alerts.ts` og `test/alerts.test.tsx`.
 - ✅ `src/Modules/Alerts/Sounds/` (`AlertSounds`, `AlertSound`, `AlertSoundException`, `SoundFiles`, `AlertSoundLibrary`), `assets/src/dashboard/sections/alerts/AlertSoundsCard.tsx` og `tests/Integration/Alerts/AlertSoundsTest.php`.
+- ✅ `src/Modules/Alerts/Images/` (`AlertImages`, `AlertImage`, `AlertImageException`, `ImageFiles`, `AlertImageLibrary`), `assets/src/overlay/textfill.ts`/`.css`, `assets/src/dashboard/sections/alerts/AlertImagesCard.tsx` og `tests/Integration/Alerts/AlertImagesTest.php` (trin 25.6.10).
 - ✅ `src/Modules/Alerts/Fonts/` (`AlertFonts`, `AlertFont`, `AlertFontsException`), `src/Modules/Alerts/Admin/AlertsAdminPage.php` og `AlertsAdminActions.php`; `assets/src/dashboard/sections/alerts/` (`OverlayDesigner.tsx`, `designer.ts`, `useFontStylesheet.ts`) og `test/alerts-designer.test.ts`.
 
 ## Database/data used
@@ -68,7 +71,7 @@ Migrationer fra 18 (detaljer i DATABASE.md):
 | `merchboard_settings` | `alerts_enabled` ✅ (default `false`); planlagt: poll-interval, lydgrænser, checkout-brugernavn, globalt overlay |
 | Options uden autoload | Krypterede Twitch-credentials og -tokens (planlagt) |
 | Ordre-meta | `_merchboard_alert_username` (fallback: `_ccmerch_username`) |
-| Vedhæftnings-meta ✅ (25.6) | `_merchboard_alert_sound_creator`: ejeren af en uploadet lyd; `_merchboard_alert_sound_library` (25.6.3): en lyd i administratorens bibliotek |
+| Vedhæftnings-meta ✅ (25.6) | `_merchboard_alert_sound_creator`: ejeren af en uploadet lyd; `_merchboard_alert_sound_library` (25.6.3): en lyd i administratorens bibliotek; `_merchboard_alert_image_creator` og `_merchboard_alert_image_library` (25.6.10): ejeren af et billede til tekstfyld eller et billede i administratorens billedbibliotek |
 
 ## Permissions
 - Creator: `merchboard_access_dashboard`; creatoren findes via `CreatorContext` og har kun adgang til egne data.

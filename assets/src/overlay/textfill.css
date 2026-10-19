@@ -1,0 +1,169 @@
+/*
+ * Text fills (phase 25, step 6.10), our own implementation; see
+ * textfill.ts. Each letter shows --merchboard-fill-image through its text
+ * (background-clip: text), shifted by its position in the box, so the fill
+ * runs across the whole text while the box keeps its own background. The
+ * text colour stays the configured colour (the typewriter caret uses it);
+ * only the letters' own paint is transparent.
+ *
+ * Variables on the box: --merchboard-fill-image, --merchboard-fill-w/-h
+ * (size of the fill), --merchboard-fill-x/-y (its offset); per letter
+ * --fx/--fy (its position in the box). Letter variables are set on the
+ * letters: a custom property resolves var() where it is declared.
+ */
+
+.merchboard-fill {
+	-webkit-text-fill-color: transparent;
+}
+
+/* Letters are placed against the box (overlay boxes are fixed already). */
+.merchboard-fill:not(.merchboard-overlay__el) {
+	position: relative;
+}
+
+.merchboard-fill .merchboard-anim__letter {
+	background-image: var(--merchboard-fill-image);
+	background-repeat: repeat;
+	background-position: calc(var(--merchboard-fill-x) - var(--fx)) calc(var(--merchboard-fill-y) - var(--fy));
+	background-size: var(--merchboard-fill-w) var(--merchboard-fill-h);
+	-webkit-background-clip: text;
+	background-clip: text;
+
+	/* A text shadow would cover the fill: the shadow becomes a drop shadow. */
+	text-shadow: none !important;
+	filter: drop-shadow(var(--merchboard-text-shadow));
+}
+
+/* The glitch copies keep their own colours. */
+.merchboard-fill[data-effect="glitch"]::before,
+.merchboard-fill[data-effect="glitch"]::after {
+	-webkit-text-fill-color: currentcolor;
+}
+
+/* ---------------------------------------------------------- Motion. */
+
+/* Letters without a text animation still move their fill. */
+.merchboard-fill:not(.merchboard-anim) .merchboard-anim__letter {
+	animation: var(--merchboard-l-fill, none);
+}
+
+.merchboard-fill[data-fill-motion="pan"] .merchboard-anim__letter {
+	--merchboard-l-fill: merchboard-fill-pan 6s linear infinite;
+}
+
+.merchboard-fill[data-fill-motion="fall"] .merchboard-anim__letter {
+	--merchboard-l-fill: merchboard-fill-fall 3s linear infinite;
+}
+
+/*
+ * Shadow effects as drop shadows on the letters (a text shadow would cover
+ * the fill, and a drop shadow on the box would shadow its background). Not
+ * while going: the out-animation replaces them.
+ */
+.merchboard-fill.merchboard-anim:is([data-effect="neon"], [data-effect="glow-pulse"], [data-effect="dancing-shadow"]) {
+	--merchboard-a-fx: none;
+}
+
+.merchboard-fill.merchboard-anim:not(.merchboard-anim--out)[data-in="shadow-paint"] .merchboard-anim__letter {
+	--merchboard-l-in: merchboard-fill-shadow-paint var(--merchboard-anim-time) ease-out backwards;
+}
+
+.merchboard-fill.merchboard-anim:not(.merchboard-anim--out)[data-effect="neon"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-fill-neon var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite alternate;
+}
+
+.merchboard-fill.merchboard-anim:not(.merchboard-anim--out)[data-effect="glow-pulse"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-fill-glow-pulse var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite;
+}
+
+.merchboard-fill.merchboard-anim:not(.merchboard-anim--out)[data-effect="dancing-shadow"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-fill-dancing-shadow var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite alternate;
+}
+
+.merchboard-fill.merchboard-anim:not(.merchboard-anim--out)[data-effect="depth-pulse"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-fill-depth var(--merchboard-cycle) ease-in-out calc(var(--merchboard-in-total) + var(--i) * 70ms) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.merchboard-fill .merchboard-anim__letter {
+		animation: none !important;
+	}
+
+	/* The designer and the sample only animate on request (see animations.css). */
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-fill:not(.merchboard-anim) .merchboard-anim__letter {
+		animation: var(--merchboard-l-fill, none) !important;
+	}
+}
+
+/* ------------------------------------------------------- Keyframes. */
+
+@keyframes merchboard-fill-pan {
+
+	to {
+		background-position: calc(var(--merchboard-fill-x) + var(--merchboard-fill-w) - var(--fx)) calc(var(--merchboard-fill-y) - var(--fy));
+	}
+}
+
+@keyframes merchboard-fill-fall {
+
+	to {
+		background-position: calc(var(--merchboard-fill-x) - var(--fx)) calc(var(--merchboard-fill-y) + var(--merchboard-fill-h) - var(--fy));
+	}
+}
+
+@keyframes merchboard-fill-shadow-paint {
+
+	0% {
+		opacity: 0;
+		filter: drop-shadow(-0.6em 0 0 var(--merchboard-effect-color)) drop-shadow(0.6em 0 0 var(--merchboard-effect-color));
+	}
+
+	60% {
+		opacity: 1;
+		filter: drop-shadow(-0.05em 0 0 var(--merchboard-effect-color)) drop-shadow(0.05em 0 0 var(--merchboard-effect-color));
+	}
+}
+
+@keyframes merchboard-fill-neon {
+
+	from {
+		filter: drop-shadow(0 0 0.05em #fff) drop-shadow(0 0 0.15em var(--merchboard-effect-color)) drop-shadow(0 0 0.3em var(--merchboard-effect-color));
+	}
+
+	to {
+		filter: drop-shadow(0 0 0.1em #fff) drop-shadow(0 0 0.3em var(--merchboard-effect-color)) drop-shadow(0 0 0.7em var(--merchboard-effect-color));
+	}
+}
+
+@keyframes merchboard-fill-glow-pulse {
+
+	from,
+	to {
+		filter: drop-shadow(0 0 0 var(--merchboard-effect-color)) brightness(1);
+	}
+
+	50% {
+		filter: drop-shadow(0 0 0.5em var(--merchboard-effect-color)) brightness(1.25);
+	}
+}
+
+@keyframes merchboard-fill-dancing-shadow {
+
+	from {
+		filter: drop-shadow(0.08em 0.08em 0 var(--merchboard-effect-color)) drop-shadow(-0.08em -0.08em 0 rgba(255, 255, 255, 0.6));
+	}
+
+	to {
+		filter: drop-shadow(-0.08em 0.08em 0 rgba(255, 255, 255, 0.6)) drop-shadow(0.08em -0.08em 0 var(--merchboard-effect-color));
+	}
+}
+
+/* Stacked drop shadows: each shadows the ones before, so the depth adds up. */
+@keyframes merchboard-fill-depth {
+
+	50% {
+		filter: drop-shadow(0.03em 0.03em 0 var(--merchboard-effect-color)) drop-shadow(0.03em 0.03em 0 var(--merchboard-effect-color)) drop-shadow(0.03em 0.03em 0 var(--merchboard-effect-color));
+		transform: translate(-0.05em, -0.05em);
+	}
+}

@@ -23,6 +23,7 @@ export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 
 import type { TextAnimation } from '../../overlay/animations';
 import type { TextFit } from '../../overlay/fit';
+import type { TextFill } from '../../overlay/textfill';
 
 export { TEXT_FITS } from '../../overlay/fit';
 export type { TextFit };
@@ -67,6 +68,11 @@ export interface OverlaySettings {
 	readonly animations: {
 		readonly main_text: TextAnimation;
 		readonly secondary_text: TextAnimation;
+	};
+	/** Text fills of the main and the secondary text (step 25.6.10). */
+	readonly text_fills: {
+		readonly main_text: TextFill;
+		readonly secondary_text: TextFill;
 	};
 	/** "inherit" (the default font) or an approved Google font (ADR-067). */
 	readonly font_family: string;
@@ -158,6 +164,30 @@ export interface AlertsAudio {
 	readonly maxSeconds: number;
 }
 
+/** An image that can fill alert text: the creator's own or the library's. */
+export interface AlertImageFile {
+	readonly id: number;
+	/** File URL on this site. */
+	readonly url: string;
+	readonly name: string;
+	readonly width: number;
+	readonly height: number;
+}
+
+/** The images that can fill alert text (step 25.6.10). */
+export interface AlertsImages {
+	/** The creator's own uploads, newest first. */
+	readonly own: readonly AlertImageFile[];
+	/** Images of the administrator's library. */
+	readonly library: readonly AlertImageFile[];
+	/** Largest file in bytes. */
+	readonly maxBytes: number;
+	/** Largest width and height in pixels. */
+	readonly maxPixels: number;
+	/** Most own images. */
+	readonly maxOwn: number;
+}
+
 export interface AlertOverlay {
 	/** The OBS browser source URL; contains the secret overlay id. */
 	readonly url: string;
@@ -167,6 +197,8 @@ export interface AlertOverlay {
 	readonly fontApproved: boolean;
 	/** The sounds; null when sounds are not available. */
 	readonly audio: AlertsAudio | null;
+	/** The text fill images; null when images are not available. */
+	readonly images: AlertsImages | null;
 }
 
 export interface AlertsOverlayState {

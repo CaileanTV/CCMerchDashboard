@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Alerts\Overlay;
 
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use MerchBoard\Modules\Alerts\Images\AlertImages;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,19 +30,22 @@ defined( 'ABSPATH' ) || exit;
  *   so the secret id never leaves the page in a Referer header.
  * - **Styles:** every value in the inline style sheet comes from the
  *   validated settings (OverlaySettings), never raw input.
+ * - **Text fills:** a preset by name, or an image only when the creator may
+ *   use it (AlertImages); the bundle builds the CSS from these.
  */
 final class OverlayPage {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param OverlayRoute    $route  Route.
-	 * @param OverlayFeed     $feed   Overlay lookup.
-	 * @param OverlayAssets   $assets Bundle.
-	 * @param Logger          $logger Technical log.
-	 * @param AlertFonts|null $fonts  Approved fonts; null for none.
+	 * @param OverlayRoute     $route  Route.
+	 * @param OverlayFeed      $feed   Overlay lookup.
+	 * @param OverlayAssets    $assets Bundle.
+	 * @param Logger           $logger Technical log.
+	 * @param AlertFonts|null  $fonts  Approved fonts; null for none.
+	 * @param AlertImages|null $images Text fill images; null shows only the preset fills.
 	 */
-	public function __construct( private OverlayRoute $route, private OverlayFeed $feed, private OverlayAssets $assets, private Logger $logger, private ?AlertFonts $fonts = null ) {
+	public function __construct( private OverlayRoute $route, private OverlayFeed $feed, private OverlayAssets $assets, private Logger $logger, private ?AlertFonts $fonts = null, private ?AlertImages $images = null ) {
 	}
 
 	/**
@@ -116,6 +120,10 @@ final class OverlayPage {
 				'animations'       => array(
 					'main'      => $settings->animations()['main_text'],
 					'secondary' => $settings->animations()['secondary_text'],
+				),
+				'fills'            => array(
+					'main'      => AlertImages::look( $this->images, $overlay->creator_id, $settings->text_fills()['main_text'] ),
+					'secondary' => AlertImages::look( $this->images, $overlay->creator_id, $settings->text_fills()['secondary_text'] ),
 				),
 			),
 		);

@@ -182,6 +182,29 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertSame( 404, rest_do_request( $this->request( OverlayId::generate() ) )->get_status(), 'Unknown ids are never counted.' );
 	}
 
+	public function test_text_fills_reach_the_overlay_script_only_with_images_the_creator_may_use(): void {
+		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
+		$id      = $this->overlay(
+			$creator->id,
+			array(
+				'text_fills' => array(
+					'main_text'      => array(
+						'type'   => 'preset',
+						'preset' => 'gold',
+						'motion' => 'pan',
+					),
+					'secondary_text' => array(
+						'type'  => 'image',
+						'image' => 999999,
+					),
+				),
+			)
+		);
+		$html    = (string) $this->page()->render( $id, 'nonce123' );
+
+		self::assertStringContainsString( '"fills":{"main":{"kind":"preset","preset":"gold","motion":"pan"},"secondary":null}', $html );
+	}
+
 	public function test_the_page_carries_only_validated_values_and_no_unknown_overlay(): void {
 		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
 		$id      = $this->overlay(
@@ -206,6 +229,7 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertStringContainsString( '"imageFollows":false', $html );
 		self::assertStringContainsString( '"displayFromSound":false', $html );
 		self::assertStringContainsString( '"animations":{"main":{"in":"fade","effect":"none","out":"fade"', $html, 'The text animations reach the overlay script.' );
+		self::assertStringContainsString( '"fills":{"main":null,"secondary":null}', $html, 'No text fill by default.' );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 
 		$headers = OverlayPage::security_headers( 'nonce123' );

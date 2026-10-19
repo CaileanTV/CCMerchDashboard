@@ -4,10 +4,13 @@
  * for the animation time, then the next alert. The alert's sound starts
  * with the fade-in. Texts are inserted as text, never as HTML. With text
  * animations (step 25.6.9), the texts animate in and out instead of fading,
- * and the next alert waits for the out-animation.
+ * and the next alert waits for the out-animation. With text fills (step
+ * 25.6.10), the letters are filled once the text has its final size.
  */
 import { leaveText, renderText, resetText } from './animations';
 import type { TextAnimation } from './animations';
+import { applyFill, clearFill, layoutFill } from './textfill';
+import type { FillLook } from './textfill';
 import type { OverlayAlert } from './feed';
 
 export interface OverlayElements {
@@ -25,6 +28,11 @@ export interface Timing {
 	animations?: {
 		readonly main: TextAnimation;
 		readonly secondary: TextAnimation;
+	};
+	/** Text fills of the main and the secondary text; null for none. */
+	fills?: {
+		readonly main: FillLook | null;
+		readonly secondary: FillLook | null;
 	};
 }
 
@@ -205,15 +213,22 @@ export class AlertPlayer {
 			);
 		}
 
+		applyFill( text, this.timing.fills?.main ?? null );
+		applyFill( secondary, this.timing.fills?.secondary ?? null );
 		this.fit( text );
 		this.fit( secondary );
 		this.arrange( this.elements );
+		// The letters' places are final only now.
+		layoutFill( text );
+		layoutFill( secondary );
 	}
 
 	private finish(): void {
 		this.elements.image.replaceChildren();
 		resetText( this.elements.text );
 		resetText( this.elements.secondary );
+		clearFill( this.elements.text );
+		clearFill( this.elements.secondary );
 		this.elements.text.textContent = '';
 		this.elements.secondary.textContent = '';
 		this.playing = false;

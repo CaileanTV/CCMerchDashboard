@@ -7,6 +7,7 @@
  */
 import './overlay.css';
 import './animations.css';
+import './textfill.css';
 import {
 	REQUEST_TIMEOUT,
 	SHORT_POLL_INTERVAL,

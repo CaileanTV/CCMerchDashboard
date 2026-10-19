@@ -249,4 +249,39 @@ describe( 'AlertPlayer', () => {
 		expect( text.classList.contains( 'merchboard-anim' ) ).toBe( false );
 		expect( text.textContent ).toBe( '' );
 	} );
+	it( 'fills the texts and removes the fill after the alert (step 25.6.10)', () => {
+		const text = document.createElement( 'div' );
+		const secondary = document.createElement( 'div' );
+		const timers: Array< { callback: () => void; delay: number } > = [];
+		const player = new AlertPlayer(
+			{ image: document.createElement( 'div' ), text, secondary },
+			{
+				displayDuration: 5000,
+				animDuration: 500,
+				fills: {
+					main: { kind: 'preset', preset: 'gold', motion: 'pan' },
+					secondary: null,
+				},
+			},
+			() => true,
+			( callback, delay ) => {
+				timers.push( { callback, delay } );
+			}
+		);
+
+		player.enqueue( [ alert( 1, { text: 'Hey', secondary: 'You' } ) ] );
+		expect( text.classList.contains( 'merchboard-fill' ) ).toBe( true );
+		expect(
+			text.querySelectorAll( '.merchboard-anim__letter' )
+		).toHaveLength( 3 );
+		expect( secondary.classList.contains( 'merchboard-fill' ) ).toBe(
+			false
+		);
+		expect( secondary.textContent ).toBe( 'You' );
+
+		timers.shift()?.callback();
+		timers.shift()?.callback();
+		expect( text.classList.contains( 'merchboard-fill' ) ).toBe( false );
+		expect( text.textContent ).toBe( '' );
+	} );
 } );

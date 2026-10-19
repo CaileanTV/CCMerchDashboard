@@ -16,6 +16,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Field } from '../../components/Field';
 import { Toast } from '../../components/Toast';
+import { AlertImagesCard } from './AlertImagesCard';
 import { AnimationFields } from './AnimationFields';
 import {
 	FONT_WEIGHTS,
@@ -26,6 +27,7 @@ import {
 } from '../../types/alerts';
 import type {
 	AlertFontOption,
+	AlertsImages,
 	AlertsOverlayState,
 	NumberField,
 	OverlaySettings,
@@ -111,6 +113,8 @@ interface Props {
 	readonly saveSlot?: HTMLElement | null;
 	/** Called with the unsaved values on every change (the designer previews them). */
 	readonly onDraft?: ( values: OverlaySettings ) => void;
+	/** Images the texts can be filled with (step 25.6.10); null when not available. */
+	readonly images?: AlertsImages | null;
 }
 
 /**
@@ -126,6 +130,7 @@ interface Props {
  * @param props.onSaved      Called with the answer after saving.
  * @param props.saveSlot     Where the save button is shown.
  * @param props.onDraft      Called with the unsaved values.
+ * @param props.images       Images the texts can be filled with.
  */
 export function OverlaySettingsForm( {
 	settings,
@@ -134,6 +139,7 @@ export function OverlaySettingsForm( {
 	onSaved,
 	saveSlot = null,
 	onDraft,
+	images = null,
 }: Props ) {
 	const id = useId();
 	const [ values, setValues ] = useState( settings );
@@ -485,10 +491,10 @@ export function OverlaySettingsForm( {
 				</div>
 			</Card>
 
-			<Card title={ __( 'Animations', 'merchboard' ) }>
+			<Card title={ __( 'Animations and text fill', 'merchboard' ) }>
 				<p className="merchboard-field__help">
 					{ __(
-						'How each text comes in, moves while it is shown and goes out. The animation time below sets how long the in- and out-animations take. Press "Play animation" in the designer to see it.',
+						'How each text comes in, moves while it is shown and goes out, and what fills its letters: the text colour, a gradient or pattern, or an image (an animated GIF keeps moving). The animation time below sets how long the in- and out-animations take. The example shows your choice; press "Play animation" in the designer to see it on the overlay.',
 						'merchboard'
 					) }
 				</p>
@@ -496,6 +502,16 @@ export function OverlaySettingsForm( {
 					legend={ __( 'Main text', 'merchboard' ) }
 					value={ values.animations.main_text }
 					duration={ values.anim_duration }
+					fill={ values.text_fills.main_text }
+					onFillChange={ ( fill ) =>
+						set( {
+							text_fills: {
+								...values.text_fills,
+								main_text: fill,
+							},
+						} )
+					}
+					images={ images }
 					onChange={ ( animation ) =>
 						set( {
 							animations: {
@@ -510,6 +526,16 @@ export function OverlaySettingsForm( {
 						legend={ __( 'Secondary text', 'merchboard' ) }
 						value={ values.animations.secondary_text }
 						duration={ values.anim_duration }
+						fill={ values.text_fills.secondary_text }
+						onFillChange={ ( fill ) =>
+							set( {
+								text_fills: {
+									...values.text_fills,
+									secondary_text: fill,
+								},
+							} )
+						}
+						images={ images }
 						onChange={ ( animation ) =>
 							set( {
 								animations: {
@@ -521,6 +547,19 @@ export function OverlaySettingsForm( {
 					/>
 				) }
 			</Card>
+
+			{ /* The own images, right below where an image is chosen, only when a text uses one. */ }
+			{ images !== null &&
+				( values.text_fills.main_text.type === 'image' ||
+					( values.show_secondary &&
+						values.text_fills.secondary_text.type ===
+							'image' ) ) && (
+					<AlertImagesCard
+						images={ images }
+						onSaved={ onSaved }
+						notify={ setToast }
+					/>
+				) }
 
 			<Card title={ __( 'Timing', 'merchboard' ) }>
 				<label
