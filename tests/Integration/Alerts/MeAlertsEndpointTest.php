@@ -66,7 +66,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 		$this->posts    = new ProductPosts( $this->wpdb );
 		$this->overlays = new AlertOverlayRepository( $this->wpdb );
-		$sounds         = AlertSoundsTest::sounds( $this->overlays );
+		$sounds         = AlertSoundsTest::sounds( $this->overlays, AlertSoundsTest::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ) );
 		$this->feed     = new OverlayFeed( $this->overlays, new AlertEventRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue(), $sounds );
 		$fonts          = new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): mixed => null );
 		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0, $fonts );
@@ -230,6 +230,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 	public function test_sounds_are_uploaded_switched_on_and_deleted_through_the_routes(): void {
 		$this->creator( 'nova' );
+		$user = get_current_user_id();
 		self::assertSame( 404, $this->upload( 'default', AlertSoundsTest::wav_upload( 1 ) )->get_status(), 'Set up the overlay first.' );
 		$this->call( 'POST', self::ROUTE );
 
@@ -252,6 +253,15 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => 'yes' ) )->get_status() );
 
 		self::assertNull( $this->data( $this->call( 'DELETE', self::ROUTE . '/sounds/default' ) )['overlay']['audio']['default'] );
+
+		// A library sound is chosen with JSON instead of a file.
+		wp_set_current_user( 1 );
+		$chime = AlertSoundsTest::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) )->add( AlertSoundsTest::wav_upload( 1, 'chime.wav' ) );
+		wp_set_current_user( $user );
+		$chosen = $this->data( $this->call( 'POST', self::ROUTE . '/sounds/default', array( 'library' => $chime->attachment_id ) ) )['overlay']['audio'];
+		self::assertSame( $chime->attachment_id, $chosen['default']['library_id'] );
+		self::assertSame( 'chime.wav', $chosen['library'][0]['name'] );
+		self::assertSame( array( 'library' => 'unknown_sound' ), $this->call( 'POST', self::ROUTE . '/sounds/default', array( 'library' => 1 ) )->get_data()['data']['fields'] ?? null );
 	}
 
 	public function test_a_new_url_kills_the_old_one_at_once(): void {

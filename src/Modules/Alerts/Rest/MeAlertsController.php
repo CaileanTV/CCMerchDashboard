@@ -41,9 +41,10 @@ defined( 'ABSPATH' ) || exit;
  *   so the answer shows what was saved.
  * - `POST …/regenerate`: a new secret id.
  * - `POST …/test`: a test alert.
- * - `POST …/sounds/{slot}` (multipart field `file`) and `DELETE …/sounds/{slot}`:
- *   the default sound (`default`) or the sound of one of the creator's
- *   categories (its term id); see AlertSounds.
+ * - `POST …/sounds/{slot}` (multipart field `file`, or JSON `library` with
+ *   a library sound) and `DELETE …/sounds/{slot}`: the default sound
+ *   (`default`) or the sound of one of the creator's categories (its term
+ *   id); see AlertSounds.
  *
  * The answer contains the OBS URL with the secret id, so it is only ever
  * sent to the creator it belongs to. Before the overlay is set up, the
@@ -206,7 +207,8 @@ final class MeAlertsController extends RestController {
 	}
 
 	/**
-	 * `POST /me/alerts/overlay/sounds/{slot}`: stores the uploaded file `file`.
+	 * `POST /me/alerts/overlay/sounds/{slot}`: stores the uploaded file `file`,
+	 * or puts the library sound `library` into the slot.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
@@ -215,15 +217,18 @@ final class MeAlertsController extends RestController {
 		return $this->with_creator(
 			self::ROUTE . '/sounds',
 			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
-				$files = $request->get_file_params();
-				$file  = is_array( $files['file'] ?? null ) ? $files['file'] : array();
+				$files   = $request->get_file_params();
+				$file    = is_array( $files['file'] ?? null ) ? $files['file'] : array();
+				$library = $request->get_param( 'library' );
 
 				if ( null === $this->sounds ) {
 					return self::not_set_up();
 				}
 
 				try {
-					$overlay = $this->sounds->upload( $creator_id, self::slot( $request ), $file );
+					$overlay = array() === $file && null !== $library
+						? $this->sounds->choose( $creator_id, self::slot( $request ), is_int( $library ) ? $library : 0 )
+						: $this->sounds->upload( $creator_id, self::slot( $request ), $file );
 				} catch ( AlertSoundException $e ) {
 					return self::error( 'merchboard_invalid_request', __( 'The sound was not saved.', 'merchboard' ), 400, array( 'fields' => array( $e->field() => $e->reason() ) ) );
 				}

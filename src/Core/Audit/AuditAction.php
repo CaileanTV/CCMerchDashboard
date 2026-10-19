@@ -376,4 +376,14 @@ enum AuditAction: string {
 	 * An approved alert font was removed (ADR-067). Context: family.
 	 */
 	case AlertFontRemoved = 'alert_font_removed';
+
+	/**
+	 * A sound was added to the alert sound library (phase 25, step 6.3). Context: file name.
+	 */
+	case AlertSoundLibraryAdded = 'alert_sound_library_added';
+
+	/**
+	 * A sound was removed from the alert sound library. Context: file name.
+	 */
+	case AlertSoundLibraryRemoved = 'alert_sound_library_removed';
 }

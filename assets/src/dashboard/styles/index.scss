@@ -863,6 +863,13 @@
 	margin-bottom: var(--merchboard-space-2);
 }
 
+.merchboard-sounds__library {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	max-width: 24rem;
+	margin-bottom: var(--merchboard-space-2);
+}
+
 .merchboard-sounds__upload {
 	cursor: pointer;
 }

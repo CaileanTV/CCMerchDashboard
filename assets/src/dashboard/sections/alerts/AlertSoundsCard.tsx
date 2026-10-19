@@ -2,6 +2,7 @@ import { useId, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import {
+	chooseAlertSound,
 	removeAlertSound,
 	updateAlertsOverlay,
 	uploadAlertSound,
@@ -58,6 +59,11 @@ export function soundErrorMessage(
 			);
 		case 'unknown_category':
 			return __( 'This category is no longer yours.', 'merchboard' );
+		case 'unknown_sound':
+			return __(
+				'This sound is no longer in the library. Choose another one.',
+				'merchboard'
+			);
 		default:
 			return __( 'No file was received. Try again.', 'merchboard' );
 	}
@@ -74,7 +80,9 @@ interface RowProps {
 
 function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
 	const id = useId();
-	const [ busy, setBusy ] = useState< 'upload' | 'remove' | null >( null );
+	const [ busy, setBusy ] = useState< 'upload' | 'remove' | 'choose' | null >(
+		null
+	);
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ saved, setSaved ] = useState< string | null >( null );
 	const [ error, setError ] = useState< ApiError | null >( null );
@@ -117,6 +125,31 @@ function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
 		}
 
 		const code = result.error.fields.file ?? result.error.fields.slot;
+
+		if ( result.error.kind === 'invalid_request' && code !== undefined ) {
+			setMessage(
+				soundErrorMessage( code, audio.maxBytes, audio.maxSeconds )
+			);
+		} else {
+			setError( result.error );
+		}
+	};
+
+	const choose = async ( soundId: number ) => {
+		setBusy( 'choose' );
+		setMessage( null );
+		setSaved( null );
+		setError( null );
+		const result = await chooseAlertSound( slot, soundId );
+		setBusy( null );
+
+		if ( result.ok ) {
+			onSaved( result.data );
+			notify( __( 'Sound saved.', 'merchboard' ) );
+			return;
+		}
+
+		const code = result.error.fields.library ?? result.error.fields.slot;
 
 		if ( result.error.kind === 'invalid_request' && code !== undefined ) {
 			setMessage(
@@ -185,6 +218,46 @@ function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
 			{ saved !== null && <Alert tone="success">{ saved }</Alert> }
 			{ message !== null && <Alert tone="danger">{ message }</Alert> }
 			{ error !== null && <ApiErrorState error={ error } /> }
+			{ audio.library.length > 0 && (
+				<div className="merchboard-sounds__library">
+					<label htmlFor={ `${ id }-library` }>
+						{ __( 'Sound from the library', 'merchboard' ) }
+					</label>
+					<select
+						id={ `${ id }-library` }
+						className="merchboard-input"
+						value={
+							sound !== null && sound.libraryId > 0
+								? String( sound.libraryId )
+								: ''
+						}
+						disabled={ busy !== null }
+						onChange={ ( event ) => {
+							const chosen = Number( event.target.value );
+
+							if ( Number.isInteger( chosen ) && chosen > 0 ) {
+								void choose( chosen );
+							}
+						} }
+					>
+						<option value="" disabled>
+							{ sound !== null && sound.libraryId === 0
+								? __( 'Your own sound', 'merchboard' )
+								: __( 'Choose a sound…', 'merchboard' ) }
+						</option>
+						{ audio.library.map( ( item ) => (
+							<option key={ item.id } value={ String( item.id ) }>
+								{ sprintf(
+									/* translators: 1: file name, 2: length in seconds. */
+									__( '%1$s (%2$d s)', 'merchboard' ),
+									item.name,
+									item.seconds
+								) }
+							</option>
+						) ) }
+					</select>
+				</div>
+			) }
 			<div className="merchboard-alerts__actions">
 				<input
 					id={ `${ id }-file` }

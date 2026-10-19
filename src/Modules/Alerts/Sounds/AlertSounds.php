@@ -23,15 +23,14 @@ defined( 'ABSPATH' ) || exit;
  * Sounds of a creator's overlay (ADR-065 pkt. 3): a default sound and one
  * sound per category of the creator, as in MerchAlert.
  *
- * - **Files:** attachments in the Media Library, marked with their owner
- *   (OWNER_META). Only the owner's attachments are ever played, listed or
- *   deleted, so a settings value can never reach another creator's file.
- * - **Upload:** MP3, WAV or OGG. The extension and the file's real type are
- *   checked before the file is moved, the file is then read as audio (its
- *   format must match the extension), and its size and length must be
- *   within MAX_BYTES and MAX_SECONDS. Unlike MerchAlert, a file that cannot
- *   be read as audio is refused. A refused or unsaved file is deleted.
- * - **First sound:** uploading the overlay's first sound switches sounds on.
+ * - **Own files:** the creator's uploads (validated by SoundFiles) are
+ *   attachments marked with their owner (OWNER_META). Only the owner's
+ *   attachments are ever played, listed or deleted, so a settings value can
+ *   never reach another creator's file.
+ * - **Library:** instead of uploading, a creator can choose a sound of the
+ *   administrator's library (AlertSoundLibrary, step 6.3); library files are
+ *   never deleted by creators.
+ * - **First sound:** the overlay's first sound switches sounds on.
  * - **Replace and remove:** the previous file of a slot is deleted after the
  *   new settings are saved, only when the creator owns it and no other
  *   slot uses it.
@@ -49,54 +48,11 @@ final class AlertSounds {
 	public const OWNER_META = '_merchboard_alert_sound_creator';
 
 	/**
-	 * Largest file (MerchAlert's default limit).
-	 */
-	public const MAX_BYTES = 10485760;
-
-	/**
-	 * Longest sound in seconds (MerchAlert's default limit).
-	 */
-	public const MAX_SECONDS = 30;
-
-	/**
-	 * Allowed extensions and types.
-	 */
-	public const TYPES = array(
-		'mp3'     => 'audio/mpeg',
-		'wav'     => 'audio/wav',
-		'ogg|oga' => 'audio/ogg',
-	);
-
-	/**
-	 * The getID3 file formats each extension may have.
-	 */
-	private const FORMATS = array(
-		'mp3' => array( 'mp3' ),
-		'wav' => array( 'wav', 'riff' ),
-		'ogg' => array( 'ogg' ),
-		'oga' => array( 'ogg' ),
-	);
-
-	/**
 	 * The creator's categories: term id → name.
 	 *
 	 * @var Closure(int): array<int, string>
 	 */
 	private Closure $categories;
-
-	/**
-	 * Moves an uploaded file into the uploads folder; wp_handle_upload()'s result.
-	 *
-	 * @var Closure(array<string, mixed>, array<string, mixed>): array<string, mixed>
-	 */
-	private Closure $move;
-
-	/**
-	 * Reads audio metadata; wp_read_audio_metadata()'s result.
-	 *
-	 * @var Closure(string): mixed
-	 */
-	private Closure $analyze;
 
 	/**
 	 * The parent terms of a category.
@@ -110,45 +66,27 @@ final class AlertSounds {
 	 *
 	 * @phpstan-param Closure(int): array<int, string> $categories
 	 *
-	 * @param AlertOverlayRepository                                                           $overlays   Overlays.
-	 * @param Closure                                                                          $categories The creator's categories (term id → name).
-	 * @param (Closure(array<string, mixed>, array<string, mixed>): array<string, mixed>)|null $move       File move; defaults to wp_handle_upload().
-	 * @param (Closure(string): mixed)|null                                                    $analyze    Audio metadata; defaults to wp_read_audio_metadata().
-	 * @param (Closure(int): list<int>)|null                                                   $ancestors  Parent categories; defaults to get_ancestors().
+	 * @param AlertOverlayRepository         $overlays   Overlays.
+	 * @param Closure                        $categories The creator's categories (term id → name).
+	 * @param SoundFiles                     $files      Sound files.
+	 * @param AlertSoundLibrary|null         $library    The administrator's library; null for none.
+	 * @param (Closure(int): list<int>)|null $ancestors  Parent categories; defaults to get_ancestors().
 	 */
-	public function __construct( private AlertOverlayRepository $overlays, Closure $categories, ?Closure $move = null, ?Closure $analyze = null, ?Closure $ancestors = null ) {
+	public function __construct( private AlertOverlayRepository $overlays, Closure $categories, private SoundFiles $files, private ?AlertSoundLibrary $library = null, ?Closure $ancestors = null ) {
 		$this->categories = $categories;
-		$this->move       = $move ?? static function ( array $file, array $overrides ): array {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-
-			return wp_handle_upload( $file, $overrides );
-		};
-		$this->analyze    = $analyze ?? static function ( string $path ): mixed {
-			require_once ABSPATH . 'wp-admin/includes/media.php';
-
-			return wp_read_audio_metadata( $path );
-		};
 		$this->ancestors  = $ancestors ?? static fn( int $term_id ): array => array_values( array_map( 'intval', get_ancestors( $term_id, 'product_cat', 'taxonomy' ) ) );
-	}
-
-	/**
-	 * The largest file this site accepts.
-	 */
-	public static function max_bytes(): int {
-		$site = (int) wp_max_upload_size();
-
-		return $site > 0 ? min( self::MAX_BYTES, $site ) : self::MAX_BYTES;
 	}
 
 	/**
 	 * The sounds of an overlay for the dashboard.
 	 *
 	 * @param AlertOverlay $overlay Overlay.
-	 * @return array{enabled: bool, default: array{url: string, name: string, seconds: int}|null, categories: list<array{term_id: int, name: string, sound: array{url: string, name: string, seconds: int}|null}>, max_bytes: int, max_seconds: int}
+	 * @return array{enabled: bool, default: array{url: string, name: string, seconds: int, library_id: int}|null, categories: list<array{term_id: int, name: string, sound: array{url: string, name: string, seconds: int, library_id: int}|null}>, library: list<array{id: int, url: string, name: string, seconds: int}>, max_bytes: int, max_seconds: int}
 	 */
 	public function describe( AlertOverlay $overlay ): array {
 		$values     = $overlay->settings->to_array();
 		$categories = array();
+		$library    = array();
 
 		foreach ( ( $this->categories )( $overlay->creator_id ) as $term_id => $name ) {
 			$categories[] = array(
@@ -158,12 +96,22 @@ final class AlertSounds {
 			);
 		}
 
+		foreach ( null === $this->library ? array() : $this->library->all() as $sound ) {
+			$library[] = array(
+				'id'      => $sound->attachment_id,
+				'url'     => $sound->url,
+				'name'    => $sound->name,
+				'seconds' => $sound->seconds,
+			);
+		}
+
 		return array(
 			'enabled'     => $values['audio_enabled'],
 			'default'     => $this->sound( $values['audio_default_sound'], $overlay->creator_id )?->to_array(),
 			'categories'  => $categories,
-			'max_bytes'   => self::max_bytes(),
-			'max_seconds' => self::MAX_SECONDS,
+			'library'     => $library,
+			'max_bytes'   => SoundFiles::max_bytes(),
+			'max_seconds' => SoundFiles::MAX_SECONDS,
 		);
 	}
 
@@ -213,27 +161,32 @@ final class AlertSounds {
 		}
 
 		$this->check_slot( $creator_id, $slot );
-		$this->assign_new( $overlay, $slot, $this->store_file( $creator_id, $file ) );
+		$this->assign_new( $overlay, $slot, $this->files->store( $file, self::OWNER_META, $creator_id ) );
 
 		return $this->overlays->find_for_creator( $creator_id );
 	}
 
 	/**
-	 * Puts a new attachment into a slot; deletes it when that fails.
+	 * Puts a sound of the library into a slot and replaces the slot's old sound.
 	 *
-	 * @param AlertOverlay $overlay    Overlay.
-	 * @param int          $slot       Slot.
-	 * @param int          $attachment New attachment.
-	 * @throws Throwable When it cannot be stored (DatabaseException); the attachment is deleted.
+	 * @param int $creator_id Creator.
+	 * @param int $slot       0 for the default sound, else a term id of the creator's categories.
+	 * @param int $sound      Library sound (attachment id).
+	 * @return AlertOverlay|null The changed overlay; null before it is set up.
+	 * @throws AlertSoundException When the slot or the sound is unknown.
+	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function assign_new( AlertOverlay $overlay, int $slot, int $attachment ): void {
-		try {
-			$this->assign( $overlay, $slot, $attachment );
-		} catch ( Throwable $e ) {
-			wp_delete_attachment( $attachment, true );
+	public function choose( int $creator_id, int $slot, int $sound ): ?AlertOverlay {
+		$overlay = $this->overlays->find_for_creator( $creator_id );
 
-			throw $e;
+		if ( null === $overlay ) {
+			return null;
 		}
+
+		$this->check_slot( $creator_id, $slot );
+		$this->assign( $overlay, $slot, $this->library_sound( $sound ) );
+
+		return $this->overlays->find_for_creator( $creator_id );
 	}
 
 	/**
@@ -257,6 +210,24 @@ final class AlertSounds {
 	}
 
 	/**
+	 * Puts a new attachment into a slot; deletes it when that fails.
+	 *
+	 * @param AlertOverlay $overlay    Overlay.
+	 * @param int          $slot       Slot.
+	 * @param int          $attachment New attachment.
+	 * @throws Throwable When it cannot be stored (DatabaseException); the attachment is deleted.
+	 */
+	private function assign_new( AlertOverlay $overlay, int $slot, int $attachment ): void {
+		try {
+			$this->assign( $overlay, $slot, $attachment );
+		} catch ( Throwable $e ) {
+			wp_delete_attachment( $attachment, true );
+
+			throw $e;
+		}
+	}
+
+	/**
 	 * Puts an attachment (0: none) into a slot, then deletes the slot's
 	 * previous file when the creator owns it and nothing else uses it.
 	 *
@@ -268,7 +239,7 @@ final class AlertSounds {
 	private function assign( AlertOverlay $overlay, int $slot, int $attachment ): void {
 		$values = $overlay->settings->to_array();
 
-		// The first sound switches sounds on: uploading one means wanting to hear it.
+		// The first sound switches sounds on: adding one means wanting to hear it.
 		if ( $attachment > 0 && 0 === $values['audio_default_sound'] && array() === $values['audio_category_map'] ) {
 			$values['audio_enabled'] = true;
 		}
@@ -295,138 +266,6 @@ final class AlertSounds {
 	}
 
 	/**
-	 * Validates and stores an uploaded file as an attachment of the creator.
-	 *
-	 * @param int          $creator_id Creator.
-	 * @param array<mixed> $file       Upload.
-	 * @return int Attachment id.
-	 * @throws AlertSoundException When the file is refused (it is deleted again).
-	 */
-	private function store_file( int $creator_id, array $file ): int {
-		$error = $file['error'] ?? null;
-
-		if ( UPLOAD_ERR_INI_SIZE === $error || UPLOAD_ERR_FORM_SIZE === $error ) {
-			throw new AlertSoundException( AlertSoundException::TOO_LARGE );
-		}
-
-		if ( UPLOAD_ERR_OK !== $error || ! is_string( $file['tmp_name'] ?? null ) || ! is_string( $file['name'] ?? null ) || '' === $file['tmp_name'] ) {
-			throw new AlertSoundException( AlertSoundException::NO_FILE );
-		}
-
-		$size = (int) filesize( $file['tmp_name'] );
-
-		if ( $size <= 0 ) {
-			throw new AlertSoundException( AlertSoundException::NO_FILE );
-		}
-
-		if ( $size > self::max_bytes() ) {
-			throw new AlertSoundException( AlertSoundException::TOO_LARGE );
-		}
-
-		$check = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], self::TYPES );
-		$ext   = is_string( $check['ext'] ) ? strtolower( $check['ext'] ) : '';
-
-		if ( ! isset( self::FORMATS[ $ext ] ) || ! is_string( $check['type'] ) ) {
-			throw new AlertSoundException( AlertSoundException::INVALID_TYPE );
-		}
-
-		$moved = ( $this->move )(
-			array(
-				'name'     => $file['name'],
-				'type'     => $check['type'],
-				'tmp_name' => $file['tmp_name'],
-				'error'    => UPLOAD_ERR_OK,
-				'size'     => $size,
-			),
-			array(
-				'test_form' => false,
-				'mimes'     => self::TYPES,
-			)
-		);
-
-		if ( ! is_string( $moved['file'] ?? null ) || isset( $moved['error'] ) ) {
-			throw new AlertSoundException( AlertSoundException::NO_FILE );
-		}
-
-		$path = $moved['file'];
-
-		try {
-			$seconds = $this->audio_length( $path, $ext );
-
-			return $this->insert_attachment( $creator_id, $path, $check['type'], $size, $seconds );
-		} catch ( AlertSoundException $e ) {
-			wp_delete_file( $path );
-
-			throw $e;
-		}
-	}
-
-	/**
-	 * The length of a stored file in whole seconds.
-	 *
-	 * @param string $path File.
-	 * @param string $ext  Extension.
-	 * @throws AlertSoundException When it is not audio of the extension's format or too long.
-	 */
-	private function audio_length( string $path, string $ext ): int {
-		wp_raise_memory_limit( 'admin' );
-		$meta = ( $this->analyze )( $path );
-
-		if ( ! is_array( $meta ) || ! in_array( $meta['fileformat'] ?? null, self::FORMATS[ $ext ], true ) || ! is_int( $meta['length'] ?? null ) || $meta['length'] < 0 ) {
-			throw new AlertSoundException( AlertSoundException::UNREADABLE );
-		}
-
-		if ( $meta['length'] > self::MAX_SECONDS ) {
-			throw new AlertSoundException( AlertSoundException::TOO_LONG );
-		}
-
-		return $meta['length'];
-	}
-
-	/**
-	 * Adds a stored file to the Media Library, owned by the creator. The
-	 * metadata is written directly: generating it would read embedded album
-	 * art with GD or Imagick, which can exhaust the memory (as MerchAlert found).
-	 *
-	 * @param int    $creator_id Creator.
-	 * @param string $path       File.
-	 * @param string $type       MIME type.
-	 * @param int    $size       Bytes.
-	 * @param int    $seconds    Length.
-	 * @return int Attachment id.
-	 * @throws AlertSoundException When the attachment cannot be created.
-	 */
-	private function insert_attachment( int $creator_id, string $path, string $type, int $size, int $seconds ): int {
-		$id = wp_insert_attachment(
-			array(
-				'post_mime_type' => $type,
-				'post_title'     => sanitize_text_field( pathinfo( $path, PATHINFO_FILENAME ) ),
-				'post_content'   => '',
-				'post_status'    => 'inherit',
-			),
-			$path,
-			0,
-			true
-		);
-
-		if ( ! is_int( $id ) ) {
-			throw new AlertSoundException( AlertSoundException::NO_FILE );
-		}
-
-		wp_update_attachment_metadata(
-			$id,
-			array(
-				'filesize'  => $size,
-				'mime_type' => $type,
-				'length'    => $seconds,
-			)
-		);
-		update_post_meta( $id, self::OWNER_META, $creator_id );
-
-		return $id;
-	}
-
-	/**
 	 * Requires the default slot or one of the creator's categories.
 	 *
 	 * @param int $creator_id Creator.
@@ -440,27 +279,34 @@ final class AlertSounds {
 	}
 
 	/**
-	 * A sound the creator owns, or null.
+	 * A sound of the library.
+	 *
+	 * @param int $sound Attachment id.
+	 * @return int The attachment id.
+	 * @throws AlertSoundException When it is not a library sound.
+	 */
+	private function library_sound( int $sound ): int {
+		$found = $this->library?->find( $sound );
+
+		if ( null === $found ) {
+			throw new AlertSoundException( AlertSoundException::UNKNOWN_SOUND );
+		}
+
+		return $found->attachment_id;
+	}
+
+	/**
+	 * A sound the creator owns or a library sound, or null.
 	 *
 	 * @param int $attachment Attachment id.
 	 * @param int $creator_id Creator.
 	 */
 	private function sound( int $attachment, int $creator_id ): ?AlertSound {
-		if ( $attachment <= 0 || ! $this->owns( $attachment, $creator_id ) ) {
+		if ( $attachment <= 0 ) {
 			return null;
 		}
 
-		$url  = wp_get_attachment_url( $attachment );
-		$host = is_string( $url ) ? wp_parse_url( $url, PHP_URL_HOST ) : null;
-		$type = get_post_mime_type( $attachment );
-
-		if ( ! is_string( $url ) || ! is_string( $host ) || wp_parse_url( home_url(), PHP_URL_HOST ) !== $host || ! is_string( $type ) || ! str_starts_with( $type, 'audio/' ) ) {
-			return null;
-		}
-
-		$meta = wp_get_attachment_metadata( $attachment );
-
-		return new AlertSound( $attachment, $url, wp_basename( $url ), is_array( $meta ) && is_int( $meta['length'] ?? null ) ? $meta['length'] : 0 );
+		return $this->owns( $attachment, $creator_id ) ? $this->files->sound( $attachment ) : $this->library?->find( $attachment );
 	}
 
 	/**

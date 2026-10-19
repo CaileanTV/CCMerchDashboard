@@ -14,7 +14,8 @@ use DomainException;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Carries a stable reason code for the dashboard (`data.fields`).
+ * Carries a stable reason code for the dashboard (`data.fields`) and the
+ * admin result notice.
  */
 final class AlertSoundException extends DomainException {
 
@@ -24,6 +25,9 @@ final class AlertSoundException extends DomainException {
 	public const TOO_LONG         = 'too_long';
 	public const UNREADABLE       = 'unreadable';
 	public const UNKNOWN_CATEGORY = 'unknown_category';
+	public const UNKNOWN_SOUND    = 'unknown_sound';
+	public const LIBRARY_FULL     = 'library_full';
+	public const NOT_AUTHORIZED   = 'not_authorized';
 
 	/**
 	 * Constructor.
@@ -45,6 +49,10 @@ final class AlertSoundException extends DomainException {
 	 * The request field the reason belongs to.
 	 */
 	public function field(): string {
-		return self::UNKNOWN_CATEGORY === $this->reason ? 'slot' : 'file';
+		return match ( $this->reason ) {
+			self::UNKNOWN_CATEGORY => 'slot',
+			self::UNKNOWN_SOUND    => 'library',
+			default                => 'file',
+		};
 	}
 }

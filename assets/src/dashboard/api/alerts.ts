@@ -18,6 +18,7 @@ import type {
 	AlertFontOption,
 	AlertSoundFile,
 	AlertsAudio,
+	LibrarySound,
 	AlertsOverlayState,
 	FontWeight,
 	LayoutBox,
@@ -152,7 +153,11 @@ function parseSound( value: unknown ): AlertSoundFile | null | undefined {
 	if (
 		! isRecord( value ) ||
 		typeof value.name !== 'string' ||
-		! isIntegerIn( value.seconds, { min: 0, max: 86400 } )
+		! isIntegerIn( value.seconds, { min: 0, max: 86400 } ) ||
+		! isIntegerIn( value.library_id, {
+			min: 0,
+			max: Number.MAX_SAFE_INTEGER,
+		} )
 	) {
 		return undefined;
 	}
@@ -161,7 +166,48 @@ function parseSound( value: unknown ): AlertSoundFile | null | undefined {
 
 	return url === null
 		? undefined
-		: { url, name: value.name, seconds: value.seconds };
+		: {
+				url,
+				name: value.name,
+				seconds: value.seconds,
+				libraryId: value.library_id,
+			};
+}
+
+function parseLibrary( value: unknown ): LibrarySound[] | null {
+	if ( ! Array.isArray( value ) ) {
+		return null;
+	}
+
+	const sounds: LibrarySound[] = [];
+
+	for ( const item of value as unknown[] ) {
+		const url = isRecord( item )
+			? readSameOriginUrl( item.url, window.location.origin )
+			: null;
+
+		if (
+			! isRecord( item ) ||
+			url === null ||
+			! isIntegerIn( item.id, {
+				min: 1,
+				max: Number.MAX_SAFE_INTEGER,
+			} ) ||
+			typeof item.name !== 'string' ||
+			! isIntegerIn( item.seconds, { min: 0, max: 86400 } )
+		) {
+			return null;
+		}
+
+		sounds.push( {
+			id: item.id,
+			url,
+			name: item.name,
+			seconds: item.seconds,
+		} );
+	}
+
+	return sounds;
 }
 
 /**
@@ -188,9 +234,10 @@ export function parseAudio( value: unknown ): AlertsAudio | null | undefined {
 	}
 
 	const defaultSound = parseSound( value.default );
+	const library = parseLibrary( value.library );
 	const categories: Array< AlertsAudio[ 'categories' ][ number ] > = [];
 
-	if ( defaultSound === undefined ) {
+	if ( defaultSound === undefined || library === null ) {
 		return undefined;
 	}
 
@@ -216,6 +263,7 @@ export function parseAudio( value: unknown ): AlertsAudio | null | undefined {
 		enabled: value.enabled,
 		defaultSound,
 		categories,
+		library,
 		maxBytes: value.max_bytes,
 		maxSeconds: value.max_seconds,
 	};
@@ -429,6 +477,22 @@ export function uploadAlertSound(
 
 	return request(
 		{ path: soundPath( slot ), method: 'POST', body },
+		parseAlertsOverlay
+	);
+}
+
+/**
+ * Puts a sound of the administrator's library into a slot.
+ *
+ * @param slot    The default sound or a category's term id.
+ * @param soundId Library sound id.
+ */
+export function chooseAlertSound(
+	slot: SoundSlot,
+	soundId: number
+): Promise< ApiResult< AlertsOverlayState > > {
+	return request(
+		{ path: soundPath( slot ), method: 'POST', data: { library: soundId } },
 		parseAlertsOverlay
 	);
 }

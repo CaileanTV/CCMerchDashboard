@@ -11,16 +11,25 @@ namespace MerchBoard\Tests\Integration\Alerts;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Modules\Alerts\Admin\AlertsAdminActions;
+use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\OverlayId;
 use MerchBoard\Modules\Alerts\Overlay\OverlaySettings;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
+use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -31,6 +40,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
  */
 #[CoversClass( AlertSounds::class )]
 #[CoversClass( AlertSoundException::class )]
+#[CoversClass( AlertSoundLibrary::class )]
+#[CoversClass( SoundFiles::class )]
 final class AlertSoundsTest extends IntegrationTestCase {
 
 	private const HOODIES = 12;
@@ -61,21 +72,41 @@ final class AlertSoundsTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * The service as the module builds it, with a test upload move.
-	 *
-	 * @param AlertOverlayRepository $overlays Overlays.
+	 * Sound files with a test upload move.
 	 */
-	public static function sounds( AlertOverlayRepository $overlays ): AlertSounds {
-		return new AlertSounds(
-			$overlays,
-			static fn(): array => array( self::HOODIES => 'Hoodies' ),
-			// Uploads in tests are not HTTP uploads: is_uploaded_file() is false.
+	public static function sound_files(): SoundFiles {
+		// Uploads in tests are not HTTP uploads: is_uploaded_file() is false.
+		return new SoundFiles(
 			static function ( array $file, array $overrides ): array {
 				require_once ABSPATH . 'wp-admin/includes/file.php';
 
 				return wp_handle_sideload( $file, $overrides );
-			},
-			null,
+			}
+		);
+	}
+
+	/**
+	 * The sound library as the module builds it.
+	 *
+	 * @param AuditTrail  $audit       Audit trail.
+	 * @param Transaction $transaction Transaction.
+	 */
+	public static function library( AuditTrail $audit, Transaction $transaction ): AlertSoundLibrary {
+		return new AlertSoundLibrary( self::sound_files(), $audit, $transaction );
+	}
+
+	/**
+	 * The service as the module builds it.
+	 *
+	 * @param AlertOverlayRepository $overlays Overlays.
+	 * @param AlertSoundLibrary|null $library  Library.
+	 */
+	public static function sounds( AlertOverlayRepository $overlays, ?AlertSoundLibrary $library = null ): AlertSounds {
+		return new AlertSounds(
+			$overlays,
+			static fn(): array => array( self::HOODIES => 'Hoodies' ),
+			self::sound_files(),
+			$library,
 			static fn( int $term_id ): array => self::CHILD === $term_id ? array( self::HOODIES ) : array()
 		);
 	}
@@ -151,7 +182,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 			),
 			$audio['categories']
 		);
-		self::assertSame( AlertSounds::MAX_SECONDS, $audio['max_seconds'] );
+		self::assertSame( SoundFiles::MAX_SECONDS, $audio['max_seconds'] );
 
 		$disabled = $this->overlay( $this->creator, array( 'audio_enabled' => false ) );
 		self::assertSame( '', $this->sounds->url_for( $disabled, $this->event( array() ) ), 'Sounds are off.' );
@@ -224,7 +255,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 		$this->overlay();
 		$upload = match ( $content ) {
 			'wav'   => self::wav_upload( 1, $name ),
-			'long'  => self::wav_upload( AlertSounds::MAX_SECONDS + 1, $name ),
+			'long'  => self::wav_upload( SoundFiles::MAX_SECONDS + 1, $name ),
 			default => self::upload( $content, $name ),
 		};
 		$before = $this->files();
@@ -280,6 +311,126 @@ final class AlertSoundsTest extends IntegrationTestCase {
 
 		$this->sounds->remove( $this->creator, 0 );
 		self::assertNotNull( get_post( $id ), 'Orion\'s file is kept.' );
+	}
+
+	public function test_the_library_is_managed_only_by_administrators_and_audited(): void {
+		$library = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$sound   = $library->add( self::wav_upload( 1, 'chime.wav' ) );
+
+		self::assertTrue( $sound->library );
+		self::assertSame( 'chime.wav', $sound->name );
+		self::assertSame( array( $sound->attachment_id ), array_map( static fn( $item ): int => $item->attachment_id, $library->all() ) );
+		self::assertNull( $library->find( 999999 ) );
+
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'alert_sound_library_added' ), array_column( $audit, 'action' ) );
+		self::assertSame( array( 'name' => 'chime.wav' ), json_decode( (string) $audit[0]['context'], true ) );
+
+		wp_set_current_user( $this->create_user( 'library-subscriber' ) );
+
+		foreach ( array( static fn() => $library->add( self::wav_upload( 1 ) ), static fn() => $library->remove( $sound->attachment_id ) ) as $change ) {
+			try {
+				$change();
+				self::fail( 'Expected AlertSoundException.' );
+			} catch ( AlertSoundException $e ) {
+				self::assertSame( AlertSoundException::NOT_AUTHORIZED, $e->reason() );
+			}
+		}
+
+		wp_set_current_user( 1 );
+		self::assertFalse( $library->remove( 999999 ), 'Not a library sound.' );
+		self::assertTrue( $library->remove( $sound->attachment_id ) );
+		self::assertNull( get_post( $sound->attachment_id ) );
+		self::assertSame( array( 'alert_sound_library_added', 'alert_sound_library_removed' ), array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) );
+	}
+
+	public function test_creators_choose_library_sounds_which_they_never_delete(): void {
+		$library = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$sounds  = self::sounds( $this->overlays, $library );
+		$chime   = $library->add( self::wav_upload( 1, 'chime.wav' ) );
+		$this->overlay();
+
+		self::assertSame( array( 'id' => $chime->attachment_id, 'url' => $chime->url, 'name' => 'chime.wav', 'seconds' => 1 ), $sounds->describe( $this->overlay() )['library'][0] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short expectation.
+
+		$overlay = $sounds->choose( $this->creator, self::HOODIES, $chime->attachment_id );
+		self::assertNotNull( $overlay );
+		self::assertTrue( $overlay->settings->to_array()['audio_enabled'], 'The first sound switches sounds on.' );
+		self::assertSame( $chime->attachment_id, $sounds->describe( $overlay )['categories'][0]['sound']['library_id'] ?? null );
+		self::assertSame( $chime->url, $sounds->url_for( $overlay, $this->event( array( self::HOODIES ) ) ) );
+
+		// Replacing and removing never delete the library file.
+		$sounds->upload( $this->creator, self::HOODIES, self::wav_upload( 1 ) );
+		$sounds->remove( $this->creator, self::HOODIES );
+		self::assertNotNull( get_post( $chime->attachment_id ) );
+
+		// Own uploads of another creator are not library sounds.
+		$own = $sounds->upload( $this->creator, 0, self::wav_upload( 1 ) )?->settings->to_array()['audio_default_sound'] ?? 0;
+
+		foreach ( array( $own, 999999 ) as $attachment ) {
+			try {
+				$sounds->choose( $this->creator, self::HOODIES, $attachment );
+				self::fail( 'Expected AlertSoundException.' );
+			} catch ( AlertSoundException $e ) {
+				self::assertSame( AlertSoundException::UNKNOWN_SOUND, $e->reason() );
+				self::assertSame( 'library', $e->field() );
+			}
+		}
+
+		// A removed library sound is no longer played.
+		$sounds->choose( $this->creator, 0, $chime->attachment_id );
+		$library->remove( $chime->attachment_id );
+		$after = $this->overlay();
+		self::assertNull( $sounds->describe( $after )['default'] );
+		self::assertSame( '', $sounds->url_for( $after, $this->event( array() ) ) );
+	}
+
+	public function test_the_admin_tab_uploads_lists_and_removes_library_sounds(): void {
+		require_once ABSPATH . 'wp-admin/includes/template.php';
+		$library = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$actions = new AlertsAdminActions( new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ), new RecordingLogger(), $library );
+
+		$url = $actions->process(
+			array(
+				'action'   => AlertsAdminActions::SOUND_ADD_ACTION,
+				'_wpnonce' => wp_create_nonce( AlertsAdminActions::SOUND_ADD_ACTION ),
+			),
+			array( 'file' => self::wav_upload( 1, 'chime.wav' ) )
+		);
+		self::assertStringContainsString( 'tab=sounds', $url );
+		self::assertStringContainsString( AlertsAdminActions::RESULT_ARG . '=sound_added', $url );
+
+		$refused = $actions->process(
+			array(
+				'action'   => AlertsAdminActions::SOUND_ADD_ACTION,
+				'_wpnonce' => wp_create_nonce( AlertsAdminActions::SOUND_ADD_ACTION ),
+			),
+			array( 'file' => self::upload( 'not audio', 'x.php' ) )
+		);
+		self::assertStringContainsString( AlertsAdminActions::RESULT_ARG . '=invalid_type', $refused );
+
+		$sound = $library->all()[0] ?? null;
+		self::assertNotNull( $sound );
+
+		$_GET['tab'] = 'sounds';
+		ob_start();
+		( new AlertsAdminPage( new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ), $library ) )->render();
+		$html = (string) ob_get_clean();
+		unset( $_GET['tab'] );
+
+		self::assertStringContainsString( 'enctype="multipart/form-data"', $html );
+		self::assertStringContainsString( '<td>chime.wav</td>', $html );
+		self::assertStringContainsString( 'value="' . AlertsAdminActions::SOUND_REMOVE_ACTION . '"', $html );
+		self::assertNotNull( AlertsAdminPage::result_message( 'library_full' ) );
+
+		$url = $actions->process(
+			array(
+				'action'   => AlertsAdminActions::SOUND_REMOVE_ACTION,
+				'sound'    => (string) $sound->attachment_id,
+				'_wpnonce' => wp_create_nonce( AlertsAdminActions::nonce_action( AlertsAdminActions::SOUND_REMOVE_ACTION, (string) $sound->attachment_id ) ),
+			)
+		);
+		self::assertStringContainsString( AlertsAdminActions::RESULT_ARG . '=sound_removed', $url );
+		self::assertSame( array(), $library->all() );
 	}
 
 	/**

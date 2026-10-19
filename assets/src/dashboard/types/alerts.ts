@@ -109,6 +109,16 @@ export interface AlertSoundFile {
 	readonly name: string;
 	/** Length in whole seconds. */
 	readonly seconds: number;
+	/** The library sound's id; 0 for the creator's own file. */
+	readonly libraryId: number;
+}
+
+/** A sound of the administrator's library. */
+export interface LibrarySound {
+	readonly id: number;
+	readonly url: string;
+	readonly name: string;
+	readonly seconds: number;
 }
 
 /** A sound slot: the default sound or one of the creator's categories. */
@@ -125,6 +135,8 @@ export interface AlertsAudio {
 		readonly name: string;
 		readonly sound: AlertSoundFile | null;
 	} >;
+	/** Sounds the creator can choose instead of uploading. */
+	readonly library: readonly LibrarySound[];
 	/** Largest file in bytes. */
 	readonly maxBytes: number;
 	/** Longest sound in seconds. */

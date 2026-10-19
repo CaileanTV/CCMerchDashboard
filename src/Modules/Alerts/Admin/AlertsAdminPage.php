@@ -14,13 +14,17 @@ use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
+use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
+use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
+use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * "Merch Dashboard → Alerts" (ADR-065 pkt. 7), for `merchboard_manage_alerts`.
  * Phase 25 step 5 adds the tab "Fonts" (ADR-067): the Google Fonts API key,
- * the catalogue and the approved fonts. The other tabs (order log, global
+ * the catalogue and the approved fonts. Step 6.3 adds the tab "Sounds": the
+ * sound library creators can choose from. The other tabs (order log, global
  * overlay, chatbot, import) follow in later steps. Read-only rendering;
  * every change goes through AlertsAdminActions. Everything is escaped.
  */
@@ -41,9 +45,10 @@ final class AlertsAdminPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param AlertFonts $fonts Font library.
+	 * @param AlertFonts             $fonts   Font library.
+	 * @param AlertSoundLibrary|null $library Sound library; null for none.
 	 */
-	public function __construct( private AlertFonts $fonts ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null ) {
 	}
 
 	/**
@@ -98,6 +103,14 @@ final class AlertsAdminPage {
 			AlertFontsException::NO_KEY              => array( __( 'Save a Google Fonts API key first.', 'merchboard' ), 'error' ),
 			AlertFontsException::UNAVAILABLE         => array( __( 'Google Fonts could not be reached. Try again later.', 'merchboard' ), 'error' ),
 			AlertFontsException::UNKNOWN_FONT        => array( __( 'The font is not in the catalogue, or the limit of approved fonts is reached.', 'merchboard' ), 'error' ),
+			'sound_added'                            => array( __( 'The sound was added to the library. Creators can choose it now.', 'merchboard' ), 'success' ),
+			'sound_removed'                          => array( __( 'The sound was removed. Overlays that used it play their other sounds.', 'merchboard' ), 'success' ),
+			AlertSoundException::NO_FILE             => array( __( 'No file was received. Try again.', 'merchboard' ), 'error' ),
+			AlertSoundException::INVALID_TYPE        => array( __( 'Choose an MP3, WAV or OGG file.', 'merchboard' ), 'error' ),
+			AlertSoundException::TOO_LARGE           => array( __( 'The file is too large.', 'merchboard' ), 'error' ),
+			AlertSoundException::TOO_LONG            => array( __( 'The sound is too long.', 'merchboard' ), 'error' ),
+			AlertSoundException::UNREADABLE          => array( __( 'The file could not be read as a sound. Choose another file.', 'merchboard' ), 'error' ),
+			AlertSoundException::LIBRARY_FULL        => array( __( 'The library is full. Remove a sound first.', 'merchboard' ), 'error' ),
 			'error'                                  => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
 			default                                  => null,
 		};
@@ -114,14 +127,31 @@ final class AlertsAdminPage {
 		// Read-only parameters; nothing is changed by this request.
 		$code   = isset( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$search = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- A search of the view.
+		$tab    = isset( $_GET['tab'] ) && 'sounds' === $_GET['tab'] && null !== $this->library ? 'sounds' : 'fonts'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$notice = self::result_message( $code );
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Alerts', 'merchboard' ) . '</h1>';
-		echo '<nav class="nav-tab-wrapper"><a class="nav-tab nav-tab-active" href="' . esc_url( self::url() ) . '">' . esc_html__( 'Fonts', 'merchboard' ) . '</a></nav>';
+		echo '<nav class="nav-tab-wrapper">';
+		echo '<a class="nav-tab' . ( 'fonts' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url() ) . '"' . ( 'fonts' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Fonts', 'merchboard' ) . '</a>';
+
+		if ( null !== $this->library ) {
+			echo '<a class="nav-tab' . ( 'sounds' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'sounds' ) ) . '"' . ( 'sounds' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Sounds', 'merchboard' ) . '</a>';
+		}
+
+		echo '</nav>';
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		$library = 'sounds' === $tab ? $this->library : null;
+
+		if ( null !== $library ) {
+			$this->render_sounds( $library );
+			echo '</div>';
+
+			return;
 		}
 
 		echo '<p>' . esc_html__( 'Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google\'s servers in the creator dashboard and in OBS, which sends the viewer\'s IP address to Google (ADR-067).', 'merchboard' ) . '</p>';
@@ -130,6 +160,61 @@ final class AlertsAdminPage {
 		$this->render_approved();
 		$this->render_catalog( $search );
 		echo '</div>';
+	}
+
+	/**
+	 * The sound library: upload and the list of sounds.
+	 *
+	 * @param AlertSoundLibrary $library Sound library.
+	 */
+	private function render_sounds( AlertSoundLibrary $library ): void {
+		echo '<p>' . esc_html(
+			sprintf(
+				/* translators: 1: size in MB, 2: seconds, 3: number of sounds. */
+				__( 'Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s MB and %2$d seconds each; at most %3$d sounds.', 'merchboard' ),
+				number_format_i18n( SoundFiles::max_bytes() / 1048576, 1 ),
+				SoundFiles::MAX_SECONDS,
+				AlertSoundLibrary::MAX_SOUNDS
+			)
+		) . '</p>';
+
+		echo '<h2>' . esc_html__( 'Add a sound', 'merchboard' ) . '</h2>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" enctype="multipart/form-data">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::SOUND_ADD_ACTION ) . '">';
+		wp_nonce_field( AlertsAdminActions::SOUND_ADD_ACTION );
+		echo '<label for="merchboard-alert-sound-file" class="screen-reader-text">' . esc_html__( 'Sound file', 'merchboard' ) . '</label>';
+		echo '<input type="file" id="merchboard-alert-sound-file" name="file" accept=".mp3,.wav,.ogg,.oga,audio/mpeg,audio/wav,audio/ogg" required> ';
+		submit_button( __( 'Upload sound', 'merchboard' ), 'secondary', 'submit', false );
+		echo '</form>';
+
+		$sounds = $library->all();
+
+		echo '<h2>' . esc_html__( 'Sound library', 'merchboard' ) . '</h2>';
+
+		if ( array() === $sounds ) {
+			echo '<p>' . esc_html__( 'The library is empty. Creators can only use their own sounds.', 'merchboard' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Sound', 'merchboard' ) . '</th><th>' . esc_html__( 'Length', 'merchboard' ) . '</th><th>' . esc_html__( 'Play', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
+
+		foreach ( $sounds as $sound ) {
+			echo '<tr><td>' . esc_html( $sound->name ) . '</td><td>' . esc_html(
+				sprintf(
+					/* translators: %d: seconds. */
+					_n( '%d second', '%d seconds', $sound->seconds, 'merchboard' ),
+					$sound->seconds
+				)
+			) . '</td><td><audio controls preload="none" src="' . esc_url( $sound->url ) . '"></audio></td><td>';
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::SOUND_REMOVE_ACTION ) . '">';
+			echo '<input type="hidden" name="sound" value="' . esc_attr( (string) $sound->attachment_id ) . '">';
+			wp_nonce_field( AlertsAdminActions::nonce_action( AlertsAdminActions::SOUND_REMOVE_ACTION, (string) $sound->attachment_id ) );
+			submit_button( __( 'Remove', 'merchboard' ), 'small', 'submit', false );
+			echo '</form></td></tr>';
+		}
+
+		echo '</tbody></table>';
 	}
 
 	/**

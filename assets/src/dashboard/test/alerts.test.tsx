@@ -82,12 +82,21 @@ const SOUND = {
 	url: `${ ORIGIN }/wp-content/uploads/2026/10/ding.mp3`,
 	name: 'ding.mp3',
 	seconds: 3,
+	library_id: 0,
+};
+
+const CHIME = {
+	id: 40,
+	url: `${ ORIGIN }/wp-content/uploads/2026/10/chime.wav`,
+	name: 'chime.wav',
+	seconds: 2,
 };
 
 const AUDIO = {
 	enabled: false,
 	default: null,
 	categories: [ { term_id: 12, name: 'Hoodies', sound: SOUND } ],
+	library: [ CHIME ],
 	max_bytes: 10485760,
 	max_seconds: 30,
 };
@@ -119,7 +128,19 @@ describe( 'response validation', () => {
 		expect( parseAlertsOverlay( body( URL_A ) )?.overlay?.audio ).toEqual( {
 			enabled: false,
 			defaultSound: null,
-			categories: [ { termId: 12, name: 'Hoodies', sound: SOUND } ],
+			categories: [
+				{
+					termId: 12,
+					name: 'Hoodies',
+					sound: {
+						url: SOUND.url,
+						name: SOUND.name,
+						seconds: 3,
+						libraryId: 0,
+					},
+				},
+			],
+			library: [ CHIME ],
 			maxBytes: 10485760,
 			maxSeconds: 30,
 		} );
@@ -552,5 +573,40 @@ describe( 'AlertsSection', () => {
 		).toHaveLength( 1 );
 		expect( rendered?.container.textContent ).toContain( 'Sound deleted.' );
 		confirm.mockRestore();
+	} );
+
+	it( 'chooses a library sound instead of uploading one', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `POST ${ PATH }/sounds/default` ]: () =>
+				response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const select = rendered?.container.querySelector< HTMLSelectElement >(
+			'.merchboard-sounds__library select'
+		);
+		expect( select ).not.toBeNull();
+		expect(
+			Array.from( select?.options ?? [] ).map( ( option ) => option.text )
+		).toEqual( [ 'Choose a sound…', 'chime.wav (2 s)' ] );
+
+		act( () => {
+			if ( select ) {
+				select.value = '40';
+				select.dispatchEvent(
+					new Event( 'change', { bubbles: true } )
+				);
+			}
+		} );
+		await flush();
+
+		const chosen = requests.find(
+			( r ) => r.path === `${ PATH }/sounds/default`
+		);
+		expect( chosen?.method ).toBe( 'POST' );
+		expect( chosen?.data ).toEqual( { library: 40 } );
+		expect( rendered?.container.textContent ).toContain( 'Sound saved.' );
 	} );
 } );

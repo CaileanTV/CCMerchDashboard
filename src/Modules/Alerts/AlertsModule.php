@@ -31,7 +31,9 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
+use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
@@ -97,14 +99,19 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ) ) );
-		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ) ) );
+		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
 		$container->set( AlertOverlayRepository::class, static fn( Container $c ): AlertOverlayRepository => new AlertOverlayRepository( $c->get( wpdb::class ) ) );
 		$container->set( AlertTemplate::class, static fn(): AlertTemplate => new AlertTemplate() );
 		$container->set( OverlayTestQueue::class, static fn(): OverlayTestQueue => new OverlayTestQueue() );
-		// Sounds (phase 25, step 6): the creator's own categories, by name.
+		// Sounds (phase 25, step 6) and the administrator's library (step 6.3).
+		$container->set( SoundFiles::class, static fn(): SoundFiles => new SoundFiles() );
+		$container->set(
+			AlertSoundLibrary::class,
+			static fn( Container $c ): AlertSoundLibrary => new AlertSoundLibrary( $c->get( SoundFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
 		$container->set(
 			AlertSounds::class,
 			static fn( Container $c ): AlertSounds => new AlertSounds(
@@ -121,7 +128,9 @@ final class AlertsModule implements Module {
 					}
 
 					return $names;
-				}
+				},
+				$c->get( SoundFiles::class ),
+				$c->get( AlertSoundLibrary::class )
 			)
 		);
 		$container->set(

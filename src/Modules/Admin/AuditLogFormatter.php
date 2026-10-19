@@ -122,6 +122,8 @@ final class AuditLogFormatter {
 			AuditAction::AlertFontsSynced          => __( 'Google Fonts catalogue fetched', 'merchboard' ),
 			AuditAction::AlertFontApproved         => __( 'Alert font approved', 'merchboard' ),
 			AuditAction::AlertFontRemoved          => __( 'Alert font removed', 'merchboard' ),
+			AuditAction::AlertSoundLibraryAdded    => __( 'Sound added to the alert sound library', 'merchboard' ),
+			AuditAction::AlertSoundLibraryRemoved  => __( 'Sound removed from the alert sound library', 'merchboard' ),
 		};
 	}
 
