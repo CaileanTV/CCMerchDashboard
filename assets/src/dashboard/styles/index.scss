@@ -789,3 +789,30 @@
 		display: none;
 	}
 }
+
+/* Alerts (phase 25, ADR-065). */
+.merchboard-alerts__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 0 var(--merchboard-space-4);
+}
+
+.merchboard-alerts__check {
+	display: block;
+	margin-bottom: var(--merchboard-space-2);
+}
+
+.merchboard-alerts__url {
+	margin-bottom: var(--merchboard-space-3);
+}
+
+.merchboard-alerts__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+}
+
+.merchboard-alerts__color {
+	padding: var(--merchboard-space-1);
+	cursor: pointer;
+}

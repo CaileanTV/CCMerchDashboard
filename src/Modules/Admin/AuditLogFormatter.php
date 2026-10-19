@@ -116,6 +116,8 @@ final class AuditLogFormatter {
 			AuditAction::CreatorCodeRegistered     => __( 'Creator discount code registered', 'merchboard' ),
 			AuditAction::CreatorCodeEnded          => __( 'Creator discount code ended', 'merchboard' ),
 			AuditAction::OrderExcludedByCreatorCode => __( 'Order excluded (creator discount code)', 'merchboard' ),
+			AuditAction::AlertOverlayCreated       => __( 'Alert overlay set up', 'merchboard' ),
+			AuditAction::AlertOverlayIdRegenerated => __( 'Alert overlay URL replaced', 'merchboard' ),
 		};
 	}
 

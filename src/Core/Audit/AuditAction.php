@@ -343,4 +343,16 @@ enum AuditAction: string {
 	 * order had settled rows and ledger rows, and the coupon deviation flag.
 	 */
 	case OrderExcludedByCreatorCode = 'order_excluded_by_creator_code';
+
+	/**
+	 * A creator set up an alert overlay (ADR-065). Context: none; the secret
+	 * overlay id is never recorded.
+	 */
+	case AlertOverlayCreated = 'alert_overlay_created';
+
+	/**
+	 * A creator replaced the secret id of the alert overlay, so the old OBS
+	 * URL stopped working (ADR-065). Context: none; ids are never recorded.
+	 */
+	case AlertOverlayIdRegenerated = 'alert_overlay_id_regenerated';
 }

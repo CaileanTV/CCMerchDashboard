@@ -6,7 +6,7 @@
 Når en kunde køber en creators merch, skal creatoren kunne vise det live på sin stream: en alert i OBS-overlayet med billede, tekst og lyd og eventuelt en besked i Twitch-chatten. Funktionen kom fra projektejerens ældre plugin MerchAlert og samles nu i Merch Dashboard, så creators kun har ét login og én kategori-mapping.
 
 ## Current status
-I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Trin 25.3 (2026-10-19, ikke committet): den offentlige overlay-side for OBS med feed (ny og legacy URL); overlays kan først oprettes fra dashboardet i 25.4. Dashboard-sektion, designer og fonte, lyde, historik-UI, chatbot, admin-ekstra og import mangler.
+I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Trin 25.3 (2026-10-19, committet): den offentlige overlay-side for OBS med feed (ny og legacy URL); overlays oprettes fra dashboardet. Trin 25.4 (2026-10-19): sektionen "Alerts" i creator-dashboardet med opsætning, OBS-URL (kopiér, åbn, ny URL), testalert og indstillingsformularen. Designer og fonte, lyde, historik-UI, chatbot, admin-ekstra og import mangler.
 
 ## User-facing functionality
 Creatoren får sektionen **"Alerts"** i creator-dashboardet med undersiderne:
@@ -45,7 +45,7 @@ Settings får sektionen **"Alerts"**: slå alerts til og fra, poll-interval, gr�
 - ✅ `src/Modules/Alerts/Overlay/`: `AlertOverlay`/`AlertOverlayRepository`, `OverlayId`, `OverlaySettings`, `AlertTemplate`, `OverlayFeed`, `OverlayFeedController`, `OverlayRateLimiter`, `OverlayRoute`, `OverlayPage` og `OverlayAssets`; `templates/alerts/overlay.php`; `assets/src/overlay/` (`feed.ts`, `player.ts`, `index.ts`, `overlay.css`).
 - ✅ `src/Core/Database/Migrations/CreateAlertEventsTable.php` (migration 18) og `CreateAlertOverlaysTable.php` (migration 19).
 - ✅ Tests: `tests/Unit/Modules/Alerts/`, `tests/Integration/Alerts/` og `tests/Integration/Database/MigrationTest.php`.
-- Planlagt: `assets/src/dashboard/sections/alerts/…`.
+- ✅ `src/Modules/Alerts/Overlay/AlertOverlays.php` og `OverlayTestQueue.php`, `src/Modules/Alerts/Rest/MeAlertsController.php`, `src/Modules/Alerts/Dashboard/AlertsDashboardSection.php`; `assets/src/dashboard/sections/alerts/` (`AlertsSection.tsx`, `OverlaySettingsForm.tsx`), `api/alerts.ts`, `types/alerts.ts` og `test/alerts.test.tsx`.
 
 ## Database/data used
 Migrationer fra 18 (detaljer i DATABASE.md):
@@ -68,7 +68,7 @@ Migrationer fra 18 (detaljer i DATABASE.md):
 - Overlay-siden: hemmeligt overlay-ID, `hash_equals` og rate-limit.
 
 ## API endpoints
-✅ Offentligt: `GET merchboard/v1/alerts/overlay/{overlay_id}/feed` (API.md, ADR-065 pkt. 4). Planlagt under `merchboard/v1/me/alerts`: overlay og indstillinger, nyt overlay-ID, testalert, preview-data, historik og detaljer, gensend, lyd (upload og sletning) og chatbot (indstillinger, preview og testbesked). Dokumenteres i API.md ved implementeringen.
+✅ Offentligt: `GET merchboard/v1/alerts/overlay/{overlay_id}/feed` (API.md, ADR-065 pkt. 4). ✅ Creator: `GET`/`POST`/`PATCH /me/alerts/overlay`, `POST /me/alerts/overlay/regenerate` og `POST /me/alerts/overlay/test` (API.md). Planlagt under `merchboard/v1/me/alerts`: preview-data, historik og detaljer, gensend, lyd (upload og sletning) og chatbot (indstillinger, preview og testbesked). Dokumenteres i API.md ved implementeringen.
 
 ## Hooks
 Lytter på `woocommerce_order_status_processing` og `woocommerce_order_status_completed`. Domæne-events og jobnavne følger `merchboard_alerts_<…>` (MODULES.md).

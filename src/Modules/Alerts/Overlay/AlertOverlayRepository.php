@@ -99,6 +99,48 @@ final class AlertOverlayRepository {
 	}
 
 	/**
+	 * Stores new settings; the new `updated_at` changes the overlay's version.
+	 *
+	 * @param int             $id       Overlay row id.
+	 * @param OverlaySettings $settings Settings.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function update_settings( int $id, OverlaySettings $settings ): void {
+		$this->update( $id, array( 'settings' => $settings->to_json() ) );
+	}
+
+	/**
+	 * Replaces the secret id; the old OBS URL stops working at once.
+	 *
+	 * @param int    $id         Overlay row id.
+	 * @param string $overlay_id New secret id (OverlayId format).
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function update_overlay_id( int $id, string $overlay_id ): void {
+		if ( ! OverlayId::valid( $overlay_id ) ) {
+			throw new DatabaseException( 'Invalid alert overlay id.' );
+		}
+
+		$this->update( $id, array( 'overlay_id' => $overlay_id ) );
+	}
+
+	/**
+	 * Updates one overlay row and its `updated_at`.
+	 *
+	 * @param int                   $id     Overlay row id.
+	 * @param array<string, string> $values Column values (strings).
+	 * @throws DatabaseException When the row was not updated.
+	 */
+	private function update( int $id, array $values ): void {
+		$values['updated_at'] = gmdate( 'Y-m-d H:i:s' );
+		$updated              = $this->wpdb->update( $this->table(), $values, array( 'id' => $id ), array_fill( 0, count( $values ), '%s' ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not update the alert overlay.' );
+		}
+	}
+
+	/**
 	 * An overlay from a row.
 	 *
 	 * @param mixed $row Row (ARRAY_A) or null.

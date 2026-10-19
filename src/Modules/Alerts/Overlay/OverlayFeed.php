@@ -33,6 +33,9 @@ defined( 'ABSPATH' ) || exit;
  * - **Not found:** an unknown id, a regenerated id or an inactive creator
  *   give null (404), without saying which.
  *
+ * Test alerts (OverlayTestQueue) are delivered with id 0 and do not move
+ * the cursor.
+ *
  * Each alert is rendered on the server: the texts are plain text and the
  * image is a URL of this site, or '' (the page's CSP only allows its own
  * images).
@@ -72,6 +75,7 @@ final class OverlayFeed {
 	 * @param AlertTemplate                    $template  Text rendering.
 	 * @param (Closure(int, int): string)|null $image_url Image URL lookup; defaults to the Media Library, same origin only.
 	 * @param (Closure(int): void)|null        $sleep     Sleep; defaults to sleep().
+	 * @param OverlayTestQueue|null            $tests     Test alerts; null for none.
 	 */
 	public function __construct(
 		private AlertOverlayRepository $overlays,
@@ -79,7 +83,8 @@ final class OverlayFeed {
 		private CreatorRepository $creators,
 		private AlertTemplate $template,
 		?Closure $image_url = null,
-		?Closure $sleep = null
+		?Closure $sleep = null,
+		private ?OverlayTestQueue $tests = null
 	) {
 		$this->image_url = $image_url ?? self::media_library_url( ... );
 		$this->sleep     = $sleep ?? static function ( int $seconds ): void {
@@ -111,11 +116,12 @@ final class OverlayFeed {
 
 		for ( $check = 0; ; ++$check ) {
 			$events = $this->events->after( $overlay->creator_id, $after, self::LIMIT );
+			$tests  = null === $this->tests ? array() : $this->tests->drain( $overlay->id );
 
-			if ( array() !== $events || $check >= $checks ) {
+			if ( array() !== $events || array() !== $tests || $check >= $checks ) {
 				$last = end( $events );
 
-				return self::answer( false === $last ? $after : $last->id, $overlay, array_map( fn( AlertEvent $event ): array => $this->alert( $overlay, $event ), $events ) );
+				return self::answer( false === $last ? $after : $last->id, $overlay, array_merge( array_map( fn( AlertEvent $event ): array => $this->render( $overlay, $event ), $events ), $tests ) );
 			}
 
 			( $this->sleep )( 1 );
@@ -142,13 +148,13 @@ final class OverlayFeed {
 	}
 
 	/**
-	 * One alert as the page shows it.
+	 * One alert as the page shows it (also used for test alerts).
 	 *
 	 * @param AlertOverlay $overlay Overlay.
 	 * @param AlertEvent   $event   Alert.
 	 * @return array{id: int, image: string, text: string, secondary: string}
 	 */
-	private function alert( AlertOverlay $overlay, AlertEvent $event ): array {
+	public function render( AlertOverlay $overlay, AlertEvent $event ): array {
 		$settings = $overlay->settings;
 
 		return array(

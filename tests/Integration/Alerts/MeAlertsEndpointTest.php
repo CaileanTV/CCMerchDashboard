@@ -1,0 +1,266 @@
+<?php
+/**
+ * Integration tests for `/me/alerts/overlay`.
+ *
+ * @package MerchBoard
+ */
+
+declare( strict_types=1 );
+
+namespace MerchBoard\Tests\Integration\Alerts;
+
+use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Alerts\AlertEventRepository;
+use MerchBoard\Modules\Alerts\AlertsAvailability;
+use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
+use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
+use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
+use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
+use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
+use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
+use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Creators\CreatorService;
+use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
+use MerchBoard\Tests\Integration\Support\ProductPosts;
+use PHPUnit\Framework\Attributes\CoversClass;
+use WP_REST_Request;
+use WP_REST_Response;
+
+/**
+ * ADR-065 pkt. 3 and ADR-007: the creator manages only the own overlay;
+ * the secret URL only reaches its owner; a new id kills the old URL; test
+ * alerts reach the overlay through the feed.
+ */
+#[CoversClass( MeAlertsController::class )]
+#[CoversClass( AlertOverlays::class )]
+#[CoversClass( OverlayTestQueue::class )]
+final class MeAlertsEndpointTest extends IntegrationTestCase {
+
+	private const ROUTE = '/merchboard/v1/me/alerts/overlay';
+
+	private ProductPosts $posts;
+
+	private AlertOverlayRepository $overlays;
+
+	private OverlayFeed $feed;
+
+	/**
+	 * Registers the routes on `rest_api_init` (null when not registered).
+	 *
+	 * @var (callable(): void)|null
+	 */
+	private $register = null;
+
+	protected function setUp(): void {
+		parent::setUp();
+		$this->install();
+
+		$this->posts    = new ProductPosts( $this->wpdb );
+		$this->overlays = new AlertOverlayRepository( $this->wpdb );
+		$this->feed     = new OverlayFeed( $this->overlays, new AlertEventRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue() );
+		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0 );
+		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ) );
+		$this->register = static function () use ( $controller ): void {
+			$controller->register_routes();
+		};
+		add_action( 'rest_api_init', $this->register );
+		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server per test.
+		rest_get_server();
+	}
+
+	protected function tearDown(): void {
+		if ( null !== $this->register ) {
+			remove_action( 'rest_api_init', $this->register );
+		}
+
+		$this->posts->remove_all();
+		parent::tearDown();
+	}
+
+	public function test_set_up_returns_the_url_once_and_is_audited(): void {
+		$creator = $this->creator( 'nova' );
+
+		$before = $this->call( 'GET', self::ROUTE );
+		self::assertSame( 200, $before->get_status() );
+		self::assertNull( $this->data( $before )['overlay'] );
+		self::assertFalse( $this->data( $before )['merchalert_active'] );
+
+		self::assertSame( 404, $this->call( 'PATCH', self::ROUTE, array( 'font_size' => 40 ) )->get_status(), 'Nothing to change before the set up.' );
+		self::assertSame( 404, $this->call( 'POST', self::ROUTE . '/test' )->get_status() );
+
+		$created = $this->data( $this->call( 'POST', self::ROUTE ) );
+		self::assertIsArray( $created['overlay'] );
+		self::assertMatchesRegularExpression( '#/merchboard-alerts/overlay/[0-9a-f]{32}/$|merchboard_alert_overlay=[0-9a-f]{32}$#', (string) $created['overlay']['url'] );
+		self::assertSame( 32, $created['overlay']['settings']['font_size'] );
+
+		$again = $this->data( $this->call( 'POST', self::ROUTE ) );
+		self::assertSame( $created['overlay']['url'], $again['overlay']['url'], 'Setting up again keeps the overlay.' );
+		self::assertSame( array( 'alert_overlay_created' ), $this->audit_actions( $creator ) );
+		self::assertStringNotContainsString( (string) $this->overlays->find_for_creator( $creator )?->overlay_id, (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ), 'The secret id is never audited.' );
+	}
+
+	public function test_settings_change_only_the_form_fields_and_are_normalized(): void {
+		$creator = $this->creator( 'nova' );
+		$this->call( 'POST', self::ROUTE );
+
+		$saved = $this->data(
+			$this->call(
+				'PATCH',
+				self::ROUTE,
+				array(
+					'template'       => 'Thanks $UserName!',
+					'font_size'      => 999,
+					'text_color'     => '#ABC',
+					'show_secondary' => true,
+					'font_family'    => 'Roboto',
+					'layout'         => array( 'elements' => array() ),
+				)
+			)
+		);
+
+		self::assertSame( 'Thanks $UserName!', $saved['overlay']['settings']['template'] );
+		self::assertSame( 200, $saved['overlay']['settings']['font_size'], 'Clamped to the maximum.' );
+		self::assertSame( '#aabbcc', $saved['overlay']['settings']['text_color'] );
+		self::assertTrue( $saved['overlay']['settings']['show_secondary'] );
+
+		$stored = $this->overlays->find_for_creator( $creator )?->settings->to_array();
+		self::assertIsArray( $stored );
+		self::assertSame( 'inherit', $stored['font_family'], 'The font is not a form field yet.' );
+		self::assertSame( 40, $stored['layout']['elements']['product_image']['x'], 'The layout is untouched.' );
+
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'font_size' => array( 1 ) ) )->get_status() );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'show_secondary' => 'yes' ) )->get_status() );
+	}
+
+	public function test_a_new_url_kills_the_old_one_at_once(): void {
+		$creator = $this->creator( 'nova' );
+		$this->call( 'POST', self::ROUTE );
+		$old = (string) $this->overlays->find_for_creator( $creator )?->overlay_id;
+
+		$answer = $this->data( $this->call( 'POST', self::ROUTE . '/regenerate' ) );
+		$new    = (string) $this->overlays->find_for_creator( $creator )?->overlay_id;
+
+		self::assertNotSame( $old, $new );
+		self::assertStringContainsString( $new, (string) $answer['overlay']['url'] );
+		self::assertNull( $this->feed->read( $old, null, false ), 'The old OBS URL is gone.' );
+		self::assertNotNull( $this->feed->read( $new, null, false ) );
+		self::assertSame( array( 'alert_overlay_created', 'alert_overlay_id_regenerated' ), $this->audit_actions( $creator ) );
+	}
+
+	public function test_a_test_alert_reaches_the_overlay_once_without_moving_the_cursor(): void {
+		$creator = $this->creator( 'nova' );
+		$product = $this->posts->add( 'Hoodie', 'publish', array( (string) $creator ) );
+		$this->posts->add( 'Draft hoodie', 'draft', array( (string) $creator ) );
+		$this->call( 'POST', self::ROUTE );
+		$this->call( 'PATCH', self::ROUTE, array( 'template' => '$UserName tested $Product' ) );
+		$id    = (string) $this->overlays->find_for_creator( $creator )?->overlay_id;
+		$start = $this->feed->read( $id, null, false );
+		self::assertNotNull( $start );
+
+		$sent = $this->call( 'POST', self::ROUTE . '/test' );
+		self::assertSame( 200, $sent->get_status() );
+		self::assertSame( array( 'sent' => true ), $sent->get_data() );
+
+		$answer = $this->feed->read( $id, $start['cursor'], false );
+		self::assertNotNull( $answer );
+		self::assertSame( $start['cursor'], $answer['cursor'] );
+		self::assertSame(
+			array(
+				array(
+					'id'        => 0,
+					'image'     => '',
+					'text'      => 'TestFan tested Hoodie',
+					'secondary' => '',
+				),
+			),
+			$answer['alerts']
+		);
+		self::assertSame( array(), $this->feed->read( $id, $start['cursor'], false )['alerts'] ?? null, 'Delivered once.' );
+		self::assertSame( 0, $this->count_rows( Tables::ALERT_EVENTS ), 'A test alert is never stored as an alert.' );
+		self::assertGreaterThan( 0, $product );
+	}
+
+	public function test_each_creator_sees_only_the_own_overlay_and_guests_nothing(): void {
+		$nova     = $this->creator( 'nova' );
+		$nova_url = $this->data( $this->call( 'POST', self::ROUTE ) )['overlay']['url'];
+
+		$this->creator( 'orion' );
+		self::assertNull( $this->data( $this->call( 'GET', self::ROUTE ) )['overlay'], 'Orion has no overlay yet.' );
+		$orion_url = $this->data( $this->call( 'POST', self::ROUTE ) )['overlay']['url'];
+		self::assertNotSame( $nova_url, $orion_url );
+		self::assertNotNull( $this->overlays->find_for_creator( $nova ) );
+
+		wp_set_current_user( 0 );
+		self::assertSame( 401, $this->call( 'GET', self::ROUTE )->get_status() );
+
+		wp_set_current_user( $this->create_user( 'subscriber_only' ) );
+		self::assertSame( 403, $this->call( 'POST', self::ROUTE )->get_status() );
+	}
+
+	/**
+	 * A logged-in active creator; returns the creator id.
+	 *
+	 * @param string $login Login.
+	 */
+	private function creator( string $login ): int {
+		$user = $this->create_user( $login );
+		wp_set_current_user( 1 );
+		$creator = $this->service( CreatorService::class )->create( ucfirst( $login ), CreatorStatus::Active, $user );
+		wp_set_current_user( $user );
+
+		return $creator->id;
+	}
+
+	/**
+	 * Dispatches a request with a JSON body.
+	 *
+	 * @param string               $method Method.
+	 * @param string               $route  Route.
+	 * @param array<string, mixed> $body   JSON body.
+	 */
+	private function call( string $method, string $route, array $body = array() ): WP_REST_Response {
+		$request = new WP_REST_Request( $method, $route );
+
+		if ( array() !== $body ) {
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( (string) wp_json_encode( $body ) );
+		}
+
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * The answer data of an overlay route.
+	 *
+	 * @param WP_REST_Response $response Response.
+	 * @return array<string, mixed>
+	 */
+	private function data( WP_REST_Response $response ): array {
+		self::assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		self::assertIsArray( $data );
+
+		return $data;
+	}
+
+	/**
+	 * The audit actions of a creator, oldest first.
+	 *
+	 * @param int $creator Creator id.
+	 * @return list<string>
+	 */
+	private function audit_actions( int $creator ): array {
+		return array_values(
+			array_map(
+				static fn( array $row ): string => (string) $row['action'],
+				array_filter( $this->rows( Tables::AUDIT_LOG ), static fn( array $row ): bool => (string) $creator === (string) $row['creator_id'] && str_starts_with( (string) $row['action'], 'alert_overlay' ) )
+			)
+		);
+	}
+}

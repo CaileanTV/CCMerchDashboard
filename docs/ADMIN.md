@@ -149,7 +149,7 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 - Forklaring i UI: Ændringen gælder for synkroniseringer efter ændringen – også af eksisterende ordrer, ikke kun nye ordrer. Der sker ingen masse-genberegning og ingen backfill; en ordre vurderes efter den aktuelle liste, næste gang den synkroniseres, og kan så få reversal og lukning eller en ny cyklus med behandlingstidspunktet som `occurred_at` (følger af den tilstandsbaserede synkronisering, ADR-038 pkt. 13). Historiske rækker ændres aldrig.
 - En ændring skriver `settings_updated` med `setting` = `counted_order_statuses`, `previous_value` og `value` som lister (vises som `a, b`), i samme transaktion som option'en.
 
-**"Alerts"** (✅ fase 25, trin 25.2, ADR-065 pkt. 6; ikke runtime-verificeret):
+**"Alerts"** (✅ fase 25, trin 25.2, ADR-065 pkt. 6; ikke runtime-verificeret; audit-loggen viser fra trin 25.4 også "Alert overlay set up" og "Alert overlay URL replaced" for creatorens overlay):
 
 - Tilføjes af Alerts-modulet via `merchboard_settings_sections` og vises kun for brugere med `merchboard_manage_alerts` og kun med WooCommerce (modulet startes sammen med WooCommerce-modulet).
 - Én afkrydsning, "Record purchase alerts for creators", slået fra som standard, også efter en opdatering. Status vises som "Off", "On" eller "Switched on, but paused while MerchAlert is active".
