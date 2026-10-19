@@ -31,6 +31,16 @@ final class OverlaySettings {
 	public const TEXT_FITS = array( 'fixed', 'shrink', 'grow' );
 
 	/**
+	 * Text animations (step 6.9): in-animations, effects while shown,
+	 * out-animations and speeds. The same lists as assets/src/overlay/
+	 * animations.ts; anything else falls back to the default (fade, none, fade).
+	 */
+	public const ANIMATIONS_IN     = array( 'fade', 'slide-up', 'pop', 'typewriter', 'split', 'wave', 'drop', 'spin-3d', 'roll-3d', 'blur', 'wipe', 'shadow-paint' );
+	public const ANIMATION_EFFECTS = array( 'none', 'neon', 'glow-pulse', 'heartbeat', 'glitch', 'dancing-shadow', 'melt', 'wave', 'float-3d', 'depth-pulse', 'breathe' );
+	public const ANIMATIONS_OUT    = array( 'fade', 'slide-down', 'pop', 'typewriter', 'split', 'wave', 'spin-3d', 'roll-3d', 'blur', 'wipe' );
+	public const ANIMATION_SPEEDS  = array( 'slow', 'normal', 'fast' );
+
+	/**
 	 * Canvas height in pixels (OBS' default browser source).
 	 */
 	public const CANVAS_HEIGHT = 1080;
@@ -53,7 +63,7 @@ final class OverlaySettings {
 	/**
 	 * Normalized values.
 	 *
-	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
+	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}}
 	 */
 	private array $values;
 
@@ -88,6 +98,7 @@ final class OverlaySettings {
 			'audio_default_sound' => self::int( $input['audio_default_sound'] ?? null, 0, PHP_INT_MAX, 0 ),
 			'audio_category_map'  => self::category_map( $input['audio_category_map'] ?? null ),
 			'layout'              => self::layout( $input['layout'] ?? null ),
+			'animations'          => self::clean_animations( $input['animations'] ?? null ),
 		);
 	}
 
@@ -121,7 +132,7 @@ final class OverlaySettings {
 	/**
 	 * The normalized values.
 	 *
-	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
+	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}}
 	 */
 	public function to_array(): array {
 		return $this->values;
@@ -146,6 +157,15 @@ final class OverlaySettings {
 	 */
 	public function secondary_template(): string {
 		return $this->values['secondary_template'];
+	}
+
+	/**
+	 * The text animations of the main and the secondary text (step 6.9).
+	 *
+	 * @return array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}
+	 */
+	public function animations(): array {
+		return $this->values['animations'];
 	}
 
 	/**
@@ -340,6 +360,39 @@ final class OverlaySettings {
 		$value = is_scalar( $value ) ? (string) $value : '';
 
 		return in_array( $value, array( '100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold' ), true ) ? $value : '700';
+	}
+
+	/**
+	 * Text animations of both texts; unknown values get the default.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}
+	 */
+	private static function clean_animations( mixed $value ): array {
+		$value = is_array( $value ) ? $value : array();
+
+		return array(
+			'main_text'      => self::clean_animation( $value['main_text'] ?? null ),
+			'secondary_text' => self::clean_animation( $value['secondary_text'] ?? null ),
+		);
+	}
+
+	/**
+	 * One text animation.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return array{in: string, effect: string, out: string, color: string, speed: string}
+	 */
+	private static function clean_animation( mixed $value ): array {
+		$value = is_array( $value ) ? $value : array();
+
+		return array(
+			'in'     => self::choice( $value['in'] ?? null, self::ANIMATIONS_IN, 'fade' ),
+			'effect' => self::choice( $value['effect'] ?? null, self::ANIMATION_EFFECTS, 'none' ),
+			'out'    => self::choice( $value['out'] ?? null, self::ANIMATIONS_OUT, 'fade' ),
+			'color'  => self::hex( $value['color'] ?? null, '#ff2bd6' ),
+			'speed'  => self::choice( $value['speed'] ?? null, self::ANIMATION_SPEEDS, 'normal' ),
+		);
 	}
 
 	/**

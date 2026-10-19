@@ -113,6 +113,10 @@ final class OverlayPage {
 				'textFit'          => $settings->text_fit(),
 				'imageFollows'     => $settings->grows_up( 'main_text' ),
 				'displayFromSound' => $settings->display_from_sound(),
+				'animations'       => array(
+					'main'      => $settings->animations()['main_text'],
+					'secondary' => $settings->animations()['secondary_text'],
+				),
 			),
 		);
 

@@ -3,6 +3,7 @@
  * always the one the server resolves; nothing here sends an id. Every
  * answer is validated before use; the overlay URL must be on this site.
  */
+import { parseAnimation } from '../../overlay/animations';
 import { isTextFit } from '../../overlay/fit';
 import { request } from './client';
 import type { ApiResult } from './client';
@@ -346,6 +347,17 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		display_duration: value.display_duration as number,
 		show_secondary: value.show_secondary,
 		display_from_sound: value.display_from_sound,
+		// Unknown values become the default animation, as on the server.
+		animations: {
+			main_text: parseAnimation(
+				isRecord( value.animations ) ? value.animations.main_text : null
+			),
+			secondary_text: parseAnimation(
+				isRecord( value.animations )
+					? value.animations.secondary_text
+					: null
+			),
+		},
 		font_family: value.font_family,
 	};
 }

@@ -4,6 +4,8 @@
  * Pure functions without DOM or network access, so they can be tested alone.
  * Every value from the page or the server is validated before use.
  */
+import { parseAnimation } from './animations';
+import type { TextAnimation } from './animations';
 import { isTextFit } from './fit';
 import type { TextFit } from './fit';
 
@@ -38,6 +40,11 @@ export interface OverlayConfig {
 	imageFollows: boolean;
 	/** Whether an alert with a sound is shown as long as the sound plays. */
 	displayFromSound: boolean;
+	/** Text animations of the main and the secondary text (step 25.6.9). */
+	animations: {
+		readonly main: TextAnimation;
+		readonly secondary: TextAnimation;
+	};
 }
 
 /** Longest wait between retries after errors, in milliseconds. */
@@ -95,6 +102,14 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 		textFit: isTextFit( value.textFit ) ? value.textFit : 'fixed',
 		imageFollows: value.imageFollows === true,
 		displayFromSound: value.displayFromSound === true,
+		animations: {
+			main: parseAnimation(
+				isRecord( value.animations ) ? value.animations.main : null
+			),
+			secondary: parseAnimation(
+				isRecord( value.animations ) ? value.animations.secondary : null
+			),
+		},
 	};
 }
 

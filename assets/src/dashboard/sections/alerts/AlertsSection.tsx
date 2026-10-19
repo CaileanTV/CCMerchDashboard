@@ -15,7 +15,7 @@ import { Card } from '../../components/Card';
 import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
-import type { AlertsOverlayState } from '../../types/alerts';
+import type { AlertsOverlayState, OverlaySettings } from '../../types/alerts';
 import { AlertSoundsCard } from './AlertSoundsCard';
 import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
@@ -253,10 +253,13 @@ function AlertsContent( {
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
 	const [ saveSlot, setSaveSlot ] = useState< HTMLDivElement | null >( null );
+	// The settings form's unsaved values, previewed by the designer.
+	const [ draft, setDraft ] = useState< OverlaySettings | null >( null );
 
 	useEffect( () => setState( initial ), [ initial ] );
 
-	const family = state.overlay?.settings.font_family ?? 'inherit';
+	const family =
+		( draft ?? state.overlay?.settings )?.font_family ?? 'inherit';
 	const font = state.fonts.find( ( option ) => option.family === family );
 
 	useFontStylesheet( font?.url ?? null );
@@ -288,6 +291,7 @@ function AlertsContent( {
 							fontApproved={ state.overlay.fontApproved }
 							onSaved={ setState }
 							saveSlot={ saveSlot }
+							onDraft={ setDraft }
 						/>
 					</div>
 					{ /* The settings' save button, right above the designer, which is always last. */ }
@@ -297,6 +301,7 @@ function AlertsContent( {
 							key={ `designer-${ state.overlay.url }` }
 							layout={ state.overlay.layout }
 							settings={ state.overlay.settings }
+							preview={ draft }
 							fontFamily={
 								font === undefined
 									? 'inherit'

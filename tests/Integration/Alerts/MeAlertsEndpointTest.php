@@ -140,6 +140,25 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( '#aabbcc', $saved['overlay']['settings']['text_color'] );
 		self::assertTrue( $saved['overlay']['settings']['show_secondary'] );
 		self::assertSame( 'shrink', $saved['overlay']['settings']['text_fit'] );
+
+		$animated = $this->data(
+			$this->call(
+				'PATCH',
+				self::ROUTE,
+				array(
+					'animations' => array(
+						'main_text' => array(
+							'in'     => 'typewriter',
+							'effect' => '<script>',
+						),
+					),
+				)
+			)
+		)['overlay']['settings']['animations'];
+		self::assertSame( 'typewriter', $animated['main_text']['in'] );
+		self::assertSame( 'none', $animated['main_text']['effect'], 'Unknown effects become none.' );
+		self::assertSame( 'fade', $animated['secondary_text']['in'] );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'animations' => 'pop' ) )->get_status() );
 		self::assertSame( 'fixed', $this->data( $this->call( 'PATCH', self::ROUTE, array( 'text_fit' => 'stretch' ) ) )['overlay']['settings']['text_fit'], 'Unknown modes fall back to fixed.' );
 
 		$stored = $this->overlays->find_for_creator( $creator )?->settings->to_array();

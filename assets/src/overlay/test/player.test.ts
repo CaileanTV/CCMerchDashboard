@@ -4,6 +4,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { AlertPlayer, MAX_QUEUE } from '../player';
 import type { OverlayAlert } from '../feed';
+import { DEFAULT_ANIMATION, LETTER_STEP } from '../animations';
 
 function setup(
 	hidden: string[] = [],
@@ -203,5 +204,49 @@ describe( 'AlertPlayer', () => {
 
 		off.player.enqueue( [ alert( 3, { sound: '/ding.mp3' } ) ] );
 		expect( off.timers[ 0 ]?.delay ).toBe( 5000 );
+	} );
+
+	it( 'animates the texts and waits for a letter out-animation', () => {
+		const text = document.createElement( 'div' );
+		const timers: Array< { callback: () => void; delay: number } > = [];
+		const player = new AlertPlayer(
+			{
+				image: document.createElement( 'div' ),
+				text,
+				secondary: document.createElement( 'div' ),
+			},
+			{
+				displayDuration: 5000,
+				animDuration: 500,
+				animations: {
+					main: {
+						...DEFAULT_ANIMATION,
+						in: 'pop',
+						out: 'typewriter',
+					},
+					secondary: DEFAULT_ANIMATION,
+				},
+			},
+			() => true,
+			( callback, delay ) => {
+				timers.push( { callback, delay } );
+			}
+		);
+
+		player.enqueue( [ alert( 1, { text: 'Hello' } ) ] );
+		expect( text.dataset.in ).toBe( 'pop' );
+		expect(
+			text.querySelectorAll( '.merchboard-anim__letter' )
+		).toHaveLength( 5 );
+
+		timers.shift()?.callback();
+		expect( text.classList.contains( 'merchboard-anim--out' ) ).toBe(
+			true
+		);
+		expect( timers[ 0 ]?.delay ).toBe( 500 + 5 * LETTER_STEP.normal );
+
+		timers.shift()?.callback();
+		expect( text.classList.contains( 'merchboard-anim' ) ).toBe( false );
+		expect( text.textContent ).toBe( '' );
 	} );
 } );

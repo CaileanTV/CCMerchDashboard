@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T15:03:20+00:00\n"
+"POT-Creation-Date: 2026-10-19T16:33:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -1446,7 +1446,7 @@ msgstr ""
 msgid "History"
 msgstr ""
 
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:235
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:240
 msgid "Test product"
 msgstr ""
 
@@ -1470,7 +1470,7 @@ msgstr ""
 msgid "The sound was not saved."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:407
+#: src/Modules/Alerts/Rest/MeAlertsController.php:412
 msgid "Set up your overlay first."
 msgstr ""
 
@@ -5620,6 +5620,7 @@ msgid "Secondary text"
 msgstr ""
 
 #: build/dashboard.js:7
+#: build/dashboard.js:10
 msgid "Main text"
 msgstr ""
 
@@ -5694,7 +5695,6 @@ msgid "Layout saved."
 msgstr ""
 
 #: build/dashboard.js:8
-#: build/dashboard.js:10
 #: build/dashboard.js:30
 msgid "Saving…"
 msgstr ""
@@ -5713,6 +5713,162 @@ msgstr ""
 
 #: build/dashboard.js:8
 msgid "Redo"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Play animation"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Slide up"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Pop"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Typewriter"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Split (from both sides)"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Wave (letter by letter)"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Drop (letter by letter)"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "3D spin"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "3D roll"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Blur in"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Wipe"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Shadow paint"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Fade"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Neon glow"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Glow pulse"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Heartbeat"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Glitch"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Dancing shadow"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Melting"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Wave"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "3D float"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Depth pulse"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Breathe (needs a variable font)"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "No effect"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Slide down"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Typewriter (delete)"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Split (to both sides)"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Blur out"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Slow"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Fast"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Normal"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Thanks for the merch!"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Pause example"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Play example"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "In"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Effect while shown"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Out"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Speed"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Effect colour"
 msgstr ""
 
 #: build/dashboard.js:8
@@ -5737,6 +5893,10 @@ msgstr ""
 
 #: build/dashboard.js:8
 msgid "Center"
+msgstr ""
+
+#: build/dashboard.js:8
+msgid "Save overlay settings"
 msgstr ""
 
 #. translators: 1: minimum, 2: maximum.
@@ -5853,6 +6013,14 @@ msgid "The size of the product image that is loaded. The box size is set in the 
 msgstr ""
 
 #: build/dashboard.js:10
+msgid "Animations"
+msgstr ""
+
+#: build/dashboard.js:10
+msgid "How each text comes in, moves while it is shown and goes out. The animation time below sets how long the in- and out-animations take. Press \"Play animation\" in the designer to see it."
+msgstr ""
+
+#: build/dashboard.js:10
 msgid "Timing"
 msgstr ""
 
@@ -5870,10 +6038,6 @@ msgstr ""
 
 #: build/dashboard.js:10
 msgid "Animation time (ms)"
-msgstr ""
-
-#: build/dashboard.js:10
-msgid "Save overlay settings"
 msgstr ""
 
 #: build/dashboard.js:10

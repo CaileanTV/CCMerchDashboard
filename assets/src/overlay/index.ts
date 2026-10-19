@@ -6,6 +6,7 @@
  * reloads the page when the overlay settings change.
  */
 import './overlay.css';
+import './animations.css';
 import {
 	REQUEST_TIMEOUT,
 	SHORT_POLL_INTERVAL,

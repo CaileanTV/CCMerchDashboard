@@ -1,4 +1,10 @@
-import { createPortal, useCallback, useId, useState } from '@wordpress/element';
+import {
+	createPortal,
+	useCallback,
+	useEffect,
+	useId,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { FormEvent } from 'react';
 
@@ -10,6 +16,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Field } from '../../components/Field';
 import { Toast } from '../../components/Toast';
+import { AnimationFields } from './AnimationFields';
 import {
 	FONT_WEIGHTS,
 	NUMBER_FIELDS,
@@ -102,6 +109,8 @@ interface Props {
 	 * null keeps it at the end of the form.
 	 */
 	readonly saveSlot?: HTMLElement | null;
+	/** Called with the unsaved values on every change (the designer previews them). */
+	readonly onDraft?: ( values: OverlaySettings ) => void;
 }
 
 /**
@@ -116,6 +125,7 @@ interface Props {
  * @param props.fontApproved Whether the saved font is still approved.
  * @param props.onSaved      Called with the answer after saving.
  * @param props.saveSlot     Where the save button is shown.
+ * @param props.onDraft      Called with the unsaved values.
  */
 export function OverlaySettingsForm( {
 	settings,
@@ -123,9 +133,12 @@ export function OverlaySettingsForm( {
 	fontApproved,
 	onSaved,
 	saveSlot = null,
+	onDraft,
 }: Props ) {
 	const id = useId();
 	const [ values, setValues ] = useState( settings );
+
+	useEffect( () => onDraft?.( values ), [ values, onDraft ] );
 	const [ errors, setErrors ] = useState< Errors >( {} );
 	const [ saveError, setSaveError ] = useState< ApiError | null >( null );
 	const [ busy, setBusy ] = useState( false );
@@ -470,6 +483,43 @@ export function OverlaySettingsForm( {
 						)
 					) }
 				</div>
+			</Card>
+
+			<Card title={ __( 'Animations', 'merchboard' ) }>
+				<p className="merchboard-field__help">
+					{ __(
+						'How each text comes in, moves while it is shown and goes out. The animation time below sets how long the in- and out-animations take. Press "Play animation" in the designer to see it.',
+						'merchboard'
+					) }
+				</p>
+				<AnimationFields
+					legend={ __( 'Main text', 'merchboard' ) }
+					value={ values.animations.main_text }
+					duration={ values.anim_duration }
+					onChange={ ( animation ) =>
+						set( {
+							animations: {
+								...values.animations,
+								main_text: animation,
+							},
+						} )
+					}
+				/>
+				{ values.show_secondary && (
+					<AnimationFields
+						legend={ __( 'Secondary text', 'merchboard' ) }
+						value={ values.animations.secondary_text }
+						duration={ values.anim_duration }
+						onChange={ ( animation ) =>
+							set( {
+								animations: {
+									...values.animations,
+									secondary_text: animation,
+								},
+							} )
+						}
+					/>
+				) }
 			</Card>
 
 			<Card title={ __( 'Timing', 'merchboard' ) }>

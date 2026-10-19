@@ -329,6 +329,7 @@ final class MeAlertsController extends RestController {
 		$settings['show_secondary']     = $values['layout']['elements']['secondary_text']['visible'];
 		$settings['display_from_sound'] = $values['display_from_sound'];
 		$settings['font_family']        = $values['font_family'];
+		$settings['animations']         = $values['animations'];
 
 		return array(
 			'url'           => OverlayRoute::url( $overlay->overlay_id ),
@@ -377,12 +378,16 @@ final class MeAlertsController extends RestController {
 			$input['font_family'] = $body['font_family'];
 		}
 
-		if ( array_key_exists( 'layout', $body ) ) {
-			if ( ! is_array( $body['layout'] ) ) {
+		foreach ( array( 'layout', 'animations' ) as $key ) {
+			if ( ! array_key_exists( $key, $body ) ) {
+				continue;
+			}
+
+			if ( ! is_array( $body[ $key ] ) ) {
 				return null;
 			}
 
-			$input['layout'] = $body['layout'];
+			$input[ $key ] = $body[ $key ];
 		}
 
 		foreach ( array( 'show_secondary', 'audio_enabled', 'display_from_sound' ) as $key ) {

@@ -206,6 +206,51 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertStringStartsWith( 'left:176px;top:895px;width:700px;height:80px;', $shrink->element_style( 'main_text' ), 'Shrinking happens in the overlay script.' );
 	}
 
+	public function test_text_animations_default_to_the_fade_and_are_normalized(): void {
+		$default = array(
+			'in'     => 'fade',
+			'effect' => 'none',
+			'out'    => 'fade',
+			'color'  => '#ff2bd6',
+			'speed'  => 'normal',
+		);
+
+		self::assertSame(
+			array(
+				'main_text'      => $default,
+				'secondary_text' => $default,
+			),
+			OverlaySettings::defaults()->animations()
+		);
+
+		$settings = OverlaySettings::from_array(
+			array(
+				'animations' => array(
+					'main_text'      => array(
+						'in'     => 'typewriter',
+						'effect' => 'explode',
+						'out'    => 'wave',
+						'color'  => '#0F0',
+						'speed'  => 'fast',
+					),
+					'secondary_text' => 'nonsense',
+				),
+			)
+		);
+
+		self::assertSame(
+			array(
+				'in'     => 'typewriter',
+				'effect' => 'none',
+				'out'    => 'wave',
+				'color'  => '#00ff00',
+				'speed'  => 'fast',
+			),
+			$settings->animations()['main_text']
+		);
+		self::assertSame( $default, $settings->animations()['secondary_text'] );
+	}
+
 	public function test_the_secondary_text_needs_a_template_and_visibility(): void {
 		self::assertFalse( OverlaySettings::defaults()->shows_secondary() );
 		self::assertStringEndsWith( 'display:none;', OverlaySettings::defaults()->element_style( 'secondary_text' ) );

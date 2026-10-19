@@ -9,6 +9,7 @@ import {
 	parseAnswer,
 	parseConfig,
 } from '../feed';
+import { DEFAULT_ANIMATION } from '../animations';
 
 const FEED = `${ window.location.origin }/wp-json/merchboard/v1/alerts/overlay/${ 'a'.repeat( 32 ) }/feed`;
 
@@ -31,6 +32,10 @@ describe( 'parseConfig', () => {
 			textFit: 'shrink',
 			imageFollows: true,
 			displayFromSound: false,
+			animations: {
+				main: DEFAULT_ANIMATION,
+				secondary: DEFAULT_ANIMATION,
+			},
 		} );
 		expect(
 			parseConfig( {

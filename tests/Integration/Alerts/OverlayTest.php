@@ -205,6 +205,7 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertStringContainsString( '"textFit":"fixed"', $html, 'The overlay script knows how text meets its box.' );
 		self::assertStringContainsString( '"imageFollows":false', $html );
 		self::assertStringContainsString( '"displayFromSound":false', $html );
+		self::assertStringContainsString( '"animations":{"main":{"in":"fade","effect":"none","out":"fade"', $html, 'The text animations reach the overlay script.' );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 
 		$headers = OverlayPage::security_headers( 'nonce123' );

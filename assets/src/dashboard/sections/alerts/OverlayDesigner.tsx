@@ -9,6 +9,9 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
+import '../../../overlay/animations.css';
+import { leaveText, renderText, resetText } from '../../../overlay/animations';
+import type { TextAnimation } from '../../../overlay/animations';
 import { fitText } from '../../../overlay/fit';
 import { updateAlertsOverlay } from '../../api/alerts';
 import type { ApiError } from '../../api/client';
@@ -104,27 +107,44 @@ function elementLabel( element: LayoutElement ): string {
 
 /**
  * A text box of the preview; with "shrink", the text gets smaller until it
- * fits, as in the overlay.
+ * fits, and "Play animation" plays its animation, as in the overlay.
  *
- * @param props        Props.
- * @param props.text   Text.
- * @param props.style  Style.
- * @param props.shrink Whether to shrink the text to fit.
- * @param props.size   Box size (the fit is redone when it changes).
+ * @param props             Props.
+ * @param props.text        Text.
+ * @param props.style       Style.
+ * @param props.shrink      Whether to shrink the text to fit.
+ * @param props.size        Box size (the fit is redone when it changes).
+ * @param props.animation   The text's animation.
+ * @param props.play        Increases each time the animation is played.
+ * @param props.animTime    In/out time (ms).
+ * @param props.displayTime Display time (ms; the preview shows at most 4 s).
  */
 function PreviewText( {
 	text,
 	style,
 	shrink,
 	size,
+	animation,
+	play,
+	animTime,
+	displayTime,
 }: {
 	readonly text: string;
 	readonly style: CSSProperties;
 	readonly shrink: boolean;
 	readonly size: string;
+	readonly animation: TextAnimation;
+	/** Increases each time the animation is played. */
+	readonly play: number;
+	readonly animTime: number;
+	readonly displayTime: number;
 } ) {
 	const ref = useRef< HTMLSpanElement >( null );
 
+	// Compared by value: a re-render with the same look keeps a running preview.
+	const look = JSON.stringify( style );
+
+	// The text is set here, not by React, so the animation can split it into letters.
 	useLayoutEffect( () => {
 		const element = ref.current;
 
@@ -132,19 +152,69 @@ function PreviewText( {
 			return;
 		}
 
+		resetText( element );
+		element.textContent = text;
+
 		if ( shrink ) {
 			fitText( element );
 		} else {
 			element.style.fontSize = '';
 		}
-	}, [ text, style, shrink, size ] );
+	}, [ text, look, shrink, size ] );
+
+	// "Play animation": in, effect, out, as in the overlay (step 25.6.9).
+	useEffect( () => {
+		const element = ref.current;
+
+		if ( play === 0 || element === null ) {
+			return undefined;
+		}
+
+		const times = renderText( element, text, animation, animTime, true );
+		const timers: number[] = [];
+
+		if ( shrink ) {
+			fitText( element );
+		}
+
+		timers.push(
+			window.setTimeout(
+				() => {
+					leaveText( element );
+					timers.push(
+						window.setTimeout( () => {
+							resetText( element );
+							element.textContent = text;
+						}, times.outTotal )
+					);
+				},
+				Math.max(
+					times.inTotal,
+					Math.min( displayTime, PREVIEW_LIMIT )
+				)
+			)
+		);
+
+		return () => {
+			timers.forEach( ( timer ) => window.clearTimeout( timer ) );
+			resetText( element );
+			element.textContent = text;
+		};
+		// Only a new play starts the animation; the text and look follow on the next play.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ play ] );
 
 	return (
-		<span ref={ ref } className="merchboard-designer__text" style={ style }>
-			{ text }
-		</span>
+		<span
+			ref={ ref }
+			className="merchboard-designer__text"
+			style={ style }
+		/>
 	);
 }
+
+/** Longest display time of the preview (ms). */
+const PREVIEW_LIMIT = 4000;
 
 interface Drag {
 	readonly element: LayoutElement;
@@ -160,6 +230,11 @@ interface Drag {
 interface Props {
 	readonly layout: OverlayLayout;
 	readonly settings: OverlaySettings;
+	/**
+	 * The settings form's unsaved values: the preview shows them, so a choice
+	 * (e.g. an animation) can be seen before it is saved.
+	 */
+	readonly preview?: OverlaySettings | null;
 	/** The CSS font-family of the preview (approved font or inherit). */
 	readonly fontFamily: string;
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
@@ -179,20 +254,25 @@ interface Props {
  *
  * @param props            Props.
  * @param props.layout     The saved layout.
- * @param props.settings   The saved settings (look of the preview).
+ * @param props.settings   The saved settings.
+ * @param props.preview    The form's unsaved settings (look of the preview).
  * @param props.fontFamily CSS font-family of the preview.
  * @param props.onSaved    Called with the answer after saving.
  */
 export function OverlayDesigner( {
 	layout: saved,
 	settings,
+	preview = null,
 	fontFamily,
 	onSaved,
 }: Props ) {
+	const look = preview ?? settings;
 	const id = useId();
 	const canvas = useRef< HTMLDivElement >( null );
 	const drag = useRef< Drag | null >( null );
 	const history = useHistory( saved );
+	// Each press of "Play animation" increases it (step 25.6.9).
+	const [ play, setPlay ] = useState( 0 );
 	const layout = history.value;
 	const setLayout = history.set;
 	const root = useRef< HTMLDivElement >( null );
@@ -202,7 +282,7 @@ export function OverlayDesigner( {
 	// The secondary text is only on the canvas when it is switched on in the
 	// overlay settings, so creators are not confused by an unused box.
 	const elements = LAYOUT_ELEMENTS.filter(
-		( element ) => element !== 'secondary_text' || settings.show_secondary
+		( element ) => element !== 'secondary_text' || look.show_secondary
 	);
 	const visible = chosen.filter( ( element ) =>
 		elements.includes( element )
@@ -236,7 +316,7 @@ export function OverlayDesigner( {
 		} );
 
 	const grows = ( element: LayoutElement ) =>
-		element !== 'product_image' && settings.text_fit === 'grow';
+		element !== 'product_image' && look.text_fit === 'grow';
 	const follows =
 		grows( 'main_text' ) && growsUp( layout.elements.main_text );
 
@@ -254,7 +334,7 @@ export function OverlayDesigner( {
 			setImageShift( shift );
 		}
 		// The text, its look and the boxes change the main text's height.
-	}, [ follows, imageShift, layout, settings, fontFamily ] );
+	}, [ follows, imageShift, layout, look, fontFamily ] );
 
 	const start = (
 		event: ReactPointerEvent< HTMLElement >,
@@ -438,14 +518,14 @@ export function OverlayDesigner( {
 		`${ ( value / CANVAS.width ) * 100 }cqw`;
 	const textStyle: CSSProperties = {
 		fontFamily,
-		fontWeight: settings.font_weight,
-		color: settings.text_color,
-		textShadow: settings.text_shadow === '' ? 'none' : settings.text_shadow,
-		textAlign: settings.text_align,
-		background: background( settings.bg_color, settings.bg_opacity ),
-		borderRadius: scaled( settings.border_radius ),
-		padding: scaled( settings.padding ),
-		fontSize: scaled( settings.font_size ),
+		fontWeight: look.font_weight,
+		color: look.text_color,
+		textShadow: look.text_shadow === '' ? 'none' : look.text_shadow,
+		textAlign: look.text_align,
+		background: background( look.bg_color, look.bg_opacity ),
+		borderRadius: scaled( look.border_radius ),
+		padding: scaled( look.padding ),
+		fontSize: scaled( look.font_size ),
 	};
 
 	const number = (
@@ -531,8 +611,8 @@ export function OverlayDesigner( {
 						const item = layout.elements[ element ];
 						const template =
 							element === 'secondary_text'
-								? settings.secondary_template
-								: settings.template;
+								? look.secondary_template
+								: look.template;
 
 						return (
 							<div
@@ -596,10 +676,16 @@ export function OverlayDesigner( {
 													}
 												: textStyle
 										}
-										shrink={
-											settings.text_fit === 'shrink'
-										}
+										shrink={ look.text_fit === 'shrink' }
 										size={ `${ item.w }x${ item.h }` }
+										animation={
+											element === 'secondary_text'
+												? look.animations.secondary_text
+												: look.animations.main_text
+										}
+										play={ play }
+										animTime={ look.anim_duration }
+										displayTime={ look.display_duration }
 									/>
 								) }
 								<span
@@ -820,6 +906,12 @@ export function OverlayDesigner( {
 						aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y"
 					>
 						{ __( 'Redo', 'merchboard' ) }
+					</Button>
+					<Button
+						variant="secondary"
+						onClick={ () => setPlay( ( count ) => count + 1 ) }
+					>
+						{ __( 'Play animation', 'merchboard' ) }
 					</Button>
 				</div>
 			</div>

@@ -21,6 +21,7 @@ export const TEXT_ALIGNS = [ 'left', 'center', 'right' ] as const;
 export type FontWeight = ( typeof FONT_WEIGHTS )[ number ] | 'normal' | 'bold';
 export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 
+import type { TextAnimation } from '../../overlay/animations';
 import type { TextFit } from '../../overlay/fit';
 
 export { TEXT_FITS } from '../../overlay/fit';
@@ -62,6 +63,11 @@ export interface OverlaySettings {
 	readonly show_secondary: boolean;
 	/** Alerts with a sound are shown as long as the sound plays (step 25.6.8). */
 	readonly display_from_sound: boolean;
+	/** Text animations of the main and the secondary text (step 25.6.9). */
+	readonly animations: {
+		readonly main_text: TextAnimation;
+		readonly secondary_text: TextAnimation;
+	};
 	/** "inherit" (the default font) or an approved Google font (ADR-067). */
 	readonly font_family: string;
 }

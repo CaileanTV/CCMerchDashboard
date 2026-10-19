@@ -983,6 +983,34 @@ input:focus-visible + .merchboard-sounds__upload {
 	overflow-wrap: anywhere;
 }
 
+// The looping sample of a text animation in the settings (step 25.6.9).
+.merchboard-animation__sample {
+	display: flex;
+	gap: var(--merchboard-space-3);
+	align-items: center;
+	margin-top: var(--merchboard-space-3);
+}
+
+.merchboard-animation__stage {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	min-height: 4.5rem;
+	padding: var(--merchboard-space-3);
+	overflow: hidden;
+	font-size: var(--merchboard-text-xl);
+	font-weight: 700;
+	color: var(--merchboard-on-inverse);
+	background: var(--merchboard-inverse-surface);
+	border-radius: var(--merchboard-radius-sm);
+	perspective: 600px;
+}
+
+.merchboard-animation__text {
+	white-space: pre;
+}
+
 .merchboard-designer__handle {
 	position: absolute;
 	right: -6px;

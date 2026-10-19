@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act } from 'react';
 
+import { DEFAULT_ANIMATION } from '../../overlay/animations';
 import { parseAlertsOverlay } from '../api/alerts';
 import { ConfigContext } from '../app/config-context';
 import {
@@ -39,6 +40,10 @@ const SETTINGS = {
 	display_duration: 5000,
 	show_secondary: false,
 	display_from_sound: false,
+	animations: {
+		main_text: DEFAULT_ANIMATION,
+		secondary_text: DEFAULT_ANIMATION,
+	},
 	font_family: 'inherit',
 };
 
@@ -527,7 +532,9 @@ describe( 'AlertsSection', () => {
 		await flush();
 
 		expect( requests.find( ( r ) => r.method === 'PATCH' )?.data ).toEqual(
-			{ audio_enabled: true }
+			{
+				audio_enabled: true,
+			}
 		);
 
 		const file = new File( [ 'x' ], 'ding.mp3', { type: 'audio/mpeg' } );
@@ -779,5 +786,116 @@ describe( 'AlertsSection', () => {
 		expect(
 			slot?.parentElement?.lastElementChild?.contains( designer ?? null )
 		).toBe( true );
+	} );
+
+	it( 'saves the text animations and offers to play them', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const fieldset = rendered?.container.querySelector(
+			'.merchboard-animation'
+		);
+		const inSelect = fieldset?.querySelector( 'select' ) ?? null;
+
+		expect( inSelect ).not.toBeNull();
+		act( () => {
+			if ( inSelect ) {
+				inSelect.value = 'typewriter';
+				inSelect.dispatchEvent(
+					new Event( 'change', { bubbles: true } )
+				);
+			}
+		} );
+
+		click( button( 'Save overlay settings' ) );
+		await flush();
+
+		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
+			animations: { main_text: { in: string } };
+		};
+		expect( patch.animations.main_text.in ).toBe( 'typewriter' );
+		expect( button( 'Play animation' ) ).not.toBeNull();
+		expect(
+			rendered?.container.querySelectorAll( '.merchboard-animation' )
+		).toHaveLength( 1 );
+	} );
+
+	it( 'loops a sample of the chosen animation, which can be paused', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const sample = () =>
+			rendered?.container.querySelector(
+				'.merchboard-animation__text'
+			) ?? null;
+		const inSelect =
+			rendered?.container.querySelector(
+				'.merchboard-animation select'
+			) ?? null;
+
+		expect( sample()?.classList.contains( 'merchboard-anim' ) ).toBe(
+			true
+		);
+
+		act( () => {
+			if ( inSelect instanceof HTMLSelectElement ) {
+				inSelect.value = 'wave';
+				inSelect.dispatchEvent(
+					new Event( 'change', { bubbles: true } )
+				);
+			}
+		} );
+
+		const text = sample();
+		expect( text instanceof HTMLElement && text.dataset.in ).toBe( 'wave' );
+		expect(
+			text?.querySelectorAll( '.merchboard-anim__letter' ).length
+		).toBeGreaterThan( 0 );
+
+		click( button( 'Pause example' ) );
+
+		expect( sample()?.classList.contains( 'merchboard-anim' ) ).toBe(
+			false
+		);
+		expect( button( 'Play example' ) ).not.toBeNull();
+	} );
+
+	it( 'plays an unsaved animation in the designer', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const inSelect =
+			rendered?.container.querySelector(
+				'.merchboard-animation select'
+			) ?? null;
+
+		act( () => {
+			if ( inSelect instanceof HTMLSelectElement ) {
+				inSelect.value = 'typewriter';
+				inSelect.dispatchEvent(
+					new Event( 'change', { bubbles: true } )
+				);
+			}
+		} );
+
+		click( button( 'Play animation' ) );
+
+		const text = rendered?.container.querySelector(
+			'.merchboard-designer .merchboard-anim'
+		);
+		expect( text instanceof HTMLElement && text.dataset.in ).toBe(
+			'typewriter'
+		);
+		expect( requests.some( ( r ) => r.method === 'PATCH' ) ).toBe( false );
 	} );
 } );

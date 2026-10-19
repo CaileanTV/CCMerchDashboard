@@ -1,0 +1,649 @@
+/*
+ * Text animations (phase 25, step 6.9), our own implementations; see
+ * animations.ts. Each data attribute sets a custom property, so the
+ * in-animation and the effect combine on one element (the effect waits for
+ * --merchboard-in-total), and the out-animation replaces both.
+ *
+ * The letter variables (--merchboard-l-*) are set on the letters, not on the
+ * box: a custom property resolves var(--i) where it is declared, and only
+ * the letters have --i.
+ *
+ * Variables: --merchboard-anim-time (in/out time), --merchboard-letter-step,
+ * --merchboard-letters, --merchboard-in-total, --merchboard-cycle (effect)
+ * and --merchboard-effect-color; per letter --i (index) and --side (-1/1).
+ */
+
+.merchboard-anim {
+	animation: var(--merchboard-a-in, none), var(--merchboard-a-fx, none);
+	transition: none !important;
+}
+
+.merchboard-anim .merchboard-anim__letter {
+	display: inline-block;
+	animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none);
+}
+
+/* In the overlay, the animation decides opacity and movement. */
+.merchboard-anim.merchboard-overlay__el--visible,
+.merchboard-anim.merchboard-overlay__el--hiding {
+	opacity: 1;
+	transform: none;
+}
+
+/* ------------------------------------------------------------- In. */
+
+.merchboard-anim[data-in="fade"] {
+	--merchboard-a-in: merchboard-fade-in var(--merchboard-anim-time) ease backwards;
+}
+
+.merchboard-anim[data-in="slide-up"] {
+	--merchboard-a-in: merchboard-slide-up var(--merchboard-anim-time) cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.merchboard-anim[data-in="pop"] {
+	--merchboard-a-in: merchboard-pop var(--merchboard-anim-time) ease-out backwards;
+}
+
+.merchboard-anim[data-in="spin-3d"] {
+	--merchboard-a-in: merchboard-spin-in var(--merchboard-anim-time) ease-out backwards;
+}
+
+.merchboard-anim[data-in="roll-3d"] {
+	--merchboard-a-in: merchboard-roll-in var(--merchboard-anim-time) ease-out backwards;
+}
+
+.merchboard-anim[data-in="blur"] {
+	--merchboard-a-in: merchboard-blur-in var(--merchboard-anim-time) ease-out backwards;
+}
+
+.merchboard-anim[data-in="wipe"] {
+	--merchboard-a-in: merchboard-wipe-in var(--merchboard-anim-time) ease-in-out backwards;
+}
+
+.merchboard-anim[data-in="shadow-paint"] {
+	--merchboard-a-in: merchboard-shadow-paint var(--merchboard-anim-time) ease-out backwards;
+}
+
+.merchboard-anim[data-in="typewriter"] .merchboard-anim__letter {
+	--merchboard-l-in: merchboard-hidden 1ms calc(var(--i) * var(--merchboard-letter-step)) backwards;
+}
+
+.merchboard-anim[data-in="split"] .merchboard-anim__letter {
+	--merchboard-l-in: merchboard-split-in var(--merchboard-anim-time) calc(var(--i) * var(--merchboard-letter-step) / 2) ease-out backwards;
+}
+
+.merchboard-anim[data-in="wave"] .merchboard-anim__letter {
+	--merchboard-l-in: merchboard-rise var(--merchboard-anim-time) calc(var(--i) * var(--merchboard-letter-step)) ease-out backwards;
+}
+
+.merchboard-anim[data-in="drop"] .merchboard-anim__letter {
+	--merchboard-l-in: merchboard-drop var(--merchboard-anim-time) calc(var(--i) * var(--merchboard-letter-step)) ease-out backwards;
+}
+
+/* --------------------------------------------------------- Effects. */
+
+.merchboard-anim[data-effect="neon"] {
+	--merchboard-a-fx: merchboard-neon var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite alternate;
+}
+
+.merchboard-anim[data-effect="glow-pulse"] {
+	--merchboard-a-fx: merchboard-glow-pulse var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite;
+}
+
+.merchboard-anim[data-effect="heartbeat"] {
+	--merchboard-a-fx: merchboard-heartbeat var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite;
+}
+
+.merchboard-anim[data-effect="dancing-shadow"] {
+	--merchboard-a-fx: merchboard-dancing-shadow var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite alternate;
+}
+
+.merchboard-anim[data-effect="float-3d"] {
+	--merchboard-a-fx: merchboard-float-3d var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite alternate;
+}
+
+.merchboard-anim[data-effect="breathe"] {
+	--merchboard-a-fx: merchboard-breathe var(--merchboard-cycle) ease-in-out var(--merchboard-in-total) infinite alternate;
+}
+
+.merchboard-anim[data-effect="melt"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-melt var(--merchboard-cycle) ease-in-out calc(var(--merchboard-in-total) + var(--i) * 90ms) infinite alternate;
+}
+
+.merchboard-anim[data-effect="wave"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-bob var(--merchboard-cycle) ease-in-out calc(var(--merchboard-in-total) + var(--i) * 110ms) infinite alternate;
+}
+
+.merchboard-anim[data-effect="depth-pulse"] .merchboard-anim__letter {
+	--merchboard-l-fx: merchboard-depth var(--merchboard-cycle) ease-in-out calc(var(--merchboard-in-total) + var(--i) * 70ms) infinite;
+}
+
+/* Glitch: two copies of the text (data-text) that jump sideways. */
+.merchboard-anim[data-effect="glitch"]:not(.merchboard-overlay__el) {
+	position: relative;
+}
+
+.merchboard-anim[data-effect="glitch"]::before,
+.merchboard-anim[data-effect="glitch"]::after {
+	position: absolute;
+	inset: 0;
+	padding: inherit;
+	pointer-events: none;
+	content: attr(data-text);
+	opacity: 0;
+	animation: merchboard-glitch var(--merchboard-cycle) steps(2, end) var(--merchboard-in-total) infinite;
+}
+
+.merchboard-anim[data-effect="glitch"]::before {
+	color: var(--merchboard-effect-color);
+}
+
+.merchboard-anim[data-effect="glitch"]::after {
+	color: #00e5ff;
+	animation-direction: reverse;
+}
+
+/*
+ * Typewriter: a caret follows the text. While typing it is on the letter
+ * last typed, while deleting on the last letter left: each letter shows it
+ * for its own turn only (--n is the number of steps to the next letter, as
+ * spaces have no span). The blinking cursor after the text takes over when
+ * all letters are typed, and gives way when deleting starts.
+ */
+.merchboard-anim__cursor {
+	--merchboard-cursor: merchboard-blink 1s steps(1) infinite;
+	display: none;
+	width: 0.08em;
+	height: 1em;
+	margin-left: 0.06em;
+	vertical-align: -0.12em;
+	background: currentcolor;
+	animation: var(--merchboard-cursor);
+}
+
+.merchboard-anim[data-in="typewriter"] .merchboard-anim__cursor,
+.merchboard-anim[data-out="typewriter"] .merchboard-anim__cursor {
+	display: inline-block;
+}
+
+.merchboard-anim[data-in="typewriter"] .merchboard-anim__cursor {
+	--merchboard-cursor:
+		merchboard-hidden 1ms calc(var(--merchboard-letters) * var(--merchboard-letter-step)) backwards,
+		merchboard-blink 1s steps(1) calc(var(--merchboard-letters) * var(--merchboard-letter-step)) infinite;
+}
+
+.merchboard-anim[data-out="typewriter"].merchboard-anim--out .merchboard-anim__cursor {
+	display: none;
+}
+
+.merchboard-anim[data-in="typewriter"] .merchboard-anim__letter,
+.merchboard-anim[data-out="typewriter"] .merchboard-anim__letter {
+	position: relative;
+}
+
+.merchboard-anim[data-in="typewriter"] .merchboard-anim__letter::after,
+.merchboard-anim[data-out="typewriter"] .merchboard-anim__letter::after {
+	position: absolute;
+	top: 50%;
+	left: calc(100% + 0.06em);
+	width: 0.08em;
+	height: 1em;
+	margin-top: -0.5em;
+	pointer-events: none;
+	content: "";
+	background: currentcolor;
+	opacity: 0;
+	animation: var(--merchboard-caret, none);
+}
+
+.merchboard-anim[data-in="typewriter"] .merchboard-anim__letter {
+	--merchboard-caret: merchboard-caret calc(var(--n) * var(--merchboard-letter-step)) linear calc(var(--i) * var(--merchboard-letter-step));
+}
+
+/* Its own keyframes: a new animation name starts it afresh. */
+.merchboard-anim[data-out="typewriter"].merchboard-anim--out .merchboard-anim__letter {
+	--merchboard-caret: merchboard-caret-out calc(var(--n) * var(--merchboard-letter-step)) linear calc((var(--merchboard-letters) - var(--i) - var(--n)) * var(--merchboard-letter-step));
+}
+
+/* ------------------------------------------------------------ Out. */
+
+.merchboard-anim[data-out="fade"] {
+	--merchboard-a-out: merchboard-fade-out var(--merchboard-anim-time) ease forwards;
+}
+
+.merchboard-anim[data-out="slide-down"] {
+	--merchboard-a-out: merchboard-slide-down var(--merchboard-anim-time) ease-in forwards;
+}
+
+.merchboard-anim[data-out="pop"] {
+	--merchboard-a-out: merchboard-pop-out var(--merchboard-anim-time) ease-in forwards;
+}
+
+.merchboard-anim[data-out="spin-3d"] {
+	--merchboard-a-out: merchboard-spin-out var(--merchboard-anim-time) ease-in forwards;
+}
+
+.merchboard-anim[data-out="roll-3d"] {
+	--merchboard-a-out: merchboard-roll-out var(--merchboard-anim-time) ease-in forwards;
+}
+
+.merchboard-anim[data-out="blur"] {
+	--merchboard-a-out: merchboard-blur-out var(--merchboard-anim-time) ease-in forwards;
+}
+
+.merchboard-anim[data-out="wipe"] {
+	--merchboard-a-out: merchboard-wipe-out var(--merchboard-anim-time) ease-in-out forwards;
+}
+
+.merchboard-anim[data-out="typewriter"] .merchboard-anim__letter {
+	--merchboard-l-out: merchboard-vanish 1ms calc((var(--merchboard-letters) - var(--i)) * var(--merchboard-letter-step)) forwards;
+}
+
+.merchboard-anim[data-out="split"] .merchboard-anim__letter {
+	--merchboard-l-out: merchboard-split-out var(--merchboard-anim-time) calc(var(--i) * var(--merchboard-letter-step) / 2) ease-in forwards;
+}
+
+.merchboard-anim[data-out="wave"] .merchboard-anim__letter {
+	--merchboard-l-out: merchboard-sink var(--merchboard-anim-time) calc(var(--i) * var(--merchboard-letter-step)) ease-in forwards;
+}
+
+/* Going: the out-animation replaces the in-animation and the effect. */
+.merchboard-anim.merchboard-anim--out {
+	--merchboard-a-in: var(--merchboard-a-out, none);
+	--merchboard-a-fx: none;
+}
+
+.merchboard-anim.merchboard-anim--out .merchboard-anim__letter {
+	--merchboard-l-in: var(--merchboard-l-out, none);
+	--merchboard-l-fx: none;
+}
+
+.merchboard-anim.merchboard-anim--out::before,
+.merchboard-anim.merchboard-anim--out::after {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.merchboard-anim,
+	.merchboard-anim .merchboard-anim__letter,
+	.merchboard-anim .merchboard-anim__letter::after,
+	.merchboard-anim__cursor {
+		animation: none !important;
+	}
+
+	/*
+	 * The designer and the sample in the settings only animate on request
+	 * ("Play animation"; the sample starts paused with reduced motion), so
+	 * they play, overriding the dashboard's reduced-motion rule.
+	 */
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim {
+		animation: var(--merchboard-a-in, none), var(--merchboard-a-fx, none) !important;
+	}
+
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim .merchboard-anim__letter {
+		animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none) !important;
+	}
+
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim[data-effect="glitch"]::before,
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim[data-effect="glitch"]::after {
+		animation: merchboard-glitch var(--merchboard-cycle) steps(2, end) var(--merchboard-in-total) infinite !important;
+	}
+
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim[data-effect="glitch"]::after {
+		animation-direction: reverse !important;
+	}
+
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim .merchboard-anim__letter::after {
+		animation: var(--merchboard-caret, none) !important;
+	}
+
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim__cursor {
+		animation: var(--merchboard-cursor) !important;
+	}
+}
+
+/* ------------------------------------------------------- Keyframes. */
+
+@keyframes merchboard-fade-in {
+
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes merchboard-fade-out {
+
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes merchboard-slide-up {
+
+	from {
+		opacity: 0;
+		transform: translateY(0.8em);
+	}
+}
+
+@keyframes merchboard-slide-down {
+
+	to {
+		opacity: 0;
+		transform: translateY(0.8em);
+	}
+}
+
+@keyframes merchboard-pop {
+
+	0% {
+		opacity: 0;
+		transform: scale(0.2);
+	}
+
+	70% {
+		opacity: 1;
+		transform: scale(1.15);
+	}
+}
+
+@keyframes merchboard-pop-out {
+
+	30% {
+		transform: scale(1.1);
+	}
+
+	to {
+		opacity: 0;
+		transform: scale(0.2);
+	}
+}
+
+@keyframes merchboard-spin-in {
+
+	from {
+		opacity: 0;
+		transform: perspective(600px) rotateY(-90deg);
+	}
+}
+
+@keyframes merchboard-spin-out {
+
+	to {
+		opacity: 0;
+		transform: perspective(600px) rotateY(90deg);
+	}
+}
+
+@keyframes merchboard-roll-in {
+
+	from {
+		opacity: 0;
+		transform: perspective(600px) rotateX(90deg);
+	}
+}
+
+@keyframes merchboard-roll-out {
+
+	to {
+		opacity: 0;
+		transform: perspective(600px) rotateX(-90deg);
+	}
+}
+
+@keyframes merchboard-blur-in {
+
+	from {
+		opacity: 0;
+		filter: blur(12px);
+	}
+}
+
+@keyframes merchboard-blur-out {
+
+	to {
+		opacity: 0;
+		filter: blur(12px);
+	}
+}
+
+@keyframes merchboard-wipe-in {
+
+	from {
+		clip-path: inset(0 100% 0 0);
+	}
+
+	to {
+		clip-path: inset(0);
+	}
+}
+
+@keyframes merchboard-wipe-out {
+
+	from {
+		clip-path: inset(0);
+	}
+
+	to {
+		clip-path: inset(0 0 0 100%);
+	}
+}
+
+@keyframes merchboard-shadow-paint {
+
+	0% {
+		opacity: 0;
+		text-shadow: -0.6em 0 0 var(--merchboard-effect-color), 0.6em 0 0 var(--merchboard-effect-color);
+	}
+
+	60% {
+		opacity: 1;
+		text-shadow: -0.05em 0 0 var(--merchboard-effect-color), 0.05em 0 0 var(--merchboard-effect-color);
+	}
+}
+
+@keyframes merchboard-hidden {
+
+	from,
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes merchboard-caret {
+
+	from,
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes merchboard-caret-out {
+
+	from,
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes merchboard-vanish {
+
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes merchboard-split-in {
+
+	from {
+		opacity: 0;
+		transform: translateX(calc(var(--side) * 1.5em));
+	}
+}
+
+@keyframes merchboard-split-out {
+
+	to {
+		opacity: 0;
+		transform: translateX(calc(var(--side) * 1.5em));
+	}
+}
+
+@keyframes merchboard-rise {
+
+	from {
+		opacity: 0;
+		transform: translateY(0.8em);
+	}
+}
+
+@keyframes merchboard-sink {
+
+	to {
+		opacity: 0;
+		transform: translateY(0.8em);
+	}
+}
+
+@keyframes merchboard-drop {
+
+	0% {
+		opacity: 0;
+		transform: translateY(-1.2em);
+	}
+
+	60% {
+		opacity: 1;
+		transform: translateY(0.15em);
+	}
+}
+
+@keyframes merchboard-neon {
+
+	from {
+		text-shadow: 0 0 0.05em #fff, 0 0 0.2em var(--merchboard-effect-color), 0 0 0.4em var(--merchboard-effect-color);
+	}
+
+	to {
+		text-shadow: 0 0 0.1em #fff, 0 0 0.4em var(--merchboard-effect-color), 0 0 0.9em var(--merchboard-effect-color), 0 0 1.4em var(--merchboard-effect-color);
+	}
+}
+
+@keyframes merchboard-glow-pulse {
+
+	50% {
+		color: var(--merchboard-effect-color);
+		text-shadow: 0 0 0.5em var(--merchboard-effect-color);
+	}
+}
+
+@keyframes merchboard-heartbeat {
+
+	0%,
+	45%,
+	100% {
+		transform: scale(1);
+	}
+
+	15%,
+	35% {
+		transform: scale(1.08);
+	}
+}
+
+@keyframes merchboard-dancing-shadow {
+
+	from {
+		text-shadow: 0.08em 0.08em 0 var(--merchboard-effect-color), -0.08em -0.08em 0 rgba(255, 255, 255, 0.6);
+	}
+
+	to {
+		text-shadow: -0.08em 0.08em 0 rgba(255, 255, 255, 0.6), 0.08em -0.08em 0 var(--merchboard-effect-color);
+	}
+}
+
+@keyframes merchboard-float-3d {
+
+	from {
+		transform: perspective(600px) rotateX(10deg) rotateY(-12deg);
+	}
+
+	to {
+		transform: perspective(600px) rotateX(-6deg) rotateY(12deg) translateY(-0.1em);
+	}
+}
+
+@keyframes merchboard-breathe {
+
+	from {
+		font-weight: 300;
+	}
+
+	to {
+		font-weight: 800;
+	}
+}
+
+@keyframes merchboard-melt {
+
+	to {
+		filter: blur(0.5px);
+		transform: translateY(0.12em) scaleY(1.15);
+	}
+}
+
+@keyframes merchboard-bob {
+
+	to {
+		transform: translateY(-0.25em);
+	}
+}
+
+@keyframes merchboard-depth {
+
+	50% {
+		text-shadow: 0.03em 0.03em 0 var(--merchboard-effect-color), 0.06em 0.06em 0 var(--merchboard-effect-color), 0.09em 0.09em 0 var(--merchboard-effect-color);
+		transform: translate(-0.05em, -0.05em);
+	}
+}
+
+@keyframes merchboard-glitch {
+
+	0% {
+		clip-path: inset(10% 0 60% 0);
+		opacity: 1;
+		transform: translate(-0.04em, 0);
+	}
+
+	25% {
+		clip-path: inset(55% 0 20% 0);
+		opacity: 1;
+		transform: translate(0.04em, 0);
+	}
+
+	50% {
+		clip-path: inset(30% 0 45% 0);
+		opacity: 1;
+		transform: translate(-0.02em, 0);
+	}
+
+	75% {
+		clip-path: inset(70% 0 5% 0);
+		opacity: 1;
+		transform: translate(0.03em, 0);
+	}
+
+	100% {
+		clip-path: inset(20% 0 65% 0);
+		opacity: 1;
+		transform: translate(0, 0);
+	}
+}
+
+@keyframes merchboard-blink {
+
+	50% {
+		opacity: 0;
+	}
+}

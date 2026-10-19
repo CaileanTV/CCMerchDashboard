@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-19T15:03:22+00:00\n"
+"PO-Revision-Date: 2026-10-19T16:33:08+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1446,7 +1446,7 @@ msgstr "Overlay-indstillinger"
 msgid "History"
 msgstr "Historik"
 
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:235
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:240
 msgid "Test product"
 msgstr "Testprodukt"
 
@@ -1470,7 +1470,7 @@ msgstr "Fonten er ikke tilgængelig."
 msgid "The sound was not saved."
 msgstr "Lyden blev ikke gemt."
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:407
+#: src/Modules/Alerts/Rest/MeAlertsController.php:412
 msgid "Set up your overlay first."
 msgstr "Opret dit overlay først."
 
@@ -5620,6 +5620,7 @@ msgid "Secondary text"
 msgstr "Sekundær tekst"
 
 #: build/dashboard.js:7
+#: build/dashboard.js:10
 msgid "Main text"
 msgstr "Hovedtekst"
 
@@ -5694,7 +5695,6 @@ msgid "Layout saved."
 msgstr "Layoutet blev gemt."
 
 #: build/dashboard.js:8
-#: build/dashboard.js:10
 #: build/dashboard.js:30
 msgid "Saving…"
 msgstr "Gemmer …"
@@ -5714,6 +5714,162 @@ msgstr "Fortryd"
 #: build/dashboard.js:8
 msgid "Redo"
 msgstr "Gentag"
+
+#: build/dashboard.js:8
+msgid "Play animation"
+msgstr "Afspil animation"
+
+#: build/dashboard.js:8
+msgid "Slide up"
+msgstr "Glid op"
+
+#: build/dashboard.js:8
+msgid "Pop"
+msgstr "Pop"
+
+#: build/dashboard.js:8
+msgid "Typewriter"
+msgstr "Skrivemaskine"
+
+#: build/dashboard.js:8
+msgid "Split (from both sides)"
+msgstr "Split (fra begge sider)"
+
+#: build/dashboard.js:8
+msgid "Wave (letter by letter)"
+msgstr "Bølge (bogstav for bogstav)"
+
+#: build/dashboard.js:8
+msgid "Drop (letter by letter)"
+msgstr "Fald ned (bogstav for bogstav)"
+
+#: build/dashboard.js:8
+msgid "3D spin"
+msgstr "3D-spin"
+
+#: build/dashboard.js:8
+msgid "3D roll"
+msgstr "3D-rul"
+
+#: build/dashboard.js:8
+msgid "Blur in"
+msgstr "Sløret ind"
+
+#: build/dashboard.js:8
+msgid "Wipe"
+msgstr "Tør over"
+
+#: build/dashboard.js:8
+msgid "Shadow paint"
+msgstr "Skyggemaling"
+
+#: build/dashboard.js:8
+msgid "Fade"
+msgstr "Fade"
+
+#: build/dashboard.js:8
+msgid "Neon glow"
+msgstr "Neonglød"
+
+#: build/dashboard.js:8
+msgid "Glow pulse"
+msgstr "Glødpuls"
+
+#: build/dashboard.js:8
+msgid "Heartbeat"
+msgstr "Hjerteslag"
+
+#: build/dashboard.js:8
+msgid "Glitch"
+msgstr "Glitch"
+
+#: build/dashboard.js:8
+msgid "Dancing shadow"
+msgstr "Dansende skygge"
+
+#: build/dashboard.js:8
+msgid "Melting"
+msgstr "Smeltende"
+
+#: build/dashboard.js:8
+msgid "Wave"
+msgstr "Bølge"
+
+#: build/dashboard.js:8
+msgid "3D float"
+msgstr "3D-svæv"
+
+#: build/dashboard.js:8
+msgid "Depth pulse"
+msgstr "Dybdepuls"
+
+#: build/dashboard.js:8
+msgid "Breathe (needs a variable font)"
+msgstr "Ånde (kræver en variabel font)"
+
+#: build/dashboard.js:8
+msgid "No effect"
+msgstr "Ingen effekt"
+
+#: build/dashboard.js:8
+msgid "Slide down"
+msgstr "Glid ned"
+
+#: build/dashboard.js:8
+msgid "Typewriter (delete)"
+msgstr "Skrivemaskine (slet)"
+
+#: build/dashboard.js:8
+msgid "Split (to both sides)"
+msgstr "Split (til begge sider)"
+
+#: build/dashboard.js:8
+msgid "Blur out"
+msgstr "Sløret ud"
+
+#: build/dashboard.js:8
+msgid "Slow"
+msgstr "Langsom"
+
+#: build/dashboard.js:8
+msgid "Fast"
+msgstr "Hurtig"
+
+#: build/dashboard.js:8
+msgid "Normal"
+msgstr "Normal"
+
+#: build/dashboard.js:8
+msgid "Thanks for the merch!"
+msgstr "Tak for merchen!"
+
+#: build/dashboard.js:8
+msgid "Pause example"
+msgstr "Sæt eksempel på pause"
+
+#: build/dashboard.js:8
+msgid "Play example"
+msgstr "Afspil eksempel"
+
+#: build/dashboard.js:8
+msgid "In"
+msgstr "Ind"
+
+#: build/dashboard.js:8
+msgid "Effect while shown"
+msgstr "Effekt mens den vises"
+
+#: build/dashboard.js:8
+msgid "Out"
+msgstr "Ud"
+
+#: build/dashboard.js:8
+msgid "Speed"
+msgstr "Hastighed"
+
+#: build/dashboard.js:8
+msgid "Effect colour"
+msgstr "Effektfarve"
 
 #: build/dashboard.js:8
 msgid "Shrink the text to fit the box"
@@ -5738,6 +5894,10 @@ msgstr "Højre"
 #: build/dashboard.js:8
 msgid "Center"
 msgstr "Midten"
+
+#: build/dashboard.js:8
+msgid "Save overlay settings"
+msgstr "Gem overlayindstillinger"
 
 #. translators: 1: minimum, 2: maximum.
 #: build/dashboard.js:9
@@ -5853,6 +6013,14 @@ msgid "The size of the product image that is loaded. The box size is set in the 
 msgstr "Størrelsen på det produktbillede, der hentes. Boksens størrelse sættes i designeren."
 
 #: build/dashboard.js:10
+msgid "Animations"
+msgstr "Animationer"
+
+#: build/dashboard.js:10
+msgid "How each text comes in, moves while it is shown and goes out. The animation time below sets how long the in- and out-animations take. Press \"Play animation\" in the designer to see it."
+msgstr "Hvordan hver tekst kommer ind, bevæger sig mens den vises og forsvinder. Animationstiden nedenfor styrer, hvor længe ind- og ud-animationerne varer. Tryk \"Afspil animation\" i designeren for at se den."
+
+#: build/dashboard.js:10
 msgid "Timing"
 msgstr "Timing"
 
@@ -5871,10 +6039,6 @@ msgstr "Visningstid (ms)"
 #: build/dashboard.js:10
 msgid "Animation time (ms)"
 msgstr "Animationstid (ms)"
-
-#: build/dashboard.js:10
-msgid "Save overlay settings"
-msgstr "Gem overlayindstillinger"
 
 #: build/dashboard.js:10
 msgid "Your stream overlay"

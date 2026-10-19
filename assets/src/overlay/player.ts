@@ -2,8 +2,12 @@
  * Shows alerts one after the other (ADR-065 pkt. 3), as MerchAlert does:
  * fade in, stay for the display time (which includes the fade-in), fade out
  * for the animation time, then the next alert. The alert's sound starts
- * with the fade-in. Texts are inserted as text, never as HTML.
+ * with the fade-in. Texts are inserted as text, never as HTML. With text
+ * animations (step 25.6.9), the texts animate in and out instead of fading,
+ * and the next alert waits for the out-animation.
  */
+import { leaveText, renderText, resetText } from './animations';
+import type { TextAnimation } from './animations';
 import type { OverlayAlert } from './feed';
 
 export interface OverlayElements {
@@ -17,6 +21,11 @@ export interface Timing {
 	animDuration: number;
 	/** Whether an alert with a sound is shown as long as the sound plays. */
 	displayFromSound?: boolean;
+	/** Text animations of the main and the secondary text. */
+	animations?: {
+		readonly main: TextAnimation;
+		readonly secondary: TextAnimation;
+	};
 }
 
 /** Shortest display time when it comes from a sound, in milliseconds. */
@@ -33,6 +42,9 @@ export class AlertPlayer {
 	private readonly queue: OverlayAlert[] = [];
 
 	private playing = false;
+
+	/** How long the current alert's out-animation takes (ms). */
+	private outTime = 0;
 
 	constructor(
 		private readonly elements: OverlayElements,
@@ -140,15 +152,19 @@ export class AlertPlayer {
 		this.schedule( () => {
 			for ( const element of animated ) {
 				element.classList.replace( VISIBLE, HIDING );
+				leaveText( element );
 			}
 
-			this.schedule( () => {
-				for ( const element of animated ) {
-					element.classList.replace( HIDING, HIDDEN );
-				}
+			this.schedule(
+				() => {
+					for ( const element of animated ) {
+						element.classList.replace( HIDING, HIDDEN );
+					}
 
-				this.finish();
-			}, this.timing.animDuration );
+					this.finish();
+				},
+				Math.max( this.timing.animDuration, this.outTime )
+			);
 		}, delay );
 	}
 
@@ -165,8 +181,30 @@ export class AlertPlayer {
 			image.append( img );
 		}
 
-		text.textContent = alert.text;
-		secondary.textContent = alert.secondary;
+		this.outTime = 0;
+
+		if ( this.timing.animations === undefined ) {
+			text.textContent = alert.text;
+			secondary.textContent = alert.secondary;
+		} else {
+			const duration = this.timing.animDuration;
+
+			this.outTime = Math.max(
+				renderText(
+					text,
+					alert.text,
+					this.timing.animations.main,
+					duration
+				).outTotal,
+				renderText(
+					secondary,
+					alert.secondary,
+					this.timing.animations.secondary,
+					duration
+				).outTotal
+			);
+		}
+
 		this.fit( text );
 		this.fit( secondary );
 		this.arrange( this.elements );
@@ -174,6 +212,8 @@ export class AlertPlayer {
 
 	private finish(): void {
 		this.elements.image.replaceChildren();
+		resetText( this.elements.text );
+		resetText( this.elements.secondary );
 		this.elements.text.textContent = '';
 		this.elements.secondary.textContent = '';
 		this.playing = false;

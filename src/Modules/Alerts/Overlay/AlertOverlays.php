@@ -154,6 +154,11 @@ final class AlertOverlays {
 			$values['layout'] = $input['layout'];
 		}
 
+		// The text animations of both texts (step 25.6.9), normalized by OverlaySettings.
+		if ( is_array( $input['animations'] ?? null ) ) {
+			$values['animations'] = $input['animations'];
+		}
+
 		if ( array_key_exists( 'show_secondary', $input ) ) {
 			$values['layout']['elements']['secondary_text']['visible'] = true === $input['show_secondary'];
 		}
