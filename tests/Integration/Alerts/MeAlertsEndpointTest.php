@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
@@ -64,8 +65,9 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		$this->posts    = new ProductPosts( $this->wpdb );
 		$this->overlays = new AlertOverlayRepository( $this->wpdb );
 		$this->feed     = new OverlayFeed( $this->overlays, new AlertEventRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue() );
-		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0 );
-		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ) );
+		$fonts          = new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): mixed => null );
+		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0, $fonts );
+		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ), $fonts );
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();
 		};
@@ -79,6 +81,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 			remove_action( 'rest_api_init', $this->register );
 		}
 
+		delete_option( AlertFonts::APPROVED_OPTION );
 		$this->posts->remove_all();
 		parent::tearDown();
 	}
@@ -118,8 +121,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 					'font_size'      => 999,
 					'text_color'     => '#ABC',
 					'show_secondary' => true,
-					'font_family'    => 'Roboto',
-					'layout'         => array( 'elements' => array() ),
+					'image_url'      => 'https://evil.example/x.png',
 				)
 			)
 		);
@@ -131,11 +133,91 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 		$stored = $this->overlays->find_for_creator( $creator )?->settings->to_array();
 		self::assertIsArray( $stored );
-		self::assertSame( 'inherit', $stored['font_family'], 'The font is not a form field yet.' );
+		self::assertSame( 'inherit', $stored['font_family'], 'The font is untouched.' );
 		self::assertSame( 40, $stored['layout']['elements']['product_image']['x'], 'The layout is untouched.' );
+		self::assertTrue( $stored['layout']['elements']['secondary_text']['visible'] );
+		self::assertArrayNotHasKey( 'image_url', $stored );
 
 		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'font_size' => array( 1 ) ) )->get_status() );
 		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'show_secondary' => 'yes' ) )->get_status() );
+	}
+
+	public function test_only_approved_fonts_are_saved_and_a_removed_font_is_flagged(): void {
+		$creator = $this->creator( 'nova' );
+		update_option(
+			AlertFonts::APPROVED_OPTION,
+			array(
+				array(
+					'family'   => 'Roboto',
+					'category' => 'sans-serif',
+					'weights'  => array( 400, 700 ),
+				),
+			),
+			false
+		);
+		$created = $this->data( $this->call( 'POST', self::ROUTE ) );
+		self::assertSame(
+			array(
+				array(
+					'family' => 'Roboto',
+					'url'    => 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap',
+				),
+			),
+			$created['fonts']
+		);
+		self::assertSame( 'inherit', $created['overlay']['settings']['font_family'] );
+		self::assertTrue( $created['overlay']['font_approved'] );
+
+		$refused = $this->call( 'PATCH', self::ROUTE, array( 'font_family' => 'Lobster' ) );
+		self::assertSame( 400, $refused->get_status() );
+		self::assertSame( array( 'font_family' => 'not_approved' ), $refused->get_data()['data']['fields'] ?? null );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'font_family' => 7 ) )->get_status() );
+
+		$saved = $this->data( $this->call( 'PATCH', self::ROUTE, array( 'font_family' => 'Roboto' ) ) );
+		self::assertSame( 'Roboto', $saved['overlay']['settings']['font_family'] );
+		self::assertTrue( $saved['overlay']['font_approved'] );
+
+		delete_option( AlertFonts::APPROVED_OPTION );
+		$after = $this->data( $this->call( 'GET', self::ROUTE ) );
+		self::assertSame( array(), $after['fonts'] );
+		self::assertSame( 'Roboto', $after['overlay']['settings']['font_family'], 'The choice is kept for when the font comes back.' );
+		self::assertFalse( $after['overlay']['font_approved'] );
+
+		self::assertSame( 'inherit', $this->data( $this->call( 'PATCH', self::ROUTE, array( 'font_family' => 'inherit' ) ) )['overlay']['settings']['font_family'] );
+		self::assertNotNull( $this->overlays->find_for_creator( $creator ) );
+	}
+
+	public function test_the_designer_layout_is_saved_normalized(): void {
+		$creator = $this->creator( 'nova' );
+		$this->call( 'POST', self::ROUTE );
+		$layout = $this->data( $this->call( 'GET', self::ROUTE ) )['overlay']['layout'];
+		self::assertSame( array( 'product_image', 'main_text', 'secondary_text' ), array_keys( $layout['elements'] ) );
+
+		$layout['elements']['main_text']['x']      = 300;
+		$layout['elements']['main_text']['w']      = 99999;
+		$layout['elements']['product_image']['x']  = 'evil';
+		$layout['elements']['secondary_text']['h'] = 60;
+		$layout['canvas']                          = array(
+			'snap_grid' => true,
+			'grid_size' => 20,
+		);
+		$layout['elements']['extra']               = array( 'x' => 1 );
+
+		$saved = $this->data( $this->call( 'PATCH', self::ROUTE, array( 'layout' => $layout ) ) )['overlay']['layout'];
+		self::assertSame( 300, $saved['elements']['main_text']['x'] );
+		self::assertSame( 3840, $saved['elements']['main_text']['w'], 'Clamped.' );
+		self::assertSame( 40, $saved['elements']['product_image']['x'], 'Invalid values fall back to the default.' );
+		self::assertSame( 60, $saved['elements']['secondary_text']['h'] );
+		self::assertSame(
+			array(
+				'snap_grid' => true,
+				'grid_size' => 20,
+			),
+			$saved['canvas']
+		);
+		self::assertArrayNotHasKey( 'extra', $saved['elements'] );
+		self::assertSame( $saved, $this->overlays->find_for_creator( $creator )?->settings->to_array()['layout'] );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'layout' => 'big' ) )->get_status() );
 	}
 
 	public function test_a_new_url_kills_the_old_one_at_once(): void {

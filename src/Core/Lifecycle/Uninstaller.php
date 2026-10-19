@@ -17,6 +17,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
 use WP_User;
 use wpdb;
@@ -172,6 +173,9 @@ final class Uninstaller {
 		delete_option( Migrator::VERSION_OPTION );
 		delete_option( Migrator::LOCK_OPTION );
 		delete_option( RoleManager::VERSION_OPTION );
+		delete_option( AlertFonts::KEY_OPTION );
+		delete_option( AlertFonts::APPROVED_OPTION );
+		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );
 		delete_option( Settings::OPTION );
 

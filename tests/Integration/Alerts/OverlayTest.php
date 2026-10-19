@@ -11,9 +11,12 @@ namespace MerchBoard\Tests\Integration\Alerts;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
 use MerchBoard\Modules\Alerts\Overlay\OverlayAssets;
@@ -205,6 +208,41 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertSame( 'no-referrer', $headers['Referrer-Policy'] );
 	}
 
+	public function test_only_an_approved_font_is_loaded_from_google(): void {
+		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
+		$id      = $this->overlay( $creator->id, array( 'font_family' => 'Open Sans' ) );
+		$fonts   = new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): mixed => null );
+		update_option(
+			AlertFonts::APPROVED_OPTION,
+			array(
+				array(
+					'family'   => 'Open Sans',
+					'category' => 'sans-serif',
+					'weights'  => array( 400, 700 ),
+				),
+			),
+			false
+		);
+
+		try {
+			$html = (string) $this->page( $fonts )->render( $id, 'nonce123' );
+			self::assertStringContainsString( "href='https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&#038;display=swap'", $html );
+			self::assertStringContainsString( '--merchboard-font-family:"Open Sans", sans-serif;', $html );
+
+			delete_option( AlertFonts::APPROVED_OPTION );
+			$html = (string) $this->page( $fonts )->render( $id, 'nonce123' );
+			self::assertStringNotContainsString( 'fonts.googleapis.com', $html, 'A removed font is never loaded.' );
+			self::assertStringContainsString( '--merchboard-font-family:inherit;', $html );
+		} finally {
+			delete_option( AlertFonts::APPROVED_OPTION );
+		}
+
+		$csp = OverlayPage::security_headers( 'nonce123' )['Content-Security-Policy'];
+		self::assertStringContainsString( "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;", $csp );
+		self::assertStringContainsString( "font-src 'self' https://fonts.gstatic.com;", $csp );
+		self::assertStringContainsString( "connect-src 'self';", $csp, 'Nothing else reaches Google.' );
+	}
+
 	public function test_overlay_urls_and_the_legacy_rule(): void {
 		$id = OverlayId::generate();
 
@@ -257,11 +295,13 @@ final class OverlayTest extends IntegrationTestCase {
 
 	/**
 	 * The page with the real bundle location.
+	 *
+	 * @param AlertFonts|null $fonts Approved fonts.
 	 */
-	private function page(): OverlayPage {
+	private function page( ?AlertFonts $fonts = null ): OverlayPage {
 		$root = dirname( __DIR__, 3 ) . '/';
 
-		return new OverlayPage( new OverlayRoute( true ), $this->feed(), new OverlayAssets( $root, plugin_dir_url( $root . 'merchboard.php' ), new RecordingLogger() ), new RecordingLogger() );
+		return new OverlayPage( new OverlayRoute( true ), $this->feed(), new OverlayAssets( $root, plugin_dir_url( $root . 'merchboard.php' ), new RecordingLogger() ), new RecordingLogger(), $fonts );
 	}
 
 	/**

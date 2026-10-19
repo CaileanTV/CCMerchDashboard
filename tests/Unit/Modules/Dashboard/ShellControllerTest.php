@@ -538,6 +538,9 @@ final class ShellControllerTest extends TestCase {
 		self::assertStringContainsString( "frame-ancestors 'self'", $app );
 		self::assertStringNotContainsString( 'unsafe-eval', $app );
 		self::assertStringNotContainsString( "script-src 'self' 'unsafe-inline'", $app );
+		self::assertStringContainsString( 'https://fonts.googleapis.com', $app, 'Approved alert fonts (ADR-067).' );
+		self::assertStringContainsString( "font-src 'self' https://fonts.gstatic.com", $app );
+		self::assertStringNotContainsString( "connect-src 'self' https", $app, 'Scripts never reach Google.' );
 	}
 
 	public function test_unknown_templates_are_refused(): void {

@@ -19,6 +19,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo); ✅ fase 25, trin 25.2: "Alerts" (kill switch for købs-alerts, kun med WooCommerce, ADR-065). Tabs General · Access · Advanced kommer, når de får indhold
 ├── Payouts                    ✅ fase 23, trin 23.6 (WooCommerce, ADR-055/056/058): kø og historik for creatorernes payout-anmodninger, afvisning og registrering af manuel overførsel; kræver merchboard_manage_payouts; fulde bank-/PayPal-oplysninger kræver desuden merchboard_view_payout_details
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
+├── Alerts                     ✅ fase 25, trin 25.5 (WooCommerce, ADR-065/067): fanen "Fonts" (Google Fonts API-nøgle, katalog og godkendte fonte); kræver merchboard_manage_alerts. Fanerne ordrelog, globalt overlay, chatbot og import følger i 25.8–25.10
 ├── Order history              ✅ fase 22 (WooCommerce, ADR-051/052): ordrehistorik for sales ledgeren pr. ordre; kræver merchboard_manage_creators; sletning af en testordres historik kræver merchboard_delete_order_history
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
@@ -155,6 +156,14 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 - Én afkrydsning, "Record purchase alerts for creators", slået fra som standard, også efter en opdatering. Status vises som "Off", "On" eller "Switched on, but paused while MerchAlert is active".
 - Er MerchAlert aktivt (konstanten `CCMERCH_ALERT_VERSION` er defineret), vises en advarsel: der sendes ingen alerts, før MerchAlert er deaktiveret, og MerchAlert må ikke slettes, fordi dets data skal kunne importeres (trin 25.10).
 - Egen formular og nonce (`merchboard_save_alerts_settings`); capability før nonce; notices via `merchboard_alerts_result`. `AlertSettings` tjekker capability igen og skriver `settings_updated` (`setting` = `alerts_enabled`) i samme transaktion som option'en; en uændret værdi skriver intet.
+
+**Merch Dashboard → Alerts, fanen "Fonts"** (✅ fase 25, trin 25.5, ADR-067; ikke runtime-verificeret):
+
+- Undermenuen "Alerts" (`merchboard-alerts`, `admin_menu`-prioritet 27, mellem "Recalculations" og "Audit log") tilføjes af Alerts-modulet og kræver `merchboard_manage_alerts`.
+- **Google Fonts API-nøgle:** gemmes (password-felt) eller fjernes. Nøglen vises aldrig igen, kun om der er en. Formatet tjekkes (20–64 tegn: bogstaver, tal, `_` og `-`).
+- **Katalog:** "Fetch the catalogue" henter Google Fonts-kataloget (kun med en gemt nøgle; populæreste først) og gemmer det i 30 dage. Søgning viser højst 50 familier med kategori og knappen "Approve".
+- **Godkendte fonte:** liste med "Remove". Højst 100. Kun familier fra kataloget kan godkendes. En fjernet font indlæses ikke længere; overlays, der brugte den, viser standardfonten.
+- Handlinger via `admin-post.php` (`merchboard_alert_fonts_key`, `merchboard_alert_fonts_sync`, `merchboard_alert_font_approve`, `merchboard_alert_font_remove`): capability før nonce, nonce pr. handling og (for godkend og fjern) pr. fontfamilie, Post/Redirect/Get med whitelistet resultatkode (`merchboard_alerts_admin_result`). `AlertFonts` tjekker capability igen. Audit: "Google Fonts API key changed" (kun om nøglen blev fjernet, aldrig selve nøglen), "Google Fonts catalogue fetched" (antal familier), "Alert font approved" og "Alert font removed" (familien).
 
 **Planlagte settings** (når de får indhold):
 

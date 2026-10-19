@@ -7,14 +7,20 @@ import { request } from './client';
 import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
 import {
+	BOX_LIMITS,
 	FONT_WEIGHTS,
+	LAYOUT_ELEMENTS,
 	NUMBER_FIELDS,
 	TEMPLATE_MAX_LENGTH,
 	TEXT_ALIGNS,
 } from '../types/alerts';
 import type {
+	AlertFontOption,
 	AlertsOverlayState,
 	FontWeight,
+	LayoutBox,
+	LayoutElement,
+	OverlayLayout,
 	OverlaySettings,
 	TextAlign,
 } from '../types/alerts';
@@ -22,6 +28,118 @@ import type {
 const PATH = '/merchboard/v1/me/alerts/overlay';
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/;
+
+/** A plain family name, as the server allows (ADR-067). */
+const FONT_FAMILY = /^[A-Za-z0-9][A-Za-z0-9 -]{0,63}$/;
+
+/** Every font stylesheet comes from Google Fonts. */
+const FONT_URL =
+	/^https:\/\/fonts\.googleapis\.com\/css2\?family=[A-Za-z0-9+-]+:wght@[0-9;]+&display=swap$/;
+
+function isFontFamily( value: unknown ): value is string {
+	return (
+		value === 'inherit' ||
+		( typeof value === 'string' && FONT_FAMILY.test( value ) )
+	);
+}
+
+function isIntegerIn(
+	value: unknown,
+	range: { readonly min: number; readonly max: number }
+): value is number {
+	return (
+		typeof value === 'number' &&
+		Number.isInteger( value ) &&
+		value >= range.min &&
+		value <= range.max
+	);
+}
+
+function parseBox( value: unknown ): LayoutBox | null {
+	if (
+		! isRecord( value ) ||
+		! isIntegerIn( value.x, BOX_LIMITS.x ) ||
+		! isIntegerIn( value.y, BOX_LIMITS.y ) ||
+		! isIntegerIn( value.w, BOX_LIMITS.w ) ||
+		! isIntegerIn( value.h, BOX_LIMITS.h ) ||
+		! isIntegerIn( value.border_radius, BOX_LIMITS.border_radius ) ||
+		typeof value.visible !== 'boolean' ||
+		typeof value.lock_aspect !== 'boolean'
+	) {
+		return null;
+	}
+
+	return {
+		x: value.x,
+		y: value.y,
+		w: value.w,
+		h: value.h,
+		visible: value.visible,
+		lock_aspect: value.lock_aspect,
+		border_radius: value.border_radius,
+	};
+}
+
+/**
+ * Validates the overlay layout of an answer.
+ *
+ * @param value Candidate.
+ */
+export function parseLayout( value: unknown ): OverlayLayout | null {
+	if (
+		! isRecord( value ) ||
+		! isRecord( value.elements ) ||
+		! isRecord( value.canvas ) ||
+		typeof value.canvas.snap_grid !== 'boolean' ||
+		! isIntegerIn( value.canvas.grid_size, { min: 1, max: 100 } )
+	) {
+		return null;
+	}
+
+	const elements: Partial< Record< LayoutElement, LayoutBox > > = {};
+
+	for ( const element of LAYOUT_ELEMENTS ) {
+		const box = parseBox( value.elements[ element ] );
+
+		if ( box === null ) {
+			return null;
+		}
+
+		elements[ element ] = box;
+	}
+
+	return {
+		elements: elements as Record< LayoutElement, LayoutBox >,
+		canvas: {
+			snap_grid: value.canvas.snap_grid,
+			grid_size: value.canvas.grid_size,
+		},
+	};
+}
+
+function parseFonts( value: unknown ): AlertFontOption[] | null {
+	if ( ! Array.isArray( value ) ) {
+		return null;
+	}
+
+	const fonts: AlertFontOption[] = [];
+
+	for ( const item of value as unknown[] ) {
+		if (
+			! isRecord( item ) ||
+			typeof item.family !== 'string' ||
+			! FONT_FAMILY.test( item.family ) ||
+			typeof item.url !== 'string' ||
+			! FONT_URL.test( item.url )
+		) {
+			return null;
+		}
+
+		fonts.push( { family: item.family, url: item.url } );
+	}
+
+	return fonts;
+}
 
 function isFontWeight( value: unknown ): value is FontWeight {
 	return (
@@ -73,7 +191,8 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		! HEX_COLOR.test( value.bg_color ) ||
 		typeof value.text_shadow !== 'string' ||
 		value.text_shadow.length > 100 ||
-		typeof value.show_secondary !== 'boolean'
+		typeof value.show_secondary !== 'boolean' ||
+		! isFontFamily( value.font_family )
 	) {
 		return null;
 	}
@@ -94,11 +213,13 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		anim_duration: value.anim_duration as number,
 		display_duration: value.display_duration as number,
 		show_secondary: value.show_secondary,
+		font_family: value.font_family,
 	};
 }
 
 /**
- * Validates `{ overlay: { url, settings } | null, alerts_enabled, merchalert_active }`.
+ * Validates `{ overlay: { url, settings, layout, font_approved } | null,
+ * alerts_enabled, merchalert_active, fonts }`.
  *
  * @param body Response body.
  */
@@ -112,9 +233,16 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 		return null;
 	}
 
+	const fonts = parseFonts( body.fonts );
+
+	if ( fonts === null ) {
+		return null;
+	}
+
 	const state = {
 		alertsEnabled: body.alerts_enabled,
 		merchalertActive: body.merchalert_active,
+		fonts,
 	};
 
 	if ( body.overlay === null ) {
@@ -127,10 +255,15 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 
 	const url = readSameOriginUrl( body.overlay.url, window.location.origin );
 	const settings = parseOverlaySettings( body.overlay.settings );
+	const layout = parseLayout( body.overlay.layout );
+	const fontApproved = body.overlay.font_approved;
 
-	return url === null || settings === null
+	return url === null ||
+		settings === null ||
+		layout === null ||
+		typeof fontApproved !== 'boolean'
 		? null
-		: { overlay: { url, settings }, ...state };
+		: { overlay: { url, settings, layout, fontApproved }, ...state };
 }
 
 /**
@@ -166,15 +299,15 @@ export function createAlertsOverlay(): Promise<
 }
 
 /**
- * Saves the overlay settings.
+ * Saves overlay settings (the form's fields, the font or the layout).
  *
- * @param settings Settings.
+ * @param changes Fields to save.
  */
 export function updateAlertsOverlay(
-	settings: OverlaySettings
+	changes: Partial< OverlaySettings > | { readonly layout: OverlayLayout }
 ): Promise< ApiResult< AlertsOverlayState > > {
 	return request(
-		{ path: PATH, method: 'PATCH', data: { ...settings } },
+		{ path: PATH, method: 'PATCH', data: { ...changes } },
 		parseAlertsOverlay
 	);
 }

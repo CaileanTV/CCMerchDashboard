@@ -17,6 +17,8 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use InvalidArgumentException;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 
 defined( 'ABSPATH' ) || exit;
@@ -27,10 +29,11 @@ defined( 'ABSPATH' ) || exit;
  * a creator id from a client.
  *
  * - **Set up** is explicit and idempotent, with an audit record.
- * - **Settings:** only the fields of the overlay form change (EDITABLE and
- *   the visibility of the secondary text); the font, the layout and the
- *   sounds keep their values until their own steps (25.5, 25.6). Everything
- *   is normalized by OverlaySettings.
+ * - **Settings:** only the fields of the overlay form (EDITABLE and the
+ *   visibility of the secondary text), the font (an approved font or the
+ *   default, ADR-067) and the designer's layout change; the sounds keep their
+ *   values until their own step (25.6). Everything is normalized by
+ *   OverlaySettings.
  * - **New id:** the old OBS URL stops working at once; audited without ids.
  * - **Test alert:** a random published product of the creator, shown by
  *   the overlay within a second (OverlayTestQueue); never stored as an
@@ -65,6 +68,7 @@ final class AlertOverlays {
 	 * @param AuditTrail               $audit       Audit trail.
 	 * @param Transaction              $transaction Database transaction.
 	 * @param (Closure(int): int)|null $image_id    Featured image lookup; defaults to get_post_thumbnail_id().
+	 * @param AlertFonts|null          $fonts       Approved fonts; null allows only the default font.
 	 */
 	public function __construct(
 		private AlertOverlayRepository $overlays,
@@ -73,7 +77,8 @@ final class AlertOverlays {
 		private ProductStore $products,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		?Closure $image_id = null
+		?Closure $image_id = null,
+		private ?AlertFonts $fonts = null
 	) {
 		$this->image_id = $image_id ?? static function ( int $product_id ): int {
 			$id = get_post_thumbnail_id( $product_id );
@@ -122,6 +127,7 @@ final class AlertOverlays {
 	 * @param int          $creator_id Creator.
 	 * @param array<mixed> $input      Submitted fields; unknown keys are ignored.
 	 * @return AlertOverlay|null The changed overlay; null before it is set up.
+	 * @throws InvalidArgumentException When the font is not approved (message: the field).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function update_settings( int $creator_id, array $input ): ?AlertOverlay {
@@ -139,6 +145,15 @@ final class AlertOverlays {
 			}
 		}
 
+		if ( array_key_exists( 'font_family', $input ) ) {
+			$values['font_family'] = $this->approved_family( $input['font_family'] );
+		}
+
+		// The designer saves the whole layout; the form only the visibility of the secondary text.
+		if ( is_array( $input['layout'] ?? null ) ) {
+			$values['layout'] = $input['layout'];
+		}
+
 		if ( array_key_exists( 'show_secondary', $input ) ) {
 			$values['layout']['elements']['secondary_text']['visible'] = true === $input['show_secondary'];
 		}
@@ -146,6 +161,20 @@ final class AlertOverlays {
 		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
 
 		return $this->overlays->find_for_creator( $creator_id );
+	}
+
+	/**
+	 * The submitted font: the default ('inherit') or an approved family.
+	 *
+	 * @param mixed $family Submitted family.
+	 * @throws InvalidArgumentException When the font is not approved (message: the field).
+	 */
+	private function approved_family( mixed $family ): string {
+		if ( 'inherit' === $family || ( is_string( $family ) && null !== $this->fonts?->find( $family ) ) ) {
+			return (string) $family;
+		}
+
+		throw new InvalidArgumentException( 'font_family' );
 	}
 
 	/**

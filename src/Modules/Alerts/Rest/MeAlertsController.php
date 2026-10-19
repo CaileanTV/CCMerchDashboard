@@ -13,6 +13,9 @@ use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
+use MerchBoard\Modules\Alerts\Fonts\AlertFont;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use InvalidArgumentException;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
@@ -51,8 +54,9 @@ final class MeAlertsController extends RestController {
 	 * @param AlertOverlays      $overlays     Overlay service.
 	 * @param AlertsAvailability $availability Kill switch and MerchAlert guard.
 	 * @param Logger             $logger       Technical log.
+	 * @param AlertFonts|null    $fonts        Approved fonts; null for none.
 	 */
-	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger ) {
+	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -140,7 +144,11 @@ final class MeAlertsController extends RestController {
 					return self::error( 'merchboard_invalid_request', __( 'The overlay settings are invalid.', 'merchboard' ), 400 );
 				}
 
-				$overlay = $this->overlays->update_settings( $creator_id, $input );
+				try {
+					$overlay = $this->overlays->update_settings( $creator_id, $input );
+				} catch ( InvalidArgumentException ) {
+					return self::error( 'merchboard_invalid_request', __( 'The font is not available.', 'merchboard' ), 400, array( 'fields' => array( 'font_family' => 'not_approved' ) ) );
+				}
 
 				return null === $overlay ? self::not_set_up() : $this->answer( $overlay );
 			}
@@ -196,9 +204,18 @@ final class MeAlertsController extends RestController {
 	private function answer( ?AlertOverlay $overlay ): WP_REST_Response {
 		$response = new WP_REST_Response(
 			array(
-				'overlay'           => null === $overlay ? null : self::overlay( $overlay ),
+				'overlay'           => null === $overlay ? null : $this->overlay( $overlay ),
 				'alerts_enabled'    => $this->availability->enabled(),
 				'merchalert_active' => $this->availability->merchalert_active(),
+				'fonts'             => array_values(
+					array_map(
+						static fn( AlertFont $font ): array => array(
+							'family' => $font->family,
+							'url'    => $font->css_url(),
+						),
+						$this->fonts?->approved() ?? array()
+					)
+				),
 			),
 			200
 		);
@@ -211,9 +228,9 @@ final class MeAlertsController extends RestController {
 	 * An overlay as the dashboard shows it.
 	 *
 	 * @param AlertOverlay $overlay Overlay.
-	 * @return array{url: string, settings: array<string, mixed>}
+	 * @return array{url: string, settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>}
 	 */
-	private static function overlay( AlertOverlay $overlay ): array {
+	private function overlay( AlertOverlay $overlay ): array {
 		$values   = $overlay->settings->to_array();
 		$settings = array();
 
@@ -222,10 +239,14 @@ final class MeAlertsController extends RestController {
 		}
 
 		$settings['show_secondary'] = $values['layout']['elements']['secondary_text']['visible'];
+		$settings['font_family']    = $values['font_family'];
 
 		return array(
-			'url'      => OverlayRoute::url( $overlay->overlay_id ),
-			'settings' => $settings,
+			'url'           => OverlayRoute::url( $overlay->overlay_id ),
+			'settings'      => $settings,
+			// False when the saved font is no longer approved; the overlay then shows the default font.
+			'font_approved' => 'inherit' === $values['font_family'] || null !== $this->fonts?->find( $values['font_family'] ),
+			'layout'        => $values['layout'],
 		);
 	}
 
@@ -235,7 +256,7 @@ final class MeAlertsController extends RestController {
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
-	 * @return array<string, int|string|bool>|null
+	 * @return array<string, mixed>|null
 	 */
 	private static function input( WP_REST_Request $request ): ?array {
 		$body = (array) $request->get_json_params();
@@ -256,6 +277,22 @@ final class MeAlertsController extends RestController {
 			}
 
 			$input[ $key ] = $body[ $key ];
+		}
+
+		if ( array_key_exists( 'font_family', $body ) ) {
+			if ( ! is_string( $body['font_family'] ) ) {
+				return null;
+			}
+
+			$input['font_family'] = $body['font_family'];
+		}
+
+		if ( array_key_exists( 'layout', $body ) ) {
+			if ( ! is_array( $body['layout'] ) ) {
+				return null;
+			}
+
+			$input['layout'] = $body['layout'];
 		}
 
 		if ( array_key_exists( 'show_secondary', $body ) ) {

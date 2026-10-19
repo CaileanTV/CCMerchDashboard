@@ -16,7 +16,9 @@ import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 import type { AlertsOverlayState } from '../../types/alerts';
+import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
+import { useFontStylesheet } from './useFontStylesheet';
 
 function SetupCard( {
 	onCreated,
@@ -225,6 +227,11 @@ function AlertsContent( {
 
 	useEffect( () => setState( initial ), [ initial ] );
 
+	const family = state.overlay?.settings.font_family ?? 'inherit';
+	const font = state.fonts.find( ( option ) => option.family === family );
+
+	useFontStylesheet( font?.url ?? null );
+
 	return (
 		<>
 			<Notices state={ state } />
@@ -238,7 +245,21 @@ function AlertsContent( {
 						notify={ setToast }
 					/>
 					<OverlaySettingsForm
+						key={ `form-${ state.overlay.url }` }
 						settings={ state.overlay.settings }
+						fonts={ state.fonts }
+						fontApproved={ state.overlay.fontApproved }
+						onSaved={ setState }
+					/>
+					<OverlayDesigner
+						key={ `designer-${ state.overlay.url }` }
+						layout={ state.overlay.layout }
+						settings={ state.overlay.settings }
+						fontFamily={
+							font === undefined
+								? 'inherit'
+								: `"${ font.family }", sans-serif`
+						}
 						onSaved={ setState }
 					/>
 				</>

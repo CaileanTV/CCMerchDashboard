@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-19T08:56:17+00:00\n"
+"PO-Revision-Date: 2026-10-19T09:49:01+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -307,367 +307,383 @@ msgstr "Alert-overlay oprettet"
 msgid "Alert overlay URL replaced"
 msgstr "Alert-overlayets URL udskiftet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:211
+#: src/Modules/Admin/AuditLogFormatter.php:121
+msgid "Google Fonts API key changed"
+msgstr "Google Fonts API-nøgle ændret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:122
+msgid "Google Fonts catalogue fetched"
+msgstr "Google Fonts-katalog hentet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:123
+msgid "Alert font approved"
+msgstr "Alert-font godkendt"
+
+#: src/Modules/Admin/AuditLogFormatter.php:124
+msgid "Alert font removed"
+msgstr "Alert-font fjernet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:215
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:213
+#: src/Modules/Admin/AuditLogFormatter.php:217
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:216
+#: src/Modules/Admin/AuditLogFormatter.php:220
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:219
+#: src/Modules/Admin/AuditLogFormatter.php:223
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:222
+#: src/Modules/Admin/AuditLogFormatter.php:226
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:225
+#: src/Modules/Admin/AuditLogFormatter.php:229
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:228
+#: src/Modules/Admin/AuditLogFormatter.php:232
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:230
+#: src/Modules/Admin/AuditLogFormatter.php:234
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:233
+#: src/Modules/Admin/AuditLogFormatter.php:237
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:236
+#: src/Modules/Admin/AuditLogFormatter.php:240
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:237
+#: src/Modules/Admin/AuditLogFormatter.php:241
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:238
+#: src/Modules/Admin/AuditLogFormatter.php:242
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:239
+#: src/Modules/Admin/AuditLogFormatter.php:243
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:241
+#: src/Modules/Admin/AuditLogFormatter.php:245
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:245
+#: src/Modules/Admin/AuditLogFormatter.php:249
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:248
+#: src/Modules/Admin/AuditLogFormatter.php:252
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:254
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:254
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:253
+#: src/Modules/Admin/AuditLogFormatter.php:257
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:256
+#: src/Modules/Admin/AuditLogFormatter.php:260
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/Admin/AuditLogFormatter.php:263
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:262
+#: src/Modules/Admin/AuditLogFormatter.php:266
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:264
+#: src/Modules/Admin/AuditLogFormatter.php:268
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:267
+#: src/Modules/Admin/AuditLogFormatter.php:271
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:274
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:277
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:276
+#: src/Modules/Admin/AuditLogFormatter.php:280
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:278
+#: src/Modules/Admin/AuditLogFormatter.php:282
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:285
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:288
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:287
+#: src/Modules/Admin/AuditLogFormatter.php:291
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:289
+#: src/Modules/Admin/AuditLogFormatter.php:293
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:289
+#: src/Modules/Admin/AuditLogFormatter.php:293
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:292
+#: src/Modules/Admin/AuditLogFormatter.php:296
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:299
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:302
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:299
+#: src/Modules/Admin/AuditLogFormatter.php:303
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:302
+#: src/Modules/Admin/AuditLogFormatter.php:306
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:305
+#: src/Modules/Admin/AuditLogFormatter.php:309
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:308
+#: src/Modules/Admin/AuditLogFormatter.php:312
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:311
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:355
+#: src/Modules/Admin/AuditLogFormatter.php:359
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:357
+#: src/Modules/Admin/AuditLogFormatter.php:361
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:359
+#: src/Modules/Admin/AuditLogFormatter.php:363
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:372
+#: src/Modules/Admin/AuditLogFormatter.php:376
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:373
+#: src/Modules/Admin/AuditLogFormatter.php:377
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:374
+#: src/Modules/Admin/AuditLogFormatter.php:378
 #: build/dashboard.js:4
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:375
+#: src/Modules/Admin/AuditLogFormatter.php:379
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/Admin/AuditLogFormatter.php:380
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:381
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:378
+#: src/Modules/Admin/AuditLogFormatter.php:382
 msgid "Failed"
 msgstr "Fejlet"
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:388
-#: src/Modules/Admin/AuditLogFormatter.php:414
-#: src/Modules/Admin/AuditLogFormatter.php:473
+#: src/Modules/Admin/AuditLogFormatter.php:392
+#: src/Modules/Admin/AuditLogFormatter.php:418
+#: src/Modules/Admin/AuditLogFormatter.php:477
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:401
+#: src/Modules/Admin/AuditLogFormatter.php:405
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:10
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:402
+#: src/Modules/Admin/AuditLogFormatter.php:406
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:10
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:407
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:10
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:404
+#: src/Modules/Admin/AuditLogFormatter.php:408
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:10
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:432
+#: src/Modules/Admin/AuditLogFormatter.php:436
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:456
+#: src/Modules/Admin/AuditLogFormatter.php:460
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:457
+#: src/Modules/Admin/AuditLogFormatter.php:461
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:458
+#: src/Modules/Admin/AuditLogFormatter.php:462
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:459
+#: src/Modules/Admin/AuditLogFormatter.php:463
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:460
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:612
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:461
+#: src/Modules/Admin/AuditLogFormatter.php:465
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:462
-#: src/Modules/Admin/AuditLogFormatter.php:668
+#: src/Modules/Admin/AuditLogFormatter.php:466
+#: src/Modules/Admin/AuditLogFormatter.php:672
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:6
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:463
+#: src/Modules/Admin/AuditLogFormatter.php:467
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:492
+#: src/Modules/Admin/AuditLogFormatter.php:496
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:507
+#: src/Modules/Admin/AuditLogFormatter.php:511
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -676,7 +692,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:576
+#: src/Modules/Admin/AuditLogFormatter.php:580
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -685,87 +701,87 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:576
+#: src/Modules/Admin/AuditLogFormatter.php:580
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:586
+#: src/Modules/Admin/AuditLogFormatter.php:590
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:587
+#: src/Modules/Admin/AuditLogFormatter.php:591
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:588
+#: src/Modules/Admin/AuditLogFormatter.php:592
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:589
+#: src/Modules/Admin/AuditLogFormatter.php:593
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:590
+#: src/Modules/Admin/AuditLogFormatter.php:594
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:591
+#: src/Modules/Admin/AuditLogFormatter.php:595
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:592
+#: src/Modules/Admin/AuditLogFormatter.php:596
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:593
+#: src/Modules/Admin/AuditLogFormatter.php:597
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:594
+#: src/Modules/Admin/AuditLogFormatter.php:598
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:595
+#: src/Modules/Admin/AuditLogFormatter.php:599
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:596
+#: src/Modules/Admin/AuditLogFormatter.php:600
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:609
+#: src/Modules/Admin/AuditLogFormatter.php:613
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:621
+#: src/Modules/Admin/AuditLogFormatter.php:625
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:622
+#: src/Modules/Admin/AuditLogFormatter.php:626
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:634
+#: src/Modules/Admin/AuditLogFormatter.php:638
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:635
+#: src/Modules/Admin/AuditLogFormatter.php:639
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:636
+#: src/Modules/Admin/AuditLogFormatter.php:640
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:668
+#: src/Modules/Admin/AuditLogFormatter.php:672
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
@@ -774,15 +790,15 @@ msgstr "produkterne i én mapping"
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:687
+#: src/Modules/Admin/AuditLogFormatter.php:691
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:688
+#: src/Modules/Admin/AuditLogFormatter.php:692
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:689
+#: src/Modules/Admin/AuditLogFormatter.php:693
 msgid "social links"
 msgstr "sociale links"
 
@@ -1049,10 +1065,13 @@ msgstr "Bevares, når pluginet slettes"
 msgid "Settings"
 msgstr "Indstillinger"
 
+#: src/Modules/Alerts/Admin/AlertsAdminActions.php:84
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:87
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 
+#: src/Modules/Alerts/Admin/AlertsAdminActions.php:92
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:93
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:136
@@ -1071,6 +1090,175 @@ msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:55
+msgid "Merch Dashboard Alerts"
+msgstr "Merch Dashboard Alerts"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:56
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:74
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:44
+msgid "Alerts"
+msgstr "Alerts"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:90
+msgid "The Google Fonts API key was saved."
+msgstr "Google Fonts API-nøglen blev gemt."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:91
+msgid "The Google Fonts API key was removed."
+msgstr "Google Fonts API-nøglen blev fjernet."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:92
+msgid "The Google Fonts catalogue was fetched."
+msgstr "Google Fonts-kataloget blev hentet."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:93
+msgid "The font was approved. Creators can choose it now."
+msgstr "Fonten blev godkendt. Creators kan vælge den nu."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:94
+msgid "The font was removed. Overlays that used it show the default font."
+msgstr "Fonten blev fjernet. Overlays, der brugte den, viser standardfonten."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:95
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
+msgid "Nothing was changed."
+msgstr "Intet blev ændret."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:96
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
+#: src/Modules/Settings/Admin/SettingsPage.php:165
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
+msgid "You are not allowed to change these settings."
+msgstr "Du har ikke adgang til at ændre disse indstillinger."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:97
+msgid "Google did not accept the API key. Check the key and try again."
+msgstr "Google accepterede ikke API-nøglen. Kontrollér nøglen, og prøv igen."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:98
+msgid "Save a Google Fonts API key first."
+msgstr "Gem først en Google Fonts API-nøgle."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:99
+msgid "Google Fonts could not be reached. Try again later."
+msgstr "Google Fonts kunne ikke kontaktes. Prøv igen senere."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:100
+msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
+msgstr "Fonten findes ikke i kataloget, eller grænsen for godkendte fonte er nået."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:101
+msgid "A technical error occurred. Nothing was changed."
+msgstr "Der opstod en teknisk fejl. Intet blev ændret."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
+msgid "Fonts"
+msgstr "Fonte"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
+msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in OBS, which sends the viewer's IP address to Google (ADR-067)."
+msgstr "Creators kan bruge de godkendte fonte i deres alert-overlay. Fontene hentes fra Googles servere i creator-dashboardet og i OBS, hvilket sender seerens IP-adresse til Google (ADR-067)."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+msgid "Google Fonts API key"
+msgstr "Google Fonts API-nøgle"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+msgid "A key is saved. It is never shown again."
+msgstr "En nøgle er gemt. Den vises aldrig igen."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+msgid "No key is saved. The key is only needed to fetch the catalogue."
+msgstr "Der er ingen nøgle gemt. Nøglen skal kun bruges til at hente kataloget."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:144
+msgid "API key"
+msgstr "API-nøgle"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:146
+msgid "Save key"
+msgstr "Gem nøgle"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:149
+msgid "Remove key"
+msgstr "Fjern nøgle"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:161
+msgid "Approved fonts"
+msgstr "Godkendte fonte"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:164
+msgid "No fonts are approved. Creators can only use the default font."
+msgstr "Ingen fonte er godkendt. Creators kan kun bruge standardfonten."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:168
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:218
+#: build/dashboard.js:3
+msgid "Font"
+msgstr "Font"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:168
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:218
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
+msgid "Category"
+msgstr "Kategori"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:168
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:218
+#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
+#: build/dashboard.js:21
+msgid "Actions"
+msgstr "Handlinger"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:172
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
+msgid "Remove"
+msgstr "Fjern"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:185
+msgid "Google Fonts catalogue"
+msgstr "Google Fonts-katalog"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:189
+msgid "Fetch the catalogue again"
+msgstr "Hent kataloget igen"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:189
+msgid "Fetch the catalogue"
+msgstr "Hent kataloget"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:198
+msgid "Search fonts"
+msgstr "Søg efter fonte"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:200
+msgid "Search"
+msgstr "Søg"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:207
+msgid "No fonts match the search."
+msgstr "Ingen fonte matcher søgningen."
+
+#. translators: %d: number of fonts.
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:214
+#, php-format
+msgid "At most %d fonts, the most popular first."
+msgstr "Højst %d fonte, de mest populære først."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:224
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
+msgid "Approved"
+msgstr "Godkendt"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:226
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
+msgid "Approve"
+msgstr "Godkend"
+
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:51
 msgid "Purchase alerts are switched on."
 msgstr "Købs-alerts er slået til."
@@ -1083,20 +1271,9 @@ msgstr "Købs-alerts er slået fra. Der registreres ingen nye alerts."
 msgid "No changes were made to the alert settings."
 msgstr "Der blev ikke foretaget ændringer i indstillingerne for alerts."
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
-#: src/Modules/Settings/Admin/SettingsPage.php:165
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
-msgid "You are not allowed to change these settings."
-msgstr "Du har ikke adgang til at ændre disse indstillinger."
-
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:55
 msgid "A technical error occurred. The alert settings were not changed."
 msgstr "Der opstod en teknisk fejl. Indstillingerne for alerts blev ikke ændret."
-
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:74
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:44
-msgid "Alerts"
-msgstr "Alerts"
 
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:81
 msgid "MerchAlert is active on this site, so Merch Dashboard sends no alerts. Deactivate MerchAlert before you switch alerts on. Do not delete it: deleting MerchAlert deletes its data, which can still be imported."
@@ -1138,7 +1315,7 @@ msgstr "Slået til, men sat på pause, mens MerchAlert er aktivt."
 msgid "On. Alerts are recorded when orders are paid."
 msgstr "Slået til. Alerts registreres, når ordrer betales."
 
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:199
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:228
 msgid "Test product"
 msgstr "Testprodukt"
 
@@ -1150,11 +1327,15 @@ msgstr "For mange forespørgsler. Prøv igen senere."
 msgid "This overlay does not exist."
 msgstr "Dette overlay findes ikke."
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:140
+#: src/Modules/Alerts/Rest/MeAlertsController.php:144
 msgid "The overlay settings are invalid."
 msgstr "Overlayindstillingerne er ugyldige."
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:276
+#: src/Modules/Alerts/Rest/MeAlertsController.php:150
+msgid "The font is not available."
+msgstr "Fonten er ikke tilgængelig."
+
+#: src/Modules/Alerts/Rest/MeAlertsController.php:313
 msgid "Set up your overlay first."
 msgstr "Opret dit overlay først."
 
@@ -1875,10 +2056,6 @@ msgstr "%1$s Konverteret: %2$d. Ikke konverteret: %3$d."
 msgid "No product category is mapped to this creator."
 msgstr "Ingen produktkategori er mappet til denne creator."
 
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
-msgid "Category"
-msgstr "Kategori"
-
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:200
 msgid "ID"
 msgstr "ID"
@@ -1890,13 +2067,6 @@ msgstr "Mappet"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:203
 msgid "Published products directly in the category"
 msgstr "Udgivne produkter direkte i kategorien"
-
-#: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
-#: build/dashboard.js:21
-msgid "Actions"
-msgstr "Handlinger"
 
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:213
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:351
@@ -2593,10 +2763,6 @@ msgstr "Den gemte tilknytning er ugyldig. Tilknyt produktet igen (med \"Overtag\
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:208
 msgid "Managed by the product category: remove the product from the category, or keep the link as manual first to remove it here."
 msgstr "Styres af produktkategorien: fjern produktet fra kategorien, eller behold tilknytningen som manuel først for at kunne fjerne den her."
-
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
-msgid "Remove"
-msgstr "Fjern"
 
 #. translators: %s: comma-separated category names.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:257
@@ -3541,10 +3707,6 @@ msgid "Next step"
 msgstr "Næste trin"
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
-msgid "Approve"
-msgstr "Godkend"
-
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "I have reviewed the preview. Approving executes nothing."
 msgstr "Jeg har gennemgået forhåndsvisningen. Godkendelsen udfører intet."
 
@@ -3598,10 +3760,6 @@ msgstr "Note (valgfri, højst 500 tegn)"
 msgid "Creator #%d"
 msgstr "Creator #%d"
 
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
-msgid "Approved"
-msgstr "Godkendt"
-
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:492
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1016
 #: build/dashboard.js:8
@@ -3650,10 +3808,6 @@ msgstr "Manuel vurdering"
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:59
 msgid "Saved. Available payout amounts are calculated with the new value from now on."
 msgstr "Gemt. Disponible udbetalingsbeløb beregnes med den nye værdi fra nu af."
-
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
-msgid "Nothing was changed."
-msgstr "Intet blev ændret."
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:61
 msgid "You are not allowed to manage payouts."
@@ -5188,6 +5342,81 @@ msgid "Dismiss"
 msgstr "Luk"
 
 #: build/dashboard.js:1
+msgid "Product image"
+msgstr "Produktbillede"
+
+#: build/dashboard.js:1
+#: build/dashboard.js:3
+msgid "Secondary text"
+msgstr "Sekundær tekst"
+
+#: build/dashboard.js:1
+msgid "Main text"
+msgstr "Hovedtekst"
+
+#: build/dashboard.js:1
+msgid "Designer"
+msgstr "Designer"
+
+#: build/dashboard.js:1
+msgid "Drag the boxes to place them, and drag the lower right corner to resize them. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
+msgstr "Træk boksene for at placere dem, og træk i nederste højre hjørne for at ændre deres størrelse. Lærredet er din browser source på 1920 × 1080. Forhåndsvisningen bruger eksempelværdier."
+
+#: build/dashboard.js:1
+msgid "Left (px)"
+msgstr "Venstre (px)"
+
+#: build/dashboard.js:1
+msgid "Top (px)"
+msgstr "Top (px)"
+
+#: build/dashboard.js:1
+msgid "Width (px)"
+msgstr "Bredde (px)"
+
+#: build/dashboard.js:1
+msgid "Height (px)"
+msgstr "Højde (px)"
+
+#: build/dashboard.js:1
+msgid "Image corner radius (px)"
+msgstr "Billedets hjørneradius (px)"
+
+#: build/dashboard.js:1
+msgid "Show this element"
+msgstr "Vis dette element"
+
+#: build/dashboard.js:1
+msgid "Keep the aspect ratio"
+msgstr "Bevar billedformatet"
+
+#: build/dashboard.js:1
+msgid "Snap to grid"
+msgstr "Fastgør til gitter"
+
+#: build/dashboard.js:1
+msgid "Grid size (px)"
+msgstr "Gitterstørrelse (px)"
+
+#: build/dashboard.js:1
+msgid "Layout saved."
+msgstr "Layoutet blev gemt."
+
+#: build/dashboard.js:1
+#: build/dashboard.js:3
+#: build/dashboard.js:23
+msgid "Saving…"
+msgstr "Gemmer …"
+
+#: build/dashboard.js:1
+msgid "Save layout"
+msgstr "Gem layout"
+
+#: build/dashboard.js:1
+msgid "Reset to the default layout"
+msgstr "Nulstil til standardlayoutet"
+
+#: build/dashboard.js:1
 msgid "Left"
 msgstr "Venstre"
 
@@ -5233,16 +5462,24 @@ msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category and $Ord
 msgstr "Variabler: $UserName, $Product, $Quantity, $Variation, $Category og $OrderNumber. $UserName er det brugernavn, kunden skrev ved checkout, eller \"Anonymous\"; kundens navn vises aldrig."
 
 #: build/dashboard.js:3
-msgid "Secondary text"
-msgstr "Sekundær tekst"
-
-#: build/dashboard.js:3
 msgid "Show the secondary text"
 msgstr "Vis den sekundære tekst"
 
 #: build/dashboard.js:3
 msgid "Text style"
 msgstr "Tekststil"
+
+#: build/dashboard.js:3
+msgid "Your font is no longer available. The overlay shows the default font until you choose another one."
+msgstr "Din font er ikke længere tilgængelig. Overlayet viser standardfonten, indtil du vælger en anden."
+
+#: build/dashboard.js:3
+msgid "Fonts approved by Merch Dashboard. They are loaded from Google Fonts."
+msgstr "Fonte godkendt af Merch Dashboard. De hentes fra Google Fonts."
+
+#: build/dashboard.js:3
+msgid "Default font"
+msgstr "Standardfont"
 
 #: build/dashboard.js:3
 msgid "Font size (px)"
@@ -5307,11 +5544,6 @@ msgstr "Visningstid (ms)"
 #: build/dashboard.js:3
 msgid "Animation time (ms)"
 msgstr "Animationstid (ms)"
-
-#: build/dashboard.js:3
-#: build/dashboard.js:23
-msgid "Saving…"
-msgstr "Gemmer …"
 
 #: build/dashboard.js:3
 msgid "Save overlay settings"

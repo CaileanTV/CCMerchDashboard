@@ -33,13 +33,61 @@ const SETTINGS = {
 	anim_duration: 500,
 	display_duration: 5000,
 	show_secondary: false,
+	font_family: 'inherit',
+};
+
+const LAYOUT = {
+	elements: {
+		product_image: {
+			x: 40,
+			y: 880,
+			w: 120,
+			h: 120,
+			visible: true,
+			lock_aspect: true,
+			border_radius: 4,
+		},
+		main_text: {
+			x: 176,
+			y: 895,
+			w: 700,
+			h: 80,
+			visible: true,
+			lock_aspect: false,
+			border_radius: 0,
+		},
+		secondary_text: {
+			x: 176,
+			y: 985,
+			w: 700,
+			h: 50,
+			visible: false,
+			lock_aspect: false,
+			border_radius: 0,
+		},
+	},
+	canvas: { snap_grid: false, grid_size: 10 },
+};
+
+const ROBOTO = {
+	family: 'Roboto',
+	url: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap',
 };
 
 function body( url: string | null, extra: Record< string, unknown > = {} ) {
 	return {
-		overlay: url === null ? null : { url, settings: SETTINGS },
+		overlay:
+			url === null
+				? null
+				: {
+						url,
+						settings: SETTINGS,
+						layout: LAYOUT,
+						font_approved: true,
+					},
 		alerts_enabled: true,
 		merchalert_active: false,
+		fonts: [ ROBOTO ],
 		...extra,
 	};
 }
@@ -53,6 +101,7 @@ describe( 'response validation', () => {
 			overlay: null,
 			alertsEnabled: true,
 			merchalertActive: false,
+			fonts: [ ROBOTO ],
 		} );
 	} );
 
@@ -77,6 +126,35 @@ describe( 'response validation', () => {
 			overlay: {
 				url: URL_A,
 				settings: { ...SETTINGS, show_secondary: 1 },
+			},
+		},
+		{
+			...body( URL_A ),
+			fonts: [ { family: 'Roboto', url: 'https://evil.example/x.css' } ],
+		},
+		{
+			...body( URL_A ),
+			fonts: [ { family: 'Roboto;}', url: ROBOTO.url } ],
+		},
+		{
+			...body( URL_A ),
+			overlay: {
+				url: URL_A,
+				settings: SETTINGS,
+				font_approved: true,
+				layout: {
+					...LAYOUT,
+					canvas: { snap_grid: false, grid_size: 0 },
+				},
+			},
+		},
+		{
+			...body( URL_A ),
+			overlay: {
+				url: URL_A,
+				settings: { ...SETTINGS, font_family: 'x"}' },
+				font_approved: true,
+				layout: LAYOUT,
 			},
 		},
 	] )( 'rejects malformed bodies %#', ( candidate ) => {
@@ -219,5 +297,62 @@ describe( 'AlertsSection', () => {
 		expect( rendered?.container.textContent ).toContain(
 			'Overlay settings saved.'
 		);
+	} );
+
+	it( 'offers only approved fonts and keeps an unavailable font until another is chosen', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, {
+					...body( URL_A ),
+					overlay: {
+						url: URL_A,
+						settings: { ...SETTINGS, font_family: 'Lobster' },
+						layout: LAYOUT,
+						font_approved: false,
+					},
+				} ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		expect( rendered?.container.textContent ).toContain(
+			'Your font is no longer available'
+		);
+		expect(
+			Array.from(
+				rendered?.container.querySelectorAll< HTMLOptionElement >(
+					'option'
+				) ?? []
+			)
+				.filter( ( option ) => ! option.disabled )
+				.map( ( option ) => option.value )
+		).toEqual( expect.arrayContaining( [ 'inherit', 'Roboto' ] ) );
+
+		click( button( 'Save overlay settings' ) );
+		await flush();
+
+		const patch = requests.find( ( r ) => r.method === 'PATCH' );
+		expect( patch?.data ).not.toHaveProperty( 'font_family' );
+	} );
+
+	it( 'saves the designer layout', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		expect(
+			rendered?.container.querySelectorAll( '.merchboard-designer__box' )
+		).toHaveLength( 3 );
+
+		click( button( 'Save layout' ) );
+		await flush();
+
+		const patch = requests.find( ( r ) => r.method === 'PATCH' );
+		expect( patch?.data ).toEqual( { layout: LAYOUT } );
+		expect( rendered?.container.textContent ).toContain( 'Layout saved.' );
 	} );
 } );

@@ -118,6 +118,10 @@ final class AuditLogFormatter {
 			AuditAction::OrderExcludedByCreatorCode => __( 'Order excluded (creator discount code)', 'merchboard' ),
 			AuditAction::AlertOverlayCreated       => __( 'Alert overlay set up', 'merchboard' ),
 			AuditAction::AlertOverlayIdRegenerated => __( 'Alert overlay URL replaced', 'merchboard' ),
+			AuditAction::AlertFontsKeyChanged      => __( 'Google Fonts API key changed', 'merchboard' ),
+			AuditAction::AlertFontsSynced          => __( 'Google Fonts catalogue fetched', 'merchboard' ),
+			AuditAction::AlertFontApproved         => __( 'Alert font approved', 'merchboard' ),
+			AuditAction::AlertFontRemoved          => __( 'Alert font removed', 'merchboard' ),
 		};
 	}
 

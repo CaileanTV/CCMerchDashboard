@@ -14,9 +14,12 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\Alerts\Admin\AlertsAdminActions;
+use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
 use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
@@ -88,6 +91,11 @@ final class AlertsModule implements Module {
 			static fn( Container $c ): AlertsSettingsSection => new AlertsSettingsSection( $c->get( AlertsAvailability::class ) )
 		);
 
+		// Font library (phase 25, step 5; ADR-067).
+		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ) ) );
+		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ) ) );
+
 		// Overlay page and feed (phase 25, step 3).
 		$container->set( AlertOverlayRepository::class, static fn( Container $c ): AlertOverlayRepository => new AlertOverlayRepository( $c->get( wpdb::class ) ) );
 		$container->set( AlertTemplate::class, static fn(): AlertTemplate => new AlertTemplate() );
@@ -113,12 +121,14 @@ final class AlertsModule implements Module {
 				$c->get( OverlayTestQueue::class ),
 				$c->get( ProductStore::class ),
 				$c->get( AuditTrail::class ),
-				$c->get( Transaction::class )
+				$c->get( Transaction::class ),
+				null,
+				$c->get( AlertFonts::class )
 			)
 		);
 		$container->set(
 			MeAlertsController::class,
-			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ) )
 		);
 		( new AlertsDashboardSection() )->register();
 		$container->set(
@@ -137,7 +147,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			OverlayPage::class,
-			static fn( Container $c ): OverlayPage => new OverlayPage( $c->get( OverlayRoute::class ), $c->get( OverlayFeed::class ), $c->get( OverlayAssets::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): OverlayPage => new OverlayPage( $c->get( OverlayRoute::class ), $c->get( OverlayFeed::class ), $c->get( OverlayAssets::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ) )
 		);
 
 		add_action(
@@ -170,9 +180,18 @@ final class AlertsModule implements Module {
 		$container->get( AlertHooks::class )->register();
 
 		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( AlertsAdminPage::class )->add_menu();
+			},
+			AlertsAdminPage::PRIORITY
+		);
+
+		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( AlertsSettingsActions::class )->register();
+				$container->get( AlertsAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
 			}
 		);

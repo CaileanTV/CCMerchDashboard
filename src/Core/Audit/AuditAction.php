@@ -355,4 +355,25 @@ enum AuditAction: string {
 	 * URL stopped working (ADR-065). Context: none; ids are never recorded.
 	 */
 	case AlertOverlayIdRegenerated = 'alert_overlay_id_regenerated';
+
+	/**
+	 * The Google Fonts API key of the alert font library was saved or removed
+	 * (ADR-067). Context: whether it was removed; never the key.
+	 */
+	case AlertFontsKeyChanged = 'alert_fonts_key_changed';
+
+	/**
+	 * The Google Fonts catalogue was fetched (ADR-067). Context: number of families.
+	 */
+	case AlertFontsSynced = 'alert_fonts_synced';
+
+	/**
+	 * A font was approved for alert overlays (ADR-067). Context: family.
+	 */
+	case AlertFontApproved = 'alert_font_approved';
+
+	/**
+	 * An approved alert font was removed (ADR-067). Context: family.
+	 */
+	case AlertFontRemoved = 'alert_font_removed';
 }

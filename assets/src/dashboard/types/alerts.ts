@@ -53,12 +53,62 @@ export interface OverlaySettings {
 	readonly anim_duration: number;
 	readonly display_duration: number;
 	readonly show_secondary: boolean;
+	/** "inherit" (the default font) or an approved Google font (ADR-067). */
+	readonly font_family: string;
+}
+
+/** Elements of the 1920 × 1080 overlay canvas. */
+export const LAYOUT_ELEMENTS = [
+	'product_image',
+	'main_text',
+	'secondary_text',
+] as const;
+
+export type LayoutElement = ( typeof LAYOUT_ELEMENTS )[ number ];
+
+/** The canvas size of OBS' default browser source. */
+export const CANVAS = { width: 1920, height: 1080 } as const;
+
+/** The server's bounds of a box (OverlaySettings). */
+export const BOX_LIMITS = {
+	x: { min: -3840, max: 3840 },
+	y: { min: -2160, max: 2160 },
+	w: { min: 10, max: 3840 },
+	h: { min: 10, max: 2160 },
+	border_radius: { min: 0, max: 500 },
+} as const;
+
+export interface LayoutBox {
+	readonly x: number;
+	readonly y: number;
+	readonly w: number;
+	readonly h: number;
+	readonly visible: boolean;
+	readonly lock_aspect: boolean;
+	readonly border_radius: number;
+}
+
+export interface OverlayLayout {
+	readonly elements: Readonly< Record< LayoutElement, LayoutBox > >;
+	readonly canvas: {
+		readonly snap_grid: boolean;
+		readonly grid_size: number;
+	};
+}
+
+/** An approved font with its Google Fonts stylesheet. */
+export interface AlertFontOption {
+	readonly family: string;
+	readonly url: string;
 }
 
 export interface AlertOverlay {
 	/** The OBS browser source URL; contains the secret overlay id. */
 	readonly url: string;
 	readonly settings: OverlaySettings;
+	readonly layout: OverlayLayout;
+	/** False when the saved font is no longer approved (the default font is shown). */
+	readonly fontApproved: boolean;
 }
 
 export interface AlertsOverlayState {
@@ -68,4 +118,6 @@ export interface AlertsOverlayState {
 	readonly alertsEnabled: boolean;
 	/** Whether MerchAlert is still active (then no alerts are recorded). */
 	readonly merchalertActive: boolean;
+	/** The fonts an administrator approved. */
+	readonly fonts: readonly AlertFontOption[];
 }

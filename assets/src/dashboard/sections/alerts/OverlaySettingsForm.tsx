@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { updateAlertsOverlay } from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
+import { Alert } from '../../components/Alert';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Field } from '../../components/Field';
@@ -16,6 +17,7 @@ import {
 	TEXT_ALIGNS,
 } from '../../types/alerts';
 import type {
+	AlertFontOption,
 	AlertsOverlayState,
 	NumberField,
 	OverlaySettings,
@@ -79,6 +81,8 @@ function alignLabel( align: TextAlign ): string {
 
 interface Props {
 	readonly settings: OverlaySettings;
+	readonly fonts: readonly AlertFontOption[];
+	readonly fontApproved: boolean;
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
 }
 
@@ -88,11 +92,18 @@ interface Props {
  * sounds). Saving changes the overlay's version, so an open OBS source
  * reloads with the new look.
  *
- * @param props          Props.
- * @param props.settings The saved settings.
- * @param props.onSaved  Called with the answer after saving.
+ * @param props              Props.
+ * @param props.settings     The saved settings.
+ * @param props.fonts        The approved fonts.
+ * @param props.fontApproved Whether the saved font is still approved.
+ * @param props.onSaved      Called with the answer after saving.
  */
-export function OverlaySettingsForm( { settings, onSaved }: Props ) {
+export function OverlaySettingsForm( {
+	settings,
+	fonts,
+	fontApproved,
+	onSaved,
+}: Props ) {
 	const id = useId();
 	const [ values, setValues ] = useState( settings );
 	const [ errors, setErrors ] = useState< Errors >( {} );
@@ -115,8 +126,16 @@ export function OverlaySettingsForm( { settings, onSaved }: Props ) {
 			return;
 		}
 
+		// A font that is no longer approved is kept until the creator picks another.
+		const unavailable =
+			values.font_family !== 'inherit' &&
+			! fonts.some( ( font ) => font.family === values.font_family );
+		const { font_family: fontFamily, ...rest } = values;
+
 		setBusy( true );
-		const result = await updateAlertsOverlay( values );
+		const result = await updateAlertsOverlay(
+			unavailable ? rest : { ...rest, font_family: fontFamily }
+		);
 		setBusy( false );
 
 		if ( ! result.ok ) {
@@ -226,6 +245,53 @@ export function OverlaySettingsForm( { settings, onSaved }: Props ) {
 			</Card>
 
 			<Card title={ __( 'Text style', 'merchboard' ) }>
+				{ ! fontApproved && (
+					<Alert tone="warning">
+						{ __(
+							'Your font is no longer available. The overlay shows the default font until you choose another one.',
+							'merchboard'
+						) }
+					</Alert>
+				) }
+				<Field
+					label={ __( 'Font', 'merchboard' ) }
+					help={ __(
+						'Fonts approved by Merch Dashboard. They are loaded from Google Fonts.',
+						'merchboard'
+					) }
+				>
+					{ ( control ) => (
+						<select
+							{ ...control }
+							className="merchboard-input"
+							value={ values.font_family }
+							onChange={ ( event ) =>
+								set( { font_family: event.target.value } )
+							}
+						>
+							<option value="inherit">
+								{ __( 'Default font', 'merchboard' ) }
+							</option>
+							{ ! fontApproved &&
+								values.font_family !== 'inherit' && (
+									<option
+										value={ values.font_family }
+										disabled
+									>
+										{ values.font_family }
+									</option>
+								) }
+							{ fonts.map( ( font ) => (
+								<option
+									key={ font.family }
+									value={ font.family }
+								>
+									{ font.family }
+								</option>
+							) ) }
+						</select>
+					) }
+				</Field>
 				<div className="merchboard-alerts__grid">
 					{ number(
 						'font_size',

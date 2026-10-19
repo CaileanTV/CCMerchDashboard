@@ -21,6 +21,7 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayAssets;
 defined( 'ABSPATH' ) || exit;
 
 $merchboard_ready     = true === ( $merchboard_view['ready'] ?? false );
+$merchboard_font_url  = is_string( $merchboard_view['font_url'] ?? null ) ? $merchboard_view['font_url'] : '';
 $merchboard_variables = is_array( $merchboard_view['variables'] ?? null ) ? $merchboard_view['variables'] : array();
 $merchboard_boxes     = is_array( $merchboard_view['boxes'] ?? null ) ? $merchboard_view['boxes'] : array();
 $merchboard_config    = wp_json_encode( $merchboard_view['config'] ?? array(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES );
@@ -43,6 +44,13 @@ foreach ( array( 'image', 'text', 'secondary' ) as $merchboard_box ) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Merch Dashboard alerts</title>
+<?php
+if ( '' !== $merchboard_font_url ) {
+	// The approved Google font (ADR-067); no version argument, Google answers 400 to unknown parameters.
+	wp_register_style( 'merchboard-overlay-font', $merchboard_font_url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- See above.
+	wp_print_styles( array( 'merchboard-overlay-font' ) );
+}
+?>
 <style><?php echo $merchboard_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Validated values, with characters that could leave a declaration or the style element removed. ?></style>
 <?php
 if ( $merchboard_ready ) {

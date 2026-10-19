@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Overlay;
 
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
@@ -23,7 +24,8 @@ defined( 'ABSPATH' ) || exit;
  * - **Access:** the secret id is the credential; an unknown id, a
  *   regenerated id or an inactive creator get the same bare 404.
  * - **Headers:** its own CSP (scripts only from this site with a nonce, no
- *   connections or images elsewhere), `noindex`, no caching, and no referrer,
+ *   connections or images elsewhere; style sheets and fonts also from Google
+ *   Fonts, ADR-067), `noindex`, no caching, and no referrer,
  *   so the secret id never leaves the page in a Referer header.
  * - **Styles:** every value in the inline style sheet comes from the
  *   validated settings (OverlaySettings), never raw input.
@@ -33,12 +35,13 @@ final class OverlayPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param OverlayRoute  $route  Route.
-	 * @param OverlayFeed   $feed   Overlay lookup.
-	 * @param OverlayAssets $assets Bundle.
-	 * @param Logger        $logger Technical log.
+	 * @param OverlayRoute    $route  Route.
+	 * @param OverlayFeed     $feed   Overlay lookup.
+	 * @param OverlayAssets   $assets Bundle.
+	 * @param Logger          $logger Technical log.
+	 * @param AlertFonts|null $fonts  Approved fonts; null for none.
 	 */
-	public function __construct( private OverlayRoute $route, private OverlayFeed $feed, private OverlayAssets $assets, private Logger $logger ) {
+	public function __construct( private OverlayRoute $route, private OverlayFeed $feed, private OverlayAssets $assets, private Logger $logger, private ?AlertFonts $fonts = null ) {
 	}
 
 	/**
@@ -84,8 +87,17 @@ final class OverlayPage {
 			return null;
 		}
 
-		$settings        = $overlay->settings;
+		$settings = $overlay->settings;
+		$family   = $settings->to_array()['font_family'];
+		$font     = 'inherit' === $family ? null : $this->fonts?->find( $family );
+
+		// A font that is no longer approved is never loaded; the default font is shown instead (ADR-067).
+		if ( null === $font && 'inherit' !== $family ) {
+			$settings = OverlaySettings::from_array( array_merge( $settings->to_array(), array( 'font_family' => 'inherit' ) ) );
+		}
+
 		$merchboard_view = array(
+			'font_url'  => null === $font ? '' : $font->css_url(),
 			'ready'     => $this->assets->register(),
 			'variables' => $settings->css_variables(),
 			'boxes'     => array(
@@ -133,7 +145,7 @@ final class OverlayPage {
 	 */
 	public static function security_headers( string $nonce ): array {
 		return array(
-			'Content-Security-Policy' => "default-src 'none'; script-src 'self' 'nonce-" . $nonce . "'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+			'Content-Security-Policy' => "default-src 'none'; script-src 'self' 'nonce-" . $nonce . "'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; media-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
 			'X-Robots-Tag'            => 'noindex, nofollow',
 			'Referrer-Policy'         => 'no-referrer',
 			'X-Content-Type-Options'  => 'nosniff',

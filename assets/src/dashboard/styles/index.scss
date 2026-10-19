@@ -816,3 +816,81 @@
 	padding: var(--merchboard-space-1);
 	cursor: pointer;
 }
+
+/* Overlay designer (phase 25, step 5): the 1920 × 1080 canvas of OBS. */
+.merchboard-designer {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	margin-bottom: var(--merchboard-space-4);
+	overflow: hidden;
+	container-type: inline-size;
+	touch-action: none;
+	background: var(--merchboard-inverse-surface);
+	border: 1px solid var(--merchboard-control-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	&[data-grid="on"] {
+		background-image:
+			linear-gradient(var(--merchboard-text-subtle) 1px, transparent 1px),
+			linear-gradient(90deg, var(--merchboard-text-subtle) 1px, transparent 1px);
+		background-size: var(--designer-grid) var(--designer-grid);
+	}
+}
+
+.merchboard-designer__box {
+	position: absolute;
+	display: flex;
+	cursor: move;
+	outline: 1px dashed var(--merchboard-on-inverse);
+
+	&.is-selected {
+		z-index: 1;
+		outline: 2px solid var(--merchboard-focus-on-inverse);
+	}
+
+	&.is-hidden {
+		opacity: 0.35;
+	}
+
+	&:focus-visible {
+		outline: 3px solid var(--merchboard-focus-on-inverse);
+	}
+}
+
+.merchboard-designer__image {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	font-size: 1.2cqw;
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface-muted);
+}
+
+.merchboard-designer__text {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	line-height: 1.3;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+.merchboard-designer__handle {
+	position: absolute;
+	right: -6px;
+	bottom: -6px;
+	width: 12px;
+	height: 12px;
+	cursor: nwse-resize;
+	background: var(--merchboard-focus-on-inverse);
+	border-radius: 2px;
+}
+
+.merchboard-designer__properties {
+	padding: 0;
+	margin: 0 0 var(--merchboard-space-4);
+	border: 0;
+}

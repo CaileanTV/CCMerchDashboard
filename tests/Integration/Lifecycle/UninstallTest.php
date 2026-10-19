@@ -22,6 +22,7 @@ use MerchBoard\Core\Security\ProtectedMetaWrite;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -113,6 +114,9 @@ final class UninstallTest extends IntegrationTestCase {
 
 	public function test_uninstall_with_opt_in_removes_only_merch_dashboard_data(): void {
 		$this->enable_deletion();
+		update_option( AlertFonts::KEY_OPTION, 'AIzaTestKey_0123456789-abcdef', false );
+		update_option( AlertFonts::APPROVED_OPTION, array( array( 'family' => 'Roboto' ) ), false );
+		set_transient( AlertFonts::CATALOG_KEY, array( array( 'family' => 'Roboto' ) ), 60 );
 		$audit_before = $this->rows( Tables::AUDIT_LOG );
 		$max_creator  = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MAX(id) FROM %i', $this->table( Tables::CREATORS ) ) );
 
@@ -139,9 +143,11 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
 		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
-		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION ) as $option ) {
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
 		}
+
+		self::assertFalse( get_transient( AlertFonts::CATALOG_KEY ), 'The font catalogue is removed.' );
 
 		self::assertNull( get_role( Capabilities::CREATOR_ROLE ) );
 		self::assertSame( array(), $this->plugin_caps_on_roles() );
