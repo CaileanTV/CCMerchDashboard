@@ -19,6 +19,8 @@ use InvalidArgumentException;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
+use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
+use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -33,11 +35,15 @@ defined( 'ABSPATH' ) || exit;
  * - `GET`: the overlay (or null before it is set up) and whether alerts are
  *   switched on and MerchAlert is active.
  * - `POST`: sets the overlay up (idempotent).
- * - `PATCH`: changes the form fields (AlertOverlays::EDITABLE and
- *   `show_secondary`) from the JSON or form body; values are normalized,
+ * - `PATCH`: changes the form fields (AlertOverlays::EDITABLE,
+ *   `show_secondary`, `audio_enabled`, `font_family` and `layout`) from the
+ *   JSON or form body; values are normalized,
  *   so the answer shows what was saved.
  * - `POST …/regenerate`: a new secret id.
  * - `POST …/test`: a test alert.
+ * - `POST …/sounds/{slot}` (multipart field `file`) and `DELETE …/sounds/{slot}`:
+ *   the default sound (`default`) or the sound of one of the creator's
+ *   categories (its term id); see AlertSounds.
  *
  * The answer contains the OBS URL with the secret id, so it is only ever
  * sent to the creator it belongs to. Before the overlay is set up, the
@@ -55,8 +61,9 @@ final class MeAlertsController extends RestController {
 	 * @param AlertsAvailability $availability Kill switch and MerchAlert guard.
 	 * @param Logger             $logger       Technical log.
 	 * @param AlertFonts|null    $fonts        Approved fonts; null for none.
+	 * @param AlertSounds|null   $sounds       Alert sounds; null for none.
 	 */
-	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null ) {
+	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -103,6 +110,25 @@ final class MeAlertsController extends RestController {
 				)
 			);
 		}
+
+		register_rest_route(
+			self::NAMESPACE,
+			self::ROUTE . '/sounds/(?P<slot>default|[1-9][0-9]{0,18})',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'upload_sound' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'remove_sound' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(),
+				),
+			)
+		);
 	}
 
 	/**
@@ -180,6 +206,63 @@ final class MeAlertsController extends RestController {
 	}
 
 	/**
+	 * `POST /me/alerts/overlay/sounds/{slot}`: stores the uploaded file `file`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function upload_sound( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/sounds',
+			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
+				$files = $request->get_file_params();
+				$file  = is_array( $files['file'] ?? null ) ? $files['file'] : array();
+
+				if ( null === $this->sounds ) {
+					return self::not_set_up();
+				}
+
+				try {
+					$overlay = $this->sounds->upload( $creator_id, self::slot( $request ), $file );
+				} catch ( AlertSoundException $e ) {
+					return self::error( 'merchboard_invalid_request', __( 'The sound was not saved.', 'merchboard' ), 400, array( 'fields' => array( $e->field() => $e->reason() ) ) );
+				}
+
+				return null === $overlay ? self::not_set_up() : $this->answer( $overlay );
+			}
+		);
+	}
+
+	/**
+	 * `DELETE /me/alerts/overlay/sounds/{slot}`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function remove_sound( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/sounds',
+			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
+				$overlay = null === $this->sounds ? null : $this->sounds->remove( $creator_id, self::slot( $request ) );
+
+				return null === $overlay ? self::not_set_up() : $this->answer( $overlay );
+			}
+		);
+	}
+
+	/**
+	 * The sound slot of a route: 0 for the default sound, else a term id.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	private static function slot( WP_REST_Request $request ): int {
+		$slot = $request->get_param( 'slot' );
+
+		return is_string( $slot ) && 'default' !== $slot ? (int) $slot : 0;
+	}
+
+	/**
 	 * Runs an endpoint for the current creator.
 	 *
 	 * @param string                                     $route    Route, for the log.
@@ -228,7 +311,7 @@ final class MeAlertsController extends RestController {
 	 * An overlay as the dashboard shows it.
 	 *
 	 * @param AlertOverlay $overlay Overlay.
-	 * @return array{url: string, settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>}
+	 * @return array{url: string, settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>, audio: array<string, mixed>|null}
 	 */
 	private function overlay( AlertOverlay $overlay ): array {
 		$values   = $overlay->settings->to_array();
@@ -247,6 +330,7 @@ final class MeAlertsController extends RestController {
 			// False when the saved font is no longer approved; the overlay then shows the default font.
 			'font_approved' => 'inherit' === $values['font_family'] || null !== $this->fonts?->find( $values['font_family'] ),
 			'layout'        => $values['layout'],
+			'audio'         => null === $this->sounds ? null : $this->sounds->describe( $overlay ),
 		);
 	}
 
@@ -295,12 +379,16 @@ final class MeAlertsController extends RestController {
 			$input['layout'] = $body['layout'];
 		}
 
-		if ( array_key_exists( 'show_secondary', $body ) ) {
-			if ( ! is_bool( $body['show_secondary'] ) ) {
+		foreach ( array( 'show_secondary', 'audio_enabled' ) as $key ) {
+			if ( ! array_key_exists( $key, $body ) ) {
+				continue;
+			}
+
+			if ( ! is_bool( $body[ $key ] ) ) {
 				return null;
 			}
 
-			$input['show_secondary'] = $body['show_secondary'];
+			$input[ $key ] = $body[ $key ];
 		}
 
 		return $input;

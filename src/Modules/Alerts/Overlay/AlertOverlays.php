@@ -31,9 +31,9 @@ defined( 'ABSPATH' ) || exit;
  * - **Set up** is explicit and idempotent, with an audit record.
  * - **Settings:** only the fields of the overlay form (EDITABLE and the
  *   visibility of the secondary text), the font (an approved font or the
- *   default, ADR-067) and the designer's layout change; the sounds keep their
- *   values until their own step (25.6). Everything is normalized by
- *   OverlaySettings.
+ *   default, ADR-067), the designer's layout and whether sounds play change;
+ *   the sound files change only through AlertSounds. Everything is
+ *   normalized by OverlaySettings.
  * - **New id:** the old OBS URL stops working at once; audited without ids.
  * - **Test alert:** a random published product of the creator, shown by
  *   the overlay within a second (OverlayTestQueue); never stored as an
@@ -156,6 +156,11 @@ final class AlertOverlays {
 
 		if ( array_key_exists( 'show_secondary', $input ) ) {
 			$values['layout']['elements']['secondary_text']['visible'] = true === $input['show_secondary'];
+		}
+
+		// The sound files themselves change only through AlertSounds.
+		if ( array_key_exists( 'audio_enabled', $input ) ) {
+			$values['audio_enabled'] = true === $input['audio_enabled'];
 		}
 
 		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );

@@ -5,12 +5,16 @@
  * Every value from the page or the server is validated before use.
  */
 
-/** One alert as the server renders it (plain text, an image URL of this site or ''). */
+/**
+ * One alert as the server renders it: plain text, and an image and a sound
+ * URL of this site or ''.
+ */
 export interface OverlayAlert {
 	id: number;
 	image: string;
 	text: string;
 	secondary: string;
+	sound: string;
 }
 
 /** An answer of `GET merchboard/v1/alerts/overlay/{id}/feed`. */
@@ -85,7 +89,8 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 
 /**
  * A feed answer, or null when it does not have the expected shape. Alerts
- * with an image of another origin keep their text but lose the image.
+ * with an image or a sound of another origin keep their text but lose the
+ * image or the sound.
  *
  * @param value Parsed JSON.
  */
@@ -107,7 +112,8 @@ export function parseAnswer( value: unknown ): FeedAnswer | null {
 			! isCount( item.id ) ||
 			typeof item.image !== 'string' ||
 			typeof item.text !== 'string' ||
-			typeof item.secondary !== 'string'
+			typeof item.secondary !== 'string' ||
+			typeof item.sound !== 'string'
 		) {
 			return null;
 		}
@@ -117,6 +123,7 @@ export function parseAnswer( value: unknown ): FeedAnswer | null {
 			image: sameOrigin( item.image ) ? item.image : '',
 			text: item.text,
 			secondary: item.secondary,
+			sound: sameOrigin( item.sound ) ? item.sound : '',
 		} );
 	}
 

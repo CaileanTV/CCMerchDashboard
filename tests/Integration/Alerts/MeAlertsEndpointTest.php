@@ -23,6 +23,7 @@ use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
+use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -41,6 +42,7 @@ use WP_REST_Response;
 #[CoversClass( MeAlertsController::class )]
 #[CoversClass( AlertOverlays::class )]
 #[CoversClass( OverlayTestQueue::class )]
+#[CoversClass( AlertSounds::class )]
 final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 	private const ROUTE = '/merchboard/v1/me/alerts/overlay';
@@ -64,10 +66,11 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 		$this->posts    = new ProductPosts( $this->wpdb );
 		$this->overlays = new AlertOverlayRepository( $this->wpdb );
-		$this->feed     = new OverlayFeed( $this->overlays, new AlertEventRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue() );
+		$sounds         = AlertSoundsTest::sounds( $this->overlays );
+		$this->feed     = new OverlayFeed( $this->overlays, new AlertEventRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue(), $sounds );
 		$fonts          = new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): mixed => null );
 		$service        = new AlertOverlays( $this->overlays, $this->feed, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0, $fonts );
-		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ), $fonts );
+		$controller     = new MeAlertsController( $this->service( CreatorContext::class ), $service, new AlertsAvailability( static fn(): bool => false ), $this->service( Logger::class ), $fonts, $sounds );
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();
 		};
@@ -82,6 +85,11 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		}
 
 		delete_option( AlertFonts::APPROVED_OPTION );
+
+		foreach ( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids' ) ) as $attachment ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short query.
+			wp_delete_attachment( (int) $attachment, true );
+		}
+
 		$this->posts->remove_all();
 		parent::tearDown();
 	}
@@ -220,6 +228,32 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'layout' => 'big' ) )->get_status() );
 	}
 
+	public function test_sounds_are_uploaded_switched_on_and_deleted_through_the_routes(): void {
+		$this->creator( 'nova' );
+		self::assertSame( 404, $this->upload( 'default', AlertSoundsTest::wav_upload( 1 ) )->get_status(), 'Set up the overlay first.' );
+		$this->call( 'POST', self::ROUTE );
+
+		$saved = $this->data( $this->upload( 'default', AlertSoundsTest::wav_upload( 2 ) ) )['overlay']['audio'];
+		self::assertSame( 2, $saved['default']['seconds'] );
+		self::assertTrue( $saved['enabled'], 'The first sound switches sounds on.' );
+		self::assertSame( 'Hoodies', $saved['categories'][0]['name'] );
+
+		$refused = $this->upload( 'default', AlertSoundsTest::upload( '<?php echo 1;', 'x.php' ) );
+		self::assertSame( 400, $refused->get_status() );
+		self::assertSame( array( 'file' => 'invalid_type' ), $refused->get_data()['data']['fields'] ?? null );
+
+		$foreign = $this->upload( '77', AlertSoundsTest::wav_upload( 1 ) );
+		self::assertSame( array( 'slot' => 'unknown_category' ), $foreign->get_data()['data']['fields'] ?? null );
+		self::assertSame( 400, $this->upload( 'default', null )->get_status(), 'No file.' );
+		self::assertSame( 404, $this->upload( 'abc', AlertSoundsTest::wav_upload( 1 ) )->get_status(), 'Unknown slot route.' );
+
+		self::assertFalse( $this->data( $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => false ) ) )['overlay']['audio']['enabled'] );
+		self::assertTrue( $this->data( $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => true ) ) )['overlay']['audio']['enabled'] );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => 'yes' ) )->get_status() );
+
+		self::assertNull( $this->data( $this->call( 'DELETE', self::ROUTE . '/sounds/default' ) )['overlay']['audio']['default'] );
+	}
+
 	public function test_a_new_url_kills_the_old_one_at_once(): void {
 		$creator = $this->creator( 'nova' );
 		$this->call( 'POST', self::ROUTE );
@@ -259,6 +293,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 					'image'     => '',
 					'text'      => 'TestFan tested Hoodie',
 					'secondary' => '',
+					'sound'     => '',
 				),
 			),
 			$answer['alerts']
@@ -312,6 +347,24 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		if ( array() !== $body ) {
 			$request->set_header( 'Content-Type', 'application/json' );
 			$request->set_body( (string) wp_json_encode( $body ) );
+		}
+
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * Uploads a sound file through the route.
+	 *
+	 * @phpstan-param array{name: non-empty-string, type: non-empty-string, tmp_name: non-empty-string, error: int<0, 8>, size: int<0, max>}|null $file
+	 *
+	 * @param string     $slot Slot segment.
+	 * @param array|null $file Upload, or null for none.
+	 */
+	private function upload( string $slot, ?array $file ): WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', self::ROUTE . '/sounds/' . $slot );
+
+		if ( null !== $file ) {
+			$request->set_file_params( array( 'file' => $file ) );
 		}
 
 		return rest_do_request( $request );

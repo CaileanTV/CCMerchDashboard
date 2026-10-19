@@ -540,6 +540,7 @@ final class ShellControllerTest extends TestCase {
 		self::assertStringNotContainsString( "script-src 'self' 'unsafe-inline'", $app );
 		self::assertStringContainsString( 'https://fonts.googleapis.com', $app, 'Approved alert fonts (ADR-067).' );
 		self::assertStringContainsString( "font-src 'self' https://fonts.gstatic.com", $app );
+		self::assertStringContainsString( "media-src 'self';", $app, 'Alert sound previews from this site only.' );
 		self::assertStringNotContainsString( "connect-src 'self' https", $app, 'Scripts never reach Google.' );
 	}
 

@@ -66,6 +66,8 @@ export interface ApiRequest {
 	readonly path: string;
 	readonly method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
 	readonly data?: Readonly< Record< string, unknown > >;
+	/** A multipart body (file uploads); instead of `data`. */
+	readonly body?: FormData;
 	readonly signal?: AbortSignal;
 }
 
@@ -263,6 +265,7 @@ async function send( options: ApiRequest ): Promise< Sent > {
 			path: options.path,
 			method: options.method ?? 'GET',
 			...( options.data === undefined ? {} : { data: options.data } ),
+			...( options.body === undefined ? {} : { body: options.body } ),
 			...( options.signal === undefined
 				? {}
 				: { signal: options.signal } ),

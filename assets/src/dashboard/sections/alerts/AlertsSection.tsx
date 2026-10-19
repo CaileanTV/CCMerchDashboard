@@ -16,6 +16,7 @@ import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 import type { AlertsOverlayState } from '../../types/alerts';
+import { AlertSoundsCard } from './AlertSoundsCard';
 import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
 import { useFontStylesheet } from './useFontStylesheet';
@@ -262,6 +263,13 @@ function AlertsContent( {
 						}
 						onSaved={ setState }
 					/>
+					{ state.overlay.audio !== null && (
+						<AlertSoundsCard
+							audio={ state.overlay.audio }
+							onSaved={ setState }
+							notify={ setToast }
+						/>
+					) }
 				</>
 			) }
 			<Toast message={ toast } onDismiss={ dismissToast } />
@@ -271,7 +279,8 @@ function AlertsContent( {
 
 /**
  * "Alerts" (ADR-065): the creator's OBS overlay. Set up, browser source URL
- * (copy, open, replace), test alert and the overlay's look and timing.
+ * (copy, open, replace), test alert, the overlay's look and timing, the
+ * designer and the sounds.
  */
 export function AlertsSection() {
 	const { state, retry } = useApi( getAlertsOverlay );

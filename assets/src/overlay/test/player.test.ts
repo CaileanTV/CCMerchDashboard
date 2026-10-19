@@ -10,6 +10,7 @@ function setup( hidden: string[] = [] ) {
 	const text = document.createElement( 'div' );
 	const secondary = document.createElement( 'div' );
 	const timers: Array< { callback: () => void; delay: number } > = [];
+	const played: string[] = [];
 	const names = new Map< HTMLElement, string >( [
 		[ image, 'image' ],
 		[ text, 'text' ],
@@ -27,6 +28,9 @@ function setup( hidden: string[] = [] ) {
 		( element ) => ! hidden.includes( names.get( element ) ?? '' ),
 		( callback, delay ) => {
 			timers.push( { callback, delay } );
+		},
+		( url ) => {
+			played.push( url );
 		}
 	);
 
@@ -42,14 +46,21 @@ function setup( hidden: string[] = [] ) {
 		return timer.delay;
 	};
 
-	return { image, text, secondary, player, timers, tick };
+	return { image, text, secondary, player, timers, played, tick };
 }
 
 function alert(
 	id: number,
 	extra: Partial< OverlayAlert > = {}
 ): OverlayAlert {
-	return { id, image: '', text: `Alert ${ id }`, secondary: '', ...extra };
+	return {
+		id,
+		image: '',
+		text: `Alert ${ id }`,
+		secondary: '',
+		sound: '',
+		...extra,
+	};
 }
 
 describe( 'AlertPlayer', () => {
@@ -82,6 +93,17 @@ describe( 'AlertPlayer', () => {
 		expect(
 			text.classList.contains( 'merchboard-overlay__el--hidden' )
 		).toBe( true );
+	} );
+
+	it( "plays each alert's sound once when it is shown", () => {
+		const { player, played, tick } = setup();
+
+		player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ), alert( 2 ) ] );
+		expect( played ).toEqual( [ '/ding.mp3' ] );
+
+		tick();
+		tick();
+		expect( played ).toEqual( [ '/ding.mp3' ] );
 	} );
 
 	it( 'inserts text as text and the image as an img element', () => {

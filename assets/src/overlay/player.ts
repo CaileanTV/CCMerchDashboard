@@ -1,8 +1,8 @@
 /**
  * Shows alerts one after the other (ADR-065 pkt. 3), as MerchAlert does:
  * fade in, stay for the display time (which includes the fade-in), fade out
- * for the animation time, then the next alert. Texts are inserted as text,
- * never as HTML.
+ * for the animation time, then the next alert. The alert's sound starts
+ * with the fade-in. Texts are inserted as text, never as HTML.
  */
 import type { OverlayAlert } from './feed';
 
@@ -40,7 +40,8 @@ export class AlertPlayer {
 			delay: number
 		) => void = ( callback, delay ) => {
 			window.setTimeout( callback, delay );
-		}
+		},
+		private readonly play: ( url: string ) => void = () => undefined
 	) {}
 
 	/** Number of alerts waiting. */
@@ -89,6 +90,10 @@ export class AlertPlayer {
 		if ( animated.length === 0 ) {
 			this.finish();
 			return;
+		}
+
+		if ( alert.sound !== '' ) {
+			this.play( alert.sound );
 		}
 
 		for ( const element of animated ) {

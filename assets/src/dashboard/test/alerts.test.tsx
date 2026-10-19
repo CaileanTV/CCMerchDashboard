@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { act } from 'react';
 
 import { parseAlertsOverlay } from '../api/alerts';
 import { ConfigContext } from '../app/config-context';
@@ -74,6 +75,20 @@ const ROBOTO = {
 	url: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap',
 };
 
+const SOUND = {
+	url: `${ ORIGIN }/wp-content/uploads/2026/10/ding.mp3`,
+	name: 'ding.mp3',
+	seconds: 3,
+};
+
+const AUDIO = {
+	enabled: false,
+	default: null,
+	categories: [ { term_id: 12, name: 'Hoodies', sound: SOUND } ],
+	max_bytes: 10485760,
+	max_seconds: 30,
+};
+
 function body( url: string | null, extra: Record< string, unknown > = {} ) {
 	return {
 		overlay:
@@ -84,6 +99,7 @@ function body( url: string | null, extra: Record< string, unknown > = {} ) {
 						settings: SETTINGS,
 						layout: LAYOUT,
 						font_approved: true,
+						audio: AUDIO,
 					},
 		alerts_enabled: true,
 		merchalert_active: false,
@@ -97,6 +113,13 @@ describe( 'response validation', () => {
 		expect( parseAlertsOverlay( body( URL_A ) )?.overlay?.url ).toBe(
 			URL_A
 		);
+		expect( parseAlertsOverlay( body( URL_A ) )?.overlay?.audio ).toEqual( {
+			enabled: false,
+			defaultSound: null,
+			categories: [ { termId: 12, name: 'Hoodies', sound: SOUND } ],
+			maxBytes: 10485760,
+			maxSeconds: 30,
+		} );
 		expect( parseAlertsOverlay( body( null ) ) ).toEqual( {
 			overlay: null,
 			alertsEnabled: true,
@@ -155,6 +178,41 @@ describe( 'response validation', () => {
 				settings: { ...SETTINGS, font_family: 'x"}' },
 				font_approved: true,
 				layout: LAYOUT,
+			},
+		},
+		{
+			...body( URL_A ),
+			overlay: {
+				url: URL_A,
+				settings: SETTINGS,
+				font_approved: true,
+				layout: LAYOUT,
+			},
+		},
+		{
+			...body( URL_A ),
+			overlay: {
+				url: URL_A,
+				settings: SETTINGS,
+				font_approved: true,
+				layout: LAYOUT,
+				audio: {
+					...AUDIO,
+					default: { ...SOUND, url: 'https://evil.example/x.mp3' },
+				},
+			},
+		},
+		{
+			...body( URL_A ),
+			overlay: {
+				url: URL_A,
+				settings: SETTINGS,
+				font_approved: true,
+				layout: LAYOUT,
+				audio: {
+					...AUDIO,
+					categories: [ { term_id: 0, name: 'x', sound: null } ],
+				},
 			},
 		},
 	] )( 'rejects malformed bodies %#', ( candidate ) => {
@@ -309,6 +367,7 @@ describe( 'AlertsSection', () => {
 						settings: { ...SETTINGS, font_family: 'Lobster' },
 						layout: LAYOUT,
 						font_approved: false,
+						audio: AUDIO,
 					},
 				} ),
 			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
@@ -354,5 +413,124 @@ describe( 'AlertsSection', () => {
 		const patch = requests.find( ( r ) => r.method === 'PATCH' );
 		expect( patch?.data ).toEqual( { layout: LAYOUT } );
 		expect( rendered?.container.textContent ).toContain( 'Layout saved.' );
+	} );
+
+	const choose = ( input: HTMLInputElement, file: File ) => {
+		Object.defineProperty( input, 'files', {
+			configurable: true,
+			value: [ file ],
+		} );
+		act( () => {
+			input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+		} );
+	};
+
+	const fileInputs = () =>
+		Array.from(
+			rendered?.container.querySelectorAll< HTMLInputElement >(
+				'input[type="file"]'
+			) ?? []
+		);
+
+	it( 'switches sounds on and uploads a default sound', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `POST ${ PATH }/sounds/default` ]: () =>
+				response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const toggle = Array.from(
+			rendered?.container.querySelectorAll< HTMLInputElement >(
+				'input[type="checkbox"]'
+			) ?? []
+		).find( ( input ) =>
+			input.parentElement?.textContent?.includes( 'Play sounds' )
+		);
+		click( toggle ?? null );
+		await flush();
+
+		expect( requests.find( ( r ) => r.method === 'PATCH' )?.data ).toEqual(
+			{ audio_enabled: true }
+		);
+
+		const file = new File( [ 'x' ], 'ding.mp3', { type: 'audio/mpeg' } );
+		choose( fileInputs()[ 0 ] as HTMLInputElement, file );
+		await flush();
+
+		const upload = requests.find(
+			( r ) => r.path === `${ PATH }/sounds/default`
+		);
+		expect( upload?.method ).toBe( 'POST' );
+		expect( ( upload?.body as FormData ).get( 'file' ) ).toBe( file );
+		expect( rendered?.container.textContent ).toContain( 'Sound saved.' );
+		expect( rendered?.container.textContent ).toContain(
+			'Category: Hoodies'
+		);
+		expect( rendered?.container.textContent ).toContain( 'ding.mp3 (3 s)' );
+	} );
+
+	it( 'explains a refused sound and checks the size before uploading', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `POST ${ PATH }/sounds/default` ]: () =>
+				response( 400, {
+					code: 'merchboard_invalid_request',
+					data: { fields: { file: 'too_long' } },
+				} ),
+		} );
+
+		await show();
+
+		choose(
+			fileInputs()[ 0 ] as HTMLInputElement,
+			new File( [ 'x' ], 'long.wav', { type: 'audio/wav' } )
+		);
+		await flush();
+		expect( rendered?.container.textContent ).toContain(
+			'The sound is longer than 30 seconds.'
+		);
+
+		const big = new File( [ 'x' ], 'big.mp3', { type: 'audio/mpeg' } );
+		Object.defineProperty( big, 'size', { value: 10485761 } );
+		choose( fileInputs()[ 0 ] as HTMLInputElement, big );
+		await flush();
+
+		expect( rendered?.container.textContent ).toContain(
+			'The file is larger than 10 MB.'
+		);
+		expect( requests.filter( ( r ) => r.method === 'POST' ) ).toHaveLength(
+			1
+		);
+	} );
+
+	it( 'deletes a category sound only after confirmation', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `DELETE ${ PATH }/sounds/12` ]: () =>
+				response( 200, body( URL_A ) ),
+		} );
+		const confirm = jest
+			.spyOn( window, 'confirm' )
+			.mockReturnValueOnce( false )
+			.mockReturnValueOnce( true );
+
+		await show();
+
+		click( button( 'Delete sound' ) );
+		await flush();
+		expect(
+			requests.filter( ( r ) => r.method === 'DELETE' )
+		).toHaveLength( 0 );
+
+		click( button( 'Delete sound' ) );
+		await flush();
+		expect(
+			requests.filter( ( r ) => r.method === 'DELETE' )
+		).toHaveLength( 1 );
+		expect( rendered?.container.textContent ).toContain( 'Sound deleted.' );
+		confirm.mockRestore();
 	} );
 } );

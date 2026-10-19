@@ -102,6 +102,35 @@ export interface AlertFontOption {
 	readonly url: string;
 }
 
+/** An uploaded alert sound (ADR-065). */
+export interface AlertSoundFile {
+	/** File URL on this site. */
+	readonly url: string;
+	readonly name: string;
+	/** Length in whole seconds. */
+	readonly seconds: number;
+}
+
+/** A sound slot: the default sound or one of the creator's categories. */
+export type SoundSlot = 'default' | number;
+
+/** The overlay's sounds. */
+export interface AlertsAudio {
+	/** Whether alerts play a sound. */
+	readonly enabled: boolean;
+	readonly defaultSound: AlertSoundFile | null;
+	/** The creator's categories with their sound. */
+	readonly categories: ReadonlyArray< {
+		readonly termId: number;
+		readonly name: string;
+		readonly sound: AlertSoundFile | null;
+	} >;
+	/** Largest file in bytes. */
+	readonly maxBytes: number;
+	/** Longest sound in seconds. */
+	readonly maxSeconds: number;
+}
+
 export interface AlertOverlay {
 	/** The OBS browser source URL; contains the secret overlay id. */
 	readonly url: string;
@@ -109,6 +138,8 @@ export interface AlertOverlay {
 	readonly layout: OverlayLayout;
 	/** False when the saved font is no longer approved (the default font is shown). */
 	readonly fontApproved: boolean;
+	/** The sounds; null when sounds are not available. */
+	readonly audio: AlertsAudio | null;
 }
 
 export interface AlertsOverlayState {

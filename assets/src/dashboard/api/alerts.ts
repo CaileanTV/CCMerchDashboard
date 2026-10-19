@@ -16,12 +16,15 @@ import {
 } from '../types/alerts';
 import type {
 	AlertFontOption,
+	AlertSoundFile,
+	AlertsAudio,
 	AlertsOverlayState,
 	FontWeight,
 	LayoutBox,
 	LayoutElement,
 	OverlayLayout,
 	OverlaySettings,
+	SoundSlot,
 	TextAlign,
 } from '../types/alerts';
 
@@ -141,6 +144,83 @@ function parseFonts( value: unknown ): AlertFontOption[] | null {
 	return fonts;
 }
 
+function parseSound( value: unknown ): AlertSoundFile | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		typeof value.name !== 'string' ||
+		! isIntegerIn( value.seconds, { min: 0, max: 86400 } )
+	) {
+		return undefined;
+	}
+
+	const url = readSameOriginUrl( value.url, window.location.origin );
+
+	return url === null
+		? undefined
+		: { url, name: value.name, seconds: value.seconds };
+}
+
+/**
+ * Validates the sounds of an answer; undefined when invalid.
+ *
+ * @param value Candidate.
+ */
+export function parseAudio( value: unknown ): AlertsAudio | null | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		typeof value.enabled !== 'boolean' ||
+		! Array.isArray( value.categories ) ||
+		! isIntegerIn( value.max_bytes, {
+			min: 1,
+			max: Number.MAX_SAFE_INTEGER,
+		} ) ||
+		! isIntegerIn( value.max_seconds, { min: 1, max: 3600 } )
+	) {
+		return undefined;
+	}
+
+	const defaultSound = parseSound( value.default );
+	const categories: Array< AlertsAudio[ 'categories' ][ number ] > = [];
+
+	if ( defaultSound === undefined ) {
+		return undefined;
+	}
+
+	for ( const item of value.categories as unknown[] ) {
+		const sound = isRecord( item ) ? parseSound( item.sound ) : undefined;
+
+		if (
+			! isRecord( item ) ||
+			! isIntegerIn( item.term_id, {
+				min: 1,
+				max: Number.MAX_SAFE_INTEGER,
+			} ) ||
+			typeof item.name !== 'string' ||
+			sound === undefined
+		) {
+			return undefined;
+		}
+
+		categories.push( { termId: item.term_id, name: item.name, sound } );
+	}
+
+	return {
+		enabled: value.enabled,
+		defaultSound,
+		categories,
+		maxBytes: value.max_bytes,
+		maxSeconds: value.max_seconds,
+	};
+}
+
 function isFontWeight( value: unknown ): value is FontWeight {
 	return (
 		value === 'normal' ||
@@ -218,7 +298,7 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 }
 
 /**
- * Validates `{ overlay: { url, settings, layout, font_approved } | null,
+ * Validates `{ overlay: { url, settings, layout, font_approved, audio } | null,
  * alerts_enabled, merchalert_active, fonts }`.
  *
  * @param body Response body.
@@ -257,13 +337,15 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 	const settings = parseOverlaySettings( body.overlay.settings );
 	const layout = parseLayout( body.overlay.layout );
 	const fontApproved = body.overlay.font_approved;
+	const audio = parseAudio( body.overlay.audio );
 
 	return url === null ||
 		settings === null ||
 		layout === null ||
-		typeof fontApproved !== 'boolean'
+		typeof fontApproved !== 'boolean' ||
+		audio === undefined
 		? null
-		: { overlay: { url, settings, layout, fontApproved }, ...state };
+		: { overlay: { url, settings, layout, fontApproved, audio }, ...state };
 }
 
 /**
@@ -299,12 +381,16 @@ export function createAlertsOverlay(): Promise<
 }
 
 /**
- * Saves overlay settings (the form's fields, the font or the layout).
+ * Saves overlay settings (the form's fields, the font, the layout or
+ * whether sounds play).
  *
  * @param changes Fields to save.
  */
 export function updateAlertsOverlay(
-	changes: Partial< OverlaySettings > | { readonly layout: OverlayLayout }
+	changes:
+		| Partial< OverlaySettings >
+		| { readonly layout: OverlayLayout }
+		| { readonly audio_enabled: boolean }
 ): Promise< ApiResult< AlertsOverlayState > > {
 	return request(
 		{ path: PATH, method: 'PATCH', data: { ...changes } },
@@ -320,6 +406,43 @@ export function regenerateAlertsOverlay(): Promise<
 > {
 	return request(
 		{ path: `${ PATH }/regenerate`, method: 'POST' },
+		parseAlertsOverlay
+	);
+}
+
+function soundPath( slot: SoundSlot ): string {
+	return `${ PATH }/sounds/${ slot === 'default' ? 'default' : String( slot ) }`;
+}
+
+/**
+ * Uploads a sound into a slot; the slot's old sound is deleted.
+ *
+ * @param slot The default sound or a category's term id.
+ * @param file MP3, WAV or OGG file.
+ */
+export function uploadAlertSound(
+	slot: SoundSlot,
+	file: File
+): Promise< ApiResult< AlertsOverlayState > > {
+	const body = new FormData();
+	body.append( 'file', file );
+
+	return request(
+		{ path: soundPath( slot ), method: 'POST', body },
+		parseAlertsOverlay
+	);
+}
+
+/**
+ * Removes the sound of a slot.
+ *
+ * @param slot The default sound or a category's term id.
+ */
+export function removeAlertSound(
+	slot: SoundSlot
+): Promise< ApiResult< AlertsOverlayState > > {
+	return request(
+		{ path: soundPath( slot ), method: 'DELETE' },
 		parseAlertsOverlay
 	);
 }

@@ -17,6 +17,7 @@
 | Migrationsfejl | transient `merchboard_db_migration_failed` ✅ (5 min) | Pause mellem automatiske forsøg og admin notice |
 | Rolle `merchboard_creator` og pluginets capabilities | WordPress' `wp_user_roles`-option via role-API ✅ (fase 5) | WordPress-nativt. Aldrig direkte manipuleret. |
 | Synkroniseret rolle-version | `wp_options`: `merchboard_roles_version` ✅ (autoload) | Styrer rolle-sync ved opdateringer (ADR-022) |
+| Alert-lyde (ADR-065, trin 25.6) | Vedhæftninger i WordPress' mediebibliotek; post meta `_merchboard_alert_sound_creator` (creator-ID) markerer ejeren. Hvilken fil der hører til hvilket slot, står i overlayets `settings` (`audio_default_sound`, `audio_category_map`) ✅ | Kun ejerens filer afspilles, vises eller slettes. Filerne er almindelige medier og bevares ved opt-in-afinstallation |
 | Alert-fontbibliotek (ADR-067) | `wp_options` uden autoload: `merchboard_alert_fonts_key` (Google Fonts API-nøgle) og `merchboard_alert_fonts_approved` (godkendte fonte: `family`, `category`, `weights`); transient `merchboard_alert_fonts_catalog` (Google Fonts-kataloget, 30 dage) ✅ fase 25, trin 25.5 | Erstatter den planlagte tabel `merchboard_alert_fonts` (ADR-065, statusnote 2026-10-19): lille og læses altid samlet. Skrives kun af `AlertFonts` med audit i samme transaktion. Nøglen sendes aldrig til frontend |
 | Secrets (API-nøgler til integrationer) | `wp-config.php`-konstanter (foretrukket) eller option med `autoload = no` | Aldrig i repo, aldrig autoloaded, aldrig sendt til frontend |
 | Produkter, varianter, ordrer, refunds og kunder | **WooCommerce** (HPOS) | Source of truth. Ingen kopi af masterdata. |
@@ -632,6 +633,7 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 | Ordremeta `_merchboard_ledger_failure` (fejlmarkøren, ADR-038) | Ja: legacy-postmeta via `delete_post_meta_by_key()`; HPOS-ordremeta kun via WooCommerce CRUD (ordrerne findes med `meta_key` + `meta_compare => EXISTS`), mens WooCommerce er aktivt (ellers bliver den liggende, ADR-038 Q3). Ingen direkte SQL mod WooCommerce-tabeller. |
 | Options `merchboard_db_version`, `merchboard_db_migration_lock`, `merchboard_roles_version` | Ja (også når tabeller bevares: en geninstallation kører alle migrationer igen hen over de bevarede tabeller; de skriver ingen data og ændrer ingen bevarede rækker; testet på MariaDB 10.11 i `ReinstallAfterUninstallTest`, MySQL 8 afventer CI) |
 | Transient `merchboard_db_migration_failed` | Ja |
+| Alert-lyde: vedhæftninger med post meta `_merchboard_alert_sound_creator` (fase 25, trin 25.6) | **Nej**: lydfilerne er creatorens uploads og bevares som almindelige medier (sammen med meta-nøglen); de kan slettes i mediebiblioteket |
 | Options `merchboard_alert_fonts_key` (Google Fonts API-nøglen) og `merchboard_alert_fonts_approved`, transient `merchboard_alert_fonts_catalog` (fase 25, trin 25.5, ADR-067) | Ja, sammen med de øvrige options |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |
 | Rollen `merchboard_creator` | Ja: fjernes fra brugere (andre roller bevares) og derefter som rolle |

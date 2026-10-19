@@ -34,8 +34,8 @@ final class OverlayTestQueue {
 	/**
 	 * Adds a rendered alert.
 	 *
-	 * @param int                                                            $overlay Overlay row id.
-	 * @param array{id: int, image: string, text: string, secondary: string} $alert   Rendered alert.
+	 * @param int                                                                           $overlay Overlay row id.
+	 * @param array{id: int, image: string, text: string, secondary: string, sound: string} $alert   Rendered alert.
 	 */
 	public function push( int $overlay, array $alert ): void {
 		$queue   = $this->read( $overlay );
@@ -48,7 +48,7 @@ final class OverlayTestQueue {
 	 * Takes the waiting alerts, oldest first.
 	 *
 	 * @param int $overlay Overlay row id.
-	 * @return list<array{id: int, image: string, text: string, secondary: string}>
+	 * @return list<array{id: int, image: string, text: string, secondary: string, sound: string}>
 	 */
 	public function drain( int $overlay ): array {
 		$queue = $this->read( $overlay );
@@ -64,7 +64,7 @@ final class OverlayTestQueue {
 	 * The waiting alerts, read fresh.
 	 *
 	 * @param int $overlay Overlay row id.
-	 * @return list<array{id: int, image: string, text: string, secondary: string}>
+	 * @return list<array{id: int, image: string, text: string, secondary: string, sound: string}>
 	 */
 	private function read( int $overlay ): array {
 		$key = self::key( $overlay );
@@ -77,12 +77,13 @@ final class OverlayTestQueue {
 		$queue  = array();
 
 		foreach ( is_array( $stored ) ? $stored : array() as $alert ) {
-			if ( is_array( $alert ) && is_string( $alert['text'] ?? null ) && is_string( $alert['image'] ?? null ) && is_string( $alert['secondary'] ?? null ) ) {
+			if ( is_array( $alert ) && is_string( $alert['text'] ?? null ) && is_string( $alert['image'] ?? null ) && is_string( $alert['secondary'] ?? null ) && is_string( $alert['sound'] ?? null ) ) {
 				$queue[] = array(
 					'id'        => 0,
 					'image'     => $alert['image'],
 					'text'      => $alert['text'],
 					'secondary' => $alert['secondary'],
+					'sound'     => $alert['sound'],
 				);
 			}
 		}

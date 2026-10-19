@@ -31,10 +31,13 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
+use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use WP_Term;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -45,7 +48,8 @@ defined( 'ABSPATH' ) || exit;
  * whose product attribution it uses. Phase 25, step 2: alerts are recorded
  * when an order is paid, behind the kill switch in Settings → Alerts and
  * the MerchAlert guard. Step 3: the public overlay page for OBS and its
- * feed (new and legacy URL). The dashboard section, the chatbot and the
+ * feed (new and legacy URL). Step 4: the dashboard section. Step 5: the
+ * designer and the font library. Step 6: sounds. The chatbot and the
  * import follow in later steps.
  */
 final class AlertsModule implements Module {
@@ -100,6 +104,26 @@ final class AlertsModule implements Module {
 		$container->set( AlertOverlayRepository::class, static fn( Container $c ): AlertOverlayRepository => new AlertOverlayRepository( $c->get( wpdb::class ) ) );
 		$container->set( AlertTemplate::class, static fn(): AlertTemplate => new AlertTemplate() );
 		$container->set( OverlayTestQueue::class, static fn(): OverlayTestQueue => new OverlayTestQueue() );
+		// Sounds (phase 25, step 6): the creator's own categories, by name.
+		$container->set(
+			AlertSounds::class,
+			static fn( Container $c ): AlertSounds => new AlertSounds(
+				$c->get( AlertOverlayRepository::class ),
+				static function ( int $creator_id ) use ( $c ): array {
+					$names = array();
+
+					foreach ( $c->get( CreatorCategoryRepository::class )->for_creator( $creator_id ) as $category ) {
+						$term = get_term( $category->term_id, 'product_cat' );
+
+						if ( $term instanceof WP_Term ) {
+							$names[ $category->term_id ] = $term->name;
+						}
+					}
+
+					return $names;
+				}
+			)
+		);
 		$container->set(
 			OverlayFeed::class,
 			static fn( Container $c ): OverlayFeed => new OverlayFeed(
@@ -109,7 +133,8 @@ final class AlertsModule implements Module {
 				$c->get( AlertTemplate::class ),
 				null,
 				null,
-				$c->get( OverlayTestQueue::class )
+				$c->get( OverlayTestQueue::class ),
+				$c->get( AlertSounds::class )
 			)
 		);
 		// The creator's overlay in the dashboard (phase 25, step 4).
@@ -128,7 +153,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			MeAlertsController::class,
-			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ) )
+			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ) )
 		);
 		( new AlertsDashboardSection() )->register();
 		$container->set(

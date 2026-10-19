@@ -48,7 +48,7 @@ describe( 'parseConfig', () => {
 } );
 
 describe( 'parseAnswer', () => {
-	it( 'accepts an answer and keeps only same-origin images', () => {
+	it( 'accepts an answer and keeps only same-origin images and sounds', () => {
 		expect(
 			parseAnswer( {
 				cursor: 12,
@@ -59,12 +59,14 @@ describe( 'parseAnswer', () => {
 						image: `${ window.location.origin }/wp-content/uploads/a.jpg`,
 						text: 'nova_fan bought Hoodie',
 						secondary: '',
+						sound: `${ window.location.origin }/wp-content/uploads/ding.mp3`,
 					},
 					{
 						id: 12,
 						image: 'https://cdn.example/b.jpg',
 						text: 'Anonymous bought Mug',
 						secondary: 'Thanks!',
+						sound: 'https://cdn.example/ding.mp3',
 					},
 				],
 			} )
@@ -77,12 +79,14 @@ describe( 'parseAnswer', () => {
 					image: `${ window.location.origin }/wp-content/uploads/a.jpg`,
 					text: 'nova_fan bought Hoodie',
 					secondary: '',
+					sound: `${ window.location.origin }/wp-content/uploads/ding.mp3`,
 				},
 				{
 					id: 12,
 					image: '',
 					text: 'Anonymous bought Mug',
 					secondary: 'Thanks!',
+					sound: '',
 				},
 			],
 		} );
@@ -99,7 +103,16 @@ describe( 'parseAnswer', () => {
 			parseAnswer( {
 				cursor: 1,
 				version: 'v',
-				alerts: [ { id: 1, image: '', text: 3, secondary: '' } ],
+				alerts: [
+					{ id: 1, image: '', text: 3, secondary: '', sound: '' },
+				],
+			} )
+		).toBeNull();
+		expect(
+			parseAnswer( {
+				cursor: 1,
+				version: 'v',
+				alerts: [ { id: 1, image: '', text: 'x', secondary: '' } ],
 			} )
 		).toBeNull();
 		expect( parseAnswer( 'oops' ) ).toBeNull();

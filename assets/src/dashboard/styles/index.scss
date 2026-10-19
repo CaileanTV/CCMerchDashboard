@@ -817,6 +817,39 @@
 	cursor: pointer;
 }
 
+/* Alert sounds (phase 25, step 6). */
+.merchboard-sounds__row {
+	padding-top: var(--merchboard-space-3);
+	margin-top: var(--merchboard-space-3);
+	border-top: 1px solid var(--merchboard-border);
+}
+
+.merchboard-sounds__label {
+	margin: 0 0 var(--merchboard-space-2);
+	font-size: var(--merchboard-text-md);
+}
+
+.merchboard-sounds__none {
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-sounds__file {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	margin-bottom: var(--merchboard-space-2);
+}
+
+.merchboard-sounds__upload {
+	cursor: pointer;
+}
+
+input:focus-visible + .merchboard-sounds__upload {
+	outline: 2px solid var(--merchboard-focus);
+	outline-offset: 2px;
+}
+
 /* Overlay designer (phase 25, step 5): the 1920 × 1080 canvas of OBS. */
 .merchboard-designer {
 	position: relative;

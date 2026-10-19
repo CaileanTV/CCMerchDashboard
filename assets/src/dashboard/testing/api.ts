@@ -18,6 +18,8 @@ export interface RecordedRequest {
 	readonly path: string;
 	readonly method: string;
 	readonly data: unknown;
+	/** A multipart body (file uploads). */
+	readonly body?: unknown;
 }
 
 /**
@@ -89,8 +91,14 @@ export function mockApi(
 			path = '',
 			method = 'GET',
 			data,
-		} = options as { path?: string; method?: string; data?: unknown };
-		const recorded = { path, method, data };
+			body,
+		} = options as {
+			path?: string;
+			method?: string;
+			data?: unknown;
+			body?: unknown;
+		};
+		const recorded = { path, method, data, body };
 		requests.push( recorded );
 
 		const route = routes[ `${ method } ${ path }` ];
