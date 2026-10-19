@@ -58,6 +58,15 @@ function SetupCard( {
 	);
 }
 
+/**
+ * The overlay URL with its secret id masked, for showing on a stream.
+ *
+ * @param url Overlay URL.
+ */
+export function maskOverlayUrl( url: string ): string {
+	return url.replace( /[0-9a-f]{32}/g, '•'.repeat( 12 ) );
+}
+
 function BrowserSourceCard( {
 	url,
 	onRegenerated,
@@ -70,17 +79,25 @@ function BrowserSourceCard( {
 	const id = useId();
 	const [ busy, setBusy ] = useState< 'test' | 'regenerate' | null >( null );
 	const [ error, setError ] = useState< ApiError | null >( null );
+	const [ shown, setShown ] = useState( false );
+
+	// A new URL starts hidden again.
+	useEffect( () => setShown( false ), [ url ] );
 
 	const copy = async () => {
 		try {
 			await window.navigator.clipboard.writeText( url );
 			notify( __( 'URL copied.', 'merchboard' ) );
 		} catch {
-			const input = document.getElementById( `${ id }-url` );
+			// Without clipboard access the URL must be shown to be copied by hand.
+			setShown( true );
+			window.setTimeout( () => {
+				const input = document.getElementById( `${ id }-url` );
 
-			if ( input instanceof HTMLInputElement ) {
-				input.select();
-			}
+				if ( input instanceof HTMLInputElement ) {
+					input.select();
+				}
+			}, 0 );
 
 			notify( __( 'Copy the selected URL with Ctrl+C.', 'merchboard' ) );
 		}
@@ -139,7 +156,7 @@ function BrowserSourceCard( {
 		<Card title={ __( 'Browser source for OBS', 'merchboard' ) }>
 			<p>
 				{ __(
-					'Add a browser source in OBS with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts.',
+					'Add a browser source in OBS with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts. It stays hidden until you show it, so it is safe on stream; copying and opening work without showing it.',
 					'merchboard'
 				) }
 			</p>
@@ -156,7 +173,7 @@ function BrowserSourceCard( {
 					type="text"
 					className="merchboard-input"
 					readOnly
-					value={ url }
+					value={ shown ? url : maskOverlayUrl( url ) }
 					onFocus={ ( event ) => event.target.select() }
 				/>
 			</div>
@@ -164,14 +181,24 @@ function BrowserSourceCard( {
 				<Button variant="secondary" onClick={ copy }>
 					{ __( 'Copy URL', 'merchboard' ) }
 				</Button>
-				<a
-					className="merchboard-button merchboard-button--secondary merchboard-button--md"
-					href={ url }
-					target="_blank"
-					rel="noopener noreferrer"
+				<Button
+					variant="secondary"
+					aria-pressed={ shown }
+					onClick={ () => setShown( ! shown ) }
+				>
+					{ shown
+						? __( 'Hide URL', 'merchboard' )
+						: __( 'Show URL', 'merchboard' ) }
+				</Button>
+				{ /* A button, not a link: hovering a link would show the URL in the status bar. */ }
+				<Button
+					variant="secondary"
+					onClick={ () =>
+						window.open( url, '_blank', 'noopener,noreferrer' )
+					}
 				>
 					{ __( 'Open overlay', 'merchboard' ) }
-				</a>
+				</Button>
 				<Button
 					variant="secondary"
 					onClick={ test }

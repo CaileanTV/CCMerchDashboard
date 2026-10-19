@@ -3,7 +3,10 @@ import { act } from 'react';
 
 import { parseAlertsOverlay } from '../api/alerts';
 import { ConfigContext } from '../app/config-context';
-import { AlertsSection } from '../sections/alerts/AlertsSection';
+import {
+	AlertsSection,
+	maskOverlayUrl,
+} from '../sections/alerts/AlertsSection';
 import { validateOverlaySettings } from '../sections/alerts/OverlaySettingsForm';
 import { mockApi, response } from '../testing/api';
 import { CONFIG, ORIGIN, click, flush, render } from '../testing/helpers';
@@ -287,16 +290,32 @@ describe( 'AlertsSection', () => {
 			'GET',
 			'POST',
 		] );
-		expect(
+		const field = () =>
 			rendered?.container.querySelector< HTMLInputElement >(
 				'input[readonly]'
-			)?.value
-		).toBe( URL_A );
-		expect(
-			rendered?.container
-				.querySelector( 'a[target="_blank"]' )
-				?.getAttribute( 'rel' )
-		).toBe( 'noopener noreferrer' );
+			)?.value;
+
+		expect( field() ).toBe( maskOverlayUrl( URL_A ) );
+		expect( field() ).not.toContain( 'a'.repeat( 32 ) );
+		expect( rendered?.container.innerHTML ).not.toContain(
+			'a'.repeat( 32 )
+		);
+
+		click( button( 'Show URL' ) );
+		expect( field() ).toBe( URL_A );
+		click( button( 'Hide URL' ) );
+		expect( field() ).toBe( maskOverlayUrl( URL_A ) );
+
+		const open = jest
+			.spyOn( window, 'open' )
+			.mockImplementation( () => null );
+		click( button( 'Open overlay' ) );
+		expect( open ).toHaveBeenCalledWith(
+			URL_A,
+			'_blank',
+			'noopener,noreferrer'
+		);
+		open.mockRestore();
 	} );
 
 	it( 'replaces the URL only after confirmation and sends test alerts', async () => {
@@ -315,6 +334,7 @@ describe( 'AlertsSection', () => {
 		await flush();
 		expect( requests ).toHaveLength( 1 );
 
+		click( button( 'Show URL' ) );
 		confirm.mockReturnValueOnce( true );
 		click( button( 'Create new URL' ) );
 		await flush();
@@ -322,7 +342,7 @@ describe( 'AlertsSection', () => {
 			rendered?.container.querySelector< HTMLInputElement >(
 				'input[readonly]'
 			)?.value
-		).toBe( URL_B );
+		).toBe( maskOverlayUrl( URL_B ) );
 
 		click( button( 'Send test alert' ) );
 		await flush();
