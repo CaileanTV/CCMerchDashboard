@@ -437,6 +437,32 @@ describe( 'AlertsSection', () => {
 		expect( patch?.data ).not.toHaveProperty( 'font_family' );
 	} );
 
+	it( 'shows the secondary text box only when it is switched on', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, {
+					...body( URL_A ),
+					overlay: {
+						url: URL_A,
+						settings: { ...SETTINGS, show_secondary: true },
+						layout: LAYOUT,
+						font_approved: true,
+						audio: AUDIO,
+					},
+				} ),
+		} );
+
+		await show();
+
+		expect(
+			Array.from(
+				rendered?.container.querySelectorAll(
+					'.merchboard-designer__box'
+				) ?? []
+			).map( ( box ) => box.getAttribute( 'aria-label' ) )
+		).toEqual( [ 'Product image', 'Main text', 'Secondary text' ] );
+	} );
+
 	it( 'saves the designer layout', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
@@ -445,9 +471,14 @@ describe( 'AlertsSection', () => {
 
 		await show();
 
+		// The secondary text is switched off, so its box is not shown.
 		expect(
-			rendered?.container.querySelectorAll( '.merchboard-designer__box' )
-		).toHaveLength( 3 );
+			Array.from(
+				rendered?.container.querySelectorAll(
+					'.merchboard-designer__box'
+				) ?? []
+			).map( ( box ) => box.getAttribute( 'aria-label' ) )
+		).toEqual( [ 'Product image', 'Main text' ] );
 
 		click( button( 'Save layout' ) );
 		await flush();
@@ -609,5 +640,143 @@ describe( 'AlertsSection', () => {
 		expect( chosen?.method ).toBe( 'POST' );
 		expect( chosen?.data ).toEqual( { library: 40 } );
 		expect( rendered?.container.textContent ).toContain( 'Sound saved.' );
+	} );
+
+	it( 'selects several boxes with Shift and aligns them to each other', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const boxes = Array.from(
+			rendered?.container.querySelectorAll< HTMLElement >(
+				'.merchboard-designer__box'
+			) ?? []
+		);
+		const image = boxes[ 0 ] as HTMLElement;
+
+		act( () => {
+			image.dispatchEvent(
+				new KeyboardEvent( 'keydown', {
+					key: 'Enter',
+					shiftKey: true,
+					bubbles: true,
+				} )
+			);
+		} );
+
+		expect(
+			boxes.map( ( box ) => box.getAttribute( 'aria-pressed' ) )
+		).toEqual( [ 'true', 'true' ] );
+		expect( rendered?.container.textContent ).toContain(
+			'2 elements selected'
+		);
+
+		const target = rendered?.container.querySelector< HTMLSelectElement >(
+			'.merchboard-designer__align select'
+		);
+		act( () => {
+			if ( target ) {
+				target.value = 'selection';
+				target.dispatchEvent(
+					new Event( 'change', { bubbles: true } )
+				);
+			}
+		} );
+
+		click( button( 'Align top' ) );
+		click( button( 'Save layout' ) );
+		await flush();
+
+		const saved = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
+			layout: typeof LAYOUT;
+		};
+		expect( saved.layout.elements.main_text.y ).toBe(
+			LAYOUT.elements.product_image.y
+		);
+		expect( saved.layout.elements.product_image.y ).toBe(
+			LAYOUT.elements.product_image.y
+		);
+	} );
+
+	it( 'undoes and redoes designer changes with the keyboard', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const leftField = () =>
+			Array.from(
+				rendered?.container.querySelectorAll< HTMLInputElement >(
+					'.merchboard-designer__properties input[type="number"]'
+				) ?? []
+			)[ 0 ];
+		const press = (
+			init: KeyboardEventInit,
+			target: EventTarget = window
+		) =>
+			act( () => {
+				target.dispatchEvent(
+					new KeyboardEvent( 'keydown', { bubbles: true, ...init } )
+				);
+			} );
+
+		expect( button( 'Undo' )?.hasAttribute( 'disabled' ) ).toBe( true );
+		expect( leftField()?.value ).toBe(
+			String( LAYOUT.elements.main_text.x )
+		);
+
+		click( button( 'Align left' ) );
+		expect( leftField()?.value ).toBe( '0' );
+		expect( button( 'Undo' )?.hasAttribute( 'disabled' ) ).toBe( false );
+
+		press( { key: 'z', ctrlKey: true } );
+		expect( leftField()?.value ).toBe(
+			String( LAYOUT.elements.main_text.x )
+		);
+
+		press( { key: 'z', ctrlKey: true, shiftKey: true } );
+		expect( leftField()?.value ).toBe( '0' );
+
+		// A text field of the settings form keeps the browser's own undo.
+		const template = rendered?.container.querySelector( 'textarea' );
+		expect( template ).not.toBeNull();
+		press( { key: 'z', ctrlKey: true }, template as HTMLTextAreaElement );
+		expect( leftField()?.value ).toBe( '0' );
+
+		click( button( 'Undo' ) );
+		expect( leftField()?.value ).toBe(
+			String( LAYOUT.elements.main_text.x )
+		);
+	} );
+
+	it( 'shows the save button right above the designer, which is last', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const save = button( 'Save overlay settings' );
+		const designer = rendered?.container.querySelector(
+			'.merchboard-designer'
+		);
+		const slot = save?.closest(
+			'.merchboard-form__actions'
+		)?.parentElement;
+
+		expect( save?.closest( '.merchboard-alerts__columns' ) ).toBeNull();
+		expect( save?.getAttribute( 'form' ) ).toBe(
+			rendered?.container.querySelector( 'form' )?.id
+		);
+		expect( slot?.nextElementSibling?.contains( designer ?? null ) ).toBe(
+			true
+		);
+		expect(
+			slot?.parentElement?.lastElementChild?.contains( designer ?? null )
+		).toBe( true );
 	} );
 } );

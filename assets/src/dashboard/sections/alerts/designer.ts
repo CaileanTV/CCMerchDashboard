@@ -1,9 +1,10 @@
 /**
  * Pure helpers of the overlay designer (ADR-065 pkt. 3): moving and
  * resizing boxes on the 1920 × 1080 canvas with snap-to-grid and the
- * server's bounds, the default layout, and the sample text of the preview.
+ * server's bounds, moving several boxes together and aligning them (step
+ * 25.6.6), the default layout, and the sample text of the preview.
  */
-import { BOX_LIMITS } from '../../types/alerts';
+import { BOX_LIMITS, CANVAS } from '../../types/alerts';
 import type {
 	LayoutBox,
 	LayoutElement,
@@ -157,4 +158,135 @@ export function background( hex: string, opacity: number ): string {
 	return `rgba(${ channel( 1 ) },${ channel( 3 ) },${ channel( 5 ) },${
 		opacity / 100
 	})`;
+}
+
+/**
+ * Whether a text box with "grow" grows up: its middle is in the lower half
+ * of the canvas, so it keeps its bottom edge (as the overlay does).
+ *
+ * @param box Box.
+ */
+export function growsUp( box: LayoutBox ): boolean {
+	return 2 * box.y + box.h > CANVAS.height;
+}
+
+/**
+ * Moves several boxes together: the lead box is moved (and snapped) as
+ * moveBox() does, and the others move by the same distance.
+ *
+ * @param layout Layout (the boxes are replaced in it).
+ * @param starts The boxes as they were when the drag started.
+ * @param lead   The box that is dragged.
+ * @param dx     Horizontal distance in canvas pixels.
+ * @param dy     Vertical distance in canvas pixels.
+ */
+export function moveBoxes(
+	layout: OverlayLayout,
+	starts: Readonly< Partial< Record< LayoutElement, LayoutBox > > >,
+	lead: LayoutElement,
+	dx: number,
+	dy: number
+): OverlayLayout {
+	const from = starts[ lead ];
+
+	if ( from === undefined ) {
+		return layout;
+	}
+
+	const to = moveBox( from, from.x + dx, from.y + dy, layout );
+	let next = layout;
+
+	for ( const [ element, box ] of Object.entries( starts ) as Array<
+		[ LayoutElement, LayoutBox ]
+	> ) {
+		next = withBox( next, element, {
+			...box,
+			x: clamp( box.x + to.x - from.x, BOX_LIMITS.x ),
+			y: clamp( box.y + to.y - from.y, BOX_LIMITS.y ),
+		} );
+	}
+
+	return next;
+}
+
+/** Edges and centres boxes can be aligned to. */
+export const ALIGNMENTS = [
+	'left',
+	'center',
+	'right',
+	'top',
+	'middle',
+	'bottom',
+] as const;
+
+export type Alignment = ( typeof ALIGNMENTS )[ number ];
+
+/** What boxes are aligned to: the canvas or the selected boxes' outline. */
+export type AlignTarget = 'canvas' | 'selection';
+
+/**
+ * Aligns boxes to the canvas or to the outline around all of them.
+ *
+ * @param layout    Layout.
+ * @param elements  The boxes to align.
+ * @param alignment Edge or centre.
+ * @param target    Canvas or selection.
+ */
+export function alignBoxes(
+	layout: OverlayLayout,
+	elements: readonly LayoutElement[],
+	alignment: Alignment,
+	target: AlignTarget
+): OverlayLayout {
+	const boxes = elements.map( ( element ) => layout.elements[ element ] );
+
+	if ( boxes.length === 0 ) {
+		return layout;
+	}
+
+	const area =
+		target === 'canvas'
+			? { left: 0, top: 0, right: CANVAS.width, bottom: CANVAS.height }
+			: {
+					left: Math.min( ...boxes.map( ( box ) => box.x ) ),
+					top: Math.min( ...boxes.map( ( box ) => box.y ) ),
+					right: Math.max( ...boxes.map( ( box ) => box.x + box.w ) ),
+					bottom: Math.max(
+						...boxes.map( ( box ) => box.y + box.h )
+					),
+				};
+	let next = layout;
+
+	elements.forEach( ( element, index ) => {
+		const box = boxes[ index ] as LayoutBox;
+		let { x, y } = box;
+
+		switch ( alignment ) {
+			case 'left':
+				x = area.left;
+				break;
+			case 'center':
+				x = ( area.left + area.right - box.w ) / 2;
+				break;
+			case 'right':
+				x = area.right - box.w;
+				break;
+			case 'top':
+				y = area.top;
+				break;
+			case 'middle':
+				y = ( area.top + area.bottom - box.h ) / 2;
+				break;
+			default:
+				y = area.bottom - box.h;
+		}
+
+		next = withBox( next, element, {
+			...box,
+			x: clamp( x, BOX_LIMITS.x ),
+			y: clamp( y, BOX_LIMITS.y ),
+		} );
+	} );
+
+	return next;
 }
