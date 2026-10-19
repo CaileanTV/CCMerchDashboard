@@ -46,7 +46,7 @@ function SetupCard( {
 		<Card title={ __( 'Your stream overlay', 'merchboard' ) }>
 			<p>
 				{ __(
-					'Show an alert on your stream when someone buys your merch. Set up your overlay to get a browser source URL for OBS.',
+					'Show an alert on your stream when someone buys your merch. Set up your overlay to get the URL for a browser source in your streaming software.',
 					'merchboard'
 				) }
 			</p>
@@ -126,7 +126,7 @@ function BrowserSourceCard( {
 			// eslint-disable-next-line no-alert -- A deliberate, destructive action needs an explicit confirmation.
 			! window.confirm(
 				__(
-					'Create a new overlay URL? The current URL stops working at once, and you must paste the new one into OBS.',
+					'Create a new overlay URL? The current URL stops working at once, and you must paste the new one into your browser source.',
 					'merchboard'
 				)
 			)
@@ -143,7 +143,7 @@ function BrowserSourceCard( {
 			onRegenerated( result.data );
 			notify(
 				__(
-					'New overlay URL created. Paste it into OBS.',
+					'New overlay URL created. Paste it into your browser source.',
 					'merchboard'
 				)
 			);
@@ -153,10 +153,10 @@ function BrowserSourceCard( {
 	};
 
 	return (
-		<Card title={ __( 'Browser source for OBS', 'merchboard' ) }>
+		<Card title={ __( 'Browser source', 'merchboard' ) }>
 			<p>
 				{ __(
-					'Add a browser source in OBS with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts. It stays hidden until you show it, so it is safe on stream; copying and opening work without showing it.',
+					'Add a browser source in your streaming software with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts. It stays hidden until you show it, so it is safe on stream; copying and opening work without showing it.',
 					'merchboard'
 				) }
 			</p>

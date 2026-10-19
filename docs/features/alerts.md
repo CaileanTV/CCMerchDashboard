@@ -6,14 +6,14 @@
 Når en kunde køber en creators merch, skal creatoren kunne vise det live på sin stream: en alert i OBS-overlayet med billede, tekst og lyd og eventuelt en besked i Twitch-chatten. Funktionen kom fra projektejerens ældre plugin MerchAlert og samles nu i Merch Dashboard, så creators kun har ét login og én kategori-mapping.
 
 ## Current status
-I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Trin 25.3 (2026-10-19, committet): den offentlige overlay-side for OBS med feed (ny og legacy URL); overlays oprettes fra dashboardet. Trin 25.4 (2026-10-19, committet): sektionen "Alerts" i creator-dashboardet med opsætning, OBS-URL (kopiér, åbn, ny URL), testalert og indstillingsformularen. Trin 25.5 (2026-10-19, committet): designeren, fontvælgeren og admin-undermenuen Merch Dashboard → Alerts med fanen "Fonts" (Google Fonts). Trin 25.6 (2026-10-19): lyde. Layout (25.6.1), maskeret OBS-URL (25.6.2), historik-UI, chatbot, admin-ekstra og import mangler.
+I gang (fase 25). Trin 25.2 (2026-10-19, committet): alerts registreres ved betalt ordre bag kill switch'en Settings → Alerts (slået fra som standard) og MerchAlert-vagten. Trin 25.3 (2026-10-19, committet): den offentlige overlay-side for OBS med feed (ny og legacy URL); overlays oprettes fra dashboardet. Trin 25.4 (2026-10-19, committet): sektionen "Alerts" i creator-dashboardet med opsætning, OBS-URL (kopiér, åbn, ny URL), testalert og indstillingsformularen. Trin 25.5 (2026-10-19, committet): designeren, fontvælgeren og admin-undermenuen Merch Dashboard → Alerts med fanen "Fonts" (Google Fonts). Trin 25.6 (2026-10-19, committet): lyde. Trin 25.6.1–25.6.3 (2026-10-19): kort side om side, maskeret OBS-URL og lydbibliotek fra admin. Historik-UI, chatbot, admin-ekstra og import mangler.
 
 ## User-facing functionality
 Creatoren får sektionen **"Alerts"** i creator-dashboardet med undersiderne:
 
-- **Overlay:** browser source-URL til OBS (kopiér, åbn), nyt overlay-ID (den gamle URL holder op med at virke med det samme), testalert med et tilfældigt produkt fra creatorens kategori, og indstillinger for tekst (skabelon, sekundær skabelon, font, størrelse, vægt, farve, skygge, justering), boks (billedstørrelse, baggrund, gennemsigtighed, hjørner, luft) og timing (animation og visningstid).
+- **Overlay:** browser source-URL til OBS (maskeret, indtil creatoren trykker "Show URL"; kopiér og åbn virker uden at vise den, 25.6.2), nyt overlay-ID (den gamle URL holder op med at virke med det samme), testalert med et tilfældigt produkt fra creatorens kategori, og indstillinger for tekst (skabelon, sekundær skabelon, font, størrelse, vægt, farve, skygge, justering), boks (billedstørrelse, baggrund, gennemsigtighed, hjørner, luft) og timing (animation og visningstid).
 - **Designer ✅ (25.5):** 1920×1080-lærred, hvor billede, hovedtekst og sekundær tekst trækkes og skaleres (fra nederste højre hjørne), med egenskabspanel (position, størrelse, synlighed, billedets hjørneradius og bevaret billedformat), snap-to-grid og en forhåndsvisning med eksempelværdier, der følger formularens gemte udseende. Fonte vælges i formularen blandt dem, administratoren har godkendt; er den valgte font fjernet, får creatoren en advarsel, og overlayet viser standardfonten.
-- **Lyde ✅ (25.6):** alert-lyd til og fra, standardlyd (upload, erstat, slet og afspil; MP3, WAV eller OGG, højst 10 MB og 30 sekunder; administratoren kan ændre grænserne fra 25.9) og lyd pr. kategori, kun for creatorens egne kategorier. En underkategori afspiller overkategoriens lyd. Den første lyd slår lyde til. I OBS går lyden til browser source'ens lyd i mixeren (lydmonitorering skal være slået til for selv at høre den); i en almindelig browserfane viser overlayet knappen "Click to turn on the alert sound", fordi browseren blokerer lyd før et klik.
+- **Lyde ✅ (25.6):** alert-lyd til og fra, standardlyd (upload, erstat, slet og afspil; MP3, WAV eller OGG, højst 10 MB og 30 sekunder; administratoren kan ændre grænserne fra 25.9) og lyd pr. kategori, kun for creatorens egne kategorier. En underkategori afspiller overkategoriens lyd. Den første lyd slår lyde til. I stedet for at uploade kan creatoren vælge en lyd fra administratorens lydbibliotek (25.6.3). OBS afspiller lyden automatisk uden klik, også efter genstart; lyden går til browser source'ens lyd i mixeren (lydmonitorering skal være slået til for selv at høre den). En almindelig browserfane kan blokere lyd, medmindre autoplay er tilladt for sitet i browserens indstillinger.
 - **Historik:** ordrer med alerts, 10 pr. side, med detaljer pr. ordre, "Anonymisér kundenavne" (huskes i browseren) og gensend af en enkelt alert eller hele ordren (gensender også chatbeskeden).
 - **Chatbot:** vejledning (`/mod` og `/vip` til botten), slå beskeder til og fra, beskedskabelon, preview og testbesked i creatorens kanal. Creatoren kan ikke selv vælge kanal.
 
@@ -27,6 +27,7 @@ Undermenuen **"Alerts"** under Merch Dashboard (capability `merchboard_manage_al
 - **Ordrelog:** statuskort og ordrer med alerts, filtreret på i dag, seneste 24 timer eller alle.
 - **Globalt overlay:** et overlay uafhængigt af creators med URL, testalert, replay af seneste ordre, designer og lyd.
 - **Chatbot:** Twitch Client ID og Secret, forbind og afbryd, kanal pr. creator, status, diagnostik og testbesked.
+- **Sounds ✅ (25.6.3):** lydbiblioteket: upload og fjern lyde (højst 50), som creators kan vælge imellem.
 - **Fonts ✅ (25.5):** Google Fonts API-nøgle (gem eller fjern; vises aldrig igen), hentning af kataloget (gemmes i 30 dage), søgning (højst 50 resultater, populæreste først), godkendelse og fjernelse af fonte (højst 100 godkendte).
 - **Import:** engangsimport fra MerchAlert med tørkørsel og bekræftelse.
 
@@ -48,7 +49,7 @@ Settings får sektionen **"Alerts"**: slå alerts til og fra, poll-interval, gr�
 - ✅ `src/Core/Database/Migrations/CreateAlertEventsTable.php` (migration 18) og `CreateAlertOverlaysTable.php` (migration 19).
 - ✅ Tests: `tests/Unit/Modules/Alerts/`, `tests/Integration/Alerts/` og `tests/Integration/Database/MigrationTest.php`.
 - ✅ `src/Modules/Alerts/Overlay/AlertOverlays.php` og `OverlayTestQueue.php`, `src/Modules/Alerts/Rest/MeAlertsController.php`, `src/Modules/Alerts/Dashboard/AlertsDashboardSection.php`; `assets/src/dashboard/sections/alerts/` (`AlertsSection.tsx`, `OverlaySettingsForm.tsx`), `api/alerts.ts`, `types/alerts.ts` og `test/alerts.test.tsx`.
-- ✅ `src/Modules/Alerts/Sounds/` (`AlertSounds`, `AlertSound`, `AlertSoundException`), `assets/src/dashboard/sections/alerts/AlertSoundsCard.tsx` og `tests/Integration/Alerts/AlertSoundsTest.php`.
+- ✅ `src/Modules/Alerts/Sounds/` (`AlertSounds`, `AlertSound`, `AlertSoundException`, `SoundFiles`, `AlertSoundLibrary`), `assets/src/dashboard/sections/alerts/AlertSoundsCard.tsx` og `tests/Integration/Alerts/AlertSoundsTest.php`.
 - ✅ `src/Modules/Alerts/Fonts/` (`AlertFonts`, `AlertFont`, `AlertFontsException`), `src/Modules/Alerts/Admin/AlertsAdminPage.php` og `AlertsAdminActions.php`; `assets/src/dashboard/sections/alerts/` (`OverlayDesigner.tsx`, `designer.ts`, `useFontStylesheet.ts`) og `test/alerts-designer.test.ts`.
 
 ## Database/data used
@@ -64,7 +65,7 @@ Migrationer fra 18 (detaljer i DATABASE.md):
 | `merchboard_settings` | `alerts_enabled` ✅ (default `false`); planlagt: poll-interval, lydgrænser, checkout-brugernavn, globalt overlay |
 | Options uden autoload | Krypterede Twitch-credentials og -tokens (planlagt) |
 | Ordre-meta | `_merchboard_alert_username` (fallback: `_ccmerch_username`) |
-| Vedhæftnings-meta ✅ (25.6) | `_merchboard_alert_sound_creator`: ejeren af en uploadet lyd |
+| Vedhæftnings-meta ✅ (25.6) | `_merchboard_alert_sound_creator`: ejeren af en uploadet lyd; `_merchboard_alert_sound_library` (25.6.3): en lyd i administratorens bibliotek |
 
 ## Permissions
 - Creator: `merchboard_access_dashboard`; creatoren findes via `CreatorContext` og har kun adgang til egne data.
@@ -90,7 +91,7 @@ Planlagt: unit-tests for routing, skabeloner, validering af CSS-værdier, krypte
 - Google Fonts sender brugerens IP-adresse til Google (GDPR-forbehold, ADR-067).
 - Designerens forhåndsvisning bruger eksempelværdier og formularens gemte udseende; ændringer i formularen vises i designeren, når de er gemt.
 - Lydfilerne bevares ved opt-in-afinstallation som almindelige medier.
-- En almindelig browser afspiller først lyd efter et klik på overlay-siden (autoplay-politik); OBS afspiller uden klik.
+- En almindelig browserfane kan blokere lyd (autoplay-politik), medmindre autoplay er tilladt for sitet; OBS afspiller altid uden klik. Overlay-siden har ingen knap til at slå lyd til (projektejerens beslutning 2026-10-19).
 - Grænserne for lydfiler (10 MB, 30 sekunder) er faste indtil 25.9.
 - Designeren gemmer hele layoutet på én gang; ændringer i to faner samtidig overskriver hinanden (den sidste gemning vinder).
 - Twitch-tokens migreres ikke; botten skal forbindes igen efter importen.

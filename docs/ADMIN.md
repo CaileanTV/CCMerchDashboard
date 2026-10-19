@@ -19,7 +19,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo); ✅ fase 25, trin 25.2: "Alerts" (kill switch for købs-alerts, kun med WooCommerce, ADR-065). Tabs General · Access · Advanced kommer, når de får indhold
 ├── Payouts                    ✅ fase 23, trin 23.6 (WooCommerce, ADR-055/056/058): kø og historik for creatorernes payout-anmodninger, afvisning og registrering af manuel overførsel; kræver merchboard_manage_payouts; fulde bank-/PayPal-oplysninger kræver desuden merchboard_view_payout_details
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
-├── Alerts                     ✅ fase 25, trin 25.5 (WooCommerce, ADR-065/067): fanen "Fonts" (Google Fonts API-nøgle, katalog og godkendte fonte); kræver merchboard_manage_alerts. Fanerne ordrelog, globalt overlay, chatbot og import følger i 25.8–25.10
+├── Alerts                     ✅ fase 25, trin 25.5 (WooCommerce, ADR-065/067): fanen "Fonts" (Google Fonts API-nøgle, katalog og godkendte fonte); trin 25.6.3: fanen "Sounds" (lydbibliotek); kræver merchboard_manage_alerts. Fanerne ordrelog, globalt overlay, chatbot og import følger i 25.8–25.10
 ├── Order history              ✅ fase 22 (WooCommerce, ADR-051/052): ordrehistorik for sales ledgeren pr. ordre; kræver merchboard_manage_creators; sletning af en testordres historik kræver merchboard_delete_order_history
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
@@ -164,6 +164,12 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 - **Katalog:** "Fetch the catalogue" henter Google Fonts-kataloget (kun med en gemt nøgle; populæreste først) og gemmer det i 30 dage. Søgning viser højst 50 familier med kategori og knappen "Approve".
 - **Godkendte fonte:** liste med "Remove". Højst 100. Kun familier fra kataloget kan godkendes. En fjernet font indlæses ikke længere; overlays, der brugte den, viser standardfonten.
 - Handlinger via `admin-post.php` (`merchboard_alert_fonts_key`, `merchboard_alert_fonts_sync`, `merchboard_alert_font_approve`, `merchboard_alert_font_remove`): capability før nonce, nonce pr. handling og (for godkend og fjern) pr. fontfamilie, Post/Redirect/Get med whitelistet resultatkode (`merchboard_alerts_admin_result`). `AlertFonts` tjekker capability igen. Audit: "Google Fonts API key changed" (kun om nøglen blev fjernet, aldrig selve nøglen), "Google Fonts catalogue fetched" (antal familier), "Alert font approved" og "Alert font removed" (familien).
+
+**Merch Dashboard → Alerts, fanen "Sounds"** (✅ fase 25, trin 25.6.3; ikke runtime-verificeret):
+
+- Upload af en lyd (MP3, WAV eller OGG, højst 10 MB og 30 sekunder, samme kontrol som creatorens uploads) og listen over bibliotekets lyde (navn, længde, afspil, "Remove"). Højst 50 lyde.
+- Handlinger via `admin-post.php` (`merchboard_alert_sound_library_add` som multipart, `merchboard_alert_sound_library_remove` med nonce pr. lyd): capability før nonce, Post/Redirect/Get til fanen med whitelistet resultatkode. `AlertSoundLibrary` tjekker capability igen. Audit: "Sound added to the alert sound library" og "Sound removed from the alert sound library" (filnavnet).
+- Creators vælger bibliotekets lyde i sektionen "Alerts"; en fjernet lyd afspilles ingen steder, og overlays, der brugte den, afspiller deres andre lyde.
 
 **Planlagte settings** (når de får indhold):
 

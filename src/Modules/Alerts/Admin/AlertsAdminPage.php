@@ -154,7 +154,7 @@ final class AlertsAdminPage {
 			return;
 		}
 
-		echo '<p>' . esc_html__( 'Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google\'s servers in the creator dashboard and in OBS, which sends the viewer\'s IP address to Google (ADR-067).', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google\'s servers in the creator dashboard and in the browser source, which sends the viewer\'s IP address to Google (ADR-067).', 'merchboard' ) . '</p>';
 
 		$this->render_key();
 		$this->render_approved();
