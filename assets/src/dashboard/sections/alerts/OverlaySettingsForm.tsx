@@ -184,7 +184,11 @@ export function OverlaySettingsForm( {
 	);
 
 	return (
-		<form className="merchboard-form" onSubmit={ onSubmit } noValidate>
+		<form
+			className="merchboard-form merchboard-alerts__form merchboard-alerts__wide"
+			onSubmit={ onSubmit }
+			noValidate
+		>
 			{ saveError !== null && <ApiErrorState error={ saveError } /> }
 
 			<Card title={ __( 'Alert text', 'merchboard' ) }>

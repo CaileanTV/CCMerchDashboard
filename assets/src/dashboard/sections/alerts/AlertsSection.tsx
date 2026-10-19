@@ -239,29 +239,11 @@ function AlertsContent( {
 			{ state.overlay === null ? (
 				<SetupCard onCreated={ setState } />
 			) : (
-				<>
+				<div className="merchboard-alerts">
 					<BrowserSourceCard
 						url={ state.overlay.url }
 						onRegenerated={ setState }
 						notify={ setToast }
-					/>
-					<OverlaySettingsForm
-						key={ `form-${ state.overlay.url }` }
-						settings={ state.overlay.settings }
-						fonts={ state.fonts }
-						fontApproved={ state.overlay.fontApproved }
-						onSaved={ setState }
-					/>
-					<OverlayDesigner
-						key={ `designer-${ state.overlay.url }` }
-						layout={ state.overlay.layout }
-						settings={ state.overlay.settings }
-						fontFamily={
-							font === undefined
-								? 'inherit'
-								: `"${ font.family }", sans-serif`
-						}
-						onSaved={ setState }
 					/>
 					{ state.overlay.audio !== null && (
 						<AlertSoundsCard
@@ -270,7 +252,27 @@ function AlertsContent( {
 							notify={ setToast }
 						/>
 					) }
-				</>
+					<OverlaySettingsForm
+						key={ `form-${ state.overlay.url }` }
+						settings={ state.overlay.settings }
+						fonts={ state.fonts }
+						fontApproved={ state.overlay.fontApproved }
+						onSaved={ setState }
+					/>
+					<div className="merchboard-alerts__wide">
+						<OverlayDesigner
+							key={ `designer-${ state.overlay.url }` }
+							layout={ state.overlay.layout }
+							settings={ state.overlay.settings }
+							fontFamily={
+								font === undefined
+									? 'inherit'
+									: `"${ font.family }", sans-serif`
+							}
+							onSaved={ setState }
+						/>
+					</div>
+				</div>
 			) }
 			<Toast message={ toast } onDismiss={ dismissToast } />
 		</>

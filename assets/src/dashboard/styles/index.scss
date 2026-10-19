@@ -790,7 +790,29 @@
 	}
 }
 
-/* Alerts (phase 25, ADR-065). */
+/* Alerts (phase 25, ADR-065). Cards side by side on wide screens (25.6.1). */
+.merchboard-alerts,
+.merchboard-alerts__form {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+	gap: var(--merchboard-space-6);
+	align-items: start;
+}
+
+.merchboard-alerts__form {
+	max-width: none;
+
+	// Errors, the save button and the toast region span the whole row.
+	> :not(.merchboard-card) {
+		grid-column: 1 / -1;
+	}
+}
+
+.merchboard-alerts__wide {
+	grid-column: 1 / -1;
+	min-width: 0;
+}
+
 .merchboard-alerts__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
