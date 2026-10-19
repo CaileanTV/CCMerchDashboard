@@ -254,6 +254,8 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertFalse( $this->data( $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => false ) ) )['overlay']['audio']['enabled'] );
 		self::assertTrue( $this->data( $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => true ) ) )['overlay']['audio']['enabled'] );
 		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'audio_enabled' => 'yes' ) )->get_status() );
+		self::assertTrue( $this->data( $this->call( 'PATCH', self::ROUTE, array( 'display_from_sound' => true ) ) )['overlay']['settings']['display_from_sound'] );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'display_from_sound' => 1 ) )->get_status() );
 
 		self::assertNull( $this->data( $this->call( 'DELETE', self::ROUTE . '/sounds/default' ) )['overlay']['audio']['default'] );
 

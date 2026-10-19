@@ -159,8 +159,10 @@ final class AlertOverlays {
 		}
 
 		// The sound files themselves change only through AlertSounds.
-		if ( array_key_exists( 'audio_enabled', $input ) ) {
-			$values['audio_enabled'] = true === $input['audio_enabled'];
+		foreach ( array( 'audio_enabled', 'display_from_sound' ) as $flag ) {
+			if ( array_key_exists( $flag, $input ) ) {
+				$values[ $flag ] = true === $input[ $flag ];
+			}
 		}
 
 		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );

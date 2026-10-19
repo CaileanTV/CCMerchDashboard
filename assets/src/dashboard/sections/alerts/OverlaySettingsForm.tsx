@@ -473,6 +473,33 @@ export function OverlaySettingsForm( {
 			</Card>
 
 			<Card title={ __( 'Timing', 'merchboard' ) }>
+				<label
+					className="merchboard-alerts__check"
+					htmlFor={ `${ id }-from-sound` }
+				>
+					<input
+						id={ `${ id }-from-sound` }
+						type="checkbox"
+						checked={ values.display_from_sound }
+						aria-describedby={ `${ id }-from-sound-help` }
+						onChange={ ( event ) =>
+							set( { display_from_sound: event.target.checked } )
+						}
+					/>{ ' ' }
+					{ __(
+						'Show the alert as long as its sound plays',
+						'merchboard'
+					) }
+				</label>
+				<p
+					id={ `${ id }-from-sound-help` }
+					className="merchboard-field__help"
+				>
+					{ __(
+						'Just add a sound: an alert with a sound is shown for exactly as long as the sound lasts, then fades out. Alerts without a sound use the display time below.',
+						'merchboard'
+					) }
+				</p>
 				<div className="merchboard-alerts__grid">
 					{ number(
 						'display_duration',

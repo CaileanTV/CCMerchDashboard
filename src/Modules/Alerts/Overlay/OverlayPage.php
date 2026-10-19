@@ -106,12 +106,13 @@ final class OverlayPage {
 				'secondary' => $settings->element_style( 'secondary_text' ),
 			),
 			'config'    => array(
-				'feed'            => rest_url( 'merchboard/v1/alerts/overlay/' . $overlay->overlay_id . '/feed' ),
-				'version'         => $overlay->version(),
-				'displayDuration' => $settings->display_duration(),
-				'animDuration'    => $settings->anim_duration(),
-				'textFit'         => $settings->text_fit(),
-				'imageFollows'    => $settings->grows_up( 'main_text' ),
+				'feed'             => rest_url( 'merchboard/v1/alerts/overlay/' . $overlay->overlay_id . '/feed' ),
+				'version'          => $overlay->version(),
+				'displayDuration'  => $settings->display_duration(),
+				'animDuration'     => $settings->anim_duration(),
+				'textFit'          => $settings->text_fit(),
+				'imageFollows'     => $settings->grows_up( 'main_text' ),
+				'displayFromSound' => $settings->display_from_sound(),
 			),
 		);
 

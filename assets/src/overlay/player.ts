@@ -15,7 +15,12 @@ export interface OverlayElements {
 export interface Timing {
 	displayDuration: number;
 	animDuration: number;
+	/** Whether an alert with a sound is shown as long as the sound plays. */
+	displayFromSound?: boolean;
 }
+
+/** Shortest display time when it comes from a sound, in milliseconds. */
+export const MIN_SOUND_DISPLAY = 1000;
 
 /** Longest queue; older alerts are dropped when a flood arrives. */
 export const MAX_QUEUE = 100;
@@ -41,8 +46,11 @@ export class AlertPlayer {
 		) => void = ( callback, delay ) => {
 			window.setTimeout( callback, delay );
 		},
-		private readonly play: ( url: string ) => void = () => undefined,
-		private readonly fit: ( element: HTMLElement ) => void = () => undefined,
+		private readonly play: (
+			url: string
+		) => Promise< number | null > | void = () => undefined,
+		private readonly fit: ( element: HTMLElement ) => void = () =>
+			undefined,
 		private readonly arrange: ( elements: OverlayElements ) => void = () =>
 			undefined
 	) {}
@@ -95,15 +103,40 @@ export class AlertPlayer {
 			return;
 		}
 
-		if ( alert.sound !== '' ) {
-			this.play( alert.sound );
-		}
+		const length =
+			alert.sound === '' ? undefined : this.play( alert.sound );
 
 		for ( const element of animated ) {
 			element.classList.remove( HIDDEN, HIDING );
 			element.classList.add( VISIBLE );
 		}
 
+		// With "as long as the sound plays", the sound's length is the display time.
+		if (
+			this.timing.displayFromSound === true &&
+			length instanceof Promise
+		) {
+			void length.then( ( ms ) =>
+				this.hide(
+					animated,
+					ms === null
+						? this.timing.displayDuration
+						: Math.max( MIN_SOUND_DISPLAY, ms )
+				)
+			);
+			return;
+		}
+
+		this.hide( animated, this.timing.displayDuration );
+	}
+
+	/**
+	 * Fades the shown elements out after a delay, then shows the next alert.
+	 *
+	 * @param animated The shown elements.
+	 * @param delay    Display time in milliseconds.
+	 */
+	private hide( animated: HTMLElement[], delay: number ): void {
 		this.schedule( () => {
 			for ( const element of animated ) {
 				element.classList.replace( VISIBLE, HIDING );
@@ -116,7 +149,7 @@ export class AlertPlayer {
 
 				this.finish();
 			}, this.timing.animDuration );
-		}, this.timing.displayDuration );
+		}, delay );
 	}
 
 	private fill( alert: OverlayAlert ): void {

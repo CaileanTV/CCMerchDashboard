@@ -322,6 +322,7 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		typeof value.text_shadow !== 'string' ||
 		value.text_shadow.length > 100 ||
 		typeof value.show_secondary !== 'boolean' ||
+		typeof value.display_from_sound !== 'boolean' ||
 		! isFontFamily( value.font_family )
 	) {
 		return null;
@@ -344,6 +345,7 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		anim_duration: value.anim_duration as number,
 		display_duration: value.display_duration as number,
 		show_secondary: value.show_secondary,
+		display_from_sound: value.display_from_sound,
 		font_family: value.font_family,
 	};
 }

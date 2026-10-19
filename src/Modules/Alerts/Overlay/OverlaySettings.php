@@ -53,7 +53,7 @@ final class OverlaySettings {
 	/**
 	 * Normalized values.
 	 *
-	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
+	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
 	 */
 	private array $values;
 
@@ -84,6 +84,7 @@ final class OverlaySettings {
 			'anim_duration'       => self::int( $input['anim_duration'] ?? null, 0, 5000, 500 ),
 			'display_duration'    => self::int( $input['display_duration'] ?? null, 1000, 30000, 5000 ),
 			'audio_enabled'       => self::flag( $input['audio_enabled'] ?? null ),
+			'display_from_sound'  => self::flag( $input['display_from_sound'] ?? null ),
 			'audio_default_sound' => self::int( $input['audio_default_sound'] ?? null, 0, PHP_INT_MAX, 0 ),
 			'audio_category_map'  => self::category_map( $input['audio_category_map'] ?? null ),
 			'layout'              => self::layout( $input['layout'] ?? null ),
@@ -120,7 +121,7 @@ final class OverlaySettings {
 	/**
 	 * The normalized values.
 	 *
-	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
+	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}}
 	 */
 	public function to_array(): array {
 		return $this->values;
@@ -145,6 +146,14 @@ final class OverlaySettings {
 	 */
 	public function secondary_template(): string {
 		return $this->values['secondary_template'];
+	}
+
+	/**
+	 * Whether an alert with a sound is shown as long as its sound plays
+	 * instead of the display time (step 6.8).
+	 */
+	public function display_from_sound(): bool {
+		return $this->values['display_from_sound'];
 	}
 
 	/**

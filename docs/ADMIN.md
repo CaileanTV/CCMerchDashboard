@@ -167,7 +167,7 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 
 **Merch Dashboard → Alerts, fanen "Sounds"** (✅ fase 25, trin 25.6.3; ikke runtime-verificeret):
 
-- Upload af en lyd (MP3, WAV eller OGG, højst 10 MB og 30 sekunder, samme kontrol som creatorens uploads) og listen over bibliotekets lyde (navn, længde, afspil, "Remove"). Højst 50 lyde.
+- Upload af en lyd (MP3, WAV eller OGG, højst 10 MB og 30 sekunder, samme kontrol som creatorens uploads) med et valgfrit navn, og listen over bibliotekets lyde (navn, der kan ændres med "Omdøb", længde, afspil, "Remove"). Højst 50 lyde. Navnet (højst 60 tegn, ellers filnavnet) er det, creators ser (trin 25.6.7); omdøbning auditeres ("Sound of the alert sound library renamed").
 - Handlinger via `admin-post.php` (`merchboard_alert_sound_library_add` som multipart, `merchboard_alert_sound_library_remove` med nonce pr. lyd): capability før nonce, Post/Redirect/Get til fanen med whitelistet resultatkode. `AlertSoundLibrary` tjekker capability igen. Audit: "Sound added to the alert sound library" og "Sound removed from the alert sound library" (filnavnet).
 - Creators vælger bibliotekets lyde i sektionen "Alerts"; en fjernet lyd afspilles ingen steder, og overlays, der brugte den, afspiller deres andre lyde.
 

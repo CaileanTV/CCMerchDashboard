@@ -36,6 +36,8 @@ export interface OverlayConfig {
 	textFit: TextFit;
 	/** Whether the image follows the main text when it grows up. */
 	imageFollows: boolean;
+	/** Whether an alert with a sound is shown as long as the sound plays. */
+	displayFromSound: boolean;
 }
 
 /** Longest wait between retries after errors, in milliseconds. */
@@ -92,6 +94,7 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 		animDuration: value.animDuration,
 		textFit: isTextFit( value.textFit ) ? value.textFit : 'fixed',
 		imageFollows: value.imageFollows === true,
+		displayFromSound: value.displayFromSound === true,
 	};
 }
 

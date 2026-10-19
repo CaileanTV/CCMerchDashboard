@@ -30,6 +30,7 @@ describe( 'parseConfig', () => {
 			animDuration: 500,
 			textFit: 'shrink',
 			imageFollows: true,
+			displayFromSound: false,
 		} );
 		expect(
 			parseConfig( {

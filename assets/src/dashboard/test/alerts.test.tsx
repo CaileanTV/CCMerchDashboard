@@ -38,6 +38,7 @@ const SETTINGS = {
 	anim_duration: 500,
 	display_duration: 5000,
 	show_secondary: false,
+	display_from_sound: false,
 	font_family: 'inherit',
 };
 

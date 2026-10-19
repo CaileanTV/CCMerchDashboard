@@ -43,6 +43,7 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame( 500, $values['anim_duration'] );
 		self::assertSame( 5000, $values['display_duration'] );
 		self::assertFalse( $values['audio_enabled'] );
+		self::assertFalse( $values['display_from_sound'], 'The display time applies, as in MerchAlert.' );
 		self::assertSame( OverlaySettings::default_layout(), $values['layout'] );
 	}
 

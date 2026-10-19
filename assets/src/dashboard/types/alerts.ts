@@ -60,6 +60,8 @@ export interface OverlaySettings {
 	readonly anim_duration: number;
 	readonly display_duration: number;
 	readonly show_secondary: boolean;
+	/** Alerts with a sound are shown as long as the sound plays (step 25.6.8). */
+	readonly display_from_sound: boolean;
 	/** "inherit" (the default font) or an approved Google font (ADR-067). */
 	readonly font_family: string;
 }

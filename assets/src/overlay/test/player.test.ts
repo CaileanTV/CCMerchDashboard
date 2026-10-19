@@ -5,7 +5,11 @@ import { describe, expect, it } from '@jest/globals';
 import { AlertPlayer, MAX_QUEUE } from '../player';
 import type { OverlayAlert } from '../feed';
 
-function setup( hidden: string[] = [] ) {
+function setup(
+	hidden: string[] = [],
+	fromSound = false,
+	length: number | null = null
+) {
 	const image = document.createElement( 'div' );
 	const text = document.createElement( 'div' );
 	const secondary = document.createElement( 'div' );
@@ -24,13 +28,19 @@ function setup( hidden: string[] = [] ) {
 
 	const player = new AlertPlayer(
 		{ image, text, secondary },
-		{ displayDuration: 5000, animDuration: 500 },
+		{
+			displayDuration: 5000,
+			animDuration: 500,
+			displayFromSound: fromSound,
+		},
 		( element ) => ! hidden.includes( names.get( element ) ?? '' ),
 		( callback, delay ) => {
 			timers.push( { callback, delay } );
 		},
 		( url ) => {
 			played.push( url );
+
+			return Promise.resolve( length );
 		}
 	);
 
@@ -163,5 +173,35 @@ describe( 'AlertPlayer', () => {
 		);
 
 		expect( player.waiting ).toBe( MAX_QUEUE - 1 );
+	} );
+
+	it( 'shows an alert with a sound as long as the sound plays', async () => {
+		const { player, timers } = setup( [], true, 2750 );
+
+		player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ) ] );
+		expect( timers ).toHaveLength( 0 );
+
+		await Promise.resolve();
+		await Promise.resolve();
+		expect( timers[ 0 ]?.delay ).toBe( 2750 );
+	} );
+
+	it( 'uses the display time without a sound, or when its length is unknown', async () => {
+		const unknown = setup( [], true, null );
+
+		unknown.player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ) ] );
+		await Promise.resolve();
+		await Promise.resolve();
+		expect( unknown.timers[ 0 ]?.delay ).toBe( 5000 );
+
+		const silent = setup( [], true, 2750 );
+
+		silent.player.enqueue( [ alert( 2 ) ] );
+		expect( silent.timers[ 0 ]?.delay ).toBe( 5000 );
+
+		const off = setup( [], false, 2750 );
+
+		off.player.enqueue( [ alert( 3, { sound: '/ding.mp3' } ) ] );
+		expect( off.timers[ 0 ]?.delay ).toBe( 5000 );
 	} );
 } );

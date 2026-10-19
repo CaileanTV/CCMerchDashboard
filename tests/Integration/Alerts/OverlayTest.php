@@ -204,6 +204,7 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertMatchesRegularExpression( '#<script type="application/json" id="merchboard-overlay-config">\{.*"feed":"[^"]+/merchboard/v1/alerts/overlay/' . $id . '/feed".*\}</script>#', $html );
 		self::assertStringContainsString( '"textFit":"fixed"', $html, 'The overlay script knows how text meets its box.' );
 		self::assertStringContainsString( '"imageFollows":false', $html );
+		self::assertStringContainsString( '"displayFromSound":false', $html );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 
 		$headers = OverlayPage::security_headers( 'nonce123' );
