@@ -313,6 +313,25 @@
 	font-size: var(--merchboard-text-lg);
 }
 
+// A title with actions at its right (e.g. "Refresh").
+.merchboard-card__header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2) var(--merchboard-space-4);
+	align-items: baseline;
+	justify-content: space-between;
+	margin-bottom: var(--merchboard-space-4);
+
+	.merchboard-card__title {
+		margin: 0;
+	}
+}
+
+.merchboard-card__actions {
+	display: flex;
+	gap: var(--merchboard-space-2);
+}
+
 .merchboard-alert {
 	padding: var(--merchboard-space-3) var(--merchboard-space-4);
 	border: 1px solid currentcolor;
@@ -1103,4 +1122,30 @@ input:disabled + .merchboard-sounds__upload {
 
 .merchboard-designer__selection {
 	color: var(--merchboard-text-muted);
+}
+
+// The alert history (phase 25, step 7).
+.merchboard-history {
+	display: grid;
+	gap: var(--merchboard-space-4);
+}
+
+.merchboard-history__details summary {
+	cursor: pointer;
+}
+
+.merchboard-history__alerts {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	padding: 0;
+	margin: var(--merchboard-space-2) 0 0;
+	list-style: none;
+
+	li {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--merchboard-space-2);
+		align-items: center;
+		justify-content: space-between;
+	}
 }

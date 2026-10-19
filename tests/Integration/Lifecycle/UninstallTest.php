@@ -154,6 +154,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->plugin_caps_on_users() );
 		self::assertSame( '', get_user_meta( $this->creator_user, 'merchboard_dashboard_theme', true ), 'Theme preference removed (ADR-044).' );
 		self::assertSame( '', get_user_meta( $this->multi_role_user, 'merchboard_dashboard_theme', true ) );
+		self::assertSame( '', get_user_meta( $this->creator_user, 'merchboard_alerts_anonymize', true ), 'Alert history preference removed.' );
 
 		// Everything else kept.
 		self::assertSame( 'kept', get_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', true ), 'Exact key only, no prefix match.' );
@@ -673,6 +674,8 @@ final class UninstallTest extends IntegrationTestCase {
 		update_user_meta( $this->creator_user, 'merchboard_dashboard_theme', 'dark-red' );
 		update_user_meta( $this->multi_role_user, 'merchboard_dashboard_theme', 'light' );
 		update_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', 'kept' );
+		// "Anonymize usernames" in the alert history (phase 25, step 7).
+		update_user_meta( $this->creator_user, 'merchboard_alerts_anonymize', '1' );
 
 		update_option( 'merchboard_test_unrelated', 'kept' );
 		$this->post_id = (int) wp_insert_post(

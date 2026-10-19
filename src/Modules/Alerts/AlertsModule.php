@@ -20,6 +20,7 @@ use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
 use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use MerchBoard\Modules\Alerts\History\AlertHistory;
 use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Images\ImageFiles;
@@ -34,6 +35,7 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
+use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
@@ -178,6 +180,15 @@ final class AlertsModule implements Module {
 			MeAlertsController::class,
 			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ) )
 		);
+		// The history: resend and "Stop all alerts" (phase 25, step 7).
+		$container->set(
+			AlertHistory::class,
+			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ) )
+		);
+		$container->set(
+			MeAlertsHistoryController::class,
+			static fn( Container $c ): MeAlertsHistoryController => new MeAlertsHistoryController( $c->get( CreatorContext::class ), $c->get( AlertHistory::class ), $c->get( Logger::class ) )
+		);
 		( new AlertsDashboardSection() )->register();
 		$container->set(
 			OverlayFeedController::class,
@@ -220,6 +231,7 @@ final class AlertsModule implements Module {
 			static function () use ( $container ): void {
 				$container->get( OverlayFeedController::class )->register_routes();
 				$container->get( MeAlertsController::class )->register_routes();
+				$container->get( MeAlertsHistoryController::class )->register_routes();
 			}
 		);
 

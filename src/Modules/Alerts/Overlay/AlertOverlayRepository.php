@@ -110,6 +110,30 @@ final class AlertOverlayRepository {
 	}
 
 	/**
+	 * Gives the overlay a new version without changing it ("Stop all alerts",
+	 * step 25.7): the open overlay page reloads. The new `updated_at` is at
+	 * least a second after the old one, so the version also changes within
+	 * the second of the last change.
+	 *
+	 * @param int $id Overlay row id.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function touch( int $id ): void {
+		$wpdb = $this->wpdb;
+		$sql  = $wpdb->prepare( 'UPDATE %i SET updated_at = GREATEST(UTC_TIMESTAMP(), updated_at + INTERVAL 1 SECOND) WHERE id = %d', $this->table(), $id );
+
+		if ( null === $sql ) {
+			throw new DatabaseException( 'Could not prepare the alert overlay update.' );
+		}
+
+		$updated = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; a custom table.
+
+		if ( false === $updated || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not update the alert overlay.' );
+		}
+	}
+
+	/**
 	 * Replaces the secret id; the old OBS URL stops working at once.
 	 *
 	 * @param int    $id         Overlay row id.

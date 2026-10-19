@@ -30,7 +30,8 @@ defined( 'ABSPATH' ) || exit;
  * - **Long-poll:** with `wait`, the request checks once a second for up to
  *   WAIT_SECONDS before it answers without alerts.
  * - **Version:** every answer carries the overlay's version; the page
- *   reloads when it changes (new settings or a new id).
+ *   reloads when it changes (new settings, a new id or "Stop all alerts").
+ *   A long-poll answers at once when the version changes while it waits.
  * - **Not found:** an unknown id, a regenerated id or an inactive creator
  *   give null (404), without saying which.
  *
@@ -115,7 +116,8 @@ final class OverlayFeed {
 			return self::answer( $this->events->latest_id( $overlay->creator_id ), $overlay, array() );
 		}
 
-		$checks = $wait ? self::WAIT_SECONDS : 0;
+		$checks  = $wait ? self::WAIT_SECONDS : 0;
+		$version = $overlay->version();
 
 		for ( $check = 0; ; ++$check ) {
 			$events = $this->events->after( $overlay->creator_id, $after, self::LIMIT );
@@ -134,6 +136,11 @@ final class OverlayFeed {
 
 			if ( null === $overlay ) {
 				return null;
+			}
+
+			// A new version (e.g. "Stop all alerts") is answered at once: the page reloads.
+			if ( $overlay->version() !== $version ) {
+				return self::answer( $after, $overlay, array() );
 			}
 		}
 	}

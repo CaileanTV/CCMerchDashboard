@@ -214,3 +214,24 @@ export interface AlertsOverlayState {
 	/** The fonts an administrator approved. */
 	readonly fonts: readonly AlertFontOption[];
 }
+
+/** An alert of the history (step 25.7): only what the alert shows. */
+export interface HistoryAlert {
+	readonly id: number;
+	readonly product: string;
+	readonly variation: string;
+	readonly quantity: number;
+	/** ISO 8601 UTC. */
+	readonly createdAt: string;
+}
+
+/** An order with alerts in the history. */
+export interface HistoryOrder {
+	readonly orderId: number;
+	readonly orderNumber: string;
+	/** The customer's voluntary username; '' for none. */
+	readonly username: string;
+	/** ISO 8601 UTC. */
+	readonly createdAt: string;
+	readonly alerts: readonly HistoryAlert[];
+}

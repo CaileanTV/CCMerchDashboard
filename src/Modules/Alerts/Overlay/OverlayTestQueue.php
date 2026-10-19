@@ -24,7 +24,7 @@ final class OverlayTestQueue {
 	/**
 	 * Longest queue.
 	 */
-	public const MAX = 5;
+	public const MAX = 20;
 
 	/**
 	 * Seconds a test alert waits.
@@ -42,6 +42,15 @@ final class OverlayTestQueue {
 		$queue[] = $alert;
 
 		set_transient( self::key( $overlay ), array_slice( $queue, -self::MAX ), self::TTL );
+	}
+
+	/**
+	 * Drops the waiting alerts ("Stop all alerts", step 25.7).
+	 *
+	 * @param int $overlay Overlay row id.
+	 */
+	public function clear( int $overlay ): void {
+		delete_transient( self::key( $overlay ) );
 	}
 
 	/**

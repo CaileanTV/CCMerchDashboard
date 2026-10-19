@@ -14,6 +14,7 @@ use DateTimeZone;
 use Exception;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Http\Pagination;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -101,6 +102,92 @@ final class AlertEventRepository {
 		}
 
 		return array_map( self::hydrate( ... ), $rows );
+	}
+
+	/**
+	 * The number of the creator's orders with alerts (the history, step 25.7).
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function order_count( int $creator_id ): int {
+		$wpdb  = $this->wpdb;
+		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(DISTINCT order_id) FROM %i WHERE creator_id = %d', $this->table(), $creator_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return is_numeric( $count ) ? (int) $count : 0;
+	}
+
+	/**
+	 * A page of the creator's orders with alerts, the newest alert first.
+	 *
+	 * @param int        $creator_id Creator.
+	 * @param Pagination $pagination Page.
+	 * @return list<int> Order ids.
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function order_page( int $creator_id, Pagination $pagination ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT order_id FROM %i WHERE creator_id = %d GROUP BY order_id ORDER BY MAX(id) DESC LIMIT %d OFFSET %d', $this->table(), $creator_id, $pagination->per_page, $pagination->offset() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * The creator's alerts of some orders, oldest first; never another
+	 * creator's alerts of the same order.
+	 *
+	 * @phpstan-param list<int> $order_ids
+	 *
+	 * @param int   $creator_id Creator.
+	 * @param int[] $order_ids  Orders.
+	 * @return list<AlertEvent>
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function for_creator_orders( int $creator_id, array $order_ids ): array {
+		$order_ids = array_unique( array_filter( $order_ids, static fn( int $id ): bool => $id > 0 ) );
+
+		if ( array() === $order_ids ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id = %d AND order_id IN (' . implode( ', ', array_fill( 0, count( $order_ids ), '%d' ) ) . ') ORDER BY id', $this->table(), $creator_id, ...$order_ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list and one placeholder per id; values are prepared.
+
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( self::hydrate( ... ), $rows );
+	}
+
+	/**
+	 * One of the creator's alerts, or null (also for another creator's alert).
+	 *
+	 * @param int $creator_id Creator.
+	 * @param int $id         Alert id.
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function find_for_creator( int $creator_id, int $id ): ?AlertEvent {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id = %d AND id = %d', $this->table(), $creator_id, $id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alert.' );
+		}
+
+		return is_array( $row ) ? self::hydrate( $row ) : null;
 	}
 
 	/**

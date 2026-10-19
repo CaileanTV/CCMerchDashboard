@@ -90,10 +90,12 @@ final class Uninstaller {
 
 	/**
 	 * User meta keys owned by the plugin: the dashboard theme preference
-	 * (Modules\Dashboard\ThemePreference::META_KEY, ADR-044; a test keeps both
-	 * equal, so core does not depend on the module).
+	 * (Modules\Dashboard\ThemePreference::META_KEY, ADR-044) and "Anonymize
+	 * usernames" in the alert history (Modules\Alerts\Rest\
+	 * MeAlertsHistoryController::ANONYMIZE_META, phase 25 step 7); a test keeps
+	 * them equal, so core does not depend on the modules.
 	 */
-	public const USER_META_KEYS = array( 'merchboard_dashboard_theme' );
+	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize' );
 
 	/**
 	 * The status of a pending payout (Modules\WooCommerce\Payouts\PayoutStatus::Pending;
