@@ -62,7 +62,6 @@ if ( $merchboard_ready ) {
 <div id="merchboard-overlay-image" class="merchboard-overlay__el merchboard-overlay__el--hidden"></div>
 <div id="merchboard-overlay-text" class="merchboard-overlay__el merchboard-overlay__el--hidden merchboard-overlay__text"></div>
 <div id="merchboard-overlay-secondary" class="merchboard-overlay__el merchboard-overlay__el--hidden merchboard-overlay__text"></div>
-<button type="button" id="merchboard-overlay-sound" class="merchboard-overlay__sound" hidden><?php esc_html_e( 'Click to turn on the alert sound', 'merchboard' ); ?></button>
 <script type="application/json" id="merchboard-overlay-config"><?php echo false === $merchboard_config ? '{}' : $merchboard_config; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON with <, >, &, ' and " escaped. ?></script>
 <?php
 if ( $merchboard_ready ) {

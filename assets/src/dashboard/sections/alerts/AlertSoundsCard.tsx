@@ -280,7 +280,7 @@ export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
 			</p>
 			<p>
 				{ __(
-					'In OBS, the sound goes to the browser source\'s audio in the mixer; turn on audio monitoring there to hear it yourself. A normal browser tab plays sound only after you click "Click to turn on the alert sound" in the overlay.',
+					"The browser source plays the sounds automatically, also after a restart. The sound goes to the browser source's audio in the audio mixer of your streaming software; turn on audio monitoring there to hear it yourself. A normal browser tab may block sounds unless you allow autoplay for this site in the browser's site settings.",
 					'merchboard'
 				) }
 			</p>

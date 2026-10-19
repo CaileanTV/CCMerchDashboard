@@ -200,7 +200,7 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertStringContainsString( '--merchboard-text-shadow:none;', $html );
 		self::assertStringNotContainsString( '<script>alert', $html );
 		self::assertStringContainsString( '<meta name="robots" content="noindex, nofollow">', $html );
-		self::assertStringContainsString( '<button type="button" id="merchboard-overlay-sound" class="merchboard-overlay__sound" hidden>', $html, 'The sound button is hidden until a browser blocks a sound.' );
+		self::assertStringNotContainsString( '<button', $html, 'Sounds play without a click (OBS allows autoplay).' );
 		self::assertMatchesRegularExpression( '#<script type="application/json" id="merchboard-overlay-config">\{.*"feed":"[^"]+/merchboard/v1/alerts/overlay/' . $id . '/feed".*\}</script>#', $html );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 

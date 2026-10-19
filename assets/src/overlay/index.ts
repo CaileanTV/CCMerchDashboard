@@ -16,7 +16,7 @@ import {
 	type OverlayConfig,
 } from './feed';
 import { AlertPlayer } from './player';
-import { SoundGate } from './sound';
+import { playSound } from './sound';
 
 /** Wait after a 404 (the id was regenerated or the creator deactivated). */
 const GONE_RETRY = 60000;
@@ -134,11 +134,6 @@ function start(): void {
 		}
 	} );
 
-	const button = document.getElementById( 'merchboard-overlay-sound' );
-	const sounds = new SoundGate(
-		button instanceof HTMLButtonElement ? button : null
-	);
-
 	void run(
 		config,
 		new AlertPlayer(
@@ -146,7 +141,7 @@ function start(): void {
 			config,
 			undefined,
 			undefined,
-			( url ) => sounds.play( url )
+			( url ) => playSound( url )
 		)
 	);
 }

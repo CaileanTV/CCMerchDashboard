@@ -1,9 +1,9 @@
 /**
- * Alert sounds of the overlay (ADR-065). OBS' browser source plays sound
- * without a click. A normal browser blocks sound on a page nobody has
- * clicked yet (autoplay policy); then the page shows a button, and the
- * click turns the sound on for the rest of the visit and plays the blocked
- * sound.
+ * Alert sounds of the overlay (ADR-065). OBS' browser source starts its
+ * browser with `autoplay-policy=no-user-gesture-required`, so sounds play
+ * automatically, also after OBS is restarted. A normal browser tab may block
+ * them (autoplay policy) unless autoplay is allowed for the site in the
+ * browser's settings; the alert is still shown.
  */
 
 /** Something that can play a sound once. */
@@ -12,67 +12,23 @@ export interface Playable {
 }
 
 /**
- * Whether a failed play() was blocked by the autoplay policy.
+ * Plays a sound once; a blocked or failed sound only loses the sound.
  *
- * @param error Rejection reason.
+ * @param url    Sound URL of this site.
+ * @param create Creates a sound; defaults to an Audio element.
  */
-export function isAutoplayBlocked( error: unknown ): boolean {
-	return (
-		typeof error === 'object' &&
-		error !== null &&
-		( error as { name?: unknown } ).name === 'NotAllowedError'
-	);
-}
+export function playSound(
+	url: string,
+	create: ( url: string ) => Playable = ( source ) => new Audio( source )
+): void {
+	let sound: Playable;
 
-export class SoundGate {
-	private pending: string | null = null;
-
-	/**
-	 * @param button The "turn on sound" button (hidden until needed), or null.
-	 * @param create Creates a sound; defaults to an Audio element.
-	 */
-	constructor(
-		private readonly button: HTMLButtonElement | null,
-		private readonly create: ( url: string ) => Playable = ( url ) =>
-			new Audio( url )
-	) {
-		this.button?.addEventListener( 'click', () => this.unlock() );
+	try {
+		sound = create( url );
+	} catch {
+		// No audio support: the alert is still shown.
+		return;
 	}
 
-	/**
-	 * Plays a sound; shows the button when the browser blocks it.
-	 *
-	 * @param url Sound URL of this site.
-	 */
-	play( url: string ): void {
-		let sound: Playable;
-
-		try {
-			sound = this.create( url );
-		} catch {
-			// No audio support: the alert is still shown.
-			return;
-		}
-
-		sound.play().catch( ( error: unknown ) => {
-			if ( isAutoplayBlocked( error ) && this.button !== null ) {
-				this.pending = url;
-				this.button.hidden = false;
-			}
-		} );
-	}
-
-	private unlock(): void {
-		const url = this.pending;
-
-		this.pending = null;
-
-		if ( this.button !== null ) {
-			this.button.hidden = true;
-		}
-
-		if ( url !== null ) {
-			this.play( url );
-		}
-	}
+	sound.play().catch( () => undefined );
 }
