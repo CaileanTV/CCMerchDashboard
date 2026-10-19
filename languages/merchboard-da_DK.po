@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-19T18:22:32+00:00\n"
+"PO-Revision-Date: 2026-10-19T18:56:05+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1544,7 +1544,7 @@ msgstr "Overlay-indstillinger"
 msgid "History"
 msgstr "Historik"
 
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:258
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:264
 msgid "Test product"
 msgstr "Testprodukt"
 
@@ -1576,7 +1576,7 @@ msgstr "Billedet blev ikke gemt."
 msgid "The image was not deleted."
 msgstr "Billedet blev ikke slettet."
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:503
+#: src/Modules/Alerts/Rest/MeAlertsController.php:504
 msgid "Set up your overlay first."
 msgstr "Opret dit overlay først."
 
@@ -6060,6 +6060,14 @@ msgid "Still"
 msgstr "Stille"
 
 #: build/dashboard.js:13
+msgid "Counterclockwise"
+msgstr "Mod uret"
+
+#: build/dashboard.js:13
+msgid "Clockwise"
+msgstr "Med uret"
+
+#: build/dashboard.js:13
 msgid "Thanks for the merch!"
 msgstr "Tak for merchen!"
 
@@ -6110,6 +6118,30 @@ msgstr "Dine billeder"
 #: build/dashboard.js:13
 msgid "Fill motion"
 msgstr "Fyldets bevægelse"
+
+#: build/dashboard.js:13
+msgid "Placement"
+msgstr "Placering"
+
+#: build/dashboard.js:13
+msgid "In its text box"
+msgstr "I tekstboksen"
+
+#: build/dashboard.js:13
+msgid "Around the image"
+msgstr "Rundt om billedet"
+
+#: build/dashboard.js:13
+msgid "Direction"
+msgstr "Retning"
+
+#: build/dashboard.js:13
+msgid "Glide speed"
+msgstr "Hastighed rundt"
+
+#: build/dashboard.js:13
+msgid "Repeat the text all the way round"
+msgstr "Gentag teksten hele vejen rundt"
 
 #: build/dashboard.js:13
 msgid "Shrink the text to fit the box"

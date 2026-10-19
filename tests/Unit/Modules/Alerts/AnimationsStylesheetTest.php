@@ -35,6 +35,8 @@ final class AnimationsStylesheetTest extends TestCase {
 			'animations' => array( 'animations.css', 20 ),
 			// The text fills (step 6.10): --fx, --fy and the letter effects.
 			'text fills' => array( 'textfill.css', 10 ),
+			// The text around the image (step 6.11): --d and the glide.
+			'frame'      => array( 'frame.css', 4 ),
 		);
 	}
 
@@ -49,7 +51,7 @@ final class AnimationsStylesheetTest extends TestCase {
 		foreach ( $rules as $rule ) {
 			$selector = trim( $rule[1] );
 
-			if ( 1 === preg_match( '/--[\w-]+:[^;]*var\(--(?:i|n|side|fx|fy)\)/', $rule[2] ) && ! str_contains( $selector, '.merchboard-anim__letter' ) ) {
+			if ( 1 === preg_match( '/--[\w-]+:[^;]*var\(--(?:i|n|side|fx|fy|d)\)/', $rule[2] ) && ! str_contains( $selector, '.merchboard-anim__letter' ) ) {
 				$wrong[] = $selector;
 			}
 		}

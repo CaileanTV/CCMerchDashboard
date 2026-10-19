@@ -306,6 +306,63 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame( $settings->text_fills(), OverlaySettings::from_json( $settings->to_json() )->text_fills(), 'Stored and read back unchanged.' );
 	}
 
+	public function test_the_main_text_around_the_image_is_normalized_and_placed_round_it(): void {
+		self::assertSame(
+			array(
+				'enabled'   => false,
+				'direction' => 'clockwise',
+				'speed'     => 'normal',
+				'repeat'    => true,
+			),
+			OverlaySettings::defaults()->text_frame()
+		);
+		self::assertFalse( OverlaySettings::defaults()->frames_image() );
+
+		$settings = OverlaySettings::from_array(
+			array(
+				'font_size'  => 40,
+				'text_fit'   => 'grow',
+				'text_frame' => array(
+					'enabled'   => '1',
+					'direction' => 'counterclockwise',
+					'speed'     => 'warp',
+					'repeat'    => false,
+				),
+				'layout'     => array(
+					'elements' => array(
+						'product_image' => array(
+							'x' => 100,
+							'y' => 800,
+							'w' => 200,
+							'h' => 200,
+						),
+						'main_text'     => array(
+							'x' => 400,
+							'y' => 900,
+							'w' => 600,
+							'h' => 150,
+						),
+					),
+				),
+			)
+		);
+
+		self::assertSame(
+			array(
+				'enabled'   => true,
+				'direction' => 'counterclockwise',
+				'speed'     => 'normal',
+				'repeat'    => false,
+			),
+			$settings->text_frame()
+		);
+		self::assertTrue( $settings->frames_image() );
+		// The image with a margin of 1.2 font sizes (48 px) on every side; no "grow".
+		self::assertSame( 'left:52px;top:752px;width:296px;height:296px;', $settings->element_style( 'main_text' ) );
+		self::assertFalse( $settings->grows_up( 'main_text' ), 'The text follows the image, it does not grow.' );
+		self::assertSame( $settings->text_frame(), OverlaySettings::from_json( $settings->to_json() )->text_frame(), 'Stored and read back unchanged.' );
+	}
+
 	public function test_the_secondary_text_needs_a_template_and_visibility(): void {
 		self::assertFalse( OverlaySettings::defaults()->shows_secondary() );
 		self::assertStringEndsWith( 'display:none;', OverlaySettings::defaults()->element_style( 'secondary_text' ) );

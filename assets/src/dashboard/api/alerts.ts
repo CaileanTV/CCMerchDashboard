@@ -5,6 +5,7 @@
  */
 import { parseAnimation } from '../../overlay/animations';
 import { parseTextFill } from '../../overlay/textfill';
+import { parseTextFrame } from '../../overlay/frame';
 import { isTextFit } from '../../overlay/fit';
 import { request } from './client';
 import type { ApiResult } from './client';
@@ -446,6 +447,7 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 					: null
 			),
 		},
+		text_frame: parseTextFrame( value.text_frame ),
 		font_family: value.font_family,
 	};
 }

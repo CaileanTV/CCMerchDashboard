@@ -50,6 +50,15 @@ final class OverlaySettings {
 	public const FILL_MOTIONS = array( 'none', 'pan', 'fall' );
 
 	/**
+	 * The main text around the image (step 6.11): directions and speeds, as
+	 * in assets/src/overlay/frame.ts, and the margin round the image that
+	 * holds the text, in font sizes (FRAME_MARGIN there).
+	 */
+	public const FRAME_DIRECTIONS = array( 'clockwise', 'counterclockwise' );
+	public const FRAME_SPEEDS     = array( 'still', 'slow', 'normal', 'fast' );
+	public const FRAME_MARGIN     = 1.2;
+
+	/**
 	 * Canvas height in pixels (OBS' default browser source).
 	 */
 	public const CANVAS_HEIGHT = 1080;
@@ -72,7 +81,7 @@ final class OverlaySettings {
 	/**
 	 * Normalized values.
 	 *
-	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}, text_fills: array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}}
+	 * @var array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}, text_fills: array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}, text_frame: array{enabled: bool, direction: string, speed: string, repeat: bool}}
 	 */
 	private array $values;
 
@@ -109,6 +118,7 @@ final class OverlaySettings {
 			'layout'              => self::layout( $input['layout'] ?? null ),
 			'animations'          => self::clean_animations( $input['animations'] ?? null ),
 			'text_fills'          => self::clean_fills( $input['text_fills'] ?? null ),
+			'text_frame'          => self::clean_frame( $input['text_frame'] ?? null ),
 		);
 	}
 
@@ -142,7 +152,7 @@ final class OverlaySettings {
 	/**
 	 * The normalized values.
 	 *
-	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}, text_fills: array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}}
+	 * @return array{template: string, secondary_template: string, font_family: string, font_size: int, font_weight: string, text_color: string, text_shadow: string, text_align: string, text_fit: string, image_size: int, bg_color: string, bg_opacity: int, border_radius: int, padding: int, anim_duration: int, display_duration: int, audio_enabled: bool, display_from_sound: bool, audio_default_sound: int, audio_category_map: array<int, int>, layout: array{elements: array<string, array{x: int, y: int, w: int, h: int, visible: bool, lock_aspect: bool, border_radius: int}>, canvas: array{snap_grid: bool, grid_size: int}}, animations: array{main_text: array{in: string, effect: string, out: string, color: string, speed: string}, secondary_text: array{in: string, effect: string, out: string, color: string, speed: string}}, text_fills: array{main_text: array{type: string, preset: string, image: int, motion: string}, secondary_text: array{type: string, preset: string, image: int, motion: string}}, text_frame: array{enabled: bool, direction: string, speed: string, repeat: bool}}
 	 */
 	public function to_array(): array {
 		return $this->values;
@@ -190,6 +200,22 @@ final class OverlaySettings {
 	}
 
 	/**
+	 * The main text around the image instead of in its box (step 6.11).
+	 *
+	 * @return array{enabled: bool, direction: string, speed: string, repeat: bool}
+	 */
+	public function text_frame(): array {
+		return $this->values['text_frame'];
+	}
+
+	/**
+	 * Whether the main text runs around the image.
+	 */
+	public function frames_image(): bool {
+		return $this->values['text_frame']['enabled'];
+	}
+
+	/**
 	 * Whether an alert with a sound is shown as long as its sound plays
 	 * instead of the display time (step 6.8).
 	 */
@@ -231,6 +257,10 @@ final class OverlaySettings {
 	 */
 	public function grows_up( string $element ): bool {
 		$box = $this->values['layout']['elements'][ $element ] ?? null;
+
+		if ( 'main_text' === $element && $this->frames_image() ) {
+			return false;
+		}
 
 		return 'product_image' !== $element && 'grow' === $this->values['text_fit'] && null !== $box && 2 * $box['y'] + $box['h'] > self::CANVAS_HEIGHT;
 	}
@@ -277,6 +307,15 @@ final class OverlaySettings {
 	 */
 	public function element_style( string $element ): string {
 		$box = $this->values['layout']['elements'][ $element ] ?? self::default_layout()['elements']['main_text'];
+
+		// Around the image (step 6.11): the image's box with a margin that holds the text.
+		if ( 'main_text' === $element && $this->frames_image() ) {
+			$image  = $this->values['layout']['elements']['product_image'];
+			$margin = (int) round( $this->values['font_size'] * self::FRAME_MARGIN );
+
+			return sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $image['x'] - $margin, $image['y'] - $margin, $image['w'] + 2 * $margin, $image['h'] + 2 * $margin ) . ( $box['visible'] ? '' : 'display:none;' );
+		}
+
 		if ( $this->grows_up( $element ) ) {
 			$style = sprintf( 'left:%dpx;bottom:%dpx;width:%dpx;height:auto;min-height:%dpx;', $box['x'], self::CANVAS_HEIGHT - $box['y'] - $box['h'], $box['w'], $box['h'] );
 		} elseif ( 'product_image' !== $element && 'grow' === $this->values['text_fit'] ) {
@@ -445,6 +484,24 @@ final class OverlaySettings {
 			'preset' => self::choice( $value['preset'] ?? null, self::FILL_PRESETS, 'rainbow' ),
 			'image'  => self::int( $value['image'] ?? null, 0, PHP_INT_MAX, 0 ),
 			'motion' => self::choice( $value['motion'] ?? null, self::FILL_MOTIONS, 'none' ),
+		);
+	}
+
+	/**
+	 * The main text around the image; unknown values get the default (off).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return array{enabled: bool, direction: string, speed: string, repeat: bool}
+	 */
+	private static function clean_frame( mixed $value ): array {
+		$value = is_array( $value ) ? $value : array();
+
+		return array(
+			'enabled'   => self::flag( $value['enabled'] ?? null ),
+			'direction' => self::choice( $value['direction'] ?? null, self::FRAME_DIRECTIONS, 'clockwise' ),
+			'speed'     => self::choice( $value['speed'] ?? null, self::FRAME_SPEEDS, 'normal' ),
+			// Repeating is the default: the text then goes all the way round.
+			'repeat'    => array_key_exists( 'repeat', $value ) ? self::flag( $value['repeat'] ) : true,
 		);
 	}
 

@@ -14,6 +14,9 @@ import { leaveText, renderText, resetText } from '../../../overlay/animations';
 import type { TextAnimation } from '../../../overlay/animations';
 import { fitText } from '../../../overlay/fit';
 import '../../../overlay/textfill.css';
+import '../../../overlay/frame.css';
+import { applyFrame, clearFrame, frameBox } from '../../../overlay/frame';
+import type { TextFrame } from '../../../overlay/frame';
 import {
 	applyFill,
 	clearFill,
@@ -128,12 +131,14 @@ function elementLabel( element: LayoutElement ): string {
  * @param props.animTime    In/out time (ms).
  * @param props.displayTime Display time (ms; the preview shows at most 4 s).
  * @param props.fill        The text fill (step 25.6.10); null for none.
+ * @param props.frame       The text around the image (step 25.6.11); null for none.
  */
 function PreviewText( {
 	text,
 	style,
 	shrink,
 	fill,
+	frame = null,
 	size,
 	animation,
 	play,
@@ -150,9 +155,12 @@ function PreviewText( {
 	readonly animTime: number;
 	readonly displayTime: number;
 	readonly fill: FillLook | null;
+	readonly frame?: TextFrame | null;
 } ) {
 	const ref = useRef< HTMLSpanElement >( null );
-	const fillKey = JSON.stringify( fill );
+	const fillKey = JSON.stringify( [ fill, frame ] );
+	// Around the image, the frame sizes the text; it is not fitted to a box.
+	const fits = shrink && frame === null;
 
 	// Compared by value: a re-render with the same look keeps a running preview.
 	const look = JSON.stringify( style );
@@ -166,17 +174,19 @@ function PreviewText( {
 		}
 
 		resetText( element );
+		clearFrame( element );
 		element.textContent = text;
 		applyFill( element, fill );
+		applyFrame( element, frame );
 
-		if ( shrink ) {
+		if ( fits ) {
 			fitText( element );
 		} else {
 			element.style.fontSize = '';
 		}
 
 		layoutFill( element );
-		// The fill is compared by value (fillKey).
+		// The fill and the frame are compared by value (fillKey).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ text, look, shrink, size, fillKey ] );
 
@@ -193,10 +203,12 @@ function PreviewText( {
 		// The text as it is shown when the preview has ended.
 		const still = () => {
 			resetText( element );
+			clearFrame( element );
 			element.textContent = text;
 			applyFill( element, fill );
+			applyFrame( element, frame );
 
-			if ( shrink ) {
+			if ( fits ) {
 				fitText( element );
 			}
 
@@ -204,8 +216,9 @@ function PreviewText( {
 		};
 
 		applyFill( element, fill );
+		applyFrame( element, frame );
 
-		if ( shrink ) {
+		if ( fits ) {
 			fitText( element );
 		}
 
@@ -318,14 +331,20 @@ export function OverlayDesigner( {
 	] );
 	// The secondary text is only on the canvas when it is switched on in the
 	// overlay settings, so creators are not confused by an unused box.
+	// Around the image (step 25.6.11), the main text follows the image: it is shown round it, not as a box.
+	const framed = look.text_frame.enabled;
 	const elements = LAYOUT_ELEMENTS.filter(
-		( element ) => element !== 'secondary_text' || look.show_secondary
+		( element ) =>
+			( element !== 'secondary_text' || look.show_secondary ) &&
+			( element !== 'main_text' || ! framed )
 	);
 	const visible = chosen.filter( ( element ) =>
 		elements.includes( element )
 	);
 	const selection: LayoutElement[] =
-		visible.length > 0 ? visible : [ 'main_text' ];
+		visible.length > 0
+			? visible
+			: [ framed ? 'product_image' : 'main_text' ];
 	const [ alignTarget, setAlignTarget ] = useState< AlignTarget >( 'canvas' );
 	const mainBox = useRef< HTMLDivElement >( null );
 	const [ imageShift, setImageShift ] = useState( 0 );
@@ -744,6 +763,41 @@ export function OverlayDesigner( {
 							</div>
 						);
 					} ) }
+					{ framed && (
+						<div
+							className="merchboard-designer__frame"
+							aria-hidden="true"
+							style={ ( () => {
+								const ring = frameBox(
+									layout.elements.product_image,
+									look.font_size
+								);
+
+								return {
+									left: percent( ring.x, CANVAS.width ),
+									top: percent( ring.y, CANVAS.height ),
+									width: percent( ring.w, CANVAS.width ),
+									height: percent( ring.h, CANVAS.height ),
+								};
+							} )() }
+						>
+							<PreviewText
+								text={ sampleText( look.template ) }
+								style={ textStyle }
+								shrink={ false }
+								size={ `${ layout.elements.product_image.w }x${ layout.elements.product_image.h }x${ look.font_size }` }
+								animation={ look.animations.main_text }
+								play={ play }
+								fill={ fillLook(
+									look.text_fills.main_text,
+									fillImages
+								) }
+								frame={ look.text_frame }
+								animTime={ look.anim_duration }
+								displayTime={ look.display_duration }
+							/>
+						</div>
+					) }
 				</div>
 
 				<fieldset className="merchboard-designer__align">

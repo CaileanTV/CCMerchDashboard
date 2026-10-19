@@ -3,6 +3,7 @@ import { act } from 'react';
 
 import { DEFAULT_ANIMATION } from '../../overlay/animations';
 import { DEFAULT_FILL } from '../../overlay/textfill';
+import { DEFAULT_FRAME } from '../../overlay/frame';
 import { parseAlertsOverlay } from '../api/alerts';
 import { ConfigContext } from '../app/config-context';
 import {
@@ -49,6 +50,7 @@ const SETTINGS = {
 		main_text: DEFAULT_FILL,
 		secondary_text: DEFAULT_FILL,
 	},
+	text_frame: DEFAULT_FRAME,
 	font_family: 'inherit',
 };
 
@@ -1081,5 +1083,76 @@ describe( 'AlertsSection', () => {
 		).toBe( true );
 		expect( rendered?.container.textContent ).toContain( 'Image deleted.' );
 		confirm.mockRestore();
+	} );
+
+	it( 'runs the main text round the image in the example, the designer and the saved settings', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const field = ( label: string ) => {
+			const element = Array.from(
+				rendered?.container.querySelectorAll( 'label' ) ?? []
+			).find( ( item ) => item.textContent === label );
+			const control = element
+				? document.getElementById( element.htmlFor )
+				: null;
+
+			return control instanceof HTMLSelectElement ? control : null;
+		};
+		const change = ( select: HTMLSelectElement | null, value: string ) => {
+			expect( select ).not.toBeNull();
+			act( () => {
+				if ( select ) {
+					select.value = value;
+					select.dispatchEvent(
+						new Event( 'change', { bubbles: true } )
+					);
+				}
+			} );
+		};
+		const boxes = () =>
+			Array.from(
+				rendered?.container.querySelectorAll(
+					'.merchboard-designer__box'
+				) ?? []
+			).map( ( box ) => box.getAttribute( 'aria-label' ) );
+
+		expect( boxes() ).toContain( 'Main text' );
+		expect( field( 'Direction' ) ).toBeNull();
+
+		change( field( 'Placement' ), 'frame' );
+		change( field( 'Direction' ), 'counterclockwise' );
+		change( field( 'Glide speed' ), 'fast' );
+
+		expect(
+			rendered?.container.querySelector(
+				'.merchboard-animation__ring .merchboard-frame'
+			)
+		).not.toBeNull();
+		expect( boxes() ).not.toContain( 'Main text' );
+		expect(
+			rendered?.container
+				.querySelector(
+					'.merchboard-designer__frame .merchboard-frame'
+				)
+				?.getAttribute( 'data-frame-direction' )
+		).toBe( 'counterclockwise' );
+
+		click( button( 'Save overlay settings' ) );
+		await flush();
+
+		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
+			text_frame: unknown;
+		};
+		expect( patch.text_frame ).toEqual( {
+			enabled: true,
+			direction: 'counterclockwise',
+			speed: 'fast',
+			repeat: true,
+		} );
 	} );
 } );

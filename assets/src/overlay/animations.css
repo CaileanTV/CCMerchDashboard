@@ -20,7 +20,7 @@
 
 .merchboard-anim .merchboard-anim__letter {
 	display: inline-block;
-	animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none), var(--merchboard-l-fill, none);
+	animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none), var(--merchboard-l-fill, none), var(--merchboard-l-frame, none);
 }
 
 /* In the overlay, the animation decides opacity and movement. */
@@ -282,7 +282,7 @@
 	}
 
 	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim .merchboard-anim__letter {
-		animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none), var(--merchboard-l-fill, none) !important;
+		animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none), var(--merchboard-l-fill, none), var(--merchboard-l-frame, none) !important;
 	}
 
 	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-anim[data-effect="glitch"]::before,

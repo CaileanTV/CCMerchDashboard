@@ -32,7 +32,8 @@ defined( 'ABSPATH' ) || exit;
  * - **Set up** is explicit and idempotent, with an audit record.
  * - **Settings:** only the fields of the overlay form (EDITABLE and the
  *   visibility of the secondary text), the font (an approved font or the
- *   default, ADR-067), the designer's layout, the text animations and fills
+ *   default, ADR-067), the designer's layout, the text animations, fills
+ *   and the text around the image
  *   and whether sounds play change; the sound and image files change only
  *   through AlertSounds and AlertImages, and a text fill only keeps an image
  *   the creator may use. Everything is normalized by OverlaySettings.
@@ -166,6 +167,11 @@ final class AlertOverlays {
 		// The text fills of both texts (step 25.6.10).
 		if ( is_array( $input['text_fills'] ?? null ) ) {
 			$values['text_fills'] = $input['text_fills'];
+		}
+
+		// The main text around the image (step 25.6.11).
+		if ( is_array( $input['text_frame'] ?? null ) ) {
+			$values['text_frame'] = $input['text_frame'];
 		}
 
 		if ( array_key_exists( 'show_secondary', $input ) ) {

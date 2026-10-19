@@ -121,6 +121,8 @@ final class OverlayPage {
 					'main'      => $settings->animations()['main_text'],
 					'secondary' => $settings->animations()['secondary_text'],
 				),
+				// The main text around the image (step 6.11); null when it is in its box.
+				'frame'            => $settings->frames_image() ? $settings->text_frame() : null,
 				'fills'            => array(
 					'main'      => AlertImages::look( $this->images, $overlay->creator_id, $settings->text_fills()['main_text'] ),
 					'secondary' => AlertImages::look( $this->images, $overlay->creator_id, $settings->text_fills()['secondary_text'] ),

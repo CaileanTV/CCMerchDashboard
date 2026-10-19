@@ -205,6 +205,26 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertStringContainsString( '"fills":{"main":{"kind":"preset","preset":"gold","motion":"pan"},"secondary":null}', $html );
 	}
 
+	public function test_the_main_text_around_the_image_reaches_the_overlay_round_the_image(): void {
+		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
+		$id      = $this->overlay(
+			$creator->id,
+			array(
+				'font_size'  => 30,
+				'text_frame' => array(
+					'enabled' => true,
+					'speed'   => 'slow',
+				),
+			)
+		);
+		$html    = (string) $this->page()->render( $id, 'nonce123' );
+		$image   = OverlaySettings::default_layout()['elements']['product_image'];
+
+		self::assertStringContainsString( '"frame":{"enabled":true,"direction":"clockwise","speed":"slow","repeat":true}', $html );
+		self::assertStringContainsString( sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $image['x'] - 36, $image['y'] - 36, $image['w'] + 72, $image['h'] + 72 ), $html, 'The main text box is the image with a margin.' );
+		self::assertStringContainsString( '"imageFollows":false', $html );
+	}
+
 	public function test_the_page_carries_only_validated_values_and_no_unknown_overlay(): void {
 		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
 		$id      = $this->overlay(
@@ -230,6 +250,7 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertStringContainsString( '"displayFromSound":false', $html );
 		self::assertStringContainsString( '"animations":{"main":{"in":"fade","effect":"none","out":"fade"', $html, 'The text animations reach the overlay script.' );
 		self::assertStringContainsString( '"fills":{"main":null,"secondary":null}', $html, 'No text fill by default.' );
+		self::assertStringContainsString( '"frame":null', $html, 'The main text is in its box by default.' );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 
 		$headers = OverlayPage::security_headers( 'nonce123' );

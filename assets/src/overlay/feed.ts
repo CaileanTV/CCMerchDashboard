@@ -8,6 +8,8 @@ import { parseAnimation } from './animations';
 import type { TextAnimation } from './animations';
 import { isTextFit } from './fit';
 import type { TextFit } from './fit';
+import { parseTextFrame } from './frame';
+import type { TextFrame } from './frame';
 import { parseFillLook } from './textfill';
 import type { FillLook } from './textfill';
 
@@ -47,6 +49,8 @@ export interface OverlayConfig {
 		readonly main: TextAnimation;
 		readonly secondary: TextAnimation;
 	};
+	/** The main text around the image (step 25.6.11); null when it is in its box. */
+	frame: TextFrame | null;
 	/** Text fills of the main and the secondary text (step 25.6.10); null for none. */
 	fills: {
 		readonly main: FillLook | null;
@@ -117,6 +121,9 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 				isRecord( value.animations ) ? value.animations.secondary : null
 			),
 		},
+		frame: isRecord( value.frame )
+			? { ...parseTextFrame( value.frame ), enabled: true }
+			: null,
 		fills: {
 			main: parseFillLook(
 				isRecord( value.fills ) ? value.fills.main : null,

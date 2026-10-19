@@ -24,6 +24,7 @@ export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 import type { TextAnimation } from '../../overlay/animations';
 import type { TextFit } from '../../overlay/fit';
 import type { TextFill } from '../../overlay/textfill';
+import type { TextFrame } from '../../overlay/frame';
 
 export { TEXT_FITS } from '../../overlay/fit';
 export type { TextFit };
@@ -74,6 +75,8 @@ export interface OverlaySettings {
 		readonly main_text: TextFill;
 		readonly secondary_text: TextFill;
 	};
+	/** The main text around the image instead of in its box (step 25.6.11). */
+	readonly text_frame: TextFrame;
 	/** "inherit" (the default font) or an approved Google font (ADR-067). */
 	readonly font_family: string;
 }

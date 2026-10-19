@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useEffect, useId, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 import '../../../overlay/animations.css';
@@ -19,6 +19,18 @@ import type {
 	TextAnimation,
 } from '../../../overlay/animations';
 import '../../../overlay/textfill.css';
+import '../../../overlay/frame.css';
+import {
+	FRAME_DIRECTIONS,
+	FRAME_SPEEDS,
+	applyFrame,
+	clearFrame,
+} from '../../../overlay/frame';
+import type {
+	FrameDirection,
+	FrameSpeed,
+	TextFrame,
+} from '../../../overlay/frame';
 import {
 	FILL_MOTIONS,
 	FILL_PRESETS,
@@ -26,6 +38,7 @@ import {
 	applyFill,
 	clearFill,
 	fillLook,
+	layoutFill,
 } from '../../../overlay/textfill';
 import type {
 	FillLook,
@@ -203,6 +216,25 @@ function motionLabel( value: FillMotion ): string {
 	}
 }
 
+function directionLabel( value: FrameDirection ): string {
+	return value === 'counterclockwise'
+		? __( 'Counterclockwise', 'merchboard' )
+		: __( 'Clockwise', 'merchboard' );
+}
+
+function frameSpeedLabel( value: FrameSpeed ): string {
+	switch ( value ) {
+		case 'still':
+			return __( 'Still', 'merchboard' );
+		case 'slow':
+			return __( 'Slow', 'merchboard' );
+		case 'fast':
+			return __( 'Fast', 'merchboard' );
+		default:
+			return __( 'Normal', 'merchboard' );
+	}
+}
+
 /** How long the sample shows the effect before it leaves (ms). */
 const SAMPLE_SHOWN = 2500;
 
@@ -218,15 +250,18 @@ const SAMPLE_PAUSE = 600;
  * @param props.animation The animation.
  * @param props.duration  In/out time (ms).
  * @param props.fill      The text fill; null for none.
+ * @param props.frame     The text around the image (step 25.6.11); null for none.
  */
 export function AnimationSample( {
 	animation,
 	duration,
 	fill = null,
+	frame = null,
 }: {
 	readonly animation: TextAnimation;
 	readonly duration: number;
 	readonly fill?: FillLook | null;
+	readonly frame?: TextFrame | null;
 } ) {
 	const ref = useRef< HTMLSpanElement >( null );
 	// With reduced motion the sample waits until it is played on request.
@@ -236,7 +271,8 @@ export function AnimationSample( {
 			! window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches
 	);
 	const text = __( 'Thanks for the merch!', 'merchboard' );
-	const choice = JSON.stringify( [ animation, fill ] );
+	const framed = frame?.enabled === true;
+	const choice = JSON.stringify( [ animation, fill, frame ] );
 
 	useEffect( () => {
 		const element = ref.current;
@@ -257,6 +293,8 @@ export function AnimationSample( {
 			);
 
 			applyFill( element, fill );
+			applyFrame( element, frame );
+			layoutFill( element );
 
 			timer = window.setTimeout( () => {
 				leaveText( element );
@@ -273,22 +311,40 @@ export function AnimationSample( {
 			resetText( element );
 			element.textContent = text;
 			applyFill( element, fill );
+			applyFrame( element, frame );
+			layoutFill( element );
 		}
 
 		return () => {
 			window.clearTimeout( timer );
 			resetText( element );
 			clearFill( element );
+			clearFrame( element );
 			element.textContent = text;
 		};
-		// The animation and the fill are compared by value (choice).
+		// The animation, the fill and the frame are compared by value (choice).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ choice, duration, playing, text ] );
 
 	return (
 		<div className="merchboard-animation__sample">
 			<div className="merchboard-animation__stage" aria-hidden="true">
-				<span ref={ ref } className="merchboard-animation__text" />
+				{ framed ? (
+					<div className="merchboard-animation__ring">
+						<span className="merchboard-animation__image" />
+						<span
+							ref={ ref }
+							key="ring"
+							className="merchboard-animation__text"
+						/>
+					</div>
+				) : (
+					<span
+						ref={ ref }
+						key="line"
+						className="merchboard-animation__text"
+					/>
+				) }
 			</div>
 			<Button
 				variant="secondary"
@@ -314,6 +370,9 @@ interface Props {
 	readonly onFillChange: ( fill: TextFill ) => void;
 	/** Images the text can be filled with; null when not available. */
 	readonly images: AlertsImages | null;
+	/** The text around the image (main text only, step 25.6.11). */
+	readonly frame?: TextFrame;
+	readonly onFrameChange?: ( frame: TextFrame ) => void;
 }
 
 /**
@@ -321,14 +380,16 @@ interface Props {
  * colour (when the choice uses one) and speed; and its fill (step 25.6.10):
  * a ready-made gradient or pattern or an image, still or moving.
  *
- * @param props              Props.
- * @param props.legend       The text's name.
- * @param props.value        The animation.
- * @param props.onChange     Called with the changed animation.
- * @param props.duration     In/out time (ms) for the sample.
- * @param props.fill         The text fill.
- * @param props.onFillChange Called with the changed fill.
- * @param props.images       Images the text can be filled with.
+ * @param props               Props.
+ * @param props.legend        The text's name.
+ * @param props.value         The animation.
+ * @param props.onChange      Called with the changed animation.
+ * @param props.duration      In/out time (ms) for the sample.
+ * @param props.fill          The text fill.
+ * @param props.onFillChange  Called with the changed fill.
+ * @param props.images        Images the text can be filled with.
+ * @param props.frame         The text around the image (main text only).
+ * @param props.onFrameChange Called with the changed frame.
  */
 export function AnimationFields( {
 	legend,
@@ -338,11 +399,19 @@ export function AnimationFields( {
 	fill,
 	onFillChange,
 	images,
+	frame,
+	onFrameChange,
 }: Props ) {
 	const set = ( change: Partial< TextAnimation > ) =>
 		onChange( { ...value, ...change } );
+	const id = useId();
 	const setFill = ( change: Partial< TextFill > ) =>
 		onFillChange( { ...fill, ...change } );
+	const setFrame = ( change: Partial< TextFrame > ) => {
+		if ( frame !== undefined ) {
+			onFrameChange?.( { ...frame, ...change } );
+		}
+	};
 	const own = images?.own ?? [];
 	const library = images?.library ?? [];
 	const types = FILL_TYPES.filter(
@@ -518,10 +587,71 @@ export function AnimationFields( {
 						( option ) => setFill( { motion: option } )
 					) }
 			</div>
+			{ frame !== undefined && (
+				<div className="merchboard-alerts__grid">
+					<Field label={ __( 'Placement', 'merchboard' ) }>
+						{ ( control ) => (
+							<select
+								{ ...control }
+								className="merchboard-input"
+								value={ frame.enabled ? 'frame' : 'box' }
+								onChange={ ( event ) =>
+									setFrame( {
+										enabled: event.target.value === 'frame',
+									} )
+								}
+							>
+								<option value="box">
+									{ __( 'In its text box', 'merchboard' ) }
+								</option>
+								<option value="frame">
+									{ __( 'Around the image', 'merchboard' ) }
+								</option>
+							</select>
+						) }
+					</Field>
+					{ frame.enabled &&
+						select(
+							__( 'Direction', 'merchboard' ),
+							frame.direction,
+							FRAME_DIRECTIONS,
+							directionLabel,
+							( option ) => setFrame( { direction: option } )
+						) }
+					{ frame.enabled &&
+						select(
+							__( 'Glide speed', 'merchboard' ),
+							frame.speed,
+							FRAME_SPEEDS,
+							frameSpeedLabel,
+							( option ) => setFrame( { speed: option } )
+						) }
+					{ frame.enabled && (
+						<label
+							className="merchboard-alerts__check"
+							htmlFor={ `${ id }-repeat` }
+						>
+							<input
+								id={ `${ id }-repeat` }
+								type="checkbox"
+								checked={ frame.repeat }
+								onChange={ ( event ) =>
+									setFrame( { repeat: event.target.checked } )
+								}
+							/>{ ' ' }
+							{ __(
+								'Repeat the text all the way round',
+								'merchboard'
+							) }
+						</label>
+					) }
+				</div>
+			) }
 			<AnimationSample
 				animation={ value }
 				duration={ duration }
 				fill={ fillLook( fill, [ ...own, ...library ] ) }
+				frame={ frame ?? null }
 			/>
 		</fieldset>
 	);

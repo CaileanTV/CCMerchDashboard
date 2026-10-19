@@ -512,6 +512,8 @@ export function OverlaySettingsForm( {
 						} )
 					}
 					images={ images }
+					frame={ values.text_frame }
+					onFrameChange={ ( frame ) => set( { text_frame: frame } ) }
 					onChange={ ( animation ) =>
 						set( {
 							animations: {

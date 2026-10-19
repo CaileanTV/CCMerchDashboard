@@ -284,4 +284,44 @@ describe( 'AlertPlayer', () => {
 		expect( text.classList.contains( 'merchboard-fill' ) ).toBe( false );
 		expect( text.textContent ).toBe( '' );
 	} );
+	it( 'runs the main text round the image instead of fitting it (step 25.6.11)', () => {
+		const text = document.createElement( 'div' );
+		const secondary = document.createElement( 'div' );
+		const fitted: HTMLElement[] = [];
+		const timers: Array< { callback: () => void; delay: number } > = [];
+		const player = new AlertPlayer(
+			{ image: document.createElement( 'div' ), text, secondary },
+			{
+				displayDuration: 5000,
+				animDuration: 500,
+				frame: {
+					enabled: true,
+					direction: 'clockwise',
+					speed: 'slow',
+					repeat: true,
+				},
+			},
+			() => true,
+			( callback, delay ) => {
+				timers.push( { callback, delay } );
+			},
+			() => undefined,
+			( element ) => {
+				fitted.push( element );
+			}
+		);
+
+		player.enqueue( [ alert( 1, { text: 'Hey you', secondary: 'Hi' } ) ] );
+		expect( text.classList.contains( 'merchboard-frame' ) ).toBe( true );
+		expect( text.dataset.frameSpeed ).toBe( 'slow' );
+		expect( fitted ).toEqual( [ secondary ] );
+		expect( secondary.classList.contains( 'merchboard-frame' ) ).toBe(
+			false
+		);
+
+		timers.shift()?.callback();
+		timers.shift()?.callback();
+		expect( text.classList.contains( 'merchboard-frame' ) ).toBe( false );
+		expect( text.textContent ).toBe( '' );
+	} );
 } );

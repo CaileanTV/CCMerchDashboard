@@ -420,6 +420,7 @@ final class MeAlertsController extends RestController {
 		$settings['font_family']        = $values['font_family'];
 		$settings['animations']         = $values['animations'];
 		$settings['text_fills']         = $values['text_fills'];
+		$settings['text_frame']         = $values['text_frame'];
 
 		return array(
 			'url'           => OverlayRoute::url( $overlay->overlay_id ),
@@ -469,7 +470,7 @@ final class MeAlertsController extends RestController {
 			$input['font_family'] = $body['font_family'];
 		}
 
-		foreach ( array( 'layout', 'animations', 'text_fills' ) as $key ) {
+		foreach ( array( 'layout', 'animations', 'text_fills', 'text_frame' ) as $key ) {
 			if ( ! array_key_exists( $key, $body ) ) {
 				continue;
 			}

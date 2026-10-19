@@ -344,6 +344,36 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 'none', $after['settings']['text_fills']['main_text']['type'], 'The fill that used it is cleared.' );
 	}
 
+	public function test_the_main_text_around_the_image_is_saved_normalized(): void {
+		$this->creator( 'nova' );
+		$this->call( 'POST', self::ROUTE );
+
+		$saved = $this->data(
+			$this->call(
+				'PATCH',
+				self::ROUTE,
+				array(
+					'text_frame' => array(
+						'enabled'   => true,
+						'direction' => 'counterclockwise',
+						'speed'     => 'warp',
+					),
+				)
+			)
+		)['overlay']['settings']['text_frame'];
+
+		self::assertSame(
+			array(
+				'enabled'   => true,
+				'direction' => 'counterclockwise',
+				'speed'     => 'normal',
+				'repeat'    => true,
+			),
+			$saved
+		);
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'text_frame' => true ) )->get_status() );
+	}
+
 	public function test_a_new_url_kills_the_old_one_at_once(): void {
 		$creator = $this->creator( 'nova' );
 		$this->call( 'POST', self::ROUTE );

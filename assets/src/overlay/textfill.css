@@ -43,7 +43,7 @@
 /* ---------------------------------------------------------- Motion. */
 
 /* Letters without a text animation still move their fill. */
-.merchboard-fill:not(.merchboard-anim) .merchboard-anim__letter {
+.merchboard-fill:not(.merchboard-anim):not(.merchboard-frame) .merchboard-anim__letter {
 	animation: var(--merchboard-l-fill, none);
 }
 
@@ -91,7 +91,7 @@
 	}
 
 	/* The designer and the sample only animate on request (see animations.css). */
-	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-fill:not(.merchboard-anim) .merchboard-anim__letter {
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-fill:not(.merchboard-anim):not(.merchboard-frame) .merchboard-anim__letter {
 		animation: var(--merchboard-l-fill, none) !important;
 	}
 }

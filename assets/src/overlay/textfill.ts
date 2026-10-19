@@ -301,14 +301,19 @@ export function layoutFill( element: HTMLElement ): void {
 	const letters = Array.from(
 		element.querySelectorAll< HTMLElement >( '.merchboard-anim__letter' )
 	);
+	// A letter's place: on a frame round the image (frame.ts) its distance along the frame.
+	const place = ( letter: HTMLElement ) =>
+		letter.dataset.frameX === undefined
+			? { x: letter.offsetLeft, y: letter.offsetTop }
+			: { x: Number( letter.dataset.frameX ), y: 0 };
 	// The text's extent in the box: the fill spans the text, not the empty rest of the box.
-	const left = Math.min( ...letters.map( ( letter ) => letter.offsetLeft ) );
-	const top = Math.min( ...letters.map( ( letter ) => letter.offsetTop ) );
+	const left = Math.min( ...letters.map( ( letter ) => place( letter ).x ) );
+	const top = Math.min( ...letters.map( ( letter ) => place( letter ).y ) );
 	const right = Math.max(
-		...letters.map( ( letter ) => letter.offsetLeft + letter.offsetWidth )
+		...letters.map( ( letter ) => place( letter ).x + letter.offsetWidth )
 	);
 	const bottom = Math.max(
-		...letters.map( ( letter ) => letter.offsetTop + letter.offsetHeight )
+		...letters.map( ( letter ) => place( letter ).y + letter.offsetHeight )
 	);
 	const origin = {
 		x: Number.isFinite( left ) ? left : 0,
@@ -346,7 +351,7 @@ export function layoutFill( element: HTMLElement ): void {
 	element.style.setProperty( '--merchboard-fill-y', `${ size.y }px` );
 
 	for ( const letter of letters ) {
-		letter.style.setProperty( '--fx', `${ letter.offsetLeft }px` );
-		letter.style.setProperty( '--fy', `${ letter.offsetTop }px` );
+		letter.style.setProperty( '--fx', `${ place( letter ).x }px` );
+		letter.style.setProperty( '--fy', `${ place( letter ).y }px` );
 	}
 }

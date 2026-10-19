@@ -36,7 +36,22 @@ describe( 'parseConfig', () => {
 				main: DEFAULT_ANIMATION,
 				secondary: DEFAULT_ANIMATION,
 			},
+			frame: null,
 			fills: { main: null, secondary: null },
+		} );
+		expect(
+			parseConfig( {
+				feed: FEED,
+				version: 'v1',
+				displayDuration: 5000,
+				animDuration: 500,
+				frame: { direction: 'counterclockwise', speed: 'warp' },
+			} )?.frame
+		).toEqual( {
+			enabled: true,
+			direction: 'counterclockwise',
+			speed: 'normal',
+			repeat: true,
 		} );
 		expect(
 			parseConfig( {

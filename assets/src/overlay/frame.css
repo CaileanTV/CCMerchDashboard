@@ -1,0 +1,64 @@
+/*
+ * Text around the image (phase 25, step 6.11), our own implementation; see
+ * frame.ts. Each letter sits on the frame (offset-path) at its distance
+ * --d and glides round by the frame's length; the box itself shows no
+ * background. Letter variables are set on the letters (see animations.css).
+ */
+
+.merchboard-frame {
+	padding: 0 !important;
+	overflow: visible !important;
+	white-space: nowrap;
+	background: none !important;
+}
+
+/* Letters are placed against the box (overlay boxes are fixed already). */
+.merchboard-frame:not(.merchboard-overlay__el) {
+	position: relative;
+}
+
+.merchboard-frame .merchboard-anim__letter {
+	--merchboard-l-frame: merchboard-frame-glide var(--merchboard-frame-time) linear infinite var(--merchboard-frame-dir);
+	position: absolute !important;
+	top: 0;
+	left: 0;
+	display: inline-block;
+	font-size: calc(1em * var(--merchboard-frame-scale, 1));
+	offset-path: var(--merchboard-frame-path);
+	offset-distance: var(--d);
+	offset-rotate: auto;
+	offset-anchor: center;
+}
+
+.merchboard-frame[data-frame-speed="still"] .merchboard-anim__letter {
+	--merchboard-l-frame: none;
+}
+
+/* Letters without a text animation still glide (and keep a moving fill). */
+.merchboard-frame:not(.merchboard-anim) .merchboard-anim__letter {
+	animation: var(--merchboard-l-fill, none), var(--merchboard-l-frame, none);
+}
+
+/* The end cursor has no place on the frame; the letters' caret does. */
+.merchboard-frame .merchboard-anim__cursor {
+	display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.merchboard-frame .merchboard-anim__letter {
+		animation: none !important;
+	}
+
+	/* The designer and the sample only animate on request (see animations.css). */
+	:is(.merchboard-designer, .merchboard-animation__sample) .merchboard-frame:not(.merchboard-anim) .merchboard-anim__letter {
+		animation: var(--merchboard-l-fill, none), var(--merchboard-l-frame, none) !important;
+	}
+}
+
+@keyframes merchboard-frame-glide {
+
+	to {
+		offset-distance: calc(var(--d) + var(--merchboard-frame-length));
+	}
+}

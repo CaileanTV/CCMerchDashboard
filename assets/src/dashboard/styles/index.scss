@@ -983,6 +983,14 @@ input:disabled + .merchboard-sounds__upload {
 	}
 }
 
+// The main text around the image (step 25.6.11): it follows the image,
+// so it is not a box of its own.
+.merchboard-designer__frame {
+	position: absolute;
+	display: flex;
+	pointer-events: none;
+}
+
 .merchboard-designer__box {
 	position: absolute;
 	display: flex;
@@ -1049,6 +1057,26 @@ input:disabled + .merchboard-sounds__upload {
 
 .merchboard-animation__text {
 	white-space: pre;
+}
+
+// The sample of the text around the image (step 25.6.11): a stand-in image
+// with the frame's margin (1.2 font sizes, as frame.ts) round it.
+.merchboard-animation__ring {
+	display: grid;
+	width: calc(4.5rem + 2.4em);
+	height: calc(4.5rem + 2.4em);
+	margin: var(--merchboard-space-2) 0;
+
+	> * {
+		grid-area: 1 / 1;
+	}
+}
+
+.merchboard-animation__image {
+	margin: 1.2em;
+	background: var(--merchboard-on-inverse);
+	border-radius: var(--merchboard-radius-sm);
+	opacity: 0.3;
 }
 
 .merchboard-designer__handle {
