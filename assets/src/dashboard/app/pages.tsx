@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 import { EmptyState } from '../components/EmptyState';
@@ -46,7 +46,15 @@ export function resolvePage(
 		const render = SECTION_COMPONENTS[ section.id ];
 
 		return {
-			title: section.label,
+			title:
+				section.group === undefined
+					? section.label
+					: sprintf(
+							/* translators: 1: menu group, e.g. "Alerts", 2: page in the group. */
+							__( '%1$s: %2$s', 'merchboard' ),
+							section.group.label,
+							section.label
+						),
 			content:
 				render === undefined ? (
 					<EmptyState

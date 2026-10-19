@@ -10,6 +10,8 @@ import type {
 	RoutingMode,
 } from './types/config';
 
+const GROUP_ID = /^[a-z][a-z0-9_-]{0,39}$/;
+
 function parseSections( value: unknown ): DashboardSection[] | null {
 	if ( ! Array.isArray( value ) ) {
 		return null;
@@ -31,7 +33,27 @@ function parseSections( value: unknown ): DashboardSection[] | null {
 			return null;
 		}
 
-		sections.push( { id, label, path } );
+		if ( item.group === undefined ) {
+			sections.push( { id, label, path } );
+			continue;
+		}
+
+		const groupLabel = readString( item, 'group_label' );
+
+		if (
+			typeof item.group !== 'string' ||
+			! GROUP_ID.test( item.group ) ||
+			groupLabel === null
+		) {
+			return null;
+		}
+
+		sections.push( {
+			id,
+			label,
+			path,
+			group: { id: item.group, label: groupLabel },
+		} );
 	}
 
 	return sections;

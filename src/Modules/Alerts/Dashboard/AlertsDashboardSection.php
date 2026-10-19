@@ -29,7 +29,9 @@ final class AlertsDashboardSection {
 	}
 
 	/**
-	 * Inserts the section before "profile", or at the end.
+	 * Inserts the group "Alerts" before "profile", or at the end: the
+	 * overlay settings (the former "Alerts" page, same URL) and the history
+	 * (filled in step 25.7).
 	 *
 	 * @param mixed $sections Sections.
 	 * @return mixed
@@ -39,26 +41,38 @@ final class AlertsDashboardSection {
 			return $sections;
 		}
 
-		$section = array(
-			'id'         => 'alerts',
-			'label'      => __( 'Alerts', 'merchboard' ),
-			'path'       => 'alerts',
-			'capability' => Capabilities::ACCESS_DASHBOARD,
+		$group  = array(
+			array(
+				'id'          => 'alerts',
+				'label'       => __( 'Overlay settings', 'merchboard' ),
+				'path'        => 'alerts',
+				'capability'  => Capabilities::ACCESS_DASHBOARD,
+				'group'       => 'alerts',
+				'group_label' => __( 'Alerts', 'merchboard' ),
+			),
+			array(
+				'id'          => 'alerts-history',
+				'label'       => __( 'History', 'merchboard' ),
+				'path'        => 'alerts/history',
+				'capability'  => Capabilities::ACCESS_DASHBOARD,
+				'group'       => 'alerts',
+				'group_label' => __( 'Alerts', 'merchboard' ),
+			),
 		);
-		$result  = array();
-		$added   = false;
+		$result = array();
+		$added  = false;
 
 		foreach ( $sections as $existing ) {
 			if ( ! $added && is_array( $existing ) && 'profile' === ( $existing['id'] ?? null ) ) {
-				$result[] = $section;
-				$added    = true;
+				array_push( $result, ...$group );
+				$added = true;
 			}
 
 			$result[] = $existing;
 		}
 
 		if ( ! $added ) {
-			$result[] = $section;
+			array_push( $result, ...$group );
 		}
 
 		return $result;

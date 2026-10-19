@@ -180,6 +180,48 @@
 	}
 }
 
+// Menu groups (25.6.4): a button that opens and closes its sections.
+.merchboard-nav__toggle {
+	display: flex;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	background: none;
+	border: 0;
+
+	&[data-active="true"] {
+		font-weight: 600;
+	}
+}
+
+.merchboard-nav__chevron {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-right: 2px solid currentcolor;
+	border-bottom: 2px solid currentcolor;
+	transform: rotate(45deg);
+	transition: transform 0.15s ease;
+
+	[aria-expanded="true"] > & {
+		transform: rotate(-135deg);
+	}
+}
+
+.merchboard-nav__sublist {
+	padding-left: var(--merchboard-space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.merchboard-nav__chevron {
+		transition: none;
+	}
+}
+
 @media (min-width: $merchboard-lg) {
 
 	.merchboard-topbar__menu-button,
@@ -790,27 +832,28 @@
 	}
 }
 
-/* Alerts (phase 25, ADR-065). Cards side by side on wide screens (25.6.1). */
-.merchboard-alerts,
-.merchboard-alerts__form {
+/* Alerts (phase 25, ADR-065). The cards in two balanced columns on wide
+   screens, stacked without gaps (25.6.1); the designer below at full width. */
+.merchboard-alerts {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
 	gap: var(--merchboard-space-6);
-	align-items: start;
-}
-
-.merchboard-alerts__form {
-	max-width: none;
-
-	// Errors, the save button and the toast region span the whole row.
-	> :not(.merchboard-card) {
-		grid-column: 1 / -1;
-	}
-}
-
-.merchboard-alerts__wide {
-	grid-column: 1 / -1;
 	min-width: 0;
+}
+
+.merchboard-alerts__columns {
+	column-gap: var(--merchboard-space-6);
+	columns: 24rem 2;
+}
+
+// The form's cards flow in the columns like the other cards.
+.merchboard-alerts__form {
+	display: contents;
+}
+
+.merchboard-alerts__columns > *,
+.merchboard-alerts__form > *:not(.merchboard-toast-region) {
+	margin: 0 0 var(--merchboard-space-6);
+	break-inside: avoid;
 }
 
 .merchboard-alerts__grid {

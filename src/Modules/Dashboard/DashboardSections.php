@@ -18,7 +18,9 @@ defined( 'ABSPATH' ) || exit;
  * The registry of dashboard sections (docs/FRONTEND.md#sektioner): which
  * sections exist, in which order, and which of them the current user may see.
  *
- * Each section is `{ id, label, path, capability }`. Modules add sections with
+ * Each section is `{ id, label, path, capability }`, optionally with a group
+ * (`group`, `group_label`) whose sections the menu shows under one item that
+ * opens and closes (phase 25, step 6.4). Modules add sections with
  * the `merchboard_dashboard_sections` filter; the frontend renders a section
  * only when this build has a component for its id. The server decides the
  * list: sections whose capability the user lacks are never sent.
@@ -67,13 +69,13 @@ final class DashboardSections {
 	/**
 	 * Every valid section after the filter, in order.
 	 *
-	 * @return array<int, array{id: string, label: string, path: string, capability: string}>
+	 * @return array<int, array{id: string, label: string, path: string, capability: string, group?: string, group_label?: string}>
 	 */
 	public function all(): array {
 		/**
 		 * Filters the creator dashboard sections.
 		 *
-		 * @param array<int, array{id: string, label: string, path: string, capability: string}> $sections Sections in display order.
+		 * @param array<int, array{id: string, label: string, path: string, capability: string, group?: string, group_label?: string}> $sections Sections in display order.
 		 */
 		$filtered = apply_filters( 'merchboard_dashboard_sections', $this->defaults() );
 		$sections = array();
@@ -104,18 +106,15 @@ final class DashboardSections {
 	 * The sections the current user may see, for the bootstrap data (the
 	 * capability itself is not sent).
 	 *
-	 * @return array<int, array{id: string, label: string, path: string}>
+	 * @return array<int, array{id: string, label: string, path: string, group?: string, group_label?: string}>
 	 */
 	public function for_current_user(): array {
 		$visible = array();
 
 		foreach ( $this->all() as $section ) {
 			if ( current_user_can( $section['capability'] ) ) {
-				$visible[] = array(
-					'id'    => $section['id'],
-					'label' => $section['label'],
-					'path'  => $section['path'],
-				);
+				unset( $section['capability'] );
+				$visible[] = $section;
 			}
 		}
 
@@ -133,10 +132,12 @@ final class DashboardSections {
 	}
 
 	/**
-	 * A valid section, or null.
+	 * A valid section, or null. A section may belong to a group (`group`, an
+	 * id, and `group_label`): the menu shows a group's sections under one item
+	 * that opens and closes.
 	 *
 	 * @param mixed $candidate Filtered entry.
-	 * @return array{id: string, label: string, path: string, capability: string}|null
+	 * @return array{id: string, label: string, path: string, capability: string, group?: string, group_label?: string}|null
 	 */
 	private function validated( mixed $candidate ): ?array {
 		if ( ! is_array( $candidate ) ) {
@@ -162,11 +163,27 @@ final class DashboardSections {
 			return null;
 		}
 
-		return array(
+		$section = array(
 			'id'         => $id,
 			'label'      => trim( wp_strip_all_tags( $label ) ),
 			'path'       => $normalized,
 			'capability' => $capability,
 		);
+
+		if ( ! array_key_exists( 'group', $candidate ) ) {
+			return $section;
+		}
+
+		$group       = $candidate['group'];
+		$group_label = $candidate['group_label'] ?? null;
+
+		if ( ! is_string( $group ) || 1 !== preg_match( '/^[a-z][a-z0-9_-]{0,39}$/', $group ) || ! is_string( $group_label ) || '' === trim( wp_strip_all_tags( $group_label ) ) ) {
+			return null;
+		}
+
+		$section['group']       = $group;
+		$section['group_label'] = trim( wp_strip_all_tags( $group_label ) );
+
+		return $section;
 	}
 }

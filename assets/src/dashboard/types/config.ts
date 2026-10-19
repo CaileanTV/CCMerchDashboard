@@ -15,6 +15,8 @@ export interface DashboardSection {
 	readonly label: string;
 	/** Path below the dashboard start page ('' for the start page). */
 	readonly path: string;
+	/** The menu group the section belongs to (e.g. "Alerts"), if any. */
+	readonly group?: { readonly id: string; readonly label: string };
 }
 
 /**

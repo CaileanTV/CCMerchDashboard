@@ -252,6 +252,7 @@ function AlertsContent( {
 	const [ state, setState ] = useState( initial );
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
+	const [ saveSlot, setSaveSlot ] = useState< HTMLDivElement | null >( null );
 
 	useEffect( () => setState( initial ), [ initial ] );
 
@@ -267,26 +268,31 @@ function AlertsContent( {
 				<SetupCard onCreated={ setState } />
 			) : (
 				<div className="merchboard-alerts">
-					<BrowserSourceCard
-						url={ state.overlay.url }
-						onRegenerated={ setState }
-						notify={ setToast }
-					/>
-					{ state.overlay.audio !== null && (
-						<AlertSoundsCard
-							audio={ state.overlay.audio }
-							onSaved={ setState }
+					<div className="merchboard-alerts__columns">
+						<BrowserSourceCard
+							url={ state.overlay.url }
+							onRegenerated={ setState }
 							notify={ setToast }
 						/>
-					) }
-					<OverlaySettingsForm
-						key={ `form-${ state.overlay.url }` }
-						settings={ state.overlay.settings }
-						fonts={ state.fonts }
-						fontApproved={ state.overlay.fontApproved }
-						onSaved={ setState }
-					/>
-					<div className="merchboard-alerts__wide">
+						{ state.overlay.audio !== null && (
+							<AlertSoundsCard
+								audio={ state.overlay.audio }
+								onSaved={ setState }
+								notify={ setToast }
+							/>
+						) }
+						<OverlaySettingsForm
+							key={ `form-${ state.overlay.url }` }
+							settings={ state.overlay.settings }
+							fonts={ state.fonts }
+							fontApproved={ state.overlay.fontApproved }
+							onSaved={ setState }
+							saveSlot={ saveSlot }
+						/>
+					</div>
+					{ /* The settings' save button, right above the designer, which is always last. */ }
+					<div ref={ setSaveSlot } />
+					<div>
 						<OverlayDesigner
 							key={ `designer-${ state.overlay.url }` }
 							layout={ state.overlay.layout }

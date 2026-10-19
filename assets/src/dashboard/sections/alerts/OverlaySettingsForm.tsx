@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from '@wordpress/element';
+import { createPortal, useCallback, useId, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { FormEvent } from 'react';
 
@@ -84,6 +84,11 @@ interface Props {
 	readonly fonts: readonly AlertFontOption[];
 	readonly fontApproved: boolean;
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
+	/**
+	 * Where the save button is shown (right above the designer, step 25.6.1);
+	 * null keeps it at the end of the form.
+	 */
+	readonly saveSlot?: HTMLElement | null;
 }
 
 /**
@@ -97,12 +102,14 @@ interface Props {
  * @param props.fonts        The approved fonts.
  * @param props.fontApproved Whether the saved font is still approved.
  * @param props.onSaved      Called with the answer after saving.
+ * @param props.saveSlot     Where the save button is shown.
  */
 export function OverlaySettingsForm( {
 	settings,
 	fonts,
 	fontApproved,
 	onSaved,
+	saveSlot = null,
 }: Props ) {
 	const id = useId();
 	const [ values, setValues ] = useState( settings );
@@ -183,9 +190,21 @@ export function OverlaySettingsForm( {
 		</Field>
 	);
 
+	// The button belongs to the form (the form attribute) wherever it is shown.
+	const actions = (
+		<div className="merchboard-form__actions">
+			<Button type="submit" form={ `${ id }-form` } isBusy={ busy }>
+				{ busy
+					? __( 'Saving…', 'merchboard' )
+					: __( 'Save overlay settings', 'merchboard' ) }
+			</Button>
+		</div>
+	);
+
 	return (
 		<form
-			className="merchboard-form merchboard-alerts__form merchboard-alerts__wide"
+			id={ `${ id }-form` }
+			className="merchboard-form merchboard-alerts__form"
 			onSubmit={ onSubmit }
 			noValidate
 		>
@@ -427,13 +446,7 @@ export function OverlaySettingsForm( {
 				</div>
 			</Card>
 
-			<div className="merchboard-form__actions">
-				<Button type="submit" isBusy={ busy }>
-					{ busy
-						? __( 'Saving…', 'merchboard' )
-						: __( 'Save overlay settings', 'merchboard' ) }
-				</Button>
-			</div>
+			{ saveSlot === null ? actions : createPortal( actions, saveSlot ) }
 
 			<Toast message={ toast } onDismiss={ dismissToast } />
 		</form>

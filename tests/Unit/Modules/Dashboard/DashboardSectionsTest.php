@@ -87,6 +87,38 @@ final class DashboardSectionsTest extends TestCase {
 		self::assertArrayNotHasKey( 'capability', $sections[2], 'The capability is not sent to the browser.' );
 	}
 
+	public function test_sections_can_belong_to_a_menu_group(): void {
+		Filters\expectApplied( DashboardSections::FILTER )->once()->andReturnUsing(
+			static fn( array $sections ): array => array_merge(
+				$sections,
+				array(
+					array(
+						'id'          => 'alerts',
+						'label'       => 'Overlay settings',
+						'path'        => 'alerts',
+						'capability'  => Capabilities::ACCESS_DASHBOARD,
+						'group'       => 'alerts',
+						'group_label' => 'Alerts <i>x</i>',
+					),
+				)
+			)
+		);
+
+		$sections = $this->registry()->for_current_user();
+
+		self::assertSame(
+			array(
+				'id'          => 'alerts',
+				'label'       => 'Overlay settings',
+				'path'        => 'alerts',
+				'group'       => 'alerts',
+				'group_label' => 'Alerts x',
+			),
+			$sections[2]
+		);
+		self::assertArrayNotHasKey( 'group', $sections[0], 'Sections without a group have none.' );
+	}
+
 	public function test_sections_without_the_capability_are_not_sent(): void {
 		Filters\expectApplied( DashboardSections::FILTER )->once()->andReturnUsing(
 			static fn( array $sections ): array => array_merge(
@@ -119,16 +151,18 @@ final class DashboardSectionsTest extends TestCase {
 		);
 
 		return array(
-			'not an array'       => array( 'extra' ),
-			'uppercase id'       => array( array_merge( $valid, array( 'id' => 'Extra' ) ) ),
-			'id with spaces'     => array( array_merge( $valid, array( 'id' => 'my extra' ) ) ),
-			'missing label'      => array( array_diff_key( $valid, array( 'label' => true ) ) ),
-			'empty label'        => array( array_merge( $valid, array( 'label' => '  ' ) ) ),
-			'missing capability' => array( array_diff_key( $valid, array( 'capability' => true ) ) ),
-			'traversal path'     => array( array_merge( $valid, array( 'path' => '../wp-admin' ) ) ),
-			'external path'      => array( array_merge( $valid, array( 'path' => 'https://evil.example' ) ) ),
-			'duplicate id'       => array( array_merge( $valid, array( 'id' => 'profile' ) ) ),
-			'duplicate path'     => array( array_merge( $valid, array( 'path' => 'profile' ) ) ),
+			'not an array'        => array( 'extra' ),
+			'uppercase id'        => array( array_merge( $valid, array( 'id' => 'Extra' ) ) ),
+			'id with spaces'      => array( array_merge( $valid, array( 'id' => 'my extra' ) ) ),
+			'missing label'       => array( array_diff_key( $valid, array( 'label' => true ) ) ),
+			'empty label'         => array( array_merge( $valid, array( 'label' => '  ' ) ) ),
+			'missing capability'  => array( array_diff_key( $valid, array( 'capability' => true ) ) ),
+			'traversal path'      => array( array_merge( $valid, array( 'path' => '../wp-admin' ) ) ),
+			'external path'       => array( array_merge( $valid, array( 'path' => 'https://evil.example' ) ) ),
+			'duplicate id'        => array( array_merge( $valid, array( 'id' => 'profile' ) ) ),
+			'duplicate path'      => array( array_merge( $valid, array( 'path' => 'profile' ) ) ),
+			'bad group id'        => array( array_merge( $valid, array( 'group' => 'Bad Group', 'group_label' => 'Group' ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short case.
+			'group without label' => array( array_merge( $valid, array( 'group' => 'extras' ) ) ),
 		);
 	}
 
