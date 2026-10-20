@@ -56,6 +56,7 @@ use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use OpenSSLAsymmetricKey;
 use WP_REST_Request;
@@ -201,7 +202,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->sender        = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
 		$this->oauth         = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
 		$this->twitch        = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
-		$this->kick_oauth    = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
+		$this->kick_oauth    = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
 	}
 
 	protected function tearDown(): void {
@@ -881,6 +882,40 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( array( 'login' => 'nova_kick', 'platform' => 'kick' ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertStringNotContainsString( 'kick-access-1', (string) wp_json_encode( $audit ) );
 		self::assertSame( home_url( '/' ), $this->kick_oauth->finish( $query['state'] ?? '', 'code-k', '' ), 'A state is used once.' );
+	}
+
+	public function test_a_failed_kick_authorization_names_the_step_in_the_log_and_the_code_on_the_page(): void {
+		$this->set_up_kick();
+		$logger = new RecordingLogger();
+		$oauth  = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$nova   = $this->creator( 'nova' );
+
+		// Kick refuses the code (e.g. a wrong redirect URL or secret).
+		$this->answer( self::KICK_TOKEN, 400, array( 'error' => 'invalid_grant' ) );
+		$state    = $this->query( $oauth->start_channel( $nova ) )['state'] ?? '';
+		$location = $oauth->finish( $state, 'secret-code-1', '' );
+
+		self::assertStringContainsString( 'chatbot=invalid_credentials&platform=kick', $location );
+		$warnings = $logger->at( 'warning' );
+		self::assertSame( array( 'step' => 'token', 'reason' => 'invalid_credentials', 'status' => 400, 'detail' => '' ), $warnings[0]['context'] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		// Kick answers the channel request in an unexpected shape.
+		$this->answer(
+			self::KICK_TOKEN,
+			200,
+			array(
+				'access_token'  => 'kick-access-9',
+				'refresh_token' => 'kick-refresh-9',
+				'expires_in'    => 7200,
+			)
+		);
+		$this->answer( self::KICK_CHANNELS, 200, array( 'data' => array() ) );
+		$state = $this->query( $oauth->start_channel( $nova ) )['state'] ?? '';
+		self::assertStringContainsString( 'chatbot=unexpected_answer&platform=kick', $oauth->finish( $state, 'secret-code-2', '' ) );
+		self::assertSame( array( 'channel', 'unexpected_answer', 200 ), array( $logger->at( 'warning' )[1]['context']['step'] ?? null, $logger->at( 'warning' )[1]['context']['reason'] ?? null, $logger->at( 'warning' )[1]['context']['status'] ?? null ) );
+		self::assertStringNotContainsString( 'secret-code', (string) wp_json_encode( $logger->entries ), 'Never the code or a token.' );
+		self::assertStringNotContainsString( 'kick-access-9', (string) wp_json_encode( $logger->entries ) );
+		self::assertFalse( $this->channels->find( $nova, ChatPlatform::Kick )->connected() );
 	}
 
 	public function test_a_purchase_is_announced_once_on_each_platform(): void {

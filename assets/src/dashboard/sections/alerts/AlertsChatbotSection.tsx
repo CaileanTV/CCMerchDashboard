@@ -131,9 +131,13 @@ export function connectMessage(
 		default:
 			return {
 				tone: 'danger',
-				text: __(
-					'The bot could not be added. Try again later.',
-					'merchboard'
+				text: sprintf(
+					/* translators: 1: technical error code. */
+					__(
+						'The bot could not be added (error code: %1$s). Try again later, or give an administrator the error code.',
+						'merchboard'
+					),
+					code
 				),
 			};
 	}

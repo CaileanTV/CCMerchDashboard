@@ -113,7 +113,7 @@ final class KickApi {
 		$token  = $answer['access_token'] ?? null;
 
 		if ( ! is_string( $token ) || '' === $token ) {
-			throw new KickException( KickException::UNAVAILABLE );
+			throw new KickException( KickException::UNEXPECTED, 200 );
 		}
 
 		return array(
@@ -208,12 +208,12 @@ final class KickApi {
 		$id   = is_array( $channel ) ? ( $channel['broadcaster_user_id'] ?? null ) : null;
 		$slug = is_array( $channel ) ? ( $channel['slug'] ?? null ) : null;
 
-		if ( ! is_int( $id ) || $id <= 0 || ! is_string( $slug ) || 1 !== preg_match( '/^[A-Za-z0-9_-]{1,25}$/', $slug ) ) {
-			throw new KickException( KickException::UNAVAILABLE );
+		if ( ! is_numeric( $id ) || (int) $id <= 0 || ! is_string( $slug ) || 1 !== preg_match( '/^[A-Za-z0-9_-]{1,25}$/', $slug ) ) {
+			throw new KickException( KickException::UNEXPECTED, 200 );
 		}
 
 		return array(
-			'id'   => (string) $id,
+			'id'   => (string) (int) $id,
 			'slug' => strtolower( $slug ),
 		);
 	}
@@ -295,7 +295,7 @@ final class KickApi {
 		$error = is_array( $data ) && is_string( $data['error'] ?? null ) ? $data['error'] : '';
 
 		if ( '' === $id ) {
-			throw new KickException( '' !== $error ? KickException::FORBIDDEN : KickException::UNAVAILABLE );
+			throw new KickException( '' !== $error ? KickException::FORBIDDEN : KickException::UNEXPECTED, $answer['status'] );
 		}
 
 		return array(
@@ -337,7 +337,7 @@ final class KickApi {
 		$key     = is_array( $decoded ) && is_array( $decoded['data'] ?? null ) ? ( $decoded['data']['public_key'] ?? null ) : $answer['body'];
 
 		if ( ! is_string( $key ) || ! str_contains( $key, 'BEGIN PUBLIC KEY' ) ) {
-			throw new KickException( KickException::UNAVAILABLE );
+			throw new KickException( KickException::UNEXPECTED, 200 );
 		}
 
 		return $key;
@@ -383,7 +383,7 @@ final class KickApi {
 		$refresh = $answer['refresh_token'] ?? null;
 
 		if ( ! is_string( $access ) || '' === $access || ! is_string( $refresh ) || '' === $refresh ) {
-			throw new KickException( KickException::UNAVAILABLE );
+			throw new KickException( KickException::UNEXPECTED, 200 );
 		}
 
 		return array(
@@ -405,7 +405,7 @@ final class KickApi {
 		$answer = ( $this->http )( 'POST', $url, array( 'Content-Type' => 'application/x-www-form-urlencoded' ), http_build_query( $fields ) );
 
 		if ( in_array( $answer['status'], array( 400, 401, 403 ), true ) ) {
-			throw new KickException( KickException::INVALID_CREDENTIALS );
+			throw new KickException( KickException::INVALID_CREDENTIALS, $answer['status'] );
 		}
 
 		self::check( $answer['status'] );
@@ -460,7 +460,8 @@ final class KickApi {
 				401 => KickException::UNAUTHORIZED,
 				403 => KickException::FORBIDDEN,
 				default => KickException::UNAVAILABLE,
-			}
+			},
+			$status
 		);
 	}
 

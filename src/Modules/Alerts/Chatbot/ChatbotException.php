@@ -32,6 +32,7 @@ class ChatbotException extends RuntimeException {
 	public const NOT_AUTHORIZED      = 'not_authorized';
 	public const UNREADABLE          = 'unreadable';
 	public const NO_WEBHOOKS         = 'no_webhooks';
+	public const UNEXPECTED          = 'unexpected_answer';
 
 	/**
 	 * The platform in technical messages.
@@ -42,8 +43,9 @@ class ChatbotException extends RuntimeException {
 	 * Constructor.
 	 *
 	 * @param string $reason One of the constants.
+	 * @param int    $status The platform's HTTP status, for the technical log (0: none or a transport error).
 	 */
-	public function __construct( private string $reason ) {
+	public function __construct( private string $reason, private int $status = 0 ) {
 		parent::__construct( static::PLATFORM_LABEL . ' chatbot: ' . $reason . '.' );
 	}
 
@@ -52,5 +54,12 @@ class ChatbotException extends RuntimeException {
 	 */
 	public function reason(): string {
 		return $this->reason;
+	}
+
+	/**
+	 * The platform's HTTP status (0: none or a transport error).
+	 */
+	public function status(): int {
+		return $this->status;
 	}
 }

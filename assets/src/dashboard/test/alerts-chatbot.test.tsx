@@ -206,6 +206,9 @@ describe( 'previewMessage', () => {
 			connectMessage( 'bot_is_broadcaster', 'Twitch' )?.text
 		).toContain( "bot's own account" );
 		expect( connectMessage( 'whatever', 'Kick' )?.tone ).toBe( 'danger' );
+		expect( connectMessage( 'unexpected_answer', 'Kick' )?.text ).toContain(
+			'error code: unexpected_answer'
+		);
 		expect( statusLabel( 'sent' ) ).toBe( 'sent' );
 		expect( statusLabel( 'waiting' ) ).toBe( 'waiting to be sent' );
 		expect( statusLabel( 'failed' ) ).toBe( 'not sent' );

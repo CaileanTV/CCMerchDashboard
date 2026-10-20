@@ -14,6 +14,7 @@ use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Logging\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -46,6 +47,13 @@ final class KickOAuth {
 	private Closure $dashboard_url;
 
 	/**
+	 * The step of complete() in progress, for the technical log.
+	 *
+	 * @var string
+	 */
+	private string $step = '';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param KickAccount              $account       The Kick app.
@@ -56,10 +64,11 @@ final class KickOAuth {
 	 * @param AuditTrail               $audit         Audit trail.
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param Closure                  $dashboard_url The dashboard URL of a path.
+	 * @param Logger                   $logger        Technical log (failures without tokens).
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private KickAccount $account, private KickApi $api, private KickTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url ) {
+	public function __construct( private KickAccount $account, private KickApi $api, private KickTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
@@ -114,8 +123,10 @@ final class KickOAuth {
 			$result = '' !== $error || '' === $code ? KickException::DENIED : $this->complete( $data['creator'], $code, $data['verifier'] );
 		} catch ( KickException $e ) {
 			$result = $e->reason();
-		} catch ( DatabaseException ) {
+			$this->log_failure( $result, $e->status() );
+		} catch ( DatabaseException $e ) {
 			$result = 'error';
+			$this->log_failure( $result, 0, $e->getMessage() );
 		} finally {
 			wp_set_current_user( $previous );
 		}
@@ -135,9 +146,12 @@ final class KickOAuth {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private function complete( int $creator_id, string $code, string $verifier ): string {
-		$tokens   = $this->api->exchange_code( $this->account->client_id(), $this->account->require_secret(), $code, KickAccount::redirect_uri(), $verifier );
-		$channel  = $this->api->token_channel( $tokens['access'] );
-		$previous = $this->channels->find( $creator_id, ChatPlatform::Kick );
+		$this->step = 'token';
+		$tokens     = $this->api->exchange_code( $this->account->client_id(), $this->account->require_secret(), $code, KickAccount::redirect_uri(), $verifier );
+		$this->step = 'channel';
+		$channel    = $this->api->token_channel( $tokens['access'] );
+		$this->step = 'store';
+		$previous   = $this->channels->find( $creator_id, ChatPlatform::Kick );
 
 		// Another channel before: its tokens are revoked and its subscription ends.
 		if ( $previous->connected() && $previous->broadcaster_id !== $channel['id'] ) {
@@ -159,8 +173,30 @@ final class KickOAuth {
 			}
 		);
 		$this->tokens->store( $creator_id, $tokens );
+		$this->step = 'subscribe';
 		$this->subscriptions->subscribe( $this->channels->find( $creator_id, ChatPlatform::Kick ) );
 
 		return 'connected';
+	}
+
+	/**
+	 * Logs a failed authorization: the step, the reason and Kick's HTTP
+	 * status (WooCommerce → Status → Logs, source "merchboard"). Never a
+	 * token, a code or a secret.
+	 *
+	 * @param string $reason Reason code.
+	 * @param int    $status Kick's HTTP status (0: none).
+	 * @param string $detail Technical detail (database errors).
+	 */
+	private function log_failure( string $reason, int $status, string $detail = '' ): void {
+		$this->logger->warning(
+			'Adding the bot to a Kick channel failed.',
+			array(
+				'step'   => $this->step,
+				'reason' => $reason,
+				'status' => $status,
+				'detail' => $detail,
+			)
+		);
 	}
 }
