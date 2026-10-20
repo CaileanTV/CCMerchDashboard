@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065).
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069), kun til alert-chatbotten.
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -3632,7 +3632,7 @@ Accepteret af projektejeren 2026-10-18. Godkender Twitch som ekstern service eft
 - **Rate limit:** beskeder sendes gennem Action Scheduler i en kø, der overholder Twitchs svar (`Ratelimit-*`) og prøver igen efter 429; mellem linjer i samme ordre venter køen mindst et sekund (Twitchs grænse pr. kanal). Creator-siden anbefaler at give botten moderator eller VIP. Admin-siden viser den seneste grænse, Twitch har meldt, så en verificering kan ses.
 - **Kryptering (pkt. 5) og ingen migrering af hemmeligheder (pkt. 6)** er uændrede; app-secret, app-token og webhook-secret krypteres.
 
-**Implementeringsnote 2026-10-20 (trin 25.8, implementeret; testet automatisk, ikke runtime-verificeret):** som statusnoten. Modulets `Chatbot/`-klasser, migration 20 (`merchboard_alert_chatbot`, `merchboard_alert_chat_messages`, `merchboard_alert_chat_log`), options `merchboard_alert_twitch` og `merchboard_alert_chatbot_format`, admin-fanen "Chatbot", creatorens `/me/alerts/chatbot` og de offentlige `GET /alerts/twitch/callback` og `POST /alerts/twitch/eventsub`. Token-kontrol (pkt. 4) er et afvist app-token, der fornyes én gang ved afsendelse, og et app-token, der hentes igen en time før udløb; der er intet tilbagevendende job, fordi bruger-tokens ikke gemmes. Afsendelsen køer ét job pr. creator og ordre (ingen `usleep`). Hvor webhooks ikke kan modtages, viser admin-siden Twitchs indlejrede chat og et link til chatten hos Twitch (Twitch indlejrer kun på HTTPS-sider).
+**Implementeringsnote 2026-10-20 (trin 25.8, implementeret; testet automatisk, ikke runtime-verificeret):** som statusnoten. Modulets `Chatbot/`-klasser, migration 20 (`merchboard_alert_chatbot`, `merchboard_alert_chat_messages`, `merchboard_alert_chat_log`), options `merchboard_alert_twitch` og `merchboard_alert_chatbot_format`, admin-fanen "Chatbot", creatorens `/me/alerts/chatbot` og de offentlige `GET /alerts/twitch/callback` og `POST /alerts/twitch/eventsub`. Token-kontrol (pkt. 4) er et afvist app-token, der fornyes én gang ved afsendelse, og et app-token, der hentes igen en time før udløb; der er intet tilbagevendende job, fordi bruger-tokens ikke gemmes. Afsendelsen køer ét job pr. creator og ordre (ingen `usleep`). Hvor webhooks ikke kan modtages, viser admin-siden Twitchs indlejrede chat og et link til chatten hos Twitch (Twitch indlejrer kun på HTTPS-sider). **Statusnote 2026-10-20:** chatbotten udvides til Kick som én fælles chatbot på tværs af platforme (ADR-069, trin 25.8.1–25.8.2); Twitchs opførsel efter denne ADR er uændret.
 
 ## Context
 MerchAlert sender en chatbesked i creatorens Twitch-kanal, når en ordre med creatorens produkter bliver betalt. Projektejeren vil beholde chatbotten i integrationen (ADR-065). ADR-016 kræver en ADR for hver ekstern service.
@@ -3771,3 +3771,70 @@ Schema-version 17 tilføjer to tabeller (dbDelta, idempotent). Der ændres intet
 
 ## Related
 ADR-007, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-059, ADR-060, ADR-064.
+
+---
+
+# ADR-069: Kick som godkendt ekstern service (fælles alert-chatbot)
+
+## Date
+2026-10-20
+
+## Status
+Accepteret af projektejeren 2026-10-20, inklusive at creatorens Kick-tokens gemmes krypteret ("så længe den krypteres, og ikke kan tilgås af andre end os"). Godkender Kick som ekstern service efter ADR-016. **Ikke implementeret** (fase 25, trin 25.8.2).
+
+## Context
+Twitch-chatbotten (ADR-066, trin 25.8) virker på devpage. Projektejeren vil have præcis samme setup på Kick og lægger vægt på, at chatbotten opleves ens på tværs af platforme. Kicks offentlige API ([docs.kick.com](https://docs.kick.com/)) understøtter at sende en chatbesked som bot (`POST /public/v1/chat` med `type: "bot"`), at lytte til chatten med webhook-eventet `chat.message.sent` og OAuth 2.1 med PKCE.
+
+Den afgørende forskel fra Twitch: en bot-besked sendes med **kanalejerens** bruger-token med scope `chat:write` ("Send chat messages and allow chat bots to post in your chat") og går altid til kanalen bag tokenet. Twitch sender med et app access token, så der gemmes ingen bruger-tokens (ADR-066). På Kick skal creatorens token bruges ved hver afsendelse og derfor gemmes.
+
+## Decision
+1. **Én chatbot, flere platforme.** Chatbot-motoren fra 25.8 bliver platformsuafhængig: Action Scheduler-køen, beskedloggen (aldrig to gange, gensend fra historikken), beskedformatet (én pr. ordrelinje eller én pr. ordre, administratorens valg), skabelonen og alert-variablerne (kun alert-variabler, ingen beløb, ADR-066) og den kortvarige chatlog (24 timer, højst 200 pr. kanal) deles. Hver platform er en adapter med login, afsendelse, abonnement og webhook-verifikation. Twitchs opførsel ændres ikke.
+2. **Ens oplevelse.**
+   - **Creator (Alerts → Chatbot):** ét kort pr. platform med "Tilføj botten til din kanal" (OAuth hos platformen med kanalens konto), "Send testbesked" og "Fjern botten". Skabelonen er fælles; beskeder slås til og fra pr. platform.
+   - **Admin (fanen "Chatbot"):** én sektion pr. platform med app (Client ID og Secret), bot, tjekliste for badge og verificering, kanaler og chatvindue med "Send som botten".
+3. **Godkendte Kick-endpoints:**
+   - Login: `https://id.kick.com/oauth/authorize`, `/oauth/token` (authorization code med PKCE, refresh token og client credentials) og `/oauth/revoke`.
+   - API: `https://api.kick.com/public/v1/users`, `/channels`, `/chat`, `/events/subscriptions` og `/public-key`.
+   - Andre Kick-endpoints kræver en ny ADR.
+4. **Afsendelse:** `POST /public/v1/chat` med `type: "bot"` og creatorens access token. Beskeden kommer fra appens bot-konto, som administratoren opretter hos Kick under appen. Der sendes ikke som almindelig bruger (uden badge), medmindre projektejeren beslutter det senere. Kicks rate limits er ikke dokumenteret; køen holder mindst et sekund mellem beskeder i en kanal og prøver igen efter 429 (efter `Retry-After`, hvis Kick sender den, ellers 60 sekunder; højst 5 forsøg som Twitch).
+5. **Creatorens Kick-token (projektejerens godkendelse 2026-10-20):**
+   - Access- og refresh-token gemmes **krypteret** med libsodium (`sodium_crypto_secretbox`, tilfældig nonce pr. værdi). Nøglen afledes af `wp_salt( 'auth' )` med et Kick-domæne, adskilt fra Twitch-nøglen og `MERCHBOARD_PAYOUT_KEY` (ADR-056).
+   - Tokens dekrypteres kun på serveren i det øjeblik, de sendes til Kick. De sendes aldrig til browseren, vises aldrig i UI, logges aldrig og skrives aldrig i audit-loggen (kun kanalens login).
+   - Kun pluginets serverkode læser dem; ingen REST-route eller admin-side returnerer dem.
+   - Tokenet fornyes med refresh-tokenet, før det udløber. Det nye par gemmes i samme skrivning, så et roteret refresh-token aldrig går tabt.
+   - Afvises fornyelsen (creatoren har trukket adgangen tilbage), slettes tokens. Kanalen vises som "Tilføj botten igen" for creatoren og administratoren.
+   - "Fjern botten" tilbagekalder tokenet hos Kick (`/oauth/revoke`) og sletter det. Opt-in-afinstallation sletter alt.
+   - Skiftes saltene, kan tokens ikke længere læses, og creatorerne skal tilføje botten igen.
+   - **Begrænsning:** en person med adgang til både databasen og `wp-config.php` (saltene) på serveren kan dekryptere; det gælder al kryptering på sitet (ADR-056).
+6. **Lytning og chatvindue:**
+   - Abonnement på `chat.message.sent` (version 1) med app access token og kanalens `broadcaster_user_id`.
+   - Kick kalder sitets webhook (`POST merchboard/v1/alerts/kick/webhook`). Administratoren registrerer URL'en i Kick-appens indstillinger; admin-siden viser den.
+   - **Verifikation:** RSA-SHA256 (PKCS#1 v1.5) over `Kick-Event-Message-Id`, `Kick-Event-Message-Timestamp` og den rå body, sammensat med `.`, med Kicks offentlige nøgle fra `/public/v1/public-key`. Nøglen caches og hentes igen, hvis en signatur ikke kan verificeres. Højst 10 minutter gammel, dubletter afvises på besked-id'et.
+   - Kick afmelder et abonnement, der har fejlet i over et døgn. "Forny chat-abonnementerne" dækker også Kick.
+   - Hvor webhooks ikke kan modtages (fx Local), viser admin-siden et link til Kicks chat.
+7. **OAuth:** authorization code med PKCE (`S256`) og et tilfældigt enkeltbrugs-`state` bundet til brugeren og creatoren, som for Twitch. Verifier'en gemmes kun server-side i state'en (10 minutter).
+8. **Data:** en migration gør kanaltabellen platformsbevidst (`platform` = `twitch` eller `kick`, én kanal pr. creator og platform; kolonner til de krypterede Kick-tokens og udløb). Beskedloggen og chatloggen får platformen med i deres nøgler. Kick-appens Client ID, krypterede secret og app-token ligger i en option uden autoload som Twitchs.
+
+## Alternatives considered
+- **Sende som almindelig bruger med bot-kontoens token:** virker i alle kanaler uden creatorens token, men uden badge og ikke "ens" med Twitch. Fravalgt; kan tilvælges senere, hvis `type: "bot"` ikke virker stabilt.
+- **Ikke gemme creatorens token:** så kan Kick ikke sende som bot. Fravalgt.
+- **Tredjeparts Kick-SDK eller den uofficielle Pusher-chat:** strider mod ADR-004 og er ustabil. Fravalgt.
+
+## Reason
+Projektejeren vil have samme chatbot på Kick og Twitch, og Kicks officielle API understøtter bot-beskeder i creatorens kanal.
+
+## Security
+- Kicks tokens, secrets og app-token behandles som Twitchs (ADR-066): krypteret, kun server-side, aldrig i UI, logs eller audit.
+- **Kendt risiko:** flere udviklere rapporterer 500-fejl med `type: "bot"` ([KickDevDocs #343](https://github.com/KickEngineering/KickDevDocs/issues/343), uden svar fra Kick). Fejl vises som beskedens status og i admin; der falder ikke tilbage til at sende som bruger.
+- **Personoplysninger** som ADR-066: beskederne kan indeholde kundens frivillige brugernavn og vises offentligt i Kick-chatten; chatloggen gemmer seernes navne og beskeder i højst 24 timer.
+
+## Migration/data implications
+En ny migration (schema-version 21): kanaltabellen får platform og felter til krypterede Kick-tokens; beskedlog og chatlog får platform. Eksisterende Twitch-rækker får `platform` = `twitch`. En ny option til Kick-appen. Alt slettes ved opt-in-afinstallation.
+
+## Consequences
+- Kick er en godkendt ekstern service for projektet, kun til alert-chatbotten.
+- Pluginet gemmer for første gang en tredjeparts bruger-token (creatorens Kick-token).
+- Twitch-koden fra 25.8 refaktoreres til den fælles motor; dens tests skal fortsat bestå uændret.
+
+## Related
+ADR-004, ADR-016, ADR-056, ADR-065, ADR-066.
