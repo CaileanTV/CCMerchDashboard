@@ -281,7 +281,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 		$second = $this->second();
 		$sales  = '`' . $this->table( Tables::SALES ) . '`';
-		$update = $this->version_update( $second, '21' );
+		$update = $this->version_update( $second, '22' );
 		$result = null;
 		$errno  = null;
 
@@ -303,7 +303,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 
 		self::assertFalse( $result, 'The UPDATE waited for the shared lock and gave up.' );
 		self::assertSame( 1205, $errno );
-		self::assertSame( '20', $this->stored_version(), 'The version is unchanged.' );
+		self::assertSame( '21', $this->stored_version(), 'The version is unchanged.' );
 		self::assertSame( array( 's:11:1' ), $this->keys(), 'The synchronization committed.' );
 		self::assertSame( array( 'clear:7' ), $this->marker->calls );
 	}
@@ -312,7 +312,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 		$second = $this->second();
 		$second->query( 'START TRANSACTION' );
-		self::assertSame( 1, $second->query( $this->version_update( $second, '21' ) ) );
+		self::assertSame( 1, $second->query( $this->version_update( $second, '22' ) ) );
 		$errno = $this->errno_before_rollback();
 		$this->wpdb->suppress_errors( true );
 

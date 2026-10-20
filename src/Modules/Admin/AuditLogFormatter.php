@@ -136,6 +136,8 @@ final class AuditLogFormatter {
 			AuditAction::AlertChatbotChannelConnected => __( 'Chatbot added to a creator\'s channel', 'merchboard' ),
 			AuditAction::AlertChatbotChannelDisconnected => __( 'Chatbot removed from a creator\'s channel', 'merchboard' ),
 			AuditAction::AlertChatbotMessageSent => __( 'Chat message sent as the bot', 'merchboard' ),
+			AuditAction::AlertKickAppChanged => __( 'Kick app of the alert chatbot saved', 'merchboard' ),
+			AuditAction::AlertKickAppRemoved => __( 'Kick app of the alert chatbot removed', 'merchboard' ),
 		};
 	}
 

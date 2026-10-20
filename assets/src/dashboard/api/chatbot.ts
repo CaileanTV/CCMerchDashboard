@@ -1,6 +1,7 @@
 /**
- * `/me/alerts/chatbot` (phase 25, step 8): the creator's Twitch chatbot.
- * The creator is the one the server resolves for the logged-in user.
+ * `/me/alerts/chatbot` (phase 25, steps 8 and 8.2): the creator's chatbot
+ * on Twitch and Kick. The creator is the one the server resolves for the
+ * logged-in user.
  */
 import { request } from './client';
 import type { ApiResult } from './client';
@@ -8,28 +9,39 @@ import { isRecord } from './validate';
 
 const PATH = '/merchboard/v1/me/alerts/chatbot';
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
-const LOGIN = /^\w{1,25}$/;
+const LOGIN = /^[\w-]{1,25}$/;
 
-/** The chatbot as the dashboard shows it. */
-export interface ChatbotState {
-	/** Whether an administrator has set the Twitch app and the bot up. */
+/** The platforms, in the order the page shows them. */
+export const PLATFORMS = [ 'twitch', 'kick' ] as const;
+export type ChatPlatform = ( typeof PLATFORMS )[ number ];
+
+/** The authorization page of each platform (the only accepted hosts). */
+const AUTHORIZE_HOSTS: Readonly< Record< ChatPlatform, string > > = {
+	twitch: 'id.twitch.tv',
+	kick: 'id.kick.com',
+};
+
+/** The channel URL's host of each platform. */
+const CHANNEL_HOSTS: Readonly< Record< ChatPlatform, string > > = {
+	twitch: 'www.twitch.tv',
+	kick: 'kick.com',
+};
+
+/** One platform of the chatbot. */
+export interface ChatbotPlatformState {
+	readonly platform: ChatPlatform;
+	/** The platform's name (a brand). */
+	readonly label: string;
+	/** Whether an administrator has set the platform up. */
 	readonly available: boolean;
-	/** The bot's Twitch login; '' before it is connected. */
+	/** The bot's name; '' when unknown. */
 	readonly botLogin: string;
-	/** One message per order line or per order (the administrator's choice). */
-	readonly mode: 'line' | 'order';
-	/** How each product shows in $Products, and between them. */
-	readonly itemFormat: string;
-	readonly separator: string;
-	/** The variables the template can use. */
-	readonly variables: readonly string[];
+	/** Whether purchases are announced on this platform. */
 	readonly enabled: boolean;
-	/** The template; '' for the default. */
-	readonly template: string;
-	readonly defaultTemplate: string;
 	/** The channel the creator added the bot to, or null. */
 	readonly channel: {
 		readonly login: string;
+		readonly url: string;
 		readonly connectedAt: string;
 	} | null;
 	/** The latest message's outcome, or null. */
@@ -38,6 +50,21 @@ export interface ChatbotState {
 		readonly reason: string;
 		readonly at: string;
 	} | null;
+}
+
+/** The chatbot as the dashboard shows it. */
+export interface ChatbotState {
+	/** One message per order line or per order (the administrator's choice). */
+	readonly mode: 'line' | 'order';
+	/** How each product shows in $Products, and between them. */
+	readonly itemFormat: string;
+	readonly separator: string;
+	/** The variables the template can use. */
+	readonly variables: readonly string[];
+	/** The template shared by the platforms; '' for the default. */
+	readonly template: string;
+	readonly defaultTemplate: string;
+	readonly platforms: readonly ChatbotPlatformState[];
 }
 
 /** The outcome of a test message. */
@@ -49,38 +76,33 @@ export interface ChatbotTest {
 	readonly message: string;
 }
 
-/**
- * Validates the chatbot answer.
- *
- * @param body Response body.
- */
-export function parseChatbot( body: unknown ): ChatbotState | null {
+function isPlatform( value: unknown ): value is ChatPlatform {
+	return ( PLATFORMS as readonly unknown[] ).includes( value );
+}
+
+function parsePlatform( body: unknown ): ChatbotPlatformState | null {
 	if (
 		! isRecord( body ) ||
+		! isPlatform( body.platform ) ||
+		typeof body.label !== 'string' ||
 		typeof body.available !== 'boolean' ||
 		typeof body.bot_login !== 'string' ||
 		( body.bot_login !== '' && ! LOGIN.test( body.bot_login ) ) ||
-		( body.mode !== 'line' && body.mode !== 'order' ) ||
-		typeof body.item_format !== 'string' ||
-		typeof body.separator !== 'string' ||
-		! Array.isArray( body.variables ) ||
-		! ( body.variables as unknown[] ).every(
-			( item ) => typeof item === 'string'
-		) ||
-		typeof body.enabled !== 'boolean' ||
-		typeof body.template !== 'string' ||
-		typeof body.default_template !== 'string'
+		typeof body.enabled !== 'boolean'
 	) {
 		return null;
 	}
 
-	let channel: ChatbotState[ 'channel' ] = null;
+	const platform = body.platform;
+	let channel: ChatbotPlatformState[ 'channel' ] = null;
 
 	if ( body.channel !== null ) {
 		if (
 			! isRecord( body.channel ) ||
 			typeof body.channel.login !== 'string' ||
 			! LOGIN.test( body.channel.login ) ||
+			typeof body.channel.url !== 'string' ||
+			! isHttpsOn( body.channel.url, CHANNEL_HOSTS[ platform ] ) ||
 			typeof body.channel.connected_at !== 'string' ||
 			! ISO_UTC.test( body.channel.connected_at )
 		) {
@@ -89,11 +111,12 @@ export function parseChatbot( body: unknown ): ChatbotState | null {
 
 		channel = {
 			login: body.channel.login,
+			url: body.channel.url,
 			connectedAt: body.channel.connected_at,
 		};
 	}
 
-	let lastMessage: ChatbotState[ 'lastMessage' ] = null;
+	let lastMessage: ChatbotPlatformState[ 'lastMessage' ] = null;
 
 	if ( body.last_message !== null ) {
 		if (
@@ -114,35 +137,73 @@ export function parseChatbot( body: unknown ): ChatbotState | null {
 	}
 
 	return {
+		platform,
+		label: body.label,
 		available: body.available,
 		botLogin: body.bot_login,
-		mode: body.mode,
-		itemFormat: body.item_format,
-		separator: body.separator,
-		variables: body.variables as string[],
 		enabled: body.enabled,
-		template: body.template,
-		defaultTemplate: body.default_template,
 		channel,
 		lastMessage,
 	};
 }
 
-function parseUrl( body: unknown ): string | null {
-	if ( ! isRecord( body ) || typeof body.url !== 'string' ) {
+/**
+ * Validates the chatbot answer.
+ *
+ * @param body Response body.
+ */
+export function parseChatbot( body: unknown ): ChatbotState | null {
+	if (
+		! isRecord( body ) ||
+		( body.mode !== 'line' && body.mode !== 'order' ) ||
+		typeof body.item_format !== 'string' ||
+		typeof body.separator !== 'string' ||
+		! Array.isArray( body.variables ) ||
+		! ( body.variables as unknown[] ).every(
+			( item ) => typeof item === 'string'
+		) ||
+		typeof body.template !== 'string' ||
+		typeof body.default_template !== 'string' ||
+		! Array.isArray( body.platforms )
+	) {
 		return null;
 	}
 
+	const platforms = ( body.platforms as unknown[] ).map( parsePlatform );
+
+	if ( platforms.some( ( platform ) => platform === null ) ) {
+		return null;
+	}
+
+	return {
+		mode: body.mode,
+		itemFormat: body.item_format,
+		separator: body.separator,
+		variables: body.variables as string[],
+		template: body.template,
+		defaultTemplate: body.default_template,
+		platforms: platforms as ChatbotPlatformState[],
+	};
+}
+
+function isHttpsOn( value: string, host: string ): boolean {
 	try {
-		const url = new URL( body.url );
+		const url = new URL( value );
 
-		// Only Twitch's authorization page.
-		return url.protocol === 'https:' && url.host === 'id.twitch.tv'
-			? url.href
-			: null;
+		return url.protocol === 'https:' && url.host === host;
 	} catch {
-		return null;
+		return false;
 	}
+}
+
+function parseUrl( platform: ChatPlatform ) {
+	return ( body: unknown ): string | null =>
+		isRecord( body ) &&
+		typeof body.url === 'string' &&
+		// Only the platform's own authorization page.
+		isHttpsOn( body.url, AUTHORIZE_HOSTS[ platform ] )
+			? new URL( body.url ).href
+			: null;
 }
 
 function parseTest( body: unknown ): ChatbotTest | null {
@@ -169,42 +230,64 @@ export function getChatbot(
 }
 
 /**
- * Saves whether purchases are announced and the template.
+ * Saves the shared template and messages on or off per platform.
  *
  * @param changes          Changes.
- * @param changes.enabled  Messages on or off.
  * @param changes.template Template; '' for the default.
+ * @param changes.enabled  Messages on or off by platform.
  */
 export function updateChatbot( changes: {
-	readonly enabled: boolean;
 	readonly template: string;
+	readonly enabled: Readonly< Partial< Record< ChatPlatform, boolean > > >;
 } ): Promise< ApiResult< ChatbotState > > {
 	return request(
-		{ path: PATH, method: 'PATCH', data: { ...changes } },
+		{
+			path: PATH,
+			method: 'PATCH',
+			data: { template: changes.template, enabled: changes.enabled },
+		},
 		parseChatbot
 	);
 }
 
 /**
- * Twitch's page where the creator adds the bot to the own channel.
+ * The platform's page where the creator adds the bot to the own channel.
+ *
+ * @param platform Platform.
  */
-export function connectChatbot(): Promise< ApiResult< string > > {
-	return request( { path: `${ PATH }/connect`, method: 'POST' }, parseUrl );
-}
-
-/**
- * Removes the bot from the creator's channel.
- */
-export function disconnectChatbot(): Promise< ApiResult< ChatbotState > > {
+export function connectChatbot(
+	platform: ChatPlatform
+): Promise< ApiResult< string > > {
 	return request(
-		{ path: `${ PATH }/channel`, method: 'DELETE' },
+		{ path: `${ PATH }/${ platform }/connect`, method: 'POST' },
+		parseUrl( platform )
+	);
+}
+
+/**
+ * Removes the bot from the creator's channel on a platform.
+ *
+ * @param platform Platform.
+ */
+export function disconnectChatbot(
+	platform: ChatPlatform
+): Promise< ApiResult< ChatbotState > > {
+	return request(
+		{ path: `${ PATH }/${ platform }/channel`, method: 'DELETE' },
 		parseChatbot
 	);
 }
 
 /**
- * Sends a test message to the creator's channel.
+ * Sends a test message to the creator's channel on a platform.
+ *
+ * @param platform Platform.
  */
-export function testChatbot(): Promise< ApiResult< ChatbotTest > > {
-	return request( { path: `${ PATH }/test`, method: 'POST' }, parseTest );
+export function testChatbot(
+	platform: ChatPlatform
+): Promise< ApiResult< ChatbotTest > > {
+	return request(
+		{ path: `${ PATH }/${ platform }/test`, method: 'POST' },
+		parseTest
+	);
 }

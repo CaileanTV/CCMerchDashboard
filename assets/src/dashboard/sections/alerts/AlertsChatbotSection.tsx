@@ -5,10 +5,15 @@ import {
 	connectChatbot,
 	disconnectChatbot,
 	getChatbot,
+	PLATFORMS,
 	testChatbot,
 	updateChatbot,
 } from '../../api/chatbot';
-import type { ChatbotState } from '../../api/chatbot';
+import type {
+	ChatbotPlatformState,
+	ChatbotState,
+	ChatPlatform,
+} from '../../api/chatbot';
 import type { ApiError } from '../../api/client';
 import { Alert } from '../../components/Alert';
 import { ApiErrorState } from '../../components/ApiErrorState';
@@ -19,7 +24,7 @@ import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 
-/** Longest template in characters (Twitch's longest message). */
+/** Longest template in characters (the platforms' longest message). */
 export const CHAT_TEMPLATE_MAX = 500;
 
 /** Sample values of the preview (a test purchase). */
@@ -75,12 +80,16 @@ export function previewMessage(
 }
 
 /**
- * The message of Twitch's answer after adding the bot (the `twitch` query
- * argument of the redirect), or null.
+ * The message of the platform's answer after adding the bot (the
+ * `chatbot` query argument of the redirect), or null.
  *
- * @param code Result code.
+ * @param code  Result code.
+ * @param label The platform's name.
  */
-export function connectMessage( code: string ): {
+export function connectMessage(
+	code: string,
+	label: string
+): {
 	readonly tone: 'success' | 'danger' | 'info';
 	readonly text: string;
 } | null {
@@ -90,17 +99,25 @@ export function connectMessage( code: string ): {
 		case 'connected':
 			return {
 				tone: 'success',
-				text: __(
-					'The bot was added to your channel. It writes in your chat when someone buys your merch.',
-					'merchboard'
+				text: sprintf(
+					/* translators: 1: platform (Twitch or Kick). */
+					__(
+						'The bot was added to your %1$s channel. It writes in your chat when someone buys your merch.',
+						'merchboard'
+					),
+					label
 				),
 			};
 		case 'denied':
 			return {
 				tone: 'info',
-				text: __(
-					'You cancelled at Twitch. Nothing was changed.',
-					'merchboard'
+				text: sprintf(
+					/* translators: 1: platform (Twitch or Kick). */
+					__(
+						'You cancelled at %1$s. Nothing was changed.',
+						'merchboard'
+					),
+					label
 				),
 			};
 		case 'bot_is_broadcaster':
@@ -123,20 +140,28 @@ export function connectMessage( code: string ): {
 }
 
 /**
- * The result code Twitch's redirect brought, removed from the address bar.
+ * The result the platform's redirect brought, removed from the address bar.
  */
-function takeConnectResult(): string {
+function takeConnectResult(): {
+	readonly code: string;
+	readonly platform: ChatPlatform;
+} {
 	const url = new URL( window.location.href );
-	const code = url.searchParams.get( 'twitch' ) ?? '';
+	const code = url.searchParams.get( 'chatbot' ) ?? '';
+	const platform = url.searchParams.get( 'platform' ) ?? '';
 
 	if ( code === '' ) {
-		return '';
+		return { code: '', platform: 'twitch' };
 	}
 
-	url.searchParams.delete( 'twitch' );
+	url.searchParams.delete( 'chatbot' );
+	url.searchParams.delete( 'platform' );
 	window.history.replaceState( window.history.state, '', url.href );
 
-	return /^[a-z_]{1,40}$/.test( code ) ? code : 'error';
+	return {
+		code: /^[a-z_]{1,40}$/.test( code ) ? code : 'error',
+		platform: platform === 'kick' ? 'kick' : 'twitch',
+	};
 }
 
 /**
@@ -157,46 +182,192 @@ export function statusLabel( status: string ): string {
 	}
 }
 
-function testMessage( result: string ): string {
+function testMessage( result: string, label: string ): string {
 	switch ( result ) {
 		case 'sent':
 			return __( 'The test message was sent.', 'merchboard' );
 		case 'rate_limited':
-			return __(
-				'Twitch asked the bot to wait. Try again in a moment.',
-				'merchboard'
+			return sprintf(
+				/* translators: 1: platform (Twitch or Kick). */
+				__(
+					'%1$s asked the bot to wait. Try again in a moment.',
+					'merchboard'
+				),
+				label
 			);
 		case 'forbidden':
-			return __(
-				'Twitch refused the message. Add the bot to your channel again.',
-				'merchboard'
+		case 'unauthorized':
+			return sprintf(
+				/* translators: 1: platform (Twitch or Kick). */
+				__(
+					'%1$s refused the message. Add the bot to your channel again.',
+					'merchboard'
+				),
+				label
 			);
 		default:
-			return __(
-				'Twitch did not show the message (e.g. because of your chat settings).',
-				'merchboard'
+			return sprintf(
+				/* translators: 1: platform (Twitch or Kick). */
+				__(
+					'%1$s did not show the message (e.g. because of your chat settings).',
+					'merchboard'
+				),
+				label
 			);
 	}
+}
+
+type Busy = 'save' | `${ 'connect' | 'disconnect' | 'test' }:${ ChatPlatform }`;
+
+interface PlatformCardProps {
+	readonly platform: ChatbotPlatformState;
+	readonly busy: Busy | null;
+	readonly onConnect: () => void;
+	readonly onDisconnect: () => void;
+	readonly onTest: () => void;
+}
+
+function PlatformCard( {
+	platform,
+	busy,
+	onConnect,
+	onDisconnect,
+	onTest,
+}: PlatformCardProps ) {
+	const { label, channel, botLogin, lastMessage } = platform;
+
+	return (
+		<Card
+			title={ sprintf(
+				/* translators: 1: platform (Twitch or Kick). */
+				__( 'Your %1$s channel', 'merchboard' ),
+				label
+			) }
+		>
+			{ channel === null ? (
+				<>
+					<p>
+						{ sprintf(
+							/* translators: 1: platform (Twitch or Kick). */
+							__(
+								"Add the bot to your channel, and it writes in your %1$s chat when someone buys your merch. You go to %1$s and allow the bot to chat in your channel; log in with your channel's account.",
+								'merchboard'
+							),
+							label
+						) }
+					</p>
+					<Button
+						onClick={ onConnect }
+						isBusy={ busy === `connect:${ platform.platform }` }
+						disabled={ busy !== null }
+					>
+						{ __( 'Add the bot to your channel', 'merchboard' ) }
+					</Button>
+				</>
+			) : (
+				<>
+					<p>
+						{ botLogin === ''
+							? sprintf(
+									/* translators: 1: channel login. */
+									__(
+										'The bot writes in the chat of %1$s.',
+										'merchboard'
+									),
+									channel.login
+								)
+							: sprintf(
+									/* translators: 1: bot login, 2: channel login. */
+									__(
+										'The bot %1$s writes in the chat of %2$s.',
+										'merchboard'
+									),
+									botLogin,
+									channel.login
+								) }
+					</p>
+					{ platform.platform === 'twitch' && botLogin !== '' && (
+						<p className="merchboard-field__help">
+							{ sprintf(
+								/* translators: 1: bot login. */
+								__(
+									'Tip: give the bot moderator or VIP in your channel (/mod %1$s or /vip %1$s), so it may send more messages when many buy at once.',
+									'merchboard'
+								),
+								botLogin
+							) }
+						</p>
+					) }
+					{ lastMessage !== null && (
+						<p className="merchboard-field__help">
+							{ sprintf(
+								/* translators: 1: status, 2: the platform's reason or nothing. */
+								__( 'Latest message: %1$s%2$s', 'merchboard' ),
+								statusLabel( lastMessage.status ),
+								lastMessage.reason === '' ||
+									lastMessage.status === 'sent'
+									? ''
+									: ` (${ lastMessage.reason })`
+							) }
+						</p>
+					) }
+					<div className="merchboard-alerts__actions">
+						<Button
+							variant="secondary"
+							onClick={ onTest }
+							isBusy={ busy === `test:${ platform.platform }` }
+							disabled={ busy !== null }
+						>
+							{ __( 'Send test message', 'merchboard' ) }
+						</Button>
+						<Button
+							variant="ghost"
+							onClick={ onDisconnect }
+							isBusy={
+								busy === `disconnect:${ platform.platform }`
+							}
+							disabled={ busy !== null }
+						>
+							{ __( 'Remove the bot', 'merchboard' ) }
+						</Button>
+					</div>
+				</>
+			) }
+		</Card>
+	);
 }
 
 function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 	const id = useId();
 	const [ state, setState ] = useState( initial );
-	const [ enabled, setEnabled ] = useState( initial.enabled );
+	const [ enabled, setEnabled ] = useState<
+		Partial< Record< ChatPlatform, boolean > >
+	>( () =>
+		Object.fromEntries(
+			initial.platforms.map( ( platform ) => [
+				platform.platform,
+				platform.enabled,
+			] )
+		)
+	);
 	const [ template, setTemplate ] = useState( initial.template );
-	const [ busy, setBusy ] = useState<
-		'save' | 'connect' | 'disconnect' | 'test' | null
-	>( null );
+	const [ busy, setBusy ] = useState< Busy | null >( null );
 	const [ error, setError ] = useState< ApiError | null >( null );
 	const [ result ] = useState( takeConnectResult );
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
-	const connected = connectMessage( result );
+	const available = state.platforms.filter(
+		( platform ) => platform.available
+	);
+	const labelOf = ( platform: ChatPlatform ) =>
+		state.platforms.find( ( item ) => item.platform === platform )?.label ??
+		platform;
+	const connected = connectMessage( result.code, labelOf( result.platform ) );
 
 	const save = async () => {
 		setBusy( 'save' );
 		setError( null );
-		const answer = await updateChatbot( { enabled, template } );
+		const answer = await updateChatbot( { template, enabled } );
 		setBusy( null );
 
 		if ( answer.ok ) {
@@ -208,10 +379,10 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 		}
 	};
 
-	const connect = async () => {
-		setBusy( 'connect' );
+	const connect = async ( platform: ChatPlatform ) => {
+		setBusy( `connect:${ platform }` );
 		setError( null );
-		const answer = await connectChatbot();
+		const answer = await connectChatbot( platform );
 
 		if ( answer.ok ) {
 			window.location.assign( answer.data );
@@ -222,7 +393,7 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 		setError( answer.error );
 	};
 
-	const disconnect = async () => {
+	const disconnect = async ( platform: ChatPlatform ) => {
 		if (
 			// eslint-disable-next-line no-alert -- Removing the bot needs an explicit confirmation.
 			! window.confirm(
@@ -235,9 +406,9 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 			return;
 		}
 
-		setBusy( 'disconnect' );
+		setBusy( `disconnect:${ platform }` );
 		setError( null );
-		const answer = await disconnectChatbot();
+		const answer = await disconnectChatbot( platform );
 		setBusy( null );
 
 		if ( answer.ok ) {
@@ -250,14 +421,14 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 		}
 	};
 
-	const test = async () => {
-		setBusy( 'test' );
+	const test = async ( platform: ChatPlatform ) => {
+		setBusy( `test:${ platform }` );
 		setError( null );
-		const answer = await testChatbot();
+		const answer = await testChatbot( platform );
 		setBusy( null );
 
 		if ( answer.ok ) {
-			setToast( testMessage( answer.data.result ) );
+			setToast( testMessage( answer.data.result, labelOf( platform ) ) );
 		} else {
 			setError( answer.error );
 		}
@@ -274,7 +445,7 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 			{ connected !== null && (
 				<Alert tone={ connected.tone }>{ connected.text }</Alert>
 			) }
-			{ ! state.available && (
+			{ available.length === 0 && (
 				<Alert tone="info">
 					{ __(
 						'The chatbot is not set up yet. When an administrator has connected it, you can add it to your channel here.',
@@ -283,88 +454,49 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 				</Alert>
 			) }
 			{ error !== null && <ApiErrorState error={ error } /> }
-			<Card title={ __( 'Your Twitch channel', 'merchboard' ) }>
-				{ state.channel === null ? (
-					<>
-						<p>
-							{ __(
-								"Add the bot to your channel, and it writes in your Twitch chat when someone buys your merch. You go to Twitch and allow the bot to chat in your channel; log in with your channel's account.",
-								'merchboard'
-							) }
-						</p>
-						<Button
-							onClick={ connect }
-							isBusy={ busy === 'connect' }
-							disabled={ ! state.available || busy !== null }
-						>
-							{ __(
-								'Add the bot to your channel',
-								'merchboard'
-							) }
-						</Button>
-					</>
-				) : (
-					<>
-						<p>
-							{ sprintf(
-								/* translators: 1: bot login, 2: channel login. */
-								__(
-									'The bot %1$s writes in the chat of %2$s.',
-									'merchboard'
-								),
-								state.botLogin,
-								state.channel.login
-							) }
-						</p>
-						<p className="merchboard-field__help">
-							{ sprintf(
-								/* translators: 1: bot login. */
-								__(
-									'Tip: give the bot moderator or VIP in your channel (/mod %1$s or /vip %1$s), so it may send more messages when many buy at once.',
-									'merchboard'
-								),
-								state.botLogin
-							) }
-						</p>
-						<div className="merchboard-alerts__actions">
-							<Button
-								variant="secondary"
-								onClick={ test }
-								isBusy={ busy === 'test' }
-								disabled={ busy !== null }
-							>
-								{ __( 'Send test message', 'merchboard' ) }
-							</Button>
-							<Button
-								variant="ghost"
-								onClick={ disconnect }
-								isBusy={ busy === 'disconnect' }
-								disabled={ busy !== null }
-							>
-								{ __( 'Remove the bot', 'merchboard' ) }
-							</Button>
-						</div>
-					</>
-				) }
-			</Card>
+			{ available.map( ( platform ) => (
+				<PlatformCard
+					key={ platform.platform }
+					platform={ platform }
+					busy={ busy }
+					onConnect={ () => connect( platform.platform ) }
+					onDisconnect={ () => disconnect( platform.platform ) }
+					onTest={ () => test( platform.platform ) }
+				/>
+			) ) }
 			<Card title={ __( 'Chat message', 'merchboard' ) }>
-				<label
-					className="merchboard-alerts__check"
-					htmlFor={ `${ id }-enabled` }
-				>
-					<input
-						id={ `${ id }-enabled` }
-						type="checkbox"
-						checked={ enabled }
-						onChange={ ( event ) =>
-							setEnabled( event.target.checked )
-						}
-					/>{ ' ' }
-					{ __(
-						'Write in the chat when someone buys',
-						'merchboard'
-					) }
-				</label>
+				{ PLATFORMS.filter( ( platform ) =>
+					available.some( ( item ) => item.platform === platform )
+				).map( ( platform ) => (
+					<p key={ platform }>
+						<label
+							className="merchboard-alerts__check"
+							htmlFor={ `${ id }-${ platform }` }
+						>
+							<input
+								id={ `${ id }-${ platform }` }
+								type="checkbox"
+								checked={ enabled[ platform ] ?? true }
+								onChange={ ( event ) => {
+									const on = event.target.checked;
+
+									setEnabled( ( current ) => ( {
+										...current,
+										[ platform ]: on,
+									} ) );
+								} }
+							/>{ ' ' }
+							{ sprintf(
+								/* translators: 1: platform (Twitch or Kick). */
+								__(
+									'Write in the %1$s chat when someone buys',
+									'merchboard'
+								),
+								labelOf( platform )
+							) }
+						</label>
+					</p>
+				) ) }
 				<Field
 					label={ __( 'Message', 'merchboard' ) }
 					help={ sprintf(
@@ -402,19 +534,6 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 				<Button onClick={ save } isBusy={ busy === 'save' }>
 					{ __( 'Save chatbot settings', 'merchboard' ) }
 				</Button>
-				{ state.lastMessage !== null && (
-					<p className="merchboard-field__help">
-						{ sprintf(
-							/* translators: 1: status, 2: Twitch's reason or nothing. */
-							__( 'Latest message: %1$s%2$s', 'merchboard' ),
-							statusLabel( state.lastMessage.status ),
-							state.lastMessage.reason === '' ||
-								state.lastMessage.status === 'sent'
-								? ''
-								: ` (${ state.lastMessage.reason })`
-						) }
-					</p>
-				) }
 			</Card>
 			<Toast message={ toast } onDismiss={ dismissToast } />
 		</div>
@@ -422,9 +541,10 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 }
 
 /**
- * "Alerts → Chatbot" (phase 25, step 8; ADR-066): the creator adds the bot
- * to the own Twitch channel (Twitch's page, `channel:bot`), switches chat
- * messages on or off, edits the message and sends a test message.
+ * "Alerts → Chatbot" (phase 25, steps 8 and 8.2; ADR-066, ADR-069): the
+ * creator adds the bot to the own Twitch and Kick channel (the platform's
+ * page), switches chat messages on or off per platform, edits the shared
+ * message and sends a test message.
  */
 export function AlertsChatbotSection() {
 	const { state, retry } = useApi( getChatbot );

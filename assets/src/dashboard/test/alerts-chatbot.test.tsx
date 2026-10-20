@@ -28,28 +28,61 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 
 const PATH = '/merchboard/v1/me/alerts/chatbot';
 
-const STATE = {
+const TWITCH = {
+	platform: 'twitch',
+	label: 'Twitch',
 	available: true,
 	bot_login: 'merch_bot',
-	mode: 'line',
-	item_format: '$Quantity× $Product',
-	separator: ', ',
-	variables: [ '$UserName', '$Name', '$Product', '$Quantity' ],
 	enabled: true,
-	template: '',
-	default_template: '🔔 $Name just bought $Product!',
 	channel: null,
 	last_message: null,
 };
 
+const KICK = {
+	platform: 'kick',
+	label: 'Kick',
+	available: true,
+	bot_login: '',
+	enabled: true,
+	channel: null,
+	last_message: null,
+};
+
+const STATE = {
+	mode: 'line',
+	item_format: '$Quantity× $Product',
+	separator: ', ',
+	variables: [ '$UserName', '$Name', '$Product', '$Quantity' ],
+	template: '',
+	default_template: '🔔 $Name just bought $Product!',
+	platforms: [ TWITCH, KICK ],
+};
+
 const CONNECTED = {
 	...STATE,
-	channel: { login: 'nova', connected_at: '2026-10-20T10:00:00Z' },
-	last_message: {
-		status: 'sent',
-		reason: '',
-		at: '2026-10-20T10:05:00Z',
-	},
+	platforms: [
+		{
+			...TWITCH,
+			channel: {
+				login: 'nova',
+				url: 'https://www.twitch.tv/nova',
+				connected_at: '2026-10-20T10:00:00Z',
+			},
+			last_message: {
+				status: 'sent',
+				reason: '',
+				at: '2026-10-20T10:05:00Z',
+			},
+		},
+		{
+			...KICK,
+			channel: {
+				login: 'nova-kick',
+				url: 'https://kick.com/nova-kick',
+				connected_at: '2026-10-20T10:00:00Z',
+			},
+		},
+	],
 };
 
 let rendered: Rendered | null = null;
@@ -72,50 +105,76 @@ async function show( routes: Readonly< Record< string, Route > > ) {
 	return requests;
 }
 
-const button = ( label: string ) =>
-	Array.from( rendered?.container.querySelectorAll( 'button' ) ?? [] ).find(
+const buttons = ( label: string ) =>
+	Array.from( rendered?.container.querySelectorAll( 'button' ) ?? [] ).filter(
 		( element ) => element.textContent === label
-	) ?? null;
+	);
+
+const text = () => rendered?.container.textContent ?? '';
 
 describe( 'parseChatbot', () => {
-	it( 'reads the state and refuses anything malformed', () => {
-		expect( parseChatbot( STATE )?.botLogin ).toBe( 'merch_bot' );
-		expect( parseChatbot( CONNECTED )?.channel?.login ).toBe( 'nova' );
+	it( 'reads the state of every platform and refuses anything malformed', () => {
+		const state = parseChatbot( CONNECTED );
+
+		expect( state?.platforms.map( ( p ) => p.channel?.login ) ).toEqual( [
+			'nova',
+			'nova-kick',
+		] );
 
 		for ( const bad of [
 			{ ...STATE, mode: 'both' },
-			{ ...STATE, bot_login: 'not a login' },
 			{ ...STATE, variables: [ 1 ] },
-			{ ...STATE, channel: { login: 'nova', connected_at: 'now' } },
+			{ ...STATE, platforms: [ { ...TWITCH, platform: 'youtube' } ] },
 			{
 				...STATE,
-				channel: { login: '<b>', connected_at: '2026-10-20T10:00:00Z' },
+				platforms: [ { ...TWITCH, bot_login: 'not a login' } ],
 			},
-			{ ...STATE, last_message: { status: 'sent', reason: '', at: 3 } },
-			{ ...STATE, enabled: 'yes' },
+			{
+				...STATE,
+				platforms: [
+					{
+						...KICK,
+						channel: {
+							login: 'nova',
+							url: 'https://evil.example/nova',
+							connected_at: '2026-10-20T10:00:00Z',
+						},
+					},
+				],
+			},
+			{
+				...STATE,
+				platforms: [
+					{
+						...TWITCH,
+						last_message: { status: 'sent', reason: '', at: 3 },
+					},
+				],
+			},
+			{ ...STATE, platforms: 'twitch' },
 		] ) {
 			expect( parseChatbot( bad ) ).toBeNull();
 		}
 	} );
 
-	it( "only accepts Twitch's own authorization page", async () => {
+	it( "only accepts the platform's own authorization page", async () => {
 		mockApi( {
-			[ `POST ${ PATH }/connect` ]: () =>
+			[ `POST ${ PATH }/kick/connect` ]: () =>
 				response( 200, {
-					url: 'https://evil.example/oauth2/authorize',
+					url: 'https://id.twitch.tv/oauth2/authorize',
 				} ),
 		} );
-		expect( ( await connectChatbot() ).ok ).toBe( false );
+		expect( ( await connectChatbot( 'kick' ) ).ok ).toBe( false );
 
 		mockApi( {
-			[ `POST ${ PATH }/connect` ]: () =>
+			[ `POST ${ PATH }/kick/connect` ]: () =>
 				response( 200, {
-					url: 'https://id.twitch.tv/oauth2/authorize?client_id=x',
+					url: 'https://id.kick.com/oauth/authorize?client_id=x',
 				} ),
 		} );
-		const answer = await connectChatbot();
+		const answer = await connectChatbot( 'kick' );
 		expect( answer.ok && answer.data ).toBe(
-			'https://id.twitch.tv/oauth2/authorize?client_id=x'
+			'https://id.kick.com/oauth/authorize?client_id=x'
 		);
 	} );
 } );
@@ -137,17 +196,16 @@ describe( 'previewMessage', () => {
 		).toBe( 'TestFan bought 1× Hoodie + 2× Mug (3 items)' );
 	} );
 
-	it( 'maps the result codes of the redirect', () => {
-		expect( connectMessage( '' ) ).toBeNull();
-		expect( connectMessage( 'connected' )?.tone ).toBe( 'success' );
-		expect( connectMessage( 'denied' )?.tone ).toBe( 'info' );
-		expect( connectMessage( 'bot_is_broadcaster' )?.text ).toContain(
-			"bot's own account"
+	it( 'maps the result codes of the redirect and the statuses', () => {
+		expect( connectMessage( '', 'Kick' ) ).toBeNull();
+		expect( connectMessage( 'connected', 'Kick' )?.text ).toContain(
+			'your Kick channel'
 		);
-		expect( connectMessage( 'whatever' )?.tone ).toBe( 'danger' );
-	} );
-
-	it( 'names the status of the latest message', () => {
+		expect( connectMessage( 'denied', 'Twitch' )?.tone ).toBe( 'info' );
+		expect(
+			connectMessage( 'bot_is_broadcaster', 'Twitch' )?.text
+		).toContain( "bot's own account" );
+		expect( connectMessage( 'whatever', 'Kick' )?.tone ).toBe( 'danger' );
 		expect( statusLabel( 'sent' ) ).toBe( 'sent' );
 		expect( statusLabel( 'waiting' ) ).toBe( 'waiting to be sent' );
 		expect( statusLabel( 'failed' ) ).toBe( 'not sent' );
@@ -158,55 +216,65 @@ describe( 'AlertsChatbotSection', () => {
 	it( 'explains that the chatbot is not set up yet', async () => {
 		await show( {
 			[ `GET ${ PATH }` ]: () =>
-				response( 200, { ...STATE, available: false, bot_login: '' } ),
+				response( 200, {
+					...STATE,
+					platforms: [
+						{ ...TWITCH, available: false, bot_login: '' },
+						{ ...KICK, available: false },
+					],
+				} ),
 		} );
 
-		expect( rendered?.container.textContent ).toContain(
-			'The chatbot is not set up yet.'
-		);
-		expect( button( 'Add the bot to your channel' )?.disabled ).toBe(
-			true
-		);
+		expect( text() ).toContain( 'The chatbot is not set up yet.' );
+		expect( buttons( 'Add the bot to your channel' ) ).toHaveLength( 0 );
 	} );
 
-	it( 'shows the result of Twitch and removes it from the address', async () => {
+	it( 'shows only the platforms the administrator set up', async () => {
+		await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, {
+					...STATE,
+					platforms: [ TWITCH, { ...KICK, available: false } ],
+				} ),
+		} );
+
+		expect( text() ).toContain( 'Your Twitch channel' );
+		expect( text() ).not.toContain( 'Your Kick channel' );
+		expect( text() ).not.toContain( 'Write in the Kick chat' );
+	} );
+
+	it( 'shows the result of the platform and removes it from the address', async () => {
 		setUrl(
-			`${ ORIGIN }/creator-dashboard/alerts/chatbot?twitch=connected`
+			`${ ORIGIN }/creator-dashboard/alerts/chatbot?chatbot=connected&platform=kick`
 		);
 		await show( { [ `GET ${ PATH }` ]: () => response( 200, CONNECTED ) } );
 
-		expect( rendered?.container.textContent ).toContain(
-			'The bot was added to your channel.'
-		);
+		expect( text() ).toContain( 'The bot was added to your Kick channel.' );
 		expect( window.location.search ).toBe( '' );
-		expect( rendered?.container.textContent ).toContain(
+		expect( text() ).toContain(
 			'The bot merch_bot writes in the chat of nova.'
 		);
-		expect( rendered?.container.textContent ).toContain(
-			'/mod merch_bot or /vip merch_bot'
+		expect( text() ).toContain(
+			'The bot writes in the chat of nova-kick.'
 		);
-		expect( rendered?.container.textContent ).toContain(
-			'Latest message: sent'
-		);
+		expect( text() ).toContain( '/mod merch_bot or /vip merch_bot' );
+		expect( text() ).toContain( 'Latest message: sent' );
 	} );
 
-	it( 'saves the message and previews it', async () => {
+	it( 'saves the shared message and the platforms on or off', async () => {
 		const requests = await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, CONNECTED ),
-			[ `PATCH ${ PATH }` ]: ( request ) =>
-				response( 200, {
-					...CONNECTED,
-					...( request.data as object ),
-				} ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, CONNECTED ),
 		} );
 		const textarea =
 			rendered?.container.querySelector< HTMLTextAreaElement >(
 				'textarea'
 			);
-
-		expect( rendered?.container.textContent ).toContain(
-			'🔔 TestFan just bought Hoodie!'
-		);
+		const kick = Array.from(
+			rendered?.container.querySelectorAll< HTMLInputElement >(
+				'input[type="checkbox"]'
+			) ?? []
+		)[ 1 ];
 
 		act( () => {
 			const setter = Object.getOwnPropertyDescriptor(
@@ -216,73 +284,72 @@ describe( 'AlertsChatbotSection', () => {
 			setter?.call( textarea, 'Thanks $Name for the $Product!' );
 			textarea?.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 		} );
-		expect( rendered?.container.textContent ).toContain(
-			'Thanks TestFan for the Hoodie!'
-		);
+		expect( text() ).toContain( 'Thanks TestFan for the Hoodie!' );
 
-		click( button( 'Save chatbot settings' ) );
+		click( kick ?? null );
+		click( buttons( 'Save chatbot settings' )[ 0 ] ?? null );
 		await flush();
 		expect( requests.find( ( r ) => r.method === 'PATCH' )?.data ).toEqual(
-			{ enabled: true, template: 'Thanks $Name for the $Product!' }
+			{
+				template: 'Thanks $Name for the $Product!',
+				enabled: { twitch: true, kick: false },
+			}
 		);
-		expect( rendered?.container.textContent ).toContain(
-			'Chatbot settings saved.'
-		);
+		expect( text() ).toContain( 'Chatbot settings saved.' );
 	} );
 
-	it( 'sends a test message and removes the bot only after confirmation', async () => {
+	it( 'tests and removes the bot per platform, removing only after confirmation', async () => {
 		const requests = await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, CONNECTED ),
-			[ `POST ${ PATH }/test` ]: () =>
+			[ `POST ${ PATH }/kick/test` ]: () =>
 				response( 200, {
 					result: 'rate_limited',
 					reason: '',
 					message: 'x',
 				} ),
-			[ `DELETE ${ PATH }/channel` ]: () => response( 200, STATE ),
+			[ `DELETE ${ PATH }/kick/channel` ]: () =>
+				response( 200, {
+					...CONNECTED,
+					platforms: [ CONNECTED.platforms[ 0 ], KICK ],
+				} ),
 		} );
 		const confirm = jest
 			.spyOn( window, 'confirm' )
 			.mockReturnValueOnce( false )
 			.mockReturnValueOnce( true );
 
-		click( button( 'Send test message' ) );
+		click( buttons( 'Send test message' )[ 1 ] ?? null );
 		await flush();
-		expect( rendered?.container.textContent ).toContain(
-			'Twitch asked the bot to wait.'
-		);
+		expect( text() ).toContain( 'Kick asked the bot to wait.' );
 
-		click( button( 'Remove the bot' ) );
+		click( buttons( 'Remove the bot' )[ 1 ] ?? null );
 		await flush();
 		expect( requests.some( ( r ) => r.method === 'DELETE' ) ).toBe( false );
 
-		click( button( 'Remove the bot' ) );
+		click( buttons( 'Remove the bot' )[ 1 ] ?? null );
 		await flush();
-		expect( requests.some( ( r ) => r.method === 'DELETE' ) ).toBe( true );
-		expect( button( 'Add the bot to your channel' ) ).not.toBeNull();
+		expect(
+			requests
+				.filter( ( r ) => r.method === 'DELETE' )
+				.map( ( r ) => r.path )
+		).toEqual( [ `${ PATH }/kick/channel` ] );
+		expect( buttons( 'Add the bot to your channel' ) ).toHaveLength( 1 );
 		confirm.mockRestore();
 	} );
 
 	it( 'shows a fixed error text when the bot cannot be added', async () => {
 		await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, STATE ),
-			[ `POST ${ PATH }/connect` ]: () =>
+			[ `POST ${ PATH }/twitch/connect` ]: () =>
 				response( 409, {
 					code: 'merchboard_chatbot_unavailable',
 					message: 'The chatbot is not set up yet.',
 				} ),
 		} );
 
-		expect( rendered?.container.textContent ).not.toContain(
-			'The bot could not be added.'
-		);
-		click( button( 'Add the bot to your channel' ) );
+		expect( text() ).not.toContain( 'The bot could not be added.' );
+		click( buttons( 'Add the bot to your channel' )[ 0 ] ?? null );
 		await flush();
-		expect( rendered?.container.textContent ).toContain(
-			'Something went wrong.'
-		);
-		expect( rendered?.container.textContent ).not.toContain(
-			'The chatbot is not set up yet.'
-		);
+		expect( text() ).toContain( 'Something went wrong.' );
 	} );
 } );

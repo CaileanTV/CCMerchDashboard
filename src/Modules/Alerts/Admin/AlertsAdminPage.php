@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Alerts\Admin;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
@@ -192,7 +193,8 @@ final class AlertsAdminPage {
 
 		if ( 'chatbot' === $tab && null !== $this->chatbot ) {
 			try {
-				$this->chatbot->render( isset( $_GET['chat'] ) ? absint( $_GET['chat'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only: which channel's chat is shown.
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Display only: which channel's chat is shown; the platform is matched against the known ones.
+				$this->chatbot->render( isset( $_GET['chat'] ) ? absint( $_GET['chat'] ) : 0, ChatPlatform::parse( isset( $_GET['platform'] ) ? sanitize_key( wp_unslash( $_GET['platform'] ) ) : '' ) ?? ChatPlatform::Twitch );
 			} catch ( DatabaseException ) {
 				echo '<div class="notice notice-error"><p>' . esc_html__( 'A technical error occurred. Nothing was changed.', 'merchboard' ) . '</p></div>';
 			}

@@ -21,17 +21,26 @@ use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\ChatLogRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatMessageRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatMessages;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatforms;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
 use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
+use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
+use MerchBoard\Modules\Alerts\Chatbot\KickApi;
+use MerchBoard\Modules\Alerts\Chatbot\KickOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\KickPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\KickTokens;
+use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
-use MerchBoard\Modules\Alerts\Chatbot\TwitchCipher;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchPlatform;
 use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\History\AlertHistory;
@@ -49,7 +58,9 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
+use MerchBoard\Modules\Alerts\Rest\ChatbotChatController;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
+use MerchBoard\Modules\Alerts\Rest\KickController;
 use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
 use MerchBoard\Modules\Alerts\Rest\TwitchController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
@@ -198,12 +209,16 @@ final class AlertsModule implements Module {
 			MeAlertsController::class,
 			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ) )
 		);
-		// The Twitch chatbot (phase 25, step 8; ADR-066, status note 2026-10-20).
+		// The chatbot on Twitch and Kick (phase 25, steps 8 and 8.2; ADR-066, ADR-069).
 		$container->set( TwitchApi::class, static fn(): TwitchApi => new TwitchApi() );
-		$container->set( TwitchCipher::class, static fn(): TwitchCipher => new TwitchCipher() );
 		$container->set(
 			TwitchAccount::class,
-			static fn( Container $c ): TwitchAccount => new TwitchAccount( $c->get( TwitchApi::class ), $c->get( TwitchCipher::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+			static fn( Container $c ): TwitchAccount => new TwitchAccount( $c->get( TwitchApi::class ), new ChatCipher( ChatPlatform::Twitch ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set( KickApi::class, static fn(): KickApi => new KickApi() );
+		$container->set(
+			KickAccount::class,
+			static fn( Container $c ): KickAccount => new KickAccount( $c->get( KickApi::class ), new ChatCipher( ChatPlatform::Kick ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
 		);
 		$container->set( ChatbotFormat::class, static fn( Container $c ): ChatbotFormat => new ChatbotFormat( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ChatbotChannelRepository::class, static fn( Container $c ): ChatbotChannelRepository => new ChatbotChannelRepository( $c->get( wpdb::class ) ) );
@@ -211,14 +226,24 @@ final class AlertsModule implements Module {
 		$container->set( ChatLogRepository::class, static fn( Container $c ): ChatLogRepository => new ChatLogRepository( $c->get( wpdb::class ) ) );
 		$container->set( ChatMessages::class, static fn( Container $c ): ChatMessages => new ChatMessages( $c->get( AlertTemplate::class ) ) );
 		$container->set(
+			KickTokens::class,
+			static fn( Container $c ): KickTokens => new KickTokens( $c->get( KickAccount::class ), $c->get( KickApi::class ), new ChatCipher( ChatPlatform::Kick ), $c->get( ChatbotChannelRepository::class ) )
+		);
+		$container->set(
+			ChatPlatforms::class,
+			static fn( Container $c ): ChatPlatforms => new ChatPlatforms(
+				new TwitchPlatform( $c->get( TwitchAccount::class ), $c->get( TwitchApi::class ) ),
+				new KickPlatform( $c->get( KickAccount::class ), $c->get( KickApi::class ), $c->get( KickTokens::class ), $c->get( ChatbotChannelRepository::class ) )
+			)
+		);
+		$container->set(
 			ChatSubscriptions::class,
-			static fn( Container $c ): ChatSubscriptions => new ChatSubscriptions( $c->get( TwitchAccount::class ), $c->get( TwitchApi::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ) )
+			static fn( Container $c ): ChatSubscriptions => new ChatSubscriptions( $c->get( ChatPlatforms::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ) )
 		);
 		$container->set(
 			ChatSender::class,
 			static fn( Container $c ): ChatSender => new ChatSender(
-				$c->get( TwitchAccount::class ),
-				$c->get( TwitchApi::class ),
+				$c->get( ChatPlatforms::class ),
 				$c->get( ChatbotChannelRepository::class ),
 				$c->get( ChatMessageRepository::class ),
 				$c->get( ChatbotFormat::class ),
@@ -229,6 +254,7 @@ final class AlertsModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		$dashboard_url = static fn( string $path ): string => $container->get( DashboardRoute::class )->url( $path );
 		$container->set(
 			TwitchOAuth::class,
 			static fn( Container $c ): TwitchOAuth => new TwitchOAuth(
@@ -238,13 +264,26 @@ final class AlertsModule implements Module {
 				$c->get( ChatSubscriptions::class ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
-				static fn( string $path ): string => $c->get( DashboardRoute::class )->url( $path )
+				$dashboard_url
+			)
+		);
+		$container->set(
+			KickOAuth::class,
+			static fn( Container $c ): KickOAuth => new KickOAuth(
+				$c->get( KickAccount::class ),
+				$c->get( KickApi::class ),
+				$c->get( KickTokens::class ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatSubscriptions::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$dashboard_url
 			)
 		);
 		$container->set(
 			CreatorChatbot::class,
 			static fn( Container $c ): CreatorChatbot => new CreatorChatbot(
-				$c->get( TwitchAccount::class ),
+				$c->get( ChatPlatforms::class ),
 				$c->get( ChatbotChannelRepository::class ),
 				$c->get( ChatMessageRepository::class ),
 				$c->get( ChatbotFormat::class ),
@@ -260,21 +299,30 @@ final class AlertsModule implements Module {
 			static fn( Container $c ): TwitchController => new TwitchController( $c->get( TwitchOAuth::class ), $c->get( TwitchAccount::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ), $c->get( Logger::class ) )
 		);
 		$container->set(
+			KickController::class,
+			static fn( Container $c ): KickController => new KickController( $c->get( KickOAuth::class ), new KickWebhookVerifier( $c->get( KickApi::class ) ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			ChatbotChatController::class,
+			static fn( Container $c ): ChatbotChatController => new ChatbotChatController( $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
 			MeChatbotController::class,
-			static fn( Container $c ): MeChatbotController => new MeChatbotController( $c->get( CreatorContext::class ), $c->get( CreatorChatbot::class ), $c->get( TwitchOAuth::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): MeChatbotController => new MeChatbotController( $c->get( CreatorContext::class ), $c->get( CreatorChatbot::class ), $c->get( TwitchOAuth::class ), $c->get( KickOAuth::class ), $c->get( Logger::class ) )
 		);
 		$container->set(
 			ChatbotAdminTab::class,
 			static function ( Container $c ): ChatbotAdminTab {
 				$root = dirname( __DIR__, 3 ) . '/';
 
-				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ) );
+				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( KickAccount::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ) );
 			}
 		);
 		$container->set(
 			ChatbotAdminActions::class,
 			static fn( Container $c ): ChatbotAdminActions => new ChatbotAdminActions(
 				$c->get( TwitchAccount::class ),
+				$c->get( KickAccount::class ),
 				$c->get( TwitchOAuth::class ),
 				$c->get( ChatbotFormat::class ),
 				$c->get( ChatSubscriptions::class ),
@@ -339,6 +387,8 @@ final class AlertsModule implements Module {
 				$container->get( MeAlertsHistoryController::class )->register_routes();
 				$container->get( MeChatbotController::class )->register_routes();
 				$container->get( TwitchController::class )->register_routes();
+				$container->get( KickController::class )->register_routes();
+				$container->get( ChatbotChatController::class )->register_routes();
 			}
 		);
 
@@ -359,11 +409,11 @@ final class AlertsModule implements Module {
 
 		add_action(
 			ChatSender::HOOK,
-			static function ( mixed $creator_id, mixed $order_id ) use ( $container ): void {
-				$container->get( ChatSender::class )->run( $creator_id, $order_id );
+			static function ( mixed $creator_id, mixed $order_id, mixed $platform = 'twitch' ) use ( $container ): void {
+				$container->get( ChatSender::class )->run( $creator_id, $order_id, $platform );
 			},
 			10,
-			2
+			3
 		);
 
 		add_action(

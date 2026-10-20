@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
  *   (EventSub), for the admin's chat window; kept for 24 hours, at most 200
  *   per channel.
  *
- * Idempotent: dbDelta().
+ * Idempotent: a table that exists is left as it is.
  */
 final class CreateAlertChatbotTables implements Migration {
 
@@ -50,12 +50,27 @@ final class CreateAlertChatbotTables implements Migration {
 		foreach ( array( Tables::ALERT_CHATBOT, Tables::ALERT_CHAT_MESSAGES, Tables::ALERT_CHAT_LOG ) as $name ) {
 			$table = Tables::name( $wpdb, $name );
 
-			dbDelta( self::schema( $name, $table, $charset ) );
+			// An existing table is left alone: migration 21 replaced its unique
+			// indexes, which dbDelta() would otherwise add back on a re-run.
+			if ( ! self::exists( $wpdb, $table ) ) {
+				dbDelta( self::schema( $name, $table, $charset ) );
+			}
 
-			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) !== $table ) {
+			if ( ! self::exists( $wpdb, $table ) ) {
 				throw new DatabaseException( 'Could not create the alert chatbot tables.' );
 			}
 		}
+	}
+
+	/**
+	 * Whether a table exists.
+	 *
+	 * @param wpdb   $wpdb  WordPress database object.
+	 * @param string $table Full table name.
+	 * @phpstan-impure Reads the database.
+	 */
+	private static function exists( wpdb $wpdb, string $table ): bool {
+		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
 	}
 
 	/**

@@ -12,8 +12,10 @@ namespace MerchBoard\Modules\Alerts\Rest;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Alerts\Chatbot\ChatbotException;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
-use MerchBoard\Modules\Alerts\Chatbot\TwitchException;
+use MerchBoard\Modules\Alerts\Chatbot\KickOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use WP_Error;
 use WP_REST_Request;
@@ -23,31 +25,38 @@ use WP_REST_Server;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `/me/alerts/chatbot` (phase 25, step 8). The creator is always the one
- * CreatorContext resolves (ADR-007).
+ * `/me/alerts/chatbot` (phase 25, steps 8 and 8.2). The creator is always
+ * the one CreatorContext resolves (ADR-007).
  *
- * - `GET`: the chatbot as the dashboard shows it (CreatorChatbot::describe).
- * - `PATCH` with JSON `{ enabled, template }`: messages on or off and the
- *   template (plain text, at most 500 characters).
- * - `POST …/connect`: `{ "url": … }`, Twitch's page where the creator adds
- *   the bot to the own channel (`channel:bot`); 409 before the administrator
- *   has set the bot up.
- * - `DELETE …/channel`: removes the bot from the channel.
- * - `POST …/test`: sends a test message; `{ result, reason, message }`.
+ * - `GET`: the chatbot on every platform (CreatorChatbot::describe).
+ * - `PATCH` with JSON `{ template?, enabled?: { twitch?, kick? } }`: the
+ *   shared template (plain text, at most 500 characters) and messages on or
+ *   off per platform.
+ * - `POST …/{platform}/connect`: `{ "url": … }`, the platform's page where
+ *   the creator adds the bot to the own channel; 409 before the
+ *   administrator has set the platform up.
+ * - `DELETE …/{platform}/channel`: removes the bot from the channel.
+ * - `POST …/{platform}/test`: sends a test message; `{ result, reason, message }`.
  */
 final class MeChatbotController extends RestController {
 
 	private const ROUTE = '/me/alerts/chatbot';
 
 	/**
+	 * Route pattern of a platform.
+	 */
+	private const PLATFORM = '/(?P<platform>twitch|kick)';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CreatorContext $context Creator access.
 	 * @param CreatorChatbot $chatbot The creator's chatbot.
-	 * @param TwitchOAuth    $oauth   Authorizations.
+	 * @param TwitchOAuth    $twitch  Twitch authorizations.
+	 * @param KickOAuth      $kick    Kick authorizations.
 	 * @param Logger         $logger  Technical log.
 	 */
-	public function __construct( private CreatorContext $context, private CreatorChatbot $chatbot, private TwitchOAuth $oauth, Logger $logger ) {
+	public function __construct( private CreatorContext $context, private CreatorChatbot $chatbot, private TwitchOAuth $twitch, private KickOAuth $kick, Logger $logger ) {
 		parent::__construct( $logger );
 	}
 
@@ -58,7 +67,7 @@ final class MeChatbotController extends RestController {
 		$route = function ( string $path, string $method, string $callback ): void {
 			register_rest_route(
 				self::NAMESPACE,
-				self::ROUTE . $path,
+				self::ROUTE . self::PLATFORM . $path,
 				array(
 					array(
 						'methods'             => $method,
@@ -94,7 +103,7 @@ final class MeChatbotController extends RestController {
 	}
 
 	/**
-	 * Permission: an active creator (CreatorContext).
+	 * Only creators with dashboard access.
 	 */
 	public function permission(): bool|WP_Error {
 		$creator = $this->require_creator( $this->context );
@@ -113,22 +122,30 @@ final class MeChatbotController extends RestController {
 	 * `PATCH /me/alerts/chatbot`.
 	 *
 	 * @param WP_REST_Request $request Request.
-	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
 	 */
 	public function update_chatbot( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		return $this->with_creator(
 			self::ROUTE,
 			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
 				$body     = (array) $request->get_json_params();
-				$current  = $this->chatbot->describe( $creator_id );
-				$enabled  = $body['enabled'] ?? $current['enabled'];
-				$template = $body['template'] ?? $current['template'];
+				$template = $body['template'] ?? null;
+				$enabled  = $body['enabled'] ?? array();
 
-				if ( ! is_bool( $enabled ) || ! is_string( $template ) ) {
-					return self::error( 'merchboard_invalid_request', __( 'The chatbot settings are invalid.', 'merchboard' ), 400 );
+				if ( ( null !== $template && ! is_string( $template ) ) || ! is_array( $enabled ) ) {
+					return self::invalid();
 				}
 
-				$this->chatbot->save( $creator_id, $enabled, $template );
+				$switches = array();
+
+				foreach ( $enabled as $platform => $on ) {
+					if ( null === ChatPlatform::parse( $platform ) || ! is_bool( $on ) ) {
+						return self::invalid();
+					}
+
+					$switches[ (string) $platform ] = $on;
+				}
+
+				$this->chatbot->save( $creator_id, $template, $switches );
 
 				return $this->answer( $creator_id );
 			}
@@ -136,15 +153,21 @@ final class MeChatbotController extends RestController {
 	}
 
 	/**
-	 * `POST /me/alerts/chatbot/connect`.
+	 * `POST /me/alerts/chatbot/{platform}/connect`.
+	 *
+	 * @param WP_REST_Request $request Request.
 	 */
-	public function connect(): WP_REST_Response|WP_Error {
+	public function connect( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$platform = self::platform( $request );
+
 		return $this->with_creator(
 			self::ROUTE . '/connect',
-			function ( int $creator_id ): WP_REST_Response|WP_Error {
+			function ( int $creator_id ) use ( $platform ): WP_REST_Response|WP_Error {
 				try {
-					return new WP_REST_Response( array( 'url' => $this->oauth->start_channel( $creator_id ) ), 200 );
-				} catch ( TwitchException $e ) {
+					$url = ChatPlatform::Kick === $platform ? $this->kick->start_channel( $creator_id ) : $this->twitch->start_channel( $creator_id );
+
+					return new WP_REST_Response( array( 'url' => $url ), 200 );
+				} catch ( ChatbotException $e ) {
 					return self::error( 'merchboard_chatbot_unavailable', __( 'The chatbot is not set up yet.', 'merchboard' ), 409, array( 'reason' => $e->reason() ) );
 				}
 			}
@@ -152,13 +175,17 @@ final class MeChatbotController extends RestController {
 	}
 
 	/**
-	 * `DELETE /me/alerts/chatbot/channel`.
+	 * `DELETE /me/alerts/chatbot/{platform}/channel`.
+	 *
+	 * @param WP_REST_Request $request Request.
 	 */
-	public function disconnect(): WP_REST_Response|WP_Error {
+	public function disconnect( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$platform = self::platform( $request );
+
 		return $this->with_creator(
 			self::ROUTE . '/channel',
-			function ( int $creator_id ): WP_REST_Response {
-				$this->chatbot->disconnect( $creator_id );
+			function ( int $creator_id ) use ( $platform ): WP_REST_Response {
+				$this->chatbot->disconnect( $creator_id, $platform );
 
 				return $this->answer( $creator_id );
 			}
@@ -166,15 +193,19 @@ final class MeChatbotController extends RestController {
 	}
 
 	/**
-	 * `POST /me/alerts/chatbot/test`.
+	 * `POST /me/alerts/chatbot/{platform}/test`.
+	 *
+	 * @param WP_REST_Request $request Request.
 	 */
-	public function test(): WP_REST_Response|WP_Error {
+	public function test( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$platform = self::platform( $request );
+
 		return $this->with_creator(
 			self::ROUTE . '/test',
-			function ( int $creator_id ): WP_REST_Response|WP_Error {
+			function ( int $creator_id ) use ( $platform ): WP_REST_Response|WP_Error {
 				try {
-					return new WP_REST_Response( $this->chatbot->test( $creator_id ), 200 );
-				} catch ( TwitchException $e ) {
+					return new WP_REST_Response( $this->chatbot->test( $creator_id, $platform ), 200 );
+				} catch ( ChatbotException $e ) {
 					return self::error( 'merchboard_chatbot_unavailable', __( 'The test message could not be sent.', 'merchboard' ), 409, array( 'reason' => $e->reason() ) );
 				}
 			}
@@ -182,7 +213,7 @@ final class MeChatbotController extends RestController {
 	}
 
 	/**
-	 * The answer of the chatbot routes.
+	 * The chatbot as the dashboard shows it.
 	 *
 	 * @param int $creator_id Creator.
 	 */
@@ -191,6 +222,22 @@ final class MeChatbotController extends RestController {
 		$response->header( 'Cache-Control', 'no-store' );
 
 		return $response;
+	}
+
+	/**
+	 * The route's platform (the pattern allows only known ones).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 */
+	private static function platform( WP_REST_Request $request ): ChatPlatform {
+		return ChatPlatform::parse( $request->get_param( 'platform' ) ) ?? ChatPlatform::Twitch;
+	}
+
+	/**
+	 * 400 for invalid settings.
+	 */
+	private static function invalid(): WP_Error {
+		return self::error( 'merchboard_invalid_request', __( 'The chatbot settings are invalid.', 'merchboard' ), 400 );
 	}
 
 	/**

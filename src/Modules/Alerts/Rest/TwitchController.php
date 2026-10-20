@@ -12,13 +12,12 @@ namespace MerchBoard\Modules\Alerts\Rest;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
-use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatLogRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchException;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
-use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -40,9 +39,8 @@ defined( 'ABSPATH' ) || exit;
  *   plain text, notes a revoked subscription, and stores chat messages of
  *   the bot's channels for the admin's chat window.
  *
- * `GET /alerts/twitch/chat/{creator}?after={id}` serves that chat window
- * (cookie and `X-WP-Nonce`, only `merchboard_manage_alerts`): the channel's
- * messages after a cursor, as plain text fields.
+ * The admin's chat window reads the stored messages through
+ * ChatbotChatController.
  */
 final class TwitchController extends RestController {
 
@@ -95,47 +93,7 @@ final class TwitchController extends RestController {
 				),
 			)
 		);
-		register_rest_route(
-			self::NAMESPACE,
-			'/alerts/twitch/chat/(?P<creator>[1-9][0-9]{0,18})',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'chat' ),
-					'permission_callback' => static fn(): bool => current_user_can( Capabilities::MANAGE_ALERTS ),
-					'args'                => array(
-						'after' => array(
-							'type'    => 'integer',
-							'minimum' => 0,
-							'default' => 0,
-						),
-					),
-				),
-			)
-		);
 		add_filter( 'rest_pre_serve_request', array( $this, 'serve_plain' ), 10, 3 );
-	}
-
-	/**
-	 * `GET /alerts/twitch/chat/{creator}`: `{ messages: [...] }`.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
-	 */
-	public function chat( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		return $this->run(
-			'/alerts/twitch/chat',
-			function () use ( $request ): WP_REST_Response {
-				$creator  = $request->get_param( 'creator' );
-				$after    = $request->get_param( 'after' );
-				$channel  = $this->channels->find( is_string( $creator ) ? (int) $creator : 0 );
-				$messages = $channel->connected() ? $this->chat->after( $channel->broadcaster_id, is_int( $after ) ? $after : 0 ) : array();
-				$response = new WP_REST_Response( array( 'messages' => $messages ), 200 );
-				$response->header( 'Cache-Control', 'no-store' );
-
-				return $response;
-			}
-		);
 	}
 
 	/**
@@ -238,11 +196,11 @@ final class TwitchController extends RestController {
 		$subscription = is_array( $payload['subscription'] ?? null ) ? $payload['subscription'] : array();
 		$condition    = is_array( $subscription['condition'] ?? null ) ? $subscription['condition'] : array();
 		$broadcaster  = is_string( $condition['broadcaster_user_id'] ?? null ) ? $condition['broadcaster_user_id'] : '';
-		$channel      = $this->channels->find_by_broadcaster( $broadcaster );
+		$channel      = $this->channels->find_by_broadcaster( ChatPlatform::Twitch, $broadcaster );
 
 		if ( 'webhook_callback_verification' === $type ) {
 			if ( null !== $channel ) {
-				$this->channels->set_subscription( $channel->creator_id, is_string( $subscription['id'] ?? null ) ? $subscription['id'] : $channel->subscription_id, 'enabled' );
+				$this->channels->set_subscription( $channel->creator_id, ChatPlatform::Twitch, is_string( $subscription['id'] ?? null ) ? $subscription['id'] : $channel->subscription_id, 'enabled' );
 			}
 
 			$challenge = is_string( $payload['challenge'] ?? null ) ? $payload['challenge'] : '';
@@ -251,7 +209,7 @@ final class TwitchController extends RestController {
 		}
 
 		if ( 'revocation' === $type && null !== $channel ) {
-			$this->channels->set_subscription( $channel->creator_id, '', is_string( $subscription['status'] ?? null ) ? sanitize_key( $subscription['status'] ) : 'revoked' );
+			$this->channels->set_subscription( $channel->creator_id, ChatPlatform::Twitch, '', is_string( $subscription['status'] ?? null ) ? sanitize_key( $subscription['status'] ) : 'revoked' );
 		}
 
 		$event = is_array( $payload['event'] ?? null ) ? $payload['event'] : array();
@@ -259,6 +217,7 @@ final class TwitchController extends RestController {
 		if ( 'notification' === $type && null !== $channel && 'channel.chat.message' === ( $subscription['type'] ?? null ) ) {
 			$message = is_array( $event['message'] ?? null ) ? $event['message'] : array();
 			$this->chat->add(
+				ChatPlatform::Twitch,
 				$broadcaster,
 				is_string( $event['message_id'] ?? null ) ? $event['message_id'] : '',
 				is_string( $event['chatter_user_login'] ?? null ) ? $event['chatter_user_login'] : '',

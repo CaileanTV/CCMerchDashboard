@@ -128,7 +128,7 @@ final class TwitchOAuth {
 
 		return $bot
 			? AlertsAdminPage::url( 'chatbot', 'bot_' . $result )
-			: add_query_arg( 'twitch', $result, ( $this->dashboard_url )( 'alerts/chatbot' ) );
+			: self::dashboard_result( ( $this->dashboard_url )( 'alerts/chatbot' ), ChatPlatform::Twitch, $result );
 	}
 
 	/**
@@ -148,7 +148,7 @@ final class TwitchOAuth {
 
 		if ( $bot ) {
 			$this->account->connect_bot( $user['id'], $user['login'] );
-			$this->subscriptions->subscribe_all();
+			$this->subscriptions->subscribe_all( ChatPlatform::Twitch );
 
 			return 'connected';
 		}
@@ -169,12 +169,19 @@ final class TwitchOAuth {
 	private function connect_channel( int $creator_id, array $user ): void {
 		$this->require_other_account( $user['id'] );
 
-		$previous = $this->channels->find( $creator_id );
+		$previous = $this->channels->find( $creator_id, ChatPlatform::Twitch );
 
 		$this->transaction->run(
 			function () use ( $creator_id, $user ): void {
-				$this->audit->record( AuditAction::AlertChatbotChannelConnected, $creator_id, array( 'login' => $user['login'] ) );
-				$this->channels->connect( $creator_id, $user['id'], $user['login'] );
+				$this->audit->record(
+					AuditAction::AlertChatbotChannelConnected,
+					$creator_id,
+					array(
+						'login'    => $user['login'],
+						'platform' => ChatPlatform::Twitch->value,
+					)
+				);
+				$this->channels->connect( $creator_id, ChatPlatform::Twitch, $user['id'], $user['login'] );
 			}
 		);
 
@@ -183,7 +190,7 @@ final class TwitchOAuth {
 			$this->subscriptions->unsubscribe( $previous );
 		}
 
-		$this->subscriptions->subscribe( $this->channels->find( $creator_id ) );
+		$this->subscriptions->subscribe( $this->channels->find( $creator_id, ChatPlatform::Twitch ) );
 	}
 
 	/**
@@ -227,5 +234,23 @@ final class TwitchOAuth {
 		);
 
 		return TwitchApi::authorize_url( $this->account->client_id(), TwitchAccount::redirect_uri(), $scopes, $state, $force_verify );
+	}
+
+	/**
+	 * The dashboard's chatbot page with the outcome of an authorization
+	 * (`?chatbot=<result>&platform=<platform>`), which the page shows once.
+	 *
+	 * @param string       $url      The page's URL.
+	 * @param ChatPlatform $platform Platform.
+	 * @param string       $result   Result code.
+	 */
+	public static function dashboard_result( string $url, ChatPlatform $platform, string $result ): string {
+		return add_query_arg(
+			array(
+				'chatbot'  => $result,
+				'platform' => $platform->value,
+			),
+			$url
+		);
 	}
 }

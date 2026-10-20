@@ -33,10 +33,22 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
 use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
-use MerchBoard\Modules\Alerts\Chatbot\TwitchCipher;
+use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatforms;
+use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
+use MerchBoard\Modules\Alerts\Chatbot\KickApi;
+use MerchBoard\Modules\Alerts\Chatbot\KickException;
+use MerchBoard\Modules\Alerts\Chatbot\KickOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\KickPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\KickTokens;
+use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchException;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
+use MerchBoard\Modules\Alerts\Rest\ChatbotChatController;
+use MerchBoard\Modules\Alerts\Rest\KickController;
 use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
 use MerchBoard\Modules\Alerts\Rest\TwitchController;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -45,6 +57,7 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use PHPUnit\Framework\Attributes\CoversClass;
+use OpenSSLAsymmetricKey;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -57,7 +70,16 @@ use WP_REST_Response;
  */
 #[CoversClass( TwitchApi::class )]
 #[CoversClass( TwitchAccount::class )]
-#[CoversClass( TwitchCipher::class )]
+#[CoversClass( ChatCipher::class )]
+#[CoversClass( TwitchPlatform::class )]
+#[CoversClass( KickApi::class )]
+#[CoversClass( KickAccount::class )]
+#[CoversClass( KickTokens::class )]
+#[CoversClass( KickPlatform::class )]
+#[CoversClass( KickOAuth::class )]
+#[CoversClass( KickWebhookVerifier::class )]
+#[CoversClass( KickController::class )]
+#[CoversClass( ChatbotChatController::class )]
 #[CoversClass( TwitchOAuth::class )]
 #[CoversClass( ChatSender::class )]
 #[CoversClass( ChatSubscriptions::class )]
@@ -77,6 +99,14 @@ final class ChatbotTest extends IntegrationTestCase {
 	private const SECRET    = 'zyxwvutsrq9876543210';
 	private const APP_TOKEN = 'apptoken0001';
 	private const BOT_ID    = '900';
+
+	private const KICK_CLIENT   = '01JABCDEFGHJKMNPQRSTVWXYZ0';
+	private const KICK_SECRET   = 'kicksecret0123456789abcdef';
+	private const KICK_TOKEN    = 'POST https://id.kick.com/oauth/token';
+	private const KICK_CHANNELS = 'GET https://api.kick.com/public/v1/channels';
+	private const KICK_CHAT     = 'POST https://api.kick.com/public/v1/chat';
+	private const KICK_KEY      = 'GET https://api.kick.com/public/v1/public-key';
+	private const KICK_REVOKE   = 'POST https://id.kick.com/oauth/revoke';
 
 	private const TOKEN_URL         = 'POST https://id.twitch.tv/oauth2/token';
 	private const USERS_URL         = 'GET https://api.twitch.tv/helix/users';
@@ -129,6 +159,16 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	private TwitchController $twitch;
 
+	private KickApi $kick_api;
+
+	private KickAccount $kick;
+
+	private KickTokens $kick_tokens;
+
+	private KickOAuth $kick_oauth;
+
+	private ChatPlatforms $platforms;
+
 	/**
 	 * Registers the routes on `rest_api_init` (null when not registered).
 	 *
@@ -146,17 +186,22 @@ final class ChatbotTest extends IntegrationTestCase {
 		$logger      = $this->service( Logger::class );
 
 		$this->api           = new TwitchApi( $this->transport() );
-		$this->account       = new TwitchAccount( $this->api, new TwitchCipher(), $audit, $transaction );
+		$this->account       = new TwitchAccount( $this->api, new ChatCipher( ChatPlatform::Twitch ), $audit, $transaction );
 		$this->channels      = new ChatbotChannelRepository( $this->wpdb );
 		$this->log           = new ChatMessageRepository( $this->wpdb );
 		$this->chat          = new ChatLogRepository( $this->wpdb );
 		$this->format        = new ChatbotFormat( $audit, $transaction );
 		$this->events        = new AlertEventRepository( $this->wpdb );
 		$this->queue         = new FakeJobQueue();
-		$this->subscriptions = new ChatSubscriptions( $this->account, $this->api, $this->channels, $this->chat );
-		$this->sender        = new ChatSender( $this->account, $this->api, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
+		$this->kick_api      = new KickApi( $this->transport() );
+		$this->kick          = new KickAccount( $this->kick_api, new ChatCipher( ChatPlatform::Kick ), $audit, $transaction );
+		$this->kick_tokens   = new KickTokens( $this->kick, $this->kick_api, new ChatCipher( ChatPlatform::Kick ), $this->channels );
+		$this->platforms     = new ChatPlatforms( new TwitchPlatform( $this->account, $this->api ), new KickPlatform( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels ) );
+		$this->subscriptions = new ChatSubscriptions( $this->platforms, $this->channels, $this->chat );
+		$this->sender        = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
 		$this->oauth         = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
 		$this->twitch        = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
+		$this->kick_oauth    = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
 	}
 
 	protected function tearDown(): void {
@@ -167,6 +212,9 @@ final class ChatbotTest extends IntegrationTestCase {
 		remove_all_filters( 'rest_pre_serve_request' );
 		remove_all_filters( 'rest_url' );
 		delete_option( TwitchAccount::OPTION );
+		delete_option( KickAccount::OPTION );
+		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
+		delete_transient( 'merchboard_kick_public_key_refetch' );
 		delete_option( ChatbotFormat::OPTION );
 		delete_option( Settings::OPTION );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_twitch_state_%' );
@@ -281,8 +329,17 @@ final class ChatbotTest extends IntegrationTestCase {
 		);
 		$location = $this->oauth->finish( $query['state'] ?? '', 'code-2', '' );
 
-		self::assertSame( add_query_arg( 'twitch', 'connected', home_url( '/creator-dashboard/alerts/chatbot/' ) ), $location );
-		$channel = $this->channels->find( $nova );
+		self::assertSame(
+			add_query_arg(
+				array(
+					'chatbot'  => 'connected',
+					'platform' => 'twitch',
+				),
+				home_url( '/creator-dashboard/alerts/chatbot/' )
+			),
+			$location
+		);
+		$channel = $this->channels->find( $nova, ChatPlatform::Twitch );
 		self::assertSame( array( '500', 'nova', ChatSubscriptions::NO_WEBHOOKS ), array( $channel->broadcaster_id, $channel->broadcaster_login, $channel->subscription_status ), 'The test site is not reachable over HTTPS.' );
 		self::assertContains( 'alert_chatbot_channel_connected', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) );
 		self::assertStringNotContainsString( 'usertoken-nova', (string) wp_json_encode( $this->rows( Tables::ALERT_CHATBOT ) ) );
@@ -290,7 +347,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		// Refused at Twitch.
 		wp_set_current_user( $this->user_of( $nova ) );
 		$denied = $this->query( $this->oauth->start_channel( $nova ) );
-		self::assertStringEndsWith( 'twitch=denied', $this->oauth->finish( $denied['state'] ?? '', '', 'access_denied' ) );
+		self::assertStringContainsString( 'chatbot=denied&platform=twitch', $this->oauth->finish( $denied['state'] ?? '', '', 'access_denied' ) );
 	}
 
 	public function test_the_bot_cannot_be_added_to_its_own_channel(): void {
@@ -312,8 +369,8 @@ final class ChatbotTest extends IntegrationTestCase {
 			)
 		);
 
-		self::assertStringEndsWith( 'twitch=bot_is_broadcaster', $this->oauth->finish( $query['state'] ?? '', 'code-3', '' ) );
-		self::assertFalse( $this->channels->find( $orion )->connected() );
+		self::assertStringContainsString( 'chatbot=bot_is_broadcaster&platform=twitch', $this->oauth->finish( $query['state'] ?? '', 'code-3', '' ) );
+		self::assertFalse( $this->channels->find( $orion, ChatPlatform::Twitch )->connected() );
 	}
 
 	public function test_the_chat_subscription_uses_the_app_token_and_reuses_an_existing_one(): void {
@@ -321,7 +378,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		// A public HTTPS site (the test site is a local .test host).
 		add_filter( 'rest_url', static fn( string $url ): string => (string) preg_replace( '#^https?://[^/]+#', 'https://shop.example.com', $url ) );
 		$nova = $this->creator( 'nova' );
-		$this->channels->connect( $nova, '500', 'nova' );
+		$this->channels->connect( $nova, ChatPlatform::Twitch, '500', 'nova' );
 
 		$this->answer(
 			self::SUBSCRIBE_URL,
@@ -335,7 +392,7 @@ final class ChatbotTest extends IntegrationTestCase {
 				),
 			)
 		);
-		self::assertSame( 'webhook_callback_verification_pending', $this->subscriptions->subscribe( $this->channels->find( $nova ) ) );
+		self::assertSame( 'webhook_callback_verification_pending', $this->subscriptions->subscribe( $this->channels->find( $nova, ChatPlatform::Twitch ) ) );
 
 		$request = end( $this->requests );
 		self::assertIsArray( $request );
@@ -352,7 +409,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( TwitchAccount::webhook_url(), $request['body']['transport']['callback'] ?? null );
 		self::assertStringStartsWith( 'https://', TwitchAccount::webhook_url() );
 		self::assertSame( $this->account->webhook_secret(), $request['body']['transport']['secret'] ?? null );
-		self::assertSame( 'sub-1', $this->channels->find( $nova )->subscription_id );
+		self::assertSame( 'sub-1', $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_id );
 
 		// Already subscribed (409): the existing subscription is looked up.
 		$this->answer( self::SUBSCRIBE_URL, 409, array( 'message' => 'subscription already exists' ) );
@@ -375,11 +432,11 @@ final class ChatbotTest extends IntegrationTestCase {
 			)
 		);
 		self::assertSame( 1, $this->subscriptions->subscribe_all() );
-		self::assertSame( array( 'sub-1', 'enabled' ), array( $this->channels->find( $nova )->subscription_id, $this->channels->find( $nova )->subscription_status ) );
+		self::assertSame( array( 'sub-1', 'enabled' ), array( $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_id, $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_status ) );
 
 		// Without `channel:bot` Twitch refuses it.
 		$this->answer( self::SUBSCRIBE_URL, 403, array( 'message' => 'forbidden' ) );
-		self::assertSame( TwitchException::FORBIDDEN, $this->subscriptions->subscribe( $this->channels->find( $nova ) ) );
+		self::assertSame( TwitchException::FORBIDDEN, $this->subscriptions->subscribe( $this->channels->find( $nova, ChatPlatform::Twitch ) ) );
 	}
 
 	public function test_one_message_per_order_line_with_the_app_token_never_twice(): void {
@@ -439,7 +496,7 @@ final class ChatbotTest extends IntegrationTestCase {
 	public function test_one_message_per_order_in_the_administrators_format(): void {
 		$nova = $this->connected_creator( 'nova' );
 		self::assertTrue( $this->format->save( 'order', '$Quantity× $Product', ' + ' ) );
-		$this->channels->save_settings( $nova, true, 'Thanks $Name for $Products ($ItemCount)$Amount' );
+		$this->channels->save_template( $nova, 'Thanks $Name for $Products ($ItemCount)$Amount' );
 		$this->alert( $nova, 200, 1, 'Hoodie' );
 		$this->alert( $nova, 200, 2, '$UserName Mug' );
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
@@ -469,7 +526,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->sender->order_paid( 300 );
 		$this->run_jobs( 1 );
 
-		self::assertSame( 'waiting', $this->log->latest( $nova )['status'] ?? null );
+		self::assertSame( 'waiting', $this->log->latest( $nova, ChatPlatform::Twitch )['status'] ?? null );
 		self::assertEqualsWithDelta( $reset - time() + 1, $this->queue->pending[0]['delay'] ?? 0, 1, 'Retried after Twitch\'s reset.' );
 		self::assertGreaterThan( 0, $this->account->wait_seconds() );
 
@@ -482,7 +539,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->answer( self::MESSAGES_URL, 503, array() );
 		$this->run_jobs();
 		self::assertCount( ChatSender::MAX_ATTEMPTS, $this->sent() );
-		self::assertSame( array( 'failed', 'failed' ), array( $this->log->latest( $nova )['status'] ?? null, $this->log->latest( $nova )['reason'] ?? null ) );
+		self::assertSame( array( 'failed', 'failed' ), array( $this->log->latest( $nova, ChatPlatform::Twitch )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::Twitch )['reason'] ?? null ) );
 		self::assertSame( array(), $this->queue->pending );
 	}
 
@@ -507,7 +564,7 @@ final class ChatbotTest extends IntegrationTestCase {
 
 		$this->sender->order_paid( 400 );
 		$this->run_jobs();
-		self::assertSame( array( 'failed', 'msg_duplicate' ), array( $this->log->latest( $nova )['status'] ?? null, $this->log->latest( $nova )['reason'] ?? null ) );
+		self::assertSame( array( 'failed', 'msg_duplicate' ), array( $this->log->latest( $nova, ChatPlatform::Twitch )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::Twitch )['reason'] ?? null ) );
 		self::assertCount( 1, $this->sent() );
 
 		$this->answer( self::MESSAGES_URL, 401, array( 'message' => 'invalid token' ) );
@@ -521,7 +578,7 @@ final class ChatbotTest extends IntegrationTestCase {
 			)
 		);
 
-		self::assertSame( 'sent', $this->sender->send_now( '500', 'Hi' )['result'] );
+		self::assertSame( 'sent', $this->sender->send_now( $this->channels->find( $nova, ChatPlatform::Twitch ), 'Hi' )['result'] );
 		$requests = $this->requests_to( self::MESSAGES_URL );
 		self::assertSame( 'Bearer apptoken0002', end( $requests )['headers']['Authorization'] ?? null );
 		self::assertSame( 'apptoken0002', $this->account->app_token() );
@@ -532,13 +589,13 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->alert( $nova, 500, 1, 'Hoodie' );
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
 
-		$this->channels->save_settings( $nova, false, '' );
+		$this->channels->save_enabled( $nova, ChatPlatform::Twitch, false );
 		$this->sender->order_paid( 500 );
 		$this->run_jobs();
 		self::assertSame( array(), $this->sent() );
 		self::assertFalse( $this->sender->resend( $nova, 500 ) );
 
-		$this->channels->save_settings( $nova, true, '' );
+		$this->channels->save_enabled( $nova, ChatPlatform::Twitch, true );
 		$this->enable_alerts( false );
 		$this->sender->order_paid( 500 );
 		self::assertSame( array(), $this->queue->pending, 'The kill switch stops the queue too.' );
@@ -552,7 +609,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$response = $this->event( 'webhook_callback_verification', array( 'challenge' => 'pogchamp-kappa-360noscope-vohiyo' ) );
 		self::assertSame( 200, $response->get_status() );
 		self::assertSame( 'pogchamp-kappa-360noscope-vohiyo', $response->get_data() );
-		self::assertSame( 'enabled', $this->channels->find( $nova )->subscription_status );
+		self::assertSame( 'enabled', $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_status );
 
 		ob_start();
 		$served = $this->twitch->serve_plain( false, $response, new WP_REST_Request( 'POST', '/merchboard/v1/alerts/twitch/eventsub' ) );
@@ -584,12 +641,12 @@ final class ChatbotTest extends IntegrationTestCase {
 		);
 
 		$this->as_admin();
-		$chat = $this->call( 'GET', '/merchboard/v1/alerts/twitch/chat/' . $nova );
+		$chat = $this->call( 'GET', '/merchboard/v1/alerts/chat/twitch/' . $nova );
 		self::assertSame( 200, $chat->get_status() );
 		$messages = $chat->get_data()['messages'];
 		self::assertSame( array( '<b>hype</b>', 'second' ), array_column( $messages, 'text' ), 'Stored as text; the window inserts it as text.' );
 		self::assertSame( array( '#ff4500', '' ), array_column( $messages, 'color' ) );
-		self::assertSame( array( 'second' ), array_column( $this->call( 'GET', '/merchboard/v1/alerts/twitch/chat/' . $nova, array( 'after' => $messages[0]['id'] ) )->get_data()['messages'], 'text' ) );
+		self::assertSame( array( 'second' ), array_column( $this->call( 'GET', '/merchboard/v1/alerts/chat/twitch/' . $nova, array( 'after' => $messages[0]['id'] ) )->get_data()['messages'], 'text' ) );
 
 		// Forged, stale or unsigned events are refused.
 		self::assertSame( 403, $this->event( 'notification', array( 'event' => $message ), 'x', gmdate( 'Y-m-d\TH:i:s\Z', time() - 700 ) )->get_status() );
@@ -598,25 +655,25 @@ final class ChatbotTest extends IntegrationTestCase {
 
 		// Revocation (the creator removed the bot at Twitch).
 		self::assertSame( 204, $this->event( 'revocation', array(), 'r', null, null, 'authorization_revoked' )->get_status() );
-		self::assertSame( 'authorization_revoked', $this->channels->find( $nova )->subscription_status );
+		self::assertSame( 'authorization_revoked', $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_status );
 
 		// Only alert administrators read the chat.
 		wp_set_current_user( $this->create_user( 'subscriber_only' ) );
-		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/alerts/twitch/chat/' . $nova )->get_status() );
+		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/alerts/chat/twitch/' . $nova )->get_status() );
 	}
 
 	public function test_the_chat_log_keeps_only_a_day_and_two_hundred_messages_per_channel(): void {
 		for ( $i = 1; $i <= ChatLogRepository::KEEP_PER_CHANNEL + 5; $i++ ) {
-			$this->chat->add( '500', 'id-' . $i, 'viewer', 'Viewer', '', 'message ' . $i );
+			$this->chat->add( ChatPlatform::Twitch, '500', 'id-' . $i, 'viewer', 'Viewer', '', 'message ' . $i );
 		}
 
-		$this->chat->add( '501', 'other-1', 'viewer', 'Viewer', '', 'other channel' );
-		self::assertSame( ChatLogRepository::KEEP_PER_CHANNEL, count( $this->chat->after( '500', 0, 500 ) ) );
-		self::assertSame( 'message 6', $this->chat->after( '500', 0, 500 )[0]['text'] );
+		$this->chat->add( ChatPlatform::Twitch, '501', 'other-1', 'viewer', 'Viewer', '', 'other channel' );
+		self::assertSame( ChatLogRepository::KEEP_PER_CHANNEL, count( $this->chat->after( ChatPlatform::Twitch, '500', 0, 500 ) ) );
+		self::assertSame( 'message 6', $this->chat->after( ChatPlatform::Twitch, '500', 0, 500 )[0]['text'] );
 
 		$this->execute( 'UPDATE %i SET created_at = %s WHERE broadcaster_id = %s', $this->table( Tables::ALERT_CHAT_LOG ), gmdate( 'Y-m-d H:i:s', time() - 25 * HOUR_IN_SECONDS ), '501' );
-		$this->chat->add( '500', 'id-new', 'viewer', 'Viewer', '', 'new' );
-		self::assertSame( array(), $this->chat->after( '501', 0 ), 'Older than 24 hours.' );
+		$this->chat->add( ChatPlatform::Twitch, '500', 'id-new', 'viewer', 'Viewer', '', 'new' );
+		self::assertSame( array(), $this->chat->after( ChatPlatform::Twitch, '501', 0 ), 'Older than 24 hours.' );
 	}
 
 	public function test_the_creator_manages_the_chatbot_only_for_the_own_channel(): void {
@@ -625,17 +682,18 @@ final class ChatbotTest extends IntegrationTestCase {
 
 		$state = $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' );
 		self::assertSame( 200, $state->get_status() );
-		self::assertFalse( $state->get_data()['available'] );
-		self::assertSame( 409, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/connect' )->get_status() );
+		self::assertFalse( $state->get_data()['platforms'][0]['available'] );
+		self::assertSame( array( 'twitch', 'kick' ), array_column( $state->get_data()['platforms'], 'platform' ) );
+		self::assertSame( 409, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/connect' )->get_status() );
 
 		$this->set_up_bot( $nova );
-		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/connect' );
+		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/connect' );
 		self::assertSame( 200, $connect->get_status() );
 		self::assertSame( 'channel:bot', $this->query( $connect->get_data()['url'] )['scope'] ?? null );
 
-		$this->channels->connect( $nova, '500', 'nova' );
+		$this->channels->connect( $nova, ChatPlatform::Twitch, '500', 'nova' );
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
-		$test = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/test' );
+		$test = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/test' );
 		self::assertSame(
 			array(
 				'result'  => 'sent',
@@ -649,19 +707,19 @@ final class ChatbotTest extends IntegrationTestCase {
 			'PATCH',
 			'/merchboard/v1/me/alerts/chatbot',
 			array(
-				'enabled'  => false,
+				'enabled'  => array( 'twitch' => false ),
 				'template' => "<b>Tak</b>  \$Name\n for \$Product!",
 			)
 		);
 		self::assertSame( 200, $saved->get_status() );
-		self::assertSame( array( false, 'Tak $Name for $Product!' ), array( $saved->get_data()['enabled'], $saved->get_data()['template'] ) );
-		self::assertSame( array( 'login' => 'nova' ), array_intersect_key( (array) $saved->get_data()['channel'], array( 'login' => true ) ) );
-		self::assertSame( 400, $this->call( 'PATCH', '/merchboard/v1/me/alerts/chatbot', array( 'enabled' => 'yes' ) )->get_status() );
+		self::assertSame( array( false, true, 'Tak $Name for $Product!' ), array( $saved->get_data()['platforms'][0]['enabled'], $saved->get_data()['platforms'][1]['enabled'], $saved->get_data()['template'] ) );
+		self::assertSame( array( 'login' => 'nova' ), array_intersect_key( (array) $saved->get_data()['platforms'][0]['channel'], array( 'login' => true ) ) );
+		self::assertSame( 400, $this->call( 'PATCH', '/merchboard/v1/me/alerts/chatbot', array( 'enabled' => array( 'twitch' => 'yes' ) ) )->get_status() );
 
-		$removed = $this->call( 'DELETE', '/merchboard/v1/me/alerts/chatbot/channel' );
-		self::assertNull( $removed->get_data()['channel'] );
+		$removed = $this->call( 'DELETE', '/merchboard/v1/me/alerts/chatbot/twitch/channel' );
+		self::assertNull( $removed->get_data()['platforms'][0]['channel'] );
 		self::assertContains( 'alert_chatbot_channel_disconnected', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) );
-		self::assertSame( 409, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/test' )->get_status() );
+		self::assertSame( 409, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/test' )->get_status() );
 
 		wp_set_current_user( $this->create_user( 'subscriber_only' ) );
 		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' )->get_status() );
@@ -669,7 +727,7 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	public function test_the_administrator_sends_as_the_bot_and_sees_the_channels(): void {
 		$nova    = $this->connected_creator( 'nova' );
-		$actions = new ChatbotAdminActions( $this->account, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
 		$this->as_admin();
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
 
@@ -678,7 +736,7 @@ final class ChatbotTest extends IntegrationTestCase {
 				'action'   => ChatbotAdminActions::SEND_ACTION,
 				'creator'  => (string) $nova,
 				'message'  => 'Hello chat',
-				'_wpnonce' => wp_create_nonce( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $nova ) ),
+				'_wpnonce' => wp_create_nonce( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $nova, ChatPlatform::Twitch ) ),
 			)
 		);
 		self::assertStringContainsString( 'merchboard_alerts_admin_result=message_sent', $url );
@@ -702,7 +760,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		wp_mkdir_p( $plugin . 'build' );
 		file_put_contents( $plugin . 'build/alerts-admin.js', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
 		file_put_contents( $plugin . 'build/alerts-admin.asset.php', "<?php return array( 'dependencies' => array(), 'version' => 'test' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		$tab = new ChatbotAdminTab( $this->account, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/' );
+		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/' );
 		ob_start();
 		$tab->render( 0 );
 		$page = (string) ob_get_clean();
@@ -717,7 +775,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'https://www.twitch.tv/popout/nova/chat', $chat );
 		self::assertStringNotContainsString( 'data-merchboard-chat', $chat );
 
-		$this->channels->set_subscription( $nova, 'sub-1', 'enabled' );
+		$this->channels->set_subscription( $nova, ChatPlatform::Twitch, 'sub-1', 'enabled' );
 		ob_start();
 		$tab->render( $nova );
 		self::assertStringContainsString( 'data-merchboard-chat', (string) ob_get_clean(), 'With the subscription: our own window.' );
@@ -732,6 +790,372 @@ final class ChatbotTest extends IntegrationTestCase {
 		wp_delete_file( $plugin . 'build/alerts-admin.asset.php' );
 		rmdir( $plugin . 'build' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test fixture.
 		rmdir( $plugin ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test fixture.
+	}
+
+	public function test_the_kick_app_is_checked_at_kick_and_its_secret_is_stored_encrypted(): void {
+		$this->as_admin();
+
+		foreach ( array( array( 'x', self::KICK_SECRET, '' ), array( self::KICK_CLIENT, self::KICK_SECRET, 'not a bot!' ) ) as [ $client, $secret, $bot ] ) {
+			try {
+				$this->kick->save_app( $client, $secret, $bot );
+				self::fail( 'Expected KickException.' );
+			} catch ( KickException $e ) {
+				self::assertSame( KickException::INVALID_CREDENTIALS, $e->reason() );
+			}
+		}
+
+		$this->answer( self::KICK_TOKEN, 401, array( 'error' => 'invalid_client' ) );
+
+		try {
+			$this->kick->save_app( self::KICK_CLIENT, self::KICK_SECRET, 'merchbot' );
+			self::fail( 'Expected KickException.' );
+		} catch ( KickException $e ) {
+			self::assertSame( KickException::INVALID_CREDENTIALS, $e->reason() );
+		}
+
+		self::assertFalse( $this->kick->has_app() );
+
+		$this->set_up_kick();
+
+		self::assertTrue( $this->kick->has_app() );
+		self::assertSame( 'merchbot', $this->kick->bot_name() );
+		self::assertSame( 'client_credentials', $this->last_body( self::KICK_TOKEN )['grant_type'] ?? null );
+		$stored = (string) wp_json_encode( get_option( KickAccount::OPTION ) );
+		self::assertStringNotContainsString( self::KICK_SECRET, $stored );
+		self::assertStringNotContainsString( 'kickapptoken', $stored );
+		self::assertContains( 'alert_kick_app_changed', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) );
+		self::assertStringNotContainsString( self::KICK_SECRET, (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ) );
+	}
+
+	public function test_a_creator_adds_the_bot_to_the_kick_channel_with_pkce(): void {
+		$this->set_up_kick();
+		$nova  = $this->creator( 'nova' );
+		$url   = $this->kick_oauth->start_channel( $nova );
+		$query = $this->query( $url );
+
+		self::assertStringStartsWith( KickApi::AUTHORIZE_URL . '?', $url );
+		self::assertSame( 'channel:read chat:write events:subscribe', $query['scope'] ?? null );
+		self::assertSame( 'S256', $query['code_challenge_method'] ?? null );
+		self::assertSame( KickAccount::redirect_uri(), $query['redirect_uri'] ?? null );
+
+		// Kick's redirect: the creator's browser, without a REST nonce.
+		wp_set_current_user( 0 );
+		$this->answer(
+			self::KICK_TOKEN,
+			200,
+			array(
+				'access_token'  => 'kick-access-1',
+				'refresh_token' => 'kick-refresh-1',
+				'expires_in'    => 7200,
+				'token_type'    => 'Bearer',
+			)
+		);
+		$this->answer(
+			self::KICK_CHANNELS,
+			200,
+			array(
+				'data' => array(
+					array(
+						'broadcaster_user_id' => 777,
+						'slug'                => 'Nova_Kick',
+					),
+				),
+			)
+		);
+		$location = $this->kick_oauth->finish( $query['state'] ?? '', 'code-k', '' );
+
+		self::assertSame( add_query_arg( array( 'chatbot' => 'connected', 'platform' => 'kick' ), home_url( '/creator-dashboard/alerts/chatbot/' ) ), $location ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$body = $this->last_body( self::KICK_TOKEN );
+		self::assertSame( 'authorization_code', $body['grant_type'] ?? null );
+		self::assertSame( $query['code_challenge'] ?? null, KickApi::challenge( (string) ( $body['code_verifier'] ?? '' ) ), 'The verifier matches the challenge (PKCE).' );
+		self::assertSame( 'Bearer kick-access-1', $this->requests_to( self::KICK_CHANNELS )[0]['headers']['Authorization'] ?? null );
+
+		$channel = $this->channels->find( $nova, ChatPlatform::Kick );
+		self::assertSame( array( '777', 'nova_kick', ChatSubscriptions::NO_WEBHOOKS ), array( $channel->broadcaster_id, $channel->broadcaster_login, $channel->subscription_status ) );
+		self::assertFalse( $this->channels->find( $nova, ChatPlatform::Twitch )->connected(), 'Twitch is separate.' );
+		self::assertNotNull( $this->channels->tokens( $nova, ChatPlatform::Kick ) );
+		$rows = (string) wp_json_encode( $this->rows( Tables::ALERT_CHATBOT ) );
+		self::assertStringNotContainsString( 'kick-access-1', $rows, 'Stored encrypted.' );
+		self::assertStringNotContainsString( 'kick-refresh-1', $rows );
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'login' => 'nova_kick', 'platform' => 'kick' ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringNotContainsString( 'kick-access-1', (string) wp_json_encode( $audit ) );
+		self::assertSame( home_url( '/' ), $this->kick_oauth->finish( $query['state'] ?? '', 'code-k', '' ), 'A state is used once.' );
+	}
+
+	public function test_a_purchase_is_announced_once_on_each_platform(): void {
+		$nova = $this->connected_creator( 'nova' );
+		$this->kick_creator( $nova, 7200 );
+		$this->alert( $nova, 100, 1, 'Hoodie' );
+		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
+		$this->answer(
+			self::KICK_CHAT,
+			200,
+			array(
+				'data'    => array(
+					'is_sent'    => true,
+					'message_id' => 'k-1',
+				),
+				'message' => 'OK',
+			)
+		);
+
+		$this->sender->order_paid( 100 );
+		self::assertSame( array( 'twitch', 'kick' ), array_map( static fn( array $job ): mixed => $job['args'][2] ?? null, $this->queue->pending ), 'One job per platform.' );
+
+		$this->run_jobs();
+
+		self::assertSame( array( '🔔 nova_fan just bought Hoodie!' ), array_column( $this->sent(), 'message' ) );
+		$kick = $this->requests_to( self::KICK_CHAT );
+		self::assertCount( 1, $kick );
+		self::assertSame(
+			array(
+				'type'    => 'bot',
+				'content' => '🔔 nova_fan just bought Hoodie!',
+			),
+			$kick[0]['body']
+		);
+		self::assertSame( 'Bearer kick-access-1', $kick[0]['headers']['Authorization'] ?? null, 'With the channel\'s own token (type "bot").' );
+		self::assertSame( 'sent', $this->log->latest( $nova, ChatPlatform::Kick )['status'] ?? null );
+
+		// Paid again: nothing twice on either platform.
+		$this->sender->order_paid( 100 );
+		$this->run_jobs();
+		self::assertCount( 1, $this->sent() );
+		self::assertCount( 1, $this->requests_to( self::KICK_CHAT ) );
+
+		// Kick messages off: a resend goes to Twitch only.
+		$this->channels->save_enabled( $nova, ChatPlatform::Kick, false );
+		self::assertTrue( $this->sender->resend( $nova, 100 ) );
+		self::assertSame( array( 'twitch' ), array_map( static fn( array $job ): mixed => $job['args'][2] ?? null, $this->queue->pending ) );
+	}
+
+	public function test_the_kick_token_is_renewed_and_a_revoked_access_forgets_the_channel(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->kick_creator( $nova, 60 );
+		$this->alert( $nova, 200, 1, 'Hoodie' );
+		$this->answer(
+			self::KICK_TOKEN,
+			200,
+			array(
+				'access_token'  => 'kick-access-2',
+				'refresh_token' => 'kick-refresh-2',
+				'expires_in'    => 7200,
+			)
+		);
+		$this->answer( self::KICK_CHAT, 200, array( 'data' => array( 'is_sent' => true ) ) );
+
+		$this->sender->order_paid( 200 );
+		$this->run_jobs();
+
+		$refresh = $this->last_body( self::KICK_TOKEN );
+		self::assertSame( array( 'refresh_token', 'kick-refresh-1' ), array( $refresh['grant_type'] ?? null, $refresh['refresh_token'] ?? null ), 'Renewed shortly before it expires.' );
+		self::assertSame( 'Bearer kick-access-2', $this->requests_to( self::KICK_CHAT )[0]['headers']['Authorization'] ?? null );
+		self::assertSame( 'kick-access-2', $this->kick_tokens->access( $nova ), 'The rotated pair was stored.' );
+
+		// The creator revoked the access at Kick.
+		$this->answer( self::KICK_CHAT, 401, array( 'message' => 'Unauthorized' ) );
+		$this->answer( self::KICK_TOKEN, 400, array( 'error' => 'invalid_grant' ) );
+		$result = $this->sender->send_now( $this->channels->find( $nova, ChatPlatform::Kick ), 'Hi' );
+
+		self::assertSame( array( 'unauthorized', 'authorization_revoked' ), array( $result['result'], $result['reason'] ) );
+		self::assertFalse( $this->channels->find( $nova, ChatPlatform::Kick )->connected(), 'The creator adds the bot again.' );
+		self::assertNull( $this->channels->tokens( $nova, ChatPlatform::Kick ) );
+	}
+
+	public function test_kick_asks_to_wait_and_the_job_waits(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->kick_creator( $nova, 7200 );
+		$this->alert( $nova, 300, 1, 'Hoodie' );
+		$this->answer( self::KICK_CHAT, 429, array( 'message' => 'Too Many Requests' ), array( 'retry-after' => '30' ) );
+
+		$this->sender->order_paid( 300 );
+		$this->run_jobs( 1 );
+
+		self::assertSame( 'waiting', $this->log->latest( $nova, ChatPlatform::Kick )['status'] ?? null );
+		self::assertSame( array( 30, 'kick' ), array( $this->queue->pending[0]['delay'] ?? null, $this->queue->pending[0]['args'][2] ?? null ) );
+		self::assertGreaterThan( 0, $this->kick->wait_seconds() );
+
+		$this->run_jobs( 1 );
+		self::assertCount( 1, $this->requests_to( self::KICK_CHAT ), 'The job only waits.' );
+	}
+
+	public function test_the_creator_removes_the_kick_bot_and_the_token_is_revoked(): void {
+		$this->routes();
+		$nova = $this->creator( 'nova' );
+		$this->kick_creator( $nova, 7200 );
+		wp_set_current_user( $this->user_of( $nova ) );
+
+		$state = $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' );
+		self::assertSame( array( 'login' => 'nova_kick' ), array_intersect_key( (array) $state->get_data()['platforms'][1]['channel'], array( 'login' => true ) ) );
+		self::assertSame( 'https://kick.com/nova_kick', $state->get_data()['platforms'][1]['channel']['url'] ?? null );
+		self::assertStringNotContainsString( 'kick-access-1', (string) wp_json_encode( $state->get_data() ), 'Tokens never reach the browser.' );
+
+		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/kick/connect' );
+		self::assertStringStartsWith( KickApi::AUTHORIZE_URL, (string) $connect->get_data()['url'] );
+
+		$removed = $this->call( 'DELETE', '/merchboard/v1/me/alerts/chatbot/kick/channel' );
+		self::assertNull( $removed->get_data()['platforms'][1]['channel'] );
+		self::assertSame( array( 'kick-refresh-1', 'kick-access-1' ), array_map( fn( array $request ): string => (string) ( $this->query( $request['url'] )['token'] ?? '' ), $this->requests_to( self::KICK_REVOKE ) ), 'Both tokens are revoked at Kick.' );
+		self::assertNull( $this->channels->tokens( $nova, ChatPlatform::Kick ) );
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'login' => 'nova_kick', 'platform' => 'kick' ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	public function test_the_kick_webhook_accepts_only_signed_events_and_feeds_the_chat_window(): void {
+		$key     = self::rsa_key();
+		$other   = self::rsa_key();
+		$details = openssl_pkey_get_details( $key );
+		self::assertIsArray( $details );
+
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->kick_creator( $nova, 7200 );
+		$this->answer(
+			self::KICK_KEY,
+			200,
+			array(
+				'data'    => array( 'public_key' => $details['key'] ),
+				'message' => 'OK',
+			)
+		);
+		$this->routes();
+		$message = array(
+			'message_id'  => 'kick-msg-1',
+			'broadcaster' => array(
+				'user_id'  => 777,
+				'username' => 'nova_kick',
+			),
+			'sender'      => array(
+				'user_id'      => 5,
+				'username'     => 'Viewer5',
+				'channel_slug' => 'viewer5',
+				'identity'     => array( 'username_color' => '#00FF00' ),
+			),
+			'content'     => '<b>hype</b>',
+		);
+
+		self::assertSame( 200, $this->kick_event( $message, $key )->get_status() );
+		self::assertSame( 200, $this->kick_event( $message, $key, 'chat.message.sent', 'delivery-2' )->get_status() );
+		self::assertSame( 200, $this->kick_event( array( 'follower' => array() ), $key, 'channel.followed', 'delivery-3' )->get_status() );
+		self::assertSame( 1, $this->count_rows( Tables::ALERT_CHAT_LOG ), 'Stored once; other events are ignored.' );
+
+		$this->as_admin();
+		$chat = $this->call( 'GET', '/merchboard/v1/alerts/chat/kick/' . $nova );
+		self::assertSame(
+			array(
+				'login' => 'viewer5',
+				'name'  => 'Viewer5',
+				'color' => '#00ff00',
+				'text'  => '<b>hype</b>',
+			),
+			array_intersect_key( $chat->get_data()['messages'][0], array_flip( array( 'login', 'name', 'color', 'text' ) ) )
+		);
+		self::assertSame( array(), $this->call( 'GET', '/merchboard/v1/alerts/chat/twitch/' . $nova )->get_data()['messages'], 'Twitch has no channel.' );
+
+		// Forged (another key) or stale events are refused.
+		self::assertSame( 403, $this->kick_event( array( 'message_id' => 'kick-msg-2' ) + $message, $other, 'chat.message.sent', 'delivery-4' )->get_status() );
+		self::assertSame( 403, $this->kick_event( array( 'message_id' => 'kick-msg-3' ) + $message, $key, 'chat.message.sent', 'delivery-5', gmdate( 'Y-m-d\TH:i:s\Z', time() - 700 ) )->get_status() );
+		self::assertSame( 1, $this->count_rows( Tables::ALERT_CHAT_LOG ) );
+		self::assertLessThanOrEqual( 2, count( $this->requests_to( self::KICK_KEY ) ), 'The key is cached; a forged signature refetches it at most once.' );
+	}
+
+	/**
+	 * A new RSA key for signing test events. Some PHP builds have no
+	 * openssl.cnf; a minimal one is used then.
+	 */
+	private static function rsa_key(): OpenSSLAsymmetricKey {
+		$options = array(
+			'private_key_bits' => 2048,
+			'private_key_type' => OPENSSL_KEYTYPE_RSA,
+		);
+		$key     = openssl_pkey_new( $options );
+
+		if ( false === $key ) {
+			$config = wp_tempnam( 'merchboard-openssl' );
+			file_put_contents( $config, "[req]\ndistinguished_name = dn\n[dn]\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+			$key = openssl_pkey_new( $options + array( 'config' => $config ) );
+			wp_delete_file( $config );
+		}
+
+		self::assertInstanceOf( OpenSSLAsymmetricKey::class, $key );
+
+		return $key;
+	}
+
+	/**
+	 * The body of the latest request to a URL.
+	 *
+	 * @param string $key "METHOD URL".
+	 * @return array<mixed>
+	 */
+	private function last_body( string $key ): array {
+		$requests = $this->requests_to( $key );
+
+		return (array) ( $requests[ count( $requests ) - 1 ]['body'] ?? array() );
+	}
+
+	/**
+	 * Sets the Kick app up (as an administrator).
+	 */
+	private function set_up_kick(): void {
+		$current = get_current_user_id();
+		$this->as_admin();
+		$this->answer(
+			self::KICK_TOKEN,
+			200,
+			array(
+				'access_token' => 'kickapptoken',
+				'token_type'   => 'Bearer',
+				'expires_in'   => 5000000,
+			)
+		);
+		$this->kick->save_app( self::KICK_CLIENT, self::KICK_SECRET, 'merchbot' );
+		wp_set_current_user( $current );
+	}
+
+	/**
+	 * Adds the bot to a creator's Kick channel (777, nova_kick) with tokens.
+	 *
+	 * @param int $creator_id Creator.
+	 * @param int $expires_in Seconds until the access token expires.
+	 */
+	private function kick_creator( int $creator_id, int $expires_in ): void {
+		$this->set_up_kick();
+		$this->channels->connect( $creator_id, ChatPlatform::Kick, '777', 'nova_kick' );
+		$this->kick_tokens->store(
+			$creator_id,
+			array(
+				'access'     => 'kick-access-1',
+				'refresh'    => 'kick-refresh-1',
+				'expires_in' => $expires_in,
+			)
+		);
+	}
+
+	/**
+	 * Posts a signed Kick event to the webhook.
+	 *
+	 * @param array<mixed>         $payload   Payload.
+	 * @param OpenSSLAsymmetricKey $key       Private key that signs it.
+	 * @param string               $type      Event type.
+	 * @param string               $id        Delivery id.
+	 * @param string|null          $timestamp Timestamp; null for now.
+	 */
+	private function kick_event( array $payload, OpenSSLAsymmetricKey $key, string $type = 'chat.message.sent', string $id = 'delivery-1', ?string $timestamp = null ): WP_REST_Response {
+		$timestamp ??= gmdate( 'Y-m-d\TH:i:s\Z' );
+		$body        = (string) wp_json_encode( $payload );
+		$signature   = '';
+		self::assertTrue( openssl_sign( $id . '.' . $timestamp . '.' . $body, $signature, $key, OPENSSL_ALGO_SHA256 ) );
+		$request = new WP_REST_Request( 'POST', '/merchboard/v1/alerts/kick/webhook' );
+		$request->set_header( 'Kick-Event-Message-Id', $id );
+		$request->set_header( 'Kick-Event-Message-Timestamp', $timestamp );
+		$request->set_header( 'Kick-Event-Signature', base64_encode( (string) $signature ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A signature, as Kick sends it.
+		$request->set_header( 'Kick-Event-Type', $type );
+		$request->set_header( 'Kick-Event-Version', '1' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( $body );
+
+		return rest_do_request( $request );
 	}
 
 	/**
@@ -863,7 +1287,7 @@ final class ChatbotTest extends IntegrationTestCase {
 	private function connected_creator( string $login ): int {
 		$this->set_up_bot();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( ucfirst( $login ), CreatorStatus::Active )->id;
-		$this->channels->connect( $creator, '500', $login );
+		$this->channels->connect( $creator, ChatPlatform::Twitch, '500', $login );
 
 		return $creator;
 	}
@@ -984,12 +1408,16 @@ final class ChatbotTest extends IntegrationTestCase {
 	 */
 	private function routes(): void {
 		$logger         = $this->service( Logger::class );
-		$creator        = new CreatorChatbot( $this->account, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
-		$me             = new MeChatbotController( $this->service( CreatorContext::class ), $creator, $this->oauth, $logger );
+		$creator        = new CreatorChatbot( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$me             = new MeChatbotController( $this->service( CreatorContext::class ), $creator, $this->oauth, $this->kick_oauth, $logger );
+		$chat           = new ChatbotChatController( $this->channels, $this->chat, $logger );
+		$kick           = new KickController( $this->kick_oauth, new KickWebhookVerifier( $this->kick_api ), $this->channels, $this->chat, $logger );
 		$twitch         = $this->twitch;
-		$this->register = static function () use ( $me, $twitch ): void {
+		$this->register = static function () use ( $me, $twitch, $chat, $kick ): void {
 			$me->register_routes();
 			$twitch->register_routes();
+			$chat->register_routes();
+			$kick->register_routes();
 		};
 		add_action( 'rest_api_init', $this->register );
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server per test.

@@ -156,6 +156,13 @@ final class RecordingWpdb extends wpdb {
 	public array $dropped_columns = array();
 
 	/**
+	 * Indexes dropped by prepared "ALTER TABLE %i DROP INDEX %i" statements, "table.index" => true.
+	 *
+	 * @var array<string, true>
+	 */
+	public array $dropped_indexes = array();
+
+	/**
 	 * Tables dropped by prepared "DROP TABLE IF EXISTS %i" statements, name => true.
 	 *
 	 * @var array<string, true>
@@ -209,6 +216,10 @@ final class RecordingWpdb extends wpdb {
 
 		if ( null !== $prepared && 'SHOW INDEX FROM %i WHERE Key_name = %s' === $prepared['query'] ) {
 			$key = $prepared['args'][0] . '.' . $prepared['args'][1];
+
+			if ( isset( $this->dropped_indexes[ $key ] ) ) {
+				return null;
+			}
 
 			return ( $this->columns_exist ?? $this->tables_exist ) || isset( $this->added_indexes[ $key ] ) ? array( 'Key_name' => $prepared['args'][1] ) : null;
 		}
@@ -345,6 +356,16 @@ final class RecordingWpdb extends wpdb {
 
 			if ( 1 === $result ) {
 				$this->state_rows[ $table ] = true;
+			}
+
+			return $result;
+		}
+
+		if ( null !== $prepared && 'ALTER TABLE %i DROP INDEX %i' === $prepared['query'] ) {
+			$result = $this->query_results[ $query ] ?? true;
+
+			if ( false !== $result ) {
+				$this->dropped_indexes[ $prepared['args'][0] . '.' . $prepared['args'][1] ] = true;
 			}
 
 			return $result;

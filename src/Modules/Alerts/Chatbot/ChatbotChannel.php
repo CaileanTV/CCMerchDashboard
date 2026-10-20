@@ -1,6 +1,6 @@
 <?php
 /**
- * A creator's chatbot settings and channel.
+ * A creator's chatbot settings and channel on one platform.
  *
  * @package MerchBoard
  */
@@ -13,8 +13,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * A row of `merchboard_alert_chatbot`: whether the creator's purchases are
- * announced in chat, the template, and the Twitch channel the creator added
- * the bot to (empty before that).
+ * announced in the platform's chat, the template (shared by the creator's
+ * platforms, ADR-069 pkt. 2), and the channel the creator added the bot to
+ * (empty before that). Never carries a token: the Kick tokens are read
+ * separately (ChatbotChannelRepository::tokens()), so they cannot end up in
+ * an answer by accident.
  */
 final readonly class ChatbotChannel {
 
@@ -29,23 +32,25 @@ final readonly class ChatbotChannel {
 	public const DEFAULT_ORDER_TEMPLATE = '🔔 $Name just bought $Products!';
 
 	/**
-	 * Longest template in characters (Twitch's longest message).
+	 * Longest template in characters (the platforms' longest message).
 	 */
 	public const TEMPLATE_MAX = 500;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param int    $creator_id          Creator.
-	 * @param bool   $enabled             Whether purchases are announced.
-	 * @param string $template            Template; '' for the default.
-	 * @param string $broadcaster_id      Twitch channel id; '' before the bot is added.
-	 * @param string $broadcaster_login   Twitch channel login.
-	 * @param int    $authorized_at       When the creator added the bot (Unix time; 0 for never).
-	 * @param string $subscription_id     EventSub chat subscription.
-	 * @param string $subscription_status Its status as Twitch reported it.
+	 * @param ChatPlatform $platform            Platform.
+	 * @param int          $creator_id          Creator.
+	 * @param bool         $enabled             Whether purchases are announced on this platform.
+	 * @param string       $template            Template; '' for the default.
+	 * @param string       $broadcaster_id      Channel id at the platform; '' before the bot is added.
+	 * @param string       $broadcaster_login   Channel login (Twitch) or slug (Kick).
+	 * @param int          $authorized_at       When the creator added the bot (Unix time; 0 for never).
+	 * @param string       $subscription_id     The bot's chat subscription.
+	 * @param string       $subscription_status Its status as the platform reported it.
 	 */
 	public function __construct(
+		public ChatPlatform $platform,
 		public int $creator_id,
 		public bool $enabled,
 		public string $template,

@@ -14,28 +14,30 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannel;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\ChatMessageRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
+use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Creators\CreatorRepository;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Merch Dashboard → Alerts → Chatbot (phase 25, step 8; ADR-066, status
- * note 2026-10-20). Read-only rendering; every change goes through
+ * Merch Dashboard → Alerts → Chatbot (phase 25, steps 8 and 8.2; ADR-066,
+ * ADR-069). Read-only rendering; every change goes through
  * ChatbotAdminActions. Everything is escaped; secrets are never shown.
  *
- * - **Twitch app:** Client ID and Secret, and the redirect URL to register.
- * - **Bot account:** log in with the bot (Twitch always asks, so the right
- *   account can be chosen) and the requirements of Twitch's chatbot badge
- *   and chat identity.
+ * - **Twitch:** the app (Client ID, Secret, redirect URL), the bot account
+ *   (Twitch always asks, so the right account can be chosen), the
+ *   requirements of Twitch's chatbot badge and chat identity, and the
+ *   latest rate limit.
+ * - **Kick:** the app (Client ID, Secret, the bot's name, redirect and
+ *   webhook URL) and its requirements.
  * - **Message format:** one message per line or per order, with the format
- *   of `$Products`.
- * - **Rate limit:** the latest limit Twitch reported (higher for a
- *   verified bot).
- * - **Channels:** the creators who added the bot, with a chat window per
- *   channel: the bot's own (EventSub) when Twitch can reach the site,
- *   Twitch's embedded chat otherwise, and "Send as the bot".
+ *   of `$Products`, shared by the platforms.
+ * - **Channels:** the creators' channels on every platform, with a chat
+ *   window per channel: the bot's own (webhook) when the platform can reach
+ *   the site, the platform's own chat otherwise, and "Send as the bot".
  */
 final class ChatbotAdminTab {
 
@@ -47,7 +49,8 @@ final class ChatbotAdminTab {
 	/**
 	 * Constructor.
 	 *
-	 * @param TwitchAccount            $account    App and bot.
+	 * @param TwitchAccount            $account    Twitch app and bot.
+	 * @param KickAccount              $kick       Kick app.
 	 * @param ChatbotFormat            $format     Message format.
 	 * @param ChatbotChannelRepository $channels   The creators' channels.
 	 * @param ChatMessageRepository    $log        Message log.
@@ -55,7 +58,7 @@ final class ChatbotAdminTab {
 	 * @param string                   $plugin_dir Plugin directory (with slash).
 	 * @param string                   $plugin_url Plugin URL (with slash).
 	 */
-	public function __construct( private TwitchAccount $account, private ChatbotFormat $format, private ChatbotChannelRepository $channels, private ChatMessageRepository $log, private CreatorRepository $creators, private string $plugin_dir, private string $plugin_url ) {
+	public function __construct( private TwitchAccount $account, private KickAccount $kick, private ChatbotFormat $format, private ChatbotChannelRepository $channels, private ChatMessageRepository $log, private CreatorRepository $creators, private string $plugin_dir, private string $plugin_url ) {
 	}
 
 	/**
@@ -70,17 +73,21 @@ final class ChatbotAdminTab {
 			'app_removed'                  => array( __( 'The Twitch app, the bot and every secret were removed.', 'merchboard' ), 'success' ),
 			'app_invalid_credentials'      => array( __( 'Twitch did not accept the Client ID and Secret. Check them in the Twitch developer console.', 'merchboard' ), 'error' ),
 			'app_unavailable', 'bot_unavailable' => array( __( 'Twitch could not be reached. Try again later.', 'merchboard' ), 'error' ),
-			'app_unreadable'               => array( __( 'The secret cannot be stored encrypted on this server (sodium is missing).', 'merchboard' ), 'error' ),
+			'app_unreadable', 'kick_unreadable' => array( __( 'The secret cannot be stored encrypted on this server (sodium is missing).', 'merchboard' ), 'error' ),
 			'bot_connected'                => array( __( 'The bot account was connected. Its chat subscriptions were renewed.', 'merchboard' ), 'success' ),
 			'bot_disconnected'             => array( __( 'The bot account was disconnected. No messages are sent until a bot is connected again.', 'merchboard' ), 'success' ),
 			'bot_denied'                   => array( __( 'The login at Twitch was cancelled. Nothing was changed.', 'merchboard' ), 'info' ),
 			'bot_not_configured'           => array( __( 'Save the Twitch app first.', 'merchboard' ), 'error' ),
 			'bot_invalid_credentials', 'bot_unauthorized', 'bot_forbidden' => array( __( 'Twitch did not accept the login. Try again, and check the redirect URL of the Twitch app.', 'merchboard' ), 'error' ),
 			'bot_error'                    => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
+			'kick_saved'                   => array( __( 'The Kick app was saved. Kick accepted its credentials.', 'merchboard' ), 'success' ),
+			'kick_removed'                 => array( __( 'The Kick app and every secret were removed.', 'merchboard' ), 'success' ),
+			'kick_invalid_credentials'     => array( __( 'Kick did not accept the Client ID and Secret (or the bot name is invalid). Check them in the Kick developer settings.', 'merchboard' ), 'error' ),
+			'kick_unavailable'             => array( __( 'Kick could not be reached. Try again later.', 'merchboard' ), 'error' ),
 			'format_saved'                 => array( __( 'The message format was saved.', 'merchboard' ), 'success' ),
 			'resubscribed'                 => array( __( 'The chat subscriptions were renewed.', 'merchboard' ), 'success' ),
 			'message_sent'                 => array( __( 'The message was sent as the bot.', 'merchboard' ), 'success' ),
-			'message_failed'               => array( __( 'Twitch did not send the message. Check that the bot is still in the channel.', 'merchboard' ), 'error' ),
+			'message_failed'               => array( __( 'The platform did not send the message. Check that the bot is still in the channel.', 'merchboard' ), 'error' ),
 			default                        => null,
 		};
 	}
@@ -88,19 +95,24 @@ final class ChatbotAdminTab {
 	/**
 	 * Renders the tab.
 	 *
-	 * @param int $chat Creator whose chat window is shown; 0 for the overview.
+	 * @param int          $chat     Creator whose chat window is shown; 0 for the overview.
+	 * @param ChatPlatform $platform The chat window's platform.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
-	public function render( int $chat ): void {
+	public function render( int $chat, ChatPlatform $platform = ChatPlatform::Twitch ): void {
 		if ( $chat > 0 ) {
-			$this->render_chat( $chat );
+			$this->render_chat( $chat, $platform );
 			return;
 		}
 
+		echo '<h2>Twitch</h2>';
 		$this->render_app();
 		$this->render_bot();
-		$this->render_format();
 		$this->render_rate_limit();
+		echo '<hr><h2>Kick</h2>';
+		$this->render_kick();
+		echo '<hr>';
+		$this->render_format();
 		$this->render_channels();
 	}
 
@@ -108,7 +120,7 @@ final class ChatbotAdminTab {
 	 * The Twitch app.
 	 */
 	private function render_app(): void {
-		echo '<h2>' . esc_html__( 'Twitch app', 'merchboard' ) . '</h2>';
+		echo '<h3>' . esc_html__( 'Twitch app', 'merchboard' ) . '</h3>';
 		echo '<p>' . esc_html__( 'Create an application in the Twitch developer console (category "Chat Bot", client type "Confidential") and register this OAuth redirect URL:', 'merchboard' ) . '</p>';
 		echo '<p><code>' . esc_html( TwitchAccount::redirect_uri() ) . '</code></p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -129,12 +141,12 @@ final class ChatbotAdminTab {
 	}
 
 	/**
-	 * The bot account and the badge requirements.
+	 * The Twitch bot account and the badge requirements.
 	 */
 	private function render_bot(): void {
 		$bot = $this->account->bot();
 
-		echo '<h2>' . esc_html__( 'Bot account', 'merchboard' ) . '</h2>';
+		echo '<h3>' . esc_html__( 'Bot account', 'merchboard' ) . '</h3>';
 
 		if ( ! $this->account->has_app() ) {
 			echo '<p>' . esc_html__( 'Save the Twitch app first.', 'merchboard' ) . '</p>';
@@ -158,14 +170,63 @@ final class ChatbotAdminTab {
 
 		echo '</form>';
 
-		$checks = array(
-			array( true, __( 'Messages are sent with Send Chat Message and an app access token.', 'merchboard' ) ),
-			array( null !== $bot, __( 'The bot account authorized the app (user:bot, user:write:chat, user:read:chat).', 'merchboard' ) ),
-			array( true, __( 'Each creator adds the bot to the own channel (channel:bot) in the dashboard.', 'merchboard' ) ),
-			array( TwitchAccount::webhooks_possible(), __( 'The bot listens to the chats over an EventSub webhook (needs an HTTPS site Twitch can reach).', 'merchboard' ) ),
+		self::checklist(
+			__( 'Chatbot badge and chat identity', 'merchboard' ),
+			array(
+				array( true, __( 'Messages are sent with Send Chat Message and an app access token.', 'merchboard' ) ),
+				array( null !== $bot, __( 'The bot account authorized the app (user:bot, user:write:chat, user:read:chat).', 'merchboard' ) ),
+				array( true, __( 'Each creator adds the bot to the own channel (channel:bot) in the dashboard.', 'merchboard' ) ),
+				array( TwitchAccount::webhooks_possible(), __( 'The bot listens to the chats over an EventSub webhook (needs an HTTPS site Twitch can reach).', 'merchboard' ) ),
+			)
 		);
+	}
 
-		echo '<h3>' . esc_html__( 'Chatbot badge and chat identity', 'merchboard' ) . '</h3><ul>';
+	/**
+	 * The Kick app and its requirements.
+	 */
+	private function render_kick(): void {
+		echo '<h3>' . esc_html__( 'Kick app', 'merchboard' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Create an app in your Kick account under Settings → Developer (two-factor authentication must be on), create a bot for the app there, and register this redirect URL:', 'merchboard' ) . '</p>';
+		echo '<p><code>' . esc_html( KickAccount::redirect_uri() ) . '</code></p>';
+		echo '<p>' . esc_html__( 'Turn on webhooks for the app and enter this webhook URL:', 'merchboard' ) . '</p>';
+		echo '<p><code>' . esc_html( KickAccount::webhook_url() ) . '</code></p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::KICK_APP_ACTION ) . '">';
+		wp_nonce_field( ChatbotAdminActions::KICK_APP_ACTION );
+		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row"><label for="merchboard-kick-client">' . esc_html__( 'Client ID', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-kick-client" name="client_id" class="regular-text" autocomplete="off" spellcheck="false" value="' . esc_attr( $this->kick->client_id() ) . '"></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-kick-secret">' . esc_html__( 'Client Secret', 'merchboard' ) . '</label></th><td><input type="password" id="merchboard-kick-secret" name="secret" class="regular-text" autocomplete="off" spellcheck="false" aria-describedby="merchboard-kick-secret-help">';
+		echo '<p id="merchboard-kick-secret-help" class="description">' . esc_html( $this->kick->has_app() ? __( 'A secret is saved and never shown again. Enter it again to change the app.', 'merchboard' ) : __( 'The secret is stored encrypted.', 'merchboard' ) ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-kick-bot">' . esc_html__( 'Bot name', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-kick-bot" name="bot_name" class="regular-text" maxlength="25" autocomplete="off" spellcheck="false" value="' . esc_attr( $this->kick->bot_name() ) . '" aria-describedby="merchboard-kick-bot-help">';
+		echo '<p id="merchboard-kick-bot-help" class="description">' . esc_html__( 'The name of the app\'s bot at Kick, shown to creators (optional).', 'merchboard' ) . '</p></td></tr>';
+		echo '</tbody></table>';
+		submit_button( __( 'Save and check', 'merchboard' ), 'primary', 'submit', false );
+
+		if ( '' !== $this->kick->client_id() ) {
+			echo ' <button type="submit" name="remove" value="1" class="button-link button-link-delete">' . esc_html__( 'Remove the app', 'merchboard' ) . '</button>';
+		}
+
+		echo '</form>';
+
+		self::checklist(
+			__( 'Bot messages at Kick', 'merchboard' ),
+			array(
+				array( $this->kick->has_app(), __( 'The Kick app is saved and Kick accepted its credentials.', 'merchboard' ) ),
+				array( true, __( 'Messages are sent as the app\'s bot (type "bot") with the channel\'s own token, which is stored encrypted and renewed automatically.', 'merchboard' ) ),
+				array( true, __( 'Each creator adds the bot to the own channel (chat:write) in the dashboard.', 'merchboard' ) ),
+				array( KickAccount::webhooks_possible(), __( 'The bot listens to the chats over Kick\'s webhook (needs an HTTPS site Kick can reach).', 'merchboard' ) ),
+			)
+		);
+	}
+
+	/**
+	 * A list of requirements.
+	 *
+	 * @param string                    $title  Heading.
+	 * @param list<array{bool, string}> $checks Met and text.
+	 */
+	private static function checklist( string $title, array $checks ): void {
+		echo '<h4>' . esc_html( $title ) . '</h4><ul>';
 
 		foreach ( $checks as [ $met, $text ] ) {
 			echo '<li>' . ( $met ? '✓ ' : '✗ ' ) . esc_html( $text ) . ( $met ? '' : ' <strong>' . esc_html__( '(not met)', 'merchboard' ) . '</strong>' ) . '</li>';
@@ -222,12 +283,12 @@ final class ChatbotAdminTab {
 	}
 
 	/**
-	 * The latest rate limit.
+	 * The latest Twitch rate limit.
 	 */
 	private function render_rate_limit(): void {
 		$rate = $this->account->rate_limit();
 
-		echo '<h2>' . esc_html__( 'Rate limit and verification', 'merchboard' ) . '</h2>';
+		echo '<h3>' . esc_html__( 'Rate limit and verification', 'merchboard' ) . '</h3>';
 		echo '<p>' . esc_html__( 'Twitch lets a bot send 20 messages per 30 seconds across all channels (100 where it is moderator or VIP), and at most one per second in a channel. A verified bot may send 7,500 per 30 seconds. Messages wait in a queue when the limit is reached.', 'merchboard' ) . '</p>';
 		echo '<p>' . esc_html(
 			0 === $rate['seen_at']
@@ -238,7 +299,7 @@ final class ChatbotAdminTab {
 	}
 
 	/**
-	 * The channels with the bot.
+	 * The channels with the bot on every platform.
 	 *
 	 * @throws DatabaseException When the database cannot be read.
 	 */
@@ -252,16 +313,17 @@ final class ChatbotAdminTab {
 			return;
 		}
 
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Creator', 'merchboard' ) . '</th><th>' . esc_html__( 'Channel', 'merchboard' ) . '</th><th>' . esc_html__( 'Messages', 'merchboard' ) . '</th><th>' . esc_html__( 'Listening', 'merchboard' ) . '</th><th>' . esc_html__( 'Latest message', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Creator', 'merchboard' ) . '</th><th>' . esc_html__( 'Platform', 'merchboard' ) . '</th><th>' . esc_html__( 'Channel', 'merchboard' ) . '</th><th>' . esc_html__( 'Messages', 'merchboard' ) . '</th><th>' . esc_html__( 'Listening', 'merchboard' ) . '</th><th>' . esc_html__( 'Latest message', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
 
 		foreach ( $channels as $channel ) {
-			$last = $this->log->latest( $channel->creator_id );
+			$last = $this->log->latest( $channel->creator_id, $channel->platform );
 			echo '<tr><td>' . esc_html( $this->creators->find( $channel->creator_id )->display_name ?? '' ) . '</td>';
-			echo '<td><a href="' . esc_url( 'https://www.twitch.tv/' . rawurlencode( $channel->broadcaster_login ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $channel->broadcaster_login ) . '</a></td>';
+			echo '<td>' . esc_html( $channel->platform->label() ) . '</td>';
+			echo '<td><a href="' . esc_url( $channel->platform->channel_url( $channel->broadcaster_login ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $channel->broadcaster_login ) . '</a></td>';
 			echo '<td>' . esc_html( $channel->enabled ? __( 'On', 'merchboard' ) : __( 'Off', 'merchboard' ) ) . '</td>';
 			echo '<td>' . esc_html( self::listening( $channel ) ) . '</td>';
 			echo '<td>' . esc_html( null === $last ? '—' : $last['status'] . ( '' !== $last['reason'] ? ' (' . $last['reason'] . ')' : '' ) ) . '</td>';
-			echo '<td><a class="button button-small" href="' . esc_url( add_query_arg( 'chat', $channel->creator_id, AlertsAdminPage::url( 'chatbot' ) ) ) . '">' . esc_html__( 'Open chat', 'merchboard' ) . '</a></td></tr>';
+			echo '<td><a class="button button-small" href="' . esc_url( self::chat_url( $channel->creator_id, $channel->platform ) ) . '">' . esc_html__( 'Open chat', 'merchboard' ) . '</a></td></tr>';
 		}
 
 		echo '</tbody></table>';
@@ -276,11 +338,12 @@ final class ChatbotAdminTab {
 	/**
 	 * A channel's chat window and "Send as the bot".
 	 *
-	 * @param int $creator_id Creator.
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
-	private function render_chat( int $creator_id ): void {
-		$channel = $this->channels->find( $creator_id );
+	private function render_chat( int $creator_id, ChatPlatform $platform ): void {
+		$channel = $this->channels->find( $creator_id, $platform );
 
 		echo '<p><a href="' . esc_url( AlertsAdminPage::url( 'chatbot' ) ) . '">← ' . esc_html__( 'Back to the chatbot', 'merchboard' ) . '</a></p>';
 
@@ -289,27 +352,47 @@ final class ChatbotAdminTab {
 			return;
 		}
 
-		/* translators: %s: Twitch channel login. */
-		echo '<h2>' . esc_html( sprintf( __( 'Chat of %s', 'merchboard' ), $channel->broadcaster_login ) ) . '</h2>';
+		/* translators: 1: channel login, 2: platform (Twitch or Kick). */
+		echo '<h2>' . esc_html( sprintf( __( 'Chat of %1$s (%2$s)', 'merchboard' ), $channel->broadcaster_login, $platform->label() ) ) . '</h2>';
 
 		if ( 'enabled' === $channel->subscription_status && $this->enqueue_script() ) {
-			echo '<div class="merchboard-chat" data-merchboard-chat data-endpoint="' . esc_url( rest_url( 'merchboard/v1/alerts/twitch/chat/' . $creator_id ) ) . '" data-nonce="' . esc_attr( wp_create_nonce( 'wp_rest' ) ) . '" data-empty="' . esc_attr__( 'No messages in the last 24 hours.', 'merchboard' ) . '" data-error="' . esc_attr__( 'The chat could not be loaded. It is tried again.', 'merchboard' ) . '" role="log" aria-live="polite" style="height:420px;overflow-y:auto;padding:8px;background:#fff;border:1px solid #c3c4c7"></div>';
-			echo '<p class="description">' . esc_html__( 'The bot\'s own view of the chat (EventSub). Messages are kept for 24 hours.', 'merchboard' ) . '</p>';
-		} else {
+			echo '<div class="merchboard-chat" data-merchboard-chat data-endpoint="' . esc_url( rest_url( 'merchboard/v1/alerts/chat/' . $platform->value . '/' . $creator_id ) ) . '" data-nonce="' . esc_attr( wp_create_nonce( 'wp_rest' ) ) . '" data-empty="' . esc_attr__( 'No messages in the last 24 hours.', 'merchboard' ) . '" data-error="' . esc_attr__( 'The chat could not be loaded. It is tried again.', 'merchboard' ) . '" role="log" aria-live="polite" style="height:420px;overflow-y:auto;padding:8px;background:#fff;border:1px solid #c3c4c7"></div>';
+			echo '<p class="description">' . esc_html__( 'The bot\'s own view of the chat (webhook). Messages are kept for 24 hours.', 'merchboard' ) . '</p>';
+		} elseif ( ChatPlatform::Twitch === $platform ) {
 			echo '<p class="description">' . esc_html__( 'Twitch cannot send the chat to this site (no HTTPS webhook), so Twitch\'s own chat is shown. It loads from twitch.tv.', 'merchboard' ) . '</p>';
 			echo '<iframe title="' . esc_attr__( 'Twitch chat', 'merchboard' ) . '" src="' . esc_url( 'https://www.twitch.tv/embed/' . rawurlencode( $channel->broadcaster_login ) . '/chat?parent=' . rawurlencode( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ) . '" width="100%" height="420" style="max-width:640px;border:1px solid #c3c4c7"></iframe>';
 			// Twitch embeds only on HTTPS pages; the pop-out chat works everywhere.
 			echo '<p><a href="' . esc_url( 'https://www.twitch.tv/popout/' . rawurlencode( $channel->broadcaster_login ) . '/chat?popout=' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open the chat at Twitch', 'merchboard' ) . '</a></p>';
+		} else {
+			echo '<p class="description">' . esc_html__( 'Kick cannot send the chat to this site (no HTTPS webhook, or webhooks are off in the Kick app).', 'merchboard' ) . '</p>';
+			echo '<p><a href="' . esc_url( 'https://kick.com/popout/' . rawurlencode( $channel->broadcaster_login ) . '/chat' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open the chat at Kick', 'merchboard' ) . '</a></p>';
 		}
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::SEND_ACTION ) . '">';
 		echo '<input type="hidden" name="creator" value="' . esc_attr( (string) $creator_id ) . '">';
-		wp_nonce_field( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $creator_id ) );
+		echo '<input type="hidden" name="platform" value="' . esc_attr( $platform->value ) . '">';
+		wp_nonce_field( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $creator_id, $platform ) );
 		echo '<p><label for="merchboard-chat-message">' . esc_html__( 'Send as the bot', 'merchboard' ) . '</label><br>';
 		echo '<input type="text" id="merchboard-chat-message" name="message" class="large-text" maxlength="500" required></p>';
 		submit_button( __( 'Send', 'merchboard' ), 'primary', 'submit', false );
 		echo '</form>';
+	}
+
+	/**
+	 * The chat window's URL.
+	 *
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
+	 */
+	public static function chat_url( int $creator_id, ChatPlatform $platform ): string {
+		return add_query_arg(
+			array(
+				'chat'     => $creator_id,
+				'platform' => $platform->value,
+			),
+			AlertsAdminPage::url( 'chatbot' )
+		);
 	}
 
 	/**

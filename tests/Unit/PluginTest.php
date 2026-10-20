@@ -307,13 +307,14 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_order_exclusions \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_events \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_overlays \(/' ) );
-		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(/' ) );
-		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_messages \(/' ) );
-		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(/' ) );
+		// Migration 20 leaves existing chatbot tables alone (this fake reports every table as existing); migration 21 adds the platforms.
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(.*\n\s*platform /s' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_messages \(.*\n\s*platform /s' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(.*\n\s*platform /s' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 20, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 21, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

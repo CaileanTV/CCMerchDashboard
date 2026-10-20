@@ -20,15 +20,17 @@ use MerchBoard\Modules\Alerts\AlertEvent;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The creator's side of the chatbot (Alerts → Chatbot, phase 25 step 8).
- * Callers pass the creator that CreatorContext resolved.
+ * The creator's side of the chatbot on every platform (Alerts → Chatbot,
+ * phase 25 steps 8 and 8.2; ADR-069 pkt. 2). Callers pass the creator that
+ * CreatorContext resolved.
  *
- * - **Channel:** the creator adds the bot to the own channel (TwitchOAuth)
- *   and can remove it again; both are audited with the channel's login.
- * - **Messages:** on or off and the template, not audited (like the other
- *   alert settings).
- * - **Test message:** a sample purchase ("TestFan") sent right away, in the
- *   format the administrator chose.
+ * - **Channels:** one per platform; the creator adds the bot to the own
+ *   channel (TwitchOAuth, KickOAuth) and can remove it again; both are
+ *   audited with the channel's login and the platform.
+ * - **Messages:** one template shared by the platforms, messages on or off
+ *   per platform; not audited (like the other alert settings).
+ * - **Test message:** a sample purchase ("TestFan") sent right away on one
+ *   platform, in the format the administrator chose.
  */
 final class CreatorChatbot {
 
@@ -40,7 +42,7 @@ final class CreatorChatbot {
 	/**
 	 * Constructor.
 	 *
-	 * @param TwitchAccount            $account       App and bot.
+	 * @param ChatPlatforms            $platforms     The platforms.
 	 * @param ChatbotChannelRepository $channels      The creators' channels.
 	 * @param ChatMessageRepository    $log           Message log.
 	 * @param ChatbotFormat            $format        Message format.
@@ -51,7 +53,7 @@ final class CreatorChatbot {
 	 * @param Transaction              $transaction   Database transaction.
 	 */
 	public function __construct(
-		private TwitchAccount $account,
+		private ChatPlatforms $platforms,
 		private ChatbotChannelRepository $channels,
 		private ChatMessageRepository $log,
 		private ChatbotFormat $format,
@@ -67,70 +69,101 @@ final class CreatorChatbot {
 	 * What the dashboard shows.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return array{available: bool, bot_login: string, mode: string, item_format: string, separator: string, variables: list<string>, enabled: bool, template: string, default_template: string, channel: array{login: string, connected_at: string}|null, last_message: array{status: string, reason: string, at: string}|null}
+	 * @return array{mode: string, item_format: string, separator: string, variables: list<string>, template: string, default_template: string, platforms: list<array{platform: string, label: string, available: bool, bot_login: string, enabled: bool, channel: array{login: string, url: string, connected_at: string}|null, last_message: array{status: string, reason: string, at: string}|null}>}
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function describe( int $creator_id ): array {
-		$channel = $this->channels->find( $creator_id );
-		$format  = $this->format->get();
-		$mode    = $format['mode'];
-		$bot     = $this->account->bot();
-		$last    = $this->log->latest( $creator_id );
+		$channels  = $this->channels->for_creator( $creator_id );
+		$format    = $this->format->get();
+		$mode      = $format['mode'];
+		$platforms = array();
+
+		foreach ( $this->platforms->all() as $adapter ) {
+			$platform    = $adapter->platform();
+			$channel     = $channels[ $platform->value ];
+			$last        = $this->log->latest( $creator_id, $platform );
+			$platforms[] = array(
+				'platform'     => $platform->value,
+				'label'        => $platform->label(),
+				'available'    => $adapter->ready(),
+				'bot_login'    => $adapter->bot_login(),
+				'enabled'      => $channel->enabled,
+				'channel'      => $channel->connected() ? array(
+					'login'        => $channel->broadcaster_login,
+					'url'          => $platform->channel_url( $channel->broadcaster_login ),
+					'connected_at' => gmdate( 'Y-m-d\TH:i:s\Z', $channel->authorized_at ),
+				) : null,
+				'last_message' => null === $last ? null : array(
+					'status' => $last['status'],
+					'reason' => $last['reason'],
+					'at'     => gmdate( 'Y-m-d\TH:i:s\Z', $last['at'] ),
+				),
+			);
+		}
 
 		return array(
-			'available'        => $this->account->ready(),
-			'bot_login'        => null === $bot ? '' : $bot['login'],
 			'mode'             => $mode,
 			'item_format'      => $format['item'],
 			'separator'        => $format['separator'],
 			'variables'        => 'order' === $mode ? ChatMessages::ORDER_VARIABLES : ChatMessages::LINE_VARIABLES,
-			'enabled'          => $channel->enabled,
-			'template'         => $channel->template,
+			'template'         => $channels[ ChatPlatform::Twitch->value ]->template,
 			'default_template' => 'order' === $mode ? ChatbotChannel::DEFAULT_ORDER_TEMPLATE : ChatbotChannel::DEFAULT_TEMPLATE,
-			'channel'          => $channel->connected() ? array(
-				'login'        => $channel->broadcaster_login,
-				'connected_at' => gmdate( 'Y-m-d\TH:i:s\Z', $channel->authorized_at ),
-			) : null,
-			'last_message'     => null === $last ? null : array(
-				'status' => $last['status'],
-				'reason' => $last['reason'],
-				'at'     => gmdate( 'Y-m-d\TH:i:s\Z', $last['at'] ),
-			),
+			'platforms'        => $platforms,
 		);
 	}
 
 	/**
-	 * Saves whether purchases are announced and the template.
+	 * Saves the shared template and whether purchases are announced per
+	 * platform.
 	 *
-	 * @param int    $creator_id Creator.
-	 * @param bool   $enabled    Messages on or off.
-	 * @param string $template   Template ('' for the default); plain text, one line, at most 500 characters.
+	 * @param int                 $creator_id Creator.
+	 * @param string|null         $template   Template ('' for the default; null: unchanged); plain text, one line, at most 500 characters.
+	 * @param array<string, bool> $enabled    On or off by platform value (unknown platforms are ignored).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function save( int $creator_id, bool $enabled, string $template ): void {
-		$template = trim( (string) preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $template ) ) );
+	public function save( int $creator_id, ?string $template, array $enabled ): void {
+		if ( null !== $template ) {
+			$template = trim( (string) preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $template ) ) );
+			$this->channels->save_template( $creator_id, mb_substr( $template, 0, ChatbotChannel::TEMPLATE_MAX ) );
+		}
 
-		$this->channels->save_settings( $creator_id, $enabled, mb_substr( $template, 0, ChatbotChannel::TEMPLATE_MAX ) );
+		foreach ( $enabled as $value => $on ) {
+			$platform = ChatPlatform::parse( $value );
+
+			if ( null !== $platform ) {
+				$this->channels->save_enabled( $creator_id, $platform, $on );
+			}
+		}
 	}
 
 	/**
-	 * Removes the bot from the creator's channel.
+	 * Removes the bot from the creator's channel on a platform.
 	 *
-	 * @param int $creator_id Creator.
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
 	 * @return bool Whether a channel was removed.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function disconnect( int $creator_id ): bool {
-		$channel = $this->channels->find( $creator_id );
+	public function disconnect( int $creator_id, ChatPlatform $platform ): bool {
+		$channel = $this->channels->find( $creator_id, $platform );
 
 		if ( ! $channel->connected() ) {
 			return false;
 		}
 
+		// Kick: the creator's token is revoked before it is deleted.
+		$this->platforms->get( $platform )->release( $channel );
 		$this->transaction->run(
 			function () use ( $creator_id, $channel ): void {
-				$this->audit->record( AuditAction::AlertChatbotChannelDisconnected, $creator_id, array( 'login' => $channel->broadcaster_login ) );
-				$this->channels->disconnect( $creator_id );
+				$this->audit->record(
+					AuditAction::AlertChatbotChannelDisconnected,
+					$creator_id,
+					array(
+						'login'    => $channel->broadcaster_login,
+						'platform' => $channel->platform->value,
+					)
+				);
+				$this->channels->disconnect( $creator_id, $channel->platform );
 			}
 		);
 		$this->subscriptions->unsubscribe( $channel );
@@ -139,21 +172,22 @@ final class CreatorChatbot {
 	}
 
 	/**
-	 * Sends a test message to the creator's channel.
+	 * Sends a test message to the creator's channel on a platform.
 	 *
-	 * @param int $creator_id Creator.
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
 	 * @return array{result: string, reason: string, message: string}
-	 * @throws TwitchException When the bot or the channel is not set up, or Twitch refuses the app.
+	 * @throws ChatbotException When the platform or the channel is not set up, or the platform refuses the app.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
-	public function test( int $creator_id ): array {
-		$channel = self::require_channel( $this->channels->find( $creator_id ) );
+	public function test( int $creator_id, ChatPlatform $platform ): array {
+		$channel = self::require_channel( $this->channels->find( $creator_id, $platform ) );
 		$format  = $this->format->get();
 		$event   = new AlertEvent( $creator_id, 0, '0001', 0, 0, 0, __( 'Test product', 'merchboard' ), '', 1, 0, array(), self::TEST_USERNAME, new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) );
 		$message = 'order' === $format['mode']
 			? $this->messages->order( $channel->template_for( 'order' ), array( $event ), $format )
 			: $this->messages->line( $channel->template_for( 'line' ), $event );
-		$result  = $this->sender->send_now( $channel->broadcaster_id, $message );
+		$result  = $this->sender->send_now( $channel, $message );
 
 		return array(
 			'result'  => $result['result'],
@@ -166,11 +200,11 @@ final class CreatorChatbot {
 	 * Requires a channel with the bot.
 	 *
 	 * @param ChatbotChannel $channel The creator's channel.
-	 * @throws TwitchException When the creator has not added the bot.
+	 * @throws ChatbotException When the creator has not added the bot.
 	 */
 	private static function require_channel( ChatbotChannel $channel ): ChatbotChannel {
 		if ( ! $channel->connected() ) {
-			throw new TwitchException( TwitchException::NOT_CONFIGURED );
+			throw new ChatbotException( ChatbotException::NOT_CONFIGURED );
 		}
 
 		return $channel;

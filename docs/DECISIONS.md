@@ -3780,7 +3780,7 @@ ADR-007, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-059, ADR-060,
 2026-10-20
 
 ## Status
-Accepteret af projektejeren 2026-10-20, inklusive at creatorens Kick-tokens gemmes krypteret ("så længe den krypteres, og ikke kan tilgås af andre end os"). Godkender Kick som ekstern service efter ADR-016. **Ikke implementeret** (fase 25, trin 25.8.2).
+Accepteret af projektejeren 2026-10-20, inklusive at creatorens Kick-tokens gemmes krypteret ("så længe den krypteres, og ikke kan tilgås af andre end os"). Godkender Kick som ekstern service efter ADR-016. **Implementeringsnote 2026-10-20 (trin 25.8.2; testet automatisk, ikke runtime-verificeret):** som beslutningen, med disse præciseringer: scopes er `channel:read chat:write events:subscribe` (`/public/v1/users` bruges ikke; kanalen slås op med `/public/v1/channels`); bottens navn indtastes af administratoren og vises kun for creators; en ukendt `Retry-After` giver 60 sekunders venten; Kicks offentlige nøgle hentes højst hvert 10. minut igen ved en ugyldig signatur; migration 20 lader nu eksisterende tabeller være. Projektejeren besluttede samme dag at udskyde YouTube.
 
 ## Context
 Twitch-chatbotten (ADR-066, trin 25.8) virker på devpage. Projektejeren vil have præcis samme setup på Kick og lægger vægt på, at chatbotten opleves ens på tværs af platforme. Kicks offentlige API ([docs.kick.com](https://docs.kick.com/)) understøtter at sende en chatbesked som bot (`POST /public/v1/chat` med `type: "bot"`), at lytte til chatten med webhook-eventet `chat.message.sent` og OAuth 2.1 med PKCE.

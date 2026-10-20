@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * The central chatbot (ADR-066, status note 2026-10-20): the project
  * owner's Twitch app (Client ID and Secret) and the bot account an
  * administrator connects. Stored in one option without autoload; the secret,
- * the app access token and the webhook secret are encrypted (TwitchCipher)
+ * the app access token and the webhook secret are encrypted (ChatCipher)
  * and never leave the server or show in the UI again.
  *
  * - **App access token:** fetched with client credentials when needed and
@@ -61,12 +61,12 @@ final class TwitchAccount {
 	/**
 	 * Constructor.
 	 *
-	 * @param TwitchApi    $api         Twitch.
-	 * @param TwitchCipher $cipher      Encryption.
-	 * @param AuditTrail   $audit       Audit trail.
-	 * @param Transaction  $transaction Database transaction.
+	 * @param TwitchApi   $api         Twitch.
+	 * @param ChatCipher  $cipher      Encryption.
+	 * @param AuditTrail  $audit       Audit trail.
+	 * @param Transaction $transaction Database transaction.
 	 */
-	public function __construct( private TwitchApi $api, private TwitchCipher $cipher, private AuditTrail $audit, private Transaction $transaction ) {
+	public function __construct( private TwitchApi $api, private ChatCipher $cipher, private AuditTrail $audit, private Transaction $transaction ) {
 	}
 
 	/**
@@ -126,11 +126,7 @@ final class TwitchAccount {
 	 * chat instead.
 	 */
 	public static function webhooks_possible(): bool {
-		$url  = self::webhook_url();
-		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
-		$port = wp_parse_url( $url, PHP_URL_PORT );
-
-		return str_starts_with( $url, 'https://' ) && ( null === $port || 443 === $port ) && 1 !== preg_match( '/(^localhost$|\.local$|\.test$|^127\.|^10\.|^192\.168\.)/', $host );
+		return ChatPlatforms::reachable( self::webhook_url() );
 	}
 
 	/**

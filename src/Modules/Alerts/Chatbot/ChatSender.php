@@ -19,28 +19,28 @@ use MerchBoard\Modules\WooCommerce\JobQueue;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The chat messages of the alerts (ADR-066 pkt. 3 and status note
- * 2026-10-20), sent in the background through Action Scheduler, never in a
- * customer's or creator's request.
+ * The chat messages of the alerts on every platform (ADR-066 pkt. 3, its
+ * status note 2026-10-20 and ADR-069 pkt. 1), sent in the background
+ * through Action Scheduler, never in a customer's or creator's request.
  *
- * - **When:** a job per creator and order, queued when the order's alerts
- *   are recorded (and again for a resend). The job sends one message per
- *   line or one per order (ChatbotFormat) to the channel the creator added
- *   the bot to, while alerts are switched on, the bot is connected and the
- *   creator's messages are on.
- * - **Never twice:** the message log (ChatMessageRepository) is checked
- *   before sending; a resend forgets the entry first.
- * - **Rate limit:** after each message the job notes Twitch's `Ratelimit-*`
- *   values; when the limit is used up, or Twitch answers 429, the job waits
- *   until Twitch's reset. Lines of one order are at least a second apart
- *   (Twitch's limit per channel). A message is tried at most MAX_ATTEMPTS
- *   times.
+ * - **When:** a job per creator, order and platform, queued when the
+ *   order's alerts are recorded (and again for a resend). The job sends one
+ *   message per line or one per order (ChatbotFormat) to the channel the
+ *   creator added the bot to, while alerts are switched on, the platform is
+ *   set up and the creator's messages on that platform are on.
+ * - **Never twice:** the message log (ChatMessageRepository) is checked per
+ *   platform before sending; a resend forgets the entry first.
+ * - **Rate limit:** the platform tells how long to wait (Twitch's
+ *   `Ratelimit-*`, Kick's 429); the job waits that long. Lines of one order
+ *   are at least a second apart (the platforms' limit per channel). A
+ *   message is tried at most MAX_ATTEMPTS times.
  * - **Logs** only reason codes, never tokens or the message.
  */
 final class ChatSender {
 
 	/**
-	 * Action Scheduler hook; arguments: creator id, order id.
+	 * Action Scheduler hook; arguments: creator id, order id, platform
+	 * (jobs queued before step 8.2 have no platform: Twitch).
 	 */
 	public const HOOK = 'merchboard_alert_chat_send';
 
@@ -62,8 +62,7 @@ final class ChatSender {
 	/**
 	 * Constructor.
 	 *
-	 * @param TwitchAccount            $account      App and bot.
-	 * @param TwitchApi                $api          Twitch.
+	 * @param ChatPlatforms            $platforms    The platforms.
 	 * @param ChatbotChannelRepository $channels     The creators' channels.
 	 * @param ChatMessageRepository    $log          Message log.
 	 * @param ChatbotFormat            $format       Message format.
@@ -74,8 +73,7 @@ final class ChatSender {
 	 * @param Logger                   $logger       Technical log.
 	 */
 	public function __construct(
-		private TwitchAccount $account,
-		private TwitchApi $api,
+		private ChatPlatforms $platforms,
 		private ChatbotChannelRepository $channels,
 		private ChatMessageRepository $log,
 		private ChatbotFormat $format,
@@ -89,19 +87,22 @@ final class ChatSender {
 
 	/**
 	 * Queues the messages of an order's alerts for every creator that has
-	 * alerts in it (`woocommerce_order_status_*`, after the alerts are
-	 * recorded). Cheap when the chatbot is not set up.
+	 * alerts in it, on each platform where the creator has the bot
+	 * (`woocommerce_order_status_*`, after the alerts are recorded). Cheap
+	 * when no platform is set up.
 	 *
 	 * @param mixed $order_id Order id from WooCommerce.
 	 */
 	public function order_paid( mixed $order_id ): void {
-		if ( ! is_numeric( $order_id ) || (int) $order_id <= 0 || ! $this->account->ready() || ! $this->availability->sending() ) {
+		if ( ! is_numeric( $order_id ) || (int) $order_id <= 0 || array() === $this->platforms->ready() || ! $this->availability->sending() ) {
 			return;
 		}
 
 		try {
 			foreach ( $this->events->creators_of_order( (int) $order_id ) as $creator_id ) {
-				$this->schedule( $creator_id, (int) $order_id );
+				foreach ( $this->active_channels( $creator_id ) as $channel ) {
+					$this->schedule( $creator_id, (int) $order_id, $channel->platform );
+				}
 			}
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Chat messages could not be queued.', array( 'reason' => $e->getMessage() ) );
@@ -109,96 +110,122 @@ final class ChatSender {
 	}
 
 	/**
-	 * Sends the messages of an order again (from the history): the log
-	 * entries are forgotten and a job is queued.
+	 * Sends the messages of an order again (from the history) on each
+	 * platform where the creator has the bot: the log entries are forgotten
+	 * and jobs are queued.
 	 *
 	 * @param int $creator_id    Creator.
 	 * @param int $order_id      Order.
 	 * @param int $order_item_id One line; 0 for all of the order.
-	 * @return bool Whether a job was queued (false while the chatbot is off).
+	 * @return bool Whether a job was queued (false while the chatbot is off everywhere).
 	 * @throws DatabaseException When the log cannot be updated.
 	 */
 	public function resend( int $creator_id, int $order_id, int $order_item_id = 0 ): bool {
-		$channel = $this->channels->find( $creator_id );
+		$queued = false;
 
-		if ( ! $this->account->ready() || ! $channel->connected() || ! $channel->enabled ) {
-			return false;
-		}
-
-		if ( 'order' === $this->format->get()['mode'] ) {
-			$this->log->forget( $creator_id, $order_id, 0 );
-		} else {
-			foreach ( $this->events->for_creator_orders( $creator_id, array( $order_id ) ) as $event ) {
-				if ( 0 === $order_item_id || $event->order_item_id === $order_item_id ) {
-					$this->log->forget( $creator_id, $order_id, $event->order_item_id );
+		foreach ( $this->active_channels( $creator_id ) as $channel ) {
+			if ( 'order' === $this->format->get()['mode'] ) {
+				$this->log->forget( $creator_id, $channel->platform, $order_id, 0 );
+			} else {
+				foreach ( $this->events->for_creator_orders( $creator_id, array( $order_id ) ) as $event ) {
+					if ( 0 === $order_item_id || $event->order_item_id === $order_item_id ) {
+						$this->log->forget( $creator_id, $channel->platform, $order_id, $event->order_item_id );
+					}
 				}
 			}
+
+			$queued = $this->schedule( $creator_id, $order_id, $channel->platform ) || $queued;
 		}
 
-		return $this->schedule( $creator_id, $order_id );
+		return $queued;
 	}
 
 	/**
-	 * The job (Action Scheduler): sends the next message of a creator's order.
+	 * The job (Action Scheduler): sends the next message of a creator's
+	 * order on a platform.
 	 *
 	 * @param mixed $creator_id Creator.
 	 * @param mixed $order_id   Order.
+	 * @param mixed $platform   Platform value (Twitch for jobs queued before step 8.2).
 	 */
-	public function run( mixed $creator_id, mixed $order_id ): void {
-		if ( ! is_numeric( $creator_id ) || ! is_numeric( $order_id ) ) {
+	public function run( mixed $creator_id, mixed $order_id, mixed $platform = 'twitch' ): void {
+		$platform = ChatPlatform::parse( $platform );
+
+		if ( ! is_numeric( $creator_id ) || ! is_numeric( $order_id ) || null === $platform ) {
 			return;
 		}
 
 		try {
-			$this->send_next( (int) $creator_id, (int) $order_id );
-		} catch ( DatabaseException | TwitchException $e ) {
+			$this->send_next( (int) $creator_id, (int) $order_id, $platform );
+		} catch ( DatabaseException | ChatbotException $e ) {
 			$this->logger->error(
 				'A chat message could not be sent.',
 				array(
 					'creator_id' => (int) $creator_id,
-					'reason'     => $e instanceof TwitchException ? $e->reason() : $e->getMessage(),
+					'platform'   => $platform->value,
+					'reason'     => $e instanceof ChatbotException ? $e->reason() : $e->getMessage(),
 				)
 			);
 		}
 	}
 
 	/**
-	 * Sends a message right away (test message, admin's message); the rate
-	 * limit is noted.
+	 * Sends a message right away (test message, admin's message).
 	 *
-	 * @param string $broadcaster_id Channel.
-	 * @param string $message        Message.
-	 * @return array{result: string, reason: string, limit: int|null, remaining: int|null, reset: int|null}
-	 * @throws TwitchException When the chatbot is not set up or Twitch refuses the app.
+	 * @param ChatbotChannel $channel The creator's channel.
+	 * @param string         $message Message.
+	 * @return array{result: string, reason: string, retry_after: int|null}
+	 * @throws ChatbotException When the platform is not set up or refuses the app.
+	 * @throws DatabaseException When stored tokens cannot be read or written.
 	 */
-	public function send_now( string $broadcaster_id, string $message ): array {
-		$bot = $this->account->bot();
+	public function send_now( ChatbotChannel $channel, string $message ): array {
+		self::require_sendable( $channel, $message );
 
-		if ( null === $bot || '' === trim( $message ) ) {
-			throw new TwitchException( TwitchException::NOT_CONFIGURED );
+		return $this->platforms->get( $channel->platform )->send( $channel, $message );
+	}
+
+	/**
+	 * Requires a channel with the bot and a message.
+	 *
+	 * @param ChatbotChannel $channel The creator's channel.
+	 * @param string         $message Message.
+	 * @throws ChatbotException When there is no channel or no message.
+	 */
+	private static function require_sendable( ChatbotChannel $channel, string $message ): void {
+		if ( ! $channel->connected() || '' === trim( $message ) ) {
+			throw new ChatbotException( ChatbotException::NOT_CONFIGURED );
+		}
+	}
+
+	/**
+	 * The creator's channels where messages are sent: the platform is set
+	 * up, the bot is in the channel and the creator's messages are on.
+	 *
+	 * @param int $creator_id Creator.
+	 * @return list<ChatbotChannel>
+	 * @throws DatabaseException When the channels cannot be read.
+	 */
+	private function active_channels( int $creator_id ): array {
+		$active = array();
+
+		foreach ( $this->channels->for_creator( $creator_id ) as $channel ) {
+			if ( $channel->connected() && $channel->enabled && $this->platforms->get( $channel->platform )->ready() ) {
+				$active[] = $channel;
+			}
 		}
 
-		$client = $this->account->client_id();
-		$result = $this->api->send_message( $client, $this->account->app_token(), $broadcaster_id, $bot['id'], $message );
-
-		// A refused app token is renewed once.
-		if ( 'unauthorized' === $result['result'] ) {
-			$result = $this->api->send_message( $client, $this->account->app_token( true ), $broadcaster_id, $bot['id'], $message );
-		}
-
-		$this->account->note_rate_limit( $result['limit'], $result['remaining'], $result['reset'] );
-
-		return $result;
+		return $active;
 	}
 
 	/**
 	 * Queues a job unless the same one waits.
 	 *
-	 * @param int $creator_id Creator.
-	 * @param int $order_id   Order.
+	 * @param int          $creator_id Creator.
+	 * @param int          $order_id   Order.
+	 * @param ChatPlatform $platform   Platform.
 	 */
-	private function schedule( int $creator_id, int $order_id ): bool {
-		$args = array( $creator_id, $order_id );
+	private function schedule( int $creator_id, int $order_id, ChatPlatform $platform ): bool {
+		$args = array( $creator_id, $order_id, $platform->value );
 
 		return ! $this->queue->has_pending( self::HOOK, $args ) && $this->queue->enqueue( self::HOOK, $args );
 	}
@@ -208,33 +235,36 @@ final class ChatSender {
 	 * running job as pending, so there is no duplicate check; the message
 	 * log keeps a second job from sending anything twice).
 	 *
-	 * @param int $creator_id Creator.
-	 * @param int $order_id   Order.
-	 * @param int $delay      Seconds to wait.
+	 * @param int          $creator_id Creator.
+	 * @param int          $order_id   Order.
+	 * @param ChatPlatform $platform   Platform.
+	 * @param int          $delay      Seconds to wait.
 	 */
-	private function again( int $creator_id, int $order_id, int $delay ): void {
-		$this->queue->enqueue( self::HOOK, array( $creator_id, $order_id ), $delay );
+	private function again( int $creator_id, int $order_id, ChatPlatform $platform, int $delay ): void {
+		$this->queue->enqueue( self::HOOK, array( $creator_id, $order_id, $platform->value ), $delay );
 	}
 
 	/**
 	 * Sends the next message that is due.
 	 *
-	 * @param int $creator_id Creator.
-	 * @param int $order_id   Order.
+	 * @param int          $creator_id Creator.
+	 * @param int          $order_id   Order.
+	 * @param ChatPlatform $platform   Platform.
 	 * @throws DatabaseException When the database cannot be read or written.
-	 * @throws TwitchException When the app is not set up or Twitch refuses it.
+	 * @throws ChatbotException When the platform is not set up or refuses the app.
 	 */
-	private function send_next( int $creator_id, int $order_id ): void {
-		$channel = $this->channels->find( $creator_id );
+	private function send_next( int $creator_id, int $order_id, ChatPlatform $platform ): void {
+		$channel = $this->channels->find( $creator_id, $platform );
+		$adapter = $this->platforms->get( $platform );
 
-		if ( ! $this->availability->sending() || ! $this->account->ready() || ! $channel->connected() || ! $channel->enabled ) {
+		if ( ! $this->availability->sending() || ! $adapter->ready() || ! $channel->connected() || ! $channel->enabled ) {
 			return;
 		}
 
-		$wait = $this->account->wait_seconds();
+		$wait = $adapter->wait_seconds();
 
 		if ( $wait > 0 ) {
-			$this->again( $creator_id, $order_id, $wait );
+			$this->again( $creator_id, $order_id, $platform, $wait );
 			return;
 		}
 
@@ -246,14 +276,14 @@ final class ChatSender {
 		}
 
 		if ( 'order' === $format['mode'] ) {
-			if ( ! $this->log->sent( $creator_id, $order_id, 0 ) ) {
+			if ( ! $this->log->sent( $creator_id, $platform, $order_id, 0 ) ) {
 				$this->deliver( $channel, $order_id, 0, $this->messages->order( $channel->template_for( 'order' ), $events, $format ) );
 			}
 
 			return;
 		}
 
-		$pending = array_values( array_filter( $events, fn( AlertEvent $event ): bool => ! $this->log->sent( $creator_id, $order_id, $event->order_item_id ) ) );
+		$pending = array_values( array_filter( $events, fn( AlertEvent $event ): bool => ! $this->log->sent( $creator_id, $platform, $order_id, $event->order_item_id ) ) );
 		$next    = $pending[0] ?? null;
 
 		if ( null === $next ) {
@@ -264,7 +294,7 @@ final class ChatSender {
 
 		// The order's next line, at least a second later (also after a skipped one).
 		if ( $done && count( $pending ) > 1 ) {
-			$this->again( $creator_id, $order_id, self::LINE_GAP );
+			$this->again( $creator_id, $order_id, $platform, self::LINE_GAP );
 		}
 	}
 
@@ -278,33 +308,33 @@ final class ChatSender {
 	 * @param string         $message       Message.
 	 * @return bool Whether this message is finished (sent or given up), so the next may follow.
 	 * @throws DatabaseException When the log cannot be written.
-	 * @throws TwitchException When the app is not set up or Twitch refuses it.
+	 * @throws ChatbotException When the platform is not set up or refuses the app.
 	 */
 	private function deliver( ChatbotChannel $channel, int $order_id, int $order_item_id, string $message ): bool {
 		$creator_id = $channel->creator_id;
+		$platform   = $channel->platform;
 
 		if ( '' === $message ) {
-			$this->log->note( $creator_id, $order_id, $order_item_id, ChatMessageRepository::SKIPPED, 'empty' );
+			$this->log->note( $creator_id, $platform, $order_id, $order_item_id, ChatMessageRepository::SKIPPED, 'empty' );
 
 			return true;
 		}
 
-		$result   = $this->send_now( $channel->broadcaster_id, $message );
-		$attempts = $this->log->attempts( $creator_id, $order_id, $order_item_id ) + 1;
+		$result   = $this->send_now( $channel, $message );
+		$attempts = $this->log->attempts( $creator_id, $platform, $order_id, $order_item_id ) + 1;
 
 		if ( 'sent' === $result['result'] ) {
-			$this->log->note( $creator_id, $order_id, $order_item_id, ChatMessageRepository::SENT );
+			$this->log->note( $creator_id, $platform, $order_id, $order_item_id, ChatMessageRepository::SENT );
 
 			return true;
 		}
 
-		// Twitch dropped it (e.g. the channel's filters) or refused the channel: not tried again.
+		// Dropped (e.g. the channel's filters) or the channel refused: not tried again.
 		$final = in_array( $result['result'], array( 'dropped', 'forbidden', 'unauthorized' ), true ) || $attempts >= self::MAX_ATTEMPTS;
-		$this->log->note( $creator_id, $order_id, $order_item_id, $final ? ChatMessageRepository::FAILED : ChatMessageRepository::WAITING, '' !== $result['reason'] ? $result['reason'] : $result['result'] );
+		$this->log->note( $creator_id, $platform, $order_id, $order_item_id, $final ? ChatMessageRepository::FAILED : ChatMessageRepository::WAITING, '' !== $result['reason'] ? $result['reason'] : $result['result'] );
 
 		if ( ! $final ) {
-			$delay = 'rate_limited' === $result['result'] && null !== $result['reset'] ? max( 1, $result['reset'] - time() + 1 ) : self::RETRY_DELAY;
-			$this->again( $creator_id, $order_id, $delay );
+			$this->again( $creator_id, $order_id, $platform, $result['retry_after'] ?? self::RETRY_DELAY );
 		}
 
 		return $final;

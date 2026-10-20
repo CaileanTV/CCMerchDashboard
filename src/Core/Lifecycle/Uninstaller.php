@@ -18,6 +18,8 @@ use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
+use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
+use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
@@ -181,6 +183,8 @@ final class Uninstaller {
 		delete_option( AlertFonts::APPROVED_OPTION );
 		delete_option( TwitchAccount::OPTION );
 		delete_option( ChatbotFormat::OPTION );
+		delete_option( KickAccount::OPTION );
+		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );
 		delete_option( Settings::OPTION );

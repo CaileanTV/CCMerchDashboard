@@ -1,6 +1,6 @@
 <?php
 /**
- * The bot's EventSub chat subscriptions.
+ * The bot's chat subscriptions.
  *
  * @package MerchBoard
  */
@@ -14,29 +14,27 @@ use MerchBoard\Core\Database\DatabaseException;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The bot listens to the chat of every channel it was added to (ADR-066,
- * status note 2026-10-20): EventSub `channel.chat.message` over webhook,
- * with the app access token, which gives the bot Twitch's chat identity
- * (listed under "Chat Bots") and feeds the admin's chat window. A site
- * Twitch cannot reach (not HTTPS, or a local site) gets no subscription;
- * the admin page shows Twitch's embedded chat there instead.
+ * Subscribes the bot to the creators' chats on every platform (Twitch's
+ * EventSub, Kick's events; ADR-066, ADR-069), so the admin's chat window
+ * shows them, and notes each subscription's status. Where the platform
+ * cannot reach the site (no HTTPS, e.g. Local), the status is
+ * `no_webhooks` and the admin page shows the platform's own chat instead.
  */
 final class ChatSubscriptions {
 
 	/**
-	 * Status of a channel on a site Twitch cannot reach.
+	 * Status of a channel whose chat cannot be received (no public HTTPS).
 	 */
 	public const NO_WEBHOOKS = 'no_webhooks';
 
 	/**
 	 * Constructor.
 	 *
-	 * @param TwitchAccount            $account  App and bot.
-	 * @param TwitchApi                $api      Twitch.
-	 * @param ChatbotChannelRepository $channels The creators' channels.
-	 * @param ChatLogRepository        $chat     Chat window messages.
+	 * @param ChatPlatforms            $platforms The platforms.
+	 * @param ChatbotChannelRepository $channels  The creators' channels.
+	 * @param ChatLogRepository        $chat      The chat log.
 	 */
-	public function __construct( private TwitchAccount $account, private TwitchApi $api, private ChatbotChannelRepository $channels, private ChatLogRepository $chat ) {
+	public function __construct( private ChatPlatforms $platforms, private ChatbotChannelRepository $channels, private ChatLogRepository $chat ) {
 	}
 
 	/**
@@ -47,27 +45,27 @@ final class ChatSubscriptions {
 	 * @throws DatabaseException When the status cannot be stored.
 	 */
 	public function subscribe( ChatbotChannel $channel ): string {
-		$bot = $this->account->bot();
+		$platform = $this->platforms->get( $channel->platform );
 
-		if ( ! $channel->connected() || null === $bot ) {
+		if ( ! $channel->connected() || ! $platform->ready() ) {
 			return '';
 		}
 
-		if ( ! TwitchAccount::webhooks_possible() ) {
-			$this->channels->set_subscription( $channel->creator_id, '', self::NO_WEBHOOKS );
+		if ( ! $platform->webhooks_possible() ) {
+			$this->channels->set_subscription( $channel->creator_id, $channel->platform, '', self::NO_WEBHOOKS );
 
 			return self::NO_WEBHOOKS;
 		}
 
 		try {
-			$subscription = $this->api->subscribe_chat( $this->account->client_id(), $this->account->app_token(), $channel->broadcaster_id, $bot['id'], TwitchAccount::webhook_url(), $this->account->webhook_secret() );
-		} catch ( TwitchException $e ) {
-			$this->channels->set_subscription( $channel->creator_id, '', $e->reason() );
+			$subscription = $platform->subscribe( $channel );
+		} catch ( ChatbotException $e ) {
+			$this->channels->set_subscription( $channel->creator_id, $channel->platform, '', $e->reason() );
 
 			return $e->reason();
 		}
 
-		$this->channels->set_subscription( $channel->creator_id, $subscription['id'], $subscription['status'] );
+		$this->channels->set_subscription( $channel->creator_id, $channel->platform, $subscription['id'], $subscription['status'] );
 
 		return $subscription['status'];
 	}
@@ -79,28 +77,24 @@ final class ChatSubscriptions {
 	 * @throws DatabaseException When the chat messages cannot be deleted.
 	 */
 	public function unsubscribe( ChatbotChannel $channel ): void {
-		if ( '' !== $channel->subscription_id && $this->account->has_app() ) {
-			try {
-				$this->api->unsubscribe( $this->account->client_id(), $this->account->app_token(), $channel->subscription_id );
-			} catch ( TwitchException ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch -- Twitch ends a subscription whose authorization is gone by itself.
-			}
-		}
+		$this->platforms->get( $channel->platform )->unsubscribe( $channel );
 
 		if ( '' !== $channel->broadcaster_id ) {
-			$this->chat->clear( $channel->broadcaster_id );
+			$this->chat->clear( $channel->platform, $channel->broadcaster_id );
 		}
 	}
 
 	/**
-	 * Subscribes every channel again (after the bot or the app changed).
+	 * Subscribes every channel again (after the bot or an app changed).
 	 *
+	 * @param ChatPlatform|null $platform Only this platform; null for all.
 	 * @return int Channels subscribed.
 	 * @throws DatabaseException When the channels cannot be read or a status stored.
 	 */
-	public function subscribe_all(): int {
+	public function subscribe_all( ?ChatPlatform $platform = null ): int {
 		$count = 0;
 
-		foreach ( $this->channels->connected() as $channel ) {
+		foreach ( $this->channels->connected( $platform ) as $channel ) {
 			if ( in_array( $this->subscribe( $channel ), array( 'enabled', 'webhook_callback_verification_pending' ), true ) ) {
 				++$count;
 			}

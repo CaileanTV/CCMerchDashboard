@@ -433,17 +433,27 @@ enum AuditAction: string {
 	case AlertChatbotFormatChanged = 'alert_chatbot_format_changed';
 
 	/**
-	 * A creator added the bot to the own Twitch channel. Context: the channel login.
+	 * A creator added the bot to the own channel. Context: the channel login and, from step 8.2, the platform.
 	 */
 	case AlertChatbotChannelConnected = 'alert_chatbot_channel_connected';
 
 	/**
-	 * The bot was removed from a creator's Twitch channel. Context: the channel login.
+	 * The bot was removed from a creator's channel. Context: the channel login and, from step 8.2, the platform.
 	 */
 	case AlertChatbotChannelDisconnected = 'alert_chatbot_channel_disconnected';
 
 	/**
-	 * An administrator sent a chat message as the bot. Context: the channel login; never the message.
+	 * An administrator sent a chat message as the bot. Context: the channel login and, from step 8.2, the platform; never the message.
 	 */
 	case AlertChatbotMessageSent = 'alert_chatbot_message_sent';
+
+	/**
+	 * The Kick app of the alert chatbot was saved (phase 25, step 8.2, ADR-069). Context: whether it is a new app; never the secret.
+	 */
+	case AlertKickAppChanged = 'alert_kick_app_changed';
+
+	/**
+	 * The Kick app of the alert chatbot was removed with every secret.
+	 */
+	case AlertKickAppRemoved = 'alert_kick_app_removed';
 }
