@@ -18,6 +18,20 @@ use MerchBoard\Modules\Alerts\Admin\AlertsAdminActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
+use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
+use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
+use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
+use MerchBoard\Modules\Alerts\Chatbot\ChatLogRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatMessageRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatMessages;
+use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
+use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
+use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchCipher;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\History\AlertHistory;
@@ -36,11 +50,15 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
+use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
+use MerchBoard\Modules\Alerts\Rest\TwitchController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Dashboard\DashboardRoute;
+use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
@@ -104,7 +122,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -180,10 +198,97 @@ final class AlertsModule implements Module {
 			MeAlertsController::class,
 			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ) )
 		);
+		// The Twitch chatbot (phase 25, step 8; ADR-066, status note 2026-10-20).
+		$container->set( TwitchApi::class, static fn(): TwitchApi => new TwitchApi() );
+		$container->set( TwitchCipher::class, static fn(): TwitchCipher => new TwitchCipher() );
+		$container->set(
+			TwitchAccount::class,
+			static fn( Container $c ): TwitchAccount => new TwitchAccount( $c->get( TwitchApi::class ), $c->get( TwitchCipher::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set( ChatbotFormat::class, static fn( Container $c ): ChatbotFormat => new ChatbotFormat( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( ChatbotChannelRepository::class, static fn( Container $c ): ChatbotChannelRepository => new ChatbotChannelRepository( $c->get( wpdb::class ) ) );
+		$container->set( ChatMessageRepository::class, static fn( Container $c ): ChatMessageRepository => new ChatMessageRepository( $c->get( wpdb::class ) ) );
+		$container->set( ChatLogRepository::class, static fn( Container $c ): ChatLogRepository => new ChatLogRepository( $c->get( wpdb::class ) ) );
+		$container->set( ChatMessages::class, static fn( Container $c ): ChatMessages => new ChatMessages( $c->get( AlertTemplate::class ) ) );
+		$container->set(
+			ChatSubscriptions::class,
+			static fn( Container $c ): ChatSubscriptions => new ChatSubscriptions( $c->get( TwitchAccount::class ), $c->get( TwitchApi::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ) )
+		);
+		$container->set(
+			ChatSender::class,
+			static fn( Container $c ): ChatSender => new ChatSender(
+				$c->get( TwitchAccount::class ),
+				$c->get( TwitchApi::class ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatMessageRepository::class ),
+				$c->get( ChatbotFormat::class ),
+				$c->get( ChatMessages::class ),
+				$c->get( AlertEventRepository::class ),
+				$c->get( AlertsAvailability::class ),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			TwitchOAuth::class,
+			static fn( Container $c ): TwitchOAuth => new TwitchOAuth(
+				$c->get( TwitchAccount::class ),
+				$c->get( TwitchApi::class ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatSubscriptions::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				static fn( string $path ): string => $c->get( DashboardRoute::class )->url( $path )
+			)
+		);
+		$container->set(
+			CreatorChatbot::class,
+			static fn( Container $c ): CreatorChatbot => new CreatorChatbot(
+				$c->get( TwitchAccount::class ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatMessageRepository::class ),
+				$c->get( ChatbotFormat::class ),
+				$c->get( ChatMessages::class ),
+				$c->get( ChatSubscriptions::class ),
+				$c->get( ChatSender::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class )
+			)
+		);
+		$container->set(
+			TwitchController::class,
+			static fn( Container $c ): TwitchController => new TwitchController( $c->get( TwitchOAuth::class ), $c->get( TwitchAccount::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			MeChatbotController::class,
+			static fn( Container $c ): MeChatbotController => new MeChatbotController( $c->get( CreatorContext::class ), $c->get( CreatorChatbot::class ), $c->get( TwitchOAuth::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			ChatbotAdminTab::class,
+			static function ( Container $c ): ChatbotAdminTab {
+				$root = dirname( __DIR__, 3 ) . '/';
+
+				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ) );
+			}
+		);
+		$container->set(
+			ChatbotAdminActions::class,
+			static fn( Container $c ): ChatbotAdminActions => new ChatbotAdminActions(
+				$c->get( TwitchAccount::class ),
+				$c->get( TwitchOAuth::class ),
+				$c->get( ChatbotFormat::class ),
+				$c->get( ChatSubscriptions::class ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatSender::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( Logger::class )
+			)
+		);
 		// The history: resend and "Stop all alerts" (phase 25, step 7).
 		$container->set(
 			AlertHistory::class,
-			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ) )
+			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ), $c->get( ChatSender::class ) )
 		);
 		$container->set(
 			MeAlertsHistoryController::class,
@@ -232,12 +337,34 @@ final class AlertsModule implements Module {
 				$container->get( OverlayFeedController::class )->register_routes();
 				$container->get( MeAlertsController::class )->register_routes();
 				$container->get( MeAlertsHistoryController::class )->register_routes();
+				$container->get( MeChatbotController::class )->register_routes();
+				$container->get( TwitchController::class )->register_routes();
 			}
 		);
 
 		// Every request: orders are paid in checkout, wp-admin, REST, WP-CLI
 		// and by payment gateways' callbacks.
 		$container->get( AlertHooks::class )->register();
+
+		// Chat messages: queued after the alerts are recorded (priority 10), sent by Action Scheduler.
+		foreach ( array( 'woocommerce_order_status_processing', 'woocommerce_order_status_completed' ) as $status ) {
+			add_action(
+				$status,
+				static function ( mixed $order_id ) use ( $container ): void {
+					$container->get( ChatSender::class )->order_paid( $order_id );
+				},
+				20
+			);
+		}
+
+		add_action(
+			ChatSender::HOOK,
+			static function ( mixed $creator_id, mixed $order_id ) use ( $container ): void {
+				$container->get( ChatSender::class )->run( $creator_id, $order_id );
+			},
+			10,
+			2
+		);
 
 		add_action(
 			'admin_menu',
@@ -252,6 +379,7 @@ final class AlertsModule implements Module {
 			static function () use ( $container ): void {
 				$container->get( AlertsSettingsActions::class )->register();
 				$container->get( AlertsAdminActions::class )->register();
+				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
 			}
 		);

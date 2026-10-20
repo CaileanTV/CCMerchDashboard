@@ -406,4 +406,44 @@ enum AuditAction: string {
 	 * An image of the alert image library got a new name. Context: name, previous name.
 	 */
 	case AlertImageLibraryRenamed = 'alert_image_library_renamed';
+
+	/**
+	 * The Twitch app of the alert chatbot was saved (phase 25, step 8). Context: whether it is a new app; never the secret.
+	 */
+	case AlertTwitchAppChanged = 'alert_twitch_app_changed';
+
+	/**
+	 * The Twitch app of the alert chatbot was removed, with the bot and every secret.
+	 */
+	case AlertTwitchAppRemoved = 'alert_twitch_app_removed';
+
+	/**
+	 * The Twitch bot account was connected. Context: its login.
+	 */
+	case AlertChatbotBotConnected = 'alert_chatbot_bot_connected';
+
+	/**
+	 * The Twitch bot account was disconnected. Context: its login.
+	 */
+	case AlertChatbotBotDisconnected = 'alert_chatbot_bot_disconnected';
+
+	/**
+	 * How chat messages are composed was changed. Context: the mode.
+	 */
+	case AlertChatbotFormatChanged = 'alert_chatbot_format_changed';
+
+	/**
+	 * A creator added the bot to the own Twitch channel. Context: the channel login.
+	 */
+	case AlertChatbotChannelConnected = 'alert_chatbot_channel_connected';
+
+	/**
+	 * The bot was removed from a creator's Twitch channel. Context: the channel login.
+	 */
+	case AlertChatbotChannelDisconnected = 'alert_chatbot_channel_disconnected';
+
+	/**
+	 * An administrator sent a chat message as the bot. Context: the channel login; never the message.
+	 */
+	case AlertChatbotMessageSent = 'alert_chatbot_message_sent';
 }

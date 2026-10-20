@@ -181,7 +181,7 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 | `src/` | Al PHP-kode inkl. egen autoloader (ADR-017) |
 | `templates/` | Dashboard-shell, 403-side og alert-overlayets side |
 | `assets/js/` | Admin-scripts uden build (brugersøgning i creator-formularen) |
-| `build/` | Dashboardets bundle: `dashboard.js`, `dashboard.css`, `dashboard-rtl.css` og `dashboard.asset.php`, og alert-overlayets: `overlay.js`, `overlay.css`, `overlay-rtl.css` og `overlay.asset.php`. Uden source maps |
+| `build/` | Dashboardets bundle: `dashboard.js`, `dashboard.css`, `dashboard-rtl.css` og `dashboard.asset.php`, alert-overlayets: `overlay.js`, `overlay.css`, `overlay-rtl.css` og `overlay.asset.php`, og admin-chatvinduets (trin 25.8): `alerts-admin.js` og `alerts-admin.asset.php`. Uden source maps |
 | `languages/` | `merchboard.pot`, `merchboard-da_DK.po`/`.mo` og JS-oversættelsen (`merchboard-da_DK-<md5(build/dashboard.js)>.json`) |
 
 **Aldrig med:** `vendor/` (ingen runtime-dependencies), `node_modules/`, `assets/src/` (TypeScript-kilder og Jest-tests), `tests/`, `docs/`, `bin/`, `.git*`, `.github/`, `.tools/`, konfiguration (`composer.*`, `package*.json`, `tsconfig.json`, `jest.config.js`, lint/test-konfiguration), caches, logs, databaser, `.env` og credentials. `.distignore` og `export-ignore` i `.gitattributes` er holdt i sync med allowlisten.

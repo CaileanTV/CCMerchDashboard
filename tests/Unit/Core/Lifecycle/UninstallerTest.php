@@ -117,6 +117,18 @@ final class UninstallerTest extends TestCase {
 				),
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_alert_chatbot' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_alert_chat_messages' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_alert_chat_log' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
 					'args'  => array( 'wp_3_merchboard_item_pricing' ),
 				),
 			),

@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
@@ -30,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  *   quantities, the customer's voluntary username and the time.
  * - **Resend:** an alert or all alerts of an order are shown again in the
  *   overlay, through the queue that test alerts use (OverlayTestQueue);
- *   nothing is stored again. (The chat message follows with step 25.8.)
+ *   nothing is stored again. The chat message is sent again too, when the
+ *   creator's chatbot is on (step 25.8).
  * - **Stop all alerts:** the waiting resends and tests are dropped and the
  *   overlay gets a new version, so the open overlay page reloads at once:
  *   the alert it shows and its queue are gone, and it starts again from
@@ -53,8 +55,9 @@ final class AlertHistory {
 	 * @param AlertOverlayRepository $overlays Overlays.
 	 * @param OverlayFeed            $feed     Alert rendering.
 	 * @param OverlayTestQueue       $queue    Queue of the overlay's resends and tests.
+	 * @param ChatSender|null        $chat     Chat messages; null for none.
 	 */
-	public function __construct( private AlertEventRepository $events, private AlertOverlayRepository $overlays, private OverlayFeed $feed, private OverlayTestQueue $queue ) {
+	public function __construct( private AlertEventRepository $events, private AlertOverlayRepository $overlays, private OverlayFeed $feed, private OverlayTestQueue $queue, private ?ChatSender $chat = null ) {
 	}
 
 	/**
@@ -124,8 +127,13 @@ final class AlertHistory {
 	 */
 	public function resend_alert( int $creator_id, int $alert_id ): ?int {
 		$event = $this->events->find_for_creator( $creator_id, $alert_id );
+		$sent  = $this->resend( $creator_id, null === $event ? array() : array( $event ) );
 
-		return $this->resend( $creator_id, null === $event ? array() : array( $event ) );
+		if ( null !== $event && null !== $sent ) {
+			$this->chat?->resend( $creator_id, $event->order_id, $event->order_item_id );
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -137,7 +145,13 @@ final class AlertHistory {
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function resend_order( int $creator_id, int $order_id ): ?int {
-		return $this->resend( $creator_id, $this->events->for_creator_orders( $creator_id, array( $order_id ) ) );
+		$sent = $this->resend( $creator_id, $this->events->for_creator_orders( $creator_id, array( $order_id ) ) );
+
+		if ( null !== $sent && $sent > 0 ) {
+			$this->chat?->resend( $creator_id, $order_id );
+		}
+
+		return $sent;
 	}
 
 	/**

@@ -32,7 +32,7 @@ final class AlertsDashboardSectionTest extends TestCase {
 		);
 
 		self::assertIsArray( $sections );
-		self::assertSame( array( 'overview', 'payouts', 'alerts', 'alerts-history', 'profile' ), array_column( $sections, 'id' ) );
+		self::assertSame( array( 'overview', 'payouts', 'alerts', 'alerts-history', 'alerts-chatbot', 'profile' ), array_column( $sections, 'id' ) );
 		self::assertSame(
 			array(
 				'id'          => 'alerts',
@@ -53,7 +53,7 @@ final class AlertsDashboardSectionTest extends TestCase {
 		$sections = AlertsDashboardSection::add_section( array( array( 'id' => 'overview' ) ) );
 
 		self::assertIsArray( $sections );
-		self::assertSame( array( 'overview', 'alerts', 'alerts-history' ), array_column( $sections, 'id' ) );
+		self::assertSame( array( 'overview', 'alerts', 'alerts-history', 'alerts-chatbot' ), array_column( $sections, 'id' ) );
 		self::assertSame( 'not an array', AlertsDashboardSection::add_section( 'not an array' ) );
 	}
 }

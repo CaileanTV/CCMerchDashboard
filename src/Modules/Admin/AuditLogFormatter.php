@@ -128,6 +128,14 @@ final class AuditLogFormatter {
 			AuditAction::AlertImageLibraryAdded    => __( 'Image added to the alert image library', 'merchboard' ),
 			AuditAction::AlertImageLibraryRemoved  => __( 'Image removed from the alert image library', 'merchboard' ),
 			AuditAction::AlertImageLibraryRenamed  => __( 'Image of the alert image library renamed', 'merchboard' ),
+			AuditAction::AlertTwitchAppChanged => __( 'Twitch app of the alert chatbot saved', 'merchboard' ),
+			AuditAction::AlertTwitchAppRemoved => __( 'Twitch app of the alert chatbot removed', 'merchboard' ),
+			AuditAction::AlertChatbotBotConnected => __( 'Chatbot account connected', 'merchboard' ),
+			AuditAction::AlertChatbotBotDisconnected => __( 'Chatbot account disconnected', 'merchboard' ),
+			AuditAction::AlertChatbotFormatChanged => __( 'Chat message format changed', 'merchboard' ),
+			AuditAction::AlertChatbotChannelConnected => __( 'Chatbot added to a creator\'s channel', 'merchboard' ),
+			AuditAction::AlertChatbotChannelDisconnected => __( 'Chatbot removed from a creator\'s channel', 'merchboard' ),
+			AuditAction::AlertChatbotMessageSent => __( 'Chat message sent as the bot', 'merchboard' ),
 		};
 	}
 

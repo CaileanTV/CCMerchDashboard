@@ -307,10 +307,13 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_order_exclusions \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_events \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_overlays \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_messages \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 19, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 20, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

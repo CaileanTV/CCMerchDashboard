@@ -172,6 +172,25 @@ final class AlertEventRepository {
 	}
 
 	/**
+	 * The creators with alerts in an order (the chat messages, step 25.8).
+	 *
+	 * @param int $order_id Order.
+	 * @return list<int>
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function creators_of_order( int $order_id ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT creator_id FROM %i WHERE order_id = %d ORDER BY creator_id', $this->table(), $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * One of the creator's alerts, or null (also for another creator's alert).
 	 *
 	 * @param int $creator_id Creator.

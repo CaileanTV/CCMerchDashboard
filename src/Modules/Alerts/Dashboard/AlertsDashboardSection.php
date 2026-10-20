@@ -41,7 +41,7 @@ final class AlertsDashboardSection {
 			return $sections;
 		}
 
-		$group  = array(
+		$group = array(
 			array(
 				'id'          => 'alerts',
 				'label'       => __( 'Overlay settings', 'merchboard' ),
@@ -54,6 +54,15 @@ final class AlertsDashboardSection {
 				'id'          => 'alerts-history',
 				'label'       => __( 'History', 'merchboard' ),
 				'path'        => 'alerts/history',
+				'capability'  => Capabilities::ACCESS_DASHBOARD,
+				'group'       => 'alerts',
+				'group_label' => __( 'Alerts', 'merchboard' ),
+			),
+			// The Twitch chatbot (step 25.8).
+			array(
+				'id'          => 'alerts-chatbot',
+				'label'       => __( 'Chatbot', 'merchboard' ),
+				'path'        => 'alerts/chatbot',
 				'capability'  => Capabilities::ACCESS_DASHBOARD,
 				'group'       => 'alerts',
 				'group_label' => __( 'Alerts', 'merchboard' ),

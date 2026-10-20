@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Migration;
 use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
 use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
+use MerchBoard\Core\Database\Migrations\CreateAlertChatbotTables;
 use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertOverlaysTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
@@ -41,8 +42,8 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
-		self::assertSame( '19', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( 20, $this->migrator()->installed_version() );
+		self::assertSame( '20', (string) $this->raw_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::AUDIT_LOG ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
@@ -68,7 +69,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ) );
 		self::assertSame( array( '0' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT default_markup_bps FROM %i', $this->table( Tables::CREATORS ) ) ) );
 		self::assertSame( 'Før opgradering 🎸', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
@@ -77,7 +78,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_4_adds_only_the_sales_ledger_tables(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[5], $migrations[6], $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[5], $migrations[6], $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		( new CreatorRepository( $this->wpdb ) )->create( 'Før salg', CreatorStatus::Active );
 		$before = $this->rows( Tables::CREATORS );
@@ -87,7 +88,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES ) );
 		self::assertSame( 0, $this->count_rows( Tables::SALES_CYCLES ) );
@@ -95,7 +96,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_5_adds_pricing_with_0_markup_for_existing_creators_and_keeps_the_ledger(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[6], $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[6], $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$repository = new CreatorRepository( $this->wpdb );
 		$active     = $repository->create( 'Aktiv før prissætning', CreatorStatus::Active );
@@ -109,7 +110,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows_without_markup( Tables::CREATORS ), 'Existing creator data unchanged.' );
 
 		$markups = new CreatorMarkupRepository( $this->wpdb );
@@ -139,7 +140,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_6_adds_vat_status_and_sales_tax_without_changing_existing_data(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[7], $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før moms', CreatorStatus::Active );
 		$this->wpdb->insert(
@@ -162,7 +163,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertSame( '0', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT vat_registered FROM %i WHERE id = %d', $this->table( Tables::CREATORS ), $creator->id ) ), 'Existing creators: not VAT registered.' );
 		$after = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
 		self::assertIsArray( $after );
@@ -174,7 +175,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_7_switches_to_the_share_model_without_changing_history(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[8], $migrations[9], $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før andel', CreatorStatus::Active );
 		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( 1667 ) );
@@ -208,7 +209,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertSame( $creators, array_map( static fn( array $row ): array => array_diff_key( $row, array( 'payout_start_at' => null ) ), $this->rows( Tables::CREATORS ) ), 'Markup and VAT status unchanged (the settlement start is added by version 9).' );
 
 		$after = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i', $this->table( Tables::SALES_LINE_PRICING ) ), ARRAY_A );
@@ -231,7 +232,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 	public function test_upgrade_from_9_adds_the_gift_card_columns_without_changing_payouts(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[10], $migrations[11], $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før gavekort', CreatorStatus::Active );
 		$this->wpdb->insert( $this->table( Tables::PAYOUTS ), array( 'creator_id' => $creator->id, 'currency' => 'DKK', 'amount' => '25.0000', 'price_decimals' => 2, 'method' => 'bank', 'status' => 'pending', 'destination_hint' => '•••• 1234', 'idempotency_key' => 'key-before-10', 'requested_at' => '2026-10-10 10:00:00', 'updated_at' => '2026-10-10 10:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -241,7 +242,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		$after = $this->rows( Tables::PAYOUTS );
 		self::assertNull( $after[0]['gift_card_provider'] );
 		self::assertNull( $after[0]['gift_card_external_id'] );
@@ -268,7 +269,7 @@ final class MigrationTest extends IntegrationTestCase {
 	public function test_upgrade_from_14_adds_only_the_exports_table_and_keeps_existing_data(): void {
 		// A database that ran schema version 14 without the exports table (as Local did).
 		$migrations = Schema::migrations();
-		unset( $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før eksport', CreatorStatus::Active );
 		$this->wpdb->insert( $this->table( Tables::RECALCULATIONS ), array( 'rule' => 'adr063-remove-20', 'calculation_version' => 'adr063-adr054-v1', 'status' => 'closed', 'fingerprint' => str_repeat( 'a', 64 ), 'created_at' => '2026-10-17 12:00:00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -283,7 +284,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertTrue( $this->has_table( Tables::RECALCULATION_EXPORTS ) );
 		self::assertSame( 0, $this->count_rows( Tables::RECALCULATION_EXPORTS ) );
 		self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( Tables::RECALCULATION_EXPORTS ) ) ) );
@@ -295,25 +296,25 @@ final class MigrationTest extends IntegrationTestCase {
 		// Re-running migration 15 changes nothing.
 		( new CreatePayoutRecalculationExportsTable() )->up( $this->wpdb );
 		self::assertSame( 0, $this->count_rows( Tables::RECALCULATION_EXPORTS ) );
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 	}
 
 	public function test_migration_14_no_longer_creates_the_exports_table(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 
 		( new CreatePayoutRecalculationTables() )->up( $this->wpdb );
 
 		self::assertFalse( $this->has_table( Tables::RECALCULATION_EXPORTS ), 'Only migration 15 creates it.' );
-		self::assertSame( array( 14, 15, 16, 17, 18, 19 ), array_slice( array_keys( Schema::migrations() ), -6 ) );
+		self::assertSame( array( 14, 15, 16, 17, 18, 19, 20 ), array_slice( array_keys( Schema::migrations() ), -7 ) );
 		self::assertInstanceOf( CreatePayoutRecalculationExportsTable::class, Schema::migrations()[15] );
 	}
 
 	public function test_upgrade_from_15_adds_only_the_empty_vat_history_and_keeps_the_current_status(): void {
 		// A database of schema version 15 (as Local after R2).
 		$migrations = Schema::migrations();
-		unset( $migrations[16], $migrations[17], $migrations[18], $migrations[19] );
+		unset( $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før momshistorik', CreatorStatus::Active );
 		( new CreatorVatRepository( $this->wpdb ) )->save( $creator->id, true );
@@ -324,7 +325,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertTrue( $this->has_table( Tables::CREATOR_VAT_HISTORY ) );
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_VAT_HISTORY ), 'No history is invented for existing creators.' );
 		self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( Tables::CREATOR_VAT_HISTORY ) ) ) );
@@ -341,7 +342,7 @@ final class MigrationTest extends IntegrationTestCase {
 	public function test_upgrade_from_17_adds_only_the_empty_alert_events_table(): void {
 		// A database of schema version 17 (with the creator discount codes).
 		$migrations = Schema::migrations();
-		unset( $migrations[18], $migrations[19] );
+		unset( $migrations[18], $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		( new CreatorRepository( $this->wpdb ) )->create( 'Før alerts', CreatorStatus::Active );
 		$before = $this->rows( Tables::CREATORS );
@@ -351,7 +352,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertTrue( $this->has_table( Tables::ALERT_EVENTS ) );
 		self::assertSame( 0, $this->count_rows( Tables::ALERT_EVENTS ), 'No alerts are invented for earlier orders.' );
 		self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( Tables::ALERT_EVENTS ) ) ) );
@@ -370,7 +371,7 @@ final class MigrationTest extends IntegrationTestCase {
 	public function test_upgrade_from_18_adds_the_overlays_and_drops_the_customer_first_name(): void {
 		// A database of schema version 18 (as Local after phase 25, step 2).
 		$migrations = Schema::migrations();
-		unset( $migrations[19] );
+		unset( $migrations[19], $migrations[20] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$events = $this->table( Tables::ALERT_EVENTS );
 		$insert = $this->wpdb->prepare( 'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_first_name, customer_username, created_at) VALUES (1, 2, %s, 3, 4, 0, %s, %s, 1, 0, %s, %s, %s, %s)', $events, '02', 'Hoodie', '', '[]', 'Anna', 'anna_streams', '2026-10-19 10:00:00' );
@@ -382,7 +383,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertTrue( $this->has_table( Tables::ALERT_OVERLAYS ) );
 		self::assertSame( 0, $this->count_rows( Tables::ALERT_OVERLAYS ) );
 		self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( Tables::ALERT_OVERLAYS ) ) ) );
@@ -395,6 +396,43 @@ final class MigrationTest extends IntegrationTestCase {
 		( new CreateAlertOverlaysTable() )->up( $this->wpdb );
 		self::assertSame( 1, $this->count_rows( Tables::ALERT_EVENTS ) );
 		self::assertInstanceOf( CreateAlertOverlaysTable::class, Schema::migrations()[19] );
+	}
+
+	public function test_upgrade_from_19_adds_the_three_empty_chatbot_tables(): void {
+		// A database of schema version 19 (as Local after phase 25, step 7).
+		$migrations = Schema::migrations();
+		unset( $migrations[20] );
+		( new Migrator( $this->wpdb, $migrations ) )->migrate();
+		( new CreatorRepository( $this->wpdb ) )->create( 'Før chatbot', CreatorStatus::Active );
+		$before = $this->rows( Tables::CREATORS );
+
+		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertFalse( $this->has_table( Tables::ALERT_CHATBOT ) );
+
+		$this->install();
+
+		self::assertSame( 20, $this->migrator()->installed_version() );
+		$unique = array(
+			Tables::ALERT_CHATBOT       => array( 'creator_id' ),
+			Tables::ALERT_CHAT_MESSAGES => array( 'message' ),
+			Tables::ALERT_CHAT_LOG      => array( 'message_id' ),
+		);
+
+		foreach ( $unique as $table => $indexes ) {
+			self::assertTrue( $this->has_table( $table ) );
+			self::assertSame( 0, $this->count_rows( $table ) );
+			self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( $table ) ) ) );
+			self::assertSame( $indexes, $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT DISTINCT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND NON_UNIQUE = 0 AND INDEX_NAME <> %s ORDER BY INDEX_NAME', $this->table( $table ), 'PRIMARY' ) ) );
+		}
+
+		self::assertSame( array( 'creator_id', 'order_id', 'order_item_id' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND INDEX_NAME = %s ORDER BY SEQ_IN_INDEX', $this->table( Tables::ALERT_CHAT_MESSAGES ), 'message' ) ), 'A message is sent at most once per order line (ADR-066).' );
+		self::assertNotContains( 'access_token', $this->wpdb->get_col( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $this->table( Tables::ALERT_CHATBOT ) ) ), 'No Twitch tokens are stored per creator.' );
+		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
+
+		// Re-running migration 20 changes nothing.
+		( new CreateAlertChatbotTables() )->up( $this->wpdb );
+		self::assertSame( 0, $this->count_rows( Tables::ALERT_CHATBOT ) );
+		self::assertInstanceOf( CreateAlertChatbotTables::class, Schema::migrations()[20] );
 	}
 
 	public function test_current_schema_runs_no_queries(): void {
@@ -417,7 +455,7 @@ final class MigrationTest extends IntegrationTestCase {
 		$this->install();
 		$this->install();
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertSame( $before, $this->rows( Tables::CREATORS ) );
 	}
 
@@ -501,7 +539,7 @@ final class MigrationTest extends IntegrationTestCase {
 
 		self::assertTrue( $this->migrator()->migrate() );
 
-		self::assertSame( 19, $this->migrator()->installed_version() );
+		self::assertSame( 20, $this->migrator()->installed_version() );
 		self::assertNull( $this->raw_option( Migrator::LOCK_OPTION ) );
 	}
 

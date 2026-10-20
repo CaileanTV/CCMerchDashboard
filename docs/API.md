@@ -91,6 +91,10 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `POST` | `/me/alerts/history/alerts/{id}/resend` | ✅ Trin 25.7: viser en af creatorens alerts igen i overlayet (via køen som testalerts). `{ "sent": 1 }`; 404 for en alert, creatoren ikke ejer, eller før overlayet er sat op | 25 |
 | `POST` | `/me/alerts/history/orders/{id}/resend` | ✅ Trin 25.7: viser creatorens alerts af en ordre igen. `{ "sent": n }`; 404 uden creatorens alerts i ordren eller før opsætning | 25 |
 | `POST` | `/me/alerts/stop` | ✅ Trin 25.7: "Stop alle alerts": tømmer køen af gensendelser og testalerts og giver overlayet en ny version, så den åbne overlay-side genindlæser sig straks (feedets long-poll svarer med det samme) og starter fra "nu". `{ "stopped": true }`; 404 før opsætning | 25 |
+| `GET`, `PATCH` | `/me/alerts/chatbot` | ✅ Trin 25.8 (ADR-066): creatorens chatbot. `{ available, bot_login, mode, item_format, separator, variables, enabled, template, default_template, channel: { login, connected_at } \| null, last_message: { status, reason, at } \| null }`; `available` er `false`, før en administrator har sat app og bot op. `PATCH { enabled?, template? }`: skabelonen bliver ren tekst på én linje (højst 500 tegn; `""` = standard); en ikke-boolsk `enabled` eller ikke-tekst `template`: 400. `Cache-Control: no-store` | 25 |
+| `POST` | `/me/alerts/chatbot/connect` | ✅ Trin 25.8: `{ url }` til Twitchs godkendelsesside, hvor creatoren tilføjer botten til sin kanal (`channel:bot`; enkeltbrugs-state i 10 minutter, bundet til brugeren og creatoren). 409 `merchboard_chatbot_unavailable`, før chatbotten er sat op | 25 |
+| `DELETE` | `/me/alerts/chatbot/channel` | ✅ Trin 25.8: fjerner botten fra creatorens kanal (afslutter abonnementet og sletter kanalens chatlog; audit). Svarer med chatbot-tilstanden | 25 |
+| `POST` | `/me/alerts/chatbot/test` | ✅ Trin 25.8: sender en testbesked (testkøb fra "TestFan") til creatorens kanal. `{ result, reason, message }` (`result`: `sent`, `dropped`, `rate_limited`, `unauthorized`, `forbidden` eller `failed`). 409 uden kanal eller bot | 25 |
 | `GET`, `PATCH` | `/me/alerts/preferences` | ✅ Trin 25.7: `{ "anonymize": bool }`, om historikken forkorter brugernavne; gemmes som user meta `merchboard_alerts_anonymize` på den indloggede bruger (som dashboard-temaet, ADR-044). `PATCH` med en ikke-boolsk værdi: 400 | 25 |
 | `DELETE` | `/me/alerts/overlay/images/{id}` | ✅ Trin 25.6.10: sletter et eget billede; tekstfyld, der brugte det, slås fra. Samme svar som `GET`. 400 med `data.fields.image` = `unknown_image` for et billede, creatoren ikke ejer (fx et biblioteksbillede); 404 før opsætning | 25 |
 | `POST` | `/me/alerts/overlay/test` | ✅ Sender en testalert med et tilfældigt publiceret produkt fra creatoren til overlayet via feedet (`{ "sent": true }`); gemmes ikke som alert og sendes ikke til Twitch. 404 uden overlay | 25 |
@@ -110,7 +114,7 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 
 ### Offentlig: alert-overlayets feed ✅ (fase 25, trin 25.3, ADR-065 pkt. 4)
 
-`GET /merchboard/v1/alerts/overlay/{overlay_id}/feed` er pluginets eneste offentlige route (`permission_callback` = `__return_true`, besluttet i ADR-065). OBS kan ikke logge ind, så det hemmelige overlay-ID i stien er adgangen (32 hex-tegn, 128 bit, sammenlignet med `hash_equals()`).
+`GET /merchboard/v1/alerts/overlay/{overlay_id}/feed` er en offentlig route (de andre er Twitchs callback og webhook, trin 25.8) (`permission_callback` = `__return_true`, besluttet i ADR-065). OBS kan ikke logge ind, så det hemmelige overlay-ID i stien er adgangen (32 hex-tegn, 128 bit, sammenlignet med `hash_equals()`).
 
 | Parameter | Type | Betydning |
 | --- | --- | --- |
@@ -120,6 +124,14 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 Svar `200`: `{ cursor, version, alerts: [ { id, image, text, secondary, sound } ] }`, højst 20 alerts, ældste først. `text` og `secondary` er færdig tekst (skabelonen med variablerne udfyldt; `$FirstName` og `$UserName` giver kundens frivillige brugernavn eller "Anonymous"), `image` er en billed-URL på samme site eller `""`. `sound` (fra trin 25.6) er URL'en på alertens lyd på samme site eller `""`: med lyde slået til lyden for den første af produktets kategorier (eller deres overkategorier), der har en, ellers standardlyden. `version` skifter, når indstillingerne eller ID'et ændres; siden genindlæses så. Ingen kunde- eller ordre-ID'er. Headers: `Cache-Control: no-store`, `X-Robots-Tag: noindex`.
 
 Fejl: `404 merchboard_overlay_not_found` (ukendt eller ugyldigt ID, eller inaktiv creator; samme svar for alle), `429 merchboard_too_many_requests` (mere end 60 forespørgsler pr. overlay pr. minut; kun eksisterende overlays tælles).
+
+### Twitch: callback, EventSub-webhook og admin-chat ✅ (fase 25, trin 25.8, ADR-066)
+
+| Metode | Route | Adgang og indhold |
+| --- | --- | --- |
+| `GET` | `/alerts/twitch/callback` | Offentlig (Twitch sender browseren hertil; registreres som redirect-URL i Twitch-appen). Kræver en gyldig enkeltbrugs-`state`; ombytter `code`, slår kontoen op og svarer `302` til admin-fanen "Chatbot" (bot-kontoen) eller til dashboardets Alerts → Chatbot med `?twitch=connected`, `denied`, `bot_is_broadcaster` eller en anden fejlkode. Ukendt state: `302` til forsiden. Bruger-tokenet gemmes ikke |
+| `POST` | `/alerts/twitch/eventsub` | Offentlig, men kun med gyldig signatur: HMAC-SHA256 over `Twitch-Eventsub-Message-Id` + `-Timestamp` + rå body med webhook-secret'en (`hash_equals`; højst 10 minutter gammel), ellers `403`. `webhook_callback_verification`: svarer med `challenge` som ren tekst (`200`). `notification` (`channel.chat.message`): gemmer beskeden i chatloggen (`204`). `revocation`: noterer status (`204`) |
+| `GET` | `/alerts/twitch/chat/{creator}?after=` | `merchboard_manage_alerts` (REST-nonce). `{ messages: [ { id, login, name, color, text, at } ] }`, de seneste (højst 100) eller dem efter `after`; til admin-chatvinduet. `Cache-Control: no-store` |
 
 ### Integrations: `/merchboard/v1/integrations/{provider}/webhook` (fremtid)
 

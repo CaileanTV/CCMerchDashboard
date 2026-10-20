@@ -194,6 +194,24 @@ final class Tables {
 	public const ALERT_OVERLAYS = 'merchboard_alert_overlays';
 
 	/**
+	 * Alert chatbot, schema version 20 (ADR-066): one row per creator with
+	 * messages on or off, the template and the Twitch channel.
+	 */
+	public const ALERT_CHATBOT = 'merchboard_alert_chatbot';
+
+	/**
+	 * Chat message log, schema version 20: one row per creator, order and
+	 * line, so a message is never sent twice.
+	 */
+	public const ALERT_CHAT_MESSAGES = 'merchboard_alert_chat_messages';
+
+	/**
+	 * The channels' latest chat messages, schema version 20: kept 24 hours,
+	 * at most 200 per channel, for the admin's chat window.
+	 */
+	public const ALERT_CHAT_LOG = 'merchboard_alert_chat_log';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -226,6 +244,9 @@ final class Tables {
 		self::ORDER_EXCLUSIONS,
 		self::ALERT_EVENTS,
 		self::ALERT_OVERLAYS,
+		self::ALERT_CHATBOT,
+		self::ALERT_CHAT_MESSAGES,
+		self::ALERT_CHAT_LOG,
 	);
 
 	/**

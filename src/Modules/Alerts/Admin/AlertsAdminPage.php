@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Admin;
 
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
@@ -30,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  * Phase 25 step 5 adds the tab "Fonts" (ADR-067): the Google Fonts API key,
  * the catalogue and the approved fonts. Step 6.3 adds the tab "Sounds": the
  * sound library creators can choose from; step 6.10 the tab "Images": the
- * images creators can fill their alert text with. The other tabs (order log, global
+ * images creators can fill their alert text with; step 8 the tab "Chatbot"
+ * (ChatbotAdminTab). The other tabs (order log, global
  * overlay, chatbot, import) follow in later steps. Read-only rendering;
  * every change goes through AlertsAdminActions. Everything is escaped.
  */
@@ -54,8 +56,9 @@ final class AlertsAdminPage {
 	 * @param AlertFonts             $fonts   Font library.
 	 * @param AlertSoundLibrary|null $library Sound library; null for none.
 	 * @param AlertImageLibrary|null $images  Image library; null for none.
+	 * @param ChatbotAdminTab|null   $chatbot The chatbot tab; null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null ) {
 	}
 
 	/**
@@ -132,7 +135,7 @@ final class AlertsAdminPage {
 			'image_' . AlertImageException::LIBRARY_FULL => array( __( 'The library is full. Remove an image first.', 'merchboard' ), 'error' ),
 			'image_' . AlertImageException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'                                  => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
-			default                                  => null,
+			default                                  => ChatbotAdminTab::result_message( $code ),
 		};
 	}
 
@@ -150,6 +153,7 @@ final class AlertsAdminPage {
 		$tab    = match ( isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 			'sounds' => null === $this->library ? 'fonts' : 'sounds',
 			'images' => null === $this->images ? 'fonts' : 'images',
+			'chatbot' => null === $this->chatbot ? 'fonts' : 'chatbot',
 			default  => 'fonts',
 		};
 		$notice = self::result_message( $code );
@@ -161,6 +165,10 @@ final class AlertsAdminPage {
 
 		if ( null !== $this->library ) {
 			echo '<a class="nav-tab' . ( 'sounds' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'sounds' ) ) . '"' . ( 'sounds' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Sounds', 'merchboard' ) . '</a>';
+		}
+
+		if ( null !== $this->chatbot ) {
+			echo '<a class="nav-tab' . ( 'chatbot' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'chatbot' ) ) . '"' . ( 'chatbot' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Chatbot', 'merchboard' ) . '</a>';
 		}
 
 		if ( null !== $this->images ) {
@@ -177,6 +185,17 @@ final class AlertsAdminPage {
 
 		if ( null !== $library ) {
 			$this->render_sounds( $library );
+			echo '</div>';
+
+			return;
+		}
+
+		if ( 'chatbot' === $tab && null !== $this->chatbot ) {
+			try {
+				$this->chatbot->render( isset( $_GET['chat'] ) ? absint( $_GET['chat'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only: which channel's chat is shown.
+			} catch ( DatabaseException ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'A technical error occurred. Nothing was changed.', 'merchboard' ) . '</p></div>';
+			}
 			echo '</div>';
 
 			return;

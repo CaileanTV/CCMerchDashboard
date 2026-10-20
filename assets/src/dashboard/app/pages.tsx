@@ -2,6 +2,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 import { EmptyState } from '../components/EmptyState';
+import { AlertsChatbotSection } from '../sections/alerts/AlertsChatbotSection';
 import { AlertsHistorySection } from '../sections/alerts/AlertsHistorySection';
 import { AlertsSection } from '../sections/alerts/AlertsSection';
 import { OrdersSection } from '../sections/orders/OrdersSection';
@@ -27,6 +28,7 @@ const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	payouts: () => <PayoutsSection />,
 	alerts: () => <AlertsSection />,
 	'alerts-history': () => <AlertsHistorySection />,
+	'alerts-chatbot': () => <AlertsChatbotSection />,
 	profile: () => <ProfileSection />,
 };
 

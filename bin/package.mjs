@@ -71,6 +71,8 @@ const REQUIRED = [
 	'build/overlay.js',
 	'build/overlay.css',
 	'build/overlay.asset.php',
+	'build/alerts-admin.js',
+	'build/alerts-admin.asset.php',
 	'languages/merchboard.pot',
 	'languages/merchboard-da_DK.po',
 	'languages/merchboard-da_DK.mo',
