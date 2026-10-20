@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069), kun til alert-chatbotten.
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten.
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -3780,7 +3780,7 @@ ADR-007, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-059, ADR-060,
 2026-10-20
 
 ## Status
-Accepteret af projektejeren 2026-10-20, inklusive at creatorens Kick-tokens gemmes krypteret ("så længe den krypteres, og ikke kan tilgås af andre end os"). Godkender Kick som ekstern service efter ADR-016. **Implementeringsnote 2026-10-20 (trin 25.8.2; testet automatisk, ikke runtime-verificeret):** som beslutningen, med disse præciseringer: scopes er `channel:read chat:write events:subscribe` (`/public/v1/users` bruges ikke; kanalen slås op med `/public/v1/channels`); bottens navn indtastes af administratoren og vises kun for creators; en ukendt `Retry-After` giver 60 sekunders venten; Kicks offentlige nøgle hentes højst hvert 10. minut igen ved en ugyldig signatur; migration 20 lader nu eksisterende tabeller være. Projektejeren besluttede samme dag at udskyde YouTube.
+Accepteret af projektejeren 2026-10-20, inklusive at creatorens Kick-tokens gemmes krypteret ("så længe den krypteres, og ikke kan tilgås af andre end os"). Godkender Kick som ekstern service efter ADR-016. **Implementeringsnote 2026-10-20 (trin 25.8.2; testet automatisk, ikke runtime-verificeret):** som beslutningen, med disse præciseringer: scopes er `channel:read chat:write events:subscribe` (`/public/v1/users` bruges ikke; kanalen slås op med `/public/v1/channels`); bottens navn indtastes af administratoren og vises kun for creators; en ukendt `Retry-After` giver 60 sekunders venten; Kicks offentlige nøgle hentes højst hvert 10. minut igen ved en ugyldig signatur; migration 20 lader nu eksisterende tabeller være. Projektejeren besluttede samme dag at udskyde YouTube, men genoptog det samme aften (ADR-070). **Statusnote 2026-10-20 (devpage):** projektejeren har afprøvet Kick-chatbotten på devpage: virker. Første forsøg fejlede med 401 ved kanalopslaget, fordi Kick-appen ikke havde scopet `channel:read` slået til; app-scopes skal slås til i Kick-appens indstillinger (`channel:read`, `chat:write`, `events:subscribe`). Siden viser nu fejlkoden, og det mislykkede trin logges (`fd3e68b`).
 
 ## Context
 Twitch-chatbotten (ADR-066, trin 25.8) virker på devpage. Projektejeren vil have præcis samme setup på Kick og lægger vægt på, at chatbotten opleves ens på tværs af platforme. Kicks offentlige API ([docs.kick.com](https://docs.kick.com/)) understøtter at sende en chatbesked som bot (`POST /public/v1/chat` med `type: "bot"`), at lytte til chatten med webhook-eventet `chat.message.sent` og OAuth 2.1 med PKCE.
@@ -3838,3 +3838,59 @@ En ny migration (schema-version 21): kanaltabellen får platform og felter til k
 
 ## Related
 ADR-004, ADR-016, ADR-056, ADR-065, ADR-066.
+
+---
+
+# ADR-070: YouTube som godkendt ekstern service (alert-chatbot)
+
+## Date
+2026-10-20
+
+## Status
+Accepteret af projektejeren 2026-10-20 med fire beslutninger: køb, mens creatoren ikke er live, venter til næste stream (højst 24 timer); om creatoren er live, tjekkes kun ved en ordre eller en testbesked og derudover højst 5 gange pr. ventende ordre (pkt. 5); bottens og creatorens Google-tokens gemmes krypteret som Kick-tokens (ADR-069 pkt. 5); først docs (trin 25.8.3), derefter koden (trin 25.8.4). Godkender YouTube Data API v3 (Google) som ekstern service efter ADR-016, kun til alert-chatbotten. **Ikke implementeret** (fase 25, trin 25.8.4).
+
+## Context
+Den fælles chatbot (ADR-069) virker på Twitch og Kick; projektejeren har afprøvet begge på devpage 2026-10-20. Projektejeren vil have YouTube med. YouTube adskiller sig på fire punkter:
+- En chatbesked kræver en aktiv livestreams live-chat (`liveChatId`); uden for en stream findes der ingen chat at skrive i.
+- Der findes intet bot-badge; botten er en almindelig YouTube-kanal (creatoren kan gøre den til moderator).
+- Beskeder sendes med en bruger-token (bottens Google-konto), ikke et app-token.
+- Kvoten er 10.000 enheder pr. dag pr. Google-projekt: `liveChatMessages.insert` koster 20, `liveBroadcasts.list` og `channels.list` 1 ([quota](https://developers.google.com/youtube/v3/determine_quota_cost)). YouTube har ingen webhooks for chat.
+
+## Decision
+1. **Samme chatbot, tredje platform.** YouTube bliver en adapter i den fælles motor (ADR-069 pkt. 1): samme kø, beskedlog, skabelon og beskedformat; et kort "Din YouTube-kanal" hos creatoren og en YouTube-sektion i admin-fanen "Chatbot".
+2. **Godkendte endpoints:**
+   - Login: `https://accounts.google.com/o/oauth2/v2/auth`, `https://oauth2.googleapis.com/token` (authorization code med PKCE og `access_type=offline`, refresh token) og `https://oauth2.googleapis.com/revoke`.
+   - API: `https://www.googleapis.com/youtube/v3/channels` (`mine=true`), `/liveBroadcasts` (`broadcastStatus=active`, `mine=true`) og `/liveChat/messages` (insert).
+   - Admin-chatvindue: YouTubes indlejrede live-chat (`https://www.youtube.com/live_chat?v={video}&embed_domain={host}`), ellers et link til kanalens `/live`.
+   - Andre Google-endpoints kræver en ny ADR.
+3. **Bot-konto:** administratoren logger ind med bottens Google-konto (scope `https://www.googleapis.com/auth/youtube.force-ssl`). Bottens refresh token gemmes krypteret (ChatCipher, YouTubes domæne) i en option uden autoload; access tokens fornyes efter behov.
+4. **Creatorens kanal:** creatoren logger ind med sin Google-konto (scope `https://www.googleapis.com/auth/youtube.readonly`), så den aktive livestream kan findes (`liveBroadcasts.list`). Creatorens tokens gemmes krypteret i kanalrækken som Kick-tokens og behandles efter ADR-069 pkt. 5 (aldrig i browser, logs eller audit; tilbagekaldes og slettes ved "Fjern botten"; slettes, når Google afviser fornyelsen).
+5. **Ikke live (projektejerens beslutning 2026-10-20: begrænsede live-tjek):** om creatoren er live, tjekkes (`liveBroadcasts.list`, 1 enhed) kun, når der kommer en ordre med creatorens produkter, når creatoren sender en testbesked, og derudover højst 5 gange pr. ventende ordre med stigende pause (efter 10 minutter, 30 minutter, 1½ time, 4 timer og 12 timer). Der er ingen løbende polling. En besked til en creator, der ikke er live, venter (status `waiting`, grund `not_live`); når et tjek finder en aktiv stream, sendes creatorens ventende beskeder i rækkefølge med mindst et sekund imellem. En besked, der er ældre end 24 timer, eller hvis genforsøg er brugt op, springes over (`skipped`, `not_live`). Et tjek koster højst cirka 6 enheder pr. ordre, også når creatoren aldrig går live.
+6. **Kvote:** svarer Google `quotaExceeded`, venter YouTube-beskeder til næste kvotedøgn (midnat Pacific Time), og admin-siden viser det. Der bruges ingen polling af chatten (`liveChatMessages.list`), så kvoten går til beskeder.
+7. **Google-projektet** (YouTube Data API v3, OAuth-klient med sitets redirect-URL) oprettes og administreres af projektejeren. I testtilstand udløber Googles refresh tokens efter 7 dage, og højst 100 testbrugere kan logge ind; til rigtig brug skal Google verificere appen (sensitive scopes), eventuelt med en kvoteansøgning. Admin-siden viser, at login skal fornyes, når Google afviser et token.
+8. **Data:** en migration udvider kanal- og chatlog-tabellernes `broadcaster_id` og `broadcaster_login`, så YouTubes kanal-id (`UC…`, 24 tegn) og kanalnavn passer. YouTube-appens Client ID, krypterede secret og bottens krypterede refresh token ligger i en option uden autoload.
+
+## Alternatives considered
+- **Spring køb uden stream over:** enklest, men creatoren mister beskeder om køb mellem streams. Fravalgt af projektejeren.
+- **Tjek hvert 5. minut i op til 24 timer:** op til 288 enheder pr. creator pr. døgn; med mange creators er dagskvoten brugt, før der sendes beskeder. Fravalgt af projektejeren.
+- **Kun tjek ved ordre og testbesked:** ingen baggrundskald, men ventende beskeder når først ud ved næste ordre under en stream. Fravalgt til fordel for få genforsøg.
+- **Find livestreamen uden creatorens login** (`search.list` på kanal-id): 100 kald pr. dag i alt og upræcist. Fravalgt.
+- **Lytte til chatten med `streamList`/`liveChatMessages.list`:** kræver en åben forbindelse eller polling, der bruger kvoten. Fravalgt; admin bruger YouTubes indlejrede chat.
+
+## Reason
+Projektejeren vil have samme chatbot på YouTube som på Twitch og Kick; YouTubes officielle API understøtter at skrive i en aktiv livestreams chat som en anden kanal.
+
+## Security
+- Google-tokens og -secrets behandles som Kicks (ADR-069): krypteret, kun server-side, aldrig i UI, logs eller audit.
+- **Personoplysninger** som ADR-066/069: beskederne kan indeholde kundens frivillige brugernavn og vises offentligt i YouTube-chatten. Der gemmes ingen YouTube-chatbeskeder (ingen chatlog for YouTube).
+- Google-appens privatlivspolitik og verificering er projektejerens ansvar; ikke juridisk vurderet.
+
+## Migration/data implications
+En ny migration (schema-version 22) udvider `broadcaster_id`/`broadcaster_login` i `merchboard_alert_chatbot` og `merchboard_alert_chat_log`. En ny option til YouTube-appen og bottens token. Alt slettes ved opt-in-afinstallation.
+
+## Consequences
+- YouTube (Google) er en godkendt ekstern service, kun til alert-chatbotten.
+- YouTube-beskeder kan komme senere end købet (når creatoren går live), og der er en daglig kvote.
+
+## Related
+ADR-016, ADR-056, ADR-065, ADR-066, ADR-069.
