@@ -697,7 +697,12 @@ final class ChatbotTest extends IntegrationTestCase {
 		);
 		self::assertStringContainsString( 'merchboard_alerts_admin_result=app_invalid_credentials', $invalid );
 
-		$tab = new ChatbotAdminTab( $this->account, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), dirname( __DIR__, 3 ) . '/', plugins_url( '/', dirname( __DIR__, 3 ) . '/merchboard.php' ) );
+		// A stand-in build, so the test does not depend on `npm run build` (CI runs without it).
+		$plugin = trailingslashit( get_temp_dir() ) . 'merchboard-chatbot-test-' . wp_generate_password( 8, false ) . '/';
+		wp_mkdir_p( $plugin . 'build' );
+		file_put_contents( $plugin . 'build/alerts-admin.js', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		file_put_contents( $plugin . 'build/alerts-admin.asset.php', "<?php return array( 'dependencies' => array(), 'version' => 'test' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		$tab = new ChatbotAdminTab( $this->account, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/' );
 		ob_start();
 		$tab->render( 0 );
 		$page = (string) ob_get_clean();
@@ -716,6 +721,17 @@ final class ChatbotTest extends IntegrationTestCase {
 		ob_start();
 		$tab->render( $nova );
 		self::assertStringContainsString( 'data-merchboard-chat', (string) ob_get_clean(), 'With the subscription: our own window.' );
+		self::assertTrue( wp_script_is( 'merchboard-alerts-admin', 'enqueued' ) );
+
+		// Without the built script the page falls back to Twitch's chat.
+		wp_delete_file( $plugin . 'build/alerts-admin.js' );
+		wp_dequeue_script( 'merchboard-alerts-admin' );
+		ob_start();
+		$tab->render( $nova );
+		self::assertStringNotContainsString( 'data-merchboard-chat', (string) ob_get_clean() );
+		wp_delete_file( $plugin . 'build/alerts-admin.asset.php' );
+		rmdir( $plugin . 'build' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test fixture.
+		rmdir( $plugin ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Test fixture.
 	}
 
 	/**
