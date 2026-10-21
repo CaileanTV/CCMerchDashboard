@@ -49,7 +49,7 @@ final class ChatbotChatController extends RestController {
 	public function register_routes(): void {
 		register_rest_route(
 			self::NAMESPACE,
-			'/alerts/chat/(?P<platform>twitch|kick)/(?P<creator>[1-9][0-9]{0,18})',
+			'/alerts/chat/(?P<platform>twitch|kick|youtube)/(?P<creator>[1-9][0-9]{0,18})',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-20T19:52:59+00:00\n"
+"PO-Revision-Date: 2026-10-21T15:19:19+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -387,367 +387,375 @@ msgstr "Kick-app til alert-chatbotten gemt"
 msgid "Kick app of the alert chatbot removed"
 msgstr "Kick-app til alert-chatbotten fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:231
+#: src/Modules/Admin/AuditLogFormatter.php:141
+msgid "YouTube app of the alert chatbot saved"
+msgstr "YouTube-app til alert-chatbotten gemt"
+
+#: src/Modules/Admin/AuditLogFormatter.php:142
+msgid "YouTube app of the alert chatbot removed"
+msgstr "YouTube-app til alert-chatbotten fjernet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:233
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:233
+#: src/Modules/Admin/AuditLogFormatter.php:235
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:236
+#: src/Modules/Admin/AuditLogFormatter.php:238
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:239
+#: src/Modules/Admin/AuditLogFormatter.php:241
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:242
+#: src/Modules/Admin/AuditLogFormatter.php:244
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:245
+#: src/Modules/Admin/AuditLogFormatter.php:247
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:248
+#: src/Modules/Admin/AuditLogFormatter.php:250
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:252
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:253
+#: src/Modules/Admin/AuditLogFormatter.php:255
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:256
+#: src/Modules/Admin/AuditLogFormatter.php:258
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:259
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:258
+#: src/Modules/Admin/AuditLogFormatter.php:260
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/Admin/AuditLogFormatter.php:261
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:263
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:265
+#: src/Modules/Admin/AuditLogFormatter.php:267
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:268
+#: src/Modules/Admin/AuditLogFormatter.php:270
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:272
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:272
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:275
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:276
+#: src/Modules/Admin/AuditLogFormatter.php:278
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:279
+#: src/Modules/Admin/AuditLogFormatter.php:281
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:284
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:286
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:287
+#: src/Modules/Admin/AuditLogFormatter.php:289
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:290
+#: src/Modules/Admin/AuditLogFormatter.php:292
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:293
+#: src/Modules/Admin/AuditLogFormatter.php:295
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:298
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:300
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:303
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:304
+#: src/Modules/Admin/AuditLogFormatter.php:306
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogFormatter.php:309
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:309
+#: src/Modules/Admin/AuditLogFormatter.php:311
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:309
+#: src/Modules/Admin/AuditLogFormatter.php:311
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:312
+#: src/Modules/Admin/AuditLogFormatter.php:314
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:317
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:318
+#: src/Modules/Admin/AuditLogFormatter.php:320
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:319
+#: src/Modules/Admin/AuditLogFormatter.php:321
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:322
+#: src/Modules/Admin/AuditLogFormatter.php:324
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:325
+#: src/Modules/Admin/AuditLogFormatter.php:327
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:328
+#: src/Modules/Admin/AuditLogFormatter.php:330
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:331
+#: src/Modules/Admin/AuditLogFormatter.php:333
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:336
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:375
+#: src/Modules/Admin/AuditLogFormatter.php:377
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:379
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:379
+#: src/Modules/Admin/AuditLogFormatter.php:381
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:392
+#: src/Modules/Admin/AuditLogFormatter.php:394
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:393
+#: src/Modules/Admin/AuditLogFormatter.php:395
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:396
 #: build/dashboard.js:35
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:397
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:398
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:399
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:398
+#: src/Modules/Admin/AuditLogFormatter.php:400
 msgid "Failed"
 msgstr "Fejlet"
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:408
-#: src/Modules/Admin/AuditLogFormatter.php:434
-#: src/Modules/Admin/AuditLogFormatter.php:493
+#: src/Modules/Admin/AuditLogFormatter.php:410
+#: src/Modules/Admin/AuditLogFormatter.php:436
+#: src/Modules/Admin/AuditLogFormatter.php:495
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:421
+#: src/Modules/Admin/AuditLogFormatter.php:423
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:41
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:424
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:41
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:423
+#: src/Modules/Admin/AuditLogFormatter.php:425
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:41
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:424
+#: src/Modules/Admin/AuditLogFormatter.php:426
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:41
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:452
+#: src/Modules/Admin/AuditLogFormatter.php:454
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:476
+#: src/Modules/Admin/AuditLogFormatter.php:478
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:477
+#: src/Modules/Admin/AuditLogFormatter.php:479
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:478
+#: src/Modules/Admin/AuditLogFormatter.php:480
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:479
+#: src/Modules/Admin/AuditLogFormatter.php:481
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:480
-#: src/Modules/Admin/AuditLogFormatter.php:628
+#: src/Modules/Admin/AuditLogFormatter.php:482
+#: src/Modules/Admin/AuditLogFormatter.php:630
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:481
+#: src/Modules/Admin/AuditLogFormatter.php:483
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:482
-#: src/Modules/Admin/AuditLogFormatter.php:688
+#: src/Modules/Admin/AuditLogFormatter.php:484
+#: src/Modules/Admin/AuditLogFormatter.php:690
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:37
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:483
+#: src/Modules/Admin/AuditLogFormatter.php:485
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:512
+#: src/Modules/Admin/AuditLogFormatter.php:514
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:527
+#: src/Modules/Admin/AuditLogFormatter.php:529
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -756,7 +764,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:596
+#: src/Modules/Admin/AuditLogFormatter.php:598
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -765,87 +773,87 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:596
+#: src/Modules/Admin/AuditLogFormatter.php:598
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:606
+#: src/Modules/Admin/AuditLogFormatter.php:608
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:607
+#: src/Modules/Admin/AuditLogFormatter.php:609
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:610
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:609
+#: src/Modules/Admin/AuditLogFormatter.php:611
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:610
+#: src/Modules/Admin/AuditLogFormatter.php:612
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:611
+#: src/Modules/Admin/AuditLogFormatter.php:613
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:612
+#: src/Modules/Admin/AuditLogFormatter.php:614
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:613
+#: src/Modules/Admin/AuditLogFormatter.php:615
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:614
+#: src/Modules/Admin/AuditLogFormatter.php:616
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:615
+#: src/Modules/Admin/AuditLogFormatter.php:617
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:616
+#: src/Modules/Admin/AuditLogFormatter.php:618
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:629
+#: src/Modules/Admin/AuditLogFormatter.php:631
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:641
+#: src/Modules/Admin/AuditLogFormatter.php:643
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:642
+#: src/Modules/Admin/AuditLogFormatter.php:644
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:654
+#: src/Modules/Admin/AuditLogFormatter.php:656
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:655
+#: src/Modules/Admin/AuditLogFormatter.php:657
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:656
+#: src/Modules/Admin/AuditLogFormatter.php:658
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:688
+#: src/Modules/Admin/AuditLogFormatter.php:690
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
@@ -854,15 +862,15 @@ msgstr "produkterne i én mapping"
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:707
+#: src/Modules/Admin/AuditLogFormatter.php:709
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:708
+#: src/Modules/Admin/AuditLogFormatter.php:710
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:709
+#: src/Modules/Admin/AuditLogFormatter.php:711
 msgid "social links"
 msgstr "sociale links"
 
@@ -878,7 +886,7 @@ msgid "Event"
 msgstr "Hændelse"
 
 #: src/Modules/Admin/AuditLogListTable.php:93
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
@@ -1134,13 +1142,13 @@ msgstr "Indstillinger"
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:148
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:87
-#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:123
+#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:134
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:134
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:93
-#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:132
+#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:143
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -1303,7 +1311,8 @@ msgstr "Biblioteket er fuldt. Fjern et billede først."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:199
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:82
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:102
 msgid "A technical error occurred. Nothing was changed."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret."
 
@@ -1385,7 +1394,7 @@ msgstr "Afspil"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:404
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:454
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
@@ -1590,359 +1599,480 @@ msgstr "Slået til, men sat på pause, mens MerchAlert er aktivt."
 msgid "On. Alerts are recorded when orders are paid."
 msgstr "Slået til. Alerts registreres, når ordrer betales."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:72
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:77
 msgid "The Twitch app was saved. Twitch accepted its credentials."
 msgstr "Twitch-appen er gemt. Twitch godkendte dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:73
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:78
 msgid "The Twitch app, the bot and every secret were removed."
 msgstr "Twitch-appen, botten og alle hemmeligheder er fjernet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:74
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:79
 msgid "Twitch did not accept the Client ID and Secret. Check them in the Twitch developer console."
 msgstr "Twitch godkendte ikke Client ID og Secret. Tjek dem i Twitch Developer Console."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:75
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:80
 msgid "Twitch could not be reached. Try again later."
 msgstr "Twitch kunne ikke nås. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:76
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:81
 msgid "The secret cannot be stored encrypted on this server (sodium is missing)."
 msgstr "Hemmeligheden kan ikke gemmes krypteret på denne server (sodium mangler)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:77
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:82
 msgid "The bot account was connected. Its chat subscriptions were renewed."
 msgstr "Bot-kontoen er forbundet. Dens chat-abonnementer er fornyet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:78
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:83
 msgid "The bot account was disconnected. No messages are sent until a bot is connected again."
 msgstr "Bot-kontoen er afbrudt. Der sendes ingen beskeder, før en bot er forbundet igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:79
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:84
 msgid "The login at Twitch was cancelled. Nothing was changed."
 msgstr "Login hos Twitch blev annulleret. Intet er ændret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:80
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:152
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:85
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:170
 msgid "Save the Twitch app first."
 msgstr "Gem Twitch-appen først."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:81
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:86
 msgid "Twitch did not accept the login. Try again, and check the redirect URL of the Twitch app."
 msgstr "Twitch godkendte ikke login. Prøv igen, og tjek Twitch-appens redirect-URL."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:83
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:88
 msgid "The Kick app was saved. Kick accepted its credentials."
 msgstr "Kick-appen er gemt. Kick godkendte dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:84
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
 msgid "The Kick app and every secret were removed."
 msgstr "Kick-appen og alle hemmeligheder er fjernet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:85
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
 msgid "Kick did not accept the Client ID and Secret (or the bot name is invalid). Check them in the Kick developer settings."
 msgstr "Kick godkendte ikke Client ID og Secret (eller bottens navn er ugyldigt). Tjek dem i Kicks udviklerindstillinger."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:86
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:91
 msgid "Kick could not be reached. Try again later."
 msgstr "Kick kunne ikke nås. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:92
+msgid "The Google app was saved. Log in with the bot account next."
+msgstr "Google-appen er gemt. Log nu ind med bot-kontoen."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:93
+msgid "The Google app, the YouTube bot and every secret were removed."
+msgstr "Google-appen, YouTube-botten og alle hemmeligheder er fjernet."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:94
+msgid "This is not a Google OAuth Client ID and Secret. Copy them from the Google Cloud console."
+msgstr "Det er ikke et Client ID og Secret fra Google OAuth. Kopiér dem fra Google Cloud-konsollen."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:95
+msgid "The YouTube bot was connected."
+msgstr "YouTube-botten er forbundet."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:96
+msgid "The YouTube bot was disconnected. No YouTube messages are sent until a bot is connected again."
+msgstr "YouTube-botten er afbrudt. Der sendes ingen YouTube-beskeder, før en bot er forbundet igen."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:97
+msgid "The login at Google was cancelled. Nothing was changed."
+msgstr "Login hos Google blev afbrudt. Intet er ændret."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:98
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:289
+msgid "Save the Google app first."
+msgstr "Gem Google-appen først."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:99
+msgid "Google gave no lasting access or the account has no YouTube channel. Log in again with the bot's YouTube channel and allow access."
+msgstr "Google gav ikke varig adgang, eller kontoen har ingen YouTube-kanal. Log ind igen med bottens YouTube-kanal, og giv adgang."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:100
+msgid "Google did not accept the login. Try again, and check the redirect URL and the YouTube Data API in the Google Cloud project."
+msgstr "Google godkendte ikke login. Prøv igen, og tjek redirect-URL'en og YouTube Data API i Google Cloud-projektet."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:101
+msgid "Google could not be reached. Try again later."
+msgstr "Google kunne ikke nås. Prøv igen senere."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:103
 msgid "The message format was saved."
 msgstr "Beskedformatet er gemt."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:88
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
 msgid "The chat subscriptions were renewed."
 msgstr "Chat-abonnementerne er fornyet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:105
 msgid "The message was sent as the bot."
 msgstr "Beskeden er sendt som botten."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:106
 msgid "The platform did not send the message. Check that the bot is still in the channel."
 msgstr "Platformen sendte ikke beskeden. Tjek, at botten stadig er i kanalen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:123
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:141
 msgid "Twitch app"
 msgstr "Twitch-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:124
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:142
 msgid "Create an application in the Twitch developer console (category \"Chat Bot\", client type \"Confidential\") and register this OAuth redirect URL:"
 msgstr "Opret en applikation i Twitch Developer Console (kategori \"Chat Bot\", client type \"Confidential\"), og registrér denne OAuth redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:130
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:197
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:148
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:215
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:253
 msgid "Client ID"
 msgstr "Client ID"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:131
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:198
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:149
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:216
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:254
 msgid "Client Secret"
 msgstr "Client Secret"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:132
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:199
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:150
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:217
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:255
 msgid "A secret is saved and never shown again. Enter it again to change the app."
 msgstr "En hemmelighed er gemt og vises aldrig igen. Indtast den igen for at ændre appen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:132
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:199
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:150
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:217
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:255
 msgid "The secret is stored encrypted."
 msgstr "Hemmeligheden gemmes krypteret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:134
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:203
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:152
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:221
 msgid "Save and check"
 msgstr "Gem og tjek"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:137
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:206
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:155
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:224
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:260
 msgid "Remove the app"
 msgstr "Fjern appen"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:149
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:167
 msgid "Bot account"
 msgstr "Bot-konto"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:159
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:177
 msgid "Log in with the Twitch account that writes the messages, not with your own. Twitch always asks, so you can choose the account; a private browser window helps."
 msgstr "Log ind med den Twitch-konto, der skriver beskederne, ikke med din egen. Twitch spørger altid, så du kan vælge kontoen; et privat browservindue hjælper."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:162
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:180
 msgid "Log in with the bot account at Twitch"
 msgstr "Log ind med bot-kontoen hos Twitch"
 
 #. translators: %s: Twitch login of the bot.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
+#. translators: %s: name of the bot's YouTube channel.
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:183
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:276
 #, php-format
 msgid "Connected as %s."
 msgstr "Forbundet som %s."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:168
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:186
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:284
 msgid "Disconnect the bot"
 msgstr "Afbryd botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:174
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:192
 msgid "Chatbot badge and chat identity"
 msgstr "Chatbot-badge og chat-identitet"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:176
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:194
 msgid "Messages are sent with Send Chat Message and an app access token."
 msgstr "Beskeder sendes med Send Chat Message og en app access token."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:177
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:195
 msgid "The bot account authorized the app (user:bot, user:write:chat, user:read:chat)."
 msgstr "Bot-kontoen har godkendt appen (user:bot, user:write:chat, user:read:chat)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:178
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:196
 msgid "Each creator adds the bot to the own channel (channel:bot) in the dashboard."
 msgstr "Hver creator tilføjer botten til sin egen kanal (channel:bot) i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:179
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:197
 msgid "The bot listens to the chats over an EventSub webhook (needs an HTTPS site Twitch can reach)."
 msgstr "Botten lytter til chattene via en EventSub-webhook (kræver et HTTPS-site, som Twitch kan nå)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:188
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:206
 msgid "Kick app"
 msgstr "Kick-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:189
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:207
 msgid "Create an app in your Kick account under Settings → Developer (two-factor authentication must be on), create a bot for the app there, and register this redirect URL:"
 msgstr "Opret en app på din Kick-konto under Settings → Developer (totrinsbekræftelse skal være slået til), opret en bot til appen dér, og registrér denne redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:191
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:209
 msgid "Turn on webhooks for the app and enter this webhook URL:"
 msgstr "Slå webhooks til for appen, og indtast denne webhook-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:200
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:218
 msgid "Bot name"
 msgstr "Bottens navn"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:201
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:219
 msgid "The name of the app's bot at Kick, shown to creators (optional)."
 msgstr "Navnet på appens bot hos Kick, som vises for creators (valgfrit)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:212
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
 msgid "Bot messages at Kick"
 msgstr "Bot-beskeder hos Kick"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:214
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
 msgid "The Kick app is saved and Kick accepted its credentials."
 msgstr "Kick-appen er gemt, og Kick har godkendt dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:215
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:233
 msgid "Messages are sent as the app's bot (type \"bot\") with the channel's own token, which is stored encrypted and renewed automatically."
 msgstr "Beskeder sendes som appens bot (type \"bot\") med kanalens eget token, som gemmes krypteret og fornyes automatisk."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:216
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
 msgid "Each creator adds the bot to the own channel (chat:write) in the dashboard."
 msgstr "Hver creator tilføjer botten til sin egen kanal (chat:write) i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:217
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:235
 msgid "The bot listens to the chats over Kick's webhook (needs an HTTPS site Kick can reach)."
 msgstr "Botten lytter til chattene via Kicks webhook (kræver et HTTPS-site, som Kick kan nå)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:246
+msgid "Google app"
+msgstr "Google-app"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:247
+msgid "Create a project in the Google Cloud console, enable the YouTube Data API v3, create an OAuth client (type \"Web application\") and register this redirect URL:"
+msgstr "Opret et projekt i Google Cloud-konsollen, slå YouTube Data API v3 til, opret en OAuth-klient (typen \"Web application\"), og registrér denne redirect-URL:"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:257
+msgid "Save"
+msgstr "Gem"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:264
+msgid "YouTube bot"
+msgstr "YouTube-bot"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
+msgid "Log in with the Google account of the YouTube channel that writes the messages, not with your own. Google always asks which account to use."
+msgstr "Log ind med Google-kontoen for den YouTube-kanal, der skriver beskederne, ikke med din egen. Google spørger altid, hvilken konto der skal bruges."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:273
+msgid "Log in with the bot account at Google"
+msgstr "Log ind med bot-kontoen hos Google"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:279
+msgid "Google no longer accepts the bot's login (it was revoked, or the Google app is in testing, where logins expire after 7 days). Disconnect the bot and log in again."
+msgstr "Google godkender ikke længere bottens login (det er tilbagekaldt, eller Google-appen er i test, hvor logins udløber efter 7 dage). Afbryd botten, og log ind igen."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:295
+msgid "Bot messages on YouTube"
+msgstr "Bot-beskeder på YouTube"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:297
+msgid "The Google app is saved."
+msgstr "Google-appen er gemt."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:298
+msgid "The bot's YouTube channel is logged in (youtube.force-ssl)."
+msgstr "Bottens YouTube-kanal er logget ind (youtube.force-ssl)."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:299
+msgid "Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found."
+msgstr "Hver creator tilføjer botten til sin egen kanal (youtube.readonly) i dashboardet, så livestreamen kan findes."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:300
+msgid "Messages are written only during a livestream; purchases between streams wait for the next stream (at most 24 hours)."
+msgstr "Beskeder skrives kun under en livestream; køb mellem streams venter på næste stream (højst 24 timer)."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:301
+msgid "The day's YouTube quota is not used up (10,000 units; a message costs 20, a live check 1)."
+msgstr "Dagens YouTube-kvote er ikke brugt op (10.000 enheder; en besked koster 20, et live-tjek 1)."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:304
+msgid "YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days; Google must verify the app for lasting use."
+msgstr "YouTube viser intet bot-badge; creators kan gøre botten til moderator. Mens Google-appen er i test, kan højst 100 testbrugere logge ind, og logins udløber efter 7 dage; Google skal verificere appen til varig brug."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:317
 msgid "(not met)"
 msgstr "(ikke opfyldt)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:244
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:329
 msgid "Message format"
 msgstr "Beskedformat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:333
 msgid "Messages per purchase"
 msgstr "Beskeder pr. køb"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:249
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:334
 msgid "One message per order line (as MerchAlert)"
 msgstr "Én besked pr. ordrelinje (som MerchAlert)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:250
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:335
 msgid "One message per order"
 msgstr "Én besked pr. ordre"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:251
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:336
 msgid "Each product in $Products (one message per order)"
 msgstr "Hvert produkt i $Products (én besked pr. ordre)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:253
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:338
 msgid "Variables: $Quantity, $Product, $Variation, $Category."
 msgstr "Variabler: $Quantity, $Product, $Variation, $Category."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:254
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:339
 msgid "Between the products"
 msgstr "Mellem produkterne"
 
 #. translators: 1: a product, 2: the separator, 3: another product.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:259
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:344
 #, php-format
 msgid "Example of $Products: %1$s%2$s%3$s"
 msgstr "Eksempel på $Products: %1$s%2$s%3$s"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:281
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:366
 msgid "Save format"
 msgstr "Gem format"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:291
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:376
 msgid "Rate limit and verification"
 msgstr "Rate limit og verificering"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:292
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:377
 msgid "Twitch lets a bot send 20 messages per 30 seconds across all channels (100 where it is moderator or VIP), and at most one per second in a channel. A verified bot may send 7,500 per 30 seconds. Messages wait in a queue when the limit is reached."
 msgstr "Twitch lader en bot sende 20 beskeder pr. 30 sekunder på tværs af alle kanaler (100, hvor den er moderator eller VIP), og højst én pr. sekund i en kanal. En verificeret bot må sende 7.500 pr. 30 sekunder. Beskeder venter i en kø, når grænsen er nået."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:295
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:380
 msgid "No message has been sent yet."
 msgstr "Der er ikke sendt nogen besked endnu."
 
 #. translators: %d: messages per 30 seconds.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:297
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
 #, php-format
 msgid "Twitch reported a limit of %d messages per 30 seconds for the latest message."
 msgstr "Twitch oplyste en grænse på %d beskeder pr. 30 sekunder ved den seneste besked."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:309
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:394
 msgid "Channels"
 msgstr "Kanaler"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:312
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:397
 msgid "No creator has added the bot to a channel yet. Creators do this under Alerts → Chatbot in the dashboard."
 msgstr "Ingen creator har tilføjet botten til en kanal endnu. Creators gør det under Alerts → Chatbot i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 msgid "Platform"
 msgstr "Platform"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 msgid "Channel"
 msgstr "Kanal"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 msgid "Messages"
 msgstr "Beskeder"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 msgid "Listening"
 msgstr "Lytter"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:401
 msgid "Latest message"
 msgstr "Seneste besked"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:323
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:408
 msgid "On"
 msgstr "Til"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:323
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:408
 msgid "Off"
 msgstr "Fra"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:326
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:411
 msgid "Open chat"
 msgstr "Åbn chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:334
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:419
 msgid "Renew the chat subscriptions"
 msgstr "Forny chat-abonnementerne"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:348
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:433
 msgid "Back to the chatbot"
 msgstr "Tilbage til chatbotten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:351
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:436
 msgid "This creator has not added the bot to a channel."
 msgstr "Denne creator har ikke tilføjet botten til en kanal."
 
 #. translators: 1: channel login, 2: platform (Twitch or Kick).
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:356
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:441
 #, php-format
 msgid "Chat of %1$s (%2$s)"
 msgstr "Chat for %1$s (%2$s)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:359
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:444
 msgid "No messages in the last 24 hours."
 msgstr "Ingen beskeder de seneste 24 timer."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:359
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:444
 msgid "The chat could not be loaded. It is tried again."
 msgstr "Chatten kunne ikke indlæses. Der prøves igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:360
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "The bot's own view of the chat (webhook). Messages are kept for 24 hours."
 msgstr "Bottens egen visning af chatten (webhook). Beskeder gemmes i 24 timer."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:362
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 msgid "Twitch cannot send the chat to this site (no HTTPS webhook), so Twitch's own chat is shown. It loads from twitch.tv."
 msgstr "Twitch kan ikke sende chatten til dette site (ingen HTTPS-webhook), så Twitchs egen chat vises. Den indlæses fra twitch.tv."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:363
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:448
 msgid "Twitch chat"
 msgstr "Twitch-chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:365
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:450
 msgid "Open the chat at Twitch"
 msgstr "Åbn chatten hos Twitch"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:367
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:454
 msgid "Kick cannot send the chat to this site (no HTTPS webhook, or webhooks are off in the Kick app)."
 msgstr "Kick kan ikke sende chatten til dette site (ingen HTTPS-webhook, eller webhooks er slået fra i Kick-appen)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:368
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:455
 msgid "Open the chat at Kick"
 msgstr "Åbn chatten hos Kick"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:376
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:463
 msgid "Send as the bot"
 msgstr "Send som botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:378
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:465
 msgid "Send"
 msgstr "Send"
 
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:480
+msgid "The creator is not live on YouTube right now (or YouTube could not be asked). The chat exists only during a livestream."
+msgstr "Creatoren er ikke live på YouTube lige nu (eller YouTube kunne ikke spørges). Chatten findes kun under en livestream."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:482
+msgid "YouTube's own live chat of the current livestream. It loads from youtube.com."
+msgstr "YouTubes egen livechat fra den aktuelle livestream. Den indlæses fra youtube.com."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:483
+msgid "YouTube chat"
+msgstr "YouTube-chat"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:486
+msgid "Open the livestream at YouTube"
+msgstr "Åbn livestreamen hos YouTube"
+
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:405
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:512
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -1952,16 +2082,20 @@ msgstr "Send"
 msgid "Yes"
 msgstr "Ja"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:406
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:513
 msgid "Waiting for Twitch"
 msgstr "Venter på Twitch"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:407
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:514
 msgid "No (site not reachable)"
 msgstr "Nej (sitet kan ikke nås)"
 
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:515
+msgid "YouTube's chat (embedded)"
+msgstr "YouTubes chat (indlejret)"
+
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:408
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:516
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2025,15 +2159,15 @@ msgstr "Indstillingen er ikke gyldig."
 msgid "The alert was not found."
 msgstr "Alerten blev ikke fundet."
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:171
+#: src/Modules/Alerts/Rest/MeChatbotController.php:177
 msgid "The chatbot is not set up yet."
 msgstr "Chatbotten er ikke sat op endnu."
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:209
+#: src/Modules/Alerts/Rest/MeChatbotController.php:215
 msgid "The test message could not be sent."
 msgstr "Testbeskeden kunne ikke sendes."
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:240
+#: src/Modules/Alerts/Rest/MeChatbotController.php:246
 msgid "The chatbot settings are invalid."
 msgstr "Chatbot-indstillingerne er ugyldige."
 
@@ -6027,8 +6161,16 @@ msgid "sent"
 msgstr "sendt"
 
 #: build/dashboard.js:1
+msgid "waiting for your next livestream"
+msgstr "venter på din næste livestream"
+
+#: build/dashboard.js:1
 msgid "waiting to be sent"
 msgstr "venter på at blive sendt"
+
+#: build/dashboard.js:1
+msgid "skipped (no livestream within 24 hours)"
+msgstr "sprunget over (ingen livestream inden for 24 timer)"
 
 #: build/dashboard.js:1
 msgid "skipped (empty message)"
@@ -6065,6 +6207,10 @@ msgstr "Botten skriver i chatten hos %1$s."
 #, js-format
 msgid "The bot %1$s writes in the chat of %2$s."
 msgstr "Botten %1$s skriver i chatten hos %2$s."
+
+#: build/dashboard.js:5
+msgid "On YouTube the bot writes only during your livestreams; purchases between streams wait for your next stream (at most 24 hours). Tip: make the bot a moderator of your channel, so YouTube does not hold its messages back."
+msgstr "På YouTube skriver botten kun under dine livestreams; køb mellem streams venter på din næste stream (højst 24 timer). Tip: gør botten til moderator på din kanal, så YouTube ikke holder dens beskeder tilbage."
 
 #. translators: 1: bot login.
 #: build/dashboard.js:6
@@ -6123,6 +6269,10 @@ msgstr "Botten er fjernet fra din kanal."
 #: build/dashboard.js:10
 msgid "The test message was sent."
 msgstr "Testbeskeden er sendt."
+
+#: build/dashboard.js:10
+msgid "You are not live on YouTube right now. Test messages can only be written during a livestream."
+msgstr "Du er ikke live på YouTube lige nu. Testbeskeder kan kun skrives under en livestream."
 
 #. translators: 1: platform (Twitch or Kick).
 #: build/dashboard.js:11

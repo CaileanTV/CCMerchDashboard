@@ -124,10 +124,10 @@ describe( 'parseChatbot', () => {
 		for ( const bad of [
 			{ ...STATE, mode: 'both' },
 			{ ...STATE, variables: [ 1 ] },
-			{ ...STATE, platforms: [ { ...TWITCH, platform: 'youtube' } ] },
+			{ ...STATE, platforms: [ { ...TWITCH, platform: 'tiktok' } ] },
 			{
 				...STATE,
-				platforms: [ { ...TWITCH, bot_login: 'not a login' } ],
+				platforms: [ { ...TWITCH, bot_login: 'x'.repeat( 101 ) } ],
 			},
 			{
 				...STATE,
@@ -212,6 +212,12 @@ describe( 'previewMessage', () => {
 		expect( statusLabel( 'sent' ) ).toBe( 'sent' );
 		expect( statusLabel( 'waiting' ) ).toBe( 'waiting to be sent' );
 		expect( statusLabel( 'failed' ) ).toBe( 'not sent' );
+		expect( statusLabel( 'waiting', 'not_live' ) ).toBe(
+			'waiting for your next livestream'
+		);
+		expect( statusLabel( 'skipped', 'not_live' ) ).toBe(
+			'skipped (no livestream within 24 hours)'
+		);
 	} );
 } );
 
@@ -338,6 +344,56 @@ describe( 'AlertsChatbotSection', () => {
 		).toEqual( [ `${ PATH }/kick/channel` ] );
 		expect( buttons( 'Add the bot to your channel' ) ).toHaveLength( 1 );
 		confirm.mockRestore();
+	} );
+
+	it( 'shows the YouTube channel and explains that messages wait for a livestream', async () => {
+		const youtube = {
+			platform: 'youtube',
+			label: 'YouTube',
+			available: true,
+			bot_login: 'Merch Bot',
+			enabled: true,
+			channel: {
+				login: 'Nova Streams',
+				url: 'https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv',
+				connected_at: '2026-10-21T10:00:00Z',
+			},
+			last_message: {
+				status: 'waiting',
+				reason: 'not_live',
+				at: '2026-10-21T10:05:00Z',
+			},
+		};
+		await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, {
+					...STATE,
+					platforms: [ TWITCH, KICK, youtube ],
+				} ),
+			[ `POST ${ PATH }/youtube/test` ]: () =>
+				response( 200, {
+					result: 'not_live',
+					reason: 'not_live',
+					message: 'x',
+				} ),
+		} );
+
+		expect( text() ).toContain( 'Your YouTube channel' );
+		expect( text() ).toContain(
+			'The bot Merch Bot writes in the chat of Nova Streams.'
+		);
+		expect( text() ).toContain( 'only during your livestreams' );
+		expect( text() ).toContain(
+			'Latest message: waiting for your next livestream'
+		);
+		expect( text() ).not.toContain( '(not_live)' );
+		expect( text() ).toContain(
+			'Write in the YouTube chat when someone buys'
+		);
+
+		click( buttons( 'Send test message' )[ 0 ] ?? null );
+		await flush();
+		expect( text() ).toContain( 'You are not live on YouTube right now.' );
 	} );
 
 	it( 'shows a fixed error text when the bot cannot be added', async () => {

@@ -165,8 +165,8 @@ final class ChatbotChannelRepository {
 			$creator_id,
 			$platform,
 			array(
-				'broadcaster_id'      => $id,
-				'broadcaster_login'   => $login,
+				'broadcaster_id'      => substr( $id, 0, 64 ),
+				'broadcaster_login'   => mb_substr( $login, 0, 100 ),
 				'authorized_at'       => gmdate( 'Y-m-d H:i:s' ),
 				'subscription_id'     => '',
 				'subscription_status' => '',

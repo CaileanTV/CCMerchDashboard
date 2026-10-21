@@ -28,10 +28,10 @@ final class KickPlatform implements ChatbotPlatform {
 	 *
 	 * @param KickAccount              $account  The Kick app.
 	 * @param KickApi                  $api      Kick.
-	 * @param KickTokens               $tokens   The creators' tokens.
+	 * @param CreatorTokens            $tokens   The creators' Kick tokens.
 	 * @param ChatbotChannelRepository $channels The creators' channels.
 	 */
-	public function __construct( private KickAccount $account, private KickApi $api, private KickTokens $tokens, private ChatbotChannelRepository $channels ) {
+	public function __construct( private KickAccount $account, private KickApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels ) {
 	}
 
 	/**
@@ -101,7 +101,7 @@ final class KickPlatform implements ChatbotPlatform {
 	 * @param ChatbotChannel $channel The creator's channel.
 	 * @param string         $message Message.
 	 * @return array{result: string, reason: string, retry_after: int|null}|null
-	 * @throws KickException When Kick cannot be reached for a token.
+	 * @throws ChatbotException When Kick cannot be reached for a token.
 	 * @throws DatabaseException When the tokens cannot be read or stored.
 	 */
 	private function send_with_token( ChatbotChannel $channel, string $message ): ?array {
@@ -109,7 +109,7 @@ final class KickPlatform implements ChatbotPlatform {
 			$result = $this->api->send_message( $this->tokens->access( $channel->creator_id ), $message );
 
 			return 'unauthorized' === $result['result'] ? $this->api->send_message( $this->tokens->access( $channel->creator_id, true ), $message ) : $result;
-		} catch ( KickException $e ) {
+		} catch ( ChatbotException $e ) {
 			return self::revoked( $e );
 		}
 	}
@@ -117,11 +117,11 @@ final class KickPlatform implements ChatbotPlatform {
 	/**
 	 * Null when the failure means the creator revoked the access.
 	 *
-	 * @param KickException $e Failure.
-	 * @throws KickException Every other failure.
+	 * @param ChatbotException $e Failure.
+	 * @throws ChatbotException Every other failure.
 	 */
-	private static function revoked( KickException $e ): null {
-		if ( KickException::UNAUTHORIZED !== $e->reason() ) {
+	private static function revoked( ChatbotException $e ): null {
+		if ( ChatbotException::UNAUTHORIZED !== $e->reason() ) {
 			throw $e;
 		}
 

@@ -90,7 +90,7 @@ final class CreatorChatbot {
 				'enabled'      => $channel->enabled,
 				'channel'      => $channel->connected() ? array(
 					'login'        => $channel->broadcaster_login,
-					'url'          => $platform->channel_url( $channel->broadcaster_login ),
+					'url'          => $platform->channel_url( $channel->broadcaster_id, $channel->broadcaster_login ),
 					'connected_at' => gmdate( 'Y-m-d\TH:i:s\Z', $channel->authorized_at ),
 				) : null,
 				'last_message' => null === $last ? null : array(
@@ -188,6 +188,11 @@ final class CreatorChatbot {
 			? $this->messages->order( $channel->template_for( 'order' ), array( $event ), $format )
 			: $this->messages->line( $channel->template_for( 'line' ), $event );
 		$result  = $this->sender->send_now( $channel, $message );
+
+		// The creator is live (YouTube): messages that waited for the stream follow.
+		if ( 'sent' === $result['result'] && ChatPlatform::YouTube === $platform ) {
+			$this->sender->flush_waiting( $creator_id, $platform );
+		}
 
 		return array(
 			'result'  => $result['result'],

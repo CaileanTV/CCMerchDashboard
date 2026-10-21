@@ -21,6 +21,7 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
 use WP_User;
@@ -184,6 +185,7 @@ final class Uninstaller {
 		delete_option( TwitchAccount::OPTION );
 		delete_option( ChatbotFormat::OPTION );
 		delete_option( KickAccount::OPTION );
+		delete_option( YouTubeAccount::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

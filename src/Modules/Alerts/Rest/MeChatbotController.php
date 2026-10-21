@@ -17,6 +17,7 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
 use MerchBoard\Modules\Alerts\Chatbot\KickOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeOAuth;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -45,7 +46,7 @@ final class MeChatbotController extends RestController {
 	/**
 	 * Route pattern of a platform.
 	 */
-	private const PLATFORM = '/(?P<platform>twitch|kick)';
+	private const PLATFORM = '/(?P<platform>twitch|kick|youtube)';
 
 	/**
 	 * Constructor.
@@ -54,9 +55,10 @@ final class MeChatbotController extends RestController {
 	 * @param CreatorChatbot $chatbot The creator's chatbot.
 	 * @param TwitchOAuth    $twitch  Twitch authorizations.
 	 * @param KickOAuth      $kick    Kick authorizations.
+	 * @param YouTubeOAuth   $youtube YouTube authorizations.
 	 * @param Logger         $logger  Technical log.
 	 */
-	public function __construct( private CreatorContext $context, private CreatorChatbot $chatbot, private TwitchOAuth $twitch, private KickOAuth $kick, Logger $logger ) {
+	public function __construct( private CreatorContext $context, private CreatorChatbot $chatbot, private TwitchOAuth $twitch, private KickOAuth $kick, private YouTubeOAuth $youtube, Logger $logger ) {
 		parent::__construct( $logger );
 	}
 
@@ -164,7 +166,11 @@ final class MeChatbotController extends RestController {
 			self::ROUTE . '/connect',
 			function ( int $creator_id ) use ( $platform ): WP_REST_Response|WP_Error {
 				try {
-					$url = ChatPlatform::Kick === $platform ? $this->kick->start_channel( $creator_id ) : $this->twitch->start_channel( $creator_id );
+					$url = match ( $platform ) {
+						ChatPlatform::Twitch  => $this->twitch->start_channel( $creator_id ),
+						ChatPlatform::Kick    => $this->kick->start_channel( $creator_id ),
+						ChatPlatform::YouTube => $this->youtube->start_channel( $creator_id ),
+					};
 
 					return new WP_REST_Response( array( 'url' => $url ), 200 );
 				} catch ( ChatbotException $e ) {

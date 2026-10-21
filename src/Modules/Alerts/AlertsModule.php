@@ -31,16 +31,20 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatPlatforms;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
 use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
+use MerchBoard\Modules\Alerts\Chatbot\CreatorTokens;
 use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\KickApi;
 use MerchBoard\Modules\Alerts\Chatbot\KickOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\KickPlatform;
-use MerchBoard\Modules\Alerts\Chatbot\KickTokens;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubePlatform;
 use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\History\AlertHistory;
@@ -63,6 +67,7 @@ use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
 use MerchBoard\Modules\Alerts\Rest\KickController;
 use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
 use MerchBoard\Modules\Alerts\Rest\TwitchController;
+use MerchBoard\Modules\Alerts\Rest\YouTubeController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
@@ -209,7 +214,7 @@ final class AlertsModule implements Module {
 			MeAlertsController::class,
 			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ) )
 		);
-		// The chatbot on Twitch and Kick (phase 25, steps 8 and 8.2; ADR-066, ADR-069).
+		// The chatbot on Twitch, Kick and YouTube (phase 25, steps 8, 8.2 and 8.4; ADR-066, ADR-069, ADR-070).
 		$container->set( TwitchApi::class, static fn(): TwitchApi => new TwitchApi() );
 		$container->set(
 			TwitchAccount::class,
@@ -220,20 +225,26 @@ final class AlertsModule implements Module {
 			KickAccount::class,
 			static fn( Container $c ): KickAccount => new KickAccount( $c->get( KickApi::class ), new ChatCipher( ChatPlatform::Kick ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
 		);
+		$container->set( YouTubeApi::class, static fn(): YouTubeApi => new YouTubeApi() );
+		$container->set(
+			YouTubeAccount::class,
+			static fn( Container $c ): YouTubeAccount => new YouTubeAccount( $c->get( YouTubeApi::class ), new ChatCipher( ChatPlatform::YouTube ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set(
+			YouTubePlatform::class,
+			static fn( Container $c ): YouTubePlatform => new YouTubePlatform( $c->get( YouTubeAccount::class ), $c->get( YouTubeApi::class ), self::youtube_tokens( $c ), $c->get( ChatbotChannelRepository::class ) )
+		);
 		$container->set( ChatbotFormat::class, static fn( Container $c ): ChatbotFormat => new ChatbotFormat( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ChatbotChannelRepository::class, static fn( Container $c ): ChatbotChannelRepository => new ChatbotChannelRepository( $c->get( wpdb::class ) ) );
 		$container->set( ChatMessageRepository::class, static fn( Container $c ): ChatMessageRepository => new ChatMessageRepository( $c->get( wpdb::class ) ) );
 		$container->set( ChatLogRepository::class, static fn( Container $c ): ChatLogRepository => new ChatLogRepository( $c->get( wpdb::class ) ) );
 		$container->set( ChatMessages::class, static fn( Container $c ): ChatMessages => new ChatMessages( $c->get( AlertTemplate::class ) ) );
 		$container->set(
-			KickTokens::class,
-			static fn( Container $c ): KickTokens => new KickTokens( $c->get( KickAccount::class ), $c->get( KickApi::class ), new ChatCipher( ChatPlatform::Kick ), $c->get( ChatbotChannelRepository::class ) )
-		);
-		$container->set(
 			ChatPlatforms::class,
 			static fn( Container $c ): ChatPlatforms => new ChatPlatforms(
 				new TwitchPlatform( $c->get( TwitchAccount::class ), $c->get( TwitchApi::class ) ),
-				new KickPlatform( $c->get( KickAccount::class ), $c->get( KickApi::class ), $c->get( KickTokens::class ), $c->get( ChatbotChannelRepository::class ) )
+				new KickPlatform( $c->get( KickAccount::class ), $c->get( KickApi::class ), self::kick_tokens( $c ), $c->get( ChatbotChannelRepository::class ) ),
+				$c->get( YouTubePlatform::class )
 			)
 		);
 		$container->set(
@@ -272,7 +283,21 @@ final class AlertsModule implements Module {
 			static fn( Container $c ): KickOAuth => new KickOAuth(
 				$c->get( KickAccount::class ),
 				$c->get( KickApi::class ),
-				$c->get( KickTokens::class ),
+				self::kick_tokens( $c ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatSubscriptions::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$dashboard_url,
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			YouTubeOAuth::class,
+			static fn( Container $c ): YouTubeOAuth => new YouTubeOAuth(
+				$c->get( YouTubeAccount::class ),
+				$c->get( YouTubeApi::class ),
+				self::youtube_tokens( $c ),
 				$c->get( ChatbotChannelRepository::class ),
 				$c->get( ChatSubscriptions::class ),
 				$c->get( AuditTrail::class ),
@@ -304,19 +329,23 @@ final class AlertsModule implements Module {
 			static fn( Container $c ): KickController => new KickController( $c->get( KickOAuth::class ), new KickWebhookVerifier( $c->get( KickApi::class ) ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ), $c->get( Logger::class ) )
 		);
 		$container->set(
+			YouTubeController::class,
+			static fn( Container $c ): YouTubeController => new YouTubeController( $c->get( YouTubeOAuth::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
 			ChatbotChatController::class,
 			static fn( Container $c ): ChatbotChatController => new ChatbotChatController( $c->get( ChatbotChannelRepository::class ), $c->get( ChatLogRepository::class ), $c->get( Logger::class ) )
 		);
 		$container->set(
 			MeChatbotController::class,
-			static fn( Container $c ): MeChatbotController => new MeChatbotController( $c->get( CreatorContext::class ), $c->get( CreatorChatbot::class ), $c->get( TwitchOAuth::class ), $c->get( KickOAuth::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): MeChatbotController => new MeChatbotController( $c->get( CreatorContext::class ), $c->get( CreatorChatbot::class ), $c->get( TwitchOAuth::class ), $c->get( KickOAuth::class ), $c->get( YouTubeOAuth::class ), $c->get( Logger::class ) )
 		);
 		$container->set(
 			ChatbotAdminTab::class,
 			static function ( Container $c ): ChatbotAdminTab {
 				$root = dirname( __DIR__, 3 ) . '/';
 
-				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( KickAccount::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ) );
+				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( KickAccount::class ), $c->get( YouTubeAccount::class ), $c->get( YouTubePlatform::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ) );
 			}
 		);
 		$container->set(
@@ -324,6 +353,8 @@ final class AlertsModule implements Module {
 			static fn( Container $c ): ChatbotAdminActions => new ChatbotAdminActions(
 				$c->get( TwitchAccount::class ),
 				$c->get( KickAccount::class ),
+				$c->get( YouTubeAccount::class ),
+				$c->get( YouTubeOAuth::class ),
 				$c->get( TwitchOAuth::class ),
 				$c->get( ChatbotFormat::class ),
 				$c->get( ChatSubscriptions::class ),
@@ -389,6 +420,7 @@ final class AlertsModule implements Module {
 				$container->get( MeChatbotController::class )->register_routes();
 				$container->get( TwitchController::class )->register_routes();
 				$container->get( KickController::class )->register_routes();
+				$container->get( YouTubeController::class )->register_routes();
 				$container->get( ChatbotChatController::class )->register_routes();
 			}
 		);
@@ -432,6 +464,47 @@ final class AlertsModule implements Module {
 				$container->get( AlertsAdminActions::class )->register();
 				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
+			}
+		);
+	}
+
+	/**
+	 * The creators' Google tokens (ADR-070 pkt. 4): renewed and revoked at
+	 * Google.
+	 *
+	 * @param Container $c Service container.
+	 */
+	private static function youtube_tokens( Container $c ): CreatorTokens {
+		$account = $c->get( YouTubeAccount::class );
+		$api     = $c->get( YouTubeApi::class );
+
+		return new CreatorTokens(
+			ChatPlatform::YouTube,
+			new ChatCipher( ChatPlatform::YouTube ),
+			$c->get( ChatbotChannelRepository::class ),
+			static fn( string $refresh ): array => $api->refresh( $account->client_id(), $account->require_secret(), $refresh ),
+			static function ( string $token ) use ( $api ): void {
+				$api->revoke( $token );
+			}
+		);
+	}
+
+	/**
+	 * The creators' Kick tokens (ADR-069 pkt. 5): renewed and revoked at Kick.
+	 *
+	 * @param Container $c Service container.
+	 */
+	private static function kick_tokens( Container $c ): CreatorTokens {
+		$account = $c->get( KickAccount::class );
+		$api     = $c->get( KickApi::class );
+
+		return new CreatorTokens(
+			ChatPlatform::Kick,
+			new ChatCipher( ChatPlatform::Kick ),
+			$c->get( ChatbotChannelRepository::class ),
+			static fn( string $refresh ): array => $api->refresh( $account->client_id(), $account->require_secret(), $refresh ),
+			static function ( string $token, string $hint ) use ( $api ): void {
+				$api->revoke( $token, $hint );
 			}
 		);
 	}

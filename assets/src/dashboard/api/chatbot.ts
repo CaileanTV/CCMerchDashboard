@@ -9,22 +9,25 @@ import { isRecord } from './validate';
 
 const PATH = '/merchboard/v1/me/alerts/chatbot';
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
-const LOGIN = /^[\w-]{1,25}$/;
+/** A channel or bot name: a login, a slug or a YouTube channel name (shown as text). */
+const NAME_MAX = 100;
 
 /** The platforms, in the order the page shows them. */
-export const PLATFORMS = [ 'twitch', 'kick' ] as const;
+export const PLATFORMS = [ 'twitch', 'kick', 'youtube' ] as const;
 export type ChatPlatform = ( typeof PLATFORMS )[ number ];
 
 /** The authorization page of each platform (the only accepted hosts). */
 const AUTHORIZE_HOSTS: Readonly< Record< ChatPlatform, string > > = {
 	twitch: 'id.twitch.tv',
 	kick: 'id.kick.com',
+	youtube: 'accounts.google.com',
 };
 
 /** The channel URL's host of each platform. */
 const CHANNEL_HOSTS: Readonly< Record< ChatPlatform, string > > = {
 	twitch: 'www.twitch.tv',
 	kick: 'kick.com',
+	youtube: 'www.youtube.com',
 };
 
 /** One platform of the chatbot. */
@@ -87,7 +90,7 @@ function parsePlatform( body: unknown ): ChatbotPlatformState | null {
 		typeof body.label !== 'string' ||
 		typeof body.available !== 'boolean' ||
 		typeof body.bot_login !== 'string' ||
-		( body.bot_login !== '' && ! LOGIN.test( body.bot_login ) ) ||
+		body.bot_login.length > NAME_MAX ||
 		typeof body.enabled !== 'boolean'
 	) {
 		return null;
@@ -100,7 +103,8 @@ function parsePlatform( body: unknown ): ChatbotPlatformState | null {
 		if (
 			! isRecord( body.channel ) ||
 			typeof body.channel.login !== 'string' ||
-			! LOGIN.test( body.channel.login ) ||
+			body.channel.login === '' ||
+			body.channel.login.length > NAME_MAX ||
 			typeof body.channel.url !== 'string' ||
 			! isHttpsOn( body.channel.url, CHANNEL_HOSTS[ platform ] ) ||
 			typeof body.channel.connected_at !== 'string' ||

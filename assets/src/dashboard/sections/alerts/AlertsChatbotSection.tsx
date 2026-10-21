@@ -172,15 +172,20 @@ function takeConnectResult(): {
  * The latest message's status as the creator reads it.
  *
  * @param status Status from the message log.
+ * @param reason Its reason code ('' for none).
  */
-export function statusLabel( status: string ): string {
+export function statusLabel( status: string, reason = '' ): string {
 	switch ( status ) {
 		case 'sent':
 			return __( 'sent', 'merchboard' );
 		case 'waiting':
-			return __( 'waiting to be sent', 'merchboard' );
+			return reason === 'not_live'
+				? __( 'waiting for your next livestream', 'merchboard' )
+				: __( 'waiting to be sent', 'merchboard' );
 		case 'skipped':
-			return __( 'skipped (empty message)', 'merchboard' );
+			return reason === 'not_live'
+				? __( 'skipped (no livestream within 24 hours)', 'merchboard' )
+				: __( 'skipped (empty message)', 'merchboard' );
 		default:
 			return __( 'not sent', 'merchboard' );
 	}
@@ -190,6 +195,11 @@ function testMessage( result: string, label: string ): string {
 	switch ( result ) {
 		case 'sent':
 			return __( 'The test message was sent.', 'merchboard' );
+		case 'not_live':
+			return __(
+				'You are not live on YouTube right now. Test messages can only be written during a livestream.',
+				'merchboard'
+			);
 		case 'rate_limited':
 			return sprintf(
 				/* translators: 1: platform (Twitch or Kick). */
@@ -290,6 +300,14 @@ function PlatformCard( {
 									channel.login
 								) }
 					</p>
+					{ platform.platform === 'youtube' && (
+						<p className="merchboard-field__help">
+							{ __(
+								'On YouTube the bot writes only during your livestreams; purchases between streams wait for your next stream (at most 24 hours). Tip: make the bot a moderator of your channel, so YouTube does not hold its messages back.',
+								'merchboard'
+							) }
+						</p>
+					) }
 					{ platform.platform === 'twitch' && botLogin !== '' && (
 						<p className="merchboard-field__help">
 							{ sprintf(
@@ -307,8 +325,12 @@ function PlatformCard( {
 							{ sprintf(
 								/* translators: 1: status, 2: the platform's reason or nothing. */
 								__( 'Latest message: %1$s%2$s', 'merchboard' ),
-								statusLabel( lastMessage.status ),
+								statusLabel(
+									lastMessage.status,
+									lastMessage.reason
+								),
 								lastMessage.reason === '' ||
+									lastMessage.reason === 'not_live' ||
 									lastMessage.status === 'sent'
 									? ''
 									: ` (${ lastMessage.reason })`

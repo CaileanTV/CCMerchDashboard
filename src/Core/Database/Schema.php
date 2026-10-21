@@ -30,6 +30,7 @@ use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationTables;
 use MerchBoard\Core\Database\Migrations\CreatePayoutTables;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Migrations\CreateSettlementTables;
+use MerchBoard\Core\Database\Migrations\WidenChatbotChannels;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -69,6 +70,7 @@ final class Schema {
 			19 => new CreateAlertOverlaysTable(),
 			20 => new CreateAlertChatbotTables(),
 			21 => new AddChatbotPlatforms(),
+			22 => new WidenChatbotChannels(),
 		);
 	}
 }

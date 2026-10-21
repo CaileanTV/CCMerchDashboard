@@ -25,6 +25,9 @@ use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeOAuth;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -46,16 +49,22 @@ final class ChatbotAdminActions {
 	public const RESUBSCRIBE_ACTION    = 'merchboard_alert_chatbot_resubscribe';
 	public const SEND_ACTION           = 'merchboard_alert_chatbot_send';
 
+	public const YOUTUBE_APP_ACTION            = 'merchboard_alert_chatbot_youtube_app';
+	public const YOUTUBE_BOT_CONNECT_ACTION    = 'merchboard_alert_chatbot_youtube_bot_connect';
+	public const YOUTUBE_BOT_DISCONNECT_ACTION = 'merchboard_alert_chatbot_youtube_bot_disconnect';
+
 	/**
 	 * Every handled action.
 	 */
-	private const ACTIONS = array( self::APP_ACTION, self::BOT_CONNECT_ACTION, self::BOT_DISCONNECT_ACTION, self::KICK_APP_ACTION, self::FORMAT_ACTION, self::RESUBSCRIBE_ACTION, self::SEND_ACTION );
+	private const ACTIONS = array( self::APP_ACTION, self::BOT_CONNECT_ACTION, self::BOT_DISCONNECT_ACTION, self::KICK_APP_ACTION, self::YOUTUBE_APP_ACTION, self::YOUTUBE_BOT_CONNECT_ACTION, self::YOUTUBE_BOT_DISCONNECT_ACTION, self::FORMAT_ACTION, self::RESUBSCRIBE_ACTION, self::SEND_ACTION );
 
 	/**
 	 * Constructor.
 	 *
 	 * @param TwitchAccount            $account       Twitch app and bot.
 	 * @param KickAccount              $kick          Kick app.
+	 * @param YouTubeAccount           $youtube       Google app and YouTube bot.
+	 * @param YouTubeOAuth             $google        YouTube authorizations.
 	 * @param TwitchOAuth              $oauth         Twitch authorizations.
 	 * @param ChatbotFormat            $format        Message format.
 	 * @param ChatSubscriptions        $subscriptions Chat subscriptions.
@@ -68,6 +77,8 @@ final class ChatbotAdminActions {
 	public function __construct(
 		private TwitchAccount $account,
 		private KickAccount $kick,
+		private YouTubeAccount $youtube,
+		private YouTubeOAuth $google,
 		private TwitchOAuth $oauth,
 		private ChatbotFormat $format,
 		private ChatSubscriptions $subscriptions,
@@ -106,8 +117,8 @@ final class ChatbotAdminActions {
 		// The nonce is verified in process() before any input is used.
 		$url = $this->process( wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and every field validated in process().
 
-		// "Log in with the bot account" goes to Twitch's authorization page; no other host.
-		add_filter( 'allowed_redirect_hosts', static fn( array $hosts ): array => array_merge( $hosts, array( (string) wp_parse_url( TwitchApi::AUTHORIZE_URL, PHP_URL_HOST ) ) ) );
+		// "Log in with the bot account" goes to Twitch's or Google's authorization page; no other host.
+		add_filter( 'allowed_redirect_hosts', static fn( array $hosts ): array => array_merge( $hosts, array( (string) wp_parse_url( TwitchApi::AUTHORIZE_URL, PHP_URL_HOST ), (string) wp_parse_url( YouTubeApi::AUTHORIZE_URL, PHP_URL_HOST ) ) ) );
 		wp_safe_redirect( $url );
 		exit;
 	}
@@ -138,6 +149,8 @@ final class ChatbotAdminActions {
 			$prefix = match ( $action ) {
 				self::BOT_CONNECT_ACTION, self::BOT_DISCONNECT_ACTION => 'bot_',
 				self::KICK_APP_ACTION => 'kick_',
+				self::YOUTUBE_APP_ACTION => 'youtube_',
+				self::YOUTUBE_BOT_CONNECT_ACTION, self::YOUTUBE_BOT_DISCONNECT_ACTION => 'youtube_bot_',
 				default => 'app_',
 			};
 
@@ -184,6 +197,22 @@ final class ChatbotAdminActions {
 				$this->subscriptions->subscribe_all( ChatPlatform::Kick );
 
 				return AlertsAdminPage::url( 'chatbot', 'kick_saved' );
+			case self::YOUTUBE_APP_ACTION:
+				if ( $remove ) {
+					$this->youtube->remove_app();
+
+					return AlertsAdminPage::url( 'chatbot', 'youtube_removed' );
+				}
+
+				$this->youtube->save_app( self::scalar( $input, 'client_id' ), self::scalar( $input, 'secret' ) );
+
+				return AlertsAdminPage::url( 'chatbot', 'youtube_saved' );
+			case self::YOUTUBE_BOT_CONNECT_ACTION:
+				return $this->google->start_bot();
+			case self::YOUTUBE_BOT_DISCONNECT_ACTION:
+				$this->youtube->disconnect_bot();
+
+				return AlertsAdminPage::url( 'chatbot', 'youtube_bot_disconnected' );
 			case self::BOT_CONNECT_ACTION:
 				return $this->oauth->start_bot();
 			case self::BOT_DISCONNECT_ACTION:

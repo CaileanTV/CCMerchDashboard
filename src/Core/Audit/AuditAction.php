@@ -456,4 +456,14 @@ enum AuditAction: string {
 	 * The Kick app of the alert chatbot was removed with every secret.
 	 */
 	case AlertKickAppRemoved = 'alert_kick_app_removed';
+
+	/**
+	 * The Google app of the YouTube chatbot was saved (phase 25, step 8.4, ADR-070). Context: whether it is a new app; never the secret.
+	 */
+	case AlertYouTubeAppChanged = 'alert_youtube_app_changed';
+
+	/**
+	 * The Google app of the YouTube chatbot was removed with the bot and every secret.
+	 */
+	case AlertYouTubeAppRemoved = 'alert_youtube_app_removed';
 }

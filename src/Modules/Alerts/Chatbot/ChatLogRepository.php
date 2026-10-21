@@ -61,7 +61,7 @@ final class ChatLogRepository {
 			'INSERT IGNORE INTO %i (platform, broadcaster_id, message_id, chatter_login, chatter_name, color, text, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
 			$this->table(),
 			$platform->value,
-			substr( $broadcaster_id, 0, 20 ),
+			substr( $broadcaster_id, 0, 64 ),
 			substr( $message_id, 0, 64 ),
 			substr( $login, 0, 25 ),
 			mb_substr( $name, 0, 64 ),

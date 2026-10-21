@@ -124,6 +124,26 @@ final class ChatMessageRepository {
 	}
 
 	/**
+	 * The orders with messages that wait for a reason (e.g. `not_live`).
+	 *
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
+	 * @param string       $reason     Reason code.
+	 * @return list<int>
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function waiting_orders( int $creator_id, ChatPlatform $platform, string $reason ): array {
+		$wpdb   = $this->wpdb;
+		$orders = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT order_id FROM %i WHERE creator_id = %d AND platform = %s AND status = %s AND reason = %s ORDER BY order_id', $this->table(), $creator_id, $platform->value, self::WAITING, $reason ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the chat message log.' );
+		}
+
+		return array_map( 'intval', $orders );
+	}
+
+	/**
 	 * The creator's latest message outcome, or null.
 	 *
 	 * @param int          $creator_id Creator.

@@ -24,6 +24,7 @@ use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\CreatorService;
@@ -123,6 +124,7 @@ final class UninstallTest extends IntegrationTestCase {
 		update_option( TwitchAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( ChatbotFormat::OPTION, array( 'mode' => 'order' ), false );
 		update_option( KickAccount::OPTION, array( 'client_id' => 'abc' ), false );
+		update_option( YouTubeAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		$audit_before = $this->rows( Tables::AUDIT_LOG );
 		$max_creator  = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MAX(id) FROM %i', $this->table( Tables::CREATORS ) ) );
 
@@ -149,7 +151,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
 		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
-		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION ) as $option ) {
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
 		}
 
@@ -436,7 +438,7 @@ final class UninstallTest extends IntegrationTestCase {
 
 		remove_filter( 'query', $fail );
 		self::assertTrue( Settings::delete_data_on_uninstall(), 'Opt-in kept for the retry.' );
-		self::assertSame( '21', $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '22', $this->raw_option( Migrator::VERSION_OPTION ) );
 
 		$this->run_uninstall();
 

@@ -18,12 +18,14 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatbotException;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\ChatLogRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatMessageRepository;
@@ -31,6 +33,7 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatMessages;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
 use MerchBoard\Modules\Alerts\Chatbot\CreatorChatbot;
+use MerchBoard\Modules\Alerts\Chatbot\CreatorTokens;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
 use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
@@ -41,9 +44,12 @@ use MerchBoard\Modules\Alerts\Chatbot\KickApi;
 use MerchBoard\Modules\Alerts\Chatbot\KickException;
 use MerchBoard\Modules\Alerts\Chatbot\KickOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\KickPlatform;
-use MerchBoard\Modules\Alerts\Chatbot\KickTokens;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubePlatform;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchException;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
@@ -51,6 +57,7 @@ use MerchBoard\Modules\Alerts\Rest\ChatbotChatController;
 use MerchBoard\Modules\Alerts\Rest\KickController;
 use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
 use MerchBoard\Modules\Alerts\Rest\TwitchController;
+use MerchBoard\Modules\Alerts\Rest\YouTubeController;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -75,12 +82,17 @@ use WP_REST_Response;
 #[CoversClass( TwitchPlatform::class )]
 #[CoversClass( KickApi::class )]
 #[CoversClass( KickAccount::class )]
-#[CoversClass( KickTokens::class )]
+#[CoversClass( CreatorTokens::class )]
 #[CoversClass( KickPlatform::class )]
 #[CoversClass( KickOAuth::class )]
 #[CoversClass( KickWebhookVerifier::class )]
 #[CoversClass( KickController::class )]
 #[CoversClass( ChatbotChatController::class )]
+#[CoversClass( YouTubeApi::class )]
+#[CoversClass( YouTubeAccount::class )]
+#[CoversClass( YouTubePlatform::class )]
+#[CoversClass( YouTubeOAuth::class )]
+#[CoversClass( YouTubeController::class )]
 #[CoversClass( TwitchOAuth::class )]
 #[CoversClass( ChatSender::class )]
 #[CoversClass( ChatSubscriptions::class )]
@@ -108,6 +120,16 @@ final class ChatbotTest extends IntegrationTestCase {
 	private const KICK_CHAT     = 'POST https://api.kick.com/public/v1/chat';
 	private const KICK_KEY      = 'GET https://api.kick.com/public/v1/public-key';
 	private const KICK_REVOKE   = 'POST https://id.kick.com/oauth/revoke';
+
+	private const YT_CLIENT     = '123456789012-abcdefghij0123456789abcdefghij01.apps.googleusercontent.com';
+	private const YT_SECRET     = 'GOCSPX-testsecret0123456789';
+	private const YT_TOKEN      = 'POST https://oauth2.googleapis.com/token';
+	private const YT_REVOKE     = 'POST https://oauth2.googleapis.com/revoke';
+	private const YT_CHANNELS   = 'GET https://www.googleapis.com/youtube/v3/channels';
+	private const YT_BROADCASTS = 'GET https://www.googleapis.com/youtube/v3/liveBroadcasts';
+	private const YT_MESSAGES   = 'POST https://www.googleapis.com/youtube/v3/liveChat/messages';
+	private const YT_BOT        = 'UCbotbotbotbotbotbotbot1';
+	private const YT_CREATOR    = 'UCnovanovanovanovanova12';
 
 	private const TOKEN_URL         = 'POST https://id.twitch.tv/oauth2/token';
 	private const USERS_URL         = 'GET https://api.twitch.tv/helix/users';
@@ -164,11 +186,21 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	private KickAccount $kick;
 
-	private KickTokens $kick_tokens;
+	private CreatorTokens $kick_tokens;
 
 	private KickOAuth $kick_oauth;
 
 	private ChatPlatforms $platforms;
+
+	private YouTubeApi $youtube_api;
+
+	private YouTubeAccount $youtube;
+
+	private CreatorTokens $youtube_tokens;
+
+	private YouTubePlatform $youtube_platform;
+
+	private YouTubeOAuth $youtube_oauth;
 
 	/**
 	 * Registers the routes on `rest_api_init` (null when not registered).
@@ -186,23 +218,48 @@ final class ChatbotTest extends IntegrationTestCase {
 		$transaction = $this->service( Transaction::class );
 		$logger      = $this->service( Logger::class );
 
-		$this->api           = new TwitchApi( $this->transport() );
-		$this->account       = new TwitchAccount( $this->api, new ChatCipher( ChatPlatform::Twitch ), $audit, $transaction );
-		$this->channels      = new ChatbotChannelRepository( $this->wpdb );
-		$this->log           = new ChatMessageRepository( $this->wpdb );
-		$this->chat          = new ChatLogRepository( $this->wpdb );
-		$this->format        = new ChatbotFormat( $audit, $transaction );
-		$this->events        = new AlertEventRepository( $this->wpdb );
-		$this->queue         = new FakeJobQueue();
-		$this->kick_api      = new KickApi( $this->transport() );
-		$this->kick          = new KickAccount( $this->kick_api, new ChatCipher( ChatPlatform::Kick ), $audit, $transaction );
-		$this->kick_tokens   = new KickTokens( $this->kick, $this->kick_api, new ChatCipher( ChatPlatform::Kick ), $this->channels );
-		$this->platforms     = new ChatPlatforms( new TwitchPlatform( $this->account, $this->api ), new KickPlatform( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels ) );
-		$this->subscriptions = new ChatSubscriptions( $this->platforms, $this->channels, $this->chat );
-		$this->sender        = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
-		$this->oauth         = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
-		$this->twitch        = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
-		$this->kick_oauth    = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$this->api              = new TwitchApi( $this->transport() );
+		$this->account          = new TwitchAccount( $this->api, new ChatCipher( ChatPlatform::Twitch ), $audit, $transaction );
+		$this->channels         = new ChatbotChannelRepository( $this->wpdb );
+		$this->log              = new ChatMessageRepository( $this->wpdb );
+		$this->chat             = new ChatLogRepository( $this->wpdb );
+		$this->format           = new ChatbotFormat( $audit, $transaction );
+		$this->events           = new AlertEventRepository( $this->wpdb );
+		$this->queue            = new FakeJobQueue();
+		$this->kick_api         = new KickApi( $this->transport() );
+		$this->kick             = new KickAccount( $this->kick_api, new ChatCipher( ChatPlatform::Kick ), $audit, $transaction );
+		$kick_api               = $this->kick_api;
+		$kick                   = $this->kick;
+		$this->kick_tokens      = new CreatorTokens(
+			ChatPlatform::Kick,
+			new ChatCipher( ChatPlatform::Kick ),
+			$this->channels,
+			static fn( string $refresh ): array => $kick_api->refresh( $kick->client_id(), $kick->require_secret(), $refresh ),
+			static function ( string $token, string $hint ) use ( $kick_api ): void {
+				$kick_api->revoke( $token, $hint );
+			}
+		);
+		$this->youtube_api      = new YouTubeApi( $this->transport() );
+		$this->youtube          = new YouTubeAccount( $this->youtube_api, new ChatCipher( ChatPlatform::YouTube ), $audit, $transaction );
+		$youtube_api            = $this->youtube_api;
+		$youtube                = $this->youtube;
+		$this->youtube_tokens   = new CreatorTokens(
+			ChatPlatform::YouTube,
+			new ChatCipher( ChatPlatform::YouTube ),
+			$this->channels,
+			static fn( string $refresh ): array => $youtube_api->refresh( $youtube->client_id(), $youtube->require_secret(), $refresh ),
+			static function ( string $token ) use ( $youtube_api ): void {
+				$youtube_api->revoke( $token );
+			}
+		);
+		$this->youtube_platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels );
+		$this->platforms        = new ChatPlatforms( new TwitchPlatform( $this->account, $this->api ), new KickPlatform( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels ), $this->youtube_platform );
+		$this->subscriptions    = new ChatSubscriptions( $this->platforms, $this->channels, $this->chat );
+		$this->sender           = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
+		$this->oauth            = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
+		$this->twitch           = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
+		$this->kick_oauth       = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$this->youtube_oauth    = new YouTubeOAuth( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
 	}
 
 	protected function tearDown(): void {
@@ -214,6 +271,8 @@ final class ChatbotTest extends IntegrationTestCase {
 		remove_all_filters( 'rest_url' );
 		delete_option( TwitchAccount::OPTION );
 		delete_option( KickAccount::OPTION );
+		delete_option( YouTubeAccount::OPTION );
+		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s', $this->wpdb->options, '%merchboard_youtube_%', '%merchboard_chat_flushed_%' );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( 'merchboard_kick_public_key_refetch' );
 		delete_option( ChatbotFormat::OPTION );
@@ -684,7 +743,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$state = $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' );
 		self::assertSame( 200, $state->get_status() );
 		self::assertFalse( $state->get_data()['platforms'][0]['available'] );
-		self::assertSame( array( 'twitch', 'kick' ), array_column( $state->get_data()['platforms'], 'platform' ) );
+		self::assertSame( array( 'twitch', 'kick', 'youtube' ), array_column( $state->get_data()['platforms'], 'platform' ) );
 		self::assertSame( 409, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/connect' )->get_status() );
 
 		$this->set_up_bot( $nova );
@@ -728,7 +787,7 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	public function test_the_administrator_sends_as_the_bot_and_sees_the_channels(): void {
 		$nova    = $this->connected_creator( 'nova' );
-		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
 		$this->as_admin();
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
 
@@ -761,7 +820,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		wp_mkdir_p( $plugin . 'build' );
 		file_put_contents( $plugin . 'build/alerts-admin.js', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
 		file_put_contents( $plugin . 'build/alerts-admin.asset.php', "<?php return array( 'dependencies' => array(), 'version' => 'test' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/' );
+		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->youtube, $this->youtube_platform, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/' );
 		ob_start();
 		$tab->render( 0 );
 		$page = (string) ob_get_clean();
@@ -1094,6 +1153,426 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertLessThanOrEqual( 2, count( $this->requests_to( self::KICK_KEY ) ), 'The key is cached; a forged signature refetches it at most once.' );
 	}
 
+	public function test_the_youtube_bot_logs_in_at_google_with_pkce_and_offline_access(): void {
+		$this->as_admin();
+
+		try {
+			$this->youtube->save_app( 'not-a-google-client', self::YT_SECRET );
+			self::fail( 'Expected ChatbotException.' );
+		} catch ( ChatbotException $e ) {
+			self::assertSame( ChatbotException::INVALID_CREDENTIALS, $e->reason() );
+		}
+
+		$this->youtube->save_app( self::YT_CLIENT, self::YT_SECRET );
+		self::assertTrue( $this->youtube->has_app() );
+		self::assertFalse( $this->youtube->ready(), 'Not before the bot logs in.' );
+		self::assertStringNotContainsString( self::YT_SECRET, (string) wp_json_encode( get_option( YouTubeAccount::OPTION ) ) );
+		self::assertSame( array(), $this->requests, 'Google cannot check an app without a login.' );
+
+		$url   = $this->youtube_oauth->start_bot();
+		$query = $this->query( $url );
+		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', $url );
+		self::assertSame( array( YouTubeAccount::BOT_SCOPE, 'offline', 'consent select_account', 'S256', YouTubeAccount::redirect_uri() ), array( $query['scope'] ?? null, $query['access_type'] ?? null, $query['prompt'] ?? null, $query['code_challenge_method'] ?? null, $query['redirect_uri'] ?? null ) );
+
+		// Without a refresh token the bot could not send later.
+		wp_set_current_user( 0 );
+		$this->answer(
+			self::YT_TOKEN,
+			200,
+			array(
+				'access_token' => 'yt-bot-access-0',
+				'expires_in'   => 3599,
+			)
+		);
+		self::assertSame( AlertsAdminPage::url( 'chatbot', 'youtube_bot_' . ChatbotException::UNEXPECTED ), $this->youtube_oauth->finish( $query['state'] ?? '', 'code-0', '' ) );
+		self::assertNull( $this->youtube->bot() );
+
+		$this->as_admin();
+		$query = $this->query( $this->youtube_oauth->start_bot() );
+		wp_set_current_user( 0 );
+		$this->answer(
+			self::YT_TOKEN,
+			200,
+			array(
+				'access_token'  => 'yt-bot-access-1',
+				'refresh_token' => 'yt-bot-refresh-1',
+				'expires_in'    => 3599,
+			)
+		);
+		$this->answer( self::YT_CHANNELS, 200, self::youtube_channel( self::YT_BOT, 'Merch Bot', '@merchbot' ) );
+
+		self::assertSame( AlertsAdminPage::url( 'chatbot', 'youtube_bot_connected' ), $this->youtube_oauth->finish( $query['state'] ?? '', 'code-1', '' ) );
+		$body = $this->last_body( self::YT_TOKEN );
+		self::assertSame( array( 'authorization_code', self::YT_CLIENT ), array( $body['grant_type'] ?? null, $body['client_id'] ?? null ) );
+		self::assertSame( $query['code_challenge'] ?? null, KickApi::challenge( (string) ( $body['code_verifier'] ?? '' ) ), 'The verifier matches the challenge (PKCE).' );
+		self::assertSame( array( 'Bearer yt-bot-access-1' ), array_map( static fn( array $request ): mixed => $request['headers']['Authorization'] ?? null, $this->requests_to( self::YT_CHANNELS ) ), 'The channel is looked up only with a refresh token.' );
+		self::assertSame( array( self::YT_BOT, 'merchbot', false ), array( $this->youtube->bot()['id'] ?? null, $this->youtube->bot()['name'] ?? null, $this->youtube->bot()['invalid'] ?? null ) );
+		self::assertTrue( $this->youtube->ready() );
+		$stored = (string) wp_json_encode( get_option( YouTubeAccount::OPTION ) );
+		self::assertStringNotContainsString( 'yt-bot-access-1', $stored, 'Stored encrypted.' );
+		self::assertStringNotContainsString( 'yt-bot-refresh-1', $stored );
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertContains( 'alert_youtube_app_changed', array_column( $audit, 'action' ) );
+		self::assertSame( array( 'login' => 'merchbot', 'platform' => 'youtube' ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringNotContainsString( 'yt-bot-', (string) wp_json_encode( $audit ) );
+		self::assertSame( home_url( '/' ), $this->youtube_oauth->finish( $query['state'] ?? '', 'code-1', '' ), 'A state is used once.' );
+
+		$this->as_admin();
+		$this->youtube->disconnect_bot();
+		self::assertNull( $this->youtube->bot() );
+		self::assertSame( array( 'yt-bot-refresh-1', 'yt-bot-access-1' ), array_map( static fn( array $request ): string => (string) ( ( (array) $request['body'] )['token'] ?? '' ), $this->requests_to( self::YT_REVOKE ) ), 'Both tokens are revoked at Google.' );
+	}
+
+	public function test_a_creator_adds_the_youtube_channel_and_the_bots_own_channel_is_refused(): void {
+		$this->set_up_youtube();
+		$this->routes();
+		$nova  = $this->creator( 'nova' );
+		$query = $this->query( $this->youtube_oauth->start_channel( $nova ) );
+		self::assertSame( array( YouTubeAccount::CHANNEL_SCOPE, 'offline', 'consent' ), array( $query['scope'] ?? null, $query['access_type'] ?? null, $query['prompt'] ?? null ) );
+
+		// The creator logged in with the bot's account.
+		wp_set_current_user( 0 );
+		$this->answer(
+			self::YT_TOKEN,
+			200,
+			array(
+				'access_token'  => 'yt-wrong-access',
+				'refresh_token' => 'yt-wrong-refresh',
+				'expires_in'    => 3599,
+			)
+		);
+		$this->answer( self::YT_CHANNELS, 200, self::youtube_channel( self::YT_BOT, 'Merch Bot', '@merchbot' ) );
+		self::assertStringContainsString( 'chatbot=' . ChatbotException::BOT_IS_BROADCASTER . '&platform=youtube', $this->youtube_oauth->finish( $query['state'] ?? '', 'code-w', '' ) );
+		self::assertFalse( $this->channels->find( $nova, ChatPlatform::YouTube )->connected() );
+
+		// Google's redirect reaches the callback route.
+		wp_set_current_user( $this->user_of( $nova ) );
+		$query = $this->query( $this->youtube_oauth->start_channel( $nova ) );
+		wp_set_current_user( 0 );
+		$this->answer(
+			self::YT_TOKEN,
+			200,
+			array(
+				'access_token'  => 'yt-nova-access-1',
+				'refresh_token' => 'yt-nova-refresh-1',
+				'expires_in'    => 3599,
+			)
+		);
+		$this->answer( self::YT_CHANNELS, 200, self::youtube_channel( self::YT_CREATOR, 'Nova Live', '' ) );
+		$callback = $this->call(
+			'GET',
+			'/merchboard/v1/alerts/youtube/callback',
+			array(
+				'state' => $query['state'] ?? '',
+				'code'  => 'code-n',
+			)
+		);
+
+		self::assertSame( 302, $callback->get_status() );
+		self::assertSame( add_query_arg( array( 'chatbot' => 'connected', 'platform' => 'youtube' ), home_url( '/creator-dashboard/alerts/chatbot/' ) ), $callback->get_headers()['Location'] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$channel = $this->channels->find( $nova, ChatPlatform::YouTube );
+		self::assertSame( array( self::YT_CREATOR, 'Nova Live', YouTubePlatform::EMBEDDED ), array( $channel->broadcaster_id, $channel->broadcaster_login, $channel->subscription_status ) );
+		self::assertSame( 'yt-nova-access-1', $this->youtube_tokens->access( $nova ) );
+		$rows = (string) wp_json_encode( $this->rows( Tables::ALERT_CHATBOT ) );
+		self::assertStringNotContainsString( 'yt-nova-access-1', $rows, 'Stored encrypted.' );
+		self::assertStringNotContainsString( 'yt-nova-refresh-1', $rows );
+
+		wp_set_current_user( $this->user_of( $nova ) );
+		$youtube = $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' )->get_data()['platforms'][2];
+		self::assertSame( array( 'youtube', true, 'merchbot' ), array( $youtube['platform'], $youtube['available'], $youtube['bot_login'] ) );
+		self::assertSame( array( 'Nova Live', 'https://www.youtube.com/channel/' . self::YT_CREATOR ), array( $youtube['channel']['login'] ?? null, $youtube['channel']['url'] ?? null ) );
+	}
+
+	public function test_a_youtube_purchase_waits_for_the_stream_and_is_skipped_after_the_last_retry(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->youtube_creator( $nova );
+		$this->alert( $nova, 400, 1, 'Hoodie' );
+		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
+
+		$this->sender->order_paid( 400 );
+		self::assertSame( array( 'youtube' ), array_map( static fn( array $job ): mixed => $job['args'][2] ?? null, $this->queue->pending ) );
+
+		foreach ( array( 600, 1800, 5400, 14400, 43200 ) as $delay ) {
+			$this->not_live_any_more( $nova );
+			$this->run_jobs( 1 );
+			self::assertSame( array( 'waiting', 'not_live' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
+			self::assertSame( $delay, $this->queue->pending[0]['delay'] ?? null );
+		}
+
+		$this->not_live_any_more( $nova );
+		$this->run_jobs( 1 );
+		self::assertSame( array( 'skipped', 'not_live' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
+		self::assertSame( array(), $this->queue->pending );
+		self::assertSame( array(), $this->requests_to( self::YT_MESSAGES ) );
+		$lookups = $this->requests_to( self::YT_BROADCASTS );
+		self::assertCount( 6, $lookups, 'Only when there is something to send.' );
+		self::assertSame( array( 'active', 'Bearer yt-nova-access-1' ), array( $this->query( $lookups[0]['url'] )['broadcastStatus'] ?? null, $lookups[0]['headers']['Authorization'] ?? null ), 'With the creator\'s token.' );
+
+		// A purchase older than a day is not announced any more.
+		$this->alert( $nova, 401, 2, 'Cap', '-25 hours' );
+		$this->sender->order_paid( 401 );
+		self::assertCount( 1, $this->queue->pending );
+		$this->not_live_any_more( $nova );
+		$this->run_jobs( 1 );
+		self::assertSame( array( 'skipped', 'skipped' ), array_column( $this->rows( Tables::ALERT_CHAT_MESSAGES ), 'status' ), 'Skipped at the first check.' );
+		self::assertSame( array(), $this->queue->pending );
+	}
+
+	public function test_a_live_youtube_creator_gets_the_message_and_the_waiting_ones_follow(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->youtube_creator( $nova );
+		$this->alert( $nova, 500, 1, 'Hoodie' );
+		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
+		$this->sender->order_paid( 500 );
+		$this->run_jobs( 1 );
+		self::assertSame( 'waiting', $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null );
+
+		// The retry is far ahead; the creator goes live and another purchase comes in.
+		$this->queue->pending = array();
+		$this->not_live_any_more( $nova );
+		$this->live( 'video-1', 'chat-1' );
+		$this->answer( self::YT_MESSAGES, 200, array( 'id' => 'message-1' ) );
+		$this->alert( $nova, 501, 2, 'Cap' );
+		$this->sender->order_paid( 501 );
+		$this->run_jobs( 1 );
+
+		self::assertSame( array( array( $nova, 500, 'youtube' ) ), array_column( $this->queue->pending, 'args' ), 'The waiting order follows right away.' );
+		$this->run_jobs();
+
+		$messages = $this->requests_to( self::YT_MESSAGES );
+		self::assertSame(
+			array( '🔔 nova_fan just bought Cap!', '🔔 nova_fan just bought Hoodie!' ),
+			array_map( static fn( array $request ): mixed => ( (array) $request['body'] )['snippet']['textMessageDetails']['messageText'] ?? null, $messages )
+		);
+		self::assertSame( array( 'chat-1', 'textMessageEvent' ), array( ( (array) $messages[0]['body'] )['snippet']['liveChatId'] ?? null, ( (array) $messages[0]['body'] )['snippet']['type'] ?? null ) );
+		self::assertSame( 'Bearer yt-bot-access-1', $messages[0]['headers']['Authorization'] ?? null, 'Written as the bot.' );
+		self::assertCount( 2, $this->requests_to( self::YT_BROADCASTS ), 'The live chat is kept between messages.' );
+		self::assertSame( 'video-1', $this->youtube_platform->live_video( $this->channels->find( $nova, ChatPlatform::YouTube ) ) );
+
+		// Paid again: nothing twice.
+		$this->sender->order_paid( 501 );
+		$this->run_jobs();
+		self::assertCount( 2, $this->requests_to( self::YT_MESSAGES ) );
+	}
+
+	public function test_youtube_messages_wait_for_the_quota_and_a_refused_bot_must_log_in_again(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->youtube_creator( $nova );
+		$this->live( 'video-1', 'chat-1' );
+		$this->alert( $nova, 600, 1, 'Hoodie' );
+		$this->answer( self::YT_MESSAGES, 403, array( 'error' => array( 'errors' => array( array( 'reason' => 'quotaExceeded' ) ) ) ) );
+
+		$this->sender->order_paid( 600 );
+		$this->run_jobs( 1 );
+
+		self::assertSame( array( 'waiting', 'quota_exceeded' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
+		self::assertGreaterThan( time(), $this->youtube->quota_until() );
+		self::assertLessThanOrEqual( DAY_IN_SECONDS + 3700, $this->youtube->wait_seconds(), 'Until midnight Pacific Time.' );
+		self::assertGreaterThan( 0, $this->queue->pending[0]['delay'] ?? 0 );
+		$this->run_jobs( 1 );
+		self::assertCount( 1, $this->requests_to( self::YT_MESSAGES ), 'The job only waits.' );
+
+		// Google refuses the bot's token and then its refresh token.
+		delete_option( YouTubeAccount::OPTION );
+		$this->set_up_youtube();
+		$this->answer( self::YT_MESSAGES, 401, array( 'error' => array( 'errors' => array( array( 'reason' => 'authError' ) ) ) ) );
+		$this->answer( self::YT_TOKEN, 400, array( 'error' => 'invalid_grant' ) );
+
+		try {
+			$this->sender->send_now( $this->channels->find( $nova, ChatPlatform::YouTube ), 'Hi' );
+			self::fail( 'Expected ChatbotException.' );
+		} catch ( ChatbotException $e ) {
+			self::assertSame( ChatbotException::UNAUTHORIZED, $e->reason() );
+		}
+
+		self::assertTrue( $this->youtube->bot()['invalid'] ?? false );
+		self::assertFalse( $this->youtube_platform->ready(), 'Nothing is sent until the bot logs in again.' );
+		self::assertSame( 'yt-bot-refresh-1', $this->last_body( self::YT_TOKEN )['refresh_token'] ?? null );
+		self::assertTrue( $this->channels->find( $nova, ChatPlatform::YouTube )->connected(), 'The creator\'s channel stays.' );
+	}
+
+	public function test_a_revoked_youtube_access_forgets_the_channel_after_one_renewal(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->youtube_creator( $nova );
+
+		// An access token Google no longer accepts is renewed once.
+		$this->answer( self::YT_BROADCASTS, 401, array( 'error' => array( 'errors' => array( array( 'reason' => 'authError' ) ) ) ) );
+		$this->answer(
+			self::YT_TOKEN,
+			200,
+			array(
+				'access_token' => 'yt-nova-access-2',
+				'expires_in'   => 3599,
+			)
+		);
+		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
+		$result = $this->sender->send_now( $this->channels->find( $nova, ChatPlatform::YouTube ), 'Hi' );
+
+		self::assertSame( array( 'not_live', 'not_live' ), array( $result['result'], $result['reason'] ) );
+		self::assertSame( array( 'refresh_token', 'yt-nova-refresh-1' ), array( $this->last_body( self::YT_TOKEN )['grant_type'] ?? null, $this->last_body( self::YT_TOKEN )['refresh_token'] ?? null ) );
+		self::assertSame( 'Bearer yt-nova-access-2', $this->requests_to( self::YT_BROADCASTS )[1]['headers']['Authorization'] ?? null );
+		self::assertSame( 'yt-nova-access-2', $this->youtube_tokens->access( $nova ), 'Google kept the refresh token; the new access token is stored.' );
+
+		// The creator revoked the access at Google.
+		$this->not_live_any_more( $nova );
+		$this->answer( self::YT_BROADCASTS, 401, array( 'error' => array( 'errors' => array( array( 'reason' => 'authError' ) ) ) ) );
+		$this->answer( self::YT_TOKEN, 400, array( 'error' => 'invalid_grant' ) );
+		$result = $this->sender->send_now( $this->channels->find( $nova, ChatPlatform::YouTube ), 'Hi' );
+
+		self::assertSame( array( 'unauthorized', 'authorization_revoked' ), array( $result['result'], $result['reason'] ) );
+		self::assertFalse( $this->channels->find( $nova, ChatPlatform::YouTube )->connected(), 'The creator adds the bot again.' );
+		self::assertNull( $this->channels->tokens( $nova, ChatPlatform::YouTube ) );
+	}
+
+	public function test_the_creator_tests_youtube_and_removes_the_channel(): void {
+		$this->routes();
+		$nova = $this->creator( 'nova' );
+		$this->youtube_creator( $nova );
+		wp_set_current_user( $this->user_of( $nova ) );
+		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
+
+		$test = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/test' );
+		self::assertSame( array( 'not_live', 'not_live' ), array( $test->get_data()['result'], $test->get_data()['reason'] ), 'Not live: nothing is sent.' );
+		self::assertSame( array(), $this->requests_to( self::YT_MESSAGES ) );
+
+		// A purchase waits for the stream; a test message while live sends it.
+		$this->log->note( $nova, ChatPlatform::YouTube, 700, 1, ChatMessageRepository::WAITING, 'not_live' );
+		$this->not_live_any_more( $nova );
+		$this->live( 'video-1', 'chat-1' );
+		$this->answer( self::YT_MESSAGES, 200, array( 'id' => 'message-1' ) );
+		$test = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/test' );
+		self::assertSame( 'sent', $test->get_data()['result'] );
+		self::assertSame( array( array( $nova, 700, 'youtube' ) ), array_column( $this->queue->pending, 'args' ) );
+
+		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/connect' );
+		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', (string) $connect->get_data()['url'] );
+
+		$removed = $this->call( 'DELETE', '/merchboard/v1/me/alerts/chatbot/youtube/channel' );
+		self::assertNull( $removed->get_data()['platforms'][2]['channel'] );
+		self::assertSame( array( 'yt-nova-refresh-1', 'yt-nova-access-1' ), array_map( static fn( array $request ): string => (string) ( ( (array) $request['body'] )['token'] ?? '' ), $this->requests_to( self::YT_REVOKE ) ), 'Both tokens are revoked at Google.' );
+		self::assertNull( $this->channels->tokens( $nova, ChatPlatform::YouTube ) );
+		self::assertFalse( get_transient( 'merchboard_youtube_live_' . $nova ), 'The live chat is forgotten.' );
+	}
+
+	public function test_the_administrator_sees_the_youtube_setup_and_the_embedded_live_chat(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->youtube_creator( $nova );
+		$this->as_admin();
+		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->youtube, $this->youtube_platform, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), trailingslashit( get_temp_dir() ) . 'merchboard-no-build/', 'https://shop.example.com/wp-content/plugins/merchboard/' );
+
+		ob_start();
+		$tab->render( 0 );
+		$page = (string) ob_get_clean();
+		self::assertStringContainsString( esc_html( YouTubeAccount::redirect_uri() ), $page );
+		self::assertStringContainsString( 'merchbot', $page );
+		self::assertStringNotContainsString( self::YT_SECRET, $page );
+
+		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
+		ob_start();
+		$tab->render( $nova, ChatPlatform::YouTube );
+		self::assertStringNotContainsString( 'youtube.com/live_chat', (string) ob_get_clean(), 'Not live: no chat to show.' );
+
+		$this->not_live_any_more( $nova );
+		$this->live( 'video-1', 'chat-1' );
+		ob_start();
+		$tab->render( $nova, ChatPlatform::YouTube );
+		self::assertStringContainsString( esc_url( 'https://www.youtube.com/live_chat?v=video-1&embed_domain=' . wp_parse_url( home_url(), PHP_URL_HOST ) ), (string) ob_get_clean() );
+	}
+
+	/**
+	 * A YouTube `channels.list` answer.
+	 *
+	 * @param string $id     Channel id.
+	 * @param string $title  Title.
+	 * @param string $handle Handle ('' for none).
+	 * @return array<mixed>
+	 */
+	private static function youtube_channel( string $id, string $title, string $handle ): array {
+		return array(
+			'items' => array(
+				array(
+					'id'      => $id,
+					'snippet' => array_filter(
+						array(
+							'title'     => $title,
+							'customUrl' => $handle,
+						)
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Sets the Google app and the bot (merchbot) up, as an administrator.
+	 */
+	private function set_up_youtube(): void {
+		$current = get_current_user_id();
+		$this->as_admin();
+		$this->youtube->save_app( self::YT_CLIENT, self::YT_SECRET );
+		$this->youtube->connect_bot(
+			array(
+				'id'   => self::YT_BOT,
+				'name' => 'merchbot',
+			),
+			array(
+				'access'     => 'yt-bot-access-1',
+				'refresh'    => 'yt-bot-refresh-1',
+				'expires_in' => 3599,
+			)
+		);
+		wp_set_current_user( $current );
+	}
+
+	/**
+	 * Adds the bot to a creator's YouTube channel with tokens.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private function youtube_creator( int $creator_id ): void {
+		$this->set_up_youtube();
+		$this->channels->connect( $creator_id, ChatPlatform::YouTube, self::YT_CREATOR, 'Nova Live' );
+		$this->channels->set_subscription( $creator_id, ChatPlatform::YouTube, '', YouTubePlatform::EMBEDDED );
+		$this->youtube_tokens->store(
+			$creator_id,
+			array(
+				'access'     => 'yt-nova-access-1',
+				'refresh'    => 'yt-nova-refresh-1',
+				'expires_in' => 3599,
+			)
+		);
+	}
+
+	/**
+	 * Queues YouTube's answer: the creator is live.
+	 *
+	 * @param string $video Video id.
+	 * @param string $chat  Live chat id.
+	 */
+	private function live( string $video, string $chat ): void {
+		$this->answer(
+			self::YT_BROADCASTS,
+			200,
+			array(
+				'items' => array(
+					array(
+						'id'      => $video,
+						'snippet' => array( 'liveChatId' => $chat ),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Forgets the looked-up livestream, as when its time is up.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private function not_live_any_more( int $creator_id ): void {
+		delete_transient( 'merchboard_youtube_live_' . $creator_id );
+	}
+
 	/**
 	 * A new RSA key for signing test events. Some PHP builds have no
 	 * openssl.cnf; a minimal one is used then.
@@ -1375,9 +1854,10 @@ final class ChatbotTest extends IntegrationTestCase {
 	 * @param int    $order_id   Order.
 	 * @param int    $item_id    Order line.
 	 * @param string $product    Product name.
+	 * @param string $at         When it was bought (relative to now).
 	 */
-	private function alert( int $creator_id, int $order_id, int $item_id, string $product ): void {
-		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) ) );
+	private function alert( int $creator_id, int $order_id, int $item_id, string $product, string $at = 'now' ): void {
+		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( $at, new DateTimeZone( 'UTC' ) ) ) );
 	}
 
 	/**
@@ -1444,15 +1924,17 @@ final class ChatbotTest extends IntegrationTestCase {
 	private function routes(): void {
 		$logger         = $this->service( Logger::class );
 		$creator        = new CreatorChatbot( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
-		$me             = new MeChatbotController( $this->service( CreatorContext::class ), $creator, $this->oauth, $this->kick_oauth, $logger );
+		$me             = new MeChatbotController( $this->service( CreatorContext::class ), $creator, $this->oauth, $this->kick_oauth, $this->youtube_oauth, $logger );
 		$chat           = new ChatbotChatController( $this->channels, $this->chat, $logger );
 		$kick           = new KickController( $this->kick_oauth, new KickWebhookVerifier( $this->kick_api ), $this->channels, $this->chat, $logger );
+		$youtube        = new YouTubeController( $this->youtube_oauth, $logger );
 		$twitch         = $this->twitch;
-		$this->register = static function () use ( $me, $twitch, $chat, $kick ): void {
+		$this->register = static function () use ( $me, $twitch, $chat, $kick, $youtube ): void {
 			$me->register_routes();
 			$twitch->register_routes();
 			$chat->register_routes();
 			$kick->register_routes();
+			$youtube->register_routes();
 		};
 		add_action( 'rest_api_init', $this->register );
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server per test.

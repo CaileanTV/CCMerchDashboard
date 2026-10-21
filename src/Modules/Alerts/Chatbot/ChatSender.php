@@ -60,6 +60,24 @@ final class ChatSender {
 	private const RETRY_DELAY = 60;
 
 	/**
+	 * Seconds before each live check of a message that waits for the
+	 * creator's next livestream (YouTube, ADR-070 pkt. 5): at most five
+	 * retries per waiting message, so the quota stays bounded.
+	 */
+	private const LIVE_RETRIES = array( 600, 1800, 5400, 14400, 43200 );
+
+	/**
+	 * Oldest purchase a waiting message is still sent for (24 hours).
+	 */
+	private const LIVE_MAX_AGE = 86400;
+
+	/**
+	 * Transient prefix: a creator's waiting messages were just sent on
+	 * (once per ten minutes, so jobs do not queue each other in turn).
+	 */
+	private const FLUSHED_PREFIX = 'merchboard_chat_flushed_';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ChatPlatforms            $platforms    The platforms.
@@ -277,7 +295,7 @@ final class ChatSender {
 
 		if ( 'order' === $format['mode'] ) {
 			if ( ! $this->log->sent( $creator_id, $platform, $order_id, 0 ) ) {
-				$this->deliver( $channel, $order_id, 0, $this->messages->order( $channel->template_for( 'order' ), $events, $format ) );
+				$this->deliver( $channel, $order_id, 0, $this->messages->order( $channel->template_for( 'order' ), $events, $format ), $events[0]->created_at->getTimestamp() );
 			}
 
 			return;
@@ -290,7 +308,7 @@ final class ChatSender {
 			return;
 		}
 
-		$done = $this->deliver( $channel, $order_id, $next->order_item_id, $this->messages->line( $channel->template_for( 'line' ), $next ) );
+		$done = $this->deliver( $channel, $order_id, $next->order_item_id, $this->messages->line( $channel->template_for( 'line' ), $next ), $next->created_at->getTimestamp() );
 
 		// The order's next line, at least a second later (also after a skipped one).
 		if ( $done && count( $pending ) > 1 ) {
@@ -306,11 +324,12 @@ final class ChatSender {
 	 * @param int            $order_id      Order.
 	 * @param int            $order_item_id Line; 0 for the whole order.
 	 * @param string         $message       Message.
+	 * @param int            $purchased_at  When the purchase was recorded (Unix time).
 	 * @return bool Whether this message is finished (sent or given up), so the next may follow.
 	 * @throws DatabaseException When the log cannot be written.
 	 * @throws ChatbotException When the platform is not set up or refuses the app.
 	 */
-	private function deliver( ChatbotChannel $channel, int $order_id, int $order_item_id, string $message ): bool {
+	private function deliver( ChatbotChannel $channel, int $order_id, int $order_item_id, string $message, int $purchased_at ): bool {
 		$creator_id = $channel->creator_id;
 		$platform   = $channel->platform;
 
@@ -326,7 +345,16 @@ final class ChatSender {
 		if ( 'sent' === $result['result'] ) {
 			$this->log->note( $creator_id, $platform, $order_id, $order_item_id, ChatMessageRepository::SENT );
 
+			// The creator is live: the messages that waited for the stream follow.
+			if ( ChatPlatform::YouTube === $platform ) {
+				$this->flush_waiting( $creator_id, $platform, $order_id );
+			}
+
 			return true;
+		}
+
+		if ( 'not_live' === $result['result'] ) {
+			return $this->wait_for_stream( $channel, $order_id, $order_item_id, $attempts, $purchased_at );
 		}
 
 		// Dropped (e.g. the channel's filters) or the channel refused: not tried again.
@@ -338,5 +366,63 @@ final class ChatSender {
 		}
 
 		return $final;
+	}
+
+	/**
+	 * Queues the creator's messages that wait for a livestream right away
+	 * (the creator was found live: a message was sent, or a test message).
+	 * At most once per ten minutes per creator and platform.
+	 *
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
+	 * @param int          $except     Order already being sent (0 for none).
+	 * @throws DatabaseException When the log cannot be read.
+	 */
+	public function flush_waiting( int $creator_id, ChatPlatform $platform, int $except = 0 ): void {
+		$key = self::FLUSHED_PREFIX . $platform->value . '_' . $creator_id;
+
+		if ( false !== get_transient( $key ) ) {
+			return;
+		}
+
+		$orders = array_values( array_diff( $this->log->waiting_orders( $creator_id, $platform, 'not_live' ), array( $except ) ) );
+
+		if ( array() === $orders ) {
+			return;
+		}
+
+		set_transient( $key, 1, 10 * MINUTE_IN_SECONDS );
+
+		foreach ( $orders as $order_id ) {
+			$this->again( $creator_id, $order_id, $platform, self::LINE_GAP );
+		}
+	}
+
+	/**
+	 * A message whose creator is not live waits for the next livestream: it
+	 * is checked again after each of LIVE_RETRIES; when they are used up or
+	 * the purchase is older than a day, it is skipped (ADR-070 pkt. 5).
+	 *
+	 * @param ChatbotChannel $channel       The creator's channel.
+	 * @param int            $order_id      Order.
+	 * @param int            $order_item_id Line; 0 for the whole order.
+	 * @param int            $attempts      Attempts including this one.
+	 * @param int            $purchased_at  When the purchase was recorded (Unix time).
+	 * @return bool Whether this message is finished (skipped).
+	 * @throws DatabaseException When the log cannot be written.
+	 */
+	private function wait_for_stream( ChatbotChannel $channel, int $order_id, int $order_item_id, int $attempts, int $purchased_at ): bool {
+		$delay = self::LIVE_RETRIES[ $attempts - 1 ] ?? null;
+
+		if ( null === $delay || time() - $purchased_at > self::LIVE_MAX_AGE ) {
+			$this->log->note( $channel->creator_id, $channel->platform, $order_id, $order_item_id, ChatMessageRepository::SKIPPED, 'not_live' );
+
+			return true;
+		}
+
+		$this->log->note( $channel->creator_id, $channel->platform, $order_id, $order_item_id, ChatMessageRepository::WAITING, 'not_live' );
+		$this->again( $channel->creator_id, $order_id, $channel->platform, $delay );
+
+		return false;
 	}
 }

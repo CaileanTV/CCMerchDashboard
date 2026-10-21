@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
  * events:subscribe`. The state is random (128 bit), single-use, valid for
  * ten minutes and bound to the WordPress user and the creator; the PKCE
  * verifier stays on the server inside it. The creator's tokens are stored
- * encrypted (KickTokens), the channel's id and slug in the channel row; the
+ * encrypted (CreatorTokens), the channel's id and slug in the channel row; the
  * bot then subscribes to the channel's chat.
  */
 final class KickOAuth {
@@ -58,7 +58,7 @@ final class KickOAuth {
 	 *
 	 * @param KickAccount              $account       The Kick app.
 	 * @param KickApi                  $api           Kick.
-	 * @param KickTokens               $tokens        The creators' tokens.
+	 * @param CreatorTokens            $tokens        The creators' Kick tokens.
 	 * @param ChatbotChannelRepository $channels      The creators' channels.
 	 * @param ChatSubscriptions        $subscriptions Chat subscriptions.
 	 * @param AuditTrail               $audit         Audit trail.
@@ -68,7 +68,7 @@ final class KickOAuth {
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private KickAccount $account, private KickApi $api, private KickTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger ) {
+	public function __construct( private KickAccount $account, private KickApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
@@ -121,7 +121,7 @@ final class KickOAuth {
 
 		try {
 			$result = '' !== $error || '' === $code ? KickException::DENIED : $this->complete( $data['creator'], $code, $data['verifier'] );
-		} catch ( KickException $e ) {
+		} catch ( ChatbotException $e ) {
 			$result = $e->reason();
 			$this->log_failure( $result, $e->status() );
 		} catch ( DatabaseException $e ) {

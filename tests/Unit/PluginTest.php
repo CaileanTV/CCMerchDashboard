@@ -52,6 +52,13 @@ final class PluginTest extends TestCase {
 
 	private const FILE = '/plugins/merchboard/merchboard.php';
 
+	/**
+	 * Extra dbDelta() calls beyond one per table: migration 21 changes the three
+	 * chatbot tables and migration 22 two of them again, while migration 20
+	 * skips them when they exist (as in this fake) — net +2.
+	 */
+	private const CHATBOT_REDELTAS = 2;
+
 	private RecordingWpdb $wpdb;
 
 	private InMemoryOptions $options;
@@ -259,8 +266,9 @@ final class PluginTest extends TestCase {
 
 	public function test_activation_installs_the_schema(): void {
 		unset( $this->options->options[ Migrator::VERSION_OPTION ] );
-		// One dbDelta() per table, including the retired one (created by migration 6, dropped by 8).
-		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) + count( Tables::retired() ) );
+		// One dbDelta() per table, including the retired one (created by migration 6, dropped by 8),
+		// plus the chatbot tables that migrations 21 and 22 change again (migration 20 skips existing tables).
+		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) + count( Tables::retired() ) + self::CHATBOT_REDELTAS );
 
 		$this->plugin()->activate();
 
@@ -269,7 +277,7 @@ final class PluginTest extends TestCase {
 
 	public function test_boot_upgrades_an_outdated_schema_before_modules_register(): void {
 		$this->options->options[ Migrator::VERSION_OPTION ] = '0';
-		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) + count( Tables::retired() ) );
+		Functions\expect( 'dbDelta' )->times( count( Tables::all() ) + count( Tables::retired() ) + self::CHATBOT_REDELTAS );
 
 		$this->plugin()->boot();
 
@@ -311,10 +319,13 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(.*\n\s*platform /s' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_messages \(.*\n\s*platform /s' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(.*\n\s*platform /s' ) );
+		// Migration 22 widens the channel columns.
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(.*broadcaster_id varchar\(64\)/s' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(.*broadcaster_id varchar\(64\)/s' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 21, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 22, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

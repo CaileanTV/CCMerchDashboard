@@ -18,6 +18,9 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSubscriptions;
 use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
+use MerchBoard\Modules\Alerts\Chatbot\YouTubePlatform;
 use MerchBoard\Modules\Creators\CreatorRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -51,6 +54,8 @@ final class ChatbotAdminTab {
 	 *
 	 * @param TwitchAccount            $account    Twitch app and bot.
 	 * @param KickAccount              $kick       Kick app.
+	 * @param YouTubeAccount           $youtube    Google app and YouTube bot.
+	 * @param YouTubePlatform          $live       YouTube livestreams (the embedded chat).
 	 * @param ChatbotFormat            $format     Message format.
 	 * @param ChatbotChannelRepository $channels   The creators' channels.
 	 * @param ChatMessageRepository    $log        Message log.
@@ -58,7 +63,7 @@ final class ChatbotAdminTab {
 	 * @param string                   $plugin_dir Plugin directory (with slash).
 	 * @param string                   $plugin_url Plugin URL (with slash).
 	 */
-	public function __construct( private TwitchAccount $account, private KickAccount $kick, private ChatbotFormat $format, private ChatbotChannelRepository $channels, private ChatMessageRepository $log, private CreatorRepository $creators, private string $plugin_dir, private string $plugin_url ) {
+	public function __construct( private TwitchAccount $account, private KickAccount $kick, private YouTubeAccount $youtube, private YouTubePlatform $live, private ChatbotFormat $format, private ChatbotChannelRepository $channels, private ChatMessageRepository $log, private CreatorRepository $creators, private string $plugin_dir, private string $plugin_url ) {
 	}
 
 	/**
@@ -73,7 +78,7 @@ final class ChatbotAdminTab {
 			'app_removed'                  => array( __( 'The Twitch app, the bot and every secret were removed.', 'merchboard' ), 'success' ),
 			'app_invalid_credentials'      => array( __( 'Twitch did not accept the Client ID and Secret. Check them in the Twitch developer console.', 'merchboard' ), 'error' ),
 			'app_unavailable', 'bot_unavailable' => array( __( 'Twitch could not be reached. Try again later.', 'merchboard' ), 'error' ),
-			'app_unreadable', 'kick_unreadable' => array( __( 'The secret cannot be stored encrypted on this server (sodium is missing).', 'merchboard' ), 'error' ),
+			'app_unreadable', 'kick_unreadable', 'youtube_unreadable' => array( __( 'The secret cannot be stored encrypted on this server (sodium is missing).', 'merchboard' ), 'error' ),
 			'bot_connected'                => array( __( 'The bot account was connected. Its chat subscriptions were renewed.', 'merchboard' ), 'success' ),
 			'bot_disconnected'             => array( __( 'The bot account was disconnected. No messages are sent until a bot is connected again.', 'merchboard' ), 'success' ),
 			'bot_denied'                   => array( __( 'The login at Twitch was cancelled. Nothing was changed.', 'merchboard' ), 'info' ),
@@ -84,6 +89,17 @@ final class ChatbotAdminTab {
 			'kick_removed'                 => array( __( 'The Kick app and every secret were removed.', 'merchboard' ), 'success' ),
 			'kick_invalid_credentials'     => array( __( 'Kick did not accept the Client ID and Secret (or the bot name is invalid). Check them in the Kick developer settings.', 'merchboard' ), 'error' ),
 			'kick_unavailable'             => array( __( 'Kick could not be reached. Try again later.', 'merchboard' ), 'error' ),
+			'youtube_saved'                => array( __( 'The Google app was saved. Log in with the bot account next.', 'merchboard' ), 'success' ),
+			'youtube_removed'              => array( __( 'The Google app, the YouTube bot and every secret were removed.', 'merchboard' ), 'success' ),
+			'youtube_invalid_credentials'  => array( __( 'This is not a Google OAuth Client ID and Secret. Copy them from the Google Cloud console.', 'merchboard' ), 'error' ),
+			'youtube_bot_connected'        => array( __( 'The YouTube bot was connected.', 'merchboard' ), 'success' ),
+			'youtube_bot_disconnected'     => array( __( 'The YouTube bot was disconnected. No YouTube messages are sent until a bot is connected again.', 'merchboard' ), 'success' ),
+			'youtube_bot_denied'           => array( __( 'The login at Google was cancelled. Nothing was changed.', 'merchboard' ), 'info' ),
+			'youtube_bot_not_configured'   => array( __( 'Save the Google app first.', 'merchboard' ), 'error' ),
+			'youtube_bot_unexpected_answer' => array( __( 'Google gave no lasting access or the account has no YouTube channel. Log in again with the bot\'s YouTube channel and allow access.', 'merchboard' ), 'error' ),
+			'youtube_bot_invalid_credentials', 'youtube_bot_unauthorized', 'youtube_bot_forbidden' => array( __( 'Google did not accept the login. Try again, and check the redirect URL and the YouTube Data API in the Google Cloud project.', 'merchboard' ), 'error' ),
+			'youtube_bot_unavailable'      => array( __( 'Google could not be reached. Try again later.', 'merchboard' ), 'error' ),
+			'youtube_bot_error'            => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
 			'format_saved'                 => array( __( 'The message format was saved.', 'merchboard' ), 'success' ),
 			'resubscribed'                 => array( __( 'The chat subscriptions were renewed.', 'merchboard' ), 'success' ),
 			'message_sent'                 => array( __( 'The message was sent as the bot.', 'merchboard' ), 'success' ),
@@ -111,6 +127,8 @@ final class ChatbotAdminTab {
 		$this->render_rate_limit();
 		echo '<hr><h2>Kick</h2>';
 		$this->render_kick();
+		echo '<hr><h2>YouTube</h2>';
+		$this->render_youtube();
 		echo '<hr>';
 		$this->render_format();
 		$this->render_channels();
@@ -220,6 +238,73 @@ final class ChatbotAdminTab {
 	}
 
 	/**
+	 * The Google app, the YouTube bot and their requirements.
+	 */
+	private function render_youtube(): void {
+		$bot = $this->youtube->bot();
+
+		echo '<h3>' . esc_html__( 'Google app', 'merchboard' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Create a project in the Google Cloud console, enable the YouTube Data API v3, create an OAuth client (type "Web application") and register this redirect URL:', 'merchboard' ) . '</p>';
+		echo '<p><code>' . esc_html( YouTubeAccount::redirect_uri() ) . '</code></p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::YOUTUBE_APP_ACTION ) . '">';
+		wp_nonce_field( ChatbotAdminActions::YOUTUBE_APP_ACTION );
+		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row"><label for="merchboard-youtube-client">' . esc_html__( 'Client ID', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-youtube-client" name="client_id" class="regular-text" autocomplete="off" spellcheck="false" value="' . esc_attr( $this->youtube->client_id() ) . '"></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-youtube-secret">' . esc_html__( 'Client Secret', 'merchboard' ) . '</label></th><td><input type="password" id="merchboard-youtube-secret" name="secret" class="regular-text" autocomplete="off" spellcheck="false" aria-describedby="merchboard-youtube-secret-help">';
+		echo '<p id="merchboard-youtube-secret-help" class="description">' . esc_html( $this->youtube->has_app() ? __( 'A secret is saved and never shown again. Enter it again to change the app.', 'merchboard' ) : __( 'The secret is stored encrypted.', 'merchboard' ) ) . '</p></td></tr>';
+		echo '</tbody></table>';
+		submit_button( __( 'Save', 'merchboard' ), 'primary', 'submit', false );
+
+		if ( '' !== $this->youtube->client_id() ) {
+			echo ' <button type="submit" name="remove" value="1" class="button-link button-link-delete">' . esc_html__( 'Remove the app', 'merchboard' ) . '</button>';
+		}
+
+		echo '</form>';
+		echo '<h3>' . esc_html__( 'YouTube bot', 'merchboard' ) . '</h3>';
+
+		if ( $this->youtube->has_app() ) {
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+
+			if ( null === $bot ) {
+				echo '<p>' . esc_html__( 'Log in with the Google account of the YouTube channel that writes the messages, not with your own. Google always asks which account to use.', 'merchboard' ) . '</p>';
+				echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::YOUTUBE_BOT_CONNECT_ACTION ) . '">';
+				wp_nonce_field( ChatbotAdminActions::YOUTUBE_BOT_CONNECT_ACTION );
+				submit_button( __( 'Log in with the bot account at Google', 'merchboard' ), 'primary', 'submit', false );
+			} else {
+				/* translators: %s: name of the bot's YouTube channel. */
+				echo '<p>' . esc_html( sprintf( __( 'Connected as %s.', 'merchboard' ), $bot['name'] ) ) . '</p>';
+
+				if ( $bot['invalid'] ) {
+					echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Google no longer accepts the bot\'s login (it was revoked, or the Google app is in testing, where logins expire after 7 days). Disconnect the bot and log in again.', 'merchboard' ) . '</p></div>';
+				}
+
+				echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::YOUTUBE_BOT_DISCONNECT_ACTION ) . '">';
+				wp_nonce_field( ChatbotAdminActions::YOUTUBE_BOT_DISCONNECT_ACTION );
+				submit_button( __( 'Disconnect the bot', 'merchboard' ), 'secondary', 'submit', false );
+			}
+
+			echo '</form>';
+		} else {
+			echo '<p>' . esc_html__( 'Save the Google app first.', 'merchboard' ) . '</p>';
+		}
+
+		$quota = $this->youtube->quota_until();
+
+		self::checklist(
+			__( 'Bot messages on YouTube', 'merchboard' ),
+			array(
+				array( $this->youtube->has_app(), __( 'The Google app is saved.', 'merchboard' ) ),
+				array( $this->youtube->ready(), __( 'The bot\'s YouTube channel is logged in (youtube.force-ssl).', 'merchboard' ) ),
+				array( true, __( 'Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found.', 'merchboard' ) ),
+				array( true, __( 'Messages are written only during a livestream; purchases between streams wait for the next stream (at most 24 hours).', 'merchboard' ) ),
+				array( 0 === $quota, __( 'The day\'s YouTube quota is not used up (10,000 units; a message costs 20, a live check 1).', 'merchboard' ) ),
+			)
+		);
+		echo '<p class="description">' . esc_html__( 'YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days; Google must verify the app for lasting use.', 'merchboard' ) . '</p>';
+	}
+
+	/**
 	 * A list of requirements.
 	 *
 	 * @param string                    $title  Heading.
@@ -319,7 +404,7 @@ final class ChatbotAdminTab {
 			$last = $this->log->latest( $channel->creator_id, $channel->platform );
 			echo '<tr><td>' . esc_html( $this->creators->find( $channel->creator_id )->display_name ?? '' ) . '</td>';
 			echo '<td>' . esc_html( $channel->platform->label() ) . '</td>';
-			echo '<td><a href="' . esc_url( $channel->platform->channel_url( $channel->broadcaster_login ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $channel->broadcaster_login ) . '</a></td>';
+			echo '<td><a href="' . esc_url( $channel->platform->channel_url( $channel->broadcaster_id, $channel->broadcaster_login ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $channel->broadcaster_login ) . '</a></td>';
 			echo '<td>' . esc_html( $channel->enabled ? __( 'On', 'merchboard' ) : __( 'Off', 'merchboard' ) ) . '</td>';
 			echo '<td>' . esc_html( self::listening( $channel ) ) . '</td>';
 			echo '<td>' . esc_html( null === $last ? '—' : $last['status'] . ( '' !== $last['reason'] ? ' (' . $last['reason'] . ')' : '' ) ) . '</td>';
@@ -363,6 +448,8 @@ final class ChatbotAdminTab {
 			echo '<iframe title="' . esc_attr__( 'Twitch chat', 'merchboard' ) . '" src="' . esc_url( 'https://www.twitch.tv/embed/' . rawurlencode( $channel->broadcaster_login ) . '/chat?parent=' . rawurlencode( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ) . '" width="100%" height="420" style="max-width:640px;border:1px solid #c3c4c7"></iframe>';
 			// Twitch embeds only on HTTPS pages; the pop-out chat works everywhere.
 			echo '<p><a href="' . esc_url( 'https://www.twitch.tv/popout/' . rawurlencode( $channel->broadcaster_login ) . '/chat?popout=' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open the chat at Twitch', 'merchboard' ) . '</a></p>';
+		} elseif ( ChatPlatform::YouTube === $platform ) {
+			$this->render_youtube_chat( $channel );
 		} else {
 			echo '<p class="description">' . esc_html__( 'Kick cannot send the chat to this site (no HTTPS webhook, or webhooks are off in the Kick app).', 'merchboard' ) . '</p>';
 			echo '<p><a href="' . esc_url( 'https://kick.com/popout/' . rawurlencode( $channel->broadcaster_login ) . '/chat' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open the chat at Kick', 'merchboard' ) . '</a></p>';
@@ -374,9 +461,29 @@ final class ChatbotAdminTab {
 		echo '<input type="hidden" name="platform" value="' . esc_attr( $platform->value ) . '">';
 		wp_nonce_field( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $creator_id, $platform ) );
 		echo '<p><label for="merchboard-chat-message">' . esc_html__( 'Send as the bot', 'merchboard' ) . '</label><br>';
-		echo '<input type="text" id="merchboard-chat-message" name="message" class="large-text" maxlength="500" required></p>';
+		echo '<input type="text" id="merchboard-chat-message" name="message" class="large-text" maxlength="' . esc_attr( ChatPlatform::YouTube === $platform ? (string) YouTubeApi::MESSAGE_MAX : '500' ) . '" required></p>';
 		submit_button( __( 'Send', 'merchboard' ), 'primary', 'submit', false );
 		echo '</form>';
+	}
+
+	/**
+	 * YouTube's own live chat of the creator's current livestream (YouTube
+	 * has no chat webhooks), or a link to the channel's live page.
+	 *
+	 * @param ChatbotChannel $channel The creator's YouTube channel.
+	 * @throws DatabaseException When the creator's tokens cannot be read.
+	 */
+	private function render_youtube_chat( ChatbotChannel $channel ): void {
+		$video = $this->live->live_video( $channel );
+
+		if ( '' === $video ) {
+			echo '<p class="description">' . esc_html__( 'The creator is not live on YouTube right now (or YouTube could not be asked). The chat exists only during a livestream.', 'merchboard' ) . '</p>';
+		} else {
+			echo '<p class="description">' . esc_html__( 'YouTube\'s own live chat of the current livestream. It loads from youtube.com.', 'merchboard' ) . '</p>';
+			echo '<iframe title="' . esc_attr__( 'YouTube chat', 'merchboard' ) . '" src="' . esc_url( 'https://www.youtube.com/live_chat?v=' . rawurlencode( $video ) . '&embed_domain=' . rawurlencode( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ) . '" width="100%" height="420" style="max-width:640px;border:1px solid #c3c4c7"></iframe>';
+		}
+
+		echo '<p><a href="' . esc_url( 'https://www.youtube.com/channel/' . rawurlencode( $channel->broadcaster_id ) . '/live' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open the livestream at YouTube', 'merchboard' ) . '</a></p>';
 	}
 
 	/**
@@ -405,6 +512,7 @@ final class ChatbotAdminTab {
 			'enabled'                               => __( 'Yes', 'merchboard' ),
 			'webhook_callback_verification_pending' => __( 'Waiting for Twitch', 'merchboard' ),
 			ChatSubscriptions::NO_WEBHOOKS          => __( 'No (site not reachable)', 'merchboard' ),
+			YouTubePlatform::EMBEDDED               => __( 'YouTube\'s chat (embedded)', 'merchboard' ),
 			''                                      => __( 'No', 'merchboard' ),
 			default                                 => $channel->subscription_status,
 		};
