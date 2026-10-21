@@ -164,7 +164,7 @@ function takeConnectResult(): {
 
 	return {
 		code: /^[a-z_]{1,40}$/.test( code ) ? code : 'error',
-		platform: platform === 'kick' ? 'kick' : 'twitch',
+		platform: PLATFORMS.find( ( item ) => item === platform ) ?? 'twitch',
 	};
 }
 
@@ -180,18 +180,33 @@ export function statusLabel( status: string, reason = '' ): string {
 			return __( 'sent', 'merchboard' );
 		case 'waiting':
 			return reason === 'not_live'
-				? __( 'waiting for your next livestream', 'merchboard' )
+				? __(
+						'waiting (you were not live; checked again after 5 minutes)',
+						'merchboard'
+					)
 				: __( 'waiting to be sent', 'merchboard' );
 		case 'skipped':
 			return reason === 'not_live'
-				? __( 'skipped (no livestream within 24 hours)', 'merchboard' )
+				? __( 'skipped (you were not live)', 'merchboard' )
 				: __( 'skipped (empty message)', 'merchboard' );
 		default:
 			return __( 'not sent', 'merchboard' );
 	}
 }
 
-function testMessage( result: string, label: string ): string {
+function testMessage(
+	result: string,
+	label: string,
+	platform: ChatPlatform
+): string {
+	// YouTube refuses the bot's message because of the stream or chat settings, not the bot.
+	if ( result === 'forbidden' && platform === 'youtube' ) {
+		return __(
+			'YouTube did not let the bot write. Check that your livestream is not private and that your chat is not for subscribers or members only, and make the bot a moderator.',
+			'merchboard'
+		);
+	}
+
 	switch ( result ) {
 		case 'sent':
 			return __( 'The test message was sent.', 'merchboard' );
@@ -303,7 +318,7 @@ function PlatformCard( {
 					{ platform.platform === 'youtube' && (
 						<p className="merchboard-field__help">
 							{ __(
-								'On YouTube the bot writes only during your livestreams; purchases between streams wait for your next stream (at most 24 hours). Tip: make the bot a moderator of your channel, so YouTube does not hold its messages back.',
+								'On YouTube the bot writes only during your livestreams. If you are not live when someone buys, it checks once more after 5 minutes; otherwise the purchase is not announced in the chat. Tip: make the bot a moderator of your channel, so YouTube does not hold its messages back.',
 								'merchboard'
 							) }
 						</p>
@@ -454,7 +469,9 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 		setBusy( null );
 
 		if ( answer.ok ) {
-			setToast( testMessage( answer.data.result, labelOf( platform ) ) );
+			setToast(
+				testMessage( answer.data.result, labelOf( platform ), platform )
+			);
 		} else {
 			setError( answer.error );
 		}

@@ -213,10 +213,10 @@ describe( 'previewMessage', () => {
 		expect( statusLabel( 'waiting' ) ).toBe( 'waiting to be sent' );
 		expect( statusLabel( 'failed' ) ).toBe( 'not sent' );
 		expect( statusLabel( 'waiting', 'not_live' ) ).toBe(
-			'waiting for your next livestream'
+			'waiting (you were not live; checked again after 5 minutes)'
 		);
 		expect( statusLabel( 'skipped', 'not_live' ) ).toBe(
-			'skipped (no livestream within 24 hours)'
+			'skipped (you were not live)'
 		);
 	} );
 } );
@@ -364,18 +364,22 @@ describe( 'AlertsChatbotSection', () => {
 				at: '2026-10-21T10:05:00Z',
 			},
 		};
+		const results = [ 'not_live', 'forbidden' ];
 		await show( {
 			[ `GET ${ PATH }` ]: () =>
 				response( 200, {
 					...STATE,
 					platforms: [ TWITCH, KICK, youtube ],
 				} ),
-			[ `POST ${ PATH }/youtube/test` ]: () =>
-				response( 200, {
-					result: 'not_live',
-					reason: 'not_live',
+			[ `POST ${ PATH }/youtube/test` ]: () => {
+				const result = results.shift() ?? 'sent';
+
+				return response( 200, {
+					result,
+					reason: result,
 					message: 'x',
-				} ),
+				} );
+			},
 		} );
 
 		expect( text() ).toContain( 'Your YouTube channel' );
@@ -384,7 +388,7 @@ describe( 'AlertsChatbotSection', () => {
 		);
 		expect( text() ).toContain( 'only during your livestreams' );
 		expect( text() ).toContain(
-			'Latest message: waiting for your next livestream'
+			'Latest message: waiting (you were not live; checked again after 5 minutes)'
 		);
 		expect( text() ).not.toContain( '(not_live)' );
 		expect( text() ).toContain(
@@ -394,6 +398,42 @@ describe( 'AlertsChatbotSection', () => {
 		click( buttons( 'Send test message' )[ 0 ] ?? null );
 		await flush();
 		expect( text() ).toContain( 'You are not live on YouTube right now.' );
+
+		// A private stream or a restricted chat: YouTube refuses the bot.
+		click( buttons( 'Send test message' )[ 0 ] ?? null );
+		await flush();
+		expect( text() ).toContain(
+			'YouTube did not let the bot write. Check that your livestream is not private'
+		);
+		expect( text() ).not.toContain( 'Add the bot to your channel again' );
+	} );
+
+	it( "names YouTube in the result of Google's redirect", async () => {
+		setUrl(
+			`${ ORIGIN }/creator-dashboard/alerts/chatbot?chatbot=denied&platform=youtube`
+		);
+		await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, {
+					...STATE,
+					platforms: [
+						TWITCH,
+						KICK,
+						{
+							platform: 'youtube',
+							label: 'YouTube',
+							available: true,
+							bot_login: 'Merch Bot',
+							enabled: true,
+							channel: null,
+							last_message: null,
+						},
+					],
+				} ),
+		} );
+
+		expect( text() ).toContain( 'You cancelled at YouTube.' );
+		expect( window.location.search ).toBe( '' );
 	} );
 
 	it( 'shows a fixed error text when the bot cannot be added', async () => {

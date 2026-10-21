@@ -252,7 +252,7 @@ final class ChatbotTest extends IntegrationTestCase {
 				$youtube_api->revoke( $token );
 			}
 		);
-		$this->youtube_platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels );
+		$this->youtube_platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $logger );
 		$this->platforms        = new ChatPlatforms( new TwitchPlatform( $this->account, $this->api ), new KickPlatform( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels ), $this->youtube_platform );
 		$this->subscriptions    = new ChatSubscriptions( $this->platforms, $this->channels, $this->chat );
 		$this->sender           = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
@@ -626,6 +626,31 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->run_jobs();
 		self::assertSame( array( 'failed', 'msg_duplicate' ), array( $this->log->latest( $nova, ChatPlatform::Twitch )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::Twitch )['reason'] ?? null ) );
 		self::assertCount( 1, $this->sent() );
+
+		// A dropped line does not hold up the order's next line.
+		$this->alert( $nova, 401, 11, 'Hoodie' );
+		$this->alert( $nova, 401, 12, 'Cap' );
+		$this->answer(
+			self::MESSAGES_URL,
+			200,
+			array(
+				'data' => array(
+					array(
+						'is_sent'     => false,
+						'drop_reason' => array(
+							'code'    => 'msg_rejected',
+							'message' => 'x',
+						),
+					),
+				),
+			)
+		);
+		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
+		$this->sender->order_paid( 401 );
+		$this->run_jobs();
+		self::assertSame( array( '🔔 nova_fan just bought Hoodie!', '🔔 nova_fan just bought Cap!' ), array_slice( array_column( $this->sent(), 'message' ), 1 ), 'Each line once.' );
+		self::assertSame( array( 'failed', 'sent' ), array_column( array_values( array_filter( $this->rows( Tables::ALERT_CHAT_MESSAGES ), static fn( array $row ): bool => '401' === (string) $row['order_id'] ) ), 'status' ) );
+		self::assertSame( array(), $this->queue->pending );
 
 		$this->answer( self::MESSAGES_URL, 401, array( 'message' => 'invalid token' ) );
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
@@ -1283,39 +1308,30 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( array( 'Nova Live', 'https://www.youtube.com/channel/' . self::YT_CREATOR ), array( $youtube['channel']['login'] ?? null, $youtube['channel']['url'] ?? null ) );
 	}
 
-	public function test_a_youtube_purchase_waits_for_the_stream_and_is_skipped_after_the_last_retry(): void {
+	public function test_a_youtube_purchase_is_checked_once_more_after_five_minutes_and_then_skipped(): void {
 		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
 		$this->youtube_creator( $nova );
 		$this->alert( $nova, 400, 1, 'Hoodie' );
+		$this->alert( $nova, 400, 2, 'Cap' );
 		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
 
 		$this->sender->order_paid( 400 );
 		self::assertSame( array( 'youtube' ), array_map( static fn( array $job ): mixed => $job['args'][2] ?? null, $this->queue->pending ) );
 
-		foreach ( array( 600, 1800, 5400, 14400, 43200 ) as $delay ) {
-			$this->not_live_any_more( $nova );
-			$this->run_jobs( 1 );
-			self::assertSame( array( 'waiting', 'not_live' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
-			self::assertSame( $delay, $this->queue->pending[0]['delay'] ?? null );
-		}
-
-		$this->not_live_any_more( $nova );
+		// Not live when the order comes in: one more check after five minutes.
 		$this->run_jobs( 1 );
-		self::assertSame( array( 'skipped', 'not_live' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
+		self::assertSame( array( 'waiting', 'not_live' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
+		self::assertSame( array( 300 ), array_column( $this->queue->pending, 'delay' ) );
+
+		// Still not live: the order's lines are skipped, without asking again.
+		$this->not_live_any_more( $nova );
+		$this->run_jobs();
+		self::assertSame( array( 'skipped:not_live', 'skipped:not_live' ), array_map( static fn( array $row ): string => $row['status'] . ':' . $row['reason'], $this->rows( Tables::ALERT_CHAT_MESSAGES ) ) );
 		self::assertSame( array(), $this->queue->pending );
 		self::assertSame( array(), $this->requests_to( self::YT_MESSAGES ) );
 		$lookups = $this->requests_to( self::YT_BROADCASTS );
-		self::assertCount( 6, $lookups, 'Only when there is something to send.' );
+		self::assertCount( 2, $lookups, 'At most two live checks per order.' );
 		self::assertSame( array( 'active', 'Bearer yt-nova-access-1' ), array( $this->query( $lookups[0]['url'] )['broadcastStatus'] ?? null, $lookups[0]['headers']['Authorization'] ?? null ), 'With the creator\'s token.' );
-
-		// A purchase older than a day is not announced any more.
-		$this->alert( $nova, 401, 2, 'Cap', '-25 hours' );
-		$this->sender->order_paid( 401 );
-		self::assertCount( 1, $this->queue->pending );
-		$this->not_live_any_more( $nova );
-		$this->run_jobs( 1 );
-		self::assertSame( array( 'skipped', 'skipped' ), array_column( $this->rows( Tables::ALERT_CHAT_MESSAGES ), 'status' ), 'Skipped at the first check.' );
-		self::assertSame( array(), $this->queue->pending );
 	}
 
 	public function test_a_live_youtube_creator_gets_the_message_and_the_waiting_ones_follow(): void {
@@ -1389,6 +1405,64 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertFalse( $this->youtube_platform->ready(), 'Nothing is sent until the bot logs in again.' );
 		self::assertSame( 'yt-bot-refresh-1', $this->last_body( self::YT_TOKEN )['refresh_token'] ?? null );
 		self::assertTrue( $this->channels->find( $nova, ChatPlatform::YouTube )->connected(), 'The creator\'s channel stays.' );
+	}
+
+	public function test_a_refused_youtube_message_is_logged_with_googles_reason_and_explained(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->youtube_creator( $nova );
+		$this->live( 'video-1', 'chat-1' );
+
+		// E.g. a private livestream: Google refuses the bot.
+		$this->answer(
+			self::YT_MESSAGES,
+			403,
+			array(
+				'error' => array(
+					'code'    => 403,
+					'message' => 'You do not have the <b>permissions</b> required to create the specified message.',
+					'errors'  => array( array( 'reason' => 'forbidden' ) ),
+				),
+			)
+		);
+		$logger   = new RecordingLogger();
+		$platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $logger );
+
+		self::assertSame(
+			array(
+				'result'      => 'forbidden',
+				'reason'      => 'forbidden',
+				'retry_after' => null,
+			),
+			$platform->send( $this->channels->find( $nova, ChatPlatform::YouTube ), 'Hi' )
+		);
+		self::assertSame(
+			array(
+				'creator_id' => $nova,
+				'result'     => 'forbidden',
+				'reason'     => 'forbidden',
+				'status'     => 403,
+				'detail'     => 'You do not have the permissions required to create the specified message.',
+			),
+			$logger->at( 'warning' )[0]['context'] ?? null
+		);
+		self::assertStringNotContainsString( 'yt-bot-access', (string) wp_json_encode( $logger->entries ), 'Never a token.' );
+
+		$this->as_admin();
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
+		$send    = fn(): string => $actions->process(
+			array(
+				'action'   => ChatbotAdminActions::SEND_ACTION,
+				'creator'  => (string) $nova,
+				'platform' => 'youtube',
+				'message'  => 'Hello chat',
+				'_wpnonce' => wp_create_nonce( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $nova, ChatPlatform::YouTube ) ),
+			)
+		);
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=message_youtube_forbidden', $send() );
+
+		$this->not_live_any_more( $nova );
+		$this->answer( self::YT_BROADCASTS, 200, array( 'items' => array() ) );
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=message_youtube_not_live', $send() );
 	}
 
 	public function test_a_revoked_youtube_access_forgets_the_channel_after_one_renewal(): void {
@@ -1854,10 +1928,9 @@ final class ChatbotTest extends IntegrationTestCase {
 	 * @param int    $order_id   Order.
 	 * @param int    $item_id    Order line.
 	 * @param string $product    Product name.
-	 * @param string $at         When it was bought (relative to now).
 	 */
-	private function alert( int $creator_id, int $order_id, int $item_id, string $product, string $at = 'now' ): void {
-		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( $at, new DateTimeZone( 'UTC' ) ) ) );
+	private function alert( int $creator_id, int $order_id, int $item_id, string $product ): void {
+		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) ) );
 	}
 
 	/**

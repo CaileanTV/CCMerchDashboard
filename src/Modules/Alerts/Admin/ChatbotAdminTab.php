@@ -104,6 +104,8 @@ final class ChatbotAdminTab {
 			'resubscribed'                 => array( __( 'The chat subscriptions were renewed.', 'merchboard' ), 'success' ),
 			'message_sent'                 => array( __( 'The message was sent as the bot.', 'merchboard' ), 'success' ),
 			'message_failed'               => array( __( 'The platform did not send the message. Check that the bot is still in the channel.', 'merchboard' ), 'error' ),
+			'message_youtube_forbidden'    => array( __( 'YouTube did not let the bot write. Check that the livestream is not private and that the chat is not for subscribers or members only, and make the bot a moderator of the channel.', 'merchboard' ), 'error' ),
+			'message_youtube_not_live'     => array( __( 'The creator is not live on YouTube right now. The bot can only write during a livestream.', 'merchboard' ), 'error' ),
 			default                        => null,
 		};
 	}
@@ -297,7 +299,7 @@ final class ChatbotAdminTab {
 				array( $this->youtube->has_app(), __( 'The Google app is saved.', 'merchboard' ) ),
 				array( $this->youtube->ready(), __( 'The bot\'s YouTube channel is logged in (youtube.force-ssl).', 'merchboard' ) ),
 				array( true, __( 'Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found.', 'merchboard' ) ),
-				array( true, __( 'Messages are written only during a livestream; purchases between streams wait for the next stream (at most 24 hours).', 'merchboard' ) ),
+				array( true, __( 'Messages are written only during a livestream. When the creator is not live, the bot checks once more after 5 minutes and otherwise skips the message (as few YouTube calls as possible).', 'merchboard' ) ),
 				array( 0 === $quota, __( 'The day\'s YouTube quota is not used up (10,000 units; a message costs 20, a live check 1).', 'merchboard' ) ),
 			)
 		);

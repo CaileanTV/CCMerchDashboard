@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Chatbot;
 
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Logging\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -52,8 +53,9 @@ final class YouTubePlatform implements ChatbotPlatform {
 	 * @param YouTubeApi               $api      YouTube.
 	 * @param CreatorTokens            $tokens   The creators' Google tokens.
 	 * @param ChatbotChannelRepository $channels The creators' channels.
+	 * @param Logger                   $logger   Technical log (refused messages with Google's reason, never a token).
 	 */
-	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels ) {
+	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private Logger $logger ) {
 	}
 
 	/**
@@ -122,7 +124,20 @@ final class YouTubePlatform implements ChatbotPlatform {
 			return self::outcome( 'rate_limited', 'quota_exceeded', $this->account->wait_seconds() );
 		}
 
-		return $result;
+		if ( ! in_array( $result['result'], array( 'sent', 'not_live' ), true ) ) {
+			$this->logger->warning(
+				'YouTube refused a chat message of the bot.',
+				array(
+					'creator_id' => $channel->creator_id,
+					'result'     => $result['result'],
+					'reason'     => $result['reason'],
+					'status'     => $result['status'],
+					'detail'     => $result['detail'],
+				)
+			);
+		}
+
+		return self::outcome( $result['result'], $result['reason'], $result['retry_after'] );
 	}
 
 	/**

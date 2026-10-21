@@ -52,6 +52,39 @@ final class ChatMessageRepository {
 	}
 
 	/**
+	 * Whether the message is finished: sent, failed for good or skipped.
+	 *
+	 * @param int          $creator_id    Creator.
+	 * @param ChatPlatform $platform      Platform.
+	 * @param int          $order_id      Order.
+	 * @param int          $order_item_id Line; 0 for the whole order.
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function finished( int $creator_id, ChatPlatform $platform, int $order_id, int $order_item_id ): bool {
+		return in_array( $this->row( $creator_id, $platform, $order_id, $order_item_id )['status'], array( self::SENT, self::FAILED, self::SKIPPED ), true );
+	}
+
+	/**
+	 * Whether a message of the order was skipped for the reason.
+	 *
+	 * @param int          $creator_id Creator.
+	 * @param ChatPlatform $platform   Platform.
+	 * @param int          $order_id   Order.
+	 * @param string       $reason     Reason code.
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function skipped_in_order( int $creator_id, ChatPlatform $platform, int $order_id, string $reason ): bool {
+		$wpdb    = $this->wpdb;
+		$skipped = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE creator_id = %d AND platform = %s AND order_id = %d AND status = %s AND reason = %s', $this->table(), $creator_id, $platform->value, $order_id, self::SKIPPED, $reason ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the chat message log.' );
+		}
+
+		return (int) $skipped > 0;
+	}
+
+	/**
 	 * How often sending was tried.
 	 *
 	 * @param int          $creator_id    Creator.

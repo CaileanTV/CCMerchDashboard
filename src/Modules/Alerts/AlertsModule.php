@@ -232,7 +232,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			YouTubePlatform::class,
-			static fn( Container $c ): YouTubePlatform => new YouTubePlatform( $c->get( YouTubeAccount::class ), $c->get( YouTubeApi::class ), self::youtube_tokens( $c ), $c->get( ChatbotChannelRepository::class ) )
+			static fn( Container $c ): YouTubePlatform => new YouTubePlatform( $c->get( YouTubeAccount::class ), $c->get( YouTubeApi::class ), self::youtube_tokens( $c ), $c->get( ChatbotChannelRepository::class ), $c->get( Logger::class ) )
 		);
 		$container->set( ChatbotFormat::class, static fn( Container $c ): ChatbotFormat => new ChatbotFormat( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ChatbotChannelRepository::class, static fn( Container $c ): ChatbotChannelRepository => new ChatbotChannelRepository( $c->get( wpdb::class ) ) );

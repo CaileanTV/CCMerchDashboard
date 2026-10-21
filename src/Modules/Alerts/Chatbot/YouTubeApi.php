@@ -229,7 +229,7 @@ final class YouTubeApi {
 	 * @param string $access  The bot's access token.
 	 * @param string $chat    Live chat id.
 	 * @param string $message Message (cut to MESSAGE_MAX).
-	 * @return array{result: string, reason: string, retry_after: int|null} result: sent, dropped, not_live, quota, rate_limited, unauthorized, forbidden or failed.
+	 * @return array{result: string, reason: string, retry_after: int|null, status: int, detail: string} result: sent, dropped, not_live, quota, rate_limited, unauthorized, forbidden or failed; status: Google's HTTP status; detail: Google's error message ('' for none), for the technical log.
 	 */
 	public function send_message( string $access, string $chat, string $message ): array {
 		$answer = $this->json(
@@ -261,7 +261,21 @@ final class YouTubeApi {
 			'result'      => $result,
 			'reason'      => 'sent' === $result ? '' : substr( sanitize_key( '' !== $error ? $error : 'http_' . $status ), 0, 60 ),
 			'retry_after' => 'rate_limited' === $result ? 60 : null,
+			'status'      => $status,
+			'detail'      => self::error_message( $answer['body'] ),
 		);
+	}
+
+	/**
+	 * The message of a Google error answer, cut to 300 characters ('' for
+	 * none). Google's own text; it holds no token.
+	 *
+	 * @param array<mixed> $body Decoded body.
+	 */
+	private static function error_message( array $body ): string {
+		$error = is_array( $body['error'] ?? null ) ? $body['error'] : array();
+
+		return is_string( $error['message'] ?? null ) ? mb_substr( sanitize_text_field( $error['message'] ), 0, 300 ) : '';
 	}
 
 	/**
