@@ -466,4 +466,14 @@ enum AuditAction: string {
 	 * The Google app of the YouTube chatbot was removed with the bot and every secret.
 	 */
 	case AlertYouTubeAppRemoved = 'alert_youtube_app_removed';
+
+	/**
+	 * The privacy policy and terms of the YouTube chatbot were saved (phase 25, step 8.5, ADR-071). Context: the version and whether everyone must accept again; never the text.
+	 */
+	case AlertYouTubeLegalChanged = 'alert_youtube_legal_changed';
+
+	/**
+	 * A user accepted the privacy policy and terms of the YouTube chatbot. Context: the version and the role (creator or admin); the creator for creators.
+	 */
+	case AlertYouTubeTermsAccepted = 'alert_youtube_terms_accepted';
 }

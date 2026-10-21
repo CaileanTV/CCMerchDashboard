@@ -20,6 +20,8 @@ use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
+use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
+use MerchBoard\Modules\Alerts\Admin\YouTubeLegalTab;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
@@ -50,6 +52,9 @@ use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\History\AlertHistory;
 use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
+use MerchBoard\Modules\Alerts\Legal\LegalPage;
+use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Images\ImageFiles;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
@@ -138,7 +143,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -232,7 +237,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			YouTubePlatform::class,
-			static fn( Container $c ): YouTubePlatform => new YouTubePlatform( $c->get( YouTubeAccount::class ), $c->get( YouTubeApi::class ), self::youtube_tokens( $c ), $c->get( ChatbotChannelRepository::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): YouTubePlatform => new YouTubePlatform( $c->get( YouTubeAccount::class ), $c->get( YouTubeApi::class ), self::youtube_tokens( $c ), $c->get( ChatbotChannelRepository::class ), $c->get( YouTubeTerms::class ), $c->get( Logger::class ) )
 		);
 		$container->set( ChatbotFormat::class, static fn( Container $c ): ChatbotFormat => new ChatbotFormat( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ChatbotChannelRepository::class, static fn( Container $c ): ChatbotChannelRepository => new ChatbotChannelRepository( $c->get( wpdb::class ) ) );
@@ -266,6 +271,14 @@ final class AlertsModule implements Module {
 			)
 		);
 		$dashboard_url = static fn( string $path ): string => $container->get( DashboardRoute::class )->url( $path );
+		// The YouTube chatbot's privacy policy and terms (phase 25, step 8.5, ADR-071).
+		$container->set( YouTubeLegal::class, static fn( Container $c ): YouTubeLegal => new YouTubeLegal( $c->get( AuditTrail::class ), $c->get( Transaction::class ), $dashboard_url ) );
+		$container->set(
+			YouTubeTerms::class,
+			static fn( Container $c ): YouTubeTerms => new YouTubeTerms( $c->get( YouTubeLegal::class ), $c->get( YouTubeAccount::class ), $c->get( CreatorRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set( LegalPage::class, static fn( Container $c ): LegalPage => new LegalPage( $c->get( DashboardRoute::class ), $c->get( YouTubeLegal::class ) ) );
+		$container->set( YouTubeLegalTab::class, static fn( Container $c ): YouTubeLegalTab => new YouTubeLegalTab( $c->get( YouTubeLegal::class ) ) );
 		$container->set(
 			TwitchOAuth::class,
 			static fn( Container $c ): TwitchOAuth => new TwitchOAuth(
@@ -303,7 +316,8 @@ final class AlertsModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$dashboard_url,
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( YouTubeTerms::class )
 			)
 		);
 		$container->set(
@@ -317,7 +331,8 @@ final class AlertsModule implements Module {
 				$c->get( ChatSubscriptions::class ),
 				$c->get( ChatSender::class ),
 				$c->get( AuditTrail::class ),
-				$c->get( Transaction::class )
+				$c->get( Transaction::class ),
+				$c->get( YouTubeTerms::class )
 			)
 		);
 		$container->set(
@@ -345,7 +360,7 @@ final class AlertsModule implements Module {
 			static function ( Container $c ): ChatbotAdminTab {
 				$root = dirname( __DIR__, 3 ) . '/';
 
-				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( KickAccount::class ), $c->get( YouTubeAccount::class ), $c->get( YouTubePlatform::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ) );
+				return new ChatbotAdminTab( $c->get( TwitchAccount::class ), $c->get( KickAccount::class ), $c->get( YouTubeAccount::class ), $c->get( YouTubePlatform::class ), $c->get( ChatbotFormat::class ), $c->get( ChatbotChannelRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $root, plugin_dir_url( $root . 'merchboard.php' ), $c->get( YouTubeTerms::class ) );
 			}
 		);
 		$container->set(
@@ -362,7 +377,9 @@ final class AlertsModule implements Module {
 				$c->get( ChatSender::class ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( YouTubeLegal::class ),
+				$c->get( YouTubeTerms::class )
 			)
 		);
 		// The history: resend and "Stop all alerts" (phase 25, step 7).
@@ -410,6 +427,14 @@ final class AlertsModule implements Module {
 				$container->get( OverlayPage::class )->handle_request();
 			},
 			0
+		);
+		// The public pages of the YouTube chatbot's privacy policy and terms, before the dashboard (priority 0) requires a login.
+		add_action(
+			'template_redirect',
+			static function () use ( $container ): void {
+				$container->get( LegalPage::class )->handle_request();
+			},
+			-1
 		);
 		add_action(
 			'rest_api_init',
@@ -464,6 +489,7 @@ final class AlertsModule implements Module {
 				$container->get( AlertsAdminActions::class )->register();
 				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
+				( new CompanyDetailsSection() )->register();
 			}
 		);
 	}

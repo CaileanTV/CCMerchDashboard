@@ -16,6 +16,7 @@ use MerchBoard\Core\Lifecycle\UninstallBlocked;
 use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\ThemePreference;
@@ -316,11 +317,12 @@ final class UninstallerTest extends TestCase {
 
 		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
 
-		self::assertSame( array( ThemePreference::META_KEY, MeAlertsHistoryController::ANONYMIZE_META ), Uninstaller::USER_META_KEYS );
+		self::assertSame( array( ThemePreference::META_KEY, MeAlertsHistoryController::ANONYMIZE_META, YouTubeTerms::META ), Uninstaller::USER_META_KEYS );
 		self::assertSame(
 			array(
 				array( 'user', 0, 'merchboard_dashboard_theme', '', true, true ),
 				array( 'user', 0, 'merchboard_alerts_anonymize', '', true, true ),
+				array( 'user', 0, 'merchboard_youtube_terms_accepted', '', true, true ),
 			),
 			$calls,
 			'Exact key, every user, through the meta API, while the opt-in still exists.'

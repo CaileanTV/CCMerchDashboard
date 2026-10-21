@@ -78,6 +78,75 @@ final class AlertSettings {
 	}
 
 	/**
+	 * Saves the company name and contact e-mail, which fill `[COMPANY]` and
+	 * `[EMAIL]` in the YouTube chatbot's privacy policy and terms (ADR-071).
+	 * Each changed value is audited (`settings_updated`).
+	 *
+	 * @param string $name  Company name ('' to clear).
+	 * @param string $email Contact e-mail ('' to clear).
+	 * @return bool Whether anything changed.
+	 * @throws AlertSettingsException When not allowed or a value is invalid.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	public function set_company_details( string $name, string $email ): bool {
+		$this->authorize();
+		$name  = trim( (string) preg_replace( '/\s+/u', ' ', $name ) );
+		$email = trim( $email );
+
+		self::require_valid( Settings::valid_company_name( $name ), AlertSettingsException::INVALID_COMPANY_NAME );
+		self::require_valid( Settings::valid_company_email( $email ), AlertSettingsException::INVALID_COMPANY_EMAIL );
+
+		$settings = Settings::all();
+		$changes  = array_filter(
+			array(
+				Settings::COMPANY_NAME  => $name,
+				Settings::COMPANY_EMAIL => $email,
+			),
+			static fn( string $value, string $key ): bool => $settings[ $key ] !== $value,
+			ARRAY_FILTER_USE_BOTH
+		);
+
+		if ( array() === $changes ) {
+			return false;
+		}
+
+		$this->transaction->run(
+			function () use ( $settings, $changes ): void {
+				foreach ( $changes as $key => $value ) {
+					$this->audit->record(
+						AuditAction::SettingsUpdated,
+						null,
+						array(
+							'setting'        => $key,
+							'previous_value' => $settings[ $key ],
+							'value'          => $value,
+						)
+					);
+				}
+
+				if ( ! Settings::save( array_merge( $settings, $changes ) ) ) {
+					throw new DatabaseException( 'Could not save settings.' );
+				}
+			}
+		);
+
+		return true;
+	}
+
+	/**
+	 * Requires a valid value.
+	 *
+	 * @param bool   $valid  Whether it is valid.
+	 * @param string $reason Reason when not.
+	 * @throws AlertSettingsException When it is not.
+	 */
+	private static function require_valid( bool $valid, string $reason ): void {
+		if ( ! $valid ) {
+			throw new AlertSettingsException( $reason );
+		}
+	}
+
+	/**
 	 * Requires the alerts capability (independent of the UI).
 	 *
 	 * @throws AlertSettingsException When the current user lacks it.

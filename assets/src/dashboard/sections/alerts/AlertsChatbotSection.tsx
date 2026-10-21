@@ -1,7 +1,13 @@
-import { useCallback, useId, useState } from '@wordpress/element';
+import {
+	createInterpolateElement,
+	useCallback,
+	useId,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import {
+	acceptChatbotTerms,
 	connectChatbot,
 	disconnectChatbot,
 	getChatbot,
@@ -186,8 +192,12 @@ export function statusLabel( status: string, reason = '' ): string {
 					)
 				: __( 'waiting to be sent', 'merchboard' );
 		case 'skipped':
-			return reason === 'not_live'
-				? __( 'skipped (you were not live)', 'merchboard' )
+			if ( reason === 'not_live' ) {
+				return __( 'skipped (you were not live)', 'merchboard' );
+			}
+
+			return reason === 'terms_not_accepted'
+				? __( 'skipped (terms not accepted)', 'merchboard' )
 				: __( 'skipped (empty message)', 'merchboard' );
 		default:
 			return __( 'not sent', 'merchboard' );
@@ -210,6 +220,11 @@ function testMessage(
 	switch ( result ) {
 		case 'sent':
 			return __( 'The test message was sent.', 'merchboard' );
+		case 'skipped':
+			return __(
+				'The test message was not sent: accept the privacy policy and terms of the YouTube chatbot first.',
+				'merchboard'
+			);
 		case 'not_live':
 			return __(
 				'You are not live on YouTube right now. Test messages can only be written during a livestream.',
@@ -246,7 +261,65 @@ function testMessage(
 	}
 }
 
-type Busy = 'save' | `${ 'connect' | 'disconnect' | 'test' }:${ ChatPlatform }`;
+type Busy =
+	| 'save'
+	| `${ 'connect' | 'disconnect' | 'test' | 'terms' }:${ ChatPlatform }`;
+
+interface TermsCheckboxProps {
+	readonly terms: NonNullable< ChatbotPlatformState[ 'terms' ] >;
+	readonly checked: boolean;
+	readonly onChange: ( checked: boolean ) => void;
+}
+
+/**
+ * The checkbox that accepts the YouTube chatbot's privacy policy and terms
+ * (ADR-071), with links to their public pages.
+ *
+ * @param props          Props.
+ * @param props.terms    The pages and the version.
+ * @param props.checked  Whether it is ticked.
+ * @param props.onChange Called with the new state.
+ */
+function TermsCheckbox( { terms, checked, onChange }: TermsCheckboxProps ) {
+	const id = useId();
+
+	return (
+		<p>
+			<label className="merchboard-alerts__check" htmlFor={ id }>
+				<input
+					id={ id }
+					type="checkbox"
+					checked={ checked }
+					onChange={ ( event ) => onChange( event.target.checked ) }
+				/>{ ' ' }
+				{ createInterpolateElement(
+					__(
+						'I accept the <privacy>privacy policy</privacy> and the <terms>terms of service</terms> of the YouTube chatbot.',
+						'merchboard'
+					),
+					{
+						privacy: (
+							// eslint-disable-next-line jsx-a11y/anchor-has-content -- The text comes from the translation.
+							<a
+								href={ terms.privacyUrl }
+								target="_blank"
+								rel="noreferrer"
+							/>
+						),
+						terms: (
+							// eslint-disable-next-line jsx-a11y/anchor-has-content -- The text comes from the translation.
+							<a
+								href={ terms.termsUrl }
+								target="_blank"
+								rel="noreferrer"
+							/>
+						),
+					}
+				) }
+			</label>
+		</p>
+	);
+}
 
 interface PlatformCardProps {
 	readonly platform: ChatbotPlatformState;
@@ -254,6 +327,7 @@ interface PlatformCardProps {
 	readonly onConnect: () => void;
 	readonly onDisconnect: () => void;
 	readonly onTest: () => void;
+	readonly onAcceptTerms: () => void;
 }
 
 function PlatformCard( {
@@ -262,8 +336,10 @@ function PlatformCard( {
 	onConnect,
 	onDisconnect,
 	onTest,
+	onAcceptTerms,
 }: PlatformCardProps ) {
-	const { label, channel, botLogin, lastMessage } = platform;
+	const { label, channel, botLogin, lastMessage, terms } = platform;
+	const [ agreed, setAgreed ] = useState( false );
 
 	return (
 		<Card
@@ -285,16 +361,49 @@ function PlatformCard( {
 							label
 						) }
 					</p>
+					{ terms !== null && (
+						<TermsCheckbox
+							terms={ terms }
+							checked={ agreed }
+							onChange={ setAgreed }
+						/>
+					) }
 					<Button
 						onClick={ onConnect }
 						isBusy={ busy === `connect:${ platform.platform }` }
-						disabled={ busy !== null }
+						disabled={
+							busy !== null || ( terms !== null && ! agreed )
+						}
 					>
 						{ __( 'Add the bot to your channel', 'merchboard' ) }
 					</Button>
 				</>
 			) : (
 				<>
+					{ terms !== null && ! terms.accepted && (
+						<>
+							<Alert tone="info">
+								{ __(
+									'The privacy policy and terms of the YouTube chatbot have changed. The bot does not write in your chat until you accept them.',
+									'merchboard'
+								) }
+							</Alert>
+							<TermsCheckbox
+								terms={ terms }
+								checked={ agreed }
+								onChange={ setAgreed }
+							/>
+							<Button
+								onClick={ onAcceptTerms }
+								isBusy={
+									busy === `terms:${ platform.platform }`
+								}
+								disabled={ busy !== null || ! agreed }
+							>
+								{ __( 'Accept', 'merchboard' ) }
+							</Button>
+						</>
+					) }
 					<p>
 						{ botLogin === ''
 							? sprintf(
@@ -346,6 +455,8 @@ function PlatformCard( {
 								),
 								lastMessage.reason === '' ||
 									lastMessage.reason === 'not_live' ||
+									lastMessage.reason ===
+										'terms_not_accepted' ||
 									lastMessage.status === 'sent'
 									? ''
 									: ` (${ lastMessage.reason })`
@@ -420,10 +531,14 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 		}
 	};
 
-	const connect = async ( platform: ChatPlatform ) => {
-		setBusy( `connect:${ platform }` );
+	const connect = async ( platform: ChatbotPlatformState ) => {
+		setBusy( `connect:${ platform.platform }` );
 		setError( null );
-		const answer = await connectChatbot( platform );
+		// The checkbox enables the button, so the terms are accepted here (YouTube).
+		const answer = await connectChatbot(
+			platform.platform,
+			platform.terms !== null
+		);
 
 		if ( answer.ok ) {
 			window.location.assign( answer.data );
@@ -456,6 +571,25 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 			setState( answer.data );
 			setToast(
 				__( 'The bot was removed from your channel.', 'merchboard' )
+			);
+		} else {
+			setError( answer.error );
+		}
+	};
+
+	const acceptTerms = async () => {
+		setBusy( 'terms:youtube' );
+		setError( null );
+		const answer = await acceptChatbotTerms();
+		setBusy( null );
+
+		if ( answer.ok ) {
+			setState( answer.data );
+			setToast(
+				__(
+					'Thank you. The bot writes in your YouTube chat again.',
+					'merchboard'
+				)
 			);
 		} else {
 			setError( answer.error );
@@ -502,9 +636,10 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 					key={ platform.platform }
 					platform={ platform }
 					busy={ busy }
-					onConnect={ () => connect( platform.platform ) }
+					onConnect={ () => connect( platform ) }
 					onDisconnect={ () => disconnect( platform.platform ) }
 					onTest={ () => test( platform.platform ) }
+					onAcceptTerms={ acceptTerms }
 				/>
 			) ) }
 			<Card title={ __( 'Chat message', 'merchboard' ) }>

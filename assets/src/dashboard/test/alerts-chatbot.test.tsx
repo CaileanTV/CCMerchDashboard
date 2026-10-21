@@ -452,3 +452,130 @@ describe( 'AlertsChatbotSection', () => {
 		expect( text() ).toContain( 'Something went wrong.' );
 	} );
 } );
+
+describe( 'YouTube privacy policy and terms', () => {
+	const TERMS = {
+		privacy_url: `${ ORIGIN }/creator-dashboard/legal/youtube-privacy/`,
+		terms_url: `${ ORIGIN }/creator-dashboard/legal/youtube-terms/`,
+		version: 2,
+		accepted: false,
+	};
+	const YOUTUBE = {
+		platform: 'youtube',
+		label: 'YouTube',
+		available: true,
+		bot_login: 'Merch Bot',
+		enabled: true,
+		channel: null,
+		last_message: null,
+		terms: TERMS,
+	};
+	const checkbox = () =>
+		rendered?.container.querySelector< HTMLInputElement >(
+			'input[type="checkbox"]'
+		) ?? null;
+
+	it( 'reads the terms and refuses pages on another site', () => {
+		expect(
+			parseChatbot( { ...STATE, platforms: [ TWITCH, KICK, YOUTUBE ] } )
+				?.platforms[ 2 ]?.terms
+		).toEqual( {
+			privacyUrl: TERMS.privacy_url,
+			termsUrl: TERMS.terms_url,
+			version: 2,
+			accepted: false,
+		} );
+		expect( parseChatbot( STATE )?.platforms[ 0 ]?.terms ).toBeNull();
+
+		for ( const terms of [
+			{ ...TERMS, privacy_url: 'https://evil.example/privacy' },
+			{ ...TERMS, terms_url: 'javascript:alert(1)' },
+			{ ...TERMS, version: 0 },
+			{ ...TERMS, accepted: 'yes' },
+		] ) {
+			expect(
+				parseChatbot( {
+					...STATE,
+					platforms: [ { ...YOUTUBE, terms } ],
+				} )
+			).toBeNull();
+		}
+
+		expect( statusLabel( 'skipped', 'terms_not_accepted' ) ).toBe(
+			'skipped (terms not accepted)'
+		);
+	} );
+
+	it( 'adds the bot only after the creator accepts the terms', async () => {
+		const requests = await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, { ...STATE, platforms: [ YOUTUBE ] } ),
+			[ `POST ${ PATH }/youtube/connect` ]: () =>
+				response( 409, {
+					code: 'merchboard_chatbot_unavailable',
+					message: 'The chatbot is not set up yet.',
+				} ),
+		} );
+		const add = buttons( 'Add the bot to your channel' )[ 0 ];
+		const links = Array.from(
+			rendered?.container.querySelectorAll( 'label a' ) ?? []
+		).map( ( link ) => [ link.textContent, link.getAttribute( 'href' ) ] );
+
+		expect( links ).toEqual( [
+			[ 'privacy policy', TERMS.privacy_url ],
+			[ 'terms of service', TERMS.terms_url ],
+		] );
+		expect( add?.disabled ).toBe( true );
+
+		click( checkbox() );
+		await flush();
+		expect( add?.disabled ).toBe( false );
+		click( add ?? null );
+		await flush();
+
+		expect(
+			requests.find( ( r ) => r.path === `${ PATH }/youtube/connect` )
+				?.data
+		).toEqual( { accept_terms: true } );
+	} );
+
+	it( 'asks a connected creator to accept a new version', async () => {
+		const connected = {
+			...YOUTUBE,
+			channel: {
+				login: 'Nova Streams',
+				url: 'https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv',
+				connected_at: '2026-10-21T10:00:00Z',
+			},
+		};
+		const requests = await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, { ...STATE, platforms: [ connected ] } ),
+			[ `POST ${ PATH }/youtube/terms` ]: () =>
+				response( 200, {
+					...STATE,
+					platforms: [
+						{ ...connected, terms: { ...TERMS, accepted: true } },
+					],
+				} ),
+		} );
+
+		expect( text() ).toContain(
+			'The privacy policy and terms of the YouTube chatbot have changed.'
+		);
+		expect( buttons( 'Accept' )[ 0 ]?.disabled ).toBe( true );
+
+		click( checkbox() );
+		await flush();
+		click( buttons( 'Accept' )[ 0 ] ?? null );
+		await flush();
+
+		expect(
+			requests.find( ( r ) => r.path === `${ PATH }/youtube/terms` )?.data
+		).toEqual( { accept: true } );
+		expect( text() ).not.toContain( 'have changed' );
+		expect( text() ).toContain(
+			'The bot writes in your YouTube chat again.'
+		);
+	} );
+} );

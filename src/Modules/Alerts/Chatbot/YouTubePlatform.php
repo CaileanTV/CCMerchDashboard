@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Alerts\Chatbot;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -53,9 +54,10 @@ final class YouTubePlatform implements ChatbotPlatform {
 	 * @param YouTubeApi               $api      YouTube.
 	 * @param CreatorTokens            $tokens   The creators' Google tokens.
 	 * @param ChatbotChannelRepository $channels The creators' channels.
+	 * @param YouTubeTerms             $terms    Accepted privacy policy and terms (ADR-071).
 	 * @param Logger                   $logger   Technical log (refused messages with Google's reason, never a token).
 	 */
-	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private Logger $logger ) {
+	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private YouTubeTerms $terms, private Logger $logger ) {
 	}
 
 	/**
@@ -66,10 +68,11 @@ final class YouTubePlatform implements ChatbotPlatform {
 	}
 
 	/**
-	 * Whether the app and a working bot are set up.
+	 * Whether the app and a working bot are set up, and the administrator
+	 * accepted the published privacy policy and terms for the bot.
 	 */
 	public function ready(): bool {
-		return $this->account->ready();
+		return $this->account->ready() && $this->terms->bot_accepted();
 	}
 
 	/**
@@ -91,12 +94,18 @@ final class YouTubePlatform implements ChatbotPlatform {
 	 *
 	 * @param ChatbotChannel $channel The creator's channel.
 	 * @param string         $message Message.
-	 * @return array{result: string, reason: string, retry_after: int|null} result also `not_live` when the creator is not live.
+	 * @return array{result: string, reason: string, retry_after: int|null} result also `not_live` when the creator is not live, and `skipped` (`terms_not_accepted`) when the creator has not accepted the current privacy policy and terms.
 	 * @throws ChatbotException When the app or the bot is not set up, or Google cannot be reached.
 	 * @throws DatabaseException When the creator's tokens cannot be read or stored.
 	 */
 	public function send( ChatbotChannel $channel, string $message ): array {
 		$this->require_ready( $message );
+
+		// A creator who has not accepted the current privacy policy and terms gets no messages (ADR-071).
+		if ( ! $this->terms->creator_accepted( $channel->creator_id ) ) {
+			return self::outcome( 'skipped', 'terms_not_accepted' );
+		}
+
 		$live = $this->live( $channel );
 
 		if ( null === $live ) {
@@ -290,7 +299,7 @@ final class YouTubePlatform implements ChatbotPlatform {
 	 * @throws ChatbotException When the app or the bot is not set up or the message is empty.
 	 */
 	private function require_ready( string $message ): void {
-		if ( ! $this->account->ready() || '' === trim( $message ) ) {
+		if ( ! $this->ready() || '' === trim( $message ) ) {
 			throw new ChatbotException( ChatbotException::NOT_CONFIGURED );
 		}
 	}

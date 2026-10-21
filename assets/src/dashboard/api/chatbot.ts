@@ -1,7 +1,8 @@
 /**
- * `/me/alerts/chatbot` (phase 25, steps 8 and 8.2): the creator's chatbot
- * on Twitch and Kick. The creator is the one the server resolves for the
- * logged-in user.
+ * `/me/alerts/chatbot` (phase 25, steps 8, 8.2, 8.4 and 8.5): the creator's
+ * chatbot on Twitch, Kick and YouTube; YouTube asks the creator to accept its
+ * privacy policy and terms. The creator is the one the server resolves for
+ * the logged-in user.
  */
 import { request } from './client';
 import type { ApiResult } from './client';
@@ -52,6 +53,16 @@ export interface ChatbotPlatformState {
 		readonly status: string;
 		readonly reason: string;
 		readonly at: string;
+	} | null;
+	/**
+	 * The privacy policy and terms the creator must accept (YouTube, ADR-071),
+	 * or null when the platform asks for none.
+	 */
+	readonly terms: {
+		readonly privacyUrl: string;
+		readonly termsUrl: string;
+		readonly version: number;
+		readonly accepted: boolean;
 	} | null;
 }
 
@@ -140,6 +151,31 @@ function parsePlatform( body: unknown ): ChatbotPlatformState | null {
 		};
 	}
 
+	let terms: ChatbotPlatformState[ 'terms' ] = null;
+
+	if ( body.terms !== null && body.terms !== undefined ) {
+		if (
+			! isRecord( body.terms ) ||
+			typeof body.terms.privacy_url !== 'string' ||
+			! isSameOrigin( body.terms.privacy_url ) ||
+			typeof body.terms.terms_url !== 'string' ||
+			! isSameOrigin( body.terms.terms_url ) ||
+			typeof body.terms.version !== 'number' ||
+			! Number.isInteger( body.terms.version ) ||
+			body.terms.version < 1 ||
+			typeof body.terms.accepted !== 'boolean'
+		) {
+			return null;
+		}
+
+		terms = {
+			privacyUrl: new URL( body.terms.privacy_url ).href,
+			termsUrl: new URL( body.terms.terms_url ).href,
+			version: body.terms.version,
+			accepted: body.terms.accepted,
+		};
+	}
+
 	return {
 		platform,
 		label: body.label,
@@ -148,7 +184,27 @@ function parsePlatform( body: unknown ): ChatbotPlatformState | null {
 		enabled: body.enabled,
 		channel,
 		lastMessage,
+		terms,
 	};
+}
+
+/**
+ * Whether a URL is on this site (the public pages of the privacy policy and
+ * terms are).
+ *
+ * @param value URL.
+ */
+function isSameOrigin( value: string ): boolean {
+	try {
+		const url = new URL( value );
+
+		return (
+			url.origin === window.location.origin &&
+			( url.protocol === 'https:' || url.protocol === 'http:' )
+		);
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -257,14 +313,35 @@ export function updateChatbot( changes: {
 /**
  * The platform's page where the creator adds the bot to the own channel.
  *
- * @param platform Platform.
+ * @param platform    Platform.
+ * @param acceptTerms Whether the creator accepted the privacy policy and terms (YouTube requires it).
  */
 export function connectChatbot(
-	platform: ChatPlatform
+	platform: ChatPlatform,
+	acceptTerms = false
 ): Promise< ApiResult< string > > {
 	return request(
-		{ path: `${ PATH }/${ platform }/connect`, method: 'POST' },
+		{
+			path: `${ PATH }/${ platform }/connect`,
+			method: 'POST',
+			...( acceptTerms ? { data: { accept_terms: true } } : {} ),
+		},
 		parseUrl( platform )
+	);
+}
+
+/**
+ * Accepts the current privacy policy and terms of the YouTube chatbot (e.g.
+ * a new version).
+ */
+export function acceptChatbotTerms(): Promise< ApiResult< ChatbotState > > {
+	return request(
+		{
+			path: `${ PATH }/youtube/terms`,
+			method: 'POST',
+			data: { accept: true },
+		},
+		parseChatbot
 	);
 }
 

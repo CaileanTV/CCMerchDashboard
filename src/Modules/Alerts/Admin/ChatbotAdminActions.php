@@ -28,6 +28,8 @@ use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeOAuth;
+use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -52,11 +54,13 @@ final class ChatbotAdminActions {
 	public const YOUTUBE_APP_ACTION            = 'merchboard_alert_chatbot_youtube_app';
 	public const YOUTUBE_BOT_CONNECT_ACTION    = 'merchboard_alert_chatbot_youtube_bot_connect';
 	public const YOUTUBE_BOT_DISCONNECT_ACTION = 'merchboard_alert_chatbot_youtube_bot_disconnect';
+	public const YOUTUBE_TERMS_ACTION          = 'merchboard_alert_chatbot_youtube_terms';
+	public const LEGAL_ACTION                  = 'merchboard_alert_youtube_legal';
 
 	/**
 	 * Every handled action.
 	 */
-	private const ACTIONS = array( self::APP_ACTION, self::BOT_CONNECT_ACTION, self::BOT_DISCONNECT_ACTION, self::KICK_APP_ACTION, self::YOUTUBE_APP_ACTION, self::YOUTUBE_BOT_CONNECT_ACTION, self::YOUTUBE_BOT_DISCONNECT_ACTION, self::FORMAT_ACTION, self::RESUBSCRIBE_ACTION, self::SEND_ACTION );
+	private const ACTIONS = array( self::APP_ACTION, self::BOT_CONNECT_ACTION, self::BOT_DISCONNECT_ACTION, self::KICK_APP_ACTION, self::YOUTUBE_APP_ACTION, self::YOUTUBE_BOT_CONNECT_ACTION, self::YOUTUBE_BOT_DISCONNECT_ACTION, self::YOUTUBE_TERMS_ACTION, self::LEGAL_ACTION, self::FORMAT_ACTION, self::RESUBSCRIBE_ACTION, self::SEND_ACTION );
 
 	/**
 	 * Constructor.
@@ -73,6 +77,8 @@ final class ChatbotAdminActions {
 	 * @param AuditTrail               $audit         Audit trail.
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param Logger                   $logger        Technical log.
+	 * @param YouTubeLegal             $legal         YouTube's privacy policy and terms.
+	 * @param YouTubeTerms             $terms         Their acceptance.
 	 */
 	public function __construct(
 		private TwitchAccount $account,
@@ -86,7 +92,9 @@ final class ChatbotAdminActions {
 		private ChatSender $sender,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private Logger $logger
+		private Logger $logger,
+		private YouTubeLegal $legal,
+		private YouTubeTerms $terms
 	) {
 	}
 
@@ -150,15 +158,16 @@ final class ChatbotAdminActions {
 				self::BOT_CONNECT_ACTION, self::BOT_DISCONNECT_ACTION => 'bot_',
 				self::KICK_APP_ACTION => 'kick_',
 				self::YOUTUBE_APP_ACTION => 'youtube_',
-				self::YOUTUBE_BOT_CONNECT_ACTION, self::YOUTUBE_BOT_DISCONNECT_ACTION => 'youtube_bot_',
+				self::YOUTUBE_BOT_CONNECT_ACTION, self::YOUTUBE_BOT_DISCONNECT_ACTION, self::YOUTUBE_TERMS_ACTION => 'youtube_bot_',
+				self::LEGAL_ACTION => 'legal_',
 				default => 'app_',
 			};
 
-			return AlertsAdminPage::url( 'chatbot', $send ? 'message_failed' : $prefix . $e->reason() );
+			return AlertsAdminPage::url( self::tab( $action ), $send ? 'message_failed' : $prefix . $e->reason() );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Changing the alert chatbot failed.', array( 'reason' => $e->getMessage() ) );
 
-			return AlertsAdminPage::url( 'chatbot', 'bot_error' );
+			return AlertsAdminPage::url( self::tab( $action ), 'bot_error' );
 		}
 	}
 
@@ -208,7 +217,37 @@ final class ChatbotAdminActions {
 
 				return AlertsAdminPage::url( 'chatbot', 'youtube_saved' );
 			case self::YOUTUBE_BOT_CONNECT_ACTION:
-				return $this->google->start_bot();
+				// The administrator accepts the privacy policy and terms for the bot (ADR-071).
+				if ( '1' !== self::scalar( $input, 'accept_terms' ) ) {
+					return AlertsAdminPage::url( 'chatbot', 'youtube_bot_terms_required' );
+				}
+
+				$url = $this->google->start_bot();
+				$this->terms->accept_bot( get_current_user_id() );
+
+				return $url;
+			case self::YOUTUBE_TERMS_ACTION:
+				if ( '1' !== self::scalar( $input, 'accept_terms' ) ) {
+					return AlertsAdminPage::url( 'chatbot', 'youtube_bot_terms_required' );
+				}
+
+				$this->terms->accept_bot( get_current_user_id() );
+
+				return AlertsAdminPage::url( 'chatbot', 'youtube_terms_accepted' );
+			case self::LEGAL_ACTION:
+				$texts = array();
+
+				foreach ( YouTubeLegal::DOCUMENTS as $document ) {
+					foreach ( YouTubeLegal::LANGUAGES as $language ) {
+						$key = YouTubeLegal::key( $document, $language );
+						// HTML; YouTubeLegal limits it to wp_kses_post().
+						$texts[ $key ] = is_string( $input[ $key ] ?? null ) ? $input[ $key ] : '';
+					}
+				}
+
+				$renew = '1' === self::scalar( $input, 'renew' );
+
+				return AlertsAdminPage::url( 'youtube-legal', $this->legal->save( $texts, $renew ) );
 			case self::YOUTUBE_BOT_DISCONNECT_ACTION:
 				$this->youtube->disconnect_bot();
 
@@ -277,6 +316,15 @@ final class ChatbotAdminActions {
 			ChatPlatform::YouTube === $platform && 'not_live' === $result => 'message_youtube_not_live',
 			default => 'message_failed',
 		};
+	}
+
+	/**
+	 * The tab an action returns to.
+	 *
+	 * @param string $action Admin-post action.
+	 */
+	private static function tab( string $action ): string {
+		return self::LEGAL_ACTION === $action ? 'youtube-legal' : 'chatbot';
 	}
 
 	/**

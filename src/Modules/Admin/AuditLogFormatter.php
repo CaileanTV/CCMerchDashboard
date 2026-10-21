@@ -140,6 +140,8 @@ final class AuditLogFormatter {
 			AuditAction::AlertKickAppRemoved => __( 'Kick app of the alert chatbot removed', 'merchboard' ),
 			AuditAction::AlertYouTubeAppChanged => __( 'YouTube app of the alert chatbot saved', 'merchboard' ),
 			AuditAction::AlertYouTubeAppRemoved => __( 'YouTube app of the alert chatbot removed', 'merchboard' ),
+			AuditAction::AlertYouTubeLegalChanged => __( 'Privacy policy and terms of the YouTube chatbot saved', 'merchboard' ),
+			AuditAction::AlertYouTubeTermsAccepted => __( 'Privacy policy and terms of the YouTube chatbot accepted', 'merchboard' ),
 		};
 	}
 

@@ -102,6 +102,24 @@ final class Settings {
 	public const COMPANY_CVR = 'company_cvr';
 
 	/**
+	 * The business' legal name (phase 25, step 8.5): fills `[COMPANY]` in the
+	 * YouTube chatbot's privacy policy and terms (ADR-071). '' when not
+	 * registered; at most COMPANY_NAME_MAX_LENGTH characters, one line.
+	 */
+	public const COMPANY_NAME = 'company_name';
+
+	/**
+	 * The business' contact e-mail for privacy questions (phase 25, step 8.5):
+	 * fills `[EMAIL]` (ADR-071). '' when not registered.
+	 */
+	public const COMPANY_EMAIL = 'company_email';
+
+	/**
+	 * Longest company name.
+	 */
+	public const COMPANY_NAME_MAX_LENGTH = 200;
+
+	/**
 	 * Whether purchase alerts are sent (ADR-065 pkt. 6). Off by default, also
 	 * after an update; enabled only by exactly boolean true.
 	 */
@@ -145,7 +163,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, alerts_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -156,6 +174,8 @@ final class Settings {
 			self::PAYOUT_HOLDING_DAYS       => self::DEFAULT_PAYOUT_HOLDING_DAYS,
 			self::PAYOUT_GIFT_CARD_PROVIDER => '',
 			self::COMPANY_CVR               => '',
+			self::COMPANY_NAME              => '',
+			self::COMPANY_EMAIL             => '',
 			self::ALERTS_ENABLED            => false,
 		);
 	}
@@ -167,7 +187,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, alerts_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -175,6 +195,8 @@ final class Settings {
 		$days = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
 		$card = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
 		$cvr  = $values[ self::COMPANY_CVR ] ?? null;
+		$name = $values[ self::COMPANY_NAME ] ?? null;
+		$mail = $values[ self::COMPANY_EMAIL ] ?? null;
 
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL  => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
@@ -184,8 +206,48 @@ final class Settings {
 			self::PAYOUT_HOLDING_DAYS       => is_int( $days ) && self::valid_holding_days( $days ) ? $days : self::DEFAULT_PAYOUT_HOLDING_DAYS,
 			self::PAYOUT_GIFT_CARD_PROVIDER => is_string( $card ) && self::valid_provider_id( $card ) ? $card : '',
 			self::COMPANY_CVR               => is_string( $cvr ) && self::valid_cvr( $cvr ) ? $cvr : '',
+			self::COMPANY_NAME              => is_string( $name ) && self::valid_company_name( $name ) ? $name : '',
+			self::COMPANY_EMAIL             => is_string( $mail ) && self::valid_company_email( $mail ) ? $mail : '',
 			self::ALERTS_ENABLED            => true === ( $values[ self::ALERTS_ENABLED ] ?? false ),
 		);
+	}
+
+	/**
+	 * Whether a string is a valid stored company name: '' or one line of at
+	 * most COMPANY_NAME_MAX_LENGTH characters without control characters,
+	 * trimmed.
+	 *
+	 * @param string $name Company name.
+	 */
+	public static function valid_company_name( string $name ): bool {
+		return 1 !== preg_match( '/^\s|\s$/u', $name )
+			&& mb_strlen( $name ) <= self::COMPANY_NAME_MAX_LENGTH
+			&& 1 !== preg_match( '/[\x00-\x1F\x7F]/u', $name );
+	}
+
+	/**
+	 * Whether a string is a valid stored contact e-mail: '' or an e-mail
+	 * address.
+	 *
+	 * @param string $email E-mail.
+	 */
+	public static function valid_company_email( string $email ): bool {
+		return '' === $email || ( strlen( $email ) <= 254 && false !== filter_var( $email, FILTER_VALIDATE_EMAIL ) );
+	}
+
+	/**
+	 * The business' legal name, '' when not registered.
+	 */
+	public static function company_name(): string {
+		return self::all()[ self::COMPANY_NAME ];
+	}
+
+	/**
+	 * The business' contact e-mail for privacy questions, '' when not
+	 * registered.
+	 */
+	public static function company_email(): string {
+		return self::all()[ self::COMPANY_EMAIL ];
 	}
 
 	/**
@@ -204,7 +266,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, alerts_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );

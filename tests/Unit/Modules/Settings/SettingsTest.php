@@ -131,10 +131,44 @@ final class SettingsTest extends TestCase {
 				Settings::PAYOUT_HOLDING_DAYS       => 14,
 				Settings::PAYOUT_GIFT_CARD_PROVIDER => '',
 				Settings::COMPANY_CVR               => '',
+				Settings::COMPANY_NAME              => '',
+				Settings::COMPANY_EMAIL             => '',
 				Settings::ALERTS_ENABLED            => false,
 			),
 			Settings::all()
 		);
+	}
+
+	/**
+	 * The company name and contact e-mail (ADR-071) are not registered by
+	 * default; only one trimmed line and a valid address are kept.
+	 */
+	public function test_company_name_and_email_keep_only_valid_values(): void {
+		self::assertSame( array( '', '' ), array( Settings::company_name(), Settings::company_email() ) );
+
+		foreach ( array(
+			'Merch ApS'            => 'Merch ApS',
+			' Merch ApS'           => '',
+			"Merch\nApS"           => '',
+			str_repeat( 'Æ', 200 ) => str_repeat( 'Æ', 200 ),
+			str_repeat( 'Æ', 201 ) => '',
+		) as $stored => $expected ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::COMPANY_NAME => (string) $stored );
+			self::assertSame( $expected, Settings::company_name(), (string) $stored );
+		}
+
+		foreach ( array(
+			'privacy@example.com' => 'privacy@example.com',
+			'not an e-mail'       => '',
+			'a@b'                 => '',
+			''                    => '',
+		) as $stored => $expected ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::COMPANY_EMAIL => (string) $stored );
+			self::assertSame( $expected, Settings::company_email(), (string) $stored );
+		}
+
+		$this->options->options[ Settings::OPTION ] = array( Settings::COMPANY_NAME => 7 );
+		self::assertSame( '', Settings::company_name(), 'Only a string.' );
 	}
 
 	/**

@@ -288,6 +288,26 @@ final class YouTubeAccount {
 	}
 
 	/**
+	 * The version of the YouTube chatbot's privacy policy and terms the
+	 * administrator accepted for the bot (ADR-071; 0 for none).
+	 */
+	public function terms_version(): int {
+		return $this->stored()['terms_version'];
+	}
+
+	/**
+	 * Notes that the administrator accepted a version of the privacy policy
+	 * and terms for the bot (YouTubeTerms audits it).
+	 *
+	 * @param int $version Version.
+	 * @throws ChatbotException When not authorized.
+	 */
+	public function note_terms( int $version ): void {
+		$this->authorize();
+		$this->store( array_merge( $this->stored(), array( 'terms_version' => $version ) ) );
+	}
+
+	/**
 	 * When the quota resets, or 0 when it is not used up.
 	 */
 	public function quota_until(): int {
@@ -383,7 +403,7 @@ final class YouTubeAccount {
 	/**
 	 * The stored values, normalized.
 	 *
-	 * @return array{client_id: string, secret: string, bot_id: string, bot_name: string, bot_connected_at: int, bot_invalid: int, bot_access: string, bot_refresh: string, bot_expires: int, quota_until: int}
+	 * @return array{client_id: string, secret: string, bot_id: string, bot_name: string, bot_connected_at: int, bot_invalid: int, bot_access: string, bot_refresh: string, bot_expires: int, quota_until: int, terms_version: int}
 	 */
 	private function stored(): array {
 		$raw    = get_option( self::OPTION, array() );
@@ -415,7 +435,7 @@ final class YouTubeAccount {
 	/**
 	 * Nothing set up.
 	 *
-	 * @return array{client_id: string, secret: string, bot_id: string, bot_name: string, bot_connected_at: int, bot_invalid: int, bot_access: string, bot_refresh: string, bot_expires: int, quota_until: int}
+	 * @return array{client_id: string, secret: string, bot_id: string, bot_name: string, bot_connected_at: int, bot_invalid: int, bot_access: string, bot_refresh: string, bot_expires: int, quota_until: int, terms_version: int}
 	 */
 	private static function empty(): array {
 		return array_merge(
@@ -424,7 +444,10 @@ final class YouTubeAccount {
 				'secret'    => '',
 			),
 			self::no_bot(),
-			array( 'quota_until' => 0 )
+			array(
+				'quota_until'   => 0,
+				'terms_version' => 0,
+			)
 		);
 	}
 

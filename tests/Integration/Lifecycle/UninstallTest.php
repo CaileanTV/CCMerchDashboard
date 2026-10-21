@@ -25,6 +25,8 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\CreatorService;
@@ -125,6 +127,7 @@ final class UninstallTest extends IntegrationTestCase {
 		update_option( ChatbotFormat::OPTION, array( 'mode' => 'order' ), false );
 		update_option( KickAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( YouTubeAccount::OPTION, array( 'client_id' => 'abc' ), false );
+		update_option( YouTubeLegal::OPTION, array( 'version' => 1 ), false );
 		$audit_before = $this->rows( Tables::AUDIT_LOG );
 		$max_creator  = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MAX(id) FROM %i', $this->table( Tables::CREATORS ) ) );
 
@@ -151,7 +154,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
 		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
-		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION ) as $option ) {
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
 		}
 
@@ -163,6 +166,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( '', get_user_meta( $this->creator_user, 'merchboard_dashboard_theme', true ), 'Theme preference removed (ADR-044).' );
 		self::assertSame( '', get_user_meta( $this->multi_role_user, 'merchboard_dashboard_theme', true ) );
 		self::assertSame( '', get_user_meta( $this->creator_user, 'merchboard_alerts_anonymize', true ), 'Alert history preference removed.' );
+		self::assertSame( '', get_user_meta( $this->creator_user, YouTubeTerms::META, true ), 'YouTube terms acceptance removed.' );
 
 		// Everything else kept.
 		self::assertSame( 'kept', get_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', true ), 'Exact key only, no prefix match.' );
@@ -684,6 +688,14 @@ final class UninstallTest extends IntegrationTestCase {
 		update_user_meta( $this->plain_user, 'merchboard_dashboard_theme_backup', 'kept' );
 		// "Anonymize usernames" in the alert history (phase 25, step 7).
 		update_user_meta( $this->creator_user, 'merchboard_alerts_anonymize', '1' );
+		update_user_meta(
+			$this->creator_user,
+			YouTubeTerms::META,
+			array(
+				'version' => 1,
+				'at'      => 1,
+			)
+		);
 
 		update_option( 'merchboard_test_unrelated', 'kept' );
 		$this->post_id = (int) wp_insert_post(

@@ -52,6 +52,15 @@ use MerchBoard\Modules\Alerts\Chatbot\YouTubeOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubePlatform;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchException;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
+use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
+use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
+use MerchBoard\Modules\Alerts\AlertSettings;
+use MerchBoard\Modules\Alerts\AlertSettingsException;
+use MerchBoard\Modules\Alerts\Legal\CompanyDetails;
+use MerchBoard\Modules\Alerts\Legal\LegalPage;
+use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
+use MerchBoard\Modules\Alerts\Legal\YouTubeLegalDefaults;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
 use MerchBoard\Modules\Alerts\Rest\ChatbotChatController;
 use MerchBoard\Modules\Alerts\Rest\KickController;
@@ -59,6 +68,7 @@ use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
 use MerchBoard\Modules\Alerts\Rest\TwitchController;
 use MerchBoard\Modules\Alerts\Rest\YouTubeController;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
@@ -93,6 +103,11 @@ use WP_REST_Response;
 #[CoversClass( YouTubePlatform::class )]
 #[CoversClass( YouTubeOAuth::class )]
 #[CoversClass( YouTubeController::class )]
+#[CoversClass( YouTubeLegal::class )]
+#[CoversClass( YouTubeTerms::class )]
+#[CoversClass( LegalPage::class )]
+#[CoversClass( CompanyDetails::class )]
+#[CoversClass( CompanyDetailsSection::class )]
 #[CoversClass( TwitchOAuth::class )]
 #[CoversClass( ChatSender::class )]
 #[CoversClass( ChatSubscriptions::class )]
@@ -202,6 +217,10 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	private YouTubeOAuth $youtube_oauth;
 
+	private YouTubeLegal $legal;
+
+	private YouTubeTerms $youtube_terms;
+
 	/**
 	 * Registers the routes on `rest_api_init` (null when not registered).
 	 *
@@ -252,14 +271,16 @@ final class ChatbotTest extends IntegrationTestCase {
 				$youtube_api->revoke( $token );
 			}
 		);
-		$this->youtube_platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $logger );
+		$this->legal            = new YouTubeLegal( $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
+		$this->youtube_terms    = new YouTubeTerms( $this->legal, $this->youtube, new CreatorRepository( $this->wpdb ), $audit, $transaction );
+		$this->youtube_platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->youtube_terms, $logger );
 		$this->platforms        = new ChatPlatforms( new TwitchPlatform( $this->account, $this->api ), new KickPlatform( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels ), $this->youtube_platform );
 		$this->subscriptions    = new ChatSubscriptions( $this->platforms, $this->channels, $this->chat );
 		$this->sender           = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
 		$this->oauth            = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
 		$this->twitch           = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
 		$this->kick_oauth       = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
-		$this->youtube_oauth    = new YouTubeOAuth( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$this->youtube_oauth    = new YouTubeOAuth( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->youtube_terms );
 	}
 
 	protected function tearDown(): void {
@@ -272,6 +293,8 @@ final class ChatbotTest extends IntegrationTestCase {
 		delete_option( TwitchAccount::OPTION );
 		delete_option( KickAccount::OPTION );
 		delete_option( YouTubeAccount::OPTION );
+		delete_option( YouTubeLegal::OPTION );
+		delete_metadata( 'user', 0, YouTubeTerms::META, '', true );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s', $this->wpdb->options, '%merchboard_youtube_%', '%merchboard_chat_flushed_%' );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( 'merchboard_kick_public_key_refetch' );
@@ -812,7 +835,7 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	public function test_the_administrator_sends_as_the_bot_and_sees_the_channels(): void {
 		$nova    = $this->connected_creator( 'nova' );
-		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ), $this->legal, $this->youtube_terms );
 		$this->as_admin();
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
 
@@ -845,7 +868,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		wp_mkdir_p( $plugin . 'build' );
 		file_put_contents( $plugin . 'build/alerts-admin.js', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
 		file_put_contents( $plugin . 'build/alerts-admin.asset.php', "<?php return array( 'dependencies' => array(), 'version' => 'test' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->youtube, $this->youtube_platform, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/' );
+		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->youtube, $this->youtube_platform, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), $plugin, 'https://shop.example.com/wp-content/plugins/merchboard/', $this->youtube_terms );
 		ob_start();
 		$tab->render( 0 );
 		$page = (string) ob_get_clean();
@@ -1194,6 +1217,15 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( self::YT_SECRET, (string) wp_json_encode( get_option( YouTubeAccount::OPTION ) ) );
 		self::assertSame( array(), $this->requests, 'Google cannot check an app without a login.' );
 
+		// Google requires the privacy policy and terms (ADR-071).
+		try {
+			$this->youtube_oauth->start_bot();
+			self::fail( 'Expected ChatbotException.' );
+		} catch ( ChatbotException $e ) {
+			self::assertSame( ChatbotException::TERMS_REQUIRED, $e->reason() );
+		}
+
+		$this->publish_legal();
 		$url   = $this->youtube_oauth->start_bot();
 		$query = $this->query( $url );
 		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', $url );
@@ -1425,7 +1457,7 @@ final class ChatbotTest extends IntegrationTestCase {
 			)
 		);
 		$logger   = new RecordingLogger();
-		$platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $logger );
+		$platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->youtube_terms, $logger );
 
 		self::assertSame(
 			array(
@@ -1448,7 +1480,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( 'yt-bot-access', (string) wp_json_encode( $logger->entries ), 'Never a token.' );
 
 		$this->as_admin();
-		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ), $this->legal, $this->youtube_terms );
 		$send    = fn(): string => $actions->process(
 			array(
 				'action'   => ChatbotAdminActions::SEND_ACTION,
@@ -1518,7 +1550,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( 'sent', $test->get_data()['result'] );
 		self::assertSame( array( array( $nova, 700, 'youtube' ) ), array_column( $this->queue->pending, 'args' ) );
 
-		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/connect' );
+		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/connect', array( 'accept_terms' => true ) );
 		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', (string) $connect->get_data()['url'] );
 
 		$removed = $this->call( 'DELETE', '/merchboard/v1/me/alerts/chatbot/youtube/channel' );
@@ -1532,7 +1564,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
 		$this->youtube_creator( $nova );
 		$this->as_admin();
-		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->youtube, $this->youtube_platform, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), trailingslashit( get_temp_dir() ) . 'merchboard-no-build/', 'https://shop.example.com/wp-content/plugins/merchboard/' );
+		$tab = new ChatbotAdminTab( $this->account, $this->kick, $this->youtube, $this->youtube_platform, $this->format, $this->channels, $this->log, new CreatorRepository( $this->wpdb ), trailingslashit( get_temp_dir() ) . 'merchboard-no-build/', 'https://shop.example.com/wp-content/plugins/merchboard/', $this->youtube_terms );
 
 		ob_start();
 		$tab->render( 0 );
@@ -1551,6 +1583,243 @@ final class ChatbotTest extends IntegrationTestCase {
 		ob_start();
 		$tab->render( $nova, ChatPlatform::YouTube );
 		self::assertStringContainsString( esc_url( 'https://www.youtube.com/live_chat?v=video-1&embed_domain=' . wp_parse_url( home_url(), PHP_URL_HOST ) ), (string) ob_get_clean() );
+	}
+
+	public function test_the_youtube_terms_are_a_draft_until_published_and_then_public(): void {
+		$this->as_admin();
+		$page = new LegalPage( new DashboardRoute(), $this->legal );
+
+		self::assertFalse( $this->legal->published() );
+		self::assertSame( YouTubeLegal::PLACEHOLDERS, $this->legal->placeholders() );
+		self::assertNull( $page->render( 'privacy', 'en' ), 'A draft is not public (404).' );
+
+		$drafts = array();
+
+		foreach ( YouTubeLegal::DOCUMENTS as $document ) {
+			foreach ( YouTubeLegal::LANGUAGES as $language ) {
+				$drafts[ YouTubeLegal::key( $document, $language ) ] = $this->legal->text( $document, $language );
+			}
+		}
+
+		self::assertSame( 'legal_draft', $this->legal->save( $drafts, false ) );
+		self::assertSame( 0, $this->legal->version() );
+
+		// Only these paths are public; every other dashboard path still requires a login.
+		self::assertSame( array( 'privacy', 'en' ), LegalPage::page( 'legal/youtube-privacy' ) );
+		self::assertSame( array( 'terms', 'da' ), LegalPage::page( 'legal/youtube-terms/da' ) );
+		self::assertSame( array( 'home', 'en' ), LegalPage::page( 'legal/youtube' ) );
+
+		foreach ( array( '', 'legal', 'legal/other', 'legal/youtube-privacy/de', 'alerts/chatbot' ) as $path ) {
+			self::assertNull( LegalPage::page( $path ), $path );
+		}
+
+		$this->publish_legal();
+		self::assertSame( array( 1, array() ), array( $this->legal->version(), $this->legal->placeholders() ) );
+
+		$privacy = (string) $page->render( 'privacy', 'da' );
+		self::assertStringContainsString( '<html lang="da">', $privacy );
+		self::assertStringContainsString( 'Merch ApS', $privacy );
+		self::assertStringContainsString( 'Google API Services User Data Policy', $privacy );
+		self::assertStringContainsString( 'https://myaccount.google.com/permissions', $privacy );
+		self::assertStringContainsString( esc_url( home_url( '/creator-dashboard/legal/youtube-privacy/' ) ), $privacy, 'The other language.' );
+		self::assertStringNotContainsString( '<script', $privacy );
+		$home = (string) $page->render( 'home', 'en' );
+		self::assertStringContainsString( esc_url( home_url( '/creator-dashboard/legal/youtube-terms/' ) ), $home );
+		self::assertStringContainsString( 'https://www.youtube.com/t/terms', $home );
+		self::assertStringContainsString( "default-src 'none'", LegalPage::security_headers()['Content-Security-Policy'] );
+		self::assertStringNotContainsString( 'script-src', LegalPage::security_headers()['Content-Security-Policy'] );
+
+		// A correction keeps the version; scripts are removed.
+		$texts               = $drafts;
+		$texts['privacy_en'] = '<h2>Who we are</h2><p>Merch ApS, privacy@example.com</p><script>alert(1)</script>';
+		$texts               = array_map( static fn( string $text ): string => str_replace( YouTubeLegal::PLACEHOLDERS, array( 'Merch ApS', '12345678', 'Merchvej 1', 'privacy@example.com' ), $text ), $texts );
+		self::assertSame( 'legal_saved', $this->legal->save( $texts, false ) );
+		self::assertSame( 1, $this->legal->version() );
+		self::assertStringNotContainsString( '<script', $this->legal->text( 'privacy', 'en' ) );
+		self::assertStringNotContainsString( 'script', (string) wp_json_encode( get_option( YouTubeLegal::OPTION ) ) );
+		self::assertSame( 'no_changes', $this->legal->save( $texts, false ) );
+
+		// Published texts never get placeholders back; every text needs content.
+		self::assertSame( 'legal_placeholders', $this->legal->save( array( 'terms_da' => '[EMAIL]' ) + $texts, true ) );
+		self::assertSame( 'legal_empty', $this->legal->save( array( 'terms_da' => '<p> </p>' ) + $texts, true ) );
+		self::assertSame( 'legal_renewed', $this->legal->save( $texts, true ) );
+		self::assertSame( 2, $this->legal->version() );
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'version' => 2, 'renewed' => true ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringNotContainsString( 'Merchvej', (string) wp_json_encode( $audit ), 'The text is not audited.' );
+
+		wp_set_current_user( $this->create_user( 'not_admin' ) );
+
+		try {
+			$this->legal->save( $texts, true );
+			self::fail( 'Expected ChatbotException.' );
+		} catch ( ChatbotException $e ) {
+			self::assertSame( ChatbotException::NOT_AUTHORIZED, $e->reason() );
+		}
+	}
+
+	public function test_the_placeholders_are_filled_from_the_company_details(): void {
+		$this->as_admin();
+		$drafts = array();
+
+		foreach ( YouTubeLegal::DOCUMENTS as $document ) {
+			foreach ( YouTubeLegal::LANGUAGES as $language ) {
+				$drafts[ YouTubeLegal::key( $document, $language ) ] = YouTubeLegalDefaults::text( $document, $language );
+			}
+		}
+
+		self::assertSame( 'legal_draft', $this->legal->save( $drafts, false ), 'No company details yet.' );
+
+		$settings = new AlertSettings( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+
+		try {
+			$settings->set_company_details( 'Merch ApS', 'not an e-mail' );
+			self::fail( 'Expected AlertSettingsException.' );
+		} catch ( AlertSettingsException $e ) {
+			self::assertSame( AlertSettingsException::INVALID_COMPANY_EMAIL, $e->reason() );
+		}
+
+		self::assertTrue( $settings->set_company_details( "  Merch\n ApS ", 'privacy@example.com' ) );
+		self::assertSame( array( 'Merch ApS', 'privacy@example.com' ), array( Settings::company_name(), Settings::company_email() ) );
+		self::assertFalse( $settings->set_company_details( 'Merch ApS', 'privacy@example.com' ), 'Unchanged.' );
+		self::assertSame( array( '[CVR]', '[ADDRESS]' ), $this->legal->placeholders() );
+
+		Settings::save( array( Settings::COMPANY_CVR => '12345678' ) + Settings::all() );
+		$store = array(
+			'woocommerce_store_address'   => 'Merchvej 1',
+			'woocommerce_store_postcode'  => '1000',
+			'woocommerce_store_city'      => 'København',
+			'woocommerce_default_country' => 'DK',
+		);
+
+		foreach ( $store as $option => $value ) {
+			update_option( $option, $value );
+		}
+
+		self::assertStringStartsWith( 'Merchvej 1, 1000 København, ', CompanyDetails::address() );
+		self::assertSame( array(), $this->legal->placeholders() );
+		self::assertSame( 'legal_published', $this->legal->save( $drafts, false ) );
+
+		$page    = new LegalPage( new DashboardRoute(), $this->legal );
+		$privacy = (string) $page->render( 'privacy', 'en' );
+		self::assertStringContainsString( 'Merch ApS (CVR 12345678, Merchvej 1, 1000 København', $privacy );
+		self::assertStringContainsString( 'privacy@example.com', $privacy );
+		self::assertStringNotContainsString( '[COMPANY]', $privacy );
+		self::assertStringContainsString( '[COMPANY]', $this->legal->text( 'privacy', 'en' ), 'The texts keep the placeholders.' );
+
+		// A changed detail is shown at once, without a new version.
+		self::assertTrue( $settings->set_company_details( 'Merch & Co ApS', 'privacy@example.com' ) );
+		self::assertStringContainsString( 'Merch &amp; Co ApS', (string) $page->render( 'terms', 'da' ) );
+		self::assertSame( 1, $this->legal->version() );
+		$audit = array_values( array_filter( $this->rows( Tables::AUDIT_LOG ), static fn( array $row ): bool => 'settings_updated' === $row['action'] ) );
+		self::assertSame( array( 'company_name', 'company_email', 'company_name' ), array_map( static fn( array $row ): mixed => json_decode( (string) $row['context'], true )['setting'] ?? null, $audit ) );
+
+		// The settings screen shows every detail and saves through its action.
+		ob_start();
+		( new CompanyDetailsSection() )->render();
+		$section = (string) ob_get_clean();
+		self::assertStringContainsString( 'value="Merch &amp; Co ApS"', $section );
+		self::assertStringContainsString( '12345678', $section );
+		self::assertStringContainsString( 'Merchvej 1', $section );
+		$actions = new AlertsSettingsActions( $settings, $this->service( Logger::class ) );
+		$fields  = array(
+			'_wpnonce'      => wp_create_nonce( AlertsSettingsActions::COMPANY_ACTION ),
+			'company_name'  => 'Merch ApS',
+			'company_email' => 'bad',
+		);
+		self::assertStringContainsString( 'merchboard_company_result=invalid_company_email', $actions->save_company( $fields ) );
+		self::assertStringContainsString( 'merchboard_company_result=saved', $actions->save_company( array( 'company_email' => 'privacy@example.com' ) + $fields ) );
+		self::assertSame( 'Merch ApS', Settings::company_name() );
+
+		foreach ( array_keys( $store ) as $option ) {
+			delete_option( $option );
+		}
+	}
+
+	public function test_youtube_needs_the_terms_accepted_by_the_bot_and_the_creator(): void {
+		$this->routes();
+		$nova = $this->creator( 'nova' );
+
+		$youtube = $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' )->get_data()['platforms'][2];
+		self::assertSame( array( false, null ), array( $youtube['available'], $youtube['terms'] ), 'Not before the texts are published.' );
+
+		$this->set_up_youtube();
+		$youtube = $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' )->get_data()['platforms'][2];
+		self::assertTrue( $youtube['available'] );
+		self::assertSame(
+			array(
+				'privacy_url' => home_url( '/creator-dashboard/legal/youtube-privacy/' ),
+				'terms_url'   => home_url( '/creator-dashboard/legal/youtube-terms/' ),
+				'version'     => 1,
+				'accepted'    => false,
+			),
+			$youtube['terms']
+		);
+		self::assertNull( $this->call( 'GET', '/merchboard/v1/me/alerts/chatbot' )->get_data()['platforms'][0]['terms'], 'Only YouTube.' );
+
+		// The creator must tick the box before Google's login.
+		$refused = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/connect' );
+		self::assertSame( array( 400, 'merchboard_terms_required' ), array( $refused->get_status(), $refused->get_data()['code'] ?? null ) );
+		self::assertFalse( $this->youtube_terms->creator_accepted( $nova ) );
+
+		$connect = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/connect', array( 'accept_terms' => true ) );
+		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', (string) $connect->get_data()['url'] );
+		self::assertTrue( $this->youtube_terms->creator_accepted( $nova ) );
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'alert_youtube_terms_accepted', (string) $nova ), array( $audit[ count( $audit ) - 1 ]['action'] ?? null, (string) ( $audit[ count( $audit ) - 1 ]['creator_id'] ?? '' ) ) );
+		self::assertSame( array( 'version' => 1, 'role' => 'creator' ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		// The channel is connected; a new version is published.
+		$this->youtube_creator( $nova );
+		wp_set_current_user( $this->user_of( $nova ) );
+		$this->as_admin();
+		$texts = array();
+
+		foreach ( YouTubeLegal::DOCUMENTS as $document ) {
+			foreach ( YouTubeLegal::LANGUAGES as $language ) {
+				$texts[ YouTubeLegal::key( $document, $language ) ] = $this->legal->text( $document, $language );
+			}
+		}
+
+		self::assertSame( 'legal_renewed', $this->legal->save( $texts, true ) );
+		self::assertFalse( $this->youtube_platform->ready(), 'The bot waits for the administrator.' );
+		self::assertFalse( $this->youtube_terms->creator_accepted( $nova ) );
+
+		$this->alert( $nova, 800, 1, 'Hoodie' );
+		$this->sender->order_paid( 800 );
+		self::assertSame( array(), $this->queue->pending, 'Nothing is queued while the bot has not accepted.' );
+
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ), $this->legal, $this->youtube_terms );
+		$admin   = fn( string $action, array $fields = array() ): string => $actions->process( $fields + array( 'action' => $action, '_wpnonce' => wp_create_nonce( ChatbotAdminActions::nonce_action( $action ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=youtube_bot_terms_required', $admin( ChatbotAdminActions::YOUTUBE_TERMS_ACTION ) );
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=youtube_terms_accepted', $admin( ChatbotAdminActions::YOUTUBE_TERMS_ACTION, array( 'accept_terms' => '1' ) ) );
+		self::assertTrue( $this->youtube_platform->ready() );
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=youtube_bot_terms_required', $admin( ChatbotAdminActions::YOUTUBE_BOT_CONNECT_ACTION ) );
+		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', $admin( ChatbotAdminActions::YOUTUBE_BOT_CONNECT_ACTION, array( 'accept_terms' => '1' ) ) );
+
+		// The creator has not accepted version 2: the message is skipped without asking YouTube.
+		$this->sender->order_paid( 800 );
+		$this->run_jobs();
+		self::assertSame( array( 'skipped', 'terms_not_accepted' ), array( $this->log->latest( $nova, ChatPlatform::YouTube )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::YouTube )['reason'] ?? null ) );
+		self::assertSame( array(), $this->requests_to( self::YT_BROADCASTS ) );
+		self::assertSame( array(), $this->requests_to( self::YT_MESSAGES ) );
+
+		// The creator accepts the new version.
+		wp_set_current_user( $this->user_of( $nova ) );
+		self::assertSame( 400, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/terms' )->get_status() );
+		self::assertSame( 400, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/terms', array( 'accept' => true ) )->get_status() );
+		$accepted = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/terms', array( 'accept' => true ) );
+		self::assertSame( array( 200, 2, true ), array( $accepted->get_status(), $accepted->get_data()['platforms'][2]['terms']['version'] ?? null, $accepted->get_data()['platforms'][2]['terms']['accepted'] ?? null ) );
+		self::assertTrue( $this->youtube_terms->creator_accepted( $nova ) );
+
+		// The administrator saves a correction through the tab.
+		$this->as_admin();
+		$texts['terms_en'] .= '<p>Corrected.</p><script>alert(1)</script>';
+		$url                = $admin( ChatbotAdminActions::LEGAL_ACTION, $texts );
+		self::assertStringContainsString( 'tab=youtube-legal', $url );
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=legal_saved', $url );
+		self::assertSame( 2, $this->legal->version() );
+		self::assertStringNotContainsString( '<script', $this->legal->text( 'terms', 'en' ) );
 	}
 
 	/**
@@ -1578,9 +1847,34 @@ final class ChatbotTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Sets the Google app and the bot (merchbot) up, as an administrator.
+	 * Publishes the privacy policy and terms (the drafts with the
+	 * placeholders filled in), as an administrator.
+	 */
+	private function publish_legal(): void {
+		if ( $this->legal->published() ) {
+			return;
+		}
+
+		$current = get_current_user_id();
+		$this->as_admin();
+		$texts = array();
+
+		foreach ( YouTubeLegal::DOCUMENTS as $document ) {
+			foreach ( YouTubeLegal::LANGUAGES as $language ) {
+				$texts[ YouTubeLegal::key( $document, $language ) ] = str_replace( YouTubeLegal::PLACEHOLDERS, array( 'Merch ApS', '12345678', 'Merchvej 1, 1000 København', 'privacy@example.com' ), YouTubeLegalDefaults::text( $document, $language ) );
+			}
+		}
+
+		self::assertSame( 'legal_published', $this->legal->save( $texts, false ) );
+		wp_set_current_user( $current );
+	}
+
+	/**
+	 * Sets the Google app and the bot (merchbot) up, as an administrator who
+	 * accepted the privacy policy and terms for the bot.
 	 */
 	private function set_up_youtube(): void {
+		$this->publish_legal();
 		$current = get_current_user_id();
 		$this->as_admin();
 		$this->youtube->save_app( self::YT_CLIENT, self::YT_SECRET );
@@ -1595,16 +1889,28 @@ final class ChatbotTest extends IntegrationTestCase {
 				'expires_in' => 3599,
 			)
 		);
+		// After the app: a new app starts without an accepted version.
+		$this->youtube_terms->accept_bot( 1 );
 		wp_set_current_user( $current );
 	}
 
 	/**
-	 * Adds the bot to a creator's YouTube channel with tokens.
+	 * Adds the bot to a creator's YouTube channel with tokens; the creator
+	 * (a user is linked when there is none) accepted the privacy policy and
+	 * terms.
 	 *
 	 * @param int $creator_id Creator.
 	 */
 	private function youtube_creator( int $creator_id ): void {
 		$this->set_up_youtube();
+		$user = $this->user_of( $creator_id );
+
+		if ( 0 === $user ) {
+			$user = $this->create_user( 'creator' . $creator_id );
+			$this->execute( 'UPDATE %i SET user_id = %d WHERE id = %d', $this->table( Tables::CREATORS ), $user, $creator_id );
+		}
+
+		$this->youtube_terms->accept_creator( $creator_id, $user );
 		$this->channels->connect( $creator_id, ChatPlatform::YouTube, self::YT_CREATOR, 'Nova Live' );
 		$this->channels->set_subscription( $creator_id, ChatPlatform::YouTube, '', YouTubePlatform::EMBEDDED );
 		$this->youtube_tokens->store(
@@ -1996,7 +2302,7 @@ final class ChatbotTest extends IntegrationTestCase {
 	 */
 	private function routes(): void {
 		$logger         = $this->service( Logger::class );
-		$creator        = new CreatorChatbot( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$creator        = new CreatorChatbot( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->youtube_terms );
 		$me             = new MeChatbotController( $this->service( CreatorContext::class ), $creator, $this->oauth, $this->kick_oauth, $this->youtube_oauth, $logger );
 		$chat           = new ChatbotChatController( $this->channels, $this->chat, $logger );
 		$kick           = new KickController( $this->kick_oauth, new KickWebhookVerifier( $this->kick_api ), $this->channels, $this->chat, $logger );

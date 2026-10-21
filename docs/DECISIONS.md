@@ -3894,3 +3894,53 @@ En ny migration (schema-version 22) udvider `broadcaster_id`/`broadcaster_login`
 
 ## Related
 ADR-016, ADR-056, ADR-065, ADR-066, ADR-069.
+
+---
+
+# ADR-071: Offentlig privatlivspolitik og vilkår for YouTube-chatbotten med godkendelse
+
+## Date
+2026-10-21
+
+## Status
+Accepteret af projektejeren 2026-10-21 (plan for trin 25.8.5 godkendt): pladsholdere for afsenderen indtil videre, tekster redigerbare i admin med et komplet udkast som standard, engelsk og dansk, og både creators og administratoren godkender. **Implementeret 2026-10-21 (trin 25.8.5; testet automatisk, ikke runtime-verificeret).** **Statusnote 2026-10-21 (projektejerens ønske):** pladsholderne udfyldes fra indstillingerne, når siderne vises, i stedet for at blive erstattet i teksterne: `[COMPANY]` og `[EMAIL]` fra de nye felter virksomhedsnavn og kontakt-e-mail (Settings → "Virksomhedsoplysninger", `merchboard_settings.company_name`/`company_email`, auditeret som `settings_updated`), `[CVR]` fra afregningsbilagenes CVR-nummer (ADR-062 K09) og `[ADDRESS]` fra WooCommerces butiksadresse (som afregningsbilagene). Teksterne er offentliggjorte, når alle deres pladsholdere har en værdi; en ændret oplysning kræver ingen ny version.
+
+## Context
+Google kræver en privatlivspolitik og terms of service på offentlige URL'er (og en app-forside), før YouTube-appen kan sættes i produktion ("In production") og verificeres. I testtilstand udløber logins efter 7 dage (ADR-070 pkt. 7). Projektejeren vil have tekster specifikt for YouTube-chatbotten, offentligt tilgængelige under dashboardets adresse, og at brugerne aktivt godkender dem, før de logger ind hos Google. Dashboardet kræver i dag login på alle stier (ShellController, ADR-026).
+
+## Decision
+1. **Offentlige sider under dashboardets slug** (fx `/creator-dashboard/…`), som en præcis whitelist og en undtagelse fra login-kravet: `legal/youtube` (app-forside), `legal/youtube-privacy`, `legal/youtube-terms` (engelsk; URL'erne til Google) og de samme med `/da` (dansk). `LegalPage` svarer på `template_redirect` med prioritet −1, før dashboardet (prioritet 0); alle andre stier kræver login som før, og `DashboardModule`/`ShellController` ændres ikke. Siderne er selvstændige HTML-sider uden tema og uden scripts (CSP `default-src 'none'; style-src 'unsafe-inline'; …; frame-ancestors 'none'`), med sprogskift og links til YouTubes servicevilkår og Googles privatlivspolitik. De indekseres (ingen `noindex`), fordi Google skal kunne læse dem.
+2. **Tekster redigerbare i admin** (Merch Dashboard → Alerts → "YouTube-vilkår"): fire tekster (privatlivspolitik og vilkår på engelsk og dansk) i option `merchboard_alert_youtube_legal` uden autoload, begrænset til `wp_kses_post()` ved gem og visning. Standard er et komplet udkast (`YouTubeLegalDefaults`), der beskriver, hvad koden gør (scopes, data, opbevaring, tilbagekaldelse, Google API Services User Data Policy med Limited Use), med pladsholderne `[COMPANY]`, `[CVR]`, `[ADDRESS]`, `[EMAIL]`, som udfyldes fra virksomhedsoplysningerne i indstillingerne (statusnoten ovenfor). Udkastet er ikke juridisk rådgivning.
+3. **Offentliggørelse og versioner:** indtil teksterne gemmes uden pladsholdere, er de et udkast (version 0): siderne svarer 404, og YouTube kan ikke bruges (bot-login og kanal-login afvises). Første offentliggørelse er version 1. Et senere gem hæver kun versionen, når administratoren krydser af, at alle skal godkende igen; ellers er det en rettelse. Offentliggjorte tekster kan ikke få pladsholdere igen. Ændringer kræver `merchboard_manage_alerts` og auditeres (`alert_youtube_legal_changed`, kontekst: version og om alle skal godkende igen; aldrig teksten).
+4. **Godkendelse:**
+   - **Creator:** afkrydsning med links før "Tilføj botten"; `POST /me/alerts/chatbot/youtube/connect` kræver `{ "accept_terms": true }` (ellers 400 `merchboard_terms_required`), og godkendelsen gemmes, når login hos Google kan starte. En ny version godkendes med `POST /me/alerts/chatbot/youtube/terms`.
+   - **Administrator:** påkrævet afkrydsning før "Log ind med bot-kontoen" og "Godkend for botten" ved en ny version.
+   - **Lagring:** user meta `merchboard_youtube_terms_accepted` = `{version, at}` på den bruger, der godkender, og audit `alert_youtube_terms_accepted` (kontekst: version og rolle; creatoren for creators). Bottens godkendte version gemmes desuden i `merchboard_alert_youtube`.
+5. **Ny version:** botten er ikke klar (sender intet, og creators kan ikke forbinde), før administratoren har godkendt den gældende version. YouTube-beskeder til en creator, der ikke har godkendt den, springes over (`skipped`, `terms_not_accepted`) uden kald til YouTube. Ingen logges ud.
+6. **Rækkevidde:** kun YouTube-chatbotten. Twitch og Kick kræver ikke godkendelse.
+
+## Alternatives considered
+- **Tekster i en WordPress-side (temaet):** afhænger af temaet og kan slettes eller ændres uden for pluginnet; versioner og godkendelse ville ikke hænge sammen. Fravalgt.
+- **Fast tekst i pluginnet:** kræver en ny version af pluginnet for hver rettelse og kan ikke have butikkens oplysninger. Fravalgt af projektejeren.
+- **Godkendelse kun i browseren (afkrydsning uden lagring):** kan ikke dokumenteres og ikke kræves igen ved en ny version. Fravalgt.
+- **Login-fri sider via en ny rewrite-regel:** afhænger af rækkefølgen af reglerne; en præcis whitelist før dashboardets handler er enklere og lader login-kravet være uændret. Fravalgt.
+
+## Reason
+Google kræver siderne for at YouTube-appen kan bruges varigt; projektejeren vil have, at brugerne aktivt godkender dem, og at de kan rettes uden en ny version af pluginnet.
+
+## Security
+- Kun de seks whitelistede stier er offentlige; alle andre dashboard-stier kræver login som før. Siderne har ingen scripts, ingen formularer og ingen cookies.
+- Teksterne begrænses til `wp_kses_post()` (ingen scripts, ingen event-attributter) ved gem og igen ved visning.
+- Godkendelsen er personoplysninger om brugeren (version og tidspunkt) og slettes ved opt-in-afinstallation; audit-loggen bevarer den som dokumentation.
+- Teksternes juridiske indhold er projektejerens ansvar; udkastet er ikke juridisk vurderet.
+
+## Migration/data implications
+Ingen migration. Ny option `merchboard_alert_youtube_legal` (uden autoload) og user meta `merchboard_youtube_terms_accepted`; begge slettes ved opt-in-afinstallation. Feltet `terms_version` i `merchboard_alert_youtube`.
+
+## Consequences
+- YouTube-chatbotten kan først bruges, når teksterne er offentliggjort og godkendt for botten.
+- Google Cloud-projektet kan sættes i produktion med sitets egne URL'er (forside, privatlivspolitik, vilkår).
+- En væsentlig ændring af teksterne stopper YouTube-beskeder til creators, indtil de godkender igen.
+
+## Related
+ADR-007, ADR-016, ADR-026, ADR-065, ADR-069, ADR-070.

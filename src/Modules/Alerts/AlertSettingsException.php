@@ -24,6 +24,16 @@ final class AlertSettingsException extends DomainException {
 	public const NOT_AUTHORIZED = 'not_authorized';
 
 	/**
+	 * The company name is not one line of at most 200 characters.
+	 */
+	public const INVALID_COMPANY_NAME = 'invalid_company_name';
+
+	/**
+	 * The contact e-mail is not an e-mail address.
+	 */
+	public const INVALID_COMPANY_EMAIL = 'invalid_company_email';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the constants.

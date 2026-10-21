@@ -16,6 +16,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -73,19 +74,24 @@ final class YouTubeOAuth {
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param Closure                  $dashboard_url The dashboard URL of a path.
 	 * @param Logger                   $logger        Technical log (failures without tokens).
+	 * @param YouTubeTerms             $terms         Privacy policy and terms (ADR-071).
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger ) {
+	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger, private YouTubeTerms $terms ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
 	/**
 	 * The URL that logs the bot account in at Google.
 	 *
-	 * @throws ChatbotException When the app is not set up.
+	 * @throws ChatbotException When the app is not set up or the privacy policy and terms are not published.
 	 */
 	public function start_bot(): string {
+		if ( ! $this->terms->published() ) {
+			throw new ChatbotException( ChatbotException::TERMS_REQUIRED );
+		}
+
 		return $this->start( 'bot', 0, YouTubeAccount::BOT_SCOPE, true );
 	}
 
@@ -93,10 +99,10 @@ final class YouTubeOAuth {
 	 * The URL that asks a creator to add the bot to the own channel.
 	 *
 	 * @param int $creator_id Creator (from CreatorContext).
-	 * @throws ChatbotException When the app or the bot is not set up.
+	 * @throws ChatbotException When the app or the bot is not set up, or the administrator has not accepted the current privacy policy and terms for the bot.
 	 */
 	public function start_channel( int $creator_id ): string {
-		if ( ! $this->account->ready() ) {
+		if ( ! $this->account->ready() || ! $this->terms->bot_accepted() ) {
 			throw new ChatbotException( ChatbotException::NOT_CONFIGURED );
 		}
 

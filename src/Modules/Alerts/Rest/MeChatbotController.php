@@ -38,6 +38,9 @@ defined( 'ABSPATH' ) || exit;
  *   administrator has set the platform up.
  * - `DELETE …/{platform}/channel`: removes the bot from the channel.
  * - `POST …/{platform}/test`: sends a test message; `{ result, reason, message }`.
+ * - YouTube (ADR-071): `connect` requires `{ "accept_terms": true }` (400
+ *   `merchboard_terms_required` otherwise) and stores the acceptance;
+ *   `POST …/youtube/terms` with `{ "accept": true }` accepts a new version.
  */
 final class MeChatbotController extends RestController {
 
@@ -102,6 +105,7 @@ final class MeChatbotController extends RestController {
 		$route( '/connect', WP_REST_Server::CREATABLE, 'connect' );
 		$route( '/channel', WP_REST_Server::DELETABLE, 'disconnect' );
 		$route( '/test', WP_REST_Server::CREATABLE, 'test' );
+		$route( '/terms', WP_REST_Server::CREATABLE, 'accept_terms' );
 	}
 
 	/**
@@ -164,13 +168,25 @@ final class MeChatbotController extends RestController {
 
 		return $this->with_creator(
 			self::ROUTE . '/connect',
-			function ( int $creator_id ) use ( $platform ): WP_REST_Response|WP_Error {
+			function ( int $creator_id ) use ( $platform, $request ): WP_REST_Response|WP_Error {
+				$youtube = ChatPlatform::YouTube === $platform;
+
+				// YouTube: the creator must accept the privacy policy and terms (ADR-071).
+				if ( $youtube && ! self::accepted( $request, 'accept_terms' ) ) {
+					return self::terms_required();
+				}
+
 				try {
 					$url = match ( $platform ) {
 						ChatPlatform::Twitch  => $this->twitch->start_channel( $creator_id ),
 						ChatPlatform::Kick    => $this->kick->start_channel( $creator_id ),
 						ChatPlatform::YouTube => $this->youtube->start_channel( $creator_id ),
 					};
+
+					// Stored only once the login can start.
+					if ( $youtube ) {
+						$this->chatbot->accept_youtube_terms( $creator_id );
+					}
 
 					return new WP_REST_Response( array( 'url' => $url ), 200 );
 				} catch ( ChatbotException $e ) {
@@ -216,6 +232,56 @@ final class MeChatbotController extends RestController {
 				}
 			}
 		);
+	}
+
+	/**
+	 * `POST /me/alerts/chatbot/youtube/terms` with `{ "accept": true }`:
+	 * accepts the current privacy policy and terms of the YouTube chatbot
+	 * (e.g. a new version). Only for YouTube.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 */
+	public function accept_terms( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$platform = self::platform( $request );
+
+		return $this->with_creator(
+			self::ROUTE . '/terms',
+			function ( int $creator_id ) use ( $platform, $request ): WP_REST_Response|WP_Error {
+				if ( ChatPlatform::YouTube !== $platform ) {
+					return self::invalid();
+				}
+
+				if ( ! self::accepted( $request, 'accept' ) ) {
+					return self::terms_required();
+				}
+
+				try {
+					$this->chatbot->accept_youtube_terms( $creator_id );
+				} catch ( ChatbotException $e ) {
+					return self::error( 'merchboard_chatbot_unavailable', __( 'The chatbot is not set up yet.', 'merchboard' ), 409, array( 'reason' => $e->reason() ) );
+				}
+
+				return $this->answer( $creator_id );
+			}
+		);
+	}
+
+	/**
+	 * Whether the JSON body has `true` in a field.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @param string          $field   Field.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	private static function accepted( WP_REST_Request $request, string $field ): bool {
+		return true === ( ( (array) $request->get_json_params() )[ $field ] ?? null );
+	}
+
+	/**
+	 * 400 when the privacy policy and terms were not accepted.
+	 */
+	private static function terms_required(): WP_Error {
+		return self::error( 'merchboard_terms_required', __( 'Accept the privacy policy and terms of the YouTube chatbot first.', 'merchboard' ), 400 );
 	}
 
 	/**

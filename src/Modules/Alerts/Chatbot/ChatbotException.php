@@ -33,6 +33,7 @@ class ChatbotException extends RuntimeException {
 	public const UNREADABLE          = 'unreadable';
 	public const NO_WEBHOOKS         = 'no_webhooks';
 	public const UNEXPECTED          = 'unexpected_answer';
+	public const TERMS_REQUIRED      = 'terms_required';
 
 	/**
 	 * The platform in technical messages.

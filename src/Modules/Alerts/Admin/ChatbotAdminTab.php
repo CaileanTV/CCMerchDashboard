@@ -21,6 +21,7 @@ use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubePlatform;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Creators\CreatorRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -62,8 +63,9 @@ final class ChatbotAdminTab {
 	 * @param CreatorRepository        $creators   Creator names.
 	 * @param string                   $plugin_dir Plugin directory (with slash).
 	 * @param string                   $plugin_url Plugin URL (with slash).
+	 * @param YouTubeTerms             $terms      YouTube's privacy policy and terms (ADR-071).
 	 */
-	public function __construct( private TwitchAccount $account, private KickAccount $kick, private YouTubeAccount $youtube, private YouTubePlatform $live, private ChatbotFormat $format, private ChatbotChannelRepository $channels, private ChatMessageRepository $log, private CreatorRepository $creators, private string $plugin_dir, private string $plugin_url ) {
+	public function __construct( private TwitchAccount $account, private KickAccount $kick, private YouTubeAccount $youtube, private YouTubePlatform $live, private ChatbotFormat $format, private ChatbotChannelRepository $channels, private ChatMessageRepository $log, private CreatorRepository $creators, private string $plugin_dir, private string $plugin_url, private YouTubeTerms $terms ) {
 	}
 
 	/**
@@ -100,6 +102,15 @@ final class ChatbotAdminTab {
 			'youtube_bot_invalid_credentials', 'youtube_bot_unauthorized', 'youtube_bot_forbidden' => array( __( 'Google did not accept the login. Try again, and check the redirect URL and the YouTube Data API in the Google Cloud project.', 'merchboard' ), 'error' ),
 			'youtube_bot_unavailable'      => array( __( 'Google could not be reached. Try again later.', 'merchboard' ), 'error' ),
 			'youtube_bot_error'            => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
+			'youtube_bot_terms_required'   => array( __( 'Accept the privacy policy and terms of the YouTube chatbot first. They must be published (tab "YouTube terms").', 'merchboard' ), 'error' ),
+			'youtube_terms_accepted'       => array( __( 'The privacy policy and terms were accepted for the bot. YouTube messages are sent again.', 'merchboard' ), 'success' ),
+			'legal_draft'                  => array( __( 'The texts were saved as a draft. Replace every placeholder to publish them.', 'merchboard' ), 'info' ),
+			'legal_published'              => array( __( 'The privacy policy and terms were published. Enter their URLs at Google, then accept them for the bot on the tab "Chatbot".', 'merchboard' ), 'success' ),
+			'legal_renewed'                => array( __( 'A new version was published. Creators and the bot must accept it before YouTube messages are sent again.', 'merchboard' ), 'success' ),
+			'legal_saved'                  => array( __( 'The correction was saved; the version is unchanged.', 'merchboard' ), 'success' ),
+			'legal_placeholders'           => array( __( 'Published texts cannot contain placeholders. Nothing was saved.', 'merchboard' ), 'error' ),
+			'legal_empty'                  => array( __( 'Every text needs content. Nothing was saved.', 'merchboard' ), 'error' ),
+			'legal_not_authorized'         => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'format_saved'                 => array( __( 'The message format was saved.', 'merchboard' ), 'success' ),
 			'resubscribed'                 => array( __( 'The chat subscriptions were renewed.', 'merchboard' ), 'success' ),
 			'message_sent'                 => array( __( 'The message was sent as the bot.', 'merchboard' ), 'success' ),
@@ -268,10 +279,13 @@ final class ChatbotAdminTab {
 		if ( $this->youtube->has_app() ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 
-			if ( null === $bot ) {
+			if ( null === $bot && ! $this->terms->published() ) {
+				echo '<p>' . esc_html__( 'Publish the privacy policy and terms of the YouTube chatbot first (tab "YouTube terms"); Google requires them, and the bot account accepts them when it logs in.', 'merchboard' ) . ' <a href="' . esc_url( AlertsAdminPage::url( 'youtube-legal' ) ) . '">' . esc_html__( 'YouTube terms', 'merchboard' ) . '</a></p>';
+			} elseif ( null === $bot ) {
 				echo '<p>' . esc_html__( 'Log in with the Google account of the YouTube channel that writes the messages, not with your own. Google always asks which account to use.', 'merchboard' ) . '</p>';
 				echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::YOUTUBE_BOT_CONNECT_ACTION ) . '">';
 				wp_nonce_field( ChatbotAdminActions::YOUTUBE_BOT_CONNECT_ACTION );
+				$this->terms_checkbox();
 				submit_button( __( 'Log in with the bot account at Google', 'merchboard' ), 'primary', 'submit', false );
 			} else {
 				/* translators: %s: name of the bot's YouTube channel. */
@@ -287,6 +301,17 @@ final class ChatbotAdminTab {
 			}
 
 			echo '</form>';
+
+			// A new version (or none accepted yet): the bot waits until the administrator accepts it.
+			if ( null !== $bot && $this->terms->published() && ! $this->terms->bot_accepted() ) {
+				echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The privacy policy and terms of the YouTube chatbot have a new version. The bot sends no YouTube messages until you accept it for the bot.', 'merchboard' ) . '</p></div>';
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+				echo '<input type="hidden" name="action" value="' . esc_attr( ChatbotAdminActions::YOUTUBE_TERMS_ACTION ) . '">';
+				wp_nonce_field( ChatbotAdminActions::YOUTUBE_TERMS_ACTION );
+				$this->terms_checkbox();
+				submit_button( __( 'Accept for the bot', 'merchboard' ), 'primary', 'submit', false );
+				echo '</form>';
+			}
 		} else {
 			echo '<p>' . esc_html__( 'Save the Google app first.', 'merchboard' ) . '</p>';
 		}
@@ -297,13 +322,30 @@ final class ChatbotAdminTab {
 			__( 'Bot messages on YouTube', 'merchboard' ),
 			array(
 				array( $this->youtube->has_app(), __( 'The Google app is saved.', 'merchboard' ) ),
+				array( $this->terms->bot_accepted(), __( 'The privacy policy and terms are published and accepted for the bot.', 'merchboard' ) ),
 				array( $this->youtube->ready(), __( 'The bot\'s YouTube channel is logged in (youtube.force-ssl).', 'merchboard' ) ),
 				array( true, __( 'Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found.', 'merchboard' ) ),
 				array( true, __( 'Messages are written only during a livestream. When the creator is not live, the bot checks once more after 5 minutes and otherwise skips the message (as few YouTube calls as possible).', 'merchboard' ) ),
 				array( 0 === $quota, __( 'The day\'s YouTube quota is not used up (10,000 units; a message costs 20, a live check 1).', 'merchboard' ) ),
 			)
 		);
-		echo '<p class="description">' . esc_html__( 'YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days; Google must verify the app for lasting use.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days: publish the app in the Google Cloud console ("In production") with the URLs from the tab "YouTube terms", and log the bot in again. Without Google\'s verification, Google shows a warning at login.', 'merchboard' ) . '</p>';
+	}
+
+	/**
+	 * The required checkbox that accepts the privacy policy and terms for the
+	 * bot, with links to them.
+	 */
+	private function terms_checkbox(): void {
+		printf(
+			'<p><label><input type="checkbox" name="accept_terms" value="1" required> %s</label></p>',
+			sprintf(
+				/* translators: 1: link "privacy policy", 2: link "terms of service". */
+				esc_html__( 'On behalf of the bot account, I accept the %1$s and the %2$s of the YouTube chatbot.', 'merchboard' ),
+				'<a href="' . esc_url( $this->terms->url( 'privacy' ) ) . '" target="_blank" rel="noopener">' . esc_html__( 'privacy policy', 'merchboard' ) . '</a>',
+				'<a href="' . esc_url( $this->terms->url( 'terms' ) ) . '" target="_blank" rel="noopener">' . esc_html__( 'terms of service', 'merchboard' ) . '</a>'
+			)
+		);
 	}
 
 	/**

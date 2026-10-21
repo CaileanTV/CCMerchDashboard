@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T17:48:50+00:00\n"
+"POT-Creation-Date: 2026-10-21T20:50:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -395,367 +395,375 @@ msgstr ""
 msgid "YouTube app of the alert chatbot removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:233
+#: src/Modules/Admin/AuditLogFormatter.php:143
+msgid "Privacy policy and terms of the YouTube chatbot saved"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:144
+msgid "Privacy policy and terms of the YouTube chatbot accepted"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:235
 msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:235
+#: src/Modules/Admin/AuditLogFormatter.php:237
 #, php-format
 msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:238
+#: src/Modules/Admin/AuditLogFormatter.php:240
 #, php-format
 msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:241
+#: src/Modules/Admin/AuditLogFormatter.php:243
 #, php-format
 msgid "Status: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:244
+#: src/Modules/Admin/AuditLogFormatter.php:246
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:247
+#: src/Modules/Admin/AuditLogFormatter.php:249
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:252
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:252
+#: src/Modules/Admin/AuditLogFormatter.php:254
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:255
+#: src/Modules/Admin/AuditLogFormatter.php:257
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:258
+#: src/Modules/Admin/AuditLogFormatter.php:260
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:259
+#: src/Modules/Admin/AuditLogFormatter.php:261
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:262
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:263
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:265
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:267
+#: src/Modules/Admin/AuditLogFormatter.php:269
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:272
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:272
+#: src/Modules/Admin/AuditLogFormatter.php:274
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:272
+#: src/Modules/Admin/AuditLogFormatter.php:274
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:275
+#: src/Modules/Admin/AuditLogFormatter.php:277
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:278
+#: src/Modules/Admin/AuditLogFormatter.php:280
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:283
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:286
 msgid "Previous creator: none"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:286
+#: src/Modules/Admin/AuditLogFormatter.php:288
 #, php-format
 msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:289
+#: src/Modules/Admin/AuditLogFormatter.php:291
 #, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:292
+#: src/Modules/Admin/AuditLogFormatter.php:294
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:297
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:300
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:300
+#: src/Modules/Admin/AuditLogFormatter.php:302
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:303
+#: src/Modules/Admin/AuditLogFormatter.php:305
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:306
+#: src/Modules/Admin/AuditLogFormatter.php:308
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:309
+#: src/Modules/Admin/AuditLogFormatter.php:311
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:311
+#: src/Modules/Admin/AuditLogFormatter.php:313
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:311
+#: src/Modules/Admin/AuditLogFormatter.php:313
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:316
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:317
+#: src/Modules/Admin/AuditLogFormatter.php:319
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:320
+#: src/Modules/Admin/AuditLogFormatter.php:322
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:323
 msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:326
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:329
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:330
+#: src/Modules/Admin/AuditLogFormatter.php:332
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:333
+#: src/Modules/Admin/AuditLogFormatter.php:335
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:336
+#: src/Modules/Admin/AuditLogFormatter.php:338
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:379
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:379
+#: src/Modules/Admin/AuditLogFormatter.php:381
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:381
+#: src/Modules/Admin/AuditLogFormatter.php:383
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:396
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:397
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:398
 #: build/dashboard.js:35
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:399
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:398
+#: src/Modules/Admin/AuditLogFormatter.php:400
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:399
+#: src/Modules/Admin/AuditLogFormatter.php:401
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:402
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:410
-#: src/Modules/Admin/AuditLogFormatter.php:436
-#: src/Modules/Admin/AuditLogFormatter.php:495
+#: src/Modules/Admin/AuditLogFormatter.php:412
+#: src/Modules/Admin/AuditLogFormatter.php:438
+#: src/Modules/Admin/AuditLogFormatter.php:497
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:423
+#: src/Modules/Admin/AuditLogFormatter.php:425
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:41
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:424
+#: src/Modules/Admin/AuditLogFormatter.php:426
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:41
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:425
+#: src/Modules/Admin/AuditLogFormatter.php:427
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:41
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:426
+#: src/Modules/Admin/AuditLogFormatter.php:428
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:41
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:454
+#: src/Modules/Admin/AuditLogFormatter.php:456
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:478
+#: src/Modules/Admin/AuditLogFormatter.php:480
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:479
+#: src/Modules/Admin/AuditLogFormatter.php:481
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:480
+#: src/Modules/Admin/AuditLogFormatter.php:482
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:481
+#: src/Modules/Admin/AuditLogFormatter.php:483
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:482
-#: src/Modules/Admin/AuditLogFormatter.php:630
+#: src/Modules/Admin/AuditLogFormatter.php:484
+#: src/Modules/Admin/AuditLogFormatter.php:632
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:483
+#: src/Modules/Admin/AuditLogFormatter.php:485
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:484
-#: src/Modules/Admin/AuditLogFormatter.php:690
+#: src/Modules/Admin/AuditLogFormatter.php:486
+#: src/Modules/Admin/AuditLogFormatter.php:692
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:37
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:485
+#: src/Modules/Admin/AuditLogFormatter.php:487
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:514
+#: src/Modules/Admin/AuditLogFormatter.php:516
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:529
+#: src/Modules/Admin/AuditLogFormatter.php:531
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -764,7 +772,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:598
+#: src/Modules/Admin/AuditLogFormatter.php:600
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -773,87 +781,87 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:598
+#: src/Modules/Admin/AuditLogFormatter.php:600
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:610
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:609
+#: src/Modules/Admin/AuditLogFormatter.php:611
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:610
+#: src/Modules/Admin/AuditLogFormatter.php:612
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:611
+#: src/Modules/Admin/AuditLogFormatter.php:613
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:612
+#: src/Modules/Admin/AuditLogFormatter.php:614
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:613
+#: src/Modules/Admin/AuditLogFormatter.php:615
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:614
+#: src/Modules/Admin/AuditLogFormatter.php:616
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:615
+#: src/Modules/Admin/AuditLogFormatter.php:617
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:616
+#: src/Modules/Admin/AuditLogFormatter.php:618
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:617
+#: src/Modules/Admin/AuditLogFormatter.php:619
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:618
+#: src/Modules/Admin/AuditLogFormatter.php:620
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:631
+#: src/Modules/Admin/AuditLogFormatter.php:633
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:643
+#: src/Modules/Admin/AuditLogFormatter.php:645
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:644
+#: src/Modules/Admin/AuditLogFormatter.php:646
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:656
+#: src/Modules/Admin/AuditLogFormatter.php:658
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:657
+#: src/Modules/Admin/AuditLogFormatter.php:659
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:658
+#: src/Modules/Admin/AuditLogFormatter.php:660
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:690
+#: src/Modules/Admin/AuditLogFormatter.php:692
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
@@ -862,15 +870,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:709
+#: src/Modules/Admin/AuditLogFormatter.php:711
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:710
+#: src/Modules/Admin/AuditLogFormatter.php:712
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:711
+#: src/Modules/Admin/AuditLogFormatter.php:713
 msgid "social links"
 msgstr ""
 
@@ -886,7 +894,7 @@ msgid "Event"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogListTable.php:93
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
@@ -1140,15 +1148,17 @@ msgid "Settings"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:148
-#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:87
-#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:134
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:149
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:117
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:156
+#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:142
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:134
-#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:93
-#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:143
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:123
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:162
+#: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -1166,12 +1176,12 @@ msgstr ""
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:71
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:72
 msgid "Merch Dashboard Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:72
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:163
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:73
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:165
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:74
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:51
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:59
@@ -1180,221 +1190,228 @@ msgstr ""
 msgid "Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:106
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:107
 msgid "The Google Fonts API key was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:107
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
 msgid "The Google Fonts API key was removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
 msgid "The Google Fonts catalogue was fetched."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
 msgid "The font was approved. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
 msgid "The font was removed. Overlays that used it show the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
 msgid "Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:113
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:49
 #: src/Modules/Settings/Admin/SettingsPage.php:165
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
 msgid "You are not allowed to change these settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
 msgid "Google did not accept the API key. Check the key and try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
 msgid "Save a Google Fonts API key first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
 msgid "Google Fonts could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
 msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
 msgid "The sound was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
 msgid "The sound got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 msgid "The sound is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
 msgid "The sound was removed. Overlays that used it play their other sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
 #: build/dashboard.js:23
 #: build/dashboard.js:30
 msgid "No file was received. Try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
 #: build/dashboard.js:23
 msgid "Choose an MP3, WAV or OGG file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
 msgid "The file is too large."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
 msgid "The sound is too long."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
 #: build/dashboard.js:23
 msgid "The file could not be read as a sound. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
 msgid "The library is full. Remove a sound first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
 msgid "The image was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
 msgid "The image got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
 msgid "The image was removed. Texts it filled show their colour again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
 msgid "The image is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
 #: build/dashboard.js:30
 msgid "Choose a PNG, JPG, GIF or WebP image."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
 msgid "The image is too big. Choose a smaller image."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
 #: build/dashboard.js:30
 msgid "The file could not be read as an image. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
 msgid "The library is full. Remove an image first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:199
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:102
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
 msgid "A technical error occurred. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:165
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:167
 msgid "Fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:168
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:170
 #: build/dashboard.js:25
 msgid "Sounds"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:172
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:174
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:64
 msgid "Chatbot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:176
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:178
 msgid "Images"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:213
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:182
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:283
+msgid "YouTube terms"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:226
 msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in the browser source, which sends the viewer's IP address to Google (ADR-067)."
 msgstr ""
 
 #. translators: 1: size in MB, 2: seconds, 3: number of sounds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:230
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:243
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s MB and %2$d seconds each; at most %3$d sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:237
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:250
 msgid "Add a sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:241
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:254
 msgid "Sound file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:243
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:303
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:256
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:316
 msgid "Name (optional)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:245
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:305
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
 msgid "Creators see this name. Without a name, the file name is used."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:246
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:259
 #: build/dashboard.js:23
 msgid "Upload sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:251
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:264
 msgid "Sound library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:254
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:267
 msgid "The library is empty. Creators can only use their own sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:347
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:271
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:360
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:378
 msgid "Name"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:271
 msgid "Length"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:271
 msgid "Play"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:404
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:454
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:271
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:417
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:467
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
@@ -1403,142 +1420,142 @@ msgid "Actions"
 msgstr ""
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:266
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:274
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:328
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:408
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:287
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:341
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:421
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 msgid "Remove"
 msgstr ""
 
 #. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:290
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:303
 #, php-format
 msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:297
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:310
 msgid "Add an image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:301
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:314
 msgid "Image file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:306
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:319
 #: build/dashboard.js:33
 msgid "Upload image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:311
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:324
 #: build/dashboard.js:33
 msgid "Image library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:314
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:327
 msgid "The library is empty. Creators can only use their own images and the ready-made fills."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
 #: build/dashboard.js:33
 msgid "Image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
 msgid "Size"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:349
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:367
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:362
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:380
 msgid "Rename"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:375
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:388
 msgid "Google Fonts API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:376
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:389
 msgid "A key is saved. It is never shown again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:376
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:389
 msgid "No key is saved. The key is only needed to fetch the catalogue."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:380
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:393
 msgid "API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:382
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:395
 msgid "Save key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:385
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:398
 msgid "Remove key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:397
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:410
 msgid "Approved fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:400
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:413
 msgid "No fonts are approved. Creators can only use the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:404
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:454
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:417
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:467
 #: build/dashboard.js:35
 msgid "Font"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:404
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:454
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:417
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:467
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:421
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:434
 msgid "Google Fonts catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:425
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
 msgid "Fetch the catalogue again"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:425
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
 msgid "Fetch the catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:434
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:447
 msgid "Search fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:436
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:449
 msgid "Search"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:443
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:456
 msgid "No fonts match the search."
 msgstr ""
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:450
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:463
 #, php-format
 msgid "At most %d fonts, the most popular first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:460
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:473
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:462
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:475
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -1599,488 +1616,551 @@ msgstr ""
 msgid "On. Alerts are recorded when orders are paid."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:77
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:79
 msgid "The Twitch app was saved. Twitch accepted its credentials."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:78
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:80
 msgid "The Twitch app, the bot and every secret were removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:79
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:81
 msgid "Twitch did not accept the Client ID and Secret. Check them in the Twitch developer console."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:80
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:82
 msgid "Twitch could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:81
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:83
 msgid "The secret cannot be stored encrypted on this server (sodium is missing)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:82
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:84
 msgid "The bot account was connected. Its chat subscriptions were renewed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:83
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:85
 msgid "The bot account was disconnected. No messages are sent until a bot is connected again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:84
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:86
 msgid "The login at Twitch was cancelled. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:85
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:172
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:183
 msgid "Save the Twitch app first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:86
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:88
 msgid "Twitch did not accept the login. Try again, and check the redirect URL of the Twitch app."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:88
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
 msgid "The Kick app was saved. Kick accepted its credentials."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:91
 msgid "The Kick app and every secret were removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:92
 msgid "Kick did not accept the Client ID and Secret (or the bot name is invalid). Check them in the Kick developer settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:91
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:93
 msgid "Kick could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:92
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:94
 msgid "The Google app was saved. Log in with the bot account next."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:93
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:95
 msgid "The Google app, the YouTube bot and every secret were removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:94
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:96
 msgid "This is not a Google OAuth Client ID and Secret. Copy them from the Google Cloud console."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:95
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:97
 msgid "The YouTube bot was connected."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:96
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:98
 msgid "The YouTube bot was disconnected. No YouTube messages are sent until a bot is connected again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:97
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:99
 msgid "The login at Google was cancelled. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:98
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:291
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:100
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
 msgid "Save the Google app first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:99
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:101
 msgid "Google gave no lasting access or the account has no YouTube channel. Log in again with the bot's YouTube channel and allow access."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:100
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:102
 msgid "Google did not accept the login. Try again, and check the redirect URL and the YouTube Data API in the Google Cloud project."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:101
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:103
 msgid "Google could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:103
-msgid "The message format was saved."
-msgstr ""
-
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
-msgid "The chat subscriptions were renewed."
-msgstr ""
-
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:105
-msgid "The message was sent as the bot."
+msgid "Accept the privacy policy and terms of the YouTube chatbot first. They must be published (tab \"YouTube terms\")."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:106
-msgid "The platform did not send the message. Check that the bot is still in the channel."
+msgid "The privacy policy and terms were accepted for the bot. YouTube messages are sent again."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:107
-msgid "YouTube did not let the bot write. Check that the livestream is not private and that the chat is not for subscribers or members only, and make the bot a moderator of the channel."
+msgid "The texts were saved as a draft. Replace every placeholder to publish them."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:108
+msgid "The privacy policy and terms were published. Enter their URLs at Google, then accept them for the bot on the tab \"Chatbot\"."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:109
+msgid "A new version was published. Creators and the bot must accept it before YouTube messages are sent again."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:110
+msgid "The correction was saved; the version is unchanged."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:111
+msgid "Published texts cannot contain placeholders. Nothing was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:112
+msgid "Every text needs content. Nothing was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
+msgid "The message format was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:115
+msgid "The chat subscriptions were renewed."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:116
+msgid "The message was sent as the bot."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:117
+msgid "The platform did not send the message. Check that the bot is still in the channel."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:118
+msgid "YouTube did not let the bot write. Check that the livestream is not private and that the chat is not for subscribers or members only, and make the bot a moderator of the channel."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:119
 msgid "The creator is not live on YouTube right now. The bot can only write during a livestream."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:143
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:154
 msgid "Twitch app"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:144
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:155
 msgid "Create an application in the Twitch developer console (category \"Chat Bot\", client type \"Confidential\") and register this OAuth redirect URL:"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:150
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:217
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:255
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:161
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:228
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:266
 msgid "Client ID"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:151
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:218
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:256
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:162
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:229
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:267
 msgid "Client Secret"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:152
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:219
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:257
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:163
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:268
 msgid "A secret is saved and never shown again. Enter it again to change the app."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:152
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:219
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:257
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:163
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:268
 msgid "The secret is stored encrypted."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:154
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:223
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
 msgid "Save and check"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:157
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:226
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:262
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:168
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:237
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:273
 msgid "Remove the app"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:169
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:180
 msgid "Bot account"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:179
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:190
 msgid "Log in with the Twitch account that writes the messages, not with your own. Twitch always asks, so you can choose the account; a private browser window helps."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:182
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:193
 msgid "Log in with the bot account at Twitch"
 msgstr ""
 
 #. translators: %s: Twitch login of the bot.
 #. translators: %s: name of the bot's YouTube channel.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:185
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:278
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:196
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:292
 #, php-format
 msgid "Connected as %s."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:188
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:286
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:199
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:300
 msgid "Disconnect the bot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:194
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:205
 msgid "Chatbot badge and chat identity"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:196
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:207
 msgid "Messages are sent with Send Chat Message and an app access token."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:197
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:208
 msgid "The bot account authorized the app (user:bot, user:write:chat, user:read:chat)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:198
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:209
 msgid "Each creator adds the bot to the own channel (channel:bot) in the dashboard."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:199
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:210
 msgid "The bot listens to the chats over an EventSub webhook (needs an HTTPS site Twitch can reach)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:208
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:219
 msgid "Kick app"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:209
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:220
 msgid "Create an app in your Kick account under Settings → Developer (two-factor authentication must be on), create a bot for the app there, and register this redirect URL:"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:211
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:222
 msgid "Turn on webhooks for the app and enter this webhook URL:"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:220
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:231
 msgid "Bot name"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:221
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
 msgid "The name of the app's bot at Kick, shown to creators (optional)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:243
 msgid "Bot messages at Kick"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:245
 msgid "The Kick app is saved and Kick accepted its credentials."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:235
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:246
 msgid "Messages are sent as the app's bot (type \"bot\") with the channel's own token, which is stored encrypted and renewed automatically."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:236
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:247
 msgid "Each creator adds the bot to the own channel (chat:write) in the dashboard."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:237
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
 msgid "The bot listens to the chats over Kick's webhook (needs an HTTPS site Kick can reach)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:259
 msgid "Google app"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:249
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:260
 msgid "Create a project in the Google Cloud console, enable the YouTube Data API v3, create an OAuth client (type \"Web application\") and register this redirect URL:"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:259
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:126
 msgid "Save"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:266
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:277
 msgid "YouTube bot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:272
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:283
+msgid "Publish the privacy policy and terms of the YouTube chatbot first (tab \"YouTube terms\"); Google requires them, and the bot account accepts them when it logs in."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
 msgid "Log in with the Google account of the YouTube channel that writes the messages, not with your own. Google always asks which account to use."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:275
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:289
 msgid "Log in with the bot account at Google"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:281
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:295
 msgid "Google no longer accepts the bot's login (it was revoked, or the Google app is in testing, where logins expire after 7 days). Disconnect the bot and log in again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:297
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:307
+msgid "The privacy policy and terms of the YouTube chatbot have a new version. The bot sends no YouTube messages until you accept it for the bot."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:312
+msgid "Accept for the bot"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:322
 msgid "Bot messages on YouTube"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:299
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:324
 msgid "The Google app is saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:300
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:325
+msgid "The privacy policy and terms are published and accepted for the bot."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:326
 msgid "The bot's YouTube channel is logged in (youtube.force-ssl)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:301
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:327
 msgid "Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:302
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:328
 msgid "Messages are written only during a livestream. When the creator is not live, the bot checks once more after 5 minutes and otherwise skips the message (as few YouTube calls as possible)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:303
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:329
 msgid "The day's YouTube quota is not used up (10,000 units; a message costs 20, a live check 1)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:306
-msgid "YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days; Google must verify the app for lasting use."
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:332
+msgid "YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days: publish the app in the Google Cloud console (\"In production\") with the URLs from the tab \"YouTube terms\", and log the bot in again. Without Google's verification, Google shows a warning at login."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:319
+#. translators: 1: link "privacy policy", 2: link "terms of service".
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:344
+#, php-format
+msgid "On behalf of the bot account, I accept the %1$s and the %2$s of the YouTube chatbot."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:345
+msgid "privacy policy"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:346
+msgid "terms of service"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:361
 msgid "(not met)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:331
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:373
 msgid "Message format"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:335
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:377
 msgid "Messages per purchase"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:336
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:378
 msgid "One message per order line (as MerchAlert)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:337
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:379
 msgid "One message per order"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:338
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:380
 msgid "Each product in $Products (one message per order)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:340
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
 msgid "Variables: $Quantity, $Product, $Variation, $Category."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:341
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:383
 msgid "Between the products"
 msgstr ""
 
 #. translators: 1: a product, 2: the separator, 3: another product.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:346
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:388
 #, php-format
 msgid "Example of $Products: %1$s%2$s%3$s"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:368
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:410
 msgid "Save format"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:378
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:420
 msgid "Rate limit and verification"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:379
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:421
 msgid "Twitch lets a bot send 20 messages per 30 seconds across all channels (100 where it is moderator or VIP), and at most one per second in a channel. A verified bot may send 7,500 per 30 seconds. Messages wait in a queue when the limit is reached."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:424
 msgid "No message has been sent yet."
 msgstr ""
 
 #. translators: %d: messages per 30 seconds.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:384
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:426
 #, php-format
 msgid "Twitch reported a limit of %d messages per 30 seconds for the latest message."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:396
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:438
 msgid "Channels"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:399
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:441
 msgid "No creator has added the bot to a channel yet. Creators do this under Alerts → Chatbot in the dashboard."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "Platform"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "Channel"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "Messages"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "Listening"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:403
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "Latest message"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:410
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "On"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:410
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "Off"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:413
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:455
 msgid "Open chat"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:421
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:463
 msgid "Renew the chat subscriptions"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:435
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:477
 msgid "Back to the chatbot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:438
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:480
 msgid "This creator has not added the bot to a channel."
 msgstr ""
 
 #. translators: 1: channel login, 2: platform (Twitch or Kick).
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:443
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:485
 #, php-format
 msgid "Chat of %1$s (%2$s)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:446
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:488
 msgid "No messages in the last 24 hours."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:446
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:488
 msgid "The chat could not be loaded. It is tried again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:489
 msgid "The bot's own view of the chat (webhook). Messages are kept for 24 hours."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:449
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:491
 msgid "Twitch cannot send the chat to this site (no HTTPS webhook), so Twitch's own chat is shown. It loads from twitch.tv."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:450
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:492
 msgid "Twitch chat"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:494
 msgid "Open the chat at Twitch"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:456
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:498
 msgid "Kick cannot send the chat to this site (no HTTPS webhook, or webhooks are off in the Kick app)."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:457
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:499
 msgid "Open the chat at Kick"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:465
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:507
 msgid "Send as the bot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:467
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:509
 msgid "Send"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:482
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:524
 msgid "The creator is not live on YouTube right now (or YouTube could not be asked). The chat exists only during a livestream."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:484
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:526
 msgid "YouTube's own live chat of the current livestream. It loads from youtube.com."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:485
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:527
 msgid "YouTube chat"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:488
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:530
 msgid "Open the livestream at YouTube"
 msgstr ""
 
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:514
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:556
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2090,20 +2170,20 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:515
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:557
 msgid "Waiting for Twitch"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:516
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:558
 msgid "No (site not reachable)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:517
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:559
 msgid "YouTube's chat (embedded)"
 msgstr ""
 
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:518
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:560
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2113,7 +2193,197 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: src/Modules/Alerts/Chatbot/CreatorChatbot.php:186
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:45
+msgid "The company details were saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:46
+msgid "No changes were made to the company details."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:47
+msgid "The company name must be one line of at most 200 characters. Nothing was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:48
+msgid "The contact e-mail is not a valid e-mail address. Nothing was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
+msgid "A technical error occurred. The company details were not changed."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:69
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:69
+msgid "Company details"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:75
+msgid "These details fill the placeholders of the YouTube chatbot's privacy policy and terms ([COMPANY], [CVR], [ADDRESS], [EMAIL]) when the pages are shown."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:82
+msgid "Company name"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:86
+msgid "The legal name of the business, e.g. \"Merch ApS\". [COMPANY]"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:90
+msgid "Contact e-mail"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:93
+msgid "Where people write about privacy and the terms. [EMAIL]"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:97
+msgid "CVR number"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:98
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:104
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:74
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:688
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:688
+#: build/dashboard.js:43
+msgid "Not registered"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:99
+msgid "Set in the section \"CVR number on settlement documents\" on this page. [CVR]"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:103
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:256
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:766
+#: build/dashboard.js:46
+#: build/dashboard.js:49
+msgid "Address"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:105
+msgid "WooCommerce's store address, as on the settlement documents. [ADDRESS]"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:107
+msgid "Edit in WooCommerce"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:110
+msgid "Save company details"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:41
+msgid "Privacy policy and terms of the YouTube chatbot"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:42
+msgid "Google requires a privacy policy and terms of service for the YouTube app. The texts below are a draft that describes what the chatbot does; they are not legal advice. Review them, fill in the company details and publish them."
+msgstr ""
+
+#. translators: 1: version number, 2: date.
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:48
+#, php-format
+msgid "Published: version %1$d of %2$s. Creators and the bot must have accepted this version; until then no YouTube messages are sent to them."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:54
+msgid "Draft: the pages are not public yet, and YouTube cannot be used."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:57
+msgid "Save the texts to publish them."
+msgstr ""
+
+#. translators: %s: the placeholders without a value, e.g. "[COMPANY], [EMAIL]".
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:60
+#, php-format
+msgid "Fill in the company details for these placeholders, then save the texts to publish them: %s"
+msgstr ""
+
+#. translators: %s: the placeholders without a value, e.g. "[COMPANY], [EMAIL]".
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:66
+#, php-format
+msgid "The public pages show these placeholders, because their company details are empty: %s"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:70
+msgid "The placeholders in the texts are filled from the settings when the pages are shown; a changed detail needs no new version."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:70
+msgid "Edit the company details"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:79
+msgid "Public pages"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:80
+msgid "Enter these URLs in the Google Cloud console (Google Auth Platform → Branding): the app home page, the privacy policy and the terms of service. Add the site's domain as an authorized domain. Then publish the app (Audience → \"In production\"), so logins no longer expire after 7 days."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:81
+msgid "Page"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:84
+msgid "App home page"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:85
+#: templates/alerts/legal.php:59
+#: templates/alerts/legal.php:83
+msgid "Privacy policy"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:86
+#: templates/alerts/legal.php:60
+#: templates/alerts/legal.php:84
+msgid "Terms of service"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:92
+msgid "Open"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:99
+msgid "Texts"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:100
+msgid "HTML is allowed (headings, paragraphs, lists, links); scripts are removed. Keep the placeholders [COMPANY], [CVR], [ADDRESS] and [EMAIL]: they are filled from the company details."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:107
+msgid "Privacy policy (English)"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:108
+msgid "Privacy policy (Danish)"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:111
+msgid "Terms of service (English)"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:112
+msgid "Terms of service (Danish)"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:123
+msgid "This is a change that matters: everyone must accept the texts again (a new version). Without it, the change is a correction of the current version."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/YouTubeLegalTab.php:126
+msgid "Save and publish"
+msgstr ""
+
+#: src/Modules/Alerts/Chatbot/CreatorChatbot.php:208
 #: src/Modules/Alerts/Overlay/AlertOverlays.php:264
 msgid "Test product"
 msgstr ""
@@ -2167,15 +2437,20 @@ msgstr ""
 msgid "The alert was not found."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:177
+#: src/Modules/Alerts/Rest/MeChatbotController.php:193
+#: src/Modules/Alerts/Rest/MeChatbotController.php:261
 msgid "The chatbot is not set up yet."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:215
+#: src/Modules/Alerts/Rest/MeChatbotController.php:231
 msgid "The test message could not be sent."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:246
+#: src/Modules/Alerts/Rest/MeChatbotController.php:284
+msgid "Accept the privacy policy and terms of the YouTube chatbot first."
+msgstr ""
+
+#: src/Modules/Alerts/Rest/MeChatbotController.php:312
 msgid "The chatbot settings are invalid."
 msgstr ""
 
@@ -2578,6 +2853,7 @@ msgid "Use the default logo"
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:324
+#: templates/alerts/legal.php:103
 #: templates/dashboard/shell.php:35
 msgid "Creator dashboard"
 msgstr ""
@@ -4789,14 +5065,6 @@ msgstr ""
 msgid "Legal name (person or business)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:256
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:766
-#: build/dashboard.js:46
-#: build/dashboard.js:49
-msgid "Address"
-msgstr ""
-
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:257
 msgid "Address, line 2"
 msgstr ""
@@ -5303,13 +5571,6 @@ msgstr ""
 #: build/dashboard.js:48
 #, php-format,js-format
 msgid "Adjustments (%s)"
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:688
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:688
-#: build/dashboard.js:43
-msgid "Not registered"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:690
@@ -6046,6 +6307,52 @@ msgstr ""
 msgid "The Merch Dashboard WooCommerce integration is not active: WooCommerce %1$s or later is required. Current version: %2$s. The rest of Merch Dashboard works normally."
 msgstr ""
 
+#: templates/alerts/legal.php:29
+msgid "Privacy policy of the YouTube chatbot"
+msgstr ""
+
+#: templates/alerts/legal.php:30
+msgid "Terms of service of the YouTube chatbot"
+msgstr ""
+
+#: templates/alerts/legal.php:31
+#: templates/alerts/legal.php:55
+#: templates/alerts/legal.php:58
+msgid "YouTube chatbot"
+msgstr ""
+
+#. translators: %s: name of the shop.
+#: templates/alerts/legal.php:74
+#, php-format
+msgid "The YouTube chatbot of %s writes a message in a creator's YouTube live chat when someone buys the creator's merchandise."
+msgstr ""
+
+#: templates/alerts/legal.php:75
+msgid "our shop"
+msgstr ""
+
+#: templates/alerts/legal.php:80
+msgid "Creators connect their own YouTube channel in the creator dashboard and give read-only access (youtube.readonly), so the chatbot can see when they are live. The messages are written by our own bot account. Creators can remove the bot at any time."
+msgstr ""
+
+#: templates/alerts/legal.php:81
+msgid "The chatbot uses YouTube API Services. How we handle data, and the terms of use:"
+msgstr ""
+
+#: templates/alerts/legal.php:85
+msgid "YouTube Terms of Service"
+msgstr ""
+
+#: templates/alerts/legal.php:86
+msgid "Google Privacy Policy"
+msgstr ""
+
+#. translators: 1: version number, 2: date.
+#: templates/alerts/legal.php:94
+#, php-format
+msgid "Version %1$d, published %2$s"
+msgstr ""
+
 #: templates/dashboard/no-access.php:30
 msgid "Access not active"
 msgstr ""
@@ -6181,11 +6488,19 @@ msgid "skipped (you were not live)"
 msgstr ""
 
 #: build/dashboard.js:1
+msgid "skipped (terms not accepted)"
+msgstr ""
+
+#: build/dashboard.js:1
 msgid "skipped (empty message)"
 msgstr ""
 
 #: build/dashboard.js:1
 msgid "not sent"
+msgstr ""
+
+#: build/dashboard.js:1
+msgid "I accept the <privacy>privacy policy</privacy> and the <terms>terms of service</terms> of the YouTube chatbot."
 msgstr ""
 
 #. translators: 1: platform (Twitch or Kick).
@@ -6202,6 +6517,14 @@ msgstr ""
 
 #: build/dashboard.js:3
 msgid "Add the bot to your channel"
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "The privacy policy and terms of the YouTube chatbot have changed. The bot does not write in your chat until you accept them."
+msgstr ""
+
+#: build/dashboard.js:3
+msgid "Accept"
 msgstr ""
 
 #. translators: 1: channel login.
@@ -6263,6 +6586,10 @@ msgid "The bot could not be added (error code: %1$s). Try again later, or give a
 msgstr ""
 
 #: build/dashboard.js:10
+msgid "Thank you. The bot writes in your YouTube chat again."
+msgstr ""
+
+#: build/dashboard.js:10
 msgid "The chatbot is not set up yet. When an administrator has connected it, you can add it to your channel here."
 msgstr ""
 
@@ -6280,6 +6607,10 @@ msgstr ""
 
 #: build/dashboard.js:10
 msgid "The test message was sent."
+msgstr ""
+
+#: build/dashboard.js:10
+msgid "The test message was not sent: accept the privacy policy and terms of the YouTube chatbot first."
 msgstr ""
 
 #: build/dashboard.js:10

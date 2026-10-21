@@ -361,6 +361,13 @@ final class ChatSender {
 			return $this->wait_for_stream( $channel, $order_id, $order_item_id, $attempts );
 		}
 
+		// Not for this creator now (e.g. YouTube's terms are not accepted): not tried again.
+		if ( 'skipped' === $result['result'] ) {
+			$this->log->note( $creator_id, $platform, $order_id, $order_item_id, ChatMessageRepository::SKIPPED, $result['reason'] );
+
+			return true;
+		}
+
 		// Dropped (e.g. the channel's filters) or the channel refused: not tried again.
 		$final = in_array( $result['result'], array( 'dropped', 'forbidden', 'unauthorized' ), true ) || $attempts >= self::MAX_ATTEMPTS;
 		$this->log->note( $creator_id, $platform, $order_id, $order_item_id, $final ? ChatMessageRepository::FAILED : ChatMessageRepository::WAITING, '' !== $result['reason'] ? $result['reason'] : $result['result'] );

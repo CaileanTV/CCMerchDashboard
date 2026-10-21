@@ -22,6 +22,7 @@ use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
 use WP_User;
@@ -97,10 +98,12 @@ final class Uninstaller {
 	 * User meta keys owned by the plugin: the dashboard theme preference
 	 * (Modules\Dashboard\ThemePreference::META_KEY, ADR-044) and "Anonymize
 	 * usernames" in the alert history (Modules\Alerts\Rest\
-	 * MeAlertsHistoryController::ANONYMIZE_META, phase 25 step 7); a test keeps
-	 * them equal, so core does not depend on the modules.
+	 * MeAlertsHistoryController::ANONYMIZE_META, phase 25 step 7) and the
+	 * accepted version of the YouTube chatbot's privacy policy and terms
+	 * (Modules\Alerts\Legal\YouTubeTerms::META, step 8.5); a test keeps them
+	 * equal, so core does not depend on the modules.
 	 */
-	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize' );
+	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize', 'merchboard_youtube_terms_accepted' );
 
 	/**
 	 * The status of a pending payout (Modules\WooCommerce\Payouts\PayoutStatus::Pending;
@@ -186,6 +189,7 @@ final class Uninstaller {
 		delete_option( ChatbotFormat::OPTION );
 		delete_option( KickAccount::OPTION );
 		delete_option( YouTubeAccount::OPTION );
+		delete_option( YouTubeLegal::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

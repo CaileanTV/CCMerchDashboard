@@ -16,6 +16,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -51,6 +52,7 @@ final class CreatorChatbot {
 	 * @param ChatSender               $sender        Sending.
 	 * @param AuditTrail               $audit         Audit trail.
 	 * @param Transaction              $transaction   Database transaction.
+	 * @param YouTubeTerms             $terms         YouTube's privacy policy and terms (ADR-071).
 	 */
 	public function __construct(
 		private ChatPlatforms $platforms,
@@ -61,15 +63,28 @@ final class CreatorChatbot {
 		private ChatSubscriptions $subscriptions,
 		private ChatSender $sender,
 		private AuditTrail $audit,
-		private Transaction $transaction
+		private Transaction $transaction,
+		private YouTubeTerms $terms
 	) {
+	}
+
+	/**
+	 * The creator accepts the current privacy policy and terms of the YouTube
+	 * chatbot (ADR-071); the current user is the creator's (CreatorContext).
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws ChatbotException TERMS_REQUIRED while the texts are not published.
+	 * @throws DatabaseException When it cannot be audited.
+	 */
+	public function accept_youtube_terms( int $creator_id ): void {
+		$this->terms->accept_creator( $creator_id, get_current_user_id() );
 	}
 
 	/**
 	 * What the dashboard shows.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return array{mode: string, item_format: string, separator: string, variables: list<string>, template: string, default_template: string, platforms: list<array{platform: string, label: string, available: bool, bot_login: string, enabled: bool, channel: array{login: string, url: string, connected_at: string}|null, last_message: array{status: string, reason: string, at: string}|null}>}
+	 * @return array{mode: string, item_format: string, separator: string, variables: list<string>, template: string, default_template: string, platforms: list<array{platform: string, label: string, available: bool, bot_login: string, enabled: bool, channel: array{login: string, url: string, connected_at: string}|null, last_message: array{status: string, reason: string, at: string}|null, terms: array{privacy_url: string, terms_url: string, version: int, accepted: bool}|null}>}
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function describe( int $creator_id ): array {
@@ -98,6 +113,13 @@ final class CreatorChatbot {
 					'reason' => $last['reason'],
 					'at'     => gmdate( 'Y-m-d\TH:i:s\Z', $last['at'] ),
 				),
+				// Only YouTube asks for the privacy policy and terms, and only once they are published.
+				'terms'        => ChatPlatform::YouTube === $platform && $this->terms->published() ? array(
+					'privacy_url' => $this->terms->url( 'privacy' ),
+					'terms_url'   => $this->terms->url( 'terms' ),
+					'version'     => $this->terms->version(),
+					'accepted'    => $this->terms->creator_accepted( $creator_id ),
+				) : null,
 			);
 		}
 

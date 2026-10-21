@@ -43,6 +43,26 @@ final class AlertsSettingsActions {
 	public const FIELD_ENABLED = 'alerts_enabled';
 
 	/**
+	 * The admin-post action and nonce action of the company details (step 8.5).
+	 */
+	public const COMPANY_ACTION = 'merchboard_save_company_details';
+
+	/**
+	 * Query argument: outcome code of the company details after a redirect.
+	 */
+	public const COMPANY_RESULT_ARG = 'merchboard_company_result';
+
+	/**
+	 * The company name field.
+	 */
+	public const FIELD_COMPANY_NAME = 'company_name';
+
+	/**
+	 * The contact e-mail field.
+	 */
+	public const FIELD_COMPANY_EMAIL = 'company_email';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param AlertSettings $settings Saving.
@@ -65,6 +85,55 @@ final class AlertsSettingsActions {
 	 */
 	public function register(): void {
 		add_action( 'admin_post_' . self::SAVE_ACTION, array( $this, 'handle_save_request' ) );
+		add_action( 'admin_post_' . self::COMPANY_ACTION, array( $this, 'handle_company_request' ) );
+	}
+
+	/**
+	 * URL of the settings screen with an outcome code, at the company details.
+	 *
+	 * @param string $result Outcome code.
+	 */
+	public static function company_url( string $result ): string {
+		return add_query_arg( array( self::COMPANY_RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-company';
+	}
+
+	/**
+	 * WordPress entry point of the company details.
+	 */
+	public function handle_company_request(): void {
+		// The nonce is verified in save_company() before any input is used.
+		wp_safe_redirect( $this->save_company( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and the fields validated in save_company() and AlertSettings.
+		exit;
+	}
+
+	/**
+	 * Processes the company details form.
+	 *
+	 * @param array<mixed> $input Unslashed request data.
+	 * @return string Redirect URL.
+	 */
+	public function save_company( array $input ): string {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage alerts.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		$field = static fn( string $key ): string => is_scalar( $input[ $key ] ?? null ) ? sanitize_text_field( (string) $input[ $key ] ) : '';
+
+		if ( 1 !== wp_verify_nonce( $field( '_wpnonce' ), self::COMPANY_ACTION ) ) {
+			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		try {
+			$changed = $this->settings->set_company_details( $field( self::FIELD_COMPANY_NAME ), $field( self::FIELD_COMPANY_EMAIL ) );
+		} catch ( AlertSettingsException $e ) {
+			return self::company_url( $e->reason() );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Saving the company details failed.', array_merge( $e->context(), array( 'reason' => $e->getMessage() ) ) );
+
+			return self::company_url( 'error' );
+		}
+
+		return self::company_url( $changed ? 'saved' : 'no_changes' );
 	}
 
 	/**

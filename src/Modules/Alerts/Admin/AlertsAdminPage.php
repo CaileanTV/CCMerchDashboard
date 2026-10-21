@@ -58,8 +58,9 @@ final class AlertsAdminPage {
 	 * @param AlertSoundLibrary|null $library Sound library; null for none.
 	 * @param AlertImageLibrary|null $images  Image library; null for none.
 	 * @param ChatbotAdminTab|null   $chatbot The chatbot tab; null for none.
+	 * @param YouTubeLegalTab|null   $legal   The YouTube chatbot's privacy policy and terms; null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null ) {
 	}
 
 	/**
@@ -155,6 +156,7 @@ final class AlertsAdminPage {
 			'sounds' => null === $this->library ? 'fonts' : 'sounds',
 			'images' => null === $this->images ? 'fonts' : 'images',
 			'chatbot' => null === $this->chatbot ? 'fonts' : 'chatbot',
+			'youtube-legal' => null === $this->legal ? 'fonts' : 'youtube-legal',
 			default  => 'fonts',
 		};
 		$notice = self::result_message( $code );
@@ -174,6 +176,10 @@ final class AlertsAdminPage {
 
 		if ( null !== $this->images ) {
 			echo '<a class="nav-tab' . ( 'images' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'images' ) ) . '"' . ( 'images' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Images', 'merchboard' ) . '</a>';
+		}
+
+		if ( null !== $this->legal ) {
+			echo '<a class="nav-tab' . ( 'youtube-legal' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'youtube-legal' ) ) . '"' . ( 'youtube-legal' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'YouTube terms', 'merchboard' ) . '</a>';
 		}
 
 		echo '</nav>';
@@ -198,6 +204,13 @@ final class AlertsAdminPage {
 			} catch ( DatabaseException ) {
 				echo '<div class="notice notice-error"><p>' . esc_html__( 'A technical error occurred. Nothing was changed.', 'merchboard' ) . '</p></div>';
 			}
+			echo '</div>';
+
+			return;
+		}
+
+		if ( 'youtube-legal' === $tab && null !== $this->legal ) {
+			$this->legal->render();
 			echo '</div>';
 
 			return;
