@@ -168,6 +168,13 @@ final class WooCommerce {
 	 * @var WC_Cart|null
 	 */
 	public $cart;
+
+	/**
+	 * WC_Countries (not stubbed; callers check its methods).
+	 *
+	 * @var mixed
+	 */
+	public $countries;
 }
 
 /**
