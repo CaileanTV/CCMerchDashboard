@@ -323,9 +323,11 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(.*broadcaster_id varchar\(64\)/s' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(.*broadcaster_id varchar\(64\)/s' ) );
 
+		// Migration 23 only adds indexes (no dbDelta()).
+
 		$this->plugin()->boot();
 
-		self::assertSame( 22, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 23, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

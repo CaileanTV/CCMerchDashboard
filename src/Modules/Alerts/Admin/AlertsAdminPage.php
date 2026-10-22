@@ -59,8 +59,9 @@ final class AlertsAdminPage {
 	 * @param AlertImageLibrary|null $images  Image library; null for none.
 	 * @param ChatbotAdminTab|null   $chatbot The chatbot tab; null for none.
 	 * @param YouTubeLegalTab|null   $legal   The YouTube chatbot's privacy policy and terms; null for none.
+	 * @param OrderLogTab|null       $log     The order log (step 25.9.3), the first and default tab; null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null ) {
 	}
 
 	/**
@@ -159,13 +160,19 @@ final class AlertsAdminPage {
 			'images' => null === $this->images ? 'fonts' : 'images',
 			'chatbot' => null === $this->chatbot ? 'fonts' : 'chatbot',
 			'youtube-legal' => null === $this->legal ? 'fonts' : 'youtube-legal',
-			default  => 'fonts',
+			'fonts'  => 'fonts',
+			default  => null === $this->log ? 'fonts' : OrderLogTab::TAB,
 		};
 		$notice = self::result_message( $code );
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Alerts', 'merchboard' ) . '</h1>';
 		echo '<nav class="nav-tab-wrapper">';
+
+		if ( null !== $this->log ) {
+			echo '<a class="nav-tab' . ( OrderLogTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( OrderLogTab::TAB ) ) . '"' . ( OrderLogTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Order log', 'merchboard' ) . '</a>';
+		}
+
 		echo '<a class="nav-tab' . ( 'fonts' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url() ) . '"' . ( 'fonts' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Fonts', 'merchboard' ) . '</a>';
 
 		if ( null !== $this->library ) {
@@ -188,6 +195,18 @@ final class AlertsAdminPage {
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( OrderLogTab::TAB === $tab && null !== $this->log ) {
+			try {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only: the period is matched against the known ones and the page is a number.
+				$this->log->render( isset( $_GET[ OrderLogTab::PERIOD_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ OrderLogTab::PERIOD_ARG ] ) ) : '', isset( $_GET[ OrderLogTab::PAGE_ARG ] ) ? absint( $_GET[ OrderLogTab::PAGE_ARG ] ) : 1 );
+			} catch ( DatabaseException ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'The order log could not be read. Please try again later.', 'merchboard' ) . '</p></div>';
+			}
+			echo '</div>';
+
+			return;
 		}
 
 		$library = 'sounds' === $tab ? $this->library : null;

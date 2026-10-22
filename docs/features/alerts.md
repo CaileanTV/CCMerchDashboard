@@ -29,7 +29,7 @@ Kunden kan i checkout angive et valgfrit brugernavn, som kan vises i alerts (`$U
 ## Admin functionality
 Undermenuen **"Alerts"** under Merch Dashboard (capability `merchboard_manage_alerts`):
 
-- **Ordrelog:** statuskort og ordrer med alerts, filtreret på i dag, seneste 24 timer eller alle.
+- **Ordrelog ✅ (25.9.3):** første fane og standard. Statuskort (alerts, WooCommerce, ordrer og alerts/creators i perioden) og ordrer med alerts, filtreret på i dag (fra midnat i sitets tidszone), seneste 24 timer eller alle, 20 pr. side, med hver creators varer og chatbottens udfald pr. platform. Kun visning; opdateres med "Opdatér".
 - **Globalt overlay:** et overlay uafhængigt af creators med URL, testalert, replay af seneste ordre, designer og lyd.
 - **YouTube-vilkår ✅ (25.8.5, ADR-071):** YouTube-chatbottens privatlivspolitik og vilkår på engelsk og dansk, redigerbare med et komplet udkast; offentliggøres på offentlige sider under dashboardets adresse (`legal/youtube`, `legal/youtube-privacy`, `legal/youtube-terms`), som Google Cloud-appen henviser til.
 - **Chatbot ✅ (25.8, Kick fra 25.8.2, YouTube fra 25.8.4):** YouTube (Google-appens Client ID og Secret, redirect-URL, log ind med bottens Google-konto, kvotestatus og YouTubes indlejrede live-chat), Kick-app (Client ID, Secret og bottens navn; redirect- og webhook-URL vises) og Twitch-app (Client ID og Secret, tjekket hos Twitch), log ind med bot-kontoen, tjekliste for chatbot-badge og chat-identitet, beskedform (én pr. ordrelinje eller én pr. ordre med tilpasselig produktliste og skilletegn), rate limit og verificering, kanalerne med botten og et chatvindue pr. kanal (eget vindue via EventSub, ellers Twitchs indlejrede chat) med "Send som botten".

@@ -252,7 +252,7 @@ final class AlertsSettingsSection {
 	 * @param bool $enabled Whether alerts are switched on.
 	 * @param bool $blocked Whether MerchAlert is active.
 	 */
-	private static function status( bool $enabled, bool $blocked ): string {
+	public static function status( bool $enabled, bool $blocked ): string {
 		if ( ! $enabled ) {
 			return __( 'Off. No alerts are recorded.', 'merchboard' );
 		}

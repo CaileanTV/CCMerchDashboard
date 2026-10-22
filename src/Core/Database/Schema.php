@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Core\Database;
 
+use MerchBoard\Core\Database\Migrations\AddAlertOrderLogIndexes;
 use MerchBoard\Core\Database\Migrations\AddChatbotPlatforms;
 use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
 use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
@@ -71,6 +72,7 @@ final class Schema {
 			20 => new CreateAlertChatbotTables(),
 			21 => new AddChatbotPlatforms(),
 			22 => new WidenChatbotChannels(),
+			23 => new AddAlertOrderLogIndexes(),
 		);
 	}
 }

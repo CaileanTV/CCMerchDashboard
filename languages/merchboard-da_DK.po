@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-22T21:49:52+00:00\n"
+"PO-Revision-Date: 2026-10-22T22:41:14+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -867,6 +867,7 @@ msgstr "produkterne i én mapping"
 
 #: src/Modules/Admin/AuditLogFormatter.php:693
 #: src/Modules/Admin/OverviewPage.php:136
+#: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
 #: build/dashboard.js:37
@@ -887,6 +888,7 @@ msgid "social links"
 msgstr "sociale links"
 
 #: src/Modules/Admin/AuditLogListTable.php:91
+#: src/Modules/Alerts/Admin/OrderLogTab.php:244
 #: build/dashboard.js:17
 msgid "Time"
 msgstr "Tidspunkt"
@@ -1033,6 +1035,7 @@ msgid "View audit log"
 msgstr "Se auditlog"
 
 #: src/Modules/Admin/OverviewPage.php:121
+#: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:86
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:233
@@ -1130,6 +1133,7 @@ msgid "Up to date"
 msgstr "Opdateret"
 
 #: src/Modules/Admin/OverviewPage.php:196
+#: src/Modules/Alerts/Admin/OrderLogTab.php:202
 msgid "WooCommerce"
 msgstr "WooCommerce"
 
@@ -1152,7 +1156,7 @@ msgid "Settings"
 msgstr "Indstillinger"
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:151
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:152
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:194
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:256
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:304
@@ -1186,13 +1190,16 @@ msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:72
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:73
 msgid "Merch Dashboard Alerts"
 msgstr "Merch Dashboard Alerts"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:73
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:167
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:74
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:169
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
+#: src/Modules/Alerts/Admin/OrderLogTab.php:200
+#: src/Modules/Alerts/Admin/OrderLogTab.php:209
+#: src/Modules/Alerts/Admin/OrderLogTab.php:246
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:51
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:59
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:68
@@ -1200,33 +1207,33 @@ msgstr "Merch Dashboard Alerts"
 msgid "Alerts"
 msgstr "Alerts"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:107
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
 msgid "The Google Fonts API key was saved."
 msgstr "Google Fonts API-nøglen blev gemt."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
 msgid "The Google Fonts API key was removed."
 msgstr "Google Fonts API-nøglen blev fjernet."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
 msgid "The Google Fonts catalogue was fetched."
 msgstr "Google Fonts-kataloget blev hentet."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
 msgid "The font was approved. Creators can choose it now."
 msgstr "Fonten blev godkendt. Creators kan vælge den nu."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
 msgid "The font was removed. Overlays that used it show the default font."
 msgstr "Fonten blev fjernet. Overlays, der brugte den, viser standardfonten."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
 msgid "Nothing was changed."
 msgstr "Intet blev ændret."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:118
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:196
@@ -1238,200 +1245,208 @@ msgstr "Intet blev ændret."
 msgid "You are not allowed to change these settings."
 msgstr "Du har ikke adgang til at ændre disse indstillinger."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
 msgid "Google did not accept the API key. Check the key and try again."
 msgstr "Google accepterede ikke API-nøglen. Kontrollér nøglen, og prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
 msgid "Save a Google Fonts API key first."
 msgstr "Gem først en Google Fonts API-nøgle."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
 msgid "Google Fonts could not be reached. Try again later."
 msgstr "Google Fonts kunne ikke kontaktes. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
 msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
 msgstr "Fonten findes ikke i kataloget, eller grænsen for godkendte fonte er nået."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
 msgid "The sound was added to the library. Creators can choose it now."
 msgstr "Lyden blev tilføjet til biblioteket. Creators kan vælge den nu."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 msgid "The sound got its new name."
 msgstr "Lyden har fået sit nye navn."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
 msgid "The sound is no longer in the library."
 msgstr "Lyden findes ikke længere i biblioteket."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
 msgid "The sound was removed. Overlays that used it play their other sounds."
 msgstr "Lyden blev fjernet. Overlays, der brugte den, afspiller deres andre lyde."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
 #: build/dashboard.js:23
 #: build/dashboard.js:30
 msgid "No file was received. Try again."
 msgstr "Der blev ikke modtaget nogen fil. Prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
 #: build/dashboard.js:23
 msgid "Choose an MP3, WAV or OGG file."
 msgstr "Vælg en MP3-, WAV- eller OGG-fil."
 
 #. translators: %s: the largest file, e.g. "10 MB".
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
 #, php-format
 msgid "The file is larger than %s."
 msgstr "Filen er større end %s."
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
 #: build/dashboard.js:23
 #, js-format,php-format
 msgid "The sound is longer than %d seconds."
 msgstr "Lyden er længere end %d sekunder."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
 #: build/dashboard.js:23
 msgid "The file could not be read as a sound. Choose another file."
 msgstr "Filen kunne ikke læses som en lyd. Vælg en anden fil."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
 msgid "The library is full. Remove a sound first."
 msgstr "Biblioteket er fuldt. Fjern først en lyd."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
 msgid "The image was added to the library. Creators can choose it now."
 msgstr "Billedet blev tilføjet til biblioteket. Creators kan vælge det nu."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
 msgid "The image got its new name."
 msgstr "Billedet fik sit nye navn."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
 msgid "The image was removed. Texts it filled show their colour again."
 msgstr "Billedet blev fjernet. Tekster, det fyldte, vises i deres farve igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
 msgid "The image is no longer in the library."
 msgstr "Billedet er ikke længere i biblioteket."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
 #: build/dashboard.js:30
 msgid "Choose a PNG, JPG, GIF or WebP image."
 msgstr "Vælg et PNG-, JPG-, GIF- eller WebP-billede."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
 msgid "The file is too large."
 msgstr "Filen er for stor."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
 msgid "The image is too big. Choose a smaller image."
 msgstr "Billedet er for stort. Vælg et mindre billede."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
 #: build/dashboard.js:30
 msgid "The file could not be read as an image. Choose another file."
 msgstr "Filen kunne ikke læses som et billede. Vælg en anden fil."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
 msgid "The library is full. Remove an image first."
 msgstr "Biblioteket er fuldt. Fjern et billede først."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:207
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:226
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
 msgid "A technical error occurred. Nothing was changed."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:169
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:173
+msgid "Order log"
+msgstr "Ordrelog"
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:176
 msgid "Fonts"
 msgstr "Fonte"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:172
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:179
 #: build/dashboard.js:25
 msgid "Sounds"
 msgstr "Lyde"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:176
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:183
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:64
 msgid "Chatbot"
 msgstr "Chatbot"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:180
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:187
 msgid "Images"
 msgstr "Billeder"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:184
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:191
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
 msgid "YouTube terms"
 msgstr "YouTube-vilkår"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:228
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
+msgid "The order log could not be read. Please try again later."
+msgstr "Ordreloggen kunne ikke læses. Prøv igen senere."
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:247
 msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in the browser source, which sends the viewer's IP address to Google (ADR-067)."
 msgstr "Creators kan bruge de godkendte fonte i deres alert-overlay. Fontene hentes fra Googles servere i creator-dashboardet og i browser source, hvilket sender seerens IP-adresse til Google (ADR-067)."
 
 #. translators: 1: size, e.g. "10 MB", 2: seconds, 3: number of sounds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:245
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:264
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s and %2$d seconds each (Settings → Alerts); at most %3$d sounds."
 msgstr "Creators kan vælge disse lyde til deres alerts i stedet for at uploade deres egne. MP3, WAV eller OGG, højst %1$s og %2$d sekunder hver (Settings → Alerts); højst %3$d lyde."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:252
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:271
 msgid "Add a sound"
 msgstr "Tilføj en lyd"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:256
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:275
 msgid "Sound file"
 msgstr "Lydfil"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:277
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:337
 msgid "Name (optional)"
 msgstr "Navn (valgfrit)"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:260
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:320
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:339
 msgid "Creators see this name. Without a name, the file name is used."
 msgstr "Creators ser dette navn. Uden et navn bruges filnavnet."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:261
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:280
 #: build/dashboard.js:23
 msgid "Upload sound"
 msgstr "Upload lyd"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:266
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:285
 msgid "Sound library"
 msgstr "Lydbibliotek"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:269
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:288
 msgid "The library is empty. Creators can only use their own sounds."
 msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne lyde."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:273
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:362
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:380
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:381
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:399
 msgid "Name"
 msgstr "Navn"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:273
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
 msgid "Length"
 msgstr "Længde"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:273
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
 msgid "Play"
 msgstr "Afspil"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:273
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:469
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
@@ -1441,142 +1456,142 @@ msgid "Actions"
 msgstr "Handlinger"
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:281
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:300
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d sekund"
 msgstr[1] "%d sekunder"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:289
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:343
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:423
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:308
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:362
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:442
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 msgid "Remove"
 msgstr "Fjern"
 
 #. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:305
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:324
 #, php-format
 msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
 msgstr "Creators kan fylde deres alerttekst med disse billeder i stedet for at uploade deres egne. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde hver; højst %3$d billeder. Animerede GIF'er bliver ved med at bevæge sig."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:312
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
 msgid "Add an image"
 msgstr "Tilføj et billede"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:316
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:335
 msgid "Image file"
 msgstr "Billedfil"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:321
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:340
 #: build/dashboard.js:33
 msgid "Upload image"
 msgstr "Upload billede"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:326
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
 #: build/dashboard.js:33
 msgid "Image library"
 msgstr "Billedbibliotek"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:329
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:348
 msgid "The library is empty. Creators can only use their own images and the ready-made fills."
 msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne billeder og de færdige fyld."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
 #: build/dashboard.js:33
 msgid "Image"
 msgstr "Billede"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
 msgid "Size"
 msgstr "Størrelse"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:364
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:382
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:383
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:401
 msgid "Rename"
 msgstr "Omdøb"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:390
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:409
 msgid "Google Fonts API key"
 msgstr "Google Fonts API-nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:410
 msgid "A key is saved. It is never shown again."
 msgstr "En nøgle er gemt. Den vises aldrig igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:410
 msgid "No key is saved. The key is only needed to fetch the catalogue."
 msgstr "Der er ingen nøgle gemt. Nøglen skal kun bruges til at hente kataloget."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:395
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:414
 msgid "API key"
 msgstr "API-nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:397
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:416
 msgid "Save key"
 msgstr "Gem nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:400
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
 msgid "Remove key"
 msgstr "Fjern nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:412
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:431
 msgid "Approved fonts"
 msgstr "Godkendte fonte"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:415
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:434
 msgid "No fonts are approved. Creators can only use the default font."
 msgstr "Ingen fonte er godkendt. Creators kan kun bruge standardfonten."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:469
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
 #: build/dashboard.js:35
 msgid "Font"
 msgstr "Font"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:469
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr "Kategori"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:436
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:455
 msgid "Google Fonts catalogue"
 msgstr "Google Fonts-katalog"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:440
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:459
 msgid "Fetch the catalogue again"
 msgstr "Hent kataloget igen"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:440
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:459
 msgid "Fetch the catalogue"
 msgstr "Hent kataloget"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:449
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:468
 msgid "Search fonts"
 msgstr "Søg efter fonte"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:451
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:470
 msgid "Search"
 msgstr "Søg"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:458
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:477
 msgid "No fonts match the search."
 msgstr "Ingen fonte matcher søgningen."
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:465
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:484
 #, php-format
 msgid "At most %d fonts, the most popular first."
 msgstr "Højst %d fonte, de mest populære først."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:475
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:494
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr "Godkendt"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:477
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:496
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr "Godkend"
@@ -2491,6 +2506,109 @@ msgstr "Tom for standardgrænsen; ellers 100 KB til 500 MB. Sitets upload-græns
 msgid "Empty for the site-wide limit; else 1 second to 60 minutes."
 msgstr "Tom for standardgrænsen; ellers 1 sekund til 60 minutter."
 
+#: src/Modules/Alerts/Admin/OrderLogTab.php:144
+msgid "No orders with alerts in this period. Alerts are recorded when an order with a creator's products is paid (processing or completed) while alerts are switched on."
+msgstr "Ingen ordrer med alerts i denne periode. Alerts registreres, når en ordre med en creators produkter er betalt (behandles eller gennemført), mens alerts er slået til."
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:158
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:327
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:653
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:323
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:411
+msgid "&laquo; Previous"
+msgstr "&laquo; Forrige"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:159
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:328
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:654
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:324
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:412
+msgid "Next &raquo;"
+msgstr "Næste &raquo;"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:177
+msgid "Today"
+msgstr "I dag"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:178
+msgid "Last 24 hours"
+msgstr "Seneste 24 timer"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:179
+#: src/Modules/Creators/Admin/CreatorsListTable.php:133
+msgid "All"
+msgstr "Alle"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:190
+#: build/dashboard.js:20
+msgid "Refresh"
+msgstr "Opdatér"
+
+#. translators: %s: WooCommerce version.
+#: src/Modules/Alerts/Admin/OrderLogTab.php:205
+#, php-format
+msgid "Active (version %s)"
+msgstr "Aktiv (version %s)"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:208
+msgid "Orders with alerts"
+msgstr "Ordrer med alerts"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:243
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1017
+#: build/dashboard.js:17
+#: build/dashboard.js:35
+#: build/dashboard.js:48
+msgid "Order"
+msgstr "Ordre"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:245
+#: build/dashboard.js:17
+msgid "Username"
+msgstr "Brugernavn"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:247
+msgid "Chat"
+msgstr "Chat"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:261
+msgid "Anonymous"
+msgstr "Anonym"
+
+#. translators: 1: product name, 2: quantity.
+#: src/Modules/Alerts/Admin/OrderLogTab.php:308
+#, php-format
+msgid "%1$s × %2$d"
+msgstr "%1$s × %2$d"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:326
+msgid "No chat message"
+msgstr "Ingen chatbesked"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:356
+#: build/dashboard.js:1
+msgid "sent"
+msgstr "sendt"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:357
+msgid "waiting"
+msgstr "venter"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:358
+msgid "failed"
+msgstr "fejlet"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:359
+msgid "skipped"
+msgstr "sprunget over"
+
+#: src/Modules/Alerts/Admin/OrderLogTab.php:371
+msgid "not live"
+msgstr "ikke live"
+
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:41
 msgid "Privacy policy and terms of the YouTube chatbot"
 msgstr "Privatlivspolitik og vilkår for YouTube-chatbotten"
@@ -2841,10 +2959,6 @@ msgstr "Gem ændringer"
 #, php-format
 msgid "%s (archived on uninstall)"
 msgstr "%s (arkiveret ved afinstallation)"
-
-#: src/Modules/Creators/Admin/CreatorsListTable.php:133
-msgid "All"
-msgstr "Alle"
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:186
 msgid "No creators found."
@@ -4320,16 +4434,6 @@ msgid "Gift card order registration could not be checked"
 msgstr "Gavekortregistreringen kunne ikke kontrolleres"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1017
-#: build/dashboard.js:17
-#: build/dashboard.js:35
-#: build/dashboard.js:48
-msgid "Order"
-msgstr "Ordre"
-
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
 msgid "Ledger dates"
 msgstr "Ledger-datoer"
 
@@ -4364,20 +4468,6 @@ msgstr "Profitdata"
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
 msgid "Settlement"
 msgstr "Afregning"
-
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:327
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:653
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:323
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:411
-msgid "&laquo; Previous"
-msgstr "&laquo; Forrige"
-
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:328
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:654
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:324
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:412
-msgid "Next &raquo;"
-msgstr "Næste &raquo;"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:350
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:787
@@ -6691,10 +6781,6 @@ msgid "Dismiss"
 msgstr "Luk"
 
 #: build/dashboard.js:1
-msgid "sent"
-msgstr "sendt"
-
-#: build/dashboard.js:1
 msgid "waiting (you were not live; checked again after 5 minutes)"
 msgstr "venter (du var ikke live; tjekkes igen efter 5 minutter)"
 
@@ -6947,10 +7033,6 @@ msgstr[0] "%d alert blev sendt til dit overlay."
 msgstr[1] "%d alerts blev sendt til dit overlay."
 
 #: build/dashboard.js:17
-msgid "Username"
-msgstr "Brugernavn"
-
-#: build/dashboard.js:17
 msgid "No username"
 msgstr "Intet brugernavn"
 
@@ -6989,10 +7071,6 @@ msgstr "Gensend ordre"
 #: build/dashboard.js:20
 msgid "Your alerts"
 msgstr "Dine alerts"
-
-#: build/dashboard.js:20
-msgid "Refresh"
-msgstr "Opdatér"
 
 #: build/dashboard.js:20
 msgid "The list also refreshes itself every minute."

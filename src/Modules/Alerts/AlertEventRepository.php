@@ -143,6 +143,87 @@ final class AlertEventRepository {
 	}
 
 	/**
+	 * Totals of the administrator's order log (step 25.9.3): orders, alerts
+	 * and creators with alerts recorded since a moment (null = all).
+	 *
+	 * @param DateTimeImmutable|null $since Lower bound, inclusive; null for all.
+	 * @return array{orders: int, alerts: int, creators: int}
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function log_totals( ?DateTimeImmutable $since ): array {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(DISTINCT order_id) AS orders, COUNT(*) AS alerts, COUNT(DISTINCT creator_id) AS creators FROM %i WHERE created_at >= %s', $this->table(), self::lower_bound( $since ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( ! is_array( $row ) || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array(
+			'orders'   => self::int( $row['orders'] ?? null ),
+			'alerts'   => self::int( $row['alerts'] ?? null ),
+			'creators' => self::int( $row['creators'] ?? null ),
+		);
+	}
+
+	/**
+	 * A page of the order log: orders with alerts recorded since a moment,
+	 * the newest alert first, across all creators.
+	 *
+	 * @param DateTimeImmutable|null $since      Lower bound, inclusive; null for all.
+	 * @param Pagination             $pagination Page.
+	 * @return list<int> Order ids.
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function log_page( ?DateTimeImmutable $since, Pagination $pagination ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT order_id FROM %i WHERE created_at >= %s GROUP BY order_id ORDER BY MAX(id) DESC LIMIT %d OFFSET %d', $this->table(), self::lower_bound( $since ), $pagination->per_page, $pagination->offset() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * Every creator's alerts of some orders, oldest first (the order log).
+	 *
+	 * @phpstan-param list<int> $order_ids
+	 *
+	 * @param int[] $order_ids Orders.
+	 * @return list<AlertEvent>
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function for_orders( array $order_ids ): array {
+		$order_ids = array_values( array_unique( array_filter( $order_ids, static fn( int $id ): bool => $id > 0 ) ) );
+
+		if ( array() === $order_ids ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE order_id IN (' . implode( ', ', array_fill( 0, count( $order_ids ), '%d' ) ) . ') ORDER BY id', $this->table(), ...$order_ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list and one placeholder per id; values are prepared.
+
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( self::hydrate( ... ), $rows );
+	}
+
+	/**
+	 * The stored (UTC) lower bound of a time filter.
+	 *
+	 * @param DateTimeImmutable|null $since Lower bound; null for all.
+	 */
+	private static function lower_bound( ?DateTimeImmutable $since ): string {
+		return null === $since ? '1000-01-01 00:00:00' : $since->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+	}
+
+	/**
 	 * The creator's alerts of some orders, oldest first; never another
 	 * creator's alerts of the same order.
 	 *

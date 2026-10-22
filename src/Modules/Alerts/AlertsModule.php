@@ -23,6 +23,7 @@ use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
 use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
 use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsActions;
 use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsSection;
+use MerchBoard\Modules\Alerts\Admin\OrderLogTab;
 use MerchBoard\Modules\Alerts\Admin\YouTubeLegalTab;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
@@ -148,7 +149,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).

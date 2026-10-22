@@ -177,6 +177,47 @@ final class ChatMessageRepository {
 	}
 
 	/**
+	 * The message outcomes of some orders for the administrator's order log
+	 * (step 25.9.3): per order, creator, platform and status, the number of
+	 * messages and a reason ('' for none).
+	 *
+	 * @phpstan-param list<int> $order_ids
+	 *
+	 * @param int[] $order_ids Orders.
+	 * @return list<array{order_id: int, creator_id: int, platform: string, status: string, reason: string, count: int}>
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function outcomes( array $order_ids ): array {
+		$order_ids = array_values( array_unique( array_filter( $order_ids, static fn( int $id ): bool => $id > 0 ) ) );
+
+		if ( array() === $order_ids ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT order_id, creator_id, platform, status, MAX(reason) AS reason, COUNT(*) AS count FROM %i WHERE order_id IN (' . implode( ', ', array_fill( 0, count( $order_ids ), '%d' ) ) . ') GROUP BY order_id, creator_id, platform, status ORDER BY order_id, creator_id, platform, status', $this->table(), ...$order_ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery -- One placeholder per id; values are prepared.
+
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the chat message log.' );
+		}
+
+		$outcomes = array();
+
+		foreach ( $rows as $row ) {
+			$outcomes[] = array(
+				'order_id'   => (int) ( $row['order_id'] ?? 0 ),
+				'creator_id' => (int) ( $row['creator_id'] ?? 0 ),
+				'platform'   => (string) ( $row['platform'] ?? '' ),
+				'status'     => (string) ( $row['status'] ?? '' ),
+				'reason'     => (string) ( $row['reason'] ?? '' ),
+				'count'      => (int) ( $row['count'] ?? 0 ),
+			);
+		}
+
+		return $outcomes;
+	}
+
+	/**
 	 * The creator's latest message outcome, or null.
 	 *
 	 * @param int          $creator_id Creator.
