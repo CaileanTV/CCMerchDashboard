@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-21T20:50:54+00:00\n"
+"PO-Revision-Date: 2026-10-22T17:37:00+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -894,7 +894,7 @@ msgid "Event"
 msgstr "Hændelse"
 
 #: src/Modules/Admin/AuditLogListTable.php:93
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
@@ -1347,7 +1347,7 @@ msgid "Images"
 msgstr "Billeder"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:182
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:283
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
 msgid "YouTube terms"
 msgstr "YouTube-vilkår"
 
@@ -1411,7 +1411,7 @@ msgstr "Afspil"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:417
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:467
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
@@ -1649,7 +1649,7 @@ msgid "The login at Twitch was cancelled. Nothing was changed."
 msgstr "Login hos Twitch blev annulleret. Intet er ændret."
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:183
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:185
 msgid "Save the Twitch app first."
 msgstr "Gem Twitch-appen først."
 
@@ -1698,7 +1698,7 @@ msgid "The login at Google was cancelled. Nothing was changed."
 msgstr "Login hos Google blev afbrudt. Intet er ændret."
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:100
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:316
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:318
 msgid "Save the Google app first."
 msgstr "Gem Google-appen først."
 
@@ -1770,397 +1770,405 @@ msgstr "YouTube tillod ikke botten at skrive. Tjek, at livestreamen ikke er priv
 msgid "The creator is not live on YouTube right now. The bot can only write during a livestream."
 msgstr "Creatoren er ikke live på YouTube lige nu. Botten kan kun skrive under en livestream."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:154
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:120
+msgid "Google did not let the creator's account see its livestreams. The creator removes the bot and adds it again with the Google account that owns the channel (for a brand account: its owner), and checks that the channel may stream live. Google's error code is in WooCommerce → Status → Logs."
+msgstr "Google lod ikke creatorens konto se sine livestreams. Creatoren fjerner botten og tilføjer den igen med den Google-konto, der ejer kanalen (for en brand-konto: dens ejer), og tjekker, at kanalen må livestreame. Googles fejlkode står under WooCommerce → Status → Logs."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:121
+msgid "The day's YouTube quota is used up. Messages wait until it resets at midnight Pacific Time."
+msgstr "Dagens YouTube-kvote er brugt op. Beskeder venter, til den nulstilles ved midnat Pacific Time."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:156
 msgid "Twitch app"
 msgstr "Twitch-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:155
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:157
 msgid "Create an application in the Twitch developer console (category \"Chat Bot\", client type \"Confidential\") and register this OAuth redirect URL:"
 msgstr "Opret en applikation i Twitch Developer Console (kategori \"Chat Bot\", client type \"Confidential\"), og registrér denne OAuth redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:161
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:228
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:266
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:163
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:268
 msgid "Client ID"
 msgstr "Client ID"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:162
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:229
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:267
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:164
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:231
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:269
 msgid "Client Secret"
 msgstr "Client Secret"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:163
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:268
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
 msgid "A secret is saved and never shown again. Enter it again to change the app."
 msgstr "En hemmelighed er gemt og vises aldrig igen. Indtast den igen for at ændre appen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:163
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:268
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
 msgid "The secret is stored encrypted."
 msgstr "Hemmeligheden gemmes krypteret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:167
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:236
 msgid "Save and check"
 msgstr "Gem og tjek"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:168
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:237
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:273
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:170
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:239
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:275
 msgid "Remove the app"
 msgstr "Fjern appen"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:180
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:182
 msgid "Bot account"
 msgstr "Bot-konto"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:190
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:192
 msgid "Log in with the Twitch account that writes the messages, not with your own. Twitch always asks, so you can choose the account; a private browser window helps."
 msgstr "Log ind med den Twitch-konto, der skriver beskederne, ikke med din egen. Twitch spørger altid, så du kan vælge kontoen; et privat browservindue hjælper."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:193
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:195
 msgid "Log in with the bot account at Twitch"
 msgstr "Log ind med bot-kontoen hos Twitch"
 
 #. translators: %s: Twitch login of the bot.
 #. translators: %s: name of the bot's YouTube channel.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:196
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:292
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:198
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:294
 #, php-format
 msgid "Connected as %s."
 msgstr "Forbundet som %s."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:199
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:300
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:201
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:302
 msgid "Disconnect the bot"
 msgstr "Afbryd botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:205
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:207
 msgid "Chatbot badge and chat identity"
 msgstr "Chatbot-badge og chat-identitet"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:207
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:209
 msgid "Messages are sent with Send Chat Message and an app access token."
 msgstr "Beskeder sendes med Send Chat Message og en app access token."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:208
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:210
 msgid "The bot account authorized the app (user:bot, user:write:chat, user:read:chat)."
 msgstr "Bot-kontoen har godkendt appen (user:bot, user:write:chat, user:read:chat)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:209
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:211
 msgid "Each creator adds the bot to the own channel (channel:bot) in the dashboard."
 msgstr "Hver creator tilføjer botten til sin egen kanal (channel:bot) i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:210
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:212
 msgid "The bot listens to the chats over an EventSub webhook (needs an HTTPS site Twitch can reach)."
 msgstr "Botten lytter til chattene via en EventSub-webhook (kræver et HTTPS-site, som Twitch kan nå)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:219
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:221
 msgid "Kick app"
 msgstr "Kick-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:220
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:222
 msgid "Create an app in your Kick account under Settings → Developer (two-factor authentication must be on), create a bot for the app there, and register this redirect URL:"
 msgstr "Opret en app på din Kick-konto under Settings → Developer (totrinsbekræftelse skal være slået til), opret en bot til appen dér, og registrér denne redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:222
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:224
 msgid "Turn on webhooks for the app and enter this webhook URL:"
 msgstr "Slå webhooks til for appen, og indtast denne webhook-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:231
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:233
 msgid "Bot name"
 msgstr "Bottens navn"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
 msgid "The name of the app's bot at Kick, shown to creators (optional)."
 msgstr "Navnet på appens bot hos Kick, som vises for creators (valgfrit)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:243
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:245
 msgid "Bot messages at Kick"
 msgstr "Bot-beskeder hos Kick"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:245
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:247
 msgid "The Kick app is saved and Kick accepted its credentials."
 msgstr "Kick-appen er gemt, og Kick har godkendt dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:246
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
 msgid "Messages are sent as the app's bot (type \"bot\") with the channel's own token, which is stored encrypted and renewed automatically."
 msgstr "Beskeder sendes som appens bot (type \"bot\") med kanalens eget token, som gemmes krypteret og fornyes automatisk."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:247
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:249
 msgid "Each creator adds the bot to the own channel (chat:write) in the dashboard."
 msgstr "Hver creator tilføjer botten til sin egen kanal (chat:write) i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:250
 msgid "The bot listens to the chats over Kick's webhook (needs an HTTPS site Kick can reach)."
 msgstr "Botten lytter til chattene via Kicks webhook (kræver et HTTPS-site, som Kick kan nå)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:259
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:261
 msgid "Google app"
 msgstr "Google-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:260
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:262
 msgid "Create a project in the Google Cloud console, enable the YouTube Data API v3, create an OAuth client (type \"Web application\") and register this redirect URL:"
 msgstr "Opret et projekt i Google Cloud-konsollen, slå YouTube Data API v3 til, opret en OAuth-klient (typen \"Web application\"), og registrér denne redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:272
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:126
 msgid "Save"
 msgstr "Gem"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:277
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:279
 msgid "YouTube bot"
 msgstr "YouTube-bot"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:283
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
 msgid "Publish the privacy policy and terms of the YouTube chatbot first (tab \"YouTube terms\"); Google requires them, and the bot account accepts them when it logs in."
 msgstr "Offentliggør først privatlivspolitikken og vilkårene for YouTube-chatbotten (fanen \"YouTube-vilkår\"); Google kræver dem, og bot-kontoen godkender dem, når den logger ind."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:287
 msgid "Log in with the Google account of the YouTube channel that writes the messages, not with your own. Google always asks which account to use."
 msgstr "Log ind med Google-kontoen for den YouTube-kanal, der skriver beskederne, ikke med din egen. Google spørger altid, hvilken konto der skal bruges."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:289
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:291
 msgid "Log in with the bot account at Google"
 msgstr "Log ind med bot-kontoen hos Google"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:295
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:297
 msgid "Google no longer accepts the bot's login (it was revoked, or the Google app is in testing, where logins expire after 7 days). Disconnect the bot and log in again."
 msgstr "Google godkender ikke længere bottens login (det er tilbagekaldt, eller Google-appen er i test, hvor logins udløber efter 7 dage). Afbryd botten, og log ind igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:307
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:309
 msgid "The privacy policy and terms of the YouTube chatbot have a new version. The bot sends no YouTube messages until you accept it for the bot."
 msgstr "Privatlivspolitikken og vilkårene for YouTube-chatbotten har en ny version. Botten sender ingen YouTube-beskeder, før du godkender den for botten."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:312
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:314
 msgid "Accept for the bot"
 msgstr "Godkend for botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:322
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:324
 msgid "Bot messages on YouTube"
 msgstr "Bot-beskeder på YouTube"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:324
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:326
 msgid "The Google app is saved."
 msgstr "Google-appen er gemt."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:325
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:327
 msgid "The privacy policy and terms are published and accepted for the bot."
 msgstr "Privatlivspolitikken og vilkårene er offentliggjort og godkendt for botten."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:326
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:328
 msgid "The bot's YouTube channel is logged in (youtube.force-ssl)."
 msgstr "Bottens YouTube-kanal er logget ind (youtube.force-ssl)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:327
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:329
 msgid "Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found."
 msgstr "Hver creator tilføjer botten til sin egen kanal (youtube.readonly) i dashboardet, så livestreamen kan findes."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:328
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:330
 msgid "Messages are written only during a livestream. When the creator is not live, the bot checks once more after 5 minutes and otherwise skips the message (as few YouTube calls as possible)."
 msgstr "Beskeder skrives kun under en livestream. Er creatoren ikke live, tjekker botten én gang til efter 5 minutter og springer ellers beskeden over (så få YouTube-kald som muligt)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:329
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:331
 msgid "The day's YouTube quota is not used up (10,000 units; a message costs 20, a live check 1)."
 msgstr "Dagens YouTube-kvote er ikke brugt op (10.000 enheder; en besked koster 20, et live-tjek 1)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:332
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:334
 msgid "YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days: publish the app in the Google Cloud console (\"In production\") with the URLs from the tab \"YouTube terms\", and log the bot in again. Without Google's verification, Google shows a warning at login."
 msgstr "YouTube viser intet bot-badge; creators kan gøre botten til moderator. Mens Google-appen er i test, kan højst 100 testbrugere logge ind, og logins udløber efter 7 dage: offentliggør appen i Google Cloud-konsollen (\"In production\") med URL'erne fra fanen \"YouTube-vilkår\", og log botten ind igen. Uden Googles verificering viser Google en advarsel ved login."
 
 #. translators: 1: link "privacy policy", 2: link "terms of service".
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:344
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:346
 #, php-format
 msgid "On behalf of the bot account, I accept the %1$s and the %2$s of the YouTube chatbot."
 msgstr "På vegne af bot-kontoen accepterer jeg YouTube-chatbottens %1$s og %2$s."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:345
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:347
 msgid "privacy policy"
 msgstr "privatlivspolitik"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:346
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:348
 msgid "terms of service"
 msgstr "vilkår"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:361
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:363
 msgid "(not met)"
 msgstr "(ikke opfyldt)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:373
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:375
 msgid "Message format"
 msgstr "Beskedformat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:377
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:379
 msgid "Messages per purchase"
 msgstr "Beskeder pr. køb"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:378
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:380
 msgid "One message per order line (as MerchAlert)"
 msgstr "Én besked pr. ordrelinje (som MerchAlert)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:379
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:381
 msgid "One message per order"
 msgstr "Én besked pr. ordre"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:380
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
 msgid "Each product in $Products (one message per order)"
 msgstr "Hvert produkt i $Products (én besked pr. ordre)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:384
 msgid "Variables: $Quantity, $Product, $Variation, $Category."
 msgstr "Variabler: $Quantity, $Product, $Variation, $Category."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:383
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:385
 msgid "Between the products"
 msgstr "Mellem produkterne"
 
 #. translators: 1: a product, 2: the separator, 3: another product.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:388
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:390
 #, php-format
 msgid "Example of $Products: %1$s%2$s%3$s"
 msgstr "Eksempel på $Products: %1$s%2$s%3$s"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:410
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:412
 msgid "Save format"
 msgstr "Gem format"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:420
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:422
 msgid "Rate limit and verification"
 msgstr "Rate limit og verificering"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:421
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:423
 msgid "Twitch lets a bot send 20 messages per 30 seconds across all channels (100 where it is moderator or VIP), and at most one per second in a channel. A verified bot may send 7,500 per 30 seconds. Messages wait in a queue when the limit is reached."
 msgstr "Twitch lader en bot sende 20 beskeder pr. 30 sekunder på tværs af alle kanaler (100, hvor den er moderator eller VIP), og højst én pr. sekund i en kanal. En verificeret bot må sende 7.500 pr. 30 sekunder. Beskeder venter i en kø, når grænsen er nået."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:424
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:426
 msgid "No message has been sent yet."
 msgstr "Der er ikke sendt nogen besked endnu."
 
 #. translators: %d: messages per 30 seconds.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:426
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:428
 #, php-format
 msgid "Twitch reported a limit of %d messages per 30 seconds for the latest message."
 msgstr "Twitch oplyste en grænse på %d beskeder pr. 30 sekunder ved den seneste besked."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:438
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:440
 msgid "Channels"
 msgstr "Kanaler"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:441
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:443
 msgid "No creator has added the bot to a channel yet. Creators do this under Alerts → Chatbot in the dashboard."
 msgstr "Ingen creator har tilføjet botten til en kanal endnu. Creators gør det under Alerts → Chatbot i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 msgid "Platform"
 msgstr "Platform"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 msgid "Channel"
 msgstr "Kanal"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 msgid "Messages"
 msgstr "Beskeder"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 msgid "Listening"
 msgstr "Lytter"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 msgid "Latest message"
 msgstr "Seneste besked"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:454
 msgid "On"
 msgstr "Til"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:454
 msgid "Off"
 msgstr "Fra"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:455
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:457
 msgid "Open chat"
 msgstr "Åbn chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:463
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:465
 msgid "Renew the chat subscriptions"
 msgstr "Forny chat-abonnementerne"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:477
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:479
 msgid "Back to the chatbot"
 msgstr "Tilbage til chatbotten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:480
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:482
 msgid "This creator has not added the bot to a channel."
 msgstr "Denne creator har ikke tilføjet botten til en kanal."
 
 #. translators: 1: channel login, 2: platform (Twitch or Kick).
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:485
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:487
 #, php-format
 msgid "Chat of %1$s (%2$s)"
 msgstr "Chat for %1$s (%2$s)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:488
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:490
 msgid "No messages in the last 24 hours."
 msgstr "Ingen beskeder de seneste 24 timer."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:488
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:490
 msgid "The chat could not be loaded. It is tried again."
 msgstr "Chatten kunne ikke indlæses. Der prøves igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:489
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:491
 msgid "The bot's own view of the chat (webhook). Messages are kept for 24 hours."
 msgstr "Bottens egen visning af chatten (webhook). Beskeder gemmes i 24 timer."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:491
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:493
 msgid "Twitch cannot send the chat to this site (no HTTPS webhook), so Twitch's own chat is shown. It loads from twitch.tv."
 msgstr "Twitch kan ikke sende chatten til dette site (ingen HTTPS-webhook), så Twitchs egen chat vises. Den indlæses fra twitch.tv."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:492
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:494
 msgid "Twitch chat"
 msgstr "Twitch-chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:494
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:496
 msgid "Open the chat at Twitch"
 msgstr "Åbn chatten hos Twitch"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:498
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:500
 msgid "Kick cannot send the chat to this site (no HTTPS webhook, or webhooks are off in the Kick app)."
 msgstr "Kick kan ikke sende chatten til dette site (ingen HTTPS-webhook, eller webhooks er slået fra i Kick-appen)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:499
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:501
 msgid "Open the chat at Kick"
 msgstr "Åbn chatten hos Kick"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:507
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:509
 msgid "Send as the bot"
 msgstr "Send som botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:509
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:511
 msgid "Send"
 msgstr "Send"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:524
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:526
 msgid "The creator is not live on YouTube right now (or YouTube could not be asked). The chat exists only during a livestream."
 msgstr "Creatoren er ikke live på YouTube lige nu (eller YouTube kunne ikke spørges). Chatten findes kun under en livestream."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:526
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:528
 msgid "YouTube's own live chat of the current livestream. It loads from youtube.com."
 msgstr "YouTubes egen livechat fra den aktuelle livestream. Den indlæses fra youtube.com."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:527
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:529
 msgid "YouTube chat"
 msgstr "YouTube-chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:530
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:532
 msgid "Open the livestream at YouTube"
 msgstr "Åbn livestreamen hos YouTube"
 
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:556
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:558
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2170,20 +2178,20 @@ msgstr "Åbn livestreamen hos YouTube"
 msgid "Yes"
 msgstr "Ja"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:557
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:559
 msgid "Waiting for Twitch"
 msgstr "Venter på Twitch"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:558
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:560
 msgid "No (site not reachable)"
 msgstr "Nej (sitet kan ikke nås)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:559
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:561
 msgid "YouTube's chat (embedded)"
 msgstr "YouTubes chat (indlejret)"
 
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:560
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:562
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -6600,6 +6608,14 @@ msgstr "Fjern botten fra din kanal? Den skriver så ikke længere i din chat."
 #: build/dashboard.js:10
 msgid "The bot was removed from your channel."
 msgstr "Botten er fjernet fra din kanal."
+
+#: build/dashboard.js:10
+msgid "Google did not let your account see your YouTube livestreams. Remove the bot and add it again with the Google account that owns the channel (for a brand account: its owner), and check that your channel may stream live."
+msgstr "Google lod ikke din konto se dine YouTube-livestreams. Fjern botten, og tilføj den igen med den Google-konto, der ejer kanalen (for en brand-konto: dens ejer), og tjek, at din kanal må livestreame."
+
+#: build/dashboard.js:10
+msgid "YouTube's daily quota for the chatbot is used up. Messages wait until it resets (midnight Pacific Time)."
+msgstr "YouTubes daglige kvote for chatbotten er brugt op. Beskeder venter, til den nulstilles (midnat Pacific Time)."
 
 #: build/dashboard.js:10
 msgid "YouTube did not let the bot write. Check that your livestream is not private and that your chat is not for subscribers or members only, and make the bot a moderator."

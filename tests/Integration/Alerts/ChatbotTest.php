@@ -1497,6 +1497,64 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'merchboard_alerts_admin_result=message_youtube_not_live', $send() );
 	}
 
+	public function test_a_refused_live_check_is_logged_and_explained_and_a_used_up_quota_waits(): void {
+		$this->routes();
+		$nova = $this->creator( 'nova' );
+		$this->youtube_creator( $nova );
+		wp_set_current_user( $this->user_of( $nova ) );
+		$logger   = new RecordingLogger();
+		$platform = new YouTubePlatform( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->youtube_terms, $logger );
+		$channel  = $this->channels->find( $nova, ChatPlatform::YouTube );
+		$refusal  = static fn( string $reason, string $message ): array => array(
+			'error' => array(
+				'code'    => 403,
+				'message' => $message,
+				'errors'  => array( array( 'reason' => $reason ) ),
+			),
+		);
+
+		// The account may not see its livestreams (e.g. not the owner of a brand account).
+		$this->answer( self::YT_BROADCASTS, 403, $refusal( 'insufficientLivePermissions', 'The request is not authorized to retrieve the live broadcast.' ) );
+		self::assertSame( array( 'forbidden', 'live_not_allowed' ), array_slice( array_values( $platform->send( $channel, 'Hi' ) ), 0, 2 ) );
+		self::assertSame(
+			array(
+				'creator_id' => $nova,
+				'reason'     => 'live_not_allowed',
+				'status'     => 403,
+				'detail'     => 'insufficientLivePermissions The request is not authorized to retrieve the live broadcast.',
+			),
+			$logger->at( 'warning' )[0]['context'] ?? null
+		);
+		self::assertStringNotContainsString( 'yt-nova-access', (string) wp_json_encode( $logger->entries ), 'Never a token.' );
+		self::assertTrue( $this->channels->find( $nova, ChatPlatform::YouTube )->connected(), 'The channel stays.' );
+
+		// The creator's test message gets an answer instead of a 409.
+		$test = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/youtube/test' );
+		self::assertSame( array( 200, 'forbidden', 'live_not_allowed' ), array( $test->get_status(), $test->get_data()['result'] ?? null, $test->get_data()['reason'] ?? null ) );
+
+		$this->as_admin();
+		$actions = new ChatbotAdminActions( $this->account, $this->kick, $this->youtube, $this->youtube_oauth, $this->oauth, $this->format, $this->subscriptions, $this->channels, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ), $this->legal, $this->youtube_terms );
+		$send    = fn(): string => $actions->process(
+			array(
+				'action'   => ChatbotAdminActions::SEND_ACTION,
+				'creator'  => (string) $nova,
+				'platform' => 'youtube',
+				'message'  => 'Hello chat',
+				'_wpnonce' => wp_create_nonce( ChatbotAdminActions::nonce_action( ChatbotAdminActions::SEND_ACTION, $nova, ChatPlatform::YouTube ) ),
+			)
+		);
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=message_youtube_live_not_allowed', $send() );
+
+		// The day's quota is used up already at the live check: the messages wait, with no further call.
+		$this->answer( self::YT_BROADCASTS, 403, $refusal( 'quotaExceeded', 'The request cannot be completed because you have exceeded your quota.' ) );
+		self::assertSame( 'quota_exceeded', $platform->send( $channel, 'Hi' )['reason'] );
+		self::assertGreaterThan( time(), $this->youtube->quota_until() );
+		$calls = count( $this->requests_to( self::YT_BROADCASTS ) );
+		self::assertSame( array( 'rate_limited', 'quota_exceeded' ), array_slice( array_values( $platform->send( $channel, 'Hi' ) ), 0, 2 ) );
+		self::assertCount( $calls, $this->requests_to( self::YT_BROADCASTS ), 'No call while the quota is used up.' );
+		self::assertStringContainsString( 'merchboard_alerts_admin_result=message_youtube_quota', $send() );
+	}
+
 	public function test_a_revoked_youtube_access_forgets_the_channel_after_one_renewal(): void {
 		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
 		$this->youtube_creator( $nova );

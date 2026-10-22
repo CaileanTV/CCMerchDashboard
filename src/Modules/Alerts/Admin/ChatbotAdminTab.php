@@ -117,6 +117,8 @@ final class ChatbotAdminTab {
 			'message_failed'               => array( __( 'The platform did not send the message. Check that the bot is still in the channel.', 'merchboard' ), 'error' ),
 			'message_youtube_forbidden'    => array( __( 'YouTube did not let the bot write. Check that the livestream is not private and that the chat is not for subscribers or members only, and make the bot a moderator of the channel.', 'merchboard' ), 'error' ),
 			'message_youtube_not_live'     => array( __( 'The creator is not live on YouTube right now. The bot can only write during a livestream.', 'merchboard' ), 'error' ),
+			'message_youtube_live_not_allowed' => array( __( 'Google did not let the creator\'s account see its livestreams. The creator removes the bot and adds it again with the Google account that owns the channel (for a brand account: its owner), and checks that the channel may stream live. Google\'s error code is in WooCommerce → Status → Logs.', 'merchboard' ), 'error' ),
+			'message_youtube_quota'        => array( __( 'The day\'s YouTube quota is used up. Messages wait until it resets at midnight Pacific Time.', 'merchboard' ), 'error' ),
 			default                        => null,
 		};
 	}

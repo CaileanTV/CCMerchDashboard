@@ -34,6 +34,8 @@ class ChatbotException extends RuntimeException {
 	public const NO_WEBHOOKS         = 'no_webhooks';
 	public const UNEXPECTED          = 'unexpected_answer';
 	public const TERMS_REQUIRED      = 'terms_required';
+	public const QUOTA_EXCEEDED      = 'quota_exceeded';
+	public const LIVE_NOT_ALLOWED    = 'live_not_allowed';
 
 	/**
 	 * The platform in technical messages.
@@ -45,9 +47,17 @@ class ChatbotException extends RuntimeException {
 	 *
 	 * @param string $reason One of the constants.
 	 * @param int    $status The platform's HTTP status, for the technical log (0: none or a transport error).
+	 * @param string $detail The platform's own error code and text, for the technical log ('' for none; never a token).
 	 */
-	public function __construct( private string $reason, private int $status = 0 ) {
+	public function __construct( private string $reason, private int $status = 0, private string $detail = '' ) {
 		parent::__construct( static::PLATFORM_LABEL . ' chatbot: ' . $reason . '.' );
+	}
+
+	/**
+	 * The platform's own error code and text ('' for none).
+	 */
+	public function detail(): string {
+		return $this->detail;
 	}
 
 	/**

@@ -94,7 +94,7 @@ final class YouTubePlatform implements ChatbotPlatform {
 	 *
 	 * @param ChatbotChannel $channel The creator's channel.
 	 * @param string         $message Message.
-	 * @return array{result: string, reason: string, retry_after: int|null} result also `not_live` when the creator is not live, and `skipped` (`terms_not_accepted`) when the creator has not accepted the current privacy policy and terms.
+	 * @return array{result: string, reason: string, retry_after: int|null} result also `not_live` when the creator is not live, `skipped` (`terms_not_accepted`) when the creator has not accepted the current privacy policy and terms, `rate_limited` (`quota_exceeded`) while the day's quota is used up and `forbidden` (`live_not_allowed`) when Google does not let the creator's account see its livestreams.
 	 * @throws ChatbotException When the app or the bot is not set up, or Google cannot be reached.
 	 * @throws DatabaseException When the creator's tokens cannot be read or stored.
 	 */
@@ -106,7 +106,16 @@ final class YouTubePlatform implements ChatbotPlatform {
 			return self::outcome( 'skipped', 'terms_not_accepted' );
 		}
 
-		$live = $this->live( $channel );
+		// The day's quota is used up: no call until it resets (also for test messages).
+		if ( $this->account->wait_seconds() > 0 ) {
+			return self::outcome( 'rate_limited', 'quota_exceeded', $this->account->wait_seconds() );
+		}
+
+		try {
+			$live = $this->live( $channel );
+		} catch ( ChatbotException $e ) {
+			return $this->live_failure( $channel, $e );
+		}
 
 		if ( null === $live ) {
 			return self::outcome( 'unauthorized', 'authorization_revoked' );
@@ -147,6 +156,40 @@ final class YouTubePlatform implements ChatbotPlatform {
 		}
 
 		return self::outcome( $result['result'], $result['reason'], $result['retry_after'] );
+	}
+
+	/**
+	 * A failed live lookup: logged with Google's error code and text (never
+	 * a token). A used-up quota makes the messages wait until it resets; an
+	 * account that may not see its livestreams is a final refusal.
+	 *
+	 * @param ChatbotChannel   $channel The creator's channel.
+	 * @param ChatbotException $e       Failure.
+	 * @return array{result: string, reason: string, retry_after: int|null}
+	 * @throws ChatbotException Every other failure (e.g. Google cannot be reached).
+	 */
+	private function live_failure( ChatbotChannel $channel, ChatbotException $e ): array {
+		$this->logger->warning(
+			'YouTube refused the live check of a creator.',
+			array(
+				'creator_id' => $channel->creator_id,
+				'reason'     => $e->reason(),
+				'status'     => $e->status(),
+				'detail'     => $e->detail(),
+			)
+		);
+
+		if ( ChatbotException::QUOTA_EXCEEDED === $e->reason() ) {
+			$this->account->note_quota_exhausted();
+
+			return self::outcome( 'rate_limited', 'quota_exceeded', $this->account->wait_seconds() );
+		}
+
+		if ( ChatbotException::LIVE_NOT_ALLOWED === $e->reason() ) {
+			return self::outcome( 'forbidden', 'live_not_allowed' );
+		}
+
+		throw $e;
 	}
 
 	/**

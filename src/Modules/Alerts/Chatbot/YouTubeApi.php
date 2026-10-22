@@ -190,7 +190,7 @@ final class YouTubeApi {
 	 *
 	 * @param string $access The creator's access token.
 	 * @return array{video: string, chat: string}|null
-	 * @throws ChatbotException When the token is refused or Google cannot be reached.
+	 * @throws ChatbotException UNAUTHORIZED when the token is refused, QUOTA_EXCEEDED when the day's quota is used up, LIVE_NOT_ALLOWED when the account may not see its livestreams, others when Google refuses or cannot be reached; with Google's error code and text.
 	 */
 	public function active_broadcast( string $access ): ?array {
 		$answer = $this->json(
@@ -206,7 +206,7 @@ final class YouTubeApi {
 			null
 		);
 
-		self::check( $answer['status'] );
+		self::check_live( $answer['status'], $answer['body'] );
 
 		foreach ( is_array( $answer['body']['items'] ?? null ) ? $answer['body']['items'] : array() as $item ) {
 			$video = is_array( $item ) ? ( $item['id'] ?? null ) : null;
@@ -276,6 +276,34 @@ final class YouTubeApi {
 		$error = is_array( $body['error'] ?? null ) ? $body['error'] : array();
 
 		return is_string( $error['message'] ?? null ) ? mb_substr( sanitize_text_field( $error['message'] ), 0, 300 ) : '';
+	}
+
+	/**
+	 * Requires a successful live lookup; a failure carries Google's error
+	 * code and text.
+	 *
+	 * @param int          $status HTTP status (0: transport error).
+	 * @param array<mixed> $body   Decoded body.
+	 * @throws ChatbotException When it is not a success.
+	 */
+	private static function check_live( int $status, array $body ): void {
+		if ( 200 === $status ) {
+			return;
+		}
+
+		$error = self::error_reason( $body );
+
+		throw new ChatbotException(
+			match ( true ) {
+				401 === $status => ChatbotException::UNAUTHORIZED,
+				in_array( $error, array( 'quotaExceeded', 'dailyLimitExceeded', 'rateLimitExceeded' ), true ) => ChatbotException::QUOTA_EXCEEDED,
+				in_array( $error, array( 'insufficientPermissions', 'insufficientLivePermissions', 'liveStreamingNotEnabled' ), true ) => ChatbotException::LIVE_NOT_ALLOWED,
+				403 === $status => ChatbotException::FORBIDDEN,
+				default => ChatbotException::UNAVAILABLE,
+			},
+			$status,
+			mb_substr( trim( $error . ' ' . self::error_message( $body ) ), 0, 300 )
+		);
 	}
 
 	/**

@@ -364,7 +364,12 @@ describe( 'AlertsChatbotSection', () => {
 				at: '2026-10-21T10:05:00Z',
 			},
 		};
-		const results = [ 'not_live', 'forbidden' ];
+		const results = [
+			[ 'not_live', 'not_live' ],
+			[ 'forbidden', 'forbidden' ],
+			[ 'forbidden', 'live_not_allowed' ],
+			[ 'rate_limited', 'quota_exceeded' ],
+		];
 		await show( {
 			[ `GET ${ PATH }` ]: () =>
 				response( 200, {
@@ -372,11 +377,11 @@ describe( 'AlertsChatbotSection', () => {
 					platforms: [ TWITCH, KICK, youtube ],
 				} ),
 			[ `POST ${ PATH }/youtube/test` ]: () => {
-				const result = results.shift() ?? 'sent';
+				const [ result, reason ] = results.shift() ?? [ 'sent', '' ];
 
 				return response( 200, {
 					result,
-					reason: result,
+					reason,
 					message: 'x',
 				} );
 			},
@@ -406,6 +411,20 @@ describe( 'AlertsChatbotSection', () => {
 			'YouTube did not let the bot write. Check that your livestream is not private'
 		);
 		expect( text() ).not.toContain( 'Add the bot to your channel again' );
+
+		// Google does not let the creator's account see its livestreams.
+		click( buttons( 'Send test message' )[ 0 ] ?? null );
+		await flush();
+		expect( text() ).toContain(
+			'Google did not let your account see your YouTube livestreams.'
+		);
+
+		// The day's quota is used up.
+		click( buttons( 'Send test message' )[ 0 ] ?? null );
+		await flush();
+		expect( text() ).toContain(
+			"YouTube's daily quota for the chatbot is used up."
+		);
 	} );
 
 	it( "names YouTube in the result of Google's redirect", async () => {

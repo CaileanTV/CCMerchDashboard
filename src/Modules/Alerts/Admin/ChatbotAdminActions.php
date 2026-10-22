@@ -307,13 +307,17 @@ final class ChatbotAdminActions {
 			}
 		);
 
-		$result = $this->sender->send_now( $channel, $message )['result'];
+		$sent    = $this->sender->send_now( $channel, $message );
+		$result  = $sent['result'];
+		$youtube = ChatPlatform::YouTube === $platform;
 
 		return match ( true ) {
 			'sent' === $result => 'message_sent',
+			$youtube && 'live_not_allowed' === $sent['reason'] => 'message_youtube_live_not_allowed',
+			$youtube && 'quota_exceeded' === $sent['reason'] => 'message_youtube_quota',
 			// YouTube refuses the bot because of the stream or chat settings (e.g. a private stream).
-			ChatPlatform::YouTube === $platform && 'forbidden' === $result => 'message_youtube_forbidden',
-			ChatPlatform::YouTube === $platform && 'not_live' === $result => 'message_youtube_not_live',
+			$youtube && 'forbidden' === $result => 'message_youtube_forbidden',
+			$youtube && 'not_live' === $result => 'message_youtube_not_live',
 			default => 'message_failed',
 		};
 	}

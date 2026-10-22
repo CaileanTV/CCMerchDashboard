@@ -206,9 +206,25 @@ export function statusLabel( status: string, reason = '' ): string {
 
 function testMessage(
 	result: string,
+	reason: string,
 	label: string,
 	platform: ChatPlatform
 ): string {
+	// Google does not let the creator's account see its livestreams.
+	if ( reason === 'live_not_allowed' ) {
+		return __(
+			'Google did not let your account see your YouTube livestreams. Remove the bot and add it again with the Google account that owns the channel (for a brand account: its owner), and check that your channel may stream live.',
+			'merchboard'
+		);
+	}
+
+	if ( reason === 'quota_exceeded' ) {
+		return __(
+			"YouTube's daily quota for the chatbot is used up. Messages wait until it resets (midnight Pacific Time).",
+			'merchboard'
+		);
+	}
+
 	// YouTube refuses the bot's message because of the stream or chat settings, not the bot.
 	if ( result === 'forbidden' && platform === 'youtube' ) {
 		return __(
@@ -604,7 +620,12 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 
 		if ( answer.ok ) {
 			setToast(
-				testMessage( answer.data.result, labelOf( platform ), platform )
+				testMessage(
+					answer.data.result,
+					answer.data.reason,
+					labelOf( platform ),
+					platform
+				)
 			);
 		} else {
 			setError( answer.error );
