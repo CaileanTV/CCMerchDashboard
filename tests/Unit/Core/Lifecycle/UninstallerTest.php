@@ -294,9 +294,27 @@ final class UninstallerTest extends TestCase {
 					'tables_left'  => true,
 					'settings'     => true,
 				),
+				array(
+					'key'          => '_merchboard_alert_username',
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+				array(
+					'key'          => '_wc_other/merchboard/alert-username',
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+				array(
+					'key'          => '_wc_other/merchboard/alert-username-show',
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
 			),
 			$deleted,
-			'Both product keys and the order failure marker (legacy post meta), through the meta API, while the opt-in is on and before the tables are dropped.'
+			'Both product keys, the order failure marker and the alert username (legacy post meta), through the meta API, while the opt-in is on and before the tables are dropped.'
 		);
 		self::assertArrayNotHasKey( Settings::OPTION, $options->options, 'The opt-in is removed last.' );
 	}

@@ -147,7 +147,35 @@ function wc_strtolower( $value ) {}
  * Cart (class-wc-cart.php).
  */
 class WC_Cart {
+
+	/**
+	 * @var array<string, array<string, mixed>>
+	 */
+	public $cart_contents = array();
+
+	/**
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function get_cart() {}
 }
+
+/**
+ * The main WooCommerce instance (class-woocommerce.php).
+ */
+final class WooCommerce {
+
+	/**
+	 * @var WC_Cart|null
+	 */
+	public $cart;
+}
+
+/**
+ * The main WooCommerce instance.
+ *
+ * @return WooCommerce
+ */
+function WC() {}
 
 /**
  * Discounts of a cart or an order (class-wc-discounts.php).
@@ -612,3 +640,19 @@ class ActionScheduler_Action {
 	 */
 	public function get_args() {}
 }
+
+/**
+ * Registers a field in the block checkout (WooCommerce 8.9+).
+ *
+ * @param array<string, mixed> $options Field options.
+ * @return \WP_Error|void
+ */
+function woocommerce_register_additional_checkout_field( $options ) {}
+
+/**
+ * Adds an extension's data to a Store API endpoint (WooCommerce Blocks).
+ *
+ * @param array<string, mixed> $args Endpoint, namespace and callbacks.
+ * @return void
+ */
+function woocommerce_store_api_register_endpoint_data( $args ) {}

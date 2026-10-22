@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T17:36:58+00:00\n"
+"POT-Creation-Date: 2026-10-22T19:23:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -1149,15 +1149,17 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:149
-#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:117
-#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:156
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:144
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:192
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:231
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:142
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:134
-#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:123
-#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:162
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:150
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:198
+#: src/Modules/Alerts/Admin/AlertsSettingsActions.php:237
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:136
@@ -1182,7 +1184,7 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:73
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:165
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:74
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:51
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:59
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:68
@@ -1217,7 +1219,8 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:117
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:113
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:49
 #: src/Modules/Settings/Admin/SettingsPage.php:165
@@ -1560,59 +1563,119 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:51
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:53
 msgid "Purchase alerts are switched on."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:52
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
 msgid "Purchase alerts are switched off. No new alerts are recorded."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:53
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:55
 msgid "No changes were made to the alert settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:55
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:57
 msgid "A technical error occurred. The alert settings were not changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:81
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:83
 msgid "MerchAlert is active on this site, so Merch Dashboard sends no alerts. Deactivate MerchAlert before you switch alerts on. Do not delete it: deleting MerchAlert deletes its data, which can still be imported."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:84
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:86
 msgid "When an order is paid (processing or completed), the creator each product is attributed to gets an alert. Mapping a product category to a creator attributes its products, so the category turns the alerts on. Only active creators get alerts."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:85
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:87
 msgid "Status:"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:91
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:93
 msgid "Purchase alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:93
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:95
 msgid "Record purchase alerts for creators"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:94
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:96
 msgid "Off by default. Orders paid while alerts are off get no alerts later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:97
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:99
 msgid "Save alert settings"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:109
-msgid "Off. No alerts are recorded."
-msgstr ""
-
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:113
-msgid "Switched on, but paused while MerchAlert is active."
+msgid "The checkout username field was saved."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:114
+msgid "No changes were made to the checkout username field."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:115
+msgid "The label must be one line of at most 100 characters. Nothing was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:116
+msgid "The checkbox text must be one line of at most 300 characters. Nothing was saved."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:118
+msgid "A technical error occurred. The checkout username field was not changed."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:132
+msgid "Username in the checkout"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:138
+msgid "An optional field in the classic and the block checkout, where customers can give the username shown in the creator's alert and chat ($UserName). The customer first ticks a checkbox that says the name is shown publicly; then the field appears. Both are shown only while purchase alerts are switched on and the cart holds a creator's product. Without a username, alerts show \"Anonymous\"."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:143
+msgid "Username field"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:145
+msgid "Show the field in the checkout"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:146
+msgid "Off by default."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:149
+msgid "Label"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:154
+msgid "Empty for the default, e.g. \"Twitch username\"."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:158
+msgid "Checkbox text"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:163
+msgid "The text of the checkbox that shows the field. Empty for the default. Tell customers that the name is shown publicly."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:166
+msgid "Save checkout field"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:178
+msgid "Off. No alerts are recorded."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:182
+msgid "Switched on, but paused while MerchAlert is active."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:183
 msgid "On. Alerts are recorded when orders are paid."
 msgstr ""
 
@@ -2394,6 +2457,20 @@ msgstr ""
 #: src/Modules/Alerts/Chatbot/CreatorChatbot.php:208
 #: src/Modules/Alerts/Overlay/AlertOverlays.php:264
 msgid "Test product"
+msgstr ""
+
+#: src/Modules/Alerts/Checkout/CheckoutUsername.php:111
+msgid "Stream username"
+msgstr ""
+
+#: src/Modules/Alerts/Checkout/CheckoutUsername.php:118
+msgid "Show my username in the creator's livestream (overlay and chat). It is shown publicly."
+msgstr ""
+
+#. translators: %d: the most characters of a username.
+#: src/Modules/Alerts/Checkout/CheckoutUsername.php:126
+#, php-format
+msgid "The username can be at most %d characters."
 msgstr ""
 
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:47

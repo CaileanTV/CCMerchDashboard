@@ -141,6 +141,55 @@ final class AlertSettingsTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( 'MerchAlert is active', $html, 'MerchAlert is not loaded in the test site.' );
 	}
 
+	public function test_the_checkout_username_field_is_saved_audited_and_validated(): void {
+		$settings = $this->settings();
+
+		self::assertTrue( $settings->set_checkout_username( true, "  Twitch \n username ", '' ) );
+		self::assertSame( array( true, 'Twitch username', '' ), array( Settings::checkout_username_enabled(), Settings::checkout_username_label(), Settings::checkout_username_help() ) );
+		self::assertFalse( $settings->set_checkout_username( true, 'Twitch username', '' ), 'Unchanged.' );
+
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'checkout_username_enabled', 'checkout_username_label' ), array_map( static fn( array $row ): mixed => json_decode( (string) $row['context'], true )['setting'] ?? null, $audit ), 'One record per changed value.' );
+
+		foreach ( array(
+			array( str_repeat( 'x', 101 ), '', AlertSettingsException::INVALID_CHECKOUT_LABEL ),
+			array( '', str_repeat( 'x', 301 ), AlertSettingsException::INVALID_CHECKOUT_HELP ),
+		) as [ $label, $help, $reason ] ) {
+			try {
+				$settings->set_checkout_username( false, $label, $help );
+				self::fail( 'Expected AlertSettingsException.' );
+			} catch ( AlertSettingsException $e ) {
+				self::assertSame( $reason, $e->reason() );
+			}
+		}
+
+		self::assertTrue( Settings::checkout_username_enabled(), 'Nothing was saved.' );
+
+		// The form: an unchecked box switches the field off; the outcome is whitelisted.
+		$actions = new AlertsSettingsActions( $settings, new RecordingLogger() );
+		$nonce   = wp_create_nonce( AlertsSettingsActions::CHECKOUT_ACTION );
+		$url     = $actions->save_checkout(
+			array(
+				'_wpnonce'                                 => $nonce,
+				AlertsSettingsActions::FIELD_CHECKOUT_LABEL => 'Twitch username',
+				AlertsSettingsActions::FIELD_CHECKOUT_HELP => 'Shown on stream.',
+			)
+		);
+		self::assertStringContainsString( AlertsSettingsActions::CHECKOUT_RESULT_ARG . '=saved', $url );
+		self::assertSame( array( false, 'Shown on stream.' ), array( Settings::checkout_username_enabled(), Settings::checkout_username_help() ) );
+		self::assertStringContainsString( '=invalid_checkout_label', $actions->save_checkout( array( '_wpnonce' => $nonce, AlertsSettingsActions::FIELD_CHECKOUT_LABEL => str_repeat( 'x', 101 ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertNotNull( AlertsSettingsSection::checkout_result_message( 'saved' ) );
+		self::assertNull( AlertsSettingsSection::checkout_result_message( '<script>' ) );
+
+		require_once ABSPATH . 'wp-admin/includes/template.php';
+		ob_start();
+		( new AlertsSettingsSection( new AlertsAvailability( static fn(): bool => false ) ) )->render();
+		$html = (string) ob_get_clean();
+		self::assertStringContainsString( 'id="merchboard-checkout-username"', $html );
+		self::assertStringContainsString( 'value="Shown on stream."', $html );
+		self::assertStringContainsString( 'placeholder="Stream username"', $html, 'The default as a placeholder.' );
+	}
+
 	/**
 	 * The service as the module builds it (the Alerts module only boots with
 	 * WooCommerce, which the integration site does not load).

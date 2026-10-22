@@ -31,6 +31,17 @@ class WC_Coupon {
  * WooCommerce cart.
  */
 class WC_Cart {
+
+	/**
+	 * Cart items by key, as WC_Cart::get_cart() returns them.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
+	public $cart_contents = array();
+
+	public function get_cart() {
+		return $this->cart_contents;
+	}
 }
 
 /**

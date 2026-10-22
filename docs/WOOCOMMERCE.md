@@ -176,6 +176,15 @@ Afsnittet "Pricing" på creatorens redigeringsside; se ADMIN.md. WooCommerces pr
 
 **20 %-fradraget:** fjernet efter ADR-063 (erstatter ADR-049's åbne spørgsmål om andre momssatser). Historiske afregninger reguleres kun via admin-siden "Recalculations" med forhåndsvisning, godkendelse og udførelse som særskilte trin (ADR-063, R2 trin 2).
 
+## Checkout: brugernavn til alerts (fase 25, trin 25.9.1, ADR-065 pkt. 9)
+
+`Modules\Alerts\Checkout\CheckoutUsernameField` tilføjer en afkrydsning og et valgfrit felt, når både alerts og feltet er slået til i Settings → Alerts (tjekkes, når hooks kører), og kurven indeholder en creators produkt (`ProductCreatorLink`; uden kurv skjules intet). Feltet vises først, når afkrydsningen ("Vis mit brugernavn i creatorens livestream (overlay og chat). Det vises offentligt.") er sat, og navnet bruges kun da. Afkrydsningen styrer kun navnet: alerten sendes altid, uden afkrydsning som "Anonymous":
+
+- **Klassisk checkout:** `woocommerce_checkout_fields` (gruppen `order`: afkrydsningen `merchboard_alert_username_show` med prioritet 110 og feltet med prioritet 111, `maxlength` 50), et lille inline-script på `woocommerce_after_checkout_form`, der skjuler feltet, indtil afkrydsningen er sat, `woocommerce_after_checkout_validation` (fejl ved over 50 tegn) og `woocommerce_checkout_create_order` (`$order->update_meta_data( '_merchboard_alert_username', … )`, gemt med ordren via CRUD, HPOS og legacy). Uden afkrydsning eller med tomt felt gemmes intet.
+- **Blok-checkout:** to felter via `woocommerce_register_additional_checkout_field()` på `woocommerce_init`, placering `order`: afkrydsningen `merchboard/alert-username-show` og feltet `merchboard/alert-username` (`maxLength` 50, `sanitize_callback`/`validate_callback`). Synligheden styres af WooCommerces `hidden`-regler (JSON Schema, evalueres i browseren og på serveren): feltet er skjult, indtil `checkout.additional_fields` har afkrydsningen sat, og begge er skjult, når `cart.extensions.merchboard.has_creator_products` er `false`. Den værdi lægges i Store API-kurven med `woocommerce_store_api_register_endpoint_data()` ved `woocommerce_blocks_loaded` (eller straks, når WooCommerce allerede har fyret det, før modulerne starter på `plugins_loaded`); mangler den, skjules intet. WooCommerce gemmer værdierne som `_wc_other/merchboard/alert-username(-show)` og viser dem i ordrebekræftelsen og på admins ordreside.
+- **Admin:** det klassiske felts værdi vises på ordresiden (`woocommerce_admin_order_data_after_billing_address`).
+- **Læsning:** `WooCommercePaidOrderReader` tager den klassiske nøgle, så blok-nøglen (kun når `_wc_other/merchboard/alert-username-show` er sat), så MerchAlerts `_ccmerch_username`; renset til én linje og højst 50 tegn.
+
 ## Dashboard-data og privacy
 
 ✅ Fase 19 (ADR-039; kontrakterne i [API.md](API.md#get-meproducts--fase-19-trin-2-adr-039)). Creator'en kommer altid fra `CreatorContext` på serveren, aldrig fra requesten.

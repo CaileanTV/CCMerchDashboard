@@ -13,6 +13,8 @@ use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
+use MerchBoard\Modules\Alerts\WooCommercePaidOrderReader;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
@@ -39,6 +41,23 @@ final class UninstallerOrderMetaTest extends TestCase {
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
 		Functions\when( 'delete_metadata' )->justReturn( true );
+	}
+
+	public function test_the_alert_username_is_removed_and_merchalerts_stays(): void {
+		self::assertSame( array( self::KEY, WooCommercePaidOrderReader::USERNAME_META, CheckoutUsername::BLOCK_META, CheckoutUsername::BLOCK_SHOW_META ), Uninstaller::ORDER_META_KEYS );
+		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
+		WcOrderStorage::add_order( 1, 'completed' );
+		WcOrderStorage::$meta[1] = array(
+			WooCommercePaidOrderReader::USERNAME_META => 'nova_fan',
+			CheckoutUsername::BLOCK_META              => 'nova_fan',
+			CheckoutUsername::BLOCK_SHOW_META         => '1',
+			WooCommercePaidOrderReader::LEGACY_USERNAME_META => 'old_name',
+		);
+		$wpdb                    = new RecordingWpdb();
+		$logger                  = new RecordingLogger();
+
+		self::assertTrue( ( new Uninstaller( $wpdb, new SchemaEraser( $wpdb, $logger ), $logger ) )->run() );
+		self::assertSame( array( WooCommercePaidOrderReader::LEGACY_USERNAME_META => 'old_name' ), WcOrderStorage::$meta[1], 'MerchAlert\'s key is not the plugin\'s.' );
 	}
 
 	public function test_hpos_markers_are_removed_through_crud_in_batches_with_the_order_save_suppressed(): void {
@@ -74,11 +93,13 @@ final class UninstallerOrderMetaTest extends TestCase {
 		self::assertCount( 125, WcOrderStorage::$saves, 'One meta save per marked order.' );
 		self::assertSame( array( true ), array_values( array_unique( WcOrderStorage::$saves ) ), 'Every save with HPOS\' order save suppressed.' );
 		self::assertFalse( has_filter( 'woocommerce_orders_table_datastore_should_save_after_meta_change', '__return_false' ) );
-		self::assertSame( array( 100, 100, 100 ), array_column( WcOrderStorage::$queries, 'limit' ), 'Batches of 100 until none is left.' );
+		$marker = array_values( array_filter( WcOrderStorage::$queries, static fn( array $query ): bool => self::KEY === ( $query['meta_key'] ?? null ) ) );
+		self::assertSame( array( 100, 100, 100 ), array_column( $marker, 'limit' ), 'Batches of 100 until none is left.' );
 
 		foreach ( WcOrderStorage::$queries as $query ) {
 			// Only orders with the key are loaded: legacy storage ignores `meta_query` (Q4 runtime finding).
-			self::assertSame( array( self::KEY, 'EXISTS' ), array( $query['meta_key'] ?? null, $query['meta_compare'] ?? null ) );
+			self::assertContains( $query['meta_key'] ?? null, Uninstaller::ORDER_META_KEYS );
+			self::assertSame( 'EXISTS', $query['meta_compare'] ?? null );
 			self::assertArrayNotHasKey( 'meta_query', $query );
 		}
 		self::assertSame( array(), $logger->at( 'warning' ) );

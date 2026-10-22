@@ -49,6 +49,19 @@ class WP_Error {
 	public function get_error_data() {
 		return $this->data;
 	}
+
+	/**
+	 * Adds an error (the first one becomes the code and message).
+	 *
+	 * @param string $code    Code.
+	 * @param string $message Message.
+	 */
+	public function add( $code, $message ) {
+		if ( '' === $this->code ) {
+			$this->code    = $code;
+			$this->message = $message;
+		}
+	}
 }
 
 /**

@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts;
 
+use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
+use MerchBoard\Modules\Alerts\Checkout\CheckoutUsernameField;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Product_Variation;
@@ -19,9 +21,12 @@ defined( 'ABSPATH' ) || exit;
  * WooCommerce CRUD only (HPOS and legacy storage alike), always in the
  * `edit` context so filters cannot change what is stored. Lines without a
  * product or with a quantity below 1 are skipped. The username is the
- * checkout field's order meta (`_merchboard_alert_username`, ADR-065 pkt. 9),
- * with MerchAlert's `_ccmerch_username` as the fallback for older orders
- * (ADR-065 pkt. 5). The image is the variation's own, else the product's.
+ * checkout field's order meta (`_merchboard_alert_username` from the classic
+ * checkout, `_wc_other/merchboard/alert-username` from the block checkout
+ * when its checkbox `_wc_other/merchboard/alert-username-show` is ticked;
+ * ADR-065 pkt. 9, step 25.9.1), with MerchAlert's `_ccmerch_username` as the
+ * fallback for older orders (ADR-065 pkt. 5). The image is the variation's
+ * own, else the product's.
  */
 final class WooCommercePaidOrderReader implements PaidOrderReader {
 
@@ -91,16 +96,25 @@ final class WooCommercePaidOrderReader implements PaidOrderReader {
 	}
 
 	/**
-	 * The username from checkout, else MerchAlert's, else ''.
+	 * The username from the classic checkout, else from the block checkout
+	 * (only with its checkbox ticked), else MerchAlert's, else ''; one line
+	 * of at most
+	 * CheckoutUsername::MAX_LENGTH characters.
 	 *
 	 * @param WC_Order $order Order.
 	 */
 	private static function username( WC_Order $order ): string {
-		foreach ( array( self::USERNAME_META, self::LEGACY_USERNAME_META ) as $key ) {
-			$value = self::text( $order->get_meta( $key, true, 'edit' ) );
+		$keys = array( self::USERNAME_META, CheckoutUsername::BLOCK_META, self::LEGACY_USERNAME_META );
+
+		if ( ! CheckoutUsernameField::ticked( $order->get_meta( CheckoutUsername::BLOCK_SHOW_META, true, 'edit' ) ) ) {
+			$keys = array( self::USERNAME_META, self::LEGACY_USERNAME_META );
+		}
+
+		foreach ( $keys as $key ) {
+			$value = CheckoutUsername::clean( $order->get_meta( $key, true, 'edit' ) );
 
 			if ( '' !== $value ) {
-				return $value;
+				return mb_substr( $value, 0, CheckoutUsername::MAX_LENGTH );
 			}
 		}
 

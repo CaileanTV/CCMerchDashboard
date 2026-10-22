@@ -126,6 +126,34 @@ final class Settings {
 	public const ALERTS_ENABLED = 'alerts_enabled';
 
 	/**
+	 * Whether customers get an optional "username" field in the checkout
+	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
+	 * are on; enabled only by exactly boolean true.
+	 */
+	public const CHECKOUT_USERNAME_ENABLED = 'checkout_username_enabled';
+
+	/**
+	 * The label of the checkout username field: one line, '' for the default.
+	 */
+	public const CHECKOUT_USERNAME_LABEL = 'checkout_username_label';
+
+	/**
+	 * The help text under the checkout username field: one line, '' for the
+	 * default (that the name is shown publicly).
+	 */
+	public const CHECKOUT_USERNAME_HELP = 'checkout_username_help';
+
+	/**
+	 * Longest checkout username label.
+	 */
+	public const CHECKOUT_USERNAME_LABEL_MAX_LENGTH = 100;
+
+	/**
+	 * Longest checkout username help text.
+	 */
+	public const CHECKOUT_USERNAME_HELP_MAX_LENGTH = 300;
+
+	/**
 	 * Slugs WordPress, WooCommerce or common setups already use for their own
 	 * URLs; the dashboard must never shadow them.
 	 */
@@ -163,7 +191,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -177,6 +205,9 @@ final class Settings {
 			self::COMPANY_NAME              => '',
 			self::COMPANY_EMAIL             => '',
 			self::ALERTS_ENABLED            => false,
+			self::CHECKOUT_USERNAME_ENABLED => false,
+			self::CHECKOUT_USERNAME_LABEL   => '',
+			self::CHECKOUT_USERNAME_HELP    => '',
 		);
 	}
 
@@ -187,16 +218,18 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string}
 	 */
 	public static function sanitize( array $values ): array {
-		$slug = $values[ self::DASHBOARD_SLUG ] ?? null;
-		$logo = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
-		$days = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
-		$card = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
-		$cvr  = $values[ self::COMPANY_CVR ] ?? null;
-		$name = $values[ self::COMPANY_NAME ] ?? null;
-		$mail = $values[ self::COMPANY_EMAIL ] ?? null;
+		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
+		$logo  = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
+		$days  = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
+		$card  = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
+		$cvr   = $values[ self::COMPANY_CVR ] ?? null;
+		$name  = $values[ self::COMPANY_NAME ] ?? null;
+		$mail  = $values[ self::COMPANY_EMAIL ] ?? null;
+		$label = $values[ self::CHECKOUT_USERNAME_LABEL ] ?? null;
+		$help  = $values[ self::CHECKOUT_USERNAME_HELP ] ?? null;
 
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL  => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
@@ -209,6 +242,9 @@ final class Settings {
 			self::COMPANY_NAME              => is_string( $name ) && self::valid_company_name( $name ) ? $name : '',
 			self::COMPANY_EMAIL             => is_string( $mail ) && self::valid_company_email( $mail ) ? $mail : '',
 			self::ALERTS_ENABLED            => true === ( $values[ self::ALERTS_ENABLED ] ?? false ),
+			self::CHECKOUT_USERNAME_ENABLED => true === ( $values[ self::CHECKOUT_USERNAME_ENABLED ] ?? false ),
+			self::CHECKOUT_USERNAME_LABEL   => is_string( $label ) && self::valid_line( $label, self::CHECKOUT_USERNAME_LABEL_MAX_LENGTH ) ? $label : '',
+			self::CHECKOUT_USERNAME_HELP    => is_string( $help ) && self::valid_line( $help, self::CHECKOUT_USERNAME_HELP_MAX_LENGTH ) ? $help : '',
 		);
 	}
 
@@ -220,9 +256,42 @@ final class Settings {
 	 * @param string $name Company name.
 	 */
 	public static function valid_company_name( string $name ): bool {
-		return 1 !== preg_match( '/^\s|\s$/u', $name )
-			&& mb_strlen( $name ) <= self::COMPANY_NAME_MAX_LENGTH
-			&& 1 !== preg_match( '/[\x00-\x1F\x7F]/u', $name );
+		return self::valid_line( $name, self::COMPANY_NAME_MAX_LENGTH );
+	}
+
+	/**
+	 * Whether a string is a valid stored line of text: '' or one trimmed line
+	 * of at most $max characters without control characters.
+	 *
+	 * @param string $text Text.
+	 * @param int    $max  Longest length in characters.
+	 */
+	public static function valid_line( string $text, int $max ): bool {
+		return 1 !== preg_match( '/^\s|\s$/u', $text )
+			&& mb_strlen( $text ) <= $max
+			&& 1 !== preg_match( '/[\x00-\x1F\x7F]/u', $text );
+	}
+
+	/**
+	 * Whether the optional username field is shown in the checkout (when
+	 * alerts are switched on, too).
+	 */
+	public static function checkout_username_enabled(): bool {
+		return self::all()[ self::CHECKOUT_USERNAME_ENABLED ];
+	}
+
+	/**
+	 * The label of the checkout username field ('' for the default).
+	 */
+	public static function checkout_username_label(): string {
+		return self::all()[ self::CHECKOUT_USERNAME_LABEL ];
+	}
+
+	/**
+	 * The help text of the checkout username field ('' for the default).
+	 */
+	public static function checkout_username_help(): string {
+		return self::all()[ self::CHECKOUT_USERNAME_HELP ];
 	}
 
 	/**
@@ -266,7 +335,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );

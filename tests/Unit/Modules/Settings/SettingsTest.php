@@ -134,9 +134,42 @@ final class SettingsTest extends TestCase {
 				Settings::COMPANY_NAME              => '',
 				Settings::COMPANY_EMAIL             => '',
 				Settings::ALERTS_ENABLED            => false,
+				Settings::CHECKOUT_USERNAME_ENABLED => false,
+				Settings::CHECKOUT_USERNAME_LABEL   => '',
+				Settings::CHECKOUT_USERNAME_HELP    => '',
 			),
 			Settings::all()
 		);
+	}
+
+	/**
+	 * The checkout username field is off by default and only exactly true
+	 * switches it on; its texts keep only one trimmed line within the limit
+	 * (step 25.9.1).
+	 */
+	public function test_checkout_username_is_off_by_default_and_keeps_valid_texts(): void {
+		self::assertSame( array( false, '', '' ), array( Settings::checkout_username_enabled(), Settings::checkout_username_label(), Settings::checkout_username_help() ) );
+
+		$this->options->options[ Settings::OPTION ] = array( Settings::CHECKOUT_USERNAME_ENABLED => '1' );
+		self::assertFalse( Settings::checkout_username_enabled() );
+		$this->options->options[ Settings::OPTION ] = array( Settings::CHECKOUT_USERNAME_ENABLED => true );
+		self::assertTrue( Settings::checkout_username_enabled() );
+
+		foreach ( array(
+			'Twitch username'      => 'Twitch username',
+			' Twitch'              => '',
+			"Twitch\nname"         => '',
+			str_repeat( 'x', 100 ) => str_repeat( 'x', 100 ),
+			str_repeat( 'x', 101 ) => '',
+		) as $stored => $expected ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::CHECKOUT_USERNAME_LABEL => (string) $stored );
+			self::assertSame( $expected, Settings::checkout_username_label(), (string) $stored );
+		}
+
+		$this->options->options[ Settings::OPTION ] = array( Settings::CHECKOUT_USERNAME_HELP => str_repeat( 'x', 301 ) );
+		self::assertSame( '', Settings::checkout_username_help() );
+		$this->options->options[ Settings::OPTION ] = array( Settings::CHECKOUT_USERNAME_HELP => 'Shown publicly.' );
+		self::assertSame( 'Shown publicly.', Settings::checkout_username_help() );
 	}
 
 	/**

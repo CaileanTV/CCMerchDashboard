@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\Alerts;
 
 use Brain\Monkey\Functions;
+use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
 use MerchBoard\Modules\Alerts\PaidOrderLine;
 use MerchBoard\Modules\Alerts\WooCommercePaidOrderReader;
 use MerchBoard\Tests\Unit\Support\WcOrderStorage;
@@ -19,6 +20,7 @@ use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 #[CoversClass( WooCommercePaidOrderReader::class )]
+#[CoversClass( CheckoutUsername::class )]
 #[RunTestsInSeparateProcesses]
 #[PreserveGlobalState( false )]
 final class WooCommercePaidOrderReaderTest extends TestCase {
@@ -82,6 +84,38 @@ final class WooCommercePaidOrderReaderTest extends TestCase {
 
 		WcOrderStorage::$meta[7] = array( WooCommercePaidOrderReader::USERNAME_META => '   ' );
 		self::assertSame( '', ( new WooCommercePaidOrderReader() )->read( 7 )->username );
+	}
+
+	public function test_the_block_checkout_field_is_read_only_with_its_box_ticked_cleaned_and_cut(): void {
+		WcOrderStorage::add_order( 7, 'completed' );
+		WcOrderStorage::$meta[7] = array(
+			CheckoutUsername::BLOCK_META => 'Nova',
+			WooCommercePaidOrderReader::LEGACY_USERNAME_META => 'old_name',
+		);
+		self::assertSame( 'old_name', ( new WooCommercePaidOrderReader() )->read( 7 )?->username, 'Not without the box ticked.' );
+
+		WcOrderStorage::$meta[7] = array(
+			CheckoutUsername::BLOCK_SHOW_META => '0',
+			CheckoutUsername::BLOCK_META      => 'Nova',
+		);
+		self::assertSame( '', ( new WooCommercePaidOrderReader() )->read( 7 )->username, 'Not with the box left empty.' );
+
+		WcOrderStorage::$meta[7] = array(
+			CheckoutUsername::BLOCK_SHOW_META => '1',
+			CheckoutUsername::BLOCK_META      => " <b>Nova</b>\n  Fan ",
+			WooCommercePaidOrderReader::LEGACY_USERNAME_META => 'old_name',
+		);
+		self::assertSame( 'Nova Fan', ( new WooCommercePaidOrderReader() )->read( 7 )->username, 'Before MerchAlert\'s; one plain line.' );
+
+		WcOrderStorage::$meta[7] = array(
+			WooCommercePaidOrderReader::USERNAME_META => 'classic',
+			CheckoutUsername::BLOCK_SHOW_META         => '1',
+			CheckoutUsername::BLOCK_META              => 'block',
+		);
+		self::assertSame( 'classic', ( new WooCommercePaidOrderReader() )->read( 7 )->username );
+
+		WcOrderStorage::$meta[7] = array( WooCommercePaidOrderReader::LEGACY_USERNAME_META => str_repeat( 'æ', 60 ) );
+		self::assertSame( str_repeat( 'æ', CheckoutUsername::MAX_LENGTH ), ( new WooCommercePaidOrderReader() )->read( 7 )->username, 'At most 50 characters.' );
 	}
 
 	public function test_refunds_unknown_orders_and_other_types_are_not_read(): void {

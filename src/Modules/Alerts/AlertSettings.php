@@ -96,13 +96,56 @@ final class AlertSettings {
 		self::require_valid( Settings::valid_company_name( $name ), AlertSettingsException::INVALID_COMPANY_NAME );
 		self::require_valid( Settings::valid_company_email( $email ), AlertSettingsException::INVALID_COMPANY_EMAIL );
 
-		$settings = Settings::all();
-		$changes  = array_filter(
+		return $this->save_changes(
 			array(
 				Settings::COMPANY_NAME  => $name,
 				Settings::COMPANY_EMAIL => $email,
-			),
-			static fn( string $value, string $key ): bool => $settings[ $key ] !== $value,
+			)
+		);
+	}
+
+	/**
+	 * Saves the checkout username field (ADR-065 pkt. 9, step 25.9.1):
+	 * whether it is shown, its label and its help text ('' for the
+	 * defaults). Each changed value is audited (`settings_updated`).
+	 *
+	 * @param bool   $enabled Whether the field is shown in the checkout.
+	 * @param string $label   Label ('' for the default).
+	 * @param string $help    Help text ('' for the default).
+	 * @return bool Whether anything changed.
+	 * @throws AlertSettingsException When not allowed or a text is invalid.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	public function set_checkout_username( bool $enabled, string $label, string $help ): bool {
+		$this->authorize();
+		$label = trim( (string) preg_replace( '/\s+/u', ' ', $label ) );
+		$help  = trim( (string) preg_replace( '/\s+/u', ' ', $help ) );
+
+		self::require_valid( Settings::valid_line( $label, Settings::CHECKOUT_USERNAME_LABEL_MAX_LENGTH ), AlertSettingsException::INVALID_CHECKOUT_LABEL );
+		self::require_valid( Settings::valid_line( $help, Settings::CHECKOUT_USERNAME_HELP_MAX_LENGTH ), AlertSettingsException::INVALID_CHECKOUT_HELP );
+
+		return $this->save_changes(
+			array(
+				Settings::CHECKOUT_USERNAME_ENABLED => $enabled,
+				Settings::CHECKOUT_USERNAME_LABEL   => $label,
+				Settings::CHECKOUT_USERNAME_HELP    => $help,
+			)
+		);
+	}
+
+	/**
+	 * Saves the changed values: one audit record (`settings_updated`) per
+	 * changed value and the option, in one transaction.
+	 *
+	 * @param array<string, string|bool> $values Values by settings key.
+	 * @return bool Whether anything changed.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	private function save_changes( array $values ): bool {
+		$settings = Settings::all();
+		$changes  = array_filter(
+			$values,
+			static fn( string|bool $value, string $key ): bool => ( $settings[ $key ] ?? null ) !== $value,
 			ARRAY_FILTER_USE_BOTH
 		);
 
@@ -118,7 +161,7 @@ final class AlertSettings {
 						null,
 						array(
 							'setting'        => $key,
-							'previous_value' => $settings[ $key ],
+							'previous_value' => $settings[ $key ] ?? null,
 							'value'          => $value,
 						)
 					);

@@ -34,6 +34,17 @@ final class AlertSettingsException extends DomainException {
 	public const INVALID_COMPANY_EMAIL = 'invalid_company_email';
 
 	/**
+	 * The checkout username label is not one line of at most 100 characters.
+	 */
+	public const INVALID_CHECKOUT_LABEL = 'invalid_checkout_label';
+
+	/**
+	 * The checkout username help text is not one line of at most 300
+	 * characters.
+	 */
+	public const INVALID_CHECKOUT_HELP = 'invalid_checkout_help';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the constants.

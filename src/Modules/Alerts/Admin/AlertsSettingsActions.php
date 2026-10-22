@@ -63,6 +63,32 @@ final class AlertsSettingsActions {
 	public const FIELD_COMPANY_EMAIL = 'company_email';
 
 	/**
+	 * The admin-post action and nonce action of the checkout username field
+	 * (step 25.9.1).
+	 */
+	public const CHECKOUT_ACTION = 'merchboard_save_checkout_username';
+
+	/**
+	 * Query argument: outcome code of the checkout username field.
+	 */
+	public const CHECKOUT_RESULT_ARG = 'merchboard_checkout_result';
+
+	/**
+	 * The checkbox that shows the field.
+	 */
+	public const FIELD_CHECKOUT_ENABLED = 'checkout_username_enabled';
+
+	/**
+	 * The label field.
+	 */
+	public const FIELD_CHECKOUT_LABEL = 'checkout_username_label';
+
+	/**
+	 * The help text field.
+	 */
+	public const FIELD_CHECKOUT_HELP = 'checkout_username_help';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param AlertSettings $settings Saving.
@@ -86,6 +112,55 @@ final class AlertsSettingsActions {
 	public function register(): void {
 		add_action( 'admin_post_' . self::SAVE_ACTION, array( $this, 'handle_save_request' ) );
 		add_action( 'admin_post_' . self::COMPANY_ACTION, array( $this, 'handle_company_request' ) );
+		add_action( 'admin_post_' . self::CHECKOUT_ACTION, array( $this, 'handle_checkout_request' ) );
+	}
+
+	/**
+	 * URL of the settings screen with an outcome code, at the checkout field.
+	 *
+	 * @param string $result Outcome code.
+	 */
+	public static function checkout_url( string $result ): string {
+		return add_query_arg( array( self::CHECKOUT_RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-checkout-username';
+	}
+
+	/**
+	 * WordPress entry point of the checkout username field.
+	 */
+	public function handle_checkout_request(): void {
+		// The nonce is verified in save_checkout() before any input is used.
+		wp_safe_redirect( $this->save_checkout( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and the fields validated in save_checkout() and AlertSettings.
+		exit;
+	}
+
+	/**
+	 * Processes the checkout username form.
+	 *
+	 * @param array<mixed> $input Unslashed request data.
+	 * @return string Redirect URL.
+	 */
+	public function save_checkout( array $input ): string {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage alerts.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		$field = static fn( string $key ): string => is_scalar( $input[ $key ] ?? null ) ? sanitize_text_field( (string) $input[ $key ] ) : '';
+
+		if ( 1 !== wp_verify_nonce( $field( '_wpnonce' ), self::CHECKOUT_ACTION ) ) {
+			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		try {
+			$changed = $this->settings->set_checkout_username( '1' === $field( self::FIELD_CHECKOUT_ENABLED ), $field( self::FIELD_CHECKOUT_LABEL ), $field( self::FIELD_CHECKOUT_HELP ) );
+		} catch ( AlertSettingsException $e ) {
+			return self::checkout_url( $e->reason() );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Saving the checkout username field failed.', array_merge( $e->context(), array( 'reason' => $e->getMessage() ) ) );
+
+			return self::checkout_url( 'error' );
+		}
+
+		return self::checkout_url( $changed ? 'saved' : 'no_changes' );
 	}
 
 	/**

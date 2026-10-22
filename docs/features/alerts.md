@@ -24,7 +24,7 @@ Creatoren får menupunktet **"Alerts"** i creator-dashboardet, som åbner og luk
 
 Skabelonvariabler i overlayet: `$FirstName`, `$OrderNumber`, `$Product`, `$Quantity`, `$Category`, `$Variation` og `$UserName`. I chatbeskeder (ADR-066, statusnote 2026-10-20) kun alert-variablerne: `$UserName`/`$Name`, `$Product`, `$Quantity`, `$Category`, `$Variation` og `$OrderNumber`, ved én besked pr. ordre `$UserName`/`$Name`, `$Products`, `$ItemCount` og `$OrderNumber`. `$Amount` vises ikke (bliver tomt). **Ingen kundenavne (projektejerens beslutning 2026-10-19):** `$FirstName`, `$Name` og `$UserName` giver alle kundens frivillige brugernavn eller "Anonymous", så skabeloner fra MerchAlert virker uændret. Variablerne erstattes i ét gennemløb, så et produktnavn med fx `$Category` ikke udvides igen.
 
-Kunden kan i checkout angive et valgfrit brugernavn, som kan vises i alerts (`$UserName`).
+Kunden kan i checkout angive et valgfrit brugernavn, som kan vises i alerts (`$UserName`). ✅ **25.9.1:** feltet findes i både klassisk og blok-checkout, når administratoren har slået det til (og alerts er slået til), og kun når kurven indeholder en creators produkt. Feltet ligger bag en afkrydsning, der siger, at navnet vises offentligt; navnet bruges kun, når den er sat; højst 50 tegn. Alerten og chatbeskeden sendes altid ved købet; uden afkrydsning (eller uden navn) er de anonyme ("Anonymous").
 
 ## Admin functionality
 Undermenuen **"Alerts"** under Merch Dashboard (capability `merchboard_manage_alerts`):
@@ -72,9 +72,9 @@ Migrationer fra 18 (detaljer i DATABASE.md):
 | `merchboard_alert_chat_messages` ✅ | Schema-version 20: log over sendte chatbeskeder pr. ordrelinje eller ordre; hindrer dobbelte beskeder |
 | `merchboard_alert_chat_log` ✅ | Schema-version 20: seneste chatbeskeder til admin-chatvinduet (24 timer, højst 200 pr. kanal) |
 | Fontbibliotek ✅ (25.5) | Options uden autoload `merchboard_alert_fonts_key` og `merchboard_alert_fonts_approved`, transient `merchboard_alert_fonts_catalog` (30 dage); erstatter den planlagte tabel `merchboard_alert_fonts` (ADR-065, statusnote) |
-| `merchboard_settings` | `alerts_enabled` ✅ (default `false`); planlagt: poll-interval, lydgrænser, checkout-brugernavn, globalt overlay |
+| `merchboard_settings` | `alerts_enabled` ✅ (default `false`); `checkout_username_enabled` (default `false`), `checkout_username_label`, `checkout_username_help` (afkrydsningsteksten) ✅ (25.9.1); planlagt: poll-interval, lydgrænser, globalt overlay |
 | Options uden autoload ✅ (25.8, 25.8.2, 25.8.4) | `merchboard_alert_youtube` (Google-app, bottens kanal og krypterede tokens, kvote), `merchboard_alert_kick` (Kick-app), `merchboard_alert_twitch` (Client ID, krypteret secret, app-token og webhook-secret, bot, rate limit) og `merchboard_alert_chatbot_format` (beskedform) |
-| Ordre-meta | `_merchboard_alert_username` (fallback: `_ccmerch_username`) |
+| Ordre-meta ✅ (25.9.1) | `_merchboard_alert_username` (klassisk checkout), `_wc_other/merchboard/alert-username` og afkrydsningen `_wc_other/merchboard/alert-username-show` (blok-checkout, skrevet af WooCommerce); fallback: `_ccmerch_username` |
 | Vedhæftnings-meta ✅ (25.6) | `_merchboard_alert_sound_creator`: ejeren af en uploadet lyd; `_merchboard_alert_sound_library` (25.6.3): en lyd i administratorens bibliotek; `_merchboard_alert_image_creator` og `_merchboard_alert_image_library` (25.6.10): ejeren af et billede til tekstfyld eller et billede i administratorens billedbibliotek |
 
 ## Permissions

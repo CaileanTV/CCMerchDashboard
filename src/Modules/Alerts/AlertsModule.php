@@ -51,6 +51,7 @@ use MerchBoard\Modules\Alerts\Dashboard\AlertsDashboardSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\History\AlertHistory;
 use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
+use MerchBoard\Modules\Alerts\Checkout\CheckoutUsernameField;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Legal\LegalPage;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
@@ -453,6 +454,8 @@ final class AlertsModule implements Module {
 		// Every request: orders are paid in checkout, wp-admin, REST, WP-CLI
 		// and by payment gateways' callbacks.
 		$container->get( AlertHooks::class )->register();
+		// The optional username in the checkout (step 25.9.1); each hook checks the settings when it runs.
+		( new CheckoutUsernameField( static fn( int $product_id ): ?int => $container->get( ProductCreatorLink::class )->creator_id( $product_id ) ) )->register();
 
 		// Chat messages: queued after the alerts are recorded (priority 10), sent by Action Scheduler.
 		foreach ( array( 'woocommerce_order_status_processing', 'woocommerce_order_status_completed' ) as $status ) {

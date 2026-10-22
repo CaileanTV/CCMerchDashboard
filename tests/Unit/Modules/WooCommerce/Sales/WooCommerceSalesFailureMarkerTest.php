@@ -120,7 +120,7 @@ final class WooCommerceSalesFailureMarkerTest extends TestCase {
 	}
 
 	public function test_uninstall_removes_the_same_key(): void {
-		self::assertSame( array( self::KEY ), Uninstaller::ORDER_META_KEYS );
+		self::assertSame( self::KEY, Uninstaller::ORDER_META_KEYS[0] );
 	}
 
 	/**
