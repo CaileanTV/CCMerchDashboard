@@ -349,6 +349,10 @@ export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
 						maximumFractionDigits: 1,
 					} ),
 					audio.maxSeconds
+				) }{ ' ' }
+				{ __(
+					'Do you need larger or longer sounds? Contact us to ask for other limits.',
+					'merchboard'
 				) }
 			</p>
 			<p>

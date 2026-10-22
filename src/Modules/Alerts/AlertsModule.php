@@ -21,6 +21,8 @@ use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
 use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
+use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsActions;
+use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsSection;
 use MerchBoard\Modules\Alerts\Admin\YouTubeLegalTab;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
@@ -76,8 +78,10 @@ use MerchBoard\Modules\Alerts\Rest\TwitchController;
 use MerchBoard\Modules\Alerts\Rest\YouTubeController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Sounds\CreatorSoundLimits;
 use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\WooCommerce\JobQueue;
@@ -157,6 +161,13 @@ final class AlertsModule implements Module {
 			AlertSoundLibrary::class,
 			static fn( Container $c ): AlertSoundLibrary => new AlertSoundLibrary( $c->get( SoundFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
 		);
+		// A creator's own sound limits (step 9.2).
+		$container->set(
+			CreatorSoundLimits::class,
+			static fn( Container $c ): CreatorSoundLimits => new CreatorSoundLimits( $c->get( CreatorMetaStore::class ), $c->get( CreatorRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set( CreatorSoundLimitsActions::class, static fn( Container $c ): CreatorSoundLimitsActions => new CreatorSoundLimitsActions( $c->get( CreatorSoundLimits::class ), $c->get( Logger::class ) ) );
+		$container->set( CreatorSoundLimitsSection::class, static fn( Container $c ): CreatorSoundLimitsSection => new CreatorSoundLimitsSection( $c->get( CreatorSoundLimits::class ) ) );
 		$container->set(
 			AlertSounds::class,
 			static fn( Container $c ): AlertSounds => new AlertSounds(
@@ -175,7 +186,9 @@ final class AlertsModule implements Module {
 					return $names;
 				},
 				$c->get( SoundFiles::class ),
-				$c->get( AlertSoundLibrary::class )
+				$c->get( AlertSoundLibrary::class ),
+				null,
+				$c->get( CreatorSoundLimits::class )
 			)
 		);
 		// Images that fill the alert text (phase 25, step 6.10) and the administrator's library.
@@ -493,6 +506,8 @@ final class AlertsModule implements Module {
 				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
 				( new CompanyDetailsSection() )->register();
+				$container->get( CreatorSoundLimitsActions::class )->register();
+				$container->get( CreatorSoundLimitsSection::class )->register();
 			}
 		);
 	}

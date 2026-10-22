@@ -125,6 +125,7 @@ final class AuditLogFormatter {
 			AuditAction::AlertSoundLibraryAdded    => __( 'Sound added to the alert sound library', 'merchboard' ),
 			AuditAction::AlertSoundLibraryRemoved  => __( 'Sound removed from the alert sound library', 'merchboard' ),
 			AuditAction::AlertSoundLibraryRenamed  => __( 'Sound of the alert sound library renamed', 'merchboard' ),
+			AuditAction::AlertCreatorSoundLimitsChanged => __( 'Creator\'s alert sound limits changed', 'merchboard' ),
 			AuditAction::AlertImageLibraryAdded    => __( 'Image added to the alert image library', 'merchboard' ),
 			AuditAction::AlertImageLibraryRemoved  => __( 'Image removed from the alert image library', 'merchboard' ),
 			AuditAction::AlertImageLibraryRenamed  => __( 'Image of the alert image library renamed', 'merchboard' ),

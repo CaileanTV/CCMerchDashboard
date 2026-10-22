@@ -190,6 +190,72 @@ final class AlertSettingsTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'placeholder="Stream username"', $html, 'The default as a placeholder.' );
 	}
 
+	public function test_the_sound_limits_are_saved_audited_and_validated(): void {
+		$settings = $this->settings();
+		self::assertSame( array( 10485760, 30 ), array( Settings::sound_max_bytes(), Settings::sound_max_seconds() ), 'MerchAlert\'s defaults.' );
+
+		self::assertTrue( $settings->set_sound_limits( 5242880, 30 ) );
+		self::assertFalse( $settings->set_sound_limits( 5242880, 30 ), 'Unchanged.' );
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'sound_max_bytes' ), array_map( static fn( array $row ): mixed => json_decode( (string) $row['context'], true )['setting'] ?? null, $audit ), 'One record per changed value.' );
+		self::assertSame( 10485760, json_decode( (string) $audit[0]['context'], true )['previous_value'] ?? null );
+
+		foreach ( array(
+			array( 102399, 30, AlertSettingsException::INVALID_SOUND_SIZE ),
+			array( 524288001, 30, AlertSettingsException::INVALID_SOUND_SIZE ),
+			array( 102400, 0, AlertSettingsException::INVALID_SOUND_LENGTH ),
+			array( 102400, 3601, AlertSettingsException::INVALID_SOUND_LENGTH ),
+		) as [ $bytes, $seconds, $reason ] ) {
+			try {
+				$settings->set_sound_limits( $bytes, $seconds );
+				self::fail( 'Expected AlertSettingsException.' );
+			} catch ( AlertSettingsException $e ) {
+				self::assertSame( $reason, $e->reason() );
+			}
+		}
+
+		self::assertSame( array( 5242880, 30 ), array( Settings::sound_max_bytes(), Settings::sound_max_seconds() ), 'Nothing was saved.' );
+
+		// The form: a whole number and a unit each.
+		$actions = new AlertsSettingsActions( $settings, new RecordingLogger() );
+		$nonce   = wp_create_nonce( AlertsSettingsActions::SOUNDS_ACTION );
+		$form    = static fn( string $size, string $size_unit, string $length, string $length_unit ): array => array(
+			'_wpnonce'                                     => $nonce,
+			AlertsSettingsActions::FIELD_SOUND_SIZE        => $size,
+			AlertsSettingsActions::FIELD_SOUND_SIZE_UNIT   => $size_unit,
+			AlertsSettingsActions::FIELD_SOUND_LENGTH      => $length,
+			AlertsSettingsActions::FIELD_SOUND_LENGTH_UNIT => $length_unit,
+		);
+
+		self::assertStringContainsString( AlertsSettingsActions::SOUNDS_RESULT_ARG . '=saved', $actions->save_sounds( $form( '500', 'KB', '2', 'minutes' ) ) );
+		self::assertSame( array( 512000, 120 ), array( Settings::sound_max_bytes(), Settings::sound_max_seconds() ) );
+		self::assertStringContainsString( '=no_changes', $actions->save_sounds( $form( '500', 'KB', '120', 'seconds' ) ) );
+
+		foreach ( array(
+			array( $form( '1.5', 'MB', '30', 'seconds' ), 'invalid_sound_size' ),
+			array( $form( '99', 'KB', '30', 'seconds' ), 'invalid_sound_size' ),
+			array( $form( '10', 'GB', '30', 'seconds' ), 'invalid_sound_size' ),
+			array( $form( '10', 'MB', '61', 'minutes' ), 'invalid_sound_length' ),
+			array( $form( '10', 'MB', '-5', 'seconds' ), 'invalid_sound_length' ),
+		) as [ $input, $code ] ) {
+			self::assertStringContainsString( '=' . $code, $actions->save_sounds( $input ) );
+		}
+
+		self::assertSame( array( 512000, 120 ), array( Settings::sound_max_bytes(), Settings::sound_max_seconds() ), 'Nothing was saved.' );
+		self::assertNotNull( AlertsSettingsSection::sounds_result_message( 'invalid_sound_length' ) );
+		self::assertNull( AlertsSettingsSection::sounds_result_message( '<script>' ) );
+
+		require_once ABSPATH . 'wp-admin/includes/template.php';
+		ob_start();
+		( new AlertsSettingsSection( new AlertsAvailability( static fn(): bool => false ) ) )->render();
+		$html = (string) ob_get_clean();
+		self::assertStringContainsString( 'id="merchboard-sound-limits"', $html );
+		self::assertStringContainsString( 'name="sound_max_size" value="500"', $html );
+		self::assertStringContainsString( '<option value="KB" selected=\'selected\'>KB</option>', $html, '500 KB is not whole megabytes.' );
+		self::assertStringContainsString( 'name="sound_max_length" value="2"', $html );
+		self::assertStringContainsString( '<option value="minutes" selected=\'selected\'>', $html );
+	}
+
 	/**
 	 * The service as the module builds it (the Alerts module only boots with
 	 * WooCommerce, which the integration site does not load).

@@ -602,6 +602,9 @@ describe( 'AlertsSection', () => {
 		} );
 
 		await show();
+		expect( rendered?.container.textContent ).toContain(
+			'Contact us to ask for other limits.'
+		);
 
 		choose(
 			fileInputs()[ 0 ] as HTMLInputElement,

@@ -137,6 +137,8 @@ final class SettingsTest extends TestCase {
 				Settings::CHECKOUT_USERNAME_ENABLED => false,
 				Settings::CHECKOUT_USERNAME_LABEL   => '',
 				Settings::CHECKOUT_USERNAME_HELP    => '',
+				Settings::SOUND_MAX_BYTES           => 10485760,
+				Settings::SOUND_MAX_SECONDS         => 30,
 			),
 			Settings::all()
 		);
@@ -176,6 +178,28 @@ final class SettingsTest extends TestCase {
 	 * The company name and contact e-mail (ADR-071) are not registered by
 	 * default; only one trimmed line and a valid address are kept.
 	 */
+	public function test_sound_limits_default_to_merchalerts_and_keep_only_whole_numbers_in_range(): void {
+		self::assertSame( array( 10485760, 30 ), array( Settings::sound_max_bytes(), Settings::sound_max_seconds() ) );
+
+		foreach ( array( 102399, 524288001, '204800', 204800.0, -1 ) as $stored ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::SOUND_MAX_BYTES => $stored );
+			self::assertSame( 10485760, Settings::sound_max_bytes(), 'Falls back to the default.' );
+		}
+
+		foreach ( array( 0, 3601, '20', true ) as $stored ) {
+			$this->options->options[ Settings::OPTION ] = array( Settings::SOUND_MAX_SECONDS => $stored );
+			self::assertSame( 30, Settings::sound_max_seconds(), 'Falls back to the default.' );
+		}
+
+		$this->options->options[ Settings::OPTION ] = array(
+			Settings::SOUND_MAX_BYTES   => 102400,
+			Settings::SOUND_MAX_SECONDS => 3600,
+		);
+		self::assertSame( array( 102400, 3600 ), array( Settings::sound_max_bytes(), Settings::sound_max_seconds() ), 'The bounds are allowed.' );
+		$this->options->options[ Settings::OPTION ] = array( Settings::SOUND_MAX_BYTES => 524288000 );
+		self::assertSame( 524288000, Settings::sound_max_bytes() );
+	}
+
 	public function test_company_name_and_email_keep_only_valid_values(): void {
 		self::assertSame( array( '', '' ), array( Settings::company_name(), Settings::company_email() ) );
 

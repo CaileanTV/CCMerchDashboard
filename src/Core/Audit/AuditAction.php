@@ -393,6 +393,11 @@ enum AuditAction: string {
 	case AlertSoundLibraryRenamed = 'alert_sound_library_renamed';
 
 	/**
+	 * A creator's own limit of uploaded alert sounds was set or removed (phase 25, step 9.2). Context: the setting (`sound_max_bytes` or `sound_max_seconds`), the previous and the new value (null = the site-wide limit).
+	 */
+	case AlertCreatorSoundLimitsChanged = 'alert_creator_sound_limits_changed';
+
+	/**
 	 * An image was added to the alert image library (phase 25, step 6.10). Context: file name.
 	 */
 	case AlertImageLibraryAdded = 'alert_image_library_added';

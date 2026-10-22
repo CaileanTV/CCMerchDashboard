@@ -39,9 +39,16 @@ final class CreatorMetaStore {
 	public const BILLING_DETAILS = 'billing_details';
 
 	/**
+	 * The creator's own limits of uploaded alert sounds (phase 25, step
+	 * 25.9.2): `{ max_bytes?: int, max_seconds?: int }`, each instead of the
+	 * site-wide limit. Written by the Alerts module's CreatorSoundLimits only.
+	 */
+	public const ALERT_SOUND_LIMITS = 'alert_sound_limits';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS );
+	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS );
 
 	/**
 	 * Constructor.

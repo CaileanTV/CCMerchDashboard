@@ -71,8 +71,9 @@ final class AlertSounds {
 	 * @param SoundFiles                     $files      Sound files.
 	 * @param AlertSoundLibrary|null         $library    The administrator's library; null for none.
 	 * @param (Closure(int): list<int>)|null $ancestors  Parent categories; defaults to get_ancestors().
+	 * @param CreatorSoundLimits|null        $limits     The creators' own upload limits; null for the site-wide ones only.
 	 */
-	public function __construct( private AlertOverlayRepository $overlays, Closure $categories, private SoundFiles $files, private ?AlertSoundLibrary $library = null, ?Closure $ancestors = null ) {
+	public function __construct( private AlertOverlayRepository $overlays, Closure $categories, private SoundFiles $files, private ?AlertSoundLibrary $library = null, ?Closure $ancestors = null, private ?CreatorSoundLimits $limits = null ) {
 		$this->categories = $categories;
 		$this->ancestors  = $ancestors ?? static fn( int $term_id ): array => array_values( array_map( 'intval', get_ancestors( $term_id, 'product_cat', 'taxonomy' ) ) );
 	}
@@ -105,13 +106,15 @@ final class AlertSounds {
 			);
 		}
 
+		$limits = $this->limits( $overlay->creator_id );
+
 		return array(
 			'enabled'     => $values['audio_enabled'],
 			'default'     => $this->sound( $values['audio_default_sound'], $overlay->creator_id )?->to_array(),
 			'categories'  => $categories,
 			'library'     => $library,
-			'max_bytes'   => SoundFiles::max_bytes(),
-			'max_seconds' => SoundFiles::MAX_SECONDS,
+			'max_bytes'   => $limits->max_bytes,
+			'max_seconds' => $limits->max_seconds,
 		);
 	}
 
@@ -161,7 +164,7 @@ final class AlertSounds {
 		}
 
 		$this->check_slot( $creator_id, $slot );
-		$this->assign_new( $overlay, $slot, $this->files->store( $file, self::OWNER_META, $creator_id ) );
+		$this->assign_new( $overlay, $slot, $this->files->store( $file, self::OWNER_META, $creator_id, $this->limits( $creator_id ) ) );
 
 		return $this->overlays->find_for_creator( $creator_id );
 	}
@@ -317,5 +320,14 @@ final class AlertSounds {
 	 */
 	private function owns( int $attachment, int $creator_id ): bool {
 		return $creator_id > 0 && 'attachment' === get_post_type( $attachment ) && (string) get_post_meta( $attachment, self::OWNER_META, true ) === (string) $creator_id;
+	}
+
+	/**
+	 * The limits of a creator's uploads (their own or the site-wide ones).
+	 *
+	 * @param int $creator_id Creator id.
+	 */
+	private function limits( int $creator_id ): SoundLimits {
+		return null === $this->limits ? SoundLimits::site_wide() : $this->limits->for_creator( $creator_id );
 	}
 }

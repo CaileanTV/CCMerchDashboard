@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Sounds;
 
 use Closure;
+use MerchBoard\Core\Settings\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -21,24 +22,17 @@ defined( 'ABSPATH' ) || exit;
  * - **Upload:** MP3, WAV or OGG. The extension and the file's real type are
  *   checked before the file is moved, the file is then read as audio (its
  *   format must match the extension), and its size and length must be
- *   within MAX_BYTES and MAX_SECONDS. Unlike MerchAlert, a file that cannot
- *   be read as audio is refused. A refused file is deleted at once.
+ *   within the limits of the upload: the site-wide max_bytes() and
+ *   max_seconds() (Settings → Alerts, step 25.9.2), or a creator's own
+ *   (CreatorSoundLimits); checked at upload only, so stored sounds stay. Unlike MerchAlert, a
+ *   file that cannot be read as audio is refused. A refused file is deleted
+ *   at once.
  * - **Storage:** an attachment in the Media Library, marked with one meta
  *   key (the owner or the library), so the callers can tell their files
  *   apart from any other attachment.
  * - **Reading:** only audio attachments with a URL on this site.
  */
 final class SoundFiles {
-
-	/**
-	 * Largest file (MerchAlert's default limit).
-	 */
-	public const MAX_BYTES = 10485760;
-
-	/**
-	 * Longest sound in seconds (MerchAlert's default limit).
-	 */
-	public const MAX_SECONDS = 30;
 
 	/**
 	 * Allowed extensions and types.
@@ -93,25 +87,44 @@ final class SoundFiles {
 	}
 
 	/**
-	 * The largest file this site accepts.
+	 * The largest file: the administrator's limit, or the site's upload
+	 * limit when that is smaller.
 	 */
 	public static function max_bytes(): int {
+		return self::within_site_limit( Settings::sound_max_bytes() );
+	}
+
+	/**
+	 * A largest file, or the site's upload limit when that is smaller.
+	 *
+	 * @param int $bytes Largest file in bytes.
+	 */
+	public static function within_site_limit( int $bytes ): int {
 		$site = (int) wp_max_upload_size();
 
-		return $site > 0 ? min( self::MAX_BYTES, $site ) : self::MAX_BYTES;
+		return $site > 0 ? min( $bytes, $site ) : $bytes;
+	}
+
+	/**
+	 * The longest sound in seconds (the administrator's limit).
+	 */
+	public static function max_seconds(): int {
+		return Settings::sound_max_seconds();
 	}
 
 	/**
 	 * Validates and stores an uploaded file as an attachment with a marker.
 	 *
-	 * @param array<mixed> $file  Upload (one entry of $_FILES).
-	 * @param string       $key   Marker meta key.
-	 * @param int          $value Marker value.
+	 * @param array<mixed>     $file   Upload (one entry of $_FILES).
+	 * @param string           $key    Marker meta key.
+	 * @param int              $value  Marker value.
+	 * @param SoundLimits|null $limits Limits; null for the site-wide ones.
 	 * @return int Attachment id.
 	 * @throws AlertSoundException When the file is refused (it is deleted again).
 	 */
-	public function store( array $file, string $key, int $value ): int {
-		$error = $file['error'] ?? null;
+	public function store( array $file, string $key, int $value, ?SoundLimits $limits = null ): int {
+		$limits ??= SoundLimits::site_wide();
+		$error    = $file['error'] ?? null;
 
 		if ( UPLOAD_ERR_INI_SIZE === $error || UPLOAD_ERR_FORM_SIZE === $error ) {
 			throw new AlertSoundException( AlertSoundException::TOO_LARGE );
@@ -127,7 +140,7 @@ final class SoundFiles {
 			throw new AlertSoundException( AlertSoundException::NO_FILE );
 		}
 
-		if ( $size > self::max_bytes() ) {
+		if ( $size > $limits->max_bytes ) {
 			throw new AlertSoundException( AlertSoundException::TOO_LARGE );
 		}
 
@@ -159,7 +172,7 @@ final class SoundFiles {
 		$path = $moved['file'];
 
 		try {
-			$seconds = $this->audio_length( $path, $ext );
+			$seconds = $this->audio_length( $path, $ext, $limits->max_seconds );
 
 			return $this->insert_attachment( $path, $check['type'], $size, $seconds, $key, $value );
 		} catch ( AlertSoundException $e ) {
@@ -198,11 +211,12 @@ final class SoundFiles {
 	/**
 	 * The length of a stored file in whole seconds.
 	 *
-	 * @param string $path File.
-	 * @param string $ext  Extension.
+	 * @param string $path        File.
+	 * @param string $ext         Extension.
+	 * @param int    $max_seconds Longest sound.
 	 * @throws AlertSoundException When it is not audio of the extension's format or too long.
 	 */
-	private function audio_length( string $path, string $ext ): int {
+	private function audio_length( string $path, string $ext, int $max_seconds ): int {
 		wp_raise_memory_limit( 'admin' );
 		$meta = ( $this->analyze )( $path );
 
@@ -210,7 +224,7 @@ final class SoundFiles {
 			throw new AlertSoundException( AlertSoundException::UNREADABLE );
 		}
 
-		if ( $meta['length'] > self::MAX_SECONDS ) {
+		if ( $meta['length'] > $max_seconds ) {
 			throw new AlertSoundException( AlertSoundException::TOO_LONG );
 		}
 

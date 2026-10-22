@@ -45,6 +45,21 @@ final class AlertSettingsException extends DomainException {
 	public const INVALID_CHECKOUT_HELP = 'invalid_checkout_help';
 
 	/**
+	 * The largest sound file is not a whole number within 100 KB … 500 MB.
+	 */
+	public const INVALID_SOUND_SIZE = 'invalid_sound_size';
+
+	/**
+	 * The longest sound is not a whole number within 1 second … 1 hour.
+	 */
+	public const INVALID_SOUND_LENGTH = 'invalid_sound_length';
+
+	/**
+	 * The creator does not exist (a creator's own sound limits).
+	 */
+	public const CREATOR_NOT_FOUND = 'creator_not_found';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the constants.

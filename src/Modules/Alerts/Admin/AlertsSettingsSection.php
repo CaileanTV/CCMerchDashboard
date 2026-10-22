@@ -99,6 +99,85 @@ final class AlertsSettingsSection {
 		submit_button( __( 'Save alert settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
 		self::render_checkout_username();
+		self::render_sound_limits();
+	}
+
+	/**
+	 * Message and type for an outcome code of the sound limits; null for
+	 * unknown codes.
+	 *
+	 * @param string $code Outcome code.
+	 * @return array{0: string, 1: string}|null [message, 'success'|'info'|'error']
+	 */
+	public static function sounds_result_message( string $code ): ?array {
+		return match ( $code ) {
+			'saved'                                      => array( __( 'The sound limits were saved. They apply to new uploads.', 'merchboard' ), 'success' ),
+			'no_changes'                                 => array( __( 'No changes were made to the sound limits.', 'merchboard' ), 'info' ),
+			AlertSettingsException::INVALID_SOUND_SIZE   => array( __( 'The largest file must be a whole number between 100 KB and 500 MB. Nothing was saved.', 'merchboard' ), 'error' ),
+			AlertSettingsException::INVALID_SOUND_LENGTH => array( __( 'The longest sound must be a whole number between 1 second and 60 minutes. Nothing was saved.', 'merchboard' ), 'error' ),
+			AlertSettingsException::NOT_AUTHORIZED       => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
+			'error'                                      => array( __( 'A technical error occurred. The sound limits were not changed.', 'merchboard' ), 'error' ),
+			default                                      => null,
+		};
+	}
+
+	/**
+	 * The limits of uploaded alert sounds (step 25.9.2): the largest file in
+	 * KB or MB and the longest sound in seconds or minutes.
+	 */
+	private static function render_sound_limits(): void {
+		// Read-only outcome code; nothing is changed by this request.
+		$code    = isset( $_GET[ AlertsSettingsActions::SOUNDS_RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ AlertsSettingsActions::SOUNDS_RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$notice  = self::sounds_result_message( $code );
+		$bytes   = Settings::sound_max_bytes();
+		$seconds = Settings::sound_max_seconds();
+		$in_mb   = 0 === $bytes % AlertsSettingsActions::SIZE_UNITS['MB'];
+		$in_min  = $seconds >= 60 && 0 === $seconds % 60;
+		$site    = (int) wp_max_upload_size();
+
+		echo '<h3 id="merchboard-sound-limits">' . esc_html__( 'Sound file limits', 'merchboard' ) . '</h3>';
+
+		if ( null !== $notice ) {
+			printf( '<div class="notice notice-%1$s inline"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		echo '<p>' . esc_html__( 'The largest file and the longest sound creators and the sound library can upload (MP3, WAV or OGG). The limits apply to new uploads; sounds already uploaded stay.', 'merchboard' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsSettingsActions::SOUNDS_ACTION ) . '">';
+		wp_nonce_field( AlertsSettingsActions::SOUNDS_ACTION );
+		echo '<table class="form-table" role="presentation"><tbody>';
+		printf(
+			'<tr><th scope="row"><label for="merchboard-sound-size">%1$s</label></th><td><input type="number" id="merchboard-sound-size" name="%2$s" value="%3$d" min="1" step="1" class="small-text" required> <select name="%4$s" aria-label="%5$s"><option value="KB"%6$s>KB</option><option value="MB"%7$s>MB</option></select><p class="description">%8$s</p></td></tr>',
+			esc_html__( 'Largest file', 'merchboard' ),
+			esc_attr( AlertsSettingsActions::FIELD_SOUND_SIZE ),
+			(int) ( $in_mb ? $bytes / AlertsSettingsActions::SIZE_UNITS['MB'] : intdiv( $bytes, AlertsSettingsActions::SIZE_UNITS['KB'] ) ),
+			esc_attr( AlertsSettingsActions::FIELD_SOUND_SIZE_UNIT ),
+			esc_attr__( 'Unit of the largest file', 'merchboard' ),
+			selected( $in_mb, false, false ),
+			selected( $in_mb, true, false ),
+			esc_html(
+				$site > 0 && $site < $bytes
+					/* translators: %s: the site's upload limit, e.g. "8 MB". */
+					? sprintf( __( '100 KB to 500 MB; default 10 MB. This site accepts uploads of at most %s, so that is the limit now.', 'merchboard' ), size_format( $site ) )
+					: __( '100 KB to 500 MB; default 10 MB.', 'merchboard' )
+			)
+		);
+		printf(
+			'<tr><th scope="row"><label for="merchboard-sound-length">%1$s</label></th><td><input type="number" id="merchboard-sound-length" name="%2$s" value="%3$d" min="1" step="1" class="small-text" required> <select name="%4$s" aria-label="%5$s"><option value="seconds"%6$s>%7$s</option><option value="minutes"%8$s>%9$s</option></select><p class="description">%10$s</p></td></tr>',
+			esc_html__( 'Longest sound', 'merchboard' ),
+			esc_attr( AlertsSettingsActions::FIELD_SOUND_LENGTH ),
+			(int) ( $in_min ? intdiv( $seconds, 60 ) : $seconds ),
+			esc_attr( AlertsSettingsActions::FIELD_SOUND_LENGTH_UNIT ),
+			esc_attr__( 'Unit of the longest sound', 'merchboard' ),
+			selected( $in_min, false, false ),
+			esc_html__( 'seconds', 'merchboard' ),
+			selected( $in_min, true, false ),
+			esc_html__( 'minutes', 'merchboard' ),
+			esc_html__( '1 second to 60 minutes; default 30 seconds.', 'merchboard' )
+		);
+		echo '</tbody></table>';
+		submit_button( __( 'Save sound limits', 'merchboard' ), 'secondary' );
+		echo '</form>';
 	}
 
 	/**

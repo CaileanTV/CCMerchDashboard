@@ -14,9 +14,14 @@ use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
+use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
+use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsActions;
+use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsSection;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\AlertSettingsException;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
@@ -25,7 +30,9 @@ use MerchBoard\Modules\Alerts\Overlay\OverlaySettings;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Sounds\CreatorSoundLimits;
 use MerchBoard\Modules\Alerts\Sounds\SoundFiles;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
@@ -68,6 +75,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 			wp_delete_attachment( (int) $attachment, true );
 		}
 
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -98,16 +106,18 @@ final class AlertSoundsTest extends IntegrationTestCase {
 	/**
 	 * The service as the module builds it.
 	 *
-	 * @param AlertOverlayRepository $overlays Overlays.
-	 * @param AlertSoundLibrary|null $library  Library.
+	 * @param AlertOverlayRepository  $overlays Overlays.
+	 * @param AlertSoundLibrary|null  $library  Library.
+	 * @param CreatorSoundLimits|null $limits   The creators' own limits.
 	 */
-	public static function sounds( AlertOverlayRepository $overlays, ?AlertSoundLibrary $library = null ): AlertSounds {
+	public static function sounds( AlertOverlayRepository $overlays, ?AlertSoundLibrary $library = null, ?CreatorSoundLimits $limits = null ): AlertSounds {
 		return new AlertSounds(
 			$overlays,
 			static fn(): array => array( self::HOODIES => 'Hoodies' ),
 			self::sound_files(),
 			$library,
-			static fn( int $term_id ): array => self::CHILD === $term_id ? array( self::HOODIES ) : array()
+			static fn( int $term_id ): array => self::CHILD === $term_id ? array( self::HOODIES ) : array(),
+			$limits
 		);
 	}
 
@@ -182,7 +192,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 			),
 			$audio['categories']
 		);
-		self::assertSame( SoundFiles::MAX_SECONDS, $audio['max_seconds'] );
+		self::assertSame( array( SoundFiles::max_bytes(), 30 ), array( $audio['max_bytes'], $audio['max_seconds'] ), 'The default limits.' );
 
 		$disabled = $this->overlay( $this->creator, array( 'audio_enabled' => false ) );
 		self::assertSame( '', $this->sounds->url_for( $disabled, $this->event( array() ) ), 'Sounds are off.' );
@@ -255,7 +265,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 		$this->overlay();
 		$upload = match ( $content ) {
 			'wav'   => self::wav_upload( 1, $name ),
-			'long'  => self::wav_upload( SoundFiles::MAX_SECONDS + 1, $name ),
+			'long'  => self::wav_upload( SoundFiles::max_seconds() + 1, $name ),
 			default => self::upload( $content, $name ),
 		};
 		$before = $this->files();
@@ -274,6 +284,171 @@ final class AlertSoundsTest extends IntegrationTestCase {
 		self::assertSame( array(), get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'fields' => 'ids' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short query.
 		self::assertSame( $before, $this->files(), 'No file is left in the uploads folder.' );
 		self::assertSame( 0, $this->overlays->find_for_creator( $this->creator )?->settings->to_array()['audio_default_sound'] );
+	}
+
+	public function test_the_administrators_limits_apply_to_new_uploads_and_stored_sounds_stay(): void {
+		$this->overlay();
+		$stored = $this->sounds->upload( $this->creator, 0, self::wav_upload( 3 ) );
+		self::assertNotNull( $stored );
+
+		Settings::save(
+			array_merge(
+				Settings::all(),
+				array(
+					Settings::SOUND_MAX_BYTES   => 102400,
+					Settings::SOUND_MAX_SECONDS => 2,
+				)
+			)
+		);
+		$library = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+
+		foreach ( array(
+			array( fn() => $this->sounds->upload( $this->creator, 0, self::wav_upload( 3 ) ), AlertSoundException::TOO_LONG ),
+			array( static fn() => $library->add( self::wav_upload( 3, 'chime.wav' ) ), AlertSoundException::TOO_LONG ),
+			array( fn() => $this->sounds->upload( $this->creator, 0, self::wav_upload( 13 ) ), AlertSoundException::TOO_LARGE ),
+		) as [ $upload, $reason ] ) {
+			try {
+				$upload();
+				self::fail( 'Expected AlertSoundException.' );
+			} catch ( AlertSoundException $e ) {
+				self::assertSame( $reason, $e->reason() );
+			}
+		}
+
+		$audio = $this->sounds->describe( $stored );
+		self::assertSame( array( 102400, 2 ), array( $audio['max_bytes'], $audio['max_seconds'] ), 'The dashboard shows the new limits.' );
+		self::assertSame( 3, $audio['default']['seconds'] ?? null, 'A stored sound stays, though it is longer now.' );
+		self::assertSame( array(), $library->all() );
+		self::assertSame( 'The sound is longer than 2 seconds.', AlertsAdminPage::result_message( AlertSoundException::TOO_LONG )[0] ?? null );
+		self::assertSame( 'The file is larger than 100 KB.', AlertsAdminPage::result_message( AlertSoundException::TOO_LARGE )[0] ?? null );
+	}
+
+	public function test_a_creators_own_limits_apply_to_their_uploads_only_and_are_audited(): void {
+		$creators = new CreatorRepository( $this->wpdb );
+		$limits   = new CreatorSoundLimits( new CreatorMetaStore( $this->wpdb ), $creators, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$library  = self::library( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$sounds   = self::sounds( $this->overlays, $library, $limits );
+		$other    = $creators->create( 'Orion', CreatorStatus::Active )->id;
+		$this->overlay();
+		$this->overlay( $other );
+		Settings::save( array_merge( Settings::all(), array( Settings::SOUND_MAX_SECONDS => 2 ) ) );
+
+		self::assertSame(
+			array(
+				'max_bytes'   => null,
+				'max_seconds' => null,
+			),
+			$limits->own( $this->creator ),
+			'None: the site-wide limits.'
+		);
+		self::assertTrue( $limits->set( $this->creator, 102400, 5 ) );
+		self::assertFalse( $limits->set( $this->creator, 102400, 5 ), 'Unchanged.' );
+
+		$overlay = $sounds->upload( $this->creator, 0, self::wav_upload( 3 ) );
+		self::assertSame( 3, $overlay ? $sounds->describe( $overlay )['default']['seconds'] ?? null : null, 'Longer than the site-wide limit, within the creator\'s own.' );
+		self::assertSame( array( 102400, 5 ), $overlay ? array( $sounds->describe( $overlay )['max_bytes'], $sounds->describe( $overlay )['max_seconds'] ) : null, 'The dashboard shows the creator\'s own limits.' );
+
+		foreach ( array(
+			array( fn() => $sounds->upload( $this->creator, 0, self::wav_upload( 13 ) ), AlertSoundException::TOO_LARGE ),
+			array( fn() => $sounds->upload( $other, 0, self::wav_upload( 3 ) ), AlertSoundException::TOO_LONG ),
+			array( static fn() => $library->add( self::wav_upload( 3, 'chime.wav' ) ), AlertSoundException::TOO_LONG ),
+		) as [ $upload, $reason ] ) {
+			try {
+				$upload();
+				self::fail( 'Expected AlertSoundException.' );
+			} catch ( AlertSoundException $e ) {
+				self::assertSame( $reason, $e->reason(), 'Smaller than the creator\'s own; the other creator and the library keep the site-wide limits.' );
+			}
+		}
+
+		$audit = $this->rows( Tables::AUDIT_LOG );
+		self::assertSame( array( 'alert_creator_sound_limits_changed', 'alert_creator_sound_limits_changed' ), array_column( $audit, 'action' ) );
+		self::assertSame( (string) $this->creator, (string) $audit[0]['creator_id'] );
+		self::assertSame(
+			array(
+				'setting'        => 'sound_max_bytes',
+				'previous_value' => null,
+				'value'          => 102400,
+			),
+			json_decode( (string) $audit[0]['context'], true )
+		);
+
+		self::assertTrue( $limits->set( $this->creator, null, 5 ) );
+		self::assertSame( SoundFiles::max_bytes(), $limits->for_creator( $this->creator )->max_bytes, 'An empty limit is the site-wide one again.' );
+		self::assertTrue( $limits->set( $this->creator, null, null ) );
+		self::assertNull( ( new CreatorMetaStore( $this->wpdb ) )->get( $this->creator, CreatorMetaStore::ALERT_SOUND_LIMITS ), 'Nothing is kept.' );
+
+		foreach ( array(
+			array( $this->creator, 102399, null, AlertSettingsException::INVALID_SOUND_SIZE ),
+			array( $this->creator, null, 3601, AlertSettingsException::INVALID_SOUND_LENGTH ),
+			array( 999999, null, 5, AlertSettingsException::CREATOR_NOT_FOUND ),
+		) as [ $creator_id, $bytes, $seconds, $reason ] ) {
+			try {
+				$limits->set( $creator_id, $bytes, $seconds );
+				self::fail( 'Expected AlertSettingsException.' );
+			} catch ( AlertSettingsException $e ) {
+				self::assertSame( $reason, $e->reason() );
+			}
+		}
+
+		wp_set_current_user( $this->create_user( 'limits-subscriber' ) );
+
+		try {
+			$limits->set( $this->creator, null, 5 );
+			self::fail( 'Expected AlertSettingsException.' );
+		} catch ( AlertSettingsException $e ) {
+			self::assertSame( AlertSettingsException::NOT_AUTHORIZED, $e->reason() );
+		}
+
+		wp_set_current_user( 1 );
+	}
+
+	public function test_the_creators_edit_page_sets_and_shows_their_own_limits(): void {
+		require_once ABSPATH . 'wp-admin/includes/template.php';
+		$creators = new CreatorRepository( $this->wpdb );
+		$limits   = new CreatorSoundLimits( new CreatorMetaStore( $this->wpdb ), $creators, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$actions  = new CreatorSoundLimitsActions( $limits, new RecordingLogger() );
+		$form     = fn( string $size, string $length ): array => array(
+			'creator_id'                                   => (string) $this->creator,
+			'_wpnonce'                                     => wp_create_nonce( CreatorSoundLimitsActions::nonce_action( $this->creator ) ),
+			AlertsSettingsActions::FIELD_SOUND_SIZE        => $size,
+			AlertsSettingsActions::FIELD_SOUND_SIZE_UNIT   => 'MB',
+			AlertsSettingsActions::FIELD_SOUND_LENGTH      => $length,
+			AlertsSettingsActions::FIELD_SOUND_LENGTH_UNIT => 'minutes',
+		);
+
+		$url = $actions->handle( $form( '', '2' ) );
+		self::assertStringContainsString( CreatorSoundLimitsActions::RESULT_ARG . '=saved', $url );
+		self::assertStringContainsString( 'creator=' . $this->creator, $url );
+		self::assertStringEndsWith( '#merchboard-creator-sound-limits', $url );
+		self::assertSame(
+			array(
+				'max_bytes'   => null,
+				'max_seconds' => 120,
+			),
+			$limits->own( $this->creator ),
+			'An empty field keeps the site-wide limit.'
+		);
+		self::assertStringContainsString( '=invalid_sound_size', $actions->handle( $form( '600', '2' ) ) );
+		self::assertStringContainsString( '=no_changes', $actions->handle( $form( '', '2' ) ) );
+		self::assertNotNull( CreatorSoundLimitsSection::result_message( 'creator_not_found' ) );
+		self::assertNull( CreatorSoundLimitsSection::result_message( '<script>' ) );
+
+		$creator = $creators->find( $this->creator );
+		self::assertNotNull( $creator );
+		ob_start();
+		( new CreatorSoundLimitsSection( $limits ) )->render( $creator );
+		$html = (string) ob_get_clean();
+		self::assertStringContainsString( 'id="merchboard-creator-sound-limits"', $html );
+		self::assertStringContainsString( 'name="sound_max_size" value=""', $html, 'Empty: the site-wide limit.' );
+		self::assertStringContainsString( 'name="sound_max_length" value="2"', $html );
+		self::assertStringContainsString( 'value="' . CreatorSoundLimitsActions::ACTION . '"', $html );
+
+		wp_set_current_user( $this->create_user( 'section-subscriber' ) );
+		ob_start();
+		( new CreatorSoundLimitsSection( $limits ) )->render( $creator );
+		self::assertSame( '', (string) ob_get_clean(), 'Only for users who manage alerts.' );
+		wp_set_current_user( 1 );
 	}
 
 	public function test_a_foreign_category_a_missing_file_and_no_overlay_are_refused(): void {

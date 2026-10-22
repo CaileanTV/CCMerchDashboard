@@ -121,8 +121,10 @@ final class AlertsAdminPage {
 			'sound_removed'                          => array( __( 'The sound was removed. Overlays that used it play their other sounds.', 'merchboard' ), 'success' ),
 			AlertSoundException::NO_FILE             => array( __( 'No file was received. Try again.', 'merchboard' ), 'error' ),
 			AlertSoundException::INVALID_TYPE        => array( __( 'Choose an MP3, WAV or OGG file.', 'merchboard' ), 'error' ),
-			AlertSoundException::TOO_LARGE           => array( __( 'The file is too large.', 'merchboard' ), 'error' ),
-			AlertSoundException::TOO_LONG            => array( __( 'The sound is too long.', 'merchboard' ), 'error' ),
+			/* translators: %s: the largest file, e.g. "10 MB". */
+			AlertSoundException::TOO_LARGE           => array( sprintf( __( 'The file is larger than %s.', 'merchboard' ), size_format( SoundFiles::max_bytes() ) ), 'error' ),
+			/* translators: %d: seconds. */
+			AlertSoundException::TOO_LONG            => array( sprintf( __( 'The sound is longer than %d seconds.', 'merchboard' ), SoundFiles::max_seconds() ), 'error' ),
 			AlertSoundException::UNREADABLE          => array( __( 'The file could not be read as a sound. Choose another file.', 'merchboard' ), 'error' ),
 			AlertSoundException::LIBRARY_FULL        => array( __( 'The library is full. Remove a sound first.', 'merchboard' ), 'error' ),
 			'image_added'                            => array( __( 'The image was added to the library. Creators can choose it now.', 'merchboard' ), 'success' ),
@@ -239,10 +241,10 @@ final class AlertsAdminPage {
 	private function render_sounds( AlertSoundLibrary $library ): void {
 		echo '<p>' . esc_html(
 			sprintf(
-				/* translators: 1: size in MB, 2: seconds, 3: number of sounds. */
-				__( 'Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s MB and %2$d seconds each; at most %3$d sounds.', 'merchboard' ),
-				number_format_i18n( SoundFiles::max_bytes() / 1048576, 1 ),
-				SoundFiles::MAX_SECONDS,
+				/* translators: 1: size, e.g. "10 MB", 2: seconds, 3: number of sounds. */
+				__( 'Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s and %2$d seconds each (Settings → Alerts); at most %3$d sounds.', 'merchboard' ),
+				size_format( SoundFiles::max_bytes() ),
+				SoundFiles::max_seconds(),
 				AlertSoundLibrary::MAX_SOUNDS
 			)
 		) . '</p>';

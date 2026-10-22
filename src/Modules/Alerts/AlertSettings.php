@@ -134,10 +134,37 @@ final class AlertSettings {
 	}
 
 	/**
+	 * Saves the limits of uploaded alert sounds (step 25.9.2): the largest
+	 * file in bytes and the longest sound in seconds, within
+	 * Settings::SOUND_MAX_BYTES_RANGE and SOUND_MAX_SECONDS_RANGE. They apply
+	 * to new uploads (creators' sounds and the library); stored sounds stay.
+	 * Each changed value is audited (`settings_updated`).
+	 *
+	 * @param int $max_bytes   Largest file in bytes.
+	 * @param int $max_seconds Longest sound in seconds.
+	 * @return bool Whether anything changed.
+	 * @throws AlertSettingsException When not allowed or a limit is out of range.
+	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
+	 */
+	public function set_sound_limits( int $max_bytes, int $max_seconds ): bool {
+		$this->authorize();
+
+		self::require_valid( Settings::valid_sound_max_bytes( $max_bytes ), AlertSettingsException::INVALID_SOUND_SIZE );
+		self::require_valid( Settings::valid_sound_max_seconds( $max_seconds ), AlertSettingsException::INVALID_SOUND_LENGTH );
+
+		return $this->save_changes(
+			array(
+				Settings::SOUND_MAX_BYTES   => $max_bytes,
+				Settings::SOUND_MAX_SECONDS => $max_seconds,
+			)
+		);
+	}
+
+	/**
 	 * Saves the changed values: one audit record (`settings_updated`) per
 	 * changed value and the option, in one transaction.
 	 *
-	 * @param array<string, string|bool> $values Values by settings key.
+	 * @param array<string, string|bool|int> $values Values by settings key.
 	 * @return bool Whether anything changed.
 	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
 	 */
@@ -145,7 +172,7 @@ final class AlertSettings {
 		$settings = Settings::all();
 		$changes  = array_filter(
 			$values,
-			static fn( string|bool $value, string $key ): bool => ( $settings[ $key ] ?? null ) !== $value,
+			static fn( string|bool|int $value, string $key ): bool => ( $settings[ $key ] ?? null ) !== $value,
 			ARRAY_FILTER_USE_BOTH
 		);
 

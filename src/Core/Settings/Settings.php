@@ -154,6 +154,38 @@ final class Settings {
 	public const CHECKOUT_USERNAME_HELP_MAX_LENGTH = 300;
 
 	/**
+	 * The largest alert sound file in bytes (step 25.9.2; MerchAlert's
+	 * `max_audio_size`). Sites with a smaller upload limit use theirs.
+	 */
+	public const SOUND_MAX_BYTES = 'sound_max_bytes';
+
+	/**
+	 * The longest alert sound in seconds (step 25.9.2; MerchAlert's
+	 * `max_audio_duration`).
+	 */
+	public const SOUND_MAX_SECONDS = 'sound_max_seconds';
+
+	/**
+	 * Default largest sound file (MerchAlert's default, 10 MB).
+	 */
+	public const DEFAULT_SOUND_MAX_BYTES = 10485760;
+
+	/**
+	 * Default longest sound (MerchAlert's default).
+	 */
+	public const DEFAULT_SOUND_MAX_SECONDS = 30;
+
+	/**
+	 * Allowed largest sound file: 100 KB … 500 MB (as MerchAlert).
+	 */
+	public const SOUND_MAX_BYTES_RANGE = array( 102400, 524288000 );
+
+	/**
+	 * Allowed longest sound: 1 second … 1 hour (as MerchAlert).
+	 */
+	public const SOUND_MAX_SECONDS_RANGE = array( 1, 3600 );
+
+	/**
 	 * Slugs WordPress, WooCommerce or common setups already use for their own
 	 * URLs; the dashboard must never shadow them.
 	 */
@@ -191,7 +223,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -208,6 +240,8 @@ final class Settings {
 			self::CHECKOUT_USERNAME_ENABLED => false,
 			self::CHECKOUT_USERNAME_LABEL   => '',
 			self::CHECKOUT_USERNAME_HELP    => '',
+			self::SOUND_MAX_BYTES           => self::DEFAULT_SOUND_MAX_BYTES,
+			self::SOUND_MAX_SECONDS         => self::DEFAULT_SOUND_MAX_SECONDS,
 		);
 	}
 
@@ -218,7 +252,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -230,6 +264,8 @@ final class Settings {
 		$mail  = $values[ self::COMPANY_EMAIL ] ?? null;
 		$label = $values[ self::CHECKOUT_USERNAME_LABEL ] ?? null;
 		$help  = $values[ self::CHECKOUT_USERNAME_HELP ] ?? null;
+		$bytes = $values[ self::SOUND_MAX_BYTES ] ?? null;
+		$secs  = $values[ self::SOUND_MAX_SECONDS ] ?? null;
 
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL  => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
@@ -245,6 +281,8 @@ final class Settings {
 			self::CHECKOUT_USERNAME_ENABLED => true === ( $values[ self::CHECKOUT_USERNAME_ENABLED ] ?? false ),
 			self::CHECKOUT_USERNAME_LABEL   => is_string( $label ) && self::valid_line( $label, self::CHECKOUT_USERNAME_LABEL_MAX_LENGTH ) ? $label : '',
 			self::CHECKOUT_USERNAME_HELP    => is_string( $help ) && self::valid_line( $help, self::CHECKOUT_USERNAME_HELP_MAX_LENGTH ) ? $help : '',
+			self::SOUND_MAX_BYTES           => is_int( $bytes ) && self::valid_sound_max_bytes( $bytes ) ? $bytes : self::DEFAULT_SOUND_MAX_BYTES,
+			self::SOUND_MAX_SECONDS         => is_int( $secs ) && self::valid_sound_max_seconds( $secs ) ? $secs : self::DEFAULT_SOUND_MAX_SECONDS,
 		);
 	}
 
@@ -295,6 +333,39 @@ final class Settings {
 	}
 
 	/**
+	 * Whether a largest sound file is allowed (SOUND_MAX_BYTES_RANGE).
+	 *
+	 * @param int $bytes Bytes.
+	 */
+	public static function valid_sound_max_bytes( int $bytes ): bool {
+		return $bytes >= self::SOUND_MAX_BYTES_RANGE[0] && $bytes <= self::SOUND_MAX_BYTES_RANGE[1];
+	}
+
+	/**
+	 * Whether a longest sound is allowed (SOUND_MAX_SECONDS_RANGE).
+	 *
+	 * @param int $seconds Seconds.
+	 */
+	public static function valid_sound_max_seconds( int $seconds ): bool {
+		return $seconds >= self::SOUND_MAX_SECONDS_RANGE[0] && $seconds <= self::SOUND_MAX_SECONDS_RANGE[1];
+	}
+
+	/**
+	 * The largest alert sound file in bytes, as set (before the site's
+	 * upload limit; see SoundFiles::max_bytes()).
+	 */
+	public static function sound_max_bytes(): int {
+		return self::all()[ self::SOUND_MAX_BYTES ];
+	}
+
+	/**
+	 * The longest alert sound in seconds.
+	 */
+	public static function sound_max_seconds(): int {
+		return self::all()[ self::SOUND_MAX_SECONDS ];
+	}
+
+	/**
 	 * Whether a string is a valid stored contact e-mail: '' or an e-mail
 	 * address.
 	 *
@@ -335,7 +406,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
