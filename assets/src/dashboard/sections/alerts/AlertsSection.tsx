@@ -14,7 +14,7 @@ import type { AlertsOverlayState, OverlaySettings } from '../../types/alerts';
 import { AlertSoundsCard } from './AlertSoundsCard';
 import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
-import { PresetPickerCard } from './PresetPickerCard';
+import { DesignsCard } from './DesignsCard';
 import { useFontStylesheet } from './useFontStylesheet';
 import { useOverlayApi } from './overlay-api-context';
 
@@ -331,18 +331,18 @@ export function AlertsContent( {
 			) : (
 				<div className="merchboard-alerts">
 					{ controls }
+					{ variant === 'creator' && (
+						<DesignsCard
+							fonts={ state.fonts }
+							onApplied={ applied }
+							notify={ notify }
+						/>
+					) }
 					<div className="merchboard-alerts__columns">
 						{ variant !== 'preset' && (
 							<BrowserSourceCard
 								url={ state.overlay.url }
 								onRegenerated={ setState }
-								notify={ notify }
-							/>
-						) }
-						{ variant === 'creator' && (
-							<PresetPickerCard
-								fonts={ state.fonts }
-								onApplied={ applied }
 								notify={ notify }
 							/>
 						) }

@@ -24,6 +24,9 @@ use MerchBoard\Modules\Alerts\Images\AlertImageException;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Designs\CreatorDesign;
+use MerchBoard\Modules\Alerts\Designs\CreatorDesignException;
+use MerchBoard\Modules\Alerts\Designs\CreatorDesigns;
 use MerchBoard\Modules\Alerts\Presets\OverlayPreset;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetException;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresets;
@@ -75,8 +78,9 @@ final class MeAlertsController extends RestController {
 	 * @param AlertSounds|null    $sounds       Alert sounds; null for none.
 	 * @param AlertImages|null    $images       Text fill images; null for none.
 	 * @param OverlayPresets|null $presets     Standard overlays (step 25.9.5); null for none.
+	 * @param CreatorDesigns|null $designs     The creator's saved designs; null for none.
 	 */
-	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null, private ?OverlayPresets $presets = null ) {
+	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null, private ?OverlayPresets $presets = null, private ?CreatorDesigns $designs = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -84,6 +88,31 @@ final class MeAlertsController extends RestController {
 	 * Registers the routes.
 	 */
 	public function register_routes(): void {
+		// The creator's own saved designs (after step 25.9.5).
+		$routes = array(
+			'/me/alerts/designs'                          => array( array( WP_REST_Server::READABLE, 'list_designs' ), array( WP_REST_Server::CREATABLE, 'save_design' ) ),
+			'/me/alerts/designs/(?P<design>[0-9a-f]{16})' => array( array( WP_REST_Server::DELETABLE, 'delete_design' ) ),
+			'/me/alerts/designs/(?P<design>[0-9a-f]{16})/update' => array( array( WP_REST_Server::CREATABLE, 'update_design' ) ),
+			'/me/alerts/designs/(?P<design>[0-9a-f]{16})/name' => array( array( WP_REST_Server::CREATABLE, 'rename_design' ) ),
+			self::ROUTE . '/design'                       => array( array( WP_REST_Server::CREATABLE, 'apply_design' ) ),
+		);
+
+		foreach ( $routes as $route => $methods ) {
+			register_rest_route(
+				self::NAMESPACE,
+				$route,
+				array_map(
+					fn( array $method ): array => array(
+						'methods'             => $method[0],
+						'callback'            => array( $this, $method[1] ),
+						'permission_callback' => array( $this, 'permission' ),
+						'args'                => array(),
+					),
+					$methods
+				)
+			);
+		}
+
 		// The standard overlays to start from (step 25.9.5).
 		register_rest_route(
 			self::NAMESPACE,
@@ -303,6 +332,157 @@ final class MeAlertsController extends RestController {
 				return null === $overlay ? self::not_set_up() : $this->answer( $overlay );
 			}
 		);
+	}
+
+	/**
+	 * The creator's saved designs, with what their preview needs.
+	 */
+	public function list_designs(): WP_REST_Response|WP_Error {
+		return $this->with_creator( '/me/alerts/designs', fn( int $creator_id ): WP_REST_Response => $this->designs_answer( $creator_id, null === $this->designs ? array() : $this->designs->all( $creator_id ) ) );
+	}
+
+	/**
+	 * Saves the overlay's current design under a name (`{ "name" }`).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function save_design( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->design_change( '/me/alerts/designs', fn( int $creator_id, CreatorDesigns $designs ): array => $designs->save_current( $creator_id, self::string_param( $request, 'name' ) ) );
+	}
+
+	/**
+	 * Overwrites a design with the overlay's current design.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function update_design( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->design_change( '/me/alerts/designs/{id}/update', fn( int $creator_id, CreatorDesigns $designs ): array => $designs->update_from_current( $creator_id, self::string_param( $request, 'design' ) ) );
+	}
+
+	/**
+	 * Renames a design (`{ "name" }`).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function rename_design( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->design_change( '/me/alerts/designs/{id}/name', fn( int $creator_id, CreatorDesigns $designs ): array => $designs->rename( $creator_id, self::string_param( $request, 'design' ), self::string_param( $request, 'name' ) ) );
+	}
+
+	/**
+	 * Deletes a design.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function delete_design( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->design_change( '/me/alerts/designs/{id}', fn( int $creator_id, CreatorDesigns $designs ): array => $designs->delete( $creator_id, self::string_param( $request, 'design' ) ) );
+	}
+
+	/**
+	 * Takes a design into use (`{ "design": id }`); answers with the overlay.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function apply_design( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/design',
+			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
+				if ( null === $this->designs ) {
+					return self::not_set_up();
+				}
+
+				try {
+					return $this->answer( $this->designs->apply( $creator_id, self::string_param( $request, 'design' ) ) );
+				} catch ( CreatorDesignException $e ) {
+					return self::design_refused( $e );
+				}
+			}
+		);
+	}
+
+	/**
+	 * Runs a change of the creator's designs and answers with the list.
+	 *
+	 * @param string   $route  Route for the log.
+	 * @param callable $change The change: creator id and designs → the designs.
+	 * @phpstan-param callable(int, CreatorDesigns): list<CreatorDesign> $change
+	 */
+	private function design_change( string $route, callable $change ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			$route,
+			function ( int $creator_id ) use ( $change ): WP_REST_Response|WP_Error {
+				if ( null === $this->designs ) {
+					return self::not_set_up();
+				}
+
+				try {
+					return $this->designs_answer( $creator_id, $change( $creator_id, $this->designs ) );
+				} catch ( CreatorDesignException $e ) {
+					return self::design_refused( $e );
+				}
+			}
+		);
+	}
+
+	/**
+	 * The designs: `{ designs: [ { id, name, saved_at, settings, font_approved, layout, images } ], max }`.
+	 *
+	 * @phpstan-param list<CreatorDesign> $designs
+	 *
+	 * @param int             $creator_id Creator.
+	 * @param CreatorDesign[] $designs    Designs.
+	 */
+	private function designs_answer( int $creator_id, array $designs ): WP_REST_Response {
+		$images   = $this->images?->describe( $creator_id );
+		$response = new WP_REST_Response(
+			array(
+				'designs' => array_map(
+					fn( CreatorDesign $design ): array => array_merge(
+						array(
+							'id'       => $design->id,
+							'name'     => $design->name,
+							'saved_at' => $design->saved_at,
+						),
+						self::look( $design->settings, $this->fonts ),
+						array( 'images' => $images )
+					),
+					$designs
+				),
+				'max'     => CreatorDesigns::MAX,
+			),
+			200
+		);
+		$response->header( 'Cache-Control', 'no-store' );
+
+		return $response;
+	}
+
+	/**
+	 * The answer for a refused design change.
+	 *
+	 * @param CreatorDesignException $e Reason.
+	 */
+	private static function design_refused( CreatorDesignException $e ): WP_Error {
+		return CreatorDesignException::NO_OVERLAY === $e->reason()
+			? self::not_set_up()
+			: self::error( 'merchboard_invalid_request', __( 'The design was not saved.', 'merchboard' ), 400, array( 'fields' => array( $e->field() => $e->reason() ) ) );
+	}
+
+	/**
+	 * A string parameter ('' when missing).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @param string          $name    Parameter.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	private static function string_param( WP_REST_Request $request, string $name ): string {
+		$value = $request->get_param( $name );
+
+		return is_string( $value ) ? $value : '';
 	}
 
 	/**

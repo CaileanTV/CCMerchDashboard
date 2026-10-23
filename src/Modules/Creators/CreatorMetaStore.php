@@ -46,9 +46,16 @@ final class CreatorMetaStore {
 	public const ALERT_SOUND_LIMITS = 'alert_sound_limits';
 
 	/**
+	 * The creator's own saved overlay designs (phase 25, after step 25.9.5):
+	 * a list of `{ id, name, settings (JSON), saved_at }`. Written by the Alerts
+	 * module's CreatorDesigns only.
+	 */
+	public const ALERT_DESIGNS = 'alert_designs';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS );
+	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS );
 
 	/**
 	 * Constructor.

@@ -171,7 +171,7 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 
 **Merch Dashboard → Alerts, fanen "Standard-overlays"** (✅ fase 25, trin 25.9.5; kræver `merchboard_manage_alerts`; projektejeren har 2026-10-23 testet det: virker):
 - Administratoren opretter standard-overlays fra bunden (pluginets standardindstillinger), navngiver, omdøber og sletter dem (højst 20, navn højst 60 tegn) og designer dem med de samme kort som creators (indstillinger, animationer og tekstfyld, designer). En standard har ingen browser source og ingen lyde, og tekstfyld kan kun bruge billedbiblioteket (creators må ikke bruge administratorens egne uploads).
-- Creators ser standarderne under Alerts → Overlay-indstillinger i kortet "Start fra et standard-overlay" med en forhåndsvisning og kopierer en ind i deres eget overlay efter bekræftelse: udseendet og teksterne. Creatorens lyde, "Vis alerten så længe lyden spiller" og URL bliver; senere ændringer af standarden ændrer ikke kopien (projektejerens valg 2026-10-23).
+- Creators ser standarderne under Alerts → Overlay-indstillinger i kortet "Designs" (øverst, i gruppen "Standard-overlays") med en forhåndsvisning og kopierer en ind i deres eget overlay efter bekræftelse: udseendet og teksterne. Creatorens lyde, "Vis alerten så længe lyden spiller" og URL bliver; senere ændringer af standarden ændrer ikke kopien (projektejerens valg 2026-10-23).
 - Audit: `alert_overlay_preset_created`, `alert_overlay_preset_renamed`, `alert_overlay_preset_deleted`. Design og kopiering auditeres ikke (som creators' udseende).
 
 **Merch Dashboard → Alerts, fanen "Fonts"** (✅ fase 25, trin 25.5, ADR-067; ikke runtime-verificeret):

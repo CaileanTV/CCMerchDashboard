@@ -62,6 +62,13 @@ final class AlertSounds {
 	private Closure $ancestors;
 
 	/**
+	 * The sounds a creator's saved designs still use (never deleted).
+	 *
+	 * @var Closure(int): list<int>
+	 */
+	private Closure $kept;
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int): array<int, string> $categories
@@ -72,9 +79,11 @@ final class AlertSounds {
 	 * @param AlertSoundLibrary|null         $library    The administrator's library; null for none.
 	 * @param (Closure(int): list<int>)|null $ancestors  Parent categories; defaults to get_ancestors().
 	 * @param CreatorSoundLimits|null        $limits     The creators' own upload limits; null for the site-wide ones only.
+	 * @param (Closure(int): list<int>)|null $kept       The sounds a creator's saved designs use; none by default.
 	 */
-	public function __construct( private AlertOverlayRepository $overlays, Closure $categories, private SoundFiles $files, private ?AlertSoundLibrary $library = null, ?Closure $ancestors = null, private ?CreatorSoundLimits $limits = null ) {
+	public function __construct( private AlertOverlayRepository $overlays, Closure $categories, private SoundFiles $files, private ?AlertSoundLibrary $library = null, ?Closure $ancestors = null, private ?CreatorSoundLimits $limits = null, ?Closure $kept = null ) {
 		$this->categories = $categories;
+		$this->kept       = $kept ?? static fn(): array => array();
 		$this->ancestors  = $ancestors ?? static fn( int $term_id ): array => array_values( array_map( 'intval', get_ancestors( $term_id, 'product_cat', 'taxonomy' ) ) );
 	}
 
@@ -261,7 +270,8 @@ final class AlertSounds {
 
 		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
 
-		$in_use = in_array( $previous, $values['audio_category_map'], true ) || $previous === $values['audio_default_sound'];
+		// A sound one of the creator's saved designs uses stays.
+		$in_use = in_array( $previous, $values['audio_category_map'], true ) || $previous === $values['audio_default_sound'] || in_array( $previous, ( $this->kept )( $overlay->creator_id ), true );
 
 		if ( $previous > 0 && ! $in_use && $this->owns( $previous, $overlay->creator_id ) ) {
 			wp_delete_attachment( $previous, true );

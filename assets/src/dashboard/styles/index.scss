@@ -464,6 +464,26 @@
 	flex-direction: column;
 	gap: var(--merchboard-space-2);
 	align-items: flex-end;
+
+	// A new message comes in; the oldest visibly closes when a fourth comes
+	// (LEAVE_MS in ToastStack.tsx). Reduced motion turns both off.
+	.merchboard-toast {
+		animation: merchboard-toast-in 200ms ease-out;
+		transition: opacity 200ms ease-in, transform 200ms ease-in;
+	}
+
+	.merchboard-toast--leaving {
+		opacity: 0;
+		transform: translateX(1rem);
+	}
+}
+
+@keyframes merchboard-toast-in {
+
+	from {
+		opacity: 0;
+		transform: translateY(0.5rem);
+	}
 }
 
 .merchboard-toast {

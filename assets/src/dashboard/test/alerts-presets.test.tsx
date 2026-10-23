@@ -6,7 +6,7 @@ import { DEFAULT_FILL } from '../../overlay/textfill';
 import { DEFAULT_FRAME } from '../../overlay/frame';
 import { PresetsManager } from '../../admin/alerts-presets-admin';
 import { parsePresetList, parsePresets } from '../api/alerts-presets';
-import { PresetPickerCard } from '../sections/alerts/PresetPickerCard';
+import { DesignsCard } from '../sections/alerts/DesignsCard';
 import { mockApi, response } from '../testing/api';
 import { ORIGIN, click, flush, render } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
@@ -144,12 +144,14 @@ describe( 'standard overlays (step 25.9.5)', () => {
 		expect( parsePresetList( { presets: [], max: '20' } ) ).toBeNull();
 	} );
 
-	it( 'shows nothing to a creator without standard overlays', async () => {
+	it( 'offers a creator only saving while there are no designs', async () => {
 		mockApi( {
 			[ `GET ${ ME }/presets` ]: () => response( 200, { presets: [] } ),
+			[ `GET ${ ME }/designs` ]: () =>
+				response( 200, { designs: [], max: 10 } ),
 		} );
 		rendered = render(
-			<PresetPickerCard
+			<DesignsCard
 				fonts={ [] }
 				onApplied={ () => undefined }
 				notify={ () => undefined }
@@ -157,20 +159,24 @@ describe( 'standard overlays (step 25.9.5)', () => {
 		);
 		await flush();
 
-		expect( rendered.container.textContent ).toBe( '' );
+		expect( rendered.container.textContent ).toContain( 'Designs' );
+		expect( button( 'Save current design' ) ).not.toBeNull();
+		expect( button( 'Use this design' ) ).toBeNull();
 	} );
 
 	it( 'lets a creator preview and copy a standard overlay after confirmation', async () => {
 		const requests = mockApi( {
 			[ `GET ${ ME }/presets` ]: () =>
 				response( 200, { presets: [ PRESET ] } ),
+			[ `GET ${ ME }/designs` ]: () =>
+				response( 200, { designs: [], max: 10 } ),
 			[ `POST ${ ME }/overlay/preset` ]: () => response( 200, OVERLAY ),
 		} );
 		const applied = jest.fn();
 		const confirm = jest.spyOn( window, 'confirm' );
 
 		rendered = render(
-			<PresetPickerCard
+			<DesignsCard
 				fonts={ [] }
 				onApplied={ applied }
 				notify={ () => undefined }
@@ -178,26 +184,116 @@ describe( 'standard overlays (step 25.9.5)', () => {
 		);
 		await flush();
 
-		expect( rendered.container.textContent ).toContain(
-			'Start from a standard overlay'
-		);
 		expect( rendered.container.textContent ).toContain( 'Preview' );
 		expect(
 			rendered.container.querySelector( 'option' )?.textContent
 		).toBe( 'Neon' );
+		expect( button( 'Delete' ) ).toBeNull();
 
 		confirm.mockReturnValueOnce( false );
-		click( button( 'Use this standard overlay' ) );
+		click( button( 'Use this design' ) );
 		await flush();
 		expect( applied ).not.toHaveBeenCalled();
 
 		confirm.mockReturnValueOnce( true );
-		click( button( 'Use this standard overlay' ) );
+		click( button( 'Use this design' ) );
 		await flush();
 		expect( applied ).toHaveBeenCalledTimes( 1 );
 		expect( requests.find( ( r ) => r.method === 'POST' )?.data ).toEqual( {
 			preset: ID,
 		} );
+	} );
+
+	it( 'lets a creator save, use, overwrite, rename and delete their own designs', async () => {
+		const MINE = {
+			...PRESET,
+			id: 'f'.repeat( 16 ),
+			name: 'Gaming',
+			saved_at: '2026-10-23 12:00:00',
+		};
+		const requests = mockApi( {
+			[ `GET ${ ME }/presets` ]: () => response( 200, { presets: [] } ),
+			[ `GET ${ ME }/designs` ]: () =>
+				response( 200, { designs: [], max: 10 } ),
+			[ `POST ${ ME }/designs` ]: () =>
+				response( 200, { designs: [ MINE ], max: 10 } ),
+			[ `POST ${ ME }/overlay/design` ]: () => response( 200, OVERLAY ),
+			[ `POST ${ ME }/designs/${ MINE.id }/update` ]: () =>
+				response( 200, { designs: [ MINE ], max: 10 } ),
+			[ `POST ${ ME }/designs/${ MINE.id }/name` ]: () =>
+				response( 200, {
+					designs: [ { ...MINE, name: 'Chatting' } ],
+					max: 10,
+				} ),
+			[ `DELETE ${ ME }/designs/${ MINE.id }` ]: () =>
+				response( 200, { designs: [], max: 10 } ),
+		} );
+		const applied = jest.fn();
+		const notified: string[] = [];
+		jest.spyOn( window, 'confirm' ).mockReturnValue( true );
+
+		rendered = render(
+			<DesignsCard
+				fonts={ [] }
+				onApplied={ applied }
+				notify={ ( message ) => notified.push( message ) }
+			/>
+		);
+		await flush();
+
+		const input =
+			rendered.container.querySelector< HTMLInputElement >(
+				'input[type="text"]'
+			);
+		act( () => {
+			if ( input !== null ) {
+				Object.getOwnPropertyDescriptor(
+					HTMLInputElement.prototype,
+					'value'
+				)?.set?.call( input, 'Gaming' );
+				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+			}
+		} );
+		click( button( 'Save current design' ) );
+		await flush();
+		expect(
+			requests.find(
+				( r ) => r.path === `${ ME }/designs` && r.method === 'POST'
+			)?.data
+		).toEqual( { name: 'Gaming' } );
+		expect(
+			rendered.container
+				.querySelector( 'optgroup' )
+				?.getAttribute( 'label' )
+		).toBe( 'My designs' );
+
+		click( button( 'Use this design' ) );
+		await flush();
+		expect( applied ).toHaveBeenCalledTimes( 1 );
+		expect(
+			requests.find( ( r ) => r.path === `${ ME }/overlay/design` )?.data
+		).toEqual( { design: MINE.id } );
+
+		click( button( 'Overwrite with current design' ) );
+		await flush();
+
+		jest.spyOn( window, 'prompt' ).mockReturnValueOnce( 'Chatting' );
+		click( button( 'Rename' ) );
+		await flush();
+		expect(
+			rendered.container.querySelector( 'option' )?.textContent
+		).toBe( 'Chatting' );
+
+		click( button( 'Delete' ) );
+		await flush();
+		expect( button( 'Use this design' ) ).toBeNull();
+		expect( notified ).toEqual( [
+			'Design saved.',
+			'The design is in use now.',
+			'Design saved.',
+			'Design renamed.',
+			'Design deleted.',
+		] );
 	} );
 
 	it( 'lets the administrator make, rename and delete standard overlays', async () => {

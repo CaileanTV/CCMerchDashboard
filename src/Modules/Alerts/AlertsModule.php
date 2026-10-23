@@ -30,6 +30,7 @@ use MerchBoard\Modules\Alerts\Admin\OverlayPresetsTab;
 use MerchBoard\Modules\Alerts\Presets\AdminOverlayPresetsController;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresets;
+use MerchBoard\Modules\Alerts\Designs\CreatorDesigns;
 use MerchBoard\Modules\Alerts\GlobalOverlay\AdminGlobalOverlayController;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayFeed;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayFeedController;
@@ -205,7 +206,9 @@ final class AlertsModule implements Module {
 				$c->get( SoundFiles::class ),
 				$c->get( AlertSoundLibrary::class ),
 				null,
-				$c->get( CreatorSoundLimits::class )
+				$c->get( CreatorSoundLimits::class ),
+				// A creator's saved designs keep their sounds.
+				static fn( int $creator_id ): array => $c->get( CreatorDesigns::class )->sounds_in_use( $creator_id )
 			)
 		);
 		// Images that fill the alert text (phase 25, step 6.10) and the administrator's library.
@@ -248,7 +251,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			MeAlertsController::class,
-			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ), $c->get( OverlayPresets::class ) )
+			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ), $c->get( OverlayPresets::class ), $c->get( CreatorDesigns::class ) )
 		);
 		// The chatbot on Twitch, Kick and YouTube (phase 25, steps 8, 8.2 and 8.4; ADR-066, ADR-069, ADR-070).
 		$container->set( TwitchApi::class, static fn(): TwitchApi => new TwitchApi() );
@@ -471,6 +474,8 @@ final class AlertsModule implements Module {
 		);
 		$container->set( GlobalOverlayTab::class, static fn( Container $c ): GlobalOverlayTab => new GlobalOverlayTab( $c->get( AdminBundle::class ) ) );
 		// The standard overlays (step 25.9.5).
+		// A creator's own saved designs (after step 25.9.5).
+		$container->set( CreatorDesigns::class, static fn( Container $c ): CreatorDesigns => new CreatorDesigns( $c->get( CreatorMetaStore::class ), $c->get( AlertOverlayRepository::class ), $c->get( AlertFonts::class ), $c->get( AlertImages::class ) ) );
 		$container->set(
 			OverlayPresets::class,
 			static fn( Container $c ): OverlayPresets => new OverlayPresets( new OverlayPresetStore(), $c->get( AuditTrail::class ), $c->get( AlertOverlayRepository::class ), $c->get( AlertFonts::class ), $c->get( AlertImageLibrary::class ), $c->get( AlertImages::class ) )
