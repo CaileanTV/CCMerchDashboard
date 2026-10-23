@@ -4,7 +4,7 @@
 Creators kan få deres købs-alerts ind i deres egne bots (fx en Discord- eller Twitch-bot) i stedet for eller ud over den indbyggede chatbot (ROADMAP 25.12, [ADR-073](../DECISIONS.md)).
 
 ## Current status
-25.12.1 (API-nøgler og polling) er implementeret 2026-10-23 og testet automatisk. 25.12.2 (webhooks til JSON og Discord) er planlagt og ikke bygget. Ikke udgivet i en version endnu.
+25.12.1 (API-nøgler og polling) er implementeret 2026-10-23 og committet som eksperimentel (`9564f5e`); projektejeren har testet det i browseren: godkendt. 25.12.3 (integration med SparkyBot) er planlagt (ROADMAP). 25.12.2 (webhooks til JSON og Discord) er planlagt og ikke bygget. Ikke udgivet i en version endnu.
 
 ## User-facing functionality
 Siden **Alerts → API** i creator-dashboardet vises kun, mens administratoren har API'en slået til.
