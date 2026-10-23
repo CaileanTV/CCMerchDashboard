@@ -14,7 +14,17 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\Alerts\Admin\AlertApiActions;
+use MerchBoard\Modules\Alerts\Admin\AlertApiTab;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminActions;
+use MerchBoard\Modules\Alerts\Api\AlertApiEvents;
+use MerchBoard\Modules\Alerts\Api\AlertApiFeed;
+use MerchBoard\Modules\Alerts\Api\AlertApiFeedController;
+use MerchBoard\Modules\Alerts\Api\AlertApiKeyRepository;
+use MerchBoard\Modules\Alerts\Api\AlertApiKeys;
+use MerchBoard\Modules\Alerts\Api\AlertApiQueue;
+use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
+use MerchBoard\Modules\Alerts\Rest\MeAlertsApiController;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
@@ -175,7 +185,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new MerchAlertImportTab( $c->get( MerchAlertImporter::class ) ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new MerchAlertImportTab( $c->get( MerchAlertImporter::class ) ), new AlertApiTab( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeyRepository::class ), $c->get( CreatorRepository::class ) ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -428,8 +438,27 @@ final class AlertsModule implements Module {
 		// The history: resend and "Stop all alerts" (phase 25, step 7).
 		$container->set(
 			AlertHistory::class,
-			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ), $c->get( ChatSender::class ) )
+			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ), $c->get( ChatSender::class ), $c->get( AlertApiFeed::class ) )
 		);
+		// The alert API for the creators' own bots (step 25.12.1, ADR-073).
+		$container->set( AlertApiKeyRepository::class, static fn( Container $c ): AlertApiKeyRepository => new AlertApiKeyRepository( $c->get( wpdb::class ) ) );
+		$container->set( AlertApiSwitch::class, static fn( Container $c ): AlertApiSwitch => new AlertApiSwitch( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( AlertApiKeys::class, static fn( Container $c ): AlertApiKeys => new AlertApiKeys( $c->get( AlertApiKeyRepository::class ), $c->get( AlertApiSwitch::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set(
+			AlertApiFeed::class,
+			static fn( Container $c ): AlertApiFeed => new AlertApiFeed(
+				$c->get( AlertApiSwitch::class ),
+				$c->get( AlertsAvailability::class ),
+				$c->get( CreatorRepository::class ),
+				$c->get( AlertEventRepository::class ),
+				new AlertApiEvents( $c->get( AlertTemplate::class ) ),
+				new AlertApiQueue( $c->get( AlertApiKeyRepository::class ) ),
+				$c->get( AlertOverlays::class )
+			)
+		);
+		$container->set( AlertApiFeedController::class, static fn( Container $c ): AlertApiFeedController => new AlertApiFeedController( $c->get( AlertApiFeed::class ), $c->get( AlertApiKeys::class ), new OverlayRateLimiter( null, 'merchboard_alerts_api_rl_', AlertApiFeedController::LIMIT ), $c->get( Logger::class ) ) );
+		$container->set( MeAlertsApiController::class, static fn( Container $c ): MeAlertsApiController => new MeAlertsApiController( $c->get( CreatorContext::class ), $c->get( AlertApiKeys::class ), $c->get( AlertApiSwitch::class ), $c->get( AlertApiFeed::class ), $c->get( Logger::class ) ) );
+		$container->set( AlertApiActions::class, static fn( Container $c ): AlertApiActions => new AlertApiActions( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeys::class ), $c->get( Logger::class ) ) );
 		$container->set(
 			MeAlertsHistoryController::class,
 			static fn( Container $c ): MeAlertsHistoryController => new MeAlertsHistoryController( $c->get( CreatorContext::class ), $c->get( AlertHistory::class ), $c->get( Logger::class ) )
@@ -557,6 +586,8 @@ final class AlertsModule implements Module {
 				$container->get( MeAlertsController::class )->register_routes();
 				$container->get( MeAlertsHistoryController::class )->register_routes();
 				$container->get( MeChatbotController::class )->register_routes();
+				$container->get( MeAlertsApiController::class )->register_routes();
+				$container->get( AlertApiFeedController::class )->register_routes();
 				$container->get( TwitchController::class )->register_routes();
 				$container->get( KickController::class )->register_routes();
 				$container->get( YouTubeController::class )->register_routes();
@@ -604,6 +635,7 @@ final class AlertsModule implements Module {
 				$container->get( AlertsSettingsActions::class )->register();
 				$container->get( AlertsAdminActions::class )->register();
 				$container->get( MerchAlertImportActions::class )->register();
+				$container->get( AlertApiActions::class )->register();
 				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
 				( new CompanyDetailsSection() )->register();

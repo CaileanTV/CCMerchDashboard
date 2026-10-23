@@ -273,10 +273,24 @@ final class AlertOverlays {
 			return false;
 		}
 
+		$this->tests->push( $overlay->id, $this->feed->render( $overlay, $this->test_event( $creator_id ) ) );
+
+		return true;
+	}
+
+	/**
+	 * A test alert with a random published product of the creator (a
+	 * placeholder product when there is none); never stored. Also the alert
+	 * API's test event (ADR-073).
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	public function test_event( int $creator_id ): AlertEvent {
 		$published = array_values( array_filter( $this->products->linked_to( $creator_id, 50 ), static fn( $product ): bool => 'publish' === $product->status ) );
 		$product   = array() === $published ? null : $published[ random_int( 0, count( $published ) - 1 ) ];
 		$price     = null === $product ? null : AlertMoney::product_price( $product->id );
-		$event     = new AlertEvent(
+
+		return new AlertEvent(
 			$creator_id,
 			0,
 			'0001',
@@ -294,9 +308,5 @@ final class AlertOverlays {
 			$price ?? self::TEST_AMOUNT,
 			$price ?? self::TEST_AMOUNT
 		);
-
-		$this->tests->push( $overlay->id, $this->feed->render( $overlay, $event ) );
-
-		return true;
 	}
 }

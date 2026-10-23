@@ -65,8 +65,9 @@ final class AlertsAdminPage {
 	 * @param OverlayPresetsTab|null   $presets The standard overlays (step 25.9.5); null for none.
 	 * @param CreatorPageTab|null      $creator_page The setup of the creator's page (step 25.9.6); null for none.
 	 * @param MerchAlertImportTab|null $import The import from MerchAlert (step 25.10.1); null for none.
+	 * @param AlertApiTab|null         $api    The alert API (step 25.12.1); null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null, private ?MerchAlertImportTab $import = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null, private ?MerchAlertImportTab $import = null, private ?AlertApiTab $api = null ) {
 	}
 
 	/**
@@ -145,7 +146,7 @@ final class AlertsAdminPage {
 			'image_' . AlertImageException::LIBRARY_FULL => array( __( 'The library is full. Remove an image first.', 'merchboard' ), 'error' ),
 			'image_' . AlertImageException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'                                  => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
-			default                                  => ChatbotAdminTab::result_message( $code ) ?? MerchAlertImportTab::result_message( $code ),
+			default                                  => ChatbotAdminTab::result_message( $code ) ?? MerchAlertImportTab::result_message( $code ) ?? AlertApiTab::result_message( $code ),
 		};
 	}
 
@@ -170,6 +171,7 @@ final class AlertsAdminPage {
 			OverlayPresetsTab::TAB => null === $this->presets ? 'fonts' : OverlayPresetsTab::TAB,
 			CreatorPageTab::TAB => null === $this->creator_page ? 'fonts' : CreatorPageTab::TAB,
 			MerchAlertImportTab::TAB => null === $this->import ? 'fonts' : MerchAlertImportTab::TAB,
+			AlertApiTab::TAB => null === $this->api ? 'fonts' : AlertApiTab::TAB,
 			default  => null === $this->log ? 'fonts' : OrderLogTab::TAB,
 		};
 		$notice = self::result_message( $code );
@@ -216,10 +218,26 @@ final class AlertsAdminPage {
 			echo '<a class="nav-tab' . ( 'youtube-legal' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'youtube-legal' ) ) . '"' . ( 'youtube-legal' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'YouTube terms', 'merchboard' ) . '</a>';
 		}
 
+		if ( null !== $this->api ) {
+			echo '<a class="nav-tab' . ( AlertApiTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( AlertApiTab::TAB ) ) . '"' . ( AlertApiTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'API', 'merchboard' ) . '</a>';
+		}
+
 		echo '</nav>';
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( AlertApiTab::TAB === $tab && null !== $this->api ) {
+			try {
+				$this->api->render();
+			} catch ( DatabaseException ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'The API keys could not be read. Please try again.', 'merchboard' ) . '</p></div>';
+			}
+
+			echo '</div>';
+
+			return;
 		}
 
 		if ( MerchAlertImportTab::TAB === $tab && null !== $this->import ) {

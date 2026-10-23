@@ -224,6 +224,12 @@ final class Tables {
 	public const NEWS_READS = 'merchboard_news_reads';
 
 	/**
+	 * The creators' API keys of the alert API, schema version 26 (ADR-073):
+	 * the lookup part and an HMAC of the secret, never the key.
+	 */
+	public const ALERT_API_KEYS = 'merchboard_alert_api_keys';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -261,6 +267,7 @@ final class Tables {
 		self::ALERT_CHAT_LOG,
 		self::NEWS,
 		self::NEWS_READS,
+		self::ALERT_API_KEYS,
 	);
 
 	/**

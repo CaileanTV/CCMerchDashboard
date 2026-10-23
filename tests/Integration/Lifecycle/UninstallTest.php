@@ -27,6 +27,7 @@ use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
+use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Import\MerchAlertImportPlan;
 use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
@@ -129,6 +130,7 @@ final class UninstallTest extends IntegrationTestCase {
 		set_transient( AlertFonts::CATALOG_KEY, array( array( 'family' => 'Roboto' ) ), 60 );
 		update_option( TwitchAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( ChatbotFormat::OPTION, array( 'mode' => 'order' ), false );
+		update_option( AlertApiSwitch::OPTION, '1', false );
 		update_option( KickAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( YouTubeAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( YouTubeLegal::OPTION, array( 'version' => 1 ), false );
@@ -160,7 +162,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
 		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
-		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION, GlobalOverlayStore::OPTION, OverlayPresetStore::OPTION, CreatorPageLayoutStore::OPTION, MerchAlertImportPlan::MARKER_OPTION ) as $option ) {
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION, GlobalOverlayStore::OPTION, OverlayPresetStore::OPTION, CreatorPageLayoutStore::OPTION, MerchAlertImportPlan::MARKER_OPTION, AlertApiSwitch::OPTION ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
 		}
 
@@ -448,7 +450,7 @@ final class UninstallTest extends IntegrationTestCase {
 
 		remove_filter( 'query', $fail );
 		self::assertTrue( Settings::delete_data_on_uninstall(), 'Opt-in kept for the retry.' );
-		self::assertSame( '25', $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '26', $this->raw_option( Migrator::VERSION_OPTION ) );
 
 		$this->run_uninstall();
 

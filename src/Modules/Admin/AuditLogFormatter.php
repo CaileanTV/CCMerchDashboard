@@ -156,6 +156,9 @@ final class AuditLogFormatter {
 			AuditAction::NewsUpdated => __( 'Published news message changed', 'merchboard' ),
 			AuditAction::NewsWithdrawn => __( 'News message withdrawn', 'merchboard' ),
 			AuditAction::NewsDeleted => __( 'News draft deleted', 'merchboard' ),
+			AuditAction::AlertApiSwitched => __( 'Alert API switched on or off', 'merchboard' ),
+			AuditAction::AlertApiKeyCreated => __( 'Alert API key created', 'merchboard' ),
+			AuditAction::AlertApiKeyRevoked => __( 'Alert API key revoked', 'merchboard' ),
 		};
 	}
 

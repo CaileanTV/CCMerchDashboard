@@ -55,6 +55,32 @@ final class AlertMoney {
 	}
 
 	/**
+	 * An amount for machines (the alert API, ADR-073): the shop's decimals
+	 * with a point and no separators or currency, e.g. "249.00"; null when
+	 * unknown.
+	 *
+	 * @param string|null $amount Four-decimal amount, null when unknown.
+	 */
+	public static function plain( ?string $amount ): ?string {
+		if ( null === $amount ) {
+			return null;
+		}
+
+		try {
+			$units = SalesAmount::parse( $amount );
+		} catch ( InvalidArgumentException | OverflowException ) {
+			return null;
+		}
+
+		$decimals = function_exists( 'wc_get_price_decimals' ) ? max( 0, min( 4, (int) wc_get_price_decimals() ) ) : 2;
+		$divisor  = 10 ** ( SalesAmount::DECIMALS - $decimals );
+		$rounded  = intdiv( abs( $units ) + intdiv( $divisor, 2 ), $divisor );
+		$scale    = 10 ** $decimals;
+
+		return ( $units < 0 && 0 !== $rounded ? '-' : '' ) . intdiv( $rounded, $scale ) . ( $decimals > 0 ? '.' . str_pad( (string) ( $rounded % $scale ), $decimals, '0', STR_PAD_LEFT ) : '' );
+	}
+
+	/**
 	 * A per-item amount: the line divided by the quantity, rounded to four
 	 * decimals; null when unknown.
 	 *

@@ -11,6 +11,10 @@
 	failOnDeprecation="true"
 	failOnNotice="true"
 	beStrictAboutOutputDuringTests="true">
+	<!-- The whole suite passed 112 MB with 995 tests; PHP CLI's default 128M ends it silently (WordPress' fatal error handler). -->
+	<php>
+		<ini name="memory_limit" value="512M"/>
+	</php>
 	<testsuites>
 		<testsuite name="integration">
 			<directory>tests/Integration</directory>

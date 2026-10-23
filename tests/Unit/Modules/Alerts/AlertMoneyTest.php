@@ -65,6 +65,17 @@ final class AlertMoneyTest extends TestCase {
 		self::assertSame( '', AlertMoney::format( 'abc', 'DKK' ) );
 	}
 
+	public function test_a_plain_amount_for_the_alert_api(): void {
+		self::assertSame( '1234567.51', AlertMoney::plain( '1234567.5050' ), 'The shop\'s decimals, a point, no separators or currency.' );
+		self::assertSame( '-0.01', AlertMoney::plain( '-0.0050' ) );
+		self::assertSame( '0.00', AlertMoney::plain( '-0.0040' ), 'No minus zero.' );
+		self::assertNull( AlertMoney::plain( null ) );
+		self::assertNull( AlertMoney::plain( 'abc' ) );
+
+		Functions\when( 'wc_get_price_decimals' )->justReturn( 0 );
+		self::assertSame( '250', AlertMoney::plain( '249.5000' ) );
+	}
+
 	public function test_the_price_per_item(): void {
 		self::assertSame( '249.5000', AlertMoney::per_item( '499.0000', 2 ) );
 		self::assertSame( '33.3333', AlertMoney::per_item( '100.0000', 3 ) );

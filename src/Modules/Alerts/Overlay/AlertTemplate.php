@@ -94,13 +94,14 @@ final class AlertTemplate {
 	}
 
 	/**
-	 * The names of the categories that still exist, comma-separated.
+	 * The names of the categories that still exist, comma-separated (also
+	 * the alert API's `category`, ADR-073).
 	 *
 	 * @phpstan-param list<int> $term_ids
 	 *
 	 * @param int[] $term_ids Category ids.
 	 */
-	private function categories( array $term_ids ): string {
+	public function categories( array $term_ids ): string {
 		$names = array();
 
 		foreach ( $term_ids as $term_id ) {

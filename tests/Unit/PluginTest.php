@@ -327,10 +327,11 @@ final class PluginTest extends TestCase {
 		// Migration 23 only adds indexes and 24 columns (no dbDelta()); 25 creates the news tables.
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_news \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_news_reads \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_api_keys \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 25, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 26, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

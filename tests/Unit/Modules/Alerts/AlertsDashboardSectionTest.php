@@ -20,6 +20,19 @@ final class AlertsDashboardSectionTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Functions\when( '__' )->returnArg();
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		Functions\when( 'get_option' )->justReturn( '' );
+	}
+
+	public function test_the_api_page_is_added_only_while_the_api_is_on(): void {
+		// The section reads only the switch (AlertApiSwitch::OPTION).
+		Functions\when( 'get_option' )->justReturn( '1' );
+
+		$sections = AlertsDashboardSection::add_section( array( array( 'id' => 'overview' ) ) );
+
+		self::assertIsArray( $sections );
+		self::assertSame( array( 'overview', 'alerts', 'alerts-history', 'alerts-chatbot', 'alerts-api' ), array_column( $sections, 'id' ) );
+		self::assertSame( 'alerts/api', $sections[4]['path'] ?? null );
 	}
 
 	public function test_the_group_comes_before_the_profile(): void {

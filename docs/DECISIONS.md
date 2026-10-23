@@ -3991,3 +3991,55 @@ Migration 25 (`CreateNewsTables`) opretter `merchboard_news` og `merchboard_news
 
 ## Related
 ADR-007, ADR-025, ADR-044, ADR-065.
+
+# ADR-073: Alert-API og webhooks til creatorens egne bots
+
+## Date
+2026-10-23
+
+## Status
+Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) er implementeret; 25.12.2 (webhooks) er besluttet, men ikke bygget.
+
+## Context
+Projektejeren vil have, at creators kan hente deres købs-alerts til deres egne bots (ønske 2026-10-19, ROADMAP 25.12). Det kræver en offentlig API med creator-nøgler og, med webhooks, udgående kald til adresser, som creatoren selv angiver.
+
+## Decision
+1. **Enhed:** én hændelse pr. ordrelinje (som overlayet) med felterne fra alert-skabelonens variabler: `username` (kundens frivillige brugernavn), `product`, `quantity`, `category`, `variation`, `price`, `line_total`, `total`, `currency`, plus `id`, `kind` (`purchase`, `test`, `resend`), `created_at` og `order_ref` (en HMAC af creator og ordre, ens for linjerne i en ordre; aldrig ordrenummeret). Aldrig kundens navn, e-mail, adresse eller andre ordredata.
+2. **Polling (25.12.1):** `GET merchboard/v1/alerts/api/events?after={id}&limit={n}` med en cursor som overlayets feed; uden `after` starter svaret fra nu. Nøglen sendes kun i headeren `Authorization: Bearer` (eller `X-MerchBoard-Key`), aldrig i URL'en.
+3. **Nøgler:** `mbk_{lookup}_{secret}` (12 og 48 hex-tegn fra `random_bytes()`). Kun opslagsdelen og `hash_hmac('sha256', secret, wp_salt('auth'))` gemmes; nøglen vises én gang. Højst 5 virksomme nøgler pr. creator; tilbagekaldte nøgler bevares som rækker og virker aldrig igen. "Sidst brugt" noteres højst én gang i minuttet.
+4. **Adgang:** kun mens administratoren har API'en slået til (Merch Dashboard → Alerts → API; slået fra som standard), mens alerts sendes (kill switch og MerchAlert-vagt) og kun for en aktiv creator. Ellers 503 eller 401; 401 er det samme svar for alle årsager. Højst 60 forespørgsler pr. nøgle pr. minut (429).
+5. **Test og gensendelser:** "Send testhændelse" og gensendelser fra Historik lægges i en kø pr. nøgle i 5 minutter med `id` 0, så de aldrig flytter cursoren.
+6. **Admin:** indstillingen og en oversigt pr. creator (antal nøgler, sidst brugt) med "Tilbagekald alle". Nøglerne vises aldrig for administratoren.
+7. **Webhooks (25.12.2):**
+   - **Format:** pr. webhook enten generel JSON eller Discord. JSON er én POST pr. ordre med hændelserne og en HMAC-SHA256-signatur over tidsstempel og body i headeren. Discord sender chatbeskeden med creatorens chatbot-skabelon og `allowed_mentions` slået fra.
+   - **Antal og afsendelse:** højst 3 pr. creator, ét forsøg pr. levering, og pause efter 10 fejl i træk. Projektejerens valg 2026-10-23.
+   - **Mål:** kun creatorens egne HTTPS-adresser, sendt via `wp_safe_remote_post()` uden redirects; lokale og private adresser afvises. Discord-formatet kræver Discords egne webhook-adresser.
+   - **Opbevaring:** URL'en og signeringsnøglen gemmes krypteret. Audit skrives uden URL eller hemmeligheder.
+8. **Audit:** `alert_api_switched`, `alert_api_key_created` og `alert_api_key_revoked` (med `by_admin`), med nøglens id, aldrig nøglen.
+
+## Alternatives considered
+- **Long-polling som overlayet:** hurtigere, men binder en PHP-proces pr. bot. Fravalgt af projektejeren.
+- **Pr. ordre:** fravalgt; linjerne har `order_ref`, så botten selv kan samle dem.
+- **Nøglen i URL'en:** ender i adgangslogs og browserhistorik; fravalgt.
+- **`password_hash()` af nøglen:** unødvendigt langsomt ved hver forespørgsel for en tilfældig nøgle på 192 bit; en HMAC med sitets salt er nok og gør en databasekopi værdiløs.
+- **Genforsøg af webhooks:** fravalgt af projektejeren; polling kan altid hente det, en webhook mistede.
+
+## Reason
+Projektejeren vil give creators frihed til egne bots uden at udlevere persondata eller give adgang til andet end deres egne alerts.
+
+## Security
+- Den eneste nye offentlige rute kræver en nøgle og er begrænset pr. nøgle. Svarene caches aldrig (`no-store`, `noindex`).
+- Kun samme data som overlayet viser offentligt på stream; `order_ref` kan ikke føres tilbage til ordren uden sitets salt.
+- Nøgler gemmes kun som HMAC; tilbagekaldelse virker straks; administratorens kontakt stopper alle nøgler uden at slette dem.
+- Udgående kald (25.12.2) kun til HTTPS-adresser, creatoren selv angiver, uden redirects og ikke til lokale adresser.
+
+## Migration/data implications
+Migration 26 (`CreateAlertApiKeysTable`) opretter `merchboard_alert_api_keys` (InnoDB, idempotent). Optionen `merchboard_alerts_api_enabled`. Begge slettes ved opt-in-afinstallation. Webhooks får migration 27 i 25.12.2.
+
+## Consequences
+- **Creator-dashboardet:** siden "API" under Alerts.
+- **Admin:** fanen "API".
+- **Udgående kald:** 25.12.2 tilføjer udgående kald til adresser, som creators vælger.
+
+## Related
+ADR-007, ADR-065, ADR-066, ADR-069, ADR-070.

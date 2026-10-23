@@ -542,6 +542,12 @@ Migration 20 (`CreateAlertChatbotTables`) tilføjer tre tabeller til Twitch-chat
 
 **Schema-version 22 (`WidenChatbotChannels`, ADR-070, trin 25.8.4):** plads til YouTube-kanaler (et kanal-id har 24 tegn, `UC…`, og et kanalnavn kan være langt). `merchboard_alert_chatbot`: `broadcaster_id` `varchar(64)` og `broadcaster_login` `varchar(100)`; `merchboard_alert_chat_log`: `broadcaster_id` `varchar(64)`. dbDelta() ændrer kolonnetyperne; eksisterende værdier bevares, og bredderne kontrolleres via `information_schema`, hvor databasen har det. `platform` kan nu også være `youtube`; creatorens Google-tokens ligger krypteret i `access_token`/`refresh_token` (`ChatCipher`, YouTubes domæne; ADR-070 pkt. 3). En YouTube-kanals `subscription_status` er `embedded` (ingen webhooks; admin-siden indlejrer YouTubes live-chat). Beskedloggens `reason` `not_live` betyder, at creatoren ikke var live: beskeden tjekkes én gang til efter 5 minutter (`waiting`) eller er sprunget over (`skipped`; så springes ordrens øvrige linjer også over).
 
+**Schema-version 26 (`CreateAlertApiKeysTable`, alert-API, ADR-073):** en ny tabel (InnoDB, idempotent; ingen data ændres):
+
+- **`merchboard_alert_api_keys`**: `id`, `creator_id`, `name varchar(60)`, `lookup char(12)` (UNIQUE, nøglens offentlige opslagsdel), `secret_hash char(64)` (HMAC-SHA256 af nøglens hemmelige del med WordPress' auth-salt; aldrig nøglen), `created_at`, `last_used_at datetime NULL`, `revoked_at datetime NULL` (UTC); `KEY creator_id`. Tilbagekaldte nøgler bevares som rækker.
+
+Slettes ved opt-in-afinstallation, sammen med optionen `merchboard_alerts_api_enabled`.
+
 **Schema-version 25 (`CreateNewsTables`, nyheder til creators, ADR-072):** to nye tabeller (InnoDB, idempotent; ingen data ændres):
 
 - **`merchboard_news`**: `id`, `title varchar(150)`, `body longtext` (renset HTML: `p`, `br`, `strong`, `b`, `em`, `i`, `ul`, `ol`, `li`, `a[href]` med http/https/mailto), `status varchar(20)` (`draft`, `published`, `withdrawn`), `published_at datetime NULL` (UTC, sættes første gang), `created_by` (bruger), `created_at`, `updated_at`; `KEY status_published (status, published_at)`.

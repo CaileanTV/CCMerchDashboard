@@ -480,7 +480,7 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 		self::assertSame( array( 'reference' => Recalculation::reference_of( $id ), 'status' => Recalculation::EXECUTED ), array_intersect_key( $manifest['recalculation'], array_flip( array( 'reference', 'status' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( array( true, 1, 1, 2 ), array( $manifest['scope']['complete'], $manifest['scope']['items_total'], $manifest['scope']['items_exported'], $manifest['scope']['rows_exported'] ) );
 		self::assertSame( array( 'group' => null, 'creator_id' => null ), $manifest['scope']['filters'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		self::assertSame( '25', $manifest['versions']['schema'] );
+		self::assertSame( '26', $manifest['versions']['schema'] );
 		self::assertSame( array( 'adr063-remove-20', 'adr049-adr054-v1' ), array( $manifest['versions']['recalculation'], $manifest['versions']['legacy_payouts'] ) );
 		self::assertNull( $manifest['previous_export'] );
 		self::assertStringContainsString( 'sha256sum -c SHA256SUMS', $manifest['verification'] );

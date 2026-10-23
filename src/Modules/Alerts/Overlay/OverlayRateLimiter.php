@@ -43,19 +43,21 @@ final class OverlayRateLimiter {
 	/**
 	 * Constructor.
 	 *
-	 * @param (Closure(): int)|null $clock Current Unix time; defaults to time().
+	 * @param (Closure(): int)|null $clock  Current Unix time; defaults to time().
+	 * @param string                $prefix Transient prefix: another prefix counts apart (the alert API's keys, ADR-073).
+	 * @param int                   $limit  Requests per window.
 	 */
-	public function __construct( ?Closure $clock = null ) {
+	public function __construct( ?Closure $clock = null, private string $prefix = 'merchboard_alerts_rl_', private int $limit = self::LIMIT ) {
 		$this->clock = $clock ?? static fn(): int => time();
 	}
 
 	/**
 	 * Counts a request and tells whether it is allowed.
 	 *
-	 * @param string $overlay_id Secret overlay id.
+	 * @param string $overlay_id Secret overlay id, or another id to count by.
 	 */
 	public function allow( string $overlay_id ): bool {
-		$key   = 'merchboard_alerts_rl_' . substr( hash( 'sha256', $overlay_id ), 0, 32 );
+		$key   = $this->prefix . substr( hash( 'sha256', $overlay_id ), 0, 32 );
 		$now   = ( $this->clock )();
 		$state = get_transient( $key );
 		$start = is_array( $state ) && is_int( $state['start'] ?? null ) ? $state['start'] : 0;
@@ -66,7 +68,7 @@ final class OverlayRateLimiter {
 			$count = 0;
 		}
 
-		if ( $count >= self::LIMIT ) {
+		if ( $count >= $this->limit ) {
 			return false;
 		}
 

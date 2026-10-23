@@ -99,6 +99,10 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `POST` | `/me/alerts/chatbot/youtube/terms` | ✅ Trin 25.8.5 (ADR-071): body `{ "accept": true }` godkender den gældende version af YouTube-chatbottens privatlivspolitik og vilkår (user meta og audit). Svarer med chatbot-tilstanden. 400 uden `accept: true` (`merchboard_terms_required`) eller for en anden platform; 409, før teksterne er offentliggjort | 25 |
 | `GET` | `/me/news` | ✅ Trin 25.11 (ADR-072): `{ items: [ { id, title, body, published_at, seen_at, closed_at } ] }`: de udgivne beskeder fra efter creatorens oprettelse, nyeste først; `body` er renset HTML (allow-list), tiderne ISO 8601 eller `null` | 25 |
 | `POST` | `/me/news/{id}/seen`, `/me/news/{id}/closed` | ✅ Trin 25.11: noterer, at creatoren har set eller lukket beskeden (første tidspunkt bevares; "lukket" noterer også "set"). Samme svar som `GET`. 404 for en besked, creatoren ikke ser (kladde, tilbagetrukket, fra før oprettelsen) | 25 |
+| `GET` | `/me/alerts/api` | ✅ Trin 25.12.1 (ADR-073): `{ enabled, endpoint, limit, max_keys, keys: [ { id, name, hint, created_at, last_used_at } ] }`; `hint` er starten af nøglen | 25 |
+| `POST` | `/me/alerts/api/keys` | ✅ Trin 25.12.1: `{ "name": "…" }` (højst 60 tegn) → 201 med samme svar plus `key` (hele nøglen, vises kun her). 400 ugyldigt navn, 403 `merchboard_alerts_api_disabled`, 409 `merchboard_alerts_api_key_limit` (højst 5) | 25 |
+| `DELETE` | `/me/alerts/api/keys/{id}` | ✅ Trin 25.12.1: tilbagekalder en af creatorens nøgler; samme svar som `GET`. 404 for en anden eller tilbagekaldt nøgle | 25 |
+| `POST` | `/me/alerts/api/test` | ✅ Trin 25.12.1: en testhændelse til hver af creatorens nøgler, `{ "sent": antal nøgler }`. 403 når API'en er slået fra | 25 |
 | `GET`, `PATCH` | `/me/alerts/preferences` | ✅ Trin 25.7: `{ "anonymize": bool }`, om historikken forkorter brugernavne; gemmes som user meta `merchboard_alerts_anonymize` på den indloggede bruger (som dashboard-temaet, ADR-044). `PATCH` med en ikke-boolsk værdi: 400 | 25 |
 | `DELETE` | `/me/alerts/overlay/images/{id}` | ✅ Trin 25.6.10: sletter et eget billede; tekstfyld, der brugte det, slås fra. Samme svar som `GET`. 400 med `data.fields.image` = `unknown_image` for et billede, creatoren ikke ejer (fx et biblioteksbillede); 404 før opsætning | 25 |
 | `GET` | `/me/alerts/presets` | ✅ Trin 25.9.5: standard-overlays, creatoren kan starte fra: `{ presets: [ { id, name, settings, font_approved, layout, images } ] }` (samme felter som overlayet; `images` er billedbiblioteket) | 25 |
@@ -124,6 +128,28 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 | `GET`, `POST`, `DELETE` | `/admin/alerts/creator-page` | `merchboard_manage_alerts`. ✅ Trin 25.9.6: opsætningen af creatorernes side `{ version, cards: { full, left, right }, fields: { alert_text, text_style, box_image, animations, timing }, designs_compact }`. `POST` gemmer en opsætning (normaliseret: ukendte og gentagne nøgler fjernes, manglende kort og felter kommer på deres standardplads; audit `alert_creator_page_changed`, kun ved ændring); `DELETE` nulstiller til standarden. Alle svar er den komplette opsætning | 25 |
 | `GET`/`POST` | `/admin/alerts/presets` | `merchboard_manage_alerts`. ✅ Trin 25.9.5: listen `{ presets: [ { id, name } ], max }`; `POST { "name" }` opretter (400 `invalid_name`/`presets_full`). `GET`/`PATCH`/`DELETE …/{id}` læser (samme JSON som `/me/alerts/overlay`, `audio` null, kun billedbiblioteket), gemmer design og sletter; `POST …/{id}/name` omdøber; 404 for ukendt id |
 | `GET`/`POST`/`PATCH` | `/admin/alerts/global-overlay` | `merchboard_manage_alerts`. ✅ Trin 25.9.4: det globale overlay (læs, opret, gem indstillinger) i samme JSON som `/me/alerts/overlay` plus `overlay.enabled`; desuden `POST …/enabled` (`{ "enabled": bool }`), `…/regenerate`, `…/test`, `…/replay` (404 `merchboard_no_orders` uden ordrer), `POST`/`DELETE …/sounds/{default\|term-id}` og `POST …/images`, `DELETE …/images/{id}`. Ændrer aldrig en creators overlay |
+
+### Offentlig med nøgle: alert-API til creatorens egne bots ✅ (fase 25, trin 25.12.1, ADR-073)
+
+`GET /merchboard/v1/alerts/api/events` er offentlig (`permission_callback` = `__return_true`); creatorens API-nøgle er adgangen. Den sendes kun i headeren `Authorization: Bearer mbk_…` (eller `X-MerchBoard-Key: mbk_…` på værter, der fjerner Authorization), aldrig i URL'en.
+
+| Parameter | Type | Betydning |
+| --- | --- | --- |
+| `after` | heltal ≥ 0, valgfri | Cursor: id'et på den sidste hændelse, botten har. Uden `after` svares med creatorens nyeste id som cursor og ingen køb, så botten starter fra nu |
+| `limit` | heltal 1–50, standard 20 | Flest hændelser i svaret |
+
+Svar `200`: `{ cursor, events: [ { id, kind, created_at, order_ref, username, product, quantity, category, variation, price, line_total, total, currency } ] }`, ældste først.
+
+- **Hændelser:** én pr. ordrelinje af creatorens egne varer. `kind` er `purchase`, `test` eller `resend`; test og gensendelser har `id` 0 og flytter aldrig cursoren.
+- **`order_ref`:** 16 hex-tegn, ens for linjerne i en ordre og forskellig for hver creator; aldrig ordrenummeret.
+- **Felter:** `username` er kundens frivillige brugernavn eller `""`. Beløbene er tal som streng med butikkens decimaler og punktum, eller `null`.
+- **Ingen persondata:** ingen kunde- eller ordre-id'er.
+- **Headers:** `Cache-Control: no-store`, `X-Robots-Tag: noindex`.
+
+Fejl:
+- `503 merchboard_alerts_api_unavailable`: API'en er slået fra af administratoren, alerts er slået fra, eller MerchAlert er aktivt.
+- `401 merchboard_unauthorized`: nøglen mangler, er forkert eller er tilbagekaldt, eller creatoren er inaktiv. Svaret er det samme for alle årsager.
+- `429 merchboard_too_many_requests`: mere end 60 forespørgsler pr. nøgle pr. minut.
 
 ### Offentlig: alert-overlayets feed ✅ (fase 25, trin 25.3, ADR-065 pkt. 4)
 

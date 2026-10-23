@@ -549,4 +549,19 @@ enum AuditAction: string {
 	 * A news draft was deleted. Context: news_id.
 	 */
 	case NewsDeleted = 'news_deleted';
+
+	/**
+	 * The alert API was switched on or off (ADR-073). Context: enabled.
+	 */
+	case AlertApiSwitched = 'alert_api_switched';
+
+	/**
+	 * A creator made an API key for the alert API (ADR-073). Context: key_id; never the key.
+	 */
+	case AlertApiKeyCreated = 'alert_api_key_created';
+
+	/**
+	 * An API key of the alert API was revoked (ADR-073). Context: key_id, by_admin.
+	 */
+	case AlertApiKeyRevoked = 'alert_api_key_revoked';
 }

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Dashboard;
 
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Dashboard\DashboardSections;
 
 defined( 'ABSPATH' ) || exit;
@@ -68,6 +69,19 @@ final class AlertsDashboardSection {
 				'group_label' => __( 'Alerts', 'merchboard' ),
 			),
 		);
+
+		// The alert API (step 25.12.1, ADR-073): only while the administrator has it on.
+		if ( AlertApiSwitch::on() ) {
+			$group[] = array(
+				'id'          => 'alerts-api',
+				'label'       => __( 'API', 'merchboard' ),
+				'path'        => 'alerts/api',
+				'capability'  => Capabilities::ACCESS_DASHBOARD,
+				'group'       => 'alerts',
+				'group_label' => __( 'Alerts', 'merchboard' ),
+			);
+		}
+
 		$result = array();
 		$added  = false;
 

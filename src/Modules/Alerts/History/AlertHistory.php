@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
+use MerchBoard\Modules\Alerts\Api\AlertApiFeed;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
@@ -32,7 +33,8 @@ defined( 'ABSPATH' ) || exit;
  * - **Resend:** an alert or all alerts of an order are shown again in the
  *   overlay, through the queue that test alerts use (OverlayTestQueue);
  *   nothing is stored again. The chat message is sent again too, when the
- *   creator's chatbot is on (step 25.8).
+ *   creator's chatbot is on (step 25.8), and the creator's bots get it
+ *   through the alert API, marked as resent (step 25.12.1).
  * - **Stop all alerts:** the waiting resends and tests are dropped and the
  *   overlay gets a new version, so the open overlay page reloads at once:
  *   the alert it shows and its queue are gone, and it starts again from
@@ -56,8 +58,9 @@ final class AlertHistory {
 	 * @param OverlayFeed            $feed     Alert rendering.
 	 * @param OverlayTestQueue       $queue    Queue of the overlay's resends and tests.
 	 * @param ChatSender|null        $chat     Chat messages; null for none.
+	 * @param AlertApiFeed|null      $api      The creator's bots (ADR-073); null for none.
 	 */
-	public function __construct( private AlertEventRepository $events, private AlertOverlayRepository $overlays, private OverlayFeed $feed, private OverlayTestQueue $queue, private ?ChatSender $chat = null ) {
+	public function __construct( private AlertEventRepository $events, private AlertOverlayRepository $overlays, private OverlayFeed $feed, private OverlayTestQueue $queue, private ?ChatSender $chat = null, private ?AlertApiFeed $api = null ) {
 	}
 
 	/**
@@ -185,6 +188,8 @@ final class AlertHistory {
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	private function resend( int $creator_id, array $events ): ?int {
+		$this->api?->resend( $creator_id, $events );
+
 		$overlay = $this->overlays->find_for_creator( $creator_id );
 
 		if ( null === $overlay ) {
