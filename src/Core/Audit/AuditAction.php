@@ -408,6 +408,12 @@ enum AuditAction: string {
 	case AlertOverlayPresetDeleted = 'alert_overlay_preset_deleted';
 
 	/**
+	 * The setup of the creator's overlay settings page changed or went back
+	 * to the default (phase 25, step 9.6). Context: reset.
+	 */
+	case AlertCreatorPageChanged = 'alert_creator_page_changed';
+
+	/**
 	 * A sound was added to the alert sound library (phase 25, step 6.3). Context: file name.
 	 */
 	case AlertSoundLibraryAdded = 'alert_sound_library_added';

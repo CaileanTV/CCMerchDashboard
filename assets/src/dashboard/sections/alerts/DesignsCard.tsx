@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useId, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import {
@@ -31,6 +31,8 @@ interface Props {
 	readonly fonts: readonly AlertFontOption[];
 	readonly onApplied: ( state: AlertsOverlayState ) => void;
 	readonly notify: ( message: string ) => void;
+	/** Hide the preview until the creator opens it (the page's setup, step 25.9.6). */
+	readonly compact?: boolean;
 }
 
 /** A design to choose: the creator's own or a standard overlay. */
@@ -57,8 +59,16 @@ interface Choice {
  * @param props.fonts     Approved fonts (for the preview).
  * @param props.onApplied Called with the overlay after a design was taken into use.
  * @param props.notify    Shows a message in the section's toasts.
+ * @param props.compact   Hide the preview until it is opened.
  */
-export function DesignsCard( { fonts, onApplied, notify }: Props ) {
+export function DesignsCard( {
+	fonts,
+	onApplied,
+	notify,
+	compact = false,
+}: Props ) {
+	const id = useId();
+	const [ previewOpen, setPreviewOpen ] = useState( false );
 	const own = useApi( getDesigns );
 	const standard = useApi( getAlertPresets );
 	const [ list, setList ] = useState< DesignList | null >( null );
@@ -273,6 +283,16 @@ export function DesignsCard( { fonts, onApplied, notify }: Props ) {
 								onChange={ ( event ) =>
 									setName( event.target.value )
 								}
+								onKeyDown={ ( event ) => {
+									// Enter saves the design, not the overlay's settings around it.
+									if ( event.key === 'Enter' ) {
+										event.preventDefault();
+
+										if ( name.trim() !== '' ) {
+											void save();
+										}
+									}
+								} }
 							/>
 						) }
 					</Field>
@@ -345,19 +365,38 @@ export function DesignsCard( { fonts, onApplied, notify }: Props ) {
 							</select>
 						) }
 					</Field>
-					<OverlayDesigner
-						key={ choice.key }
-						layout={ choice.layout }
-						settings={ choice.settings }
-						images={ choice.images }
-						fontFamily={
-							font === undefined
-								? 'inherit'
-								: `"${ font.family }", sans-serif`
-						}
-						onSaved={ () => undefined }
-						readOnly
-					/>
+					{ compact && (
+						<Button
+							variant="ghost"
+							aria-expanded={ previewOpen }
+							aria-controls={ `${ id }-preview` }
+							onClick={ () => setPreviewOpen( ! previewOpen ) }
+						>
+							{ previewOpen
+								? __( 'Hide preview', 'merchboard' )
+								: __( 'Show preview', 'merchboard' ) }
+						</Button>
+					) }
+					<div
+						id={ `${ id }-preview` }
+						hidden={ compact && ! previewOpen }
+					>
+						{ ( ! compact || previewOpen ) && (
+							<OverlayDesigner
+								key={ choice.key }
+								layout={ choice.layout }
+								settings={ choice.settings }
+								images={ choice.images }
+								fontFamily={
+									font === undefined
+										? 'inherit'
+										: `"${ font.family }", sans-serif`
+								}
+								onSaved={ () => undefined }
+								readOnly
+							/>
+						) }
+					</div>
 					<div className="merchboard-alerts__actions">
 						<Button onClick={ apply } isBusy={ busy === 'apply' }>
 							{ __( 'Use this design', 'merchboard' ) }

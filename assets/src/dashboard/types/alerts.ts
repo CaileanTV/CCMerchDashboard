@@ -21,6 +21,7 @@ export const TEXT_ALIGNS = [ 'left', 'center', 'right' ] as const;
 export type FontWeight = ( typeof FONT_WEIGHTS )[ number ] | 'normal' | 'bold';
 export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 
+import type { PageLayout } from '../sections/alerts/page-layout';
 import type { TextAnimation } from '../../overlay/animations';
 import type { TextFit } from '../../overlay/fit';
 import type { TextFill } from '../../overlay/textfill';
@@ -213,6 +214,8 @@ export interface AlertsOverlayState {
 	readonly merchalertActive: boolean;
 	/** The fonts an administrator approved. */
 	readonly fonts: readonly AlertFontOption[];
+	/** The setup of the creator's page (step 25.9.6); only in the creator's answers. */
+	readonly page?: PageLayout;
 }
 
 /** An alert of the history (step 25.7): only what the alert shows. */

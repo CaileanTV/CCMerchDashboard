@@ -888,20 +888,91 @@
 	min-width: 0;
 }
 
+// The page's setup (step 25.9.6): cards in full width at the top, then two
+// fixed columns, each in its own order; one column on narrow screens (full,
+// left, right). A column without cards gives its room to the other.
+.merchboard-alerts__form,
+.merchboard-alerts__full,
+.merchboard-alerts__column {
+	display: grid;
+	gap: var(--merchboard-space-6);
+	align-content: start;
+	min-width: 0;
+}
+
 .merchboard-alerts__columns {
-	column-gap: var(--merchboard-space-6);
-	columns: 24rem 2;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+	gap: var(--merchboard-space-6);
+	align-items: start;
 }
 
-// The form's cards flow in the columns like the other cards.
+// The settings form spans both columns: not the narrow width of other forms.
 .merchboard-alerts__form {
-	display: contents;
+	max-width: none;
 }
 
-.merchboard-alerts__columns > *,
-.merchboard-alerts__form > *:not(.merchboard-toast-region) {
-	margin: 0 0 var(--merchboard-space-6);
-	break-inside: avoid;
+.merchboard-alerts__column:empty {
+	display: none;
+}
+
+// The creator page's setup in wp-admin (step 25.9.6): a sketch of the page.
+.merchboard-page-setup__zone-box {
+	margin-bottom: var(--merchboard-space-4);
+	padding: var(--merchboard-space-3);
+	border: 1px dashed var(--merchboard-border-strong);
+	border-radius: var(--merchboard-radius);
+
+	h3 {
+		margin: 0 0 var(--merchboard-space-2);
+	}
+}
+
+.merchboard-page-setup__cards,
+.merchboard-page-setup__fields {
+	display: grid;
+	gap: var(--merchboard-space-2);
+	min-height: 2.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.merchboard-page-setup__fields {
+	margin-top: var(--merchboard-space-2);
+	padding-left: var(--merchboard-space-4);
+}
+
+.merchboard-page-setup__card {
+	padding: var(--merchboard-space-2) var(--merchboard-space-3);
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border-strong);
+	border-radius: var(--merchboard-radius);
+	cursor: grab;
+}
+
+.merchboard-page-setup__item {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	justify-content: space-between;
+	cursor: grab;
+}
+
+.merchboard-page-setup__name {
+	font-weight: 600;
+}
+
+.merchboard-page-setup__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-1);
+	align-items: center;
+}
+
+.merchboard-page-setup__zone {
+	width: auto;
 }
 
 .merchboard-alerts__grid {

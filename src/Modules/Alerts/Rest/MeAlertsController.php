@@ -27,6 +27,8 @@ use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Alerts\Designs\CreatorDesign;
 use MerchBoard\Modules\Alerts\Designs\CreatorDesignException;
 use MerchBoard\Modules\Alerts\Designs\CreatorDesigns;
+use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayout;
+use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
 use MerchBoard\Modules\Alerts\Presets\OverlayPreset;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetException;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresets;
@@ -70,17 +72,18 @@ final class MeAlertsController extends RestController {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorContext      $context      Creator access.
-	 * @param AlertOverlays       $overlays     Overlay service.
-	 * @param AlertsAvailability  $availability Kill switch and MerchAlert guard.
-	 * @param Logger              $logger       Technical log.
-	 * @param AlertFonts|null     $fonts        Approved fonts; null for none.
-	 * @param AlertSounds|null    $sounds       Alert sounds; null for none.
-	 * @param AlertImages|null    $images       Text fill images; null for none.
-	 * @param OverlayPresets|null $presets     Standard overlays (step 25.9.5); null for none.
-	 * @param CreatorDesigns|null $designs     The creator's saved designs; null for none.
+	 * @param CreatorContext              $context      Creator access.
+	 * @param AlertOverlays               $overlays     Overlay service.
+	 * @param AlertsAvailability          $availability Kill switch and MerchAlert guard.
+	 * @param Logger                      $logger       Technical log.
+	 * @param AlertFonts|null             $fonts        Approved fonts; null for none.
+	 * @param AlertSounds|null            $sounds       Alert sounds; null for none.
+	 * @param AlertImages|null            $images       Text fill images; null for none.
+	 * @param OverlayPresets|null         $presets     Standard overlays (step 25.9.5); null for none.
+	 * @param CreatorDesigns|null         $designs     The creator's saved designs; null for none.
+	 * @param CreatorPageLayoutStore|null $page The setup of the creator's page (step 25.9.6); null for the default.
 	 */
-	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null, private ?OverlayPresets $presets = null, private ?CreatorDesigns $designs = null ) {
+	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null, private ?OverlayPresets $presets = null, private ?CreatorDesigns $designs = null, private ?CreatorPageLayoutStore $page = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -654,6 +657,7 @@ final class MeAlertsController extends RestController {
 				'overlay'           => null === $overlay ? null : $this->overlay( $overlay ),
 				'alerts_enabled'    => $this->availability->enabled(),
 				'merchalert_active' => $this->availability->merchalert_active(),
+				'page'              => ( $this->page?->get() ?? CreatorPageLayout::defaults() )->to_array(),
 				'fonts'             => array_values(
 					array_map(
 						static fn( AlertFont $font ): array => array(

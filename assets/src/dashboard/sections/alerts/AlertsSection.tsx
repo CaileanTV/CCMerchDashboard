@@ -15,6 +15,8 @@ import { AlertSoundsCard } from './AlertSoundsCard';
 import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
 import { DesignsCard } from './DesignsCard';
+import { DEFAULT_PAGE_LAYOUT } from './page-layout';
+import type { PageCard } from './page-layout';
 import { useFontStylesheet } from './useFontStylesheet';
 import { useOverlayApi } from './overlay-api-context';
 
@@ -307,7 +309,7 @@ export function AlertsContent( {
 	const [ saveSlot, setSaveSlot ] = useState< HTMLDivElement | null >( null );
 	// The settings form's unsaved values, previewed by the designer.
 	const [ draft, setDraft ] = useState< OverlaySettings | null >( null );
-	// A copied standard overlay changes the saved settings: the form and the designer start again.
+	// A design or standard overlay taken into use changes the saved settings: the form and the designer start again.
 	const [ copies, setCopies ] = useState( 0 );
 	const applied = useCallback( ( next: AlertsOverlayState ) => {
 		setState( next );
@@ -320,8 +322,49 @@ export function AlertsContent( {
 	const family =
 		( draft ?? state.overlay?.settings )?.font_family ?? 'inherit';
 	const font = state.fonts.find( ( option ) => option.family === family );
+	// The creator's page follows the administrator's setup as loaded (step
+	// 25.9.6); the global overlay and the standard overlays keep the default.
+	const layout =
+		variant === 'creator'
+			? ( initial.page ?? DEFAULT_PAGE_LAYOUT )
+			: DEFAULT_PAGE_LAYOUT;
 
 	useFontStylesheet( font?.url ?? null );
+
+	const extraCards: Partial< Record< PageCard, ReactNode > > = {};
+
+	if ( state.overlay !== null ) {
+		if ( variant === 'creator' ) {
+			extraCards.designs = (
+				<DesignsCard
+					fonts={ state.fonts }
+					onApplied={ applied }
+					notify={ notify }
+					compact={ layout.designsCompact }
+				/>
+			);
+		}
+
+		if ( variant !== 'preset' ) {
+			extraCards.browser_source = (
+				<BrowserSourceCard
+					url={ state.overlay.url }
+					onRegenerated={ setState }
+					notify={ notify }
+				/>
+			);
+		}
+
+		if ( state.overlay.audio !== null ) {
+			extraCards.sounds = (
+				<AlertSoundsCard
+					audio={ state.overlay.audio }
+					onSaved={ setState }
+					notify={ notify }
+				/>
+			);
+		}
+	}
 
 	return (
 		<>
@@ -331,40 +374,20 @@ export function AlertsContent( {
 			) : (
 				<div className="merchboard-alerts">
 					{ controls }
-					{ variant === 'creator' && (
-						<DesignsCard
-							fonts={ state.fonts }
-							onApplied={ applied }
-							notify={ notify }
-						/>
-					) }
-					<div className="merchboard-alerts__columns">
-						{ variant !== 'preset' && (
-							<BrowserSourceCard
-								url={ state.overlay.url }
-								onRegenerated={ setState }
-								notify={ notify }
-							/>
-						) }
-						{ state.overlay.audio !== null && (
-							<AlertSoundsCard
-								audio={ state.overlay.audio }
-								onSaved={ setState }
-								notify={ notify }
-							/>
-						) }
-						<OverlaySettingsForm
-							key={ `form-${ state.overlay.url }-${ copies }` }
-							settings={ state.overlay.settings }
-							fonts={ state.fonts }
-							fontApproved={ state.overlay.fontApproved }
-							onSaved={ setState }
-							saveSlot={ saveSlot }
-							onDraft={ setDraft }
-							images={ state.overlay.images }
-							onNotify={ notify }
-						/>
-					</div>
+					<OverlaySettingsForm
+						key={ `form-${ state.overlay.url }` }
+						settings={ state.overlay.settings }
+						fonts={ state.fonts }
+						fontApproved={ state.overlay.fontApproved }
+						onSaved={ setState }
+						saveSlot={ saveSlot }
+						onDraft={ setDraft }
+						images={ state.overlay.images }
+						onNotify={ notify }
+						layout={ layout }
+						extraCards={ extraCards }
+						revision={ copies }
+					/>
 					{ /* The settings' save status, right above the designer, which is always last. */ }
 					<div ref={ setSaveSlot } />
 					<div>

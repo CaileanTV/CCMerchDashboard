@@ -62,8 +62,9 @@ final class AlertsAdminPage {
 	 * @param OrderLogTab|null       $log     The order log (step 25.9.3), the first and default tab; null for none.
 	 * @param GlobalOverlayTab|null  $global_overlay The global overlay (step 25.9.4); null for none.
 	 * @param OverlayPresetsTab|null $presets The standard overlays (step 25.9.5); null for none.
+	 * @param CreatorPageTab|null    $creator_page The setup of the creator's page (step 25.9.6); null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null ) {
 	}
 
 	/**
@@ -165,6 +166,7 @@ final class AlertsAdminPage {
 			'fonts'  => 'fonts',
 			GlobalOverlayTab::TAB => null === $this->global_overlay ? 'fonts' : GlobalOverlayTab::TAB,
 			OverlayPresetsTab::TAB => null === $this->presets ? 'fonts' : OverlayPresetsTab::TAB,
+			CreatorPageTab::TAB => null === $this->creator_page ? 'fonts' : CreatorPageTab::TAB,
 			default  => null === $this->log ? 'fonts' : OrderLogTab::TAB,
 		};
 		$notice = self::result_message( $code );
@@ -183,6 +185,10 @@ final class AlertsAdminPage {
 
 		if ( null !== $this->presets ) {
 			echo '<a class="nav-tab' . ( OverlayPresetsTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( OverlayPresetsTab::TAB ) ) . '"' . ( OverlayPresetsTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Standard overlays', 'merchboard' ) . '</a>';
+		}
+
+		if ( null !== $this->creator_page ) {
+			echo '<a class="nav-tab' . ( CreatorPageTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( CreatorPageTab::TAB ) ) . '"' . ( CreatorPageTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Creator page', 'merchboard' ) . '</a>';
 		}
 
 		echo '<a class="nav-tab' . ( 'fonts' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url() ) . '"' . ( 'fonts' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Fonts', 'merchboard' ) . '</a>';
@@ -207,6 +213,13 @@ final class AlertsAdminPage {
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( CreatorPageTab::TAB === $tab && null !== $this->creator_page ) {
+			$this->creator_page->render();
+			echo '</div>';
+
+			return;
 		}
 
 		if ( OverlayPresetsTab::TAB === $tab && null !== $this->presets ) {

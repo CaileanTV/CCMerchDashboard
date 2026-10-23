@@ -10,6 +10,7 @@ import { isTextFit } from '../../overlay/fit';
 import { request } from './client';
 import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
+import { parsePageLayout } from '../sections/alerts/page-layout';
 import {
 	BOX_LIMITS,
 	FONT_WEIGHTS,
@@ -478,6 +479,7 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 		alertsEnabled: body.alerts_enabled,
 		merchalertActive: body.merchalert_active,
 		fonts,
+		...( 'page' in body ? { page: parsePageLayout( body.page ) } : {} ),
 	};
 
 	if ( body.overlay === null ) {
