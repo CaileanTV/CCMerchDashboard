@@ -24,7 +24,12 @@ use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
 use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsActions;
 use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsSection;
 use MerchBoard\Modules\Alerts\Admin\OrderLogTab;
+use MerchBoard\Modules\Alerts\Admin\AdminBundle;
 use MerchBoard\Modules\Alerts\Admin\GlobalOverlayTab;
+use MerchBoard\Modules\Alerts\Admin\OverlayPresetsTab;
+use MerchBoard\Modules\Alerts\Presets\AdminOverlayPresetsController;
+use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
+use MerchBoard\Modules\Alerts\Presets\OverlayPresets;
 use MerchBoard\Modules\Alerts\GlobalOverlay\AdminGlobalOverlayController;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayFeed;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayFeedController;
@@ -160,7 +165,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -243,7 +248,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			MeAlertsController::class,
-			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ) )
+			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ), $c->get( OverlayPresets::class ) )
 		);
 		// The chatbot on Twitch, Kick and YouTube (phase 25, steps 8, 8.2 and 8.4; ADR-066, ADR-069, ADR-070).
 		$container->set( TwitchApi::class, static fn(): TwitchApi => new TwitchApi() );
@@ -457,13 +462,20 @@ final class AlertsModule implements Module {
 		$container->set( GlobalOverlayRoute::class, static fn( Container $c ): GlobalOverlayRoute => new GlobalOverlayRoute( ! $c->get( AlertsAvailability::class )->merchalert_active() ) );
 		$container->set( GlobalOverlayPage::class, static fn( Container $c ): GlobalOverlayPage => new GlobalOverlayPage( $c->get( GlobalOverlayRoute::class ), $c->get( GlobalOverlayFeed::class ), $c->get( OverlayPage::class ), $c->get( Logger::class ), $c->get( GlobalOverlayImages::class ) ) );
 		$container->set(
-			GlobalOverlayTab::class,
-			static function ( Container $c ): GlobalOverlayTab {
+			AdminBundle::class,
+			static function ( Container $c ): AdminBundle {
 				$root = dirname( __DIR__, 3 ) . '/';
 
-				return new GlobalOverlayTab( $root, plugin_dir_url( $root . 'merchboard.php' ), $c->get( Logger::class ) );
+				return new AdminBundle( $root, plugin_dir_url( $root . 'merchboard.php' ), $c->get( Logger::class ) );
 			}
 		);
+		$container->set( GlobalOverlayTab::class, static fn( Container $c ): GlobalOverlayTab => new GlobalOverlayTab( $c->get( AdminBundle::class ) ) );
+		// The standard overlays (step 25.9.5).
+		$container->set(
+			OverlayPresets::class,
+			static fn( Container $c ): OverlayPresets => new OverlayPresets( new OverlayPresetStore(), $c->get( AuditTrail::class ), $c->get( AlertOverlayRepository::class ), $c->get( AlertFonts::class ), $c->get( AlertImageLibrary::class ), $c->get( AlertImages::class ) )
+		);
+		$container->set( AdminOverlayPresetsController::class, static fn( Container $c ): AdminOverlayPresetsController => new AdminOverlayPresetsController( $c->get( OverlayPresets::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ) ) );
 
 		add_action(
 			'init',
@@ -498,6 +510,7 @@ final class AlertsModule implements Module {
 				$container->get( OverlayFeedController::class )->register_routes();
 				$container->get( GlobalOverlayFeedController::class )->register_routes();
 				$container->get( AdminGlobalOverlayController::class )->register_routes();
+				$container->get( AdminOverlayPresetsController::class )->register_routes();
 				$container->get( MeAlertsController::class )->register_routes();
 				$container->get( MeAlertsHistoryController::class )->register_routes();
 				$container->get( MeChatbotController::class )->register_routes();

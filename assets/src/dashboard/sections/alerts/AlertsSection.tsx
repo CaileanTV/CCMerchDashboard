@@ -14,11 +14,15 @@ import type { AlertsOverlayState, OverlaySettings } from '../../types/alerts';
 import { AlertSoundsCard } from './AlertSoundsCard';
 import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
+import { PresetPickerCard } from './PresetPickerCard';
 import { useFontStylesheet } from './useFontStylesheet';
 import { useOverlayApi } from './overlay-api-context';
 
-/** Whose overlay the cards show: the creator's own or the global overlay (step 25.9.4). */
-export type OverlayVariant = 'creator' | 'global';
+/**
+ * Whose overlay the cards show: the creator's own, the global overlay (step
+ * 25.9.4) or a standard overlay (step 25.9.5, no browser source).
+ */
+export type OverlayVariant = 'creator' | 'global' | 'preset';
 
 function SetupCard( {
 	onCreated,
@@ -239,6 +243,10 @@ function Notices( {
 	readonly state: AlertsOverlayState;
 	readonly variant: OverlayVariant;
 } ) {
+	if ( variant === 'preset' ) {
+		return null;
+	}
+
 	if ( variant === 'global' ) {
 		return state.merchalertActive || ! state.alertsEnabled ? (
 			<Alert tone="warning">
@@ -299,6 +307,13 @@ export function AlertsContent( {
 	const [ saveSlot, setSaveSlot ] = useState< HTMLDivElement | null >( null );
 	// The settings form's unsaved values, previewed by the designer.
 	const [ draft, setDraft ] = useState< OverlaySettings | null >( null );
+	// A copied standard overlay changes the saved settings: the form and the designer start again.
+	const [ copies, setCopies ] = useState( 0 );
+	const applied = useCallback( ( next: AlertsOverlayState ) => {
+		setState( next );
+		setDraft( null );
+		setCopies( ( count ) => count + 1 );
+	}, [] );
 
 	useEffect( () => setState( initial ), [ initial ] );
 
@@ -317,11 +332,20 @@ export function AlertsContent( {
 				<div className="merchboard-alerts">
 					{ controls }
 					<div className="merchboard-alerts__columns">
-						<BrowserSourceCard
-							url={ state.overlay.url }
-							onRegenerated={ setState }
-							notify={ setToast }
-						/>
+						{ variant !== 'preset' && (
+							<BrowserSourceCard
+								url={ state.overlay.url }
+								onRegenerated={ setState }
+								notify={ setToast }
+							/>
+						) }
+						{ variant === 'creator' && (
+							<PresetPickerCard
+								fonts={ state.fonts }
+								onApplied={ applied }
+								notify={ setToast }
+							/>
+						) }
 						{ state.overlay.audio !== null && (
 							<AlertSoundsCard
 								audio={ state.overlay.audio }
@@ -330,7 +354,7 @@ export function AlertsContent( {
 							/>
 						) }
 						<OverlaySettingsForm
-							key={ `form-${ state.overlay.url }` }
+							key={ `form-${ state.overlay.url }-${ copies }` }
 							settings={ state.overlay.settings }
 							fonts={ state.fonts }
 							fontApproved={ state.overlay.fontApproved }
@@ -344,7 +368,7 @@ export function AlertsContent( {
 					<div ref={ setSaveSlot } />
 					<div>
 						<OverlayDesigner
-							key={ `designer-${ state.overlay.url }` }
+							key={ `designer-${ state.overlay.url }-${ copies }` }
 							layout={ state.overlay.layout }
 							settings={ state.overlay.settings }
 							preview={ draft }

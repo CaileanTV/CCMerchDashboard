@@ -282,6 +282,11 @@ interface Props {
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
 	/** Images the texts can be filled with (step 25.6.10). */
 	readonly images?: AlertsImages | null;
+	/**
+	 * Only the canvas, without editing (a standard overlay's preview, step
+	 * 25.9.5); nothing is saved.
+	 */
+	readonly readOnly?: boolean;
 }
 
 /**
@@ -303,6 +308,7 @@ interface Props {
  * @param props.fontFamily CSS font-family of the preview.
  * @param props.onSaved    Called with the answer after saving.
  * @param props.images     Images the texts can be filled with.
+ * @param props.readOnly   Only the canvas, without editing.
  */
 export function OverlayDesigner( {
 	layout: saved,
@@ -311,6 +317,7 @@ export function OverlayDesigner( {
 	fontFamily,
 	onSaved,
 	images = null,
+	readOnly = false,
 }: Props ) {
 	const look = preview ?? settings;
 	const fillImages = [
@@ -485,6 +492,10 @@ export function OverlayDesigner( {
 	const { undo, redo } = history;
 
 	useEffect( () => {
+		if ( readOnly ) {
+			return;
+		}
+
 		const onKey = ( event: KeyboardEvent ) => {
 			const action = historyKey( event );
 			const inside =
@@ -510,7 +521,7 @@ export function OverlayDesigner( {
 		window.addEventListener( 'keydown', onKey );
 
 		return () => window.removeEventListener( 'keydown', onKey );
-	}, [ undo, redo ] );
+	}, [ undo, redo, readOnly ] );
 
 	const save = async () => {
 		setBusy( true );
@@ -640,13 +651,21 @@ export function OverlayDesigner( {
 	);
 
 	return (
-		<Card title={ __( 'Designer', 'merchboard' ) }>
-			<p>
-				{ __(
-					'Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values.',
-					'merchboard'
-				) }
-			</p>
+		<Card
+			title={
+				readOnly
+					? __( 'Preview', 'merchboard' )
+					: __( 'Designer', 'merchboard' )
+			}
+		>
+			{ ! readOnly && (
+				<p>
+					{ __(
+						'Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values.',
+						'merchboard'
+					) }
+				</p>
+			) }
 			{ saveError !== null && <ApiErrorState error={ saveError } /> }
 			<div ref={ root } className="merchboard-designer__root">
 				<div
@@ -677,8 +696,8 @@ export function OverlayDesigner( {
 						return (
 							<div
 								key={ element }
-								role="button"
-								tabIndex={ 0 }
+								role={ readOnly ? undefined : 'button' }
+								tabIndex={ readOnly ? undefined : 0 }
 								ref={
 									element === 'main_text'
 										? mainBox
@@ -697,9 +716,15 @@ export function OverlayDesigner( {
 									...boxPlacement( element, item ),
 								} }
 								onPointerDown={ ( event ) =>
-									start( event, element, 'move' )
+									readOnly
+										? undefined
+										: start( event, element, 'move' )
 								}
 								onKeyDown={ ( event ) => {
+									if ( readOnly ) {
+										return;
+									}
+
 									if (
 										event.key === 'Enter' ||
 										event.key === ' '
@@ -754,13 +779,15 @@ export function OverlayDesigner( {
 										displayTime={ look.display_duration }
 									/>
 								) }
-								<span
-									className="merchboard-designer__handle"
-									aria-hidden="true"
-									onPointerDown={ ( event ) =>
-										start( event, element, 'resize' )
-									}
-								/>
+								{ ! readOnly && (
+									<span
+										className="merchboard-designer__handle"
+										aria-hidden="true"
+										onPointerDown={ ( event ) =>
+											start( event, element, 'resize' )
+										}
+									/>
+								) }
 							</div>
 						);
 					} ) }
@@ -801,220 +828,255 @@ export function OverlayDesigner( {
 					) }
 				</div>
 
-				<fieldset className="merchboard-designer__align">
-					<legend className="merchboard-field__label">
-						{ __( 'Align', 'merchboard' ) }
-					</legend>
-					<div className="merchboard-alerts__actions">
-						{ ALIGNMENTS.map( ( alignment ) => (
-							<Button
-								key={ alignment }
-								variant="secondary"
-								size="sm"
-								onClick={ () =>
-									setLayout(
-										alignBoxes(
-											layout,
-											selection,
-											alignment,
+				{ ! readOnly && (
+					<>
+						<fieldset className="merchboard-designer__align">
+							<legend className="merchboard-field__label">
+								{ __( 'Align', 'merchboard' ) }
+							</legend>
+							<div className="merchboard-alerts__actions">
+								{ ALIGNMENTS.map( ( alignment ) => (
+									<Button
+										key={ alignment }
+										variant="secondary"
+										size="sm"
+										onClick={ () =>
+											setLayout(
+												alignBoxes(
+													layout,
+													selection,
+													alignment,
+													selection.length > 1
+														? alignTarget
+														: 'canvas'
+												)
+											)
+										}
+									>
+										{ alignmentLabel( alignment ) }
+									</Button>
+								) ) }
+							</div>
+							<Field label={ __( 'Align to', 'merchboard' ) }>
+								{ ( control ) => (
+									<select
+										{ ...control }
+										className="merchboard-input"
+										value={
 											selection.length > 1
 												? alignTarget
 												: 'canvas'
+										}
+										disabled={ selection.length < 2 }
+										onChange={ ( event ) =>
+											setAlignTarget(
+												event.target.value ===
+													'selection'
+													? 'selection'
+													: 'canvas'
+											)
+										}
+									>
+										<option value="canvas">
+											{ __( 'The canvas', 'merchboard' ) }
+										</option>
+										<option value="selection">
+											{ __(
+												'The selected elements',
+												'merchboard'
+											) }
+										</option>
+									</select>
+								) }
+							</Field>
+						</fieldset>
+
+						{ selection.length > 1 && (
+							<p className="merchboard-designer__selection">
+								{ sprintf(
+									/* translators: 1: number of elements, 2: their names. */
+									__(
+										'%1$d elements selected: %2$s.',
+										'merchboard'
+									),
+									selection.length,
+									selection.map( elementLabel ).join( ', ' )
+								) }
+							</p>
+						) }
+
+						<fieldset className="merchboard-designer__properties">
+							<legend className="merchboard-field__label">
+								{ elementLabel( selected ) }
+							</legend>
+							<div className="merchboard-alerts__grid">
+								{ number(
+									'x',
+									__( 'Left (px)', 'merchboard' )
+								) }
+								{ number(
+									'y',
+									__( 'Top (px)', 'merchboard' )
+								) }
+								{ number(
+									'w',
+									__( 'Width (px)', 'merchboard' )
+								) }
+								{ number(
+									'h',
+									__( 'Height (px)', 'merchboard' )
+								) }
+								{ selected === 'product_image' &&
+									number(
+										'border_radius',
+										__(
+											'Image corner radius (px)',
+											'merchboard'
 										)
-									)
-								}
-							>
-								{ alignmentLabel( alignment ) }
-							</Button>
-						) ) }
-					</div>
-					<Field label={ __( 'Align to', 'merchboard' ) }>
-						{ ( control ) => (
-							<select
-								{ ...control }
-								className="merchboard-input"
-								value={
-									selection.length > 1
-										? alignTarget
-										: 'canvas'
-								}
-								disabled={ selection.length < 2 }
-								onChange={ ( event ) =>
-									setAlignTarget(
-										event.target.value === 'selection'
-											? 'selection'
-											: 'canvas'
-									)
-								}
-							>
-								<option value="canvas">
-									{ __( 'The canvas', 'merchboard' ) }
-								</option>
-								<option value="selection">
+									) }
+							</div>
+							{ selected !== 'secondary_text' && (
+								<label
+									className="merchboard-alerts__check"
+									htmlFor={ `${ id }-visible` }
+								>
+									<input
+										id={ `${ id }-visible` }
+										type="checkbox"
+										checked={ box.visible }
+										onChange={ ( event ) =>
+											setBox( selected, {
+												...box,
+												visible: event.target.checked,
+											} )
+										}
+									/>{ ' ' }
+									{ __( 'Show this element', 'merchboard' ) }
+								</label>
+							) }
+							{ selected === 'product_image' && (
+								<label
+									className="merchboard-alerts__check"
+									htmlFor={ `${ id }-aspect` }
+								>
+									<input
+										id={ `${ id }-aspect` }
+										type="checkbox"
+										checked={ box.lock_aspect }
+										onChange={ ( event ) =>
+											setBox( selected, {
+												...box,
+												lock_aspect:
+													event.target.checked,
+											} )
+										}
+									/>{ ' ' }
 									{ __(
-										'The selected elements',
+										'Keep the aspect ratio',
 										'merchboard'
 									) }
-								</option>
-							</select>
-						) }
-					</Field>
-				</fieldset>
-
-				{ selection.length > 1 && (
-					<p className="merchboard-designer__selection">
-						{ sprintf(
-							/* translators: 1: number of elements, 2: their names. */
-							__( '%1$d elements selected: %2$s.', 'merchboard' ),
-							selection.length,
-							selection.map( elementLabel ).join( ', ' )
-						) }
-					</p>
-				) }
-
-				<fieldset className="merchboard-designer__properties">
-					<legend className="merchboard-field__label">
-						{ elementLabel( selected ) }
-					</legend>
-					<div className="merchboard-alerts__grid">
-						{ number( 'x', __( 'Left (px)', 'merchboard' ) ) }
-						{ number( 'y', __( 'Top (px)', 'merchboard' ) ) }
-						{ number( 'w', __( 'Width (px)', 'merchboard' ) ) }
-						{ number( 'h', __( 'Height (px)', 'merchboard' ) ) }
-						{ selected === 'product_image' &&
-							number(
-								'border_radius',
-								__( 'Image corner radius (px)', 'merchboard' )
+								</label>
 							) }
-					</div>
-					{ selected !== 'secondary_text' && (
-						<label
-							className="merchboard-alerts__check"
-							htmlFor={ `${ id }-visible` }
-						>
-							<input
-								id={ `${ id }-visible` }
-								type="checkbox"
-								checked={ box.visible }
-								onChange={ ( event ) =>
-									setBox( selected, {
-										...box,
-										visible: event.target.checked,
-									} )
-								}
-							/>{ ' ' }
-							{ __( 'Show this element', 'merchboard' ) }
-						</label>
-					) }
-					{ selected === 'product_image' && (
-						<label
-							className="merchboard-alerts__check"
-							htmlFor={ `${ id }-aspect` }
-						>
-							<input
-								id={ `${ id }-aspect` }
-								type="checkbox"
-								checked={ box.lock_aspect }
-								onChange={ ( event ) =>
-									setBox( selected, {
-										...box,
-										lock_aspect: event.target.checked,
-									} )
-								}
-							/>{ ' ' }
-							{ __( 'Keep the aspect ratio', 'merchboard' ) }
-						</label>
-					) }
-				</fieldset>
+						</fieldset>
 
-				<div className="merchboard-alerts__grid">
-					<label
-						className="merchboard-alerts__check"
-						htmlFor={ `${ id }-snap` }
-					>
-						<input
-							id={ `${ id }-snap` }
-							type="checkbox"
-							checked={ layout.canvas.snap_grid }
-							onChange={ ( event ) =>
-								setLayout( {
-									...layout,
-									canvas: {
-										...layout.canvas,
-										snap_grid: event.target.checked,
-									},
-								} )
-							}
-						/>{ ' ' }
-						{ __( 'Snap to grid', 'merchboard' ) }
-					</label>
-					<Field label={ __( 'Grid size (px)', 'merchboard' ) }>
-						{ ( control ) => (
-							<input
-								{ ...control }
-								type="number"
-								className="merchboard-input"
-								min={ 1 }
-								max={ 100 }
-								step={ 1 }
-								value={ layout.canvas.grid_size }
-								onChange={ ( event ) => {
-									const value = event.target.valueAsNumber;
-
-									if (
-										Number.isInteger( value ) &&
-										value >= 1 &&
-										value <= 100
-									) {
+						<div className="merchboard-alerts__grid">
+							<label
+								className="merchboard-alerts__check"
+								htmlFor={ `${ id }-snap` }
+							>
+								<input
+									id={ `${ id }-snap` }
+									type="checkbox"
+									checked={ layout.canvas.snap_grid }
+									onChange={ ( event ) =>
 										setLayout( {
 											...layout,
 											canvas: {
 												...layout.canvas,
-												grid_size: value,
+												snap_grid: event.target.checked,
 											},
-										} );
+										} )
 									}
-								} }
-							/>
-						) }
-					</Field>
-				</div>
+								/>{ ' ' }
+								{ __( 'Snap to grid', 'merchboard' ) }
+							</label>
+							<Field
+								label={ __( 'Grid size (px)', 'merchboard' ) }
+							>
+								{ ( control ) => (
+									<input
+										{ ...control }
+										type="number"
+										className="merchboard-input"
+										min={ 1 }
+										max={ 100 }
+										step={ 1 }
+										value={ layout.canvas.grid_size }
+										onChange={ ( event ) => {
+											const value =
+												event.target.valueAsNumber;
 
-				<div className="merchboard-alerts__actions">
-					<Button onClick={ save } isBusy={ busy }>
-						{ busy
-							? __( 'Saving…', 'merchboard' )
-							: __( 'Save layout', 'merchboard' ) }
-					</Button>
-					<Button
-						variant="secondary"
-						onClick={ () => setLayout( DEFAULT_LAYOUT ) }
-					>
-						{ __( 'Reset to the default layout', 'merchboard' ) }
-					</Button>
-					<Button
-						variant="ghost"
-						onClick={ undo }
-						disabled={ ! history.canUndo }
-						aria-keyshortcuts="Control+Z Meta+Z"
-					>
-						{ __( 'Undo', 'merchboard' ) }
-					</Button>
-					<Button
-						variant="ghost"
-						onClick={ redo }
-						disabled={ ! history.canRedo }
-						aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y"
-					>
-						{ __( 'Redo', 'merchboard' ) }
-					</Button>
-					<Button
-						variant="secondary"
-						onClick={ () => setPlay( ( count ) => count + 1 ) }
-					>
-						{ __( 'Play animation', 'merchboard' ) }
-					</Button>
-				</div>
+											if (
+												Number.isInteger( value ) &&
+												value >= 1 &&
+												value <= 100
+											) {
+												setLayout( {
+													...layout,
+													canvas: {
+														...layout.canvas,
+														grid_size: value,
+													},
+												} );
+											}
+										} }
+									/>
+								) }
+							</Field>
+						</div>
+
+						<div className="merchboard-alerts__actions">
+							<Button onClick={ save } isBusy={ busy }>
+								{ busy
+									? __( 'Saving…', 'merchboard' )
+									: __( 'Save layout', 'merchboard' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={ () => setLayout( DEFAULT_LAYOUT ) }
+							>
+								{ __(
+									'Reset to the default layout',
+									'merchboard'
+								) }
+							</Button>
+							<Button
+								variant="ghost"
+								onClick={ undo }
+								disabled={ ! history.canUndo }
+								aria-keyshortcuts="Control+Z Meta+Z"
+							>
+								{ __( 'Undo', 'merchboard' ) }
+							</Button>
+							<Button
+								variant="ghost"
+								onClick={ redo }
+								disabled={ ! history.canRedo }
+								aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y"
+							>
+								{ __( 'Redo', 'merchboard' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={ () =>
+									setPlay( ( count ) => count + 1 )
+								}
+							>
+								{ __( 'Play animation', 'merchboard' ) }
+							</Button>
+						</div>
+					</>
+				) }
 			</div>
 
 			<Toast message={ toast } onDismiss={ dismissToast } />

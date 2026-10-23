@@ -134,6 +134,17 @@ function body( url: string | null, extra: Record< string, unknown > = {} ) {
 	};
 }
 
+/**
+ * The requests to the overlay routes (not the standard overlays, step 25.9.5).
+ *
+ * @param requests Recorded requests.
+ */
+function overlayRequests< T extends { readonly path: string } >(
+	requests: readonly T[]
+): T[] {
+	return requests.filter( ( r ) => r.path.startsWith( PATH ) );
+}
+
 const IMAGE = {
 	id: 5,
 	url: `${ ORIGIN }/wp-content/uploads/2026/10/stars.gif`,
@@ -352,10 +363,9 @@ describe( 'AlertsSection', () => {
 		click( button( 'Set up overlay' ) );
 		await flush();
 
-		expect( requests.map( ( r ) => r.method ) ).toEqual( [
-			'GET',
-			'POST',
-		] );
+		expect( overlayRequests( requests ).map( ( r ) => r.method ) ).toEqual(
+			[ 'GET', 'POST' ]
+		);
 		const field = () =>
 			rendered?.container.querySelector< HTMLInputElement >(
 				'input[readonly]'
@@ -398,7 +408,7 @@ describe( 'AlertsSection', () => {
 		confirm.mockReturnValueOnce( false );
 		click( button( 'Create new URL' ) );
 		await flush();
-		expect( requests ).toHaveLength( 1 );
+		expect( overlayRequests( requests ) ).toHaveLength( 1 );
 
 		click( button( 'Show URL' ) );
 		confirm.mockReturnValueOnce( true );

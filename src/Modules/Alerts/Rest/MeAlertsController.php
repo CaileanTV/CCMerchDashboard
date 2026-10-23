@@ -24,6 +24,9 @@ use MerchBoard\Modules\Alerts\Images\AlertImageException;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Presets\OverlayPreset;
+use MerchBoard\Modules\Alerts\Presets\OverlayPresetException;
+use MerchBoard\Modules\Alerts\Presets\OverlayPresets;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -64,15 +67,16 @@ final class MeAlertsController extends RestController {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorContext     $context      Creator access.
-	 * @param AlertOverlays      $overlays     Overlay service.
-	 * @param AlertsAvailability $availability Kill switch and MerchAlert guard.
-	 * @param Logger             $logger       Technical log.
-	 * @param AlertFonts|null    $fonts        Approved fonts; null for none.
-	 * @param AlertSounds|null   $sounds       Alert sounds; null for none.
-	 * @param AlertImages|null   $images       Text fill images; null for none.
+	 * @param CreatorContext      $context      Creator access.
+	 * @param AlertOverlays       $overlays     Overlay service.
+	 * @param AlertsAvailability  $availability Kill switch and MerchAlert guard.
+	 * @param Logger              $logger       Technical log.
+	 * @param AlertFonts|null     $fonts        Approved fonts; null for none.
+	 * @param AlertSounds|null    $sounds       Alert sounds; null for none.
+	 * @param AlertImages|null    $images       Text fill images; null for none.
+	 * @param OverlayPresets|null $presets     Standard overlays (step 25.9.5); null for none.
 	 */
-	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null ) {
+	public function __construct( private CreatorContext $context, private AlertOverlays $overlays, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?AlertSounds $sounds = null, private ?AlertImages $images = null, private ?OverlayPresets $presets = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -80,6 +84,32 @@ final class MeAlertsController extends RestController {
 	 * Registers the routes.
 	 */
 	public function register_routes(): void {
+		// The standard overlays to start from (step 25.9.5).
+		register_rest_route(
+			self::NAMESPACE,
+			'/me/alerts/presets',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'list_presets' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(),
+				),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			self::ROUTE . '/preset',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'apply_preset' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(),
+				),
+			)
+		);
+
 		register_rest_route(
 			self::NAMESPACE,
 			self::ROUTE,
@@ -209,6 +239,65 @@ final class MeAlertsController extends RestController {
 					$overlay = $this->overlays->update_settings( $creator_id, $input );
 				} catch ( InvalidArgumentException ) {
 					return self::error( 'merchboard_invalid_request', __( 'The font is not available.', 'merchboard' ), 400, array( 'fields' => array( 'font_family' => 'not_approved' ) ) );
+				}
+
+				return null === $overlay ? self::not_set_up() : $this->answer( $overlay );
+			}
+		);
+	}
+
+	/**
+	 * The standard overlays, with what their preview needs (step 25.9.5).
+	 */
+	public function list_presets(): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			'/me/alerts/presets',
+			function (): WP_REST_Response {
+				$images   = $this->presets?->images();
+				$response = new WP_REST_Response(
+					array(
+						'presets' => array_map(
+							fn( OverlayPreset $preset ): array => array_merge(
+								array(
+									'id'   => $preset->id,
+									'name' => $preset->name,
+								),
+								self::look( $preset->settings, $this->fonts ),
+								array( 'images' => $images )
+							),
+							$this->presets?->all() ?? array()
+						),
+					),
+					200
+				);
+				$response->header( 'Cache-Control', 'no-store' );
+
+				return $response;
+			}
+		);
+	}
+
+	/**
+	 * Copies a standard overlay's look and texts into the creator's overlay
+	 * (`{ "preset": id }`; step 25.9.5).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function apply_preset( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/preset',
+			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
+				$preset = $request->get_param( 'preset' );
+
+				if ( null === $this->presets ) {
+					return self::not_set_up();
+				}
+
+				try {
+					$overlay = $this->presets->apply( $creator_id, is_string( $preset ) ? $preset : '' );
+				} catch ( OverlayPresetException $e ) {
+					return self::error( 'merchboard_invalid_request', __( 'The standard overlay does not exist any more.', 'merchboard' ), 400, array( 'fields' => array( 'preset' => $e->reason() ) ) );
 				}
 
 				return null === $overlay ? self::not_set_up() : $this->answer( $overlay );

@@ -393,6 +393,21 @@ enum AuditAction: string {
 	case AlertGlobalOverlayToggled = 'alert_global_overlay_toggled';
 
 	/**
+	 * A standard overlay was made (phase 25, step 9.5). Context: name.
+	 */
+	case AlertOverlayPresetCreated = 'alert_overlay_preset_created';
+
+	/**
+	 * A standard overlay got a new name. Context: name, previous name.
+	 */
+	case AlertOverlayPresetRenamed = 'alert_overlay_preset_renamed';
+
+	/**
+	 * A standard overlay was deleted (copies made from it stay). Context: name.
+	 */
+	case AlertOverlayPresetDeleted = 'alert_overlay_preset_deleted';
+
+	/**
 	 * A sound was added to the alert sound library (phase 25, step 6.3). Context: file name.
 	 */
 	case AlertSoundLibraryAdded = 'alert_sound_library_added';
