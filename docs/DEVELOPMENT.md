@@ -246,6 +246,35 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.1.0: alerts (fase 25, trin 25.10.3)
+
+**Forberedt 2026-10-23; ikke udgivet.** Version **1.1.0** (projektejerens valg 2026-10-23: minor, nye features uden breaking changes). Versions-bump, CHANGELOG-sektionen `## [1.1.0]` og tagget `v1.1.0` sættes først **efter 25.13** (slutreview og runtime-test af hele fase 25), så der aldrig udgives noget, der ikke er reviewet og runtime-testet. Udføres af projektejeren; AI-agenter har ingen adgang til staging eller produktion.
+
+### Før tagget (efter 25.13)
+
+1. 25.13 er afsluttet: slutreview og runtime-test uden åbne fund, eller fundene er rettet på `main` med grøn CI.
+2. Versions-bump til 1.1.0 og CHANGELOG-sektionen efter [Release](#release), trin 1. Schema-versionen er **24** (migration 18–24 kører ved opdatering fra 1.0.1).
+3. Tag `v1.1.0` efter [Release](#release), trin 2. Draft-releasen testes på staging (devpage) efter [Staging](#staging) og proceduren nedenfor, før den udgives.
+
+### Produktionsprocedure (alerts og MerchAlert)
+
+Rækkefølgen er låst (ADR-065): **backup → deaktivér MerchAlert → opdatér → import → slå alerts til.**
+
+1. **Backup:** filer og database via hostingen. Notér de installerede versioner af Merch Dashboard (1.0.1) og MerchAlert.
+2. **Cache:** side-cache/CDN må ikke cache `/merchboard-alerts/*`, `/ccmerch-alert/*` (de gamle OBS-URL'er) eller REST-feedet `wp-json/merchboard/v1/*`. Overlays henter nye alerts med long-poll.
+3. **Deaktivér MerchAlert** under Plugins. **Slet det ikke:** MerchAlerts afinstallation sletter dets tabeller, som importen læser.
+4. **Opdatér Merch Dashboard** med release-ZIP'en ("Erstat nuværende med uploadet"). Migration 18–24 kører; Overview skal vise schema-version 24 uden advarsler. Alerts er **slået fra** efter opdateringen (kill switch, ADR-065 pkt. 6).
+5. **Import:** Merch Dashboard → Alerts → **Import** → "Tørkør". Gennemgå rapporten: hver MerchAlert-creator skal matche den rigtige creator via sin kategori; "Springes over" kræver en beslutning (ret kategorien under Creators, og tørkør igen). Sæt kryds ved backup, og tryk "Importér". "Seneste import" viser antal creators, alerts og chatbeskeder.
+6. **Efter importen, før alerts slås til:**
+   - Stikprøve: en creators overlay i OBS med den **gamle** URL (`/ccmerch-alert/creator-overlay/{id}/`) viser en testalert; designet, lydene og fonten er som før.
+   - Det globale overlay er importeret **slået fra**; slå det til under Alerts → Globalt overlay, hvis det bruges.
+   - **Chatbot:** Twitch-logins flyttes ikke. Under Alerts → Chatbot: gem Twitch-appens Client ID og Secret, og log bot-kontoen ind. Creators tilføjer botten til deres kanal igen fra dashboardet (Alerts → Chatbot). Skabelon og til/fra er flyttet.
+   - Settings → Alerts: tjek lydgrænserne og "Brugernavn i checkout" (importeret fra MerchAlert).
+7. **Slå alerts til:** Settings → Alerts → "Købs-alerts": sæt kryds i "Registrér købs-alerts for creators", og gem. Ordrer betalt, mens alerts var slået fra, får ingen alerts bagefter. Læg en testordre (eller brug "Afspil seneste ordre" på det globale overlay), og tjek overlay, lyd og chatbesked.
+8. **Resultat:** notér version, dato, importens tal og eventuelle fund i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** slå alerts fra (Settings → Alerts), og aktivér MerchAlert igen; dets data er urørt, og mens det er aktivt, sender Merch Dashboard ingen alerts (MerchAlert-vagten). Ved fejl i selve opdateringen: installér 1.0.1-ZIP'en igen, eller gendan backuppen. **MerchAlert afinstalleres** først, når 1.1.0 har kørt stabilt, og importen er verificeret; derefter kan den ikke gentages.
+
 ## Git-workflow
 
 Se [AI-DEVELOPMENT.md](AI-DEVELOPMENT.md#git-og-github). Kort fortalt: små commits i Conventional Commits-format (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`), push efter validering, og aldrig force-push eller omskrivning af historik.
