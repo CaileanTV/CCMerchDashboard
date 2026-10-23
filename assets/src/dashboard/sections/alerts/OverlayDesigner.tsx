@@ -596,7 +596,8 @@ export function OverlayDesigner( {
 		background: background( look.bg_color, look.bg_opacity ),
 		borderRadius: scaled( look.border_radius ),
 		padding: scaled( look.padding ),
-		fontSize: scaled( look.font_size ),
+		// A variable, not font-size: fitting the text clears the inline size before it measures.
+		'--merchboard-preview-font-size': scaled( look.font_size ),
 	} as CSSProperties;
 
 	const number = (

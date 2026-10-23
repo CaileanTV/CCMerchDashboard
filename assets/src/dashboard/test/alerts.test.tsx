@@ -10,7 +10,10 @@ import {
 	AlertsSection,
 	maskOverlayUrl,
 } from '../sections/alerts/AlertsSection';
-import { validateOverlaySettings } from '../sections/alerts/OverlaySettingsForm';
+import {
+	AUTOSAVE_DELAY,
+	validateOverlaySettings,
+} from '../sections/alerts/OverlaySettingsForm';
 import { mockApi, response } from '../testing/api';
 import { CONFIG, ORIGIN, click, flush, render } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
@@ -348,6 +351,37 @@ describe( 'AlertsSection', () => {
 		await flush();
 	};
 
+	// Saves the settings form at once, as Enter in a field does, instead of waiting for the automatic save.
+	const saveNow = async () => {
+		const form = rendered?.container.querySelector(
+			'form.merchboard-alerts__form'
+		);
+		act( () => {
+			form?.dispatchEvent(
+				new Event( 'submit', { bubbles: true, cancelable: true } )
+			);
+		} );
+		await act( async () => {
+			await new Promise( ( resolve ) => window.setTimeout( resolve, 0 ) );
+		} );
+		await flush();
+	};
+
+	const typeTemplate = ( value: string ) => {
+		const template = rendered?.container.querySelector( 'textarea' );
+		act( () => {
+			if ( template ) {
+				Object.getOwnPropertyDescriptor(
+					HTMLTextAreaElement.prototype,
+					'value'
+				)?.set?.call( template, value );
+				template.dispatchEvent(
+					new Event( 'input', { bubbles: true } )
+				);
+			}
+		} );
+	};
+
 	it( 'sets the overlay up on request and shows the OBS URL', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( null ) ),
@@ -443,13 +477,24 @@ describe( 'AlertsSection', () => {
 			'Purchase alerts are switched off'
 		);
 
-		click( button( 'Save overlay settings' ) );
-		await flush();
+		expect( rendered?.container.textContent ).toContain(
+			'Changes are saved automatically.'
+		);
+		await saveNow();
+		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
+			0
+		);
+
+		typeTemplate( 'Thanks $UserName!' );
+		await saveNow();
 
 		const patch = requests.find( ( r ) => r.method === 'PATCH' );
-		expect( patch?.data ).toEqual( SETTINGS );
+		expect( patch?.data ).toEqual( {
+			...SETTINGS,
+			template: 'Thanks $UserName!',
+		} );
 		expect( rendered?.container.textContent ).toContain(
-			'Overlay settings saved.'
+			'All changes are saved.'
 		);
 	} );
 
@@ -484,8 +529,8 @@ describe( 'AlertsSection', () => {
 				.map( ( option ) => option.value )
 		).toEqual( expect.arrayContaining( [ 'inherit', 'Roboto' ] ) );
 
-		click( button( 'Save overlay settings' ) );
-		await flush();
+		typeTemplate( 'Hi $UserName!' );
+		await saveNow();
 
 		const patch = requests.find( ( r ) => r.method === 'PATCH' );
 		expect( patch?.data ).not.toHaveProperty( 'font_family' );
@@ -812,14 +857,95 @@ describe( 'AlertsSection', () => {
 		);
 	} );
 
-	it( 'shows the save button right above the designer, which is last', async () => {
+	it( 'saves every change on its own, once, a moment after the last one', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		typeTemplate( 'T' );
+		typeTemplate( 'Th' );
+		typeTemplate( 'Thanks!' );
+		expect( rendered?.container.textContent ).toContain( 'Saving…' );
+		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
+			0
+		);
+
+		await act( async () => {
+			await new Promise( ( resolve ) =>
+				window.setTimeout( resolve, AUTOSAVE_DELAY + 50 )
+			);
+		} );
+		await flush();
+
+		const patches = requests.filter( ( r ) => r.method === 'PATCH' );
+		expect( patches ).toHaveLength( 1 );
+		expect( patches[ 0 ]?.data ).toEqual( {
+			...SETTINGS,
+			template: 'Thanks!',
+		} );
+
+		// An invalid value is marked and not saved.
+		typeTemplate( '' );
+		await saveNow();
+		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
+			1
+		);
+		expect( rendered?.container.textContent ).toContain(
+			'Not saved: correct the marked fields.'
+		);
+	} );
+
+	it( 'previews the chosen font size in the designer', async () => {
 		mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 		} );
 
 		await show();
 
-		const save = button( 'Save overlay settings' );
+		const sizeField = Array.from(
+			rendered?.container.querySelectorAll( 'label' ) ?? []
+		).find( ( label ) => label.textContent === 'Font size (px)' );
+		const input = sizeField
+			? document.getElementById( sizeField.htmlFor )
+			: null;
+		const text = () =>
+			rendered?.container.querySelector< HTMLElement >(
+				'.merchboard-designer .merchboard-designer__text'
+			);
+
+		expect(
+			text()?.style.getPropertyValue( '--merchboard-preview-font-size' )
+		).toBe( `${ ( 32 / 1920 ) * 100 }cqw` );
+		expect( text()?.style.fontSize ).toBe( '' );
+
+		act( () => {
+			if ( input instanceof HTMLInputElement ) {
+				Object.getOwnPropertyDescriptor(
+					HTMLInputElement.prototype,
+					'value'
+				)?.set?.call( input, '64' );
+				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+			}
+		} );
+
+		expect(
+			text()?.style.getPropertyValue( '--merchboard-preview-font-size' )
+		).toBe( `${ ( 64 / 1920 ) * 100 }cqw` );
+	} );
+
+	it( 'shows the save status right above the designer, which is last', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const save = rendered?.container.querySelector(
+			'.merchboard-alerts__autosave'
+		);
 		const designer = rendered?.container.querySelector(
 			'.merchboard-designer'
 		);
@@ -827,10 +953,9 @@ describe( 'AlertsSection', () => {
 			'.merchboard-form__actions'
 		)?.parentElement;
 
+		expect( button( 'Save overlay settings' ) ).toBeNull();
+		expect( save?.getAttribute( 'role' ) ).toBe( 'status' );
 		expect( save?.closest( '.merchboard-alerts__columns' ) ).toBeNull();
-		expect( save?.getAttribute( 'form' ) ).toBe(
-			rendered?.container.querySelector( 'form' )?.id
-		);
 		expect( slot?.nextElementSibling?.contains( designer ?? null ) ).toBe(
 			true
 		);
@@ -862,8 +987,7 @@ describe( 'AlertsSection', () => {
 			}
 		} );
 
-		click( button( 'Save overlay settings' ) );
-		await flush();
+		await saveNow();
 
 		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
 			animations: { main_text: { in: string } };
@@ -1013,8 +1137,7 @@ describe( 'AlertsSection', () => {
 				?.getAttribute( 'data-fill-motion' )
 		).toBe( 'pan' );
 
-		click( button( 'Save overlay settings' ) );
-		await flush();
+		await saveNow();
 
 		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
 			text_fills: { main_text: unknown };
@@ -1155,8 +1278,7 @@ describe( 'AlertsSection', () => {
 				?.getAttribute( 'data-frame-direction' )
 		).toBe( 'counterclockwise' );
 
-		click( button( 'Save overlay settings' ) );
-		await flush();
+		await saveNow();
 
 		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
 			text_frame: unknown;

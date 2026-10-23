@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-23T08:16:13+00:00\n"
+"PO-Revision-Date: 2026-10-23T09:00:21+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -7773,8 +7773,26 @@ msgstr "Midten"
 #: build/alerts-global-admin.js:13
 #: build/alerts-presets-admin.js:13
 #: build/dashboard.js:33
-msgid "Save overlay settings"
-msgstr "Gem overlayindstillinger"
+msgid "All changes are saved."
+msgstr "Alle ændringer er gemt."
+
+#: build/alerts-global-admin.js:13
+#: build/alerts-presets-admin.js:13
+#: build/dashboard.js:33
+msgid "Not saved: correct the marked fields."
+msgstr "Ikke gemt: ret de markerede felter."
+
+#: build/alerts-global-admin.js:13
+#: build/alerts-presets-admin.js:13
+#: build/dashboard.js:33
+msgid "Not saved. Change a field to try again."
+msgstr "Ikke gemt. Ændr et felt for at prøve igen."
+
+#: build/alerts-global-admin.js:13
+#: build/alerts-presets-admin.js:13
+#: build/dashboard.js:33
+msgid "Changes are saved automatically."
+msgstr "Ændringer gemmes automatisk."
 
 #. translators: 1: minimum, 2: maximum.
 #: build/alerts-global-admin.js:14
@@ -7798,12 +7816,6 @@ msgstr "Skriv en tekst til alerten."
 #, js-format
 msgid "Use at most %d characters."
 msgstr "Brug højst %d tegn."
-
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
-msgid "Overlay settings saved."
-msgstr "Overlayindstillingerne er gemt."
 
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15

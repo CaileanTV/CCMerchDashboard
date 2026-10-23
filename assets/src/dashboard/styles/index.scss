@@ -1045,6 +1045,9 @@ input:disabled + .merchboard-sounds__upload {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
+	// The chosen size (scaled to the canvas); a shrunk text sets its own
+	// inline size.
+	font-size: var(--merchboard-preview-font-size, 1em);
 	line-height: 1.3;
 	white-space: pre-line;
 	overflow-wrap: anywhere;

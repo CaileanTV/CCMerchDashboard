@@ -3,6 +3,7 @@ import {
 	useCallback,
 	useEffect,
 	useId,
+	useRef,
 	useState,
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -11,7 +12,6 @@ import type { FormEvent } from 'react';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Alert } from '../../components/Alert';
-import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Field } from '../../components/Field';
 import { Toast } from '../../components/Toast';
@@ -101,13 +101,42 @@ function alignLabel( align: TextAlign ): string {
 	}
 }
 
+/** Waiting time after the last change before it is saved (ms). */
+export const AUTOSAVE_DELAY = 800;
+
+type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'invalid' | 'error';
+
+/**
+ * The text of the save status.
+ *
+ * @param status Save status.
+ */
+function statusText( status: SaveStatus ): string {
+	switch ( status ) {
+		case 'pending':
+		case 'saving':
+			return __( 'Saving…', 'merchboard' );
+		case 'saved':
+			return __( 'All changes are saved.', 'merchboard' );
+		case 'invalid':
+			return __( 'Not saved: correct the marked fields.', 'merchboard' );
+		case 'error':
+			return __(
+				'Not saved. Change a field to try again.',
+				'merchboard'
+			);
+		default:
+			return __( 'Changes are saved automatically.', 'merchboard' );
+	}
+}
+
 interface Props {
 	readonly settings: OverlaySettings;
 	readonly fonts: readonly AlertFontOption[];
 	readonly fontApproved: boolean;
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
 	/**
-	 * Where the save button is shown (right above the designer, step 25.6.1);
+	 * Where the save status is shown (right above the designer, step 25.6.1);
 	 * null keeps it at the end of the form.
 	 */
 	readonly saveSlot?: HTMLElement | null;
@@ -121,14 +150,15 @@ interface Props {
  * The overlay's text, box and timing (ADR-065 pkt. 3). Position and size of
  * the boxes, the font and the sounds have their own steps (designer, fonts,
  * sounds). Saving changes the overlay's version, so an open OBS source
- * reloads with the new look.
+ * reloads with the new look. Every change is saved automatically, a moment
+ * after the last one (AUTOSAVE_DELAY); invalid fields are marked and not saved.
  *
  * @param props              Props.
  * @param props.settings     The saved settings.
  * @param props.fonts        The approved fonts.
  * @param props.fontApproved Whether the saved font is still approved.
  * @param props.onSaved      Called with the answer after saving.
- * @param props.saveSlot     Where the save button is shown.
+ * @param props.saveSlot     Where the save status is shown.
  * @param props.onDraft      Called with the unsaved values.
  * @param props.images       Images the texts can be filled with.
  */
@@ -148,47 +178,113 @@ export function OverlaySettingsForm( {
 	useEffect( () => onDraft?.( values ), [ values, onDraft ] );
 	const [ errors, setErrors ] = useState< Errors >( {} );
 	const [ saveError, setSaveError ] = useState< ApiError | null >( null );
-	const [ busy, setBusy ] = useState( false );
+	const [ status, setStatus ] = useState< SaveStatus >( 'idle' );
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
+	// What the server has, the values now, whether a save runs and the waiting save.
+	const saved = useRef( JSON.stringify( settings ) );
+	const latest = useRef( values );
+	const saving = useRef( false );
+	const timer = useRef< number | null >( null );
+	const saveRef = useRef< () => Promise< void > >( async () => undefined );
+
+	latest.current = values;
 
 	const set = ( change: Partial< OverlaySettings > ) =>
 		setValues( ( current ) => ( { ...current, ...change } ) );
 
-	const onSubmit = async ( event: FormEvent< HTMLFormElement > ) => {
-		event.preventDefault();
-		setSaveError( null );
+	const schedule = useCallback( ( delay: number ) => {
+		if ( timer.current !== null ) {
+			window.clearTimeout( timer.current );
+		}
 
-		const clientErrors = validateOverlaySettings( values );
+		timer.current = window.setTimeout( () => {
+			timer.current = null;
+			void saveRef.current();
+		}, delay );
+	}, [] );
+
+	// Saves the current values (step 25.9.5 follow-up: every change is saved
+	// on its own, a moment after the last one, so typing is not saved per key).
+	saveRef.current = async () => {
+		const current = latest.current;
+		const key = JSON.stringify( current );
+
+		if ( key === saved.current ) {
+			return;
+		}
+
+		const clientErrors = validateOverlaySettings( current );
 		setErrors( clientErrors );
 
 		if ( Object.keys( clientErrors ).length > 0 ) {
+			setStatus( 'invalid' );
+			return;
+		}
+
+		// One save at a time; the next one starts when this one has ended.
+		if ( saving.current ) {
+			schedule( AUTOSAVE_DELAY );
 			return;
 		}
 
 		// A font that is no longer approved is kept until the creator picks another.
 		const unavailable =
-			values.font_family !== 'inherit' &&
-			! fonts.some( ( font ) => font.family === values.font_family );
-		const { font_family: fontFamily, ...rest } = values;
+			current.font_family !== 'inherit' &&
+			! fonts.some( ( font ) => font.family === current.font_family );
+		const { font_family: fontFamily, ...rest } = current;
 
-		setBusy( true );
+		saving.current = true;
+		setStatus( 'saving' );
+		setSaveError( null );
 		const result = await api.update(
 			unavailable ? rest : { ...rest, font_family: fontFamily }
 		);
-		setBusy( false );
+		saving.current = false;
 
 		if ( ! result.ok ) {
 			setSaveError( result.error );
+			setStatus( 'error' );
 			return;
 		}
 
-		if ( result.data.overlay !== null ) {
+		saved.current = key;
+
+		// The server's values (normalized) only when nothing changed meanwhile.
+		if (
+			result.data.overlay !== null &&
+			JSON.stringify( latest.current ) === key
+		) {
+			saved.current = JSON.stringify( result.data.overlay.settings );
 			setValues( result.data.overlay.settings );
 		}
 
 		onSaved( result.data );
-		setToast( __( 'Overlay settings saved.', 'merchboard' ) );
+		setStatus( 'saved' );
+	};
+
+	useEffect( () => {
+		if ( JSON.stringify( values ) !== saved.current ) {
+			setStatus( 'pending' );
+			schedule( AUTOSAVE_DELAY );
+		}
+	}, [ values, schedule ] );
+
+	// Leaving the page section saves a change that still waits.
+	useEffect(
+		() => () => {
+			if ( timer.current !== null ) {
+				window.clearTimeout( timer.current );
+				void saveRef.current();
+			}
+		},
+		[]
+	);
+
+	// Enter in a field saves at once.
+	const onSubmit = ( event: FormEvent< HTMLFormElement > ) => {
+		event.preventDefault();
+		schedule( 0 );
 	};
 
 	const error = ( field: keyof OverlaySettings ) => {
@@ -226,11 +322,13 @@ export function OverlaySettingsForm( {
 	// The button belongs to the form (the form attribute) wherever it is shown.
 	const actions = (
 		<div className="merchboard-form__actions">
-			<Button type="submit" form={ `${ id }-form` } isBusy={ busy }>
-				{ busy
-					? __( 'Saving…', 'merchboard' )
-					: __( 'Save overlay settings', 'merchboard' ) }
-			</Button>
+			<p
+				className="merchboard-field__help merchboard-alerts__autosave"
+				role="status"
+				aria-live="polite"
+			>
+				{ statusText( status ) }
+			</p>
 		</div>
 	);
 
