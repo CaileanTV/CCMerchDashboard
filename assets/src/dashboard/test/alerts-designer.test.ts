@@ -51,6 +51,9 @@ describe( 'designer helpers', () => {
 			sampleText( '$UserName bought $Product ($Variation) $Unknown' )
 		).toBe( 'TestFan bought Hoodie (Size: L) $Unknown' );
 		expect( sampleText( 'Hi $FirstName' ) ).toBe( 'Hi TestFan' );
+		expect( sampleText( '$Price · $LineTotal · $Total$OrderNumber' ) ).toBe(
+			'249,00 kr. · 249,00 kr. · 498,00 kr.'
+		);
 	} );
 
 	it( 'builds the box background', () => {

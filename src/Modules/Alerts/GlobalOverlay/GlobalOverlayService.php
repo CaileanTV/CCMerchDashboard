@@ -17,6 +17,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\AlertMoney;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
@@ -171,7 +172,9 @@ final class GlobalOverlayService {
 
 		$latest = $this->latest_order();
 		$model  = $latest[0] ?? null;
-		$event  = new AlertEvent(
+		// One item of the newest alert's price, or the example amount.
+		$price = null === $model ? AlertOverlays::TEST_AMOUNT : AlertMoney::per_item( $model->line_total, $model->quantity );
+		$event = new AlertEvent(
 			$model->creator_id ?? 0,
 			0,
 			'0001',
@@ -184,7 +187,11 @@ final class GlobalOverlayService {
 			$model->image_id ?? 0,
 			$model->category_ids ?? array(),
 			self::TEST_USERNAME,
-			new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
+			new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
+			0,
+			$price,
+			$price,
+			$model->currency ?? ''
 		);
 
 		$this->tests->push( GlobalOverlay::QUEUE, $this->feed->render( $overlay, $event ) );

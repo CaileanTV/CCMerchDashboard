@@ -17,6 +17,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\AlertMoney;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
 use InvalidArgumentException;
@@ -53,6 +54,11 @@ final class AlertOverlays {
 	 * Username shown by test alerts.
 	 */
 	public const TEST_USERNAME = 'TestFan';
+
+	/**
+	 * Amount of a test alert without a product price (four decimals, the shop's currency).
+	 */
+	public const TEST_AMOUNT = '249.0000';
 
 	/**
 	 * The featured image of a product, 0 when none.
@@ -269,6 +275,7 @@ final class AlertOverlays {
 
 		$published = array_values( array_filter( $this->products->linked_to( $creator_id, 50 ), static fn( $product ): bool => 'publish' === $product->status ) );
 		$product   = array() === $published ? null : $published[ random_int( 0, count( $published ) - 1 ) ];
+		$price     = null === $product ? null : AlertMoney::product_price( $product->id );
 		$event     = new AlertEvent(
 			$creator_id,
 			0,
@@ -282,7 +289,10 @@ final class AlertOverlays {
 			null === $product ? 0 : ( $this->image_id )( $product->id ),
 			null === $product ? array() : $product->category_ids,
 			self::TEST_USERNAME,
-			new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
+			new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
+			0,
+			$price ?? self::TEST_AMOUNT,
+			$price ?? self::TEST_AMOUNT
 		);
 
 		$this->tests->push( $overlay->id, $this->feed->render( $overlay, $event ) );

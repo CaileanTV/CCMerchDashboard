@@ -16,6 +16,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 
 defined( 'ABSPATH' ) || exit;
@@ -205,7 +206,7 @@ final class CreatorChatbot {
 	public function test( int $creator_id, ChatPlatform $platform ): array {
 		$channel = self::require_channel( $this->channels->find( $creator_id, $platform ) );
 		$format  = $this->format->get();
-		$event   = new AlertEvent( $creator_id, 0, '0001', 0, 0, 0, __( 'Test product', 'merchboard' ), '', 1, 0, array(), self::TEST_USERNAME, new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) );
+		$event   = new AlertEvent( $creator_id, 0, '0001', 0, 0, 0, __( 'Test product', 'merchboard' ), '', 1, 0, array(), self::TEST_USERNAME, new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ), 0, AlertOverlays::TEST_AMOUNT, AlertOverlays::TEST_AMOUNT );
 		$message = 'order' === $format['mode']
 			? $this->messages->order( $channel->template_for( 'order' ), array( $event ), $format )
 			: $this->messages->line( $channel->template_for( 'line' ), $event );

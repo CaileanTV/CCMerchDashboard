@@ -222,13 +222,21 @@ class MerchAlertImporter {
 
 		$events = 0;
 		$orders = array();
+		$rows   = $this->source->events( $creator['id'] );
+		$lines  = array();
 
-		foreach ( $this->source->events( $creator['id'] ) as $row ) {
+		// The creator's lines per order, for the creator's total ($Total).
+		foreach ( $rows as $row ) {
+			$lines[ $row['order_id'] ][] = $row['order_item_id'];
+		}
+
+		foreach ( $rows as $row ) {
 			if ( ! array_key_exists( $row['order_id'], $orders ) ) {
 				$orders[ $row['order_id'] ] = $this->order( $row['order_id'] );
 			}
 
-			$event = MerchAlertMapping::event( $row, $creator_id, $orders[ $row['order_id'] ] );
+			$order = $orders[ $row['order_id'] ];
+			$event = MerchAlertMapping::event( $row, $creator_id, $order, MerchAlertMapping::creator_total( $lines[ $row['order_id'] ] ?? array(), $order ) );
 
 			if ( null !== $event && $this->events->insert( $event ) ) {
 				++$events;

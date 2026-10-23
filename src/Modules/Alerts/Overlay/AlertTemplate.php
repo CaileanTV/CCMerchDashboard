@@ -11,14 +11,19 @@ namespace MerchBoard\Modules\Alerts\Overlay;
 
 use Closure;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\AlertMoney;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * MerchAlert's template variables (ADR-065 pkt. 3): `$UserName`,
- * `$FirstName`, `$OrderNumber`, `$Product`, `$Quantity`, `$Category` and
- * `$Variation`. The result is plain text; the overlay inserts it as text,
- * never as HTML.
+ * `$FirstName`, `$Product`, `$Quantity`, `$Category` and `$Variation`, and
+ * the amounts (the project owner's choice 2026-10-23): `$Price` (per item),
+ * `$LineTotal` (the line) and `$Total` (all the creator's lines of the
+ * order), what the customer paid with VAT after discounts (AlertMoney); an
+ * alert without stored amounts shows nothing for them. `$OrderNumber` is
+ * removed and shows nothing. The result is plain text; the overlay inserts
+ * it as text, never as HTML.
  *
  * - **No customer name (owner's decision 2026-10-19):** `$FirstName` and
  *   `$UserName` both give the customer's voluntary username, or "Anonymous"
@@ -75,11 +80,15 @@ final class AlertTemplate {
 			array(
 				'$UserName'    => $username,
 				'$FirstName'   => $username,
-				'$OrderNumber' => $event->order_number,
+				// Removed (the project owner's choice 2026-10-23): shows nothing.
+				'$OrderNumber' => '',
 				'$Product'     => $event->product_name,
 				'$Quantity'    => (string) $event->quantity,
 				'$Category'    => $this->categories( $event->category_ids ),
 				'$Variation'   => $event->variation,
+				'$Price'       => AlertMoney::format( AlertMoney::per_item( $event->line_total, $event->quantity ), $event->currency ),
+				'$LineTotal'   => AlertMoney::format( $event->line_total, $event->currency ),
+				'$Total'       => AlertMoney::format( $event->creator_total, $event->currency ),
 			)
 		);
 	}

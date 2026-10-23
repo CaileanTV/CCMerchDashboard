@@ -9,8 +9,12 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts;
 
+use InvalidArgumentException;
 use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
 use MerchBoard\Modules\Alerts\Checkout\CheckoutUsernameField;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
+use MerchBoard\Modules\WooCommerce\Sales\WooCommerceAmount;
+use OverflowException;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Product_Variation;
@@ -66,7 +70,8 @@ final class WooCommercePaidOrderReader implements PaidOrderReader {
 			$order_id,
 			(string) $order->get_order_number(),
 			self::username( $order ),
-			$lines
+			$lines,
+			strtoupper( (string) $order->get_currency( 'edit' ) )
 		);
 	}
 
@@ -91,8 +96,24 @@ final class WooCommercePaidOrderReader implements PaidOrderReader {
 			self::text( $item->get_name( 'edit' ) ),
 			self::variation( $variation_id ),
 			(int) $quantity,
-			self::image( $product_id, $variation_id )
+			self::image( $product_id, $variation_id ),
+			self::paid( $item )
 		);
+	}
+
+	/**
+	 * What the customer paid for a line: its total after discounts plus its
+	 * tax, as in the sales ledger (four decimals); null when WooCommerce gives
+	 * no plain amount.
+	 *
+	 * @param WC_Order_Item_Product $item Order line.
+	 */
+	private static function paid( WC_Order_Item_Product $item ): ?string {
+		try {
+			return SalesAmount::format( SalesAmount::add( WooCommerceAmount::units( $item->get_total( 'edit' ) ), WooCommerceAmount::units( $item->get_total_tax( 'edit' ) ) ) );
+		} catch ( InvalidArgumentException | OverflowException ) {
+			return null;
+		}
 	}
 
 	/**

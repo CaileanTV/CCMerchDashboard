@@ -33,7 +33,7 @@ final class AlertEventRepository {
 	 */
 	public const MAX_CATEGORIES = 40;
 
-	private const COLUMNS = 'id, creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_username, created_at';
+	private const COLUMNS = 'id, creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, line_total, creator_total, currency, image_id, category_ids, customer_username, created_at';
 
 	/**
 	 * Constructor.
@@ -53,8 +53,8 @@ final class AlertEventRepository {
 	public function insert( AlertEvent $event ): bool {
 		$wpdb = $this->wpdb;
 		$sql  = $wpdb->prepare(
-			'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, image_id, category_ids, customer_username, created_at)
-			VALUES (%d, %d, %s, %d, %d, %d, %s, %s, %d, %d, %s, %s, %s)
+			'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, line_total, creator_total, currency, image_id, category_ids, customer_username, created_at)
+			VALUES (%d, %d, %s, %d, %d, %d, %s, %s, %d, NULLIF(%s, \'\'), NULLIF(%s, \'\'), %s, %d, %s, %s, %s)
 			ON DUPLICATE KEY UPDATE id = id',
 			$this->table(),
 			$event->creator_id,
@@ -66,6 +66,9 @@ final class AlertEventRepository {
 			self::cut( $event->product_name, 255 ),
 			self::cut( $event->variation, 255 ),
 			$event->quantity,
+			self::amount( $event->line_total ),
+			self::amount( $event->creator_total ),
+			self::cut( strtoupper( $event->currency ), 3 ),
 			$event->image_id,
 			self::categories( $event->category_ids ),
 			self::cut( $event->customer_username, 191 ),
@@ -399,8 +402,20 @@ final class AlertEventRepository {
 			is_array( $categories ) ? array_values( array_filter( array_map( 'intval', $categories ), static fn( int $id ): bool => $id > 0 ) ) : array(),
 			(string) ( $row['customer_username'] ?? '' ),
 			$created,
-			self::int( $row['id'] ?? null )
+			self::int( $row['id'] ?? null ),
+			is_string( $row['line_total'] ?? null ) ? $row['line_total'] : null,
+			is_string( $row['creator_total'] ?? null ) ? $row['creator_total'] : null,
+			(string) ( $row['currency'] ?? '' )
 		);
+	}
+
+	/**
+	 * A stored amount ('' for NULL): a four-decimal string, else unknown.
+	 *
+	 * @param string|null $amount Amount.
+	 */
+	private static function amount( ?string $amount ): string {
+		return null !== $amount && 1 === preg_match( '/^-?\d{1,15}\.\d{4}$/D', $amount ) ? $amount : '';
 	}
 
 	/**

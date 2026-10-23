@@ -21,13 +21,14 @@ final readonly class PaidOrderLine {
 	/**
 	 * Constructor.
 	 *
-	 * @param int    $order_item_id Order line id.
-	 * @param int    $product_id    Parent product id.
-	 * @param int    $variation_id  Variation id, 0 for a simple product.
-	 * @param string $product_name  Line name as sold.
-	 * @param string $variation     The variation's attributes as text, '' for a simple product.
-	 * @param int    $quantity      Quantity (at least 1).
-	 * @param int    $image_id      Image attachment id, 0 when none.
+	 * @param int         $order_item_id Order line id.
+	 * @param int         $product_id    Parent product id.
+	 * @param int         $variation_id  Variation id, 0 for a simple product.
+	 * @param string      $product_name  Line name as sold.
+	 * @param string      $variation     The variation's attributes as text, '' for a simple product.
+	 * @param int         $quantity      Quantity (at least 1).
+	 * @param int         $image_id      Image attachment id, 0 when none.
+	 * @param string|null $line_total What the customer paid for the line (VAT included, after discounts), four decimals; null when unknown.
 	 */
 	public function __construct(
 		public int $order_item_id,
@@ -36,7 +37,8 @@ final readonly class PaidOrderLine {
 		public string $product_name,
 		public string $variation,
 		public int $quantity,
-		public int $image_id
+		public int $image_id,
+		public ?string $line_total = null
 	) {
 	}
 }

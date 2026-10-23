@@ -15,6 +15,7 @@ use DateTimeZone;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\Overlay\OverlaySettings;
 use MerchBoard\Modules\Alerts\PaidOrder;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -95,7 +96,7 @@ final class MerchAlertMapping {
 	 * @param string $template MerchAlert's template.
 	 */
 	public static function chat_template( string $template ): string {
-		return trim( (string) preg_replace( '/\$Name\b/', '$UserName', $template ) );
+		return trim( (string) preg_replace( array( '/\$Name\b/', '/\$Amount\b/' ), array( '$UserName', '$Total' ), $template ) );
 	}
 
 	/**
@@ -104,17 +105,20 @@ final class MerchAlertMapping {
 	 * @param array{order_id: int, order_number: string, order_item_id: int, quantity: int, product_id: int, variation_id: int, product_name: string, image_id: int, category_ids: list<int>, created_at: string} $event MerchAlert's alert.
 	 * @param int                                                                                                                                                                                                 $creator_id Our creator.
 	 * @param PaidOrder|null                                                                                                                                                                                      $order      The order now, or null when it is gone.
+	 * @param string|null                                                                                                                                                                                         $creator_total What the customer paid for the creator's lines of the order (creator_total()).
 	 */
-	public static function event( array $event, int $creator_id, ?PaidOrder $order ): ?AlertEvent {
+	public static function event( array $event, int $creator_id, ?PaidOrder $order, ?string $creator_total = null ): ?AlertEvent {
 		if ( $event['order_id'] < 1 || $event['order_item_id'] < 1 ) {
 			return null;
 		}
 
-		$variation = '';
+		$variation  = '';
+		$line_total = null;
 
 		foreach ( null === $order ? array() : $order->lines as $line ) {
 			if ( $line->order_item_id === $event['order_item_id'] ) {
-				$variation = $line->variation;
+				$variation  = $line->variation;
+				$line_total = $line->line_total;
 			}
 		}
 
@@ -137,7 +141,39 @@ final class MerchAlertMapping {
 			max( 0, $event['image_id'] ),
 			array_slice( $event['category_ids'], 0, 40 ),
 			$order->username ?? '',
-			$created_at
+			$created_at,
+			0,
+			$line_total,
+			null === $line_total ? null : $creator_total,
+			$order->currency ?? ''
 		);
+	}
+
+	/**
+	 * What the customer paid for some lines of an order now (a creator's
+	 * lines in MerchAlert); null when the order is gone or a line has no
+	 * amount.
+	 *
+	 * @phpstan-param list<int> $order_item_ids
+	 *
+	 * @param int[]          $order_item_ids The creator's lines.
+	 * @param PaidOrder|null $order          The order now.
+	 */
+	public static function creator_total( array $order_item_ids, ?PaidOrder $order ): ?string {
+		$total = 0;
+		$found = 0;
+
+		foreach ( null === $order ? array() : $order->lines as $line ) {
+			if ( in_array( $line->order_item_id, $order_item_ids, true ) ) {
+				if ( null === $line->line_total ) {
+					return null;
+				}
+
+				$total = SalesAmount::add( $total, SalesAmount::parse( $line->line_total ) );
+				++$found;
+			}
+		}
+
+		return 0 === $found ? null : SalesAmount::format( $total );
 	}
 }

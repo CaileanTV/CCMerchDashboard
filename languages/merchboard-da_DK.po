@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-23T12:52:58+00:00\n"
+"PO-Revision-Date: 2026-10-23T13:59:09+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -936,7 +936,7 @@ msgid "Event"
 msgstr "Hændelse"
 
 #: src/Modules/Admin/AuditLogListTable.php:93
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
@@ -1193,7 +1193,7 @@ msgid "Settings"
 msgstr "Indstillinger"
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:156
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:157
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:194
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:256
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:304
@@ -1229,12 +1229,12 @@ msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:77
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:78
 msgid "Merch Dashboard Alerts"
 msgstr "Merch Dashboard Alerts"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:78
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:177
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:79
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:178
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: src/Modules/Alerts/Admin/OrderLogTab.php:200
@@ -1247,37 +1247,37 @@ msgstr "Merch Dashboard Alerts"
 msgid "Alerts"
 msgstr "Alerts"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
 msgid "The Google Fonts API key was saved."
 msgstr "Google Fonts API-nøglen blev gemt."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
 msgid "The Google Fonts API key was removed."
 msgstr "Google Fonts API-nøglen blev fjernet."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
 msgid "The Google Fonts catalogue was fetched."
 msgstr "Google Fonts-kataloget blev hentet."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
 msgid "The font was approved. Creators can choose it now."
 msgstr "Fonten blev godkendt. Creators kan vælge den nu."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
 msgid "The font was removed. Overlays that used it show the default font."
 msgstr "Fonten blev fjernet. Overlays, der brugte den, viser standardfonten."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
 msgid "Nothing was changed."
 msgstr "Intet blev ændret."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:145
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:146
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:118
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:196
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:113
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:49
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
 #: src/Modules/Settings/Admin/SettingsPage.php:165
@@ -1285,40 +1285,40 @@ msgstr "Intet blev ændret."
 msgid "You are not allowed to change these settings."
 msgstr "Du har ikke adgang til at ændre disse indstillinger."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 msgid "Google did not accept the API key. Check the key and try again."
 msgstr "Google accepterede ikke API-nøglen. Kontrollér nøglen, og prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
 msgid "Save a Google Fonts API key first."
 msgstr "Gem først en Google Fonts API-nøgle."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
 msgid "Google Fonts could not be reached. Try again later."
 msgstr "Google Fonts kunne ikke kontaktes. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
 msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
 msgstr "Fonten findes ikke i kataloget, eller grænsen for godkendte fonte er nået."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
 msgid "The sound was added to the library. Creators can choose it now."
 msgstr "Lyden blev tilføjet til biblioteket. Creators kan vælge den nu."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
 msgid "The sound got its new name."
 msgstr "Lyden har fået sit nye navn."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
 msgid "The sound is no longer in the library."
 msgstr "Lyden findes ikke længere i biblioteket."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
 msgid "The sound was removed. Overlays that used it play their other sounds."
 msgstr "Lyden blev fjernet. Overlays, der brugte den, afspiller deres andre lyde."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
 #: build/alerts-global-admin.js:3
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:3
@@ -1328,7 +1328,7 @@ msgstr "Lyden blev fjernet. Overlays, der brugte den, afspiller deres andre lyde
 msgid "No file was received. Try again."
 msgstr "Der blev ikke modtaget nogen fil. Prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
@@ -1336,13 +1336,13 @@ msgid "Choose an MP3, WAV or OGG file."
 msgstr "Vælg en MP3-, WAV- eller OGG-fil."
 
 #. translators: %s: the largest file, e.g. "10 MB".
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
 #, php-format
 msgid "The file is larger than %s."
 msgstr "Filen er større end %s."
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
@@ -1350,78 +1350,78 @@ msgstr "Filen er større end %s."
 msgid "The sound is longer than %d seconds."
 msgstr "Lyden er længere end %d sekunder."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
 msgid "The file could not be read as a sound. Choose another file."
 msgstr "Filen kunne ikke læses som en lyd. Vælg en anden fil."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
 msgid "The library is full. Remove a sound first."
 msgstr "Biblioteket er fuldt. Fjern først en lyd."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
 msgid "The image was added to the library. Creators can choose it now."
 msgstr "Billedet blev tilføjet til biblioteket. Creators kan vælge det nu."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
 msgid "The image got its new name."
 msgstr "Billedet fik sit nye navn."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
 msgid "The image was removed. Texts it filled show their colour again."
 msgstr "Billedet blev fjernet. Tekster, det fyldte, vises i deres farve igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
 msgid "The image is no longer in the library."
 msgstr "Billedet er ikke længere i biblioteket."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:9
 #: build/dashboard.js:29
 msgid "Choose a PNG, JPG, GIF or WebP image."
 msgstr "Vælg et PNG-, JPG-, GIF- eller WebP-billede."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
 msgid "The file is too large."
 msgstr "Filen er for stor."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:143
 msgid "The image is too big. Choose a smaller image."
 msgstr "Billedet er for stort. Vælg et mindre billede."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:143
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:144
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:9
 #: build/dashboard.js:29
 msgid "The file could not be read as an image. Choose another file."
 msgstr "Filen kunne ikke læses som et billede. Vælg en anden fil."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:144
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:145
 msgid "The library is full. Remove an image first."
 msgstr "Biblioteket er fuldt. Fjern et billede først."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:146
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:147
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:280
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:105
 msgid "A technical error occurred. Nothing was changed."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:181
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:182
 msgid "Order log"
 msgstr "Ordrelog"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:185
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:186
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:38
 msgid "Global overlay"
 msgstr "Globalt overlay"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:189
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:190
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/alerts-presets-admin.js:18
@@ -1429,21 +1429,21 @@ msgstr "Globalt overlay"
 msgid "Standard overlays"
 msgstr "Standard-overlays"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:193
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:194
 #: build/alerts-page-admin.js:5
 msgid "Creator page"
 msgstr "Creator-siden"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:197
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:198
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:204
 msgid "Import"
 msgstr "Import"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:200
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:201
 msgid "Fonts"
 msgstr "Fonte"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:203
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:204
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: build/alerts-global-admin.js:5
 #: build/alerts-page-admin.js:1
@@ -1452,88 +1452,88 @@ msgstr "Fonte"
 msgid "Sounds"
 msgstr "Lyde"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:207
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:208
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:64
 msgid "Chatbot"
 msgstr "Chatbot"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:211
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:212
 msgid "Images"
 msgstr "Billeder"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:215
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:216
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:286
 msgid "YouTube terms"
 msgstr "YouTube-vilkår"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:259
 msgid "The order log could not be read. Please try again later."
 msgstr "Ordreloggen kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:300
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:301
 msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in the browser source, which sends the viewer's IP address to Google (ADR-067)."
 msgstr "Creators kan bruge de godkendte fonte i deres alert-overlay. Fontene hentes fra Googles servere i creator-dashboardet og i browser source, hvilket sender seerens IP-adresse til Google (ADR-067)."
 
 #. translators: 1: size, e.g. "10 MB", 2: seconds, 3: number of sounds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:317
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s and %2$d seconds each (Settings → Alerts); at most %3$d sounds."
 msgstr "Creators kan vælge disse lyde til deres alerts i stedet for at uploade deres egne. MP3, WAV eller OGG, højst %1$s og %2$d sekunder hver (Settings → Alerts); højst %3$d lyde."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:324
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:325
 msgid "Add a sound"
 msgstr "Tilføj en lyd"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:328
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:329
 msgid "Sound file"
 msgstr "Lydfil"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:330
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:390
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
 msgid "Name (optional)"
 msgstr "Navn (valgfrit)"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:332
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:392
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:393
 msgid "Creators see this name. Without a name, the file name is used."
 msgstr "Creators ser dette navn. Uden et navn bruges filnavnet."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:334
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
 msgid "Upload sound"
 msgstr "Upload lyd"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:338
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:339
 msgid "Sound library"
 msgstr "Lydbibliotek"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:341
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:342
 msgid "The library is empty. Creators can only use their own sounds."
 msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne lyde."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:434
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:452
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:346
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:406
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:435
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:453
 msgid "Name"
 msgstr "Navn"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:346
 msgid "Length"
 msgstr "Længde"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:346
 msgid "Play"
 msgstr "Afspil"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:491
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:541
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:346
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:406
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:492
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:542
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
@@ -1542,65 +1542,65 @@ msgid "Actions"
 msgstr "Handlinger"
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:353
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:354
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d sekund"
 msgstr[1] "%d sekunder"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:361
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:415
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:495
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:362
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:416
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:496
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 msgid "Remove"
 msgstr "Fjern"
 
 #. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:377
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:378
 #, php-format
 msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
 msgstr "Creators kan fylde deres alerttekst med disse billeder i stedet for at uploade deres egne. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde hver; højst %3$d billeder. Animerede GIF'er bliver ved med at bevæge sig."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:384
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:385
 msgid "Add an image"
 msgstr "Tilføj et billede"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:388
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:389
 msgid "Image file"
 msgstr "Billedfil"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:393
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:394
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Upload image"
 msgstr "Upload billede"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:398
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:399
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Image library"
 msgstr "Billedbibliotek"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:401
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:402
 msgid "The library is empty. Creators can only use their own images and the ready-made fills."
 msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne billeder og de færdige fyld."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:406
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Image"
 msgstr "Billede"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:406
 msgid "Size"
 msgstr "Størrelse"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:436
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:454
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:437
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:455
 #: build/alerts-global-admin.js:17
 #: build/alerts-presets-admin.js:17
 #: build/alerts-presets-admin.js:18
@@ -1608,40 +1608,40 @@ msgstr "Størrelse"
 msgid "Rename"
 msgstr "Omdøb"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:462
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:463
 msgid "Google Fonts API key"
 msgstr "Google Fonts API-nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:463
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:464
 msgid "A key is saved. It is never shown again."
 msgstr "En nøgle er gemt. Den vises aldrig igen."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:463
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:464
 msgid "No key is saved. The key is only needed to fetch the catalogue."
 msgstr "Der er ingen nøgle gemt. Nøglen skal kun bruges til at hente kataloget."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:467
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:468
 msgid "API key"
 msgstr "API-nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:469
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:470
 msgid "Save key"
 msgstr "Gem nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:472
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:473
 msgid "Remove key"
 msgstr "Fjern nøgle"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:484
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:485
 msgid "Approved fonts"
 msgstr "Godkendte fonte"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:487
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
 msgid "No fonts are approved. Creators can only use the default font."
 msgstr "Ingen fonte er godkendt. Creators kan kun bruge standardfonten."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:491
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:541
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:492
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:542
 #: build/alerts-global-admin.js:14
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:14
@@ -1649,49 +1649,49 @@ msgstr "Ingen fonte er godkendt. Creators kan kun bruge standardfonten."
 msgid "Font"
 msgstr "Font"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:491
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:541
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:492
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:542
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr "Kategori"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:508
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:509
 msgid "Google Fonts catalogue"
 msgstr "Google Fonts-katalog"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:512
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:513
 msgid "Fetch the catalogue again"
 msgstr "Hent kataloget igen"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:512
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:513
 msgid "Fetch the catalogue"
 msgstr "Hent kataloget"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:521
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:522
 msgid "Search fonts"
 msgstr "Søg efter fonte"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:523
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:524
 msgid "Search"
 msgstr "Søg"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:530
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:531
 msgid "No fonts match the search."
 msgstr "Ingen fonte matcher søgningen."
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:537
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:538
 #, php-format
 msgid "At most %d fonts, the most popular first."
 msgstr "Højst %d fonte, de mest populære først."
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:547
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:548
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr "Godkendt"
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:549
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:550
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr "Godkend"
@@ -1889,559 +1889,559 @@ msgstr "Slået til, men sat på pause, mens MerchAlert er aktivt."
 msgid "On. Alerts are recorded when orders are paid."
 msgstr "Slået til. Alerts registreres, når ordrer betales."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:79
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:80
 msgid "The Twitch app was saved. Twitch accepted its credentials."
 msgstr "Twitch-appen er gemt. Twitch godkendte dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:80
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:81
 msgid "The Twitch app, the bot and every secret were removed."
 msgstr "Twitch-appen, botten og alle hemmeligheder er fjernet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:81
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:82
 msgid "Twitch did not accept the Client ID and Secret. Check them in the Twitch developer console."
 msgstr "Twitch godkendte ikke Client ID og Secret. Tjek dem i Twitch Developer Console."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:82
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:83
 msgid "Twitch could not be reached. Try again later."
 msgstr "Twitch kunne ikke nås. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:83
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:84
 msgid "The secret cannot be stored encrypted on this server (sodium is missing)."
 msgstr "Hemmeligheden kan ikke gemmes krypteret på denne server (sodium mangler)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:84
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:85
 msgid "The bot account was connected. Its chat subscriptions were renewed."
 msgstr "Bot-kontoen er forbundet. Dens chat-abonnementer er fornyet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:85
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:86
 msgid "The bot account was disconnected. No messages are sent until a bot is connected again."
 msgstr "Bot-kontoen er afbrudt. Der sendes ingen beskeder, før en bot er forbundet igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:86
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
 msgid "The login at Twitch was cancelled. Nothing was changed."
 msgstr "Login hos Twitch blev annulleret. Intet er ændret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:87
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:185
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:88
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:186
 msgid "Save the Twitch app first."
 msgstr "Gem Twitch-appen først."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:88
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
 msgid "Twitch did not accept the login. Try again, and check the redirect URL of the Twitch app."
 msgstr "Twitch godkendte ikke login. Prøv igen, og tjek Twitch-appens redirect-URL."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:91
 msgid "The Kick app was saved. Kick accepted its credentials."
 msgstr "Kick-appen er gemt. Kick godkendte dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:91
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:92
 msgid "The Kick app and every secret were removed."
 msgstr "Kick-appen og alle hemmeligheder er fjernet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:92
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:93
 msgid "Kick did not accept the Client ID and Secret (or the bot name is invalid). Check them in the Kick developer settings."
 msgstr "Kick godkendte ikke Client ID og Secret (eller bottens navn er ugyldigt). Tjek dem i Kicks udviklerindstillinger."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:93
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:94
 msgid "Kick could not be reached. Try again later."
 msgstr "Kick kunne ikke nås. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:94
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:95
 msgid "The Google app was saved. Log in with the bot account next."
 msgstr "Google-appen er gemt. Log nu ind med bot-kontoen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:95
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:96
 msgid "The Google app, the YouTube bot and every secret were removed."
 msgstr "Google-appen, YouTube-botten og alle hemmeligheder er fjernet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:96
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:97
 msgid "This is not a Google OAuth Client ID and Secret. Copy them from the Google Cloud console."
 msgstr "Det er ikke et Client ID og Secret fra Google OAuth. Kopiér dem fra Google Cloud-konsollen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:97
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:98
 msgid "The YouTube bot was connected."
 msgstr "YouTube-botten er forbundet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:98
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:99
 msgid "The YouTube bot was disconnected. No YouTube messages are sent until a bot is connected again."
 msgstr "YouTube-botten er afbrudt. Der sendes ingen YouTube-beskeder, før en bot er forbundet igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:99
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:100
 msgid "The login at Google was cancelled. Nothing was changed."
 msgstr "Login hos Google blev afbrudt. Intet er ændret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:100
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:318
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:101
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:319
 msgid "Save the Google app first."
 msgstr "Gem Google-appen først."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:101
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:102
 msgid "Google gave no lasting access or the account has no YouTube channel. Log in again with the bot's YouTube channel and allow access."
 msgstr "Google gav ikke varig adgang, eller kontoen har ingen YouTube-kanal. Log ind igen med bottens YouTube-kanal, og giv adgang."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:102
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:103
 msgid "Google did not accept the login. Try again, and check the redirect URL and the YouTube Data API in the Google Cloud project."
 msgstr "Google godkendte ikke login. Prøv igen, og tjek redirect-URL'en og YouTube Data API i Google Cloud-projektet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:103
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
 msgid "Google could not be reached. Try again later."
 msgstr "Google kunne ikke nås. Prøv igen senere."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:105
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:106
 msgid "Accept the privacy policy and terms of the YouTube chatbot first. They must be published (tab \"YouTube terms\")."
 msgstr "Godkend først privatlivspolitikken og vilkårene for YouTube-chatbotten. De skal være offentliggjort (fanen \"YouTube-vilkår\")."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:106
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:107
 msgid "The privacy policy and terms were accepted for the bot. YouTube messages are sent again."
 msgstr "Privatlivspolitikken og vilkårene er godkendt for botten. YouTube-beskeder sendes igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:107
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:108
 msgid "The texts were saved as a draft. Replace every placeholder to publish them."
 msgstr "Teksterne er gemt som udkast. Erstat alle pladsholdere for at offentliggøre dem."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:108
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:109
 msgid "The privacy policy and terms were published. Enter their URLs at Google, then accept them for the bot on the tab \"Chatbot\"."
 msgstr "Privatlivspolitikken og vilkårene er offentliggjort. Indtast deres URL'er hos Google, og godkend dem derefter for botten på fanen \"Chatbot\"."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:109
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:110
 msgid "A new version was published. Creators and the bot must accept it before YouTube messages are sent again."
 msgstr "En ny version er offentliggjort. Creators og botten skal godkende den, før YouTube-beskeder sendes igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:110
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:111
 msgid "The correction was saved; the version is unchanged."
 msgstr "Rettelsen er gemt; versionen er uændret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:111
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:112
 msgid "Published texts cannot contain placeholders. Nothing was saved."
 msgstr "Offentliggjorte tekster må ikke indeholde pladsholdere. Intet er gemt."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:112
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:113
 msgid "Every text needs content. Nothing was saved."
 msgstr "Alle tekster skal have indhold. Intet er gemt."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:115
 msgid "The message format was saved."
 msgstr "Beskedformatet er gemt."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:115
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:116
 msgid "The chat subscriptions were renewed."
 msgstr "Chat-abonnementerne er fornyet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:116
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:117
 msgid "The message was sent as the bot."
 msgstr "Beskeden er sendt som botten."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:117
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:118
 msgid "The platform did not send the message. Check that the bot is still in the channel."
 msgstr "Platformen sendte ikke beskeden. Tjek, at botten stadig er i kanalen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:118
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:119
 msgid "YouTube did not let the bot write. Check that the livestream is not private and that the chat is not for subscribers or members only, and make the bot a moderator of the channel."
 msgstr "YouTube tillod ikke botten at skrive. Tjek, at livestreamen ikke er privat, og at chatten ikke kun er for abonnenter eller medlemmer, og gør botten til moderator på kanalen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:119
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:120
 msgid "The creator is not live on YouTube right now. The bot can only write during a livestream."
 msgstr "Creatoren er ikke live på YouTube lige nu. Botten kan kun skrive under en livestream."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:120
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:121
 msgid "Google did not let the creator's account see its livestreams. The creator removes the bot and adds it again with the Google account that owns the channel (for a brand account: its owner), and checks that the channel may stream live. Google's error code is in WooCommerce → Status → Logs."
 msgstr "Google lod ikke creatorens konto se sine livestreams. Creatoren fjerner botten og tilføjer den igen med den Google-konto, der ejer kanalen (for en brand-konto: dens ejer), og tjekker, at kanalen må livestreame. Googles fejlkode står under WooCommerce → Status → Logs."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:121
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:122
 msgid "The day's YouTube quota is used up. Messages wait until it resets at midnight Pacific Time."
 msgstr "Dagens YouTube-kvote er brugt op. Beskeder venter, til den nulstilles ved midnat Pacific Time."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:156
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:157
 msgid "Twitch app"
 msgstr "Twitch-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:157
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:158
 msgid "Create an application in the Twitch developer console (category \"Chat Bot\", client type \"Confidential\") and register this OAuth redirect URL:"
 msgstr "Opret en applikation i Twitch Developer Console (kategori \"Chat Bot\", client type \"Confidential\"), og registrér denne OAuth redirect-URL:"
-
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:163
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:230
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:268
-msgid "Client ID"
-msgstr "Client ID"
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:164
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:231
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:269
+msgid "Client ID"
+msgstr "Client ID"
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
 msgid "Client Secret"
 msgstr "Client Secret"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:166
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:233
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:271
 msgid "A secret is saved and never shown again. Enter it again to change the app."
 msgstr "En hemmelighed er gemt og vises aldrig igen. Indtast den igen for at ændre appen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:165
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:232
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:270
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:166
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:233
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:271
 msgid "The secret is stored encrypted."
 msgstr "Hemmeligheden gemmes krypteret."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:167
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:236
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:168
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:237
 msgid "Save and check"
 msgstr "Gem og tjek"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:170
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:239
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:275
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:171
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:240
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:276
 msgid "Remove the app"
 msgstr "Fjern appen"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:182
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:183
 msgid "Bot account"
 msgstr "Bot-konto"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:192
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:193
 msgid "Log in with the Twitch account that writes the messages, not with your own. Twitch always asks, so you can choose the account; a private browser window helps."
 msgstr "Log ind med den Twitch-konto, der skriver beskederne, ikke med din egen. Twitch spørger altid, så du kan vælge kontoen; et privat browservindue hjælper."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:195
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:196
 msgid "Log in with the bot account at Twitch"
 msgstr "Log ind med bot-kontoen hos Twitch"
 
 #. translators: %s: Twitch login of the bot.
 #. translators: %s: name of the bot's YouTube channel.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:198
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:294
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:199
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:295
 #, php-format
 msgid "Connected as %s."
 msgstr "Forbundet som %s."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:201
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:302
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:202
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:303
 msgid "Disconnect the bot"
 msgstr "Afbryd botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:207
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:208
 msgid "Chatbot badge and chat identity"
 msgstr "Chatbot-badge og chat-identitet"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:209
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:210
 msgid "Messages are sent with Send Chat Message and an app access token."
 msgstr "Beskeder sendes med Send Chat Message og en app access token."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:210
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:211
 msgid "The bot account authorized the app (user:bot, user:write:chat, user:read:chat)."
 msgstr "Bot-kontoen har godkendt appen (user:bot, user:write:chat, user:read:chat)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:211
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:212
 msgid "Each creator adds the bot to the own channel (channel:bot) in the dashboard."
 msgstr "Hver creator tilføjer botten til sin egen kanal (channel:bot) i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:212
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:213
 msgid "The bot listens to the chats over an EventSub webhook (needs an HTTPS site Twitch can reach)."
 msgstr "Botten lytter til chattene via en EventSub-webhook (kræver et HTTPS-site, som Twitch kan nå)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:221
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:222
 msgid "Kick app"
 msgstr "Kick-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:222
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:223
 msgid "Create an app in your Kick account under Settings → Developer (two-factor authentication must be on), create a bot for the app there, and register this redirect URL:"
 msgstr "Opret en app på din Kick-konto under Settings → Developer (totrinsbekræftelse skal være slået til), opret en bot til appen dér, og registrér denne redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:224
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:225
 msgid "Turn on webhooks for the app and enter this webhook URL:"
 msgstr "Slå webhooks til for appen, og indtast denne webhook-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:233
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
 msgid "Bot name"
 msgstr "Bottens navn"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:234
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:235
 msgid "The name of the app's bot at Kick, shown to creators (optional)."
 msgstr "Navnet på appens bot hos Kick, som vises for creators (valgfrit)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:245
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:246
 msgid "Bot messages at Kick"
 msgstr "Bot-beskeder hos Kick"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:247
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
 msgid "The Kick app is saved and Kick accepted its credentials."
 msgstr "Kick-appen er gemt, og Kick har godkendt dens credentials."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:248
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:249
 msgid "Messages are sent as the app's bot (type \"bot\") with the channel's own token, which is stored encrypted and renewed automatically."
 msgstr "Beskeder sendes som appens bot (type \"bot\") med kanalens eget token, som gemmes krypteret og fornyes automatisk."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:249
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:250
 msgid "Each creator adds the bot to the own channel (chat:write) in the dashboard."
 msgstr "Hver creator tilføjer botten til sin egen kanal (chat:write) i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:250
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:251
 msgid "The bot listens to the chats over Kick's webhook (needs an HTTPS site Kick can reach)."
 msgstr "Botten lytter til chattene via Kicks webhook (kræver et HTTPS-site, som Kick kan nå)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:261
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:262
 msgid "Google app"
 msgstr "Google-app"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:262
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:263
 msgid "Create a project in the Google Cloud console, enable the YouTube Data API v3, create an OAuth client (type \"Web application\") and register this redirect URL:"
 msgstr "Opret et projekt i Google Cloud-konsollen, slå YouTube Data API v3 til, opret en OAuth-klient (typen \"Web application\"), og registrér denne redirect-URL:"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:272
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:273
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:126
 msgid "Save"
 msgstr "Gem"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:279
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:280
 msgid "YouTube bot"
 msgstr "YouTube-bot"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:286
 msgid "Publish the privacy policy and terms of the YouTube chatbot first (tab \"YouTube terms\"); Google requires them, and the bot account accepts them when it logs in."
 msgstr "Offentliggør først privatlivspolitikken og vilkårene for YouTube-chatbotten (fanen \"YouTube-vilkår\"); Google kræver dem, og bot-kontoen godkender dem, når den logger ind."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:287
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:288
 msgid "Log in with the Google account of the YouTube channel that writes the messages, not with your own. Google always asks which account to use."
 msgstr "Log ind med Google-kontoen for den YouTube-kanal, der skriver beskederne, ikke med din egen. Google spørger altid, hvilken konto der skal bruges."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:291
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:292
 msgid "Log in with the bot account at Google"
 msgstr "Log ind med bot-kontoen hos Google"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:297
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:298
 msgid "Google no longer accepts the bot's login (it was revoked, or the Google app is in testing, where logins expire after 7 days). Disconnect the bot and log in again."
 msgstr "Google godkender ikke længere bottens login (det er tilbagekaldt, eller Google-appen er i test, hvor logins udløber efter 7 dage). Afbryd botten, og log ind igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:309
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:310
 msgid "The privacy policy and terms of the YouTube chatbot have a new version. The bot sends no YouTube messages until you accept it for the bot."
 msgstr "Privatlivspolitikken og vilkårene for YouTube-chatbotten har en ny version. Botten sender ingen YouTube-beskeder, før du godkender den for botten."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:314
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:315
 msgid "Accept for the bot"
 msgstr "Godkend for botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:324
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:325
 msgid "Bot messages on YouTube"
 msgstr "Bot-beskeder på YouTube"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:326
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:327
 msgid "The Google app is saved."
 msgstr "Google-appen er gemt."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:327
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:328
 msgid "The privacy policy and terms are published and accepted for the bot."
 msgstr "Privatlivspolitikken og vilkårene er offentliggjort og godkendt for botten."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:328
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:329
 msgid "The bot's YouTube channel is logged in (youtube.force-ssl)."
 msgstr "Bottens YouTube-kanal er logget ind (youtube.force-ssl)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:329
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:330
 msgid "Each creator adds the bot to the own channel (youtube.readonly) in the dashboard, so the livestream can be found."
 msgstr "Hver creator tilføjer botten til sin egen kanal (youtube.readonly) i dashboardet, så livestreamen kan findes."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:330
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:331
 msgid "Messages are written only during a livestream. When the creator is not live, the bot checks once more after 5 minutes and otherwise skips the message (as few YouTube calls as possible)."
 msgstr "Beskeder skrives kun under en livestream. Er creatoren ikke live, tjekker botten én gang til efter 5 minutter og springer ellers beskeden over (så få YouTube-kald som muligt)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:331
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:332
 msgid "The day's YouTube quota is not used up (10,000 units; a message costs 20, a live check 1)."
 msgstr "Dagens YouTube-kvote er ikke brugt op (10.000 enheder; en besked koster 20, et live-tjek 1)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:334
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:335
 msgid "YouTube shows no bot badge; creators can make the bot a moderator. While the Google app is in testing, at most 100 test users can log in and logins expire after 7 days: publish the app in the Google Cloud console (\"In production\") with the URLs from the tab \"YouTube terms\", and log the bot in again. Without Google's verification, Google shows a warning at login."
 msgstr "YouTube viser intet bot-badge; creators kan gøre botten til moderator. Mens Google-appen er i test, kan højst 100 testbrugere logge ind, og logins udløber efter 7 dage: offentliggør appen i Google Cloud-konsollen (\"In production\") med URL'erne fra fanen \"YouTube-vilkår\", og log botten ind igen. Uden Googles verificering viser Google en advarsel ved login."
 
 #. translators: 1: link "privacy policy", 2: link "terms of service".
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:346
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:347
 #, php-format
 msgid "On behalf of the bot account, I accept the %1$s and the %2$s of the YouTube chatbot."
 msgstr "På vegne af bot-kontoen accepterer jeg YouTube-chatbottens %1$s og %2$s."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:347
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:348
 msgid "privacy policy"
 msgstr "privatlivspolitik"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:348
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:349
 msgid "terms of service"
 msgstr "vilkår"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:363
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:364
 msgid "(not met)"
 msgstr "(ikke opfyldt)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:375
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:376
 msgid "Message format"
 msgstr "Beskedformat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:379
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:380
 msgid "Messages per purchase"
 msgstr "Beskeder pr. køb"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:380
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:381
 msgid "One message per order line (as MerchAlert)"
 msgstr "Én besked pr. ordrelinje (som MerchAlert)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:381
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
 msgid "One message per order"
 msgstr "Én besked pr. ordre"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:382
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:383
 msgid "Each product in $Products (one message per order)"
 msgstr "Hvert produkt i $Products (én besked pr. ordre)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:384
-msgid "Variables: $Quantity, $Product, $Variation, $Category."
-msgstr "Variabler: $Quantity, $Product, $Variation, $Category."
-
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:385
+msgid "Variables: $Quantity, $Product, $Variation, $Category, $Price, $LineTotal."
+msgstr "Variabler: $Quantity, $Product, $Variation, $Category, $Price, $LineTotal."
+
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:386
 msgid "Between the products"
 msgstr "Mellem produkterne"
 
 #. translators: 1: a product, 2: the separator, 3: another product.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:390
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:391
 #, php-format
 msgid "Example of $Products: %1$s%2$s%3$s"
 msgstr "Eksempel på $Products: %1$s%2$s%3$s"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:412
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:417
 msgid "Save format"
 msgstr "Gem format"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:422
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:427
 msgid "Rate limit and verification"
 msgstr "Rate limit og verificering"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:423
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:428
 msgid "Twitch lets a bot send 20 messages per 30 seconds across all channels (100 where it is moderator or VIP), and at most one per second in a channel. A verified bot may send 7,500 per 30 seconds. Messages wait in a queue when the limit is reached."
 msgstr "Twitch lader en bot sende 20 beskeder pr. 30 sekunder på tværs af alle kanaler (100, hvor den er moderator eller VIP), og højst én pr. sekund i en kanal. En verificeret bot må sende 7.500 pr. 30 sekunder. Beskeder venter i en kø, når grænsen er nået."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:426
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:431
 msgid "No message has been sent yet."
 msgstr "Der er ikke sendt nogen besked endnu."
 
 #. translators: %d: messages per 30 seconds.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:428
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:433
 #, php-format
 msgid "Twitch reported a limit of %d messages per 30 seconds for the latest message."
 msgstr "Twitch oplyste en grænse på %d beskeder pr. 30 sekunder ved den seneste besked."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:440
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:445
 msgid "Channels"
 msgstr "Kanaler"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:443
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:448
 msgid "No creator has added the bot to a channel yet. Creators do this under Alerts → Chatbot in the dashboard."
 msgstr "Ingen creator har tilføjet botten til en kanal endnu. Creators gør det under Alerts → Chatbot i dashboardet."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "Platform"
 msgstr "Platform"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "Channel"
 msgstr "Kanal"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "Messages"
 msgstr "Beskeder"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "Listening"
 msgstr "Lytter"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 msgid "Latest message"
 msgstr "Seneste besked"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:454
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:459
 msgid "On"
 msgstr "Til"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:454
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:459
 msgid "Off"
 msgstr "Fra"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:457
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:462
 msgid "Open chat"
 msgstr "Åbn chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:465
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:470
 msgid "Renew the chat subscriptions"
 msgstr "Forny chat-abonnementerne"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:479
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:484
 msgid "Back to the chatbot"
 msgstr "Tilbage til chatbotten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:482
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:487
 msgid "This creator has not added the bot to a channel."
 msgstr "Denne creator har ikke tilføjet botten til en kanal."
 
 #. translators: 1: channel login, 2: platform (Twitch or Kick).
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:487
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:492
 #, php-format
 msgid "Chat of %1$s (%2$s)"
 msgstr "Chat for %1$s (%2$s)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:490
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:495
 msgid "No messages in the last 24 hours."
 msgstr "Ingen beskeder de seneste 24 timer."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:490
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:495
 msgid "The chat could not be loaded. It is tried again."
 msgstr "Chatten kunne ikke indlæses. Der prøves igen."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:491
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:496
 msgid "The bot's own view of the chat (webhook). Messages are kept for 24 hours."
 msgstr "Bottens egen visning af chatten (webhook). Beskeder gemmes i 24 timer."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:493
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:498
 msgid "Twitch cannot send the chat to this site (no HTTPS webhook), so Twitch's own chat is shown. It loads from twitch.tv."
 msgstr "Twitch kan ikke sende chatten til dette site (ingen HTTPS-webhook), så Twitchs egen chat vises. Den indlæses fra twitch.tv."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:494
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:499
 msgid "Twitch chat"
 msgstr "Twitch-chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:496
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:501
 msgid "Open the chat at Twitch"
 msgstr "Åbn chatten hos Twitch"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:500
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:505
 msgid "Kick cannot send the chat to this site (no HTTPS webhook, or webhooks are off in the Kick app)."
 msgstr "Kick kan ikke sende chatten til dette site (ingen HTTPS-webhook, eller webhooks er slået fra i Kick-appen)."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:501
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:506
 msgid "Open the chat at Kick"
 msgstr "Åbn chatten hos Kick"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:509
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:514
 msgid "Send as the bot"
 msgstr "Send som botten"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:511
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:516
 msgid "Send"
 msgstr "Send"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:526
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:531
 msgid "The creator is not live on YouTube right now (or YouTube could not be asked). The chat exists only during a livestream."
 msgstr "Creatoren er ikke live på YouTube lige nu (eller YouTube kunne ikke spørges). Chatten findes kun under en livestream."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:528
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:533
 msgid "YouTube's own live chat of the current livestream. It loads from youtube.com."
 msgstr "YouTubes egen livechat fra den aktuelle livestream. Den indlæses fra youtube.com."
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:529
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:534
 msgid "YouTube chat"
 msgstr "YouTube-chat"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:532
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:537
 msgid "Open the livestream at YouTube"
 msgstr "Åbn livestreamen hos YouTube"
 
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:558
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:563
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:153
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
@@ -2452,20 +2452,20 @@ msgstr "Åbn livestreamen hos YouTube"
 msgid "Yes"
 msgstr "Ja"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:559
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:564
 msgid "Waiting for Twitch"
 msgstr "Venter på Twitch"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:560
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:565
 msgid "No (site not reachable)"
 msgstr "Nej (sitet kan ikke nås)"
 
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:561
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:566
 msgid "YouTube's chat (embedded)"
 msgstr "YouTubes chat (indlejret)"
 
 #. translators: %s: Yes or No.
-#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:562
+#: src/Modules/Alerts/Admin/ChatbotAdminTab.php:567
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:153
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
@@ -3021,9 +3021,9 @@ msgstr "Dette er en ændring, der har betydning: alle skal godkende teksterne ig
 msgid "Save and publish"
 msgstr "Gem og offentliggør"
 
-#: src/Modules/Alerts/Chatbot/CreatorChatbot.php:208
-#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:181
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:279
+#: src/Modules/Alerts/Chatbot/CreatorChatbot.php:209
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:184
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:286
 msgid "Test product"
 msgstr "Testprodukt"
 
@@ -7780,6 +7780,78 @@ msgstr "Gentag teksten hele vejen rundt"
 
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "The username the customer chose to show at checkout, or \"Anonymous\". Never the customer's real name."
+msgstr "Det brugernavn, kunden valgte at vise ved betaling, eller \"Anonymous\". Aldrig kundens rigtige navn."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "The same as $UserName (from the old alert plugin)."
+msgstr "Det samme som $UserName (fra det gamle alert-plugin)."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "The product's name."
+msgstr "Produktets navn."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "How many of the product were bought."
+msgstr "Hvor mange af produktet der blev købt."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "The chosen variation, e.g. \"Size: L\"; empty for a product without variations."
+msgstr "Den valgte variant, fx \"Størrelse: L\"; tom for et produkt uden varianter."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "The product's categories, separated by commas."
+msgstr "Produktets kategorier, adskilt af kommaer."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "What the customer paid for one item, with VAT and after any discount, e.g. \"249,00 kr.\"."
+msgstr "Det, kunden betalte for ét stk., inkl. moms og efter eventuel rabat, fx \"249,00 kr.\"."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "What the customer paid for this product in all: the price × the quantity."
+msgstr "Det, kunden betalte for dette produkt i alt: prisen × antallet."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "What the customer paid for everything from you in the order."
+msgstr "Det, kunden betalte for alt fra dig i ordren."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "Every product from you in the order, written as Merch Dashboard set it up (one message per order)."
+msgstr "Alle produkter fra dig i ordren, skrevet som Merch Dashboard har sat det op (én besked pr. ordre)."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "How many items from you the order has in all (one message per order)."
+msgstr "Hvor mange varer fra dig ordren har i alt (én besked pr. ordre)."
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:1
+msgid "What the variables mean"
+msgstr "Hvad betyder variablerne?"
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Shrink the text to fit the box"
 msgstr "Formindsk teksten, så den passer i boksen"
@@ -7878,8 +7950,8 @@ msgstr "Tekst"
 #: build/alerts-global-admin.js:14
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:34
-msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category and $OrderNumber. $UserName is the username the customer entered at checkout, or \"Anonymous\"; customer names are never shown."
-msgstr "Variabler: $UserName, $Product, $Quantity, $Variation, $Category og $OrderNumber. $UserName er det brugernavn, kunden skrev ved checkout, eller \"Anonymous\"; kundens navn vises aldrig."
+msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category, $Price, $LineTotal and $Total; see what each shows below. Customer names are never shown."
+msgstr "Variabler: $UserName, $Product, $Quantity, $Variation, $Category, $Price, $LineTotal og $Total; se nedenfor, hvad hver viser. Kundernes navne vises aldrig."
 
 #: build/alerts-global-admin.js:14
 #: build/alerts-page-admin.js:1

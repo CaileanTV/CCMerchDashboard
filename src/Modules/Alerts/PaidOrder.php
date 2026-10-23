@@ -27,12 +27,14 @@ final readonly class PaidOrder {
 	 * @param string          $order_number Order number as shown to the customer.
 	 * @param string          $username     Voluntary username from checkout, '' when none.
 	 * @param PaidOrderLine[] $lines        Product lines with a product and a positive quantity.
+	 * @param string          $currency     The order's currency code ('' when unknown).
 	 */
 	public function __construct(
 		public int $order_id,
 		public string $order_number,
 		public string $username,
-		public array $lines
+		public array $lines,
+		public string $currency = ''
 	) {
 	}
 }

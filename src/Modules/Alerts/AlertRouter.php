@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
@@ -89,6 +90,7 @@ final class AlertRouter {
 			$now      = ( $this->clock )();
 			$active   = array();
 			$recorded = 0;
+			$totals   = $this->creator_totals( $order );
 
 			foreach ( $order->lines as $line ) {
 				$creator_id = $this->links->creator_id( $line->product_id );
@@ -119,7 +121,11 @@ final class AlertRouter {
 						$line->image_id,
 						$this->products->find( $line->product_id )->category_ids ?? array(),
 						$order->username,
-						$now
+						$now,
+						0,
+						$line->line_total,
+						$totals[ $creator_id ] ?? null,
+						$order->currency
 					)
 				) ? 1 : 0;
 			}
@@ -136,5 +142,33 @@ final class AlertRouter {
 
 			return 0;
 		}
+	}
+
+	/**
+	 * What the customer paid for each creator's lines of the order ($Total);
+	 * a creator with a line of unknown amount has no total.
+	 *
+	 * @param PaidOrder $order Order.
+	 * @return array<int, string|null> Four-decimal totals by creator.
+	 */
+	private function creator_totals( PaidOrder $order ): array {
+		$units = array();
+
+		foreach ( $order->lines as $line ) {
+			$creator_id = $this->links->creator_id( $line->product_id );
+
+			if ( null === $creator_id ) {
+				continue;
+			}
+
+			if ( null === $line->line_total || ( array_key_exists( $creator_id, $units ) && null === $units[ $creator_id ] ) ) {
+				$units[ $creator_id ] = null;
+				continue;
+			}
+
+			$units[ $creator_id ] = SalesAmount::add( $units[ $creator_id ] ?? 0, SalesAmount::parse( $line->line_total ) );
+		}
+
+		return array_map( static fn( ?int $total ): ?string => null === $total ? null : SalesAmount::format( $total ), $units );
 	}
 }

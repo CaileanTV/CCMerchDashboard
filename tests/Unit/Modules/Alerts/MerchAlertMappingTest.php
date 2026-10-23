@@ -60,6 +60,7 @@ final class MerchAlertMappingTest extends TestCase {
 	public function test_the_chat_template_never_uses_the_first_name(): void {
 		self::assertSame( '🔔 $UserName just bought $Product! ($UserName)', MerchAlertMapping::chat_template( ' 🔔 $Name just bought $Product! ($UserName) ' ) );
 		self::assertSame( '$Names stay', MerchAlertMapping::chat_template( '$Names stay' ), 'Only the variable.' );
+		self::assertSame( 'Thanks for $Total!', MerchAlertMapping::chat_template( 'Thanks for $Amount!' ), 'MerchAlert\'s amount is the creator\'s total.' );
 		self::assertSame( '', MerchAlertMapping::chat_template( '' ), 'Empty: the default.' );
 	}
 

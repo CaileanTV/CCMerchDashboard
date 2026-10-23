@@ -154,6 +154,42 @@ final class AlertRouterTest extends IntegrationTestCase {
 		self::assertSame( array(), $events[1]->category_ids );
 	}
 
+	public function test_each_alert_stores_what_was_paid_for_its_line_and_for_the_creators_lines(): void {
+		$nova   = $this->creators->create( 'Nova', CreatorStatus::Active );
+		$orion  = $this->creators->create( 'Orion', CreatorStatus::Active );
+		$hoodie = $this->posts->add( 'Hoodie', 'publish', array( (string) $nova->id ) );
+		$cap    = $this->posts->add( 'Cap', 'publish', array( (string) $nova->id ) );
+		$mug    = $this->posts->add( 'Mug', 'publish', array( (string) $orion->id ) );
+
+		// Paid with VAT, after a discount: two hoodies for 398, a cap for 149.50, a mug for 79.
+		$this->orders[101] = new PaidOrder(
+			101,
+			'#101',
+			'',
+			array(
+				new PaidOrderLine( 1001, $hoodie, 0, 'Hoodie', '', 2, 0, '398.0000' ),
+				new PaidOrderLine( 1002, $cap, 0, 'Cap', '', 1, 0, '149.5000' ),
+				new PaidOrderLine( 1003, $mug, 0, 'Mug', '', 1, 0, '79.0000' ),
+			),
+			'DKK'
+		);
+
+		self::assertSame( 3, $this->router()->order_paid( 101 ) );
+		self::assertSame(
+			array(
+				array( '398.0000', '547.5000', 'DKK' ),
+				array( '149.5000', '547.5000', 'DKK' ),
+				array( '79.0000', '79.0000', 'DKK' ),
+			),
+			array_map( static fn( AlertEvent $e ): array => array( $e->line_total, $e->creator_total, $e->currency ), $this->repository()->for_order( 101 ) )
+		);
+
+		// A line without an amount: unknown, and so is the creator's total.
+		$this->orders[102] = new PaidOrder( 102, '#102', '', array( new PaidOrderLine( 1011, $hoodie, 0, 'Hoodie', '', 1, 0, null ), new PaidOrderLine( 1012, $cap, 0, 'Cap', '', 1, 0, '149.5000' ) ), 'DKK' );
+		$this->router()->order_paid( 102 );
+		self::assertSame( array( array( null, null ), array( '149.5000', null ) ), array_map( static fn( AlertEvent $e ): array => array( $e->line_total, $e->creator_total ), $this->repository()->for_order( 102 ) ) );
+	}
+
 	public function test_inactive_creators_get_no_alerts(): void {
 		$creator = $this->creators->create( 'Nova', CreatorStatus::Inactive );
 		$product = $this->posts->add( 'Hoodie', 'publish', array( (string) $creator->id ) );

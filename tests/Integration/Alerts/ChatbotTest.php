@@ -22,6 +22,7 @@ use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\AlertMoney;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
@@ -578,16 +579,17 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	public function test_one_message_per_order_in_the_administrators_format(): void {
 		$nova = $this->connected_creator( 'nova' );
-		self::assertTrue( $this->format->save( 'order', '$Quantity× $Product', ' + ' ) );
-		$this->channels->save_template( $nova, 'Thanks $Name for $Products ($ItemCount)$Amount' );
-		$this->alert( $nova, 200, 1, 'Hoodie' );
-		$this->alert( $nova, 200, 2, '$UserName Mug' );
+		self::assertTrue( $this->format->save( 'order', '$Quantity× $Product ($LineTotal)', ' + ' ) );
+		$this->channels->save_template( $nova, 'Thanks $Name for $Products ($ItemCount) $Amount$OrderNumber' );
+		$this->alert( $nova, 200, 1, 'Hoodie', '249.0000', '328.0000' );
+		$this->alert( $nova, 200, 2, '$UserName Mug', '79.0000', '328.0000' );
 		$this->answer( self::MESSAGES_URL, 200, array( 'data' => array( array( 'is_sent' => true ) ) ) );
 
 		$this->sender->order_paid( 200 );
 		$this->run_jobs();
 
-		self::assertSame( array( 'Thanks nova_fan for 1× Hoodie + 1× $UserName Mug (2)' ), array_column( $this->sent(), 'message' ), 'A product name is never read as a variable; $Amount is never shown.' );
+		$money = static fn( string $amount ): string => AlertMoney::format( $amount, 'DKK' );
+		self::assertSame( array( 'Thanks nova_fan for 1× Hoodie (' . $money( '249.0000' ) . ') + 1× $UserName Mug (' . $money( '79.0000' ) . ') (2) ' . $money( '328.0000' ) ), array_column( $this->sent(), 'message' ), 'A product name is never read as a variable; $Amount is the creator total; $OrderNumber shows nothing.' );
 		self::assertSame( 'alert_chatbot_format_changed', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' )[2] ?? null );
 	}
 
@@ -2288,13 +2290,15 @@ final class ChatbotTest extends IntegrationTestCase {
 	/**
 	 * Stores an alert of an order line.
 	 *
-	 * @param int    $creator_id Creator.
-	 * @param int    $order_id   Order.
-	 * @param int    $item_id    Order line.
-	 * @param string $product    Product name.
+	 * @param int         $creator_id Creator.
+	 * @param int         $order_id   Order.
+	 * @param int         $item_id    Order line.
+	 * @param string      $product       Product name.
+	 * @param string|null $line_total    What was paid for the line.
+	 * @param string|null $creator_total What was paid for the creator's lines.
 	 */
-	private function alert( int $creator_id, int $order_id, int $item_id, string $product ): void {
-		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) ) );
+	private function alert( int $creator_id, int $order_id, int $item_id, string $product, ?string $line_total = null, ?string $creator_total = null ): void {
+		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ), 0, $line_total, $creator_total, 'DKK' ) );
 	}
 
 	/**

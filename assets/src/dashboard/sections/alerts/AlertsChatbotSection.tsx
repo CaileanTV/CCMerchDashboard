@@ -29,6 +29,7 @@ import { Field } from '../../components/Field';
 import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
+import { TemplateVariables } from './TemplateVariables';
 
 /** Longest template in characters (the platforms' longest message). */
 export const CHAT_TEMPLATE_MAX = 500;
@@ -41,7 +42,12 @@ const SAMPLE: Readonly< Record< string, string > > = {
 	$Quantity: '1',
 	$Category: 'Merch',
 	$Variation: 'L',
-	$OrderNumber: '1001',
+	$Price: '249,00 kr.',
+	$LineTotal: '249,00 kr.',
+	// The creator's total: the hoodie and two mugs.
+	$Total: '407,00 kr.',
+	// Removed (the project owner's choice 2026-10-23): shows nothing.
+	$OrderNumber: '',
 };
 
 /**
@@ -67,6 +73,10 @@ export function previewMessage(
 			itemFormat
 				.split( '$Quantity' )
 				.join( '2' )
+				.split( '$Price' )
+				.join( '79,00 kr.' )
+				.split( '$LineTotal' )
+				.join( '158,00 kr.' )
 				.split( '$Product' )
 				.join( 'Mug' )
 		),
@@ -78,8 +88,9 @@ export function previewMessage(
 			.join( '\u0000' )
 			.split( '$ItemCount' )
 			.join( '3' )
+			// MerchAlert's $Amount is the total.
 			.split( '$Amount' )
-			.join( '' )
+			.join( '$Total' )
 	)
 		.split( '\u0000' )
 		.join( products );
@@ -727,6 +738,7 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 						/>
 					) }
 				</Field>
+				<TemplateVariables variables={ state.variables } />
 				<p className="merchboard-field__help">
 					{ __( 'Preview:', 'merchboard' ) } <q>{ preview }</q>
 				</p>

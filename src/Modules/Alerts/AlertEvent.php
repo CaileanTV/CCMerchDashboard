@@ -38,6 +38,9 @@ final readonly class AlertEvent {
 	 * @param string            $customer_username   Voluntary username, '' for none.
 	 * @param DateTimeImmutable $created_at          When the alert was recorded (UTC).
 	 * @param int               $id                  Row id, 0 before it is stored.
+	 * @param string|null       $line_total          What the customer paid for the line (VAT included, after discounts), four decimals; null when unknown.
+	 * @param string|null       $creator_total       What the customer paid for all the creator's lines of the order; null when unknown.
+	 * @param string            $currency            The order's currency code ('' when unknown).
 	 */
 	public function __construct(
 		public int $creator_id,
@@ -53,7 +56,10 @@ final readonly class AlertEvent {
 		public array $category_ids,
 		public string $customer_username,
 		public DateTimeImmutable $created_at,
-		public int $id = 0
+		public int $id = 0,
+		public ?string $line_total = null,
+		public ?string $creator_total = null,
+		public string $currency = ''
 	) {
 	}
 }

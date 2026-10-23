@@ -916,6 +916,27 @@
 	display: none;
 }
 
+// "What the variables mean" below a template (variable descriptions).
+.merchboard-alerts__variables {
+	margin-bottom: var(--merchboard-space-3);
+	color: var(--merchboard-text-muted);
+
+	summary {
+		cursor: pointer;
+	}
+
+	dl {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: var(--merchboard-space-1) var(--merchboard-space-3);
+		margin: var(--merchboard-space-2) 0 0;
+	}
+
+	dd {
+		margin: 0;
+	}
+}
+
 // The creator page's setup in wp-admin (step 25.9.6): a sketch of the page.
 .merchboard-page-setup__zone-box {
 	margin-bottom: var(--merchboard-space-4);

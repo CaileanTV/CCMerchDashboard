@@ -49,11 +49,15 @@ export const DEFAULT_LAYOUT: OverlayLayout = {
 export const SAMPLE_VALUES: Readonly< Record< string, string > > = {
 	$UserName: 'TestFan',
 	$FirstName: 'TestFan',
-	$OrderNumber: '0001',
+	// Removed (the project owner's choice 2026-10-23): shows nothing.
+	$OrderNumber: '',
 	$Product: 'Hoodie',
 	$Quantity: '1',
 	$Category: 'Merch',
 	$Variation: 'Size: L',
+	$Price: '249,00 kr.',
+	$LineTotal: '249,00 kr.',
+	$Total: '498,00 kr.',
 };
 
 function clamp( value: number, range: { min: number; max: number } ): number {
@@ -140,7 +144,7 @@ export function withBox(
  */
 export function sampleText( template: string ): string {
 	return template.replace(
-		/\$(UserName|FirstName|OrderNumber|Product|Quantity|Category|Variation)/g,
+		/\$(UserName|FirstName|OrderNumber|Product|Quantity|Category|Variation|Price|LineTotal|Total)/g,
 		( variable ) => SAMPLE_VALUES[ variable ] ?? variable
 	);
 }

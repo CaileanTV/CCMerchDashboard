@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Admin;
 
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Modules\Alerts\AlertMoney;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannel;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
@@ -381,7 +382,7 @@ final class ChatbotAdminTab {
 		echo '<label><input type="radio" name="mode" value="order"' . checked( 'order', $format['mode'], false ) . '> ' . esc_html__( 'One message per order', 'merchboard' ) . '</label></p></fieldset>';
 		echo '<p><label for="merchboard-chat-item">' . esc_html__( 'Each product in $Products (one message per order)', 'merchboard' ) . '</label><br>';
 		echo '<input type="text" id="merchboard-chat-item" name="item" class="regular-text" maxlength="' . esc_attr( (string) ChatbotFormat::ITEM_MAX ) . '" value="' . esc_attr( $format['item'] ) . '" aria-describedby="merchboard-chat-item-help">';
-		echo '<span id="merchboard-chat-item-help" class="description"> ' . esc_html__( 'Variables: $Quantity, $Product, $Variation, $Category.', 'merchboard' ) . '</span></p>';
+		echo '<span id="merchboard-chat-item-help" class="description"> ' . esc_html__( 'Variables: $Quantity, $Product, $Variation, $Category, $Price, $LineTotal.', 'merchboard' ) . '</span></p>';
 		echo '<p><label for="merchboard-chat-separator">' . esc_html__( 'Between the products', 'merchboard' ) . '</label><br>';
 		echo '<input type="text" id="merchboard-chat-separator" name="separator" class="small-text" maxlength="' . esc_attr( (string) ChatbotFormat::SEPARATOR_MAX ) . '" value="' . esc_attr( $format['separator'] ) . '"></p>';
 		echo '<p class="description">' . esc_html(
@@ -395,6 +396,8 @@ final class ChatbotAdminTab {
 						'$Product'   => 'Hoodie',
 						'$Variation' => 'L',
 						'$Category'  => 'Merch',
+						'$Price'     => AlertMoney::format( '249.0000', '' ),
+						'$LineTotal' => AlertMoney::format( '498.0000', '' ),
 					)
 				),
 				$format['separator'],
@@ -405,6 +408,8 @@ final class ChatbotAdminTab {
 						'$Product'   => 'Mug',
 						'$Variation' => '',
 						'$Category'  => 'Merch',
+						'$Price'     => AlertMoney::format( '79.0000', '' ),
+						'$LineTotal' => AlertMoney::format( '79.0000', '' ),
 					)
 				)
 			)

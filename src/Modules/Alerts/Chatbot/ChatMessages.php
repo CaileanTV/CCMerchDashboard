@@ -16,25 +16,25 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Renders a creator's template with only the alert variables (ADR-066,
- * status note 2026-10-20): `$UserName` and `$Name` (the customer's voluntary
- * username), `$Product`, `$Quantity`, `$Category`, `$Variation` and
- * `$OrderNumber`; with one message per order also `$Products` (the lines in
- * the administrator's item format, joined with the separator) and
- * `$ItemCount`. `$Amount` from MerchAlert templates is empty: the amount is
- * never shown in chat. The result is one line of plain text, at most
- * Twitch's 500 characters.
+ * status notes 2026-10-20 and 2026-10-23): `$UserName` and `$Name` (the
+ * customer's voluntary username), `$Product`, `$Quantity`, `$Category`,
+ * `$Variation`, `$Price`, `$LineTotal` and `$Total` (AlertTemplate); with
+ * one message per order also `$Products` (the lines in the administrator's
+ * item format, joined with the separator) and `$ItemCount`. MerchAlert's
+ * `$Amount` is the creator's total (`$Total`); `$OrderNumber` shows nothing.
+ * The result is one line of plain text, at most Twitch's 500 characters.
  */
 final class ChatMessages {
 
 	/**
 	 * Variables of one message per line.
 	 */
-	public const LINE_VARIABLES = array( '$UserName', '$Name', '$Product', '$Quantity', '$Category', '$Variation', '$OrderNumber' );
+	public const LINE_VARIABLES = array( '$UserName', '$Name', '$Product', '$Quantity', '$Category', '$Variation', '$Price', '$LineTotal', '$Total' );
 
 	/**
 	 * Variables of one message per order.
 	 */
-	public const ORDER_VARIABLES = array( '$UserName', '$Name', '$Products', '$ItemCount', '$OrderNumber' );
+	public const ORDER_VARIABLES = array( '$UserName', '$Name', '$Products', '$ItemCount', '$Total' );
 
 	/**
 	 * Constructor.
@@ -89,8 +89,8 @@ final class ChatMessages {
 	 * @param AlertEvent $event    Alert.
 	 */
 	private function render( string $template, AlertEvent $event ): string {
-		// MerchAlert's $Name is the username; $Amount is never shown (ADR-066).
-		return $this->template->render( str_replace( array( '$Name', '$Amount' ), array( '$UserName', '' ), $template ), $event );
+		// MerchAlert's $Name is the username and its $Amount the creator's total.
+		return $this->template->render( str_replace( array( '$Name', '$Amount' ), array( '$UserName', '$Total' ), $template ), $event );
 	}
 
 	/**

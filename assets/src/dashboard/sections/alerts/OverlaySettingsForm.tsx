@@ -18,6 +18,7 @@ import { Field } from '../../components/Field';
 import { Toast } from '../../components/Toast';
 import { AlertImagesCard } from './AlertImagesCard';
 import { AnimationFields } from './AnimationFields';
+import { OVERLAY_VARIABLES, TemplateVariables } from './TemplateVariables';
 import {
 	FONT_WEIGHTS,
 	NUMBER_FIELDS,
@@ -395,27 +396,31 @@ export function OverlaySettingsForm( {
 	// Every field the setup can order (step 25.9.6), by its key.
 	const fieldNodes: Record< PageField, ReactNode > = {
 		template: (
-			<Field
-				label={ __( 'Text', 'merchboard' ) }
-				help={ __(
-					'Variables: $UserName, $Product, $Quantity, $Variation, $Category and $OrderNumber. $UserName is the username the customer entered at checkout, or "Anonymous"; customer names are never shown.',
-					'merchboard'
-				) }
-				{ ...error( 'template' ) }
-			>
-				{ ( control ) => (
-					<textarea
-						{ ...control }
-						className="merchboard-input merchboard-input--textarea"
-						rows={ 3 }
-						maxLength={ TEMPLATE_MAX_LENGTH }
-						value={ values.template }
-						onChange={ ( event ) =>
-							set( { template: event.target.value } )
-						}
-					/>
-				) }
-			</Field>
+			<>
+				<Field
+					label={ __( 'Text', 'merchboard' ) }
+					help={ __(
+						'Variables: $UserName, $Product, $Quantity, $Variation, $Category, $Price, $LineTotal and $Total; see what each shows below. Customer names are never shown.',
+						'merchboard'
+					) }
+					{ ...error( 'template' ) }
+				>
+					{ ( control ) => (
+						<textarea
+							{ ...control }
+							className="merchboard-input merchboard-input--textarea"
+							rows={ 3 }
+							maxLength={ TEMPLATE_MAX_LENGTH }
+							value={ values.template }
+							onChange={ ( event ) =>
+								set( { template: event.target.value } )
+							}
+						/>
+					) }
+				</Field>
+				{ /* Right below the text, wherever the page's setup places it. */ }
+				<TemplateVariables variables={ OVERLAY_VARIABLES } />
+			</>
 		),
 		secondary_template: (
 			<Field

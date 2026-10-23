@@ -63,8 +63,8 @@ final class WooCommercePaidOrderReaderTest extends TestCase {
 		self::assertSame( '', $order->username );
 		self::assertEquals(
 			array(
-				new PaidOrderLine( 701, 10, 0, 'Hoodie', '', 2, 501 ),
-				new PaidOrderLine( 702, 20, 21, 'Shirt - L', '', 1, 502 ),
+				new PaidOrderLine( 701, 10, 0, 'Hoodie', '', 2, 501, '200.0000' ),
+				new PaidOrderLine( 702, 20, 21, 'Shirt - L', '', 1, 502, '100.0000' ),
 			),
 			$order->lines,
 			'The variation image wins; tags are stripped; lines without a product or quantity are skipped.'

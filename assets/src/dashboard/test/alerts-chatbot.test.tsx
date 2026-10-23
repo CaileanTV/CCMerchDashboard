@@ -189,11 +189,13 @@ describe( 'previewMessage', () => {
 	it( 'lists the products with the item format and separator', () => {
 		expect(
 			previewMessage(
-				'$UserName bought $Products ($ItemCount items)$Amount',
-				'$Quantity× $Product',
+				'$UserName bought $Products ($ItemCount items) for $Amount$OrderNumber',
+				'$Quantity× $Product ($LineTotal)',
 				' + '
 			)
-		).toBe( 'TestFan bought 1× Hoodie + 2× Mug (3 items)' );
+		).toBe(
+			'TestFan bought 1× Hoodie (249,00 kr.) + 2× Mug (158,00 kr.) (3 items) for 407,00 kr.'
+		);
 	} );
 
 	it( 'maps the result codes of the redirect and the statuses', () => {
