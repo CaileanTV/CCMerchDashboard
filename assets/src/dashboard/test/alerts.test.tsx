@@ -367,6 +367,16 @@ describe( 'AlertsSection', () => {
 		await flush();
 	};
 
+	// Waits for the automatic save of the form or the designer.
+	const waitForAutosave = async () => {
+		await act( async () => {
+			await new Promise( ( resolve ) =>
+				window.setTimeout( resolve, AUTOSAVE_DELAY + 50 )
+			);
+		} );
+		await flush();
+	};
+
 	const typeTemplate = ( value: string ) => {
 		const template = rendered?.container.querySelector( 'textarea' );
 		act( () => {
@@ -579,12 +589,44 @@ describe( 'AlertsSection', () => {
 			).map( ( box ) => box.getAttribute( 'aria-label' ) )
 		).toEqual( [ 'Product image', 'Main text' ] );
 
-		click( button( 'Save layout' ) );
-		await flush();
+		expect( button( 'Save layout' ) ).toBeNull();
+		await waitForAutosave();
+		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
+			0
+		);
 
-		const patch = requests.find( ( r ) => r.method === 'PATCH' );
-		expect( patch?.data ).toEqual( { layout: LAYOUT } );
-		expect( rendered?.container.textContent ).toContain( 'Layout saved.' );
+		const left = Array.from(
+			rendered?.container.querySelectorAll( 'label' ) ?? []
+		).find( ( label ) => label.textContent === 'Left (px)' );
+		const input = left ? document.getElementById( left.htmlFor ) : null;
+		act( () => {
+			if ( input instanceof HTMLInputElement ) {
+				Object.getOwnPropertyDescriptor(
+					HTMLInputElement.prototype,
+					'value'
+				)?.set?.call( input, '300' );
+				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+			}
+		} );
+		await waitForAutosave();
+
+		const patches = requests.filter( ( r ) => r.method === 'PATCH' );
+		expect( patches ).toHaveLength( 1 );
+		expect( patches[ 0 ]?.data ).toEqual( {
+			layout: {
+				...LAYOUT,
+				elements: {
+					...LAYOUT.elements,
+					main_text: { ...LAYOUT.elements.main_text, x: 300 },
+				},
+			},
+		} );
+		expect(
+			rendered?.container.querySelectorAll( '.merchboard-toast' )
+		).toHaveLength( 1 );
+		expect( rendered?.container.textContent ).toContain(
+			'Settings saved.'
+		);
 	} );
 
 	const choose = ( input: HTMLInputElement, file: File ) => {
@@ -791,8 +833,7 @@ describe( 'AlertsSection', () => {
 		} );
 
 		click( button( 'Align top' ) );
-		click( button( 'Save layout' ) );
-		await flush();
+		await waitForAutosave();
 
 		const saved = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
 			layout: typeof LAYOUT;

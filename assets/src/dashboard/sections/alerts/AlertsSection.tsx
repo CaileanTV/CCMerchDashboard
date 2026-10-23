@@ -8,7 +8,7 @@ import { ApiErrorState } from '../../components/ApiErrorState';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Skeleton } from '../../components/Skeleton';
-import { Toast } from '../../components/Toast';
+import { ToastStack, useToastStack } from '../../components/ToastStack';
 import { useApi } from '../../hooks/useApi';
 import type { AlertsOverlayState, OverlaySettings } from '../../types/alerts';
 import { AlertSoundsCard } from './AlertSoundsCard';
@@ -302,8 +302,8 @@ export function AlertsContent( {
 	readonly controls?: ReactNode;
 } ) {
 	const [ state, setState ] = useState( initial );
-	const [ toast, setToast ] = useState< string | null >( null );
-	const dismissToast = useCallback( () => setToast( null ), [] );
+	// One stack for every card's messages, so they never overlap.
+	const { toasts, notify, dismiss } = useToastStack();
 	const [ saveSlot, setSaveSlot ] = useState< HTMLDivElement | null >( null );
 	// The settings form's unsaved values, previewed by the designer.
 	const [ draft, setDraft ] = useState< OverlaySettings | null >( null );
@@ -336,21 +336,21 @@ export function AlertsContent( {
 							<BrowserSourceCard
 								url={ state.overlay.url }
 								onRegenerated={ setState }
-								notify={ setToast }
+								notify={ notify }
 							/>
 						) }
 						{ variant === 'creator' && (
 							<PresetPickerCard
 								fonts={ state.fonts }
 								onApplied={ applied }
-								notify={ setToast }
+								notify={ notify }
 							/>
 						) }
 						{ state.overlay.audio !== null && (
 							<AlertSoundsCard
 								audio={ state.overlay.audio }
 								onSaved={ setState }
-								notify={ setToast }
+								notify={ notify }
 							/>
 						) }
 						<OverlaySettingsForm
@@ -362,9 +362,10 @@ export function AlertsContent( {
 							saveSlot={ saveSlot }
 							onDraft={ setDraft }
 							images={ state.overlay.images }
+							onNotify={ notify }
 						/>
 					</div>
-					{ /* The settings' save button, right above the designer, which is always last. */ }
+					{ /* The settings' save status, right above the designer, which is always last. */ }
 					<div ref={ setSaveSlot } />
 					<div>
 						<OverlayDesigner
@@ -379,11 +380,12 @@ export function AlertsContent( {
 									: `"${ font.family }", sans-serif`
 							}
 							onSaved={ setState }
+							onNotify={ notify }
 						/>
 					</div>
 				</div>
 			) }
-			<Toast message={ toast } onDismiss={ dismissToast } />
+			<ToastStack toasts={ toasts } onDismiss={ dismiss } />
 		</>
 	);
 }

@@ -457,6 +457,15 @@
 	z-index: calc(var(--merchboard-z-nav) + 100);
 }
 
+// Several messages of a section stack above each other (step 25.9.5
+// follow-up); they never overlap.
+.merchboard-toast-region--stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--merchboard-space-2);
+	align-items: flex-end;
+}
+
 .merchboard-toast {
 	display: flex;
 	gap: var(--merchboard-space-4);

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-23T09:00:21+00:00\n"
+"PO-Revision-Date: 2026-10-23T09:26:33+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1304,11 +1304,11 @@ msgstr "Lyden blev fjernet. Overlays, der brugte den, afspiller deres andre lyde
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
 #: build/alerts-global-admin.js:3
-#: build/alerts-global-admin.js:10
+#: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:3
-#: build/alerts-presets-admin.js:10
+#: build/alerts-presets-admin.js:9
 #: build/dashboard.js:23
-#: build/dashboard.js:30
+#: build/dashboard.js:29
 msgid "No file was received. Try again."
 msgstr "Der blev ikke modtaget nogen fil. Prøv igen."
 
@@ -1362,9 +1362,9 @@ msgid "The image is no longer in the library."
 msgstr "Billedet er ikke længere i biblioteket."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
-#: build/alerts-global-admin.js:10
-#: build/alerts-presets-admin.js:10
-#: build/dashboard.js:30
+#: build/alerts-global-admin.js:9
+#: build/alerts-presets-admin.js:9
+#: build/dashboard.js:29
 msgid "Choose a PNG, JPG, GIF or WebP image."
 msgstr "Vælg et PNG-, JPG-, GIF- eller WebP-billede."
 
@@ -1377,9 +1377,9 @@ msgid "The image is too big. Choose a smaller image."
 msgstr "Billedet er for stort. Vælg et mindre billede."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
-#: build/alerts-global-admin.js:10
-#: build/alerts-presets-admin.js:10
-#: build/dashboard.js:30
+#: build/alerts-global-admin.js:9
+#: build/alerts-presets-admin.js:9
+#: build/dashboard.js:29
 msgid "The file could not be read as an image. Choose another file."
 msgstr "Filen kunne ikke læses som et billede. Vælg en anden fil."
 
@@ -1539,16 +1539,16 @@ msgid "Image file"
 msgstr "Billedfil"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:366
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Upload image"
 msgstr "Upload billede"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:371
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Image library"
 msgstr "Billedbibliotek"
 
@@ -1557,9 +1557,9 @@ msgid "The library is empty. Creators can only use their own images and the read
 msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne billeder og de færdige fyld."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:378
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Image"
 msgstr "Billede"
 
@@ -1607,9 +1607,9 @@ msgstr "Ingen fonte er godkendt. Creators kan kun bruge standardfonten."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:464
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:514
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Font"
 msgstr "Font"
 
@@ -3146,6 +3146,9 @@ msgid "Logo chosen. Save the logo to use it."
 msgstr "Logoet er valgt. Gem logoet for at bruge det."
 
 #: src/Modules/Settings/Admin/SettingsPage.php:163
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Settings saved."
 msgstr "Indstillingerne er gemt."
 
@@ -3691,9 +3694,9 @@ msgstr "%1$s (mappet til %2$s)"
 
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:339
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:490
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Preview"
 msgstr "Forhåndsvis"
 
@@ -6893,19 +6896,22 @@ msgid "Try again"
 msgstr "Prøv igen"
 
 #: build/alerts-global-admin.js:1
+#: build/alerts-global-admin.js:7
 #: build/alerts-presets-admin.js:1
+#: build/alerts-presets-admin.js:7
 #: build/dashboard.js:1
+#: build/dashboard.js:21
 msgid "Dismiss"
 msgstr "Luk"
 
 #. translators: %s: size in MB, e.g. "10".
 #. translators: %s: size in MB, e.g. "5".
 #: build/alerts-global-admin.js:2
-#: build/alerts-global-admin.js:9
+#: build/alerts-global-admin.js:8
 #: build/alerts-presets-admin.js:2
-#: build/alerts-presets-admin.js:9
+#: build/alerts-presets-admin.js:8
 #: build/dashboard.js:22
-#: build/dashboard.js:29
+#: build/dashboard.js:28
 #, js-format
 msgid "The file is larger than %s MB."
 msgstr "Filen er større end %s MB."
@@ -6929,11 +6935,11 @@ msgid "Replace sound"
 msgstr "Erstat lyd"
 
 #: build/alerts-global-admin.js:3
-#: build/alerts-global-admin.js:13
+#: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:3
-#: build/alerts-presets-admin.js:13
+#: build/alerts-presets-admin.js:12
 #: build/dashboard.js:23
-#: build/dashboard.js:33
+#: build/dashboard.js:32
 msgid "Uploading…"
 msgstr "Uploader…"
 
@@ -7063,939 +7069,918 @@ msgstr "Standardlyd"
 msgid "Category: %s"
 msgstr "Kategori: %s"
 
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Align left"
-msgstr "Venstrejustér"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Center horizontally"
-msgstr "Centrér vandret"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Align right"
-msgstr "Højrejustér"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Align top"
-msgstr "Justér til top"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Center vertically"
-msgstr "Centrér lodret"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Align bottom"
-msgstr "Justér til bund"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Product image"
-msgstr "Produktbillede"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:7
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:27
-#: build/dashboard.js:35
-msgid "Secondary text"
-msgstr "Sekundær tekst"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:7
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:27
-#: build/dashboard.js:35
-msgid "Main text"
-msgstr "Hovedtekst"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Designer"
-msgstr "Designer"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
-msgstr "Træk boksene for at placere dem, og træk i nederste højre hjørne for at ændre deres størrelse. Shift- eller Ctrl-klik (eller Shift+Enter) vælger flere bokse; træk i en af dem for at flytte dem sammen, eller justér dem nedenfor. Lærredet er din browser source på 1920 × 1080. Forhåndsvisningen bruger eksempelværdier."
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Align"
-msgstr "Justering"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "Align to"
-msgstr "Justér i forhold til"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "The canvas"
-msgstr "Lærredet"
-
-#: build/alerts-global-admin.js:7
-#: build/alerts-presets-admin.js:7
-#: build/dashboard.js:27
-msgid "The selected elements"
-msgstr "De valgte elementer"
-
-#. translators: 1: number of elements, 2: their names.
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-#, js-format
-msgid "%1$d elements selected: %2$s."
-msgstr "%1$d elementer valgt: %2$s."
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Left (px)"
-msgstr "Venstre (px)"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Top (px)"
-msgstr "Top (px)"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Width (px)"
-msgstr "Bredde (px)"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Height (px)"
-msgstr "Højde (px)"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Image corner radius (px)"
-msgstr "Billedets hjørneradius (px)"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Show this element"
-msgstr "Vis dette element"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Keep the aspect ratio"
-msgstr "Bevar billedformatet"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Snap to grid"
-msgstr "Fastgør til gitter"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Grid size (px)"
-msgstr "Gitterstørrelse (px)"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Layout saved."
-msgstr "Layoutet blev gemt."
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:8
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:28
-#: build/dashboard.js:33
-#: build/dashboard.js:54
-msgid "Saving…"
-msgstr "Gemmer …"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Save layout"
-msgstr "Gem layout"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Reset to the default layout"
-msgstr "Nulstil til standardlayoutet"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Undo"
-msgstr "Fortryd"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Redo"
-msgstr "Gentag"
-
-#: build/alerts-global-admin.js:8
-#: build/alerts-presets-admin.js:8
-#: build/dashboard.js:28
-msgid "Play animation"
-msgstr "Afspil animation"
-
 #. translators: %d: pixels.
-#: build/alerts-global-admin.js:10
-#: build/alerts-presets-admin.js:10
-#: build/dashboard.js:30
+#: build/alerts-global-admin.js:9
+#: build/alerts-presets-admin.js:9
+#: build/dashboard.js:29
 #, js-format
 msgid "The image is wider or higher than %d pixels."
 msgstr "Billedet er bredere eller højere end %d pixels."
 
-#: build/alerts-global-admin.js:10
-#: build/alerts-presets-admin.js:10
-#: build/dashboard.js:30
+#: build/alerts-global-admin.js:9
+#: build/alerts-presets-admin.js:9
+#: build/dashboard.js:29
 msgid "You have the most images allowed. Delete one first."
 msgstr "Du har det højeste antal billeder. Slet et først."
 
-#: build/alerts-global-admin.js:10
-#: build/alerts-presets-admin.js:10
-#: build/dashboard.js:30
+#: build/alerts-global-admin.js:9
+#: build/alerts-presets-admin.js:9
+#: build/dashboard.js:29
 msgid "This image no longer exists."
 msgstr "Billedet findes ikke længere."
 
-#: build/alerts-global-admin.js:10
-#: build/alerts-presets-admin.js:10
-#: build/dashboard.js:30
+#: build/alerts-global-admin.js:9
+#: build/alerts-presets-admin.js:9
+#: build/dashboard.js:29
 msgid "Images for text"
 msgstr "Billeder til tekst"
 
 #. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: build/alerts-global-admin.js:11
-#: build/alerts-presets-admin.js:11
-#: build/dashboard.js:31
+#: build/alerts-global-admin.js:10
+#: build/alerts-presets-admin.js:10
+#: build/dashboard.js:30
 #, js-format
 msgid "Upload images to fill your alert text with. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high; at most %3$d images. An animated GIF keeps moving."
 msgstr "Upload billeder, som din alerttekst kan fyldes med. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde; højst %3$d billeder. En animeret GIF bliver ved med at bevæge sig."
 
 #. translators: %d: number of images.
-#: build/alerts-global-admin.js:12
-#: build/alerts-presets-admin.js:12
-#: build/dashboard.js:32
+#: build/alerts-global-admin.js:11
+#: build/alerts-presets-admin.js:11
+#: build/dashboard.js:31
 #, js-format
 msgid "The image library has %d more image you can choose."
 msgid_plural "The image library has %d more images you can choose."
 msgstr[0] "Billedbiblioteket har %d billede mere, du kan vælge."
 msgstr[1] "Billedbiblioteket har %d billeder mere, du kan vælge."
 
-#: build/alerts-global-admin.js:12
-#: build/alerts-presets-admin.js:12
-#: build/dashboard.js:32
+#: build/alerts-global-admin.js:11
+#: build/alerts-presets-admin.js:11
+#: build/dashboard.js:31
 msgid "Delete this image? Texts it fills show their colour again."
 msgstr "Slet dette billede? Tekster, det fylder, vises i deres farve igen."
 
-#: build/alerts-global-admin.js:12
-#: build/alerts-presets-admin.js:12
-#: build/dashboard.js:32
+#: build/alerts-global-admin.js:11
+#: build/alerts-presets-admin.js:11
+#: build/dashboard.js:31
 msgid "Image deleted."
 msgstr "Billedet er slettet."
 
 #. translators: %s: file name.
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 #, js-format
 msgid "Delete %s"
 msgstr "Slet %s"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
 #: build/alerts-presets-admin.js:16
-#: build/dashboard.js:33
+#: build/dashboard.js:32
 msgid "Delete"
 msgstr "Slet"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Image saved. Choose it in the image list above."
 msgstr "Billedet er gemt. Vælg det i billedlisten ovenfor."
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Delete an image to upload another."
 msgstr "Slet et billede for at uploade et nyt."
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Slide up"
 msgstr "Glid op"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Pop"
 msgstr "Pop"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Typewriter"
 msgstr "Skrivemaskine"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Split (from both sides)"
 msgstr "Split (fra begge sider)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Wave (letter by letter)"
 msgstr "Bølge (bogstav for bogstav)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Drop (letter by letter)"
 msgstr "Fald ned (bogstav for bogstav)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "3D spin"
 msgstr "3D-spin"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "3D roll"
 msgstr "3D-rul"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Blur in"
 msgstr "Sløret ind"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Wipe"
 msgstr "Tør over"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Shadow paint"
 msgstr "Skyggemaling"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Fade"
 msgstr "Fade"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Neon glow"
 msgstr "Neonglød"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Glow pulse"
 msgstr "Glødpuls"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Heartbeat"
 msgstr "Hjerteslag"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Glitch"
 msgstr "Glitch"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Dancing shadow"
 msgstr "Dansende skygge"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Melting"
 msgstr "Smeltende"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Wave"
 msgstr "Bølge"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "3D float"
 msgstr "3D-svæv"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Depth pulse"
 msgstr "Dybdepuls"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Breathe (needs a variable font)"
 msgstr "Ånde (kræver en variabel font)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "No effect"
 msgstr "Ingen effekt"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Slide down"
 msgstr "Glid ned"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Typewriter (delete)"
 msgstr "Skrivemaskine (slet)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Split (to both sides)"
 msgstr "Split (til begge sider)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Blur out"
 msgstr "Sløret ud"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Slow"
 msgstr "Langsom"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Fast"
 msgstr "Hurtig"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Normal"
 msgstr "Normal"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Gradient or pattern"
 msgstr "Gradient eller mønster"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Text colour (no fill)"
 msgstr "Tekstfarve (intet fyld)"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Aurora"
 msgstr "Nordlys"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Sunset"
 msgstr "Solnedgang"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Ocean"
 msgstr "Hav"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Fire"
 msgstr "Ild"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Gold"
 msgstr "Guld"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Candy stripes"
 msgstr "Slikstriber"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Matrix"
 msgstr "Matrix"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Rainbow"
 msgstr "Regnbue"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Glides sideways"
 msgstr "Glider til siden"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Falls down"
 msgstr "Falder ned"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Still"
 msgstr "Stille"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Counterclockwise"
 msgstr "Mod uret"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Clockwise"
 msgstr "Med uret"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Thanks for the merch!"
 msgstr "Tak for merchen!"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Pause example"
 msgstr "Sæt eksempel på pause"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Play example"
 msgstr "Afspil eksempel"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "In"
 msgstr "Ind"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Effect while shown"
 msgstr "Effekt mens den vises"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Out"
 msgstr "Ud"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Speed"
 msgstr "Hastighed"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Effect colour"
 msgstr "Effektfarve"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Text fill"
 msgstr "Tekstfyld"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Upload an image first"
 msgstr "Upload et billede først"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Choose an image…"
 msgstr "Vælg et billede…"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Your images"
 msgstr "Dine billeder"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Fill motion"
 msgstr "Fyldets bevægelse"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Placement"
 msgstr "Placering"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "In its text box"
 msgstr "I tekstboksen"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Around the image"
 msgstr "Rundt om billedet"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Direction"
 msgstr "Retning"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Glide speed"
 msgstr "Hastighed rundt"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Repeat the text all the way round"
 msgstr "Gentag teksten hele vejen rundt"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Shrink the text to fit the box"
 msgstr "Formindsk teksten, så den passer i boksen"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Let the box grow with the text"
 msgstr "Lad boksen vokse med teksten"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Fixed text size"
 msgstr "Fast tekststørrelse"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Left"
 msgstr "Venstre"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Right"
 msgstr "Højre"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Center"
 msgstr "Midten"
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
+#: build/dashboard.js:54
+msgid "Saving…"
+msgstr "Gemmer …"
+
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "All changes are saved."
 msgstr "Alle ændringer er gemt."
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Not saved: correct the marked fields."
 msgstr "Ikke gemt: ret de markerede felter."
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Not saved. Change a field to try again."
 msgstr "Ikke gemt. Ændr et felt for at prøve igen."
 
-#: build/alerts-global-admin.js:13
-#: build/alerts-presets-admin.js:13
-#: build/dashboard.js:33
+#: build/alerts-global-admin.js:12
+#: build/alerts-presets-admin.js:12
+#: build/dashboard.js:32
 msgid "Changes are saved automatically."
 msgstr "Ændringer gemmes automatisk."
 
 #. translators: 1: minimum, 2: maximum.
-#: build/alerts-global-admin.js:14
-#: build/alerts-presets-admin.js:14
-#: build/dashboard.js:34
+#: build/alerts-global-admin.js:13
+#: build/alerts-presets-admin.js:13
+#: build/dashboard.js:33
 #, js-format
 msgid "Enter a whole number from %1$d to %2$d."
 msgstr "Indtast et helt tal fra %1$d til %2$d."
 
-#: build/alerts-global-admin.js:14
-#: build/alerts-presets-admin.js:14
-#: build/dashboard.js:34
+#: build/alerts-global-admin.js:13
+#: build/alerts-presets-admin.js:13
+#: build/dashboard.js:33
 msgid "Enter a text for the alert."
 msgstr "Skriv en tekst til alerten."
 
 #. translators: %d: maximum number of characters.
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 #: build/dashboard.js:36
 #, js-format
 msgid "Use at most %d characters."
 msgstr "Brug højst %d tegn."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Alert text"
 msgstr "Alert-tekst"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Text"
 msgstr "Tekst"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category and $OrderNumber. $UserName is the username the customer entered at checkout, or \"Anonymous\"; customer names are never shown."
 msgstr "Variabler: $UserName, $Product, $Quantity, $Variation, $Category og $OrderNumber. $UserName er det brugernavn, kunden skrev ved checkout, eller \"Anonymous\"; kundens navn vises aldrig."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Secondary text"
+msgstr "Sekundær tekst"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Show the secondary text"
 msgstr "Vis den sekundære tekst"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Text style"
 msgstr "Tekststil"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Your font is no longer available. The overlay shows the default font until you choose another one."
 msgstr "Din font er ikke længere tilgængelig. Overlayet viser standardfonten, indtil du vælger en anden."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Fonts approved by Merch Dashboard. They are loaded from Google Fonts."
 msgstr "Fonte godkendt af Merch Dashboard. De hentes fra Google Fonts."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Default font"
 msgstr "Standardfont"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Font size (px)"
 msgstr "Skriftstørrelse (px)"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Font weight"
 msgstr "Skrifttykkelse"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Text color"
 msgstr "Tekstfarve"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Alignment"
 msgstr "Justering"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Text size in the boxes"
 msgstr "Tekststørrelse i boksene"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Fixed: the font size above; longer text is cut off. Shrink: the font size above is the largest, and long text gets smaller until it fits. Grow: the box keeps its width and grows with the text: down from its top, or up from its bottom edge when it is in the lower half of the screen (the image then moves up with the main text). Its height in the designer is the least."
 msgstr "Fast: skriftstørrelsen ovenfor; længere tekst bliver skåret af. Formindsk: skriftstørrelsen ovenfor er den største, og lang tekst bliver mindre, indtil den passer. Vokse: boksen beholder sin bredde og vokser med teksten: nedad fra toppen, eller opad fra bunden, når den er i den nederste halvdel af skærmen (billedet flytter så op sammen med hovedteksten). Dens højde i designeren er den mindste."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Text shadow"
 msgstr "Tekstskygge"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "For example 2px 2px 4px rgba(0,0,0,0.8). Leave empty for no shadow."
 msgstr "For eksempel 2px 2px 4px rgba(0,0,0,0.8). Lad feltet være tomt for ingen skygge."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Box and image"
 msgstr "Boks og billede"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Background color"
 msgstr "Baggrundsfarve"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Background opacity (%)"
 msgstr "Baggrundens dækkevne (%)"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Corner radius (px)"
 msgstr "Hjørneradius (px)"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Padding (px)"
 msgstr "Luft (px)"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Image quality (px)"
 msgstr "Billedkvalitet (px)"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "The size of the product image that is loaded. The box size is set in the designer."
 msgstr "Størrelsen på det produktbillede, der hentes. Boksens størrelse sættes i designeren."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Animations and text fill"
 msgstr "Animationer og tekstfyld"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "How each text comes in, moves while it is shown and goes out, and what fills its letters: the text colour, a gradient or pattern, or an image (an animated GIF keeps moving). The animation time below sets how long the in- and out-animations take. The example shows your choice; press \"Play animation\" in the designer to see it on the overlay."
 msgstr "Hvordan hver tekst kommer ind, bevæger sig mens den vises og forsvinder, og hvad der fylder dens bogstaver: tekstfarven, en gradient eller et mønster eller et billede (en animeret GIF bliver ved med at bevæge sig). Animationstiden nedenfor bestemmer, hvor lang tid ind- og ud-animationerne tager. Eksemplet viser dit valg; tryk på \"Afspil animation\" i designeren for at se det på overlayet."
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Main text"
+msgstr "Hovedtekst"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Timing"
 msgstr "Timing"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Show the alert as long as its sound plays"
 msgstr "Vis alerten så længe lyden spiller"
 
-#: build/alerts-global-admin.js:15
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:35
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
 msgid "Just add a sound: an alert with a sound is shown for exactly as long as the sound lasts, then fades out. Alerts without a sound use the display time below."
 msgstr "Tilføj bare en lyd: en alert med lyd vises præcis så længe lyden varer og toner derefter ud. Alerts uden lyd bruger visningstiden nedenfor."
 
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Display time (ms)"
+msgstr "Visningstid (ms)"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Animation time (ms)"
+msgstr "Animationstid (ms)"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Align left"
+msgstr "Venstrejustér"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Center horizontally"
+msgstr "Centrér vandret"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Align right"
+msgstr "Højrejustér"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Align top"
+msgstr "Justér til top"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Center vertically"
+msgstr "Centrér lodret"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Align bottom"
+msgstr "Justér til bund"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Product image"
+msgstr "Produktbillede"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Designer"
+msgstr "Designer"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
+msgstr "Træk boksene for at placere dem, og træk i nederste højre hjørne for at ændre deres størrelse. Shift- eller Ctrl-klik (eller Shift+Enter) vælger flere bokse; træk i en af dem for at flytte dem sammen, eller justér dem nedenfor. Lærredet er din browser source på 1920 × 1080. Forhåndsvisningen bruger eksempelværdier."
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Align"
+msgstr "Justering"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "Align to"
+msgstr "Justér i forhold til"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "The canvas"
+msgstr "Lærredet"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:34
+msgid "The selected elements"
+msgstr "De valgte elementer"
+
+#. translators: 1: number of elements, 2: their names.
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15
 #: build/dashboard.js:35
-msgid "Display time (ms)"
-msgstr "Visningstid (ms)"
+#, js-format
+msgid "%1$d elements selected: %2$s."
+msgstr "%1$d elementer valgt: %2$s."
 
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15
 #: build/dashboard.js:35
-msgid "Animation time (ms)"
-msgstr "Animationstid (ms)"
+msgid "Left (px)"
+msgstr "Venstre (px)"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Top (px)"
+msgstr "Top (px)"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Width (px)"
+msgstr "Bredde (px)"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Height (px)"
+msgstr "Højde (px)"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Image corner radius (px)"
+msgstr "Billedets hjørneradius (px)"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Show this element"
+msgstr "Vis dette element"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Keep the aspect ratio"
+msgstr "Bevar billedformatet"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Snap to grid"
+msgstr "Fastgør til gitter"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Grid size (px)"
+msgstr "Gitterstørrelse (px)"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Reset to the default layout"
+msgstr "Nulstil til standardlayoutet"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Undo"
+msgstr "Fortryd"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Redo"
+msgstr "Gentag"
+
+#: build/alerts-global-admin.js:15
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:35
+msgid "Play animation"
+msgstr "Afspil animation"
 
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15

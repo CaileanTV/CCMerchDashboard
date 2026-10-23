@@ -144,6 +144,8 @@ interface Props {
 	readonly onDraft?: ( values: OverlaySettings ) => void;
 	/** Images the texts can be filled with (step 25.6.10); null when not available. */
 	readonly images?: AlertsImages | null;
+	/** Shows a message in the section's toast stack; without it, the form has its own toast. */
+	readonly onNotify?: ( message: string ) => void;
 }
 
 /**
@@ -161,6 +163,7 @@ interface Props {
  * @param props.saveSlot     Where the save status is shown.
  * @param props.onDraft      Called with the unsaved values.
  * @param props.images       Images the texts can be filled with.
+ * @param props.onNotify     Shows a message in the section's toasts.
  */
 export function OverlaySettingsForm( {
 	settings,
@@ -170,6 +173,7 @@ export function OverlaySettingsForm( {
 	saveSlot = null,
 	onDraft,
 	images = null,
+	onNotify,
 }: Props ) {
 	const id = useId();
 	const [ values, setValues ] = useState( settings );
@@ -181,6 +185,7 @@ export function OverlaySettingsForm( {
 	const [ status, setStatus ] = useState< SaveStatus >( 'idle' );
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
+	const notify = onNotify ?? setToast;
 	// What the server has, the values now, whether a save runs and the waiting save.
 	const saved = useRef( JSON.stringify( settings ) );
 	const latest = useRef( values );
@@ -261,6 +266,7 @@ export function OverlaySettingsForm( {
 
 		onSaved( result.data );
 		setStatus( 'saved' );
+		notify( __( 'Settings saved.', 'merchboard' ) );
 	};
 
 	useEffect( () => {
@@ -658,7 +664,7 @@ export function OverlaySettingsForm( {
 					<AlertImagesCard
 						images={ images }
 						onSaved={ onSaved }
-						notify={ setToast }
+						notify={ notify }
 					/>
 				) }
 
@@ -704,7 +710,9 @@ export function OverlaySettingsForm( {
 
 			{ saveSlot === null ? actions : createPortal( actions, saveSlot ) }
 
-			<Toast message={ toast } onDismiss={ dismissToast } />
+			{ onNotify === undefined && (
+				<Toast message={ toast } onDismiss={ dismissToast } />
+			) }
 		</form>
 	);
 }

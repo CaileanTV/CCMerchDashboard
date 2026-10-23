@@ -53,6 +53,7 @@ import {
 import type { Alignment, AlignTarget } from './designer';
 import { useHistory } from './history';
 import { useOverlayApi } from './overlay-api-context';
+import { AUTOSAVE_DELAY } from './OverlaySettingsForm';
 
 /**
  * Whether a key press is undo (Ctrl/Cmd+Z) or redo (Ctrl/Cmd+Shift+Z, or
@@ -287,6 +288,8 @@ interface Props {
 	 * 25.9.5); nothing is saved.
 	 */
 	readonly readOnly?: boolean;
+	/** Shows "saved" in the section's one toast; without it, the designer has its own. */
+	readonly onNotify?: ( message: string ) => void;
 }
 
 /**
@@ -309,6 +312,7 @@ interface Props {
  * @param props.onSaved    Called with the answer after saving.
  * @param props.images     Images the texts can be filled with.
  * @param props.readOnly   Only the canvas, without editing.
+ * @param props.onNotify   Shows a message in the section's toast.
  */
 export function OverlayDesigner( {
 	layout: saved,
@@ -318,6 +322,7 @@ export function OverlayDesigner( {
 	onSaved,
 	images = null,
 	readOnly = false,
+	onNotify,
 }: Props ) {
 	const look = preview ?? settings;
 	const fillImages = [
@@ -358,10 +363,28 @@ export function OverlayDesigner( {
 	const [ imageShift, setImageShift ] = useState( 0 );
 	// The last selected box is the one the properties show.
 	const selected = selection[ selection.length - 1 ] ?? 'main_text';
-	const [ busy, setBusy ] = useState( false );
 	const [ saveError, setSaveError ] = useState< ApiError | null >( null );
-	const [ toast, setToast ] = useState< string | null >( null );
-	const dismissToast = useCallback( () => setToast( null ), [] );
+	const [ ownToast, setOwnToast ] = useState< string | null >( null );
+	const dismissToast = useCallback( () => setOwnToast( null ), [] );
+	const notify = onNotify ?? setOwnToast;
+	// What the server has, the layout now, whether a save runs and the waiting save.
+	const savedLayout = useRef( '' );
+	const latestLayout = useRef( saved );
+	const saving = useRef( false );
+	const timer = useRef< number | null >( null );
+	const saveRef = useRef< () => Promise< void > >( async () => undefined );
+	const [ settled, setSettled ] = useState( 0 );
+
+	const scheduleSave = useCallback( ( delay: number ) => {
+		if ( timer.current !== null ) {
+			window.clearTimeout( timer.current );
+		}
+
+		timer.current = window.setTimeout( () => {
+			timer.current = null;
+			void saveRef.current();
+		}, delay );
+	}, [] );
 
 	const box = layout.elements[ selected ];
 	const setBox = ( element: LayoutElement, next: LayoutBox ) =>
@@ -482,6 +505,8 @@ export function OverlayDesigner( {
 	const end = () => {
 		if ( drag.current !== null ) {
 			history.settle();
+			// A drag is saved when the box is let go.
+			setSettled( ( count ) => count + 1 );
 		}
 
 		drag.current = null;
@@ -523,30 +548,93 @@ export function OverlayDesigner( {
 		return () => window.removeEventListener( 'keydown', onKey );
 	}, [ undo, redo, readOnly ] );
 
-	const save = async () => {
-		setBusy( true );
-		setSaveError( null );
-		// The overlay settings decide whether the secondary text is shown.
-		const result = await api.update( {
-			layout: withBox( layout, 'secondary_text', {
-				...layout.elements.secondary_text,
-				visible: settings.show_secondary,
-			} ),
+	// The layout as it is saved: the overlay settings decide whether the secondary text is shown.
+	const payload = ( current: OverlayLayout ): OverlayLayout =>
+		withBox( current, 'secondary_text', {
+			...current.elements.secondary_text,
+			visible: settings.show_secondary,
 		} );
-		setBusy( false );
+
+	// Saves the current layout (the owner's wish 2026-10-23: like the
+	// settings, every change is saved on its own, a moment after the last
+	// one; a drag is saved when the box is let go).
+	saveRef.current = async () => {
+		const current = payload( latestLayout.current );
+		const key = JSON.stringify( current );
+
+		if (
+			readOnly ||
+			key === savedLayout.current ||
+			drag.current !== null
+		) {
+			return;
+		}
+
+		// One save at a time; the next one starts when this one has ended.
+		if ( saving.current ) {
+			scheduleSave( AUTOSAVE_DELAY );
+			return;
+		}
+
+		saving.current = true;
+		setSaveError( null );
+		const result = await api.update( { layout: current } );
+		saving.current = false;
 
 		if ( ! result.ok ) {
 			setSaveError( result.error );
 			return;
 		}
 
-		if ( result.data.overlay !== null ) {
+		savedLayout.current = key;
+
+		// The server's layout (normalized) only when nothing changed meanwhile.
+		if (
+			result.data.overlay !== null &&
+			JSON.stringify( payload( latestLayout.current ) ) === key
+		) {
+			savedLayout.current = JSON.stringify(
+				payload( result.data.overlay.layout )
+			);
 			history.live( result.data.overlay.layout );
 		}
 
 		onSaved( result.data );
-		setToast( __( 'Layout saved.', 'merchboard' ) );
+		notify( __( 'Settings saved.', 'merchboard' ) );
 	};
+
+	latestLayout.current = layout;
+
+	// The saved layout is what the designer started with.
+	useEffect( () => {
+		savedLayout.current = JSON.stringify( payload( saved ) );
+		// Only once: later the saves keep it up to date.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [] );
+
+	useEffect( () => {
+		if (
+			! readOnly &&
+			drag.current === null &&
+			savedLayout.current !== '' &&
+			JSON.stringify( payload( layout ) ) !== savedLayout.current
+		) {
+			scheduleSave( AUTOSAVE_DELAY );
+		}
+		// The secondary text's visibility is saved by the settings form.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ layout, settled, readOnly, scheduleSave ] );
+
+	// Leaving the page section saves a change that still waits.
+	useEffect(
+		() => () => {
+			if ( timer.current !== null ) {
+				window.clearTimeout( timer.current );
+				void saveRef.current();
+			}
+		},
+		[]
+	);
 
 	const percent = ( value: number, of: number ) =>
 		`${ ( value / of ) * 100 }%`;
@@ -1037,11 +1125,6 @@ export function OverlayDesigner( {
 						</div>
 
 						<div className="merchboard-alerts__actions">
-							<Button onClick={ save } isBusy={ busy }>
-								{ busy
-									? __( 'Saving…', 'merchboard' )
-									: __( 'Save layout', 'merchboard' ) }
-							</Button>
 							<Button
 								variant="secondary"
 								onClick={ () => setLayout( DEFAULT_LAYOUT ) }
@@ -1080,7 +1163,9 @@ export function OverlayDesigner( {
 				) }
 			</div>
 
-			<Toast message={ toast } onDismiss={ dismissToast } />
+			{ onNotify === undefined && (
+				<Toast message={ ownToast } onDismiss={ dismissToast } />
+			) }
 		</Card>
 	);
 }
