@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-22T22:41:13+00:00\n"
+"POT-Creation-Date: 2026-10-23T06:58:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -324,450 +324,462 @@ msgid "Alert font removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:125
-msgid "Sound added to the alert sound library"
+msgid "Global alert overlay set up"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:126
-msgid "Sound removed from the alert sound library"
+msgid "Global alert overlay URL replaced"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:127
-msgid "Sound of the alert sound library renamed"
+msgid "Global alert overlay switched on or off"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:128
-msgid "Creator's alert sound limits changed"
+msgid "Sound added to the alert sound library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:129
-msgid "Image added to the alert image library"
+msgid "Sound removed from the alert sound library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:130
-msgid "Image removed from the alert image library"
+msgid "Sound of the alert sound library renamed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:131
-msgid "Image of the alert image library renamed"
+msgid "Creator's alert sound limits changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:132
-msgid "Twitch app of the alert chatbot saved"
+msgid "Image added to the alert image library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:133
-msgid "Twitch app of the alert chatbot removed"
+msgid "Image removed from the alert image library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:134
-msgid "Chatbot account connected"
+msgid "Image of the alert image library renamed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:135
-msgid "Chatbot account disconnected"
+msgid "Twitch app of the alert chatbot saved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:136
-msgid "Chat message format changed"
+msgid "Twitch app of the alert chatbot removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:137
-msgid "Chatbot added to a creator's channel"
+msgid "Chatbot account connected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:138
-msgid "Chatbot removed from a creator's channel"
+msgid "Chatbot account disconnected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:139
-msgid "Chat message sent as the bot"
+msgid "Chat message format changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:140
-msgid "Kick app of the alert chatbot saved"
+msgid "Chatbot added to a creator's channel"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:141
-msgid "Kick app of the alert chatbot removed"
+msgid "Chatbot removed from a creator's channel"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:142
-msgid "YouTube app of the alert chatbot saved"
+msgid "Chat message sent as the bot"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:143
-msgid "YouTube app of the alert chatbot removed"
+msgid "Kick app of the alert chatbot saved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:144
-msgid "Privacy policy and terms of the YouTube chatbot saved"
+msgid "Kick app of the alert chatbot removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:145
+msgid "YouTube app of the alert chatbot saved"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:146
+msgid "YouTube app of the alert chatbot removed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:147
+msgid "Privacy policy and terms of the YouTube chatbot saved"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:148
 msgid "Privacy policy and terms of the YouTube chatbot accepted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:236
+#: src/Modules/Admin/AuditLogFormatter.php:239
 msgid "WordPress user: none"
-msgstr ""
-
-#. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:238
-#, php-format
-msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:241
 #, php-format
-msgid "Triggered by: %s"
+msgid "WordPress user: %s"
 msgstr ""
 
-#. translators: %s: creator status.
+#. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:244
 #, php-format
-msgid "Status: %s"
+msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
 #: src/Modules/Admin/AuditLogFormatter.php:247
 #, php-format
+msgid "Status: %s"
+msgstr ""
+
+#. translators: %s: creator status.
+#: src/Modules/Admin/AuditLogFormatter.php:250
+#, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:250
+#: src/Modules/Admin/AuditLogFormatter.php:253
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:253
+#: src/Modules/Admin/AuditLogFormatter.php:256
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:255
+#: src/Modules/Admin/AuditLogFormatter.php:258
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:258
+#: src/Modules/Admin/AuditLogFormatter.php:261
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:264
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:262
+#: src/Modules/Admin/AuditLogFormatter.php:265
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:266
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:264
+#: src/Modules/Admin/AuditLogFormatter.php:267
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:266
+#: src/Modules/Admin/AuditLogFormatter.php:269
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:273
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:276
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:275
+#: src/Modules/Admin/AuditLogFormatter.php:278
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:275
+#: src/Modules/Admin/AuditLogFormatter.php:278
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:278
+#: src/Modules/Admin/AuditLogFormatter.php:281
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:284
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:287
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:287
+#: src/Modules/Admin/AuditLogFormatter.php:290
 msgid "Previous creator: none"
-msgstr ""
-
-#. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:289
-#, php-format
-msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:292
 #, php-format
+msgid "Previous creator: %s"
+msgstr ""
+
+#. translators: %s: creator name or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:295
+#, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:298
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:301
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:304
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:303
+#: src/Modules/Admin/AuditLogFormatter.php:306
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:306
+#: src/Modules/Admin/AuditLogFormatter.php:309
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:309
+#: src/Modules/Admin/AuditLogFormatter.php:312
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:312
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:317
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:317
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:317
+#: src/Modules/Admin/AuditLogFormatter.php:320
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:320
+#: src/Modules/Admin/AuditLogFormatter.php:323
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:323
+#: src/Modules/Admin/AuditLogFormatter.php:326
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:324
-msgid "WooCommerce order: deleted"
-msgstr ""
-
-#. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:327
-#, php-format
-msgid "Ledger rows deleted: %s"
+msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:330
 #, php-format
-msgid "Cycle events deleted: %s"
+msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:333
 #, php-format
-msgid "Stored tax rows deleted: %s"
+msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:336
 #, php-format
+msgid "Stored tax rows deleted: %s"
+msgstr ""
+
+#. translators: %s: number of rows.
+#: src/Modules/Admin/AuditLogFormatter.php:339
+#, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:339
+#: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:380
+#: src/Modules/Admin/AuditLogFormatter.php:383
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:385
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:384
+#: src/Modules/Admin/AuditLogFormatter.php:387
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:400
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:398
+#: src/Modules/Admin/AuditLogFormatter.php:401
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:399
+#: src/Modules/Admin/AuditLogFormatter.php:402
 #: build/dashboard.js:35
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:403
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:401
+#: src/Modules/Admin/AuditLogFormatter.php:404
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:402
+#: src/Modules/Admin/AuditLogFormatter.php:405
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:406
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:413
-#: src/Modules/Admin/AuditLogFormatter.php:439
-#: src/Modules/Admin/AuditLogFormatter.php:498
+#: src/Modules/Admin/AuditLogFormatter.php:416
+#: src/Modules/Admin/AuditLogFormatter.php:442
+#: src/Modules/Admin/AuditLogFormatter.php:501
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:426
+#: src/Modules/Admin/AuditLogFormatter.php:429
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:41
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:427
+#: src/Modules/Admin/AuditLogFormatter.php:430
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:41
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:428
+#: src/Modules/Admin/AuditLogFormatter.php:431
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:41
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:429
+#: src/Modules/Admin/AuditLogFormatter.php:432
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:41
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:457
+#: src/Modules/Admin/AuditLogFormatter.php:460
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:481
+#: src/Modules/Admin/AuditLogFormatter.php:484
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:482
+#: src/Modules/Admin/AuditLogFormatter.php:485
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:483
+#: src/Modules/Admin/AuditLogFormatter.php:486
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:484
+#: src/Modules/Admin/AuditLogFormatter.php:487
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:485
-#: src/Modules/Admin/AuditLogFormatter.php:633
+#: src/Modules/Admin/AuditLogFormatter.php:488
+#: src/Modules/Admin/AuditLogFormatter.php:636
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:486
+#: src/Modules/Admin/AuditLogFormatter.php:489
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:487
-#: src/Modules/Admin/AuditLogFormatter.php:693
+#: src/Modules/Admin/AuditLogFormatter.php:490
+#: src/Modules/Admin/AuditLogFormatter.php:696
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:37
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:488
+#: src/Modules/Admin/AuditLogFormatter.php:491
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:517
+#: src/Modules/Admin/AuditLogFormatter.php:520
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:532
+#: src/Modules/Admin/AuditLogFormatter.php:535
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -776,7 +788,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:601
+#: src/Modules/Admin/AuditLogFormatter.php:604
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -785,87 +797,87 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:601
+#: src/Modules/Admin/AuditLogFormatter.php:604
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:611
+#: src/Modules/Admin/AuditLogFormatter.php:614
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:612
+#: src/Modules/Admin/AuditLogFormatter.php:615
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:613
+#: src/Modules/Admin/AuditLogFormatter.php:616
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:614
+#: src/Modules/Admin/AuditLogFormatter.php:617
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:615
+#: src/Modules/Admin/AuditLogFormatter.php:618
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:616
+#: src/Modules/Admin/AuditLogFormatter.php:619
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:617
+#: src/Modules/Admin/AuditLogFormatter.php:620
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:618
+#: src/Modules/Admin/AuditLogFormatter.php:621
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:619
+#: src/Modules/Admin/AuditLogFormatter.php:622
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:620
+#: src/Modules/Admin/AuditLogFormatter.php:623
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:621
+#: src/Modules/Admin/AuditLogFormatter.php:624
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:634
+#: src/Modules/Admin/AuditLogFormatter.php:637
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:646
+#: src/Modules/Admin/AuditLogFormatter.php:649
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:647
+#: src/Modules/Admin/AuditLogFormatter.php:650
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:659
+#: src/Modules/Admin/AuditLogFormatter.php:662
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:660
+#: src/Modules/Admin/AuditLogFormatter.php:663
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:661
+#: src/Modules/Admin/AuditLogFormatter.php:664
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:693
+#: src/Modules/Admin/AuditLogFormatter.php:696
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
@@ -875,15 +887,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:712
+#: src/Modules/Admin/AuditLogFormatter.php:715
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:713
+#: src/Modules/Admin/AuditLogFormatter.php:716
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:714
+#: src/Modules/Admin/AuditLogFormatter.php:717
 msgid "social links"
 msgstr ""
 
@@ -1156,7 +1168,7 @@ msgid "Settings"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:152
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:153
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:194
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:256
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:304
@@ -1190,12 +1202,12 @@ msgstr ""
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:73
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:74
 msgid "Merch Dashboard Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:74
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:169
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:75
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:171
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
 #: src/Modules/Alerts/Admin/OrderLogTab.php:200
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
@@ -1207,33 +1219,33 @@ msgstr ""
 msgid "Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:108
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
 msgid "The Google Fonts API key was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:109
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
 msgid "The Google Fonts API key was removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:110
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
 msgid "The Google Fonts catalogue was fetched."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
 msgid "The font was approved. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
 msgid "The font was removed. Overlays that used it show the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
 msgid "Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:118
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:196
@@ -1245,208 +1257,223 @@ msgstr ""
 msgid "You are not allowed to change these settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
 msgid "Google did not accept the API key. Check the key and try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
 msgid "Save a Google Fonts API key first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
 msgid "Google Fonts could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
 msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 msgid "The sound was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
 msgid "The sound got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
 msgid "The sound is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
 msgid "The sound was removed. Overlays that used it play their other sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
+#: build/alerts-global-admin.js:3
+#: build/alerts-global-admin.js:10
 #: build/dashboard.js:23
 #: build/dashboard.js:30
 msgid "No file was received. Try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
+#: build/alerts-global-admin.js:3
 #: build/dashboard.js:23
 msgid "Choose an MP3, WAV or OGG file."
 msgstr ""
 
 #. translators: %s: the largest file, e.g. "10 MB".
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
 #, php-format
 msgid "The file is larger than %s."
 msgstr ""
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
+#: build/alerts-global-admin.js:3
 #: build/dashboard.js:23
 #, php-format,js-format
 msgid "The sound is longer than %d seconds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
+#: build/alerts-global-admin.js:3
 #: build/dashboard.js:23
 msgid "The file could not be read as a sound. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
 msgid "The library is full. Remove a sound first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
 msgid "The image was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
 msgid "The image got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
 msgid "The image was removed. Texts it filled show their colour again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
 msgid "The image is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: build/alerts-global-admin.js:10
 #: build/dashboard.js:30
 msgid "Choose a PNG, JPG, GIF or WebP image."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
 msgid "The file is too large."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
 msgid "The image is too big. Choose a smaller image."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+#: build/alerts-global-admin.js:10
 #: build/dashboard.js:30
 msgid "The file could not be read as an image. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
 msgid "The library is full. Remove an image first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:226
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:143
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:239
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
 msgid "A technical error occurred. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:173
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:175
 msgid "Order log"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:176
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:179
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Global overlay"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:182
 msgid "Fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:179
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:185
+#: build/alerts-global-admin.js:5
 #: build/dashboard.js:25
 msgid "Sounds"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:183
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:189
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:64
 msgid "Chatbot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:187
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:193
 msgid "Images"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:191
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:197
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
 msgid "YouTube terms"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:218
 msgid "The order log could not be read. Please try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:247
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:260
 msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in the browser source, which sends the viewer's IP address to Google (ADR-067)."
 msgstr ""
 
 #. translators: 1: size, e.g. "10 MB", 2: seconds, 3: number of sounds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:264
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:277
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s and %2$d seconds each (Settings → Alerts); at most %3$d sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:271
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:284
 msgid "Add a sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:275
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:288
 msgid "Sound file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:277
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:337
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:290
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:350
 msgid "Name (optional)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:339
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
 msgid "Creators see this name. Without a name, the file name is used."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:280
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:293
+#: build/alerts-global-admin.js:3
 #: build/dashboard.js:23
 msgid "Upload sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:285
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:298
 msgid "Sound library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:288
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:301
 msgid "The library is empty. Creators can only use their own sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:381
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:399
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:305
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:394
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:412
 msgid "Name"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:305
 msgid "Length"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:305
 msgid "Play"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:292
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:305
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:451
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:501
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
@@ -1456,142 +1483,146 @@ msgid "Actions"
 msgstr ""
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:300
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:313
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:308
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:362
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:442
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:321
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:375
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:455
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 msgid "Remove"
 msgstr ""
 
 #. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:324
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:337
 #, php-format
 msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:344
 msgid "Add an image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:335
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:348
 msgid "Image file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:340
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:353
+#: build/alerts-global-admin.js:13
 #: build/dashboard.js:33
 msgid "Upload image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:358
+#: build/alerts-global-admin.js:13
 #: build/dashboard.js:33
 msgid "Image library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:348
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:361
 msgid "The library is empty. Creators can only use their own images and the ready-made fills."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
+#: build/alerts-global-admin.js:13
 #: build/dashboard.js:33
 msgid "Image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:352
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
 msgid "Size"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:383
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:401
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:396
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:414
 msgid "Rename"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:409
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:422
 msgid "Google Fonts API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:410
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:423
 msgid "A key is saved. It is never shown again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:410
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:423
 msgid "No key is saved. The key is only needed to fetch the catalogue."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:414
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:427
 msgid "API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:416
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:429
 msgid "Save key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:432
 msgid "Remove key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:431
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:444
 msgid "Approved fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:434
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:447
 msgid "No fonts are approved. Creators can only use the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:451
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:501
+#: build/alerts-global-admin.js:15
 #: build/dashboard.js:35
 msgid "Font"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:488
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:451
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:501
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:455
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:468
 msgid "Google Fonts catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:459
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:472
 msgid "Fetch the catalogue again"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:459
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:472
 msgid "Fetch the catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:468
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:481
 msgid "Search fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:470
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:483
 msgid "Search"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:477
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:490
 msgid "No fonts match the search."
 msgstr ""
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:484
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:497
 #, php-format
 msgid "At most %d fonts, the most popular first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:494
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:507
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:496
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:509
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -2506,6 +2537,14 @@ msgstr ""
 msgid "Empty for the site-wide limit; else 1 second to 60 minutes."
 msgstr ""
 
+#: src/Modules/Alerts/Admin/GlobalOverlayTab.php:48
+msgid "An overlay of its own for a browser source in OBS, independent of every creator: it shows the alerts of all creators, with its own URL, settings, design, sounds and images. Nothing here changes a creator's overlay."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/GlobalOverlayTab.php:51
+msgid "The global overlay could not be loaded. Please try again later."
+msgstr ""
+
 #: src/Modules/Alerts/Admin/OrderLogTab.php:144
 msgid "No orders with alerts in this period. Alerts are recorded when an order with a creator's products is paid (processing or completed) while alerts are switched on."
 msgstr ""
@@ -2716,7 +2755,8 @@ msgid "Save and publish"
 msgstr ""
 
 #: src/Modules/Alerts/Chatbot/CreatorChatbot.php:208
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:264
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:181
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:279
 msgid "Test product"
 msgstr ""
 
@@ -2742,35 +2782,51 @@ msgstr ""
 msgid "History"
 msgstr ""
 
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:119
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:146
+#: src/Modules/Alerts/Rest/MeAlertsController.php:205
+msgid "The overlay settings are invalid."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:125
+#: src/Modules/Alerts/Rest/MeAlertsController.php:211
+msgid "The font is not available."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:192
+msgid "There is no order with alerts yet."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:221
+#: src/Modules/Alerts/Rest/MeAlertsController.php:267
+msgid "The sound was not saved."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:266
+#: src/Modules/Alerts/Rest/MeAlertsController.php:312
+msgid "The image was not saved."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:293
+#: src/Modules/Alerts/Rest/MeAlertsController.php:340
+msgid "The image was not deleted."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:354
+msgid "The global overlay is not set up yet."
+msgstr ""
+
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:87
 #: src/Modules/Alerts/Overlay/OverlayFeedController.php:91
 msgid "Too many requests. Please try again later."
 msgstr ""
 
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:110
 #: src/Modules/Alerts/Overlay/OverlayFeedController.php:114
 msgid "This overlay does not exist."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsController.php:204
-msgid "The overlay settings are invalid."
-msgstr ""
-
-#: src/Modules/Alerts/Rest/MeAlertsController.php:210
-msgid "The font is not available."
-msgstr ""
-
-#: src/Modules/Alerts/Rest/MeAlertsController.php:266
-msgid "The sound was not saved."
-msgstr ""
-
-#: src/Modules/Alerts/Rest/MeAlertsController.php:311
-msgid "The image was not saved."
-msgstr ""
-
-#: src/Modules/Alerts/Rest/MeAlertsController.php:339
-msgid "The image was not deleted."
-msgstr ""
-
-#: src/Modules/Alerts/Rest/MeAlertsController.php:504
+#: src/Modules/Alerts/Rest/MeAlertsController.php:521
 #: src/Modules/Alerts/Rest/MeAlertsHistoryController.php:291
 msgid "Set up your overlay first."
 msgstr ""
@@ -6678,6 +6734,7 @@ msgstr ""
 
 #: templates/dashboard/no-access.php:39
 #: templates/dashboard/shell.php:54
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Log out"
 msgstr ""
@@ -6699,44 +6756,1117 @@ msgstr ""
 msgid "Please try again later."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
+#: build/dashboard.js:1
+msgid "Success:"
+msgstr ""
+
+#: build/alerts-global-admin.js:1
+#: build/dashboard.js:1
+msgid "Warning:"
+msgstr ""
+
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Error:"
 msgstr ""
 
+#: build/alerts-global-admin.js:1
+#: build/dashboard.js:1
+msgid "Note:"
+msgstr ""
+
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Your session has expired."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Please log in again to continue."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Log in"
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "You do not have access to this."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "If you think this is a mistake, please contact us."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "This could not be found."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Something went wrong."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Please try again in a moment."
 msgstr ""
 
+#: build/alerts-global-admin.js:1
 #: build/dashboard.js:1
 msgid "Try again"
+msgstr ""
+
+#: build/alerts-global-admin.js:1
+#: build/dashboard.js:1
+msgid "Dismiss"
+msgstr ""
+
+#. translators: %s: size in MB, e.g. "10".
+#. translators: %s: size in MB, e.g. "5".
+#: build/alerts-global-admin.js:2
+#: build/alerts-global-admin.js:9
+#: build/dashboard.js:22
+#: build/dashboard.js:29
+#, js-format
+msgid "The file is larger than %s MB."
+msgstr ""
+
+#: build/alerts-global-admin.js:3
+#: build/dashboard.js:23
+msgid "This category is no longer yours."
+msgstr ""
+
+#: build/alerts-global-admin.js:3
+#: build/dashboard.js:23
+msgid "This sound is no longer in the library. Choose another one."
+msgstr ""
+
+#: build/alerts-global-admin.js:3
+#: build/dashboard.js:23
+msgid "Replace sound"
+msgstr ""
+
+#: build/alerts-global-admin.js:3
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:23
+#: build/dashboard.js:33
+msgid "Uploading…"
+msgstr ""
+
+#: build/alerts-global-admin.js:3
+#: build/dashboard.js:23
+msgid "No sound."
+msgstr ""
+
+#: build/alerts-global-admin.js:3
+#: build/dashboard.js:23
+msgid "No sound: the default sound plays."
+msgstr ""
+
+#. translators: 1: file name, 2: length in seconds.
+#: build/alerts-global-admin.js:4
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:24
+#: build/dashboard.js:25
+#, js-format
+msgid "%1$s (%2$d s)"
+msgstr ""
+
+#: build/alerts-global-admin.js:4
+#: build/dashboard.js:24
+msgid "Sound from the library"
+msgstr ""
+
+#: build/alerts-global-admin.js:4
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:24
+#: build/dashboard.js:25
+msgid "Sound saved."
+msgstr ""
+
+#: build/alerts-global-admin.js:4
+#: build/dashboard.js:24
+msgid "Your own sound"
+msgstr ""
+
+#: build/alerts-global-admin.js:4
+#: build/dashboard.js:24
+msgid "Choose a sound…"
+msgstr ""
+
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:25
+msgid "Sound saved. It plays with the next alert."
+msgstr ""
+
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:25
+msgid "Sound saved. Switch on \"Play sounds\" to hear it in the overlay."
+msgstr ""
+
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:25
+msgid "Delete this sound?"
+msgstr ""
+
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:25
+msgid "Sound deleted."
+msgstr ""
+
+#: build/alerts-global-admin.js:5
+#: build/dashboard.js:25
+msgid "Delete sound"
+msgstr ""
+
+#. translators: 1: size in MB, 2: seconds.
+#: build/alerts-global-admin.js:6
+#: build/dashboard.js:26
+#, js-format
+msgid "Play a sound with each alert. MP3, WAV or OGG, at most %1$s MB and %2$d seconds. Products in a category with its own sound play that sound; all others play the default sound."
+msgstr ""
+
+#: build/alerts-global-admin.js:6
+#: build/dashboard.js:26
+msgid "Do you need larger or longer sounds? Contact us to ask for other limits."
+msgstr ""
+
+#: build/alerts-global-admin.js:6
+#: build/dashboard.js:26
+msgid "The browser source plays the sounds automatically, also after a restart. The sound goes to the browser source's audio in the audio mixer of your streaming software; turn on audio monitoring there to hear it yourself. A normal browser tab may block sounds unless you allow autoplay for this site in the browser's site settings."
+msgstr ""
+
+#: build/alerts-global-admin.js:6
+#: build/dashboard.js:26
+msgid "Sounds are off, so your overlay plays no sound. Switch on \"Play sounds\"."
+msgstr ""
+
+#: build/alerts-global-admin.js:6
+#: build/dashboard.js:26
+msgid "Play sounds"
+msgstr ""
+
+#: build/alerts-global-admin.js:6
+#: build/dashboard.js:26
+msgid "Default sound"
+msgstr ""
+
+#. translators: %s: product category.
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+#, js-format
+msgid "Category: %s"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Align left"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Center horizontally"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Align right"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Align top"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Center vertically"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Align bottom"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Product image"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:27
+#: build/dashboard.js:35
+msgid "Secondary text"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:27
+#: build/dashboard.js:35
+msgid "Main text"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Designer"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Align"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "Align to"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "The canvas"
+msgstr ""
+
+#: build/alerts-global-admin.js:7
+#: build/dashboard.js:27
+msgid "The selected elements"
+msgstr ""
+
+#. translators: 1: number of elements, 2: their names.
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+#, js-format
+msgid "%1$d elements selected: %2$s."
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Left (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Top (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Width (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Height (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Image corner radius (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Show this element"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Keep the aspect ratio"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Snap to grid"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Grid size (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Layout saved."
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:28
+#: build/dashboard.js:33
+#: build/dashboard.js:54
+msgid "Saving…"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Save layout"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Reset to the default layout"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Undo"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Redo"
+msgstr ""
+
+#: build/alerts-global-admin.js:8
+#: build/dashboard.js:28
+msgid "Play animation"
+msgstr ""
+
+#. translators: %d: pixels.
+#: build/alerts-global-admin.js:10
+#: build/dashboard.js:30
+#, js-format
+msgid "The image is wider or higher than %d pixels."
+msgstr ""
+
+#: build/alerts-global-admin.js:10
+#: build/dashboard.js:30
+msgid "You have the most images allowed. Delete one first."
+msgstr ""
+
+#: build/alerts-global-admin.js:10
+#: build/dashboard.js:30
+msgid "This image no longer exists."
+msgstr ""
+
+#: build/alerts-global-admin.js:10
+#: build/dashboard.js:30
+msgid "Images for text"
+msgstr ""
+
+#. translators: 1: size in MB, 2: pixels, 3: number of images.
+#: build/alerts-global-admin.js:11
+#: build/dashboard.js:31
+#, js-format
+msgid "Upload images to fill your alert text with. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high; at most %3$d images. An animated GIF keeps moving."
+msgstr ""
+
+#. translators: %d: number of images.
+#: build/alerts-global-admin.js:12
+#: build/dashboard.js:32
+#, js-format
+msgid "The image library has %d more image you can choose."
+msgid_plural "The image library has %d more images you can choose."
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/alerts-global-admin.js:12
+#: build/dashboard.js:32
+msgid "Delete this image? Texts it fills show their colour again."
+msgstr ""
+
+#: build/alerts-global-admin.js:12
+#: build/dashboard.js:32
+msgid "Image deleted."
+msgstr ""
+
+#. translators: %s: file name.
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+#, js-format
+msgid "Delete %s"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Delete"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Image saved. Choose it in the image list above."
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Delete an image to upload another."
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Slide up"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Pop"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Typewriter"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Split (from both sides)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Wave (letter by letter)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Drop (letter by letter)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "3D spin"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "3D roll"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Blur in"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Wipe"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Shadow paint"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Fade"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Neon glow"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Glow pulse"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Heartbeat"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Glitch"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Dancing shadow"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Melting"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Wave"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "3D float"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Depth pulse"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Breathe (needs a variable font)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "No effect"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Slide down"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Typewriter (delete)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Split (to both sides)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Blur out"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Slow"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Fast"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Normal"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Gradient or pattern"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Text colour (no fill)"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Aurora"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Sunset"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Ocean"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Fire"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Gold"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Candy stripes"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Matrix"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Rainbow"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Glides sideways"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Falls down"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Still"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Counterclockwise"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Clockwise"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Thanks for the merch!"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Pause example"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Play example"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "In"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Effect while shown"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Out"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Speed"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Effect colour"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Text fill"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Upload an image first"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Choose an image…"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Your images"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Fill motion"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Placement"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "In its text box"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Around the image"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Direction"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Glide speed"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Repeat the text all the way round"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Shrink the text to fit the box"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Let the box grow with the text"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Fixed text size"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Left"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Right"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Center"
+msgstr ""
+
+#: build/alerts-global-admin.js:13
+#: build/dashboard.js:33
+msgid "Save overlay settings"
+msgstr ""
+
+#. translators: 1: minimum, 2: maximum.
+#: build/alerts-global-admin.js:14
+#: build/dashboard.js:34
+#, js-format
+msgid "Enter a whole number from %1$d to %2$d."
+msgstr ""
+
+#: build/alerts-global-admin.js:14
+#: build/dashboard.js:34
+msgid "Enter a text for the alert."
+msgstr ""
+
+#. translators: %d: maximum number of characters.
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+#: build/dashboard.js:36
+#, js-format
+msgid "Use at most %d characters."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Overlay settings saved."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Alert text"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Text"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category and $OrderNumber. $UserName is the username the customer entered at checkout, or \"Anonymous\"; customer names are never shown."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Show the secondary text"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Text style"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Your font is no longer available. The overlay shows the default font until you choose another one."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Fonts approved by Merch Dashboard. They are loaded from Google Fonts."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Default font"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Font size (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Font weight"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Text color"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Alignment"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Text size in the boxes"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Fixed: the font size above; longer text is cut off. Shrink: the font size above is the largest, and long text gets smaller until it fits. Grow: the box keeps its width and grows with the text: down from its top, or up from its bottom edge when it is in the lower half of the screen (the image then moves up with the main text). Its height in the designer is the least."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Text shadow"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "For example 2px 2px 4px rgba(0,0,0,0.8). Leave empty for no shadow."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Box and image"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Background color"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Background opacity (%)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Corner radius (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Padding (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Image quality (px)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "The size of the product image that is loaded. The box size is set in the designer."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Animations and text fill"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "How each text comes in, moves while it is shown and goes out, and what fills its letters: the text colour, a gradient or pattern, or an image (an animated GIF keeps moving). The animation time below sets how long the in- and out-animations take. The example shows your choice; press \"Play animation\" in the designer to see it on the overlay."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Timing"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Show the alert as long as its sound plays"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Just add a sound: an alert with a sound is shown for exactly as long as the sound lasts, then fades out. Alerts without a sound use the display time below."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Display time (ms)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Animation time (ms)"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Your stream overlay"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "An overlay of its own that shows the alerts of every creator. Set it up to get the URL for a browser source; it is switched off until you switch it on."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Show an alert on your stream when someone buys your merch. Set up your overlay to get the URL for a browser source in your streaming software."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Set up overlay"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Browser source"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Add a browser source in your streaming software with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts. It stays hidden until you show it, so it is safe on stream; copying and opening work without showing it."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Overlay URL"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "URL copied."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Copy the selected URL with Ctrl+C."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Copy URL"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Hide URL"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Show URL"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Open overlay"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Test alert sent. It appears in your open overlay within a few seconds."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Send test alert"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Create a new overlay URL? The current URL stops working at once, and you must paste the new one into your browser source."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "New overlay URL created. Paste it into your browser source."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Create new URL"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Purchase alerts are not being sent (switched off in Settings → Alerts, or MerchAlert is active), so the global overlay is not shown. Its settings can be changed already."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Alerts are being moved from the old alert plugin. New purchases do not show up here yet; test alerts work."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+#: build/dashboard.js:35
+msgid "Purchase alerts are switched off for now. Test alerts work, so you can set up your overlay already."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+msgid "On. The overlay shows the alerts of every creator while purchase alerts are switched on."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+msgid "Off. The overlay URL shows nothing until you switch it on."
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+msgid "Switch off"
+msgstr ""
+
+#: build/alerts-global-admin.js:15
+msgid "Switch on"
+msgstr ""
+
+#. translators: %d: number of alerts.
+#: build/alerts-global-admin.js:16
+#, js-format
+msgid "The latest order was sent again (%d alert). It appears in the open overlay within a few seconds."
+msgid_plural "The latest order was sent again (%d alerts). It appears in the open overlay within a few seconds."
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/alerts-global-admin.js:16
+msgid "Replay latest order"
+msgstr ""
+
+#: build/alerts-global-admin.js:16
+msgid "Loading the global overlay…"
 msgstr ""
 
 #: build/dashboard.js:1
@@ -6762,22 +7892,6 @@ msgstr ""
 
 #: build/dashboard.js:1
 msgid "Dashboard"
-msgstr ""
-
-#: build/dashboard.js:1
-msgid "Success:"
-msgstr ""
-
-#: build/dashboard.js:1
-msgid "Warning:"
-msgstr ""
-
-#: build/dashboard.js:1
-msgid "Note:"
-msgstr ""
-
-#: build/dashboard.js:1
-msgid "Dismiss"
 msgstr ""
 
 #: build/dashboard.js:1
@@ -7108,808 +8222,6 @@ msgstr ""
 
 #: build/dashboard.js:21
 msgid "Alert pages"
-msgstr ""
-
-#. translators: %s: size in MB, e.g. "10".
-#. translators: %s: size in MB, e.g. "5".
-#: build/dashboard.js:22
-#: build/dashboard.js:29
-#, js-format
-msgid "The file is larger than %s MB."
-msgstr ""
-
-#: build/dashboard.js:23
-msgid "This category is no longer yours."
-msgstr ""
-
-#: build/dashboard.js:23
-msgid "This sound is no longer in the library. Choose another one."
-msgstr ""
-
-#: build/dashboard.js:23
-msgid "Replace sound"
-msgstr ""
-
-#: build/dashboard.js:23
-#: build/dashboard.js:33
-msgid "Uploading…"
-msgstr ""
-
-#: build/dashboard.js:23
-msgid "No sound."
-msgstr ""
-
-#: build/dashboard.js:23
-msgid "No sound: the default sound plays."
-msgstr ""
-
-#. translators: 1: file name, 2: length in seconds.
-#: build/dashboard.js:24
-#: build/dashboard.js:25
-#, js-format
-msgid "%1$s (%2$d s)"
-msgstr ""
-
-#: build/dashboard.js:24
-msgid "Sound from the library"
-msgstr ""
-
-#: build/dashboard.js:24
-#: build/dashboard.js:25
-msgid "Sound saved."
-msgstr ""
-
-#: build/dashboard.js:24
-msgid "Your own sound"
-msgstr ""
-
-#: build/dashboard.js:24
-msgid "Choose a sound…"
-msgstr ""
-
-#: build/dashboard.js:25
-msgid "Sound saved. It plays with the next alert."
-msgstr ""
-
-#: build/dashboard.js:25
-msgid "Sound saved. Switch on \"Play sounds\" to hear it in the overlay."
-msgstr ""
-
-#: build/dashboard.js:25
-msgid "Delete this sound?"
-msgstr ""
-
-#: build/dashboard.js:25
-msgid "Sound deleted."
-msgstr ""
-
-#: build/dashboard.js:25
-msgid "Delete sound"
-msgstr ""
-
-#. translators: 1: size in MB, 2: seconds.
-#: build/dashboard.js:26
-#, js-format
-msgid "Play a sound with each alert. MP3, WAV or OGG, at most %1$s MB and %2$d seconds. Products in a category with its own sound play that sound; all others play the default sound."
-msgstr ""
-
-#: build/dashboard.js:26
-msgid "Do you need larger or longer sounds? Contact us to ask for other limits."
-msgstr ""
-
-#: build/dashboard.js:26
-msgid "The browser source plays the sounds automatically, also after a restart. The sound goes to the browser source's audio in the audio mixer of your streaming software; turn on audio monitoring there to hear it yourself. A normal browser tab may block sounds unless you allow autoplay for this site in the browser's site settings."
-msgstr ""
-
-#: build/dashboard.js:26
-msgid "Sounds are off, so your overlay plays no sound. Switch on \"Play sounds\"."
-msgstr ""
-
-#: build/dashboard.js:26
-msgid "Play sounds"
-msgstr ""
-
-#: build/dashboard.js:26
-msgid "Default sound"
-msgstr ""
-
-#. translators: %s: product category.
-#: build/dashboard.js:27
-#, js-format
-msgid "Category: %s"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Align left"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Center horizontally"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Align right"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Align top"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Center vertically"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Align bottom"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Product image"
-msgstr ""
-
-#: build/dashboard.js:27
-#: build/dashboard.js:35
-msgid "Secondary text"
-msgstr ""
-
-#: build/dashboard.js:27
-#: build/dashboard.js:35
-msgid "Main text"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Designer"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Align"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "Align to"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "The canvas"
-msgstr ""
-
-#: build/dashboard.js:27
-msgid "The selected elements"
-msgstr ""
-
-#. translators: 1: number of elements, 2: their names.
-#: build/dashboard.js:28
-#, js-format
-msgid "%1$d elements selected: %2$s."
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Left (px)"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Top (px)"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Width (px)"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Height (px)"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Image corner radius (px)"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Show this element"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Keep the aspect ratio"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Snap to grid"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Grid size (px)"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Layout saved."
-msgstr ""
-
-#: build/dashboard.js:28
-#: build/dashboard.js:33
-#: build/dashboard.js:54
-msgid "Saving…"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Save layout"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Reset to the default layout"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Undo"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Redo"
-msgstr ""
-
-#: build/dashboard.js:28
-msgid "Play animation"
-msgstr ""
-
-#. translators: %d: pixels.
-#: build/dashboard.js:30
-#, js-format
-msgid "The image is wider or higher than %d pixels."
-msgstr ""
-
-#: build/dashboard.js:30
-msgid "You have the most images allowed. Delete one first."
-msgstr ""
-
-#: build/dashboard.js:30
-msgid "This image no longer exists."
-msgstr ""
-
-#: build/dashboard.js:30
-msgid "Images for text"
-msgstr ""
-
-#. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: build/dashboard.js:31
-#, js-format
-msgid "Upload images to fill your alert text with. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high; at most %3$d images. An animated GIF keeps moving."
-msgstr ""
-
-#. translators: %d: number of images.
-#: build/dashboard.js:32
-#, js-format
-msgid "The image library has %d more image you can choose."
-msgid_plural "The image library has %d more images you can choose."
-msgstr[0] ""
-msgstr[1] ""
-
-#: build/dashboard.js:32
-msgid "Delete this image? Texts it fills show their colour again."
-msgstr ""
-
-#: build/dashboard.js:32
-msgid "Image deleted."
-msgstr ""
-
-#. translators: %s: file name.
-#: build/dashboard.js:33
-#, js-format
-msgid "Delete %s"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Delete"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Image saved. Choose it in the image list above."
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Delete an image to upload another."
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Slide up"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Pop"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Typewriter"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Split (from both sides)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Wave (letter by letter)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Drop (letter by letter)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "3D spin"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "3D roll"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Blur in"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Wipe"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Shadow paint"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Fade"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Neon glow"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Glow pulse"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Heartbeat"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Glitch"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Dancing shadow"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Melting"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Wave"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "3D float"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Depth pulse"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Breathe (needs a variable font)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "No effect"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Slide down"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Typewriter (delete)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Split (to both sides)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Blur out"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Slow"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Fast"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Normal"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Gradient or pattern"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Text colour (no fill)"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Aurora"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Sunset"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Ocean"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Fire"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Gold"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Candy stripes"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Matrix"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Rainbow"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Glides sideways"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Falls down"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Still"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Counterclockwise"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Clockwise"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Thanks for the merch!"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Pause example"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Play example"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "In"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Effect while shown"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Out"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Speed"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Effect colour"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Text fill"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Upload an image first"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Choose an image…"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Your images"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Fill motion"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Placement"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "In its text box"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Around the image"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Direction"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Glide speed"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Repeat the text all the way round"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Shrink the text to fit the box"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Let the box grow with the text"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Fixed text size"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Left"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Right"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Center"
-msgstr ""
-
-#: build/dashboard.js:33
-msgid "Save overlay settings"
-msgstr ""
-
-#. translators: 1: minimum, 2: maximum.
-#: build/dashboard.js:34
-#, js-format
-msgid "Enter a whole number from %1$d to %2$d."
-msgstr ""
-
-#: build/dashboard.js:34
-msgid "Enter a text for the alert."
-msgstr ""
-
-#. translators: %d: maximum number of characters.
-#: build/dashboard.js:35
-#: build/dashboard.js:36
-#, js-format
-msgid "Use at most %d characters."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Overlay settings saved."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Alert text"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Text"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Variables: $UserName, $Product, $Quantity, $Variation, $Category and $OrderNumber. $UserName is the username the customer entered at checkout, or \"Anonymous\"; customer names are never shown."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Show the secondary text"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Text style"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Your font is no longer available. The overlay shows the default font until you choose another one."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Fonts approved by Merch Dashboard. They are loaded from Google Fonts."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Default font"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Font size (px)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Font weight"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Text color"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Alignment"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Text size in the boxes"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Fixed: the font size above; longer text is cut off. Shrink: the font size above is the largest, and long text gets smaller until it fits. Grow: the box keeps its width and grows with the text: down from its top, or up from its bottom edge when it is in the lower half of the screen (the image then moves up with the main text). Its height in the designer is the least."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Text shadow"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "For example 2px 2px 4px rgba(0,0,0,0.8). Leave empty for no shadow."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Box and image"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Background color"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Background opacity (%)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Corner radius (px)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Padding (px)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Image quality (px)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "The size of the product image that is loaded. The box size is set in the designer."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Animations and text fill"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "How each text comes in, moves while it is shown and goes out, and what fills its letters: the text colour, a gradient or pattern, or an image (an animated GIF keeps moving). The animation time below sets how long the in- and out-animations take. The example shows your choice; press \"Play animation\" in the designer to see it on the overlay."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Timing"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Show the alert as long as its sound plays"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Just add a sound: an alert with a sound is shown for exactly as long as the sound lasts, then fades out. Alerts without a sound use the display time below."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Display time (ms)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Animation time (ms)"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Your stream overlay"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Show an alert on your stream when someone buys your merch. Set up your overlay to get the URL for a browser source in your streaming software."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Set up overlay"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Browser source"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Add a browser source in your streaming software with this URL, 1920 × 1080 pixels. Keep the URL secret: anyone with it can show your alerts. It stays hidden until you show it, so it is safe on stream; copying and opening work without showing it."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Overlay URL"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "URL copied."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Copy the selected URL with Ctrl+C."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Copy URL"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Hide URL"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Show URL"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Open overlay"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Test alert sent. It appears in your open overlay within a few seconds."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Send test alert"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Create a new overlay URL? The current URL stops working at once, and you must paste the new one into your browser source."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "New overlay URL created. Paste it into your browser source."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Create new URL"
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Alerts are being moved from the old alert plugin. New purchases do not show up here yet; test alerts work."
-msgstr ""
-
-#: build/dashboard.js:35
-msgid "Purchase alerts are switched off for now. Test alerts work, so you can set up your overlay already."
 msgstr ""
 
 #: build/dashboard.js:35

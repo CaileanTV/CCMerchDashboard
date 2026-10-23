@@ -1,13 +1,13 @@
 import { useId, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { removeAlertImage, uploadAlertImage } from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { Alert } from '../../components/Alert';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import type { AlertsImages, AlertsOverlayState } from '../../types/alerts';
+import { useOverlayApi } from './overlay-api-context';
 
 /** File types the server accepts. */
 export const IMAGE_ACCEPT =
@@ -78,6 +78,7 @@ interface Props {
  * @param props.notify  Shows a short confirmation.
  */
 export function AlertImagesCard( { images, onSaved, notify }: Props ) {
+	const api = useOverlayApi();
 	const id = useId();
 	const [ busy, setBusy ] = useState< 'upload' | number | null >( null );
 	const [ message, setMessage ] = useState< string | null >( null );
@@ -94,7 +95,7 @@ export function AlertImagesCard( { images, onSaved, notify }: Props ) {
 		}
 
 		setBusy( 'upload' );
-		const result = await uploadAlertImage( file );
+		const result = await api.uploadImage( file );
 		setBusy( null );
 
 		if ( result.ok ) {
@@ -133,7 +134,7 @@ export function AlertImagesCard( { images, onSaved, notify }: Props ) {
 		setBusy( imageId );
 		setMessage( null );
 		setError( null );
-		const result = await removeAlertImage( imageId );
+		const result = await api.removeImage( imageId );
 		setBusy( null );
 
 		if ( result.ok ) {

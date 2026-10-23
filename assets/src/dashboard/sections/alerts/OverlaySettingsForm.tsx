@@ -8,7 +8,6 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import type { FormEvent } from 'react';
 
-import { updateAlertsOverlay } from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Alert } from '../../components/Alert';
@@ -34,6 +33,7 @@ import type {
 	TextAlign,
 	TextFit,
 } from '../../types/alerts';
+import { useOverlayApi } from './overlay-api-context';
 
 type Errors = Partial< Record< keyof OverlaySettings, string > >;
 
@@ -143,6 +143,7 @@ export function OverlaySettingsForm( {
 }: Props ) {
 	const id = useId();
 	const [ values, setValues ] = useState( settings );
+	const api = useOverlayApi();
 
 	useEffect( () => onDraft?.( values ), [ values, onDraft ] );
 	const [ errors, setErrors ] = useState< Errors >( {} );
@@ -172,7 +173,7 @@ export function OverlaySettingsForm( {
 		const { font_family: fontFamily, ...rest } = values;
 
 		setBusy( true );
-		const result = await updateAlertsOverlay(
+		const result = await api.update(
 			unavailable ? rest : { ...rest, font_family: fontFamily }
 		);
 		setBusy( false );

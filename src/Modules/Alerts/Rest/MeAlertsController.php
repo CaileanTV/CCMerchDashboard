@@ -19,6 +19,7 @@ use InvalidArgumentException;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
+use MerchBoard\Modules\Alerts\Overlay\OverlaySettings;
 use MerchBoard\Modules\Alerts\Images\AlertImageException;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
@@ -408,7 +409,26 @@ final class MeAlertsController extends RestController {
 	 * @return array{url: string, settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>, audio: array<string, mixed>|null, images: array<string, mixed>|null}
 	 */
 	private function overlay( AlertOverlay $overlay ): array {
-		$values   = $overlay->settings->to_array();
+		return array_merge(
+			array( 'url' => OverlayRoute::url( $overlay->overlay_id ) ),
+			self::look( $overlay->settings, $this->fonts ),
+			array(
+				'audio'  => null === $this->sounds ? null : $this->sounds->describe( $overlay ),
+				'images' => $this->images?->describe( $overlay->creator_id ),
+			)
+		);
+	}
+
+	/**
+	 * The settings, the font's approval and the layout of an overlay as the
+	 * dashboard reads them (shared with the global overlay, step 25.9.4).
+	 *
+	 * @param OverlaySettings $overlay_settings Settings.
+	 * @param AlertFonts|null $fonts            Approved fonts.
+	 * @return array{settings: array<string, mixed>, font_approved: bool, layout: array<string, mixed>}
+	 */
+	public static function look( OverlaySettings $overlay_settings, ?AlertFonts $fonts ): array {
+		$values   = $overlay_settings->to_array();
 		$settings = array();
 
 		foreach ( AlertOverlays::EDITABLE as $key ) {
@@ -423,13 +443,10 @@ final class MeAlertsController extends RestController {
 		$settings['text_frame']         = $values['text_frame'];
 
 		return array(
-			'url'           => OverlayRoute::url( $overlay->overlay_id ),
 			'settings'      => $settings,
 			// False when the saved font is no longer approved; the overlay then shows the default font.
-			'font_approved' => 'inherit' === $values['font_family'] || null !== $this->fonts?->find( $values['font_family'] ),
+			'font_approved' => 'inherit' === $values['font_family'] || null !== $fonts?->find( $values['font_family'] ),
 			'layout'        => $values['layout'],
-			'audio'         => null === $this->sounds ? null : $this->sounds->describe( $overlay ),
-			'images'        => $this->images?->describe( $overlay->creator_id ),
 		);
 	}
 
@@ -441,7 +458,7 @@ final class MeAlertsController extends RestController {
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
 	 * @return array<string, mixed>|null
 	 */
-	private static function input( WP_REST_Request $request ): ?array {
+	public static function input( WP_REST_Request $request ): ?array {
 		$body = (array) $request->get_json_params();
 
 		if ( array() === $body ) {

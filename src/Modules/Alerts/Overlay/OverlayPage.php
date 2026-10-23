@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Overlay;
 
+use Closure;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
@@ -58,9 +59,26 @@ final class OverlayPage {
 			return;
 		}
 
-		$nonce = base64_encode( random_bytes( 18 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A CSP nonce.
-		$html  = $this->render( $id, $nonce );
+		$nonce = self::nonce();
 
+		self::send( $this->render( $id, $nonce ), $nonce );
+	}
+
+	/**
+	 * A fresh CSP nonce for a page's script.
+	 */
+	public static function nonce(): string {
+		return base64_encode( random_bytes( 18 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A CSP nonce.
+	}
+
+	/**
+	 * Sends an overlay page (or the 404 page for null) with its security
+	 * headers and ends the request. Shared with the global overlay.
+	 *
+	 * @param string|null $html  The page, or null for 404.
+	 * @param string      $nonce CSP nonce of the page's script.
+	 */
+	public static function send( ?string $html, string $nonce ): void {
 		foreach ( self::security_headers( $nonce ) as $name => $value ) {
 			header( $name . ': ' . $value );
 		}
@@ -91,9 +109,31 @@ final class OverlayPage {
 			return null;
 		}
 
-		$settings = $overlay->settings;
-		$family   = $settings->to_array()['font_family'];
-		$font     = 'inherit' === $family ? null : $this->fonts?->find( $family );
+		return $this->page(
+			$overlay->settings,
+			rest_url( 'merchboard/v1/alerts/overlay/' . $overlay->overlay_id . '/feed' ),
+			$overlay->version(),
+			fn( array $fill ): ?array => AlertImages::look( $this->images, $overlay->creator_id, $fill ),
+			$nonce
+		);
+	}
+
+	/**
+	 * An overlay page from its settings: the template, the overlay script
+	 * and its configuration. Shared with the global overlay (step 25.9.4),
+	 * which passes its own feed and its own text fills.
+	 *
+	 * @param OverlaySettings $settings The overlay's settings.
+	 * @param string          $feed     The feed's URL.
+	 * @param string          $version  The overlay's version.
+	 * @param Closure         $fill     A text fill's look (AlertImages::look()).
+	 * @param string          $nonce    CSP nonce of the page's script.
+	 * @phpstan-param Closure(array{type: string, preset: string, image: int, motion: string}): (array<string, mixed>|null) $fill
+	 * @throws Throwable When the template fails (after its output is discarded).
+	 */
+	public function page( OverlaySettings $settings, string $feed, string $version, Closure $fill, string $nonce ): string {
+		$family = $settings->to_array()['font_family'];
+		$font   = 'inherit' === $family ? null : $this->fonts?->find( $family );
 
 		// A font that is no longer approved is never loaded; the default font is shown instead (ADR-067).
 		if ( null === $font && 'inherit' !== $family ) {
@@ -110,8 +150,8 @@ final class OverlayPage {
 				'secondary' => $settings->element_style( 'secondary_text' ),
 			),
 			'config'    => array(
-				'feed'             => rest_url( 'merchboard/v1/alerts/overlay/' . $overlay->overlay_id . '/feed' ),
-				'version'          => $overlay->version(),
+				'feed'             => $feed,
+				'version'          => $version,
 				'displayDuration'  => $settings->display_duration(),
 				'animDuration'     => $settings->anim_duration(),
 				'textFit'          => $settings->text_fit(),
@@ -124,8 +164,8 @@ final class OverlayPage {
 				// The main text around the image (step 6.11); null when it is in its box.
 				'frame'            => $settings->frames_image() ? $settings->text_frame() : null,
 				'fills'            => array(
-					'main'      => AlertImages::look( $this->images, $overlay->creator_id, $settings->text_fills()['main_text'] ),
-					'secondary' => AlertImages::look( $this->images, $overlay->creator_id, $settings->text_fills()['secondary_text'] ),
+					'main'      => $fill( $settings->text_fills()['main_text'] ),
+					'secondary' => $fill( $settings->text_fills()['secondary_text'] ),
 				),
 			),
 		);

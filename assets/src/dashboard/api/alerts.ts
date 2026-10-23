@@ -517,146 +517,124 @@ export function parseTestSent( body: unknown ): true | null {
 	return isRecord( body ) && body.sent === true ? true : null;
 }
 
+/** The overlay calls of one owner (the creator's or the global overlay's). */
+export interface OverlayApi {
+	/** The overlay (null before it is set up). */
+	readonly get: (
+		signal?: AbortSignal
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Sets the overlay up (idempotent). */
+	readonly create: () => Promise< ApiResult< AlertsOverlayState > >;
+	/** Saves overlay settings (the form's fields, the font, the layout or whether sounds play). */
+	readonly update: (
+		changes:
+			| Partial< OverlaySettings >
+			| { readonly layout: OverlayLayout }
+			| { readonly audio_enabled: boolean }
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Replaces the secret overlay id; the old OBS URL stops working. */
+	readonly regenerate: () => Promise< ApiResult< AlertsOverlayState > >;
+	/** Uploads a sound into a slot; the slot's old sound is deleted. */
+	readonly uploadSound: (
+		slot: SoundSlot,
+		file: File
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Puts a sound of the administrator's library into a slot. */
+	readonly chooseSound: (
+		slot: SoundSlot,
+		soundId: number
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Removes the sound of a slot. */
+	readonly removeSound: (
+		slot: SoundSlot
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Uploads an own image that can fill the alert text. */
+	readonly uploadImage: (
+		file: File
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Deletes an own image; the texts it filled lose their fill. */
+	readonly removeImage: (
+		imageId: number
+	) => Promise< ApiResult< AlertsOverlayState > >;
+	/** Sends a test alert to the overlay. */
+	readonly sendTest: () => Promise< ApiResult< true > >;
+}
+
 /**
- * The creator's overlay.
+ * The overlay calls under a base path. The creator's overlay uses
+ * `/me/alerts/overlay`; the global overlay (step 25.9.4) its admin route,
+ * which answers in the same shape, so the cards are shared.
  *
- * @param signal Abort signal.
+ * @param path Base path of the routes.
  */
-export function getAlertsOverlay(
-	signal?: AbortSignal
-): Promise< ApiResult< AlertsOverlayState > > {
-	return request(
-		{ path: PATH, ...( signal === undefined ? {} : { signal } ) },
-		parseAlertsOverlay
-	);
+export function overlayApi( path: string ): OverlayApi {
+	const soundPath = ( slot: SoundSlot ): string =>
+		`${ path }/sounds/${ slot === 'default' ? 'default' : String( slot ) }`;
+
+	return {
+		get: ( signal ) =>
+			request(
+				{ path, ...( signal === undefined ? {} : { signal } ) },
+				parseAlertsOverlay
+			),
+		create: () => request( { path, method: 'POST' }, parseAlertsOverlay ),
+		update: ( changes ) =>
+			request(
+				{ path, method: 'PATCH', data: { ...changes } },
+				parseAlertsOverlay
+			),
+		regenerate: () =>
+			request(
+				{ path: `${ path }/regenerate`, method: 'POST' },
+				parseAlertsOverlay
+			),
+		uploadSound: ( slot, file ) => {
+			const body = new FormData();
+			body.append( 'file', file );
+
+			return request(
+				{ path: soundPath( slot ), method: 'POST', body },
+				parseAlertsOverlay
+			);
+		},
+		chooseSound: ( slot, soundId ) =>
+			request(
+				{
+					path: soundPath( slot ),
+					method: 'POST',
+					data: { library: soundId },
+				},
+				parseAlertsOverlay
+			),
+		removeSound: ( slot ) =>
+			request(
+				{ path: soundPath( slot ), method: 'DELETE' },
+				parseAlertsOverlay
+			),
+		uploadImage: ( file ) => {
+			const body = new FormData();
+			body.append( 'file', file );
+
+			return request(
+				{ path: `${ path }/images`, method: 'POST', body },
+				parseAlertsOverlay
+			);
+		},
+		removeImage: ( imageId ) =>
+			request(
+				{
+					path: `${ path }/images/${ String( imageId ) }`,
+					method: 'DELETE',
+				},
+				parseAlertsOverlay
+			),
+		sendTest: () =>
+			request(
+				{ path: `${ path }/test`, method: 'POST' },
+				parseTestSent
+			),
+	};
 }
 
-/**
- * Sets the overlay up (idempotent).
- */
-export function createAlertsOverlay(): Promise<
-	ApiResult< AlertsOverlayState >
-> {
-	return request( { path: PATH, method: 'POST' }, parseAlertsOverlay );
-}
-
-/**
- * Saves overlay settings (the form's fields, the font, the layout or
- * whether sounds play).
- *
- * @param changes Fields to save.
- */
-export function updateAlertsOverlay(
-	changes:
-		| Partial< OverlaySettings >
-		| { readonly layout: OverlayLayout }
-		| { readonly audio_enabled: boolean }
-): Promise< ApiResult< AlertsOverlayState > > {
-	return request(
-		{ path: PATH, method: 'PATCH', data: { ...changes } },
-		parseAlertsOverlay
-	);
-}
-
-/**
- * Replaces the secret overlay id; the old OBS URL stops working.
- */
-export function regenerateAlertsOverlay(): Promise<
-	ApiResult< AlertsOverlayState >
-> {
-	return request(
-		{ path: `${ PATH }/regenerate`, method: 'POST' },
-		parseAlertsOverlay
-	);
-}
-
-function soundPath( slot: SoundSlot ): string {
-	return `${ PATH }/sounds/${ slot === 'default' ? 'default' : String( slot ) }`;
-}
-
-/**
- * Uploads a sound into a slot; the slot's old sound is deleted.
- *
- * @param slot The default sound or a category's term id.
- * @param file MP3, WAV or OGG file.
- */
-export function uploadAlertSound(
-	slot: SoundSlot,
-	file: File
-): Promise< ApiResult< AlertsOverlayState > > {
-	const body = new FormData();
-	body.append( 'file', file );
-
-	return request(
-		{ path: soundPath( slot ), method: 'POST', body },
-		parseAlertsOverlay
-	);
-}
-
-/**
- * Puts a sound of the administrator's library into a slot.
- *
- * @param slot    The default sound or a category's term id.
- * @param soundId Library sound id.
- */
-export function chooseAlertSound(
-	slot: SoundSlot,
-	soundId: number
-): Promise< ApiResult< AlertsOverlayState > > {
-	return request(
-		{ path: soundPath( slot ), method: 'POST', data: { library: soundId } },
-		parseAlertsOverlay
-	);
-}
-
-/**
- * Removes the sound of a slot.
- *
- * @param slot The default sound or a category's term id.
- */
-export function removeAlertSound(
-	slot: SoundSlot
-): Promise< ApiResult< AlertsOverlayState > > {
-	return request(
-		{ path: soundPath( slot ), method: 'DELETE' },
-		parseAlertsOverlay
-	);
-}
-
-/**
- * Uploads an own image that can fill the alert text.
- *
- * @param file PNG, JPG, GIF or WebP file.
- */
-export function uploadAlertImage(
-	file: File
-): Promise< ApiResult< AlertsOverlayState > > {
-	const body = new FormData();
-	body.append( 'file', file );
-
-	return request(
-		{ path: `${ PATH }/images`, method: 'POST', body },
-		parseAlertsOverlay
-	);
-}
-
-/**
- * Deletes an own image; the texts it filled lose their fill.
- *
- * @param imageId Image id.
- */
-export function removeAlertImage(
-	imageId: number
-): Promise< ApiResult< AlertsOverlayState > > {
-	return request(
-		{ path: `${ PATH }/images/${ String( imageId ) }`, method: 'DELETE' },
-		parseAlertsOverlay
-	);
-}
-
-/**
- * Sends a test alert to the overlay.
- */
-export function sendTestAlert(): Promise< ApiResult< true > > {
-	return request( { path: `${ PATH }/test`, method: 'POST' }, parseTestSent );
-}
+/** The creator's overlay calls (the default of the cards). */
+export const creatorOverlayApi = overlayApi( PATH );

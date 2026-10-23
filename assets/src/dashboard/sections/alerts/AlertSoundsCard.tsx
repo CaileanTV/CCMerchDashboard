@@ -1,12 +1,6 @@
 import { useId, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import {
-	chooseAlertSound,
-	removeAlertSound,
-	updateAlertsOverlay,
-	uploadAlertSound,
-} from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { Alert } from '../../components/Alert';
 import { ApiErrorState } from '../../components/ApiErrorState';
@@ -18,6 +12,7 @@ import type {
 	AlertsOverlayState,
 	SoundSlot,
 } from '../../types/alerts';
+import { useOverlayApi } from './overlay-api-context';
 
 /** File types the server accepts. */
 export const SOUND_ACCEPT =
@@ -79,6 +74,7 @@ interface RowProps {
 }
 
 function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
+	const api = useOverlayApi();
 	const id = useId();
 	const [ busy, setBusy ] = useState< 'upload' | 'remove' | 'choose' | null >(
 		null
@@ -104,7 +100,7 @@ function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
 		}
 
 		setBusy( 'upload' );
-		const result = await uploadAlertSound( slot, file );
+		const result = await api.uploadSound( slot, file );
 		setBusy( null );
 
 		if ( result.ok ) {
@@ -140,7 +136,7 @@ function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
 		setMessage( null );
 		setSaved( null );
 		setError( null );
-		const result = await chooseAlertSound( slot, soundId );
+		const result = await api.chooseSound( slot, soundId );
 		setBusy( null );
 
 		if ( result.ok ) {
@@ -171,7 +167,7 @@ function SoundRow( { slot, label, sound, audio, onSaved, notify }: RowProps ) {
 		setBusy( 'remove' );
 		setMessage( null );
 		setError( null );
-		const result = await removeAlertSound( slot );
+		const result = await api.removeSound( slot );
 		setBusy( null );
 
 		if ( result.ok ) {
@@ -315,6 +311,7 @@ interface Props {
  * @param props.notify  Shows a short confirmation.
  */
 export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
+	const api = useOverlayApi();
 	const id = useId();
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState< ApiError | null >( null );
@@ -322,7 +319,7 @@ export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
 	const toggle = async ( enabled: boolean ) => {
 		setBusy( true );
 		setError( null );
-		const result = await updateAlertsOverlay( { audio_enabled: enabled } );
+		const result = await api.update( { audio_enabled: enabled } );
 		setBusy( false );
 
 		if ( result.ok ) {

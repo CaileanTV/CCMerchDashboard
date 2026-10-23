@@ -24,7 +24,6 @@ import {
 	layoutFill,
 } from '../../../overlay/textfill';
 import type { FillLook } from '../../../overlay/textfill';
-import { updateAlertsOverlay } from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Button } from '../../components/Button';
@@ -53,6 +52,7 @@ import {
 } from './designer';
 import type { Alignment, AlignTarget } from './designer';
 import { useHistory } from './history';
+import { useOverlayApi } from './overlay-api-context';
 
 /**
  * Whether a key press is undo (Ctrl/Cmd+Z) or redo (Ctrl/Cmd+Shift+Z, or
@@ -323,6 +323,7 @@ export function OverlayDesigner( {
 	const history = useHistory( saved );
 	// Each press of "Play animation" increases it (step 25.6.9).
 	const [ play, setPlay ] = useState( 0 );
+	const api = useOverlayApi();
 	const layout = history.value;
 	const setLayout = history.set;
 	const root = useRef< HTMLDivElement >( null );
@@ -515,7 +516,7 @@ export function OverlayDesigner( {
 		setBusy( true );
 		setSaveError( null );
 		// The overlay settings decide whether the secondary text is shown.
-		const result = await updateAlertsOverlay( {
+		const result = await api.update( {
 			layout: withBox( layout, 'secondary_text', {
 				...layout.elements.secondary_text,
 				visible: settings.show_secondary,

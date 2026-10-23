@@ -142,7 +142,32 @@ final class AlertOverlays {
 			return null;
 		}
 
-		$values = $overlay->settings->to_array();
+		$settings = self::merge( $overlay->settings, $input, $this->fonts );
+
+		// A fill keeps only the creator's own image or a library image; any other is cleared.
+		if ( is_array( $input['text_fills'] ?? null ) ) {
+			$normalized               = $settings->to_array();
+			$normalized['text_fills'] = null === $this->images ? AlertImages::without_images( $normalized['text_fills'] ) : $this->images->clean( $creator_id, $normalized['text_fills'] );
+			$settings                 = OverlaySettings::from_array( $normalized );
+		}
+
+		$this->overlays->update_settings( $overlay->id, $settings );
+
+		return $this->overlays->find_for_creator( $creator_id );
+	}
+
+	/**
+	 * The settings with the submitted form, designer and look fields (shared
+	 * with the global overlay, step 25.9.4). Text fill images are not checked
+	 * here; each owner keeps only images it may use.
+	 *
+	 * @param OverlaySettings $current Current settings.
+	 * @param array<mixed>    $input   Submitted fields; unknown keys are ignored.
+	 * @param AlertFonts|null $fonts   Approved fonts.
+	 * @throws InvalidArgumentException When the font is not approved (message: the field).
+	 */
+	public static function merge( OverlaySettings $current, array $input, ?AlertFonts $fonts ): OverlaySettings {
+		$values = $current->to_array();
 
 		foreach ( self::EDITABLE as $key ) {
 			if ( array_key_exists( $key, $input ) ) {
@@ -151,7 +176,7 @@ final class AlertOverlays {
 		}
 
 		if ( array_key_exists( 'font_family', $input ) ) {
-			$values['font_family'] = $this->approved_family( $input['font_family'] );
+			$values['font_family'] = self::approved_family( $input['font_family'], $fonts );
 		}
 
 		// The designer saves the whole layout; the form only the visibility of the secondary text.
@@ -185,28 +210,18 @@ final class AlertOverlays {
 			}
 		}
 
-		$settings = OverlaySettings::from_array( $values );
-
-		// A fill keeps only the creator's own image or a library image; any other is cleared.
-		if ( is_array( $input['text_fills'] ?? null ) ) {
-			$normalized               = $settings->to_array();
-			$normalized['text_fills'] = null === $this->images ? AlertImages::without_images( $normalized['text_fills'] ) : $this->images->clean( $creator_id, $normalized['text_fills'] );
-			$settings                 = OverlaySettings::from_array( $normalized );
-		}
-
-		$this->overlays->update_settings( $overlay->id, $settings );
-
-		return $this->overlays->find_for_creator( $creator_id );
+		return OverlaySettings::from_array( $values );
 	}
 
 	/**
 	 * The submitted font: the default ('inherit') or an approved family.
 	 *
-	 * @param mixed $family Submitted family.
+	 * @param mixed           $family Submitted family.
+	 * @param AlertFonts|null $fonts  Approved fonts.
 	 * @throws InvalidArgumentException When the font is not approved (message: the field).
 	 */
-	private function approved_family( mixed $family ): string {
-		if ( 'inherit' === $family || ( is_string( $family ) && null !== $this->fonts?->find( $family ) ) ) {
+	private static function approved_family( mixed $family, ?AlertFonts $fonts ): string {
+		if ( 'inherit' === $family || ( is_string( $family ) && null !== $fonts?->find( $family ) ) ) {
 			return (string) $family;
 		}
 

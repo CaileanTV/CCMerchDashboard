@@ -17,7 +17,9 @@ defined( 'ABSPATH' ) || exit;
  * At most MAX alerts wait; older ones are dropped. The transient is keyed
  * by a hash of the overlay's row id, never the secret id, and read past
  * WordPress' per-request option cache, so a long-poll that started before
- * the test sees it within a second.
+ * the test sees it within a second. The global overlay (step 25.9.4) has its
+ * own scope, so its queue never shares a transient with a creator's overlay
+ * of the same row id.
  */
 final class OverlayTestQueue {
 
@@ -32,6 +34,14 @@ final class OverlayTestQueue {
 	public const TTL = 300;
 
 	/**
+	 * Constructor.
+	 *
+	 * @param string $scope Which overlays: 'overlay' for the creators' (the default), 'global' for the global overlay.
+	 */
+	public function __construct( private string $scope = 'overlay' ) {
+	}
+
+	/**
 	 * Adds a rendered alert.
 	 *
 	 * @param int                                                                           $overlay Overlay row id.
@@ -41,7 +51,7 @@ final class OverlayTestQueue {
 		$queue   = $this->read( $overlay );
 		$queue[] = $alert;
 
-		set_transient( self::key( $overlay ), array_slice( $queue, -self::MAX ), self::TTL );
+		set_transient( $this->key( $overlay ), array_slice( $queue, -self::MAX ), self::TTL );
 	}
 
 	/**
@@ -50,7 +60,7 @@ final class OverlayTestQueue {
 	 * @param int $overlay Overlay row id.
 	 */
 	public function clear( int $overlay ): void {
-		delete_transient( self::key( $overlay ) );
+		delete_transient( $this->key( $overlay ) );
 	}
 
 	/**
@@ -63,7 +73,7 @@ final class OverlayTestQueue {
 		$queue = $this->read( $overlay );
 
 		if ( array() !== $queue ) {
-			delete_transient( self::key( $overlay ) );
+			delete_transient( $this->key( $overlay ) );
 		}
 
 		return $queue;
@@ -76,7 +86,7 @@ final class OverlayTestQueue {
 	 * @return list<array{id: int, image: string, text: string, secondary: string, sound: string}>
 	 */
 	private function read( int $overlay ): array {
-		$key = self::key( $overlay );
+		$key = $this->key( $overlay );
 
 		wp_cache_delete( '_transient_' . $key, 'options' );
 		wp_cache_delete( '_transient_timeout_' . $key, 'options' );
@@ -105,7 +115,7 @@ final class OverlayTestQueue {
 	 *
 	 * @param int $overlay Overlay row id.
 	 */
-	private static function key( int $overlay ): string {
-		return 'merchboard_alerts_test_' . substr( hash( 'sha256', 'overlay:' . $overlay ), 0, 24 );
+	private function key( int $overlay ): string {
+		return 'merchboard_alerts_test_' . substr( hash( 'sha256', $this->scope . ':' . $overlay ), 0, 24 );
 	}
 }

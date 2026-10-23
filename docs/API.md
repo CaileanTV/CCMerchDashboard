@@ -112,6 +112,7 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 | --- | --- | --- |
 | `GET`/`POST` | `/admin/creators` | `merchboard_manage_creators` |
 | `GET`/`PATCH` | `/admin/creators/{id}` | `merchboard_manage_creators` |
+| `GET`/`POST`/`PATCH` | `/admin/alerts/global-overlay` | `merchboard_manage_alerts`. ✅ Trin 25.9.4: det globale overlay (læs, opret, gem indstillinger) i samme JSON som `/me/alerts/overlay` plus `overlay.enabled`; desuden `POST …/enabled` (`{ "enabled": bool }`), `…/regenerate`, `…/test`, `…/replay` (404 `merchboard_no_orders` uden ordrer), `POST`/`DELETE …/sounds/{default\|term-id}` og `POST …/images`, `DELETE …/images/{id}`. Ændrer aldrig en creators overlay |
 
 ### Offentlig: alert-overlayets feed ✅ (fase 25, trin 25.3, ADR-065 pkt. 4)
 
@@ -125,6 +126,10 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 Svar `200`: `{ cursor, version, alerts: [ { id, image, text, secondary, sound } ] }`, højst 20 alerts, ældste først. `text` og `secondary` er færdig tekst (skabelonen med variablerne udfyldt; `$FirstName` og `$UserName` giver kundens frivillige brugernavn eller "Anonymous"), `image` er en billed-URL på samme site eller `""`. `sound` (fra trin 25.6) er URL'en på alertens lyd på samme site eller `""`: med lyde slået til lyden for den første af produktets kategorier (eller deres overkategorier), der har en, ellers standardlyden. `version` skifter, når indstillingerne eller ID'et ændres; siden genindlæses så. Ingen kunde- eller ordre-ID'er. Headers: `Cache-Control: no-store`, `X-Robots-Tag: noindex`.
 
 Fejl: `404 merchboard_overlay_not_found` (ukendt eller ugyldigt ID, eller inaktiv creator; samme svar for alle), `429 merchboard_too_many_requests` (mere end 60 forespørgsler pr. overlay pr. minut; kun eksisterende overlays tælles).
+
+### Offentlig: det globale overlays feed ✅ (fase 25, trin 25.9.4)
+
+`GET /merchboard/v1/alerts/global-overlay/{overlay_id}/feed`: samme parametre, svar og rate limit som creatorens feed ovenfor, men over alle creators' alerts og på sin egen route, så et creator-ID aldrig åbner det globale overlay og omvendt. `404 merchboard_overlay_not_found`, når ID'et er ukendt, overlayet er slået fra, alerts' kill switch er fra eller MerchAlert er aktiv.
 
 ### Twitch: callback, EventSub-webhook og admin-chat ✅ (fase 25, trin 25.8, ADR-066)
 

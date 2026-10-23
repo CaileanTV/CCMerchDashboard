@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useId, useState } from '@wordpress/element';
+import type { ReactNode } from 'react';
 import { __ } from '@wordpress/i18n';
 
-import {
-	createAlertsOverlay,
-	getAlertsOverlay,
-	regenerateAlertsOverlay,
-	sendTestAlert,
-} from '../../api/alerts';
 import type { ApiError } from '../../api/client';
 import { Alert } from '../../components/Alert';
 import { ApiErrorState } from '../../components/ApiErrorState';
@@ -20,19 +15,26 @@ import { AlertSoundsCard } from './AlertSoundsCard';
 import { OverlayDesigner } from './OverlayDesigner';
 import { OverlaySettingsForm } from './OverlaySettingsForm';
 import { useFontStylesheet } from './useFontStylesheet';
+import { useOverlayApi } from './overlay-api-context';
+
+/** Whose overlay the cards show: the creator's own or the global overlay (step 25.9.4). */
+export type OverlayVariant = 'creator' | 'global';
 
 function SetupCard( {
 	onCreated,
+	variant,
 }: {
 	readonly onCreated: ( state: AlertsOverlayState ) => void;
+	readonly variant: OverlayVariant;
 } ) {
 	const [ busy, setBusy ] = useState( false );
+	const api = useOverlayApi();
 	const [ error, setError ] = useState< ApiError | null >( null );
 
 	const create = async () => {
 		setBusy( true );
 		setError( null );
-		const result = await createAlertsOverlay();
+		const result = await api.create();
 		setBusy( false );
 
 		if ( result.ok ) {
@@ -43,12 +45,23 @@ function SetupCard( {
 	};
 
 	return (
-		<Card title={ __( 'Your stream overlay', 'merchboard' ) }>
+		<Card
+			title={
+				variant === 'global'
+					? __( 'Global overlay', 'merchboard' )
+					: __( 'Your stream overlay', 'merchboard' )
+			}
+		>
 			<p>
-				{ __(
-					'Show an alert on your stream when someone buys your merch. Set up your overlay to get the URL for a browser source in your streaming software.',
-					'merchboard'
-				) }
+				{ variant === 'global'
+					? __(
+							'An overlay of its own that shows the alerts of every creator. Set it up to get the URL for a browser source; it is switched off until you switch it on.',
+							'merchboard'
+						)
+					: __(
+							'Show an alert on your stream when someone buys your merch. Set up your overlay to get the URL for a browser source in your streaming software.',
+							'merchboard'
+						) }
 			</p>
 			{ error !== null && <ApiErrorState error={ error } /> }
 			<Button onClick={ create } isBusy={ busy }>
@@ -78,6 +91,7 @@ function BrowserSourceCard( {
 } ) {
 	const id = useId();
 	const [ busy, setBusy ] = useState< 'test' | 'regenerate' | null >( null );
+	const api = useOverlayApi();
 	const [ error, setError ] = useState< ApiError | null >( null );
 	const [ shown, setShown ] = useState( false );
 
@@ -106,7 +120,7 @@ function BrowserSourceCard( {
 	const test = async () => {
 		setBusy( 'test' );
 		setError( null );
-		const result = await sendTestAlert();
+		const result = await api.sendTest();
 		setBusy( null );
 
 		if ( result.ok ) {
@@ -136,7 +150,7 @@ function BrowserSourceCard( {
 
 		setBusy( 'regenerate' );
 		setError( null );
-		const result = await regenerateAlertsOverlay();
+		const result = await api.regenerate();
 		setBusy( null );
 
 		if ( result.ok ) {
@@ -218,7 +232,24 @@ function BrowserSourceCard( {
 	);
 }
 
-function Notices( { state }: { readonly state: AlertsOverlayState } ) {
+function Notices( {
+	state,
+	variant,
+}: {
+	readonly state: AlertsOverlayState;
+	readonly variant: OverlayVariant;
+} ) {
+	if ( variant === 'global' ) {
+		return state.merchalertActive || ! state.alertsEnabled ? (
+			<Alert tone="warning">
+				{ __(
+					'Purchase alerts are not being sent (switched off in Settings → Alerts, or MerchAlert is active), so the global overlay is not shown. Its settings can be changed already.',
+					'merchboard'
+				) }
+			</Alert>
+		) : null;
+	}
+
 	if ( state.merchalertActive ) {
 		return (
 			<Alert tone="warning">
@@ -244,10 +275,23 @@ function Notices( { state }: { readonly state: AlertsOverlayState } ) {
 	return null;
 }
 
-function AlertsContent( {
+/**
+ * The overlay's cards: browser source, sounds, settings and designer. The
+ * global overlay (step 25.9.4) shows its own controls above them.
+ *
+ * @param props          Props.
+ * @param props.initial  The overlay as loaded.
+ * @param props.variant  Whose overlay it is.
+ * @param props.controls Cards shown above the overlay's cards (the global overlay's switch and replay).
+ */
+export function AlertsContent( {
 	initial,
+	variant = 'creator',
+	controls,
 }: {
 	readonly initial: AlertsOverlayState;
+	readonly variant?: OverlayVariant;
+	readonly controls?: ReactNode;
 } ) {
 	const [ state, setState ] = useState( initial );
 	const [ toast, setToast ] = useState< string | null >( null );
@@ -266,11 +310,12 @@ function AlertsContent( {
 
 	return (
 		<>
-			<Notices state={ state } />
+			<Notices state={ state } variant={ variant } />
 			{ state.overlay === null ? (
-				<SetupCard onCreated={ setState } />
+				<SetupCard onCreated={ setState } variant={ variant } />
 			) : (
 				<div className="merchboard-alerts">
+					{ controls }
 					<div className="merchboard-alerts__columns">
 						<BrowserSourceCard
 							url={ state.overlay.url }
@@ -325,7 +370,8 @@ function AlertsContent( {
  * designer and the sounds.
  */
 export function AlertsSection() {
-	const { state, retry } = useApi( getAlertsOverlay );
+	const api = useOverlayApi();
+	const { state, retry } = useApi( api.get );
 
 	if ( state.status === 'loading' ) {
 		return (

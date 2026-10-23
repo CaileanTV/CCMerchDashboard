@@ -60,8 +60,9 @@ final class AlertsAdminPage {
 	 * @param ChatbotAdminTab|null   $chatbot The chatbot tab; null for none.
 	 * @param YouTubeLegalTab|null   $legal   The YouTube chatbot's privacy policy and terms; null for none.
 	 * @param OrderLogTab|null       $log     The order log (step 25.9.3), the first and default tab; null for none.
+	 * @param GlobalOverlayTab|null  $global_overlay The global overlay (step 25.9.4); null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null ) {
 	}
 
 	/**
@@ -161,6 +162,7 @@ final class AlertsAdminPage {
 			'chatbot' => null === $this->chatbot ? 'fonts' : 'chatbot',
 			'youtube-legal' => null === $this->legal ? 'fonts' : 'youtube-legal',
 			'fonts'  => 'fonts',
+			GlobalOverlayTab::TAB => null === $this->global_overlay ? 'fonts' : GlobalOverlayTab::TAB,
 			default  => null === $this->log ? 'fonts' : OrderLogTab::TAB,
 		};
 		$notice = self::result_message( $code );
@@ -171,6 +173,10 @@ final class AlertsAdminPage {
 
 		if ( null !== $this->log ) {
 			echo '<a class="nav-tab' . ( OrderLogTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( OrderLogTab::TAB ) ) . '"' . ( OrderLogTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Order log', 'merchboard' ) . '</a>';
+		}
+
+		if ( null !== $this->global_overlay ) {
+			echo '<a class="nav-tab' . ( GlobalOverlayTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( GlobalOverlayTab::TAB ) ) . '"' . ( GlobalOverlayTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Global overlay', 'merchboard' ) . '</a>';
 		}
 
 		echo '<a class="nav-tab' . ( 'fonts' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url() ) . '"' . ( 'fonts' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Fonts', 'merchboard' ) . '</a>';
@@ -195,6 +201,13 @@ final class AlertsAdminPage {
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( GlobalOverlayTab::TAB === $tab && null !== $this->global_overlay ) {
+			$this->global_overlay->render();
+			echo '</div>';
+
+			return;
 		}
 
 		if ( OrderLogTab::TAB === $tab && null !== $this->log ) {

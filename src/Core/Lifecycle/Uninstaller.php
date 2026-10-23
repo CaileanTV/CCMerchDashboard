@@ -22,6 +22,7 @@ use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
+use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
@@ -194,6 +195,7 @@ final class Uninstaller {
 		delete_option( KickAccount::OPTION );
 		delete_option( YouTubeAccount::OPTION );
 		delete_option( YouTubeLegal::OPTION );
+		delete_option( GlobalOverlayStore::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

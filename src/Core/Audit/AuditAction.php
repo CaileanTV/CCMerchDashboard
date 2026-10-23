@@ -378,6 +378,21 @@ enum AuditAction: string {
 	case AlertFontRemoved = 'alert_font_removed';
 
 	/**
+	 * The global alert overlay was set up (phase 25, step 9.4). No context.
+	 */
+	case AlertGlobalOverlayCreated = 'alert_global_overlay_created';
+
+	/**
+	 * The global alert overlay got a new secret URL. No context.
+	 */
+	case AlertGlobalOverlayIdRegenerated = 'alert_global_overlay_id_regenerated';
+
+	/**
+	 * The global alert overlay was switched on or off. Context: enabled.
+	 */
+	case AlertGlobalOverlayToggled = 'alert_global_overlay_toggled';
+
+	/**
 	 * A sound was added to the alert sound library (phase 25, step 6.3). Context: file name.
 	 */
 	case AlertSoundLibraryAdded = 'alert_sound_library_added';

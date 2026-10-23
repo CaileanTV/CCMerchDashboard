@@ -332,6 +332,45 @@ final class AlertEventRepository {
 	}
 
 	/**
+	 * The id of the newest alert of any creator, 0 when there is none: the
+	 * global overlay's starting cursor (step 25.9.4).
+	 *
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function latest_id_all(): int {
+		$wpdb = $this->wpdb;
+		$id   = $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(id) FROM %i', $this->table() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return is_numeric( $id ) ? (int) $id : 0;
+	}
+
+	/**
+	 * Every creator's alerts after a cursor (row id), oldest first: the
+	 * global overlay's feed (step 25.9.4).
+	 *
+	 * @param int $after_id Cursor: the last id already delivered.
+	 * @param int $limit    At most this many (1–50).
+	 * @return list<AlertEvent>
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function after_all( int $after_id, int $limit ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE id > %d ORDER BY id LIMIT %d', $this->table(), max( 0, $after_id ), max( 1, min( 50, $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
+
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return array_map( self::hydrate( ... ), $rows );
+	}
+
+	/**
 	 * An alert from a row.
 	 *
 	 * @param array<string, mixed> $row Row.

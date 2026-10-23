@@ -62,11 +62,11 @@ final class OverlayFeed {
 	private Closure $sleep;
 
 	/**
-	 * The URL of an attachment image in a size, or ''.
+	 * Renders an alert (shared with the global overlay).
 	 *
-	 * @var Closure(int, int): string
+	 * @var AlertRenderer
 	 */
-	private Closure $image_url;
+	private AlertRenderer $renderer;
 
 	/**
 	 * Constructor.
@@ -84,14 +84,14 @@ final class OverlayFeed {
 		private AlertOverlayRepository $overlays,
 		private AlertEventRepository $events,
 		private CreatorRepository $creators,
-		private AlertTemplate $template,
+		AlertTemplate $template,
 		?Closure $image_url = null,
 		?Closure $sleep = null,
 		private ?OverlayTestQueue $tests = null,
 		private ?AlertSounds $sounds = null
 	) {
-		$this->image_url = $image_url ?? self::media_library_url( ... );
-		$this->sleep     = $sleep ?? static function ( int $seconds ): void {
+		$this->renderer = new AlertRenderer( $template, $image_url );
+		$this->sleep    = $sleep ?? static function ( int $seconds ): void {
 			sleep( $seconds );
 		};
 	}
@@ -165,15 +165,7 @@ final class OverlayFeed {
 	 * @return array{id: int, image: string, text: string, secondary: string, sound: string}
 	 */
 	public function render( AlertOverlay $overlay, AlertEvent $event ): array {
-		$settings = $overlay->settings;
-
-		return array(
-			'id'        => $event->id,
-			'image'     => $event->image_id > 0 ? ( $this->image_url )( $event->image_id, $settings->image_size() ) : '',
-			'text'      => $this->template->render( $settings->template(), $event ),
-			'secondary' => $settings->shows_secondary() ? $this->template->render( $settings->secondary_template(), $event ) : '',
-			'sound'     => null === $this->sounds ? '' : $this->sounds->url_for( $overlay, $event ),
-		);
+		return $this->renderer->render( $overlay->settings, $event, null === $this->sounds ? '' : $this->sounds->url_for( $overlay, $event ) );
 	}
 
 	/**
@@ -190,23 +182,5 @@ final class OverlayFeed {
 			'version' => $overlay->version(),
 			'alerts'  => $alerts,
 		);
-	}
-
-	/**
-	 * The URL of an image in the Media Library, only when it is on this site.
-	 *
-	 * @param int $attachment_id Attachment id.
-	 * @param int $size          Wanted width and height in pixels.
-	 */
-	private static function media_library_url( int $attachment_id, int $size ): string {
-		$url = wp_get_attachment_image_url( $attachment_id, array( $size, $size ) );
-
-		if ( ! is_string( $url ) || '' === $url ) {
-			return '';
-		}
-
-		$host = wp_parse_url( $url, PHP_URL_HOST );
-
-		return is_string( $host ) && wp_parse_url( home_url(), PHP_URL_HOST ) === $host ? $url : '';
 	}
 }
