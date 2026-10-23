@@ -414,6 +414,18 @@ enum AuditAction: string {
 	case AlertCreatorPageChanged = 'alert_creator_page_changed';
 
 	/**
+	 * A creator's overlay, alerts and chatbot were imported from MerchAlert
+	 * (phase 25, step 10.1). Context: status, events, messages (no names).
+	 */
+	case AlertCreatorImported = 'alert_creator_imported';
+
+	/**
+	 * The import from MerchAlert ran (phase 25, step 10.1). Context: creators,
+	 * skipped, events, messages, added_events (counts only).
+	 */
+	case AlertImportCompleted = 'alert_import_completed';
+
+	/**
 	 * A sound was added to the alert sound library (phase 25, step 6.3). Context: file name.
 	 */
 	case AlertSoundLibraryAdded = 'alert_sound_library_added';

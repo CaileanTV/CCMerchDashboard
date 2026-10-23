@@ -131,6 +131,47 @@ final class ChatMessageRepository {
 	}
 
 	/**
+	 * Notes a message MerchAlert's chatbot sent (the import, step 25.10.1),
+	 * with its time, so the line is never announced again; an existing
+	 * entry stays as it is.
+	 *
+	 * @param int          $creator_id    Creator.
+	 * @param ChatPlatform $platform      Platform.
+	 * @param int          $order_id      Order.
+	 * @param int          $order_item_id Line.
+	 * @param string       $sent_at       When it was sent (UTC, Y-m-d H:i:s).
+	 * @return bool Whether it was added.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function import_sent( int $creator_id, ChatPlatform $platform, int $order_id, int $order_item_id, string $sent_at ): bool {
+		if ( $order_id < 1 || $order_item_id < 1 ) {
+			return false;
+		}
+
+		$time = 1 === preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $sent_at ) ? $sent_at : gmdate( 'Y-m-d H:i:s' );
+		$wpdb = $this->wpdb;
+		$sql  = $wpdb->prepare(
+			'INSERT IGNORE INTO %i (creator_id, platform, order_id, order_item_id, status, reason, attempts, created_at, updated_at) VALUES (%d, %s, %d, %d, %s, %s, 1, %s, %s)',
+			$this->table(),
+			$creator_id,
+			$platform->value,
+			$order_id,
+			$order_item_id,
+			self::SENT,
+			'',
+			$time,
+			$time
+		);
+		$rows = null === $sql ? false : $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; a custom table.
+
+		if ( false === $rows || '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not store the chat message log.' );
+		}
+
+		return $rows > 0;
+	}
+
+	/**
 	 * Forgets a message, so an explicit resend sends it again.
 	 *
 	 * @param int          $creator_id    Creator.

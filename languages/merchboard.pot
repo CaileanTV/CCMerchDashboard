@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-23T11:03:27+00:00\n"
+"POT-Creation-Date: 2026-10-23T12:52:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -352,450 +352,458 @@ msgid "Creator page setup changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:132
-msgid "Sound added to the alert sound library"
+msgid "Creator's alerts imported from MerchAlert"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:133
-msgid "Sound removed from the alert sound library"
+msgid "Import from MerchAlert completed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:134
-msgid "Sound of the alert sound library renamed"
+msgid "Sound added to the alert sound library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:135
-msgid "Creator's alert sound limits changed"
+msgid "Sound removed from the alert sound library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:136
-msgid "Image added to the alert image library"
+msgid "Sound of the alert sound library renamed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:137
-msgid "Image removed from the alert image library"
+msgid "Creator's alert sound limits changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:138
-msgid "Image of the alert image library renamed"
+msgid "Image added to the alert image library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:139
-msgid "Twitch app of the alert chatbot saved"
+msgid "Image removed from the alert image library"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:140
-msgid "Twitch app of the alert chatbot removed"
+msgid "Image of the alert image library renamed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:141
-msgid "Chatbot account connected"
+msgid "Twitch app of the alert chatbot saved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:142
-msgid "Chatbot account disconnected"
+msgid "Twitch app of the alert chatbot removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:143
-msgid "Chat message format changed"
+msgid "Chatbot account connected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:144
-msgid "Chatbot added to a creator's channel"
+msgid "Chatbot account disconnected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:145
-msgid "Chatbot removed from a creator's channel"
+msgid "Chat message format changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:146
-msgid "Chat message sent as the bot"
+msgid "Chatbot added to a creator's channel"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:147
-msgid "Kick app of the alert chatbot saved"
+msgid "Chatbot removed from a creator's channel"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:148
-msgid "Kick app of the alert chatbot removed"
+msgid "Chat message sent as the bot"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:149
-msgid "YouTube app of the alert chatbot saved"
+msgid "Kick app of the alert chatbot saved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:150
-msgid "YouTube app of the alert chatbot removed"
+msgid "Kick app of the alert chatbot removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:151
-msgid "Privacy policy and terms of the YouTube chatbot saved"
+msgid "YouTube app of the alert chatbot saved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:152
+msgid "YouTube app of the alert chatbot removed"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:153
+msgid "Privacy policy and terms of the YouTube chatbot saved"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:154
 msgid "Privacy policy and terms of the YouTube chatbot accepted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:243
+#: src/Modules/Admin/AuditLogFormatter.php:245
 msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:245
+#: src/Modules/Admin/AuditLogFormatter.php:247
 #, php-format
 msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:248
+#: src/Modules/Admin/AuditLogFormatter.php:250
 #, php-format
 msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:251
+#: src/Modules/Admin/AuditLogFormatter.php:253
 #, php-format
 msgid "Status: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:254
+#: src/Modules/Admin/AuditLogFormatter.php:256
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:259
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:262
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:262
+#: src/Modules/Admin/AuditLogFormatter.php:264
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:265
+#: src/Modules/Admin/AuditLogFormatter.php:267
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:268
+#: src/Modules/Admin/AuditLogFormatter.php:270
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:269
+#: src/Modules/Admin/AuditLogFormatter.php:271
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:272
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:271
+#: src/Modules/Admin/AuditLogFormatter.php:273
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:275
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:277
+#: src/Modules/Admin/AuditLogFormatter.php:279
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:280
+#: src/Modules/Admin/AuditLogFormatter.php:282
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:284
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:284
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:285
+#: src/Modules/Admin/AuditLogFormatter.php:287
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:288
+#: src/Modules/Admin/AuditLogFormatter.php:290
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:291
+#: src/Modules/Admin/AuditLogFormatter.php:293
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:294
+#: src/Modules/Admin/AuditLogFormatter.php:296
 msgid "Previous creator: none"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:298
 #, php-format
 msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:299
+#: src/Modules/Admin/AuditLogFormatter.php:301
 #, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:302
+#: src/Modules/Admin/AuditLogFormatter.php:304
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:305
+#: src/Modules/Admin/AuditLogFormatter.php:307
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:308
+#: src/Modules/Admin/AuditLogFormatter.php:310
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:312
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:313
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:316
+#: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:319
+#: src/Modules/Admin/AuditLogFormatter.php:321
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:323
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:323
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:326
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:329
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:330
+#: src/Modules/Admin/AuditLogFormatter.php:332
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:331
+#: src/Modules/Admin/AuditLogFormatter.php:333
 msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:336
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:337
+#: src/Modules/Admin/AuditLogFormatter.php:339
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:340
+#: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:343
+#: src/Modules/Admin/AuditLogFormatter.php:345
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:346
+#: src/Modules/Admin/AuditLogFormatter.php:348
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:387
+#: src/Modules/Admin/AuditLogFormatter.php:389
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:389
+#: src/Modules/Admin/AuditLogFormatter.php:391
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:391
+#: src/Modules/Admin/AuditLogFormatter.php:393
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:404
+#: src/Modules/Admin/AuditLogFormatter.php:406
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:405
+#: src/Modules/Admin/AuditLogFormatter.php:407
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:406
+#: src/Modules/Admin/AuditLogFormatter.php:408
 #: build/dashboard.js:38
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:407
+#: src/Modules/Admin/AuditLogFormatter.php:409
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:408
+#: src/Modules/Admin/AuditLogFormatter.php:410
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:411
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:410
+#: src/Modules/Admin/AuditLogFormatter.php:412
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:420
-#: src/Modules/Admin/AuditLogFormatter.php:446
-#: src/Modules/Admin/AuditLogFormatter.php:505
+#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:448
+#: src/Modules/Admin/AuditLogFormatter.php:507
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:433
+#: src/Modules/Admin/AuditLogFormatter.php:435
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:44
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:434
+#: src/Modules/Admin/AuditLogFormatter.php:436
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:44
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:435
+#: src/Modules/Admin/AuditLogFormatter.php:437
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:44
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:436
+#: src/Modules/Admin/AuditLogFormatter.php:438
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:44
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:466
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:488
+#: src/Modules/Admin/AuditLogFormatter.php:490
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:489
+#: src/Modules/Admin/AuditLogFormatter.php:491
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:490
+#: src/Modules/Admin/AuditLogFormatter.php:492
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:491
+#: src/Modules/Admin/AuditLogFormatter.php:493
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:492
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:494
+#: src/Modules/Admin/AuditLogFormatter.php:642
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:493
+#: src/Modules/Admin/AuditLogFormatter.php:495
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:494
-#: src/Modules/Admin/AuditLogFormatter.php:700
+#: src/Modules/Admin/AuditLogFormatter.php:496
+#: src/Modules/Admin/AuditLogFormatter.php:702
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:40
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:495
+#: src/Modules/Admin/AuditLogFormatter.php:497
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:524
+#: src/Modules/Admin/AuditLogFormatter.php:526
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:539
+#: src/Modules/Admin/AuditLogFormatter.php:541
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -804,7 +812,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:610
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -813,87 +821,87 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:610
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:618
+#: src/Modules/Admin/AuditLogFormatter.php:620
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:619
+#: src/Modules/Admin/AuditLogFormatter.php:621
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:620
+#: src/Modules/Admin/AuditLogFormatter.php:622
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:621
+#: src/Modules/Admin/AuditLogFormatter.php:623
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:622
+#: src/Modules/Admin/AuditLogFormatter.php:624
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:623
+#: src/Modules/Admin/AuditLogFormatter.php:625
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:624
+#: src/Modules/Admin/AuditLogFormatter.php:626
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:625
+#: src/Modules/Admin/AuditLogFormatter.php:627
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:626
+#: src/Modules/Admin/AuditLogFormatter.php:628
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:627
+#: src/Modules/Admin/AuditLogFormatter.php:629
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:628
+#: src/Modules/Admin/AuditLogFormatter.php:630
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:641
+#: src/Modules/Admin/AuditLogFormatter.php:643
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:653
+#: src/Modules/Admin/AuditLogFormatter.php:655
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:654
+#: src/Modules/Admin/AuditLogFormatter.php:656
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:666
+#: src/Modules/Admin/AuditLogFormatter.php:668
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:667
+#: src/Modules/Admin/AuditLogFormatter.php:669
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:668
+#: src/Modules/Admin/AuditLogFormatter.php:670
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:700
+#: src/Modules/Admin/AuditLogFormatter.php:702
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
@@ -903,15 +911,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:719
+#: src/Modules/Admin/AuditLogFormatter.php:721
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:720
+#: src/Modules/Admin/AuditLogFormatter.php:722
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:721
+#: src/Modules/Admin/AuditLogFormatter.php:723
 msgid "social links"
 msgstr ""
 
@@ -1063,6 +1071,7 @@ msgid "View audit log"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:121
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:86
@@ -1184,13 +1193,14 @@ msgid "Settings"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:155
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:156
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:194
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:256
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:304
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:343
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:142
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:85
+#: src/Modules/Alerts/Admin/MerchAlertImportActions.php:69
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr ""
 
@@ -1201,6 +1211,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:349
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
+#: src/Modules/Alerts/Admin/MerchAlertImportActions.php:75
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -1218,13 +1229,14 @@ msgstr ""
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:76
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:77
 msgid "Merch Dashboard Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:77
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:175
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:78
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:177
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: src/Modules/Alerts/Admin/OrderLogTab.php:200
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Alerts/Admin/OrderLogTab.php:246
@@ -1235,33 +1247,33 @@ msgstr ""
 msgid "Alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:111
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
 msgid "The Google Fonts API key was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:112
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
 msgid "The Google Fonts API key was removed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:113
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
 msgid "The Google Fonts catalogue was fetched."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:114
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
 msgid "The font was approved. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:115
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
 msgid "The font was removed. Overlays that used it show the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:116
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
 msgid "Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:144
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:145
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:118
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:196
@@ -1273,40 +1285,40 @@ msgstr ""
 msgid "You are not allowed to change these settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
 msgid "Google did not accept the API key. Check the key and try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:119
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 msgid "Save a Google Fonts API key first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
 msgid "Google Fonts could not be reached. Try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:121
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
 msgid "The font is not in the catalogue, or the limit of approved fonts is reached."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:122
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
 msgid "The sound was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:123
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
 msgid "The sound got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:124
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
 msgid "The sound is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:125
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
 msgid "The sound was removed. Overlays that used it play their other sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:126
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
 #: build/alerts-global-admin.js:3
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:3
@@ -1316,7 +1328,7 @@ msgstr ""
 msgid "No file was received. Try again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:127
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:128
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
@@ -1324,13 +1336,13 @@ msgid "Choose an MP3, WAV or OGG file."
 msgstr ""
 
 #. translators: %s: the largest file, e.g. "10 MB".
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:129
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:130
 #, php-format
 msgid "The file is larger than %s."
 msgstr ""
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:131
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
@@ -1338,78 +1350,78 @@ msgstr ""
 msgid "The sound is longer than %d seconds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:132
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
 msgid "The file could not be read as a sound. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:133
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
 msgid "The library is full. Remove a sound first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:134
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
 msgid "The image was added to the library. Creators can choose it now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:135
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
 msgid "The image got its new name."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:136
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
 msgid "The image was removed. Texts it filled show their colour again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:137
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:138
 msgid "The image is no longer in the library."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:139
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:9
 #: build/dashboard.js:29
 msgid "Choose a PNG, JPG, GIF or WebP image."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:140
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
 msgid "The file is too large."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:141
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
 msgid "The image is too big. Choose a smaller image."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:142
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:143
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:9
 #: build/dashboard.js:29
 msgid "The file could not be read as an image. Choose another file."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:143
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:144
 msgid "The library is full. Remove an image first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:145
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:265
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:146
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:279
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:89
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:104
 msgid "A technical error occurred. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:179
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:181
 msgid "Order log"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:183
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:185
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:38
 msgid "Global overlay"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:187
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:189
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/alerts-presets-admin.js:18
@@ -1417,16 +1429,22 @@ msgstr ""
 msgid "Standard overlays"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:191
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:193
 #: build/alerts-page-admin.js:5
 msgid "Creator page"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:194
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:197
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:204
+msgid "Import"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:200
 msgid "Fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:197
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:203
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: build/alerts-global-admin.js:5
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:5
@@ -1434,86 +1452,87 @@ msgstr ""
 msgid "Sounds"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:201
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:207
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:64
 msgid "Chatbot"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:205
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:211
 msgid "Images"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:209
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:215
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:285
 msgid "YouTube terms"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:244
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:258
 msgid "The order log could not be read. Please try again later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:286
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:300
 msgid "Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google's servers in the creator dashboard and in the browser source, which sends the viewer's IP address to Google (ADR-067)."
 msgstr ""
 
 #. translators: 1: size, e.g. "10 MB", 2: seconds, 3: number of sounds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:303
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:317
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s and %2$d seconds each (Settings → Alerts); at most %3$d sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:310
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:324
 msgid "Add a sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:314
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:328
 msgid "Sound file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:316
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:376
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:330
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:390
 msgid "Name (optional)"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:318
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:378
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:332
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:392
 msgid "Creators see this name. Without a name, the file name is used."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:319
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:333
 #: build/alerts-global-admin.js:3
 #: build/alerts-presets-admin.js:3
 #: build/dashboard.js:23
 msgid "Upload sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:324
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:338
 msgid "Sound library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:327
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:341
 msgid "The library is empty. Creators can only use their own sounds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:420
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:434
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:452
 msgid "Name"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
 msgid "Length"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
 msgid "Play"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:331
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:477
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:527
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:345
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:491
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:541
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:447
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
@@ -1523,65 +1542,65 @@ msgid "Actions"
 msgstr ""
 
 #. translators: %d: seconds.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:339
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:353
 #, php-format
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:347
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:401
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:481
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:361
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:415
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:495
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 msgid "Remove"
 msgstr ""
 
 #. translators: 1: size in MB, 2: pixels, 3: number of images.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:363
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:377
 #, php-format
 msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:370
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:384
 msgid "Add an image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:374
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:388
 msgid "Image file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:379
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:393
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Upload image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:384
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:398
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Image library"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:387
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:401
 msgid "The library is empty. Creators can only use their own images and the ready-made fills."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:32
 msgid "Image"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:391
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:405
 msgid "Size"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:422
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:440
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:436
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:454
 #: build/alerts-global-admin.js:17
 #: build/alerts-presets-admin.js:17
 #: build/alerts-presets-admin.js:18
@@ -1589,40 +1608,40 @@ msgstr ""
 msgid "Rename"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:448
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:462
 msgid "Google Fonts API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:449
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:463
 msgid "A key is saved. It is never shown again."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:449
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:463
 msgid "No key is saved. The key is only needed to fetch the catalogue."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:453
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:467
 msgid "API key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:455
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:469
 msgid "Save key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:458
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:472
 msgid "Remove key"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:470
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:484
 msgid "Approved fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:473
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:487
 msgid "No fonts are approved. Creators can only use the default font."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:477
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:527
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:491
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:541
 #: build/alerts-global-admin.js:14
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:14
@@ -1630,48 +1649,49 @@ msgstr ""
 msgid "Font"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:477
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:527
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:491
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:541
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:494
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:508
 msgid "Google Fonts catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:498
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:512
 msgid "Fetch the catalogue again"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:498
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:512
 msgid "Fetch the catalogue"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:507
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:521
 msgid "Search fonts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:509
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:523
 msgid "Search"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:516
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:530
 msgid "No fonts match the search."
 msgstr ""
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:523
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:537
 #, php-format
 msgid "At most %d fonts, the most popular first."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:533
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:547
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsAdminPage.php:535
+#: src/Modules/Alerts/Admin/AlertsAdminPage.php:549
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -2422,6 +2442,7 @@ msgstr ""
 
 #. translators: %s: Yes or No.
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:558
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:153
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2445,6 +2466,7 @@ msgstr ""
 
 #. translators: %s: Yes or No.
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:562
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:153
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2600,6 +2622,186 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/GlobalOverlayTab.php:42
 msgid "The global overlay could not be loaded. Please try again later."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:54
+msgid "The import is done. Check the creators' overlays, then switch alerts on in Settings → Alerts."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:55
+msgid "The import stopped because of a technical error. What was imported is kept; run the dry run again to import the rest."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:56
+msgid "Deactivate MerchAlert first (do not delete it)."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:57
+msgid "No MerchAlert data was found."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:58
+msgid "The data changed since the dry run. Check the new dry run and import again."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:59
+msgid "Confirm that you have a backup before you import."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:70
+msgid "Moves the alerts from the old plugin MerchAlert once: every creator's overlay with the same URL, settings and sounds, the alert history, the chatbot's template, switch and sent messages, the global overlay (switched off), the approved fonts and Google Fonts key, the sound limits and the username field. A MerchAlert creator is matched by their product category. MerchAlert's data is only read, never changed."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+msgid "Take a backup of the site first."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+msgid "Deactivate MerchAlert, but do not delete it: deleting it deletes its data."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+msgid "Twitch logins are not moved: log the bot in again under Chatbot, and creators add the bot to their channel again."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+msgid "Customers' first names are not moved; alerts show the username."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:78
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:131
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
+msgid "Dry run"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:90
+msgid "MerchAlert's data could not be read. Please try again later."
+msgstr ""
+
+#. translators: 1: date and time, 2: creators, 3: alerts, 4: chat messages.
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:115
+#, php-format
+msgid "Last import: %1$s (%2$d creators, %3$d alerts, %4$d chat messages added)."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:135
+msgid "MerchAlert has no creators."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+msgid "MerchAlert creator"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+msgid "Creator here"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+msgid "What happens"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+msgid "Chat messages"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:162
+msgid "Global overlay and settings"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:165
+msgid "Imported already: the global overlay, the settings and the fonts are not imported again."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:173
+msgid "Sound limits: not valid in MerchAlert; the current limits stay."
+msgstr ""
+
+#. translators: 1: largest file, e.g. "10 MB", 2: seconds.
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:175
+#, php-format
+msgid "Sound limits: %1$s and %2$d seconds."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:182
+msgid "Username at checkout: switched on."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:183
+msgid "Username at checkout: switched off."
+msgstr ""
+
+#. translators: %d: number of fonts.
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:187
+#, php-format
+msgid "Approved fonts: %d."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:192
+msgid "Google Fonts API key: moved, unless one is saved here already."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:193
+msgid "Google Fonts API key: none in MerchAlert."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:203
+msgid "I have taken a backup of the site, and MerchAlert is deactivated, not deleted."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:215
+msgid "Imported (new overlay)"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:216
+msgid "Imported (replaces the creator's current overlay)"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:217
+msgid "Imported already: only missing alerts and chat messages are added"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:218
+msgid "Skipped: no category in MerchAlert"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:219
+msgid "Skipped: the category belongs to no creator here"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:220
+msgid "Skipped: no overlay in MerchAlert"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:221
+msgid "Skipped: another MerchAlert creator is imported into the same creator"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:222
+msgid "Skipped: the overlay id is used here already"
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:234
+msgid "Global overlay: none in MerchAlert."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:235
+msgid "Global overlay: skipped, its id is used by a creator here."
+msgstr ""
+
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:236
+msgid "Global overlay: imported already."
+msgstr ""
+
+#. translators: %d: number of sounds.
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:238
+#, php-format
+msgid "Global overlay: replaces the current one with MerchAlert's URL and settings (%d sounds), switched off."
+msgstr ""
+
+#. translators: %d: number of sounds.
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:240
+#, php-format
+msgid "Global overlay: imported with MerchAlert's URL and settings (%d sounds), switched off."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:144
@@ -3396,10 +3598,6 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:163
 msgid "The dry run could not be completed. Nothing was changed."
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
-msgid "Dry run"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:181

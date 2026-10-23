@@ -129,6 +129,8 @@ final class AuditLogFormatter {
 			AuditAction::AlertOverlayPresetRenamed => __( 'Standard overlay renamed', 'merchboard' ),
 			AuditAction::AlertOverlayPresetDeleted => __( 'Standard overlay deleted', 'merchboard' ),
 			AuditAction::AlertCreatorPageChanged => __( 'Creator page setup changed', 'merchboard' ),
+			AuditAction::AlertCreatorImported => __( 'Creator\'s alerts imported from MerchAlert', 'merchboard' ),
+			AuditAction::AlertImportCompleted => __( 'Import from MerchAlert completed', 'merchboard' ),
 			AuditAction::AlertSoundLibraryAdded    => __( 'Sound added to the alert sound library', 'merchboard' ),
 			AuditAction::AlertSoundLibraryRemoved  => __( 'Sound removed from the alert sound library', 'merchboard' ),
 			AuditAction::AlertSoundLibraryRenamed  => __( 'Sound of the alert sound library renamed', 'merchboard' ),

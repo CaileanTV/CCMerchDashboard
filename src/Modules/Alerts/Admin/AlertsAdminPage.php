@@ -33,9 +33,10 @@ defined( 'ABSPATH' ) || exit;
  * the catalogue and the approved fonts. Step 6.3 adds the tab "Sounds": the
  * sound library creators can choose from; step 6.10 the tab "Images": the
  * images creators can fill their alert text with; step 8 the tab "Chatbot"
- * (ChatbotAdminTab). The other tabs (order log, global
- * overlay, chatbot, import) follow in later steps. Read-only rendering;
- * every change goes through AlertsAdminActions. Everything is escaped.
+ * (ChatbotAdminTab). Step 9 adds the order log, the global overlay, the
+ * standard overlays and the creator page; step 10.1 the import from
+ * MerchAlert (MerchAlertImportTab). Read-only rendering; every change goes
+ * through the admin-post handlers. Everything is escaped.
  */
 final class AlertsAdminPage {
 
@@ -54,17 +55,18 @@ final class AlertsAdminPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param AlertFonts             $fonts   Font library.
-	 * @param AlertSoundLibrary|null $library Sound library; null for none.
-	 * @param AlertImageLibrary|null $images  Image library; null for none.
-	 * @param ChatbotAdminTab|null   $chatbot The chatbot tab; null for none.
-	 * @param YouTubeLegalTab|null   $legal   The YouTube chatbot's privacy policy and terms; null for none.
-	 * @param OrderLogTab|null       $log     The order log (step 25.9.3), the first and default tab; null for none.
-	 * @param GlobalOverlayTab|null  $global_overlay The global overlay (step 25.9.4); null for none.
-	 * @param OverlayPresetsTab|null $presets The standard overlays (step 25.9.5); null for none.
-	 * @param CreatorPageTab|null    $creator_page The setup of the creator's page (step 25.9.6); null for none.
+	 * @param AlertFonts               $fonts   Font library.
+	 * @param AlertSoundLibrary|null   $library Sound library; null for none.
+	 * @param AlertImageLibrary|null   $images  Image library; null for none.
+	 * @param ChatbotAdminTab|null     $chatbot The chatbot tab; null for none.
+	 * @param YouTubeLegalTab|null     $legal   The YouTube chatbot's privacy policy and terms; null for none.
+	 * @param OrderLogTab|null         $log     The order log (step 25.9.3), the first and default tab; null for none.
+	 * @param GlobalOverlayTab|null    $global_overlay The global overlay (step 25.9.4); null for none.
+	 * @param OverlayPresetsTab|null   $presets The standard overlays (step 25.9.5); null for none.
+	 * @param CreatorPageTab|null      $creator_page The setup of the creator's page (step 25.9.6); null for none.
+	 * @param MerchAlertImportTab|null $import The import from MerchAlert (step 25.10.1); null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null ) {
+	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null, private ?MerchAlertImportTab $import = null ) {
 	}
 
 	/**
@@ -143,7 +145,7 @@ final class AlertsAdminPage {
 			'image_' . AlertImageException::LIBRARY_FULL => array( __( 'The library is full. Remove an image first.', 'merchboard' ), 'error' ),
 			'image_' . AlertImageException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'                                  => array( __( 'A technical error occurred. Nothing was changed.', 'merchboard' ), 'error' ),
-			default                                  => ChatbotAdminTab::result_message( $code ),
+			default                                  => ChatbotAdminTab::result_message( $code ) ?? MerchAlertImportTab::result_message( $code ),
 		};
 	}
 
@@ -167,6 +169,7 @@ final class AlertsAdminPage {
 			GlobalOverlayTab::TAB => null === $this->global_overlay ? 'fonts' : GlobalOverlayTab::TAB,
 			OverlayPresetsTab::TAB => null === $this->presets ? 'fonts' : OverlayPresetsTab::TAB,
 			CreatorPageTab::TAB => null === $this->creator_page ? 'fonts' : CreatorPageTab::TAB,
+			MerchAlertImportTab::TAB => null === $this->import ? 'fonts' : MerchAlertImportTab::TAB,
 			default  => null === $this->log ? 'fonts' : OrderLogTab::TAB,
 		};
 		$notice = self::result_message( $code );
@@ -191,6 +194,10 @@ final class AlertsAdminPage {
 			echo '<a class="nav-tab' . ( CreatorPageTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( CreatorPageTab::TAB ) ) . '"' . ( CreatorPageTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Creator page', 'merchboard' ) . '</a>';
 		}
 
+		if ( null !== $this->import ) {
+			echo '<a class="nav-tab' . ( MerchAlertImportTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( MerchAlertImportTab::TAB ) ) . '"' . ( MerchAlertImportTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Import', 'merchboard' ) . '</a>';
+		}
+
 		echo '<a class="nav-tab' . ( 'fonts' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url() ) . '"' . ( 'fonts' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Fonts', 'merchboard' ) . '</a>';
 
 		if ( null !== $this->library ) {
@@ -213,6 +220,14 @@ final class AlertsAdminPage {
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( MerchAlertImportTab::TAB === $tab && null !== $this->import ) {
+			// Read-only: shows the dry run, changes nothing.
+			$this->import->render( isset( $_GET[ MerchAlertImportTab::PREVIEW_ARG ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+			echo '</div>';
+
+			return;
 		}
 
 		if ( CreatorPageTab::TAB === $tab && null !== $this->creator_page ) {

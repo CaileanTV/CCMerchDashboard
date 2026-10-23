@@ -24,10 +24,15 @@ use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
 use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsActions;
 use MerchBoard\Modules\Alerts\Admin\CreatorSoundLimitsSection;
 use MerchBoard\Modules\Alerts\Admin\CreatorPageTab;
+use MerchBoard\Modules\Alerts\Admin\MerchAlertImportActions;
+use MerchBoard\Modules\Alerts\Admin\MerchAlertImportTab;
 use MerchBoard\Modules\Alerts\Admin\OrderLogTab;
 use MerchBoard\Modules\Alerts\Admin\AdminBundle;
 use MerchBoard\Modules\Alerts\Admin\GlobalOverlayTab;
 use MerchBoard\Modules\Alerts\Admin\OverlayPresetsTab;
+use MerchBoard\Modules\Alerts\Import\MerchAlertImporter;
+use MerchBoard\Modules\Alerts\Import\MerchAlertImportPlan;
+use MerchBoard\Modules\Alerts\Import\MerchAlertSource;
 use MerchBoard\Modules\Alerts\PageLayout\AdminCreatorPageController;
 use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
 use MerchBoard\Modules\Alerts\Presets\AdminOverlayPresetsController;
@@ -121,8 +126,9 @@ defined( 'ABSPATH' ) || exit;
  * when an order is paid, behind the kill switch in Settings → Alerts and
  * the MerchAlert guard. Step 3: the public overlay page for OBS and its
  * feed (new and legacy URL). Step 4: the dashboard section. Step 5: the
- * designer and the font library. Step 6: sounds. The chatbot and the
- * import follow in later steps.
+ * designer and the font library. Step 6: sounds. Step 8: the chatbot.
+ * Step 9: the admin tabs and checkout username. Step 10.1: the import from
+ * MerchAlert.
  */
 final class AlertsModule implements Module {
 
@@ -169,7 +175,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new MerchAlertImportTab( $c->get( MerchAlertImporter::class ) ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -483,6 +489,31 @@ final class AlertsModule implements Module {
 			OverlayPresets::class,
 			static fn( Container $c ): OverlayPresets => new OverlayPresets( new OverlayPresetStore(), $c->get( AuditTrail::class ), $c->get( AlertOverlayRepository::class ), $c->get( AlertFonts::class ), $c->get( AlertImageLibrary::class ), $c->get( AlertImages::class ) )
 		);
+		// The import from MerchAlert (step 25.10.1).
+		$container->set( MerchAlertSource::class, static fn( Container $c ): MerchAlertSource => new MerchAlertSource( $c->get( wpdb::class ) ) );
+		$container->set(
+			MerchAlertImportPlan::class,
+			static fn( Container $c ): MerchAlertImportPlan => new MerchAlertImportPlan( $c->get( MerchAlertSource::class ), $c->get( CreatorCategoryRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( GlobalOverlayStore::class ) )
+		);
+		$container->set(
+			MerchAlertImporter::class,
+			static fn( Container $c ): MerchAlertImporter => new MerchAlertImporter(
+				$c->get( MerchAlertImportPlan::class ),
+				$c->get( MerchAlertSource::class ),
+				$c->get( AlertsAvailability::class ),
+				$c->get( Transaction::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( AlertOverlayRepository::class ),
+				$c->get( AlertEventRepository::class ),
+				$c->get( ChatbotChannelRepository::class ),
+				$c->get( ChatMessageRepository::class ),
+				new WooCommercePaidOrderReader(),
+				$c->get( AlertSettings::class ),
+				$c->get( AlertFonts::class ),
+				$c->get( GlobalOverlayStore::class )
+			)
+		);
+		$container->set( MerchAlertImportActions::class, static fn( Container $c ): MerchAlertImportActions => new MerchAlertImportActions( $c->get( MerchAlertImporter::class ), $c->get( Logger::class ) ) );
 		// The setup of the creator's overlay settings page (step 25.9.6).
 		$container->set( CreatorPageLayoutStore::class, static fn( Container $c ): CreatorPageLayoutStore => new CreatorPageLayoutStore( $c->get( AuditTrail::class ) ) );
 		$container->set( AdminCreatorPageController::class, static fn( Container $c ): AdminCreatorPageController => new AdminCreatorPageController( $c->get( CreatorPageLayoutStore::class ), $c->get( Logger::class ) ) );
@@ -572,6 +603,7 @@ final class AlertsModule implements Module {
 			static function () use ( $container ): void {
 				$container->get( AlertsSettingsActions::class )->register();
 				$container->get( AlertsAdminActions::class )->register();
+				$container->get( MerchAlertImportActions::class )->register();
 				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
 				( new CompanyDetailsSection() )->register();
