@@ -24,6 +24,7 @@ use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Admin\AdminModule;
+use MerchBoard\Modules\News\NewsModule;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
@@ -323,11 +324,13 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chatbot \(.*broadcaster_id varchar\(64\)/s' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_chat_log \(.*broadcaster_id varchar\(64\)/s' ) );
 
-		// Migration 23 only adds indexes (no dbDelta()).
+		// Migration 23 only adds indexes and 24 columns (no dbDelta()); 25 creates the news tables.
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_news \(/' ) );
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_news_reads \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 24, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 25, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {
@@ -357,7 +360,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 5 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule && $modules[2] instanceof DashboardModule && $modules[3] instanceof SettingsModule && $modules[4] instanceof AdminModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 6 === count( $modules ) && $modules[0] instanceof CreatorsModule && $modules[1] instanceof AccessModule && $modules[2] instanceof DashboardModule && $modules[3] instanceof SettingsModule && $modules[4] instanceof AdminModule ) )
 			->andReturnFirstArg();
 
 		$this->plugin( $container )->boot();
@@ -473,7 +476,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 7 === count( $modules ) && $modules[5] instanceof WooCommerceModule && $modules[6] instanceof AlertsModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 8 === count( $modules ) && $modules[5] instanceof NewsModule && $modules[6] instanceof WooCommerceModule && $modules[7] instanceof AlertsModule ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 
@@ -490,7 +493,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 5 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule ) ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 6 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule ) ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 

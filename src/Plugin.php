@@ -31,6 +31,7 @@ use MerchBoard\Modules\Alerts\AlertsModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
+use MerchBoard\Modules\News\NewsModule;
 use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
@@ -267,6 +268,8 @@ final class Plugin {
 			new DashboardModule(),
 			new SettingsModule(),
 			new AdminModule(),
+			// "What's new" for the creators (step 25.11, ADR-072).
+			new NewsModule(),
 		);
 
 		$woocommerce = WooCommerceSupport::from_environment();

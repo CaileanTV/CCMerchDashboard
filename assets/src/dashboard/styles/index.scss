@@ -450,6 +450,67 @@
 	resize: vertical;
 }
 
+// Modal dialog (step 25.11): centred above a dimmed page.
+.merchboard-app.merchboard-dialog {
+	position: fixed;
+	inset: 0;
+	z-index: calc(var(--merchboard-z-nav) + 200);
+	display: grid;
+	place-items: center;
+	min-height: 0;
+	padding: var(--merchboard-space-4);
+	background: transparent;
+}
+
+.merchboard-dialog__backdrop {
+	position: fixed;
+	inset: 0;
+	background: var(--merchboard-scrim);
+}
+
+.merchboard-dialog__panel {
+	position: relative;
+	width: min(36rem, 100%);
+	max-height: calc(100vh - 2 * var(--merchboard-space-4));
+	overflow: auto;
+	padding: var(--merchboard-space-6);
+	background: var(--merchboard-surface);
+	border-radius: var(--merchboard-radius);
+	box-shadow: var(--merchboard-shadow);
+}
+
+.merchboard-dialog__title {
+	margin: 0 0 var(--merchboard-space-3);
+}
+
+.merchboard-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: var(--merchboard-space-4);
+}
+
+// News (step 25.11).
+.merchboard-news {
+	display: grid;
+	gap: var(--merchboard-space-4);
+}
+
+.merchboard-news__item summary {
+	cursor: pointer;
+}
+
+.merchboard-news__title {
+	font-weight: 600;
+}
+
+.merchboard-news__date {
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-news__body {
+	margin-top: var(--merchboard-space-2);
+}
+
 .merchboard-toast-region {
 	position: fixed;
 	right: var(--merchboard-space-4);

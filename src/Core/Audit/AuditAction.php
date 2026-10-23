@@ -529,4 +529,24 @@ enum AuditAction: string {
 	 * A user accepted the privacy policy and terms of the YouTube chatbot. Context: the version and the role (creator or admin); the creator for creators.
 	 */
 	case AlertYouTubeTermsAccepted = 'alert_youtube_terms_accepted';
+
+	/**
+	 * A news message was published to the creators (step 25.11, ADR-072). Context: news_id; never the text.
+	 */
+	case NewsPublished = 'news_published';
+
+	/**
+	 * A published or withdrawn news message was changed. Context: news_id; never the text.
+	 */
+	case NewsUpdated = 'news_updated';
+
+	/**
+	 * A news message was withdrawn from the creators. Context: news_id.
+	 */
+	case NewsWithdrawn = 'news_withdrawn';
+
+	/**
+	 * A news draft was deleted. Context: news_id.
+	 */
+	case NewsDeleted = 'news_deleted';
 }

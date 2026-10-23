@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 import { useConfig } from '../config-context';
+import { WhatsNew } from '../../sections/news/WhatsNew';
 import { Navigation } from './Navigation';
 
 export interface LayoutProps {
@@ -134,6 +135,8 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 					{ children }
 				</main>
 			</div>
+			{ /* "What's new" once the creator is known (step 25.11). */ }
+			{ creatorName !== undefined && <WhatsNew /> }
 		</div>
 	);
 }

@@ -15,8 +15,16 @@ use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
+/**
+ * The WooCommerce functions stubbed here must not exist for other tests,
+ * so every test runs in its own process.
+ */
 #[CoversClass( AlertTemplate::class )]
+#[RunTestsInSeparateProcesses]
+#[PreserveGlobalState( false )]
 final class AlertTemplateTest extends TestCase {
 
 	private AlertTemplate $template;

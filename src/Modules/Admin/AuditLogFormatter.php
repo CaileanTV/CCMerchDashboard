@@ -152,6 +152,10 @@ final class AuditLogFormatter {
 			AuditAction::AlertYouTubeAppRemoved => __( 'YouTube app of the alert chatbot removed', 'merchboard' ),
 			AuditAction::AlertYouTubeLegalChanged => __( 'Privacy policy and terms of the YouTube chatbot saved', 'merchboard' ),
 			AuditAction::AlertYouTubeTermsAccepted => __( 'Privacy policy and terms of the YouTube chatbot accepted', 'merchboard' ),
+			AuditAction::NewsPublished => __( 'News message published', 'merchboard' ),
+			AuditAction::NewsUpdated => __( 'Published news message changed', 'merchboard' ),
+			AuditAction::NewsWithdrawn => __( 'News message withdrawn', 'merchboard' ),
+			AuditAction::NewsDeleted => __( 'News draft deleted', 'merchboard' ),
 		};
 	}
 

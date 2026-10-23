@@ -92,6 +92,8 @@
 
 	--merchboard-shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
 	--merchboard-shadow: 0 1px 3px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 4%);
+	// Dims the page behind a modal dialog (every theme).
+	--merchboard-scrim: rgb(15 23 42 / 55%);
 
 	--merchboard-z-nav: 100;
 	--merchboard-motion: 150ms ease-out;
@@ -124,6 +126,7 @@
 
 	--merchboard-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
 	--merchboard-shadow: 0 1px 3px rgb(0 0 0 / 50%), 0 1px 2px rgb(0 0 0 / 30%);
+	--merchboard-scrim: rgb(0 0 0 / 65%);
 }
 
 @mixin merchboard-theme-dark-black {

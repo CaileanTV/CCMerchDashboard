@@ -256,6 +256,7 @@ final class AuditLogPageTest extends IntegrationTestCase {
 				'merchboard'           => Capabilities::MANAGE,
 				'merchboard-creators'  => Capabilities::MANAGE_CREATORS,
 				'merchboard-settings'  => Capabilities::MANAGE_SETTINGS,
+				'merchboard-news'      => Capabilities::MANAGE_CREATORS,
 				'merchboard-audit-log' => Capabilities::VIEW_LOGS,
 			),
 			array_column( $submenu['merchboard'], 1, 2 )

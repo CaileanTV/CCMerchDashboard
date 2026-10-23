@@ -26,6 +26,7 @@ use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 use MerchBoard\Core\Database\Migrations\CreateGiftCardAssessmentTables;
+use MerchBoard\Core\Database\Migrations\CreateNewsTables;
 use MerchBoard\Core\Database\Migrations\CreateOperationsTable;
 use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationExportsTable;
 use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationTables;
@@ -75,6 +76,7 @@ final class Schema {
 			22 => new WidenChatbotChannels(),
 			23 => new AddAlertOrderLogIndexes(),
 			24 => new AddAlertEventAmounts(),
+			25 => new CreateNewsTables(),
 		);
 	}
 }

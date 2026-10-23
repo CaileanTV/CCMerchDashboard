@@ -43,7 +43,7 @@ final class MeEndpointTest extends IntegrationTestCase {
 	public function test_routes_are_registered_with_permission_callbacks(): void {
 		$routes = rest_get_server()->get_routes( 'merchboard/v1' );
 
-		self::assertSame( array( '/merchboard/v1', '/merchboard/v1/me', '/merchboard/v1/me/profile', '/merchboard/v1/me/preferences' ), array_keys( $routes ) );
+		self::assertSame( array( '/merchboard/v1', '/merchboard/v1/me', '/merchboard/v1/me/profile', '/merchboard/v1/me/preferences', '/merchboard/v1/me/news', '/merchboard/v1/me/news/(?P<id>\d+)/seen', '/merchboard/v1/me/news/(?P<id>\d+)/closed' ), array_keys( $routes ) );
 
 		$methods = array();
 

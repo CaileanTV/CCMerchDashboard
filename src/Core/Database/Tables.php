@@ -212,6 +212,18 @@ final class Tables {
 	public const ALERT_CHAT_LOG = 'merchboard_alert_chat_log';
 
 	/**
+	 * News for the creators, schema version 25 (ADR-072): the administrator's
+	 * messages (draft, published, withdrawn) shown in the creator dashboard.
+	 */
+	public const NEWS = 'merchboard_news';
+
+	/**
+	 * Which creator has seen and closed which news message, schema version 25
+	 * (ADR-072): one row per message and creator, times only.
+	 */
+	public const NEWS_READS = 'merchboard_news_reads';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -247,6 +259,8 @@ final class Tables {
 		self::ALERT_CHATBOT,
 		self::ALERT_CHAT_MESSAGES,
 		self::ALERT_CHAT_LOG,
+		self::NEWS,
+		self::NEWS_READS,
 	);
 
 	/**

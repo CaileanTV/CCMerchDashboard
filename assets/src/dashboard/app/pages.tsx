@@ -5,6 +5,7 @@ import { EmptyState } from '../components/EmptyState';
 import { AlertsChatbotSection } from '../sections/alerts/AlertsChatbotSection';
 import { AlertsHistorySection } from '../sections/alerts/AlertsHistorySection';
 import { AlertsSection } from '../sections/alerts/AlertsSection';
+import { NewsSection } from '../sections/news/NewsSection';
 import { OrdersSection } from '../sections/orders/OrdersSection';
 import { OverviewSection } from '../sections/overview/OverviewSection';
 import { PayoutsSection } from '../sections/payouts/PayoutsSection';
@@ -22,6 +23,7 @@ export interface Page {
 /** Section components known to this build, by section id. */
 const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	overview: () => <OverviewSection />,
+	news: () => <NewsSection />,
 	sales: () => <SalesSection />,
 	products: () => <ProductsSection />,
 	orders: () => <OrdersSection />,

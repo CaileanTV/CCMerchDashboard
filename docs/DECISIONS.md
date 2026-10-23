@@ -3944,3 +3944,50 @@ Ingen migration. Ny option `merchboard_alert_youtube_legal` (uden autoload) og u
 
 ## Related
 ADR-007, ADR-016, ADR-026, ADR-065, ADR-069, ADR-070.
+
+---
+
+# ADR-072: Nyheder til creators ("Hvad er nyt")
+
+## Date
+2026-10-23
+
+## Status
+Accepteret af projektejeren 2026-10-23 (plan for trin 25.11 godkendt): egen undermenu "Nyheder", enkel formatering, alle aktive creators én gang, og en side "Nyheder" med tidligere beskeder.
+
+## Context
+Projektejeren vil kunne fortælle creators, hvad der er nyt i Merch Dashboard, fx efter en opdatering (ønske 2026-10-19, ROADMAP 25.11): en popup første gang en creator kommer ind efter udgivelsen, og administratoren skal kunne se, hvem der har set og lukket den. Det er en generel ændring af creator-dashboardet ud over alerts.
+
+## Decision
+1. **Modul `News`** (`src/Modules/News/`), ubetinget (kræver ikke WooCommerce).
+2. **Admin:** undermenuen Merch Dashboard → **Nyheder** (`merchboard_manage_creators`). Administratoren skriver en titel og en tekst i WordPress' egen editor (kun fed, kursiv, lister og links), gemmer en kladde, forhåndsviser og udgiver med en påkrævet afkrydsning. En udgivet besked kan rettes (vises straks, men popuppen vises ikke igen) og trækkes tilbage; kun kladder kan slettes. Pr. udgivet besked vises hver aktiv creator med "Ikke set", "Set" eller "Lukket".
+3. **Hvem og hvornår:** alle aktive creators, der er oprettet senest på udgivelsestidspunktet. Popuppen viser den nyeste udgivne besked, creatoren ikke har lukket; åbningen noteres som "set", lukningen som "lukket", og den vises ikke igen. Ældre beskeder vises ikke som popup.
+4. **Historik:** siden "Nyheder" i creator-dashboardet (efter Oversigt) med alle beskeder, creatoren ser, nyeste først.
+5. **Data (schema-version 25):** `merchboard_news` (titel, renset HTML, status, udgivelsestidspunkt) og `merchboard_news_reads` (en række pr. besked og creator med tidspunkterne for set og lukket; ingen tekst). REST `GET /me/news` og `POST /me/news/{id}/seen|closed` (ADR-007).
+6. **Formatering:** en fast allow-list (`p`, `br`, `strong`, `b`, `em`, `i`, `ul`, `ol`, `li`, `a[href]` med kun `http`, `https` og `mailto`), håndhævet ved gem og igen ved læsning. Dashboardet indsætter aldrig HTML: det bygger kun de tilladte elementer op som React-elementer fra en parset kopi, og links åbner i en ny fane uden opener.
+7. **Audit:** udgivelse, rettelse af en udgivet besked, tilbagetrækning og sletning (`news_published`, `news_updated`, `news_withdrawn`, `news_deleted`) med beskedens id; aldrig teksten. At creators ser og lukker en besked auditeres ikke (læsetabellen er dokumentationen).
+
+## Alternatives considered
+- **En sektion på Settings-siden:** for lidt plads til liste, editor og læserliste. Fravalgt af projektejeren.
+- **Ren tekst:** sikrest, men uden lister og links. Fravalgt af projektejeren.
+- **Også nye creators ser den seneste besked / udvalgte creators:** fravalgt af projektejeren; alle aktive, oprettet før udgivelsen.
+- **Pr. bruger i user meta:** en creator kan skifte bruger; pr. creator i en tabel giver også administratorens oversigt uden at læse user meta for alle.
+- **`dangerouslySetInnerHTML` med den rensede HTML:** dashboardet har aldrig indsat HTML; genopbygning af de tilladte elementer bevarer det og gør serverens rensning til et ekstra lag i stedet for det eneste.
+
+## Reason
+Projektejeren vil have en enkel og sikker kanal til creators, der kan dokumentere, hvem der har set en besked.
+
+## Security
+- Kun `merchboard_manage_creators` skriver og udgiver (admin-post med nonce, capability i både handler og service); creators læser kun via `/me` (CreatorContext), kun udgivne beskeder fra efter deres oprettelse; en kladde, en tilbagetrukket besked eller en anden besked giver 404.
+- HTML renses med allow-listen ved gem og ved læsning; klienten genopbygger kun de tilladte elementer og sikre links. CSP'en er uændret.
+- Læsetabellen indeholder kun id'er og tidspunkter. Tabellerne slettes ved opt-in-afinstallation.
+
+## Migration/data implications
+Migration 25 (`CreateNewsTables`) opretter `merchboard_news` og `merchboard_news_reads` (InnoDB, idempotent). Ingen data ændres.
+
+## Consequences
+- Dashboardet får en tilgængelig modal-komponent (`Dialog`) og en ny side "Nyheder".
+- Administratoren har en ny undermenu.
+
+## Related
+ADR-007, ADR-025, ADR-044, ADR-065.

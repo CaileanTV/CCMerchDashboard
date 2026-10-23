@@ -18,6 +18,7 @@ use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use MerchBoard\Modules\Dashboard\DashboardAssets;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Dashboard\DashboardSections;
+use MerchBoard\Modules\News\NewsDashboardSection;
 use MerchBoard\Modules\Dashboard\ShellController;
 use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
@@ -34,6 +35,9 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		$this->install();
 		$this->creator = $this->create_user( 'section_creator' );
 		$this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $this->creator );
+		// As after boot: the always-loaded News module adds its section (tearDown removes every filter).
+		remove_all_filters( DashboardSections::FILTER );
+		( new NewsDashboardSection() )->register();
 		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh script registry, as in a new request.
 		$GLOBALS['wp_styles']  = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh style registry, as in a new request.
 	}
@@ -70,10 +74,10 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		$registry = $this->service( DashboardSections::class );
 
 		wp_set_current_user( $this->creator );
-		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'Creator: no manage capability, broken entry dropped.' );
+		self::assertSame( array( 'overview', 'news', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'Creator: no manage capability, broken entry dropped.' );
 
 		wp_get_current_user()->add_cap( Capabilities::MANAGE );
-		self::assertSame( array( 'overview', 'profile', 'reports' ), array_column( $registry->for_current_user(), 'id' ) );
+		self::assertSame( array( 'overview', 'news', 'profile', 'reports' ), array_column( $registry->for_current_user(), 'id' ) );
 
 		wp_set_current_user( $this->create_user( 'plain_subscriber' ) );
 		self::assertSame( array(), $registry->for_current_user() );
@@ -83,7 +87,7 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		$registry = $this->service( DashboardSections::class );
 		wp_set_current_user( $this->creator );
 
-		self::assertSame( array( 'overview', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Sales, Products, Orders or Payouts section.' );
+		self::assertSame( array( 'overview', 'news', 'profile' ), array_column( $registry->for_current_user(), 'id' ), 'No WooCommerce module: no Sales, Products, Orders or Payouts section.' );
 
 		( new DashboardSectionRegistration() )->register();
 
@@ -114,6 +118,12 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 					'label' => 'Payouts',
 					'path'  => 'payouts',
 				),
+				// Both filters add right after the overview; News registers first, so the sales sections come before it.
+				array(
+					'id'    => 'news',
+					'label' => 'News',
+					'path'  => 'news',
+				),
 				array(
 					'id'    => 'profile',
 					'label' => 'Profile',
@@ -131,7 +141,7 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		self::assertTrue( load_textdomain( 'merchboard', self::MO ) );
 		wp_set_current_user( $this->creator );
 
-		self::assertSame( array( 'Overblik', 'Profil' ), array_column( $this->service( DashboardSections::class )->for_current_user(), 'label' ) );
+		self::assertSame( array( 'Overblik', 'Nyheder', 'Profil' ), array_column( $this->service( DashboardSections::class )->for_current_user(), 'label' ) );
 		self::assertSame( 'Din adgang er ikke aktiv', __( 'Your access is not active', 'merchboard' ) );
 		self::assertSame( 'Din adgang til creator-dashboardet er ikke aktiv. Kontakt Shop.', sprintf( __( 'Your creator dashboard access is not active. Please contact %s.', 'merchboard' ), 'Shop' ) ); // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment -- Test.
 		self::assertSame( 'Welcome, %s', __( 'Welcome, %s', 'merchboard' ), 'JavaScript-only strings are served from the JSON file, not the MO.' ); // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment -- Test.
