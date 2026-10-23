@@ -126,7 +126,7 @@ final class CreatorCategoryMappingTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( '26', (string) get_option( Migrator::VERSION_OPTION ), 'Upgraded to the latest version.' );
+		self::assertSame( '27', (string) get_option( Migrator::VERSION_OPTION ), 'Upgraded to the latest version.' );
 		self::assertSame( $this->table( Tables::CREATOR_CATEGORIES ), $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table( Tables::CREATOR_CATEGORIES ) ) ) );
 		self::assertSame( 'Before 4', ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->display_name );
 		( new CreateCreatorCategoriesTable() )->up( $this->wpdb );

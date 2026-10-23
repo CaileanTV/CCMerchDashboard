@@ -159,6 +159,9 @@ final class AuditLogFormatter {
 			AuditAction::AlertApiSwitched => __( 'Alert API switched on or off', 'merchboard' ),
 			AuditAction::AlertApiKeyCreated => __( 'Alert API key created', 'merchboard' ),
 			AuditAction::AlertApiKeyRevoked => __( 'Alert API key revoked', 'merchboard' ),
+			AuditAction::AlertWebhookCreated => __( 'Alert webhook added', 'merchboard' ),
+			AuditAction::AlertWebhookChanged => __( 'Alert webhook changed', 'merchboard' ),
+			AuditAction::AlertWebhookDeleted => __( 'Alert webhook deleted', 'merchboard' ),
 		};
 	}
 

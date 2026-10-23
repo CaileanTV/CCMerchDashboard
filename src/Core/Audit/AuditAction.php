@@ -564,4 +564,19 @@ enum AuditAction: string {
 	 * An API key of the alert API was revoked (ADR-073). Context: key_id, by_admin.
 	 */
 	case AlertApiKeyRevoked = 'alert_api_key_revoked';
+
+	/**
+	 * A creator added a webhook (ADR-073). Context: webhook_id, format; never the address or secret.
+	 */
+	case AlertWebhookCreated = 'alert_webhook_created';
+
+	/**
+	 * A webhook was changed: switched, resumed, renamed or given a new secret (ADR-073). Context: webhook_id, change, by_admin.
+	 */
+	case AlertWebhookChanged = 'alert_webhook_changed';
+
+	/**
+	 * A creator deleted a webhook (ADR-073). Context: webhook_id, format.
+	 */
+	case AlertWebhookDeleted = 'alert_webhook_deleted';
 }

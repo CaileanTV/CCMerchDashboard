@@ -37,11 +37,13 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsApiController;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookDeliveryRepository;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
+use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use PHPUnit\Framework\Attributes\CoversClass;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -319,7 +321,11 @@ final class AlertApiTest extends IntegrationTestCase {
 		}
 
 		$feed           = new AlertApiFeedController( $this->feed, $this->keys, $limiter ?? new OverlayRateLimiter( null, 'merchboard_alerts_api_test_rl_', 1000 ), $this->service( Logger::class ) );
-		$me             = new MeAlertsApiController( $this->service( CreatorContext::class ), $this->keys, $this->api, $this->feed, $this->service( Logger::class ) );
+		$audit          = $this->service( AuditTrail::class );
+		$transaction    = $this->service( Transaction::class );
+		$webhooks       = AlertWebhooksTest::webhooks( $this->wpdb, $this->api, $audit, $transaction );
+		$dispatcher     = AlertWebhooksTest::dispatcher( $this->wpdb, $this->api, $webhooks, new FakeJobQueue(), $audit, $transaction, $this->service( Logger::class ) );
+		$me             = new MeAlertsApiController( $this->service( CreatorContext::class ), $this->keys, $this->api, $this->feed, $webhooks, $dispatcher, new WebhookDeliveryRepository( $this->wpdb ), $this->service( Logger::class ) );
 		$this->register = static function () use ( $feed, $me ): void {
 			$feed->register_routes();
 			$me->register_routes();

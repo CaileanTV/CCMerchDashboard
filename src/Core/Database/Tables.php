@@ -230,6 +230,18 @@ final class Tables {
 	public const ALERT_API_KEYS = 'merchboard_alert_api_keys';
 
 	/**
+	 * The creators' webhooks of the alert API, schema version 27 (ADR-073):
+	 * the address and the signing secret encrypted.
+	 */
+	public const ALERT_WEBHOOKS = 'merchboard_alert_webhooks';
+
+	/**
+	 * The deliveries of the webhooks, schema version 27 (ADR-073): the newest
+	 * 50 per webhook.
+	 */
+	public const ALERT_WEBHOOK_DELIVERIES = 'merchboard_alert_webhook_deliveries';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -268,6 +280,8 @@ final class Tables {
 		self::NEWS,
 		self::NEWS_READS,
 		self::ALERT_API_KEYS,
+		self::ALERT_WEBHOOKS,
+		self::ALERT_WEBHOOK_DELIVERIES,
 	);
 
 	/**

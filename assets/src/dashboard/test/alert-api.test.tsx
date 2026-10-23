@@ -4,6 +4,7 @@ import { act } from 'react';
 import { parseAlertApi } from '../api/alertApi';
 import { ConfigContext } from '../app/config-context';
 import { AlertsApiSection } from '../sections/alerts/AlertsApiSection';
+import { AlertsWebhooksSection } from '../sections/alerts/AlertsWebhooksSection';
 import { mockApi, response } from '../testing/api';
 import { CONFIG, click, flush, render } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
@@ -30,6 +31,38 @@ const page = ( keys: unknown[], extra: Record< string, unknown > = {} ) => ( {
 	limit: 60,
 	max_keys: 5,
 	keys,
+	max_webhooks: 3,
+	webhooks: [],
+	deliveries: [],
+	...extra,
+} );
+
+const SECRET = `whsec_${ 'a'.repeat( 64 ) }`;
+
+const webhook = ( id: number, extra: Record< string, unknown > = {} ) => ( {
+	id,
+	name: 'SparkyBot',
+	format: 'json',
+	host: 'hooks.sparkybot.example',
+	hint: 'hooks.sparkybot.exa…/abc',
+	template: '',
+	enabled: true,
+	paused: false,
+	failures: 0,
+	created_at: '2026-10-23T10:00:00+00:00',
+	last_delivery_at: null,
+	...extra,
+} );
+
+const delivery = ( id: number, extra: Record< string, unknown > = {} ) => ( {
+	id,
+	webhook_id: 4,
+	event_id: 'evt_0123',
+	kind: 'test',
+	status: 'sent',
+	http_status: 204,
+	error: null,
+	created_at: '2026-10-23T10:05:00+00:00',
 	...extra,
 } );
 
@@ -69,6 +102,14 @@ function show(): Rendered {
 	return render(
 		<ConfigContext.Provider value={ CONFIG }>
 			<AlertsApiSection />
+		</ConfigContext.Provider>
+	);
+}
+
+function showWebhooks(): Rendered {
+	return render(
+		<ConfigContext.Provider value={ CONFIG }>
+			<AlertsWebhooksSection />
 		</ConfigContext.Provider>
 	);
 }
@@ -172,5 +213,145 @@ describe( 'alert API page', () => {
 				?.disabled
 		).toBe( true );
 		expect( button( 'Make a key' ) ).toBeNull();
+		// Webhooks have their own page.
+		expect( button( 'Add webhook' ) ).toBeNull();
+
+		rendered.unmount();
+		rendered = showWebhooks();
+		await flush();
+
+		expect( rendered.container.textContent ).toContain(
+			'nothing is sent until it is switched on again'
+		);
+		expect( button( 'Add webhook' ) ).toBeNull();
+		// Keys have their own page.
+		expect( button( 'Make a key' ) ).toBeNull();
+	} );
+
+	it( 'validates webhooks, deliveries and a made secret', () => {
+		const state = parseAlertApi(
+			page( [], {
+				webhooks: [ webhook( 4 ) ],
+				deliveries: [ delivery( 9 ) ],
+				secret: SECRET,
+			} )
+		);
+
+		expect( state?.webhooks[ 0 ]?.host ).toBe( 'hooks.sparkybot.example' );
+		expect( state?.deliveries[ 0 ]?.httpStatus ).toBe( 204 );
+		expect( state?.secret ).toBe( SECRET );
+		expect(
+			parseAlertApi(
+				page( [], { webhooks: [ webhook( 4, { format: 'xml' } ) ] } )
+			)
+		).toBeNull();
+		expect(
+			parseAlertApi(
+				page( [], {
+					deliveries: [ delivery( 9, { status: 'lost' } ) ],
+				} )
+			)
+		).toBeNull();
+		expect( parseAlertApi( page( [], { secret: 'plain' } ) ) ).toBeNull();
+		expect(
+			parseAlertApi( { ...page( [] ), webhooks: undefined } )
+		).toBeNull();
+	} );
+
+	it( 'adds a JSON webhook, shows a made secret once and lists the deliveries', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, page( [] ) ),
+			[ `POST ${ PATH }/webhooks` ]: () =>
+				response(
+					201,
+					page( [], {
+						webhooks: [ webhook( 4 ) ],
+						secret: SECRET,
+					} )
+				),
+			[ `POST ${ PATH }/webhooks/4/test` ]: () =>
+				response(
+					200,
+					page( [], {
+						webhooks: [ webhook( 4 ) ],
+						deliveries: [ delivery( 9 ) ],
+						delivery: delivery( 9 ),
+					} )
+				),
+		} );
+		rendered = showWebhooks();
+		await flush();
+
+		const form = Array.from(
+			rendered.container.querySelectorAll( 'form' )
+		).find( ( candidate ) =>
+			candidate.textContent?.includes( 'Add a webhook' )
+		);
+		const inputs = form?.querySelectorAll( 'input' ) ?? [];
+		type( inputs[ 0 ] ?? null, 'SparkyBot' );
+		type(
+			inputs[ 1 ] ?? null,
+			'https://hooks.sparkybot.example/merch/abc'
+		);
+		click( button( 'Add webhook' ) );
+		await flush();
+
+		expect( requests.at( -1 )?.data ).toEqual( {
+			name: 'SparkyBot',
+			format: 'json',
+			url: 'https://hooks.sparkybot.example/merch/abc',
+			secret: '',
+			template: '',
+		} );
+		expect(
+			(
+				rendered.container.querySelector(
+					'.merchboard-alert-api__key'
+				) as HTMLInputElement | null
+			 )?.value
+		).toBe( SECRET );
+
+		click( button( 'I have saved it' ) );
+		expect( rendered.container.textContent ).not.toContain( SECRET );
+
+		click( button( 'Send test' ) );
+		await flush();
+		expect( requests.at( -1 )?.path ).toBe( `${ PATH }/webhooks/4/test` );
+		expect( rendered.container.textContent ).toContain( 'Delivered (204)' );
+	} );
+
+	it( 'deletes a webhook only after a confirmation and offers resume when paused', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () =>
+				response(
+					200,
+					page( [], {
+						webhooks: [
+							webhook( 4, { paused: true, failures: 10 } ),
+						],
+					} )
+				),
+			[ `DELETE ${ PATH }/webhooks/4` ]: () =>
+				response( 200, page( [] ) ),
+		} );
+		rendered = showWebhooks();
+		await flush();
+
+		expect( rendered.container.textContent ).toContain(
+			'Paused after 10 failed deliveries'
+		);
+		expect( button( 'Resume' ) ).not.toBeNull();
+
+		click( button( 'Delete' ) );
+		expect(
+			requests.filter( ( r ) => r.method === 'DELETE' )
+		).toHaveLength( 0 );
+		click( button( 'Delete webhook' ) );
+		await flush();
+
+		expect( requests.at( -1 )?.path ).toBe( `${ PATH }/webhooks/4` );
+		expect( rendered.container.textContent ).toContain(
+			'You have no webhooks yet.'
+		);
 	} );
 } );

@@ -19,6 +19,7 @@ use MerchBoard\Modules\Alerts\Overlay\AlertOverlay;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookDispatcher;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -34,7 +35,8 @@ defined( 'ABSPATH' ) || exit;
  *   overlay, through the queue that test alerts use (OverlayTestQueue);
  *   nothing is stored again. The chat message is sent again too, when the
  *   creator's chatbot is on (step 25.8), and the creator's bots get it
- *   through the alert API, marked as resent (step 25.12.1).
+ *   through the alert API and the webhooks, marked as resent (steps
+ *   25.12.1 and 25.12.2).
  * - **Stop all alerts:** the waiting resends and tests are dropped and the
  *   overlay gets a new version, so the open overlay page reloads at once:
  *   the alert it shows and its queue are gone, and it starts again from
@@ -59,8 +61,9 @@ final class AlertHistory {
 	 * @param OverlayTestQueue       $queue    Queue of the overlay's resends and tests.
 	 * @param ChatSender|null        $chat     Chat messages; null for none.
 	 * @param AlertApiFeed|null      $api      The creator's bots (ADR-073); null for none.
+	 * @param WebhookDispatcher|null $webhooks The creator's webhooks (step 25.12.2); null for none.
 	 */
-	public function __construct( private AlertEventRepository $events, private AlertOverlayRepository $overlays, private OverlayFeed $feed, private OverlayTestQueue $queue, private ?ChatSender $chat = null, private ?AlertApiFeed $api = null ) {
+	public function __construct( private AlertEventRepository $events, private AlertOverlayRepository $overlays, private OverlayFeed $feed, private OverlayTestQueue $queue, private ?ChatSender $chat = null, private ?AlertApiFeed $api = null, private ?WebhookDispatcher $webhooks = null ) {
 	}
 
 	/**
@@ -189,6 +192,7 @@ final class AlertHistory {
 	 */
 	private function resend( int $creator_id, array $events ): ?int {
 		$this->api?->resend( $creator_id, $events );
+		$this->webhooks?->resend( $creator_id, $events );
 
 		$overlay = $this->overlays->find_for_creator( $creator_id );
 

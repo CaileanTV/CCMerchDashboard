@@ -19,6 +19,7 @@ use MerchBoard\Core\Database\Migrations\CreateAlertOverlaysTable;
 use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
 use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
 use MerchBoard\Core\Database\Migrations\CreateAlertApiKeysTable;
+use MerchBoard\Core\Database\Migrations\CreateAlertWebhookTables;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorCodeTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorCategoriesTable;
@@ -79,6 +80,7 @@ final class Schema {
 			24 => new AddAlertEventAmounts(),
 			25 => new CreateNewsTables(),
 			26 => new CreateAlertApiKeysTable(),
+			27 => new CreateAlertWebhookTables(),
 		);
 	}
 }

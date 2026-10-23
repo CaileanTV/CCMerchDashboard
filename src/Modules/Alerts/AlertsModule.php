@@ -25,6 +25,11 @@ use MerchBoard\Modules\Alerts\Api\AlertApiKeys;
 use MerchBoard\Modules\Alerts\Api\AlertApiQueue;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsApiController;
+use MerchBoard\Modules\Alerts\Webhooks\AlertWebhookRepository;
+use MerchBoard\Modules\Alerts\Webhooks\AlertWebhooks;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookDeliveryRepository;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookDispatcher;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookPayloads;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
@@ -185,7 +190,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new MerchAlertImportTab( $c->get( MerchAlertImporter::class ) ), new AlertApiTab( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeyRepository::class ), $c->get( CreatorRepository::class ) ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new MerchAlertImportTab( $c->get( MerchAlertImporter::class ) ), new AlertApiTab( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeyRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertWebhookRepository::class ) ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -438,7 +443,7 @@ final class AlertsModule implements Module {
 		// The history: resend and "Stop all alerts" (phase 25, step 7).
 		$container->set(
 			AlertHistory::class,
-			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ), $c->get( ChatSender::class ), $c->get( AlertApiFeed::class ) )
+			static fn( Container $c ): AlertHistory => new AlertHistory( $c->get( AlertEventRepository::class ), $c->get( AlertOverlayRepository::class ), $c->get( OverlayFeed::class ), $c->get( OverlayTestQueue::class ), $c->get( ChatSender::class ), $c->get( AlertApiFeed::class ), $c->get( WebhookDispatcher::class ) )
 		);
 		// The alert API for the creators' own bots (step 25.12.1, ADR-073).
 		$container->set( AlertApiKeyRepository::class, static fn( Container $c ): AlertApiKeyRepository => new AlertApiKeyRepository( $c->get( wpdb::class ) ) );
@@ -457,8 +462,28 @@ final class AlertsModule implements Module {
 			)
 		);
 		$container->set( AlertApiFeedController::class, static fn( Container $c ): AlertApiFeedController => new AlertApiFeedController( $c->get( AlertApiFeed::class ), $c->get( AlertApiKeys::class ), new OverlayRateLimiter( null, 'merchboard_alerts_api_rl_', AlertApiFeedController::LIMIT ), $c->get( Logger::class ) ) );
-		$container->set( MeAlertsApiController::class, static fn( Container $c ): MeAlertsApiController => new MeAlertsApiController( $c->get( CreatorContext::class ), $c->get( AlertApiKeys::class ), $c->get( AlertApiSwitch::class ), $c->get( AlertApiFeed::class ), $c->get( Logger::class ) ) );
-		$container->set( AlertApiActions::class, static fn( Container $c ): AlertApiActions => new AlertApiActions( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeys::class ), $c->get( Logger::class ) ) );
+		$container->set( MeAlertsApiController::class, static fn( Container $c ): MeAlertsApiController => new MeAlertsApiController( $c->get( CreatorContext::class ), $c->get( AlertApiKeys::class ), $c->get( AlertApiSwitch::class ), $c->get( AlertApiFeed::class ), $c->get( AlertWebhooks::class ), $c->get( WebhookDispatcher::class ), $c->get( WebhookDeliveryRepository::class ), $c->get( Logger::class ) ) );
+		$container->set( AlertApiActions::class, static fn( Container $c ): AlertApiActions => new AlertApiActions( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeys::class ), $c->get( Logger::class ), $c->get( AlertWebhooks::class ) ) );
+		// Webhooks to the creators' own bots and Discord (step 25.12.2, ADR-073).
+		$container->set( AlertWebhookRepository::class, static fn( Container $c ): AlertWebhookRepository => new AlertWebhookRepository( $c->get( wpdb::class ) ) );
+		$container->set( WebhookDeliveryRepository::class, static fn( Container $c ): WebhookDeliveryRepository => new WebhookDeliveryRepository( $c->get( wpdb::class ) ) );
+		$container->set( AlertWebhooks::class, static fn( Container $c ): AlertWebhooks => new AlertWebhooks( $c->get( AlertWebhookRepository::class ), $c->get( AlertApiSwitch::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), new ChatCipher( 'webhooks' ) ) );
+		$container->set(
+			WebhookDispatcher::class,
+			static fn( Container $c ): WebhookDispatcher => new WebhookDispatcher(
+				$c->get( AlertWebhookRepository::class ),
+				$c->get( WebhookDeliveryRepository::class ),
+				$c->get( AlertWebhooks::class ),
+				new WebhookPayloads( new AlertApiEvents( $c->get( AlertTemplate::class ) ), $c->get( ChatMessages::class ), $c->get( ChatbotFormat::class ) ),
+				$c->get( AlertEventRepository::class ),
+				$c->get( CreatorRepository::class ),
+				$c->get( AlertApiSwitch::class ),
+				$c->get( AlertsAvailability::class ),
+				$c->get( JobQueue::class ),
+				$c->get( AlertOverlays::class ),
+				$c->get( Logger::class )
+			)
+		);
 		$container->set(
 			MeAlertsHistoryController::class,
 			static fn( Container $c ): MeAlertsHistoryController => new MeAlertsHistoryController( $c->get( CreatorContext::class ), $c->get( AlertHistory::class ), $c->get( Logger::class ) )
@@ -610,7 +635,22 @@ final class AlertsModule implements Module {
 				},
 				20
 			);
+			// Webhooks (step 25.12.2): after the chat messages.
+			add_action(
+				$status,
+				static function ( mixed $order_id ) use ( $container ): void {
+					$container->get( WebhookDispatcher::class )->order_paid( $order_id );
+				},
+				30
+			);
 		}
+
+		add_action(
+			WebhookDispatcher::HOOK,
+			static function ( mixed $delivery_id ) use ( $container ): void {
+				$container->get( WebhookDispatcher::class )->run( $delivery_id );
+			}
+		);
 
 		add_action(
 			ChatSender::HOOK,

@@ -586,6 +586,19 @@
 	margin: 0;
 }
 
+.merchboard-alert-api__deliveries {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	margin: 0 0 var(--merchboard-space-4);
+	padding-left: var(--merchboard-space-4);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-alert-api__details summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
 .merchboard-toast-region {
 	position: fixed;
 	right: var(--merchboard-space-4);

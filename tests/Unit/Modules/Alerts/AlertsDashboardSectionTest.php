@@ -31,8 +31,9 @@ final class AlertsDashboardSectionTest extends TestCase {
 		$sections = AlertsDashboardSection::add_section( array( array( 'id' => 'overview' ) ) );
 
 		self::assertIsArray( $sections );
-		self::assertSame( array( 'overview', 'alerts', 'alerts-history', 'alerts-chatbot', 'alerts-api' ), array_column( $sections, 'id' ) );
+		self::assertSame( array( 'overview', 'alerts', 'alerts-history', 'alerts-chatbot', 'alerts-api', 'alerts-webhooks' ), array_column( $sections, 'id' ) );
 		self::assertSame( 'alerts/api', $sections[4]['path'] ?? null );
+		self::assertSame( 'alerts/webhooks', $sections[5]['path'] ?? null, 'Keys and webhooks work apart: two pages.' );
 	}
 
 	public function test_the_group_comes_before_the_profile(): void {

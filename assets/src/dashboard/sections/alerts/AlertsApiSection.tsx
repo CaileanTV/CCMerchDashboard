@@ -50,7 +50,7 @@ const EXAMPLE_ANSWER = `{
  * @param iso    ISO 8601 time.
  * @param locale WordPress locale, e.g. da_DK.
  */
-function when( iso: string, locale: string ): string {
+export function apiTime( iso: string, locale: string ): string {
 	try {
 		return new Intl.DateTimeFormat( locale.replace( '_', '-' ), {
 			dateStyle: 'medium',
@@ -305,10 +305,13 @@ export function AlertApiPanel( {
 												'Made %1$s · last used %2$s',
 												'merchboard'
 											),
-											when( key.createdAt, locale ),
+											apiTime( key.createdAt, locale ),
 											key.lastUsedAt === null
 												? __( 'never', 'merchboard' )
-												: when( key.lastUsedAt, locale )
+												: apiTime(
+														key.lastUsedAt,
+														locale
+													)
 										) }
 									</div>
 								</div>

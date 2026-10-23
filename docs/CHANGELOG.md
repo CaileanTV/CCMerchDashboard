@@ -6,6 +6,12 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Webhooks til creatorens egne bots og Discord (fase 25, trin 25.12.2, ADR-073):**
+  - **Formater:** under Alerts → Webhooks (egen side ved siden af Alerts → API-nøgler) kan creators tilføje op til 3 webhooks. JSON-formatet er én signeret hændelse pr. betalt ordre i SparkyBots format, og Discord-formatet skriver chatbeskeden i en kanal.
+  - **Signeringsnøgle:** den indsættes fra modtageren, eller Merch Dashboard laver en.
+  - **Levering:** ét forsøg pr. levering via Action Scheduler og pause efter 10 fejl i træk. Der er også test, genoptag og leveringslog.
+  - **Admin:** administratoren kan slå en creators webhooks fra.
+  - **Database:** schema-version 27.
 - **Alert-API til creatorens egne bots (fase 25, trin 25.12.1, ADR-073):** creators kan oprette API-nøgler under Alerts → API og hente deres købs-alerts til egne bots med `GET /merchboard/v1/alerts/api/events` (cursor, én hændelse pr. ordrelinje, ingen persondata ud over det frivillige brugernavn). Nøgler vises én gang og gemmes som hash; testhændelser og gensendelser markeres. Administratoren slår API'en til under Merch Dashboard → Alerts → API (slået fra som standard) og kan tilbagekalde en creators nøgler. Schema-version 26.
 - **Nyheder til creators (fase 25, trin 25.11, ADR-072):** undermenuen Merch Dashboard → Nyheder, hvor administratoren skriver beskeder med enkel formatering (fed, kursiv, lister og links), forhåndsviser, udgiver, retter og trækker tilbage og kan se, hvilke creators der har set og lukket hver besked. Alle aktive creators ser den nyeste besked én gang som popup i dashboardet og alle beskeder på den nye side "Nyheder". Schema-version 25.
 - **Beløb i alerts (fase 25, tilføjelse efter trin 25.10.1):** alert-tekster og chatbeskeder kan vise `$Price` (pris pr. stk.), `$LineTotal` (pris × antal) og `$Total` (alt fra creatoren i ordren): det kunden betalte inkl. moms efter rabat, i butikkens valuta. `$OrderNumber` er fjernet og viser intet. Under teksterne forklarer "Hvad betyder variablerne?" hver variabel. Schema-version 24 gemmer beløbene, når en ordre betales; ældre alerts viser dem tomme. MerchAlerts `$Amount` bliver `$Total`.

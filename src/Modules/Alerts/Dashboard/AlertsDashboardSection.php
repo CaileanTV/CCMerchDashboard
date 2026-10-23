@@ -70,12 +70,22 @@ final class AlertsDashboardSection {
 			),
 		);
 
-		// The alert API (step 25.12.1, ADR-073): only while the administrator has it on.
+		// The alert API (steps 25.12.1 and 25.12.2, ADR-073): only while the
+		// administrator has it on. Keys (the bot asks) and webhooks (the shop
+		// sends) work apart, so each has its own page.
 		if ( AlertApiSwitch::on() ) {
 			$group[] = array(
 				'id'          => 'alerts-api',
-				'label'       => __( 'API', 'merchboard' ),
+				'label'       => __( 'API keys', 'merchboard' ),
 				'path'        => 'alerts/api',
+				'capability'  => Capabilities::ACCESS_DASHBOARD,
+				'group'       => 'alerts',
+				'group_label' => __( 'Alerts', 'merchboard' ),
+			);
+			$group[] = array(
+				'id'          => 'alerts-webhooks',
+				'label'       => __( 'Webhooks', 'merchboard' ),
+				'path'        => 'alerts/webhooks',
 				'capability'  => Capabilities::ACCESS_DASHBOARD,
 				'group'       => 'alerts',
 				'group_label' => __( 'Alerts', 'merchboard' ),

@@ -3998,7 +3998,7 @@ ADR-007, ADR-025, ADR-044, ADR-065.
 2026-10-23
 
 ## Status
-Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) er implementeret; 25.12.2 (webhooks) er besluttet, men ikke bygget.
+Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) og 25.12.2 (webhooks, med SparkyBots anbefalinger bygget ind efter projektejerens valg 2026-10-23) er implementeret.
 
 ## Context
 Projektejeren vil have, at creators kan hente deres købs-alerts til deres egne bots (ønske 2026-10-19, ROADMAP 25.12). Det kræver en offentlig API med creator-nøgler og, med webhooks, udgående kald til adresser, som creatoren selv angiver.
@@ -4011,11 +4011,18 @@ Projektejeren vil have, at creators kan hente deres købs-alerts til deres egne 
 5. **Test og gensendelser:** "Send testhændelse" og gensendelser fra Historik lægges i en kø pr. nøgle i 5 minutter med `id` 0, så de aldrig flytter cursoren.
 6. **Admin:** indstillingen og en oversigt pr. creator (antal nøgler, sidst brugt) med "Tilbagekald alle". Nøglerne vises aldrig for administratoren.
 7. **Webhooks (25.12.2):**
-   - **Format:** pr. webhook enten generel JSON eller Discord. JSON er én POST pr. ordre med hændelserne og en HMAC-SHA256-signatur over tidsstempel og body i headeren. Discord sender chatbeskeden med creatorens chatbot-skabelon og `allowed_mentions` slået fra.
-   - **Antal og afsendelse:** højst 3 pr. creator, ét forsøg pr. levering, og pause efter 10 fejl i træk. Projektejerens valg 2026-10-23.
+   - **Format:** pr. webhook enten generel JSON eller Discord.
+     - **JSON** følger SparkyBots anbefalinger (projektejerens valg 2026-10-23): én hændelse pr. betalt ordre pr. creator (`id`, `type` purchase/test/resend, `created_at`, `order_ref`, `username`, `display_name` = brugernavnet eller "Anonymous", `total`, `currency`, `item_count`, `items` med vare, antal, kategori, variant, pris og linjebeløb). `id` (`evt_` + 32 hex) er en HMAC af creator og ordre for et køb, så samme køb altid har samme id og modtageren kan fjerne dubletter; test og gensendelser får et nyt id.
+     - **Headers:** `X-MerchBoard-Event-Id`, `X-MerchBoard-Timestamp` og `X-MerchBoard-Signature: sha256=` HMAC-SHA256 af `{timestamp}.{body}`.
+     - **Discord** sender chatbeskeden med webhookens egen skabelon (standard som chatbottens), én besked pr. ordre (linjerne under hinanden i linje-tilstand), med `allowed_mentions` slået fra; test og gensendelser starter med "[Test]" og "[Resent]".
+   - **Signeringsnøgle:** creatoren indsætter modtagerens hemmelighed (fx fra SparkyBots dashboard) eller lader Merch Dashboard lave en (`whsec_` + 64 hex, vises én gang). Projektejerens valg 2026-10-23.
+   - **Antal og afsendelse:** højst 3 pr. creator, ét forsøg pr. levering, og pause efter 10 fejl i træk, til creatoren genoptager. Projektejerens valg 2026-10-23, også efter SparkyBots ønske om et begrænset antal genforsøg: polling og gensend fra Historik henter det tabte, og det stabile id gør genlevering sikker.
+   - **Kø:** leveringen køes i Action Scheduler efter betalingen (samme hooks som alerts), så en langsom modtager aldrig blokerer checkout; uden Action Scheduler fejler leveringen med det samme. En test sendes straks og tæller ikke med i pausen.
+   - **Leveringslog:** de seneste 50 pr. webhook (hændelses-id, type, body, status, HTTP-kode eller fejl uden adresse); creatoren ser de seneste 20.
    - **Mål:** kun creatorens egne HTTPS-adresser, sendt via `wp_safe_remote_post()` uden redirects; lokale og private adresser afvises. Discord-formatet kræver Discords egne webhook-adresser.
    - **Opbevaring:** URL'en og signeringsnøglen gemmes krypteret. Audit skrives uden URL eller hemmeligheder.
-8. **Audit:** `alert_api_switched`, `alert_api_key_created` og `alert_api_key_revoked` (med `by_admin`), med nøglens id, aldrig nøglen.
+8. **Audit:** `alert_api_switched`, `alert_api_key_created` og `alert_api_key_revoked` (med `by_admin`), med nøglens id, aldrig nøglen; `alert_webhook_created`, `alert_webhook_changed` (med `change` og `by_admin`) og `alert_webhook_deleted` med webhookens id og format, aldrig adressen eller hemmeligheden.
+9. **Modtagere:** creatoren vælger selv modtageren (fx SparkyBot eller Discord). Merch Dashboard har ingen konto eller aftale med dem; det sender kun til adresser, som creatoren angiver.
 
 ## Alternatives considered
 - **Long-polling som overlayet:** hurtigere, men binder en PHP-proces pr. bot. Fravalgt af projektejeren.
@@ -4034,7 +4041,7 @@ Projektejeren vil give creators frihed til egne bots uden at udlevere persondata
 - Udgående kald (25.12.2) kun til HTTPS-adresser, creatoren selv angiver, uden redirects og ikke til lokale adresser.
 
 ## Migration/data implications
-Migration 26 (`CreateAlertApiKeysTable`) opretter `merchboard_alert_api_keys` (InnoDB, idempotent). Optionen `merchboard_alerts_api_enabled`. Begge slettes ved opt-in-afinstallation. Webhooks får migration 27 i 25.12.2.
+Migration 26 (`CreateAlertApiKeysTable`) opretter `merchboard_alert_api_keys` (InnoDB, idempotent). Optionen `merchboard_alerts_api_enabled`. Begge slettes ved opt-in-afinstallation. Migration 27 (`CreateAlertWebhookTables`) opretter `merchboard_alert_webhooks` og `merchboard_alert_webhook_deliveries` (InnoDB, idempotent); de slettes også ved opt-in-afinstallation.
 
 ## Consequences
 - **Creator-dashboardet:** siden "API" under Alerts.

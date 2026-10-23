@@ -15,6 +15,8 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Alerts\Api\AlertApiException;
 use MerchBoard\Modules\Alerts\Api\AlertApiKeys;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
+use MerchBoard\Modules\Alerts\Webhooks\AlertWebhooks;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookException;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,11 +37,12 @@ final class AlertApiActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param AlertApiSwitch $api    The switch.
-	 * @param AlertApiKeys   $keys   Keys.
-	 * @param Logger         $logger Technical log.
+	 * @param AlertApiSwitch     $api    The switch.
+	 * @param AlertApiKeys       $keys   Keys.
+	 * @param Logger             $logger Technical log.
+	 * @param AlertWebhooks|null $webhooks Webhooks (step 25.12.2); null for none.
 	 */
-	public function __construct( private AlertApiSwitch $api, private AlertApiKeys $keys, private Logger $logger ) {
+	public function __construct( private AlertApiSwitch $api, private AlertApiKeys $keys, private Logger $logger, private ?AlertWebhooks $webhooks = null ) {
 	}
 
 	/**
@@ -86,16 +89,26 @@ final class AlertApiActions {
 				return AlertsAdminPage::url( AlertApiTab::TAB, $enabled ? 'api_enabled' : 'api_disabled' );
 			}
 
-			if ( 'revoke_all' === $field( 'do' ) && 1 === preg_match( '/^[1-9][0-9]{0,18}$/D', $field( 'creator_id' ) ) ) {
+			$creator = 1 === preg_match( '/^[1-9][0-9]{0,18}$/D', $field( 'creator_id' ) ) ? (int) $field( 'creator_id' ) : 0;
+
+			if ( in_array( $field( 'do' ), array( 'revoke_all', 'disable_webhooks' ), true ) && $creator > 0 ) {
 				if ( '1' !== $field( 'confirm' ) ) {
 					return AlertsAdminPage::url( AlertApiTab::TAB, 'api_confirm_required' );
 				}
 
-				$this->keys->revoke_all( (int) $field( 'creator_id' ) );
+				if ( 'revoke_all' === $field( 'do' ) ) {
+					$this->keys->revoke_all( $creator );
 
-				return AlertsAdminPage::url( AlertApiTab::TAB, 'api_keys_revoked' );
+					return AlertsAdminPage::url( AlertApiTab::TAB, 'api_keys_revoked' );
+				}
+
+				if ( null !== $this->webhooks ) {
+					$this->webhooks->disable_all( $creator );
+
+					return AlertsAdminPage::url( AlertApiTab::TAB, 'api_webhooks_disabled' );
+				}
 			}
-		} catch ( AlertApiException $e ) {
+		} catch ( AlertApiException | WebhookException $e ) {
 			return AlertsAdminPage::url( AlertApiTab::TAB, 'api_' . $e->reason() );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Changing the alert API failed.', array_merge( $e->context(), array( 'reason' => $e->getMessage() ) ) );

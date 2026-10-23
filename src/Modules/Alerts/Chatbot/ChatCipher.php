@@ -35,12 +35,13 @@ final class ChatCipher {
 	/**
 	 * Constructor.
 	 *
-	 * @param ChatPlatform $platform The platform whose secrets it encrypts (the key's domain).
-	 * @param string|null  $salt     Secret material; defaults to wp_salt( 'auth' ).
+	 * @param ChatPlatform|string $platform The platform whose secrets it encrypts (the key's domain), or another domain (`webhooks`, ADR-073).
+	 * @param string|null         $salt     Secret material; defaults to wp_salt( 'auth' ).
 	 */
-	public function __construct( ChatPlatform $platform, ?string $salt = null ) {
+	public function __construct( ChatPlatform|string $platform, ?string $salt = null ) {
+		$domain    = $platform instanceof ChatPlatform ? $platform->value : $platform;
 		$this->key = function_exists( 'sodium_crypto_secretbox' ) && defined( 'SODIUM_CRYPTO_SECRETBOX_NONCEBYTES' )
-			? hash( 'sha256', 'merchboard-alerts-' . $platform->value . '-v1|' . ( $salt ?? wp_salt( 'auth' ) ), true )
+			? hash( 'sha256', 'merchboard-alerts-' . $domain . '-v1|' . ( $salt ?? wp_salt( 'auth' ) ), true )
 			: null;
 	}
 

@@ -103,6 +103,9 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `POST` | `/me/alerts/api/keys` | ✅ Trin 25.12.1: `{ "name": "…" }` (højst 60 tegn) → 201 med samme svar plus `key` (hele nøglen, vises kun her). 400 ugyldigt navn, 403 `merchboard_alerts_api_disabled`, 409 `merchboard_alerts_api_key_limit` (højst 5) | 25 |
 | `DELETE` | `/me/alerts/api/keys/{id}` | ✅ Trin 25.12.1: tilbagekalder en af creatorens nøgler; samme svar som `GET`. 404 for en anden eller tilbagekaldt nøgle | 25 |
 | `POST` | `/me/alerts/api/test` | ✅ Trin 25.12.1: en testhændelse til hver af creatorens nøgler, `{ "sent": antal nøgler }`. 403 når API'en er slået fra | 25 |
+| `POST` | `/me/alerts/api/webhooks` | ✅ Trin 25.12.2: `{ name, format: "json"\|"discord", url, secret, template }` → 201 med siden (`max_webhooks`, `webhooks: [ { id, name, format, host, hint, template, enabled, paused, failures, created_at, last_delivery_at } ]`, `deliveries`) og `secret`, når Merch Dashboard lavede signeringsnøglen (vises kun her). 400 ugyldigt felt (`fields.name\|format\|url\|secret\|template`), 403 slået fra, 409 `merchboard_alerts_webhook_limit` (højst 3), 503 `merchboard_alerts_webhook_unavailable` (ingen sodium) | 25 |
+| `PATCH`, `DELETE` | `/me/alerts/api/webhooks/{id}` | ✅ Trin 25.12.2: `PATCH` med `{ name?, template?, enabled?, resume? }` (`resume` genoptager efter pause og nulstiller fejl); `DELETE` sletter webhooken og dens log. 404 for en anden creators webhook | 25 |
+| `POST` | `/me/alerts/api/webhooks/{id}/test`, `/me/alerts/api/webhooks/{id}/secret` | ✅ Trin 25.12.2: test sender et testkøb med det samme og svarer med siden plus `delivery`; secret giver en JSON-webhook en ny signeringsnøgle (`{ "secret": "…" }` indsat, eller `""` for en ny, der vises én gang) | 25 |
 | `GET`, `PATCH` | `/me/alerts/preferences` | ✅ Trin 25.7: `{ "anonymize": bool }`, om historikken forkorter brugernavne; gemmes som user meta `merchboard_alerts_anonymize` på den indloggede bruger (som dashboard-temaet, ADR-044). `PATCH` med en ikke-boolsk værdi: 400 | 25 |
 | `DELETE` | `/me/alerts/overlay/images/{id}` | ✅ Trin 25.6.10: sletter et eget billede; tekstfyld, der brugte det, slås fra. Samme svar som `GET`. 400 med `data.fields.image` = `unknown_image` for et billede, creatoren ikke ejer (fx et biblioteksbillede); 404 før opsætning | 25 |
 | `GET` | `/me/alerts/presets` | ✅ Trin 25.9.5: standard-overlays, creatoren kan starte fra: `{ presets: [ { id, name, settings, font_approved, layout, images } ] }` (samme felter som overlayet; `images` er billedbiblioteket) | 25 |
@@ -150,6 +153,23 @@ Fejl:
 - `503 merchboard_alerts_api_unavailable`: API'en er slået fra af administratoren, alerts er slået fra, eller MerchAlert er aktivt.
 - `401 merchboard_unauthorized`: nøglen mangler, er forkert eller er tilbagekaldt, eller creatoren er inaktiv. Svaret er det samme for alle årsager.
 - `429 merchboard_too_many_requests`: mere end 60 forespørgsler pr. nøgle pr. minut.
+
+### Udgående: webhooks til creatorens egne bots ✅ (fase 25, trin 25.12.2, ADR-073)
+
+Efter en betalt ordre sender pluginet én `POST` pr. webhook til creatorens adresse (via Action Scheduler, ét forsøg, timeout 5 s, ingen redirects).
+
+**JSON** (SparkyBots format):
+
+- **Body:** `{ id, type, created_at, order_ref, username, display_name, total, currency, item_count, items: [ { product, quantity, category, variation, price, line_total } ] }`.
+- **`id`:** `evt_` + 32 hex, ens hver gang det samme køb sendes (til at fjerne dubletter). Test og gensendelser har `type` `test`/`resend` og et nyt `id`.
+- **Navn:** `display_name` er brugernavnet eller "Anonymous".
+- **Headers:** `Content-Type: application/json`, `User-Agent: MerchDashboard-Webhooks/1`, `X-MerchBoard-Event-Id`, `X-MerchBoard-Timestamp` (Unix-tid) og `X-MerchBoard-Signature: sha256=` HMAC-SHA256 af `{timestamp}.{body}` med webhookens hemmelighed.
+
+**Discord:**
+
+- **Body:** `{ content, allowed_mentions: { parse: [] } }`, højst 2000 tegn, én besked pr. ordre.
+
+**Svar:** et 2xx-svar tæller som leveret. Alt andet er en fejl, og 10 fejl i træk sætter webhooken på pause.
 
 ### Offentlig: alert-overlayets feed ✅ (fase 25, trin 25.3, ADR-065 pkt. 4)
 
