@@ -4,7 +4,7 @@
 Administratoren kan fortælle creators, hvad der er nyt i Merch Dashboard, fx efter en opdatering, og se hvem der har set og lukket beskeden (ROADMAP 25.11, [ADR-072](../DECISIONS.md)).
 
 ## Current status
-Færdig (fase 25, trin 25.11; implementeret 2026-10-23, testet automatisk). Ikke udgivet i en version endnu.
+Færdig (fase 25, trin 25.11; implementeret 2026-10-23, committet som eksperimentel `aa26c25`, CI grøn; projektejeren har testet det i browseren: godkendt). Ikke udgivet i en version endnu.
 
 ## User-facing functionality
 - **Popup:** næste gang en aktiv creator åbner dashboardet efter en udgivelse, vises den nyeste udgivne besked, creatoren ikke har lukket, som en dialog ("Forstået" eller Escape lukker). Den vises ikke igen efter lukning. Ældre beskeder vises ikke som popup.
