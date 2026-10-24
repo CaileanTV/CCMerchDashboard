@@ -16,7 +16,7 @@ use MerchBoard\Modules\Admin\AdminMenu;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * "Merch Dashboard → Import from Product Vendors" (steps 26.1–26.2,
+ * "Merch Dashboard → Import from Product Vendors" (steps 26.1–26.3,
  * ADR-074): what is migrated and what is not, the last migration, a dry run
  * with the chosen user per vendor (read-only, `preview=1`, the choices as
  * `user[term_id]`) and the confirmation form with the dry run's
@@ -99,7 +99,9 @@ final class VendorImportPage {
 	 */
 	public static function result_message( string $code ): ?array {
 		return match ( $code ) {
-			VendorImportException::NOT_AUTHORIZED => array( __( 'Sorry, you are not allowed to migrate creators. It takes the rights to manage creators and payouts.', 'merchboard' ), 'error' ),
+			VendorImportException::NOT_AUTHORIZED => array( __( 'Sorry, you are not allowed to migrate vendors. It takes the rights to manage creators and payouts.', 'merchboard' ), 'error' ),
+			VendorImportException::NO_ROLES_RIGHT => array( __( 'Sorry, you are not allowed to remove these roles. It takes the rights to manage creators and to change users\' roles.', 'merchboard' ), 'error' ),
+			VendorImportException::BUSY           => array( __( 'Another migration is running. Wait until it is done, then check the new dry run.', 'merchboard' ), 'warning' ),
 			VendorImportException::INACTIVE       => array( __( 'Activate WooCommerce Product Vendors first: the migration reads the vendors through Product Vendors itself.', 'merchboard' ), 'error' ),
 			VendorImportException::NO_DATA        => array( __( 'Product Vendors has no vendors.', 'merchboard' ), 'error' ),
 			VendorImportException::UNREADABLE     => array( __( 'Product Vendors\' vendors could not be read. Please try again later.', 'merchboard' ), 'error' ),
@@ -131,14 +133,14 @@ final class VendorImportPage {
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Import from Product Vendors', 'merchboard' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor\'s WordPress user linked to it, and the vendor\'s products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors\' data is only read, never changed.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor\'s WordPress user linked to it, and a product category and the vendor\'s products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors\' data is only read; after the migration you can remove the Product Vendors roles from the migrated users.', 'merchboard' ) . '</p>';
 		$notice = '' === $result ? null : self::result_message( $result );
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
 		}
 
-		echo '<ul class="ul-disc"><li>' . esc_html__( 'Not moved: commissions, payouts, PayPal and other payment details.', 'merchboard' ) . '</li><li>' . esc_html__( 'New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again.', 'merchboard' ) . '</li><li>' . esc_html__( 'A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved.', 'merchboard' ) . '</li><li>' . esc_html__( 'Vendors waiting for approval are skipped.', 'merchboard' ) . '</li><li>' . esc_html__( 'Keep Product Vendors active until the migration is done: it is read through Product Vendors itself.', 'merchboard' ) . '</li></ul>';
+		echo '<ul class="ul-disc"><li>' . esc_html__( 'Not moved: commissions, payouts, PayPal and other payment details.', 'merchboard' ) . '</li><li>' . esc_html__( 'New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again.', 'merchboard' ) . '</li><li>' . esc_html__( 'A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved.', 'merchboard' ) . '</li><li>' . esc_html__( 'Vendors waiting for approval are skipped.', 'merchboard' ) . '</li><li>' . esc_html__( 'Keep Product Vendors active until the migration is done: its data is read through Product Vendors itself.', 'merchboard' ) . '</li></ul>';
 
 		$this->render_last();
 		$this->render_roles();
@@ -232,7 +234,7 @@ final class VendorImportPage {
 		$all = self::product_categories();
 
 		echo '<p>' . esc_html__( 'The product category links new products, and so new sales, to the creator. The proposal is the category most of the vendor\'s products are in; choose another or none.', 'merchboard' ) . '</p>';
-		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '">';
+		echo '<form method="get" id="merchboard-vendor-dry-run" action="' . esc_url( admin_url( 'admin.php' ) ) . '">';
 		echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="' . esc_attr( self::PREVIEW_ARG ) . '" value="1">';
 		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Vendor', 'merchboard' ) . '</th><th>' . esc_html__( 'User', 'merchboard' ) . '</th><th>' . esc_html__( 'What happens', 'merchboard' ) . '</th><th>' . esc_html__( 'Product category', 'merchboard' ) . '</th><th>' . esc_html__( 'Products', 'merchboard' ) . '</th><th>' . esc_html__( 'Settlement start', 'merchboard' ) . '</th></tr></thead><tbody>';
 
@@ -245,7 +247,13 @@ final class VendorImportPage {
 
 			echo '</td><td>';
 			$this->render_users( $vendor );
-			echo '</td><td>' . esc_html( self::status_label( $vendor['status'], $vendor['creator_name'] ) ) . '</td><td>';
+			echo '</td><td>' . esc_html( self::status_label( $vendor['status'], $vendor['creator_name'] ) );
+
+			if ( ! $vendor['creator_active'] && VendorImportReport::migrates( $vendor['status'] ) ) {
+				echo '<br><em>' . esc_html__( 'The creator is inactive: its products and category cannot be linked. Activate it first.', 'merchboard' ) . '</em>';
+			}
+
+			echo '</td><td>';
 			$this->render_category( $vendor, $all );
 			echo '</td><td>' . esc_html( self::products_label( $vendor ) ) . '</td><td>' . esc_html( self::settlement_label( $vendor['settlement'] ) ) . '</td></tr>';
 		}
@@ -258,7 +266,7 @@ final class VendorImportPage {
 
 		echo '</form>';
 
-		$context = $report->audit_context();
+		$context = $report->totals();
 		printf(
 			'<p><strong>%s</strong></p>',
 			esc_html(
@@ -293,8 +301,11 @@ final class VendorImportPage {
 
 		wp_nonce_field( VendorImportActions::ACTION );
 		echo '<p><label><input type="checkbox" name="backup" value="1" required> ' . esc_html__( 'I have taken a backup of the site, and Product Vendors is active.', 'merchboard' ) . '</label></p>';
-		submit_button( __( 'Migrate vendors', 'merchboard' ), 'primary', 'submit', false );
+		submit_button( __( 'Migrate vendors', 'merchboard' ), 'primary', 'submit', false, array( 'id' => 'merchboard-vendor-migrate' ) );
+		echo '<p id="merchboard-vendor-changed" hidden><em>' . esc_html__( 'You changed a choice: update the dry run before you migrate.', 'merchboard' ) . '</em></p>';
 		echo '</form>';
+		// A changed choice is migrated only after "Update the dry run" (the form above carries the dry run's choices).
+		echo '<script>document.getElementById("merchboard-vendor-dry-run").addEventListener("change",function(){document.getElementById("merchboard-vendor-migrate").disabled=true;document.getElementById("merchboard-vendor-changed").hidden=false;});</script>';
 	}
 
 	/**
@@ -341,7 +352,7 @@ final class VendorImportPage {
 	 * The vendor's product category: a choice unless the creator has one
 	 * already (one per creator, ADR-033) or the vendor is skipped.
 	 *
-	 * @phpstan-param array{term_id: int, category: string|null, category_id: int, categories: list<array{id: int, name: string, count: int}>} $vendor
+	 * @phpstan-param array{term_id: int, category: string|null, category_id: int, categories: list<array{id: int, name: string, count: int}>, category_others: int, category_ambiguous: int} $vendor
 	 * @phpstan-param array<int, string> $all
 	 *
 	 * @param array $vendor The vendor's row.
@@ -382,6 +393,15 @@ final class VendorImportPage {
 
 		if ( VendorImportReport::CATEGORY_TAKEN === $vendor['category'] ) {
 			echo '<br><em>' . esc_html__( 'Not linked: the category belongs to another creator or is chosen for another vendor. Choose another.', 'merchboard' ) . '</em>';
+		}
+
+		if ( $vendor['category_others'] > 0 || $vendor['category_ambiguous'] > 0 ) {
+			/* translators: 1: other products linked, 2: products made ambiguous. */
+			echo '<br><strong>' . esc_html( sprintf( __( 'Also links %1$d other products in the category, and all new ones, to this creator; %2$d products of another creator become ambiguous.', 'merchboard' ), $vendor['category_others'], $vendor['category_ambiguous'] ) ) . '</strong>';
+		}
+
+		if ( VendorImportReport::CATEGORY_NONE === $vendor['category'] && array() !== $vendor['categories'] ) {
+			echo '<br><em>' . esc_html__( 'None proposed: the vendor\'s categories also hold other products, belong to another creator or were linked by an earlier migration. Choose one only on purpose.', 'merchboard' ) . '</em>';
 		}
 	}
 
@@ -427,14 +447,13 @@ final class VendorImportPage {
 	 * The last migration.
 	 */
 	private function render_last(): void {
-		wp_cache_delete( VendorImportPlan::OPTION, 'options' );
-		$stored = get_option( VendorImportPlan::OPTION, null );
+		$stored = VendorImportState::load();
 
-		if ( ! is_array( $stored ) || ! is_string( $stored['completed_at'] ?? null ) ) {
+		if ( ! isset( $stored['completed_at'] ) ) {
 			return;
 		}
 
-		$last = is_array( $stored['last'] ?? null ) ? $stored['last'] : array();
+		$last = $stored['last'] ?? array();
 
 		printf(
 			'<p><strong>%s</strong></p>',
@@ -504,6 +523,8 @@ final class VendorImportPage {
 			VendorImportReport::IMPORTED   => sprintf( __( 'Migrated already to "%s": only what is missing is added', 'merchboard' ), $creator_name ),
 			VendorImportReport::NO_ADMIN   => __( 'New creator without a user (the vendor has no administrator)', 'merchboard' ),
 			VendorImportReport::PENDING    => __( 'Skipped: the vendor is waiting for approval', 'merchboard' ),
+			VendorImportReport::NO_ROLE    => __( 'Skipped: the vendor\'s administrators have no Product Vendors role', 'merchboard' ),
+			VendorImportReport::INTERRUPTED => __( 'Skipped: an earlier migration stopped while making this vendor\'s creator. Check the creators, then link it by hand', 'merchboard' ),
 			default                        => __( 'Skipped: the user is chosen for another vendor. Choose another user or link it later.', 'merchboard' ),
 		};
 	}
@@ -549,7 +570,7 @@ final class VendorImportPage {
 		return match ( true ) {
 			null === $settlement => '—',
 			'new' === $settlement => __( 'Set to the time of the migration', 'merchboard' ),
-			'' === $settlement   => __( 'None: the whole history counts. Set it under Payouts if Product Vendors has paid for it.', 'merchboard' ),
+			'' === $settlement   => __( 'None: the whole history counts. Set it on the creator\'s page under "Payout settlement start" if Product Vendors has paid commission for those sales.', 'merchboard' ),
 			default              => get_date_from_gmt( $settlement, (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ) ),
 		};
 	}

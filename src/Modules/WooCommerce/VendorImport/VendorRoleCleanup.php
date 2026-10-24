@@ -26,10 +26,14 @@ defined( 'ABSPATH' ) || exit;
  * keep wp-admin, ADR-026). An exception to ADR-022: only these three roles
  * and only these users; every other role stays.
  *
- * The users are the migrated creators' users (OPTION's vendors) that still
- * hold one of the roles. While Product Vendors is active, a user who also
- * administers a vendor that was not migrated is shown with those vendors:
- * removing the role ends that access too. Each user's change and its
+ * The users are the ones the migration linked (VendorImportState's users),
+ * only while their creator still has that user, the creator is active and
+ * the user holds the creator role, so they keep a working creator access;
+ * and only users that still hold one of the roles. While Product Vendors
+ * is active, a user who also administers a vendor that was not migrated is
+ * shown with those vendors: removing the role ends that access too. It
+ * needs `merchboard_manage_creators` and `promote_users`, and per user
+ * `promote_user` (26.4 review). Each user's change and its
  * `vendor_roles_removed` record are one transaction.
  *
  * @phpstan-type RoleUser array{user_id: int, login: string, roles: list<string>, creator_id: int, creator_name: string, other_vendors: list<string>}
@@ -59,20 +63,24 @@ class VendorRoleCleanup {
 	 * @throws DatabaseException When the creators cannot be read.
 	 */
 	public function users(): array {
-		$mapping  = VendorImportPlan::mapping();
-		$migrated = array_flip( array_keys( $mapping ) );
+		$state    = VendorImportState::load();
+		$migrated = array_flip( array_keys( $state['vendors'] ) );
 		$others   = $this->vendors_by_admin( $migrated );
 		$users    = array();
+		$seen     = array();
 
-		foreach ( array_unique( array_values( $mapping ) ) as $creator_id ) {
+		foreach ( $state['vendors'] as $term_id => $creator_id ) {
 			$creator = $this->creators->find( $creator_id );
-			$user    = null === $creator || null === $creator->user_id ? false : get_userdata( $creator->user_id );
+			$user_id = $state['users'][ $term_id ] ?? 0;
+			$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
 
-			if ( null === $creator || ! $user instanceof WP_User ) {
+			// Only the user the migration linked, while it still has a working creator access.
+			if ( null === $creator || ! $user instanceof WP_User || $creator->user_id !== $user_id || ! $creator->is_active() || ! in_array( Capabilities::CREATOR_ROLE, $user->roles, true ) || isset( $seen[ $user_id ] ) ) {
 				continue;
 			}
 
-			$roles = array_values( array_intersect( ProductVendorsSource::ROLES, $user->roles ) );
+			$seen[ $user_id ] = true;
+			$roles            = array_values( array_intersect( ProductVendorsSource::ROLES, $user->roles ) );
 
 			if ( array() === $roles ) {
 				continue;
@@ -99,18 +107,19 @@ class VendorRoleCleanup {
 	 *
 	 * @param int[] $user_ids Users the administrator confirmed.
 	 * @return int Users changed.
-	 * @throws VendorImportException When the current user may not change roles.
+	 * @throws VendorImportException When the current user may not change roles (NO_ROLES_RIGHT).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function remove( array $user_ids ): int {
 		if ( ! current_user_can( Capabilities::MANAGE_CREATORS ) || ! current_user_can( 'promote_users' ) ) {
-			self::refuse( VendorImportException::NOT_AUTHORIZED );
+			self::refuse( VendorImportException::NO_ROLES_RIGHT );
 		}
 
 		$changed = 0;
 
 		foreach ( $this->users() as $candidate ) {
-			if ( ! in_array( $candidate['user_id'], $user_ids, true ) ) {
+			// Only confirmed users this administrator may change in WordPress itself.
+			if ( ! in_array( $candidate['user_id'], $user_ids, true ) || ! current_user_can( 'promote_user', $candidate['user_id'] ) ) {
 				continue;
 			}
 

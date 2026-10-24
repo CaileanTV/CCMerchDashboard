@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-24T21:21:21+00:00\n"
+"PO-Revision-Date: 2026-10-24T22:25:23+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -933,7 +933,7 @@ msgstr "en administrator"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:239
 msgid "Product category"
 msgstr "Produktkategori"
 
@@ -1010,7 +1010,7 @@ msgstr "Hændelse"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:644
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:320
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:331
 msgid "Creator"
 msgstr "Creator"
 
@@ -1400,7 +1400,7 @@ msgstr "Gem adgang"
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:370
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:381
 #: build/dashboard.js:51
 msgid "None"
 msgstr "Ingen"
@@ -2889,8 +2889,8 @@ msgstr "Kundernes fornavne flyttes ikke; alerts viser brugernavnet."
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:79
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:150
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:221
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:152
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:223
 msgid "Dry run"
 msgstr "Tørkørsel"
 
@@ -2917,7 +2917,7 @@ msgid "Creator here"
 msgstr "Creator her"
 
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:239
 msgid "What happens"
 msgstr "Hvad der sker"
 
@@ -3450,7 +3450,7 @@ msgstr "Chatbot-indstillingerne er ugyldige."
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
 #: src/Modules/WooCommerce/VendorImport/VendorImportActions.php:70
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:122
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:124
 #: src/Modules/WooCommerce/VendorImport/VendorRoleActions.php:74
 msgid "Sorry, you are not allowed to manage creators."
 msgstr "Du har desværre ikke adgang til at administrere creators."
@@ -4094,7 +4094,7 @@ msgstr "Resultat"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:399
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:122
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:56
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:239
 msgid "Products"
 msgstr "Produkter"
 
@@ -6152,7 +6152,7 @@ msgid "Only sales on or after this date count towards the creator's payouts; ref
 msgstr "Kun salg på eller efter denne dato tæller med i creatorens udbetalinger; refunderinger og rettelser følger deres salg. Lad feltet være tomt for at tælle hele historikken. Ældre salg ændres eller udfyldes aldrig."
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:208
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:239
 msgid "Settlement start"
 msgstr "Afregningsstart"
 
@@ -7428,249 +7428,283 @@ msgstr "Den valgte periode er ikke gyldig."
 
 #: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:77
 #: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:78
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:133
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:135
 msgid "Import from Product Vendors"
 msgstr "Import fra Product Vendors"
 
 #: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:102
-msgid "Sorry, you are not allowed to migrate creators. It takes the rights to manage creators and payouts."
-msgstr "Du har ikke adgang til at flytte creators. Det kræver rettighederne til at administrere creators og udbetalinger."
+msgid "Sorry, you are not allowed to migrate vendors. It takes the rights to manage creators and payouts."
+msgstr "Du har ikke adgang til at flytte vendors. Det kræver rettigheden til at administrere creators og udbetalinger."
 
 #: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:103
+msgid "Sorry, you are not allowed to remove these roles. It takes the rights to manage creators and to change users' roles."
+msgstr "Du har ikke adgang til at fjerne disse roller. Det kræver rettigheden til at administrere creators og til at ændre brugeres roller."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:104
+msgid "Another migration is running. Wait until it is done, then check the new dry run."
+msgstr "En anden migrering kører. Vent, til den er færdig, og tjek derefter en ny tørkørsel."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:105
 msgid "Activate WooCommerce Product Vendors first: the migration reads the vendors through Product Vendors itself."
 msgstr "Aktivér WooCommerce Product Vendors først: migreringen læser vendors gennem Product Vendors selv."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:104
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:106
 msgid "Product Vendors has no vendors."
 msgstr "Product Vendors har ingen vendors."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:105
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:107
 msgid "Product Vendors' vendors could not be read. Please try again later."
 msgstr "Product Vendors' vendors kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:106
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:108
 msgid "The data changed since the dry run. Check the new dry run and migrate again."
 msgstr "Data er ændret siden tørkørslen. Tjek den nye tørkørsel, og flyt igen."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:107
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:109
 msgid "Confirm that you have a backup before you migrate."
 msgstr "Bekræft, at du har en backup, før du flytter."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:108
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:110
 msgid "The migration is done. Check the creators and their products, then remove the Product Vendors roles when you are ready."
 msgstr "Migreringen er færdig. Tjek creators og deres produkter, og fjern derefter Product Vendors-rollerne, når du er klar."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:109
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:111
 msgid "Product Vendors' roles were removed. The users keep their other roles and their creator access."
 msgstr "Product Vendors-rollerne er fjernet. Brugerne beholder deres andre roller og deres creator-adgang."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:110
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:112
 msgid "Nothing was changed: tick the confirmation first."
 msgstr "Intet er ændret: sæt flueben ved bekræftelsen først."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:111
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
 msgid "The roles could not be removed because of a technical error. Users changed before it keep the change; try again."
 msgstr "Rollerne kunne ikke fjernes på grund af en teknisk fejl. Brugere, der blev ændret inden, beholder ændringen; prøv igen."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:112
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:114
 msgid "The migration stopped because of a technical error. What was migrated is kept; run the dry run again to migrate the rest."
 msgstr "Migreringen stoppede på grund af en teknisk fejl. Det, der er flyttet, bevares; lav tørkørslen igen for at flytte resten."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:134
-msgid "Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor's WordPress user linked to it, and the vendor's products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors' data is only read, never changed."
-msgstr "Flytter vendors fra WooCommerce Product Vendors til Merch Dashboard én gang: en creator pr. vendor, vendorens WordPress-bruger koblet til den og vendorens produkter koblet til creatoren. En vendor, hvis bruger allerede er koblet til en creator, bruger den creator. Product Vendors' data læses kun og ændres aldrig."
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:136
+msgid "Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor's WordPress user linked to it, and a product category and the vendor's products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors' data is only read; after the migration you can remove the Product Vendors roles from the migrated users."
+msgstr "Flytter vendors fra WooCommerce Product Vendors til Merch Dashboard én gang: en creator pr. vendor, vendorens WordPress-bruger koblet til den, og en produktkategori og vendorens produkter koblet til creatoren. En vendor, hvis bruger allerede er koblet til en creator, bruger den creator. Product Vendors' data læses kun; efter migreringen kan du fjerne Product Vendors-rollerne fra de flyttede brugere."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:143
 msgid "Not moved: commissions, payouts, PayPal and other payment details."
 msgstr "Flyttes ikke: kommission, udbetalinger, PayPal og andre betalingsoplysninger."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:143
 msgid "New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again."
 msgstr "Nye creators får afregningsstart på migreringens tidspunkt, så salg, som Product Vendors har betalt kommission for, aldrig udbetales igen."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:143
 msgid "A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved."
 msgstr "En creator har én WordPress-bruger. Har en vendor flere, vælger du den, der kobles på; de andre flyttes ikke."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:143
 msgid "Vendors waiting for approval are skipped."
 msgstr "Vendors, der venter på godkendelse, springes over."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
-msgid "Keep Product Vendors active until the migration is done: it is read through Product Vendors itself."
-msgstr "Lad Product Vendors være aktivt, til migreringen er færdig: den læses gennem Product Vendors selv."
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:143
+msgid "Keep Product Vendors active until the migration is done: its data is read through Product Vendors itself."
+msgstr "Lad Product Vendors være aktivt, til migreringen er færdig: dets data læses gennem Product Vendors selv."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:162
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:164
 msgid "The dry run could not be made because of a technical error. Please try again later."
 msgstr "Tørkørslen kunne ikke laves på grund af en teknisk fejl. Prøv igen senere."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:226
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:228
 msgid "Product Vendors' version is unknown."
 msgstr "Product Vendors' version er ukendt."
 
 #. translators: %s: version number.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:228
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:230
 #, php-format
 msgid "Read through Product Vendors %s."
 msgstr "Læst gennem Product Vendors %s."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:234
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:236
 msgid "The product category links new products, and so new sales, to the creator. The proposal is the category most of the vendor's products are in; choose another or none."
 msgstr "Produktkategorien kobler nye produkter, og dermed nye salg, til creatoren. Forslaget er den kategori, flest af vendorens produkter ligger i; vælg en anden eller ingen."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:239
 msgid "Vendor"
 msgstr "Vendor"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:320
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:239
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:331
 msgid "User"
 msgstr "Bruger"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:243
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:245
 msgid "A creator with the same name exists. It is not used: creators are matched by their user."
 msgstr "Der findes en creator med samme navn. Den bruges ikke: creators matches på deres bruger."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:256
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:253
+msgid "The creator is inactive: its products and category cannot be linked. Activate it first."
+msgstr "Creatoren er deaktiveret: dens produkter og kategori kan ikke kobles. Aktivér den først."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:264
 msgid "Update the dry run"
 msgstr "Opdatér tørkørslen"
 
 #. translators: 1: vendors migrated, 2: vendors skipped, 3: product categories linked, 4: products linked, 5: products linked to another creator.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:267
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:275
 #, php-format
 msgid "In all: %1$d vendors migrated, %2$d skipped, %3$d product categories linked, %4$d products linked, %5$d products left because they belong to another creator."
 msgstr "I alt: %1$d vendors flyttes, %2$d springes over, %3$d produktkategorier kobles, %4$d produkter kobles, %5$d produkter bliver stående, fordi de tilhører en anden creator."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:277
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:285
 msgid "There is nothing to migrate."
 msgstr "Der er intet at flytte."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:295
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:303
 msgid "I have taken a backup of the site, and Product Vendors is active."
 msgstr "Jeg har taget en backup af sitet, og Product Vendors er aktivt."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:296
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:304
 msgid "Migrate vendors"
 msgstr "Flyt vendors"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:315
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:336
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:305
+msgid "You changed a choice: update the dry run before you migrate."
+msgstr "Du har ændret et valg: opdatér tørkørslen, før du flytter."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:326
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:347
 msgid "Remove the Product Vendors roles"
 msgstr "Fjern Product Vendors-rollerne"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:316
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:327
 msgid "These migrated users still have a Product Vendors role, which keeps their Product Vendors access and wp-admin. Removing it leaves only their Merch Dashboard access; their other roles stay. Check the creators and their products first."
-msgstr "Disse migrerede brugere har stadig en Product Vendors-rolle, som giver dem adgang til Product Vendors og wp-admin. Når den fjernes, har de kun adgang til Merch Dashboard; deres andre roller bliver. Tjek creators og deres produkter først."
+msgstr "Disse flyttede brugere har stadig en Product Vendors-rolle, som giver dem adgang til Product Vendors og wp-admin. Når den fjernes, har de kun adgang til Merch Dashboard; deres andre roller bliver. Tjek creators og deres produkter først."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:320
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:331
 msgid "Product Vendors roles"
 msgstr "Product Vendors-roller"
 
 #. translators: %s: vendor names.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:328
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:339
 #, php-format
 msgid "Also administers vendors that were not migrated: %s. Removing the role ends that access too."
 msgstr "Administrerer også vendors, der ikke er flyttet: %s. Når rollen fjernes, ophører den adgang også."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:335
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:346
 msgid "I have checked the migrated creators and their products."
-msgstr "Jeg har kontrolleret de migrerede creators og deres produkter."
+msgstr "Jeg har kontrolleret de flyttede creators og deres produkter."
 
 #. translators: %s: product category name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:359
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:370
 #, php-format
 msgid "The creator's category \"%s\" stays"
 msgstr "Creatorens kategori \"%s\" bevares"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:368
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:379
 msgid "Product category to link"
 msgstr "Produktkategori, der kobles"
 
 #. translators: 1: product category name, 2: number of the vendor's products in it.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:374
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:385
 #, php-format
 msgid "%1$s (%2$d product)"
 msgid_plural "%1$s (%2$d products)"
 msgstr[0] "%1$s (%2$d produkt)"
 msgstr[1] "%1$s (%2$d produkter)"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:384
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:395
 msgid "Not linked: the category belongs to another creator or is chosen for another vendor. Choose another."
 msgstr "Kobles ikke: kategorien tilhører en anden creator eller er valgt til en anden vendor. Vælg en anden."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:420
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:517
+#. translators: 1: other products linked, 2: products made ambiguous.
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:400
+#, php-format
+msgid "Also links %1$d other products in the category, and all new ones, to this creator; %2$d products of another creator become ambiguous."
+msgstr "Kobler også %1$d andre produkter i kategorien og alle nye til denne creator; %2$d produkter hos en anden creator bliver tvetydige."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:404
+msgid "None proposed: the vendor's categories also hold other products, belong to another creator or were linked by an earlier migration. Choose one only on purpose."
+msgstr "Ingen foreslået: vendorens kategorier rummer også andre produkter, tilhører en anden creator eller blev koblet af en tidligere migrering. Vælg kun en med vilje."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:440
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:538
 msgid "Vendor Admin"
 msgstr "Vendor Admin"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:421
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:517
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:441
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:538
 msgid "Vendor Manager"
 msgstr "Vendor Manager"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:422
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:442
 msgid "Pending Vendor"
 msgstr "Pending Vendor"
 
 #. translators: 1: date and time, 2: creators created, 3: creators used, 4: product categories linked, 5: products linked, 6: products left, 7: failures.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:444
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:463
 #, php-format
 msgid "Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d product categories linked, %5$d products linked, %6$d products left at another creator, %7$d failed)."
 msgstr "Seneste migrering: %1$s (%2$d creators oprettet, %3$d eksisterende creators brugt, %4$d produktkategorier koblet, %5$d produkter koblet, %6$d produkter efterladt hos en anden creator, %7$d fejlede)."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:480
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:499
 msgid "User to link"
 msgstr "Bruger, der kobles på"
 
 #. translators: %d: number of other users.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:489
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:508
 #, php-format
 msgid "%d other user is not moved."
 msgid_plural "%d other users are not moved."
 msgstr[0] "%d anden bruger flyttes ikke."
 msgstr[1] "%d andre brugere flyttes ikke."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:500
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:519
 msgid "New creator with the vendor's name and the user"
 msgstr "Ny creator med vendorens navn og brugeren"
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:502
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:521
 #, php-format
 msgid "Uses the user's creator \"%s\""
 msgstr "Bruger brugerens creator \"%s\""
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:504
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:523
 #, php-format
 msgid "Migrated already to \"%s\": only what is missing is added"
 msgstr "Allerede flyttet til \"%s\": kun det, der mangler, tilføjes"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:505
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:524
 msgid "New creator without a user (the vendor has no administrator)"
 msgstr "Ny creator uden bruger (vendoren har ingen administrator)"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:506
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:525
 msgid "Skipped: the vendor is waiting for approval"
 msgstr "Springes over: vendoren venter på godkendelse"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:507
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:526
+msgid "Skipped: the vendor's administrators have no Product Vendors role"
+msgstr "Springes over: vendorens administratorer har ingen Product Vendors-rolle"
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:527
+msgid "Skipped: an earlier migration stopped while making this vendor's creator. Check the creators, then link it by hand"
+msgstr "Springes over: en tidligere migrering stoppede, mens den oprettede vendorens creator. Tjek creators, og kobl den derefter i hånden"
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:528
 msgid "Skipped: the user is chosen for another vendor. Choose another user or link it later."
 msgstr "Springes over: brugeren er valgt til en anden vendor. Vælg en anden bruger, eller kobl den på senere."
 
 #. translators: 1: products to link, 2: products linked already, 3: products linked to another creator.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:536
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:557
 #, php-format
 msgid "%1$d linked, %2$d linked already, %3$d left (another creator)"
 msgstr "%1$d kobles, %2$d allerede koblet, %3$d bliver stående (anden creator)"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:551
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:572
 msgid "Set to the time of the migration"
 msgstr "Sættes til migreringens tidspunkt"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:552
-msgid "None: the whole history counts. Set it under Payouts if Product Vendors has paid for it."
-msgstr "Ingen: hele historikken tæller. Sæt den under Udbetalinger, hvis Product Vendors har betalt for den."
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:573
+msgid "None: the whole history counts. Set it on the creator's page under \"Payout settlement start\" if Product Vendors has paid commission for those sales."
+msgstr "Ingen: hele historikken tæller. Sæt den på creatorens side under \"Afregningsstart\", hvis Product Vendors har betalt kommission for de salg."
 
 #: src/Modules/WooCommerce/WooCommerceSupport.php:90
 msgid "unknown"

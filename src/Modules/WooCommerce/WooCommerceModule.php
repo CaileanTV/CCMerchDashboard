@@ -702,13 +702,13 @@ final class WooCommerceModule implements Module {
 			VendorImporter::class,
 			static fn( Container $c ): VendorImporter => new VendorImporter(
 				$c->get( VendorImportPlan::class ),
-				$c->get( ProductVendorsSource::class ),
 				$c->get( CreatorService::class ),
 				$c->get( ProductCreatorLink::class ),
 				$c->get( CreatorCategoryService::class ),
 				$c->get( PayoutSettings::class ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
+				$c->get( wpdb::class ),
 				static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
 			)
 		);

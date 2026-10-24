@@ -82,9 +82,10 @@ final class ProductVendorsPlugin implements ProductVendorsSource {
 		$vendors = array();
 
 		foreach ( $terms as $term ) {
+			// WordPress stores term names HTML-escaped ("Tom &amp; Jerry"); the creator gets the plain name.
 			$vendors[] = array(
 				'term_id' => $term->term_id,
-				'name'    => $term->name,
+				'name'    => html_entity_decode( $term->name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			);
 		}
 

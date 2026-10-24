@@ -23,9 +23,11 @@ use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
+use MerchBoard\Modules\WooCommerce\MappingRemovalChoice;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsPlugin;
 use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsSource;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportActions;
@@ -34,6 +36,7 @@ use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportException;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPage;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportReport;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportState;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorRoleActions;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorRoleCleanup;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
@@ -163,7 +166,7 @@ final class VendorImportTest extends IntegrationTestCase {
 
 		delete_option( 'default_product_cat' );
 		remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
-		delete_option( VendorImportPlan::OPTION );
+		delete_option( VendorImportState::OPTION );
 		parent::tearDown();
 	}
 
@@ -200,8 +203,10 @@ final class VendorImportTest extends IntegrationTestCase {
 				'conflict'   => 1,
 				'categories' => 1,
 			),
-			$report->audit_context()
+			$report->totals()
 		);
+		self::assertSame( array( $this->posts[0] ), $rows['Nova Merch']['link_ids'], 'The fingerprint covers the products to link.' );
+		self::assertSame( array( 0, 0 ), array( $rows['Nova Merch']['category_others'], $rows['Nova Merch']['category_ambiguous'] ), 'The proposal holds only the vendor\'s own products.' );
 		self::assertSame(
 			array( array( VendorImportReport::CATEGORY_MAP, $this->categories['Nova Cat'] ), array( VendorImportReport::CATEGORY_MAPPED, $this->categories['Orion Cat'] ), array( VendorImportReport::CATEGORY_NONE, 0 ), array( null, 0 ) ),
 			array( array( $rows['Nova Merch']['category'], $rows['Nova Merch']['category_id'] ), array( $rows['Orion Shop']['category'], $rows['Orion Shop']['category_id'] ), array( $rows['Ghost']['category'], $rows['Ghost']['category_id'] ), array( $rows['Pending Pia']['category'], $rows['Pending Pia']['category_id'] ) ),
@@ -369,7 +374,8 @@ final class VendorImportTest extends IntegrationTestCase {
 				)
 			)
 		);
-		self::assertSame( 1, ( get_option( VendorImportPlan::OPTION )['last']['failed'] ?? null ) );
+		self::assertSame( 1, ( VendorImportState::load()['last']['failed'] ?? null ) );
+		self::assertFalse( $this->by_name( $report )['Orion Shop']['creator_active'], 'The dry run shows the inactive creator.' );
 		self::assertNotNull( $this->service( CreatorRepository::class )->find_by_user_id( $this->users['nova_admin'] ) );
 	}
 
@@ -408,8 +414,145 @@ final class VendorImportTest extends IntegrationTestCase {
 			$cleanup->remove( array( $this->users['late'] ) );
 			self::fail( 'Removed without the right.' );
 		} catch ( VendorImportException $e ) {
-			self::assertSame( VendorImportException::NOT_AUTHORIZED, $e->reason() );
+			self::assertSame( VendorImportException::NO_ROLES_RIGHT, $e->reason() );
 		}
+	}
+
+	public function test_roles_are_only_removed_from_the_user_the_migration_linked_while_it_is_a_working_creator(): void {
+		$report = $this->plan()->build();
+		$this->importer()->run( $report->fingerprint(), $report->choices(), $report->category_choices() );
+		$creators = $this->service( CreatorRepository::class );
+		$late     = $creators->find_by_user_id( $this->users['late'] );
+		$modern   = $creators->find_by_user_id( $this->users['modern'] );
+		self::assertNotNull( $late );
+		self::assertNotNull( $modern );
+
+		// Late's creator is deactivated; Modern's creator gets another user; Nova's user lost the creator role.
+		$this->service( CreatorService::class )->set_status( $late->id, CreatorStatus::Inactive );
+		$this->service( CreatorService::class )->update( $modern->id, $modern->display_name, CreatorStatus::Active, $this->users['nova_manager'] );
+		( new \WP_User( $this->users['nova_admin'] ) )->remove_role( Capabilities::CREATOR_ROLE );
+
+		self::assertSame( array( 'orion_admin' ), array_column( $this->cleanup()->users(), 'login' ) );
+		self::assertSame( 0, $this->cleanup()->remove( array( $this->users['late'], $this->users['nova_manager'], $this->users['nova_admin'] ) ) );
+		self::assertContains( ProductVendorsSource::MANAGER_ROLE, get_userdata( $this->users['nova_manager'] )->roles ?? array(), 'A user the migration did not link is never changed.' );
+	}
+
+	public function test_a_second_run_never_links_again_what_the_administrator_removed(): void {
+		$report = $this->plan()->build();
+		$this->importer()->run( $report->fingerprint(), $report->choices(), $report->category_choices() );
+		$nova = $this->service( CreatorRepository::class )->find_by_user_id( $this->users['nova_admin'] );
+		self::assertNotNull( $nova );
+		self::assertSame( array( $this->posts[0] ), VendorImportState::load()['products'][ $this->vendors['Nova Merch'] ] ?? null );
+		self::assertSame( $this->categories['Nova Cat'], VendorImportState::load()['categories'][ $this->vendors['Nova Merch'] ] ?? null );
+
+		$this->plan_links()->unlink( $this->posts[0], ProductLinkSource::Admin );
+		$this->category_service()->unlink( $nova->id, $this->categories['Nova Cat'], MappingRemovalChoice::KeepAsManual );
+
+		$row = $this->by_name( $this->plan()->build() )['Nova Merch'];
+		self::assertSame( array( VendorImportReport::IMPORTED, 0, array(), VendorImportReport::CATEGORY_NONE ), array( $row['status'], $row['products']['link'], $row['link_ids'], $row['category'] ) );
+		$again = $this->plan()->build();
+		self::assertSame( 0, $this->importer()->run( $again->fingerprint(), $again->choices(), $again->category_choices() )['linked'] );
+		self::assertNull( $this->plan_links()->creator_id( $this->posts[0] ) );
+		self::assertSame( array(), $this->category_service()->for_creator( $nova->id ) );
+
+		// A new product of the vendor is still linked.
+		$new = $this->product( 'Nova Merch' );
+		$row = $this->by_name( $this->plan()->build() )['Nova Merch'];
+		self::assertSame( array( $new ), $row['link_ids'] );
+	}
+
+	public function test_an_interrupted_run_is_resumed_and_its_creator_is_the_migrations_own(): void {
+		// The earlier run stopped after making Nova's creator, before recording it.
+		VendorImportState::save( array( 'pending' => array( $this->vendors['Nova Merch'] => $this->users['nova_admin'], $this->vendors['Ghost'] => 0 ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$nova = $this->service( CreatorService::class )->create( 'Nova Merch', CreatorStatus::Active, $this->users['nova_admin'] );
+
+		$report = $this->plan()->build();
+		$rows   = $this->by_name( $report );
+		self::assertSame( array( VendorImportReport::MATCHED, $nova->id ), array( $rows['Nova Merch']['status'], $rows['Nova Merch']['creator_id'] ) );
+		self::assertSame( VendorImportReport::INTERRUPTED, $rows['Ghost']['status'], 'A creator without a user cannot be recognized; the administrator checks first.' );
+
+		$counts = $this->importer()->run( $report->fingerprint(), $report->choices(), $report->category_choices() );
+		self::assertSame( array( 3, 1 ), array( $counts['created'], $counts['matched'] ), 'Nova\'s creator counts as made by the migration (with Late and Modern; Orion is matched).' );
+		self::assertSame( $this->now->format( 'Y-m-d H:i:s' ), $this->payouts()->settlement_start( $nova->id )?->format( 'Y-m-d H:i:s' ), 'And gets its settlement start.' );
+		self::assertSame( $nova->id, VendorImportState::load()['vendors'][ $this->vendors['Nova Merch'] ] ?? null );
+		self::assertArrayNotHasKey( $this->vendors['Nova Merch'], VendorImportState::load()['pending'] );
+	}
+
+	public function test_a_second_run_at_the_same_time_is_refused(): void {
+		$other = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		self::assertSame( '1', $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, %d)', VendorImporter::LOCK, 0 ) ) );
+
+		try {
+			$report = $this->plan()->build();
+			self::assertSame( VendorImportException::BUSY, $this->refused_run( $report->fingerprint() ) );
+			self::assertSame( array(), VendorImportState::load()['vendors'], 'Nothing was migrated.' );
+		} finally {
+			$other->get_var( $other->prepare( 'SELECT RELEASE_LOCK(%s)', VendorImporter::LOCK ) );
+			$other->close();
+		}
+
+		$report = $this->plan()->build();
+		self::assertSame( 0, $this->importer()->run( $report->fingerprint(), $report->choices(), $report->category_choices() )['failed'], 'The lock is free again.' );
+	}
+
+	public function test_a_product_added_after_the_dry_run_changes_it(): void {
+		$report = $this->plan()->build();
+		$this->product( 'Nova Merch' );
+
+		self::assertSame( VendorImportException::OUTDATED, $this->refused_run( $report->fingerprint(), $report->choices(), $report->category_choices() ) );
+	}
+
+	public function test_administrators_without_a_product_vendors_role_are_skipped(): void {
+		$boss = $this->create_user( 'boss' );
+		( new \WP_User( $boss ) )->set_role( 'administrator' );
+		$this->vendor( 'Boss Shop', array( $boss ) );
+
+		$row = $this->by_name( $this->plan()->build() )['Boss Shop'];
+		self::assertSame( array( VendorImportReport::NO_ROLE, 0, null ), array( $row['status'], $row['user_id'], $row['category'] ) );
+	}
+
+	public function test_the_category_shows_what_it_does_to_other_products(): void {
+		// An unlinked product outside the vendor in Nova Cat; one in Spare Cat linked to Orion by its category.
+		$this->loose_product( array( 'Nova Cat' ) );
+		$this->loose_product( array( 'Spare Cat' ), $this->orion, ProductLinkSource::Category );
+
+		$row = $this->by_name( $this->plan()->build() )['Nova Merch'];
+		self::assertSame( array( VendorImportReport::CATEGORY_NONE, 0 ), array( $row['category'], $row['category_id'] ), 'A category holding other products is never proposed.' );
+
+		$chosen = $this->by_name( $this->plan()->build( array(), array( $this->vendors['Nova Merch'] => $this->categories['Nova Cat'] ) ) )['Nova Merch'];
+		self::assertSame( array( VendorImportReport::CATEGORY_MAP, 1, 0 ), array( $chosen['category'], $chosen['category_others'], $chosen['category_ambiguous'] ), 'It can still be chosen, with its consequence shown.' );
+
+		$spare = $this->by_name( $this->plan()->build( array(), array( $this->vendors['Nova Merch'] => $this->categories['Spare Cat'] ) ) )['Nova Merch'];
+		self::assertSame( array( 0, 1 ), array( $spare['category_others'], $spare['category_ambiguous'] ) );
+
+		// A category chosen for an earlier vendor is taken for the next one, and not proposed.
+		$late = $this->plan()->build( array(), array( $this->vendors['Late'] => $this->categories['Nova Cat'] ) );
+		self::assertSame( array( VendorImportReport::CATEGORY_MAP, VendorImportReport::CATEGORY_NONE ), array( $this->by_name( $late )['Late']['category'], $this->by_name( $late )['Nova Merch']['category'] ) );
+		$both = $this->plan()->build( array(), array( $this->vendors['Late'] => $this->categories['Nova Cat'], $this->vendors['Nova Merch'] => $this->categories['Nova Cat'] ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( VendorImportReport::CATEGORY_TAKEN, $this->by_name( $both )['Nova Merch']['category'] );
+	}
+
+	/**
+	 * A product outside every vendor.
+	 *
+	 * @phpstan-param list<string> $categories
+	 *
+	 * @param string[]               $categories Product category names.
+	 * @param int|null               $creator_id Linked creator.
+	 * @param ProductLinkSource|null $source     How it is linked.
+	 */
+	private function loose_product( array $categories, ?int $creator_id = null, ?ProductLinkSource $source = null ): int {
+		$id            = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Loose tee' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->posts[] = $id;
+		wp_set_object_terms( $id, array_map( fn( string $name ): int => $this->categories[ $name ], $categories ), CreatorCategoryService::TAXONOMY );
+
+		if ( null !== $creator_id ) {
+			$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $id, ProductCreatorLink::META_KEY, (string) $creator_id );
+			$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $id, ProductCreatorLink::SOURCE_META_KEY, ( $source ?? ProductLinkSource::Admin )->value );
+			wp_cache_delete( $id, 'post_meta' );
+		}
+
+		return $id;
 	}
 
 	/**
@@ -454,13 +597,13 @@ final class VendorImportTest extends IntegrationTestCase {
 
 		return new VendorImporter(
 			$this->plan(),
-			new ProductVendorsPlugin(),
 			$this->service( CreatorService::class ),
 			$this->plan_links(),
 			$this->category_service(),
 			$this->payouts(),
 			$this->service( AuditTrail::class ),
 			$this->service( Transaction::class ),
+			$this->wpdb,
 			static fn(): DateTimeImmutable => $now
 		);
 	}
@@ -484,11 +627,13 @@ final class VendorImportTest extends IntegrationTestCase {
 	/**
 	 * Why the migration was refused.
 	 *
-	 * @param string $fingerprint Fingerprint.
+	 * @param string          $fingerprint      Fingerprint.
+	 * @param array<int, int> $choices          Chosen users.
+	 * @param array<int, int> $category_choices Chosen categories.
 	 */
-	private function refused_run( string $fingerprint ): string {
+	private function refused_run( string $fingerprint, array $choices = array(), array $category_choices = array() ): string {
 		try {
-			$this->importer()->run( $fingerprint, array() );
+			$this->importer()->run( $fingerprint, $choices, $category_choices );
 		} catch ( VendorImportException $e ) {
 			return $e->reason();
 		}
