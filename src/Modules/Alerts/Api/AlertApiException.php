@@ -19,11 +19,13 @@ defined( 'ABSPATH' ) || exit;
  */
 final class AlertApiException extends RuntimeException {
 
-	public const NOT_AUTHORIZED = 'not_authorized';
-	public const DISABLED       = 'api_disabled';
-	public const INVALID_NAME   = 'invalid_name';
-	public const KEY_LIMIT      = 'key_limit';
-	public const UNKNOWN_KEY    = 'unknown_key';
+	public const NOT_AUTHORIZED  = 'not_authorized';
+	public const DISABLED        = 'api_disabled';
+	public const INVALID_NAME    = 'invalid_name';
+	public const KEY_LIMIT       = 'key_limit';
+	public const UNKNOWN_KEY     = 'unknown_key';
+	public const NO_ACCESS       = 'no_access';
+	public const UNKNOWN_CREATOR = 'unknown_creator';
 
 	/**
 	 * Constructor.

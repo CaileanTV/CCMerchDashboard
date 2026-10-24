@@ -288,6 +288,7 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
   - **Creatorens egne kald:** creators opretter og tilbagekalder kun egne nøgler via `/me` (CreatorContext).
   - **Administratoren:** `merchboard_manage_alerts` slår API'en til og fra og tilbagekalder alle nøgler for en creator (admin-post, nonce, påkrævet afkrydsning).
   - **Audit:** uden nøgler.
+- **Adgang pr. creator (trin 25.12.4, ADR-073 pkt. 10):** ud over den globale kontakt skal administratoren give hver creator adgang til API-nøgler og webhooks (slået fra som standard; kun `merchboard_manage_alerts`, admin-post med nonce, capability tjekket igen i `AlertApiAccess`, audit). Uden adgang svarer feedet 401 (samme svar som en forkert nøgle), webhooks sendes ikke, og oprettelse, test og ny signeringsnøgle afvises. Creatoren kan stadig tilbagekalde, slå fra og slette.
 - **Webhooks (trin 25.12.2, ADR-073):**
   - **Udgående kald:** kun til https-adresser, som creatoren selv angiver. Ingen IP-adresser, lokale navne, andre porte eller brugeroplysninger, og Discord kun på Discords egne webhook-adresser. Kaldene går via `wp_safe_remote_post()` (afviser private adresser) uden redirects, med timeout 5 s og et lille svarloft.
   - **Hemmeligheder:** adressen og signeringsnøglen gemmes krypteret (sodium, eget nøgledomæne). Hverken adressen eller nøglen vises igen, logges, sendes til admin eller skrives i audit; fejlbeskeder renses for adresser.

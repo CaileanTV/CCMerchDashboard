@@ -27,6 +27,7 @@ const key = ( id: number, name: string ) => ( {
 
 const page = ( keys: unknown[], extra: Record< string, unknown > = {} ) => ( {
 	enabled: true,
+	access: { keys: true, webhooks: true },
 	endpoint: 'https://shop.example/wp-json/merchboard/v1/alerts/api/events',
 	limit: 60,
 	max_keys: 5,
@@ -427,5 +428,49 @@ describe( 'alert API page', () => {
 				) as HTMLButtonElement | null
 			 )?.disabled
 		).toBe( true );
+	} );
+
+	it( 'explains missing access and hides what needs it', async () => {
+		const noAccess = { access: { keys: false, webhooks: false } };
+
+		expect(
+			parseAlertApi( page( [], { access: { keys: 'yes' } } ) )
+		).toBeNull();
+
+		mockApi( {
+			[ `GET ${ PATH }` ]: () =>
+				response(
+					200,
+					page( [ key( 1, 'Bot' ) ], {
+						...noAccess,
+						webhooks: [ webhook( 4, { enabled: false } ) ],
+					} )
+				),
+		} );
+		rendered = show();
+		await flush();
+
+		expect( rendered.container.textContent ).toContain(
+			'has not given you access to API keys'
+		);
+		expect( button( 'Make a key' ) ).toBeNull();
+		expect(
+			( button( 'Send test event' ) as HTMLButtonElement | null )
+				?.disabled
+		).toBe( true );
+		expect( button( 'Revoke' ) ).not.toBeNull();
+
+		rendered.unmount();
+		rendered = showWebhooks();
+		await flush();
+
+		expect( rendered.container.textContent ).toContain(
+			'has not given you access to webhooks'
+		);
+		expect( button( 'Add webhook' ) ).toBeNull();
+		expect(
+			( button( 'Switch on' ) as HTMLButtonElement | null )?.disabled
+		).toBe( true );
+		expect( button( 'Delete' ) ).not.toBeNull();
 	} );
 } );

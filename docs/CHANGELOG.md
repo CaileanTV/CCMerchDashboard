@@ -6,6 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Adgang pr. creator til alert-API'en (fase 25, trin 25.12.4, ADR-073):** administratoren giver hver creator adgang til API-nøgler og webhooks hver for sig direkte på Merch Dashboard → Alerts → API (slået fra som standard). Creators, der allerede havde nøgler eller webhooks, beholdt adgangen (schema-version 28).
 - **Webhooks til creatorens egne bots og Discord (fase 25, trin 25.12.2, ADR-073):**
   - **Formater:** under Alerts → Webhooks (egen side ved siden af Alerts → API-nøgler) kan creators tilføje op til 3 webhooks. JSON-formatet er én signeret hændelse pr. betalt ordre i SparkyBots format, og Discord-formatet skriver chatbeskeden i en kanal.
   - **Signeringsnøgle:** den indsættes fra modtageren, eller Merch Dashboard laver en.

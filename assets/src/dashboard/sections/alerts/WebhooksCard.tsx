@@ -70,6 +70,11 @@ function refusal( error: ApiError, maxWebhooks: number ): string | null {
 				'The alert API is switched off. Ask the shop to switch it on.',
 				'merchboard'
 			);
+		case 'merchboard_alerts_api_no_access':
+			return __(
+				'The shop has not given you access to this. Ask the shop.',
+				'merchboard'
+			);
 		case 'merchboard_alerts_webhook_limit':
 			return sprintf(
 				/* translators: %d: most webhooks. */
@@ -400,7 +405,10 @@ export function WebhooksCard( {
 									<Button
 										variant="secondary"
 										size="sm"
-										disabled={ ! api.enabled }
+										disabled={
+											! api.enabled ||
+											! api.access.webhooks
+										}
 										isBusy={
 											busy === `test:${ webhook.id }`
 										}
@@ -451,6 +459,10 @@ export function WebhooksCard( {
 										isBusy={
 											busy === `switch:${ webhook.id }`
 										}
+										disabled={
+											! webhook.enabled &&
+											! api.access.webhooks
+										}
 										onClick={ () =>
 											void act(
 												`switch:${ webhook.id }`,
@@ -470,6 +482,7 @@ export function WebhooksCard( {
 										<Button
 											variant="ghost"
 											size="sm"
+											disabled={ ! api.access.webhooks }
 											isBusy={
 												busy ===
 												`secret:${ webhook.id }`
@@ -504,134 +517,142 @@ export function WebhooksCard( {
 				</ul>
 			) }
 
-			{ api.enabled && api.webhooks.length < api.maxWebhooks && (
-				<form
-					className="merchboard-alert-api__create"
-					onSubmit={ ( event ) => {
-						event.preventDefault();
-						void add();
-					} }
-				>
-					<h3>{ __( 'Add a webhook', 'merchboard' ) }</h3>
-					<Field label={ __( 'Name', 'merchboard' ) }>
-						{ ( control ) => (
-							<input
-								{ ...control }
-								className="merchboard-input"
-								maxLength={ 60 }
-								value={ name }
-								onChange={ ( event ) =>
-									setName( event.target.value )
-								}
-							/>
-						) }
-					</Field>
-					<Field label={ __( 'Format', 'merchboard' ) }>
-						{ ( control ) => (
-							<select
-								{ ...control }
-								className="merchboard-input"
-								value={ format }
-								onChange={ ( event ) =>
-									setFormat(
-										event.target.value === 'discord'
-											? 'discord'
-											: 'json'
-									)
-								}
+			{ api.enabled &&
+				api.access.webhooks &&
+				api.webhooks.length < api.maxWebhooks && (
+					<form
+						className="merchboard-alert-api__create"
+						onSubmit={ ( event ) => {
+							event.preventDefault();
+							void add();
+						} }
+					>
+						<h3>{ __( 'Add a webhook', 'merchboard' ) }</h3>
+						<Field label={ __( 'Name', 'merchboard' ) }>
+							{ ( control ) => (
+								<input
+									{ ...control }
+									className="merchboard-input"
+									maxLength={ 60 }
+									value={ name }
+									onChange={ ( event ) =>
+										setName( event.target.value )
+									}
+								/>
+							) }
+						</Field>
+						<Field label={ __( 'Format', 'merchboard' ) }>
+							{ ( control ) => (
+								<select
+									{ ...control }
+									className="merchboard-input"
+									value={ format }
+									onChange={ ( event ) =>
+										setFormat(
+											event.target.value === 'discord'
+												? 'discord'
+												: 'json'
+										)
+									}
+								>
+									<option value="json">
+										{ __(
+											'JSON (your own bot, e.g. SparkyBot)',
+											'merchboard'
+										) }
+									</option>
+									<option value="discord">
+										{ __(
+											'Discord channel',
+											'merchboard'
+										) }
+									</option>
+								</select>
+							) }
+						</Field>
+						<Field
+							label={ __( 'Address (https)', 'merchboard' ) }
+							help={
+								format === 'discord'
+									? __(
+											'In Discord: Server settings → Integrations → Webhooks → New webhook → Copy webhook URL. Keep the address secret.',
+											'merchboard'
+										)
+									: __(
+											'The address your bot gives you for purchases.',
+											'merchboard'
+										)
+							}
+						>
+							{ ( control ) => (
+								<input
+									{ ...control }
+									className="merchboard-input"
+									type="url"
+									maxLength={ 500 }
+									value={ url }
+									onChange={ ( event ) =>
+										setUrl( event.target.value )
+									}
+								/>
+							) }
+						</Field>
+						{ format === 'json' ? (
+							<Field
+								label={ __(
+									'Signing secret (optional)',
+									'merchboard'
+								) }
+								help={ __(
+									"Paste the secret from your bot, for example from SparkyBot's dashboard, or leave it empty to get one.",
+									'merchboard'
+								) }
 							>
-								<option value="json">
-									{ __(
-										'JSON (your own bot, e.g. SparkyBot)',
-										'merchboard'
-									) }
-								</option>
-								<option value="discord">
-									{ __( 'Discord channel', 'merchboard' ) }
-								</option>
-							</select>
+								{ ( control ) => (
+									<input
+										{ ...control }
+										className="merchboard-input"
+										autoComplete="off"
+										value={ secret }
+										onChange={ ( event ) =>
+											setSecret( event.target.value )
+										}
+									/>
+								) }
+							</Field>
+						) : (
+							<Field
+								label={ __(
+									'Message (optional)',
+									'merchboard'
+								) }
+								help={ __(
+									"The same variables as the chatbot, e.g. $Name just bought $Product! Empty for the chatbot's default.",
+									'merchboard'
+								) }
+							>
+								{ ( control ) => (
+									<input
+										{ ...control }
+										className="merchboard-input"
+										maxLength={ WEBHOOK_TEMPLATE_MAX }
+										value={ template }
+										onChange={ ( event ) =>
+											setTemplate( event.target.value )
+										}
+									/>
+								) }
+							</Field>
 						) }
-					</Field>
-					<Field
-						label={ __( 'Address (https)', 'merchboard' ) }
-						help={
-							format === 'discord'
-								? __(
-										'In Discord: Server settings → Integrations → Webhooks → New webhook → Copy webhook URL. Keep the address secret.',
-										'merchboard'
-									)
-								: __(
-										'The address your bot gives you for purchases.',
-										'merchboard'
-									)
-						}
-					>
-						{ ( control ) => (
-							<input
-								{ ...control }
-								className="merchboard-input"
-								type="url"
-								maxLength={ 500 }
-								value={ url }
-								onChange={ ( event ) =>
-									setUrl( event.target.value )
-								}
-							/>
-						) }
-					</Field>
-					{ format === 'json' ? (
-						<Field
-							label={ __(
-								'Signing secret (optional)',
-								'merchboard'
-							) }
-							help={ __(
-								"Paste the secret from your bot, for example from SparkyBot's dashboard, or leave it empty to get one.",
-								'merchboard'
-							) }
+						<Button
+							type="submit"
+							isBusy={ busy === 'add' }
+							disabled={ name.trim() === '' || url.trim() === '' }
 						>
-							{ ( control ) => (
-								<input
-									{ ...control }
-									className="merchboard-input"
-									autoComplete="off"
-									value={ secret }
-									onChange={ ( event ) =>
-										setSecret( event.target.value )
-									}
-								/>
-							) }
-						</Field>
-					) : (
-						<Field
-							label={ __( 'Message (optional)', 'merchboard' ) }
-							help={ __(
-								"The same variables as the chatbot, e.g. $Name just bought $Product! Empty for the chatbot's default.",
-								'merchboard'
-							) }
-						>
-							{ ( control ) => (
-								<input
-									{ ...control }
-									className="merchboard-input"
-									maxLength={ WEBHOOK_TEMPLATE_MAX }
-									value={ template }
-									onChange={ ( event ) =>
-										setTemplate( event.target.value )
-									}
-								/>
-							) }
-						</Field>
-					) }
-					<Button
-						type="submit"
-						isBusy={ busy === 'add' }
-						disabled={ name.trim() === '' || url.trim() === '' }
-					>
-						{ __( 'Add webhook', 'merchboard' ) }
-					</Button>
-				</form>
-			) }
+							{ __( 'Add webhook', 'merchboard' ) }
+						</Button>
+					</form>
+				) }
 
 			<h3>{ __( 'Deliveries', 'merchboard' ) }</h3>
 			{ api.deliveries.length === 0 ? (

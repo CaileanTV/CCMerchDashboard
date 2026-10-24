@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-24T11:16:22+00:00\n"
+"PO-Revision-Date: 2026-10-24T13:00:29+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -483,367 +483,371 @@ msgstr "Alert-webhook ændret"
 msgid "Alert webhook deleted"
 msgstr "Alert-webhook slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:255
+#: src/Modules/Admin/AuditLogFormatter.php:165
+msgid "Creator's access to the alert API changed"
+msgstr "Creatorens adgang til alert-API'en ændret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:256
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:257
+#: src/Modules/Admin/AuditLogFormatter.php:258
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:260
+#: src/Modules/Admin/AuditLogFormatter.php:261
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:264
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:266
+#: src/Modules/Admin/AuditLogFormatter.php:267
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:269
+#: src/Modules/Admin/AuditLogFormatter.php:270
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:272
+#: src/Modules/Admin/AuditLogFormatter.php:273
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:274
+#: src/Modules/Admin/AuditLogFormatter.php:275
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:277
+#: src/Modules/Admin/AuditLogFormatter.php:278
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:280
+#: src/Modules/Admin/AuditLogFormatter.php:281
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:282
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:283
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:283
+#: src/Modules/Admin/AuditLogFormatter.php:284
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:285
+#: src/Modules/Admin/AuditLogFormatter.php:286
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:289
+#: src/Modules/Admin/AuditLogFormatter.php:290
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:292
+#: src/Modules/Admin/AuditLogFormatter.php:293
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:294
+#: src/Modules/Admin/AuditLogFormatter.php:295
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:294
+#: src/Modules/Admin/AuditLogFormatter.php:295
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:297
+#: src/Modules/Admin/AuditLogFormatter.php:298
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:300
+#: src/Modules/Admin/AuditLogFormatter.php:301
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:303
+#: src/Modules/Admin/AuditLogFormatter.php:304
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:306
+#: src/Modules/Admin/AuditLogFormatter.php:307
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:308
+#: src/Modules/Admin/AuditLogFormatter.php:309
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:311
+#: src/Modules/Admin/AuditLogFormatter.php:312
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:317
+#: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:320
+#: src/Modules/Admin/AuditLogFormatter.php:321
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:322
+#: src/Modules/Admin/AuditLogFormatter.php:323
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:325
+#: src/Modules/Admin/AuditLogFormatter.php:326
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:328
+#: src/Modules/Admin/AuditLogFormatter.php:329
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:331
+#: src/Modules/Admin/AuditLogFormatter.php:332
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:333
+#: src/Modules/Admin/AuditLogFormatter.php:334
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:333
+#: src/Modules/Admin/AuditLogFormatter.php:334
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:336
+#: src/Modules/Admin/AuditLogFormatter.php:337
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:339
+#: src/Modules/Admin/AuditLogFormatter.php:340
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:342
+#: src/Modules/Admin/AuditLogFormatter.php:343
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:343
+#: src/Modules/Admin/AuditLogFormatter.php:344
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:346
+#: src/Modules/Admin/AuditLogFormatter.php:347
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:349
+#: src/Modules/Admin/AuditLogFormatter.php:350
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:352
+#: src/Modules/Admin/AuditLogFormatter.php:353
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:355
+#: src/Modules/Admin/AuditLogFormatter.php:356
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:358
+#: src/Modules/Admin/AuditLogFormatter.php:359
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:399
+#: src/Modules/Admin/AuditLogFormatter.php:400
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:401
+#: src/Modules/Admin/AuditLogFormatter.php:402
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:404
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:416
+#: src/Modules/Admin/AuditLogFormatter.php:417
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:417
+#: src/Modules/Admin/AuditLogFormatter.php:418
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:418
+#: src/Modules/Admin/AuditLogFormatter.php:419
 #: build/dashboard.js:51
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:419
+#: src/Modules/Admin/AuditLogFormatter.php:420
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:420
+#: src/Modules/Admin/AuditLogFormatter.php:421
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:421
+#: src/Modules/Admin/AuditLogFormatter.php:422
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:423
 msgid "Failed"
 msgstr "Fejlet"
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:432
-#: src/Modules/Admin/AuditLogFormatter.php:458
-#: src/Modules/Admin/AuditLogFormatter.php:517
+#: src/Modules/Admin/AuditLogFormatter.php:433
+#: src/Modules/Admin/AuditLogFormatter.php:459
+#: src/Modules/Admin/AuditLogFormatter.php:518
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:445
+#: src/Modules/Admin/AuditLogFormatter.php:446
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:57
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:446
+#: src/Modules/Admin/AuditLogFormatter.php:447
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:57
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:447
+#: src/Modules/Admin/AuditLogFormatter.php:448
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:57
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:448
+#: src/Modules/Admin/AuditLogFormatter.php:449
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:57
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:476
+#: src/Modules/Admin/AuditLogFormatter.php:477
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:500
+#: src/Modules/Admin/AuditLogFormatter.php:501
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:501
+#: src/Modules/Admin/AuditLogFormatter.php:502
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:502
+#: src/Modules/Admin/AuditLogFormatter.php:503
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:503
+#: src/Modules/Admin/AuditLogFormatter.php:504
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:504
-#: src/Modules/Admin/AuditLogFormatter.php:652
+#: src/Modules/Admin/AuditLogFormatter.php:505
+#: src/Modules/Admin/AuditLogFormatter.php:653
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:505
+#: src/Modules/Admin/AuditLogFormatter.php:506
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:506
-#: src/Modules/Admin/AuditLogFormatter.php:712
+#: src/Modules/Admin/AuditLogFormatter.php:507
+#: src/Modules/Admin/AuditLogFormatter.php:713
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:53
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:507
+#: src/Modules/Admin/AuditLogFormatter.php:508
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:536
+#: src/Modules/Admin/AuditLogFormatter.php:537
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:551
+#: src/Modules/Admin/AuditLogFormatter.php:552
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -852,7 +856,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:620
+#: src/Modules/Admin/AuditLogFormatter.php:621
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -861,87 +865,87 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:620
+#: src/Modules/Admin/AuditLogFormatter.php:621
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:630
+#: src/Modules/Admin/AuditLogFormatter.php:631
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:631
+#: src/Modules/Admin/AuditLogFormatter.php:632
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:632
+#: src/Modules/Admin/AuditLogFormatter.php:633
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:633
+#: src/Modules/Admin/AuditLogFormatter.php:634
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:634
+#: src/Modules/Admin/AuditLogFormatter.php:635
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:635
+#: src/Modules/Admin/AuditLogFormatter.php:636
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:636
+#: src/Modules/Admin/AuditLogFormatter.php:637
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:637
+#: src/Modules/Admin/AuditLogFormatter.php:638
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:638
+#: src/Modules/Admin/AuditLogFormatter.php:639
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:639
+#: src/Modules/Admin/AuditLogFormatter.php:640
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:641
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:653
+#: src/Modules/Admin/AuditLogFormatter.php:654
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:665
+#: src/Modules/Admin/AuditLogFormatter.php:666
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:666
+#: src/Modules/Admin/AuditLogFormatter.php:667
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:678
+#: src/Modules/Admin/AuditLogFormatter.php:679
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:679
+#: src/Modules/Admin/AuditLogFormatter.php:680
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:680
+#: src/Modules/Admin/AuditLogFormatter.php:681
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:712
+#: src/Modules/Admin/AuditLogFormatter.php:713
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
@@ -951,15 +955,15 @@ msgstr "produkterne i én mapping"
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:731
+#: src/Modules/Admin/AuditLogFormatter.php:732
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:732
+#: src/Modules/Admin/AuditLogFormatter.php:733
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:733
+#: src/Modules/Admin/AuditLogFormatter.php:734
 msgid "social links"
 msgstr "sociale links"
 
@@ -976,8 +980,7 @@ msgid "Event"
 msgstr "Hændelse"
 
 #: src/Modules/Admin/AuditLogListTable.php:93
-#: src/Modules/Alerts/Admin/AlertApiTab.php:122
-#: src/Modules/Alerts/Admin/AlertApiTab.php:160
+#: src/Modules/Alerts/Admin/AlertApiTab.php:127
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/News/Admin/NewsAdminPage.php:334
@@ -1114,6 +1117,7 @@ msgid "View audit log"
 msgstr "Se auditlog"
 
 #: src/Modules/Admin/OverviewPage.php:121
+#: src/Modules/Alerts/Admin/AlertApiTab.php:118
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
@@ -1235,7 +1239,7 @@ msgstr "Bevares, når pluginet slettes"
 msgid "Settings"
 msgstr "Indstillinger"
 
-#: src/Modules/Alerts/Admin/AlertApiActions.php:72
+#: src/Modules/Alerts/Admin/AlertApiActions.php:77
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:113
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:158
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:194
@@ -1248,7 +1252,7 @@ msgstr "Indstillinger"
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 
-#: src/Modules/Alerts/Admin/AlertApiActions.php:78
+#: src/Modules/Alerts/Admin/AlertApiActions.php:83
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:134
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:200
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:262
@@ -1275,31 +1279,35 @@ msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:56
-msgid "The alert API is on. Creators can make keys under Alerts → API in their dashboard."
-msgstr "Alert-API'en er slået til. Creators kan oprette nøgler under Alerts → API i deres dashboard."
+#: src/Modules/Alerts/Admin/AlertApiTab.php:62
+msgid "The alert API is on. Give creators access to API keys or webhooks in the table below."
+msgstr "Alert-API'en er slået til. Giv creators adgang til API-nøgler eller webhooks i tabellen nedenfor."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:57
+#: src/Modules/Alerts/Admin/AlertApiTab.php:63
 msgid "The alert API is off. Every key stops working until it is switched on again."
 msgstr "Alert-API'en er slået fra. Alle nøgler holder op med at virke, indtil den slås til igen."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:58
+#: src/Modules/Alerts/Admin/AlertApiTab.php:64
+msgid "The creator's access was saved."
+msgstr "Creatorens adgang er gemt."
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:65
 msgid "The creator's keys were revoked."
 msgstr "Creatorens nøgler er tilbagekaldt."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:59
+#: src/Modules/Alerts/Admin/AlertApiTab.php:66
 msgid "The creator's webhooks were switched off. The creator can switch them on again while the API is on."
 msgstr "Creatorens webhooks er slået fra. Creatoren kan slå dem til igen, mens API'en er slået til."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:60
+#: src/Modules/Alerts/Admin/AlertApiTab.php:67
 msgid "Tick the box to confirm."
 msgstr "Sæt kryds for at bekræfte."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:61
+#: src/Modules/Alerts/Admin/AlertApiTab.php:68
 msgid "The change could not be saved. Please try again."
 msgstr "Ændringen kunne ikke gemmes. Prøv igen."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:62
+#: src/Modules/Alerts/Admin/AlertApiTab.php:69
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:120
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:147
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
@@ -1313,103 +1321,116 @@ msgstr "Ændringen kunne ikke gemmes. Prøv igen."
 msgid "You are not allowed to change these settings."
 msgstr "Du har ikke adgang til at ændre disse indstillinger."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:75
-msgid "Creators can fetch their own purchase alerts into their own bots (for example a Discord or Twitch bot) with an API key. A bot gets the same facts as the alert template: the customer's voluntary username, the products, quantities, categories, variations and amounts; never names, e-mails, addresses or order numbers. Keys are shown to the creator once and stored only as a hash."
-msgstr "Creators kan hente deres egne købs-alerts ind i deres egne bots (fx en Discord- eller Twitch-bot) med en API-nøgle. En bot får de samme oplysninger som alert-skabelonen: kundens frivillige brugernavn, produkterne, antal, kategorier, varianter og beløb; aldrig navne, e-mails, adresser eller ordrenumre. Nøgler vises for creatoren én gang og gemmes kun som hash."
+#: src/Modules/Alerts/Admin/AlertApiTab.php:70
+msgid "The creator no longer exists."
+msgstr "Creatoren findes ikke længere."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:81
+#: src/Modules/Alerts/Admin/AlertApiTab.php:83
+msgid "Creators can fetch their own purchase alerts into their own bots (for example a Discord or Twitch bot) with an API key, or have them sent to a webhook. A bot gets the same facts as the alert template: the customer's voluntary username, the products, quantities, categories, variations and amounts; never names, e-mails, addresses or order numbers. Keys are shown to the creator once and stored only as a hash."
+msgstr "Creators kan hente deres egne købs-alerts ind i deres egne bots (fx en Discord- eller Twitch-bot) med en API-nøgle eller få dem sendt til en webhook. En bot får de samme oplysninger som alert-skabelonen: kundens frivillige brugernavn, produkterne, antal, kategorier, varianter og beløb; aldrig navne, e-mails, adresser eller ordrenumre. Nøgler vises for creatoren én gang og gemmes kun som hash."
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:89
 msgid "Creators can use the alert API"
 msgstr "Creators kan bruge alert-API'en"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:82
-msgid "Off by default. While it is off, the API answers 503 and creators cannot make keys; the keys are kept. Alerts that are switched off in Settings → Alerts are not sent through the API either."
-msgstr "Slået fra som standard. Mens den er slået fra, svarer API'en 503, og creators kan ikke oprette nøgler; nøglerne bevares. Alerts, der er slået fra under Indstillinger → Alerts, sendes heller ikke gennem API'en."
+#: src/Modules/Alerts/Admin/AlertApiTab.php:90
+msgid "Off by default. While it is off, the API answers 503, nothing is sent to webhooks and creators cannot make keys or webhooks; everything is kept. Alerts that are switched off in Settings → Alerts are not sent through the API either."
+msgstr "Slået fra som standard. Mens den er slået fra, svarer API'en 503, intet sendes til webhooks, og creators kan ikke oprette nøgler eller webhooks; alt bevares. Alerts, der er slået fra under Indstillinger → Alerts, sendes heller ikke gennem API'en."
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:83
+#: src/Modules/Alerts/Admin/AlertApiTab.php:91
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:273
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:126
 #: src/Modules/News/Admin/NewsAdminPage.php:288
 msgid "Save"
 msgstr "Gem"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:86
-msgid "Creators with API keys"
-msgstr "Creators med API-nøgler"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:90
-msgid "No creator has a working key."
-msgstr "Ingen creator har en virksom nøgle."
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:108
-msgid "Creators with webhooks"
-msgstr "Creators med webhooks"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:111
-msgid "No creator has a webhook."
-msgstr "Ingen creator har en webhook."
+#: src/Modules/Alerts/Admin/AlertApiTab.php:119
+msgid "A creator can only use API keys or webhooks with access given here. Without access their keys and webhooks are kept but do not work, and the pages are hidden in their dashboard."
+msgstr "En creator kan kun bruge API-nøgler eller webhooks med adgang givet her. Uden adgang bevares nøgler og webhooks, men de virker ikke, og siderne skjules i creatorens dashboard."
 
 #: src/Modules/Alerts/Admin/AlertApiTab.php:122
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:87
+msgid "There are no active creators."
+msgstr "Der er ingen aktive creators."
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:127
+msgid "Access"
+msgstr "Adgang"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:127
+#: src/Modules/Alerts/Admin/AlertApiTab.php:161
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:90
+#: build/dashboard.js:2
+msgid "API keys"
+msgstr "API-nøgler"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:127
+#: src/Modules/Alerts/Admin/AlertApiTab.php:162
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:101
 #: build/dashboard.js:48
 msgid "Webhooks"
 msgstr "Webhooks"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:122
-#: build/alerts-global-admin.js:18
-#: build/dashboard.js:49
-msgid "Switch off"
-msgstr "Slå fra"
+#: src/Modules/Alerts/Admin/AlertApiTab.php:130
+msgid "inactive"
+msgstr "inaktiv"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:132
+#: src/Modules/Alerts/Admin/AlertApiTab.php:163
+msgid "Save access"
+msgstr "Gem adgang"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:175
+#: src/Modules/Alerts/Admin/AlertApiTab.php:202
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
+#: build/dashboard.js:51
+msgid "None"
+msgstr "Ingen"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:180
+#: build/dashboard.js:3
+#: build/dashboard.js:49
+msgid "never"
+msgstr "aldrig"
+
+#. translators: 1: number of working keys, 2: when one was last used.
+#: src/Modules/Alerts/Admin/AlertApiTab.php:183
+#, php-format
+msgid "%1$d working · last used %2$s"
+msgstr "%1$d virksomme · sidst brugt %2$s"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:189
+msgid "Stop every key of this creator"
+msgstr "Stop alle denne creators nøgler"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:190
+msgid "Revoke all"
+msgstr "Tilbagekald alle"
+
+#: src/Modules/Alerts/Admin/AlertApiTab.php:211
 msgid "off"
 msgstr "slået fra"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:133
+#: src/Modules/Alerts/Admin/AlertApiTab.php:212
 msgid "paused"
 msgstr "på pause"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:134
+#: src/Modules/Alerts/Admin/AlertApiTab.php:213
 msgid "on"
 msgstr "slået til"
 
 #. translators: 1: webhook name, 2: JSON or Discord, 3: host, 4: on, off or paused.
-#: src/Modules/Alerts/Admin/AlertApiTab.php:137
+#: src/Modules/Alerts/Admin/AlertApiTab.php:216
 #, php-format
 msgid "%1$s (%2$s, %3$s): %4$s"
 msgstr "%1$s (%2$s, %3$s): %4$s"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:145
+#: src/Modules/Alerts/Admin/AlertApiTab.php:224
 msgid "Stop every webhook of this creator"
 msgstr "Stop alle denne creators webhooks"
 
-#: src/Modules/Alerts/Admin/AlertApiTab.php:146
+#: src/Modules/Alerts/Admin/AlertApiTab.php:225
 msgid "Switch off all"
 msgstr "Slå alle fra"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:160
-msgid "Working keys"
-msgstr "Virksomme nøgler"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:160
-msgid "Last used"
-msgstr "Sidst brugt"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:160
-#: build/dashboard.js:4
-msgid "Revoke"
-msgstr "Tilbagekald"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:165
-msgid "Never"
-msgstr "Aldrig"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:175
-msgid "Stop every key of this creator"
-msgstr "Stop alle denne creators nøgler"
-
-#: src/Modules/Alerts/Admin/AlertApiTab.php:176
-msgid "Revoke all"
-msgstr "Tilbagekald alle"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:79
 msgid "Merch Dashboard Alerts"
@@ -1422,11 +1443,11 @@ msgstr "Merch Dashboard Alerts"
 #: src/Modules/Alerts/Admin/OrderLogTab.php:200
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Alerts/Admin/OrderLogTab.php:246
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:52
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:60
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:69
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:83
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:91
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:62
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:70
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:79
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:94
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:105
 #: build/dashboard.js:22
 msgid "Alerts"
 msgstr "Alerts"
@@ -1626,7 +1647,7 @@ msgstr "Lyde"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:210
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:65
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:75
 msgid "Chatbot"
 msgstr "Chatbot"
 
@@ -3233,18 +3254,13 @@ msgstr "Vis mit brugernavn i creatorens livestream (overlay og chat). Det vises 
 msgid "The username can be at most %d characters."
 msgstr "Brugernavnet må højst være %d tegn."
 
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:48
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:58
 msgid "Overlay settings"
 msgstr "Overlay-indstillinger"
 
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:56
+#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:66
 msgid "History"
 msgstr "Historik"
-
-#: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:79
-#: build/dashboard.js:2
-msgid "API keys"
-msgstr "API-nøgler"
 
 #: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:119
 #: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:146
@@ -3295,67 +3311,73 @@ msgstr "Standard-overlayet blev ikke gemt."
 msgid "The standard overlay does not exist."
 msgstr "Standard-overlayet findes ikke."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:384
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:396
 #: build/dashboard.js:2
 msgid "Give the key a name of at most 60 characters."
 msgstr "Giv nøglen et navn på højst 60 tegn."
 
 #. translators: %d: most keys.
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:386
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:398
 #: build/dashboard.js:2
 #, php-format,js-format
 msgid "You can have at most %d keys. Revoke one first."
 msgstr "Du kan have højst %d nøgler. Tilbagekald en først."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:387
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:399
 msgid "The key was not found."
 msgstr "Nøglen blev ikke fundet."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:401
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:414
 #: build/dashboard.js:48
 msgid "Webhooks cannot be stored safely on this site. Ask the shop."
 msgstr "Webhooks kan ikke gemmes sikkert på dette site. Spørg shoppen."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:402
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:415
 #: build/dashboard.js:48
 msgid "Give the webhook a name of at most 60 characters."
 msgstr "Giv webhooken et navn på højst 60 tegn."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:403
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:416
 msgid "Choose JSON or Discord."
 msgstr "Vælg JSON eller Discord."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:404
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:417
 #: build/dashboard.js:48
 msgid "Enter a public https address. A Discord webhook must be a Discord webhook address."
 msgstr "Skriv en offentlig https-adresse. En Discord-webhook skal være en Discord-webhook-adresse."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:405
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:418
 #: build/dashboard.js:48
 msgid "The secret must be 16–200 characters without spaces."
 msgstr "Hemmeligheden skal være 16–200 tegn uden mellemrum."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:406
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:419
 #: build/dashboard.js:48
 msgid "The message can be at most 500 characters."
 msgstr "Beskeden må højst være 500 tegn."
 
 #. translators: %d: most webhooks.
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:408
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:421
 #: build/dashboard.js:48
 #, php-format,js-format
 msgid "You can have at most %d webhooks. Delete one first."
 msgstr "Du kan have højst %d webhooks. Slet en først."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:409
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:422
 msgid "The webhook was not found."
 msgstr "Webhooken blev ikke fundet."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:417
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:430
 #: build/dashboard.js:1
 #: build/dashboard.js:47
 msgid "The alert API is switched off. Ask the shop to switch it on."
 msgstr "Alert-API'en er slået fra. Bed shoppen om at slå den til."
+
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:437
+#: build/dashboard.js:1
+#: build/dashboard.js:47
+msgid "The shop has not given you access to this. Ask the shop."
+msgstr "Shoppen har ikke givet dig adgang til dette. Spørg shoppen."
 
 #: src/Modules/Alerts/Rest/MeAlertsController.php:332
 msgid "The standard overlay does not exist any more."
@@ -5045,12 +5067,6 @@ msgstr "Tilknyttet %s"
 #, php-format
 msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"
-
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
-#: build/dashboard.js:51
-msgid "None"
-msgstr "Ingen"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:78
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:50
@@ -9018,6 +9034,11 @@ msgstr "Fra. Overlayets URL viser intet, før du slår det til."
 
 #: build/alerts-global-admin.js:18
 #: build/dashboard.js:49
+msgid "Switch off"
+msgstr "Slå fra"
+
+#: build/alerts-global-admin.js:18
+#: build/dashboard.js:49
 msgid "Switch on"
 msgstr "Slå til"
 
@@ -9209,6 +9230,10 @@ msgid "The alert API is switched off by the shop. Your keys are kept, but bots g
 msgstr "Alert-API'en er slået fra af shoppen. Dine nøgler bevares, men bots får ingen alerts, før den slås til igen."
 
 #: build/dashboard.js:2
+msgid "The shop has not given you access to API keys. Your keys are kept, but bots get no alerts. You can still revoke them."
+msgstr "Shoppen har ikke givet dig adgang til API-nøgler. Dine nøgler bevares, men bots får ingen alerts. Du kan stadig tilbagekalde dem."
+
+#: build/dashboard.js:2
 msgid "With an API key, your own bot (for example on Discord or Twitch) can fetch your purchase alerts. Keep the key secret: anyone with it can read your alerts. Revoke a key you no longer use or that others may have seen."
 msgstr "Med en API-nøgle kan din egen bot (fx på Discord eller Twitch) hente dine købs-alerts. Hold nøglen hemmelig: alle, der har den, kan læse dine alerts. Tilbagekald en nøgle, du ikke længere bruger, eller som andre kan have set."
 
@@ -9249,11 +9274,6 @@ msgid "Made %1$s · last used %2$s"
 msgstr "Oprettet %1$s · sidst brugt %2$s"
 
 #: build/dashboard.js:3
-#: build/dashboard.js:49
-msgid "never"
-msgstr "aldrig"
-
-#: build/dashboard.js:3
 msgid "Your bot stops working with this key."
 msgstr "Din bot holder op med at virke med denne nøgle."
 
@@ -9266,6 +9286,10 @@ msgstr "Nøglen \"%s\" er tilbagekaldt."
 #: build/dashboard.js:4
 msgid "Revoke key"
 msgstr "Tilbagekald nøgle"
+
+#: build/dashboard.js:4
+msgid "Revoke"
+msgstr "Tilbagekald"
 
 #: build/dashboard.js:4
 msgid "Name of the new key"
@@ -9879,6 +9903,10 @@ msgstr "Indlæser webhooks…"
 #: build/dashboard.js:50
 msgid "The alert API is switched off by the shop. Your webhooks are kept, but nothing is sent until it is switched on again."
 msgstr "Alert-API'en er slået fra af shoppen. Dine webhooks bevares, men intet sendes, før den slås til igen."
+
+#: build/dashboard.js:50
+msgid "The shop has not given you access to webhooks. Your webhooks are kept, but nothing is sent. You can still switch them off or delete them."
+msgstr "Shoppen har ikke givet dig adgang til webhooks. Dine webhooks bevares, men intet sendes. Du kan stadig slå dem fra eller slette dem."
 
 #: build/dashboard.js:50
 msgid "Send test to all webhooks"

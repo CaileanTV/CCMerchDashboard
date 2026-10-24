@@ -21,6 +21,8 @@ export interface AlertApiKeyItem {
 
 export interface AlertApiState {
 	readonly enabled: boolean;
+	/** The shop's access for this creator (step 25.12.4). */
+	readonly access: { readonly keys: boolean; readonly webhooks: boolean };
 	/** The bots' URL. */
 	readonly endpoint: string;
 	/** Requests per key per minute. */
@@ -205,6 +207,9 @@ export function parseAlertApi( body: unknown ): AlertApiState | null {
 	if (
 		! isRecord( body ) ||
 		typeof body.enabled !== 'boolean' ||
+		! isRecord( body.access ) ||
+		typeof body.access.keys !== 'boolean' ||
+		typeof body.access.webhooks !== 'boolean' ||
 		typeof body.endpoint !== 'string' ||
 		! /^https?:\/\//.test( body.endpoint ) ||
 		! isCount( body.limit ) ||
@@ -267,6 +272,7 @@ export function parseAlertApi( body: unknown ): AlertApiState | null {
 
 	return {
 		enabled: body.enabled,
+		access: { keys: body.access.keys, webhooks: body.access.webhooks },
 		endpoint: body.endpoint,
 		limit: body.limit,
 		maxKeys: body.max_keys,

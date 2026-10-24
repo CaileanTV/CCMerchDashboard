@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
  * - **When:** after the order is paid and its alerts are recorded (the same
  *   hooks as alerts and the chatbot), only while the administrator has the
  *   API on, alerts are sent (kill switch, MerchAlert guard) and the creator
- *   is active. One delivery per webhook and order, queued in Action
+ *   is active and has access to webhooks (step 25.12.4). One delivery per webhook and order, queued in Action
  *   Scheduler so a slow receiver never holds up the checkout; without
  *   Action Scheduler the delivery fails at once.
  * - **How:** one attempt (the project owner's choice), with
@@ -169,13 +169,11 @@ class WebhookDispatcher {
 	 * @param int $creator_id Creator.
 	 * @param int $webhook_id Webhook.
 	 * @return WebhookDelivery The delivery with its outcome.
-	 * @throws WebhookException When the API is off or it is not the creator's webhook.
+	 * @throws WebhookException When the API is off, the creator has no access or it is not the creator's webhook.
 	 * @throws DatabaseException When the database cannot be read or written.
 	 */
 	public function send_test( int $creator_id, int $webhook_id ): WebhookDelivery {
-		if ( ! $this->api->enabled() ) {
-			self::refuse( WebhookException::DISABLED );
-		}
+		$this->check_access( $creator_id );
 
 		$webhook = $this->webhooks->find_for_creator( $creator_id, $webhook_id ) ?? self::refuse( WebhookException::UNKNOWN );
 		$id      = $this->store( $webhook, AlertApiEvents::TEST, array( $this->overlays->test_event( $creator_id ) ) );
@@ -190,13 +188,11 @@ class WebhookDispatcher {
 	 *
 	 * @param int $creator_id Creator.
 	 * @return list<WebhookDelivery> The deliveries with their outcome, oldest webhook first.
-	 * @throws WebhookException When the API is off.
+	 * @throws WebhookException When the API is off or the creator has no access.
 	 * @throws DatabaseException When the database cannot be read or written.
 	 */
 	public function send_test_all( int $creator_id ): array {
-		if ( ! $this->api->enabled() ) {
-			self::refuse( WebhookException::DISABLED );
-		}
+		$this->check_access( $creator_id );
 
 		$deliveries = array();
 
@@ -207,6 +203,23 @@ class WebhookDispatcher {
 		}
 
 		return $deliveries;
+	}
+
+	/**
+	 * Requires the API on and the creator's access to webhooks.
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws WebhookException When one of them is missing.
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	private function check_access( int $creator_id ): void {
+		if ( ! $this->api->enabled() ) {
+			self::refuse( WebhookException::DISABLED );
+		}
+
+		if ( ! $this->service->allowed( $creator_id ) ) {
+			self::refuse( WebhookException::NO_ACCESS );
+		}
 	}
 
 	/**
@@ -235,7 +248,7 @@ class WebhookDispatcher {
 
 			$webhook = $this->webhooks->find( $delivery->webhook_id );
 
-			if ( null === $webhook || ! $webhook->is_active() || ! $this->sending() || true !== $this->creators->find( $webhook->creator_id )?->is_active() ) {
+			if ( null === $webhook || ! $webhook->is_active() || ! $this->sending() || true !== $this->creators->find( $webhook->creator_id )?->is_active() || ! $this->service->allowed( $webhook->creator_id ) ) {
 				$this->deliveries->finish( $delivery->id, WebhookDelivery::SKIPPED, null, 'skipped' );
 
 				return;
@@ -385,7 +398,7 @@ class WebhookDispatcher {
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	private function active( int $creator_id ): array {
-		if ( true !== $this->creators->find( $creator_id )?->is_active() ) {
+		if ( true !== $this->creators->find( $creator_id )?->is_active() || ! $this->service->allowed( $creator_id ) ) {
 			return array();
 		}
 

@@ -162,6 +162,7 @@ final class AuditLogFormatter {
 			AuditAction::AlertWebhookCreated => __( 'Alert webhook added', 'merchboard' ),
 			AuditAction::AlertWebhookChanged => __( 'Alert webhook changed', 'merchboard' ),
 			AuditAction::AlertWebhookDeleted => __( 'Alert webhook deleted', 'merchboard' ),
+			AuditAction::AlertApiAccessChanged => __( 'Creator\'s access to the alert API changed', 'merchboard' ),
 		};
 	}
 

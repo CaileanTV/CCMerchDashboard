@@ -74,6 +74,11 @@ function refusal( error: ApiError, maxKeys: number ): string | null {
 				'The alert API is switched off. Ask the shop to switch it on.',
 				'merchboard'
 			);
+		case 'merchboard_alerts_api_no_access':
+			return __(
+				'The shop has not given you access to this. Ask the shop.',
+				'merchboard'
+			);
 		case 'merchboard_alerts_api_key_limit':
 			return sprintf(
 				/* translators: %d: most keys. */
@@ -231,6 +236,14 @@ export function AlertApiPanel( {
 					) }
 				</Alert>
 			) }
+			{ api.enabled && ! api.access.keys && (
+				<Alert tone="warning">
+					{ __(
+						'The shop has not given you access to API keys. Your keys are kept, but bots get no alerts. You can still revoke them.',
+						'merchboard'
+					) }
+				</Alert>
+			) }
 			{ error !== null &&
 				( message === null ? (
 					<ApiErrorState error={ error } />
@@ -359,42 +372,47 @@ export function AlertApiPanel( {
 					</ul>
 				) }
 
-				{ api.enabled && api.keys.length < api.maxKeys && (
-					<form
-						className="merchboard-alert-api__create"
-						onSubmit={ ( event ) => {
-							event.preventDefault();
-							void create();
-						} }
-					>
-						<Field
-							label={ __( 'Name of the new key', 'merchboard' ) }
-							help={ __(
-								'For example the bot that uses it.',
-								'merchboard'
-							) }
+				{ api.enabled &&
+					api.access.keys &&
+					api.keys.length < api.maxKeys && (
+						<form
+							className="merchboard-alert-api__create"
+							onSubmit={ ( event ) => {
+								event.preventDefault();
+								void create();
+							} }
 						>
-							{ ( control ) => (
-								<input
-									{ ...control }
-									className="merchboard-input"
-									maxLength={ KEY_NAME_MAX }
-									value={ name }
-									onChange={ ( event ) =>
-										setName( event.target.value )
-									}
-								/>
-							) }
-						</Field>
-						<Button
-							type="submit"
-							isBusy={ busy === 'create' }
-							disabled={ name.trim() === '' }
-						>
-							{ __( 'Make a key', 'merchboard' ) }
-						</Button>
-					</form>
-				) }
+							<Field
+								label={ __(
+									'Name of the new key',
+									'merchboard'
+								) }
+								help={ __(
+									'For example the bot that uses it.',
+									'merchboard'
+								) }
+							>
+								{ ( control ) => (
+									<input
+										{ ...control }
+										className="merchboard-input"
+										maxLength={ KEY_NAME_MAX }
+										value={ name }
+										onChange={ ( event ) =>
+											setName( event.target.value )
+										}
+									/>
+								) }
+							</Field>
+							<Button
+								type="submit"
+								isBusy={ busy === 'create' }
+								disabled={ name.trim() === '' }
+							>
+								{ __( 'Make a key', 'merchboard' ) }
+							</Button>
+						</form>
+					) }
 				{ api.keys.length >= api.maxKeys && (
 					<p>
 						{ sprintf(
@@ -415,7 +433,7 @@ export function AlertApiPanel( {
 					<Button
 						variant="secondary"
 						isBusy={ busy === 'test' }
-						disabled={ ! api.enabled }
+						disabled={ ! api.enabled || ! api.access.keys }
 						onClick={ () => void test() }
 					>
 						{ __( 'Send test event', 'merchboard' ) }

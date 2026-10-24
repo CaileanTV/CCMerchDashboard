@@ -36,6 +36,38 @@ final class AlertsDashboardSectionTest extends TestCase {
 		self::assertSame( 'alerts/webhooks', $sections[5]['path'] ?? null, 'Keys and webhooks work apart: two pages.' );
 	}
 
+	public function test_each_api_page_only_with_the_creators_access(): void {
+		Functions\when( 'get_option' )->justReturn( '1' );
+		$base = array( array( 'id' => 'overview' ) );
+		$ids  = static fn( mixed $sections ): array => is_array( $sections ) ? array_column( $sections, 'id' ) : array();
+
+		self::assertSame(
+			array( 'overview', 'alerts', 'alerts-history', 'alerts-chatbot', 'alerts-webhooks' ),
+			$ids(
+				AlertsDashboardSection::add_section(
+					$base,
+					array(
+						'keys'     => false,
+						'webhooks' => true,
+					)
+				)
+			)
+		);
+		self::assertSame(
+			array( 'overview', 'alerts', 'alerts-history', 'alerts-chatbot' ),
+			$ids(
+				AlertsDashboardSection::add_section(
+					$base,
+					array(
+						'keys'     => false,
+						'webhooks' => false,
+					)
+				)
+			),
+			'No access: no API pages.'
+		);
+	}
+
 	public function test_the_group_comes_before_the_profile(): void {
 		$sections = AlertsDashboardSection::add_section(
 			array(

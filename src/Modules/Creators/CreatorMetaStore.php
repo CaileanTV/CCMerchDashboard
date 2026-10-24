@@ -53,9 +53,16 @@ final class CreatorMetaStore {
 	public const ALERT_DESIGNS = 'alert_designs';
 
 	/**
+	 * The creator's access to the alert API (step 25.12.4, ADR-073):
+	 * `{ keys: bool, webhooks: bool }`; none means no access. Written by the
+	 * Alerts module's AlertApiAccess and migration 28 only.
+	 */
+	public const ALERT_API_ACCESS = 'alert_api_access';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS );
+	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS );
 
 	/**
 	 * Constructor.

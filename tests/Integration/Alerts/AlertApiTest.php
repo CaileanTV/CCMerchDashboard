@@ -21,6 +21,7 @@ use MerchBoard\Modules\Alerts\Admin\AlertApiActions;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
+use MerchBoard\Modules\Alerts\Api\AlertApiAccess;
 use MerchBoard\Modules\Alerts\Api\AlertApiEvents;
 use MerchBoard\Modules\Alerts\Api\AlertApiException;
 use MerchBoard\Modules\Alerts\Api\AlertApiFeed;
@@ -38,6 +39,7 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsApiController;
 use MerchBoard\Modules\Alerts\Webhooks\WebhookDeliveryRepository;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -71,6 +73,8 @@ final class AlertApiTest extends IntegrationTestCase {
 
 	private AlertApiFeed $feed;
 
+	private AlertApiAccess $access;
+
 	private AlertEventRepository $events;
 
 	private int $user;
@@ -95,7 +99,8 @@ final class AlertApiTest extends IntegrationTestCase {
 		$overlays     = new AlertOverlayRepository( $this->wpdb );
 		$this->events = new AlertEventRepository( $this->wpdb );
 		$this->api    = new AlertApiSwitch( $audit, $transaction );
-		$this->keys   = new AlertApiKeys( $repository, $this->api, $audit, $transaction );
+		$this->access = new AlertApiAccess( new CreatorMetaStore( $this->wpdb ), new CreatorRepository( $this->wpdb ), $audit, $transaction );
+		$this->keys   = new AlertApiKeys( $repository, $this->api, $audit, $transaction, $this->access );
 		$template     = new AlertTemplate( static fn( int $term_id ): ?string => 77 === $term_id ? 'Nova merch' : null );
 		$overlay_feed = new OverlayFeed( $overlays, $this->events, new CreatorRepository( $this->wpdb ), $template, static fn(): string => '', static function (): void {}, new OverlayTestQueue() );
 		$this->feed   = new AlertApiFeed(
@@ -105,13 +110,15 @@ final class AlertApiTest extends IntegrationTestCase {
 			$this->events,
 			new AlertApiEvents( $template ),
 			new AlertApiQueue( $repository ),
-			new AlertOverlays( $overlays, $overlay_feed, new OverlayTestQueue(), new PostMetaProductStore(), $audit, $transaction, static fn(): int => 0 )
+			new AlertOverlays( $overlays, $overlay_feed, new OverlayTestQueue(), new PostMetaProductStore(), $audit, $transaction, static fn(): int => 0 ),
+			$this->access
 		);
 
 		wp_set_current_user( 1 );
 		$this->api->set( true );
 		$this->user    = $this->create_user( 'nova_api' );
 		$this->creator = $this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $this->user )->id;
+		$this->access->set( $this->creator, true, false );
 		$this->routes();
 	}
 
@@ -245,6 +252,44 @@ final class AlertApiTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->keys->for_creator( $this->creator ) );
 	}
 
+	public function test_without_access_the_keys_stop_working_but_are_kept(): void {
+		$key = $this->keys->create( $this->creator, 'Bot' );
+		self::assertSame( 200, $this->poll( $key )->get_status() );
+
+		$this->access->set( $this->creator, false, false );
+		self::assertSame( 401, $this->poll( $key )->get_status(), 'The same answer as a wrong key.' );
+		self::assertCount( 1, $this->keys->for_creator( $this->creator ), 'Kept.' );
+
+		wp_set_current_user( $this->user );
+		$page = $this->data( $this->call( 'GET', '/merchboard/v1/me/alerts/api' ) );
+		self::assertSame(
+			array(
+				'keys'     => false,
+				'webhooks' => false,
+			),
+			$page['access']
+		);
+		$made = $this->call( 'POST', '/merchboard/v1/me/alerts/api/keys', array( 'name' => 'New' ) );
+		self::assertSame( array( 403, 'merchboard_alerts_api_no_access' ), array( $made->get_status(), $made->get_data()['code'] ?? null ) );
+		self::assertSame( 403, $this->call( 'POST', '/merchboard/v1/me/alerts/api/test' )->get_status() );
+
+		wp_set_current_user( 1 );
+		$this->access->set( $this->creator, true, false );
+		self::assertSame( 200, $this->poll( $key )->get_status(), 'Works again without a new key.' );
+
+		$audit = array_column( $this->rows( Tables::AUDIT_LOG ), 'action' );
+		self::assertSame( 3, count( array_keys( $audit, 'alert_api_access_changed', true ) ) );
+
+		wp_set_current_user( $this->user );
+
+		try {
+			$this->access->set( $this->creator, true, true );
+			self::fail( 'A creator cannot give themselves access.' );
+		} catch ( AlertApiException $e ) {
+			self::assertSame( AlertApiException::NOT_AUTHORIZED, $e->reason() );
+		}
+	}
+
 	public function test_requests_are_limited_per_key(): void {
 		$now     = 1_000_000;
 		$limiter = new OverlayRateLimiter( static fn(): int => $now, 'merchboard_alerts_api_rl_', 2 );
@@ -325,7 +370,7 @@ final class AlertApiTest extends IntegrationTestCase {
 		$transaction    = $this->service( Transaction::class );
 		$webhooks       = AlertWebhooksTest::webhooks( $this->wpdb, $this->api, $audit, $transaction );
 		$dispatcher     = AlertWebhooksTest::dispatcher( $this->wpdb, $this->api, $webhooks, new FakeJobQueue(), $audit, $transaction, $this->service( Logger::class ) );
-		$me             = new MeAlertsApiController( $this->service( CreatorContext::class ), $this->keys, $this->api, $this->feed, $webhooks, $dispatcher, new WebhookDeliveryRepository( $this->wpdb ), $this->service( Logger::class ) );
+		$me             = new MeAlertsApiController( $this->service( CreatorContext::class ), $this->keys, $this->api, $this->feed, $webhooks, $dispatcher, new WebhookDeliveryRepository( $this->wpdb ), $this->access, $this->service( Logger::class ) );
 		$this->register = static function () use ( $feed, $me ): void {
 			$feed->register_routes();
 			$me->register_routes();

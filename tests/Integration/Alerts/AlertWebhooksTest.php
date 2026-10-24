@@ -21,6 +21,7 @@ use MerchBoard\Modules\Alerts\Admin\AlertApiActions;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
+use MerchBoard\Modules\Alerts\Api\AlertApiAccess;
 use MerchBoard\Modules\Alerts\Api\AlertApiEvents;
 use MerchBoard\Modules\Alerts\Api\AlertApiFeed;
 use MerchBoard\Modules\Alerts\Api\AlertApiKeyRepository;
@@ -45,6 +46,7 @@ use MerchBoard\Modules\Alerts\Webhooks\WebhookDeliveryRepository;
 use MerchBoard\Modules\Alerts\Webhooks\WebhookDispatcher;
 use MerchBoard\Modules\Alerts\Webhooks\WebhookException;
 use MerchBoard\Modules\Alerts\Webhooks\WebhookPayloads;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -127,6 +129,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$this->api->set( true );
 		$this->user    = $this->create_user( 'nova_hooks' );
 		$this->creator = $this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $this->user )->id;
+		self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) )->set( $this->creator, true, true );
 		add_filter( 'pre_http_request', array( $this, 'answer' ), 10, 3 );
 	}
 
@@ -151,7 +154,18 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	 * @param Transaction    $transaction Transaction.
 	 */
 	public static function webhooks( wpdb $wpdb, AlertApiSwitch $api, AuditTrail $audit, Transaction $transaction ): AlertWebhooks {
-		return new AlertWebhooks( new AlertWebhookRepository( $wpdb ), $api, $audit, $transaction, new ChatCipher( 'webhooks', 'test-salt' ) );
+		return new AlertWebhooks( new AlertWebhookRepository( $wpdb ), $api, $audit, $transaction, new ChatCipher( 'webhooks', 'test-salt' ), self::access( $wpdb, $audit, $transaction ) );
+	}
+
+	/**
+	 * The creators' access (step 25.12.4).
+	 *
+	 * @param wpdb        $wpdb        Database.
+	 * @param AuditTrail  $audit       Audit.
+	 * @param Transaction $transaction Transaction.
+	 */
+	public static function access( wpdb $wpdb, AuditTrail $audit, Transaction $transaction ): AlertApiAccess {
+		return new AlertApiAccess( new CreatorMetaStore( $wpdb ), new CreatorRepository( $wpdb ), $audit, $transaction );
 	}
 
 	/**
@@ -450,6 +464,56 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$this->refused( fn() => $this->dispatcher->send_test( $this->creator, $hook->id ), WebhookException::DISABLED );
 	}
 
+	public function test_without_access_nothing_is_sent_and_only_switching_off_and_deleting_work(): void {
+		$hook   = $this->webhooks->create( $this->creator, 'SparkyBot', AlertWebhook::JSON, self::URL, self::SECRET, '' )['webhook'];
+		$access = self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$this->alert( $this->creator, 970, 1 );
+
+		$this->dispatcher->order_paid( 970 );
+		$access->set( $this->creator, true, false );
+		$this->run_jobs();
+		self::assertSame( array(), $this->requests, 'Checked again when the job runs.' );
+		self::assertSame( WebhookDelivery::SKIPPED, $this->deliveries()[0]['status'] );
+
+		$this->dispatcher->order_paid( 970 );
+		self::assertCount( 1, $this->queue->queued, 'Nothing new is queued.' );
+
+		$this->refused( fn() => $this->webhooks->create( $this->creator, 'New', AlertWebhook::JSON, self::URL, self::SECRET, '' ), WebhookException::NO_ACCESS );
+		$this->refused( fn() => $this->dispatcher->send_test( $this->creator, $hook->id ), WebhookException::NO_ACCESS );
+		$this->refused( fn() => $this->dispatcher->send_test_all( $this->creator ), WebhookException::NO_ACCESS );
+		$this->refused( fn() => $this->webhooks->new_secret( $this->creator, $hook->id, '' ), WebhookException::NO_ACCESS );
+
+		self::assertFalse( $this->webhooks->update( $this->creator, $hook->id, array( 'enabled' => false ) )->enabled, 'Switching off always works.' );
+		$this->refused( fn() => $this->webhooks->update( $this->creator, $hook->id, array( 'enabled' => true ) ), WebhookException::NO_ACCESS );
+
+		$this->routes();
+		wp_set_current_user( $this->user );
+		$page = $this->data( $this->call( 'GET', '/merchboard/v1/me/alerts/api' ) );
+		self::assertFalse( $page['access']['webhooks'] );
+		self::assertSame( 403, $this->call( 'POST', '/merchboard/v1/me/alerts/api/webhooks/test' )->get_status() );
+		self::assertSame( 200, $this->call( 'DELETE', '/merchboard/v1/me/alerts/api/webhooks/' . $hook->id )->get_status(), 'Deleting always works.' );
+
+		wp_set_current_user( 1 );
+		$actions = new AlertApiActions( $this->api, new AlertApiKeys( new AlertApiKeyRepository( $this->wpdb ), $this->api, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $access ), $this->service( Logger::class ), $this->webhooks, $access );
+		$input   = array(
+			'_wpnonce'   => wp_create_nonce( AlertApiActions::ACTION ),
+			'do'         => 'access',
+			'creator_id' => (string) $this->creator,
+			'webhooks'   => '1',
+		);
+		self::assertStringContainsString( 'api_access_saved', $actions->process( $input ) );
+		self::assertSame(
+			array(
+				'keys'     => false,
+				'webhooks' => true,
+			),
+			$access->for_creator( $this->creator ),
+			'An unticked box takes the access.'
+		);
+		self::assertStringContainsString( 'no_changes', $actions->process( $input ) );
+		self::assertStringContainsString( 'api_unknown_creator', $actions->process( array_merge( $input, array( 'creator_id' => '999999' ) ) ) );
+	}
+
 	public function test_the_log_keeps_the_newest_fifty_and_delete_removes_them(): void {
 		$hook = $this->webhooks->create( $this->creator, 'SparkyBot', AlertWebhook::JSON, self::URL, self::SECRET, '' )['webhook'];
 		$this->alert( $this->creator, 950, 1 );
@@ -500,13 +564,16 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertFalse( $this->data( $this->call( 'PATCH', '/merchboard/v1/me/alerts/api/webhooks/' . $id, array( 'enabled' => false ) ) )['webhooks'][0]['enabled'] );
 
 		$orion = ( new CreatorRepository( $this->wpdb ) )->create( 'Orion', CreatorStatus::Active )->id;
+		wp_set_current_user( 1 );
+		self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) )->set( $orion, false, true );
+		wp_set_current_user( $this->user );
 		$their = $this->webhooks->create( $orion, 'Theirs', AlertWebhook::JSON, self::URL, self::SECRET, '' )['webhook'];
 		self::assertSame( 404, $this->call( 'DELETE', '/merchboard/v1/me/alerts/api/webhooks/' . $their->id )->get_status(), 'Another creator\'s webhook.' );
 		self::assertSame( 404, $this->call( 'POST', '/merchboard/v1/me/alerts/api/webhooks/' . $their->id . '/test' )->get_status() );
 
 		wp_set_current_user( 1 );
 		$this->webhooks->update( $orion, $their->id, array( 'enabled' => true ) );
-		$actions = new AlertApiActions( $this->api, new AlertApiKeys( new AlertApiKeyRepository( $this->wpdb ), $this->api, $this->service( AuditTrail::class ), $this->service( Transaction::class ) ), $this->service( Logger::class ), $this->webhooks );
+		$actions = new AlertApiActions( $this->api, new AlertApiKeys( new AlertApiKeyRepository( $this->wpdb ), $this->api, $this->service( AuditTrail::class ), $this->service( Transaction::class ), self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) ) ), $this->service( Logger::class ), $this->webhooks );
 		$input   = array(
 			'_wpnonce'   => wp_create_nonce( AlertApiActions::ACTION ),
 			'do'         => 'disable_webhooks',
@@ -578,12 +645,12 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	 * Registers the creator routes on a fresh REST server.
 	 */
 	private function routes(): void {
-		$keys       = new AlertApiKeys( new AlertApiKeyRepository( $this->wpdb ), $this->api, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$keys       = new AlertApiKeys( new AlertApiKeyRepository( $this->wpdb ), $this->api, $this->service( AuditTrail::class ), $this->service( Transaction::class ), self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) ) );
 		$template   = new AlertTemplate( static fn(): ?string => null );
 		$overlays   = new AlertOverlayRepository( $this->wpdb );
 		$overlay    = new OverlayFeed( $overlays, $this->events, new CreatorRepository( $this->wpdb ), $template, static fn(): string => '', static function (): void {}, new OverlayTestQueue() );
-		$feed       = new AlertApiFeed( $this->api, new AlertsAvailability( static fn(): bool => false ), new CreatorRepository( $this->wpdb ), $this->events, new AlertApiEvents( $template ), new AlertApiQueue( new AlertApiKeyRepository( $this->wpdb ) ), new AlertOverlays( $overlays, $overlay, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0 ) );
-		$controller = new MeAlertsApiController( $this->service( CreatorContext::class ), $keys, $this->api, $feed, $this->webhooks, $this->dispatcher, new WebhookDeliveryRepository( $this->wpdb ), $this->service( Logger::class ) );
+		$feed       = new AlertApiFeed( $this->api, new AlertsAvailability( static fn(): bool => false ), new CreatorRepository( $this->wpdb ), $this->events, new AlertApiEvents( $template ), new AlertApiQueue( new AlertApiKeyRepository( $this->wpdb ) ), new AlertOverlays( $overlays, $overlay, new OverlayTestQueue(), new PostMetaProductStore(), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): int => 0 ), self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) ) );
+		$controller = new MeAlertsApiController( $this->service( CreatorContext::class ), $keys, $this->api, $feed, $this->webhooks, $this->dispatcher, new WebhookDeliveryRepository( $this->wpdb ), self::access( $this->wpdb, $this->service( AuditTrail::class ), $this->service( Transaction::class ) ), $this->service( Logger::class ) );
 
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();

@@ -579,4 +579,9 @@ enum AuditAction: string {
 	 * A creator deleted a webhook (ADR-073). Context: webhook_id, format.
 	 */
 	case AlertWebhookDeleted = 'alert_webhook_deleted';
+
+	/**
+	 * The administrator changed a creator's access to API keys and webhooks (ADR-073, step 25.12.4). Context: keys, webhooks.
+	 */
+	case AlertApiAccessChanged = 'alert_api_access_changed';
 }

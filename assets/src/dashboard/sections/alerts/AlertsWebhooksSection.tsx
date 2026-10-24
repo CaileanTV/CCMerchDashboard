@@ -86,6 +86,14 @@ function WebhooksPanel( { initial }: { readonly initial: AlertApiState } ) {
 					) }
 				</Alert>
 			) }
+			{ api.enabled && ! api.access.webhooks && (
+				<Alert tone="warning">
+					{ __(
+						'The shop has not given you access to webhooks. Your webhooks are kept, but nothing is sent. You can still switch them off or delete them.',
+						'merchboard'
+					) }
+				</Alert>
+			) }
 			<WebhooksCard
 				api={ api }
 				onChange={ setApi }
@@ -98,7 +106,11 @@ function WebhooksPanel( { initial }: { readonly initial: AlertApiState } ) {
 					<Button
 						variant="secondary"
 						isBusy={ busy }
-						disabled={ ! api.enabled || switchedOn.length === 0 }
+						disabled={
+							! api.enabled ||
+							! api.access.webhooks ||
+							switchedOn.length === 0
+						}
 						onClick={ () => void testAll() }
 					>
 						{ __( 'Send test to all webhooks', 'merchboard' ) }

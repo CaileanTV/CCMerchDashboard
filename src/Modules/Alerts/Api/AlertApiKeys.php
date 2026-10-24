@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  *   once, when it is made, and a copy of the database does not give it away.
  *   Changing the salt stops every key.
  * - **Limits:** at most MAX_KEYS working keys per creator; only while the
- *   administrator has the API on.
+ *   administrator has the API on and has given the creator access (AlertApiAccess, step 25.12.4).
  * - **Audit:** made and revoked keys (key id only, never the key).
  *
  * Callers pass the creator that CreatorContext resolved (ADR-007); a creator
@@ -67,9 +67,10 @@ class AlertApiKeys {
 	 * @param AlertApiSwitch                      $api         The administrator's switch.
 	 * @param AuditTrail                          $audit       Audit log.
 	 * @param Transaction                         $transaction Database transaction.
+	 * @param AlertApiAccess                      $access      The creators' access (step 25.12.4).
 	 * @param (Closure(): DateTimeImmutable)|null $clock       Current time; defaults to now.
 	 */
-	public function __construct( private AlertApiKeyRepository $keys, private AlertApiSwitch $api, private AuditTrail $audit, private Transaction $transaction, ?Closure $clock = null ) {
+	public function __construct( private AlertApiKeyRepository $keys, private AlertApiSwitch $api, private AuditTrail $audit, private Transaction $transaction, private AlertApiAccess $access, ?Closure $clock = null ) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 	}
 
@@ -90,12 +91,16 @@ class AlertApiKeys {
 	 * @param int    $creator_id Creator.
 	 * @param string $name       The creator's name for it.
 	 * @return string The whole key; it is never shown again.
-	 * @throws AlertApiException When the API is off, the name is invalid or the creator has MAX_KEYS keys.
+	 * @throws AlertApiException When the API is off, the creator has no access, the name is invalid or the creator has MAX_KEYS keys.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function create( int $creator_id, string $name ): string {
 		if ( ! $this->api->enabled() ) {
 			self::refuse( AlertApiException::DISABLED );
+		}
+
+		if ( ! $this->access->keys( $creator_id ) ) {
+			self::refuse( AlertApiException::NO_ACCESS );
 		}
 
 		$name = trim( sanitize_text_field( $name ) );

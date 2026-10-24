@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Dashboard;
 
+use Closure;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Dashboard\DashboardSections;
@@ -23,10 +24,18 @@ defined( 'ABSPATH' ) || exit;
 final class AlertsDashboardSection {
 
 	/**
+	 * Constructor.
+	 *
+	 * @param (Closure(): array{keys: bool, webhooks: bool})|null $access The current creator's access to API keys and webhooks (step 25.12.4); null shows both pages.
+	 */
+	public function __construct( private ?Closure $access = null ) {
+	}
+
+	/**
 	 * Registers the filter.
 	 */
 	public function register(): void {
-		add_filter( DashboardSections::FILTER, array( self::class, 'add_section' ) );
+		add_filter( DashboardSections::FILTER, fn( mixed $sections ): mixed => self::add_section( $sections, null === $this->access ? null : ( $this->access )() ) );
 	}
 
 	/**
@@ -34,10 +43,11 @@ final class AlertsDashboardSection {
 	 * overlay settings (the former "Alerts" page, same URL) and the history
 	 * (filled in step 25.7).
 	 *
-	 * @param mixed $sections Sections.
+	 * @param mixed                                  $sections Sections.
+	 * @param array{keys: bool, webhooks: bool}|null $access   The creator's access to the API pages; null for both.
 	 * @return mixed
 	 */
-	public static function add_section( mixed $sections ): mixed {
+	public static function add_section( mixed $sections, ?array $access = null ): mixed {
 		if ( ! is_array( $sections ) ) {
 			return $sections;
 		}
@@ -73,7 +83,8 @@ final class AlertsDashboardSection {
 		// The alert API (steps 25.12.1 and 25.12.2, ADR-073): only while the
 		// administrator has it on. Keys (the bot asks) and webhooks (the shop
 		// sends) work apart, so each has its own page.
-		if ( AlertApiSwitch::on() ) {
+		// Each page only with the administrator's access to it (step 25.12.4).
+		if ( AlertApiSwitch::on() && ( $access['keys'] ?? true ) ) {
 			$group[] = array(
 				'id'          => 'alerts-api',
 				'label'       => __( 'API keys', 'merchboard' ),
@@ -82,6 +93,9 @@ final class AlertsDashboardSection {
 				'group'       => 'alerts',
 				'group_label' => __( 'Alerts', 'merchboard' ),
 			);
+		}
+
+		if ( AlertApiSwitch::on() && ( $access['webhooks'] ?? true ) ) {
 			$group[] = array(
 				'id'          => 'alerts-webhooks',
 				'label'       => __( 'Webhooks', 'merchboard' ),

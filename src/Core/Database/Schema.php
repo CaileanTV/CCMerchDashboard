@@ -35,6 +35,7 @@ use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationTables;
 use MerchBoard\Core\Database\Migrations\CreatePayoutTables;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Migrations\CreateSettlementTables;
+use MerchBoard\Core\Database\Migrations\GrantExistingAlertApiAccess;
 use MerchBoard\Core\Database\Migrations\WidenChatbotChannels;
 
 defined( 'ABSPATH' ) || exit;
@@ -81,6 +82,7 @@ final class Schema {
 			25 => new CreateNewsTables(),
 			26 => new CreateAlertApiKeysTable(),
 			27 => new CreateAlertWebhookTables(),
+			28 => new GrantExistingAlertApiAccess(),
 		);
 	}
 }

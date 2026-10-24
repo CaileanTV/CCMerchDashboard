@@ -145,7 +145,7 @@ final class AdminPhase10Test extends IntegrationTestCase {
 
 		self::assertStringContainsString( '<th scope="row">Active</th><td>1</td>', $html );
 		self::assertStringContainsString( '<th scope="row">Total</th><td>2</td>', $html );
-		self::assertStringContainsString( 'Up to date (version 27)', $html );
+		self::assertStringContainsString( 'Up to date (version 28)', $html );
 		self::assertStringContainsString( '<th scope="row">Transaction support</th><td>Available</td>', $html );
 		self::assertStringNotContainsString( 'Active One', $html );
 		self::assertStringNotContainsString( '@example.org', $html );

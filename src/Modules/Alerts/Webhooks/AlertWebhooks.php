@@ -14,6 +14,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Alerts\Api\AlertApiAccess;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
 
@@ -31,7 +32,8 @@ defined( 'ABSPATH' ) || exit;
  * - **Storage:** the address and the secret are encrypted (ChatCipher,
  *   domain `webhooks`); without sodium no webhook can be added.
  * - **Limits:** at most MAX_WEBHOOKS per creator; only while the
- *   administrator has the API on. Deleting and switching off always work.
+ *   administrator has the API on and has given the creator access to
+ *   webhooks (step 25.12.4). Deleting and switching off always work.
  * - **Audit:** added, changed and deleted, with the id and format; never
  *   the address or the secret.
  *
@@ -62,8 +64,19 @@ class AlertWebhooks {
 	 * @param AuditTrail             $audit       Audit log.
 	 * @param Transaction            $transaction Database transaction.
 	 * @param ChatCipher             $cipher      Encryption (domain `webhooks`).
+	 * @param AlertApiAccess         $access      The creators' access (step 25.12.4).
 	 */
-	public function __construct( private AlertWebhookRepository $webhooks, private AlertApiSwitch $api, private AuditTrail $audit, private Transaction $transaction, private ChatCipher $cipher ) {
+	public function __construct( private AlertWebhookRepository $webhooks, private AlertApiSwitch $api, private AuditTrail $audit, private Transaction $transaction, private ChatCipher $cipher, private AlertApiAccess $access ) {
+	}
+
+	/**
+	 * Whether a creator may use webhooks (the administrator's access, step 25.12.4).
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function allowed( int $creator_id ): bool {
+		return $this->access->webhooks( $creator_id );
 	}
 
 	/**
@@ -87,12 +100,16 @@ class AlertWebhooks {
 	 * @param string $secret     The receiver's secret; '' to get one (JSON only).
 	 * @param string $template   Discord's template ('' for the default).
 	 * @return array{webhook: AlertWebhook, secret: string|null} The webhook, and a made secret (shown once).
-	 * @throws WebhookException When the API is off or an input is invalid.
+	 * @throws WebhookException When the API is off, the creator has no access or an input is invalid.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function create( int $creator_id, string $name, string $format, string $url, string $secret, string $template ): array {
 		if ( ! $this->api->enabled() ) {
 			self::refuse( WebhookException::DISABLED );
+		}
+
+		if ( ! $this->allowed( $creator_id ) ) {
+			self::refuse( WebhookException::NO_ACCESS );
 		}
 
 		if ( ! $this->cipher->available() ) {
@@ -167,7 +184,7 @@ class AlertWebhooks {
 	 * @param int                  $creator_id Creator.
 	 * @param int                  $id         Webhook.
 	 * @param array<string, mixed> $changes    Changes.
-	 * @throws WebhookException When it is not the creator's or an input is invalid.
+	 * @throws WebhookException When it is not the creator's, switching on without access or an input is invalid.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function update( int $creator_id, int $id, array $changes ): AlertWebhook {
@@ -183,6 +200,11 @@ class AlertWebhooks {
 		if ( isset( $changes['template'] ) && AlertWebhook::DISCORD === $webhook->format ) {
 			$values['template'] = self::template( $changes['template'] );
 			$audited[]          = 'template';
+		}
+
+		if ( true === ( $changes['enabled'] ?? null ) && ! $webhook->enabled && ! $this->allowed( $creator_id ) ) {
+			// Switching off always works; switching on needs access.
+			self::refuse( WebhookException::NO_ACCESS );
 		}
 
 		if ( isset( $changes['enabled'] ) && $changes['enabled'] !== $webhook->enabled ) {
@@ -217,7 +239,7 @@ class AlertWebhooks {
 	 * @param int    $id         Webhook.
 	 * @param string $secret     The receiver's secret; '' to get one.
 	 * @return string|null A made secret (shown once); null when pasted.
-	 * @throws WebhookException When it is not the creator's JSON webhook or the secret is invalid.
+	 * @throws WebhookException When it is not the creator's JSON webhook, the creator has no access or the secret is invalid.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function new_secret( int $creator_id, int $id, string $secret ): ?string {
@@ -225,6 +247,10 @@ class AlertWebhooks {
 
 		if ( AlertWebhook::JSON !== $webhook->format ) {
 			self::refuse( WebhookException::INVALID_FORMAT );
+		}
+
+		if ( ! $this->allowed( $creator_id ) ) {
+			self::refuse( WebhookException::NO_ACCESS );
 		}
 
 		$secret = trim( $secret );

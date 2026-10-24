@@ -29,6 +29,7 @@ final class WebhookException extends RuntimeException {
 	public const INVALID_TEMPLATE       = 'invalid_template';
 	public const LIMIT                  = 'webhook_limit';
 	public const UNKNOWN                = 'unknown_webhook';
+	public const NO_ACCESS              = 'no_access';
 
 	/**
 	 * Constructor.

@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Alerts\Rest;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Alerts\Api\AlertApiAccess;
 use MerchBoard\Modules\Alerts\Api\AlertApiException;
 use MerchBoard\Modules\Alerts\Api\AlertApiFeed;
 use MerchBoard\Modules\Alerts\Api\AlertApiFeedController;
@@ -35,8 +36,9 @@ defined( 'ABSPATH' ) || exit;
  * `/me/alerts/api` (steps 25.12.1 and 25.12.2, ADR-073). The creator is
  * always the one CreatorContext resolves (ADR-007); ids only ever select
  * among the creator's own keys and webhooks.
- * - `GET /me/alerts/api`: `{ enabled, endpoint, limit, max_keys, keys,
- *   max_webhooks, webhooks, deliveries }` (the newest 20 deliveries).
+ * - `GET /me/alerts/api`: `{ enabled, access: { keys, webhooks }, endpoint,
+ *   limit, max_keys, keys, max_webhooks, webhooks, deliveries }` (the newest
+ *   20 deliveries).
  * - `POST /me/alerts/api/keys` with `{ "name": "…" }`: 201 with `{ key }`
  *   (the whole key, shown once) and the page.
  * - `DELETE /me/alerts/api/keys/{id}`: revokes the key; the page.
@@ -53,8 +55,10 @@ defined( 'ABSPATH' ) || exit;
  * - `POST /me/alerts/api/webhooks/{id}/secret` with `{ secret }` ('' to get
  *   one): the page, with `{ secret }` when one was made.
  * While the administrator has the API off, making keys and webhooks and
- * tests answer 403 `merchboard_alerts_api_disabled`; revoking, switching
- * off and deleting always work.
+ * tests answer 403 `merchboard_alerts_api_disabled`, and without the
+ * administrator's access to keys or webhooks (step 25.12.4) 403
+ * `merchboard_alerts_api_no_access`; revoking, switching off and deleting
+ * always work.
  */
 final class MeAlertsApiController extends RestController {
 
@@ -77,6 +81,7 @@ final class MeAlertsApiController extends RestController {
 	 * @param AlertWebhooks             $webhooks   Webhooks.
 	 * @param WebhookDispatcher         $dispatcher Webhook tests.
 	 * @param WebhookDeliveryRepository $deliveries The delivery log.
+	 * @param AlertApiAccess            $access     The creator's access (step 25.12.4).
 	 * @param Logger                    $logger     Technical log.
 	 */
 	public function __construct(
@@ -87,6 +92,7 @@ final class MeAlertsApiController extends RestController {
 		private AlertWebhooks $webhooks,
 		private WebhookDispatcher $dispatcher,
 		private WebhookDeliveryRepository $deliveries,
+		private AlertApiAccess $access,
 		Logger $logger
 	) {
 		parent::__construct( $logger );
@@ -195,6 +201,10 @@ final class MeAlertsApiController extends RestController {
 			function ( int $creator_id ): WP_REST_Response|WP_Error {
 				if ( ! $this->api->enabled() ) {
 					return self::refused( new AlertApiException( AlertApiException::DISABLED ) );
+				}
+
+				if ( ! $this->feed->allowed( $creator_id ) ) {
+					return self::refused( new AlertApiException( AlertApiException::NO_ACCESS ) );
 				}
 
 				$response = new WP_REST_Response( array( 'sent' => $this->feed->send_test( $creator_id ) ), 200 );
@@ -356,6 +366,7 @@ final class MeAlertsApiController extends RestController {
 		$data = array_merge(
 			array(
 				'enabled'      => $this->api->enabled(),
+				'access'       => $this->access->for_creator( $creator_id ),
 				'endpoint'     => rest_url( self::NAMESPACE . '/alerts/api/events' ),
 				'limit'        => AlertApiFeedController::LIMIT,
 				'max_keys'     => AlertApiKeys::MAX_KEYS,
@@ -381,6 +392,7 @@ final class MeAlertsApiController extends RestController {
 	private static function refused( AlertApiException $e ): WP_Error {
 		return match ( $e->reason() ) {
 			AlertApiException::DISABLED     => self::disabled(),
+			AlertApiException::NO_ACCESS    => self::no_access(),
 			AlertApiException::INVALID_NAME => self::error( 'merchboard_invalid_request', __( 'Give the key a name of at most 60 characters.', 'merchboard' ), 400, array( 'fields' => array( 'name' => 'invalid' ) ) ),
 			/* translators: %d: most keys. */
 			AlertApiException::KEY_LIMIT    => self::error( 'merchboard_alerts_api_key_limit', sprintf( __( 'You can have at most %d keys. Revoke one first.', 'merchboard' ), AlertApiKeys::MAX_KEYS ), 409 ),
@@ -398,6 +410,7 @@ final class MeAlertsApiController extends RestController {
 
 		return match ( $e->reason() ) {
 			WebhookException::DISABLED               => self::disabled(),
+			WebhookException::NO_ACCESS              => self::no_access(),
 			WebhookException::ENCRYPTION_UNAVAILABLE => self::error( 'merchboard_alerts_webhook_unavailable', __( 'Webhooks cannot be stored safely on this site. Ask the shop.', 'merchboard' ), 503 ),
 			WebhookException::INVALID_NAME           => $field( 'name', __( 'Give the webhook a name of at most 60 characters.', 'merchboard' ) ),
 			WebhookException::INVALID_FORMAT         => $field( 'format', __( 'Choose JSON or Discord.', 'merchboard' ) ),
@@ -415,6 +428,13 @@ final class MeAlertsApiController extends RestController {
 	 */
 	private static function disabled(): WP_Error {
 		return self::error( 'merchboard_alerts_api_disabled', __( 'The alert API is switched off. Ask the shop to switch it on.', 'merchboard' ), 403 );
+	}
+
+	/**
+	 * The answer without the administrator's access (step 25.12.4).
+	 */
+	private static function no_access(): WP_Error {
+		return self::error( 'merchboard_alerts_api_no_access', __( 'The shop has not given you access to this. Ask the shop.', 'merchboard' ), 403 );
 	}
 
 	/**

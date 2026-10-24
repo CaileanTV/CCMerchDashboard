@@ -175,6 +175,7 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 - Afkrydsningen "Creators kan bruge alert-API'en" (slået fra som standard; auditeret som `alert_api_switched`). Slået fra svarer API'en 503, og creators kan ikke oprette nøgler; nøglerne bevares.
 - "Creators med API-nøgler": antal virksomme nøgler og sidst brugt pr. creator, med "Tilbagekald alle" bag en påkrævet afkrydsning (auditeret pr. nøgle med `by_admin`). Nøglerne vises aldrig.
 - "Creators med webhooks" (trin 25.12.2): pr. creator hver webhook med navn, format, vært og status (slået til, slået fra, på pause), med "Slå alle fra" bag en påkrævet afkrydsning (auditeret som `alert_webhook_changed` med `by_admin`). Adresser og hemmeligheder vises aldrig.
+- **Fra trin 25.12.4 (ADR-073 pkt. 10)** er de to lister samlet i én tabel "Creators" over alle aktive creators (og inaktive med nøgler eller webhooks). Hver række har: kolonnen "Adgang" med afkrydsningerne "API-nøgler" og "Webhooks" og knappen "Gem adgang" (slået fra som standard, auditeret som `alert_api_access_changed`), kolonnen "API-nøgler" (antal, sidst brugt, "Tilbagekald alle") og kolonnen "Webhooks" (navn, format, vært, status, "Slå alle fra").
 
 **Merch Dashboard → Alerts, fanen "Import"** (✅ fase 25, trin 25.10.1, ADR-065 pkt. 10; kræver `merchboard_manage_alerts`):
 - Forklaring af, hvad der flyttes og ikke flyttes, og forudsætningerne: backup, og MerchAlert deaktiveret, men ikke slettet. Mens MerchAlert er aktivt, eller uden MerchAlert-data, vises kun en besked.

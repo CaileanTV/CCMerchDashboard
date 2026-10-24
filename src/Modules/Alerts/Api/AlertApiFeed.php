@@ -28,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Only while the administrator has the API on and alerts are being sent
  * (the kill switch and the MerchAlert guard, AlertsAvailability), and only
- * for an active creator.
+ * for an active creator with access to API keys (AlertApiAccess, step
+ * 25.12.4).
  */
 class AlertApiFeed {
 
@@ -52,6 +53,7 @@ class AlertApiFeed {
 	 * @param AlertApiEvents       $shape        Alerts for bots.
 	 * @param AlertApiQueue        $queue        Tests and resends.
 	 * @param AlertOverlays        $overlays     Test alerts.
+	 * @param AlertApiAccess       $access       The creators' access (step 25.12.4).
 	 */
 	public function __construct(
 		private AlertApiSwitch $api,
@@ -60,7 +62,8 @@ class AlertApiFeed {
 		private AlertEventRepository $events,
 		private AlertApiEvents $shape,
 		private AlertApiQueue $queue,
-		private AlertOverlays $overlays
+		private AlertOverlays $overlays,
+		private AlertApiAccess $access
 	) {
 	}
 
@@ -72,13 +75,23 @@ class AlertApiFeed {
 	}
 
 	/**
-	 * Whether a key's creator is active.
+	 * Whether a key's creator is active and may use API keys (step 25.12.4).
 	 *
 	 * @param AlertApiKey $key Key.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function creator_active( AlertApiKey $key ): bool {
-		return true === $this->creators->find( $key->creator_id )?->is_active();
+		return true === $this->creators->find( $key->creator_id )?->is_active() && $this->access->keys( $key->creator_id );
+	}
+
+	/**
+	 * Whether a creator may use API keys.
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function allowed( int $creator_id ): bool {
+		return $this->access->keys( $creator_id );
 	}
 
 	/**
@@ -137,7 +150,7 @@ class AlertApiFeed {
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function resend( int $creator_id, array $events ): int {
-		if ( array() === $events || ! $this->api->enabled() ) {
+		if ( array() === $events || ! $this->api->enabled() || ! $this->access->keys( $creator_id ) ) {
 			return 0;
 		}
 

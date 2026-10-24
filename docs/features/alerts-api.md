@@ -6,7 +6,8 @@ Creators kan få deres købs-alerts ind i deres egne bots (fx SparkyBot, en Disc
 ## Current status
 - **25.12.1 (API-nøgler og polling):** implementeret 2026-10-23 og committet som eksperimentel (`9564f5e`); projektejeren har testet det i browseren: godkendt.
 - **25.12.2 (webhooks):** implementeret 2026-10-23 og testet automatisk. Webhooks findes i SparkyBots JSON-format og til Discord, og SparkyBot-udviklerens anbefalinger er bygget ind.
-- **25.12.3 (fælles test med SparkyBot-udvikleren):** planlagt (ROADMAP).
+- **25.12.3 (fælles test med SparkyBot-udvikleren):** flyttet til "Senere" i ROADMAP 2026-10-24; tages op, når udvikleren svarer.
+- **25.12.4 (adgang pr. creator):** implementeret 2026-10-24 og testet automatisk. Administratoren giver hver creator adgang til API-nøgler og webhooks hver for sig på admin-fanen API (slået fra som standard). Uden adgang skjules siden, nøglerne giver 401, og webhooks sendes ikke; nøgler og webhooks bevares. Creators med eksisterende nøgler eller webhooks beholdt adgangen (migration 28).
 
 Funktionen er ikke udgivet i en version endnu.
 
