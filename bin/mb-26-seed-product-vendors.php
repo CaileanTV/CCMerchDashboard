@@ -7,10 +7,11 @@
  *   wp eval-file bin/mb-26-seed-product-vendors.php            creates the test data
  *   wp eval-file bin/mb-26-seed-product-vendors.php cleanup    removes it again
  *
- * Refuses unless wp_get_environment_type() is "local" or "development". Everything it makes is
- * named "MB26 …" / "mb26_…" and marked with the meta key `_mb26_seed`, and only marked data is
- * removed by cleanup. Users that a migration has linked to a creator are kept by cleanup (delete
- * the creator in Merch Dashboard first), so no creator is left with a missing user.
+ * Refuses unless wp_get_environment_type() is "local". Everything it makes is named "MB26 …" /
+ * "mb26_…" and marked with the meta key `_mb26_seed`; only marked data is reused and removed by
+ * cleanup (also in the trash). Cleanup keeps products that are in an order, so no order loses its
+ * product, and users that a migration has linked to a creator (delete the creator in Merch
+ * Dashboard first), so no creator is left with a missing user.
  *
  * Every vendor has its own account (`mb26_<vendor>`, Vendor Admin; the pending vendor's is
  * pending), except "MB26 No Admin", which tests a vendor without an administrator. All accounts get
@@ -36,6 +37,36 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 
 	// The password of every test account (local sites only).
 	define( 'MERCHBOARD_MB26_PASSWORD', 'MB26-test-1234' );
+
+	// Every post status, the trash included ('any' leaves the trash out).
+	define( 'MERCHBOARD_MB26_STATUSES', array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' ) );
+
+	/**
+	 * Products and variations that are in an order, with their parents: cleanup
+	 * keeps them, so no order loses its product.
+	 *
+	 * @return array<int, true>
+	 */
+	function merchboard_mb26_ordered(): array {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'woocommerce_order_itemmeta';
+		$ids   = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT meta_value FROM %i WHERE meta_key IN (%s, %s)', $table, '_product_id', '_variation_id' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Development tool.
+		$kept  = array();
+
+		foreach ( $ids as $id ) {
+			if ( (int) $id > 0 ) {
+				$kept[ (int) $id ] = true;
+				$parent            = wp_get_post_parent_id( (int) $id );
+
+				if ( $parent > 0 ) {
+					$kept[ $parent ] = true;
+				}
+			}
+		}
+
+		return $kept;
+	}
 
 	/**
 	 * The accounts of this run, for the printed list.
@@ -287,14 +318,16 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 	 * @param bool   $sizes  A variable product with sizes S and M.
 	 */
 	function merchboard_mb26_product( int $vendor, string $name, string $status = 'publish', bool $sizes = false ): int {
+		// Only a product this script made (also in the trash) is reused.
 		$found = get_posts(
 			array(
 				'post_type'        => 'product',
-				'post_status'      => 'any',
+				'post_status'      => MERCHBOARD_MB26_STATUSES,
 				'title'            => 'MB26 ' . $name,
 				'numberposts'      => 1,
 				'fields'           => 'ids',
 				'suppress_filters' => true,
+				'meta_key'         => '_mb26_seed', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Development tool.
 			)
 		);
 
@@ -409,19 +442,30 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 	 * Removes the marked test data.
 	 */
 	function merchboard_mb26_cleanup(): void {
-		$posts = get_posts(
+		$posts         = get_posts(
 			array(
 				'post_type'        => array( 'product', 'product_variation' ),
-				'post_status'      => 'any',
+				'post_status'      => MERCHBOARD_MB26_STATUSES,
 				'numberposts'      => -1,
 				'fields'           => 'ids',
 				'suppress_filters' => true,
 				'meta_key'         => '_mb26_seed', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Development tool.
 			)
 		);
+		$ordered       = merchboard_mb26_ordered();
+		$removed       = 0;
+		$kept_products = array();
 
 		foreach ( $posts as $id ) {
-			wp_delete_post( (int) $id, true );
+			$id = (int) $id;
+
+			if ( isset( $ordered[ $id ] ) || isset( $ordered[ wp_get_post_parent_id( $id ) ] ) ) {
+				$kept_products[] = get_the_title( $id );
+				continue;
+			}
+
+			wp_delete_post( $id, true );
+			++$removed;
 		}
 
 		$terms = get_terms(
@@ -463,7 +507,11 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 			wp_delete_user( $user->ID );
 		}
 
-		WP_CLI::success( sprintf( 'Removed %d products and variations, %d vendors and %d product categories.', count( $posts ), is_array( $terms ) ? count( $terms ) : 0, is_array( $categories ) ? count( $categories ) : 0 ) );
+		WP_CLI::success( sprintf( 'Removed %d products and variations, %d vendors and %d product categories.', $removed, is_array( $terms ) ? count( $terms ) : 0, is_array( $categories ) ? count( $categories ) : 0 ) );
+
+		if ( array() !== $kept_products ) {
+			WP_CLI::warning( 'Kept products that are in an order: ' . implode( ', ', array_unique( $kept_products ) ) );
+		}
 
 		if ( array() !== $kept ) {
 			WP_CLI::warning( 'Kept users linked to a creator (delete the creators in Merch Dashboard first, then run cleanup again): ' . implode( ', ', $kept ) );
@@ -471,8 +519,8 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 	}
 }
 
-if ( ! in_array( wp_get_environment_type(), array( 'local', 'development' ), true ) ) {
-	WP_CLI::error( 'Only for a local or development site (WP_ENVIRONMENT_TYPE is "' . wp_get_environment_type() . '").' );
+if ( 'local' !== wp_get_environment_type() ) {
+	WP_CLI::error( 'Only for a local site (WP_ENVIRONMENT_TYPE is "' . wp_get_environment_type() . '").' );
 }
 
 if ( ! taxonomy_exists( 'wcpv_product_vendors' ) || ! class_exists( 'WC_Product_Simple' ) ) {

@@ -82,7 +82,8 @@ foreach ( is_array( $merchboard_terms ) ? $merchboard_terms : array() as $merchb
 	}
 
 	foreach ( $merchboard_methods as $merchboard_method ) {
-		if ( 1 === preg_match( '/admins|managers|vendor_users|get_vendor_admins/i', $merchboard_method ) ) {
+		// Only readers: a name like update_vendor_admins() would write.
+		if ( str_starts_with( $merchboard_method, 'get_' ) && 1 === preg_match( '/admins|managers|vendor_users/i', $merchboard_method ) ) {
 			try {
 				WP_CLI::log( $merchboard_method . '( term ): ' . merchboard_mb26_shape( call_user_func( array( $merchboard_utils, $merchboard_method ), $merchboard_term->term_id ) ) );
 			} catch ( Throwable $merchboard_e ) {
