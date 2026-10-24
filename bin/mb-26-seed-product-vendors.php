@@ -21,7 +21,9 @@
  * no administrator, one user on two vendors (a Vendor Manager on both), simple and variable
  * products, a draft and a trashed product, and ten ordinary vendors for volume. Administrators are
  * written in `vendor_data` (Product Vendors 2.x); open a vendor under Products → Vendors and click
- * Update to have Product Vendors store them its own way. Running it again adds what is missing.
+ * Update to have Product Vendors store them its own way. Every vendor's products are also in a product
+ * category with the vendor's name (step 26.2.1 proposes it) instead of the default category
+ * ("Uncategorized"). Running it again adds what is missing.
  *
  * @package MerchBoard
  */
@@ -236,6 +238,47 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 	}
 
 	/**
+	 * The test product category of a vendor (its name), made once.
+	 *
+	 * @param int $vendor Vendor term id.
+	 */
+	function merchboard_mb26_category( int $vendor ): int {
+		$vendor_term = get_term( $vendor, 'wcpv_product_vendors' );
+		$name        = $vendor_term instanceof WP_Term ? $vendor_term->name : 'MB26 Vendor ' . $vendor;
+		$existing    = get_term_by( 'name', $name, 'product_cat' );
+
+		if ( $existing instanceof WP_Term ) {
+			return $existing->term_id;
+		}
+
+		$term = wp_insert_term( $name, 'product_cat' );
+
+		if ( is_wp_error( $term ) ) {
+			WP_CLI::error( 'Could not create the category ' . $name . ': ' . $term->get_error_message() );
+		}
+
+		update_term_meta( $term['term_id'], '_mb26_seed', '1' );
+
+		return (int) $term['term_id'];
+	}
+
+	/**
+	 * Puts a product in its vendor's category instead of the default one
+	 * ("Uncategorized", which WooCommerce sets on save); other categories stay.
+	 *
+	 * @param int $product_id Product.
+	 * @param int $vendor     Vendor term id.
+	 */
+	function merchboard_mb26_set_category( int $product_id, int $vendor ): void {
+		$default    = (int) get_option( 'default_product_cat', 0 );
+		$current    = wp_get_object_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		$categories = array_diff( array_map( 'intval', is_array( $current ) ? $current : array() ), array( $default ) );
+		$categories = array_values( array_unique( array_merge( $categories, array( merchboard_mb26_category( $vendor ) ) ) ) );
+
+		wp_set_object_terms( $product_id, $categories, 'product_cat' );
+	}
+
+	/**
 	 * A test product of a vendor.
 	 *
 	 * @param int    $vendor Vendor term id.
@@ -256,6 +299,8 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 		);
 
 		if ( array() !== $found ) {
+			merchboard_mb26_set_category( (int) $found[0], $vendor );
+
 			return (int) $found[0];
 		}
 
@@ -289,6 +334,7 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 		}
 
 		wp_set_object_terms( $id, array( $vendor ), 'wcpv_product_vendors' );
+		merchboard_mb26_set_category( $id, $vendor );
 
 		if ( 'trash' === $status ) {
 			wp_trash_post( $id );
@@ -391,6 +437,20 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 			wp_delete_term( (int) $id, 'wcpv_product_vendors' );
 		}
 
+		$categories = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+				'meta_key'   => '_mb26_seed', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Development tool.
+				'fields'     => 'ids',
+			)
+		);
+
+		// Merch Dashboard removes a deleted category's creator mapping itself.
+		foreach ( is_array( $categories ) ? $categories : array() as $id ) {
+			wp_delete_term( (int) $id, 'product_cat' );
+		}
+
 		require_once ABSPATH . 'wp-admin/includes/user.php';
 		$kept = array();
 
@@ -403,7 +463,7 @@ if ( ! function_exists( 'merchboard_mb26_seed' ) ) {
 			wp_delete_user( $user->ID );
 		}
 
-		WP_CLI::success( sprintf( 'Removed %d products and variations and %d vendors.', count( $posts ), is_array( $terms ) ? count( $terms ) : 0 ) );
+		WP_CLI::success( sprintf( 'Removed %d products and variations, %d vendors and %d product categories.', count( $posts ), is_array( $terms ) ? count( $terms ) : 0, is_array( $categories ) ? count( $categories ) : 0 ) );
 
 		if ( array() !== $kept ) {
 			WP_CLI::warning( 'Kept users linked to a creator (delete the creators in Merch Dashboard first, then run cleanup again): ' . implode( ', ', $kept ) );
