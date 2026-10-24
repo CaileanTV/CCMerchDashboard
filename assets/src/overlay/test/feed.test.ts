@@ -4,10 +4,13 @@
 import { describe, expect, it } from '@jest/globals';
 import {
 	MAX_BACKOFF,
+	RELOAD_CURSOR_TTL,
 	backoff,
 	feedUrl,
 	parseAnswer,
 	parseConfig,
+	reloadUrl,
+	takeCursor,
 } from '../feed';
 import { DEFAULT_ANIMATION } from '../animations';
 
@@ -199,5 +202,46 @@ describe( 'backoff', () => {
 			MAX_BACKOFF,
 			MAX_BACKOFF,
 		] );
+	} );
+} );
+
+describe( 'the cursor across a reload', () => {
+	const PAGE = `${ window.location.origin }/merchboard-alerts/overlay/${ 'a'.repeat( 32 ) }/`;
+
+	it( 'is carried in the address and removed from it', () => {
+		const href = reloadUrl( PAGE, 41, 1000 );
+
+		expect( takeCursor( href, 2000 ) ).toEqual( {
+			cursor: 41,
+			href: PAGE,
+		} );
+		expect( takeCursor( PAGE, 2000 ) ).toEqual( {
+			cursor: null,
+			href: PAGE,
+		} );
+	} );
+
+	it( 'is ignored when old, from the future or damaged', () => {
+		expect(
+			takeCursor(
+				reloadUrl( PAGE, 41, 1000 ),
+				1000 + RELOAD_CURSOR_TTL + 1
+			).cursor
+		).toBeNull();
+		expect(
+			takeCursor( reloadUrl( PAGE, 41, 5000 ), 1000 ).cursor
+		).toBeNull();
+		expect(
+			takeCursor(
+				`${ PAGE }?merchboard_after=-1&merchboard_at=1000`,
+				1000
+			).cursor
+		).toBeNull();
+		expect(
+			takeCursor(
+				`${ PAGE }?merchboard_after=x&merchboard_at=1000`,
+				1000
+			).cursor
+		).toBeNull();
 	} );
 } );

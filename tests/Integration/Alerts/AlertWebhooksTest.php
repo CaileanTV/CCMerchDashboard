@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Alerts;
 
+use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -145,6 +146,8 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 
 		delete_option( AlertApiSwitch::OPTION );
 		delete_option( ChatbotFormat::OPTION );
+		// setUp switched alerts on; later tests expect the default.
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -182,8 +185,9 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	 * @param Transaction    $transaction Transaction.
 	 * @param Logger         $logger      Log.
 	 * @param int            $tests       Tests per minute (a high limit unless the test is about it).
+	 * @param Closure|null   $resolve     Addresses of a host; a public one by default.
 	 */
-	public static function dispatcher( wpdb $wpdb, AlertApiSwitch $api, AlertWebhooks $webhooks, FakeJobQueue $queue, AuditTrail $audit, Transaction $transaction, Logger $logger, int $tests = 1000 ): WebhookDispatcher {
+	public static function dispatcher( wpdb $wpdb, AlertApiSwitch $api, AlertWebhooks $webhooks, FakeJobQueue $queue, AuditTrail $audit, Transaction $transaction, Logger $logger, int $tests = 1000, ?Closure $resolve = null ): WebhookDispatcher {
 		$template = new AlertTemplate( static fn( int $term_id ): ?string => 77 === $term_id ? 'Nova merch' : null );
 		$overlays = new AlertOverlayRepository( $wpdb );
 		$events   = new AlertEventRepository( $wpdb );
@@ -202,7 +206,9 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 			new AlertOverlays( $overlays, $feed, new OverlayTestQueue(), new PostMetaProductStore(), $audit, $transaction, static fn(): int => 0 ),
 			$logger,
 			static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-10-23 18:05:00', new DateTimeZone( 'UTC' ) ),
-			new OverlayRateLimiter( null, 'merchboard_alerts_wh_test_' . wp_generate_password( 6, false ) . '_', $tests )
+			new OverlayRateLimiter( null, 'merchboard_alerts_wh_test_' . wp_generate_password( 6, false ) . '_', $tests ),
+			// The test hosts do not resolve; a public address unless a test says otherwise.
+			$resolve ?? static fn(): array => array( '93.184.216.34' )
 		);
 	}
 
@@ -367,6 +373,24 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'Mug', $body['content'] );
 	}
 
+	public function test_a_host_with_a_private_or_reserved_address_is_never_called(): void {
+		$this->webhooks->create( $this->creator, 'SparkyBot', AlertWebhook::JSON, self::URL, self::SECRET, '' );
+		$this->alert( $this->creator, 720, 1 );
+
+		foreach ( array( array( '169.254.169.254' ), array( '10.0.0.5' ), array( '100.64.1.1' ), array( '::1' ), array( 'fd00::1' ), array( '93.184.216.34', '127.0.0.1' ), array() ) as $addresses ) {
+			$dispatcher = self::dispatcher( $this->wpdb, $this->api, $this->webhooks, $this->queue, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ), 1000, static fn(): array => $addresses );
+			$dispatcher->order_paid( $this->paid_order() );
+			$this->run_jobs( $dispatcher );
+		}
+
+		self::assertSame( array(), $this->requests, 'Cloud metadata, private, shared, loopback, IPv6-internal, mixed or unresolved: not called (25.13 review).' );
+		self::assertSame( array( WebhookDispatcher::BLOCKED ), array_values( array_unique( array_column( $this->deliveries(), 'error' ) ) ) );
+
+		$this->dispatcher->order_paid( $this->paid_order() );
+		$this->run_jobs();
+		self::assertCount( 1, $this->requests, 'A public address is called.' );
+	}
+
 	public function test_one_attempt_failures_pause_after_ten_and_a_success_clears_them(): void {
 		$hook = $this->webhooks->create( $this->creator, 'SparkyBot', AlertWebhook::JSON, self::URL, self::SECRET, '' )['webhook'];
 		$this->alert( $this->creator, 700, 1 );
@@ -382,7 +406,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$this->status = 0;
 		$this->dispatcher->order_paid( $this->paid_order() );
 		$this->run_jobs();
-		self::assertStringNotContainsString( 'sparkybot', (string) $this->deliveries()[1]['error'], 'Never the address in the log.' );
+		self::assertSame( WebhookDispatcher::TIMED_OUT, $this->deliveries()[1]['error'], 'A reason code, never the transport\'s message or the address.' );
 
 		$this->status = 204;
 		$this->dispatcher->order_paid( $this->paid_order() );
@@ -498,7 +522,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 
 		$this->status = 204;
 		$history      = new AlertHistory( $this->events, new AlertOverlayRepository( $this->wpdb ), new OverlayFeed( new AlertOverlayRepository( $this->wpdb ), $this->events, new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue() ), new OverlayTestQueue(), null, null, $this->dispatcher );
-		$history->resend_alert( $this->creator, $alert );
+		self::assertSame( 1, $history->resend_alert( $this->creator, $alert ), 'Only a webhook, no overlay: resent (25.13 review).' );
 		$history->resend_alert( $this->creator, $alert );
 		$this->run_jobs();
 
@@ -654,10 +678,13 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 
 	/**
 	 * Runs the queued jobs.
+	 *
+	 * @param WebhookDispatcher|null $dispatcher The one that runs them; the test's own by default.
 	 */
-	private function run_jobs(): void {
-		$runner = function ( string $hook, array $args ): void {
-			$this->dispatcher->run( $args[0] ?? 0 );
+	private function run_jobs( ?WebhookDispatcher $dispatcher = null ): void {
+		$dispatcher ??= $this->dispatcher;
+		$runner       = static function ( string $hook, array $args ) use ( $dispatcher ): void {
+			$dispatcher->run( $args[0] ?? 0 );
 		};
 
 		do {

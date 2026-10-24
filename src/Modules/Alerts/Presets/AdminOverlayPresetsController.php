@@ -278,6 +278,10 @@ final class AdminOverlayPresetsController extends RestController {
 	 * @param OverlayPresetException $e Reason.
 	 */
 	private static function refused( OverlayPresetException $e ): WP_Error {
+		if ( OverlayPresetException::NOT_AUTHORIZED === $e->reason() ) {
+			return self::error( 'merchboard_forbidden', __( 'You do not have access to this resource.', 'merchboard' ), 403 );
+		}
+
 		return OverlayPresetException::UNKNOWN_PRESET === $e->reason()
 			? self::unknown()
 			: self::error( 'merchboard_invalid_request', __( 'The standard overlay was not saved.', 'merchboard' ), 400, array( 'fields' => array( $e->field() => $e->reason() ) ) );

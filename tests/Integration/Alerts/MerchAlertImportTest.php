@@ -185,6 +185,13 @@ final class MerchAlertImportTest extends IntegrationTestCase {
 		);
 		self::assertStringNotContainsString( 'Jens', (string) wp_json_encode( $events ) );
 
+		// Imported alerts are marked: the live feeds (overlay, API, global overlay) never show them as new (25.13 review).
+		self::assertSame( array( '1', '1' ), array_map( 'strval', array_column( $events, 'imported' ) ) );
+		$repository = new AlertEventRepository( $this->wpdb );
+		self::assertSame( array(), $repository->after( (int) $events[0]['creator_id'], 0, 50 ) );
+		self::assertSame( array(), $repository->after_all( 0, 50 ) );
+		self::assertSame( (int) $events[1]['id'], max( $repository->latest_id_all(), (int) $events[0]['id'] ), 'The history and the starting cursor still see them.' );
+
 		// The chatbot: template without first names, the switch and the sent message.
 		$chatbot = array_values( array_filter( $this->rows( Tables::ALERT_CHATBOT ), fn( array $row ): bool => (int) $row['creator_id'] === $this->nova && 'twitch' === $row['platform'] ) )[0] ?? array();
 		self::assertSame( array( '🔔 $UserName just bought $Product!', '1' ), array( $chatbot['template'] ?? null, (string) ( $chatbot['enabled'] ?? '' ) ) );

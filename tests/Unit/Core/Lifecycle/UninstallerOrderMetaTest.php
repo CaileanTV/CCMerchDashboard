@@ -40,6 +40,7 @@ final class UninstallerOrderMetaTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'get_posts' )->justReturn( array() );
 		Functions\when( 'delete_metadata' )->justReturn( true );
 	}
 

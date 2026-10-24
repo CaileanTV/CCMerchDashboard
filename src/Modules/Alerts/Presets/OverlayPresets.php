@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Presets;
 
+use MerchBoard\Core\Security\Capabilities;
 use InvalidArgumentException;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -88,8 +89,11 @@ final class OverlayPresets {
 	 * @param string $name Name.
 	 * @throws OverlayPresetException When the name is invalid or MAX exist.
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws OverlayPresetException When the current user lacks the alerts capability.
 	 */
 	public function create( string $name ): OverlayPreset {
+		self::authorize();
+
 		$preset = $this->store->add( self::name( $name ) );
 		$this->audit->record( AuditAction::AlertOverlayPresetCreated, null, array( 'name' => $preset->name ) );
 
@@ -103,8 +107,11 @@ final class OverlayPresets {
 	 * @param string $name New name.
 	 * @throws OverlayPresetException When it does not exist or the name is invalid.
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws OverlayPresetException When the current user lacks the alerts capability.
 	 */
 	public function rename( string $id, string $name ): OverlayPreset {
+		self::authorize();
+
 		$preset = $this->require( $id );
 		$name   = self::name( $name );
 
@@ -131,8 +138,11 @@ final class OverlayPresets {
 	 * @param string $id Id.
 	 * @throws OverlayPresetException When it does not exist.
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws OverlayPresetException When the current user lacks the alerts capability.
 	 */
 	public function delete( string $id ): void {
+		self::authorize();
+
 		$deleted = $this->store->delete( $this->require( $id )->id );
 		$this->audit->record( AuditAction::AlertOverlayPresetDeleted, null, array( 'name' => $deleted->name ) );
 	}
@@ -145,8 +155,11 @@ final class OverlayPresets {
 	 * @throws OverlayPresetException When it does not exist.
 	 * @throws InvalidArgumentException When the font is not approved (message: the field).
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws OverlayPresetException When the current user lacks the alerts capability.
 	 */
 	public function update_settings( string $id, array $input ): OverlayPreset {
+		self::authorize();
+
 		$preset = $this->require( $id );
 		$values = AlertOverlays::merge( $preset->settings, $input, $this->fonts )->to_array();
 
@@ -261,5 +274,16 @@ final class OverlayPresets {
 		}
 
 		return $name;
+	}
+
+	/**
+	 * Requires the alerts capability (independent of the UI).
+	 *
+	 * @throws OverlayPresetException When the current user lacks it.
+	 */
+	private static function authorize(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			throw new OverlayPresetException( OverlayPresetException::NOT_AUTHORIZED );
+		}
 	}
 }

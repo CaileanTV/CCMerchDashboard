@@ -16,8 +16,17 @@ use MerchBoard\Core\Lifecycle\UninstallBlocked;
 use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
+use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayImages;
+use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlaySounds;
+use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
+use MerchBoard\Modules\Alerts\Images\AlertImages;
+use MerchBoard\Modules\Alerts\Import\MerchAlertImporter;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
+use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
+use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Webhooks\WebhookDispatcher;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
@@ -261,6 +270,7 @@ final class UninstallerTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'get_posts' )->justReturn( array() );
 		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
 		Functions\when( 'delete_metadata' )->justReturn( true );
 		// #0 counts pending payouts, #1 looks for the creators table (both absent here), #2 is the first drop.
@@ -278,6 +288,7 @@ final class UninstallerTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'get_posts' )->justReturn( array() );
 		Functions\when( 'delete_metadata' )->justReturn( true );
 		$deleted = array();
 		Functions\when( 'delete_post_meta_by_key' )->alias(
@@ -293,6 +304,9 @@ final class UninstallerTest extends TestCase {
 		);
 
 		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
+
+		// The alert files' meta is covered by its own test.
+		$deleted = array_values( array_filter( $deleted, static fn( array $call ): bool => ! in_array( $call['key'], array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), true ) ) );
 
 		self::assertSame(
 			array(
@@ -344,6 +358,7 @@ final class UninstallerTest extends TestCase {
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
 		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'get_posts' )->justReturn( array() );
 		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
 		$calls = array();
 		Functions\when( 'delete_metadata' )->alias(
@@ -365,6 +380,44 @@ final class UninstallerTest extends TestCase {
 			$calls,
 			'Exact key, every user, through the meta API, while the opt-in still exists.'
 		);
+	}
+
+	public function test_with_opt_in_the_alert_files_are_deleted_but_merchalerts_stay(): void {
+		InMemoryOptions::install( array( Settings::OPTION => array( Settings::DELETE_DATA_ON_UNINSTALL => true ) ) );
+		Functions\when( 'get_users' )->justReturn( array() );
+		Functions\when( 'wp_roles' )->justReturn( (object) array( 'role_objects' => array() ) );
+		Functions\when( 'remove_role' )->justReturn( null );
+		Functions\when( 'delete_metadata' )->justReturn( true );
+		// 10 was uploaded here; 11 and 12 are MerchAlert's files the import took over.
+		Functions\when( 'get_posts' )->justReturn( array( 10, 11, 12 ) );
+		Functions\when( 'get_post_meta' )->alias(
+			static fn( int $id, string $key ): string => match ( true ) {
+				11 === $id && Uninstaller::ALERT_IMPORTED_META === $key => '1',
+				12 === $id && '_ccmerch_audio_creator_id' === $key => '5',
+				default => '',
+			}
+		);
+		$keys = array();
+		Functions\when( 'delete_post_meta_by_key' )->alias(
+			static function ( string $key ) use ( &$keys ): bool {
+				$keys[] = $key;
+				return true;
+			}
+		);
+		Functions\expect( 'wp_delete_attachment' )->once()->with( 10, true );
+		$hooks = array();
+		Functions\when( 'as_unschedule_all_actions' )->alias(
+			static function ( string $hook ) use ( &$hooks ): void {
+				$hooks[] = $hook;
+			}
+		);
+
+		self::assertTrue( $this->uninstaller()->run() );
+
+		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
+		self::assertSame( MerchAlertImporter::IMPORTED_META, Uninstaller::ALERT_IMPORTED_META );
+		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
+		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK ), $hooks, 'Queued chat messages and webhook deliveries are cancelled.' );
 	}
 
 	private function uninstaller(): Uninstaller {

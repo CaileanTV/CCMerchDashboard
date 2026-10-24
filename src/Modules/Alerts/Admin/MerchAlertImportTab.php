@@ -57,6 +57,7 @@ final class MerchAlertImportTab {
 			MerchAlertImportException::NO_DATA           => array( __( 'No MerchAlert data was found.', 'merchboard' ), 'error' ),
 			MerchAlertImportException::PREVIEW_OUTDATED  => array( __( 'The data changed since the dry run. Check the new dry run and import again.', 'merchboard' ), 'warning' ),
 			MerchAlertImportException::BACKUP_REQUIRED   => array( __( 'Confirm that you have a backup before you import.', 'merchboard' ), 'error' ),
+			MerchAlertImportException::NOT_AUTHORIZED    => array( __( 'Sorry, you are not allowed to manage alerts.', 'merchboard' ), 'error' ),
 			default                                       => null,
 		};
 	}

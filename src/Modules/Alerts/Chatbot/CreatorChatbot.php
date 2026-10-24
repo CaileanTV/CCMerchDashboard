@@ -17,6 +17,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
+use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 
 defined( 'ABSPATH' ) || exit;
@@ -42,6 +43,18 @@ final class CreatorChatbot {
 	public const TEST_USERNAME = 'TestFan';
 
 	/**
+	 * Test messages a creator may send per minute (25.13 review).
+	 */
+	public const TESTS_PER_MINUTE = 10;
+
+	/**
+	 * Limit of the creator's test messages.
+	 *
+	 * @var OverlayRateLimiter
+	 */
+	private OverlayRateLimiter $tests;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ChatPlatforms            $platforms     The platforms.
@@ -54,6 +67,7 @@ final class CreatorChatbot {
 	 * @param AuditTrail               $audit         Audit trail.
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param YouTubeTerms             $terms         YouTube's privacy policy and terms (ADR-071).
+	 * @param OverlayRateLimiter|null  $tests         Limit of the test messages; defaults to TESTS_PER_MINUTE.
 	 */
 	public function __construct(
 		private ChatPlatforms $platforms,
@@ -65,8 +79,10 @@ final class CreatorChatbot {
 		private ChatSender $sender,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private YouTubeTerms $terms
+		private YouTubeTerms $terms,
+		?OverlayRateLimiter $tests = null
 	) {
+		$this->tests = $tests ?? new OverlayRateLimiter( null, 'merchboard_alerts_chat_test_', self::TESTS_PER_MINUTE );
 	}
 
 	/**
@@ -200,11 +216,12 @@ final class CreatorChatbot {
 	 * @param int          $creator_id Creator.
 	 * @param ChatPlatform $platform   Platform.
 	 * @return array{result: string, reason: string, message: string}
-	 * @throws ChatbotException When the platform or the channel is not set up, or the platform refuses the app.
+	 * @throws ChatbotException When the platform or the channel is not set up, the creator sent too many tests or the platform refuses the app.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function test( int $creator_id, ChatPlatform $platform ): array {
 		$channel = self::require_channel( $this->channels->find( $creator_id, $platform ) );
+		self::require_allowed( $this->tests->allow( 'creator:' . $creator_id ) );
 		$format  = $this->format->get();
 		$event   = new AlertEvent( $creator_id, 0, '0001', 0, 0, 0, __( 'Test product', 'merchboard' ), '', 1, 0, array(), self::TEST_USERNAME, new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ), 0, AlertOverlays::TEST_AMOUNT, AlertOverlays::TEST_AMOUNT );
 		$message = 'order' === $format['mode']
@@ -236,5 +253,17 @@ final class CreatorChatbot {
 		}
 
 		return $channel;
+	}
+
+	/**
+	 * Requires a test within the creator's limit.
+	 *
+	 * @param bool $allowed Whether the limiter allowed it.
+	 * @throws ChatbotException TOO_MANY beyond TESTS_PER_MINUTE.
+	 */
+	private static function require_allowed( bool $allowed ): void {
+		if ( ! $allowed ) {
+			throw new ChatbotException( ChatbotException::TOO_MANY );
+		}
 	}
 }

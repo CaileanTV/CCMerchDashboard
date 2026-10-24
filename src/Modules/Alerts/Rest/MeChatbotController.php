@@ -228,6 +228,10 @@ final class MeChatbotController extends RestController {
 				try {
 					return new WP_REST_Response( $this->chatbot->test( $creator_id, $platform ), 200 );
 				} catch ( ChatbotException $e ) {
+					if ( ChatbotException::TOO_MANY === $e->reason() ) {
+						return self::error( 'merchboard_too_many_requests', __( 'Too many tests. Please wait a minute.', 'merchboard' ), 429 );
+					}
+
 					return self::error( 'merchboard_chatbot_unavailable', __( 'The test message could not be sent.', 'merchboard' ), 409, array( 'reason' => $e->reason() ) );
 				}
 			}

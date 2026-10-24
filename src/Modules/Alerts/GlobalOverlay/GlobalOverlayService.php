@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\GlobalOverlay;
 
+use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Alerts\AlertSettingsException;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
@@ -75,8 +77,11 @@ final class GlobalOverlayService {
 	 * Sets the overlay up (switched off); the existing one when it is set up.
 	 *
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function create(): GlobalOverlay {
+		self::authorize();
+
 		[ $overlay, $created ] = $this->store->create();
 
 		if ( $created ) {
@@ -93,8 +98,11 @@ final class GlobalOverlayService {
 	 * @return GlobalOverlay|null The changed overlay; null before it is set up.
 	 * @throws InvalidArgumentException When the font is not approved (message: the field).
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function update_settings( array $input ): ?GlobalOverlay {
+		self::authorize();
+
 		$overlay = $this->store->find();
 
 		if ( null === $overlay ) {
@@ -119,8 +127,11 @@ final class GlobalOverlayService {
 	 * @param bool $enabled Whether it is on.
 	 * @return bool|null Whether it changed; null before it is set up.
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function set_enabled( bool $enabled ): ?bool {
+		self::authorize();
+
 		$overlay = $this->store->find();
 
 		if ( null === $overlay ) {
@@ -142,8 +153,11 @@ final class GlobalOverlayService {
 	 *
 	 * @return GlobalOverlay|null The changed overlay; null before it is set up.
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function regenerate(): ?GlobalOverlay {
+		self::authorize();
+
 		$overlay = $this->store->find();
 
 		if ( null === $overlay ) {
@@ -162,8 +176,11 @@ final class GlobalOverlayService {
 	 *
 	 * @return bool False before it is set up.
 	 * @throws DatabaseException When the alerts cannot be read.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function send_test(): bool {
+		self::authorize();
+
 		$overlay = $this->store->find();
 
 		if ( null === $overlay ) {
@@ -204,8 +221,11 @@ final class GlobalOverlayService {
 	 *
 	 * @return int|null The number of alerts queued (0: no order yet); null before it is set up.
 	 * @throws DatabaseException When the alerts cannot be read.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function replay_latest(): ?int {
+		self::authorize();
+
 		$overlay = $this->store->find();
 
 		if ( null === $overlay ) {
@@ -229,5 +249,16 @@ final class GlobalOverlayService {
 	 */
 	private function latest_order(): array {
 		return $this->events->for_orders( $this->events->log_page( null, new Pagination( 1, 1 ) ) );
+	}
+
+	/**
+	 * Requires the alerts capability (independent of the UI).
+	 *
+	 * @throws AlertSettingsException When the current user lacks it.
+	 */
+	private static function authorize(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			throw new AlertSettingsException( AlertSettingsException::NOT_AUTHORIZED );
+		}
 	}
 }

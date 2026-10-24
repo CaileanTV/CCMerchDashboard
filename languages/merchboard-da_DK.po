@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-24T14:26:26+00:00\n"
+"PO-Revision-Date: 2026-10-24T15:51:37+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -40,6 +40,7 @@ msgstr "Du skal være logget ind."
 
 #: src/Core/Http/RestController.php:65
 #: src/Core/Http/RestController.php:79
+#: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:282
 #: src/Modules/Dashboard/Rest/MeController.php:229
 msgid "You do not have access to this resource."
 msgstr "Du har ikke adgang til denne ressource."
@@ -1118,7 +1119,7 @@ msgstr "Se auditlog"
 
 #: src/Modules/Admin/OverviewPage.php:121
 #: src/Modules/Alerts/Admin/AlertApiTab.php:118
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:133
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:85
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:86
@@ -1249,6 +1250,7 @@ msgstr "Indstillinger"
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:142
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:85
 #: src/Modules/Alerts/Admin/MerchAlertImportActions.php:69
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:60
 msgid "Sorry, you are not allowed to manage alerts."
 msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 
@@ -1439,7 +1441,7 @@ msgstr "Merch Dashboard Alerts"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:80
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:180
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 #: src/Modules/Alerts/Admin/OrderLogTab.php:200
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Alerts/Admin/OrderLogTab.php:246
@@ -1628,7 +1630,7 @@ msgid "Creator page"
 msgstr "Creator-siden"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:200
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:204
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:205
 msgid "Import"
 msgstr "Import"
 
@@ -1637,7 +1639,7 @@ msgid "Fonts"
 msgstr "Fonte"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:206
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 #: build/alerts-global-admin.js:5
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:5
@@ -1646,7 +1648,7 @@ msgid "Sounds"
 msgstr "Lyde"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:210
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:75
 msgid "Chatbot"
 msgstr "Chatbot"
@@ -1853,7 +1855,7 @@ msgstr "Font"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:510
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:560
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr "Kategori"
@@ -2641,7 +2643,7 @@ msgstr "Åbn livestreamen hos YouTube"
 
 #. translators: %s: Yes or No.
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:563
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:153
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:154
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:193
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2665,7 +2667,7 @@ msgstr "YouTubes chat (indlejret)"
 
 #. translators: %s: Yes or No.
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:567
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:153
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:154
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:189
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:194
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
@@ -2847,158 +2849,158 @@ msgstr "Dataene er ændret siden tørkørslen. Tjek den nye tørkørsel, og impo
 msgid "Confirm that you have a backup before you import."
 msgstr "Bekræft, at du har en backup, før du importerer."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:70
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
 msgid "Moves the alerts from the old plugin MerchAlert once: every creator's overlay with the same URL, settings and sounds, the alert history, the chatbot's template, switch and sent messages, the global overlay (switched off), the approved fonts and Google Fonts key, the sound limits and the username field. A MerchAlert creator is matched by their product category. MerchAlert's data is only read, never changed."
 msgstr "Flytter alerts fra det gamle plugin MerchAlert én gang: hver creators overlay med samme URL, indstillinger og lyde, alert-historikken, chatbottens skabelon, til/fra og sendte beskeder, det globale overlay (slået fra), de godkendte fonte og Google Fonts-nøglen, lydgrænserne og brugernavnsfeltet. En MerchAlert-creator matches på sin produktkategori. MerchAlerts data læses kun og ændres aldrig."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:72
 msgid "Take a backup of the site first."
 msgstr "Tag en backup af sitet først."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:72
 msgid "Deactivate MerchAlert, but do not delete it: deleting it deletes its data."
 msgstr "Deaktivér MerchAlert, men slet det ikke: sletning fjerner dets data."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:72
 msgid "Twitch logins are not moved: log the bot in again under Chatbot, and creators add the bot to their channel again."
 msgstr "Twitch-logins flyttes ikke: log botten ind igen under Chatbot, og creators tilføjer botten til deres kanal igen."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:71
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:72
 msgid "Customers' first names are not moved; alerts show the username."
 msgstr "Kundernes fornavne flyttes ikke; alerts viser brugernavnet."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:78
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:131
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:79
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
 msgid "Dry run"
 msgstr "Tørkørsel"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:90
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:91
 msgid "MerchAlert's data could not be read. Please try again later."
 msgstr "MerchAlerts data kunne ikke læses. Prøv igen senere."
 
 #. translators: 1: date and time, 2: creators, 3: alerts, 4: chat messages.
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:115
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:116
 #, php-format
 msgid "Last import: %1$s (%2$d creators, %3$d alerts, %4$d chat messages added)."
 msgstr "Seneste import: %1$s (%2$d creators, %3$d alerts og %4$d chatbeskeder tilføjet)."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:135
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:136
 msgid "MerchAlert has no creators."
 msgstr "MerchAlert har ingen creators."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 msgid "MerchAlert creator"
 msgstr "MerchAlert-creator"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 msgid "Creator here"
 msgstr "Creator her"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 msgid "What happens"
 msgstr "Hvad der sker"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:137
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
 msgid "Chat messages"
 msgstr "Chatbeskeder"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:162
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:163
 msgid "Global overlay and settings"
 msgstr "Globalt overlay og indstillinger"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:165
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:166
 msgid "Imported already: the global overlay, the settings and the fonts are not imported again."
 msgstr "Allerede importeret: det globale overlay, indstillingerne og fontene importeres ikke igen."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:173
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:174
 msgid "Sound limits: not valid in MerchAlert; the current limits stay."
 msgstr "Lydgrænser: ugyldige i MerchAlert; de nuværende grænser bliver."
 
 #. translators: 1: largest file, e.g. "10 MB", 2: seconds.
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:175
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:176
 #, php-format
 msgid "Sound limits: %1$s and %2$d seconds."
 msgstr "Lydgrænser: %1$s og %2$d sekunder."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:182
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:183
 msgid "Username at checkout: switched on."
 msgstr "Brugernavn i checkout: slået til."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:183
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:184
 msgid "Username at checkout: switched off."
 msgstr "Brugernavn i checkout: slået fra."
 
 #. translators: %d: number of fonts.
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:187
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:188
 #, php-format
 msgid "Approved fonts: %d."
 msgstr "Godkendte fonte: %d."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:192
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:193
 msgid "Google Fonts API key: moved, unless one is saved here already."
 msgstr "Google Fonts API-nøgle: flyttes, medmindre der allerede er gemt en her."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:193
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:194
 msgid "Google Fonts API key: none in MerchAlert."
 msgstr "Google Fonts API-nøgle: ingen i MerchAlert."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:203
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:204
 msgid "I have taken a backup of the site, and MerchAlert is deactivated, not deleted."
 msgstr "Jeg har taget en backup af sitet, og MerchAlert er deaktiveret, ikke slettet."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:215
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:216
 msgid "Imported (new overlay)"
 msgstr "Importeres (nyt overlay)"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:216
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:217
 msgid "Imported (replaces the creator's current overlay)"
 msgstr "Importeres (erstatter creatorens nuværende overlay)"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:217
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:218
 msgid "Imported already: only missing alerts and chat messages are added"
 msgstr "Allerede importeret: kun manglende alerts og chatbeskeder tilføjes"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:218
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:219
 msgid "Skipped: no category in MerchAlert"
 msgstr "Springes over: ingen kategori i MerchAlert"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:219
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:220
 msgid "Skipped: the category belongs to no creator here"
 msgstr "Springes over: kategorien tilhører ingen creator her"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:220
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:221
 msgid "Skipped: no overlay in MerchAlert"
 msgstr "Springes over: intet overlay i MerchAlert"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:221
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:222
 msgid "Skipped: another MerchAlert creator is imported into the same creator"
 msgstr "Springes over: en anden MerchAlert-creator importeres til samme creator"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:222
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:223
 msgid "Skipped: the overlay id is used here already"
 msgstr "Springes over: overlay-ID'et bruges allerede her"
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:234
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:235
 msgid "Global overlay: none in MerchAlert."
 msgstr "Globalt overlay: intet i MerchAlert."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:235
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:236
 msgid "Global overlay: skipped, its id is used by a creator here."
 msgstr "Globalt overlay: springes over, dets ID bruges af en creator her."
 
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:236
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:237
 msgid "Global overlay: imported already."
 msgstr "Globalt overlay: allerede importeret."
 
 #. translators: %d: number of sounds.
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:238
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:239
 #, php-format
 msgid "Global overlay: replaces the current one with MerchAlert's URL and settings (%d sounds), switched off."
 msgstr "Globalt overlay: erstatter det nuværende med MerchAlerts URL og indstillinger (%d lyde), slået fra."
 
 #. translators: %d: number of sounds.
-#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:240
+#: src/Modules/Alerts/Admin/MerchAlertImportTab.php:241
 #, php-format
 msgid "Global overlay: imported with MerchAlert's URL and settings (%d sounds), switched off."
 msgstr "Globalt overlay: importeres med MerchAlerts URL og indstillinger (%d lyde), slået fra."
@@ -3234,8 +3236,8 @@ msgstr "API-nøglen mangler, er forkert eller er tilbagekaldt."
 msgid "Too many requests. Please try again later."
 msgstr "For mange forespørgsler. Prøv igen senere."
 
-#: src/Modules/Alerts/Chatbot/CreatorChatbot.php:209
-#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:184
+#: src/Modules/Alerts/Chatbot/CreatorChatbot.php:226
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:201
 #: src/Modules/Alerts/Overlay/AlertOverlays.php:305
 msgid "Test product"
 msgstr "Testprodukt"
@@ -3303,11 +3305,11 @@ msgstr "Det globale overlay er ikke oprettet endnu."
 msgid "This overlay does not exist."
 msgstr "Dette overlay findes ikke."
 
-#: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:283
+#: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:287
 msgid "The standard overlay was not saved."
 msgstr "Standard-overlayet blev ikke gemt."
 
-#: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:290
+#: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:294
 msgid "The standard overlay does not exist."
 msgstr "Standard-overlayet findes ikke."
 
@@ -3328,6 +3330,7 @@ msgid "The key was not found."
 msgstr "Nøglen blev ikke fundet."
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:414
+#: src/Modules/Alerts/Rest/MeChatbotController.php:232
 msgid "Too many tests. Please wait a minute."
 msgstr "For mange tests. Vent et minut."
 
@@ -3405,19 +3408,19 @@ msgid "The alert was not found."
 msgstr "Alerten blev ikke fundet."
 
 #: src/Modules/Alerts/Rest/MeChatbotController.php:193
-#: src/Modules/Alerts/Rest/MeChatbotController.php:261
+#: src/Modules/Alerts/Rest/MeChatbotController.php:265
 msgid "The chatbot is not set up yet."
 msgstr "Chatbotten er ikke sat op endnu."
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:231
+#: src/Modules/Alerts/Rest/MeChatbotController.php:235
 msgid "The test message could not be sent."
 msgstr "Testbeskeden kunne ikke sendes."
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:284
+#: src/Modules/Alerts/Rest/MeChatbotController.php:288
 msgid "Accept the privacy policy and terms of the YouTube chatbot first."
 msgstr "Godkend først privatlivspolitikken og vilkårene for YouTube-chatbotten."
 
-#: src/Modules/Alerts/Rest/MeChatbotController.php:312
+#: src/Modules/Alerts/Rest/MeChatbotController.php:316
 msgid "The chatbot settings are invalid."
 msgstr "Chatbot-indstillingerne er ugyldige."
 
@@ -9733,6 +9736,22 @@ msgstr "Venter"
 #: build/dashboard.js:44
 msgid "Not sent (switched off)"
 msgstr "Ikke sendt (slået fra)"
+
+#: build/dashboard.js:44
+msgid "Failed: the address leads to a private or reserved network."
+msgstr "Fejlede: adressen fører til et privat eller reserveret netværk."
+
+#: build/dashboard.js:44
+msgid "Failed: the receiver could not be reached."
+msgstr "Fejlede: modtageren kunne ikke nås."
+
+#: build/dashboard.js:44
+msgid "Failed: the receiver did not answer in time."
+msgstr "Fejlede: modtageren svarede ikke i tide."
+
+#: build/dashboard.js:44
+msgid "Failed: the address can no longer be read. Add the webhook again."
+msgstr "Fejlede: adressen kan ikke længere læses. Tilføj webhooken igen."
 
 #. translators: %s: the error, e.g. "http_request_failed: …".
 #: build/dashboard.js:45

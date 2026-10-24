@@ -22,6 +22,7 @@ final class MerchAlertImportException extends RuntimeException {
 	public const NO_DATA           = 'import_no_data';
 	public const PREVIEW_OUTDATED  = 'import_preview_outdated';
 	public const BACKUP_REQUIRED   = 'import_backup_required';
+	public const NOT_AUTHORIZED    = 'not_authorized';
 
 	/**
 	 * Constructor.

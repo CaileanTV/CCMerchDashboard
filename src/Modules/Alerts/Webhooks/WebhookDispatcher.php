@@ -36,8 +36,12 @@ defined( 'ABSPATH' ) || exit;
  *   Scheduler so a slow receiver never holds up the checkout; without
  *   Action Scheduler the delivery fails at once.
  * - **How:** one attempt (the project owner's choice), with
- *   `wp_safe_remote_post()` (no private addresses), no redirects, a 5 second
- *   timeout and a small answer limit. A 2xx answer is a success and clears
+ *   `wp_safe_remote_post()`, no redirects, a 5 second timeout and a small
+ *   answer limit. The host is resolved first and refused unless every
+ *   address is public (FILTER_FLAG_GLOBAL_RANGE: no private, loopback,
+ *   link-local such as cloud metadata, shared or reserved IPv4/IPv6); cURL
+ *   then connects to exactly that address (no DNS rebinding; 25.13 review).
+ *   The creator sees a reason code, never the transport's message. A 2xx answer is a success and clears
  *   the failures; anything else counts one more, and PAUSE_AFTER in a row
  *   pause the webhook until the creator resumes it. Polling and resending
  *   from the history fetch what a webhook missed.
@@ -67,11 +71,33 @@ class WebhookDispatcher {
 	public const TESTS_PER_MINUTE = 10;
 
 	/**
+	 * Reason of a delivery whose host is not only public addresses (or has none).
+	 */
+	public const BLOCKED = 'blocked_address';
+
+	/**
+	 * Reason of a delivery that could not connect.
+	 */
+	public const UNREACHABLE = 'unreachable';
+
+	/**
+	 * Reason of a delivery whose receiver did not answer in time.
+	 */
+	public const TIMED_OUT = 'timeout';
+
+	/**
 	 * Limit of the creator's tests.
 	 *
 	 * @var OverlayRateLimiter
 	 */
 	private OverlayRateLimiter $tests;
+
+	/**
+	 * The addresses of a host name.
+	 *
+	 * @var Closure(string): list<string>
+	 */
+	private Closure $resolve;
 
 	/**
 	 * The current time.
@@ -83,19 +109,20 @@ class WebhookDispatcher {
 	/**
 	 * Constructor.
 	 *
-	 * @param AlertWebhookRepository              $webhooks     Webhooks.
-	 * @param WebhookDeliveryRepository           $deliveries   Deliveries.
-	 * @param AlertWebhooks                       $service      Addresses and secrets.
-	 * @param WebhookPayloads                     $payloads     Bodies.
-	 * @param AlertEventRepository                $events       Alerts.
-	 * @param CreatorRepository                   $creators     Creators.
-	 * @param AlertApiSwitch                      $api          The administrator's switch.
-	 * @param AlertsAvailability                  $availability Kill switch and MerchAlert guard.
-	 * @param JobQueue                            $queue        Jobs (Action Scheduler).
-	 * @param AlertOverlays                       $overlays     Test alerts.
-	 * @param Logger                              $logger       Technical log.
-	 * @param (Closure(): DateTimeImmutable)|null $clock        Current time; defaults to now.
-	 * @param OverlayRateLimiter|null             $tests        Limit of the creator's tests; defaults to TESTS_PER_MINUTE.
+	 * @param AlertWebhookRepository               $webhooks     Webhooks.
+	 * @param WebhookDeliveryRepository            $deliveries   Deliveries.
+	 * @param AlertWebhooks                        $service      Addresses and secrets.
+	 * @param WebhookPayloads                      $payloads     Bodies.
+	 * @param AlertEventRepository                 $events       Alerts.
+	 * @param CreatorRepository                    $creators     Creators.
+	 * @param AlertApiSwitch                       $api          The administrator's switch.
+	 * @param AlertsAvailability                   $availability Kill switch and MerchAlert guard.
+	 * @param JobQueue                             $queue        Jobs (Action Scheduler).
+	 * @param AlertOverlays                        $overlays     Test alerts.
+	 * @param Logger                               $logger       Technical log.
+	 * @param (Closure(): DateTimeImmutable)|null  $clock        Current time; defaults to now.
+	 * @param OverlayRateLimiter|null              $tests        Limit of the creator's tests; defaults to TESTS_PER_MINUTE.
+	 * @param (Closure(string): list<string>)|null $resolve      The addresses of a host; defaults to DNS (A and AAAA).
 	 */
 	public function __construct(
 		private AlertWebhookRepository $webhooks,
@@ -110,10 +137,12 @@ class WebhookDispatcher {
 		private AlertOverlays $overlays,
 		private Logger $logger,
 		?Closure $clock = null,
-		?OverlayRateLimiter $tests = null
+		?OverlayRateLimiter $tests = null,
+		?Closure $resolve = null
 	) {
-		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
-		$this->tests = $tests ?? new OverlayRateLimiter( null, 'merchboard_alerts_wh_test_', self::TESTS_PER_MINUTE );
+		$this->clock   = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+		$this->tests   = $tests ?? new OverlayRateLimiter( null, 'merchboard_alerts_wh_test_', self::TESTS_PER_MINUTE );
+		$this->resolve = $resolve ?? self::dns( ... );
 	}
 
 	/**
@@ -379,27 +408,98 @@ class WebhookDispatcher {
 			$headers['X-MerchBoard-Signature'] = WebhookPayloads::signature( $secret, $now->getTimestamp(), $delivery->payload );
 		}
 
-		$response = wp_safe_remote_post(
-			$url,
-			array(
-				'body'                => $delivery->payload,
-				'headers'             => $headers,
-				'timeout'             => self::TIMEOUT,
-				'redirection'         => 0,
-				'limit_response_size' => 1024,
-				'user-agent'          => 'MerchDashboard-Webhooks/1',
-			)
-		);
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$ip   = $this->public_address( $host );
+
+		if ( null === $ip ) {
+			$this->outcome( $id, $webhook, $count, null, self::BLOCKED );
+
+			return;
+		}
+
+		// cURL connects to the address that was checked, not to a new DNS answer.
+		$pin = static function ( mixed $handle, mixed $args, mixed $target ) use ( $host, $ip ): void {
+			if ( $handle instanceof \CurlHandle && is_string( $target ) && wp_parse_url( $target, PHP_URL_HOST ) === $host ) {
+				curl_setopt( $handle, CURLOPT_RESOLVE, array( $host . ':443:' . ( str_contains( $ip, ':' ) ? '[' . $ip . ']' : $ip ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- Pins the checked address on WordPress' own cURL handle.
+			}
+		};
+		add_action( 'http_api_curl', $pin, 10, 3 );
+
+		try {
+			$response = wp_safe_remote_post(
+				$url,
+				array(
+					'body'                => $delivery->payload,
+					'headers'             => $headers,
+					'timeout'             => self::TIMEOUT,
+					'redirection'         => 0,
+					'limit_response_size' => 1024,
+					'user-agent'          => 'MerchDashboard-Webhooks/1',
+				)
+			);
+		} finally {
+			remove_action( 'http_api_curl', $pin, 10 );
+		}
 
 		if ( is_wp_error( $response ) ) {
-			// Never the address (a Discord address is a secret).
-			$this->outcome( $id, $webhook, $count, null, (string) preg_replace( '#https?://\S+#i', '[url]', $response->get_error_code() . ': ' . $response->get_error_message() ) );
+			// The creator gets a reason code; the transport's message (never the address: a Discord address is a secret) goes to the technical log.
+			$message = (string) preg_replace( '#https?://\S+#i', '[url]', $response->get_error_code() . ': ' . $response->get_error_message() );
+			$this->logger->info(
+				'A webhook delivery failed.',
+				array(
+					'webhook_id' => $webhook->id,
+					'reason'     => $message,
+				)
+			);
+			$this->outcome( $id, $webhook, $count, null, str_contains( $message, 'cURL error 28' ) || str_contains( strtolower( $message ), 'timed out' ) ? self::TIMED_OUT : self::UNREACHABLE );
 
 			return;
 		}
 
 		$status = (int) wp_remote_retrieve_response_code( $response );
 		$this->outcome( $id, $webhook, $count, $status, $status >= 200 && $status < 300 ? null : 'http_' . $status );
+	}
+
+	/**
+	 * The address to connect to: the host's first address when every one of
+	 * them is public; null when it has none or any is private, loopback,
+	 * link-local, shared or reserved.
+	 *
+	 * @param string $host Host name.
+	 */
+	private function public_address( string $host ): ?string {
+		$addresses = '' === $host ? array() : ( $this->resolve )( $host );
+
+		foreach ( $addresses as $address ) {
+			if ( false === filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_GLOBAL_RANGE ) ) {
+				return null;
+			}
+		}
+
+		return $addresses[0] ?? null;
+	}
+
+	/**
+	 * A host's IPv4 and IPv6 addresses from DNS.
+	 *
+	 * @param string $host Host name.
+	 * @return list<string>
+	 */
+	private static function dns( string $host ): array {
+		$records   = dns_get_record( $host, DNS_A | DNS_AAAA );
+		$addresses = array();
+
+		foreach ( is_array( $records ) ? $records : array() as $record ) {
+			$address = $record['ip'] ?? $record['ipv6'] ?? null;
+
+			if ( is_string( $address ) ) {
+				$addresses[] = $address;
+			}
+		}
+
+		$fallback = array() === $addresses ? gethostbynamel( $host ) : false;
+
+		return false === $fallback ? $addresses : $fallback;
 	}
 
 	/**

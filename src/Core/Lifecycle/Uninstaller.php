@@ -115,6 +115,22 @@ final class Uninstaller {
 	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize', 'merchboard_youtube_terms_accepted' );
 
 	/**
+	 * Attachment meta keys of the alerts' files: the sounds and images of
+	 * creators, the libraries and the global overlay (the OWNER_META and
+	 * LIBRARY_META of Modules\Alerts\Sounds, Images and GlobalOverlay; a test
+	 * keeps them equal).
+	 */
+	public const ALERT_MEDIA_META_KEYS = array( '_merchboard_alert_sound_creator', '_merchboard_alert_sound_library', '_merchboard_alert_sound_global', '_merchboard_alert_image_creator', '_merchboard_alert_image_library', '_merchboard_alert_image_global' );
+
+	/**
+	 * Marker of a file the MerchAlert import took over
+	 * (Modules\Alerts\Import\MerchAlertImporter::IMPORTED_META): MerchAlert's
+	 * own file, never deleted; MerchAlert's sound owner meta
+	 * (`_ccmerch_audio_creator_id`) counts the same.
+	 */
+	public const ALERT_IMPORTED_META = '_merchboard_alert_imported';
+
+	/**
 	 * The status of a pending payout (Modules\WooCommerce\Payouts\PayoutStatus::Pending;
 	 * a test keeps both equal, so core does not depend on the module).
 	 */
@@ -178,6 +194,8 @@ final class Uninstaller {
 		$this->remove_from_roles();
 		$this->remove_product_meta();
 		$this->remove_order_meta();
+		$this->remove_alert_media();
+		ScheduledJobs::cancel_alert_jobs();
 
 		if ( ! $this->archive_creators() ) {
 			// Nothing is dropped; the opt-in survives so a later uninstall can finish.
@@ -321,6 +339,46 @@ final class Uninstaller {
 	private function remove_user_meta(): void {
 		foreach ( self::USER_META_KEYS as $key ) {
 			delete_metadata( 'user', 0, $key, '', true );
+		}
+	}
+
+	/**
+	 * Deletes the files the alerts uploaded (sounds and images of creators,
+	 * the libraries and the global overlay; 25.13 review). A file the
+	 * MerchAlert import took over is MerchAlert's and stays; only the
+	 * plugin's meta is removed from it. Idempotent.
+	 */
+	private function remove_alert_media(): void {
+		$marked = array( 'relation' => 'OR' );
+
+		foreach ( self::ALERT_MEDIA_META_KEYS as $key ) {
+			$marked[] = array(
+				'key'     => $key,
+				'compare' => 'EXISTS',
+			);
+		}
+
+		$ids = get_posts(
+			array(
+				'post_type'        => 'attachment',
+				'post_status'      => 'any',
+				'numberposts'      => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => $marked, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- One-time uninstall.
+			)
+		);
+
+		foreach ( $ids as $id ) {
+			$id = (int) $id;
+
+			if ( '' === (string) get_post_meta( $id, self::ALERT_IMPORTED_META, true ) && '' === (string) get_post_meta( $id, '_ccmerch_audio_creator_id', true ) ) {
+				wp_delete_attachment( $id, true );
+			}
+		}
+
+		foreach ( array_merge( self::ALERT_MEDIA_META_KEYS, array( self::ALERT_IMPORTED_META ) ) as $key ) {
+			delete_post_meta_by_key( $key );
 		}
 	}
 

@@ -36,6 +36,7 @@ class ChatbotException extends RuntimeException {
 	public const TERMS_REQUIRED      = 'terms_required';
 	public const QUOTA_EXCEEDED      = 'quota_exceeded';
 	public const LIVE_NOT_ALLOWED    = 'live_not_allowed';
+	public const TOO_MANY            = 'too_many_tests';
 
 	/**
 	 * The platform in technical messages.

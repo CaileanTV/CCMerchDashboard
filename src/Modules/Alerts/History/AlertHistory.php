@@ -128,18 +128,13 @@ final class AlertHistory {
 	 *
 	 * @param int $creator_id Creator.
 	 * @param int $alert_id   Alert id.
-	 * @return int|null Alerts sent (0 when it is not the creator's alert); null before the overlay is set up.
+	 * @return int|null Alerts sent (0 when it is not the creator's alert); null when it reached nothing (no overlay, chatbot, API or webhook).
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function resend_alert( int $creator_id, int $alert_id ): ?int {
 		$event = $this->events->find_for_creator( $creator_id, $alert_id );
-		$sent  = $this->resend( $creator_id, null === $event ? array() : array( $event ) );
 
-		if ( null !== $event && null !== $sent ) {
-			$this->chat?->resend( $creator_id, $event->order_id, $event->order_item_id );
-		}
-
-		return $sent;
+		return null === $event ? 0 : $this->resend( $creator_id, array( $event ), $event->order_id, $event->order_item_id );
 	}
 
 	/**
@@ -147,17 +142,13 @@ final class AlertHistory {
 	 *
 	 * @param int $creator_id Creator.
 	 * @param int $order_id   Order.
-	 * @return int|null Alerts sent (0 when the order has none of the creator's); null before the overlay is set up.
+	 * @return int|null Alerts sent (0 when the order has none of the creator's); null when it reached nothing (no overlay, chatbot, API or webhook).
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function resend_order( int $creator_id, int $order_id ): ?int {
-		$sent = $this->resend( $creator_id, $this->events->for_creator_orders( $creator_id, array( $order_id ) ) );
+		$events = $this->events->for_creator_orders( $creator_id, array( $order_id ) );
 
-		if ( null !== $sent && $sent > 0 ) {
-			$this->chat?->resend( $creator_id, $order_id );
-		}
-
-		return $sent;
+		return array() === $events ? 0 : $this->resend( $creator_id, $events, $order_id, 0 );
 	}
 
 	/**
@@ -181,30 +172,32 @@ final class AlertHistory {
 	}
 
 	/**
-	 * Queues alerts for the creator's overlay.
+	 * Sends alerts again on each of the creator's channels on its own: the
+	 * overlay, the API, the webhooks and the chatbot (a creator without an
+	 * overlay still resends to the others; 25.13 review).
 	 *
-	 * @phpstan-param list<AlertEvent> $events
+	 * @phpstan-param non-empty-list<AlertEvent> $events
 	 *
-	 * @param int          $creator_id Creator.
-	 * @param AlertEvent[] $events     The creator's alerts.
-	 * @return int|null Alerts sent; null before the overlay is set up.
+	 * @param int          $creator_id    Creator.
+	 * @param AlertEvent[] $events        The creator's alerts.
+	 * @param int          $order_id      Their order.
+	 * @param int          $order_item_id One line; 0 for all of the order.
+	 * @return int|null Alerts sent; null when no channel is set up.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
-	private function resend( int $creator_id, array $events ): ?int {
-		$this->api?->resend( $creator_id, $events );
-		$this->webhooks?->resend( $creator_id, $events );
+	private function resend( int $creator_id, array $events, int $order_id, int $order_item_id ): ?int {
+		$overlay  = $this->overlays->find_for_creator( $creator_id );
+		$api      = $this->api?->resend( $creator_id, $events ) ?? 0;
+		$webhooks = $this->webhooks?->resend( $creator_id, $events ) ?? 0;
+		$chat     = $this->chat?->resend( $creator_id, $order_id, $order_item_id ) ?? false;
 
-		$overlay = $this->overlays->find_for_creator( $creator_id );
-
-		if ( null === $overlay ) {
-			return null;
+		if ( null !== $overlay ) {
+			foreach ( $events as $event ) {
+				$this->queue->push( $overlay->id, $this->render( $overlay, $event ) );
+			}
 		}
 
-		foreach ( $events as $event ) {
-			$this->queue->push( $overlay->id, $this->render( $overlay, $event ) );
-		}
-
-		return count( $events );
+		return null !== $overlay || $api > 0 || $webhooks > 0 || $chat ? count( $events ) : null;
 	}
 
 	/**

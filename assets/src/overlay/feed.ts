@@ -204,6 +204,57 @@ export function feedUrl(
 	return url.toString();
 }
 
+/** How long a cursor carried over a reload stays valid (ms). */
+export const RELOAD_CURSOR_TTL = 60000;
+
+/** Query parameters that carry the cursor over a reload. */
+const AFTER_PARAM = 'merchboard_after';
+const AT_PARAM = 'merchboard_at';
+
+/**
+ * The page's address for the reload after a settings change: it carries the
+ * cursor, so alerts recorded while the page reloads are still shown (25.13
+ * review). In the address, not in browser storage (docs/SECURITY.md).
+ *
+ * @param href   The page's address.
+ * @param cursor Cursor before the reload.
+ * @param now    Current time (ms).
+ */
+export function reloadUrl( href: string, cursor: number, now: number ): string {
+	const url = new URL( href );
+	url.searchParams.set( AFTER_PARAM, String( cursor ) );
+	url.searchParams.set( AT_PARAM, String( now ) );
+
+	return url.toString();
+}
+
+/**
+ * The cursor carried over a reload and the address without it; the cursor
+ * is null when there is none or it is older than RELOAD_CURSOR_TTL (a later
+ * refresh or a new OBS session never replays old alerts).
+ *
+ * @param href The page's address.
+ * @param now  Current time (ms).
+ */
+export function takeCursor(
+	href: string,
+	now: number
+): { cursor: number | null; href: string } {
+	const url = new URL( href );
+	const after = url.searchParams.get( AFTER_PARAM );
+	const at = Number( url.searchParams.get( AT_PARAM ) );
+	url.searchParams.delete( AFTER_PARAM );
+	url.searchParams.delete( AT_PARAM );
+	const cursor =
+		after !== null && /^\d{1,15}$/.test( after ) ? Number( after ) : null;
+	const fresh =
+		Number.isSafeInteger( at ) &&
+		now - at >= 0 &&
+		now - at <= RELOAD_CURSOR_TTL;
+
+	return { cursor: fresh ? cursor : null, href: url.toString() };
+}
+
 /**
  * Wait before retry `attempt` (0, 1, …): 1 s, 2 s, 4 s … up to MAX_BACKOFF.
  *

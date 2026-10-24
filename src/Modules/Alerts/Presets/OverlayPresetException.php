@@ -34,6 +34,11 @@ final class OverlayPresetException extends DomainException {
 	public const INVALID_NAME = 'invalid_name';
 
 	/**
+	 * The current user lacks `merchboard_manage_alerts`.
+	 */
+	public const NOT_AUTHORIZED = 'not_authorized';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the constants.

@@ -63,6 +63,7 @@ use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegalDefaults;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
+use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Rest\ChatbotChatController;
 use MerchBoard\Modules\Alerts\Rest\KickController;
 use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
@@ -538,6 +539,7 @@ final class ChatbotTest extends IntegrationTestCase {
 				),
 			)
 		);
+		$this->as_admin();
 		self::assertSame( 1, $this->subscriptions->subscribe_all() );
 		self::assertSame( array( 'sub-1', 'enabled' ), array( $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_id, $this->channels->find( $nova, ChatPlatform::Twitch )->subscription_status ) );
 
@@ -858,6 +860,15 @@ final class ChatbotTest extends IntegrationTestCase {
 			),
 			$test->get_data()
 		);
+
+		// At most TESTS_PER_MINUTE tests per creator (25.13 review).
+		for ( $i = 1; $i < CreatorChatbot::TESTS_PER_MINUTE; $i++ ) {
+			self::assertSame( 200, $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/test' )->get_status() );
+		}
+
+		$refused = $this->call( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/test' );
+		self::assertSame( array( 429, 'merchboard_too_many_requests' ), array( $refused->get_status(), $refused->get_data()['code'] ?? null ) );
+		self::assertCount( CreatorChatbot::TESTS_PER_MINUTE, $this->sent() );
 
 		$saved = $this->call(
 			'PATCH',
@@ -2447,7 +2458,7 @@ final class ChatbotTest extends IntegrationTestCase {
 	 */
 	private function routes(): void {
 		$logger         = $this->service( Logger::class );
-		$creator        = new CreatorChatbot( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->youtube_terms );
+		$creator        = new CreatorChatbot( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->subscriptions, $this->sender, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->youtube_terms, new OverlayRateLimiter( null, 'merchboard_test_chat_' . wp_generate_password( 8, false ) . '_', CreatorChatbot::TESTS_PER_MINUTE ) );
 		$me             = new MeChatbotController( $this->service( CreatorContext::class ), $creator, $this->oauth, $this->kick_oauth, $this->youtube_oauth, $logger );
 		$chat           = new ChatbotChatController( $this->channels, $this->chat, $logger );
 		$kick           = new KickController( $this->kick_oauth, new KickWebhookVerifier( $this->kick_api ), $this->channels, $this->chat, $logger );

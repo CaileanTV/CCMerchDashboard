@@ -118,6 +118,38 @@ function refusal( error: ApiError, maxWebhooks: number ): string | null {
 }
 
 /**
+ * A failed delivery's reason code in words; null for other errors.
+ *
+ * @param code Reason code from the server.
+ */
+function failureReason( code: string ): string | null {
+	switch ( code ) {
+		case 'blocked_address':
+			return __(
+				'Failed: the address leads to a private or reserved network.',
+				'merchboard'
+			);
+		case 'unreachable':
+			return __(
+				'Failed: the receiver could not be reached.',
+				'merchboard'
+			);
+		case 'timeout':
+			return __(
+				'Failed: the receiver did not answer in time.',
+				'merchboard'
+			);
+		case 'unreadable':
+			return __(
+				'Failed: the address can no longer be read. Add the webhook again.',
+				'merchboard'
+			);
+		default:
+			return null;
+	}
+}
+
+/**
  * A delivery's outcome in words.
  *
  * @param delivery Delivery.
@@ -135,6 +167,14 @@ export function deliveryOutcome( delivery: WebhookDeliveryItem ): string {
 		case 'skipped':
 			return __( 'Not sent (switched off)', 'merchboard' );
 		default:
+			if ( delivery.httpStatus === null && delivery.error !== null ) {
+				const reason = failureReason( delivery.error );
+
+				if ( reason !== null ) {
+					return reason;
+				}
+			}
+
 			return delivery.httpStatus === null
 				? sprintf(
 						/* translators: %s: the error, e.g. "http_request_failed: …". */

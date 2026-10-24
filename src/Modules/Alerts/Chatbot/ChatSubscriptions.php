@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Chatbot;
 
+use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Database\DatabaseException;
 
 defined( 'ABSPATH' ) || exit;
@@ -90,8 +91,11 @@ final class ChatSubscriptions {
 	 * @param ChatPlatform|null $platform Only this platform; null for all.
 	 * @return int Channels subscribed.
 	 * @throws DatabaseException When the channels cannot be read or a status stored.
+	 * @throws ChatbotException When the current user lacks the alerts capability.
 	 */
 	public function subscribe_all( ?ChatPlatform $platform = null ): int {
+		self::authorize();
+
 		$count = 0;
 
 		foreach ( $this->channels->connected( $platform ) as $channel ) {
@@ -101,5 +105,16 @@ final class ChatSubscriptions {
 		}
 
 		return $count;
+	}
+
+	/**
+	 * Requires the alerts capability (independent of the UI).
+	 *
+	 * @throws ChatbotException When the current user lacks it.
+	 */
+	private static function authorize(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			throw new ChatbotException( ChatbotException::NOT_AUTHORIZED );
+		}
 	}
 }

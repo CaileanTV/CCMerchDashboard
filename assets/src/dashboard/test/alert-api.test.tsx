@@ -5,6 +5,7 @@ import { parseAlertApi } from '../api/alertApi';
 import { ConfigContext } from '../app/config-context';
 import { AlertsApiSection } from '../sections/alerts/AlertsApiSection';
 import { AlertsWebhooksSection } from '../sections/alerts/AlertsWebhooksSection';
+import { deliveryOutcome } from '../sections/alerts/WebhooksCard';
 import { mockApi, response } from '../testing/api';
 import { CONFIG, click, flush, render } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
@@ -482,5 +483,33 @@ describe( 'alert API page', () => {
 			( button( 'Switch on' ) as HTMLButtonElement | null )?.disabled
 		).toBe( true );
 		expect( button( 'Delete' ) ).not.toBeNull();
+	} );
+} );
+
+describe( 'deliveryOutcome', () => {
+	const failed = ( error: string | null, httpStatus: number | null = null ) =>
+		deliveryOutcome( {
+			id: 1,
+			webhookId: 4,
+			eventId: 'evt_0123',
+			kind: 'purchase',
+			status: 'failed',
+			httpStatus,
+			error,
+			createdAt: '2026-10-24T10:05:00+00:00',
+		} );
+
+	it( 'explains the reason codes and shows the HTTP status', () => {
+		expect( failed( 'blocked_address' ) ).toBe(
+			'Failed: the address leads to a private or reserved network.'
+		);
+		expect( failed( 'timeout' ) ).toBe(
+			'Failed: the receiver did not answer in time.'
+		);
+		expect( failed( 'unreachable' ) ).toBe(
+			'Failed: the receiver could not be reached.'
+		);
+		expect( failed( 'http_500', 500 ) ).toBe( 'Failed (500)' );
+		expect( failed( 'other' ) ).toBe( 'Failed: other' );
 	} );
 } );

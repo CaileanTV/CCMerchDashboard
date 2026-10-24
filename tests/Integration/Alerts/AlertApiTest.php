@@ -128,6 +128,8 @@ final class AlertApiTest extends IntegrationTestCase {
 		}
 
 		delete_option( AlertApiSwitch::OPTION );
+		// setUp switched alerts on; later tests expect the default.
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -310,7 +312,7 @@ final class AlertApiTest extends IntegrationTestCase {
 		self::assertSame( array( 'sent' => 2 ), $this->data( $this->call( 'POST', '/merchboard/v1/me/alerts/api/test' ) ) );
 
 		$history = new AlertHistory( $this->events, new AlertOverlayRepository( $this->wpdb ), new OverlayFeed( new AlertOverlayRepository( $this->wpdb ), $this->events, new CreatorRepository( $this->wpdb ), new AlertTemplate( static fn(): ?string => null ), static fn(): string => '', static function (): void {}, new OverlayTestQueue() ), new OverlayTestQueue(), null, $this->feed );
-		self::assertNull( $history->resend_alert( $this->creator, $alert ), 'No overlay; the bots get it anyway.' );
+		self::assertSame( 1, $history->resend_alert( $this->creator, $alert ), 'No overlay: the bots get it, and it counts as resent (25.13 review).' );
 
 		$data = $this->data( $this->poll( $first, $alert ) );
 		self::assertSame( $alert, $data['cursor'], 'Tests and resends never move the cursor.' );

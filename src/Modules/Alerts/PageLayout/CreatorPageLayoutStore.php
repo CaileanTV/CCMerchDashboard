@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\PageLayout;
 
+use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Alerts\AlertSettingsException;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
@@ -51,9 +53,11 @@ final class CreatorPageLayoutStore {
 	 * Saves a setup (normalized); audited when it changes.
 	 *
 	 * @param mixed $values Submitted setup.
-	 * @throws DatabaseException When it cannot be stored.
+	 * @throws DatabaseException When it cannot be stored (or AlertSettingsException without the alerts capability).
 	 */
 	public function save( mixed $values ): CreatorPageLayout {
+		self::authorize();
+
 		$layout = CreatorPageLayout::from_array( $values );
 
 		if ( $layout->to_array() === $this->get()->to_array() ) {
@@ -75,8 +79,11 @@ final class CreatorPageLayoutStore {
 	 * Goes back to the default setup; audited when there was another.
 	 *
 	 * @throws DatabaseException When it cannot be stored.
+	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
 	public function reset(): CreatorPageLayout {
+		self::authorize();
+
 		wp_cache_delete( self::OPTION, 'options' );
 
 		if ( null !== get_option( self::OPTION, null ) ) {
@@ -85,5 +92,16 @@ final class CreatorPageLayoutStore {
 		}
 
 		return CreatorPageLayout::defaults();
+	}
+
+	/**
+	 * Requires the alerts capability (independent of the UI).
+	 *
+	 * @throws AlertSettingsException When the current user lacks it.
+	 */
+	private static function authorize(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			throw new AlertSettingsException( AlertSettingsException::NOT_AUTHORIZED );
+		}
 	}
 }

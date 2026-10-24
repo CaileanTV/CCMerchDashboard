@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Import;
 
+use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
@@ -55,6 +56,12 @@ defined( 'ABSPATH' ) || exit;
 class MerchAlertImporter {
 
 	/**
+	 * Marker of a MerchAlert file the import took over: it stays MerchAlert's
+	 * and is never deleted on uninstall (25.13 review).
+	 */
+	public const IMPORTED_META = '_merchboard_alert_imported';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param MerchAlertImportPlan     $plan         The dry run.
@@ -93,8 +100,11 @@ class MerchAlertImporter {
 	 *
 	 * @throws MerchAlertImportException When MerchAlert is active or has no data.
 	 * @throws DatabaseException When the database cannot be read.
+	 * @throws MerchAlertImportException When the current user lacks the alerts capability.
 	 */
 	public function preview(): MerchAlertImportReport {
+		self::authorize();
+
 		$this->preview_check();
 
 		return $this->plan->build();
@@ -133,8 +143,11 @@ class MerchAlertImporter {
 	 * @return array{creators: int, events: int, messages: int} What was added.
 	 * @throws MerchAlertImportException When refused.
 	 * @throws DatabaseException When it cannot be stored (the creator's transaction is rolled back).
+	 * @throws MerchAlertImportException When the current user lacks the alerts capability.
 	 */
 	public function run( string $fingerprint ): array {
+		self::authorize();
+
 		$report = $this->preview();
 
 		if ( ! hash_equals( $report->fingerprint(), $fingerprint ) ) {
@@ -173,16 +186,20 @@ class MerchAlertImporter {
 			$this->import_once( $report );
 		}
 
-		// Marks the first import (settings, fonts, global overlay) and shows the last run.
-		update_option(
-			MerchAlertImportPlan::MARKER_OPTION,
-			array(
-				'completed_at' => gmdate( 'Y-m-d H:i:s' ),
-				'last'         => $added,
-			),
-			false
+		// Marks the first import (settings, fonts, global overlay) and shows the last run; together with its audit record (25.13 review).
+		$this->transaction->run(
+			function () use ( $added, $report ): void {
+				update_option(
+					MerchAlertImportPlan::MARKER_OPTION,
+					array(
+						'completed_at' => gmdate( 'Y-m-d H:i:s' ),
+						'last'         => $added,
+					),
+					false
+				);
+				$this->audit->record( AuditAction::AlertImportCompleted, null, array_merge( $report->audit_context(), array( 'added_events' => $added['events'] ) ) );
+			}
 		);
-		$this->audit->record( AuditAction::AlertImportCompleted, null, array_merge( $report->audit_context(), array( 'added_events' => $added['events'] ) ) );
 
 		return $added;
 	}
@@ -210,6 +227,7 @@ class MerchAlertImporter {
 
 			foreach ( $sounds as $sound ) {
 				update_post_meta( $sound, AlertSounds::OWNER_META, (string) $creator_id );
+				update_post_meta( $sound, self::IMPORTED_META, '1' );
 			}
 
 			$chatbot = $this->source->chatbot( $creator['id'] );
@@ -238,7 +256,7 @@ class MerchAlertImporter {
 			$order = $orders[ $row['order_id'] ];
 			$event = MerchAlertMapping::event( $row, $creator_id, $order, MerchAlertMapping::creator_total( $lines[ $row['order_id'] ] ?? array(), $order ) );
 
-			if ( null !== $event && $this->events->insert( $event ) ) {
+			if ( null !== $event && $this->events->insert( $event, true ) ) {
 				++$events;
 			}
 		}
@@ -316,6 +334,7 @@ class MerchAlertImporter {
 
 			foreach ( $sounds as $sound ) {
 				update_post_meta( $sound, GlobalOverlaySounds::OWNER_META, '1' );
+				update_post_meta( $sound, self::IMPORTED_META, '1' );
 			}
 
 			$this->global_overlays->import( $stored['overlay_id'], $settings );
@@ -329,5 +348,16 @@ class MerchAlertImporter {
 	 */
 	private function order( int $order_id ): ?PaidOrder {
 		return $order_id > 0 ? $this->orders->read( $order_id ) : null;
+	}
+
+	/**
+	 * Requires the alerts capability (independent of the UI).
+	 *
+	 * @throws MerchAlertImportException When the current user lacks it.
+	 */
+	private static function authorize(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
+			throw new MerchAlertImportException( MerchAlertImportException::NOT_AUTHORIZED );
+		}
 	}
 }

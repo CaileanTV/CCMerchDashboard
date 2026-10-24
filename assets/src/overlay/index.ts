@@ -3,7 +3,8 @@
  * long-polls the feed and shows the alerts. Falls back to a request every
  * five seconds when long-polls time out (a proxy that buffers them), backs
  * off after errors, retries at once when OBS shows the scene again, and
- * reloads the page when the overlay settings change.
+ * reloads the page when the overlay settings change (keeping its cursor, so
+ * no purchase is missed meanwhile).
  */
 import './overlay.css';
 import './animations.css';
@@ -15,7 +16,9 @@ import {
 	backoff,
 	feedUrl,
 	parseAnswer,
+	takeCursor,
 	parseConfig,
+	reloadUrl,
 	type OverlayConfig,
 } from './feed';
 import { AlertPlayer } from './player';
@@ -53,7 +56,13 @@ async function run(
 	config: OverlayConfig,
 	player: AlertPlayer
 ): Promise< void > {
-	let cursor: number | null = null;
+	const carried = takeCursor( window.location.href, Date.now() );
+	let cursor = carried.cursor;
+
+	// A later refresh starts from the newest alert again.
+	if ( carried.href !== window.location.href ) {
+		window.history.replaceState( null, '', carried.href );
+	}
 	let attempt = 0;
 	let longPoll = true;
 
@@ -77,7 +86,15 @@ async function run(
 			}
 
 			if ( answer.version !== config.version ) {
-				window.location.reload();
+				// The new page goes on from here; this answer's alerts follow after the reload.
+				if ( cursor === null ) {
+					window.location.reload();
+				} else {
+					window.location.replace(
+						reloadUrl( window.location.href, cursor, Date.now() )
+					);
+				}
+
 				return;
 			}
 

@@ -34,6 +34,14 @@ final class ScheduledJobs {
 	public const SALES_BACKFILL_HOOK = 'merchboard_sales_backfill';
 
 	/**
+	 * Action Scheduler hooks of the alerts' chat messages and webhook
+	 * deliveries (Modules\Alerts\Chatbot\ChatSender::HOOK and
+	 * Modules\Alerts\Webhooks\WebhookDispatcher::HOOK; a test keeps them
+	 * equal). Cancelled on uninstall with the opt-in (25.13 review).
+	 */
+	public const ALERT_HOOKS = array( 'merchboard_alert_chat_send', 'merchboard_alert_webhook_send' );
+
+	/**
 	 * Cancels the pending backfill pages; never throws.
 	 */
 	public static function cancel_sales_backfill(): void {
@@ -45,6 +53,23 @@ final class ScheduledJobs {
 			as_unschedule_all_actions( self::SALES_BACKFILL_HOOK );
 		} catch ( Throwable ) {
 			return;
+		}
+	}
+
+	/**
+	 * Cancels the pending chat messages and webhook deliveries; never throws.
+	 */
+	public static function cancel_alert_jobs(): void {
+		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
+			return;
+		}
+
+		foreach ( self::ALERT_HOOKS as $hook ) {
+			try {
+				as_unschedule_all_actions( $hook );
+			} catch ( Throwable ) {
+				continue;
+			}
 		}
 	}
 }

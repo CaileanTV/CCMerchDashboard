@@ -46,15 +46,16 @@ final class AlertEventRepository {
 	/**
 	 * Stores an alert unless the line already has one for the creator.
 	 *
-	 * @param AlertEvent $event Alert.
+	 * @param AlertEvent $event    Alert.
+	 * @param bool       $imported Whether the MerchAlert import adds it (the live feeds skip it).
 	 * @return bool True when it was stored, false when it existed (kept unchanged).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function insert( AlertEvent $event ): bool {
+	public function insert( AlertEvent $event, bool $imported = false ): bool {
 		$wpdb = $this->wpdb;
 		$sql  = $wpdb->prepare(
-			'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, line_total, creator_total, currency, image_id, category_ids, customer_username, created_at)
-			VALUES (%d, %d, %s, %d, %d, %d, %s, %s, %d, NULLIF(%s, \'\'), NULLIF(%s, \'\'), %s, %d, %s, %s, %s)
+			'INSERT INTO %i (creator_id, order_id, order_number, order_item_id, product_id, variation_id, product_name, variation, quantity, line_total, creator_total, currency, image_id, category_ids, customer_username, imported, created_at)
+			VALUES (%d, %d, %s, %d, %d, %d, %s, %s, %d, NULLIF(%s, \'\'), NULLIF(%s, \'\'), %s, %d, %s, %s, %d, %s)
 			ON DUPLICATE KEY UPDATE id = id',
 			$this->table(),
 			$event->creator_id,
@@ -72,6 +73,7 @@ final class AlertEventRepository {
 			$event->image_id,
 			self::categories( $event->category_ids ),
 			self::cut( $event->customer_username, 191 ),
+			$imported ? 1 : 0,
 			$event->created_at->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' )
 		);
 
@@ -315,6 +317,7 @@ final class AlertEventRepository {
 	/**
 	 * The creator's alerts after a cursor (row id), oldest first. Ids grow
 	 * with every insert, so a cursor never skips or repeats an alert.
+	 * Imported alerts are not live purchases and are skipped (migration 29).
 	 *
 	 * @param int $creator_id Creator.
 	 * @param int $after_id   Cursor: the last id already delivered.
@@ -325,7 +328,7 @@ final class AlertEventRepository {
 	 */
 	public function after( int $creator_id, int $after_id, int $limit ): array {
 		$wpdb = $this->wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id = %d AND id > %d ORDER BY id LIMIT %d', $this->table(), $creator_id, max( 0, $after_id ), max( 1, min( 50, $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id = %d AND id > %d AND imported = 0 ORDER BY id LIMIT %d', $this->table(), $creator_id, max( 0, $after_id ), max( 1, min( 50, $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
 
 		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the alerts.' );
@@ -354,7 +357,7 @@ final class AlertEventRepository {
 
 	/**
 	 * Every creator's alerts after a cursor (row id), oldest first: the
-	 * global overlay's feed (step 25.9.4).
+	 * global overlay's feed (step 25.9.4). Imported alerts are skipped.
 	 *
 	 * @param int $after_id Cursor: the last id already delivered.
 	 * @param int $limit    At most this many (1–50).
@@ -364,7 +367,7 @@ final class AlertEventRepository {
 	 */
 	public function after_all( int $after_id, int $limit ): array {
 		$wpdb = $this->wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE id > %d ORDER BY id LIMIT %d', $this->table(), max( 0, $after_id ), max( 1, min( 50, $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE id > %d AND imported = 0 ORDER BY id LIMIT %d', $this->table(), max( 0, $after_id ), max( 1, min( 50, $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Constant column list; values are prepared.
 
 		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the alerts.' );
