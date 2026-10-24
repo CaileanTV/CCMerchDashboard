@@ -131,7 +131,9 @@ class WebhookPayloads {
 			$template = 'order' === $mode ? ChatbotChannel::DEFAULT_ORDER_TEMPLATE : ChatbotChannel::DEFAULT_TEMPLATE;
 		}
 
-		$text = 'order' === $mode
+		// The customer types the username: Discord must show it as text, never as a link or formatting (25.13 review).
+		$events = array_map( self::escaped( ... ), $events );
+		$text   = 'order' === $mode
 			? $this->messages->order( $template, $events, $format )
 			: implode( "\n", array_map( fn( AlertEvent $event ): string => $this->messages->line( $template, $event ), $events ) );
 
@@ -147,6 +149,36 @@ class WebhookPayloads {
 				'allowed_mentions' => array( 'parse' => array() ),
 			),
 			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		);
+	}
+
+	/**
+	 * An alert with Discord's markdown in the customer's username escaped
+	 * (e.g. `[Free](https://…)` is shown as typed, not as a link).
+	 *
+	 * @param AlertEvent $event Alert.
+	 */
+	private static function escaped( AlertEvent $event ): AlertEvent {
+		$username = (string) preg_replace( '/([\\\\*_~`|>\[\]()#:<-])/u', '\\\\$1', $event->customer_username );
+
+		return new AlertEvent(
+			$event->creator_id,
+			$event->order_id,
+			$event->order_number,
+			$event->order_item_id,
+			$event->product_id,
+			$event->variation_id,
+			$event->product_name,
+			$event->variation,
+			$event->quantity,
+			$event->image_id,
+			$event->category_ids,
+			$username,
+			$event->created_at,
+			$event->id,
+			$event->line_total,
+			$event->creator_total,
+			$event->currency
 		);
 	}
 

@@ -245,7 +245,12 @@ export function WebhooksCard( {
 		}
 
 		onChange( answer.data );
-		setShownSecret( answer.data.secret ?? null );
+
+		// Only a new secret replaces the shown one; another action (e.g. a test) keeps it until it is closed.
+		if ( answer.data.secret ) {
+			setShownSecret( answer.data.secret );
+		}
+
 		done?.( answer.data );
 	};
 

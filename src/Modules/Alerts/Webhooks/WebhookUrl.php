@@ -64,7 +64,8 @@ final class WebhookUrl {
 		return array(
 			'url'  => $url,
 			'host' => $host,
-			'hint' => mb_substr( $host, 0, 19 ) . '…' . substr( $url, -4 ),
+			// A Discord address ends in its token: never part of the hint (25.13 review).
+			'hint' => mb_substr( $host, 0, 19 ) . '…' . ( AlertWebhook::DISCORD === $format ? '' : substr( $url, -4 ) ),
 		);
 	}
 

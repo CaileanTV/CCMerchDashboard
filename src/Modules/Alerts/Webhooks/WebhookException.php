@@ -30,6 +30,7 @@ final class WebhookException extends RuntimeException {
 	public const LIMIT                  = 'webhook_limit';
 	public const UNKNOWN                = 'unknown_webhook';
 	public const NO_ACCESS              = 'no_access';
+	public const TOO_MANY               = 'too_many_tests';
 
 	/**
 	 * Constructor.

@@ -229,6 +229,8 @@ final class AlertApiTest extends IntegrationTestCase {
 		$request = new WP_REST_Request( 'GET', '/merchboard/v1/alerts/api/events' );
 		$request->set_header( AlertApiFeedController::KEY_HEADER, $key );
 		self::assertSame( 200, rest_do_request( $request )->get_status(), 'The fallback header.' );
+		$request->set_header( 'Authorization', 'Basic ' . base64_encode( 'site:password' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A Basic auth header.
+		self::assertSame( 200, rest_do_request( $request )->get_status(), 'The fallback header also behind Basic auth.' );
 
 		wp_set_current_user( 1 );
 		$this->service( CreatorService::class )->set_status( $this->creator, CreatorStatus::Inactive );

@@ -90,6 +90,18 @@ class WebhookDeliveryRepository {
 	}
 
 	/**
+	 * Whether a webhook already has a delivery of an event (a purchase's id
+	 * is stable, so a second status change of the order is not sent again).
+	 *
+	 * @param int    $webhook_id Webhook.
+	 * @param string $event_id   Event id.
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	public function has_event( int $webhook_id, string $event_id ): bool {
+		return array() !== $this->rows( 'SELECT id FROM %i WHERE webhook_id = %d AND event_id = %s LIMIT 1', $this->table(), $webhook_id, $event_id );
+	}
+
+	/**
 	 * A creator's newest deliveries.
 	 *
 	 * @param int $creator_id Creator.
@@ -143,7 +155,8 @@ class WebhookDeliveryRepository {
 			return;
 		}
 
-		$sql = $wpdb->prepare( 'DELETE FROM %i WHERE webhook_id = %d AND id < %d', $this->table(), $webhook_id, (int) $keep );
+		// Never a delivery that is still waiting for its job (25.13 review).
+		$sql = $wpdb->prepare( 'DELETE FROM %i WHERE webhook_id = %d AND id < %d AND status <> %s', $this->table(), $webhook_id, (int) $keep, WebhookDelivery::PENDING );
 
 		if ( null === $sql || false === $wpdb->query( $sql ) || '' !== $wpdb->last_error ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; a custom table.
 			throw new DatabaseException( 'Could not drop old webhook deliveries.' );

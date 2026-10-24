@@ -100,8 +100,13 @@ final class AlertApiFeedController extends RestController {
 				}
 
 				$header = (string) $request->get_header( 'authorization' );
-				$header = '' !== $header ? $header : 'Bearer ' . (string) $request->get_header( self::KEY_HEADER );
-				$key    = $this->keys->authenticate( $header );
+				$custom = (string) $request->get_header( self::KEY_HEADER );
+
+				// A site behind Basic auth uses Authorization itself: the key then comes in X-MerchBoard-Key (25.13 review).
+				if ( '' !== $custom && 0 !== stripos( $header, 'Bearer ' ) ) {
+					$header = 'Bearer ' . $custom;
+				}
+				$key = $this->keys->authenticate( $header );
 
 				if ( null === $key || ! $this->feed->creator_active( $key ) ) {
 					return self::error( 'merchboard_unauthorized', __( 'The API key is missing, wrong or revoked.', 'merchboard' ), 401 );

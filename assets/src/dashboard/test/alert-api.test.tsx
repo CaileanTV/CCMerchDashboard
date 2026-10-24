@@ -312,13 +312,23 @@ describe( 'alert API page', () => {
 			 )?.value
 		).toBe( SECRET );
 
-		click( button( 'I have saved it' ) );
-		expect( rendered.container.textContent ).not.toContain( SECRET );
-
 		click( button( 'Send test' ) );
 		await flush();
 		expect( requests.at( -1 )?.path ).toBe( `${ PATH }/webhooks/4/test` );
 		expect( rendered.container.textContent ).toContain( 'Delivered (204)' );
+		// The made secret stays until it is closed, also after another action.
+		expect(
+			(
+				rendered.container.querySelector(
+					'.merchboard-alert-api__key'
+				) as HTMLInputElement | null
+			 )?.value
+		).toBe( SECRET );
+
+		click( button( 'I have saved it' ) );
+		expect(
+			rendered.container.querySelector( '.merchboard-alert-api__key' )
+		).toBeNull();
 	} );
 
 	it( 'deletes a webhook only after a confirmation and offers resume when paused', async () => {

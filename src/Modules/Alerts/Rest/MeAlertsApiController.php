@@ -411,6 +411,7 @@ final class MeAlertsApiController extends RestController {
 		return match ( $e->reason() ) {
 			WebhookException::DISABLED               => self::disabled(),
 			WebhookException::NO_ACCESS              => self::no_access(),
+			WebhookException::TOO_MANY               => self::error( 'merchboard_too_many_requests', __( 'Too many tests. Please wait a minute.', 'merchboard' ), 429 ),
 			WebhookException::ENCRYPTION_UNAVAILABLE => self::error( 'merchboard_alerts_webhook_unavailable', __( 'Webhooks cannot be stored safely on this site. Ask the shop.', 'merchboard' ), 503 ),
 			WebhookException::INVALID_NAME           => $field( 'name', __( 'Give the webhook a name of at most 60 characters.', 'merchboard' ) ),
 			WebhookException::INVALID_FORMAT         => $field( 'format', __( 'Choose JSON or Discord.', 'merchboard' ) ),

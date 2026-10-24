@@ -132,7 +132,7 @@ final class YouTubeOAuth {
 		wp_set_current_user( $data['user'] );
 
 		try {
-			$result = '' !== $error || '' === $code ? ChatbotException::DENIED : $this->complete( $bot, $data['creator'], $code, $data['verifier'] );
+			$result = '' !== $error || '' === $code || ! TwitchOAuth::same_login( $data['user'] ) ? ChatbotException::DENIED : $this->complete( $bot, $data['creator'], $code, $data['verifier'] );
 		} catch ( ChatbotException $e ) {
 			$result = $e->reason();
 			$this->log_failure( $bot, $result, $e->status() );

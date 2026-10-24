@@ -117,7 +117,7 @@ final class TwitchOAuth {
 		wp_set_current_user( $data['user'] );
 
 		try {
-			$result = '' !== $error || '' === $code ? TwitchException::DENIED : $this->complete( $bot, $data['creator'], $code );
+			$result = '' !== $error || '' === $code || ! self::same_login( $data['user'] ) ? TwitchException::DENIED : $this->complete( $bot, $data['creator'], $code );
 		} catch ( TwitchException $e ) {
 			$result = $e->reason();
 		} catch ( DatabaseException ) {
@@ -129,6 +129,19 @@ final class TwitchOAuth {
 		return $bot
 			? AlertsAdminPage::url( 'chatbot', 'bot_' . $result )
 			: self::dashboard_result( ( $this->dashboard_url )( 'alerts/chatbot' ), ChatPlatform::Twitch, $result );
+	}
+
+	/**
+	 * Whether the browser that comes back from the platform is logged in as
+	 * the user who started the authorization (25.13 review). A link with
+	 * someone else's state, e.g. sent to another streamer, cannot connect
+	 * that streamer's channel to the sender's creator. Used by Twitch, Kick
+	 * and YouTube.
+	 *
+	 * @param int $user_id The user who started it.
+	 */
+	public static function same_login( int $user_id ): bool {
+		return $user_id > 0 && (int) wp_validate_auth_cookie( '', 'logged_in' ) === $user_id;
 	}
 
 	/**

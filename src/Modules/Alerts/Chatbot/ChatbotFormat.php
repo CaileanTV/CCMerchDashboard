@@ -98,9 +98,9 @@ final class ChatbotFormat {
 		$this->transaction->run(
 			function () use ( $new ): void {
 				$this->audit->record( AuditAction::AlertChatbotFormatChanged, null, array( 'mode' => $new['mode'] ) );
+				update_option( self::OPTION, $new, false );
 			}
 		);
-		update_option( self::OPTION, $new, false );
 
 		return true;
 	}

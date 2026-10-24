@@ -124,8 +124,13 @@ final class AlertOverlays {
 
 		return $this->transaction->run(
 			function () use ( $creator_id ): AlertOverlay {
-				$overlay = $this->overlays->create( $creator_id, OverlayId::generate(), OverlaySettings::defaults() );
-				$this->audit->record( AuditAction::AlertOverlayCreated, $creator_id );
+				$id      = OverlayId::generate();
+				$overlay = $this->overlays->create( $creator_id, $id, OverlaySettings::defaults() );
+
+				// A request at the same time set it up first: that one is returned and already audited.
+				if ( $overlay->overlay_id === $id ) {
+					$this->audit->record( AuditAction::AlertOverlayCreated, $creator_id );
+				}
 
 				return $overlay;
 			}

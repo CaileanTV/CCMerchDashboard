@@ -289,7 +289,8 @@ final class ChatSender {
 		}
 
 		if ( 'order' === $format['mode'] ) {
-			if ( ! $this->log->sent( $creator_id, $platform, $order_id, 0 ) ) {
+			// Sent, failed for good or skipped: a later job (e.g. after the stream started) sends nothing again.
+			if ( ! $this->log->finished( $creator_id, $platform, $order_id, 0 ) ) {
 				$this->deliver( $channel, $order_id, 0, $this->messages->order( $channel->template_for( 'order' ), $events, $format ) );
 			}
 
@@ -343,7 +344,7 @@ final class ChatSender {
 			return true;
 		}
 
-		$result   = $this->send_now( $channel, $message );
+		$result   = $this->attempt( $channel, $message );
 		$attempts = $this->log->attempts( $creator_id, $platform, $order_id, $order_item_id ) + 1;
 
 		if ( 'sent' === $result['result'] ) {
@@ -377,6 +378,45 @@ final class ChatSender {
 		}
 
 		return $final;
+	}
+
+	/**
+	 * Sends a message of an order; a platform that cannot be reached (e.g.
+	 * while renewing the token) is an outcome that is tried again, not a
+	 * dropped message (25.13 review).
+	 *
+	 * @param ChatbotChannel $channel The creator's channel.
+	 * @param string         $message Message.
+	 * @return array{result: string, reason: string, retry_after: int|null}
+	 * @throws ChatbotException When the platform is not set up or refuses the app.
+	 * @throws DatabaseException When stored tokens cannot be read or written.
+	 */
+	private function attempt( ChatbotChannel $channel, string $message ): array {
+		try {
+			return $this->send_now( $channel, $message );
+		} catch ( ChatbotException $e ) {
+			return self::unavailable( $e );
+		}
+	}
+
+	/**
+	 * The outcome of a platform that cannot be reached; any other refusal
+	 * is thrown again.
+	 *
+	 * @param ChatbotException $e The refusal.
+	 * @return array{result: string, reason: string, retry_after: int|null}
+	 * @throws ChatbotException When it is not UNAVAILABLE.
+	 */
+	private static function unavailable( ChatbotException $e ): array {
+		if ( ChatbotException::UNAVAILABLE !== $e->reason() ) {
+			throw $e;
+		}
+
+		return array(
+			'result'      => 'unavailable',
+			'reason'      => ChatbotException::UNAVAILABLE,
+			'retry_after' => null,
+		);
 	}
 
 	/**

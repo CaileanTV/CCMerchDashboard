@@ -36,6 +36,7 @@ use MerchBoard\Modules\Alerts\Overlay\AlertOverlayRepository;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
 use MerchBoard\Modules\Alerts\Overlay\AlertTemplate;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
+use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsApiController;
 use MerchBoard\Modules\Alerts\Webhooks\AlertWebhook;
@@ -92,6 +93,8 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	private int $user;
 
 	private int $creator;
+
+	private int $next_order = 2000;
 
 	/**
 	 * The requests the stub answered.
@@ -178,8 +181,9 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	 * @param AuditTrail     $audit       Audit.
 	 * @param Transaction    $transaction Transaction.
 	 * @param Logger         $logger      Log.
+	 * @param int            $tests       Tests per minute (a high limit unless the test is about it).
 	 */
-	public static function dispatcher( wpdb $wpdb, AlertApiSwitch $api, AlertWebhooks $webhooks, FakeJobQueue $queue, AuditTrail $audit, Transaction $transaction, Logger $logger ): WebhookDispatcher {
+	public static function dispatcher( wpdb $wpdb, AlertApiSwitch $api, AlertWebhooks $webhooks, FakeJobQueue $queue, AuditTrail $audit, Transaction $transaction, Logger $logger, int $tests = 1000 ): WebhookDispatcher {
 		$template = new AlertTemplate( static fn( int $term_id ): ?string => 77 === $term_id ? 'Nova merch' : null );
 		$overlays = new AlertOverlayRepository( $wpdb );
 		$events   = new AlertEventRepository( $wpdb );
@@ -197,7 +201,8 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 			$queue,
 			new AlertOverlays( $overlays, $feed, new OverlayTestQueue(), new PostMetaProductStore(), $audit, $transaction, static fn(): int => 0 ),
 			$logger,
-			static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-10-23 18:05:00', new DateTimeZone( 'UTC' ) )
+			static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-10-23 18:05:00', new DateTimeZone( 'UTC' ) ),
+			new OverlayRateLimiter( null, 'merchboard_alerts_wh_test_' . wp_generate_password( 6, false ) . '_', $tests )
 		);
 	}
 
@@ -324,12 +329,10 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		);
 		self::assertStringNotContainsString( '1500', $body, 'Never the order number.' );
 
-		// The same order again (another status change): the same event id, so the receiver drops it.
+		// The same order again (another status change, e.g. completed): not sent again (25.13 review).
 		$this->dispatcher->order_paid( 500 );
 		$this->run_jobs();
-		$again = json_decode( (string) $this->requests[1]['args']['body'], true );
-		self::assertIsArray( $again );
-		self::assertSame( $event['id'], $again['id'] );
+		self::assertCount( 1, $this->requests );
 
 		$log = $this->webhooks->for_creator( $this->creator )[0];
 		self::assertSame( 0, $log->failures );
@@ -347,17 +350,19 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 
 		$body = json_decode( (string) $this->requests[0]['args']['body'], true );
 		self::assertIsArray( $body );
-		self::assertSame( "nova_fan bought Hoodie @everyone\nnova_fan bought Mug @everyone", $body['content'], 'Line mode: the lines below each other in one message.' );
+		self::assertSame( "nova\\_fan bought Hoodie @everyone\nnova\\_fan bought Mug @everyone", $body['content'], 'Line mode: the lines below each other in one message; the name cannot format.' );
 		self::assertSame( array( 'parse' => array() ), $body['allowed_mentions'], 'Mentions never ping.' );
 		self::assertArrayNotHasKey( 'X-MerchBoard-Signature', $this->requests[0]['args']['headers'] );
 
 		update_option( ChatbotFormat::OPTION, array( 'mode' => 'order' ), false );
 		$this->webhooks->update( $this->creator, $this->webhooks->for_creator( $this->creator )[0]->id, array( 'template' => '$Name bought $Products' ) );
-		$this->dispatcher->order_paid( 600 );
+		$this->alert( $this->creator, 601, 3, 'Hoodie' );
+		$this->alert( $this->creator, 601, 4, 'Mug' );
+		$this->dispatcher->order_paid( 601 );
 		$this->run_jobs();
 		$body = json_decode( (string) $this->requests[1]['args']['body'], true );
 		self::assertIsArray( $body );
-		self::assertStringStartsWith( 'nova_fan bought ', $body['content'] );
+		self::assertStringStartsWith( 'nova\\_fan bought ', $body['content'] );
 		self::assertStringContainsString( 'Hoodie', $body['content'] );
 		self::assertStringContainsString( 'Mug', $body['content'] );
 	}
@@ -367,7 +372,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$this->alert( $this->creator, 700, 1 );
 		$this->status = 500;
 
-		$this->dispatcher->order_paid( 700 );
+		$this->dispatcher->order_paid( $this->paid_order() );
 		$this->run_jobs();
 		self::assertCount( 1, $this->requests, 'One attempt.' );
 		self::assertSame( array(), $this->queue->pending, 'No retry is queued.' );
@@ -375,19 +380,19 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertSame( array( WebhookDelivery::FAILED, 500, 'http_500' ), array( $delivery['status'], (int) $delivery['http_status'], $delivery['error'] ) );
 
 		$this->status = 0;
-		$this->dispatcher->order_paid( 700 );
+		$this->dispatcher->order_paid( $this->paid_order() );
 		$this->run_jobs();
 		self::assertStringNotContainsString( 'sparkybot', (string) $this->deliveries()[1]['error'], 'Never the address in the log.' );
 
 		$this->status = 204;
-		$this->dispatcher->order_paid( 700 );
+		$this->dispatcher->order_paid( $this->paid_order() );
 		$this->run_jobs();
 		self::assertSame( 0, $this->find( $hook->id )->failures, 'A success clears the failures.' );
 
 		$this->status = 503;
 
 		for ( $i = 1; $i <= WebhookDispatcher::PAUSE_AFTER; $i++ ) {
-			$this->dispatcher->order_paid( 700 );
+			$this->dispatcher->order_paid( $this->paid_order() );
 			$this->run_jobs();
 		}
 
@@ -396,7 +401,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertSame( WebhookDispatcher::PAUSE_AFTER, $paused->failures );
 
 		$sent = count( $this->requests );
-		$this->dispatcher->order_paid( 700 );
+		$this->dispatcher->order_paid( $this->paid_order() );
 		$this->run_jobs();
 		self::assertCount( $sent, $this->requests, 'A paused webhook gets nothing.' );
 
@@ -430,8 +435,53 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 
 		$this->queue->is_available = false;
 		$this->service( CreatorService::class )->set_status( $this->creator, CreatorStatus::Active );
-		$this->dispatcher->order_paid( 800 );
+		$this->dispatcher->order_paid( $this->paid_order() );
 		self::assertSame( 'queue_unavailable', $this->deliveries()[1]['error'], 'Without Action Scheduler it fails at once; the checkout goes on.' );
+	}
+
+	public function test_a_creator_can_send_only_a_few_tests_a_minute(): void {
+		$hook       = $this->webhooks->create( $this->creator, 'SparkyBot', AlertWebhook::JSON, self::URL, self::SECRET, '' )['webhook'];
+		$dispatcher = self::dispatcher( $this->wpdb, $this->api, $this->webhooks, $this->queue, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ), 2 );
+
+		$dispatcher->send_test( $this->creator, $hook->id );
+		$dispatcher->send_test_all( $this->creator );
+		$this->refused( fn() => $dispatcher->send_test( $this->creator, $hook->id ), WebhookException::TOO_MANY );
+		self::assertCount( 2, $this->requests, 'The refused test sends nothing.' );
+	}
+
+	public function test_a_paid_order_is_sent_once_and_pending_deliveries_are_never_pruned(): void {
+		$this->webhooks->create( $this->creator, 'Discord', AlertWebhook::DISCORD, self::DISCORD, '', '' );
+		$this->alert( $this->creator, 980, 1 );
+
+		// Processing, then completed: one Discord message (25.13 review).
+		$this->dispatcher->order_paid( 980 );
+		$this->dispatcher->order_paid( 980 );
+		self::assertCount( 1, $this->queue->queued );
+
+		// A drop of many orders before the jobs run: nothing waiting is lost.
+		for ( $order = 1001; $order <= 1000 + WebhookDeliveryRepository::KEEP + 5; $order++ ) {
+			$this->alert( $this->creator, $order, $order );
+			$this->dispatcher->order_paid( $order );
+		}
+
+		self::assertCount( WebhookDeliveryRepository::KEEP + 6, $this->deliveries(), 'Pending deliveries are kept.' );
+		$this->run_jobs();
+		self::assertCount( WebhookDeliveryRepository::KEEP + 6, $this->requests );
+	}
+
+	public function test_discord_shows_the_customers_username_as_text(): void {
+		$this->webhooks->create( $this->creator, 'Discord', AlertWebhook::DISCORD, self::DISCORD, '', '$UserName bought $Product' );
+		$this->events->insert( new AlertEvent( $this->creator, 990, '1990', 1, 70, 0, 'Hoodie', '', 1, 0, array(), '[Free](https://evil.example/x)', new DateTimeImmutable( '2026-10-23 18:00:00', new DateTimeZone( 'UTC' ) ) ) );
+
+		$this->dispatcher->order_paid( 990 );
+		$this->run_jobs();
+
+		$body = json_decode( (string) $this->requests[0]['args']['body'], true );
+		self::assertIsArray( $body );
+		self::assertSame( '\[Free\]\(https\://evil.example/x\) bought Hoodie', $body['content'] );
+
+		$hint = $this->webhooks->for_creator( $this->creator )[0]->url_hint;
+		self::assertSame( 'discord.com…', $hint, 'Never part of the token.' );
 	}
 
 	public function test_tests_and_resends_are_marked_with_new_ids(): void {
@@ -519,10 +569,11 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$this->alert( $this->creator, 950, 1 );
 
 		for ( $i = 0; $i < WebhookDeliveryRepository::KEEP + 3; $i++ ) {
-			$this->dispatcher->order_paid( 950 );
+			$this->dispatcher->order_paid( $this->paid_order() );
+			$this->run_jobs();
 		}
 
-		self::assertCount( WebhookDeliveryRepository::KEEP, $this->deliveries() );
+		self::assertCount( WebhookDeliveryRepository::KEEP, $this->deliveries(), 'Sent deliveries beyond the newest fifty are pruned.' );
 
 		$this->webhooks->delete( $this->creator, $hook->id );
 		self::assertSame( array(), $this->deliveries() );
@@ -589,6 +640,16 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$this->api->set( false );
 		wp_set_current_user( $this->user );
 		self::assertSame( 403, $this->call( 'POST', '/merchboard/v1/me/alerts/api/webhooks', array( 'name' => 'Off', 'format' => 'discord', 'url' => self::DISCORD ) )->get_status() ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short input.
+	}
+
+	/**
+	 * Another paid order of the creator: a purchase is delivered once.
+	 */
+	private function paid_order(): int {
+		$order = ++$this->next_order;
+		$this->alert( $this->creator, $order, $order );
+
+		return $order;
 	}
 
 	/**

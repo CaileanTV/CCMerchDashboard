@@ -120,7 +120,7 @@ final class KickOAuth {
 		wp_set_current_user( $data['user'] );
 
 		try {
-			$result = '' !== $error || '' === $code ? KickException::DENIED : $this->complete( $data['creator'], $code, $data['verifier'] );
+			$result = '' !== $error || '' === $code || ! TwitchOAuth::same_login( $data['user'] ) ? KickException::DENIED : $this->complete( $data['creator'], $code, $data['verifier'] );
 		} catch ( ChatbotException $e ) {
 			$result = $e->reason();
 			$this->log_failure( $result, $e->status() );

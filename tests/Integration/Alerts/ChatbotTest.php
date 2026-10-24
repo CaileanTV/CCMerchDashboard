@@ -229,6 +229,14 @@ final class ChatbotTest extends IntegrationTestCase {
 	 */
 	private $register = null;
 
+	/**
+	 * The browser of the current user is logged in (the OAuth callback must
+	 * come back in the browser that started it, 25.13 review).
+	 */
+	private function logged_in(): void {
+		$_COOKIE[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( get_current_user_id(), time() + HOUR_IN_SECONDS, 'logged_in' );
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
@@ -285,6 +293,7 @@ final class ChatbotTest extends IntegrationTestCase {
 	}
 
 	protected function tearDown(): void {
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
 		if ( null !== $this->register ) {
 			remove_action( 'rest_api_init', $this->register );
 		}
@@ -355,7 +364,8 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	public function test_the_bot_logs_in_once_and_its_user_token_is_never_stored(): void {
 		$this->set_up_app();
-		$url   = $this->oauth->start_bot();
+		$url = $this->oauth->start_bot();
+		$this->logged_in();
 		$query = $this->query( $url );
 
 		self::assertStringStartsWith( TwitchApi::AUTHORIZE_URL . '?', $url );
@@ -394,6 +404,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$nova = $this->creator( 'nova' );
 
 		$query = $this->query( $this->oauth->start_channel( $nova ) );
+		$this->logged_in();
 		self::assertSame( 'channel:bot', $query['scope'] ?? null );
 		self::assertSame( 'false', $query['force_verify'] ?? null );
 
@@ -431,13 +442,25 @@ final class ChatbotTest extends IntegrationTestCase {
 		// Refused at Twitch.
 		wp_set_current_user( $this->user_of( $nova ) );
 		$denied = $this->query( $this->oauth->start_channel( $nova ) );
+		$this->logged_in();
 		self::assertStringContainsString( 'chatbot=denied&platform=twitch', $this->oauth->finish( $denied['state'] ?? '', '', 'access_denied' ) );
+
+		// Nova's link finished in another login (e.g. sent to another streamer) connects nothing (25.13 review).
+		$sent = $this->query( $this->oauth->start_channel( $nova ) );
+		wp_set_current_user( $this->create_user( 'other_streamer' ) );
+		$this->logged_in();
+		self::assertStringContainsString( 'chatbot=denied&platform=twitch', $this->oauth->finish( $sent['state'] ?? '', 'code-x', '' ) );
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		wp_set_current_user( $this->user_of( $nova ) );
+		$again = $this->query( $this->oauth->start_channel( $nova ) );
+		self::assertStringContainsString( 'chatbot=denied&platform=twitch', $this->oauth->finish( $again['state'] ?? '', 'code-y', '' ), 'Not logged in at all.' );
 	}
 
 	public function test_the_bot_cannot_be_added_to_its_own_channel(): void {
 		$this->set_up_bot();
 		$orion = $this->creator( 'orion' );
 		$query = $this->query( $this->oauth->start_channel( $orion ) );
+		$this->logged_in();
 
 		$this->answer( self::TOKEN_URL, 200, array( 'access_token' => 'usertoken-bot' ) );
 		$this->answer(
@@ -591,6 +614,29 @@ final class ChatbotTest extends IntegrationTestCase {
 		$money = static fn( string $amount ): string => AlertMoney::format( $amount, 'DKK' );
 		self::assertSame( array( 'Thanks nova_fan for 1× Hoodie (' . $money( '249.0000' ) . ') + 1× $UserName Mug (' . $money( '79.0000' ) . ') (2) ' . $money( '328.0000' ) ), array_column( $this->sent(), 'message' ), 'A product name is never read as a variable; $Amount is the creator total; $OrderNumber shows nothing.' );
 		self::assertSame( 'alert_chatbot_format_changed', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' )[2] ?? null );
+
+		// A message the channel dropped is finished: a later job of the order sends nothing again (25.13 review).
+		$this->alert( $nova, 201, 3, 'Cap' );
+		$this->answer(
+			self::MESSAGES_URL,
+			200,
+			array(
+				'data' => array(
+					array(
+						'is_sent'     => false,
+						'drop_reason' => array(
+							'code'    => 'msg_rejected',
+							'message' => 'x',
+						),
+					),
+				),
+			)
+		);
+		$this->sender->order_paid( 201 );
+		$this->run_jobs();
+		$this->sender->run( $nova, 201, 'twitch' );
+		self::assertCount( 2, $this->sent() );
+		self::assertSame( 'failed', $this->log->latest( $nova, ChatPlatform::Twitch )['status'] ?? null );
 	}
 
 	public function test_the_rate_limit_is_waited_for_and_failures_are_retried_a_few_times(): void {
@@ -939,8 +985,9 @@ final class ChatbotTest extends IntegrationTestCase {
 
 	public function test_a_creator_adds_the_bot_to_the_kick_channel_with_pkce(): void {
 		$this->set_up_kick();
-		$nova  = $this->creator( 'nova' );
-		$url   = $this->kick_oauth->start_channel( $nova );
+		$nova = $this->creator( 'nova' );
+		$url  = $this->kick_oauth->start_channel( $nova );
+		$this->logged_in();
 		$query = $this->query( $url );
 
 		self::assertStringStartsWith( KickApi::AUTHORIZE_URL . '?', $url );
@@ -1001,7 +1048,8 @@ final class ChatbotTest extends IntegrationTestCase {
 
 		// Kick refuses the code (e.g. a wrong redirect URL or secret).
 		$this->answer( self::KICK_TOKEN, 400, array( 'error' => 'invalid_grant' ) );
-		$state    = $this->query( $oauth->start_channel( $nova ) )['state'] ?? '';
+		$state = $this->query( $oauth->start_channel( $nova ) )['state'] ?? '';
+		$this->logged_in();
 		$location = $oauth->finish( $state, 'secret-code-1', '' );
 
 		self::assertStringContainsString( 'chatbot=invalid_credentials&platform=kick', $location );
@@ -1020,6 +1068,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		);
 		$this->answer( self::KICK_CHANNELS, 200, array( 'data' => array() ) );
 		$state = $this->query( $oauth->start_channel( $nova ) )['state'] ?? '';
+		$this->logged_in();
 		self::assertStringContainsString( 'chatbot=unexpected_answer&platform=kick', $oauth->finish( $state, 'secret-code-2', '' ) );
 		self::assertSame( array( 'channel', 'unexpected_answer', 200 ), array( $logger->at( 'warning' )[1]['context']['step'] ?? null, $logger->at( 'warning' )[1]['context']['reason'] ?? null, $logger->at( 'warning' )[1]['context']['status'] ?? null ) );
 		self::assertStringNotContainsString( 'secret-code', (string) wp_json_encode( $logger->entries ), 'Never the code or a token.' );
@@ -1124,6 +1173,35 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->requests_to( self::KICK_CHAT ), 'The job only waits.' );
 	}
 
+	public function test_a_token_renewal_that_cannot_reach_kick_is_tried_again(): void {
+		$nova = ( new CreatorRepository( $this->wpdb ) )->create( 'Nova', CreatorStatus::Active )->id;
+		$this->kick_creator( $nova, 60 );
+		$this->alert( $nova, 310, 1, 'Hoodie' );
+		$this->answer( self::KICK_TOKEN, 503, array() );
+
+		$this->sender->order_paid( 310 );
+		$this->run_jobs( 1 );
+
+		self::assertSame( array( 'waiting', 'unavailable' ), array( $this->log->latest( $nova, ChatPlatform::Kick )['status'] ?? null, $this->log->latest( $nova, ChatPlatform::Kick )['reason'] ?? null ), 'The message is not dropped (25.13 review).' );
+		self::assertSame( 60, $this->queue->pending[0]['delay'] ?? null );
+		self::assertSame( array(), $this->requests_to( self::KICK_CHAT ) );
+
+		$this->answer(
+			self::KICK_TOKEN,
+			200,
+			array(
+				'access_token'  => 'kick-access-2',
+				'refresh_token' => 'kick-refresh-2',
+				'expires_in'    => 7200,
+			)
+		);
+		$this->answer( self::KICK_CHAT, 200, array( 'data' => array( 'is_sent' => true ) ) );
+		$this->run_jobs();
+
+		self::assertSame( 'sent', $this->log->latest( $nova, ChatPlatform::Kick )['status'] ?? null );
+		self::assertCount( 1, $this->requests_to( self::KICK_CHAT ) );
+	}
+
 	public function test_the_creator_removes_the_kick_bot_and_the_token_is_revoked(): void {
 		$this->routes();
 		$nova = $this->creator( 'nova' );
@@ -1222,13 +1300,15 @@ final class ChatbotTest extends IntegrationTestCase {
 		// Google requires the privacy policy and terms (ADR-071).
 		try {
 			$this->youtube_oauth->start_bot();
+			$this->logged_in();
 			self::fail( 'Expected ChatbotException.' );
 		} catch ( ChatbotException $e ) {
 			self::assertSame( ChatbotException::TERMS_REQUIRED, $e->reason() );
 		}
 
 		$this->publish_legal();
-		$url   = $this->youtube_oauth->start_bot();
+		$url = $this->youtube_oauth->start_bot();
+		$this->logged_in();
 		$query = $this->query( $url );
 		self::assertStringStartsWith( YouTubeApi::AUTHORIZE_URL . '?', $url );
 		self::assertSame( array( YouTubeAccount::BOT_SCOPE, 'offline', 'consent select_account', 'S256', YouTubeAccount::redirect_uri() ), array( $query['scope'] ?? null, $query['access_type'] ?? null, $query['prompt'] ?? null, $query['code_challenge_method'] ?? null, $query['redirect_uri'] ?? null ) );
@@ -1248,6 +1328,7 @@ final class ChatbotTest extends IntegrationTestCase {
 
 		$this->as_admin();
 		$query = $this->query( $this->youtube_oauth->start_bot() );
+		$this->logged_in();
 		wp_set_current_user( 0 );
 		$this->answer(
 			self::YT_TOKEN,
@@ -1287,6 +1368,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->routes();
 		$nova  = $this->creator( 'nova' );
 		$query = $this->query( $this->youtube_oauth->start_channel( $nova ) );
+		$this->logged_in();
 		self::assertSame( array( YouTubeAccount::CHANNEL_SCOPE, 'offline', 'consent' ), array( $query['scope'] ?? null, $query['access_type'] ?? null, $query['prompt'] ?? null ) );
 
 		// The creator logged in with the bot's account.
@@ -1307,6 +1389,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		// Google's redirect reaches the callback route.
 		wp_set_current_user( $this->user_of( $nova ) );
 		$query = $this->query( $this->youtube_oauth->start_channel( $nova ) );
+		$this->logged_in();
 		wp_set_current_user( 0 );
 		$this->answer(
 			self::YT_TOKEN,

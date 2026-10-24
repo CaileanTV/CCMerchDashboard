@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-24T13:00:26+00:00\n"
+"POT-Creation-Date: 2026-10-24T14:26:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -3224,11 +3224,11 @@ msgstr ""
 msgid "The alert API is switched off."
 msgstr ""
 
-#: src/Modules/Alerts/Api/AlertApiFeedController.php:107
+#: src/Modules/Alerts/Api/AlertApiFeedController.php:112
 msgid "The API key is missing, wrong or revoked."
 msgstr ""
 
-#: src/Modules/Alerts/Api/AlertApiFeedController.php:111
+#: src/Modules/Alerts/Api/AlertApiFeedController.php:116
 #: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:87
 #: src/Modules/Alerts/Overlay/OverlayFeedController.php:91
 msgid "Too many requests. Please try again later."
@@ -3236,7 +3236,7 @@ msgstr ""
 
 #: src/Modules/Alerts/Chatbot/CreatorChatbot.php:209
 #: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:184
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:300
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:305
 msgid "Test product"
 msgstr ""
 
@@ -3328,52 +3328,56 @@ msgid "The key was not found."
 msgstr ""
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:414
-#: build/dashboard.js:48
-msgid "Webhooks cannot be stored safely on this site. Ask the shop."
+msgid "Too many tests. Please wait a minute."
 msgstr ""
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:415
 #: build/dashboard.js:48
-msgid "Give the webhook a name of at most 60 characters."
+msgid "Webhooks cannot be stored safely on this site. Ask the shop."
 msgstr ""
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:416
-msgid "Choose JSON or Discord."
+#: build/dashboard.js:48
+msgid "Give the webhook a name of at most 60 characters."
 msgstr ""
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:417
-#: build/dashboard.js:48
-msgid "Enter a public https address. A Discord webhook must be a Discord webhook address."
+msgid "Choose JSON or Discord."
 msgstr ""
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:418
 #: build/dashboard.js:48
-msgid "The secret must be 16–200 characters without spaces."
+msgid "Enter a public https address. A Discord webhook must be a Discord webhook address."
 msgstr ""
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:419
+#: build/dashboard.js:48
+msgid "The secret must be 16–200 characters without spaces."
+msgstr ""
+
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:420
 #: build/dashboard.js:48
 msgid "The message can be at most 500 characters."
 msgstr ""
 
 #. translators: %d: most webhooks.
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:421
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:422
 #: build/dashboard.js:48
 #, php-format,js-format
 msgid "You can have at most %d webhooks. Delete one first."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:422
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:423
 msgid "The webhook was not found."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:430
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:431
 #: build/dashboard.js:1
 #: build/dashboard.js:47
 msgid "The alert API is switched off. Ask the shop to switch it on."
 msgstr ""
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:437
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:438
 #: build/dashboard.js:1
 #: build/dashboard.js:47
 msgid "The shop has not given you access to this. Ask the shop."

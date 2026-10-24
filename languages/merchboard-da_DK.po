@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-24T13:00:29+00:00\n"
+"PO-Revision-Date: 2026-10-24T14:26:26+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1680,7 +1680,7 @@ msgstr "Creators kan bruge de godkendte fonte i deres alert-overlay. Fontene hen
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:336
 #, php-format
 msgid "Creators can choose these sounds for their alerts instead of uploading their own. MP3, WAV or OGG, at most %1$s and %2$d seconds each (Settings → Alerts); at most %3$d sounds."
-msgstr "Creators kan vælge disse lyde til deres alerts i stedet for at uploade deres egne. MP3, WAV eller OGG, højst %1$s og %2$d sekunder hver (Settings → Alerts); højst %3$d lyde."
+msgstr "Creators kan vælge disse lyde til deres alerts i stedet for at uploade deres egne. MP3, WAV eller OGG, højst %1$s og %2$d sekunder hver (Indstillinger → Alerts); højst %3$d lyde."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:343
 msgid "Add a sound"
@@ -1762,7 +1762,7 @@ msgstr "Fjern"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:396
 #, php-format
 msgid "Creators can fill their alert text with these images instead of uploading their own. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high each; at most %3$d images. Animated GIFs keep moving."
-msgstr "Creators kan fylde deres alerttekst med disse billeder i stedet for at uploade deres egne. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde hver; højst %3$d billeder. Animerede GIF'er bliver ved med at bevæge sig."
+msgstr "Creators kan fylde deres alert-tekst med disse billeder i stedet for at uploade deres egne. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde hver; højst %3$d billeder. Animerede GIF'er bliver ved med at bevæge sig."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:403
 msgid "Add an image"
@@ -2045,7 +2045,7 @@ msgstr "Brugernavn i checkout"
 
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:217
 msgid "An optional field in the classic and the block checkout, where customers can give the username shown in the creator's alert and chat ($UserName). The customer first ticks a checkbox that says the name is shown publicly; then the field appears. Both are shown only while purchase alerts are switched on and the cart holds a creator's product. Without a username, alerts show \"Anonymous\"."
-msgstr "Et valgfrit felt i den klassiske checkout og blok-checkout, hvor kunder kan angive brugernavnet, der vises i creatorens alert og chat ($UserName). Kunden sætter først flueben i en afkrydsning, der siger, at navnet vises offentligt; så kommer feltet frem. Begge vises kun, mens købsalerts er slået til, og kurven indeholder en creators produkt. Uden brugernavn viser alerts \"Anonymous\"."
+msgstr "Et valgfrit felt i den klassiske checkout og blok-checkout, hvor kunder kan angive brugernavnet, der vises i creatorens alert og chat ($UserName). Kunden sætter først flueben i en afkrydsning, der siger, at navnet vises offentligt; så kommer feltet frem. Begge vises kun, mens købs-alerts er slået til, og kurven indeholder en creators produkt. Uden brugernavn viser alerts \"Anonymous\"."
 
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:222
 msgid "Username field"
@@ -2805,7 +2805,7 @@ msgstr "Grænser for alert-lyde"
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:86
 #, php-format
 msgid "Other limits of the sounds this creator uploads for their alerts, e.g. for special needs. Empty fields use the site-wide limits from Settings → Alerts (now %1$s and %2$d seconds). The limits apply to new uploads; sounds already uploaded stay. The sound library always uses the site-wide limits."
-msgstr "Andre grænser for de lyde, denne creator uploader til sine alerts, fx ved særlige behov. Tomme felter bruger standardgrænserne fra Settings → Alerts (lige nu %1$s og %2$d sekunder). Grænserne gælder for nye uploads; lyde, der allerede er uploadet, bliver. Lydbiblioteket bruger altid standardgrænserne."
+msgstr "Andre grænser for de lyde, denne creator uploader til sine alerts, fx ved særlige behov. Tomme felter bruger standardgrænserne fra Indstillinger → Alerts (lige nu %1$s og %2$d sekunder). Grænserne gælder for nye uploads; lyde, der allerede er uploadet, bliver. Lydbiblioteket bruger altid standardgrænserne."
 
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:112
 msgid "Empty for the site-wide limit; else 100 KB to 500 MB. The site's upload limit still applies."
@@ -2825,7 +2825,7 @@ msgstr "Det globale overlay kunne ikke indlæses. Prøv igen senere."
 
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:54
 msgid "The import is done. Check the creators' overlays, then switch alerts on in Settings → Alerts."
-msgstr "Importen er gennemført. Tjek creatorernes overlays, og slå derefter alerts til under Settings → Alerts."
+msgstr "Importen er gennemført. Tjek creatorernes overlays, og slå derefter alerts til under Indstillinger → Alerts."
 
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:55
 msgid "The import stopped because of a technical error. What was imported is kept; run the dry run again to import the rest."
@@ -3224,11 +3224,11 @@ msgstr "Gem og offentliggør"
 msgid "The alert API is switched off."
 msgstr "Alert-API'en er slået fra."
 
-#: src/Modules/Alerts/Api/AlertApiFeedController.php:107
+#: src/Modules/Alerts/Api/AlertApiFeedController.php:112
 msgid "The API key is missing, wrong or revoked."
 msgstr "API-nøglen mangler, er forkert eller er tilbagekaldt."
 
-#: src/Modules/Alerts/Api/AlertApiFeedController.php:111
+#: src/Modules/Alerts/Api/AlertApiFeedController.php:116
 #: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:87
 #: src/Modules/Alerts/Overlay/OverlayFeedController.php:91
 msgid "Too many requests. Please try again later."
@@ -3236,7 +3236,7 @@ msgstr "For mange forespørgsler. Prøv igen senere."
 
 #: src/Modules/Alerts/Chatbot/CreatorChatbot.php:209
 #: src/Modules/Alerts/GlobalOverlay/GlobalOverlayService.php:184
-#: src/Modules/Alerts/Overlay/AlertOverlays.php:300
+#: src/Modules/Alerts/Overlay/AlertOverlays.php:305
 msgid "Test product"
 msgstr "Testprodukt"
 
@@ -3267,7 +3267,7 @@ msgstr "Historik"
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:145
 #: src/Modules/Alerts/Rest/MeAlertsController.php:267
 msgid "The overlay settings are invalid."
-msgstr "Overlayindstillingerne er ugyldige."
+msgstr "Overlay-indstillingerne er ugyldige."
 
 #: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:125
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:153
@@ -3328,52 +3328,56 @@ msgid "The key was not found."
 msgstr "Nøglen blev ikke fundet."
 
 #: src/Modules/Alerts/Rest/MeAlertsApiController.php:414
+msgid "Too many tests. Please wait a minute."
+msgstr "For mange tests. Vent et minut."
+
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:415
 #: build/dashboard.js:48
 msgid "Webhooks cannot be stored safely on this site. Ask the shop."
 msgstr "Webhooks kan ikke gemmes sikkert på dette site. Spørg shoppen."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:415
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:416
 #: build/dashboard.js:48
 msgid "Give the webhook a name of at most 60 characters."
 msgstr "Giv webhooken et navn på højst 60 tegn."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:416
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:417
 msgid "Choose JSON or Discord."
 msgstr "Vælg JSON eller Discord."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:417
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:418
 #: build/dashboard.js:48
 msgid "Enter a public https address. A Discord webhook must be a Discord webhook address."
 msgstr "Skriv en offentlig https-adresse. En Discord-webhook skal være en Discord-webhook-adresse."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:418
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:419
 #: build/dashboard.js:48
 msgid "The secret must be 16–200 characters without spaces."
-msgstr "Hemmeligheden skal være 16–200 tegn uden mellemrum."
+msgstr "Signeringsnøglen skal være 16–200 tegn uden mellemrum."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:419
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:420
 #: build/dashboard.js:48
 msgid "The message can be at most 500 characters."
 msgstr "Beskeden må højst være 500 tegn."
 
 #. translators: %d: most webhooks.
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:421
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:422
 #: build/dashboard.js:48
 #, php-format,js-format
 msgid "You can have at most %d webhooks. Delete one first."
 msgstr "Du kan have højst %d webhooks. Slet en først."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:422
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:423
 msgid "The webhook was not found."
 msgstr "Webhooken blev ikke fundet."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:430
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:431
 #: build/dashboard.js:1
 #: build/dashboard.js:47
 msgid "The alert API is switched off. Ask the shop to switch it on."
 msgstr "Alert-API'en er slået fra. Bed shoppen om at slå den til."
 
-#: src/Modules/Alerts/Rest/MeAlertsApiController.php:437
+#: src/Modules/Alerts/Rest/MeAlertsApiController.php:438
 #: build/dashboard.js:1
 #: build/dashboard.js:47
 msgid "The shop has not given you access to this. Ask the shop."
@@ -6249,7 +6253,7 @@ msgstr "Handlingen passer ikke til udbetalingsmetoden; intet blev ændret."
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:182
 msgid "Not registered: no available gift card plugin is chosen in Settings → Payouts."
-msgstr "Ikke registreret: der er ikke valgt et tilgængeligt gavekortplugin under Settings → Payouts."
+msgstr "Ikke registreret: der er ikke valgt et tilgængeligt gavekortplugin under Indstillinger → Udbetalinger."
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:183
 msgid "Not registered: enter the gift card code."
@@ -6478,7 +6482,7 @@ msgstr "Registrér gavekort"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:519
 msgid "No available gift card plugin is chosen in Settings → Payouts, so no gift card can be registered. The request can be rejected."
-msgstr "Der er ikke valgt et tilgængeligt gavekortplugin under Settings → Payouts, så der kan ikke registreres et gavekort. Anmodningen kan afvises."
+msgstr "Der er ikke valgt et tilgængeligt gavekortplugin under Indstillinger → Udbetalinger, så der kan ikke registreres et gavekort. Anmodningen kan afvises."
 
 #. translators: 1: gift card plugin, 2: amount with currency, 3: payout reference.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:525
@@ -7785,7 +7789,7 @@ msgstr "Billeder til tekst"
 #: build/dashboard.js:35
 #, js-format
 msgid "Upload images to fill your alert text with. PNG, JPG, GIF or WebP, at most %1$s MB and %2$d pixels wide and high; at most %3$d images. An animated GIF keeps moving."
-msgstr "Upload billeder, som din alerttekst kan fyldes med. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde; højst %3$d billeder. En animeret GIF bliver ved med at bevæge sig."
+msgstr "Upload billeder, som din alert-tekst kan fyldes med. PNG, JPG, GIF eller WebP, højst %1$s MB og %2$d pixels i bredde og højde; højst %3$d billeder. En animeret GIF bliver ved med at bevæge sig."
 
 #. translators: %d: number of images.
 #: build/alerts-global-admin.js:11
@@ -8785,7 +8789,7 @@ msgstr "Designs"
 #: build/alerts-presets-admin.js:15
 #: build/dashboard.js:40
 msgid "Save your overlay's design (look, texts and sounds) under a name and use it again later, e.g. one design for each part of your stream. Only you see your designs. You can also start from a standard overlay. Your overlay URL always stays."
-msgstr "Gem dit overlays design (udseende, tekster og lyde) under et navn, og brug det igen senere, fx ét design til hver del af din stream. Kun du kan se dine designs. Du kan også starte fra et standardoverlay. Din overlay-URL bliver altid den samme."
+msgstr "Gem dit overlays design (udseende, tekster og lyde) under et navn, og brug det igen senere, fx ét design til hver del af din stream. Kun du kan se dine designs. Du kan også starte fra et standard-overlay. Din overlay-URL bliver altid den samme."
 
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15
@@ -9010,7 +9014,7 @@ msgstr "Opret ny URL"
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:43
 msgid "Purchase alerts are not being sent (switched off in Settings → Alerts, or MerchAlert is active), so the global overlay is not shown. Its settings can be changed already."
-msgstr "Købs-alerts sendes ikke (slået fra i Settings → Alerts, eller MerchAlert er aktiv), så det globale overlay vises ikke. Dets indstillinger kan allerede ændres."
+msgstr "Købs-alerts sendes ikke (slået fra i Indstillinger → Alerts, eller MerchAlert er aktivt), så det globale overlay vises ikke. Dets indstillinger kan allerede ændres."
 
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
@@ -9766,11 +9770,11 @@ msgstr "Signeringsnøgle"
 
 #: build/dashboard.js:48
 msgid "Secret copied."
-msgstr "Nøglen er kopieret."
+msgstr "Signeringsnøglen er kopieret."
 
 #: build/dashboard.js:48
 msgid "Copy the selected secret with Ctrl+C."
-msgstr "Kopiér den markerede nøgle med Ctrl+C."
+msgstr "Kopiér den markerede signeringsnøgle med Ctrl+C."
 
 #: build/dashboard.js:48
 msgid "You have no webhooks yet."
@@ -9800,7 +9804,7 @@ msgstr "Genoptag"
 
 #: build/dashboard.js:49
 msgid "New secret"
-msgstr "Ny nøgle"
+msgstr "Ny signeringsnøgle"
 
 #: build/dashboard.js:49
 msgid "The webhook was added."
@@ -9840,7 +9844,7 @@ msgstr "Signeringsnøgle (valgfri)"
 
 #: build/dashboard.js:49
 msgid "Paste the secret from your bot, for example from SparkyBot's dashboard, or leave it empty to get one."
-msgstr "Indsæt nøglen fra din bot, fx fra SparkyBots dashboard, eller lad feltet være tomt for at få en."
+msgstr "Indsæt signeringsnøglen fra din bot, fx fra SparkyBots dashboard, eller lad feltet være tomt for at få en."
 
 #: build/dashboard.js:49
 msgid "Message (optional)"
@@ -9882,7 +9886,7 @@ msgstr "\"id\" er den samme, hver gang det samme køb sendes; brug den til at fj
 
 #: build/dashboard.js:50
 msgid "Check the headers X-MerchBoard-Timestamp and X-MerchBoard-Signature (sha256= HMAC of \"timestamp.body\" with the secret) before you accept an event."
-msgstr "Tjek headerne X-MerchBoard-Timestamp og X-MerchBoard-Signature (sha256= HMAC af \"timestamp.body\" med nøglen), før du accepterer en hændelse."
+msgstr "Tjek headerne X-MerchBoard-Timestamp og X-MerchBoard-Signature (sha256= HMAC af \"timestamp.body\" med signeringsnøglen), før du accepterer en hændelse."
 
 #: build/dashboard.js:50
 msgid "Answer with a 2xx status within 5 seconds. Each delivery is tried once; after 10 failures in a row the webhook pauses until you resume it. Use the API or resend from History to get what was missed."

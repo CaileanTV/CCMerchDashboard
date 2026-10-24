@@ -20,6 +20,7 @@ use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Api\AlertApiEvents;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Overlay\AlertOverlays;
+use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 
@@ -61,6 +62,18 @@ class WebhookDispatcher {
 	public const TIMEOUT = 5;
 
 	/**
+	 * Tests a creator may send per minute (each one waits for the receiver; 25.13 review).
+	 */
+	public const TESTS_PER_MINUTE = 10;
+
+	/**
+	 * Limit of the creator's tests.
+	 *
+	 * @var OverlayRateLimiter
+	 */
+	private OverlayRateLimiter $tests;
+
+	/**
 	 * The current time.
 	 *
 	 * @var Closure(): DateTimeImmutable
@@ -82,6 +95,7 @@ class WebhookDispatcher {
 	 * @param AlertOverlays                       $overlays     Test alerts.
 	 * @param Logger                              $logger       Technical log.
 	 * @param (Closure(): DateTimeImmutable)|null $clock        Current time; defaults to now.
+	 * @param OverlayRateLimiter|null             $tests        Limit of the creator's tests; defaults to TESTS_PER_MINUTE.
 	 */
 	public function __construct(
 		private AlertWebhookRepository $webhooks,
@@ -95,9 +109,11 @@ class WebhookDispatcher {
 		private JobQueue $queue,
 		private AlertOverlays $overlays,
 		private Logger $logger,
-		?Closure $clock = null
+		?Closure $clock = null,
+		?OverlayRateLimiter $tests = null
 	) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+		$this->tests = $tests ?? new OverlayRateLimiter( null, 'merchboard_alerts_wh_test_', self::TESTS_PER_MINUTE );
 	}
 
 	/**
@@ -120,8 +136,13 @@ class WebhookDispatcher {
 					continue;
 				}
 
+				// One delivery per purchase: an order that becomes processing and then completed is not sent twice (25.13 review).
+				$event_id = WebhookPayloads::event_id( AlertApiEvents::PURCHASE, $events[0] );
+
 				foreach ( $webhooks as $webhook ) {
-					$this->enqueue( $webhook, AlertApiEvents::PURCHASE, $events );
+					if ( ! $this->deliveries->has_event( $webhook->id, $event_id ) ) {
+						$this->enqueue( $webhook, AlertApiEvents::PURCHASE, $events );
+					}
 				}
 			}
 		} catch ( DatabaseException $e ) {
@@ -169,12 +190,25 @@ class WebhookDispatcher {
 	 * @param int $creator_id Creator.
 	 * @param int $webhook_id Webhook.
 	 * @return WebhookDelivery The delivery with its outcome.
-	 * @throws WebhookException When the API is off, the creator has no access or it is not the creator's webhook.
+	 * @throws WebhookException When the API is off, the creator has no access, sent too many tests or it is not the creator's webhook.
 	 * @throws DatabaseException When the database cannot be read or written.
 	 */
 	public function send_test( int $creator_id, int $webhook_id ): WebhookDelivery {
 		$this->check_access( $creator_id );
+		$this->check_rate( $creator_id );
 
+		return $this->test_one( $creator_id, $webhook_id );
+	}
+
+	/**
+	 * Sends a test purchase to a webhook (the checks are done).
+	 *
+	 * @param int $creator_id Creator.
+	 * @param int $webhook_id Webhook.
+	 * @throws WebhookException When it is not the creator's webhook.
+	 * @throws DatabaseException When the database cannot be read or written.
+	 */
+	private function test_one( int $creator_id, int $webhook_id ): WebhookDelivery {
 		$webhook = $this->webhooks->find_for_creator( $creator_id, $webhook_id ) ?? self::refuse( WebhookException::UNKNOWN );
 		$id      = $this->store( $webhook, AlertApiEvents::TEST, array( $this->overlays->test_event( $creator_id ) ) );
 		$this->deliver( $id, $webhook, false );
@@ -188,21 +222,34 @@ class WebhookDispatcher {
 	 *
 	 * @param int $creator_id Creator.
 	 * @return list<WebhookDelivery> The deliveries with their outcome, oldest webhook first.
-	 * @throws WebhookException When the API is off or the creator has no access.
+	 * @throws WebhookException When the API is off, the creator has no access or sent too many tests.
 	 * @throws DatabaseException When the database cannot be read or written.
 	 */
 	public function send_test_all( int $creator_id ): array {
 		$this->check_access( $creator_id );
+		$this->check_rate( $creator_id );
 
 		$deliveries = array();
 
 		foreach ( $this->webhooks->for_creator( $creator_id ) as $webhook ) {
 			if ( $webhook->enabled ) {
-				$deliveries[] = $this->send_test( $creator_id, $webhook->id );
+				$deliveries[] = $this->test_one( $creator_id, $webhook->id );
 			}
 		}
 
 		return $deliveries;
+	}
+
+	/**
+	 * Counts a test of the creator and refuses beyond TESTS_PER_MINUTE.
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws WebhookException When there were too many.
+	 */
+	private function check_rate( int $creator_id ): void {
+		if ( ! $this->tests->allow( 'creator:' . $creator_id ) ) {
+			self::refuse( WebhookException::TOO_MANY );
+		}
 	}
 
 	/**
