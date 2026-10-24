@@ -20,6 +20,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Creator pricing | 22 | Creator-profit = WooCommerce-salgspris × markup %, udbetaling efter momsstatus (× 80 % uden momsregistrering), produktmarkup og historiske snapshots; Merch Dashboard skriver aldrig priser (i gang) |
 | Payouts og gavekort | 23 | Creator-anmodninger om udbetaling (bank, PayPal, manuelt oprettet gavekort valideret via en udskiftelig pluginadapter; YITH WooCommerce Gift Cards anbefalet), reservation, admin-behandling og sikker opbevaring (planlægning) |
 | Alerts | 25 | MerchAlert integreres: købs-alerts i creatorens OBS-overlay med lyd og chatbot på Twitch, Kick og YouTube, aktiveret af creatorens kategori, som sektion i creator-dashboardet, plus alert-API og webhooks til creatorens egne bots (i gang: 25.2–25.12.4 implementeret, slutreviewet i 25.13 gennemført 2026-10-24, runtime-testen udestår; ADR-065–067, ADR-069–073) |
+| Migrering | 26 | Vendors fra WooCommerce Product Vendors flyttes til Merch Dashboard: creator, brugerkobling og produkter (udkast 2026-10-24; planlægges efter fase 25) |
 | Senere | – | Notifications, integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -610,6 +611,30 @@ Mål: projektejerens ældre plugin MerchAlert integreres fuldt i Merch Dashboard
   - **Accepteret (projektejerens beslutninger):** (4) Google Fonts-nøglen gemmes ukrypteret (SECURITY.md); (9) engelske standardtekster på stream ("Anonymous", "[Test]"/"[Resent]", standardskabeloner), fordi streams ofte har et internationalt publikum; (10) webhookens `total` ved gensendelse af én linje er creatorens samlede betalte ordretotal (API.md); (11–15) fem lave risici, se [features/alerts.md](features/alerts.md), "Known limitations".
   - **Tilbage:** runtime-testen (del B) efter tjeklisten og registreringen af den.
 - **Åbne punkter:** retention for alert-data med kundens frivillige brugernavn (fornavnet gemmes ikke siden migration 19); information til kunderne om, at brugernavnet kan vises i overlay, chat (Twitch, Kick og YouTube) og creatorens egne bots og webhooks; GDPR-forbeholdet for Google Fonts (ADR-067).
+
+---
+
+## Fase 26 – Migrering fra WooCommerce Product Vendors 📝 (udkast, projektejerens ønske 2026-10-24; planlægges efter fase 25)
+
+Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes til Merch Dashboard, så de ikke skal oprettes i hånden. Projektejerens afgrænsning 2026-10-24:
+
+- **Med:**
+  - Opret en creator pr. vendor.
+  - Kobl vendorens WordPress-bruger(e) til creatoren (fase 8).
+  - Kobl vendorens produkter til creatoren via den eksisterende produkt↔creator-kobling (fase 17), så salg og dashboard virker med det samme.
+- **Bagefter:** Product Vendors' vendor-roller fjernes fra de migrerede brugere, så de kun har Merch Dashboard-adgang.
+- **Ikke med:** kommission, udbetalinger, PayPal- og andre betalingsoplysninger og Product Vendors' øvrige data. De flyttes ikke og ændres ikke.
+- **Forventet form (som MerchAlert-importen i 25.10.1):**
+  - en admin-fane med tørkørsel og bekræftelse af backup;
+  - kan køres igen uden dubletter;
+  - auditeres;
+  - en vendor, der allerede matcher en creator, kobles i stedet for at blive oprettet igen.
+- **Test:** på Local, hvor projektejeren har installeret Product Vendors (2026-10-24), med en kopi af produktionsdata, som projektejeren selv laver. Product Vendors' datamodel (vendor-taxonomi, administratorer pr. vendor, roller) tages fra pluginets offentlige dokumentation, ikke fra filerne på Local (Project Isolation).
+- **Afklares ved planlægningen:**
+  - hvordan en vendor matches med en eksisterende creator;
+  - hvad der sker med en vendor med flere administratorer;
+  - om produkter, der allerede er koblet til en anden creator, springes over eller vises som konflikt;
+  - om vendor-rollerne fjernes i samme kørsel eller som et separat trin efter kontrol.
 
 ---
 
