@@ -1,7 +1,7 @@
 /**
  * The admin's chat window of a channel (Merch Dashboard → Alerts → Chatbot,
- * phase 25 step 8): polls `GET merchboard/v1/alerts/twitch/chat/{creator}`
- * every few seconds and shows the bot's latest chat messages. Messages are
+ * phase 25 step 8): polls
+ * `GET merchboard/v1/alerts/chat/{platform}/{creator}` every few seconds and shows the bot's latest chat messages. Messages are
  * inserted as text, never as HTML; a chatter's colour is used only when it
  * is a plain #rrggbb value.
  */

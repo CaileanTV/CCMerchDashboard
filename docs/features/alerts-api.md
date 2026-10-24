@@ -17,7 +17,7 @@ Siderne **Alerts → API-nøgler** og **Alerts → Webhooks** i creator-dashboar
 - **Webhooks:** højst 3 pr. creator.
   - **Formater:** **JSON** sender én signeret hændelse pr. betalt ordre til creatorens egen bot (fx SparkyBot). **Discord** skriver chatbeskeden i en Discord-kanal, med en valgfri egen besked.
   - **Signeringsnøgle:** til JSON indsættes den fra botten, eller Merch Dashboard laver en, som vises én gang.
-  - **Handlinger:** "Send test" sender straks og viser svaret. Webhooken kan slås til og fra, og "Genoptag" bruges efter en pause. JSON-webhooks kan få en ny nøgle, og sletning kræver bekræftelse.
+  - **Handlinger:** "Send test" sender straks og viser svaret (højst 10 tests pr. minut pr. creator). Webhooken kan slås til og fra, og "Genoptag" bruges efter en pause. JSON-webhooks kan få en ny nøgle, og sletning kræver bekræftelse.
   - **Leveringer:** de seneste 20 med tidspunkt, webhook, type og udfald.
   - **Test-kortet** (tilføjet efter 25.12.2, projektejerens ønske 2026-10-24): "Send test til alle webhooks" sender med det samme et testkøb til hver webhook, der er slået til, og viser svaret fra hver, som API-nøgle-sidens Test-kort.
 - **Test og gensendelser:** "Send testhændelse" lægger et testkøb (`kind: test`) klar til hver nøgle. Gensender creatoren en alert under Historik, får nøglerne den (`kind: resend`), og webhooks får en `resend`-levering, også uden et overlay.
@@ -28,14 +28,17 @@ Siderne **Alerts → API-nøgler** og **Alerts → Webhooks** i creator-dashboar
 ## Admin functionality
 Merch Dashboard → Alerts → fanen **API** (`merchboard_manage_alerts`):
 - Afkrydsningen "Creators kan bruge alert-API'en" er slået fra som standard. Slået fra svarer API'en 503, creators kan ikke oprette nøgler eller webhooks, og webhooks sendes ikke; alt bevares.
-- Oversigten viser creators med virksomme nøgler: antal og sidst brugt. Med en påkrævet afkrydsning kan administratoren tilbagekalde alle nøgler for en creator. Selve nøglerne vises aldrig.
-- "Creators med webhooks" viser hver webhooks navn, format, vært og status. "Slå alle fra" kræver en afkrydsning. Adresser og hemmeligheder vises aldrig.
+- Tabellen **"Creators"** (fra 25.12.4, ADR-073 pkt. 10; aktive creators og inaktive med nøgler eller webhooks) har én række pr. creator:
+  - **Adgang:** afkrydsningerne "API-nøgler" og "Webhooks" og knappen "Gem adgang" (slået fra som standard, auditeret som `alert_api_access_changed`).
+  - **API-nøgler:** antal virksomme nøgler og sidst brugt. Med en påkrævet afkrydsning kan administratoren tilbagekalde alle nøgler for creatoren. Selve nøglerne vises aldrig.
+  - **Webhooks:** hver webhooks navn, format, vært og status. "Slå alle fra" kræver en afkrydsning. Adresser og hemmeligheder vises aldrig.
 
 ## Technical implementation
 - **`Api/`:**
   - `AlertApiKeys` (service: oprettelse, tilbagekaldelse, `authenticate()`);
   - `AlertApiKeyRepository`;
   - `AlertApiSwitch` (indstillingen);
+  - `AlertApiAccess` (adgang pr. creator til nøgler og webhooks, creator meta `alert_api_access`; 25.12.4);
   - `AlertApiFeed` (svaret pr. nøgle, test, gensendelse);
   - `AlertApiEvents` (hændelsens form);
   - `AlertApiQueue` (test og gensendelser pr. nøgle);
@@ -62,7 +65,7 @@ Merch Dashboard → Alerts → fanen **API** (`merchboard_manage_alerts`):
 - **Dashboard:** `sections/alerts/AlertsApiSection.tsx` (API-nøgler), `sections/alerts/AlertsWebhooksSection.tsx` med `WebhooksCard.tsx` (webhooks) og `api/alertApi.ts`.
 
 ## Relevant files
-- `src/Modules/Alerts/Api/`, `src/Modules/Alerts/Webhooks/`, `src/Modules/Alerts/Rest/MeAlertsApiController.php`, `src/Modules/Alerts/Admin/AlertApiTab.php`, `src/Modules/Alerts/Admin/AlertApiActions.php`, `src/Core/Database/Migrations/CreateAlertApiKeysTable.php`, `src/Core/Database/Migrations/CreateAlertWebhookTables.php`
+- `src/Modules/Alerts/Api/`, `src/Modules/Alerts/Webhooks/`, `src/Modules/Alerts/Rest/MeAlertsApiController.php`, `src/Modules/Alerts/Admin/AlertApiTab.php`, `src/Modules/Alerts/Admin/AlertApiActions.php`, `src/Core/Database/Migrations/CreateAlertApiKeysTable.php`, `src/Core/Database/Migrations/CreateAlertWebhookTables.php`, `src/Core/Database/Migrations/GrantExistingAlertApiAccess.php` (migration 28)
 - `assets/src/dashboard/sections/alerts/AlertsApiSection.tsx`, `assets/src/dashboard/sections/alerts/WebhooksCard.tsx`, `assets/src/dashboard/api/alertApi.ts`
 - `tests/Integration/Alerts/AlertApiTest.php`, `tests/Integration/Alerts/AlertWebhooksTest.php`, `tests/Integration/Database/MigrationTest.php`, `tests/Unit/Modules/Alerts/WebhookRulesTest.php`, `assets/src/dashboard/test/alert-api.test.tsx`
 
@@ -73,7 +76,8 @@ Merch Dashboard → Alerts → fanen **API** (`merchboard_manage_alerts`):
 - **Transients:** testkøen pr. nøgle og rate limit pr. nøgle.
 
 ## Permissions
-- **Bot:** API-nøglen i headeren. Kun en virksom nøgle til en aktiv creator virker, og kun mens API'en og alerts er slået til.
+- **Bot:** API-nøglen i headeren `Authorization: Bearer` eller `X-MerchBoard-Key`; `X-MerchBoard-Key` bruges, når `Authorization` ikke er en Bearer-header (fx når sitet selv bruger Basic auth). Kun en virksom nøgle til en aktiv creator med adgang til API-nøgler (25.12.4) virker, og kun mens API'en og alerts er slået til.
+- **Webhooks:** kun for en creator med adgang til webhooks (25.12.4); uden adgang giver oprettelse og test 403 `merchboard_alerts_api_no_access`.
 - **Webhook-modtager:** tjekker selv signaturen med hemmeligheden.
 - **Creator:** `CreatorContext` (ADR-007).
 - **Admin:** `merchboard_manage_alerts`, nonce.
@@ -81,7 +85,7 @@ Merch Dashboard → Alerts → fanen **API** (`merchboard_manage_alerts`):
 ## API endpoints
 - `GET /merchboard/v1/alerts/api/events?after={id}&limit={1–50}` (offentlig med nøgle).
 - `GET /me/alerts/api`, `POST /me/alerts/api/keys`, `DELETE /me/alerts/api/keys/{id}`, `POST /me/alerts/api/test`.
-- `POST /me/alerts/api/webhooks`, `PATCH`/`DELETE /me/alerts/api/webhooks/{id}`, `POST /me/alerts/api/webhooks/{id}/test`, `POST /me/alerts/api/webhooks/{id}/secret`.
+- `POST /me/alerts/api/webhooks`, `POST /me/alerts/api/webhooks/test` (alle webhooks), `PATCH`/`DELETE /me/alerts/api/webhooks/{id}`, `POST /me/alerts/api/webhooks/{id}/test`, `POST /me/alerts/api/webhooks/{id}/secret`. Webhook-tests: højst 10 pr. minut pr. creator, ellers 429 `merchboard_too_many_requests`.
 
 Se [API.md](../API.md), også for webhook-formatet.
 

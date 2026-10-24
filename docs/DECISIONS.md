@@ -3606,8 +3606,8 @@ Projektejeren vil have alert-systemet fuldt integreret i Merch Dashboard: den ka
 Nye tabeller (migrationer fra 18) og nye nøgler i `merchboard_settings`. MerchAlerts data læses kun af importen og ændres ikke. Efter en vellykket import kan projektejeren afinstallere MerchAlert. Lyd-vedhæftninger beholder deres filer; kun deres meta overføres.
 
 ## Consequences
-- Fase 25 i ROADMAP med trinene 25.1–25.10.
-- Dashboardets eneste generelle ændring er CSP'en for Google Fonts (ADR-067); resten er nye sektioner, sider, routes og tabeller.
+- Fase 25 i ROADMAP med trinene 25.1–25.10 (senere udvidet til 25.13, ROADMAP).
+- Dashboardets eneste generelle ændring er CSP'en for Google Fonts (ADR-067); resten er nye sektioner, sider, routes og tabeller. *Statusnote 2026-10-24:* ikke længere den eneste: menugrupper i sektionerne (`group`/`group_label`, trin 25.6.4), `media-src 'self'` i CSP'en (trin 25.6) og `Dialog` og siden "Nyheder" (ADR-072) er også generelle ændringer af dashboardet.
 - Produktionsprocedure: backup → deaktivér MerchAlert → opdatér Merch Dashboard → import → slå alerts til. Udføres af projektejeren.
 
 ## Related
@@ -3682,7 +3682,7 @@ MerchAlerts overlay-designer lader creatoren vælge en skrifttype blandt fonte, 
 ## Decision
 1. **Katalog:** administratoren synkroniserer kataloget fra `https://www.googleapis.com/webfonts/v1/webfonts` med en Google API-nøgle og godkender fonte i fanen Fontbibliotek. Nøglen gemmes i en option uden autoload og vises ikke igen efter gemning.
 2. **Indlæsning:** fonte indlæses i browseren fra `https://fonts.googleapis.com` (CSS) og `https://fonts.gstatic.com` (fontfiler), kun i creator-dashboardet og på overlay-siden.
-3. **CSP:** dashboard-shellens politik (`ShellController`) udvides med `https://fonts.googleapis.com` i `style-src` og `https://fonts.gstatic.com` i `font-src`; overlay-sidens egen CSP får det samme. Det er den eneste generelle ændring af dashboardet i fase 25.
+3. **CSP:** dashboard-shellens politik (`ShellController`) udvides med `https://fonts.googleapis.com` i `style-src` og `https://fonts.gstatic.com` i `font-src`; overlay-sidens egen CSP får det samme. Det er den eneste generelle ændring af dashboardet i fase 25. *Statusnote 2026-10-24:* ikke længere den eneste; se ADR-065, Consequences.
 4. **Validering:** kun godkendte fontfamilier fra kataloget kan vælges og gemmes, og navnet valideres, før det bruges i CSS eller en URL.
 
 ## Alternatives considered
@@ -3998,7 +3998,7 @@ ADR-007, ADR-025, ADR-044, ADR-065.
 2026-10-23
 
 ## Status
-Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) og 25.12.2 (webhooks, med SparkyBots anbefalinger bygget ind efter projektejerens valg 2026-10-23) er implementeret.
+Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) og 25.12.2 (webhooks, med SparkyBots anbefalinger bygget ind efter projektejerens valg 2026-10-23) er implementeret. 25.12.4 (adgang pr. creator, pkt. 10) er implementeret 2026-10-24.
 
 ## Context
 Projektejeren vil have, at creators kan hente deres købs-alerts til deres egne bots (ønske 2026-10-19, ROADMAP 25.12). Det kræver en offentlig API med creator-nøgler og, med webhooks, udgående kald til adresser, som creatoren selv angiver.
@@ -4045,7 +4045,7 @@ Projektejeren vil give creators frihed til egne bots uden at udlevere persondata
 Migration 26 (`CreateAlertApiKeysTable`) opretter `merchboard_alert_api_keys` (InnoDB, idempotent). Optionen `merchboard_alerts_api_enabled`. Begge slettes ved opt-in-afinstallation. Migration 27 (`CreateAlertWebhookTables`) opretter `merchboard_alert_webhooks` og `merchboard_alert_webhook_deliveries` (InnoDB, idempotent); de slettes også ved opt-in-afinstallation.
 
 ## Consequences
-- **Creator-dashboardet:** siden "API" under Alerts.
+- **Creator-dashboardet:** siderne "API-nøgler" og "Webhooks" under Alerts.
 - **Admin:** fanen "API".
 - **Udgående kald:** 25.12.2 tilføjer udgående kald til adresser, som creators vælger.
 

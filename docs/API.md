@@ -99,14 +99,14 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `POST` | `/me/alerts/chatbot/youtube/terms` | ✅ Trin 25.8.5 (ADR-071): body `{ "accept": true }` godkender den gældende version af YouTube-chatbottens privatlivspolitik og vilkår (user meta og audit). Svarer med chatbot-tilstanden. 400 uden `accept: true` (`merchboard_terms_required`) eller for en anden platform; 409, før teksterne er offentliggjort | 25 |
 | `GET` | `/me/news` | ✅ Trin 25.11 (ADR-072): `{ items: [ { id, title, body, published_at, seen_at, closed_at } ] }`: de udgivne beskeder fra efter creatorens oprettelse, nyeste først; `body` er renset HTML (allow-list), tiderne ISO 8601 eller `null` | 25 |
 | `POST` | `/me/news/{id}/seen`, `/me/news/{id}/closed` | ✅ Trin 25.11: noterer, at creatoren har set eller lukket beskeden (første tidspunkt bevares; "lukket" noterer også "set"). Samme svar som `GET`. 404 for en besked, creatoren ikke ser (kladde, tilbagetrukket, fra før oprettelsen) | 25 |
-| `GET` | `/me/alerts/api` | ✅ Trin 25.12.1 (ADR-073); fra 25.12.4 også `access: { keys, webhooks }` (administratorens adgang; uden adgang giver oprettelse og test 403 `merchboard_alerts_api_no_access`, feedet 401, og webhooks sendes ikke): `{ enabled, endpoint, limit, max_keys, keys: [ { id, name, hint, created_at, last_used_at } ] }`; `hint` er starten af nøglen | 25 |
+| `GET` | `/me/alerts/api` | ✅ Trin 25.12.1 (ADR-073); fra 25.12.4 også `access: { keys, webhooks }` (administratorens adgang; uden adgang giver oprettelse og test 403 `merchboard_alerts_api_no_access`, feedet 401, og webhooks sendes ikke): `{ enabled, endpoint, limit, max_keys, keys: [ { id, name, hint, created_at, last_used_at } ], max_webhooks, webhooks, deliveries }` (`webhooks` og `deliveries` som under `POST /me/alerts/api/webhooks`, de seneste 20 leveringer); `hint` er starten af nøglen | 25 |
 | `POST` | `/me/alerts/api/keys` | ✅ Trin 25.12.1: `{ "name": "…" }` (højst 60 tegn) → 201 med samme svar plus `key` (hele nøglen, vises kun her). 400 ugyldigt navn, 403 `merchboard_alerts_api_disabled`, 409 `merchboard_alerts_api_key_limit` (højst 5) | 25 |
 | `DELETE` | `/me/alerts/api/keys/{id}` | ✅ Trin 25.12.1: tilbagekalder en af creatorens nøgler; samme svar som `GET`. 404 for en anden eller tilbagekaldt nøgle | 25 |
 | `POST` | `/me/alerts/api/test` | ✅ Trin 25.12.1: en testhændelse til hver af creatorens nøgler, `{ "sent": antal nøgler }`. 403 når API'en er slået fra | 25 |
 | `POST` | `/me/alerts/api/webhooks` | ✅ Trin 25.12.2: `{ name, format: "json"\|"discord", url, secret, template }` → 201 med siden (`max_webhooks`, `webhooks: [ { id, name, format, host, hint, template, enabled, paused, failures, created_at, last_delivery_at } ]`, `deliveries`) og `secret`, når Merch Dashboard lavede signeringsnøglen (vises kun her). 400 ugyldigt felt (`fields.name\|format\|url\|secret\|template`), 403 slået fra, 409 `merchboard_alerts_webhook_limit` (højst 3), 503 `merchboard_alerts_webhook_unavailable` (ingen sodium) | 25 |
 | `PATCH`, `DELETE` | `/me/alerts/api/webhooks/{id}` | ✅ Trin 25.12.2: `PATCH` med `{ name?, template?, enabled?, resume? }` (`resume` genoptager efter pause og nulstiller fejl); `DELETE` sletter webhooken og dens log. 404 for en anden creators webhook | 25 |
-| `POST` | `/me/alerts/api/webhooks/test` | ✅ Tilføjelse efter 25.12.2 (projektejerens ønske 2026-10-24): et testkøb til hver webhook, der er slået til (også en på pause), med det samme; siden plus `tested: [ deliveries ]`. Tests tæller ikke med i pausen. 403 når API'en er slået fra | 25 |
-| `POST` | `/me/alerts/api/webhooks/{id}/test`, `/me/alerts/api/webhooks/{id}/secret` | ✅ Trin 25.12.2: test sender et testkøb med det samme og svarer med siden plus `delivery`; secret giver en JSON-webhook en ny signeringsnøgle (`{ "secret": "…" }` indsat, eller `""` for en ny, der vises én gang) | 25 |
+| `POST` | `/me/alerts/api/webhooks/test` | ✅ Tilføjelse efter 25.12.2 (projektejerens ønske 2026-10-24): et testkøb til hver webhook, der er slået til (også en på pause), med det samme; siden plus `tested: [ deliveries ]`. Tests tæller ikke med i pausen. 403 når API'en er slået fra; 429 `merchboard_too_many_requests` ud over 10 webhook-tests pr. minut pr. creator (25.13) | 25 |
+| `POST` | `/me/alerts/api/webhooks/{id}/test`, `/me/alerts/api/webhooks/{id}/secret` | ✅ Trin 25.12.2: test sender et testkøb med det samme og svarer med siden plus `delivery`; secret giver en JSON-webhook en ny signeringsnøgle (`{ "secret": "…" }` indsat, eller `""` for en ny, der vises én gang). Test: 429 `merchboard_too_many_requests` ud over 10 webhook-tests pr. minut pr. creator (25.13) | 25 |
 | `GET`, `PATCH` | `/me/alerts/preferences` | ✅ Trin 25.7: `{ "anonymize": bool }`, om historikken forkorter brugernavne; gemmes som user meta `merchboard_alerts_anonymize` på den indloggede bruger (som dashboard-temaet, ADR-044). `PATCH` med en ikke-boolsk værdi: 400 | 25 |
 | `DELETE` | `/me/alerts/overlay/images/{id}` | ✅ Trin 25.6.10: sletter et eget billede; tekstfyld, der brugte det, slås fra. Samme svar som `GET`. 400 med `data.fields.image` = `unknown_image` for et billede, creatoren ikke ejer (fx et biblioteksbillede); 404 før opsætning | 25 |
 | `GET` | `/me/alerts/presets` | ✅ Trin 25.9.5: standard-overlays, creatoren kan starte fra: `{ presets: [ { id, name, settings, font_approved, layout, images } ] }` (samme felter som overlayet; `images` er billedbiblioteket) | 25 |
@@ -135,7 +135,7 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 
 ### Offentlig med nøgle: alert-API til creatorens egne bots ✅ (fase 25, trin 25.12.1, ADR-073)
 
-`GET /merchboard/v1/alerts/api/events` er offentlig (`permission_callback` = `__return_true`); creatorens API-nøgle er adgangen. Den sendes kun i headeren `Authorization: Bearer mbk_…` (eller `X-MerchBoard-Key: mbk_…` på værter, der fjerner Authorization), aldrig i URL'en.
+`GET /merchboard/v1/alerts/api/events` er offentlig (`permission_callback` = `__return_true`); creatorens API-nøgle er adgangen. Den sendes kun i headeren `Authorization: Bearer mbk_…` (eller `X-MerchBoard-Key: mbk_…` på værter, der fjerner Authorization), aldrig i URL'en. `X-MerchBoard-Key` bruges, når `Authorization` ikke er en Bearer-header, også når sitet selv sender en Basic-`Authorization` (25.13).
 
 | Parameter | Type | Betydning |
 | --- | --- | --- |
@@ -152,7 +152,7 @@ Svar `200`: `{ cursor, events: [ { id, kind, created_at, order_ref, username, pr
 
 Fejl:
 - `503 merchboard_alerts_api_unavailable`: API'en er slået fra af administratoren, alerts er slået fra, eller MerchAlert er aktivt.
-- `401 merchboard_unauthorized`: nøglen mangler, er forkert eller er tilbagekaldt, eller creatoren er inaktiv. Svaret er det samme for alle årsager.
+- `401 merchboard_unauthorized`: nøglen mangler, er forkert eller er tilbagekaldt, creatoren er inaktiv, eller creatoren har ikke adgang til API-nøgler (25.12.4). Svaret er det samme for alle årsager.
 - `429 merchboard_too_many_requests`: mere end 60 forespørgsler pr. nøgle pr. minut.
 
 ### Udgående: webhooks til creatorens egne bots ✅ (fase 25, trin 25.12.2, ADR-073)
@@ -174,7 +174,7 @@ Efter en betalt ordre sender pluginet én `POST` pr. webhook til creatorens adre
 
 ### Offentlig: alert-overlayets feed ✅ (fase 25, trin 25.3, ADR-065 pkt. 4)
 
-`GET /merchboard/v1/alerts/overlay/{overlay_id}/feed` er en offentlig route (de andre er Twitchs callback og webhook, trin 25.8) (`permission_callback` = `__return_true`, besluttet i ADR-065). OBS kan ikke logge ind, så det hemmelige overlay-ID i stien er adgangen (32 hex-tegn, 128 bit, sammenlignet med `hash_equals()`).
+`GET /merchboard/v1/alerts/overlay/{overlay_id}/feed` er en offentlig route (de andre er Twitchs callback og webhook, trin 25.8, Kicks callback og webhook, trin 25.8.2, YouTubes callback, trin 25.8.4, det globale overlays feed, trin 25.9.4, og `/alerts/api/events`, trin 25.12.1) (`permission_callback` = `__return_true`, besluttet i ADR-065). OBS kan ikke logge ind, så det hemmelige overlay-ID i stien er adgangen (32 hex-tegn, 128 bit, sammenlignet med `hash_equals()`).
 
 | Parameter | Type | Betydning |
 | --- | --- | --- |
