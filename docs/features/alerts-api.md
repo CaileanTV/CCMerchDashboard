@@ -18,9 +18,9 @@ Siderne **Alerts → API-nøgler** og **Alerts → Webhooks** i creator-dashboar
   - **Formater:** **JSON** sender én signeret hændelse pr. betalt ordre til creatorens egen bot (fx SparkyBot). **Discord** skriver chatbeskeden i en Discord-kanal, med en valgfri egen besked.
   - **Signeringsnøgle:** til JSON indsættes den fra botten, eller Merch Dashboard laver en, som vises én gang.
   - **Handlinger:** "Send test" sender straks og viser svaret (højst 10 tests pr. minut pr. creator). Webhooken kan slås til og fra, og "Genoptag" bruges efter en pause. JSON-webhooks kan få en ny nøgle, og sletning kræver bekræftelse.
-  - **Leveringer:** de seneste 20 med tidspunkt, webhook, type og udfald.
+  - **Leveringer:** de seneste 20 med tidspunkt, webhook, type og udfald. En fejl uden svar vises i ord ud fra årsagskoden (25.13 review): adressen fører til et privat eller reserveret netværk, modtageren kunne ikke nås, modtageren svarede ikke i tide, eller adressen kan ikke længere læses (tilføj webhooken igen).
   - **Test-kortet** (tilføjet efter 25.12.2, projektejerens ønske 2026-10-24): "Send test til alle webhooks" sender med det samme et testkøb til hver webhook, der er slået til, og viser svaret fra hver, som API-nøgle-sidens Test-kort.
-- **Test og gensendelser:** "Send testhændelse" lægger et testkøb (`kind: test`) klar til hver nøgle. Gensender creatoren en alert under Historik, får nøglerne den (`kind: resend`), og webhooks får en `resend`-levering, også uden et overlay.
+- **Test og gensendelser:** "Send testhændelse" lægger et testkøb (`kind: test`) klar til hver nøgle. Gensender creatoren en alert under Historik, får nøglerne den (`kind: resend`), og webhooks får en `resend`-levering, også uden et overlay. Fra 25.13 virker gensend pr. kanal (overlay, API, webhooks og chatbot hver for sig), og Historik svarer kun "Opsæt dit overlay først", når ingen kanal er sat op.
 - **Vejledning:**
   - **API:** adressen, et `curl`-eksempel med `Authorization: Bearer`, hvordan cursoren bruges (polling hvert 5.–10. sekund), grænsen på 60 forespørgsler pr. minut, fejlkoderne, et eksempelsvar og alle felter forklaret.
   - **Webhooks:** en eksempelhændelse, tjek af signaturen i Node.js, at `id` bruges til at fjerne dubletter, ét forsøg og pausen, og hvordan man opretter en Discord-webhook.
@@ -58,10 +58,12 @@ Merch Dashboard → Alerts → fanen **API** (`merchboard_manage_alerts`):
   - `display_name` er brugernavnet eller "Anonymous".
   - Signaturen er `X-MerchBoard-Signature: sha256=` HMAC af `{timestamp}.{body}`.
   - Afsendelse sker via Action Scheduler efter betalingen med ét forsøg, timeout 5 s og ingen redirects.
+  - **SSRF-værn (25.13 review):** værten slås op (A og AAAA), og leveringen afvises som `blocked_address`, medmindre alle adresser er offentlige (`FILTER_FLAG_GLOBAL_RANGE`); cURL forbinder til præcis den tjekkede adresse (`http_api_curl`, `CURLOPT_RESOLVE`). Creatoren ser årsagskoderne `blocked_address`, `unreachable`, `timeout`, `unreadable` og `http_NNN`; transportens fejltekst går til den tekniske log.
   - Et 2xx-svar nulstiller fejltælleren, og 10 fejl i træk giver pause.
 - **Test og gensendelser:**
   - **API:** de ligger i en transient pr. nøgle i 5 minutter (højst 20). Deres `id` er 0, så de aldrig flytter cursoren.
-  - **Webhooks:** de får et nyt hændelses-id.
+  - **Webhooks:** de får et nyt hændelses-id. Ved gensendelse af én linje er `total` stadig creatorens samlede betalte ordretotal, mens `items` og `item_count` kun dækker den gensendte linje (projektejerens beslutning 2026-10-24).
+- **Importerede alerts (schema-version 29):** alerts fra importen fra MerchAlert har `imported = 1` og kommer aldrig i API'ens feed som nye køb.
 - **Dashboard:** `sections/alerts/AlertsApiSection.tsx` (API-nøgler), `sections/alerts/AlertsWebhooksSection.tsx` med `WebhooksCard.tsx` (webhooks) og `api/alertApi.ts`.
 
 ## Relevant files
@@ -120,11 +122,13 @@ Se [API.md](../API.md), også for webhook-formatet.
   - ingen levering når API'en, alerts, creatoren eller webhooken siger nej;
   - test og gensendelser markeret med nye id'er;
   - loggen på 50;
+  - en vært med en privat eller reserveret adresse kaldes aldrig (25.13);
   - creator-ruterne og admin "Slå alle fra";
   - migration 27.
 - **Unit:** `AlertMoney::plain()`, dashboard-sektionen, adresseregler, signatur og krypteringsdomæne.
-- **Jest:** validering, nøglen vist én gang, tilbagekaldelse med bekræftelse, slået fra, webhook oprettet med vist hemmelighed, test, pause og sletning med bekræftelse.
+- **Jest:** validering, nøglen vist én gang, tilbagekaldelse med bekræftelse, slået fra, webhook oprettet med vist hemmelighed, test, pause og sletning med bekræftelse; leveringernes årsagskoder i ord (25.13).
 
 ## Known limitations
-- En gensendelse fra Historik før overlayet er sat op, når bottene og webhooks, men svaret siger stadig "Opsæt dit overlay først".
 - **Ét forsøg pr. levering:** SparkyBot anbefaler begrænsede genforsøg. Det, en webhook mistede, hentes med polling eller gensend fra Historik.
+- **`total` ved gensendelse af én linje** er creatorens samlede betalte ordretotal, ikke linjens (accepteret af projektejeren 2026-10-24).
+- **Accepterede lave risici (25.13 review, projektejerens beslutning 2026-10-24):** to samtidige forespørgsler kan give én nøgle eller webhook ud over grænsen; test- og gensendelseskøen pr. nøgle (transient) kan miste en hændelse, hvis en forespørgsel fejler midtvejs. Se også [alerts.md](alerts.md), "Known limitations".

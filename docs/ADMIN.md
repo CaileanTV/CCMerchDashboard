@@ -123,6 +123,7 @@ Afinstallation (slet plugin) uden eksplicit opt-in
 Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugin is deleted")
 → ventende payout eller fejl ved optællingen: intet slettes, og sletningen af pluginet afvises (ADR-059)
 → ellers slettes Merch Dashboards egne data, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og de krypterede betalingsoplysninger
+→ alerts (fra 25.13): de uploadede lyde og billeder slettes (aldrig MerchAlerts filer, som importen overtog), og ventende chat- og webhook-jobs annulleres
 → bevares (ADR-059): creators (arkiveret), audit-loggen, payouts, afregningsbilag, bilagsrækker og bilagstællere
 → alle andre WordPress- og WooCommerce-data bevares
 ```
@@ -181,7 +182,8 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 - Forklaring af, hvad der flyttes og ikke flyttes, og forudsætningerne: backup, og MerchAlert deaktiveret, men ikke slettet. Mens MerchAlert er aktivt, eller uden MerchAlert-data, vises kun en besked.
 - **"Tørkør"** (kun læsning) viser pr. MerchAlert-creator kategorien, creatoren her og hvad der sker: importeres (nyt overlay), importeres (erstatter creatorens nuværende overlay), allerede importeret (kun manglende alerts og beskeder) eller springes over (ingen kategori, kategorien tilhører ingen creator, intet overlay, en anden MerchAlert-creator til samme creator, ID'et bruges allerede). Desuden antal alerts, chatbeskeder og lyde, det globale overlay og indstillingerne og fontene.
 - **"Importér"** kræver afkrydsningen "Jeg har taget en backup …" og samme tørkørsel (fingerprint); ellers vises den nye tørkørsel. Resultatet og "Seneste import" vises på fanen.
-- Audit: `alert_creator_imported` pr. creator og `alert_import_completed` (kun antal); indstillinger og fonte auditeres som ved manuelle ændringer.
+- Audit: `alert_creator_imported` pr. creator og `alert_import_completed` (kun antal; fra 25.13 i samme transaktion som markeringen af importen); indstillinger og fonte auditeres som ved manuelle ændringer.
+- **Importerede alerts (fra 25.13, schema-version 29):** de vises i historikken og ordreloggen, men aldrig som nye køb i creatorens overlay, det globale overlay eller alert-API'en.
 
 **Merch Dashboard → Alerts, fanen "Creator-siden"** (✅ fase 25, trin 25.9.6; kræver `merchboard_manage_alerts`; React-bundle `build/alerts-page-admin.js`):
 - En skitse af creatorernes side "Overlay-indstillinger" med zonerne "Fuld bredde (øverst)", "Venstre kolonne" og "Højre kolonne". Kortene (Designs, Browser source, Lyde, Alerttekst, Tekststil, Boks og billede, Animationer og tekstfyld, Timing) trækkes mellem og inden for zonerne; "Felter" folder et korts felter ud, som trækkes i rækkefølge. Samme med knapperne "Flyt op", "Flyt ned" og placeringsvalget (tastatur og touch); en live-region læser flytningen op.

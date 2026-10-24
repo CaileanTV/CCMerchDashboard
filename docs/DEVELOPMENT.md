@@ -263,11 +263,12 @@ Rækkefølgen er låst (ADR-065): **backup → deaktivér MerchAlert → opdaté
 1. **Backup:** filer og database via hostingen. Notér de installerede versioner af Merch Dashboard (1.0.1) og MerchAlert.
 2. **Cache:** side-cache/CDN må ikke cache `/merchboard-alerts/*`, `/ccmerch-alert/*` (de gamle OBS-URL'er) eller REST-feedet `wp-json/merchboard/v1/*`. Overlays henter nye alerts med long-poll.
 3. **Deaktivér MerchAlert** under Plugins. **Slet det ikke:** MerchAlerts afinstallation sletter dets tabeller, som importen læser.
-4. **Opdatér Merch Dashboard** med release-ZIP'en ("Erstat nuværende med uploadet"). Migration 18–24 kører; Overview skal vise schema-version 24 uden advarsler. Alerts er **slået fra** efter opdateringen (kill switch, ADR-065 pkt. 6).
+4. **Opdatér Merch Dashboard** med release-ZIP'en ("Erstat nuværende med uploadet"). Migration 18–29 kører; Overview skal vise schema-version 29 uden advarsler. Alerts er **slået fra** efter opdateringen (kill switch, ADR-065 pkt. 6).
 5. **Import:** Merch Dashboard → Alerts → **Import** → "Tørkør". Gennemgå rapporten: hver MerchAlert-creator skal matche den rigtige creator via sin kategori; "Springes over" kræver en beslutning (ret kategorien under Creators, og tørkør igen). Sæt kryds ved backup, og tryk "Importér". "Seneste import" viser antal creators, alerts og chatbeskeder.
 6. **Efter importen, før alerts slås til:**
    - Stikprøve: en creators overlay i OBS med den **gamle** URL (`/ccmerch-alert/creator-overlay/{id}/`) viser en testalert; designet, lydene og fonten er som før.
    - Det globale overlay er importeret **slået fra**; slå det til under Alerts → Globalt overlay, hvis det bruges.
+   - De importerede alerts står i creatorernes Historik og i Ordreloggen, men vises ikke som nye køb i åbne overlays eller alert-API'en (schema-version 29, 25.13).
    - **Chatbot:** Twitch-logins flyttes ikke. Under Alerts → Chatbot: gem Twitch-appens Client ID og Secret, og log bot-kontoen ind. Creators tilføjer botten til deres kanal igen fra dashboardet (Alerts → Chatbot). Skabelon og til/fra er flyttet.
    - Settings → Alerts: tjek lydgrænserne og "Brugernavn i checkout" (importeret fra MerchAlert).
 7. **Slå alerts til:** Settings → Alerts → "Købs-alerts": sæt kryds i "Registrér købs-alerts for creators", og gem. Ordrer betalt, mens alerts var slået fra, får ingen alerts bagefter. Læg en testordre (eller brug "Afspil seneste ordre" på det globale overlay), og tjek overlay, lyd og chatbesked.
