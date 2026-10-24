@@ -4058,7 +4058,7 @@ ADR-007, ADR-065, ADR-066, ADR-069, ADR-070.
 2026-10-24
 
 ## Status
-Accepteret af projektejeren 2026-10-24 (plan for fase 26 godkendt). 26.1 (tørkørsel) er under implementering.
+Accepteret af projektejeren 2026-10-24 (plan for fase 26 godkendt). 26.1–26.3 er implementeret; pkt. 12 er projektejerens valg ved reviewet i 26.4 (2026-10-25).
 
 ## Context
 Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vendors (PV). De skal flyttes til Merch Dashboard én gang, så de ikke skal oprettes i hånden (ROADMAP fase 26). PV's datamodel er kun delvist offentlig: den offentlige kildekode stopper ved 2.0.27, og PV 2.1.80 flyttede listen over vendor-administratorer til et ikke-offentligt sted.
@@ -4067,7 +4067,7 @@ Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vend
 1. **Afgrænsning (projektejerens valg 2026-10-24):** pr. vendor oprettes en creator, vendorens WordPress-bruger kobles på (ADR-020), og vendorens produkter kobles på. Kommission, udbetalinger, PayPal- og andre betalingsoplysninger og PV's øvrige data flyttes ikke og ændres ikke.
 2. **Læsning gennem PV's eget API:** PV skal være aktivt under tørkørsel og migrering, så PV selv svarer på, hvor dens data ligger:
    - vendors fra taxonomien `wcpv_product_vendors`;
-   - administratorer fra `WC_Product_Vendors_Utils::get_vendor_data_by_id()` og `get_all_vendor_data()` for brugere med PV-rollerne, som foreningsmængde og normaliseret som PV selv gør (liste, kommasepareret tekst eller ét id);
+   - administratorer fra `WC_Product_Vendors_Utils::get_vendor_admins()` (PV 2.4.9 gemmer dem i sit eget lager), `get_vendor_data_by_id()` og `get_all_vendor_data()` for brugere med PV-rollerne, som foreningsmængde og normaliseret som PV selv gør (liste, kommasepareret tekst eller ét id);
    - produkter som forældreprodukter med vendorens term.
    Det er en undtagelse lig ADR-065 pkt. 5: Merch Dashboard læser et andet plugins navne, men skriver aldrig i dem.
 3. **Match via brugeren (projektejerens valg):** er vendorens valgte administrator allerede koblet til en creator, bruges den creator; ellers oprettes en ny aktiv creator med vendorens navn. Navne matches ikke, fordi creator-navne ikke er unikke; tørkørslen advarer ved samme navn. Koblingen vendor → creator gemmes i optionen `merchboard_vendor_import`, så en genkørsel genkender den.
@@ -4076,9 +4076,14 @@ Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vend
 6. **Produkter:** kobles med `ProductCreatorLink::link()` (kilde `admin`, ADR-030/032). Et produkt, der allerede er koblet til en anden creator, er en konflikt; det rapporteres og erstattes aldrig. Eksisterende ledger-rækker ændres aldrig (ADR-037/038).
 7. **Afregningsstart (projektejerens valg):** en creator, som migreringen opretter, får afregningsstart = migrationstidspunktet (ADR-054), så salg, som PV allerede har afregnet, aldrig udbetales igen. Matchede creators røres ikke; tørkørslen viser deres afregningsstart.
 8. **PV-roller (projektejerens valg):** som et separat trin efter migreringen fjernes PV's tre roller (`wc_product_vendors_admin_vendor`, `wc_product_vendors_manager_vendor`, `wc_product_vendors_pending_vendor`) fra brugere, der er koblet til en migreret creator. Andre roller røres ikke. Det er en undtagelse fra ADR-022: med en PV-rolle beholder brugeren wp-admin (ADR-026).
-9. **Form som MerchAlert-importen (ADR-065 pkt. 10):** tørkørsel uden skrivning, bekræftelse af backup og et fingerprint af tørkørslen inkl. de valgte brugere. Hvert trin pr. vendor er idempotent, så en afbrudt kørsel kan genoptages. Kræver `merchboard_manage_creators` og `merchboard_manage_payouts`.
+9. **Form som MerchAlert-importen (ADR-065 pkt. 10):** tørkørsel uden skrivning, bekræftelse af backup og et fingerprint af hele tørkørslen: de valgte brugere og kategorier og de produkter, der kobles. Kun én kørsel ad gangen (en navngiven databaselås). Hvert trin pr. vendor er idempotent og registreres i optionen, så en afbrudt kørsel kan genoptages; den valgte bruger registreres, før creatoren oprettes, så en afbrudt kørsels creator stadig kendes som migreringens egen. Kræver `merchboard_manage_creators` og `merchboard_manage_payouts`.
 10. **Audit:** `vendor_imported` pr. vendor (creator, kategori, antal), `vendor_import_completed` (antal, ingen navne) og `vendor_roles_removed` pr. bruger. Oprettelse, kobling, kategori og afregningsstart auditeres desuden af deres egne services.
-11. **Produktkategori (trin 26.2.1, projektejerens valg 2026-10-24):** pr. vendor kobles en produktkategori til creatoren med `CreatorCategoryService::link()` (ADR-033), så nye produkter i kategorien, og dermed nye salg, kobles til creatoren. Tørkørslen foreslår den kategori, flest af vendorens produkter ligger i (aldrig standardkategorien), og administratoren kan vælge en anden eller ingen. En creator, der allerede har en kategori, beholder den (én pr. creator). En kategori, der er koblet til en anden creator eller valgt til en anden vendor, kobles ikke og vises. Vendorens eksisterende produkter kobles stadig manuelt med det samme (pkt. 6), også dem uden for kategorien.
+11. **Produktkategori (trin 26.2.1, projektejerens valg 2026-10-24):** pr. vendor kobles en produktkategori til creatoren med `CreatorCategoryService::link()` (ADR-033), så nye produkter i kategorien, og dermed nye salg, kobles til creatoren. Tørkørslen foreslår den kategori, flest af vendorens produkter ligger i (aldrig standardkategorien), og administratoren kan vælge en anden eller ingen. En creator, der allerede har en kategori, beholder den (én pr. creator). En kategori, der er koblet til en anden creator eller valgt til en anden vendor, kobles ikke og vises. Vendorens eksisterende produkter kobles stadig manuelt med det samme (pkt. 6), også dem uden for kategorien. Kategorierne kobles først, når alle vendors produkter er koblet, så en kategoris afstemning ikke tager en anden vendors produkter.
+12. **Reviewet i 26.4 (projektejerens valg 2026-10-25):**
+    - **Kategoriens konsekvens:** kategoriens afstemning kobler også andre ukoblede produkter i kategorien og gør produkter, der er koblet til en anden creator via kategori, tvetydige (ADR-033). Tørkørslen viser begge tal, og kun en kategori, der ikke rummer andre produkter end vendorens, foreslås; ellers foreslås ingen.
+    - **Genkørsel:** migreringen husker de produkter og den kategori, den har koblet pr. vendor, og kobler dem aldrig igen. Det, administratoren har fjernet bagefter, forbliver fjernet; nye produkter kobles.
+    - **Administratorer uden PV-rolle** (fx en WordPress-administrator): vendoren springes over (`no_role`) og vises med en forklaring.
+    - **Rollefjernelsen (pkt. 8)** gælder kun den bruger, migreringen koblede, og kun mens creatoren er aktiv, stadig har den bruger, og brugeren har rollen `merchboard_creator`. Administratoren skal også have `promote_users` og må ændre hver bruger (`promote_user`).
 
 ## Alternatives considered
 - **Læse PV's tabeller direkte med PV deaktiveret (som MerchAlert):** administratorlisten ligger siden PV 2.1.80 et ikke-offentligt sted. At gætte nøglen kunne koble forkerte brugere; fravalgt.
@@ -4090,10 +4095,11 @@ Projektejeren vil flytte sine eksisterende vendors uden manuelt arbejde og uden 
 
 ## Security
 - Kun brugere med `merchboard_manage_creators` og `merchboard_manage_payouts` kan køre den; nonce og fingerprint binder bekræftelsen til tørkørslen.
-- PV's data læses kun. Rollefjernelsen rører kun de tre PV-roller hos migrerede brugere.
+- PV's data læses kun. Rollefjernelsen rører kun de tre PV-roller hos den bruger, migreringen koblede, og kræver `promote_users` og `promote_user` pr. bruger (pkt. 12).
+- Én kørsel ad gangen; en samtidig kørsel afvises.
 
 ## Migration/data implications
-Ingen schema-migration. Optionen `merchboard_vendor_import` (vendor-term → creator og sidste kørsel) slettes ved opt-in-afinstallation.
+Ingen schema-migration. Optionen `merchboard_vendor_import` (migreringens tilstand: vendor-term → creator, koblet bruger, koblede produkter og kategori, oprettede creators og sidste kørsel; DATABASE.md) slettes ved opt-in-afinstallation.
 
 ## Consequences
 - **Admin:** undermenuen "Import fra Product Vendors", mens PV er aktivt eller en migrering er kørt.

@@ -341,7 +341,8 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 
 ## Migrering fra WooCommerce Product Vendors (fase 26, ADR-074)
 
-- **Adgang:** siden kræver `merchboard_manage_creators`; tørkørslen og migreringen også `merchboard_manage_payouts`. Brugervalget i tørkørslen er GET-parametre, der valideres til positive heltal, og kun vendorens godkendte administratorer kan vælges.
+- **Adgang:** siden kræver `merchboard_manage_creators`; tørkørslen og migreringen også `merchboard_manage_payouts`. Bruger- og kategorivalget i tørkørslen er GET-parametre, der valideres til heltal; kun vendorens godkendte administratorer og eksisterende kategorier (aldrig standardkategorien) kan vælges.
+- **Bekræftelse:** nonce, backup-bekræftelse og et fingerprint af hele tørkørslen (valgte brugere og kategorier og de produkter, der kobles). Én kørsel ad gangen (navngiven databaselås).
 - **Product Vendors læses kun**, gennem sit eget API, mens det er aktivt. Intet skrives i dets data (en undtagelse lig ADR-065 pkt. 5).
 - **Økonomi:** kommission, udbetalinger og betalingsoplysninger flyttes ikke. Nye creators får afregningsstart = migreringens tidspunkt, så salg, som Product Vendors har afregnet, aldrig udbetales igen.
-- **Roller (26.3):** kun Product Vendors' tre roller fjernes, kun hos migrerede brugere, som administratoren har bekræftet, og kun med `merchboard_manage_creators` og WordPress' `promote_users` (undtagelse fra ADR-022). Hver ændring auditeres (`vendor_roles_removed`).
+- **Roller (26.3):** kun Product Vendors' tre roller fjernes, kun hos den bruger, migreringen koblede til en creator (mens creatoren er aktiv og stadig har brugeren), kun hos bekræftede brugere og kun med `merchboard_manage_creators`, WordPress' `promote_users` og `promote_user` for hver bruger (undtagelse fra ADR-022). Hver ændring auditeres (`vendor_roles_removed`).
