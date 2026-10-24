@@ -32,6 +32,8 @@ use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportException;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPage;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportReport;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorRoleActions;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorRoleCleanup;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use WC_Product_Vendors_Utils;
@@ -40,7 +42,8 @@ use WC_Product_Vendors_Utils;
  * The dry run (26.1): statuses, the chosen user, products and settlement
  * starts, read through Product Vendors' own API, writing nothing. The
  * migration (26.2): creators, links and settlement starts, once, with
- * Product Vendors' data unchanged.
+ * Product Vendors' data unchanged. The roles (26.3): only Product Vendors'
+ * roles, only of migrated users.
  */
 final class VendorImportTest extends IntegrationTestCase {
 
@@ -318,6 +321,52 @@ final class VendorImportTest extends IntegrationTestCase {
 		);
 		self::assertSame( 1, ( get_option( VendorImportPlan::OPTION )['last']['failed'] ?? null ) );
 		self::assertNotNull( $this->service( CreatorRepository::class )->find_by_user_id( $this->users['nova_admin'] ) );
+	}
+
+	public function test_only_product_vendors_roles_of_migrated_users_are_removed(): void {
+		$report = $this->plan()->build();
+		$this->importer()->run( $report->fingerprint(), $report->choices() );
+		$cleanup = $this->cleanup();
+
+		$users = array_column( $cleanup->users(), null, 'login' );
+		ksort( $users );
+		self::assertSame( array( 'late', 'modern', 'nova_admin', 'orion_admin' ), array_keys( $users ), 'Migrated users with a Product Vendors role; not the other administrator or a skipped vendor\'s user.' );
+		self::assertSame( array( 'Shared' ), $users['nova_admin']['other_vendors'], 'Also the administrator of a vendor that was not migrated.' );
+
+		self::assertSame( 1, $cleanup->remove( array( $this->users['nova_admin'], $this->users['nova_manager'], 999999 ) ) );
+		$roles = static fn( int $id ): array => get_userdata( $id )->roles ?? array();
+		self::assertNotContains( ProductVendorsSource::ADMIN_ROLE, $roles( $this->users['nova_admin'] ) );
+		self::assertContains( Capabilities::CREATOR_ROLE, $roles( $this->users['nova_admin'] ), 'The creator access stays.' );
+		self::assertContains( ProductVendorsSource::MANAGER_ROLE, $roles( $this->users['nova_manager'] ), 'A user that was not migrated is never changed.' );
+		self::assertContains( ProductVendorsSource::ADMIN_ROLE, $roles( $this->users['orion_admin'] ), 'Only the confirmed users.' );
+		self::assertSame( 1, count( array_keys( array_map( 'strval', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) ), 'vendor_roles_removed', true ) ) );
+		self::assertNotContains( 'nova_admin', array_column( $cleanup->users(), 'login' ) );
+
+		$actions = new VendorRoleActions( $cleanup, $this->service( Logger::class ) );
+		self::assertStringContainsString( VendorRoleActions::NOT_CONFIRMED, $actions->process( array( '_wpnonce' => wp_create_nonce( VendorRoleActions::ACTION ), 'users' => array( (string) $this->users['late'] ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertContains( ProductVendorsSource::ADMIN_ROLE, $roles( $this->users['late'] ) );
+
+		require_once ABSPATH . 'wp-admin/includes/template.php';
+		ob_start();
+		( new VendorImportPage( $this->plan(), new ProductVendorsPlugin(), $cleanup ) )->render();
+		$html = (string) ob_get_clean();
+		self::assertStringContainsString( 'name="action" value="' . VendorRoleActions::ACTION . '"', $html );
+		self::assertStringContainsString( 'value="' . $this->users['late'] . '" checked', $html );
+
+		wp_set_current_user( $this->create_user( 'no_promote' ) );
+		try {
+			$cleanup->remove( array( $this->users['late'] ) );
+			self::fail( 'Removed without the right.' );
+		} catch ( VendorImportException $e ) {
+			self::assertSame( VendorImportException::NOT_AUTHORIZED, $e->reason() );
+		}
+	}
+
+	/**
+	 * The removal of Product Vendors' roles.
+	 */
+	private function cleanup(): VendorRoleCleanup {
+		return new VendorRoleCleanup( new ProductVendorsPlugin(), $this->service( CreatorRepository::class ), $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
 	}
 
 	/**

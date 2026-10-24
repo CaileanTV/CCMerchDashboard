@@ -51,10 +51,11 @@ final class VendorImportPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param VendorImportPlan     $plan   The dry run.
-	 * @param ProductVendorsSource $source Product Vendors.
+	 * @param VendorImportPlan       $plan   The dry run.
+	 * @param ProductVendorsSource   $source Product Vendors.
+	 * @param VendorRoleCleanup|null $roles  Removal of Product Vendors' roles (step 26.3); null = no section.
 	 */
-	public function __construct( private VendorImportPlan $plan, private ProductVendorsSource $source ) {
+	public function __construct( private VendorImportPlan $plan, private ProductVendorsSource $source, private ?VendorRoleCleanup $roles = null ) {
 	}
 
 	/**
@@ -100,6 +101,9 @@ final class VendorImportPage {
 			VendorImportException::OUTDATED       => array( __( 'The data changed since the dry run. Check the new dry run and migrate again.', 'merchboard' ), 'warning' ),
 			VendorImportException::NO_BACKUP      => array( __( 'Confirm that you have a backup before you migrate.', 'merchboard' ), 'error' ),
 			VendorImportActions::DONE             => array( __( 'The migration is done. Check the creators and their products, then remove the Product Vendors roles when you are ready.', 'merchboard' ), 'success' ),
+			VendorRoleActions::DONE               => array( __( 'Product Vendors\' roles were removed. The users keep their other roles and their creator access.', 'merchboard' ), 'success' ),
+			VendorRoleActions::NOT_CONFIRMED      => array( __( 'Nothing was changed: tick the confirmation first.', 'merchboard' ), 'error' ),
+			VendorRoleActions::ERROR              => array( __( 'The roles could not be removed because of a technical error. Users changed before it keep the change; try again.', 'merchboard' ), 'error' ),
 			VendorImportActions::ERROR            => array( __( 'The migration stopped because of a technical error. What was migrated is kept; run the dry run again to migrate the rest.', 'merchboard' ), 'error' ),
 			default                               => null,
 		};
@@ -131,6 +135,7 @@ final class VendorImportPage {
 		echo '<ul class="ul-disc"><li>' . esc_html__( 'Not moved: commissions, payouts, PayPal and other payment details.', 'merchboard' ) . '</li><li>' . esc_html__( 'New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again.', 'merchboard' ) . '</li><li>' . esc_html__( 'A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved.', 'merchboard' ) . '</li><li>' . esc_html__( 'Vendors waiting for approval are skipped.', 'merchboard' ) . '</li><li>' . esc_html__( 'Keep Product Vendors active until the migration is done: it is read through Product Vendors itself.', 'merchboard' ) . '</li></ul>';
 
 		$this->render_last();
+		$this->render_roles();
 
 		try {
 			$this->plan->check();
@@ -251,6 +256,59 @@ final class VendorImportPage {
 		echo '<p><label><input type="checkbox" name="backup" value="1" required> ' . esc_html__( 'I have taken a backup of the site, and Product Vendors is active.', 'merchboard' ) . '</label></p>';
 		submit_button( __( 'Migrate vendors', 'merchboard' ), 'primary', 'submit', false );
 		echo '</form>';
+	}
+
+	/**
+	 * Step 26.3: the migrated users that still hold a Product Vendors role,
+	 * with the form that removes those roles (VendorRoleActions).
+	 */
+	private function render_roles(): void {
+		try {
+			$users = null === $this->roles ? array() : $this->roles->users();
+		} catch ( DatabaseException ) {
+			$users = array();
+		}
+
+		if ( array() === $users ) {
+			return;
+		}
+
+		echo '<h2>' . esc_html__( 'Remove the Product Vendors roles', 'merchboard' ) . '</h2>';
+		echo '<p>' . esc_html__( 'These migrated users still have a Product Vendors role, which keeps their Product Vendors access and wp-admin. Removing it leaves only their Merch Dashboard access; their other roles stay. Check the creators and their products first.', 'merchboard' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( VendorRoleActions::ACTION ) . '">';
+		wp_nonce_field( VendorRoleActions::ACTION );
+		echo '<table class="widefat striped"><thead><tr><td class="check-column"></td><th>' . esc_html__( 'User', 'merchboard' ) . '</th><th>' . esc_html__( 'Creator', 'merchboard' ) . '</th><th>' . esc_html__( 'Product Vendors roles', 'merchboard' ) . '</th></tr></thead><tbody>';
+
+		foreach ( $users as $user ) {
+			$id = 'merchboard-vendor-role-' . $user['user_id'];
+			echo '<tr><th scope="row" class="check-column"><input type="checkbox" id="' . esc_attr( $id ) . '" name="users[]" value="' . esc_attr( (string) $user['user_id'] ) . '" checked></th><td><label for="' . esc_attr( $id ) . '">' . esc_html( $user['login'] ) . '</label>';
+
+			if ( array() !== $user['other_vendors'] ) {
+				/* translators: %s: vendor names. */
+				echo '<br><em>' . esc_html( sprintf( __( 'Also administers vendors that were not migrated: %s. Removing the role ends that access too.', 'merchboard' ), implode( ', ', $user['other_vendors'] ) ) ) . '</em>';
+			}
+
+			echo '</td><td>' . esc_html( $user['creator_name'] ) . '</td><td>' . esc_html( implode( ', ', array_map( array( self::class, 'pv_role_label' ), $user['roles'] ) ) ) . '</td></tr>';
+		}
+
+		echo '</tbody></table>';
+		echo '<p><label><input type="checkbox" name="confirm" value="1" required> ' . esc_html__( 'I have checked the migrated creators and their products.', 'merchboard' ) . '</label></p>';
+		submit_button( __( 'Remove the Product Vendors roles', 'merchboard' ), 'secondary', 'submit', false );
+		echo '</form>';
+	}
+
+	/**
+	 * One of Product Vendors' roles in words.
+	 *
+	 * @param string $role Role.
+	 */
+	private static function pv_role_label( string $role ): string {
+		return match ( $role ) {
+			ProductVendorsSource::ADMIN_ROLE   => __( 'Vendor Admin', 'merchboard' ),
+			ProductVendorsSource::MANAGER_ROLE => __( 'Vendor Manager', 'merchboard' ),
+			default                            => __( 'Pending Vendor', 'merchboard' ),
+		};
 	}
 
 	/**

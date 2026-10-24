@@ -7,7 +7,7 @@ Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vend
 I gang (fase 26).
 - **26.1 tørkørsel:** implementeret 2026-10-24, læser kun. Projektejeren har kontrolleret den på Local med Product Vendors 2.4.9.
 - **26.2 migrering:** implementeret 2026-10-24, testet automatisk.
-- **26.3 fjernelse af PV-roller:** udestår.
+- **26.3 fjernelse af PV-roller:** implementeret 2026-10-24, testet automatisk.
 - **26.4 review og runtime-test:** udestår.
 
 Udgives sammen med fase 25 som 1.1.0.
@@ -35,6 +35,10 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
   - Pr. vendor oprettes eller genbruges creatoren, nye creators får afregningsstart = migreringens tidspunkt (én gang), og vendorens frie produkter kobles.
   - Siden viser bagefter en besked og en linje om seneste migrering (creators oprettet og brugt, produkter koblet, efterladt hos en anden creator og fejlede).
   - En genkørsel tilføjer kun det, der mangler.
+- **Fjern Product Vendors-roller (26.3):** et afsnit på siden, så længe migrerede brugere stadig har en PV-rolle (også efter at PV er deaktiveret).
+  - Listen viser bruger, creator og PV-roller, med alle markeret. Administrerer brugeren også en vendor, der ikke er migreret, vises en advarsel: fjernelsen afslutter også den adgang.
+  - Fluebenet "Jeg har kontrolleret de migrerede creators og deres produkter" og knappen **Fjern Product Vendors-rollerne**.
+  - Kun PV's tre roller fjernes, og kun hos de markerede migrerede brugere. Brugerne beholder deres andre roller og deres creator-adgang.
 
 **Regler (projektejerens valg 2026-10-24):**
 - **Match:** via brugeren.
@@ -63,6 +67,8 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
 
   En vendor, der fejler (fx en deaktiveret creator, hvis produkter ikke kan kobles), tælles, og kørslen fortsætter. Til sidst skrives seneste kørsel og `vendor_import_completed` i én transaktion.
 - **`VendorImportActions`:** admin-post `merchboard_vendor_import`: capability → nonce → backup → fingerprintets form → migreringen; Post/Redirect/Get med en resultatkode.
+- **`VendorRoleCleanup` (26.3):** `users()` giver de migrerede creators' brugere (optionens `vendors`), der stadig har en PV-rolle, med vendors, der ikke er migreret, som de også administrerer (kun mens PV er aktivt). `remove( $user_ids )` kræver `merchboard_manage_creators` og `promote_users` og ændrer kun bekræftede brugere, der stadig er på listen: `WP_User::remove_role()` for PV-rollerne og audit `vendor_roles_removed` i én transaktion pr. bruger.
+- **`VendorRoleActions` (26.3):** admin-post `merchboard_vendor_roles`: capability → nonce → bekræftelse → fjernelsen; Post/Redirect/Get.
 - **Wiring:** `WooCommerceModule`.
 
 ## Relevant files
@@ -83,7 +89,7 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
 Ingen.
 
 ## Hooks
-`admin_menu` (prioritet 29) og `admin_post_merchboard_vendor_import` (26.2).
+`admin_menu` (prioritet 29), `admin_post_merchboard_vendor_import` (26.2) og `admin_post_merchboard_vendor_roles` (26.3). De to admin-post-handlere bygges først, når formularen sendes.
 
 ## Dependencies
 WooCommerce-modulet (`ProductCreatorLink`, `PayoutSettings`) og WooCommerce Product Vendors (aktivt) til migreringen.
@@ -98,6 +104,7 @@ WooCommerce-modulet (`ProductCreatorLink`, `PayoutSettings`) og WooCommerce Prod
   - afvisning uden rettigheder eller med PV inaktivt;
   - siden og valideringen af valg;
   - at tørkørslen intet skriver (snapshot af creators, audit, produktkoblinger, roller, PV's data og optionen);
+  - rollerne (26.3): kun migrerede brugere med en PV-rolle, advarslen om en anden vendor, kun de bekræftede brugere og kun PV's roller, creator-adgangen bevares, bekræftelse kræves, og uden `promote_users` afvises det;
   - migreringen: creators, brugerkobling og rolle, produktkobling, afregningsstart kun for nye creators, PV's data uændret, audit, en genkørsel uden dubletter, en afregningsstart administratoren fjernede sættes ikke igen, forældet fingerprint og manglende backup afvises, og en vendor med en deaktiveret creator tælles som fejl, mens resten flyttes.
 - **Unit (`ProductVendorsPluginTest`):** admins-værdiens former.
 

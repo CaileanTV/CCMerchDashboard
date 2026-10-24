@@ -135,6 +135,8 @@ use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportActions;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImporter;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPage;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorRoleActions;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorRoleCleanup;
 use WP_CLI;
 use wpdb;
 
@@ -709,10 +711,12 @@ final class WooCommerceModule implements Module {
 				static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
 			)
 		);
+		$container->set( VendorRoleCleanup::class, static fn( Container $c ): VendorRoleCleanup => new VendorRoleCleanup( $c->get( ProductVendorsSource::class ), $c->get( CreatorRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( VendorRoleActions::class, static fn( Container $c ): VendorRoleActions => new VendorRoleActions( $c->get( VendorRoleCleanup::class ), $c->get( Logger::class ) ) );
 		$container->set( VendorImportActions::class, static fn( Container $c ): VendorImportActions => new VendorImportActions( $c->get( VendorImporter::class ), $c->get( Logger::class ) ) );
 		$container->set(
 			VendorImportPage::class,
-			static fn( Container $c ): VendorImportPage => new VendorImportPage( $c->get( VendorImportPlan::class ), $c->get( ProductVendorsSource::class ) )
+			static fn( Container $c ): VendorImportPage => new VendorImportPage( $c->get( VendorImportPlan::class ), $c->get( ProductVendorsSource::class ), $c->get( VendorRoleCleanup::class ) )
 		);
 		$container->set(
 			PayoutRecalculationActions::class,
@@ -974,11 +978,17 @@ final class WooCommerceModule implements Module {
 				$container->get( PayoutSettingsSections::class )->register();
 			}
 		);
-		// Built only when the migration's form is sent: it needs the Creators module's service.
+		// Built only when the migration's forms are sent: they need the Creators module's service.
 		add_action(
 			'admin_post_' . VendorImportActions::ACTION,
 			static function () use ( $container ): void {
 				$container->get( VendorImportActions::class )->handle_request();
+			}
+		);
+		add_action(
+			'admin_post_' . VendorRoleActions::ACTION,
+			static function () use ( $container ): void {
+				$container->get( VendorRoleActions::class )->handle_request();
 			}
 		);
 	}

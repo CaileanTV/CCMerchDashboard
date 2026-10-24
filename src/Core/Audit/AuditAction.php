@@ -594,4 +594,9 @@ enum AuditAction: string {
 	 * The migration from WooCommerce Product Vendors ran (phase 26, ADR-074). Context: created, matched, linked, conflict, failed (counts only).
 	 */
 	case VendorImportCompleted = 'vendor_import_completed';
+
+	/**
+	 * Product Vendors' roles were removed from a migrated creator's user (phase 26, step 26.3, ADR-074 pkt. 8). Context: roles.
+	 */
+	case VendorRolesRemoved = 'vendor_roles_removed';
 }

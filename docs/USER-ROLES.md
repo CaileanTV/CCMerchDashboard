@@ -149,3 +149,7 @@ Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md
 ## Administratorer, der også er creators
 
 Tilladt, fx til test. En administrator med en aktiv creator-record kan åbne dashboardet og ser *sine egne* creator-data. Der er ingen "se som anden creator"-funktion i v1. Impersonation kræver separat design med audit-log (fremtid).
+
+## Undtagelse: Product Vendors-roller ved migreringen (fase 26, ADR-074 pkt. 8)
+
+ADR-022's regel om, at andre roller aldrig røres, har én undtagelse: efter migreringen fra WooCommerce Product Vendors kan administratoren under Merch Dashboard → Import fra Product Vendors fjerne PV's tre roller (`wc_product_vendors_admin_vendor`, `wc_product_vendors_manager_vendor`, `wc_product_vendors_pending_vendor`) fra brugere, der er koblet til en migreret creator. Kun de markerede brugere og kun disse tre roller; det kræver `merchboard_manage_creators` og `promote_users`, og hver ændring auditeres. Med en PV-rolle beholder brugeren wp-admin (ADR-026).
