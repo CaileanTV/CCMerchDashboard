@@ -6,6 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Migrering fra WooCommerce Product Vendors, tørkørsel (fase 26, trin 26.1, ADR-074):** undermenuen Merch Dashboard → Import fra Product Vendors viser, mens Product Vendors er aktivt, hvad migreringen vil gøre pr. vendor: ny creator eller brugerens eksisterende creator, valg af bruger, når en vendor har flere administratorer, produkter, der kobles eller bliver stående hos en anden creator, og afregningsstart. Product Vendors læses gennem sit eget API, og intet skrives endnu.
 - **Adgang pr. creator til alert-API'en (fase 25, trin 25.12.4, ADR-073):** administratoren giver hver creator adgang til API-nøgler og webhooks hver for sig direkte på Merch Dashboard → Alerts → API (slået fra som standard). Creators, der allerede havde nøgler eller webhooks, beholdt adgangen (schema-version 28).
 - **Webhooks til creatorens egne bots og Discord (fase 25, trin 25.12.2, ADR-073):**
   - **Formater:** under Alerts → Webhooks (egen side ved siden af Alerts → API-nøgler) kan creators tilføje op til 3 webhooks. JSON-formatet er én signeret hændelse pr. betalt ordre i SparkyBots format, og Discord-formatet skriver chatbeskeden i en kanal.

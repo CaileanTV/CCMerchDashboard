@@ -40,9 +40,14 @@ parameters:
         # Stand-in for an active YITH WooCommerce Gift Cards (global constants,
         # class and function; isolated test processes only).
         - tests/Fixtures/yith-gift-cards.php
+        # Stand-in for WooCommerce Product Vendors' helper class (phase 26
+        # tests); scanned below for its symbols.
+        - tests/Fixtures/product-vendors.php
     # Declares the WooCommerce and WP-CLI API the plugin uses (no stubs package, ADR-030 D5).
     scanFiles:
         - tests/Stubs/woocommerce.stub
+        # Stand-in for WooCommerce Product Vendors' helper class (phase 26 tests).
+        - tests/Fixtures/product-vendors.php
         - tests/Stubs/wp-cli.stub
     # Runtime constants of the integration test harness (tests/Integration/config.php).
     bootstrapFiles:

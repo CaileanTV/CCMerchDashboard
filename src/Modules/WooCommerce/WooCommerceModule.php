@@ -128,6 +128,10 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\SalesTaxRepository;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceOrderSnapshotReader;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker;
+use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsPlugin;
+use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsSource;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPage;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
 use WP_CLI;
 use wpdb;
 
@@ -683,6 +687,16 @@ final class WooCommerceModule implements Module {
 			PayoutRecalculationsPage::class,
 			static fn( Container $c ): PayoutRecalculationsPage => new PayoutRecalculationsPage( $c->get( PayoutRecalculationRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ), $c->get( PayoutRecalculationExportRepository::class ) )
 		);
+		// The migration from WooCommerce Product Vendors (phase 26, ADR-074).
+		$container->set( ProductVendorsSource::class, static fn(): ProductVendorsSource => new ProductVendorsPlugin() );
+		$container->set(
+			VendorImportPlan::class,
+			static fn( Container $c ): VendorImportPlan => new VendorImportPlan( $c->get( ProductVendorsSource::class ), $c->get( CreatorRepository::class ), $c->get( ProductCreatorLink::class ), $c->get( PayoutSettings::class ) )
+		);
+		$container->set(
+			VendorImportPage::class,
+			static fn( Container $c ): VendorImportPage => new VendorImportPage( $c->get( VendorImportPlan::class ), $c->get( ProductVendorsSource::class ) )
+		);
 		$container->set(
 			PayoutRecalculationActions::class,
 			static fn( Container $c ): PayoutRecalculationActions => new PayoutRecalculationActions( $c->get( PayoutRecalculations::class ), $c->get( Logger::class ), $c->get( PayoutRecalculationExports::class ) )
@@ -901,6 +915,13 @@ final class WooCommerceModule implements Module {
 				$container->get( PayoutRecalculationsPage::class )->add_menu();
 			},
 			PayoutRecalculationsPage::PRIORITY
+		);
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( VendorImportPage::class )->add_menu();
+			},
+			VendorImportPage::PRIORITY
 		);
 
 		// Only wp-admin: the product category column in the Creators list, the

@@ -4051,3 +4051,52 @@ Migration 26 (`CreateAlertApiKeysTable`) opretter `merchboard_alert_api_keys` (I
 
 ## Related
 ADR-007, ADR-065, ADR-066, ADR-069, ADR-070.
+
+# ADR-074: Migrering fra WooCommerce Product Vendors
+
+## Date
+2026-10-24
+
+## Status
+Accepteret af projektejeren 2026-10-24 (plan for fase 26 godkendt). 26.1 (tørkørsel) er under implementering.
+
+## Context
+Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vendors (PV). De skal flyttes til Merch Dashboard én gang, så de ikke skal oprettes i hånden (ROADMAP fase 26). PV's datamodel er kun delvist offentlig: den offentlige kildekode stopper ved 2.0.27, og PV 2.1.80 flyttede listen over vendor-administratorer til et ikke-offentligt sted.
+
+## Decision
+1. **Afgrænsning (projektejerens valg 2026-10-24):** pr. vendor oprettes en creator, vendorens WordPress-bruger kobles på (ADR-020), og vendorens produkter kobles på. Kommission, udbetalinger, PayPal- og andre betalingsoplysninger og PV's øvrige data flyttes ikke og ændres ikke.
+2. **Læsning gennem PV's eget API:** PV skal være aktivt under tørkørsel og migrering, så PV selv svarer på, hvor dens data ligger:
+   - vendors fra taxonomien `wcpv_product_vendors`;
+   - administratorer fra `WC_Product_Vendors_Utils::get_vendor_data_by_id()` og `get_all_vendor_data()` for brugere med PV-rollerne, som foreningsmængde og normaliseret som PV selv gør (liste, kommasepareret tekst eller ét id);
+   - produkter som forældreprodukter med vendorens term.
+   Det er en undtagelse lig ADR-065 pkt. 5: Merch Dashboard læser et andet plugins navne, men skriver aldrig i dem.
+3. **Match via brugeren (projektejerens valg):** er vendorens valgte administrator allerede koblet til en creator, bruges den creator; ellers oprettes en ny aktiv creator med vendorens navn. Navne matches ikke, fordi creator-navne ikke er unikke; tørkørslen advarer ved samme navn. Koblingen vendor → creator gemmes i optionen `merchboard_vendor_import`, så en genkørsel genkender den.
+4. **Én bruger pr. creator (ADR-020):** tørkørslen foreslår én bruger pr. vendor (en bruger, der allerede er koblet til en creator; ellers Vendor Admin før Vendor Manager; ellers den ældste), og administratoren kan vælge en anden af vendorens administratorer. De øvrige migreres ikke. En bruger kan kun vælges til én vendor.
+5. **Ventende vendors** (administratorer med kun rollen Pending Vendor) springes over. En vendor uden administratorer bliver en creator uden bruger.
+6. **Produkter:** kobles med `ProductCreatorLink::link()` (kilde `admin`, ADR-030/032). Et produkt, der allerede er koblet til en anden creator, er en konflikt; det rapporteres og erstattes aldrig. Eksisterende ledger-rækker ændres aldrig (ADR-037/038).
+7. **Afregningsstart (projektejerens valg):** en creator, som migreringen opretter, får afregningsstart = migrationstidspunktet (ADR-054), så salg, som PV allerede har afregnet, aldrig udbetales igen. Matchede creators røres ikke; tørkørslen viser deres afregningsstart.
+8. **PV-roller (projektejerens valg):** som et separat trin efter migreringen fjernes PV's tre roller (`wc_product_vendors_admin_vendor`, `wc_product_vendors_manager_vendor`, `wc_product_vendors_pending_vendor`) fra brugere, der er koblet til en migreret creator. Andre roller røres ikke. Det er en undtagelse fra ADR-022: med en PV-rolle beholder brugeren wp-admin (ADR-026).
+9. **Form som MerchAlert-importen (ADR-065 pkt. 10):** tørkørsel uden skrivning, bekræftelse af backup og et fingerprint af tørkørslen inkl. de valgte brugere. Hvert trin pr. vendor er idempotent, så en afbrudt kørsel kan genoptages. Kræver `merchboard_manage_creators` og `merchboard_manage_payouts`.
+10. **Audit:** `vendor_imported` pr. vendor (creator, antal), `vendor_import_completed` (antal, ingen navne) og `vendor_roles_removed` pr. bruger. Oprettelse, kobling og afregningsstart auditeres desuden af deres egne services.
+
+## Alternatives considered
+- **Læse PV's tabeller direkte med PV deaktiveret (som MerchAlert):** administratorlisten ligger siden PV 2.1.80 et ikke-offentligt sted. At gætte nøglen kunne koble forkerte brugere; fravalgt.
+- **Match på navn:** creator-navne er ikke unikke; fravalgt af projektejeren.
+- **Kategori-mapping:** PV bruger sin egen taxonomi, og en mapping er ikke ejerskab (ADR-033); fravalgt.
+
+## Reason
+Projektejeren vil flytte sine eksisterende vendors uden manuelt arbejde og uden at røre PV's økonomiske data.
+
+## Security
+- Kun brugere med `merchboard_manage_creators` og `merchboard_manage_payouts` kan køre den; nonce og fingerprint binder bekræftelsen til tørkørslen.
+- PV's data læses kun. Rollefjernelsen rører kun de tre PV-roller hos migrerede brugere.
+
+## Migration/data implications
+Ingen schema-migration. Optionen `merchboard_vendor_import` (vendor-term → creator og sidste kørsel) slettes ved opt-in-afinstallation.
+
+## Consequences
+- **Admin:** undermenuen "Import fra Product Vendors", mens PV er aktivt eller en migrering er kørt.
+- Efter migreringen kan projektejeren deaktivere PV.
+
+## Related
+ADR-020, ADR-022, ADR-026, ADR-030, ADR-033, ADR-037, ADR-038, ADR-054, ADR-065.
