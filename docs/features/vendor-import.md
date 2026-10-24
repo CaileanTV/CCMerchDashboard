@@ -5,8 +5,8 @@ Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vend
 
 ## Current status
 I gang (fase 26).
-- **26.1 tørkørsel:** implementeret 2026-10-24, læser kun.
-- **26.2 migrering:** udestår.
+- **26.1 tørkørsel:** implementeret 2026-10-24, læser kun. Projektejeren har kontrolleret den på Local med Product Vendors 2.4.9.
+- **26.2 migrering:** implementeret 2026-10-24, testet automatisk.
 - **26.3 fjernelse af PV-roller:** udestår.
 - **26.4 review og runtime-test:** udestår.
 
@@ -29,7 +29,12 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
   - **Produkter:** kobles / allerede koblet / bliver stående, fordi de tilhører en anden creator.
   - **Afregningsstart:** "sættes til migreringens tidspunkt" for nye creators; ellers creatorens nuværende afregningsstart.
   - **Advarsel:** når en creator med samme navn findes. Navne matches aldrig.
-- **Skriver intet.** Selve migreringen kommer i 26.2.
+- **Tørkørslen skriver intet.**
+- **Migreringen (26.2):** under tørkørslen står formularen med de valgte brugere, tørkørslens fingerprint og fluebenet "Jeg har taget en backup af sitet, og Product Vendors er aktivt" og knappen **Flyt vendors**.
+  - En frisk tørkørsel med de samme valg skal give samme fingerprint; ellers afvises den ("Data er ændret siden tørkørslen").
+  - Pr. vendor oprettes eller genbruges creatoren, nye creators får afregningsstart = migreringens tidspunkt (én gang), og vendorens frie produkter kobles.
+  - Siden viser bagefter en besked og en linje om seneste migrering (creators oprettet og brugt, produkter koblet, efterladt hos en anden creator og fejlede).
+  - En genkørsel tilføjer kun det, der mangler.
 
 **Regler (projektejerens valg 2026-10-24):**
 - **Match:** via brugeren.
@@ -50,6 +55,14 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
   - giver en `VendorImportReport` med statusserne `new`, `matched`, `imported`, `no_admin`, `pending` og `user_taken`, produkttal og afregningsstart;
   - har et fingerprint (sha256 af rapporten inkl. de valgte brugere).
 - **`VendorImportPage`:** undermenu med prioritet 29, før Audit log.
+- **`VendorImporter::run( $fingerprint, $choices )` (26.2):** bygger en frisk tørkørsel med de samme valg og kræver samme fingerprint. Uden ydre transaktion (servicerne har hver deres, og transaktioner kan ikke indlejres), men hvert trin er idempotent:
+  1. creator: tidligere kørsels (optionen), den valgte brugers, eller en ny aktiv via `CreatorService::create()` (kobler brugeren og giver rollen `merchboard_creator`); en ny skrives straks i optionen;
+  2. afregningsstart: for en creator, migreringen har oprettet, én gang via `PayoutSettings::set_settlement_start()`. En afregningsstart, administratoren ændrer bagefter, sættes aldrig igen;
+  3. produkter: frie produkter kobles via `ProductCreatorLink::link()` (kilde `admin`); produkter hos en anden creator efterlades;
+  4. audit `vendor_imported`.
+
+  En vendor, der fejler (fx en deaktiveret creator, hvis produkter ikke kan kobles), tælles, og kørslen fortsætter. Til sidst skrives seneste kørsel og `vendor_import_completed` i én transaktion.
+- **`VendorImportActions`:** admin-post `merchboard_vendor_import`: capability → nonce → backup → fingerprintets form → migreringen; Post/Redirect/Get med en resultatkode.
 - **Wiring:** `WooCommerceModule`.
 
 ## Relevant files
@@ -58,7 +71,8 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
 
 ## Database/data used
 - **Læses:** `merchboard_creators` og produkternes `_merchboard_creator_id` (ADR-030); creatorens afregningsstart (`merchboard_creators.payout_start_at`, ADR-054); PV's taxonomi, term meta `vendor_data` og roller gennem PV's API.
-- **Option:** `merchboard_vendor_import` (vendor-term → creator) læses af tørkørslen. Den skrives først af migreringen i 26.2.
+- **Option:** `merchboard_vendor_import`: `vendors` (vendor-term → creator), `created` (creators, migreringen har oprettet), `settled` (creators, hvis afregningsstart er sat), `completed_at` og `last` (tal). Slettes ved opt-in-afinstallation.
+- **Skrives (26.2):** `merchboard_creators` (via `CreatorService`), brugerens ekstra rolle `merchboard_creator`, produkternes kobling (via `ProductCreatorLink`), afregningsstart (via `PayoutSettings`) og audit. Product Vendors' data skrives aldrig.
 
 ## Permissions
 - **Siden:** `merchboard_manage_creators`.
@@ -69,7 +83,7 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
 Ingen.
 
 ## Hooks
-`admin_menu` (prioritet 29).
+`admin_menu` (prioritet 29) og `admin_post_merchboard_vendor_import` (26.2).
 
 ## Dependencies
 WooCommerce-modulet (`ProductCreatorLink`, `PayoutSettings`) og WooCommerce Product Vendors (aktivt) til migreringen.
@@ -83,7 +97,8 @@ WooCommerce-modulet (`ProductCreatorLink`, `PayoutSettings`) og WooCommerce Prod
   - genkendelse af en tidligere migrering;
   - afvisning uden rettigheder eller med PV inaktivt;
   - siden og valideringen af valg;
-  - at tørkørslen intet skriver (snapshot af creators, audit, produktkoblinger, roller, PV's data og optionen).
+  - at tørkørslen intet skriver (snapshot af creators, audit, produktkoblinger, roller, PV's data og optionen);
+  - migreringen: creators, brugerkobling og rolle, produktkobling, afregningsstart kun for nye creators, PV's data uændret, audit, en genkørsel uden dubletter, en afregningsstart administratoren fjernede sættes ikke igen, forældet fingerprint og manglende backup afvises, og en vendor med en deaktiveret creator tælles som fejl, mens resten flyttes.
 - **Unit (`ProductVendorsPluginTest`):** admins-værdiens former.
 
 ## Known limitations

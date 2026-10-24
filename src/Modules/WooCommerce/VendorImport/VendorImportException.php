@@ -23,6 +23,8 @@ final class VendorImportException extends RuntimeException {
 	public const INACTIVE       = 'vendors_inactive';
 	public const NO_DATA        = 'vendors_no_data';
 	public const UNREADABLE     = 'vendors_unreadable';
+	public const OUTDATED       = 'vendors_preview_outdated';
+	public const NO_BACKUP      = 'vendors_backup_required';
 
 	/**
 	 * Constructor.

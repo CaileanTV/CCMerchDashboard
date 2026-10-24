@@ -27,6 +27,7 @@ use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Import\MerchAlertImportPlan;
 use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
@@ -221,6 +222,7 @@ final class Uninstaller {
 		delete_option( OverlayPresetStore::OPTION );
 		delete_option( CreatorPageLayoutStore::OPTION );
 		delete_option( MerchAlertImportPlan::MARKER_OPTION );
+		delete_option( VendorImportPlan::OPTION );
 		delete_option( AlertApiSwitch::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );

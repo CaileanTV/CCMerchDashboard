@@ -163,6 +163,8 @@ final class AuditLogFormatter {
 			AuditAction::AlertWebhookChanged => __( 'Alert webhook changed', 'merchboard' ),
 			AuditAction::AlertWebhookDeleted => __( 'Alert webhook deleted', 'merchboard' ),
 			AuditAction::AlertApiAccessChanged => __( 'Creator\'s access to the alert API changed', 'merchboard' ),
+			AuditAction::VendorImported        => __( 'Vendor migrated from Product Vendors', 'merchboard' ),
+			AuditAction::VendorImportCompleted => __( 'Migration from Product Vendors completed', 'merchboard' ),
 		};
 	}
 

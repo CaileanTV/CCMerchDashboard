@@ -642,8 +642,8 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - PV-rollerne fjernes i et separat trin;
   - PV skal være aktivt, så PV's eget API læser dens data.
 - **Trin** (hvert trin committes for sig og testes af projektejeren):
-  - **26.1 Tørkørsel ✅ (implementeret 2026-10-24, testet automatisk):** ADR-074 og undermenuen "Import fra Product Vendors" med tørkørsel og valg af bruger pr. vendor. Den skriver intet. Projektejeren kontrollerer tørkørslen på Local med Product Vendors aktivt. Se [features/vendor-import.md](features/vendor-import.md).
-  - **26.2 Migrering:** creator, brugerkobling, afregningsstart og produktkobling med backup-bekræftelse og fingerprint; genkørsel uden dubletter; audit.
+  - **26.1 Tørkørsel ✅ (`ee2f062`, 2026-10-24):** ADR-074 og undermenuen "Import fra Product Vendors" med tørkørsel og valg af bruger pr. vendor. Den skriver intet. Projektejerens test på Local viste, at Product Vendors 2.4.9 gemmer administratorerne i sit eget lager; tørkørslen læser dem nu med `get_vendor_admins()`, og projektejeren har bekræftet, at den virker. Seed- og diagnosescripts til Local: `bin/mb-26-seed-product-vendors.php` og `bin/mb-26-diagnose-product-vendors.php` (`47786df`). Se [features/vendor-import.md](features/vendor-import.md).
+  - **26.2 Migrering ✅ (implementeret 2026-10-24, testet automatisk):** knappen "Flyt vendors" med backup-bekræftelse og fingerprint; creator, brugerkobling, afregningsstart (én gang, kun nye creators) og produktkobling; genkørsel uden dubletter; audit `vendor_imported` og `vendor_import_completed`. Projektejeren tester migreringen på Local.
   - **26.3 Fjern PV-roller:** separat knap med bekræftelse og audit.
   - **26.4 Slutreview og runtime-test:** review og tjekliste på Local med en kopi af produktionsdata; derefter release 1.1.0 (25.10.3) for fase 25 og 26 samlet.
 

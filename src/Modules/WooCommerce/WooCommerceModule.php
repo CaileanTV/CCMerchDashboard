@@ -128,8 +128,11 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Modules\WooCommerce\Sales\SalesTaxRepository;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceOrderSnapshotReader;
 use MerchBoard\Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker;
+use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsPlugin;
 use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsSource;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportActions;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImporter;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPage;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
 use WP_CLI;
@@ -694,6 +697,20 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): VendorImportPlan => new VendorImportPlan( $c->get( ProductVendorsSource::class ), $c->get( CreatorRepository::class ), $c->get( ProductCreatorLink::class ), $c->get( PayoutSettings::class ) )
 		);
 		$container->set(
+			VendorImporter::class,
+			static fn( Container $c ): VendorImporter => new VendorImporter(
+				$c->get( VendorImportPlan::class ),
+				$c->get( ProductVendorsSource::class ),
+				$c->get( CreatorService::class ),
+				$c->get( ProductCreatorLink::class ),
+				$c->get( PayoutSettings::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
+			)
+		);
+		$container->set( VendorImportActions::class, static fn( Container $c ): VendorImportActions => new VendorImportActions( $c->get( VendorImporter::class ), $c->get( Logger::class ) ) );
+		$container->set(
 			VendorImportPage::class,
 			static fn( Container $c ): VendorImportPage => new VendorImportPage( $c->get( VendorImportPlan::class ), $c->get( ProductVendorsSource::class ) )
 		);
@@ -955,6 +972,13 @@ final class WooCommerceModule implements Module {
 				$container->get( PayoutRecalculationExportDownload::class )->register();
 				$container->get( SettlementPdfDownload::class )->register();
 				$container->get( PayoutSettingsSections::class )->register();
+			}
+		);
+		// Built only when the migration's form is sent: it needs the Creators module's service.
+		add_action(
+			'admin_post_' . VendorImportActions::ACTION,
+			static function () use ( $container ): void {
+				$container->get( VendorImportActions::class )->handle_request();
 			}
 		);
 	}

@@ -30,6 +30,7 @@ use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Import\MerchAlertImportPlan;
 use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
@@ -162,7 +163,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
 		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
-		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION, GlobalOverlayStore::OPTION, OverlayPresetStore::OPTION, CreatorPageLayoutStore::OPTION, MerchAlertImportPlan::MARKER_OPTION, AlertApiSwitch::OPTION ) as $option ) {
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION, GlobalOverlayStore::OPTION, OverlayPresetStore::OPTION, CreatorPageLayoutStore::OPTION, MerchAlertImportPlan::MARKER_OPTION, AlertApiSwitch::OPTION, VendorImportPlan::OPTION ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
 		}
 

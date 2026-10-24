@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-24T18:40:56+00:00\n"
+"PO-Revision-Date: 2026-10-24T19:35:33+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -488,367 +488,375 @@ msgstr "Alert-webhook slettet"
 msgid "Creator's access to the alert API changed"
 msgstr "Creatorens adgang til alert-API'en ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:256
+#: src/Modules/Admin/AuditLogFormatter.php:166
+msgid "Vendor migrated from Product Vendors"
+msgstr "Vendor flyttet fra Product Vendors"
+
+#: src/Modules/Admin/AuditLogFormatter.php:167
+msgid "Migration from Product Vendors completed"
+msgstr "Migrering fra Product Vendors gennemført"
+
+#: src/Modules/Admin/AuditLogFormatter.php:258
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:258
+#: src/Modules/Admin/AuditLogFormatter.php:260
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:263
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:264
+#: src/Modules/Admin/AuditLogFormatter.php:266
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:267
+#: src/Modules/Admin/AuditLogFormatter.php:269
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:272
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:275
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:275
+#: src/Modules/Admin/AuditLogFormatter.php:277
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:278
+#: src/Modules/Admin/AuditLogFormatter.php:280
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:283
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:284
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:283
+#: src/Modules/Admin/AuditLogFormatter.php:285
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:286
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:286
+#: src/Modules/Admin/AuditLogFormatter.php:288
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:290
+#: src/Modules/Admin/AuditLogFormatter.php:292
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:293
+#: src/Modules/Admin/AuditLogFormatter.php:295
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:297
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:297
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:300
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:303
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:304
+#: src/Modules/Admin/AuditLogFormatter.php:306
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogFormatter.php:309
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:309
+#: src/Modules/Admin/AuditLogFormatter.php:311
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:312
+#: src/Modules/Admin/AuditLogFormatter.php:314
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:317
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:318
+#: src/Modules/Admin/AuditLogFormatter.php:320
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:323
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:323
+#: src/Modules/Admin/AuditLogFormatter.php:325
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:326
+#: src/Modules/Admin/AuditLogFormatter.php:328
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:329
+#: src/Modules/Admin/AuditLogFormatter.php:331
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:332
+#: src/Modules/Admin/AuditLogFormatter.php:334
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:336
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:336
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:337
+#: src/Modules/Admin/AuditLogFormatter.php:339
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:340
+#: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:343
+#: src/Modules/Admin/AuditLogFormatter.php:345
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:344
+#: src/Modules/Admin/AuditLogFormatter.php:346
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:347
+#: src/Modules/Admin/AuditLogFormatter.php:349
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:350
+#: src/Modules/Admin/AuditLogFormatter.php:352
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:353
+#: src/Modules/Admin/AuditLogFormatter.php:355
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:356
+#: src/Modules/Admin/AuditLogFormatter.php:358
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:359
+#: src/Modules/Admin/AuditLogFormatter.php:361
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:402
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:402
+#: src/Modules/Admin/AuditLogFormatter.php:404
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:404
+#: src/Modules/Admin/AuditLogFormatter.php:406
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:417
+#: src/Modules/Admin/AuditLogFormatter.php:419
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:418
+#: src/Modules/Admin/AuditLogFormatter.php:420
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:419
+#: src/Modules/Admin/AuditLogFormatter.php:421
 #: build/dashboard.js:51
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:420
+#: src/Modules/Admin/AuditLogFormatter.php:422
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:421
+#: src/Modules/Admin/AuditLogFormatter.php:423
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:424
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:423
+#: src/Modules/Admin/AuditLogFormatter.php:425
 msgid "Failed"
 msgstr "Fejlet"
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:433
-#: src/Modules/Admin/AuditLogFormatter.php:459
-#: src/Modules/Admin/AuditLogFormatter.php:518
+#: src/Modules/Admin/AuditLogFormatter.php:435
+#: src/Modules/Admin/AuditLogFormatter.php:461
+#: src/Modules/Admin/AuditLogFormatter.php:520
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:446
+#: src/Modules/Admin/AuditLogFormatter.php:448
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:57
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:447
+#: src/Modules/Admin/AuditLogFormatter.php:449
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:57
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:448
+#: src/Modules/Admin/AuditLogFormatter.php:450
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:57
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:449
+#: src/Modules/Admin/AuditLogFormatter.php:451
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:57
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:477
+#: src/Modules/Admin/AuditLogFormatter.php:479
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:501
+#: src/Modules/Admin/AuditLogFormatter.php:503
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:502
+#: src/Modules/Admin/AuditLogFormatter.php:504
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:503
+#: src/Modules/Admin/AuditLogFormatter.php:505
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:504
+#: src/Modules/Admin/AuditLogFormatter.php:506
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:505
-#: src/Modules/Admin/AuditLogFormatter.php:653
+#: src/Modules/Admin/AuditLogFormatter.php:507
+#: src/Modules/Admin/AuditLogFormatter.php:655
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:506
+#: src/Modules/Admin/AuditLogFormatter.php:508
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:507
-#: src/Modules/Admin/AuditLogFormatter.php:713
+#: src/Modules/Admin/AuditLogFormatter.php:509
+#: src/Modules/Admin/AuditLogFormatter.php:715
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
 #: build/dashboard.js:53
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:508
+#: src/Modules/Admin/AuditLogFormatter.php:510
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:537
+#: src/Modules/Admin/AuditLogFormatter.php:539
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:552
+#: src/Modules/Admin/AuditLogFormatter.php:554
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -857,7 +865,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:621
+#: src/Modules/Admin/AuditLogFormatter.php:623
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -866,87 +874,87 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:621
+#: src/Modules/Admin/AuditLogFormatter.php:623
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:631
+#: src/Modules/Admin/AuditLogFormatter.php:633
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:632
+#: src/Modules/Admin/AuditLogFormatter.php:634
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:633
+#: src/Modules/Admin/AuditLogFormatter.php:635
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:634
+#: src/Modules/Admin/AuditLogFormatter.php:636
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:635
+#: src/Modules/Admin/AuditLogFormatter.php:637
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:636
+#: src/Modules/Admin/AuditLogFormatter.php:638
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:637
+#: src/Modules/Admin/AuditLogFormatter.php:639
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:638
+#: src/Modules/Admin/AuditLogFormatter.php:640
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:639
+#: src/Modules/Admin/AuditLogFormatter.php:641
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:642
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:641
+#: src/Modules/Admin/AuditLogFormatter.php:643
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:654
+#: src/Modules/Admin/AuditLogFormatter.php:656
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:666
+#: src/Modules/Admin/AuditLogFormatter.php:668
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:667
+#: src/Modules/Admin/AuditLogFormatter.php:669
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:679
+#: src/Modules/Admin/AuditLogFormatter.php:681
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:680
+#: src/Modules/Admin/AuditLogFormatter.php:682
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:681
+#: src/Modules/Admin/AuditLogFormatter.php:683
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:713
+#: src/Modules/Admin/AuditLogFormatter.php:715
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:356
@@ -956,15 +964,15 @@ msgstr "produkterne i én mapping"
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:732
+#: src/Modules/Admin/AuditLogFormatter.php:734
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:733
+#: src/Modules/Admin/AuditLogFormatter.php:735
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:734
+#: src/Modules/Admin/AuditLogFormatter.php:736
 msgid "social links"
 msgstr "sociale links"
 
@@ -1278,6 +1286,7 @@ msgstr "Du har desværre ikke tilladelse til at administrere alerts."
 #: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:310
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:99
 #: src/Modules/WooCommerce/Admin/SettlementPdfDownload.php:117
+#: src/Modules/WooCommerce/VendorImport/VendorImportActions.php:82
 msgid "The link you followed has expired. Please try again."
 msgstr "Linket, du fulgte, er udløbet. Prøv igen."
 
@@ -2872,8 +2881,8 @@ msgstr "Kundernes fornavne flyttes ikke; alerts viser brugernavnet."
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:79
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:119
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:167
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:139
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:187
 msgid "Dry run"
 msgstr "Tørkørsel"
 
@@ -2900,7 +2909,7 @@ msgid "Creator here"
 msgstr "Creator her"
 
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:180
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:200
 msgid "What happens"
 msgstr "Hvad der sker"
 
@@ -3432,7 +3441,8 @@ msgstr "Chatbot-indstillingerne er ugyldige."
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:102
+#: src/Modules/WooCommerce/VendorImport/VendorImportActions.php:76
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
 msgid "Sorry, you are not allowed to manage creators."
 msgstr "Du har desværre ikke adgang til at administrere creators."
 
@@ -4075,7 +4085,7 @@ msgstr "Resultat"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:399
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:122
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:56
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:180
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:200
 msgid "Products"
 msgstr "Produkter"
 
@@ -6133,7 +6143,7 @@ msgid "Only sales on or after this date count towards the creator's payouts; ref
 msgstr "Kun salg på eller efter denne dato tæller med i creatorens udbetalinger; refunderinger og rettelser følger deres salg. Lad feltet være tomt for at tælle hele historikken. Ældre salg ændres eller udfyldes aldrig."
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:208
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:180
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:200
 msgid "Settlement start"
 msgstr "Afregningsstart"
 
@@ -7407,151 +7417,181 @@ msgstr "Brug en dato i formatet ÅÅÅÅ-MM-DD."
 msgid "The requested period is not valid."
 msgstr "Den valgte periode er ikke gyldig."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:64
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:65
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:111
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:71
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:72
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:123
 msgid "Import from Product Vendors"
 msgstr "Import fra Product Vendors"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:89
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:96
 msgid "Sorry, you are not allowed to migrate creators. It takes the rights to manage creators and payouts."
 msgstr "Du har ikke adgang til at flytte creators. Det kræver rettighederne til at administrere creators og udbetalinger."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:90
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:97
 msgid "Activate WooCommerce Product Vendors first: the migration reads the vendors through Product Vendors itself."
 msgstr "Aktivér WooCommerce Product Vendors først: migreringen læser vendors gennem Product Vendors selv."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:91
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:98
 msgid "Product Vendors has no vendors."
 msgstr "Product Vendors har ingen vendors."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:92
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:99
 msgid "Product Vendors' vendors could not be read. Please try again later."
 msgstr "Product Vendors' vendors kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:112
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:100
+msgid "The data changed since the dry run. Check the new dry run and migrate again."
+msgstr "Data er ændret siden tørkørslen. Tjek den nye tørkørsel, og flyt igen."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:101
+msgid "Confirm that you have a backup before you migrate."
+msgstr "Bekræft, at du har en backup, før du flytter."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:102
+msgid "The migration is done. Check the creators and their products, then remove the Product Vendors roles when you are ready."
+msgstr "Migreringen er færdig. Tjek creators og deres produkter, og fjern derefter Product Vendors-rollerne, når du er klar."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:103
+msgid "The migration stopped because of a technical error. What was migrated is kept; run the dry run again to migrate the rest."
+msgstr "Migreringen stoppede på grund af en teknisk fejl. Det, der er flyttet, bevares; lav tørkørslen igen for at flytte resten."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:124
 msgid "Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor's WordPress user linked to it, and the vendor's products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors' data is only read, never changed."
 msgstr "Flytter vendors fra WooCommerce Product Vendors til Merch Dashboard én gang: en creator pr. vendor, vendorens WordPress-bruger koblet til den og vendorens produkter koblet til creatoren. En vendor, hvis bruger allerede er koblet til en creator, bruger den creator. Product Vendors' data læses kun og ændres aldrig."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:131
 msgid "Not moved: commissions, payouts, PayPal and other payment details."
 msgstr "Flyttes ikke: kommission, udbetalinger, PayPal og andre betalingsoplysninger."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:131
 msgid "New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again."
 msgstr "Nye creators får afregningsstart på migreringens tidspunkt, så salg, som Product Vendors har betalt kommission for, aldrig udbetales igen."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:131
 msgid "A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved."
 msgstr "En creator har én WordPress-bruger. Har en vendor flere, vælger du den, der kobles på; de andre flyttes ikke."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:131
 msgid "Vendors waiting for approval are skipped."
 msgstr "Vendors, der venter på godkendelse, springes over."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:113
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:131
 msgid "Keep Product Vendors active until the migration is done: it is read through Product Vendors itself."
 msgstr "Lad Product Vendors være aktivt, til migreringen er færdig: den læses gennem Product Vendors selv."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:131
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:151
 msgid "The dry run could not be made because of a technical error. Please try again later."
 msgstr "Tørkørslen kunne ikke laves på grund af en teknisk fejl. Prøv igen senere."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:172
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:192
 msgid "Product Vendors' version is unknown."
 msgstr "Product Vendors' version er ukendt."
 
 #. translators: %s: version number.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:174
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:194
 #, php-format
 msgid "Read through Product Vendors %s."
 msgstr "Læst gennem Product Vendors %s."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:180
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:200
 msgid "Vendor"
 msgstr "Vendor"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:180
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:200
 msgid "User"
 msgstr "Bruger"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:186
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:206
 msgid "A creator with the same name exists. It is not used: creators are matched by their user."
 msgstr "Der findes en creator med samme navn. Den bruges ikke: creators matches på deres bruger."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:197
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:217
 msgid "Update the dry run"
 msgstr "Opdatér tørkørslen"
 
 #. translators: 1: vendors migrated, 2: vendors skipped, 3: products linked, 4: products linked to another creator.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:208
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:228
 #, php-format
 msgid "In all: %1$d vendors migrated, %2$d skipped, %3$d products linked, %4$d products left because they belong to another creator."
 msgstr "I alt: %1$d vendors flyttes, %2$d springes over, %3$d produkter kobles, %4$d produkter bliver stående, fordi de tilhører en anden creator."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:216
-msgid "This is a dry run: nothing was changed. The migration itself comes in the next step (26.2)."
-msgstr "Dette er en tørkørsel: intet er ændret. Selve migreringen kommer i næste trin (26.2)."
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+msgid "There is nothing to migrate."
+msgstr "Der er intet at flytte."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:242
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:251
+msgid "I have taken a backup of the site, and Product Vendors is active."
+msgstr "Jeg har taget en backup af sitet, og Product Vendors er aktivt."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:252
+msgid "Migrate vendors"
+msgstr "Flyt vendors"
+
+#. translators: 1: date and time, 2: creators created, 3: creators used, 4: products linked, 5: products left, 6: failures.
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:274
+#, php-format
+msgid "Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d products linked, %5$d products left at another creator, %6$d failed)."
+msgstr "Seneste migrering: %1$s (%2$d creators oprettet, %3$d eksisterende creators brugt, %4$d produkter koblet, %5$d produkter efterladt hos en anden creator, %6$d fejlede)."
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:309
 msgid "User to link"
 msgstr "Bruger, der kobles på"
 
 #. translators: %d: number of other users.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:251
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:318
 #, php-format
 msgid "%d other user is not moved."
 msgid_plural "%d other users are not moved."
 msgstr[0] "%d anden bruger flyttes ikke."
 msgstr[1] "%d andre brugere flyttes ikke."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:262
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:329
 msgid "New creator with the vendor's name and the user"
 msgstr "Ny creator med vendorens navn og brugeren"
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:264
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:331
 #, php-format
 msgid "Uses the user's creator \"%s\""
 msgstr "Bruger brugerens creator \"%s\""
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:266
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:333
 #, php-format
 msgid "Migrated already to \"%s\": only what is missing is added"
 msgstr "Allerede flyttet til \"%s\": kun det, der mangler, tilføjes"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:267
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:334
 msgid "New creator without a user (the vendor has no administrator)"
 msgstr "Ny creator uden bruger (vendoren har ingen administrator)"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:268
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:335
 msgid "Skipped: the vendor is waiting for approval"
 msgstr "Springes over: vendoren venter på godkendelse"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:269
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:336
 msgid "Skipped: the user is chosen for another vendor. Choose another user or link it later."
 msgstr "Springes over: brugeren er valgt til en anden vendor. Vælg en anden bruger, eller kobl den på senere."
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:279
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:346
 msgid "Vendor Admin"
 msgstr "Vendor Admin"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:279
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:346
 msgid "Vendor Manager"
 msgstr "Vendor Manager"
 
 #. translators: 1: products to link, 2: products linked already, 3: products linked to another creator.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:298
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:365
 #, php-format
 msgid "%1$d linked, %2$d linked already, %3$d left (another creator)"
 msgstr "%1$d kobles, %2$d allerede koblet, %3$d bliver stående (anden creator)"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:313
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:380
 msgid "Set to the time of the migration"
 msgstr "Sættes til migreringens tidspunkt"
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:314
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:381
 msgid "None: the whole history counts. Set it under Payouts if Product Vendors has paid for it."
 msgstr "Ingen: hele historikken tæller. Sæt den under Udbetalinger, hvis Product Vendors har betalt for den."
 

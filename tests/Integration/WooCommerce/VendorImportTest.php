@@ -13,6 +13,8 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
@@ -24,6 +26,8 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsPlugin;
 use MerchBoard\Modules\WooCommerce\VendorImport\ProductVendorsSource;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportActions;
+use MerchBoard\Modules\WooCommerce\VendorImport\VendorImporter;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportException;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPage;
 use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportPlan;
@@ -34,7 +38,9 @@ use WC_Product_Vendors_Utils;
 
 /**
  * The dry run (26.1): statuses, the chosen user, products and settlement
- * starts, read through Product Vendors' own API, writing nothing.
+ * starts, read through Product Vendors' own API, writing nothing. The
+ * migration (26.2): creators, links and settlement starts, once, with
+ * Product Vendors' data unchanged.
  */
 final class VendorImportTest extends IntegrationTestCase {
 
@@ -61,9 +67,12 @@ final class VendorImportTest extends IntegrationTestCase {
 
 	private int $orion;
 
+	private DateTimeImmutable $now;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
+		$this->now = new DateTimeImmutable( '@' . ( time() - 60 ) );
 		delete_option( Settings::OPTION );
 		require_once dirname( __DIR__, 2 ) . '/Fixtures/product-vendors.php';
 
@@ -72,6 +81,8 @@ final class VendorImportTest extends IntegrationTestCase {
 		}
 
 		register_taxonomy( ProductVendorsPlugin::TAXONOMY, array( 'product' ) );
+		// Stand-in for WooCommerce's product capabilities: an editor of posts may edit products.
+		add_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10, 2 );
 
 		foreach ( ProductVendorsSource::ROLES as $role ) {
 			add_role( $role, $role, array( 'read' => true ) );
@@ -123,6 +134,7 @@ final class VendorImportTest extends IntegrationTestCase {
 		WC_Product_Vendors_Utils::$extra_admins = array();
 		WC_Product_Vendors_Utils::$meta_admins  = array();
 		unregister_taxonomy( ProductVendorsPlugin::TAXONOMY );
+		remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
 		delete_option( VendorImportPlan::OPTION );
 		parent::tearDown();
 	}
@@ -226,7 +238,8 @@ final class VendorImportTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'Nova Merch', $html );
 		self::assertStringContainsString( 'name="user[' . $this->vendors['Nova Merch'] . ']"', $html );
 		self::assertMatchesRegularExpression( '/<option value="' . $this->users['nova_manager'] . '" selected=/', $html );
-		self::assertStringNotContainsString( 'action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"', $html, 'No migration form before 26.2.' );
+		self::assertStringContainsString( 'name="action" value="' . VendorImportActions::ACTION . '"', $html );
+		self::assertStringContainsString( 'name="user[' . $this->vendors['Nova Merch'] . ']" value="' . $this->users['nova_manager'] . '"', $html, 'The confirmation carries the chosen users.' );
 		self::assertSame(
 			array( 7 => 3 ),
 			VendorImportPage::choices(
@@ -240,22 +253,140 @@ final class VendorImportTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_the_migration_creates_and_links_once_and_never_touches_product_vendors(): void {
+		$vendor_data = $this->snapshot()['vendors'];
+		$report      = $this->plan()->build();
+		$counts      = $this->importer()->run( $report->fingerprint(), $report->choices() );
+
+		self::assertSame( array( 'created' => 4, 'matched' => 1, 'linked' => 2, 'conflict' => 1, 'failed' => 0 ), $counts ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$creators = $this->service( CreatorRepository::class );
+		$nova     = $creators->find_by_user_id( $this->users['nova_admin'] );
+		self::assertNotNull( $nova );
+		self::assertSame( array( 'Nova Merch', true ), array( $nova->display_name, $nova->is_active() ) );
+		self::assertContains( Capabilities::CREATOR_ROLE, get_userdata( $this->users['nova_admin'] )->roles ?? array() );
+		self::assertContains( ProductVendorsSource::ADMIN_ROLE, get_userdata( $this->users['nova_admin'] )->roles ?? array(), 'Product Vendors\' roles stay until 26.3.' );
+		self::assertNull( $creators->find_by_user_id( $this->users['nova_manager'] ), 'The other administrator is not moved.' );
+		self::assertNull( $creators->find_by_user_id( $this->users['pia'] ), 'A pending vendor is skipped.' );
+
+		$links = $this->plan_links();
+		self::assertSame( array( $nova->id, $this->orion, $this->orion, $this->orion ), array_map( array( $links, 'creator_id' ), $this->posts ), 'Free products are linked; another creator\'s product is never replaced.' );
+
+		$payouts = $this->payouts();
+		self::assertSame( $this->now->format( 'Y-m-d H:i:s' ), $payouts->settlement_start( $nova->id )?->format( 'Y-m-d H:i:s' ), 'A new creator starts its settlement at the migration.' );
+		self::assertNull( $payouts->settlement_start( $this->orion ), 'An existing creator is not changed.' );
+		self::assertSame( $vendor_data, $this->snapshot()['vendors'], 'Product Vendors\' data is never written.' );
+
+		$actions = array_count_values( array_map( 'strval', array_column( $this->rows( Tables::AUDIT_LOG ), 'action' ) ) );
+		self::assertSame( array( 5, 1, 4, 2 ), array( $actions['vendor_imported'] ?? 0, $actions['vendor_import_completed'] ?? 0, $actions['payout_start_changed'] ?? 0, $actions['product_creator_linked'] ?? 0 ) );
+
+		// The administrator removes the start; a second run adds nothing and keeps that choice.
+		$payouts->set_settlement_start( $nova->id, null );
+		$creators_before = count( $this->rows( Tables::CREATORS ) );
+		$again           = $this->plan()->build();
+		self::assertSame( array( VendorImportReport::IMPORTED ), array_values( array_unique( array_column( array_filter( $again->vendors, static fn( array $vendor ): bool => VendorImportReport::migrates( $vendor['status'] ) ), 'status' ) ) ) );
+		self::assertSame( array( 'created' => 0, 'matched' => 0, 'linked' => 0, 'conflict' => 1, 'failed' => 0 ), $this->importer()->run( $again->fingerprint(), $again->choices() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( $creators_before, count( $this->rows( Tables::CREATORS ) ) );
+		self::assertNull( $payouts->settlement_start( $nova->id ), 'A start the administrator changed is never set again.' );
+	}
+
+	public function test_a_changed_dry_run_no_backup_or_a_failing_vendor(): void {
+		self::assertSame( VendorImportException::OUTDATED, $this->refused_run( str_repeat( 'a', 64 ) ) );
+
+		$actions = new VendorImportActions( $this->importer(), $this->service( Logger::class ) );
+		$report  = $this->plan()->build();
+		$input   = array(
+			'_wpnonce'    => wp_create_nonce( VendorImportActions::ACTION ),
+			'fingerprint' => $report->fingerprint(),
+		);
+		self::assertStringContainsString( VendorImportException::NO_BACKUP, $actions->process( $input ) );
+		self::assertSame( array(), get_option( VendorImportPlan::OPTION, array() ), 'Nothing was migrated.' );
+
+		// Orion was deactivated: its products cannot be linked; the others are migrated.
+		$this->service( CreatorService::class )->set_status( $this->orion, CreatorStatus::Inactive );
+		$report = $this->plan()->build();
+		self::assertStringContainsString(
+			VendorImportActions::DONE,
+			$actions->process(
+				array_merge(
+					$input,
+					array(
+						'backup'      => '1',
+						'fingerprint' => $report->fingerprint(),
+					)
+				)
+			)
+		);
+		self::assertSame( 1, ( get_option( VendorImportPlan::OPTION )['last']['failed'] ?? null ) );
+		self::assertNotNull( $this->service( CreatorRepository::class )->find_by_user_id( $this->users['nova_admin'] ) );
+	}
+
+	/**
+	 * Maps `edit_product` like WooCommerce's product post type does.
+	 *
+	 * @param mixed $caps Primitive capabilities.
+	 * @param mixed $cap  Requested capability.
+	 * @return mixed
+	 */
+	public static function product_caps( mixed $caps, mixed $cap ): mixed {
+		return 'edit_product' === $cap ? array( 'edit_posts' ) : $caps;
+	}
+
 	/**
 	 * The dry run.
 	 *
 	 * @param ProductVendorsSource|null $source Product Vendors; the real adapter by default.
 	 */
 	private function plan( ?ProductVendorsSource $source = null ): VendorImportPlan {
-		$products   = new PostMetaProductStore();
-		$repository = $this->service( CreatorRepository::class );
-		$audit      = $this->service( AuditTrail::class );
+		return new VendorImportPlan( $source ?? new ProductVendorsPlugin(), $this->service( CreatorRepository::class ), $this->plan_links(), $this->payouts() );
+	}
 
-		return new VendorImportPlan(
-			$source ?? new ProductVendorsPlugin(),
-			$repository,
-			new ProductCreatorLink( $products, $repository, $audit, $this->service( Transaction::class ), $this->service( ProtectedProductMeta::class ) ),
-			new PayoutSettings( new PayoutRepository( $this->wpdb ), $audit, $this->service( Transaction::class ), static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )
+	/**
+	 * The migration (time of the run: a minute ago).
+	 */
+	private function importer(): VendorImporter {
+		$now = $this->now;
+
+		return new VendorImporter(
+			$this->plan(),
+			new ProductVendorsPlugin(),
+			$this->service( CreatorService::class ),
+			$this->plan_links(),
+			$this->payouts(),
+			$this->service( AuditTrail::class ),
+			$this->service( Transaction::class ),
+			static fn(): DateTimeImmutable => $now
 		);
+	}
+
+	/**
+	 * Products' creators.
+	 */
+	private function plan_links(): ProductCreatorLink {
+		$repository = $this->service( CreatorRepository::class );
+
+		return new ProductCreatorLink( new PostMetaProductStore(), $repository, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( ProtectedProductMeta::class ) );
+	}
+
+	/**
+	 * Settlement starts.
+	 */
+	private function payouts(): PayoutSettings {
+		return new PayoutSettings( new PayoutRepository( $this->wpdb ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) );
+	}
+
+	/**
+	 * Why the migration was refused.
+	 *
+	 * @param string $fingerprint Fingerprint.
+	 */
+	private function refused_run( string $fingerprint ): string {
+		try {
+			$this->importer()->run( $fingerprint, array() );
+		} catch ( VendorImportException $e ) {
+			return $e->reason();
+		}
+
+		self::fail( 'The migration was not refused.' );
 	}
 
 	/**

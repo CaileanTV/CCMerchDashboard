@@ -584,4 +584,14 @@ enum AuditAction: string {
 	 * The administrator changed a creator's access to API keys and webhooks (ADR-073, step 25.12.4). Context: keys, webhooks.
 	 */
 	case AlertApiAccessChanged = 'alert_api_access_changed';
+
+	/**
+	 * A vendor from WooCommerce Product Vendors was migrated to its creator (phase 26, ADR-074). Context: status, linked, conflict, failed (no names).
+	 */
+	case VendorImported = 'vendor_imported';
+
+	/**
+	 * The migration from WooCommerce Product Vendors ran (phase 26, ADR-074). Context: created, matched, linked, conflict, failed (counts only).
+	 */
+	case VendorImportCompleted = 'vendor_import_completed';
 }

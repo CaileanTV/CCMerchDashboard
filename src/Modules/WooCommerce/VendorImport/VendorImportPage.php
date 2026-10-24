@@ -16,11 +16,13 @@ use MerchBoard\Modules\Admin\AdminMenu;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * "Merch Dashboard → Import from Product Vendors" (step 26.1, ADR-074): what
- * is migrated and what is not, and a dry run with the chosen user per
- * vendor (read-only, `preview=1`, the choices as `user[term_id]`). Shown
- * while Product Vendors is active or after a migration. The page itself
- * changes nothing.
+ * "Merch Dashboard → Import from Product Vendors" (steps 26.1–26.2,
+ * ADR-074): what is migrated and what is not, the last migration, a dry run
+ * with the chosen user per vendor (read-only, `preview=1`, the choices as
+ * `user[term_id]`) and the confirmation form with the dry run's
+ * fingerprint, the chosen users and the backup checkbox
+ * (VendorImportActions). Shown while Product Vendors is active or after a
+ * migration. The page itself changes nothing.
  */
 final class VendorImportPage {
 
@@ -40,6 +42,11 @@ final class VendorImportPage {
 	 * Query argument: the chosen user per vendor.
 	 */
 	public const USER_ARG = 'user';
+
+	/**
+	 * Query argument: the outcome code after a migration.
+	 */
+	public const RESULT_ARG = 'result';
 
 	/**
 	 * Constructor.
@@ -90,6 +97,10 @@ final class VendorImportPage {
 			VendorImportException::INACTIVE       => array( __( 'Activate WooCommerce Product Vendors first: the migration reads the vendors through Product Vendors itself.', 'merchboard' ), 'error' ),
 			VendorImportException::NO_DATA        => array( __( 'Product Vendors has no vendors.', 'merchboard' ), 'error' ),
 			VendorImportException::UNREADABLE     => array( __( 'Product Vendors\' vendors could not be read. Please try again later.', 'merchboard' ), 'error' ),
+			VendorImportException::OUTDATED       => array( __( 'The data changed since the dry run. Check the new dry run and migrate again.', 'merchboard' ), 'warning' ),
+			VendorImportException::NO_BACKUP      => array( __( 'Confirm that you have a backup before you migrate.', 'merchboard' ), 'error' ),
+			VendorImportActions::DONE             => array( __( 'The migration is done. Check the creators and their products, then remove the Product Vendors roles when you are ready.', 'merchboard' ), 'success' ),
+			VendorImportActions::ERROR            => array( __( 'The migration stopped because of a technical error. What was migrated is kept; run the dry run again to migrate the rest.', 'merchboard' ), 'error' ),
 			default                               => null,
 		};
 	}
@@ -106,11 +117,20 @@ final class VendorImportPage {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$preview = '1' === ( isset( $_GET[ self::PREVIEW_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::PREVIEW_ARG ] ) ) : '' );
 		$choices = self::choices( isset( $_GET[ self::USER_ARG ] ) ? wp_unslash( $_GET[ self::USER_ARG ] ) : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized to positive integers in choices().
+		$result  = isset( $_GET[ self::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::RESULT_ARG ] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Import from Product Vendors', 'merchboard' ) . '</h1>';
 		echo '<p>' . esc_html__( 'Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor\'s WordPress user linked to it, and the vendor\'s products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors\' data is only read, never changed.', 'merchboard' ) . '</p>';
+		$notice = '' === $result ? null : self::result_message( $result );
+
+		if ( null !== $notice ) {
+			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
 		echo '<ul class="ul-disc"><li>' . esc_html__( 'Not moved: commissions, payouts, PayPal and other payment details.', 'merchboard' ) . '</li><li>' . esc_html__( 'New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again.', 'merchboard' ) . '</li><li>' . esc_html__( 'A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved.', 'merchboard' ) . '</li><li>' . esc_html__( 'Vendors waiting for approval are skipped.', 'merchboard' ) . '</li><li>' . esc_html__( 'Keep Product Vendors active until the migration is done: it is read through Product Vendors itself.', 'merchboard' ) . '</li></ul>';
+
+		$this->render_last();
 
 		try {
 			$this->plan->check();
@@ -213,7 +233,54 @@ final class VendorImportPage {
 				)
 			)
 		);
-		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'This is a dry run: nothing was changed. The migration itself comes in the next step (26.2).', 'merchboard' ) . '</p></div>';
+		if ( 0 === $context['vendors'] ) {
+			echo '<p>' . esc_html__( 'There is nothing to migrate.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( VendorImportActions::ACTION ) . '">';
+		echo '<input type="hidden" name="fingerprint" value="' . esc_attr( $report->fingerprint() ) . '">';
+
+		foreach ( $report->choices() as $term_id => $user_id ) {
+			echo '<input type="hidden" name="' . esc_attr( self::USER_ARG . '[' . $term_id . ']' ) . '" value="' . esc_attr( (string) $user_id ) . '">';
+		}
+
+		wp_nonce_field( VendorImportActions::ACTION );
+		echo '<p><label><input type="checkbox" name="backup" value="1" required> ' . esc_html__( 'I have taken a backup of the site, and Product Vendors is active.', 'merchboard' ) . '</label></p>';
+		submit_button( __( 'Migrate vendors', 'merchboard' ), 'primary', 'submit', false );
+		echo '</form>';
+	}
+
+	/**
+	 * The last migration.
+	 */
+	private function render_last(): void {
+		wp_cache_delete( VendorImportPlan::OPTION, 'options' );
+		$stored = get_option( VendorImportPlan::OPTION, null );
+
+		if ( ! is_array( $stored ) || ! is_string( $stored['completed_at'] ?? null ) ) {
+			return;
+		}
+
+		$last = is_array( $stored['last'] ?? null ) ? $stored['last'] : array();
+
+		printf(
+			'<p><strong>%s</strong></p>',
+			esc_html(
+				sprintf(
+					/* translators: 1: date and time, 2: creators created, 3: creators used, 4: products linked, 5: products left, 6: failures. */
+					__( 'Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d products linked, %5$d products left at another creator, %6$d failed).', 'merchboard' ),
+					get_date_from_gmt( $stored['completed_at'], (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ) ),
+					(int) ( $last['created'] ?? 0 ),
+					(int) ( $last['matched'] ?? 0 ),
+					(int) ( $last['linked'] ?? 0 ),
+					(int) ( $last['conflict'] ?? 0 ),
+					(int) ( $last['failed'] ?? 0 )
+				)
+			)
+		);
 	}
 
 	/**

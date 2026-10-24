@@ -6,6 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Migrering fra WooCommerce Product Vendors (fase 26, trin 26.2, ADR-074):** knappen "Flyt vendors" under tørkørslen flytter vendors til Merch Dashboard: creator (ny eller brugerens eksisterende), brugerkobling, afregningsstart = migreringens tidspunkt for nye creators og kobling af vendorens frie produkter. Kræver backup-bekræftelse og samme tørkørsel; en genkørsel tilføjer kun det, der mangler. Audit `vendor_imported` og `vendor_import_completed`; optionen `merchboard_vendor_import` slettes ved opt-in-afinstallation.
 - **Migrering fra WooCommerce Product Vendors, tørkørsel (fase 26, trin 26.1, ADR-074):** undermenuen Merch Dashboard → Import fra Product Vendors viser, mens Product Vendors er aktivt, hvad migreringen vil gøre pr. vendor: ny creator eller brugerens eksisterende creator, valg af bruger, når en vendor har flere administratorer, produkter, der kobles eller bliver stående hos en anden creator, og afregningsstart. Product Vendors læses gennem sit eget API, og intet skrives endnu.
 - **Adgang pr. creator til alert-API'en (fase 25, trin 25.12.4, ADR-073):** administratoren giver hver creator adgang til API-nøgler og webhooks hver for sig direkte på Merch Dashboard → Alerts → API (slået fra som standard). Creators, der allerede havde nøgler eller webhooks, beholdt adgangen (schema-version 28).
 - **Webhooks til creatorens egne bots og Discord (fase 25, trin 25.12.2, ADR-073):**
