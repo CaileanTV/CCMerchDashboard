@@ -4077,12 +4077,13 @@ Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vend
 7. **Afregningsstart (projektejerens valg):** en creator, som migreringen opretter, får afregningsstart = migrationstidspunktet (ADR-054), så salg, som PV allerede har afregnet, aldrig udbetales igen. Matchede creators røres ikke; tørkørslen viser deres afregningsstart.
 8. **PV-roller (projektejerens valg):** som et separat trin efter migreringen fjernes PV's tre roller (`wc_product_vendors_admin_vendor`, `wc_product_vendors_manager_vendor`, `wc_product_vendors_pending_vendor`) fra brugere, der er koblet til en migreret creator. Andre roller røres ikke. Det er en undtagelse fra ADR-022: med en PV-rolle beholder brugeren wp-admin (ADR-026).
 9. **Form som MerchAlert-importen (ADR-065 pkt. 10):** tørkørsel uden skrivning, bekræftelse af backup og et fingerprint af tørkørslen inkl. de valgte brugere. Hvert trin pr. vendor er idempotent, så en afbrudt kørsel kan genoptages. Kræver `merchboard_manage_creators` og `merchboard_manage_payouts`.
-10. **Audit:** `vendor_imported` pr. vendor (creator, antal), `vendor_import_completed` (antal, ingen navne) og `vendor_roles_removed` pr. bruger. Oprettelse, kobling og afregningsstart auditeres desuden af deres egne services.
+10. **Audit:** `vendor_imported` pr. vendor (creator, kategori, antal), `vendor_import_completed` (antal, ingen navne) og `vendor_roles_removed` pr. bruger. Oprettelse, kobling, kategori og afregningsstart auditeres desuden af deres egne services.
+11. **Produktkategori (trin 26.2.1, projektejerens valg 2026-10-24):** pr. vendor kobles en produktkategori til creatoren med `CreatorCategoryService::link()` (ADR-033), så nye produkter i kategorien, og dermed nye salg, kobles til creatoren. Tørkørslen foreslår den kategori, flest af vendorens produkter ligger i (aldrig standardkategorien), og administratoren kan vælge en anden eller ingen. En creator, der allerede har en kategori, beholder den (én pr. creator). En kategori, der er koblet til en anden creator eller valgt til en anden vendor, kobles ikke og vises. Vendorens eksisterende produkter kobles stadig manuelt med det samme (pkt. 6), også dem uden for kategorien.
 
 ## Alternatives considered
 - **Læse PV's tabeller direkte med PV deaktiveret (som MerchAlert):** administratorlisten ligger siden PV 2.1.80 et ikke-offentligt sted. At gætte nøglen kunne koble forkerte brugere; fravalgt.
 - **Match på navn:** creator-navne er ikke unikke; fravalgt af projektejeren.
-- **Kategori-mapping:** PV bruger sin egen taxonomi, og en mapping er ikke ejerskab (ADR-033); fravalgt.
+- **Kategori-mapping:** PV bruger sin egen taxonomi, og en mapping er ikke ejerskab (ADR-033); fravalgt som erstatning for produktkoblingen. *Statusnote 2026-10-24 (trin 26.2.1):* projektejeren vil have produktkategorien med, fordi det er den, der kobler nye produkter og dermed nye salg til creatoren. Migreringen kobler nu også en produktkategori pr. vendor ud over produktkoblingen, se pkt. 11.
 
 ## Reason
 Projektejeren vil flytte sine eksisterende vendors uden manuelt arbejde og uden at røre PV's økonomiske data.

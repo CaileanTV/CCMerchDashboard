@@ -21,6 +21,8 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
@@ -70,6 +72,13 @@ final class VendorImportTest extends IntegrationTestCase {
 
 	private int $orion;
 
+	/**
+	 * Product categories by name.
+	 *
+	 * @var array<string, int>
+	 */
+	private array $categories = array();
+
 	private DateTimeImmutable $now;
 
 	protected function setUp(): void {
@@ -84,6 +93,14 @@ final class VendorImportTest extends IntegrationTestCase {
 		}
 
 		register_taxonomy( ProductVendorsPlugin::TAXONOMY, array( 'product' ) );
+		register_taxonomy( CreatorCategoryService::TAXONOMY, array( 'product' ), array( 'hierarchical' => true ) );
+
+		foreach ( array( 'Uncategorized', 'Nova Cat', 'Orion Cat', 'Spare Cat' ) as $category ) {
+			$term                          = wp_insert_term( $category, CreatorCategoryService::TAXONOMY );
+			$this->categories[ $category ] = is_array( $term ) ? (int) $term['term_id'] : 0;
+		}
+
+		update_option( 'default_product_cat', $this->categories['Uncategorized'] );
 		// Stand-in for WooCommerce's product capabilities: an editor of posts may edit products.
 		add_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10, 2 );
 
@@ -113,10 +130,12 @@ final class VendorImportTest extends IntegrationTestCase {
 		$this->vendor( 'Modern', array() );
 		WC_Product_Vendors_Utils::$meta_admins = array( $this->vendors['Modern'] => array( $this->users['modern'] ) );
 
-		$this->product( 'Nova Merch' );
-		$this->product( 'Nova Merch', $this->orion );
-		$this->product( 'Orion Shop', $this->orion );
-		$this->product( 'Orion Shop' );
+		// Nova's products are in "Nova Cat" (and the default category, never proposed); Orion's creator has "Orion Cat".
+		$this->product( 'Nova Merch', null, array( 'Nova Cat', 'Uncategorized' ) );
+		$this->product( 'Nova Merch', $this->orion, array( 'Nova Cat' ) );
+		$this->product( 'Orion Shop', $this->orion, array( 'Orion Cat' ) );
+		$this->product( 'Orion Shop', null, array( 'Orion Cat' ) );
+		( new CreatorCategoryRepository( $this->wpdb ) )->insert( $this->categories['Orion Cat'], $this->orion, 1 );
 	}
 
 	protected function tearDown(): void {
@@ -137,6 +156,12 @@ final class VendorImportTest extends IntegrationTestCase {
 		WC_Product_Vendors_Utils::$extra_admins = array();
 		WC_Product_Vendors_Utils::$meta_admins  = array();
 		unregister_taxonomy( ProductVendorsPlugin::TAXONOMY );
+
+		foreach ( $this->categories as $category ) {
+			wp_delete_term( $category, CreatorCategoryService::TAXONOMY );
+		}
+
+		delete_option( 'default_product_cat' );
 		remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
 		delete_option( VendorImportPlan::OPTION );
 		parent::tearDown();
@@ -167,7 +192,22 @@ final class VendorImportTest extends IntegrationTestCase {
 		self::assertSame( array( 'new', '', null ), array( $rows['Nova Merch']['settlement'], $rows['Orion Shop']['settlement'], $rows['Pending Pia']['settlement'] ), 'A new creator gets the migration\'s time; an existing one shows its own start.' );
 		self::assertTrue( $rows['Ghost']['same_name'], 'A creator with the same name is only a warning.' );
 		self::assertSame( array( 'nova_admin', 'nova_manager' ), array_map( static fn( array $user ): string => explode( ' (', $user['name'] )[0], $rows['Nova Merch']['users'] ) );
-		self::assertSame( array( 'vendors' => 5, 'skipped' => 2, 'products' => 2, 'conflict' => 1 ), $report->audit_context() ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame(
+			array(
+				'vendors'    => 5,
+				'skipped'    => 2,
+				'products'   => 2,
+				'conflict'   => 1,
+				'categories' => 1,
+			),
+			$report->audit_context()
+		);
+		self::assertSame(
+			array( array( VendorImportReport::CATEGORY_MAP, $this->categories['Nova Cat'] ), array( VendorImportReport::CATEGORY_MAPPED, $this->categories['Orion Cat'] ), array( VendorImportReport::CATEGORY_NONE, 0 ), array( null, 0 ) ),
+			array( array( $rows['Nova Merch']['category'], $rows['Nova Merch']['category_id'] ), array( $rows['Orion Shop']['category'], $rows['Orion Shop']['category_id'] ), array( $rows['Ghost']['category'], $rows['Ghost']['category_id'] ), array( $rows['Pending Pia']['category'], $rows['Pending Pia']['category_id'] ) ),
+			'The proposal is the category most of the vendor\'s products are in, never the default; a creator keeps its own category; a skipped vendor gets none.'
+		);
+		self::assertSame( array( 'Nova Cat' ), array_column( $rows['Nova Merch']['categories'], 'name' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		self::assertSame( $before, $this->snapshot(), 'The dry run writes nothing.' );
 	}
@@ -180,6 +220,13 @@ final class VendorImportTest extends IntegrationTestCase {
 		self::assertSame( VendorImportReport::NEW, $this->by_name( $chosen )['Shared']['status'], 'The other user is free for the second vendor now.' );
 		self::assertNotSame( $proposed->fingerprint(), $chosen->fingerprint() );
 		self::assertSame( $proposed->fingerprint(), $this->plan()->build()->fingerprint(), 'The same dry run, the same fingerprint.' );
+
+		$category = fn( array $choice ): array => array_intersect_key( $this->by_name( $this->plan()->build( array(), $choice ) )['Nova Merch'], array_flip( array( 'category', 'category_id' ) ) );
+		self::assertSame( array( 'category_id' => 0, 'category' => VendorImportReport::CATEGORY_NONE ), $category( array( $this->vendors['Nova Merch'] => 0 ) ), 'None.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'category_id' => $this->categories['Spare Cat'], 'category' => VendorImportReport::CATEGORY_MAP ), $category( array( $this->vendors['Nova Merch'] => $this->categories['Spare Cat'] ) ), 'Another category.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'category_id' => $this->categories['Orion Cat'], 'category' => VendorImportReport::CATEGORY_TAKEN ), $category( array( $this->vendors['Nova Merch'] => $this->categories['Orion Cat'] ) ), 'Another creator\'s category is never moved.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( $this->categories['Nova Cat'], $category( array( $this->vendors['Nova Merch'] => $this->categories['Uncategorized'] ) )['category_id'], 'The default category is never chosen.' );
+		self::assertNotSame( $this->plan()->build()->fingerprint(), $this->plan()->build( array(), array( $this->vendors['Nova Merch'] => 0 ) )->fingerprint() );
 
 		$ignored = $this->plan()->build( array( $this->vendors['Nova Merch'] => $this->users['pia'] ) );
 		self::assertSame( $this->users['nova_admin'], $this->by_name( $ignored )['Nova Merch']['user_id'], 'A user who is not the vendor\'s is never chosen.' );
@@ -243,6 +290,7 @@ final class VendorImportTest extends IntegrationTestCase {
 		self::assertMatchesRegularExpression( '/<option value="' . $this->users['nova_manager'] . '" selected=/', $html );
 		self::assertStringContainsString( 'name="action" value="' . VendorImportActions::ACTION . '"', $html );
 		self::assertStringContainsString( 'name="user[' . $this->vendors['Nova Merch'] . ']" value="' . $this->users['nova_manager'] . '"', $html, 'The confirmation carries the chosen users.' );
+		self::assertStringContainsString( 'name="category[' . $this->vendors['Nova Merch'] . ']" value="' . $this->categories['Nova Cat'] . '"', $html, 'And the chosen categories.' );
 		self::assertSame(
 			array( 7 => 3 ),
 			VendorImportPage::choices(
@@ -261,10 +309,12 @@ final class VendorImportTest extends IntegrationTestCase {
 		$report      = $this->plan()->build();
 		$counts      = $this->importer()->run( $report->fingerprint(), $report->choices() );
 
-		self::assertSame( array( 'created' => 4, 'matched' => 1, 'linked' => 2, 'conflict' => 1, 'failed' => 0 ), $counts ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'created' => 4, 'matched' => 1, 'categories' => 1, 'linked' => 2, 'conflict' => 1, 'failed' => 0 ), $counts ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$creators = $this->service( CreatorRepository::class );
 		$nova     = $creators->find_by_user_id( $this->users['nova_admin'] );
 		self::assertNotNull( $nova );
+		self::assertSame( array( $this->categories['Nova Cat'] ), array_map( static fn( $mapping ): int => $mapping->term_id, $this->category_service()->for_creator( $nova->id ) ), 'New products in the category, and so new sales, go to the creator.' );
+		self::assertSame( array( $this->categories['Orion Cat'] ), array_map( static fn( $mapping ): int => $mapping->term_id, $this->category_service()->for_creator( $this->orion ) ) );
 		self::assertSame( array( 'Nova Merch', true ), array( $nova->display_name, $nova->is_active() ) );
 		self::assertContains( Capabilities::CREATOR_ROLE, get_userdata( $this->users['nova_admin'] )->roles ?? array() );
 		self::assertContains( ProductVendorsSource::ADMIN_ROLE, get_userdata( $this->users['nova_admin'] )->roles ?? array(), 'Product Vendors\' roles stay until 26.3.' );
@@ -287,7 +337,7 @@ final class VendorImportTest extends IntegrationTestCase {
 		$creators_before = count( $this->rows( Tables::CREATORS ) );
 		$again           = $this->plan()->build();
 		self::assertSame( array( VendorImportReport::IMPORTED ), array_values( array_unique( array_column( array_filter( $again->vendors, static fn( array $vendor ): bool => VendorImportReport::migrates( $vendor['status'] ) ), 'status' ) ) ) );
-		self::assertSame( array( 'created' => 0, 'matched' => 0, 'linked' => 0, 'conflict' => 1, 'failed' => 0 ), $this->importer()->run( $again->fingerprint(), $again->choices() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'created' => 0, 'matched' => 0, 'categories' => 0, 'linked' => 0, 'conflict' => 1, 'failed' => 0 ), $this->importer()->run( $again->fingerprint(), $again->choices(), $again->category_choices() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( $creators_before, count( $this->rows( Tables::CREATORS ) ) );
 		self::assertNull( $payouts->settlement_start( $nova->id ), 'A start the administrator changed is never set again.' );
 	}
@@ -386,7 +436,14 @@ final class VendorImportTest extends IntegrationTestCase {
 	 * @param ProductVendorsSource|null $source Product Vendors; the real adapter by default.
 	 */
 	private function plan( ?ProductVendorsSource $source = null ): VendorImportPlan {
-		return new VendorImportPlan( $source ?? new ProductVendorsPlugin(), $this->service( CreatorRepository::class ), $this->plan_links(), $this->payouts() );
+		return new VendorImportPlan( $source ?? new ProductVendorsPlugin(), $this->service( CreatorRepository::class ), $this->plan_links(), $this->payouts(), $this->category_service() );
+	}
+
+	/**
+	 * Creators' product categories.
+	 */
+	private function category_service(): CreatorCategoryService {
+		return new CreatorCategoryService( new CreatorCategoryRepository( $this->wpdb ), $this->service( CreatorRepository::class ), $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
 	}
 
 	/**
@@ -400,6 +457,7 @@ final class VendorImportTest extends IntegrationTestCase {
 			new ProductVendorsPlugin(),
 			$this->service( CreatorService::class ),
 			$this->plan_links(),
+			$this->category_service(),
 			$this->payouts(),
 			$this->service( AuditTrail::class ),
 			$this->service( Transaction::class ),
@@ -469,13 +527,17 @@ final class VendorImportTest extends IntegrationTestCase {
 	/**
 	 * A vendor's product.
 	 *
+	 * @phpstan-param list<string> $categories
+	 *
 	 * @param string   $vendor     Vendor name.
 	 * @param int|null $creator_id Linked creator.
+	 * @param string[] $categories Product category names.
 	 */
-	private function product( string $vendor, ?int $creator_id = null ): int {
+	private function product( string $vendor, ?int $creator_id = null, array $categories = array() ): int {
 		$id            = (int) wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => $vendor . ' tee' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$this->posts[] = $id;
 		wp_set_object_terms( $id, array( $this->vendors[ $vendor ] ), ProductVendorsPlugin::TAXONOMY );
+		wp_set_object_terms( $id, array_map( fn( string $name ): int => $this->categories[ $name ], $categories ), CreatorCategoryService::TAXONOMY );
 
 		if ( null !== $creator_id ) {
 			$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $id, ProductCreatorLink::META_KEY, (string) $creator_id );

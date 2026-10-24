@@ -18,6 +18,8 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Creators\CreatorException;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryException;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
@@ -40,10 +42,14 @@ defined( 'ABSPATH' ) || exit;
  * 2. a creator the migration made gets its settlement start at the time of
  *    the run, once (PayoutSettings, ADR-054): a start the administrator
  *    changes later is never set again;
- * 3. the vendor's products without a creator are linked through
+ * 3. the product category of the dry run is mapped to the creator through
+ *    CreatorCategoryService (step 26.2.1), so new products in it, and so
+ *    new sales, are linked to the creator (ADR-033); a creator that has a
+ *    category keeps it;
+ * 4. the vendor's products without a creator are linked through
  *    ProductCreatorLink (source admin); products of another creator are
  *    left (never replaced), products already linked to it are skipped;
- * 4. `vendor_imported` (creator, counts).
+ * 5. `vendor_imported` (creator, counts).
  *
  * A vendor that fails (e.g. its user was linked meanwhile) is counted and
  * the run goes on. At the end the last run and `vendor_import_completed`
@@ -55,14 +61,15 @@ class VendorImporter {
 	/**
 	 * Constructor.
 	 *
-	 * @param VendorImportPlan     $plan        The dry run.
-	 * @param ProductVendorsSource $source      Product Vendors.
-	 * @param CreatorService       $creators    Creators.
-	 * @param ProductCreatorLink   $links       Products' creators.
-	 * @param PayoutSettings       $payouts     Settlement starts.
-	 * @param AuditTrail           $audit       Audit trail.
-	 * @param Transaction          $transaction Database transaction.
-	 * @param Closure              $clock       The time of the run (UTC).
+	 * @param VendorImportPlan       $plan        The dry run.
+	 * @param ProductVendorsSource   $source      Product Vendors.
+	 * @param CreatorService         $creators    Creators.
+	 * @param ProductCreatorLink     $links       Products' creators.
+	 * @param CreatorCategoryService $categories Creators' product categories.
+	 * @param PayoutSettings         $payouts     Settlement starts.
+	 * @param AuditTrail             $audit       Audit trail.
+	 * @param Transaction            $transaction Database transaction.
+	 * @param Closure                $clock       The time of the run (UTC).
 	 * @phpstan-param Closure(): DateTimeImmutable $clock
 	 */
 	public function __construct(
@@ -70,6 +77,7 @@ class VendorImporter {
 		private ProductVendorsSource $source,
 		private CreatorService $creators,
 		private ProductCreatorLink $links,
+		private CreatorCategoryService $categories,
 		private PayoutSettings $payouts,
 		private AuditTrail $audit,
 		private Transaction $transaction,
@@ -82,12 +90,13 @@ class VendorImporter {
 	 *
 	 * @param string          $fingerprint The confirmed dry run's fingerprint.
 	 * @param array<int, int> $choices     The chosen user per vendor of that dry run.
-	 * @return array{created: int, matched: int, linked: int, conflict: int, failed: int} What happened.
+	 * @param array<int, int> $category_choices The chosen product category per vendor of that dry run (0: none).
+	 * @return array{created: int, matched: int, categories: int, linked: int, conflict: int, failed: int} What happened.
 	 * @throws VendorImportException When refused or the dry run changed.
 	 * @throws DatabaseException When the database cannot be read or written.
 	 */
-	public function run( string $fingerprint, array $choices ): array {
-		$report = $this->plan->build( $choices );
+	public function run( string $fingerprint, array $choices, array $category_choices = array() ): array {
+		$report = $this->plan->build( $choices, $category_choices );
 
 		if ( ! hash_equals( $report->fingerprint(), $fingerprint ) ) {
 			self::refuse( VendorImportException::OUTDATED );
@@ -95,16 +104,18 @@ class VendorImporter {
 
 		$now    = ( $this->clock )();
 		$counts = array(
-			'created'  => 0,
-			'matched'  => 0,
-			'linked'   => 0,
-			'conflict' => 0,
-			'failed'   => 0,
+			'created'    => 0,
+			'matched'    => 0,
+			'categories' => 0,
+			'linked'     => 0,
+			'conflict'   => 0,
+			'failed'     => 0,
 		);
 
 		foreach ( $report->vendors as $vendor ) {
 			if ( VendorImportReport::migrates( $vendor['status'] ) ) {
-				$counts = $this->vendor( $vendor['term_id'], $vendor['name'], $vendor['status'], $vendor['user_id'], $vendor['creator_id'], $now, $counts );
+				$category = VendorImportReport::CATEGORY_MAP === $vendor['category'] ? $vendor['category_id'] : 0;
+				$counts   = $this->vendor( $vendor['term_id'], $vendor['name'], $vendor['status'], $vendor['user_id'], $vendor['creator_id'], $category, $now, $counts );
 			}
 		}
 
@@ -124,17 +135,18 @@ class VendorImporter {
 	/**
 	 * Migrates one vendor.
 	 *
-	 * @param int                                                                        $term_id    Vendor.
-	 * @param string                                                                     $name       Its name.
-	 * @param string                                                                     $status     Its status in the dry run.
-	 * @param int                                                                        $user_id    The chosen user (0: none).
-	 * @param int                                                                        $creator_id Its creator in the dry run (0: a new one).
-	 * @param DateTimeImmutable                                                          $now        The time of the run.
-	 * @param array{created: int, matched: int, linked: int, conflict: int, failed: int} $counts     Counts so far.
-	 * @return array{created: int, matched: int, linked: int, conflict: int, failed: int}
+	 * @param int                                                                                         $term_id    Vendor.
+	 * @param string                                                                                      $name       Its name.
+	 * @param string                                                                                      $status     Its status in the dry run.
+	 * @param int                                                                                         $user_id    The chosen user (0: none).
+	 * @param int                                                                                         $creator_id Its creator in the dry run (0: a new one).
+	 * @param int                                                                                         $category The product category to map (0: none).
+	 * @param DateTimeImmutable                                                                           $now        The time of the run.
+	 * @param array{created: int, matched: int, categories: int, linked: int, conflict: int, failed: int} $counts     Counts so far.
+	 * @return array{created: int, matched: int, categories: int, linked: int, conflict: int, failed: int}
 	 * @throws DatabaseException When the database cannot be read or written.
 	 */
-	private function vendor( int $term_id, string $name, string $status, int $user_id, int $creator_id, DateTimeImmutable $now, array $counts ): array {
+	private function vendor( int $term_id, string $name, string $status, int $user_id, int $creator_id, int $category, DateTimeImmutable $now, array $counts ): array {
 		try {
 			if ( 0 === $creator_id ) {
 				$creator_id = $this->creators->create( $name, CreatorStatus::Active, $user_id > 0 ? $user_id : null )->id;
@@ -162,6 +174,16 @@ class VendorImporter {
 		}
 
 		self::remember( $term_id, $creator_id, false );
+
+		if ( $category > 0 ) {
+			try {
+				$counts['categories'] += $this->categories->link( $creator_id, $category ) ? 1 : 0;
+			} catch ( CreatorCategoryException ) {
+				// E.g. the creator is inactive or the category was mapped meanwhile; its products are still linked.
+				++$counts['failed'];
+			}
+		}
+
 		$linked   = 0;
 		$conflict = 0;
 		$failed   = 0;
@@ -188,6 +210,7 @@ class VendorImporter {
 				$creator_id,
 				array(
 					'status'   => $status,
+					'category' => $category,
 					'linked'   => $linked,
 					'conflict' => $conflict,
 					'failed'   => $failed,

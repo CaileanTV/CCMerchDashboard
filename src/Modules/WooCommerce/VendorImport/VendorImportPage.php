@@ -44,6 +44,11 @@ final class VendorImportPage {
 	public const USER_ARG = 'user';
 
 	/**
+	 * Query argument: the chosen product category per vendor (0: none).
+	 */
+	public const CATEGORY_ARG = 'category';
+
+	/**
 	 * Query argument: the outcome code after a migration.
 	 */
 	public const RESULT_ARG = 'result';
@@ -119,9 +124,10 @@ final class VendorImportPage {
 
 		// Read-only parameters of the dry run, validated here.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$preview = '1' === ( isset( $_GET[ self::PREVIEW_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::PREVIEW_ARG ] ) ) : '' );
-		$choices = self::choices( isset( $_GET[ self::USER_ARG ] ) ? wp_unslash( $_GET[ self::USER_ARG ] ) : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized to positive integers in choices().
-		$result  = isset( $_GET[ self::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::RESULT_ARG ] ) ) : '';
+		$preview    = '1' === ( isset( $_GET[ self::PREVIEW_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::PREVIEW_ARG ] ) ) : '' );
+		$choices    = self::choices( isset( $_GET[ self::USER_ARG ] ) ? wp_unslash( $_GET[ self::USER_ARG ] ) : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized to positive integers in choices().
+		$categories = self::category_choices( isset( $_GET[ self::CATEGORY_ARG ] ) ? wp_unslash( $_GET[ self::CATEGORY_ARG ] ) : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized to integers of 0 or more in category_choices().
+		$result     = isset( $_GET[ self::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::RESULT_ARG ] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Import from Product Vendors', 'merchboard' ) . '</h1>';
@@ -146,7 +152,7 @@ final class VendorImportPage {
 				return;
 			}
 
-			$report = $this->plan->build( $choices );
+			$report = $this->plan->build( $choices, $categories );
 		} catch ( VendorImportException $e ) {
 			$message = self::result_message( $e->reason() );
 			printf( '<div class="notice notice-%1$s inline"><p>%2$s</p></div></div>', esc_attr( $message[1] ?? 'error' ), esc_html( $message[0] ?? '' ) );
@@ -184,7 +190,30 @@ final class VendorImportPage {
 	}
 
 	/**
-	 * The dry run, with a choice of user where a vendor has several.
+	 * The chosen product categories from the query: term id → category id,
+	 * 0 for none.
+	 *
+	 * @param mixed $raw The query value.
+	 * @return array<int, int>
+	 */
+	public static function category_choices( mixed $raw ): array {
+		$choices = array();
+
+		foreach ( is_array( $raw ) ? $raw : array() as $term_id => $category ) {
+			// Numeric keys are integers already; digits only, so "-1" or "2.5" never count.
+			$category = is_int( $category ) || ( is_string( $category ) && ctype_digit( $category ) ) ? (int) $category : -1;
+
+			if ( is_int( $term_id ) && $term_id > 0 && $category >= 0 ) {
+				$choices[ $term_id ] = $category;
+			}
+		}
+
+		return $choices;
+	}
+
+	/**
+	 * The dry run, with a choice of user where a vendor has several and a
+	 * choice of product category.
 	 *
 	 * @param VendorImportReport $report The dry run.
 	 */
@@ -200,9 +229,12 @@ final class VendorImportPage {
 			)
 		);
 
+		$all = self::product_categories();
+
+		echo '<p>' . esc_html__( 'The product category links new products, and so new sales, to the creator. The proposal is the category most of the vendor\'s products are in; choose another or none.', 'merchboard' ) . '</p>';
 		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '">';
 		echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="' . esc_attr( self::PREVIEW_ARG ) . '" value="1">';
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Vendor', 'merchboard' ) . '</th><th>' . esc_html__( 'User', 'merchboard' ) . '</th><th>' . esc_html__( 'What happens', 'merchboard' ) . '</th><th>' . esc_html__( 'Products', 'merchboard' ) . '</th><th>' . esc_html__( 'Settlement start', 'merchboard' ) . '</th></tr></thead><tbody>';
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Vendor', 'merchboard' ) . '</th><th>' . esc_html__( 'User', 'merchboard' ) . '</th><th>' . esc_html__( 'What happens', 'merchboard' ) . '</th><th>' . esc_html__( 'Product category', 'merchboard' ) . '</th><th>' . esc_html__( 'Products', 'merchboard' ) . '</th><th>' . esc_html__( 'Settlement start', 'merchboard' ) . '</th></tr></thead><tbody>';
 
 		foreach ( $report->vendors as $vendor ) {
 			echo '<tr><td>' . esc_html( $vendor['name'] );
@@ -213,12 +245,14 @@ final class VendorImportPage {
 
 			echo '</td><td>';
 			$this->render_users( $vendor );
-			echo '</td><td>' . esc_html( self::status_label( $vendor['status'], $vendor['creator_name'] ) ) . '</td><td>' . esc_html( self::products_label( $vendor ) ) . '</td><td>' . esc_html( self::settlement_label( $vendor['settlement'] ) ) . '</td></tr>';
+			echo '</td><td>' . esc_html( self::status_label( $vendor['status'], $vendor['creator_name'] ) ) . '</td><td>';
+			$this->render_category( $vendor, $all );
+			echo '</td><td>' . esc_html( self::products_label( $vendor ) ) . '</td><td>' . esc_html( self::settlement_label( $vendor['settlement'] ) ) . '</td></tr>';
 		}
 
 		echo '</tbody></table>';
 
-		if ( array() !== array_filter( $report->vendors, static fn( array $vendor ): bool => count( $vendor['users'] ) > 1 ) ) {
+		if ( array() !== array_filter( $report->vendors, static fn( array $vendor ): bool => count( $vendor['users'] ) > 1 || null !== $vendor['category'] ) ) {
 			echo '<p>' . get_submit_button( __( 'Update the dry run', 'merchboard' ), 'secondary', '', false ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress' escaped button markup.
 		}
 
@@ -229,10 +263,11 @@ final class VendorImportPage {
 			'<p><strong>%s</strong></p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: vendors migrated, 2: vendors skipped, 3: products linked, 4: products linked to another creator. */
-					__( 'In all: %1$d vendors migrated, %2$d skipped, %3$d products linked, %4$d products left because they belong to another creator.', 'merchboard' ),
+					/* translators: 1: vendors migrated, 2: vendors skipped, 3: product categories linked, 4: products linked, 5: products linked to another creator. */
+					__( 'In all: %1$d vendors migrated, %2$d skipped, %3$d product categories linked, %4$d products linked, %5$d products left because they belong to another creator.', 'merchboard' ),
 					$context['vendors'],
 					$context['skipped'],
+					$context['categories'],
 					$context['products'],
 					$context['conflict']
 				)
@@ -250,6 +285,10 @@ final class VendorImportPage {
 
 		foreach ( $report->choices() as $term_id => $user_id ) {
 			echo '<input type="hidden" name="' . esc_attr( self::USER_ARG . '[' . $term_id . ']' ) . '" value="' . esc_attr( (string) $user_id ) . '">';
+		}
+
+		foreach ( $report->category_choices() as $term_id => $category ) {
+			echo '<input type="hidden" name="' . esc_attr( self::CATEGORY_ARG . '[' . $term_id . ']' ) . '" value="' . esc_attr( (string) $category ) . '">';
 		}
 
 		wp_nonce_field( VendorImportActions::ACTION );
@@ -299,6 +338,79 @@ final class VendorImportPage {
 	}
 
 	/**
+	 * The vendor's product category: a choice unless the creator has one
+	 * already (one per creator, ADR-033) or the vendor is skipped.
+	 *
+	 * @phpstan-param array{term_id: int, category: string|null, category_id: int, categories: list<array{id: int, name: string, count: int}>} $vendor
+	 * @phpstan-param array<int, string> $all
+	 *
+	 * @param array $vendor The vendor's row.
+	 * @param array $all    Every product category but the default, id → name.
+	 */
+	private function render_category( array $vendor, array $all ): void {
+		if ( null === $vendor['category'] ) {
+			echo '—';
+
+			return;
+		}
+
+		if ( VendorImportReport::CATEGORY_MAPPED === $vendor['category'] ) {
+			/* translators: %s: product category name. */
+			echo esc_html( sprintf( __( 'The creator\'s category "%s" stays', 'merchboard' ), $all[ $vendor['category_id'] ] ?? '#' . $vendor['category_id'] ) );
+
+			return;
+		}
+
+		$id   = 'merchboard-vendor-category-' . $vendor['term_id'];
+		$own  = array_column( $vendor['categories'], null, 'id' );
+		$rest = array_diff_key( $all, $own );
+
+		echo '<label class="screen-reader-text" for="' . esc_attr( $id ) . '">' . esc_html__( 'Product category to link', 'merchboard' ) . '</label>';
+		echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( self::CATEGORY_ARG . '[' . $vendor['term_id'] . ']' ) . '">';
+		printf( '<option value="0"%1$s>%2$s</option>', selected( 0, $vendor['category_id'], false ), esc_html__( 'None', 'merchboard' ) );
+
+		foreach ( $vendor['categories'] as $category ) {
+			/* translators: 1: product category name, 2: number of the vendor's products in it. */
+			printf( '<option value="%1$d"%2$s>%3$s</option>', (int) $category['id'], selected( $category['id'], $vendor['category_id'], false ), esc_html( sprintf( _n( '%1$s (%2$d product)', '%1$s (%2$d products)', $category['count'], 'merchboard' ), $category['name'], $category['count'] ) ) );
+		}
+
+		foreach ( $rest as $category => $name ) {
+			printf( '<option value="%1$d"%2$s>%3$s</option>', (int) $category, selected( $category, $vendor['category_id'], false ), esc_html( $name ) );
+		}
+
+		echo '</select>';
+
+		if ( VendorImportReport::CATEGORY_TAKEN === $vendor['category'] ) {
+			echo '<br><em>' . esc_html__( 'Not linked: the category belongs to another creator or is chosen for another vendor. Choose another.', 'merchboard' ) . '</em>';
+		}
+	}
+
+	/**
+	 * Every product category but the default one, by name.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function product_categories(): array {
+		$terms   = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+			)
+		);
+		$default = (int) get_option( 'default_product_cat', 0 );
+		$all     = array();
+
+		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
+			if ( $term->term_id !== $default ) {
+				$all[ $term->term_id ] = $term->name;
+			}
+		}
+
+		return $all;
+	}
+
+	/**
 	 * One of Product Vendors' roles in words.
 	 *
 	 * @param string $role Role.
@@ -328,11 +440,12 @@ final class VendorImportPage {
 			'<p><strong>%s</strong></p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: date and time, 2: creators created, 3: creators used, 4: products linked, 5: products left, 6: failures. */
-					__( 'Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d products linked, %5$d products left at another creator, %6$d failed).', 'merchboard' ),
+					/* translators: 1: date and time, 2: creators created, 3: creators used, 4: product categories linked, 5: products linked, 6: products left, 7: failures. */
+					__( 'Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d product categories linked, %5$d products linked, %6$d products left at another creator, %7$d failed).', 'merchboard' ),
 					get_date_from_gmt( $stored['completed_at'], (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ) ),
 					(int) ( $last['created'] ?? 0 ),
 					(int) ( $last['matched'] ?? 0 ),
+					(int) ( $last['categories'] ?? 0 ),
 					(int) ( $last['linked'] ?? 0 ),
 					(int) ( $last['conflict'] ?? 0 ),
 					(int) ( $last['failed'] ?? 0 )

@@ -696,7 +696,7 @@ final class WooCommerceModule implements Module {
 		$container->set( ProductVendorsSource::class, static fn(): ProductVendorsSource => new ProductVendorsPlugin() );
 		$container->set(
 			VendorImportPlan::class,
-			static fn( Container $c ): VendorImportPlan => new VendorImportPlan( $c->get( ProductVendorsSource::class ), $c->get( CreatorRepository::class ), $c->get( ProductCreatorLink::class ), $c->get( PayoutSettings::class ) )
+			static fn( Container $c ): VendorImportPlan => new VendorImportPlan( $c->get( ProductVendorsSource::class ), $c->get( CreatorRepository::class ), $c->get( ProductCreatorLink::class ), $c->get( PayoutSettings::class ), $c->get( CreatorCategoryService::class ) )
 		);
 		$container->set(
 			VendorImporter::class,
@@ -705,6 +705,7 @@ final class WooCommerceModule implements Module {
 				$c->get( ProductVendorsSource::class ),
 				$c->get( CreatorService::class ),
 				$c->get( ProductCreatorLink::class ),
+				$c->get( CreatorCategoryService::class ),
 				$c->get( PayoutSettings::class ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),

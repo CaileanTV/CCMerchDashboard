@@ -586,12 +586,12 @@ enum AuditAction: string {
 	case AlertApiAccessChanged = 'alert_api_access_changed';
 
 	/**
-	 * A vendor from WooCommerce Product Vendors was migrated to its creator (phase 26, ADR-074). Context: status, linked, conflict, failed (no names).
+	 * A vendor from WooCommerce Product Vendors was migrated to its creator (phase 26, ADR-074). Context: status, category (term id, 0: none), linked, conflict, failed (no names).
 	 */
 	case VendorImported = 'vendor_imported';
 
 	/**
-	 * The migration from WooCommerce Product Vendors ran (phase 26, ADR-074). Context: created, matched, linked, conflict, failed (counts only).
+	 * The migration from WooCommerce Product Vendors ran (phase 26, ADR-074). Context: created, matched, categories, linked, conflict, failed (counts only).
 	 */
 	case VendorImportCompleted = 'vendor_import_completed';
 

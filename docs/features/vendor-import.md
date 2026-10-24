@@ -7,6 +7,7 @@ Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vend
 I gang (fase 26).
 - **26.1 tørkørsel:** implementeret 2026-10-24, læser kun. Projektejeren har kontrolleret den på Local med Product Vendors 2.4.9.
 - **26.2 migrering:** implementeret 2026-10-24, testet automatisk.
+- **26.2.1 produktkategori:** implementeret 2026-10-24, testet automatisk.
 - **26.3 fjernelse af PV-roller:** implementeret 2026-10-24, testet automatisk.
 - **26.4 review og runtime-test:** udestår.
 
@@ -26,6 +27,7 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
     - allerede flyttet;
     - creator uden bruger;
     - springes over (venter på godkendelse, eller brugeren er valgt til en anden vendor).
+  - **Produktkategori (26.2.1):** kategorien, der kobles til creatoren, så nye produkter og nye salg kobles automatisk. Forslaget er den kategori, flest af vendorens produkter ligger i (aldrig standardkategorien); listen viser først vendorens kategorier med antal produkter, derefter alle andre, og "Ingen". En creator, der har en kategori, beholder den. En kategori hos en anden creator eller valgt til en anden vendor kobles ikke og vises med en forklaring. Valget sendes som `category[term_id]` (0 = ingen).
   - **Produkter:** kobles / allerede koblet / bliver stående, fordi de tilhører en anden creator.
   - **Afregningsstart:** "sættes til migreringens tidspunkt" for nye creators; ellers creatorens nuværende afregningsstart.
   - **Advarsel:** når en creator med samme navn findes. Navne matches aldrig.
@@ -62,8 +64,9 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
 - **`VendorImporter::run( $fingerprint, $choices )` (26.2):** bygger en frisk tørkørsel med de samme valg og kræver samme fingerprint. Uden ydre transaktion (servicerne har hver deres, og transaktioner kan ikke indlejres), men hvert trin er idempotent:
   1. creator: tidligere kørsels (optionen), den valgte brugers, eller en ny aktiv via `CreatorService::create()` (kobler brugeren og giver rollen `merchboard_creator`); en ny skrives straks i optionen;
   2. afregningsstart: for en creator, migreringen har oprettet, én gang via `PayoutSettings::set_settlement_start()`. En afregningsstart, administratoren ændrer bagefter, sættes aldrig igen;
-  3. produkter: frie produkter kobles via `ProductCreatorLink::link()` (kilde `admin`); produkter hos en anden creator efterlades;
-  4. audit `vendor_imported`.
+  3. produktkategori (26.2.1): tørkørslens kategori kobles via `CreatorCategoryService::link()`, som også sætter kategoriens afstemning i gang (ADR-033). Fejler det (fx en deaktiveret creator), tælles det;
+  4. produkter: frie produkter kobles via `ProductCreatorLink::link()` (kilde `admin`); produkter hos en anden creator efterlades;
+  5. audit `vendor_imported`.
 
   En vendor, der fejler (fx en deaktiveret creator, hvis produkter ikke kan kobles), tælles, og kørslen fortsætter. Til sidst skrives seneste kørsel og `vendor_import_completed` i én transaktion.
 - **`VendorImportActions`:** admin-post `merchboard_vendor_import`: capability → nonce → backup → fingerprintets form → migreringen; Post/Redirect/Get med en resultatkode.
@@ -78,7 +81,7 @@ Undermenuen **Merch Dashboard → Import fra Product Vendors** vises, mens PV er
 ## Database/data used
 - **Læses:** `merchboard_creators` og produkternes `_merchboard_creator_id` (ADR-030); creatorens afregningsstart (`merchboard_creators.payout_start_at`, ADR-054); PV's taxonomi, term meta `vendor_data` og roller gennem PV's API.
 - **Option:** `merchboard_vendor_import`: `vendors` (vendor-term → creator), `created` (creators, migreringen har oprettet), `settled` (creators, hvis afregningsstart er sat), `completed_at` og `last` (tal). Slettes ved opt-in-afinstallation.
-- **Skrives (26.2):** `merchboard_creators` (via `CreatorService`), brugerens ekstra rolle `merchboard_creator`, produkternes kobling (via `ProductCreatorLink`), afregningsstart (via `PayoutSettings`) og audit. Product Vendors' data skrives aldrig.
+- **Skrives (26.2):** `merchboard_creators` (via `CreatorService`), `merchboard_creator_categories` (via `CreatorCategoryService`, 26.2.1), brugerens ekstra rolle `merchboard_creator`, produkternes kobling (via `ProductCreatorLink`), afregningsstart (via `PayoutSettings`) og audit. Product Vendors' data skrives aldrig.
 
 ## Permissions
 - **Siden:** `merchboard_manage_creators`.
@@ -105,6 +108,7 @@ WooCommerce-modulet (`ProductCreatorLink`, `PayoutSettings`) og WooCommerce Prod
   - siden og valideringen af valg;
   - at tørkørslen intet skriver (snapshot af creators, audit, produktkoblinger, roller, PV's data og optionen);
   - rollerne (26.3): kun migrerede brugere med en PV-rolle, advarslen om en anden vendor, kun de bekræftede brugere og kun PV's roller, creator-adgangen bevares, bekræftelse kræves, og uden `promote_users` afvises det;
+  - produktkategorien (26.2.1): forslaget (aldrig standardkategorien), valg af en anden eller ingen, en creators egen kategori bevares, en anden creators kategori flyttes aldrig, fingerprintet følger valget, og migreringen kobler kategorien;
   - migreringen: creators, brugerkobling og rolle, produktkobling, afregningsstart kun for nye creators, PV's data uændret, audit, en genkørsel uden dubletter, en afregningsstart administratoren fjernede sættes ikke igen, forældet fingerprint og manglende backup afvises, og en vendor med en deaktiveret creator tælles som fejl, mens resten flyttes.
 - **Unit (`ProductVendorsPluginTest`):** admins-værdiens former.
 

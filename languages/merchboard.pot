@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-24T20:29:07+00:00\n"
+"POT-Creation-Date: 2026-10-24T21:21:18+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -933,6 +933,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
 msgid "Product category"
 msgstr ""
 
@@ -1009,7 +1010,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:644
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:281
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:320
 msgid "Creator"
 msgstr ""
 
@@ -1399,6 +1400,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:370
 #: build/dashboard.js:51
 msgid "None"
 msgstr ""
@@ -2887,8 +2889,8 @@ msgstr ""
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:79
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:132
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:179
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:144
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:192
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:150
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:221
 msgid "Dry run"
 msgstr ""
 
@@ -2915,7 +2917,7 @@ msgid "Creator here"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/MerchAlertImportTab.php:138
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:205
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
 msgid "What happens"
 msgstr ""
 
@@ -3448,7 +3450,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
 #: src/Modules/WooCommerce/VendorImport/VendorImportActions.php:70
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:117
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:122
 #: src/Modules/WooCommerce/VendorImport/VendorRoleActions.php:74
 msgid "Sorry, you are not allowed to manage creators."
 msgstr ""
@@ -4092,7 +4094,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:399
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:122
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:56
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:205
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
 msgid "Products"
 msgstr ""
 
@@ -6150,7 +6152,7 @@ msgid "Only sales on or after this date count towards the creator's payouts; ref
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:208
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:205
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
 msgid "Settlement start"
 msgstr ""
 
@@ -7424,223 +7426,249 @@ msgstr ""
 msgid "The requested period is not valid."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:72
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:73
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:127
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:77
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:78
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:133
 msgid "Import from Product Vendors"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:97
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:102
 msgid "Sorry, you are not allowed to migrate creators. It takes the rights to manage creators and payouts."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:98
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:103
 msgid "Activate WooCommerce Product Vendors first: the migration reads the vendors through Product Vendors itself."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:99
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:104
 msgid "Product Vendors has no vendors."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:100
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:105
 msgid "Product Vendors' vendors could not be read. Please try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:101
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:106
 msgid "The data changed since the dry run. Check the new dry run and migrate again."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:102
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:107
 msgid "Confirm that you have a backup before you migrate."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:103
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:108
 msgid "The migration is done. Check the creators and their products, then remove the Product Vendors roles when you are ready."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:104
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:109
 msgid "Product Vendors' roles were removed. The users keep their other roles and their creator access."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:105
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:110
 msgid "Nothing was changed: tick the confirmation first."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:106
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:111
 msgid "The roles could not be removed because of a technical error. Users changed before it keep the change; try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:107
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:112
 msgid "The migration stopped because of a technical error. What was migrated is kept; run the dry run again to migrate the rest."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:128
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:134
 msgid "Moves the vendors from WooCommerce Product Vendors to Merch Dashboard once: a creator per vendor, the vendor's WordPress user linked to it, and the vendor's products linked to the creator. A vendor whose user is linked to a creator already uses that creator. Product Vendors' data is only read, never changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:135
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
 msgid "Not moved: commissions, payouts, PayPal and other payment details."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:135
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
 msgid "New creators get their settlement start at the time of the migration, so sales Product Vendors has paid commission for are never paid out again."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:135
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
 msgid "A creator has one WordPress user. When a vendor has several, choose the one to link; the others are not moved."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:135
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
 msgid "Vendors waiting for approval are skipped."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:135
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:141
 msgid "Keep Product Vendors active until the migration is done: it is read through Product Vendors itself."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:156
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:162
 msgid "The dry run could not be made because of a technical error. Please try again later."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:197
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:226
 msgid "Product Vendors' version is unknown."
 msgstr ""
 
 #. translators: %s: version number.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:199
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:228
 #, php-format
 msgid "Read through Product Vendors %s."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:205
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:234
+msgid "The product category links new products, and so new sales, to the creator. The proposal is the category most of the vendor's products are in; choose another or none."
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
 msgid "Vendor"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:205
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:281
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:237
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:320
 msgid "User"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:211
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:243
 msgid "A creator with the same name exists. It is not used: creators are matched by their user."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:222
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:256
 msgid "Update the dry run"
 msgstr ""
 
-#. translators: 1: vendors migrated, 2: vendors skipped, 3: products linked, 4: products linked to another creator.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:233
+#. translators: 1: vendors migrated, 2: vendors skipped, 3: product categories linked, 4: products linked, 5: products linked to another creator.
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:267
 #, php-format
-msgid "In all: %1$d vendors migrated, %2$d skipped, %3$d products linked, %4$d products left because they belong to another creator."
-msgstr ""
-
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:242
-msgid "There is nothing to migrate."
-msgstr ""
-
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:256
-msgid "I have taken a backup of the site, and Product Vendors is active."
-msgstr ""
-
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:257
-msgid "Migrate vendors"
-msgstr ""
-
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:276
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:297
-msgid "Remove the Product Vendors roles"
+msgid "In all: %1$d vendors migrated, %2$d skipped, %3$d product categories linked, %4$d products linked, %5$d products left because they belong to another creator."
 msgstr ""
 
 #: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:277
+msgid "There is nothing to migrate."
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:295
+msgid "I have taken a backup of the site, and Product Vendors is active."
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:296
+msgid "Migrate vendors"
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:315
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:336
+msgid "Remove the Product Vendors roles"
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:316
 msgid "These migrated users still have a Product Vendors role, which keeps their Product Vendors access and wp-admin. Removing it leaves only their Merch Dashboard access; their other roles stay. Check the creators and their products first."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:281
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:320
 msgid "Product Vendors roles"
 msgstr ""
 
 #. translators: %s: vendor names.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:289
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:328
 #, php-format
 msgid "Also administers vendors that were not migrated: %s. Removing the role ends that access too."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:296
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:335
 msgid "I have checked the migrated creators and their products."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:308
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:404
+#. translators: %s: product category name.
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:359
+#, php-format
+msgid "The creator's category \"%s\" stays"
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:368
+msgid "Product category to link"
+msgstr ""
+
+#. translators: 1: product category name, 2: number of the vendor's products in it.
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:374
+#, php-format
+msgid "%1$s (%2$d product)"
+msgid_plural "%1$s (%2$d products)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:384
+msgid "Not linked: the category belongs to another creator or is chosen for another vendor. Choose another."
+msgstr ""
+
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:420
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:517
 msgid "Vendor Admin"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:309
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:404
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:421
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:517
 msgid "Vendor Manager"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:310
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:422
 msgid "Pending Vendor"
 msgstr ""
 
-#. translators: 1: date and time, 2: creators created, 3: creators used, 4: products linked, 5: products left, 6: failures.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:332
+#. translators: 1: date and time, 2: creators created, 3: creators used, 4: product categories linked, 5: products linked, 6: products left, 7: failures.
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:444
 #, php-format
-msgid "Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d products linked, %5$d products left at another creator, %6$d failed)."
+msgid "Last migration: %1$s (%2$d creators created, %3$d existing creators used, %4$d product categories linked, %5$d products linked, %6$d products left at another creator, %7$d failed)."
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:367
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:480
 msgid "User to link"
 msgstr ""
 
 #. translators: %d: number of other users.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:376
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:489
 #, php-format
 msgid "%d other user is not moved."
 msgid_plural "%d other users are not moved."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:387
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:500
 msgid "New creator with the vendor's name and the user"
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:389
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:502
 #, php-format
 msgid "Uses the user's creator \"%s\""
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:391
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:504
 #, php-format
 msgid "Migrated already to \"%s\": only what is missing is added"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:392
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:505
 msgid "New creator without a user (the vendor has no administrator)"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:393
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:506
 msgid "Skipped: the vendor is waiting for approval"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:394
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:507
 msgid "Skipped: the user is chosen for another vendor. Choose another user or link it later."
 msgstr ""
 
 #. translators: 1: products to link, 2: products linked already, 3: products linked to another creator.
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:423
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:536
 #, php-format
 msgid "%1$d linked, %2$d linked already, %3$d left (another creator)"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:438
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:551
 msgid "Set to the time of the migration"
 msgstr ""
 
-#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:439
+#: src/Modules/WooCommerce/VendorImport/VendorImportPage.php:552
 msgid "None: the whole history counts. Set it under Payouts if Product Vendors has paid for it."
 msgstr ""
 

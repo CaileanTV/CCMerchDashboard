@@ -12,13 +12,14 @@ namespace MerchBoard\Modules\WooCommerce\VendorImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The dry run of the migration (step 26.1, ADR-074): per vendor what
- * happens, with the chosen user and the products. The fingerprint ties the
- * administrator's confirmation to exactly this dry run, chosen users
- * included.
+ * The dry run of the migration (steps 26.1 and 26.2.1, ADR-074): per vendor
+ * what happens, with the chosen user, the product category and the
+ * products. The fingerprint ties the administrator's confirmation to
+ * exactly this dry run, chosen users and categories included.
  *
  * @phpstan-type VendorUser array{id: int, name: string, role: string, creator_id: int}
- * @phpstan-type VendorRow array{term_id: int, name: string, status: string, users: list<VendorUser>, user_id: int, creator_id: int, creator_name: string, same_name: bool, products: array{link: int, same: int, conflict: int}, settlement: string|null}
+ * @phpstan-type VendorCategory array{id: int, name: string, count: int}
+ * @phpstan-type VendorRow array{term_id: int, name: string, status: string, users: list<VendorUser>, user_id: int, creator_id: int, creator_name: string, same_name: bool, products: array{link: int, same: int, conflict: int}, settlement: string|null, categories: list<VendorCategory>, category_id: int, category: string|null}
  */
 final readonly class VendorImportReport {
 
@@ -32,6 +33,16 @@ final readonly class VendorImportReport {
 	public const NO_ADMIN   = 'no_admin';
 	public const PENDING    = 'pending';
 	public const USER_TAKEN = 'user_taken';
+
+	/**
+	 * Product category statuses (null for a skipped vendor): MAP is linked to
+	 * the creator; MAPPED is the creator's category already; TAKEN is mapped
+	 * to another creator or chosen for another vendor; NONE is no category.
+	 */
+	public const CATEGORY_MAP    = 'map';
+	public const CATEGORY_MAPPED = 'mapped';
+	public const CATEGORY_TAKEN  = 'taken';
+	public const CATEGORY_NONE   = 'none';
 
 	/**
 	 * Constructor.
@@ -78,23 +89,43 @@ final readonly class VendorImportReport {
 	}
 
 	/**
+	 * The product category per migrated vendor (0: none), for the
+	 * confirmation form.
+	 *
+	 * @return array<int, int>
+	 */
+	public function category_choices(): array {
+		$choices = array();
+
+		foreach ( $this->vendors as $vendor ) {
+			if ( null !== $vendor['category'] ) {
+				$choices[ $vendor['term_id'] ] = self::CATEGORY_NONE === $vendor['category'] ? 0 : $vendor['category_id'];
+			}
+		}
+
+		return $choices;
+	}
+
+	/**
 	 * Counts for the audit log (no names).
 	 *
 	 * @return array<string, int>
 	 */
 	public function audit_context(): array {
 		$context = array(
-			'vendors'  => 0,
-			'skipped'  => 0,
-			'products' => 0,
-			'conflict' => 0,
+			'vendors'    => 0,
+			'skipped'    => 0,
+			'products'   => 0,
+			'conflict'   => 0,
+			'categories' => 0,
 		);
 
 		foreach ( $this->vendors as $vendor ) {
 			if ( self::migrates( $vendor['status'] ) ) {
 				++$context['vendors'];
-				$context['products'] += $vendor['products']['link'];
-				$context['conflict'] += $vendor['products']['conflict'];
+				$context['products']   += $vendor['products']['link'];
+				$context['conflict']   += $vendor['products']['conflict'];
+				$context['categories'] += self::CATEGORY_MAP === $vendor['category'] ? 1 : 0;
 			} else {
 				++$context['skipped'];
 			}

@@ -87,7 +87,7 @@ final class VendorImportActions {
 		}
 
 		try {
-			$this->importer->run( $fingerprint, VendorImportPage::choices( $input[ VendorImportPage::USER_ARG ] ?? array() ) );
+			$this->importer->run( $fingerprint, VendorImportPage::choices( $input[ VendorImportPage::USER_ARG ] ?? array() ), VendorImportPage::category_choices( $input[ VendorImportPage::CATEGORY_ARG ] ?? array() ) );
 
 			return self::back( self::DONE );
 		} catch ( VendorImportException $e ) {

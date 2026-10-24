@@ -14,9 +14,11 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use WP_Term;
 use WP_User;
 
 defined( 'ABSPATH' ) || exit;
@@ -40,6 +42,14 @@ defined( 'ABSPATH' ) || exit;
  * creator already, then a Vendor Admin before a Vendor Manager, then the
  * oldest user.
  *
+ * The product category (step 26.2.1, the project owner's choice
+ * 2026-10-24): the category is what links new products, and so new sales,
+ * to the creator (ADR-033). A creator that has a category keeps it
+ * (mapped). Otherwise the administrator's choice (0: none) or the proposal,
+ * the category most of the vendor's products are in (never the default
+ * category), is mapped, unless it is mapped to another creator or chosen
+ * for an earlier vendor (taken).
+ *
  * @phpstan-import-type VendorRow from VendorImportReport
  * @phpstan-import-type VendorUser from VendorImportReport
  */
@@ -53,16 +63,18 @@ class VendorImportPlan {
 	/**
 	 * Constructor.
 	 *
-	 * @param ProductVendorsSource $source   Product Vendors.
-	 * @param CreatorRepository    $creators Creators.
-	 * @param ProductCreatorLink   $links    Products' creators.
-	 * @param PayoutSettings       $payouts  Settlement starts.
+	 * @param ProductVendorsSource   $source   Product Vendors.
+	 * @param CreatorRepository      $creators Creators.
+	 * @param ProductCreatorLink     $links    Products' creators.
+	 * @param PayoutSettings         $payouts    Settlement starts.
+	 * @param CreatorCategoryService $categories Creators' product categories.
 	 */
 	public function __construct(
 		private ProductVendorsSource $source,
 		private CreatorRepository $creators,
 		private ProductCreatorLink $links,
-		private PayoutSettings $payouts
+		private PayoutSettings $payouts,
+		private CreatorCategoryService $categories
 	) {
 	}
 
@@ -104,11 +116,12 @@ class VendorImportPlan {
 	/**
 	 * The dry run.
 	 *
-	 * @param array<int, int> $choices The administrator's chosen user per vendor.
+	 * @param array<int, int> $choices    The administrator's chosen user per vendor.
+	 * @param array<int, int> $category_choices The administrator's chosen product category per vendor (0: none).
 	 * @throws VendorImportException When refused or Product Vendors has no vendors.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
-	public function build( array $choices = array() ): VendorImportReport {
+	public function build( array $choices = array(), array $category_choices = array() ): VendorImportReport {
 		$this->check();
 		$vendors = $this->source->vendors();
 
@@ -124,14 +137,29 @@ class VendorImportPlan {
 		}
 
 		$taken = array();
+		$used  = array();
 		$rows  = array();
 
 		foreach ( $vendors as $vendor ) {
-			$row    = $this->row( $vendor['term_id'], $vendor['name'], $mapping, $choices[ $vendor['term_id'] ] ?? 0, $taken );
-			$rows[] = array_merge( $row, array( 'same_name' => 0 === $row['creator_id'] && isset( $names[ self::name_key( $vendor['name'] ) ] ) ) );
+			$row                 = $this->row( $vendor['term_id'], $vendor['name'], $mapping, $choices[ $vendor['term_id'] ] ?? 0, $taken );
+			$owned               = $this->vendor_categories( $vendor['term_id'] );
+			[ $category, $kind ] = $this->category( $row['status'], $row['creator_id'], $owned, $category_choices[ $vendor['term_id'] ] ?? null, $used );
+			$rows[]              = array_merge(
+				$row,
+				array(
+					'same_name'   => 0 === $row['creator_id'] && isset( $names[ self::name_key( $vendor['name'] ) ] ),
+					'categories'  => $owned,
+					'category_id' => $category,
+					'category'    => $kind,
+				)
+			);
 
 			if ( $row['user_id'] > 0 && self::migrates_user( $row['status'] ) ) {
 				$taken[ $row['user_id'] ] = true;
+			}
+
+			if ( VendorImportReport::CATEGORY_MAP === $kind ) {
+				$used[ $category ] = true;
 			}
 		}
 
@@ -187,6 +215,91 @@ class VendorImportPlan {
 			'products'     => $this->products( $term_id, VendorImportReport::migrates( $status ) ? $creator : null ),
 			'settlement'   => $this->settlement( $status, $creator ),
 		);
+	}
+
+	/**
+	 * The product categories of a vendor's products, most products first
+	 * (never the default category).
+	 *
+	 * @param int $term_id Vendor.
+	 * @return list<array{id: int, name: string, count: int}>
+	 */
+	private function vendor_categories( int $term_id ): array {
+		$counts  = array();
+		$default = (int) get_option( 'default_product_cat', 0 );
+
+		foreach ( $this->source->product_ids( $term_id ) as $product_id ) {
+			$terms = wp_get_post_terms( $product_id, CreatorCategoryService::TAXONOMY, array( 'fields' => 'ids' ) );
+
+			foreach ( is_array( $terms ) ? $terms : array() as $category ) {
+				$category = (int) $category;
+
+				if ( $category > 0 && $category !== $default ) {
+					$counts[ $category ] = ( $counts[ $category ] ?? 0 ) + 1;
+				}
+			}
+		}
+
+		$categories = array();
+
+		foreach ( $counts as $category => $count ) {
+			$term = get_term( $category, CreatorCategoryService::TAXONOMY );
+
+			if ( $term instanceof WP_Term ) {
+				$categories[] = array(
+					'id'    => $category,
+					'name'  => $term->name,
+					'count' => $count,
+				);
+			}
+		}
+
+		usort( $categories, static fn( array $a, array $b ): int => array( -$a['count'], $a['id'] ) <=> array( -$b['count'], $b['id'] ) );
+
+		return $categories;
+	}
+
+	/**
+	 * The product category of a vendor and its status.
+	 *
+	 * @param string                                         $status     Vendor status.
+	 * @param int                                            $creator_id The vendor's creator (0: a new one).
+	 * @param list<array{id: int, name: string, count: int}> $owned      The vendor's products' categories, most first.
+	 * @param int|null                                       $choice     The administrator's choice (0: none; null: none made).
+	 * @param array<int, true>                               $used       Categories mapped for earlier vendors.
+	 * @return array{0: int, 1: string|null} Category id and status (null: the vendor is skipped).
+	 * @throws DatabaseException When the database cannot be read.
+	 */
+	private function category( string $status, int $creator_id, array $owned, ?int $choice, array $used ): array {
+		if ( ! VendorImportReport::migrates( $status ) ) {
+			return array( 0, null );
+		}
+
+		$own = $creator_id > 0 ? $this->categories->for_creator( $creator_id ) : array();
+
+		// One category per creator (ADR-033): a creator that has one keeps it.
+		if ( array() !== $own ) {
+			return array( $own[0]->term_id, VendorImportReport::CATEGORY_MAPPED );
+		}
+
+		$category = null !== $choice && ( 0 === $choice || self::is_category( $choice ) ) ? $choice : ( $owned[0]['id'] ?? 0 );
+
+		if ( 0 === $category ) {
+			return array( 0, VendorImportReport::CATEGORY_NONE );
+		}
+
+		$mapping = $this->categories->for_category( $category );
+
+		return array( $category, isset( $used[ $category ] ) || null !== $mapping ? VendorImportReport::CATEGORY_TAKEN : VendorImportReport::CATEGORY_MAP );
+	}
+
+	/**
+	 * Whether a term is a product category other than the default one.
+	 *
+	 * @param int $term_id Term id.
+	 */
+	private static function is_category( int $term_id ): bool {
+		return $term_id > 0 && get_term( $term_id, CreatorCategoryService::TAXONOMY ) instanceof WP_Term && (int) get_option( 'default_product_cat', 0 ) !== $term_id;
 	}
 
 	/**
