@@ -185,6 +185,31 @@ class WebhookDispatcher {
 	}
 
 	/**
+	 * Sends a test purchase to each of the creator's switched-on webhooks at
+	 * once (also a paused one, so it can be checked before resuming).
+	 *
+	 * @param int $creator_id Creator.
+	 * @return list<WebhookDelivery> The deliveries with their outcome, oldest webhook first.
+	 * @throws WebhookException When the API is off.
+	 * @throws DatabaseException When the database cannot be read or written.
+	 */
+	public function send_test_all( int $creator_id ): array {
+		if ( ! $this->api->enabled() ) {
+			self::refuse( WebhookException::DISABLED );
+		}
+
+		$deliveries = array();
+
+		foreach ( $this->webhooks->for_creator( $creator_id ) as $webhook ) {
+			if ( $webhook->enabled ) {
+				$deliveries[] = $this->send_test( $creator_id, $webhook->id );
+			}
+		}
+
+		return $deliveries;
+	}
+
+	/**
 	 * Refuses a test.
 	 *
 	 * @param string $reason WebhookException constant.

@@ -486,6 +486,14 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertSame( array( 'test', 'sent', 204 ), array( $tested['delivery']['kind'], $tested['delivery']['status'], $tested['delivery']['http_status'] ) );
 		self::assertSame( 'sent', $tested['deliveries'][0]['status'] );
 
+		$this->webhooks->create( $this->creator, 'Discord', AlertWebhook::DISCORD, self::DISCORD, '', '' );
+		$this->status = 500;
+		$all          = $this->data( $this->call( 'POST', '/merchboard/v1/me/alerts/api/webhooks/test' ) );
+		self::assertSame( array( 'failed', 'failed' ), array_column( $all['tested'], 'status' ), 'One test per switched-on webhook, each with its answer.' );
+		self::assertSame( array( 'test', 'test' ), array_column( $all['tested'], 'kind' ) );
+		self::assertSame( array( 0, 0 ), array_column( $all['webhooks'], 'failures' ), 'Tests never count towards a pause.' );
+		$this->status = 204;
+
 		$secret = $this->data( $this->call( 'POST', '/merchboard/v1/me/alerts/api/webhooks/' . $id . '/secret', array( 'secret' => self::SECRET ) ) );
 		self::assertArrayNotHasKey( 'secret', $secret, 'A pasted secret is not shown back.' );
 

@@ -37,6 +37,8 @@ export interface AlertApiState {
 	readonly secret?: string;
 	/** The delivery of a test just sent. */
 	readonly delivery?: WebhookDeliveryItem;
+	/** The deliveries of a test just sent to every switched-on webhook. */
+	readonly tested?: readonly WebhookDeliveryItem[];
 }
 
 export type WebhookFormat = 'json' | 'discord';
@@ -245,10 +247,16 @@ export function parseAlertApi( body: unknown ): AlertApiState | null {
 			? undefined
 			: parseDelivery( body.delivery );
 
+	const tested =
+		body.tested === undefined
+			? undefined
+			: parseList( body.tested, parseDelivery );
+
 	if (
 		webhooks === null ||
 		deliveries === null ||
 		delivery === null ||
+		tested === null ||
 		! isCount( body.max_webhooks ) ||
 		( body.secret !== undefined &&
 			( typeof body.secret !== 'string' ||
@@ -269,7 +277,19 @@ export function parseAlertApi( body: unknown ): AlertApiState | null {
 		deliveries,
 		...( typeof body.secret === 'string' ? { secret: body.secret } : {} ),
 		...( delivery === undefined ? {} : { delivery } ),
+		...( tested === undefined ? {} : { tested } ),
 	};
+}
+
+/**
+ * Sends a test purchase to every switched-on webhook at once; the answer
+ * has their deliveries in `tested`.
+ */
+export function testAllWebhooks(): Promise< ApiResult< AlertApiState > > {
+	return request(
+		{ path: `${ PATH }/webhooks/test`, method: 'POST' },
+		parseAlertApi
+	);
 }
 
 /**

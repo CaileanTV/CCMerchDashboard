@@ -48,6 +48,8 @@ defined( 'ABSPATH' ) || exit;
  *   resume? }`; `DELETE` the same route.
  * - `POST /me/alerts/api/webhooks/{id}/test`: sends a test purchase at once;
  *   the page with `{ delivery }`.
+ * - `POST /me/alerts/api/webhooks/test`: a test purchase to each switched-on
+ *   webhook at once; the page with `{ tested: [ deliveries ] }`.
  * - `POST /me/alerts/api/webhooks/{id}/secret` with `{ secret }` ('' to get
  *   one): the page, with `{ secret }` when one was made.
  * While the administrator has the API off, making keys and webhooks and
@@ -100,6 +102,7 @@ final class MeAlertsApiController extends RestController {
 			array( self::ROUTE . '/keys/' . self::ID, WP_REST_Server::DELETABLE, 'revoke_key' ),
 			array( self::ROUTE . '/test', WP_REST_Server::CREATABLE, 'send_test' ),
 			array( self::ROUTE . '/webhooks', WP_REST_Server::CREATABLE, 'create_webhook' ),
+			array( self::ROUTE . '/webhooks/test', WP_REST_Server::CREATABLE, 'test_webhooks' ),
 			array( self::ROUTE . '/webhooks/' . self::ID, 'PATCH', 'update_webhook' ),
 			array( self::ROUTE . '/webhooks/' . self::ID, WP_REST_Server::DELETABLE, 'delete_webhook' ),
 			array( self::ROUTE . '/webhooks/' . self::ID . '/test', WP_REST_Server::CREATABLE, 'test_webhook' ),
@@ -300,6 +303,24 @@ final class MeAlertsApiController extends RestController {
 				}
 
 				return $this->answer( $creator_id, array( 'delivery' => $delivery->to_array() ) );
+			}
+		);
+	}
+
+	/**
+	 * `POST /me/alerts/api/webhooks/test`.
+	 */
+	public function test_webhooks(): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/webhooks/test-all',
+			function ( int $creator_id ): WP_REST_Response|WP_Error {
+				try {
+					$tested = $this->dispatcher->send_test_all( $creator_id );
+				} catch ( WebhookException $e ) {
+					return self::webhook_refused( $e );
+				}
+
+				return $this->answer( $creator_id, array( 'tested' => array_map( static fn( WebhookDelivery $item ): array => $item->to_array(), $tested ) ) );
 			}
 		);
 	}

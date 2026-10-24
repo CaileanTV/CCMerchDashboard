@@ -354,4 +354,78 @@ describe( 'alert API page', () => {
 			'You have no webhooks yet.'
 		);
 	} );
+
+	it( 'tests every switched-on webhook from the Test card', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () =>
+				response(
+					200,
+					page( [], {
+						webhooks: [
+							webhook( 4 ),
+							webhook( 5, {
+								name: 'Discord',
+								format: 'discord',
+							} ),
+						],
+					} )
+				),
+			[ `POST ${ PATH }/webhooks/test` ]: () =>
+				response(
+					200,
+					page( [], {
+						webhooks: [
+							webhook( 4 ),
+							webhook( 5, {
+								name: 'Discord',
+								format: 'discord',
+							} ),
+						],
+						tested: [
+							delivery( 9 ),
+							delivery( 10, {
+								webhook_id: 5,
+								status: 'failed',
+								http_status: 404,
+							} ),
+						],
+					} )
+				),
+		} );
+		rendered = showWebhooks();
+		await flush();
+
+		click( button( 'Send test to all webhooks' ) );
+		await flush();
+
+		expect( requests.at( -1 )?.path ).toBe( `${ PATH }/webhooks/test` );
+		expect( rendered.container.textContent ).toContain(
+			'SparkyBot: Delivered (204)'
+		);
+		expect( rendered.container.textContent ).toContain(
+			'Discord: Failed (404)'
+		);
+	} );
+
+	it( 'disables the Test card without a switched-on webhook', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () =>
+				response(
+					200,
+					page( [], {
+						webhooks: [ webhook( 4, { enabled: false } ) ],
+					} )
+				),
+		} );
+		rendered = showWebhooks();
+		await flush();
+
+		expect(
+			(
+				button(
+					'Send test to all webhooks'
+				) as HTMLButtonElement | null
+			 )?.disabled
+		).toBe( true );
+	} );
 } );

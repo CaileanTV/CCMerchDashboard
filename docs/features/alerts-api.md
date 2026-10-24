@@ -18,6 +18,7 @@ Siderne **Alerts → API-nøgler** og **Alerts → Webhooks** i creator-dashboar
   - **Signeringsnøgle:** til JSON indsættes den fra botten, eller Merch Dashboard laver en, som vises én gang.
   - **Handlinger:** "Send test" sender straks og viser svaret. Webhooken kan slås til og fra, og "Genoptag" bruges efter en pause. JSON-webhooks kan få en ny nøgle, og sletning kræver bekræftelse.
   - **Leveringer:** de seneste 20 med tidspunkt, webhook, type og udfald.
+  - **Test-kortet** (tilføjet efter 25.12.2, projektejerens ønske 2026-10-24): "Send test til alle webhooks" sender med det samme et testkøb til hver webhook, der er slået til, og viser svaret fra hver, som API-nøgle-sidens Test-kort.
 - **Test og gensendelser:** "Send testhændelse" lægger et testkøb (`kind: test`) klar til hver nøgle. Gensender creatoren en alert under Historik, får nøglerne den (`kind: resend`), og webhooks får en `resend`-levering, også uden et overlay.
 - **Vejledning:**
   - **API:** adressen, et `curl`-eksempel med `Authorization: Bearer`, hvordan cursoren bruges (polling hvert 5.–10. sekund), grænsen på 60 forespørgsler pr. minut, fejlkoderne, et eksempelsvar og alle felter forklaret.
