@@ -128,6 +128,13 @@ class WooCommerceCreatorCleanup implements CreatorDataCleaner {
 			}
 		} while ( array() !== $batch );
 
+		// Finally no product may still belong to the creator (a new order would create sales for it).
+		foreach ( $this->products->linked_to( $creator_id, self::BATCH ) as $product ) {
+			if ( $creator_id === $product->creator_id() ) {
+				throw new DatabaseException( 'Products are still linked to the creator being deleted.' );
+			}
+		}
+
 		return $released;
 	}
 

@@ -206,11 +206,6 @@ class CreatorDeletion {
 			}
 		}
 
-		// No product may still point at the creator (a new order would create sales for it).
-		if ( $this->has_cleaner( 'woocommerce' ) && $this->linked_products( $creator->id ) > 0 ) {
-			throw new DatabaseException( 'Products are still linked to the creator being deleted.' );
-		}
-
 		$current = $this->current( $creator->id );
 
 		if ( null !== $current->user_id ) {
@@ -285,13 +280,14 @@ class CreatorDeletion {
 	}
 
 	/**
-	 * Products whose link points at the creator.
+	 * Products whose link points at the creator (parent products only; the
+	 * link lives there, and variations or meta of deleted posts never count).
 	 *
 	 * @param int $creator_id Creator.
 	 * @throws DatabaseException When they cannot be counted.
 	 */
 	private function linked_products( int $creator_id ): int {
-		return $this->count( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE meta_key = %s AND meta_value = %s', $this->wpdb->postmeta, ProtectedProductMeta::LINK_KEY, (string) $creator_id ) );
+		return $this->count( $this->wpdb->prepare( 'SELECT COUNT(DISTINCT m.post_id) FROM %i m INNER JOIN %i p ON p.ID = m.post_id WHERE m.meta_key = %s AND m.meta_value = %s AND p.post_type = %s AND p.post_status <> %s', $this->wpdb->postmeta, $this->wpdb->posts, ProtectedProductMeta::LINK_KEY, (string) $creator_id, 'product', 'auto-draft' ) );
 	}
 
 	/**

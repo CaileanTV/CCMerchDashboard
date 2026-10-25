@@ -177,6 +177,33 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 		self::assertSame( CreatorDeletionException::ALREADY_DELETED, $this->refusal( $this->deletion(), $this->orion, 'Deleted creator #' . $this->orion ) );
 	}
 
+	public function test_links_that_never_create_sales_do_not_stop_the_deletion(): void {
+		// A variation, meta of a deleted post and a product with two entries (invalid) point at Orion (CI on MySQL, 27.4).
+		$variation                   = (int) wp_insert_post(
+			array(
+				'post_type'   => 'product_variation',
+				'post_status' => 'publish',
+				'post_parent' => $this->products['orion'],
+				'post_title'  => 'variation',
+			)
+		);
+		$this->products['variation'] = $variation;
+		$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $variation, ProtectedProductMeta::LINK_KEY, (string) $this->orion );
+		$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, 99999999, ProtectedProductMeta::LINK_KEY, (string) $this->orion );
+		$this->product( 'invalid', $this->orion, 'admin' );
+		$this->execute( 'INSERT INTO %i (post_id, meta_key, meta_value) VALUES (%d, %s, %s)', $this->wpdb->postmeta, $this->products['invalid'], ProtectedProductMeta::LINK_KEY, (string) $this->nova );
+		wp_cache_delete( $this->products['invalid'], 'post_meta' );
+
+		try {
+			self::assertSame( 2, $this->deletion()->preview( $this->find( $this->orion ) )['products'], 'Only parent products count.' );
+			self::assertSame( CreatorDeletion::MODE_ANONYMIZED, $this->deletion()->delete( $this->orion, 'Orion' ) );
+			self::assertSame( '', get_post_meta( $this->products['orion'], ProtectedProductMeta::LINK_KEY, true ) );
+			self::assertCount( 2, get_post_meta( $this->products['invalid'], ProtectedProductMeta::LINK_KEY, false ), 'An invalid link is left as it is; it never creates sales.' );
+		} finally {
+			$this->execute( 'DELETE FROM %i WHERE post_id = %d', $this->wpdb->postmeta, 99999999 );
+		}
+	}
+
 	public function test_it_is_refused_without_the_right_the_name_while_a_payout_waits_or_without_woocommerce(): void {
 		wp_set_current_user( $this->nova_user );
 		self::assertSame( CreatorDeletionException::NOT_AUTHORIZED, $this->refusal( $this->deletion(), $this->nova, 'Nova' ) );
