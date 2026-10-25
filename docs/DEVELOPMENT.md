@@ -246,14 +246,14 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
-## Release 1.1.0: alerts (fase 25, trin 25.10.3)
+## Release 1.1.0: alerts og migrering fra Product Vendors (fase 25 og 26, trin 25.10.3)
 
-**Forberedt 2026-10-23; ikke udgivet.** Version **1.1.0** (projektejerens valg 2026-10-23: minor, nye features uden breaking changes). Versions-bump, CHANGELOG-sektionen `## [1.1.0]` og tagget `v1.1.0` sættes først **efter 25.13** (slutreview og runtime-test af hele fase 25), så der aldrig udgives noget, der ikke er reviewet og runtime-testet. Udføres af projektejeren; AI-agenter har ingen adgang til staging eller produktion.
+**Versions-bump, CHANGELOG-sektionen og tagget `v1.1.0` sat 2026-10-25** efter projektejerens godkendelse samme dag (fase 25 og 26 er reviewet og runtime-testet; alert-API og webhooks endeligt godkendt efter SparkyBot-tjekket). Version **1.1.0** (projektejerens valg 2026-10-23: minor, nye features uden breaking changes). Tagget giver en draft-release; projektejeren tester den på staging og udgiver den. Produktionen udføres af projektejeren; AI-agenter har ingen adgang til staging eller produktion.
 
 ### Før tagget (efter 25.13)
 
 1. 25.13 er afsluttet: slutreview og runtime-test uden åbne fund, eller fundene er rettet på `main` med grøn CI.
-2. Versions-bump til 1.1.0 og CHANGELOG-sektionen efter [Release](#release), trin 1. Schema-versionen er **24** (migration 18–24 kører ved opdatering fra 1.0.1).
+2. Versions-bump til 1.1.0 og CHANGELOG-sektionen efter [Release](#release), trin 1. Schema-versionen er **29** (migration 18–29 kører ved opdatering fra 1.0.1).
 3. Tag `v1.1.0` efter [Release](#release), trin 2. Draft-releasen testes på staging (devpage) efter [Staging](#staging) og proceduren nedenfor, før den udgives.
 
 ### Produktionsprocedure (alerts og MerchAlert)
@@ -273,6 +273,16 @@ Rækkefølgen er låst (ADR-065): **backup → deaktivér MerchAlert → opdaté
    - Settings → Alerts: tjek lydgrænserne og "Brugernavn i checkout" (importeret fra MerchAlert).
 7. **Slå alerts til:** Settings → Alerts → "Købs-alerts": sæt kryds i "Registrér købs-alerts for creators", og gem. Ordrer betalt, mens alerts var slået fra, får ingen alerts bagefter. Læg en testordre (eller brug "Afspil seneste ordre" på det globale overlay), og tjek overlay, lyd og chatbesked.
 8. **Resultat:** notér version, dato, importens tal og eventuelle fund i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+### Produktionsprocedure (migrering fra Product Vendors, fase 26)
+
+Efter alerts-proceduren ovenfor, eller i et separat vindue. Kræver backup og at WooCommerce Product Vendors er **aktivt**, til migreringen er færdig (den læser gennem Product Vendors' eget API, ADR-074).
+
+1. **Backup:** filer og database via hostingen.
+2. **Tørkørsel:** Merch Dashboard → Import fra Product Vendors → Tørkørsel. Gennemgå hver vendor: brugeren (vælg en anden, hvis forslaget er forkert), produktkategorien og dens konsekvens ("kobler også N andre produkter"), produkter, der bliver stående, og vendors, der springes over. Opdatér tørkørslen efter hvert valg.
+3. **Flyt vendors:** sæt kryds ved backup, og tryk "Flyt vendors". Stikprøve af creators: bruger, produkter, kategori og afregningsstart (= migreringens tidspunkt for nye creators).
+4. **Roller:** når creators er kontrolleret, "Fjern Product Vendors-rollerne" for de flyttede brugere. Kommission, udbetalinger og betalingsoplysninger i Product Vendors flyttes ikke; Product Vendors kan deaktiveres bagefter.
+5. **Resultat:** notér tallene fra "Seneste migrering" i PROJECT-STATUS.md.
 
 **Tilbagerulning:** slå alerts fra (Settings → Alerts), og aktivér MerchAlert igen; dets data er urørt, og mens det er aktivt, sender Merch Dashboard ingen alerts (MerchAlert-vagten). Ved fejl i selve opdateringen: installér 1.0.1-ZIP'en igen, eller gendan backuppen. **MerchAlert afinstalleres** først, når 1.1.0 har kørt stabilt, og importen er verificeret; derefter kan den ikke gentages.
 

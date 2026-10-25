@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-25
+
+Alerts (fase 25: MerchAlert integreret i Merch Dashboard med overlay til OBS, lyde, chatbots til Twitch, Kick og YouTube, historik, nyheder, alert-API og webhooks) og migreringen fra WooCommerce Product Vendors (fase 26). Schema-version 29 (migration 18–29 kører ved opdatering fra 1.0.1). Fase 25 er godkendt af projektejeren 2026-10-24 og runtime-testet (71 punkter); alert-API og webhooks er endeligt godkendt 2026-10-25 efter SparkyBot-tjekket. Fase 26 er runtime-testet på Local 2026-10-25. Produktionsproceduren står i DEVELOPMENT.md ("Release 1.1.0").
+
 ### Added
 
 - **Produktbilledet i webhooks og alert-API (fase 25, trin 25.12.5, ADR-073 pkt. 11):** JSON-webhooks og `GET /alerts/api/events` sender `image` med URL'en til produktets billede i butikkens produktstørrelse; Discord-webhooks viser billederne under beskeden. Alert-API og webhooks er endeligt godkendt efter SparkyBot-tjekket (25.12.3).
