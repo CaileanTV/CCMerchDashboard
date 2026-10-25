@@ -13,7 +13,7 @@ Ingen direkte. Effekten er, at creators får eller mister adgang til dashboardet
 - **Merch Dashboard → Creators:** liste med statusfilter, sortering og paginering. Row actions: Rediger og Aktivér/Deaktivér.
 - **Add New Creator:** visningsnavn, status (default inaktiv) og valgfri WordPress-bruger (eksisterende brugere, der ikke er koblet andetsteds).
 - **Rediger:** visningsnavn, status og WordPress-bruger (tilknyt, skift eller frakobl).
-- Ingen sletning. Ingen oprettelse af WordPress-brugere herfra.
+- Sletning fra trin 27.3 (ADR-076): "Slet" med bekræftelsesside og creatorens navn som bekræftelse; uden økonomisk historik slettes creatoren helt, ellers bevares den anonymt. "Se som creator" fra trin 27.2 (ADR-075). Ingen oprettelse af WordPress-brugere herfra.
 - Alle ændringer registreres i audit trail (visning i fase 11).
 
 Se [ADMIN.md](../ADMIN.md#creators-liste--fase-6).

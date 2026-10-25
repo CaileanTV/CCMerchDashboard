@@ -4115,7 +4115,7 @@ ADR-020, ADR-022, ADR-026, ADR-030, ADR-033, ADR-037, ADR-038, ADR-054, ADR-065.
 2026-10-25
 
 ## Status
-Accepteret af projektejeren 2026-10-25 (plan for fase 27 godkendt). Implementeret i trin 27.2; testet automatisk, ikke runtime-verificeret.
+Accepteret af projektejeren 2026-10-25 (plan for fase 27 godkendt). Implementeret i trin 27.2; testet automatisk, ikke runtime-verificeret. **Statusnote 2026-10-25 (review i 27.4):** vagten matchede ruter med forskel på store og små bogstaver, mens WordPress ikke gør; nu ignoreres forskellen (fx `/me/Payouts`), og webhookens hemmelighed læses fra JSON-body'en som i endpointet. Sessionen er nu bundet til den login-session, den blev startet i (et hash af `wp_get_session_token()`; ikke andre enheder eller Application Passwords). Markeringen `impersonating` sættes kun på creator-forespørgsler (`/merchboard/v1/me…`), ikke på administratorens handlinger i wp-admin. Under en session viser wp-admin en besked med "Stop med at se som creatoren". Profilen kan redigeres som creatoren, og den viste creator skal have en bruger. Bootstrap-data har feltet `impersonating` ved siden af slut-linket.
 
 ## Context
 Projektejeren vil kunne hjælpe creators ved at se og bruge creator-dashboardet, som creatoren ser det (ROADMAP fase 27). Indtil nu var impersonation et ikke-mål (ARCHITECTURE.md afsnit 15, USER-ROLES.md), fordi det kræver et audit-design. ADR-007 siger, at creatoren kun findes via `CreatorContext`, og at creator-API'et er `/me`-scopet.
@@ -4161,7 +4161,7 @@ ADR-007, ADR-022, ADR-023, ADR-026, ADR-073.
 2026-10-25
 
 ## Status
-Accepteret af projektejeren 2026-10-25 (plan for fase 27 godkendt). Implementeret i trin 27.3; testet automatisk, ikke runtime-verificeret.
+Accepteret af projektejeren 2026-10-25 (plan for fase 27 godkendt). Implementeret i trin 27.3; testet automatisk, ikke runtime-verificeret. **Statusnote 2026-10-25 (review i 27.4):** navnebekræftelsen sammenligner trimmet tekst med samlede mellemrum og uden HTML-rensning (navne med fx `<` eller dobbelte mellemrum kan bekræftes); hvert moduls oprydder kan afvise, før noget ændres (rabatkoden kræver `merchboard_manage_creator_pricing`); ventende udbetalinger tælles igen efter deaktiveringen (creatoren aktiveres igen og sletningen afvises, hvis en er kommet til); creatoren læses igen under låsen; til sidst må ingen produkter pege på creatoren; Payouts-siden "Saldi" viser også slettede creators.
 
 ## Context
 Projektejeren vil kunne slette en creator fra listen (ROADMAP fase 27). Indtil nu kunne creators kun deaktiveres (DATABASE.md, ADMIN.md), fordi audit trail, sales-ledgeren, udbetalinger og afregningsbilag henviser til creator-ID'et, og de må ikke ændres (ADR-023, ADR-037/038, ADR-059).
