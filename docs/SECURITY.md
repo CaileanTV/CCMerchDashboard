@@ -339,6 +339,13 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - [ ] Tests for uautentificeret, uautoriseret, inaktiv creator, IDOR og ugyldigt input.
 - [ ] `npm run lint` er grøn, og ingen nye `phpcs:ignore` uden begrundelse.
 
+## "Se som creator" (fase 27, trin 27.2, ADR-075)
+
+- **Adgang:** kun `merchboard_manage_creators`, kun for en aktiv creator med en bruger; start og stop med nonce. Sessionen (user meta `merchboard_impersonating`) varer højst 60 minutter, tæller kun, mens rettigheden findes, og ender ved logud.
+- **Creatoren afgøres stadig server-side** i `CreatorContext` (ADR-007); klienten sender aldrig et creator-ID.
+- **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder. OBS-URL'en sendes aldrig.
+- **Sporbarhed:** start og slut auditeres; ændringer under en session har administratoren som aktør og `impersonating` i konteksten.
+
 ## Migrering fra WooCommerce Product Vendors (fase 26, ADR-074)
 
 - **Adgang:** siden kræver `merchboard_manage_creators`; tørkørslen og migreringen også `merchboard_manage_payouts`. Bruger- og kategorivalget i tørkørslen er GET-parametre, der valideres til heltal; kun vendorens godkendte administratorer og eksisterende kategorier (aldrig standardkategorien) kan vælges.

@@ -52,7 +52,7 @@ Creators-modulet (repository) og Core (Capabilities, Logger).
 
 ## Known limitations
 - Én bruger pr. creator (v1).
-- Ingen impersonation.
+- Impersonation findes fra trin 27.2: "Se som creator" for administratorer, se ADR-075. `CreatorContext::current()` returnerer den viste creator under en session.
 
 ## Future improvements
 - Teams (flere brugere pr. creator med roller).

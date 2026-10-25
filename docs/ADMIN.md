@@ -42,7 +42,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 
 `Modules/Creators/Admin/CreatorsListTable` (`WP_List_Table`). Kolonner: visningsnavn (link til redigering), WordPress-bruger ("Display Name (login)"; link til `user-edit.php` kun hvis den aktuelle bruger må redigere brugeren), status, oprettet og sidst opdateret (sitets tidszone). Views: Alle / Aktive / Inaktive. Sortering på visningsnavn, status, oprettet og opdateret (whitelisted igen i repositoriet). 20 pr. side.
 
-Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.php` med nonce, der er bundet til creator-ID'et). Ingen bulk actions og **ingen Delete** (se DATABASE.md). E-mails, passwords og andre brugerdata vises aldrig.
+Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.php` med nonce, der er bundet til creator-ID'et). Fra trin 27.2 også **Se som creator** for aktive creators med en bruger (ADR-075; samme knap øverst på redigeringssiden): åbner creator-dashboardet som creatoren i højst en time; "Stop med at se som creatoren" i dashboardet fører tilbage til creatorens side med beskeden "Du ser ikke længere som creatoren." Ingen bulk actions og **ingen Delete** (se DATABASE.md). E-mails, passwords og andre brugerdata vises aldrig.
 
 ### Opret/rediger creator ✅ (fase 6)
 

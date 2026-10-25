@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+
+- **"Se som creator" (fase 27, trin 27.2, ADR-075):** en administrator med `merchboard_manage_creators` kan åbne creator-dashboardet som en aktiv creator og handle der i højst en time (knap på creatorens side og række-handling i listen). Dashboardet viser en bjælke med "Stop med at se som creatoren". Udbetalinger, gavekortkoder, chatbot-forbindelse, YouTube-vilkår og nye hemmeligheder er afvist, og OBS-URL'en vises ikke. Start, slut og alle ændringer under sessionen auditeres.
+
 ### Removed
 
 - **Importværktøjerne (fase 27, trin 27.1):** fanen "Import" fra MerchAlert og undermenuen "Import fra Product Vendors" er fjernet, nu hvor de er kørt i produktion. De importerede og migrerede data, de gamle OBS-links og audit-posterne bevares. Schema-version 30 sletter værktøjernes optioner.

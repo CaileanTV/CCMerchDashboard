@@ -22,7 +22,7 @@
 
 ### Creator-scope: `/merchboard/v1/me/...`
 
-Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. Den håndhæver hele reglen: brugeren skal have `merchboard_access_dashboard` **og** en **aktiv** creator-record koblet til sig. Permission callbacks bruger `CreatorContext::current_user_has_access()` og gentager ikke reglen selv.
+Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. Den håndhæver hele reglen: brugeren skal have `merchboard_access_dashboard` **og** en **aktiv** creator-record koblet til sig. Permission callbacks bruger `CreatorContext::current_user_has_access()` og gentager ikke reglen selv. Fra trin 27.2 (ADR-075) svarer `/me` også for den creator, en administrator "ser som"; under en sådan session afviser `ImpersonationGuard` udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder med `403 merchboard_impersonation_blocked`, og `/me/alerts/overlay` sender OBS-URL'en uden det hemmelige id.
 
 | Metode | Route | Formål | Fase |
 | --- | --- | --- | --- |
@@ -61,7 +61,7 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 
 ### Creator-scope: `/merchboard/v1/me/...`
 
-Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. Den håndhæver hele reglen: brugeren skal have `merchboard_access_dashboard` **og** en **aktiv** creator-record koblet til sig. Permission callbacks bruger `CreatorContext::current_user_has_access()` og gentager ikke reglen selv.
+Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. Den håndhæver hele reglen: brugeren skal have `merchboard_access_dashboard` **og** en **aktiv** creator-record koblet til sig. Permission callbacks bruger `CreatorContext::current_user_has_access()` og gentager ikke reglen selv. Fra trin 27.2 (ADR-075) svarer `/me` også for den creator, en administrator "ser som"; under en sådan session afviser `ImpersonationGuard` udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder med `403 merchboard_impersonation_blocked`, og `/me/alerts/overlay` sender OBS-URL'en uden det hemmelige id.
 
 | Metode | Route | Formål | Fase |
 | --- | --- | --- | --- |

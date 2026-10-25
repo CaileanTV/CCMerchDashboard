@@ -4108,3 +4108,49 @@ Ingen schema-migration. Optionen `merchboard_vendor_import` (migreringens tilsta
 
 ## Related
 ADR-020, ADR-022, ADR-026, ADR-030, ADR-033, ADR-037, ADR-038, ADR-054, ADR-065.
+
+# ADR-075: "Se som creator" (impersonation)
+
+## Date
+2026-10-25
+
+## Status
+Accepteret af projektejeren 2026-10-25 (plan for fase 27 godkendt). Implementeret i trin 27.2; testet automatisk, ikke runtime-verificeret.
+
+## Context
+Projektejeren vil kunne hjælpe creators ved at se og bruge creator-dashboardet, som creatoren ser det (ROADMAP fase 27). Indtil nu var impersonation et ikke-mål (ARCHITECTURE.md afsnit 15, USER-ROLES.md), fordi det kræver et audit-design. ADR-007 siger, at creatoren kun findes via `CreatorContext`, og at creator-API'et er `/me`-scopet.
+
+## Decision
+1. **Hvem og hvem:** en bruger med `merchboard_manage_creators` kan se som en **aktiv** creator med en WordPress-bruger (projektejerens valg 2026-10-25: samme rettighed som til at administrere creators; ingen ny capability). En creator kan aldrig se som en anden creator.
+2. **Se og handle (projektejerens valg 2026-10-25):** administratoren ser dashboardet og kan ændre ting på creatorens vegne. Det, der ændres, ændres for creatoren.
+3. **Session:** user meta `merchboard_impersonating` = `{ creator_id, started_at, expires_at }` hos administratoren, i højst 60 minutter. Den starter fra "Se som creator" (knap på creatorens redigeringsside og række-handling i listen; link med nonce bundet til creatoren) og slutter med "Stop med at se som creatoren" i dashboardet (link med nonce), ved udløb (ved næste request), når administratoren logger ud, eller når en anden creator vælges. Sessionen tæller kun, mens brugeren stadig har rettigheden og den ikke er udløbet (fail closed).
+4. **Ét sted:** `CreatorContext::current()` returnerer den viste creator under en session (kun mens den er aktiv). Dermed følger alle `/me`-endpoints, siden og menuen med uden ændringer i dem (ADR-007 bevares: creatoren afgøres stadig server-side). Menuen viser creatorens sektioner, selv om administratoren ikke har `merchboard_access_dashboard`.
+5. **Altid afvist under en session** (`ImpersonationGuard`, 403 `merchboard_impersonation_blocked`, før endpointet kører): udbetalinger (anmod og annullér), visning af gavekortkoder, forbindelse af chatbot-platforme og godkendelse af YouTubes vilkår (OAuth og godkendelsen er bundet til den indloggede bruger), og nye hemmeligheder, der kun vises én gang (API-nøgler, webhook-signeringsnøgler, også en JSON-webhook oprettet uden modtagerens hemmelighed).
+6. **Skjult:** OBS-overlayets hemmelige URL sendes aldrig under en session (`/me/alerts/overlay` svarer med et id af nuller); dashboardet viser en forklaring i stedet for Kopiér, Vis og Åbn.
+7. **Audit:** `creator_impersonation_started` (`minutes`) og `creator_impersonation_ended` (`reason`: admin, expired, logout eller switched), hver i én transaktion med sessionens meta. Alt, der auditeres under en session, har administratoren som aktør og `impersonating` (den viste creator) i konteksten; audit-loggen viser det som "Gjort af en administrator, der så som {creator}".
+8. **Pr. bruger:** valg, der gemmes på den indloggede bruger (tema, anonymisering af brugernavne), gælder administratorens egen bruger.
+9. **Synlighed:** en bjælke øverst i dashboardet: "Du ser og handler som {creator} …" med linket til at stoppe. Bootstrap-data får `impersonation_end_url` (null uden session); intet creator-ID.
+10. **Afinstallation:** `merchboard_impersonating` er i `Uninstaller::USER_META_KEYS`.
+
+## Alternatives considered
+- **Kun visning:** mere forsigtigt, men projektejeren vil kunne hjælpe direkte; fravalgt.
+- **Logge ind som brugeren (skifte WordPress-bruger):** giver creatorens fulde konto og skjuler, hvem der handler; fravalgt.
+- **Ny capability:** fravalgt af projektejeren; `merchboard_manage_creators` dækker det.
+
+## Reason
+Support uden at kende creatorens adgangskode, med fuld sporbarhed.
+
+## Security
+- Kun `merchboard_manage_creators`; sessionen tæller ikke, hvis rettigheden fjernes. Nonce på start og stop; tidsbegrænset; ender ved logud.
+- Penge, gavekort, platformforbindelser og hemmeligheder forbliver creatorens egne (pkt. 5); OBS-URL'en sendes aldrig (pkt. 6).
+- Alt er auditeret med den rigtige aktør (pkt. 7).
+
+## Migration/data implications
+Ingen schema-migration. User meta `merchboard_impersonating`; slettes ved opt-in-afinstallation.
+
+## Consequences
+- Statusnoter: ARCHITECTURE.md afsnit 15, USER-ROLES.md og features/creator-access.md.
+- Admin: knappen og række-handlingen "Se som creator".
+
+## Related
+ADR-007, ADR-022, ADR-023, ADR-026, ADR-073.

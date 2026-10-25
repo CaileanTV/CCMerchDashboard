@@ -289,4 +289,4 @@ Se [DEVELOPMENT.md](DEVELOPMENT.md#build-og-deploy-plan).
 - Eget login-/auth-system, SSO eller OAuth for creators.
 - Headless/SPA uden WordPress-cookies.
 - Flere creators pr. produkt med revenue split (forberedt i datamodellen, men ikke bygget).
-- Impersonation ("se som creator"). Kræver audit-design og kommer senere.
+- ~~Impersonation ("se som creator")~~: ikke længere et ikke-mål; bygget i trin 27.2 med audit-design (ADR-075).

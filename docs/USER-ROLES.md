@@ -148,7 +148,7 @@ Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md
 
 ## Administratorer, der også er creators
 
-Tilladt, fx til test. En administrator med en aktiv creator-record kan åbne dashboardet og ser *sine egne* creator-data. Der er ingen "se som anden creator"-funktion i v1. Impersonation kræver separat design med audit-log (fremtid).
+Tilladt, fx til test. En administrator med en aktiv creator-record kan åbne dashboardet og ser *sine egne* creator-data. Fra trin 27.2 (ADR-075) kan en bruger med `merchboard_manage_creators` "se som creator": se og handle i en aktiv creators dashboard i højst en time, med audit og uden adgang til udbetalinger, gavekortkoder, platformforbindelser og nye hemmeligheder. En creator kan aldrig se som en anden creator.
 
 ## Undtagelse: Product Vendors-roller ved migreringen (fase 26, ADR-074 pkt. 8)
 

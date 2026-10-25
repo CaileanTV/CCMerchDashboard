@@ -84,13 +84,15 @@
   "login_url": "https://…/wp-login.php?redirect_to=…",
   "password_url": "https://…/wp-login.php?action=lostpassword",
   "locale": "da_DK",
-  "sections": [ { "id": "overview", "label": "Overview", "path": "" }, { "id": "profile", "label": "Profile", "path": "profile" } ]
+  "sections": [ { "id": "overview", "label": "Overview", "path": "" }, { "id": "profile", "label": "Profile", "path": "profile" } ],
+  "impersonation_end_url": null
 }
 ```
 
 - Kun ikke-følsomme data. **Ingen creator-data og intet creator-ID.** Hvem creator'en er, hentes via REST (`GET /me`, fase 14), så der er én sandhed og én permission-sti.
 - `site_name` er `get_bloginfo( 'name' )` og bruges kun til visning (topbar og sidetitel). Feltet skal findes og være en streng, men **må være tomt**, fordi WordPress tillader en tom webstedstitel. Med tom titel er sidetitlen kun sidens navn uden ` · `.
 - `routing` er `path` (pretty permalinks) eller `query` (`?merchboard_dashboard=1`).
+- `impersonation_end_url` (trin 27.2, ADR-075): linket, der stopper en administrators "Se som creator"-session, ellers `null`. Er det en gyldig URL på sidens egen origin, viser `Layout` bjælken "Du ser og handler som {creator} …", og kortet "Browser source" skjuler OBS-URL'en.
 - REST-root og `X-WP-Nonce` konfigureres af WordPress' eget `wp-api-fetch`-script (inline middleware). De ligger derfor ikke i bootstrap-data.
 - Klienten validerer alt i `bootstrap.ts` (`parseConfig`): alle felter skal findes (tekstfelter ikke tomme, undtagen `site_name`), alle URL'er skal være absolutte `http(s)`-URL'er på sidens egen origin uden credentials, og sektionsstier skal være gyldige dashboard-stier. Ukendte felter ignoreres. Er data ugyldige, vises en generisk fejl uden links.
 - Sektionerne kommer fra registry'et `DashboardSections` (✅ fase 15): kun sektioner, hvis capability brugeren har, og uden selve capability'en. Labels er oversat på serveren.
