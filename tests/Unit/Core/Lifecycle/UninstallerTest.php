@@ -21,7 +21,6 @@ use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayImages;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlaySounds;
 use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
 use MerchBoard\Modules\Alerts\Images\AlertImages;
-use MerchBoard\Modules\Alerts\Import\MerchAlertImporter;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
@@ -415,7 +414,6 @@ final class UninstallerTest extends TestCase {
 		self::assertTrue( $this->uninstaller()->run() );
 
 		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
-		self::assertSame( MerchAlertImporter::IMPORTED_META, Uninstaller::ALERT_IMPORTED_META );
 		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
 		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK ), $hooks, 'Queued chat messages and webhook deliveries are cancelled.' );
 	}

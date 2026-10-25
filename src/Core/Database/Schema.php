@@ -37,6 +37,7 @@ use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Migrations\CreateSettlementTables;
 use MerchBoard\Core\Database\Migrations\GrantExistingAlertApiAccess;
 use MerchBoard\Core\Database\Migrations\AddAlertEventImportedFlag;
+use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Migrations\WidenChatbotChannels;
 
 defined( 'ABSPATH' ) || exit;
@@ -85,6 +86,7 @@ final class Schema {
 			27 => new CreateAlertWebhookTables(),
 			28 => new GrantExistingAlertApiAccess(),
 			29 => new AddAlertEventImportedFlag(),
+			30 => new RemoveImportOptions(),
 		);
 	}
 }

@@ -112,6 +112,16 @@ final class AlertHistoryTest extends IntegrationTestCase {
 		self::assertSame( array( 'order_id', 'order_number', 'username', 'created_at', 'alerts' ), array_keys( $last[1] ), 'Only what an alert shows.' );
 	}
 
+	public function test_imported_alerts_stay_in_the_history_but_never_reach_the_live_feeds(): void {
+		$nova = $this->creator( 'Nova' );
+		$live = $this->alert( $nova, 120, 1 );
+		$this->events->insert( new AlertEvent( $nova, 121, '1121', 2, 70, 0, 'Old tee', '', 1, 0, array(), 'old_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) ), true );
+
+		self::assertSame( 2, $this->history()->count( $nova ), 'The history keeps alerts imported from MerchAlert (25.13 review).' );
+		self::assertSame( array( $live ), array_map( static fn( AlertEvent $event ): int => $event->id, $this->events->after( $nova, 0, 50 ) ), 'An open overlay or an API bot never shows them as new purchases.' );
+		self::assertSame( array( $live ), array_map( static fn( AlertEvent $event ): int => $event->id, $this->events->after_all( 0, 50 ) ), 'Nor the global overlay.' );
+	}
+
 	public function test_resends_go_to_the_creators_overlay_and_never_reach_other_alerts(): void {
 		$nova  = $this->creator( 'Nova' );
 		$orion = $this->creator( 'Orion' );

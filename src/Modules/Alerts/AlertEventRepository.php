@@ -47,7 +47,7 @@ final class AlertEventRepository {
 	 * Stores an alert unless the line already has one for the creator.
 	 *
 	 * @param AlertEvent $event    Alert.
-	 * @param bool       $imported Whether the MerchAlert import adds it (the live feeds skip it).
+	 * @param bool       $imported Whether it is an imported alert (the MerchAlert import, phase 25; the live feeds skip it).
 	 * @return bool True when it was stored, false when it existed (kept unchanged).
 	 * @throws DatabaseException When it cannot be stored.
 	 */

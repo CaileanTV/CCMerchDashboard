@@ -80,7 +80,7 @@ final class AlertsSettingsSection {
 		}
 
 		if ( $blocked ) {
-			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'MerchAlert is active on this site, so Merch Dashboard sends no alerts. Deactivate MerchAlert before you switch alerts on. Do not delete it: deleting MerchAlert deletes its data, which can still be imported.', 'merchboard' ) . '</p></div>';
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'MerchAlert is active on this site, so Merch Dashboard sends no alerts. Deactivate MerchAlert before you switch alerts on.', 'merchboard' ) . '</p></div>';
 		}
 
 		echo '<p>' . esc_html__( 'When an order is paid (processing or completed), the creator each product is attributed to gets an alert. Mapping a product category to a creator attributes its products, so the category turns the alerts on. Only active creators get alerts.', 'merchboard' ) . '</p>';

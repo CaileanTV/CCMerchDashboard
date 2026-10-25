@@ -68,26 +68,6 @@ final class GlobalOverlayStore {
 	}
 
 	/**
-	 * Stores MerchAlert's global overlay (the import, step 25.10.1): its id,
-	 * so the old browser source URL keeps working, and its settings,
-	 * switched off until the administrator switches it on; replaces an
-	 * overlay with another id.
-	 *
-	 * @param string          $overlay_id MerchAlert's id (32 hex characters).
-	 * @param OverlaySettings $settings   Settings.
-	 * @throws DatabaseException When the id is invalid or it cannot be stored.
-	 */
-	public function import( string $overlay_id, OverlaySettings $settings ): GlobalOverlay {
-		if ( ! OverlayId::valid( $overlay_id ) ) {
-			throw new DatabaseException( 'Invalid global overlay id.' );
-		}
-
-		$existing = $this->find();
-
-		return $this->save( new GlobalOverlay( $overlay_id, false, $settings, ( $existing->revision ?? 0 ) + 1 ) );
-	}
-
-	/**
 	 * Stores new settings.
 	 *
 	 * @param GlobalOverlay   $overlay  Overlay.

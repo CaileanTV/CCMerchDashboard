@@ -11,6 +11,7 @@ namespace MerchBoard\Core\Lifecycle;
 
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\SchemaEraser;
+use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
@@ -25,9 +26,7 @@ use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
-use MerchBoard\Modules\Alerts\Import\MerchAlertImportPlan;
 use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
-use MerchBoard\Modules\WooCommerce\VendorImport\VendorImportState;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use WC_Order;
@@ -124,8 +123,8 @@ final class Uninstaller {
 	public const ALERT_MEDIA_META_KEYS = array( '_merchboard_alert_sound_creator', '_merchboard_alert_sound_library', '_merchboard_alert_sound_global', '_merchboard_alert_image_creator', '_merchboard_alert_image_library', '_merchboard_alert_image_global' );
 
 	/**
-	 * Marker of a file the MerchAlert import took over
-	 * (Modules\Alerts\Import\MerchAlertImporter::IMPORTED_META): MerchAlert's
+	 * Marker of a file the MerchAlert import (phase 25, removed in step 27.1)
+	 * took over: MerchAlert's
 	 * own file, never deleted; MerchAlert's sound owner meta
 	 * (`_ccmerch_audio_creator_id`) counts the same.
 	 */
@@ -221,8 +220,10 @@ final class Uninstaller {
 		delete_option( GlobalOverlayStore::OPTION );
 		delete_option( OverlayPresetStore::OPTION );
 		delete_option( CreatorPageLayoutStore::OPTION );
-		delete_option( MerchAlertImportPlan::MARKER_OPTION );
-		delete_option( VendorImportState::OPTION );
+		foreach ( RemoveImportOptions::OPTIONS as $option ) {
+			delete_option( $option );
+		}
+
 		delete_option( AlertApiSwitch::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );

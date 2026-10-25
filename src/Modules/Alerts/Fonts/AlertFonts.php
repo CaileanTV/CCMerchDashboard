@@ -241,57 +241,6 @@ final class AlertFonts {
 	}
 
 	/**
-	 * Approves fonts MerchAlert approved (the import, step 25.10.1), without
-	 * the catalogue: they came from Google's catalogue there. Already
-	 * approved ones stay; at most MAX_APPROVED in all. One audit record per
-	 * new font, all in one transaction.
-	 *
-	 * @phpstan-param list<AlertFont> $fonts
-	 *
-	 * @param AlertFont[] $fonts Fonts.
-	 * @return int How many were newly approved.
-	 * @throws AlertFontsException When not authorized.
-	 * @throws DatabaseException When they cannot be stored (nothing is kept).
-	 */
-	public function import_approved( array $fonts ): int {
-		$this->authorize();
-
-		$approved = $this->approved();
-		$added    = array();
-
-		foreach ( $fonts as $font ) {
-			if ( count( $approved ) >= self::MAX_APPROVED ) {
-				break;
-			}
-
-			if ( ! isset( $approved[ $font->family ] ) ) {
-				$approved[ $font->family ] = $font;
-				$added[]                   = $font->family;
-			}
-		}
-
-		if ( array() === $added ) {
-			return 0;
-		}
-
-		$value = array_values( array_map( static fn( AlertFont $font ): array => $font->to_array(), $approved ) );
-
-		$this->transaction->run(
-			function () use ( $value, $added ): void {
-				foreach ( $added as $family ) {
-					$this->audit->record( AuditAction::AlertFontApproved, null, array( 'family' => $family ) );
-				}
-
-				if ( ! update_option( self::APPROVED_OPTION, $value, false ) && get_option( self::APPROVED_OPTION ) !== $value ) {
-					throw new DatabaseException( 'Could not save the approved fonts.' );
-				}
-			}
-		);
-
-		return count( $added );
-	}
-
-	/**
 	 * Removes an approved font; overlays that use it show the default font.
 	 *
 	 * @param string $family Family name.
