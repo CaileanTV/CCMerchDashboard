@@ -686,7 +686,7 @@ final class WooCommerceModule implements Module {
 		// Deleting a creator (phase 27, step 27.3, ADR-076): product links, category, code, markups.
 		$container->set(
 			WooCommerceCreatorCleanup::class,
-			static fn( Container $c ): WooCommerceCreatorCleanup => new WooCommerceCreatorCleanup( $c->get( ProductStore::class ), $c->get( ProductCreatorLink::class ), $c->get( CreatorCategoryService::class ), $c->get( CreatorCodeService::class ), $c->get( wpdb::class ) )
+			static fn( Container $c ): WooCommerceCreatorCleanup => new WooCommerceCreatorCleanup( $c->get( ProductStore::class ), $c->get( ProductCreatorLink::class ), $c->get( CreatorCategoryService::class ), $c->get( CreatorCodeService::class ), $c->get( CreatorCodeRepository::class ), $c->get( wpdb::class ) )
 		);
 		add_filter(
 			'merchboard_creator_data_cleaners',

@@ -57,7 +57,7 @@ final class AccessModule implements Module {
 
 		// "View as creator" (phase 27, step 27.2, ADR-075).
 		$container->set( Impersonation::class, static fn( Container $c ): Impersonation => new Impersonation( $c->get( CreatorRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( ImpersonationActions::class, static fn( Container $c ): ImpersonationActions => new ImpersonationActions( $c->get( Impersonation::class ), $c->get( DashboardRoute::class ), $c->get( Logger::class ) ) );
+		$container->set( ImpersonationActions::class, static fn( Container $c ): ImpersonationActions => new ImpersonationActions( $c->get( Impersonation::class ), $c->get( DashboardRoute::class ), $c->get( Logger::class ), $c->get( CreatorRepository::class ) ) );
 		( new ImpersonationGuard() )->register();
 		add_action(
 			'admin_init',

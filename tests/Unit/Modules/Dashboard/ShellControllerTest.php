@@ -376,7 +376,8 @@ final class ShellControllerTest extends TestCase {
 
 		$data = json_decode( substr( $inline, strlen( 'window.merchboardDashboard = ' ), -1 ), true );
 		self::assertIsArray( $data );
-		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo', 'impersonation_end_url' ), array_keys( $data ) );
+		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo', 'impersonating', 'impersonation_end_url' ), array_keys( $data ) );
+		self::assertFalse( $data['impersonating'] );
 		self::assertNull( $data['impersonation_end_url'], 'Only while an administrator views as the creator (ADR-075).' );
 		self::assertNull( $data['logo'], 'This fake plugin has no default logo file: the site name is shown as text.' );
 		self::assertSame( 'https://shop.test/wp-login.php?action=lostpassword', $data['password_url'] );

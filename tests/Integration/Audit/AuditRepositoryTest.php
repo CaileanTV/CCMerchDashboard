@@ -78,7 +78,7 @@ final class AuditRepositoryTest extends IntegrationTestCase {
 
 		self::assertSame( array(), $this->repository->for_creator( 3 )[0]->context, 'Malformed JSON reads as empty context.' );
 
-		$this->wpdb->update( $this->table( Tables::AUDIT_LOG ), array( 'action' => 'creator_deleted' ), array( 'creator_id' => 3 ) );
+		$this->wpdb->update( $this->table( Tables::AUDIT_LOG ), array( 'action' => 'creator_teleported' ), array( 'creator_id' => 3 ) );
 
 		$this->expectException( DatabaseException::class );
 		$this->repository->for_creator( 3 );

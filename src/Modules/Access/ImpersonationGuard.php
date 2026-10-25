@@ -26,6 +26,10 @@ defined( 'ABSPATH' ) || exit;
  *   the acceptance are bound to the logged-in user);
  * - new secrets shown once: an alert API key, a webhook signing secret
  *   (also a JSON webhook created without the receiver's secret).
+ *
+ * Routes match without regard to case, like WordPress' own routing (27.4
+ * review). A creator-facing request (`/merchboard/v1/me…`) is marked for the
+ * audit trail (ImpersonationSession::act()).
  */
 final class ImpersonationGuard {
 
@@ -40,12 +44,12 @@ final class ImpersonationGuard {
 	 * @var list<array{0: string, 1: string}>
 	 */
 	private const BLOCKED_ROUTES = array(
-		array( 'POST', '#^/merchboard/v1/me/payouts$#' ),
-		array( 'POST', '#^/merchboard/v1/me/payouts/\d+/cancel$#' ),
-		array( 'GET', '#^/merchboard/v1/me/payouts/\d+/gift-card$#' ),
-		array( 'POST', '#^/merchboard/v1/me/alerts/chatbot/[a-z]+/(connect|terms)$#' ),
-		array( 'POST', '#^/merchboard/v1/me/alerts/api/keys$#' ),
-		array( 'POST', '#^/merchboard/v1/me/alerts/api/webhooks/\d+/secret$#' ),
+		array( 'POST', '#^/merchboard/v1/me/payouts$#i' ),
+		array( 'POST', '#^/merchboard/v1/me/payouts/\d+/cancel$#i' ),
+		array( 'GET', '#^/merchboard/v1/me/payouts/\d+/gift-card$#i' ),
+		array( 'POST', '#^/merchboard/v1/me/alerts/chatbot/[a-z]+/(connect|terms)$#i' ),
+		array( 'POST', '#^/merchboard/v1/me/alerts/api/keys$#i' ),
+		array( 'POST', '#^/merchboard/v1/me/alerts/api/webhooks/\d+/secret$#i' ),
 	);
 
 	/**
@@ -64,7 +68,13 @@ final class ImpersonationGuard {
 	 * @return mixed
 	 */
 	public function check( mixed $response, mixed $handler, WP_REST_Request $request ): mixed {
-		if ( $response instanceof WP_Error || null === ImpersonationSession::creator_id() || ! self::blocked( $request ) ) {
+		if ( null === ImpersonationSession::creator_id() ) {
+			return $response;
+		}
+
+		ImpersonationSession::act( 1 === preg_match( '#^/merchboard/v1/me(/|$)#i', $request->get_route() ) );
+
+		if ( $response instanceof WP_Error || ! self::blocked( $request ) ) {
 			return $response;
 		}
 
@@ -82,7 +92,7 @@ final class ImpersonationGuard {
 	 */
 	public static function blocked( WP_REST_Request $request ): bool {
 		$method = strtoupper( $request->get_method() );
-		$route  = untrailingslashit( $request->get_route() );
+		$route  = strtolower( untrailingslashit( $request->get_route() ) );
 
 		foreach ( self::BLOCKED_ROUTES as [ $blocked_method, $pattern ] ) {
 			if ( $blocked_method === $method && 1 === preg_match( $pattern, $route ) ) {
@@ -90,10 +100,14 @@ final class ImpersonationGuard {
 			}
 		}
 
-		// A JSON webhook without the receiver's secret gets one made and shown once.
+		// A JSON webhook without the receiver's secret gets one made and shown
+		// once; read from the JSON body, like the endpoint does.
+		$body   = $request->get_json_params();
+		$secret = $body['secret'] ?? '';
+
 		return 'POST' === $method
 			&& '/merchboard/v1/me/alerts/api/webhooks' === $route
-			&& 'discord' !== $request->get_param( 'format' )
-			&& '' === trim( (string) ( is_scalar( $request->get_param( 'secret' ) ) ? $request->get_param( 'secret' ) : '' ) );
+			&& 'discord' !== ( $body['format'] ?? null )
+			&& '' === trim( is_scalar( $secret ) ? (string) $secret : '' );
 	}
 }

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Integration\Access;
 
 use MerchBoard\Core\Audit\AuditAction;
+use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\ImpersonationSession;
@@ -19,6 +20,7 @@ use MerchBoard\Modules\Access\ImpersonationActions;
 use MerchBoard\Modules\Access\ImpersonationException;
 use MerchBoard\Modules\Access\ImpersonationGuard;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
+use MerchBoard\Modules\Creators\CreatorProfileService;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
@@ -70,6 +72,20 @@ final class ImpersonationTest extends IntegrationTestCase {
 				array( '/me/alerts/api/webhooks/(?P<id>\d+)', 'PATCH' ),
 			);
 
+			register_rest_route(
+				'merchboard/v1',
+				'/me/test-change',
+				array(
+					'methods'             => 'POST',
+					'callback'            => static function (): WP_REST_Response {
+						( new AuditTrail( new AuditRepository( $GLOBALS['wpdb'] ), ImpersonationSession::acting_creator_id( ... ) ) )->record( AuditAction::CreatorUpdated, 1, array( 'changed_fields' => array( 'bio' ) ) );
+
+						return new WP_REST_Response( array( 'ok' => true ), 200 );
+					},
+					'permission_callback' => '__return_true',
+				)
+			);
+
 			foreach ( $routes as [ $route, $method ] ) {
 				register_rest_route(
 					'merchboard/v1',
@@ -93,6 +109,7 @@ final class ImpersonationTest extends IntegrationTestCase {
 		}
 
 		delete_user_meta( 1, ImpersonationSession::META );
+		ImpersonationSession::act( false );
 		parent::tearDown();
 	}
 
@@ -109,10 +126,25 @@ final class ImpersonationTest extends IntegrationTestCase {
 		self::assertSame( ImpersonationSession::TTL, $session['expires_at'] - $session['started_at'] );
 		self::assertNotSame( array(), $this->service( DashboardSections::class )->for_current_user(), 'The creator\'s menu, although the administrator lacks the dashboard capability.' );
 
-		// A change made as the creator is the administrator's, marked.
+		// Elsewhere (wp-admin) a change is not marked; on a creator-facing request it is the administrator's, marked.
 		$this->service( AuditTrail::class )->record( AuditAction::CreatorUpdated, $this->nova, array( 'changed_fields' => array( 'bio' ) ) );
+		self::assertArrayNotHasKey( 'impersonating', (array) json_decode( (string) $this->last_row()['context'], true ) );
+		self::assertSame( 200, $this->call( 'POST', '/merchboard/v1/me/test-change', array() )->get_status() );
 		$last = $this->last_row();
 		self::assertSame( array( 'creator_updated', '1', $this->nova ), array( $last['action'], (string) $last['actor_user_id'], json_decode( (string) $last['context'], true )['impersonating'] ?? null ) );
+		ImpersonationSession::act( false );
+
+		// The profile can be edited as the creator.
+		$this->service( CreatorProfileService::class )->update( $this->find_nova(), array( 'bio' => 'Edited by support' ) );
+		self::assertSame( 'Edited by support', $this->service( CreatorProfileService::class )->profile( $this->find_nova() )->bio );
+
+		// Another login session (another device, an application password) is never the creator.
+		$stored          = (array) get_user_meta( 1, ImpersonationSession::META, true );
+		$stored['token'] = hash( 'sha256', 'another-session' );
+		update_user_meta( 1, ImpersonationSession::META, $stored );
+		self::assertNull( ImpersonationSession::creator_id() );
+		$stored['token'] = ImpersonationSession::token();
+		update_user_meta( 1, ImpersonationSession::META, $stored );
 
 		self::assertSame( $this->nova, $this->impersonation()->end( Impersonation::ENDED_BY_ADMIN ) );
 		self::assertNull( $context->current() );
@@ -135,7 +167,7 @@ final class ImpersonationTest extends IntegrationTestCase {
 		self::assertNull( ImpersonationSession::stored( 1 ) );
 
 		// A session of a user without the capability counts for nothing.
-		update_user_meta( $this->nova_user, ImpersonationSession::META, array( 'creator_id' => $this->nova, 'started_at' => time(), 'expires_at' => time() + 60 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		update_user_meta( $this->nova_user, ImpersonationSession::META, array( 'creator_id' => $this->nova, 'started_at' => time(), 'expires_at' => time() + 60, 'token' => ImpersonationSession::token() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		wp_set_current_user( $this->nova_user );
 		self::assertNull( ImpersonationSession::creator_id() );
 		delete_user_meta( $this->nova_user, ImpersonationSession::META );
@@ -148,7 +180,7 @@ final class ImpersonationTest extends IntegrationTestCase {
 		self::assertNull( $context->current(), 'Fail closed: an inactive creator is never shown.' );
 		$this->service( CreatorService::class )->set_status( $this->nova, CreatorStatus::Active );
 
-		update_user_meta( 1, ImpersonationSession::META, array( 'creator_id' => $this->nova, 'started_at' => time() - 3700, 'expires_at' => time() - 100 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		update_user_meta( 1, ImpersonationSession::META, array( 'creator_id' => $this->nova, 'started_at' => time() - 3700, 'expires_at' => time() - 100, 'token' => ImpersonationSession::token() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertNull( ImpersonationSession::creator_id() );
 		self::assertNull( $context->current() );
 
@@ -178,6 +210,11 @@ final class ImpersonationTest extends IntegrationTestCase {
 			array( 'POST', '/merchboard/v1/me/alerts/api/keys', array() ),
 			array( 'POST', '/merchboard/v1/me/alerts/api/webhooks/3/secret', array() ),
 			array( 'POST', '/merchboard/v1/me/alerts/api/webhooks', array( 'format' => 'json', 'secret' => '' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array( 'POST', '/merchboard/v1/me/Payouts', array() ),
+			array( 'GET', '/Merchboard/V1/me/payouts/5/Gift-Card', array() ),
+			array( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/Connect', array() ),
+			array( 'POST', '/merchboard/v1/me/alerts/api/Keys', array() ),
+			array( 'POST', '/merchboard/v1/me/alerts/api/Webhooks', array( 'format' => 'json' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
 		$allowed = array(
 			array( 'GET', '/merchboard/v1/me/payouts/5/settlement-document', array() ),
@@ -217,6 +254,16 @@ final class ImpersonationTest extends IntegrationTestCase {
 		$start['creator']  = (string) $this->service( CreatorService::class )->create( 'Ghost', CreatorStatus::Active, null )->id;
 		$start['_wpnonce'] = wp_create_nonce( ImpersonationActions::START . '_' . $start['creator'] );
 		self::assertStringContainsString( CreatorsAdminPage::NOTICE_ARG . '=' . ImpersonationException::UNAVAILABLE, $actions->start( $start ) );
+	}
+
+	/**
+	 * Nova as stored now.
+	 */
+	private function find_nova(): \MerchBoard\Modules\Creators\Creator {
+		$creator = $this->service( \MerchBoard\Modules\Creators\CreatorRepository::class )->find( $this->nova );
+		self::assertNotNull( $creator );
+
+		return $creator;
 	}
 
 	/**

@@ -120,7 +120,7 @@ final class CreatorContext {
 			return null;
 		}
 
-		return null !== $creator && CreatorStatus::Active === $creator->status ? $creator : null;
+		return null !== $creator && CreatorStatus::Active === $creator->status && null !== $creator->user_id ? $creator : null;
 	}
 
 	/**

@@ -109,8 +109,7 @@ function BrowserSourceCard( {
 	const [ shown, setShown ] = useState( false );
 	// While an administrator views as the creator, the server never sends the secret URL (ADR-075).
 	// Outside the dashboard (the admin's global overlay) there is no session.
-	const hidden =
-		useContext( ConfigContext )?.impersonationEndUrl !== undefined;
+	const hidden = useContext( ConfigContext )?.impersonating === true;
 
 	// A new URL starts hidden again.
 	useEffect( () => setShown( false ), [ url ] );

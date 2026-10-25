@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\WooCommerce;
 
+use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Modules\Creators\Creator;
@@ -42,6 +44,7 @@ class WooCommerceCreatorCleanup implements CreatorDataCleaner {
 	 * @param ProductCreatorLink     $links      Products' creators.
 	 * @param CreatorCategoryService $categories Category mappings.
 	 * @param CreatorCodeService     $codes      Discount codes.
+	 * @param CreatorCodeRepository  $code_rows  The codes' storage (the check).
 	 * @param wpdb                   $wpdb       Database (product markups).
 	 */
 	public function __construct(
@@ -49,6 +52,7 @@ class WooCommerceCreatorCleanup implements CreatorDataCleaner {
 		private ProductCreatorLink $links,
 		private CreatorCategoryService $categories,
 		private CreatorCodeService $codes,
+		private CreatorCodeRepository $code_rows,
 		private wpdb $wpdb
 	) {
 	}
@@ -58,6 +62,20 @@ class WooCommerceCreatorCleanup implements CreatorDataCleaner {
 	 */
 	public function key(): string {
 		return 'woocommerce';
+	}
+
+	/**
+	 * Ending an active discount code needs `merchboard_manage_creator_pricing`
+	 * (as on the creator's page): checked before anything changes.
+	 *
+	 * @param Creator $creator The creator.
+	 * @throws CreatorDeletionException When the current user may not end it.
+	 * @throws DatabaseException When the code cannot be read.
+	 */
+	public function check( Creator $creator ): void {
+		if ( null !== $this->code_rows->active_for_creator( $creator->id ) && ! current_user_can( Capabilities::MANAGE_CREATOR_PRICING ) ) {
+			self::refuse();
+		}
 	}
 
 	/**

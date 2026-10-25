@@ -46,9 +46,8 @@ export interface DashboardConfig {
 	readonly sections: readonly DashboardSection[];
 	/** Null: no usable logo; the site name is shown as text. */
 	readonly logo: DashboardLogo | null;
-	/**
-	 * While an administrator views and acts as this creator (ADR-075): the
-	 * link that ends it. Absent otherwise.
-	 */
+	/** Whether an administrator views and acts as this creator (ADR-075). */
+	readonly impersonating?: boolean;
+	/** The link that ends that session, when it is on the page's origin. */
 	readonly impersonationEndUrl?: string;
 }

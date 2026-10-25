@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-25T13:58:49+00:00\n"
+"POT-Creation-Date: 2026-10-25T14:26:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -99,9 +99,24 @@ msgstr ""
 msgid "%1$s %2$s or later is required. Current version: %3$s."
 msgstr ""
 
+#. translators: %s: creator name.
+#: src/Modules/Access/ImpersonationActions.php:111
+#, php-format
+msgid "You view and act as %s in the creator dashboard."
+msgstr ""
+
 #: src/Modules/Access/ImpersonationActions.php:112
+msgid "Open the dashboard"
+msgstr ""
+
+#: src/Modules/Access/ImpersonationActions.php:113
+#: build/dashboard.js:2
+msgid "Stop viewing as the creator"
+msgstr ""
+
+#: src/Modules/Access/ImpersonationActions.php:141
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
-#: src/Modules/Creators/Admin/CreatorDeletionActions.php:96
+#: src/Modules/Creators/Admin/CreatorDeletionActions.php:97
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:142
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
@@ -109,7 +124,7 @@ msgstr ""
 msgid "Sorry, you are not allowed to manage creators."
 msgstr ""
 
-#: src/Modules/Access/ImpersonationActions.php:162
+#: src/Modules/Access/ImpersonationActions.php:191
 #: src/Modules/Alerts/Admin/AlertApiActions.php:83
 #: src/Modules/Alerts/Admin/AlertsAdminActions.php:134
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:200
@@ -119,7 +134,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
-#: src/Modules/Creators/Admin/CreatorDeletionActions.php:103
+#: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -137,7 +152,7 @@ msgstr ""
 msgid "The link you followed has expired. Please try again."
 msgstr ""
 
-#: src/Modules/Access/ImpersonationGuard.php:73
+#: src/Modules/Access/ImpersonationGuard.php:83
 msgid "Only the creator can do this. It is not possible while you view as the creator."
 msgstr ""
 
@@ -3658,7 +3673,7 @@ msgid "Linked to %1$s (%2$s)."
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Creators/CreatorDeletion.php:207
+#: src/Modules/Creators/CreatorDeletion.php:230
 #, php-format
 msgid "Deleted creator #%d"
 msgstr ""
@@ -9268,10 +9283,6 @@ msgstr ""
 
 #: build/dashboard.js:2
 msgid "You view and act as the creator. What you change is changed for the creator."
-msgstr ""
-
-#: build/dashboard.js:2
-msgid "Stop viewing as the creator"
 msgstr ""
 
 #: build/dashboard.js:2

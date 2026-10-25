@@ -339,13 +339,13 @@ final class PayoutsPage {
 	 * @throws DatabaseException When the creators or a balance cannot be read.
 	 */
 	private function render_balances( PayoutBalances $balances, int $page ): void {
-		$found = $this->creators->paginate( $page, self::PER_PAGE, null, 'display_name', 'asc' );
+		$found = $this->creators->paginate( $page, self::PER_PAGE, null, 'display_name', 'asc', null );
 		$pages = max( 1, (int) ceil( $found['total'] / self::PER_PAGE ) );
 
 		// A page beyond the last shows the last one, as the pagination below does.
 		if ( $page > $pages ) {
 			$page  = $pages;
-			$found = $this->creators->paginate( $page, self::PER_PAGE, null, 'display_name', 'asc' );
+			$found = $this->creators->paginate( $page, self::PER_PAGE, null, 'display_name', 'asc', null );
 		}
 
 		echo '<p class="description">' . esc_html__( 'Released earnings are the creator payouts of sales whose holding period has ended, counted from the settlement start; refunds count at once. Balance = released earnings − paid out − reserved. When a ledger row cannot be calculated, the earnings and the balance are unknown and nothing can be requested.', 'merchboard' ) . '</p>';

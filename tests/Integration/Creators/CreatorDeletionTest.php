@@ -197,6 +197,12 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->audit( 'creator_deleted' ) );
 	}
 
+	public function test_a_name_with_markup_or_repeated_spaces_can_be_confirmed(): void {
+		$this->service( CreatorRepository::class )->rename( $this->nova, 'Nova  <3' );
+
+		self::assertSame( CreatorDeletion::MODE_DELETED, $this->deletion()->delete( $this->nova, 'Nova <3' ), 'As the admin sees it in the label (27.4 review).' );
+	}
+
 	public function test_the_admin_form_needs_the_nonce_and_redirects_with_a_notice(): void {
 		$actions = new CreatorDeletionActions( $this->deletion(), $this->service( Logger::class ) );
 		$input   = array(
@@ -234,6 +240,7 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 				new ProductCreatorLink( new PostMetaProductStore(), $creators, $audit, $transaction, $this->service( ProtectedProductMeta::class ) ),
 				new CreatorCategoryService( new CreatorCategoryRepository( $this->wpdb ), $creators, $audit, $transaction ),
 				new CreatorCodeService( $creators, new CreatorCodeRepository( $this->wpdb ), $coupons, $transaction, $audit ),
+				new CreatorCodeRepository( $this->wpdb ),
 				$this->wpdb
 			);
 		}

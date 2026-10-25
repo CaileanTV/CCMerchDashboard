@@ -80,6 +80,7 @@ class Impersonation {
 			'creator_id' => $creator->id,
 			'started_at' => $now,
 			'expires_at' => $now + ImpersonationSession::TTL,
+			'token'      => ImpersonationSession::token(),
 		);
 
 		$this->transaction->run(
@@ -164,8 +165,8 @@ class Impersonation {
 	/**
 	 * Stores the session.
 	 *
-	 * @param int                                                      $user_id WordPress user id.
-	 * @param array{creator_id: int, started_at: int, expires_at: int} $session Session.
+	 * @param int                                                                     $user_id WordPress user id.
+	 * @param array{creator_id: int, started_at: int, expires_at: int, token: string} $session Session.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private static function store( int $user_id, array $session ): void {

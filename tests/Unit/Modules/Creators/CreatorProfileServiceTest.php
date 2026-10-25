@@ -64,6 +64,8 @@ final class CreatorProfileServiceTest extends TestCase {
 
 		Functions\when( 'current_time' )->justReturn( '2026-09-25 12:00:00' );
 		Functions\when( 'get_current_user_id' )->alias( fn(): int => $this->current_user_id );
+		// No "view as creator" session (ADR-075).
+		Functions\when( 'get_user_meta' )->justReturn( '' );
 		Functions\when( 'wp_json_encode' )->alias( static fn( mixed $data ): string|false => json_encode( $data ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Test stand-in.
 		Functions\when( 'wp_parse_url' )->alias( static fn( string $url ): mixed => parse_url( $url ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- Test stand-in.
 		Functions\when( 'sanitize_key' )->alias( static fn( string $key ): string => (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $key ) ) );

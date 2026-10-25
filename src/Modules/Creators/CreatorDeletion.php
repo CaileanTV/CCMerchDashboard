@@ -149,7 +149,7 @@ class CreatorDeletion {
 			self::refuse( CreatorDeletionException::ALREADY_DELETED );
 		}
 
-		if ( trim( $confirmation ) !== $creator->display_name ) {
+		if ( self::comparable( $confirmation ) !== self::comparable( $creator->display_name ) ) {
 			self::refuse( CreatorDeletionException::NOT_CONFIRMED );
 		}
 
@@ -163,21 +163,39 @@ class CreatorDeletion {
 			self::refuse( CreatorDeletionException::NEEDS_WOOCOMMERCE );
 		}
 
-		return $this->locked( fn(): string => $this->run( $creator ) );
+		// Before anything changes: every module may refuse (e.g. a right it needs).
+		foreach ( $this->cleaners as $cleaner ) {
+			$cleaner->check( $creator );
+		}
+
+		return $this->locked( fn(): string => $this->run( $creator->id ) );
 	}
 
 	/**
 	 * The steps of a deletion.
 	 *
-	 * @param Creator $creator Creator.
+	 * @param int $creator_id Creator.
 	 * @return string The mode.
-	 * @throws DatabaseException When a step cannot be stored.
+	 * @throws DatabaseException When a step cannot be stored (and CreatorDeletionException when it was deleted meanwhile or a payout started; the creator is active again).
 	 */
-	private function run( Creator $creator ): string {
+	private function run( int $creator_id ): string {
+		// Again under the lock: a second request may have deleted it meanwhile.
+		$creator = $this->creators->find( $creator_id );
+
+		if ( null === $creator || $creator->is_deleted() ) {
+			self::refuse( CreatorDeletionException::ALREADY_DELETED );
+		}
+
 		$name = $creator->display_name;
 
 		if ( $creator->is_active() ) {
 			$this->service->set_status( $creator->id, CreatorStatus::Inactive );
+
+			// An inactive creator cannot request a payout; one requested meanwhile stops the deletion.
+			if ( $this->pending_payouts( $creator->id ) > 0 ) {
+				$this->service->set_status( $creator->id, CreatorStatus::Active );
+				self::refuse( CreatorDeletionException::PAYOUTS_PENDING );
+			}
 		}
 
 		$removed = array();
@@ -186,6 +204,11 @@ class CreatorDeletion {
 			foreach ( $cleaner->remove( $this->current( $creator->id ) ) as $what => $count ) {
 				$removed[ $cleaner->key() . '_' . $what ] = $count;
 			}
+		}
+
+		// No product may still point at the creator (a new order would create sales for it).
+		if ( $this->has_cleaner( 'woocommerce' ) && $this->linked_products( $creator->id ) > 0 ) {
+			throw new DatabaseException( 'Products are still linked to the creator being deleted.' );
 		}
 
 		$current = $this->current( $creator->id );
@@ -222,6 +245,16 @@ class CreatorDeletion {
 		);
 
 		return $mode;
+	}
+
+	/**
+	 * A name for comparing the typed confirmation: trimmed, whitespace
+	 * collapsed (an admin cannot see repeated spaces in the label).
+	 *
+	 * @param string $name Name.
+	 */
+	private static function comparable( string $name ): string {
+		return trim( (string) preg_replace( '/\s+/u', ' ', $name ) );
 	}
 
 	/**

@@ -108,7 +108,7 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 					{ __( 'Log out', 'merchboard' ) }
 				</a>
 			</header>
-			{ config.impersonationEndUrl !== undefined && (
+			{ config.impersonating === true && (
 				<div className="merchboard-impersonation" role="status">
 					<p className="merchboard-impersonation__text">
 						{ creatorName !== undefined
@@ -125,12 +125,17 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 									'merchboard'
 								) }
 					</p>
-					<a
-						className="merchboard-impersonation__end"
-						href={ config.impersonationEndUrl }
-					>
-						{ __( 'Stop viewing as the creator', 'merchboard' ) }
-					</a>
+					{ config.impersonationEndUrl !== undefined && (
+						<a
+							className="merchboard-impersonation__end"
+							href={ config.impersonationEndUrl }
+						>
+							{ __(
+								'Stop viewing as the creator',
+								'merchboard'
+							) }
+						</a>
+					) }
 				</div>
 			) }
 			<nav

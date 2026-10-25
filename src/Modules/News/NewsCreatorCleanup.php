@@ -39,6 +39,14 @@ class NewsCreatorCleanup implements CreatorDataCleaner {
 	}
 
 	/**
+	 * Nothing to check.
+	 *
+	 * @param Creator $creator The creator.
+	 */
+	public function check( Creator $creator ): void {
+	}
+
+	/**
 	 * Deletes the creator's news reads.
 	 *
 	 * @param Creator $creator The creator (inactive).

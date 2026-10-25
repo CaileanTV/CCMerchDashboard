@@ -31,6 +31,8 @@ final class SchemaTest extends IntegrationTestCase {
 				'status'             => array( 'varchar(20)', '', 'NO', '' ),
 				'created_at'         => array( 'datetime', '', 'NO', '' ),
 				'updated_at'         => array( 'datetime', '', 'NO', '' ),
+				// Migration 31 (ADR-076); NULL unless deleted with history.
+				'deleted_at'         => array( 'datetime', '', 'YES', '' ),
 				// Migration 6 (phase 22); 0 for existing and new creators.
 				'default_markup_bps' => array( 'int', 'unsigned', 'NO', '' ),
 				// Migration 7 (ADR-048); 0 = not VAT registered.
@@ -42,9 +44,10 @@ final class SchemaTest extends IntegrationTestCase {
 		);
 		self::assertSame(
 			array(
-				'PRIMARY' => array( 'unique', 'id' ),
-				'status'  => array( 'non-unique', 'status' ),
-				'user_id' => array( 'unique', 'user_id' ),
+				'PRIMARY'    => array( 'unique', 'id' ),
+				'deleted_at' => array( 'non-unique', 'deleted_at' ),
+				'status'     => array( 'non-unique', 'status' ),
+				'user_id'    => array( 'unique', 'user_id' ),
 			),
 			$this->indexes( Tables::CREATORS )
 		);

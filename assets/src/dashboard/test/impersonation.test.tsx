@@ -84,6 +84,7 @@ describe( '"view as creator" (step 27.2, ADR-075)', () => {
 	it( 'shows who the administrator acts as and how to stop', async () => {
 		const element = await banner( {
 			...CONFIG,
+			impersonating: true,
 			impersonationEndUrl: END_URL,
 		} );
 

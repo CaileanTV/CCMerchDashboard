@@ -163,6 +163,7 @@ export function parseConfig(
 		locale,
 		sections,
 		logo: parseLogo( raw.logo, origin ),
+		...( raw.impersonating === true ? { impersonating: true } : {} ),
 		...parseImpersonation( raw.impersonation_end_url, origin ),
 	};
 }

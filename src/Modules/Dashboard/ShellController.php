@@ -136,6 +136,7 @@ final class ShellController {
 			'sections'              => $this->sections->for_current_user(),
 			'logo'                  => $this->logo_data(),
 			// "View as creator" (step 27.2, ADR-075): the link that ends the session, or null.
+			'impersonating'         => null !== ImpersonationSession::creator_id(),
 			'impersonation_end_url' => null === ImpersonationSession::creator_id() ? null : ImpersonationActions::end_url(),
 		);
 	}

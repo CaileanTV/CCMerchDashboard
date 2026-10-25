@@ -32,6 +32,15 @@ interface CreatorDataCleaner {
 	public function key(): string;
 
 	/**
+	 * Refuses the deletion before anything changes, e.g. when the current
+	 * user lacks a right the removal needs.
+	 *
+	 * @param Creator $creator The creator.
+	 * @throws CreatorDeletionException When the deletion may not start.
+	 */
+	public function check( Creator $creator ): void;
+
+	/**
 	 * Removes the module's data of the creator.
 	 *
 	 * @param Creator $creator The creator (inactive).

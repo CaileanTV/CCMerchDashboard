@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Access;
 
+use MerchBoard\Core\Security\ImpersonationSession;
+use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
@@ -41,11 +43,12 @@ final class ImpersonationActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param Impersonation  $impersonation Sessions.
-	 * @param DashboardRoute $route         The creator dashboard.
-	 * @param Logger         $logger        Technical log.
+	 * @param Impersonation     $impersonation Sessions.
+	 * @param DashboardRoute    $route         The creator dashboard.
+	 * @param Logger            $logger        Technical log.
+	 * @param CreatorRepository $creators      Creators (the admin notice).
 	 */
-	public function __construct( private Impersonation $impersonation, private DashboardRoute $route, private Logger $logger ) {
+	public function __construct( private Impersonation $impersonation, private DashboardRoute $route, private Logger $logger, private CreatorRepository $creators ) {
 	}
 
 	/**
@@ -83,6 +86,32 @@ final class ImpersonationActions {
 	public function register(): void {
 		add_action( 'admin_post_' . self::START, array( $this, 'handle_start' ) );
 		add_action( 'admin_post_' . self::END, array( $this, 'handle_end' ) );
+		add_action( 'admin_notices', array( $this, 'admin_notice' ) );
+	}
+
+	/**
+	 * While a session runs, every wp-admin page says so and offers to stop
+	 * (also when the viewed creator was deactivated meanwhile; 27.4 review).
+	 */
+	public function admin_notice(): void {
+		$creator_id = ImpersonationSession::creator_id();
+
+		if ( null === $creator_id ) {
+			return;
+		}
+
+		try {
+			$name = $this->creators->find( $creator_id )->display_name ?? '#' . $creator_id;
+		} catch ( DatabaseException ) {
+			$name = '#' . $creator_id;
+		}
+
+		echo '<div class="notice notice-warning"><p>';
+		/* translators: %s: creator name. */
+		echo esc_html( sprintf( __( 'You view and act as %s in the creator dashboard.', 'merchboard' ), $name ) ) . ' ';
+		echo '<a href="' . esc_url( $this->route->url() ) . '">' . esc_html__( 'Open the dashboard', 'merchboard' ) . '</a> · ';
+		echo '<a href="' . esc_url( self::end_url() ) . '">' . esc_html__( 'Stop viewing as the creator', 'merchboard' ) . '</a>';
+		echo '</p></div>';
 	}
 
 	/**

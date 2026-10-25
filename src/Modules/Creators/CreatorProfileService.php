@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators;
 
+use MerchBoard\Core\Security\ImpersonationSession;
 use InvalidArgumentException;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -114,7 +115,8 @@ final class CreatorProfileService {
 	}
 
 	/**
-	 * The creator must be the active creator linked to the current user.
+	 * The creator must be the active creator linked to the current user, or
+	 * the one an administrator views and acts as (ADR-075).
 	 *
 	 * @param Creator $creator Creator.
 	 * @throws CreatorException When it is not.
@@ -122,7 +124,9 @@ final class CreatorProfileService {
 	private function authorize( Creator $creator ): void {
 		$user_id = get_current_user_id();
 
-		if ( $user_id < 1 || $creator->user_id !== $user_id || CreatorStatus::Active !== $creator->status ) {
+		$own = $user_id > 0 && $creator->user_id === $user_id;
+
+		if ( ( ! $own && ImpersonationSession::creator_id() !== $creator->id ) || CreatorStatus::Active !== $creator->status ) {
 			throw new CreatorException( CreatorException::NOT_AUTHORIZED );
 		}
 	}

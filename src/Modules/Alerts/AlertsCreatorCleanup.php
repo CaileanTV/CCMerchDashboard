@@ -68,6 +68,14 @@ class AlertsCreatorCleanup implements CreatorDataCleaner {
 	}
 
 	/**
+	 * Nothing to check: the removal needs no right of its own.
+	 *
+	 * @param Creator $creator The creator.
+	 */
+	public function check( Creator $creator ): void {
+	}
+
+	/**
 	 * Removes the creator's alert data.
 	 *
 	 * @param Creator $creator The creator (inactive).
@@ -84,7 +92,8 @@ class AlertsCreatorCleanup implements CreatorDataCleaner {
 				throw new DatabaseException( 'Could not delete the alert data of the deleted creator.' );
 			}
 
-			$removed[ str_replace( 'merchboard_alert_', '', $table ) ] = $deleted;
+			// Not "api_keys": the log sanitizer would redact a key with that name.
+			$removed[ str_replace( array( 'merchboard_alert_', 'api_keys' ), array( '', 'keys' ), $table ) ] = $deleted;
 		}
 
 		$removed['files'] = $this->delete_files( $creator->id );

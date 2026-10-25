@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators\Admin;
 
+use MerchBoard\Modules\Creators\CreatorException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
@@ -104,8 +105,9 @@ final class CreatorDeletionActions {
 		}
 
 		try {
-			$mode = $this->deletion->delete( $creator_id, sanitize_text_field( self::scalar( $input, self::CONFIRM_FIELD ) ) );
-		} catch ( CreatorDeletionException $e ) {
+			// Only compared with the name, never shown or stored.
+			$mode = $this->deletion->delete( $creator_id, self::scalar( $input, self::CONFIRM_FIELD ) );
+		} catch ( CreatorDeletionException | CreatorException $e ) {
 			return add_query_arg( CreatorsAdminPage::NOTICE_ARG, $e->reason(), self::confirm_url( $creator_id ) );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Deleting a creator failed.', array_merge( $e->context(), array( 'creator_id' => $creator_id ) ) );

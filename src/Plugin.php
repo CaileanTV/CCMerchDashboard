@@ -236,7 +236,7 @@ final class Plugin {
 
 		$this->container->set(
 			AuditTrail::class,
-			static fn( Container $c ): AuditTrail => new AuditTrail( $c->get( AuditRepository::class ), ImpersonationSession::creator_id( ... ) )
+			static fn( Container $c ): AuditTrail => new AuditTrail( $c->get( AuditRepository::class ), ImpersonationSession::acting_creator_id( ... ) )
 		);
 
 		$this->container->set(
