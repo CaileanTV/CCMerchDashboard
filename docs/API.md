@@ -142,11 +142,11 @@ Permission: specifik capability pr. route (fx `merchboard_manage_creators`). Bru
 | `after` | heltal ≥ 0, valgfri | Cursor: id'et på den sidste hændelse, botten har. Uden `after` svares med creatorens nyeste id som cursor og ingen køb, så botten starter fra nu |
 | `limit` | heltal 1–50, standard 20 | Flest hændelser i svaret |
 
-Svar `200`: `{ cursor, events: [ { id, kind, created_at, order_ref, username, product, quantity, category, variation, price, line_total, total, currency } ] }`, ældste først.
+Svar `200`: `{ cursor, events: [ { id, kind, created_at, order_ref, username, product, quantity, category, variation, image, price, line_total, total, currency } ] }`, ældste først.
 
 - **Hændelser:** én pr. ordrelinje af creatorens egne varer. `kind` er `purchase`, `test` eller `resend`; test og gensendelser har `id` 0 og flytter aldrig cursoren.
 - **`order_ref`:** 16 hex-tegn, ens for linjerne i en ordre og forskellig for hver creator; aldrig ordrenummeret.
-- **Felter:** `username` er kundens frivillige brugernavn eller `""`. Beløbene er tal som streng med butikkens decimaler og punktum, eller `null`.
+- **Felter:** `username` er kundens frivillige brugernavn eller `""`. `image` (25.12.5) er URL'en til produktets billede (variationens, ellers produktets) i butikkens produktstørrelse (`woocommerce_single`), eller `""`. Beløbene er tal som streng med butikkens decimaler og punktum, eller `null`.
 - **Ingen persondata:** ingen kunde- eller ordre-id'er.
 - **Headers:** `Cache-Control: no-store`, `X-Robots-Tag: noindex`.
 
@@ -161,7 +161,7 @@ Efter en betalt ordre sender pluginet én `POST` pr. webhook til creatorens adre
 
 **JSON** (SparkyBots format):
 
-- **Body:** `{ id, type, created_at, order_ref, username, display_name, total, currency, item_count, items: [ { product, quantity, category, variation, price, line_total } ] }`.
+- **Body:** `{ id, type, created_at, order_ref, username, display_name, total, currency, item_count, items: [ { product, quantity, category, variation, image, price, line_total } ] }`. `image` som i polling (25.12.5).
 - **`id`:** `evt_` + 32 hex, ens hver gang det samme køb sendes (til at fjerne dubletter). Test og gensendelser har `type` `test`/`resend` og et nyt `id`.
 - **`total` ved gensendelse:** altid creatorens samlede betalte ordretotal (det, kunden betalte), også når kun én linje gensendes fra Historik; `items` og `item_count` dækker kun de gensendte linjer (projektejerens beslutning 2026-10-24, 25.13 review).
 - **Navn:** `display_name` er brugernavnet eller "Anonymous".
@@ -169,7 +169,7 @@ Efter en betalt ordre sender pluginet én `POST` pr. webhook til creatorens adre
 
 **Discord:**
 
-- **Body:** `{ content, allowed_mentions: { parse: [] } }`, højst 2000 tegn, én besked pr. ordre.
+- **Body:** `{ content, allowed_mentions: { parse: [] }, embeds }`, højst 2000 tegn, én besked pr. ordre. `embeds` (25.12.5) er produktbillederne under beskeden, `[ { image: { url } } ]`, hvert billede én gang, højst 10; uden billeder udelades feltet.
 
 **Svar:** et 2xx-svar tæller som leveret. Alt andet er en fejl, og 10 fejl i træk sætter webhooken på pause.
 

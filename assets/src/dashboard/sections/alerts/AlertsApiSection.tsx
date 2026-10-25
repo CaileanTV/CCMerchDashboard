@@ -36,6 +36,7 @@ const EXAMPLE_ANSWER = `{
       "quantity": 2,
       "category": "Merch",
       "variation": "Size: L",
+      "image": "https://shop.example/wp-content/uploads/hoodie-600x600.jpg",
       "price": "199.00",
       "line_total": "398.00",
       "total": "548.00",
@@ -521,6 +522,13 @@ export function AlertApiPanel( {
 					</dd>
 					<dt>product, quantity, category, variation</dt>
 					<dd>{ __( 'What was bought.', 'merchboard' ) }</dd>
+					<dt>image</dt>
+					<dd>
+						{ __(
+							"The address of the product's image in the shop's product size; empty when it has none.",
+							'merchboard'
+						) }
+					</dd>
 					<dt>price, line_total, total, currency</dt>
 					<dd>
 						{ __(

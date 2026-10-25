@@ -202,6 +202,7 @@ final class AlertApiTest extends IntegrationTestCase {
 				'quantity'   => 2,
 				'category'   => 'Nova merch',
 				'variation'  => 'Size: L',
+				'image'      => '',
 				'price'      => '199.00',
 				'line_total' => '398.00',
 				'total'      => '548.00',

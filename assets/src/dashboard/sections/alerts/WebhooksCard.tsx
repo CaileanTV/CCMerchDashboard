@@ -37,9 +37,11 @@ const EXAMPLE_EVENT = `{
   "item_count": 3,
   "items": [
     { "product": "Hoodie", "quantity": 2, "category": "Merch",
-      "variation": "Size: L", "price": "199.00", "line_total": "398.00" },
+      "variation": "Size: L",
+      "image": "https://shop.example/wp-content/uploads/hoodie-600x600.jpg",
+      "price": "199.00", "line_total": "398.00" },
     { "product": "Mug", "quantity": 1, "category": "Merch",
-      "variation": "", "price": "150.00", "line_total": "150.00" }
+      "variation": "", "image": "", "price": "150.00", "line_total": "150.00" }
   ]
 }`;
 

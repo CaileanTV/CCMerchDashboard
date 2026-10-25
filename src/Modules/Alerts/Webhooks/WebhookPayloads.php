@@ -26,15 +26,19 @@ defined( 'ABSPATH' ) || exit;
  *
  * - **JSON:** `{ id, type, created_at, order_ref, username, display_name,
  *   total, currency, item_count, items: [ { product, quantity, category,
- *   variation, price, line_total } ] }`. `id` is stable for a purchase (an
- *   HMAC of the creator and the order), so a receiver can drop repeats; a
+ *   variation, image, price, line_total } ] }`. `image` is the product
+ *   image's URL in the shop's product size, '' when none (step 25.12.5).
+ *   `id` is stable for a purchase (an HMAC of the creator and the order),
+ *   so a receiver can drop repeats; a
  *   test or a resend gets a new one. `username` is the customer's voluntary
  *   username ('' when none); `display_name` is that or "Anonymous". Never
  *   the customer's identity or checkout details.
- * - **Discord:** `{ content, allowed_mentions: { parse: [] } }`: the chat
- *   message with the webhook's template, one message per order (lines
- *   below each other in line mode), at most 2000 characters. Tests and
- *   resends start with "[Test]" / "[Resent]".
+ * - **Discord:** `{ content, allowed_mentions: { parse: [] }, embeds }`: the
+ *   chat message with the webhook's template, one message per order (lines
+ *   below each other in line mode), at most 2000 characters, with the
+ *   products' images below it (each once, at most ten; no `embeds` without
+ *   images; step 25.12.5). Tests and resends start with "[Test]" /
+ *   "[Resent]".
  *
  * The signature is HMAC-SHA256 of "{timestamp}.{body}" with the secret.
  */
@@ -44,6 +48,11 @@ class WebhookPayloads {
 	 * Discord's longest message.
 	 */
 	public const DISCORD_MAX = 2000;
+
+	/**
+	 * Discord's most embeds in one message.
+	 */
+	public const DISCORD_EMBEDS = 10;
 
 	/**
 	 * Constructor.
@@ -89,6 +98,7 @@ class WebhookPayloads {
 				'quantity'   => $line['quantity'],
 				'category'   => $line['category'],
 				'variation'  => $line['variation'],
+				'image'      => $line['image'],
 				'price'      => $line['price'],
 				'line_total' => $line['line_total'],
 			);
@@ -143,13 +153,17 @@ class WebhookPayloads {
 			default                => '',
 		};
 
-		return (string) wp_json_encode(
-			array(
-				'content'          => mb_substr( $prefix . $text, 0, self::DISCORD_MAX ),
-				'allowed_mentions' => array( 'parse' => array() ),
-			),
-			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		$body   = array(
+			'content'          => mb_substr( $prefix . $text, 0, self::DISCORD_MAX ),
+			'allowed_mentions' => array( 'parse' => array() ),
 		);
+		$images = array_values( array_unique( array_filter( array_map( $this->shape->image( ... ), $events ) ) ) );
+
+		if ( array() !== $images ) {
+			$body['embeds'] = array_map( static fn( string $url ): array => array( 'image' => array( 'url' => $url ) ), array_slice( $images, 0, self::DISCORD_EMBEDS ) );
+		}
+
+		return (string) wp_json_encode( $body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 	}
 
 	/**

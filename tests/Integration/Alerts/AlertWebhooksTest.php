@@ -98,6 +98,13 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	private int $next_order = 2000;
 
 	/**
+	 * Attachments made by the test.
+	 *
+	 * @var list<int>
+	 */
+	private array $attachments = array();
+
+	/**
 	 * The requests the stub answered.
 	 *
 	 * @var list<array{url: string, args: array<string, mixed>}>
@@ -139,6 +146,10 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		remove_filter( 'pre_http_request', array( $this, 'answer' ), 10 );
+
+		foreach ( $this->attachments as $attachment ) {
+			wp_delete_attachment( $attachment, true );
+		}
 
 		if ( null !== $this->register ) {
 			remove_action( 'rest_api_init', $this->register );
@@ -319,6 +330,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 					'quantity'   => 2,
 					'category'   => 'Nova merch',
 					'variation'  => 'Size: L',
+					'image'      => '',
 					'price'      => '199.00',
 					'line_total' => '398.00',
 				),
@@ -327,6 +339,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 					'quantity'   => 1,
 					'category'   => 'Nova merch',
 					'variation'  => '',
+					'image'      => '',
 					'price'      => '199.00',
 					'line_total' => '199.00',
 				),
@@ -358,6 +371,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertIsArray( $body );
 		self::assertSame( "nova\\_fan bought Hoodie @everyone\nnova\\_fan bought Mug @everyone", $body['content'], 'Line mode: the lines below each other in one message; the name cannot format.' );
 		self::assertSame( array( 'parse' => array() ), $body['allowed_mentions'], 'Mentions never ping.' );
+		self::assertArrayNotHasKey( 'embeds', $body, 'No images, no embeds.' );
 		self::assertArrayNotHasKey( 'X-MerchBoard-Signature', $this->requests[0]['args']['headers'] );
 
 		update_option( ChatbotFormat::OPTION, array( 'mode' => 'order' ), false );
@@ -491,6 +505,36 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertCount( WebhookDeliveryRepository::KEEP + 6, $this->deliveries(), 'Pending deliveries are kept.' );
 		$this->run_jobs();
 		self::assertCount( WebhookDeliveryRepository::KEEP + 6, $this->requests );
+	}
+
+	public function test_the_product_image_is_sent_to_bots_and_shown_in_discord(): void {
+		$hoodie = $this->image( 'hoodie' );
+		$mug    = $this->image( 'mug' );
+		$this->webhooks->create( $this->creator, 'SparkyBot', AlertWebhook::JSON, self::URL, self::SECRET, '' );
+		$this->webhooks->create( $this->creator, 'Discord', AlertWebhook::DISCORD, self::DISCORD, '', '$UserName bought $Product' );
+		$this->alert( $this->creator, 700, 1, 'Hoodie', 'Size: L', 1, $hoodie );
+		$this->alert( $this->creator, 700, 2, 'Hoodie', 'Size: M', 1, $hoodie );
+		$this->alert( $this->creator, 700, 3, 'Mug', '', 1, $mug );
+		$this->alert( $this->creator, 700, 4, 'Sticker' );
+
+		$this->dispatcher->order_paid( 700 );
+		$this->run_jobs();
+		self::assertCount( 2, $this->requests );
+		$bodies = array();
+
+		foreach ( $this->requests as $request ) {
+			$bodies[ (string) $request['url'] ] = json_decode( (string) $request['args']['body'], true );
+		}
+
+		$hoodie_url = (string) wp_get_attachment_image_url( $hoodie, AlertApiEvents::IMAGE_SIZE );
+		$mug_url    = (string) wp_get_attachment_image_url( $mug, AlertApiEvents::IMAGE_SIZE );
+		self::assertStringEndsWith( '/hoodie-600x600.jpg', $hoodie_url, 'The shop\'s product size.' );
+		self::assertSame( array( $hoodie_url, $hoodie_url, $mug_url, '' ), array_column( $bodies[ self::URL ]['items'] ?? array(), 'image' ), 'Every line its image; none without one.' );
+		self::assertSame(
+			array( array( 'image' => array( 'url' => $hoodie_url ) ), array( 'image' => array( 'url' => $mug_url ) ) ),
+			$bodies[ self::DISCORD ]['embeds'] ?? null,
+			'Discord shows each image once, below the message.'
+		);
 	}
 
 	public function test_discord_shows_the_customers_username_as_text(): void {
@@ -749,6 +793,44 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * A product image in the Media Library with the shop's product size (no
+	 * file is needed for its URL).
+	 *
+	 * @param string $name File name without the extension.
+	 * @return int The attachment.
+	 */
+	private function image( string $name ): int {
+		$id = wp_insert_attachment(
+			array(
+				'post_title'     => $name,
+				'post_mime_type' => 'image/jpeg',
+				'post_status'    => 'inherit',
+			),
+			'2026/10/' . $name . '.jpg'
+		);
+		self::assertGreaterThan( 0, $id );
+		$this->attachments[] = $id;
+		wp_update_attachment_metadata(
+			$id,
+			array(
+				'width'  => 1200,
+				'height' => 1200,
+				'file'   => '2026/10/' . $name . '.jpg',
+				'sizes'  => array(
+					AlertApiEvents::IMAGE_SIZE => array(
+						'file'      => $name . '-600x600.jpg',
+						'width'     => 600,
+						'height'    => 600,
+						'mime-type' => 'image/jpeg',
+					),
+				),
+			)
+		);
+
+		return $id;
+	}
+
+	/**
 	 * Stores an alert of an order line (Nova's category, 199.00 each, 548.00 for the creator's order).
 	 *
 	 * @param int    $creator_id Creator.
@@ -757,10 +839,11 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 	 * @param string $product    Product name.
 	 * @param string $variation  Variation.
 	 * @param int    $quantity   Quantity.
+	 * @param int    $image      Image attachment (0: none).
 	 * @return int The alert's id.
 	 */
-	private function alert( int $creator_id, int $order_id, int $item_id, string $product = 'Hoodie', string $variation = '', int $quantity = 1 ): int {
-		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, $variation, $quantity, 0, array( 77 ), 'nova_fan', new DateTimeImmutable( '2026-10-23 18:00:00', new DateTimeZone( 'UTC' ) ), 0, number_format( 199 * $quantity, 4, '.', '' ), '548.0000', 'DKK' ) );
+	private function alert( int $creator_id, int $order_id, int $item_id, string $product = 'Hoodie', string $variation = '', int $quantity = 1, int $image = 0 ): int {
+		$this->events->insert( new AlertEvent( $creator_id, $order_id, (string) ( 1000 + $order_id ), $item_id, 70, 0, $product, $variation, $quantity, $image, array( 77 ), 'nova_fan', new DateTimeImmutable( '2026-10-23 18:00:00', new DateTimeZone( 'UTC' ) ), 0, number_format( 199 * $quantity, 4, '.', '' ), '548.0000', 'DKK' ) );
 
 		return (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MAX(id) FROM %i', $this->table( Tables::ALERT_EVENTS ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Test fixture.
 	}
