@@ -4,12 +4,12 @@
 Projektejerens creators er i dag oprettet som vendors i WooCommerce Product Vendors (PV). Migreringen flytter dem til Merch Dashboard én gang, så de ikke skal oprettes i hånden (ROADMAP fase 26, ADR-074).
 
 ## Current status
-I gang (fase 26).
+Implementeret og runtime-testet (fase 26); udgives med 1.1.0.
 - **26.1 tørkørsel:** implementeret 2026-10-24, læser kun. Projektejeren har kontrolleret den på Local med Product Vendors 2.4.9.
 - **26.2 migrering:** implementeret 2026-10-24, testet automatisk.
 - **26.2.1 produktkategori:** implementeret 2026-10-24, testet automatisk.
 - **26.3 fjernelse af PV-roller:** implementeret 2026-10-24, testet automatisk.
-- **26.4 review og runtime-test:** reviewet er gennemført 2026-10-25, og rettelserne er implementeret og testet automatisk (projektejerens valg 2026-10-25, se "Regler"). Runtime-testen på Local udestår.
+- **26.4 review og runtime-test:** reviewet er gennemført 2026-10-25, og rettelserne er implementeret og testet automatisk (projektejerens valg 2026-10-25, se "Regler"). Runtime-testen på Local er bestået 2026-10-25 (41 af 42 punkter OK; backuppen før testen sprunget over).
 
 Udgives sammen med fase 25 som 1.1.0.
 

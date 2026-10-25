@@ -3998,7 +3998,7 @@ ADR-007, ADR-025, ADR-044, ADR-065.
 2026-10-23
 
 ## Status
-Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) og 25.12.2 (webhooks, med SparkyBots anbefalinger bygget ind efter projektejerens valg 2026-10-23) er implementeret. 25.12.4 (adgang pr. creator, pkt. 10) er implementeret 2026-10-24.
+Accepteret af projektejeren 2026-10-23 (plan for trin 25.12 godkendt). 25.12.1 (API-nøgler og polling) og 25.12.2 (webhooks, med SparkyBots anbefalinger bygget ind efter projektejerens valg 2026-10-23) er implementeret. 25.12.4 (adgang pr. creator, pkt. 10) er implementeret 2026-10-24. *Statusnote 2026-10-25:* SparkyBots udvikler har 2026-10-25 bekræftet, at integrationen virker og isolerer korrekt (botten udløses kun af de rigtige produkter); projektejeren har derefter godkendt alert-API og webhooks endeligt (2026-10-25). Adgangen pr. creator er stadig slået fra som standard (pkt. 10). Produktbilledet er tilføjet (pkt. 11).
 
 ## Context
 Projektejeren vil have, at creators kan hente deres købs-alerts til deres egne bots (ønske 2026-10-19, ROADMAP 25.12). Det kræver en offentlig API med creator-nøgler og, med webhooks, udgående kald til adresser, som creatoren selv angiver.
@@ -4024,6 +4024,7 @@ Projektejeren vil have, at creators kan hente deres købs-alerts til deres egne 
 8. **Audit:** `alert_api_switched`, `alert_api_key_created` og `alert_api_key_revoked` (med `by_admin`), med nøglens id, aldrig nøglen; `alert_webhook_created`, `alert_webhook_changed` (med `change` og `by_admin`) og `alert_webhook_deleted` med webhookens id og format, aldrig adressen eller hemmeligheden.
 9. **Modtagere:** creatoren vælger selv modtageren (fx SparkyBot eller Discord). Merch Dashboard har ingen konto eller aftale med dem; det sender kun til adresser, som creatoren angiver.
 10. **Adgang pr. creator (trin 25.12.4, projektejerens valg 2026-10-23/24):** administratoren giver hver creator adgang til "API-nøgler" og "Webhooks" hver for sig direkte på admin-fanen Merch Dashboard → Alerts → API (ikke på creatorens redigeringsside). Adgangen er slået fra som standard, og den globale kontakt er stadig hovedkontakten. Uden adgang giver nøglerne 401, webhooks sendes ikke (en kø'et levering bliver `skipped`), oprettelse og test giver 403 `merchboard_alerts_api_no_access`, og siderne skjules i dashboardet. Nøgler og webhooks bevares; tilbagekaldelse, slå fra og sletning virker altid. Migration 28 gav adgang til de creators, der allerede havde en virksom nøgle eller webhook. Gemmes som creator meta `alert_api_access`; ændringer auditeres som `alert_api_access_changed`.
+11. **Produktbilledet (trin 25.12.5, SparkyBot-udviklerens ønske, projektejerens valg 2026-10-25):** `image` på hver hændelse i polling og hver linje i JSON-webhooken: URL'en til produktets billede (variationens, ellers produktets, som overlayet) i butikkens produktstørrelse (`woocommerce_single`, ellers originalen), `""` uden billede; kun http(s)-URL'er. Discord-webhooks viser billederne som embeds under beskeden (hvert én gang, højst 10). Produktbilleder er offentlige i butikken, så ingen nye persondata.
 
 ## Alternatives considered
 - **Long-polling som overlayet:** hurtigere, men binder en PHP-proces pr. bot. Fravalgt af projektejeren.
