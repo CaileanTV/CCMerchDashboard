@@ -21,7 +21,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Payouts og gavekort | 23 | Creator-anmodninger om udbetaling (bank, PayPal, manuelt oprettet gavekort valideret via en udskiftelig pluginadapter; YITH WooCommerce Gift Cards anbefalet), reservation, admin-behandling og sikker opbevaring (planlægning) |
 | Alerts | 25 | MerchAlert integreres: købs-alerts i creatorens OBS-overlay med lyd og chatbot på Twitch, Kick og YouTube, aktiveret af creatorens kategori, som sektion i creator-dashboardet, plus alert-API og webhooks til creatorens egne bots (✅ godkendt 2026-10-24; alert-API og webhooks endeligt efter SparkyBot-tjekket; udgives med fase 26 som 1.1.0; ADR-065–067, ADR-069–073) |
 | Migrering | 26 | Vendors fra WooCommerce Product Vendors flyttes til Merch Dashboard: creator, brugerkobling, produkter og produktkategori (✅ udgivet i 1.1.0, kørt i produktion 2026-10-25) |
-| Oprydning | 27 | Importen fra MerchAlert og migreringen fra Product Vendors fjernes igen, nu hvor de er kørt (planlagt) |
+| Oprydning og admin-værktøjer | 27 | Importen fra MerchAlert og migreringen fra Product Vendors fjernes igen; "Se som creator" (impersonation) og sletning af creators (planlagt) |
 | Senere | – | Notifications, integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -654,7 +654,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 
 ---
 
-## Fase 27 📝 (planlagt 2026-10-25; første del besluttet, resten ikke planlagt)
+## Fase 27 📝 (ønsker registreret 2026-10-25; ikke planlagt i detaljer)
 
 - **27.1 Fjern importværktøjerne (projektejerens beslutning 2026-10-25):** importen fra MerchAlert og migreringen fra WooCommerce Product Vendors er kørt i produktion 2026-10-25 og skal ikke bruges mere, så de fjernes igen. Ikke implementeret; planen godkendes af projektejeren, før arbejdet starter.
   - **Fjernes:**
@@ -670,6 +670,27 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - om MerchAlert-vagten (ingen alerts, mens MerchAlert er aktivt) bliver, til MerchAlert er afinstalleret;
     - at Product Vendors-rollerne er fjernet fra de flyttede brugere i produktion, før rollefjernelsen forsvinder.
   - **ADR:** statusnoter på ADR-065 (importen) og ADR-074 (migreringen).
+- **27.2 Impersonation: "Se som creator" (projektejerens ønske 2026-10-25; flyttet fra "Senere"):** en administrator kan åbne creator-dashboardet, som en bestemt creator ser det, fx til support. Ikke implementeret. I dag et ikke-mål (ARCHITECTURE.md afsnit 15, USER-ROLES.md, features/creator-access.md), så det kræver en ny ADR med audit-design, før det bygges.
+  - **Anbefalet udgangspunkt:** kun visning (alle skrivninger afvist på serveren), en tydelig bjælke "Du ser som {creator}" med "Afslut", og audit ved start og slut (administrator, creator og tid).
+  - **Afklares i planen:**
+    - kun visning eller også handlinger på creatorens vegne;
+    - hvem der må: en ny capability kun til administratorer;
+    - hvordan `CreatorContext` (ADR-007) får den viste creator uden at ændre den indloggede bruger, og hvor længe en session varer;
+    - hvad der skjules også under visning: bankoplysninger, API-nøgler, webhook-hemmeligheder, chatbot-tokens og OBS-URL'er;
+    - om creatoren skal kunne se, at en administrator har set med.
+- **27.3 Slet en creator fra listen (projektejerens ønske 2026-10-25):** en knap til at slette en creator under Merch Dashboard → Creators. Ikke implementeret. I dag bevidst fravalgt (DATABASE.md, "Creator slettes": kun deaktivering, fordi audit og salgshistorik henviser til creator-ID'et), så det kræver en ny ADR.
+  - **Anbefalet udgangspunkt:**
+    - rigtig sletning kun af en creator uden salg i ledgeren, udbetalinger og afregningsbilag, fx en fejloprettelse eller en test;
+    - creators med historik kan kun arkiveres: deaktiveret og skjult fra listen som standard, med et filter til at vise dem.
+  - **Ved sletning:**
+    - produktkoblinger og kategori-mapping fjernes, og creator-rollen fjernes fra brugeren (brugeren selv slettes aldrig);
+    - creatorens alerts, overlays, lyde, chatbot, API-nøgler og webhooks slettes;
+    - audit-posterne bevares (ADR-023); sletningen auditeres med creatorens navn, så de gamle poster stadig kan forstås.
+  - **Afklares i planen:**
+    - præcis hvilke data der blokerer en sletning: ledger-rækker (ADR-037/038), udbetalinger, bilag og eventuelt importerede alerts;
+    - en skrevet bekræftelse som ved opt-in-afinstallationen;
+    - hvem der må: capability `merchboard_manage_creators` eller en ny, kun til administratorer;
+    - samspillet med migreringens tilstand (fase 26) og creatorens uploadede filer.
 
 ## Senere (uprioriteret)
 
@@ -686,7 +707,6 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 | Security hardening | Fuld CSP med nonces, rate limiting på `/me`-endpoints, GDPR exporter/eraser, security-review før produktion |
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
-| Impersonation | "Se som creator" for admins med audit |
 | Branding | Brand-font (self-hosted). Logo, temaer og branded login er flyttet til fase 21 |
 | ~~Alerts: SparkyBot-tjek (25.12.3)~~ ✅ 2026-10-25 | Gennemført: SparkyBots udvikler har bekræftet integrationen, og alert-API og webhooks er endeligt godkendt (se 25.12.3 og 25.12.5). Oprindeligt: flyttet fra fase 25 2026-10-24: en fælles test med SparkyBot-udvikleren af webhook-integrationen (adresse, hemmelighed fra SparkyBots dashboard, signaturtjek, dubletter via hændelses-id) og eventuelle justeringer, når udvikleren svarer. SparkyBots format er allerede bygget ind i 25.12.2; afvigelsen er ét forsøg pr. levering i stedet for begrænsede genforsøg (projektejerens valg 2026-10-23). Se 25.12.3 i fase 25. Tjekket er den endelige godkendelse af alert-API og webhooks (projektejerens beslutning 2026-10-24) |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |
