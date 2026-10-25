@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-25
+
+Fase 27: importværktøjerne er fjernet, og administratorer kan se som en creator og slette creators. Schema-version 31 (migration 30–31 kører ved opdatering fra 1.1.0). Fase 27 er reviewet og runtime-testet på Local 2026-10-25. Opdateringen står i DEVELOPMENT.md ("Release 1.2.0").
+
 ### Added
 
 - **Slet en creator (fase 27, trin 27.3, ADR-076):** "Slet" på Creators-listen med en bekræftelsesside (creatorens navn skrives som bekræftelse). En creator uden salg, udbetalinger eller afregningsbilag slettes helt; en creator med historik bevares anonymt som "Slettet creator #id" (schema-version 31). Produktkoblinger, kategori, rabatkode, alerts og brugerens creator-rolle fjernes; den økonomiske historik og audit-loggen bevares. Afvist mens en udbetaling venter.

@@ -246,6 +246,17 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.2.0: oprydning, "Se som creator" og sletning af creators (fase 27)
+
+**Versions-bump og CHANGELOG-sektionen 2026-10-25** efter projektejerens valg samme dag (minor: nye features; fase 27 er reviewet og runtime-testet på Local). Schema-version **31**: migration 30 sletter importværktøjernes optioner, og migration 31 tilføjer `deleted_at` til creators. Ingen import eller manuelle trin. Tagget giver en draft-release; projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til staging eller produktion.
+
+1. **Backup:** filer og database via hostingen. Notér den installerede version (1.1.0).
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview viser schema-version 31 uden advarsler.
+3. **Stikprøve:** Alerts har ikke fanen "Import", menuen har ikke "Import fra Product Vendors", og en creators gamle OBS-link (`/ccmerch-alert/creator-overlay/{id}/`) virker stadig. "Se som creator" og "Slet" findes på Creators-listen.
+4. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** gendan backuppen. 1.1.0-koden kender ikke slettede creators, så den bør ikke installeres oven på schema-version 31, når en creator er slettet.
+
 ## Release 1.1.0: alerts og migrering fra Product Vendors (fase 25 og 26, trin 25.10.3)
 
 **Versions-bump, CHANGELOG-sektionen og tagget `v1.1.0` sat 2026-10-25** efter projektejerens godkendelse samme dag (fase 25 og 26 er reviewet og runtime-testet; alert-API og webhooks endeligt godkendt efter SparkyBot-tjekket). Version **1.1.0** (projektejerens valg 2026-10-23: minor, nye features uden breaking changes). Tagget giver en draft-release; projektejeren tester den på staging og udgiver den. Produktionen udføres af projektejeren; AI-agenter har ingen adgang til staging eller produktion.
