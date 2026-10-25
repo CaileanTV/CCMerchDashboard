@@ -301,6 +301,11 @@ final class CreatorService {
 			throw new CreatorException( CreatorException::NOT_FOUND );
 		}
 
+		// A deleted creator is kept only as history (ADR-076): never changed again.
+		if ( $creator->is_deleted() ) {
+			throw new CreatorException( CreatorException::DELETED );
+		}
+
 		return $creator;
 	}
 

@@ -155,6 +155,16 @@ abstract class IntegrationTestCase extends TestCase {
 	}
 
 	/**
+	 * The creators' rows without `deleted_at` (schema version 31, ADR-076),
+	 * so upgrade tests compare the data an older schema already had.
+	 *
+	 * @return list<array<string, string|null>>
+	 */
+	protected function creator_rows(): array {
+		return array_map( static fn( array $row ): array => array_diff_key( $row, array( 'deleted_at' => null ) ), $this->rows( Tables::CREATORS ) );
+	}
+
+	/**
 	 * Creates a subscriber.
 	 *
 	 * @param string $login Login.

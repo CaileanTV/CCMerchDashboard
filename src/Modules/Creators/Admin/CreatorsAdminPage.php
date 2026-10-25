@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators\Admin;
 
+use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Modules\Creators\CreatorDeletion;
+use MerchBoard\Modules\Creators\CreatorDeletionException;
 use MerchBoard\Modules\Access\ImpersonationActions;
 use MerchBoard\Modules\Access\ImpersonationException;
 use MerchBoard\Core\Database\TransactionSupport;
@@ -43,14 +46,16 @@ final class CreatorsAdminPage {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorRepository  $creators     Creator storage (reads only).
-	 * @param UserAccounts       $users        User labels.
-	 * @param TransactionSupport $transactions Whether changes can be saved at all.
+	 * @param CreatorRepository    $creators     Creator storage (reads only).
+	 * @param UserAccounts         $users        User labels.
+	 * @param TransactionSupport   $transactions Whether changes can be saved at all.
+	 * @param CreatorDeletion|null $deletion Creator deletions (step 27.3, ADR-076); null hides deleting.
 	 */
 	public function __construct(
 		private CreatorRepository $creators,
 		private UserAccounts $users,
-		private TransactionSupport $transactions
+		private TransactionSupport $transactions,
+		private ?CreatorDeletion $deletion = null
 	) {
 	}
 
@@ -163,6 +168,15 @@ final class CreatorsAdminPage {
 			} else {
 				$this->render_form( $creator );
 			}
+		} elseif ( 'delete' === $action && null !== $this->deletion ) {
+			$creator = $creator_id > 0 ? $this->creators->find( $creator_id ) : null;
+
+			if ( null === $creator ) {
+				echo '<h1>' . esc_html__( 'Creator not found', 'merchboard' ) . '</h1>';
+				echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( 'Back to creators', 'merchboard' ) . '</a></p>';
+			} else {
+				$this->render_delete( $creator, $this->deletion );
+			}
 		} elseif ( '' !== $action && has_action( 'merchboard_creators_view_' . $action ) ) {
 			/**
 			 * Renders a view another module adds to the Creators page
@@ -197,6 +211,16 @@ final class CreatorsAdminPage {
 			CreatorException::INVALID_STATUS           => array( __( 'Choose a valid status.', 'merchboard' ), 'error' ),
 			CreatorException::USER_NOT_FOUND           => array( __( 'The selected WordPress user does not exist.', 'merchboard' ), 'error' ),
 			CreatorException::USER_ALREADY_LINKED      => array( __( 'The selected WordPress user is already linked to another creator.', 'merchboard' ), 'error' ),
+			CreatorException::DELETED                  => array( __( 'The creator is deleted and can no longer be changed.', 'merchboard' ), 'error' ),
+			CreatorDeletionActions::DELETED_NOTICE     => array( __( 'The creator was deleted completely.', 'merchboard' ), 'success' ),
+			CreatorDeletionActions::ANONYMIZED_NOTICE  => array( __( 'The creator was deleted. Its sales, payouts and settlement documents are kept under an anonymous name.', 'merchboard' ), 'success' ),
+			CreatorDeletionException::NOT_AUTHORIZED   => array( __( 'You are not allowed to delete this creator.', 'merchboard' ), 'error' ),
+			CreatorDeletionException::NOT_FOUND        => array( __( 'The creator does not exist.', 'merchboard' ), 'error' ),
+			CreatorDeletionException::ALREADY_DELETED  => array( __( 'The creator is already deleted.', 'merchboard' ), 'info' ),
+			CreatorDeletionException::NOT_CONFIRMED    => array( __( 'Nothing was deleted: type the creator\'s name exactly as shown.', 'merchboard' ), 'error' ),
+			CreatorDeletionException::PAYOUTS_PENDING  => array( __( 'Nothing was deleted: the creator has a payout waiting. Complete or reject it first.', 'merchboard' ), 'error' ),
+			CreatorDeletionException::NEEDS_WOOCOMMERCE => array( __( 'Nothing was deleted: products are linked to the creator, and WooCommerce must be active to remove the links.', 'merchboard' ), 'error' ),
+			CreatorDeletionException::BUSY             => array( __( 'Another creator is being deleted. Try again in a moment.', 'merchboard' ), 'error' ),
 			ImpersonationException::NOT_AUTHORIZED     => array( __( 'You are not allowed to view as a creator.', 'merchboard' ), 'error' ),
 			ImpersonationException::UNAVAILABLE        => array( __( 'You can only view as an active creator with a WordPress user.', 'merchboard' ), 'error' ),
 			ImpersonationActions::ENDED_NOTICE         => array( __( 'You no longer view as the creator.', 'merchboard' ), 'success' ),
@@ -251,6 +275,70 @@ final class CreatorsAdminPage {
 	}
 
 	/**
+	 * The confirmation page of a creator's deletion (step 27.3, ADR-076): what
+	 * happens, what blocks it, and the form with the typed name.
+	 *
+	 * @param Creator         $creator  Creator.
+	 * @param CreatorDeletion $deletion Deletions.
+	 */
+	private function render_delete( Creator $creator, CreatorDeletion $deletion ): void {
+		/* translators: %s: creator name. */
+		echo '<h1>' . esc_html( sprintf( __( 'Delete creator: %s', 'merchboard' ), $creator->display_name ) ) . '</h1>';
+		echo '<p><a href="' . esc_url( self::edit_url( $creator->id ) ) . '">' . esc_html__( '← Back to the creator', 'merchboard' ) . '</a></p>';
+
+		if ( $creator->is_deleted() ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'The creator is already deleted.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
+
+		try {
+			$preview = $deletion->preview( $creator );
+		} catch ( DatabaseException ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'A technical error occurred. Please check the creator and try again later.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
+
+		if ( CreatorDeletion::MODE_DELETED === $preview['mode'] ) {
+			echo '<p><strong>' . esc_html__( 'The creator has no sales, payouts or settlement documents and is deleted completely.', 'merchboard' ) . '</strong></p>';
+		} else {
+			/* translators: %d: creator id. */
+			echo '<p><strong>' . esc_html( sprintf( __( 'The creator has sales, payouts or settlement documents. They are kept unchanged, and the creator is kept as "Deleted creator #%d": its name, profile, payment details and WordPress user are removed. Issued settlement documents keep the name they were issued with.', 'merchboard' ), $creator->id ) ) . '</strong></p>';
+		}
+
+		echo '<p>' . esc_html__( 'Removed in both cases:', 'merchboard' ) . '</p><ul class="ul-disc">';
+		/* translators: %d: number of products. */
+		echo '<li>' . esc_html( sprintf( _n( 'the link of %d product and the product category, so new orders are no longer the creator\'s;', 'the links of %d products and the product category, so new orders are no longer the creator\'s;', $preview['products'], 'merchboard' ), $preview['products'] ) ) . '</li>';
+		echo '<li>' . esc_html__( 'the active discount code and the product markups;', 'merchboard' ) . '</li>';
+		echo '<li>' . esc_html__( 'alerts: overlay, history, sounds and images, chatbot connections, API keys and webhooks;', 'merchboard' ) . '</li>';
+		echo '<li>' . esc_html__( 'the creator role of the WordPress user (the user itself is never deleted).', 'merchboard' ) . '</li></ul>';
+		echo '<p>' . esc_html__( 'The audit log keeps its records. This cannot be undone.', 'merchboard' ) . '</p>';
+
+		if ( $preview['pending_payouts'] > 0 ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'The creator has a payout waiting. Complete or reject it before the creator can be deleted.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
+
+		if ( ! $preview['ready'] ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'Products are linked to the creator, and WooCommerce must be active to remove the links. Activate WooCommerce first.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( CreatorDeletionActions::ACTION ) . '">';
+		echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
+		wp_nonce_field( CreatorDeletionActions::nonce_action( $creator->id ) );
+		/* translators: %s: creator name. */
+		echo '<p><label for="merchboard-confirm-name">' . esc_html( sprintf( __( 'Type the creator\'s name to confirm: %s', 'merchboard' ), $creator->display_name ) ) . '</label><br>';
+		echo '<input type="text" id="merchboard-confirm-name" name="' . esc_attr( CreatorDeletionActions::CONFIRM_FIELD ) . '" class="regular-text" required autocomplete="off"></p>';
+		submit_button( __( 'Delete creator', 'merchboard' ), 'delete' );
+		echo '</form>';
+	}
+
+	/**
 	 * Renders the add/edit form.
 	 *
 	 * @param Creator|null $creator Creator to edit, or null to add.
@@ -263,6 +351,13 @@ final class CreatorsAdminPage {
 
 		echo '<h1>' . esc_html( null === $creator ? __( 'Add New Creator', 'merchboard' ) : __( 'Edit Creator', 'merchboard' ) ) . '</h1>';
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← Back to creators', 'merchboard' ) . '</a></p>';
+
+		// A deleted creator (ADR-076) is only history: nothing to edit.
+		if ( null !== $creator && $creator->is_deleted() ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'This creator is deleted. It is kept under an anonymous name only because of its sales, payouts and settlement documents, and can no longer be changed.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
 
 		// "View as creator" (step 27.2, ADR-075): the dashboard as this creator sees it, acting as the creator.
 		if ( null !== $creator && $creator->is_active() && null !== $creator->user_id ) {
@@ -321,6 +416,10 @@ final class CreatorsAdminPage {
 		echo '</tbody></table>';
 		submit_button( null === $creator ? __( 'Create creator', 'merchboard' ) : __( 'Save changes', 'merchboard' ) );
 		echo '</form>';
+
+		if ( null !== $creator && null !== $this->deletion ) {
+			echo '<p><a class="button-link-delete" href="' . esc_url( CreatorDeletionActions::confirm_url( $creator->id ) ) . '">' . esc_html__( 'Delete creator', 'merchboard' ) . '</a></p>';
+		}
 
 		if ( null !== $creator ) {
 			/**

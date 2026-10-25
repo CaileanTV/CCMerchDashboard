@@ -37,7 +37,7 @@ final class CreatorCodeTablesMigrationTest extends IntegrationTestCase {
 
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		$creator = ( new CreatorRepository( $this->wpdb ) )->create( 'Før rabatkoder', CreatorStatus::Active );
-		$before  = $this->rows( Tables::CREATORS );
+		$before  = $this->creator_rows();
 
 		self::assertSame( '16', (string) get_option( Migrator::VERSION_OPTION ) );
 		self::assertFalse( $this->has_table( Tables::CREATOR_CODES ) );
@@ -57,7 +57,7 @@ final class CreatorCodeTablesMigrationTest extends IntegrationTestCase {
 		self::assertSame( array( 'id', 'creator_id', 'code', 'coupon_id', 'valid_from', 'valid_to', 'active_creator_id', 'active_code', 'created_by', 'ended_by' ), $this->columns( Tables::CREATOR_CODES ) );
 		self::assertSame( array( 'order_id', 'status', 'reason', 'code_id', 'creator_id', 'code', 'coupon_deviation', 'order_created_at', 'assessed_at' ), $this->columns( Tables::ORDER_EXCLUSIONS ) );
 		self::assertSame( array( 'PRIMARY', 'active_code', 'active_creator' ), $this->unique_keys( Tables::CREATOR_CODES ) );
-		self::assertSame( $before, $this->rows( Tables::CREATORS ), 'Existing data is unchanged.' );
+		self::assertSame( $before, $this->creator_rows(), 'Existing data is unchanged.' );
 		self::assertNotNull( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id ) );
 
 		// Re-running migration 17 changes nothing.

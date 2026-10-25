@@ -26,12 +26,13 @@ final readonly class Creator {
 	/**
 	 * Constructor.
 	 *
-	 * @param int               $id           Creator id (primary key).
-	 * @param int|null          $user_id      Linked WordPress user id, or null when not linked.
-	 * @param string            $display_name Name shown for the creator.
-	 * @param CreatorStatus     $status       Current status.
-	 * @param DateTimeImmutable $created_at   Creation time (UTC).
-	 * @param DateTimeImmutable $updated_at   Last change (UTC).
+	 * @param int                    $id           Creator id (primary key).
+	 * @param int|null               $user_id      Linked WordPress user id, or null when not linked.
+	 * @param string                 $display_name Name shown for the creator.
+	 * @param CreatorStatus          $status       Current status.
+	 * @param DateTimeImmutable      $created_at   Creation time (UTC).
+	 * @param DateTimeImmutable      $updated_at   Last change (UTC).
+	 * @param DateTimeImmutable|null $deleted_at When the creator was deleted and anonymized (UTC; phase 27, ADR-076), or null.
 	 * @throws InvalidArgumentException When an id is not a positive integer.
 	 */
 	public function __construct(
@@ -40,7 +41,8 @@ final readonly class Creator {
 		public string $display_name,
 		public CreatorStatus $status,
 		public DateTimeImmutable $created_at,
-		public DateTimeImmutable $updated_at
+		public DateTimeImmutable $updated_at,
+		public ?DateTimeImmutable $deleted_at = null
 	) {
 		if ( $id < 1 ) {
 			throw new InvalidArgumentException( 'Creator id must be a positive integer.' );
@@ -56,5 +58,12 @@ final readonly class Creator {
 	 */
 	public function is_active(): bool {
 		return CreatorStatus::Active === $this->status;
+	}
+
+	/**
+	 * Whether the creator was deleted (kept anonymized for its history, ADR-076).
+	 */
+	public function is_deleted(): bool {
+		return null !== $this->deleted_at;
 	}
 }

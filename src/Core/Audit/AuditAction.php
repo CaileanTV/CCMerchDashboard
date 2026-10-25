@@ -609,4 +609,9 @@ enum AuditAction: string {
 	 * The administrator's "view as creator" session ended (ADR-075). Context: reason (stopped, expired, logout or switched).
 	 */
 	case CreatorImpersonationEnded = 'creator_impersonation_ended';
+
+	/**
+	 * A creator was deleted (phase 27, step 27.3, ADR-076). Context: deletion (deleted or anonymized), former_name, and counts of what was removed.
+	 */
+	case CreatorDeleted = 'creator_deleted';
 }

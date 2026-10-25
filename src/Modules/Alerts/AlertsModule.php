@@ -552,6 +552,15 @@ final class AlertsModule implements Module {
 			OverlayPresets::class,
 			static fn( Container $c ): OverlayPresets => new OverlayPresets( new OverlayPresetStore(), $c->get( AuditTrail::class ), $c->get( AlertOverlayRepository::class ), $c->get( AlertFonts::class ), $c->get( AlertImageLibrary::class ), $c->get( AlertImages::class ) )
 		);
+		// Deleting a creator (phase 27, step 27.3, ADR-076): its alert data.
+		$container->set( AlertsCreatorCleanup::class, static fn( Container $c ): AlertsCreatorCleanup => new AlertsCreatorCleanup( $c->get( CreatorChatbot::class )->disconnect( ... ), $c->get( wpdb::class ), $c->get( Logger::class ) ) );
+		add_filter(
+			'merchboard_creator_data_cleaners',
+			static function ( mixed $cleaners ) use ( $container ): array {
+				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( $container->get( AlertsCreatorCleanup::class ) ) );
+			},
+			20
+		);
 		// The setup of the creator's overlay settings page (step 25.9.6).
 		$container->set( CreatorPageLayoutStore::class, static fn( Container $c ): CreatorPageLayoutStore => new CreatorPageLayoutStore( $c->get( AuditTrail::class ) ) );
 		$container->set( AdminCreatorPageController::class, static fn( Container $c ): AdminCreatorPageController => new AdminCreatorPageController( $c->get( CreatorPageLayoutStore::class ), $c->get( Logger::class ) ) );

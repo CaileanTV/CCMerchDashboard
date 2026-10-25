@@ -114,7 +114,7 @@ final class AuditLogTest extends TestCase {
 	 */
 	public static function invalid_requests(): array {
 		return array(
-			'unknown event'         => array( array( 'event' => 'creator_deleted' ), 'event' ),
+			'unknown event'         => array( array( 'event' => 'creator_teleported' ), 'event' ),
 			'sql in event'          => array( array( 'event' => "creator_created' OR 1=1 --" ), 'event' ),
 			'wildcard event'        => array( array( 'event' => 'creator_%' ), 'event' ),
 			'creator zero'          => array( array( 'creator' => '0' ), 'creator' ),

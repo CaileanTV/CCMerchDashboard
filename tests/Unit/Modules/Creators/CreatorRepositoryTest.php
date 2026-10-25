@@ -42,7 +42,7 @@ final class CreatorRepositoryTest extends TestCase {
 
 		self::assertCount( 1, $this->wpdb->prepared );
 		self::assertSame(
-			'SELECT id, user_id, display_name, status, created_at, updated_at FROM %i WHERE id = %d',
+			'SELECT * FROM %i WHERE id = %d',
 			$this->wpdb->prepared[0]['query']
 		);
 		self::assertSame( array( 'wp_merchboard_creators', 7 ), $this->wpdb->prepared[0]['args'] );
@@ -119,7 +119,7 @@ final class CreatorRepositoryTest extends TestCase {
 
 		self::assertSame( 7, $creator?->id );
 		self::assertSame(
-			'SELECT id, user_id, display_name, status, created_at, updated_at FROM %i WHERE user_id = %d',
+			'SELECT * FROM %i WHERE user_id = %d',
 			$this->wpdb->prepared[0]['query']
 		);
 		self::assertSame( array( 'wp_merchboard_creators', 42 ), $this->wpdb->prepared[0]['args'] );

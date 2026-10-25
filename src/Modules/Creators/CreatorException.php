@@ -26,6 +26,7 @@ final class CreatorException extends DomainException {
 	public const INVALID_STATUS       = 'invalid_status';
 	public const USER_NOT_FOUND       = 'user_not_found';
 	public const USER_ALREADY_LINKED  = 'user_already_linked';
+	public const DELETED              = 'creator_deleted';
 
 	/**
 	 * Constructor.

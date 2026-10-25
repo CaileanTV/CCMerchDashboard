@@ -27,4 +27,10 @@ enum ProtectedMetaPurpose: string {
 	 * step; runs without a current user).
 	 */
 	case CategoryReconciliation = 'category_reconciliation';
+
+	/**
+	 * Deleting a creator (phase 27, step 27.3, ADR-076): its products lose the
+	 * link, whatever its origin.
+	 */
+	case CreatorDeletion = 'creator_deletion';
 }

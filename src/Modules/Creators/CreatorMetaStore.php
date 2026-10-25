@@ -120,6 +120,30 @@ final class CreatorMetaStore {
 	}
 
 	/**
+	 * Deletes every whitelisted value of a creator (its deletion, phase 27,
+	 * ADR-076).
+	 *
+	 * @param int $creator_id Creator id.
+	 * @return int How many values were deleted.
+	 * @throws DatabaseException When a value is still there afterwards.
+	 */
+	public function delete_all( int $creator_id ): int {
+		$deleted = 0;
+
+		foreach ( self::KEYS as $key ) {
+			if ( null === $this->get( $creator_id, $key ) ) {
+				continue;
+			}
+
+			delete_metadata( self::META_TYPE, $creator_id, $key );
+			$this->assert_stored( $creator_id, $key, null );
+			++$deleted;
+		}
+
+		return $deleted;
+	}
+
+	/**
 	 * Verifies a write by reading it back from the database (update_metadata()
 	 * returns false both for failures and for unchanged values).
 	 *

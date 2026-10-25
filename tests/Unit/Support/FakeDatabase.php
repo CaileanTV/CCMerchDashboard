@@ -172,12 +172,10 @@ final class FakeDatabase extends wpdb {
 			return (string) count( $this->audit_filter( $sql, $args ) );
 		}
 
-		if ( 'SELECT COUNT(*) FROM %i' === $sql ) {
-			return (string) count( $this->data[ (string) $args[0] ] ?? array() );
-		}
+		if ( 1 === preg_match( '/^SELECT COUNT\(\*\) FROM %i( WHERE 1=1| WHERE deleted_at IS (NOT )?NULL)?( AND status = %s| WHERE status = %s)?$/', $sql, $m ) ) {
+			$rows = $this->deletion_filter( $this->filter( (string) $args[0] ), $m[1] ?? '' );
 
-		if ( 'SELECT COUNT(*) FROM %i WHERE status = %s' === $sql ) {
-			return (string) count( $this->filter( (string) $args[0], 'status', (string) $args[1] ) );
+			return (string) count( '' === ( $m[3] ?? '' ) ? $rows : array_filter( $rows, static fn( array $row ): bool => (string) $args[1] === $row['status'] ) );
 		}
 
 		throw new RuntimeException( 'Unsupported get_var: ' . $sql );
@@ -200,10 +198,10 @@ final class FakeDatabase extends wpdb {
 			return array_slice( $rows, (int) $offset, (int) $limit );
 		}
 
-		if ( 'SELECT status, COUNT(*) AS total FROM %i GROUP BY status' === $sql ) {
+		if ( 'SELECT status, COUNT(*) AS total FROM %i WHERE deleted_at IS NULL GROUP BY status' === $sql ) {
 			$totals = array();
 
-			foreach ( $this->filter( (string) $args[0] ) as $row ) {
+			foreach ( $this->deletion_filter( $this->filter( (string) $args[0] ), ' WHERE deleted_at IS NULL' ) as $row ) {
 				$totals[ (string) $row['status'] ] = ( $totals[ (string) $row['status'] ] ?? 0 ) + 1;
 			}
 
@@ -248,12 +246,12 @@ final class FakeDatabase extends wpdb {
 			return array_slice( $rows, 0, (int) $args[2] );
 		}
 
-		if ( 1 === preg_match( '/FROM %i (WHERE status = %s )?ORDER BY %i (ASC|DESC), id (ASC|DESC) LIMIT %d OFFSET %d$/', $sql, $m ) ) {
-			$filtered                    = '' !== $m[1];
+		if ( 1 === preg_match( '/FROM %i( WHERE 1=1| WHERE deleted_at IS (?:NOT )?NULL)?( AND status = %s| WHERE status = %s)? ORDER BY %i (ASC|DESC), id (ASC|DESC) LIMIT %d OFFSET %d$/', $sql, $m ) ) {
+			$filtered                    = '' !== $m[2];
 			$table                       = (string) $args[0];
-			$rows                        = $filtered ? $this->filter( $table, 'status', (string) $args[1] ) : $this->filter( $table );
+			$rows                        = $this->deletion_filter( $filtered ? $this->filter( $table, 'status', (string) $args[1] ) : $this->filter( $table ), $m[1] );
 			[ $column, $limit, $offset ] = array_slice( $args, $filtered ? 2 : 1 );
-			$direction                   = 'ASC' === $m[2] ? 1 : -1;
+			$direction                   = 'ASC' === $m[3] ? 1 : -1;
 
 			usort(
 				$rows,
@@ -264,6 +262,22 @@ final class FakeDatabase extends wpdb {
 		}
 
 		throw new RuntimeException( 'Unsupported get_results: ' . $sql );
+	}
+
+	/**
+	 * Rows that pass a creators list's deletion filter (ADR-076); rows without
+	 * the column count as current.
+	 *
+	 * @param list<array<string, string|null>> $rows   Rows.
+	 * @param string                           $filter The filter part of the query ('' or ' WHERE 1=1': all).
+	 * @return list<array<string, string|null>>
+	 */
+	private function deletion_filter( array $rows, string $filter ): array {
+		return match ( $filter ) {
+			' WHERE deleted_at IS NULL'     => array_values( array_filter( $rows, static fn( array $row ): bool => null === ( $row['deleted_at'] ?? null ) ) ),
+			' WHERE deleted_at IS NOT NULL' => array_values( array_filter( $rows, static fn( array $row ): bool => null !== ( $row['deleted_at'] ?? null ) ) ),
+			default                         => $rows,
+		};
 	}
 
 	/**

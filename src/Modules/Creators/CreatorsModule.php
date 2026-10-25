@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators;
 
+use DateTimeImmutable;
+use DateTimeZone;
+use MerchBoard\Modules\Creators\Admin\CreatorDeletionActions;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
@@ -88,12 +91,29 @@ final class CreatorsModule implements Module {
 			static fn( Container $c ): UserProfileSection => new UserProfileSection( $c->get( CreatorRepository::class ) )
 		);
 
+		// Deleting a creator (phase 27, step 27.3, ADR-076); modules add their cleaners.
+		$container->set(
+			CreatorDeletion::class,
+			static fn( Container $c ): CreatorDeletion => new CreatorDeletion(
+				$c->get( CreatorRepository::class ),
+				$c->get( CreatorService::class ),
+				$c->get( CreatorMetaStore::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( wpdb::class ),
+				array_values( array_filter( (array) apply_filters( 'merchboard_creator_data_cleaners', array() ), static fn( mixed $cleaner ): bool => $cleaner instanceof CreatorDataCleaner ) ),
+				static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
+			)
+		);
+		$container->set( CreatorDeletionActions::class, static fn( Container $c ): CreatorDeletionActions => new CreatorDeletionActions( $c->get( CreatorDeletion::class ), $c->get( Logger::class ) ) );
+
 		$container->set(
 			CreatorsAdminPage::class,
 			static fn( Container $c ): CreatorsAdminPage => new CreatorsAdminPage(
 				$c->get( CreatorRepository::class ),
 				$c->get( UserAccounts::class ),
-				$c->get( TransactionSupport::class )
+				$c->get( TransactionSupport::class ),
+				$c->get( CreatorDeletion::class )
 			)
 		);
 
@@ -108,6 +128,7 @@ final class CreatorsModule implements Module {
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( CreatorAdminActions::class )->register();
+				$container->get( CreatorDeletionActions::class )->register();
 				$container->get( CreatorUserSearch::class )->register();
 				$container->get( UserProfileSection::class )->register();
 			}

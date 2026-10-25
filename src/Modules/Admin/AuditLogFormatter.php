@@ -168,6 +168,7 @@ final class AuditLogFormatter {
 			AuditAction::VendorRolesRemoved    => __( 'Product Vendors roles removed from the creator\'s user', 'merchboard' ),
 			AuditAction::CreatorImpersonationStarted => __( 'Administrator started viewing as the creator', 'merchboard' ),
 			AuditAction::CreatorImpersonationEnded => __( 'Administrator stopped viewing as the creator', 'merchboard' ),
+			AuditAction::CreatorDeleted        => __( 'Creator deleted', 'merchboard' ),
 		};
 	}
 
@@ -318,6 +319,13 @@ final class AuditLogFormatter {
 			case 'impersonating':
 				/* translators: %s: creator name or "#id". */
 				return self::text( __( 'Done by an administrator viewing as %s', 'merchboard' ), self::creator( $value, $labels ) );
+			case 'deletion':
+				return 'anonymized' === $value
+					? esc_html__( 'Kept anonymized for its sales, payouts and settlement documents', 'merchboard' )
+					: esc_html__( 'Deleted completely (no sales, payouts or settlement documents)', 'merchboard' );
+			case 'former_name':
+				/* translators: %s: the creator's former name. */
+				return self::text( __( 'Former name: %s', 'merchboard' ), self::scalar( $value ) );
 			case 'minutes':
 				/* translators: %d: minutes. */
 				return esc_html( sprintf( __( 'Session length: %d minutes', 'merchboard' ), is_int( $value ) ? $value : 0 ) );

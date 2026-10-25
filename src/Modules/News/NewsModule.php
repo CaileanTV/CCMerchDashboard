@@ -47,6 +47,15 @@ final class NewsModule implements Module {
 		$container->set( NewsService::class, static fn( Container $c ): NewsService => new NewsService( $c->get( NewsRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( NewsAdminPage::class, static fn( Container $c ): NewsAdminPage => new NewsAdminPage( $c->get( NewsRepository::class ), $c->get( CreatorRepository::class ) ) );
 		$container->set( NewsAdminActions::class, static fn( Container $c ): NewsAdminActions => new NewsAdminActions( $c->get( NewsService::class ), $c->get( Logger::class ) ) );
+		// Deleting a creator (phase 27, step 27.3, ADR-076): its news reads.
+		$container->set( NewsCreatorCleanup::class, static fn( Container $c ): NewsCreatorCleanup => new NewsCreatorCleanup( $c->get( wpdb::class ) ) );
+		add_filter(
+			'merchboard_creator_data_cleaners',
+			static function ( mixed $cleaners ) use ( $container ): array {
+				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( $container->get( NewsCreatorCleanup::class ) ) );
+			},
+			30
+		);
 		$container->set( MeNewsController::class, static fn( Container $c ): MeNewsController => new MeNewsController( $c->get( CreatorContext::class ), $c->get( NewsRepository::class ), $c->get( Logger::class ) ) );
 
 		( new NewsDashboardSection() )->register();

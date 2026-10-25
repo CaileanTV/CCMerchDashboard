@@ -36,6 +36,11 @@ defined( 'ABSPATH' ) || exit;
 final class CreatorsListTable extends WP_List_Table {
 
 	/**
+	 * The view of deleted creators (ADR-076).
+	 */
+	public const DELETED_VIEW = 'deleted';
+
+	/**
 	 * Items per page.
 	 */
 	private const PER_PAGE = 20;
@@ -144,6 +149,19 @@ final class CreatorsListTable extends WP_List_Table {
 			);
 		}
 
+		// Deleted creators (ADR-076) are only history: hidden unless asked for.
+		$deleted = $this->creators->deleted_count();
+
+		if ( $deleted > 0 || $this->deleted_filter() ) {
+			$views[ self::DELETED_VIEW ] = sprintf(
+				'<a href="%1$s"%2$s>%3$s</a>',
+				esc_url( CreatorsAdminPage::url( array( 'status' => self::DELETED_VIEW ) ) ),
+				$this->deleted_filter() ? ' class="current" aria-current="page"' : '',
+				/* translators: %d: number of deleted creators. */
+				esc_html( sprintf( __( 'Deleted (%d)', 'merchboard' ), $deleted ) )
+			);
+		}
+
 		return $views;
 	}
 
@@ -157,7 +175,7 @@ final class CreatorsListTable extends WP_List_Table {
 		$order   = isset( $_GET['order'] ) ? sanitize_key( wp_unslash( $_GET['order'] ) ) : 'desc';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		$page = $this->creators->paginate( $this->get_pagenum(), self::PER_PAGE, $this->status_filter(), $orderby, $order );
+		$page = $this->creators->paginate( $this->get_pagenum(), self::PER_PAGE, $this->status_filter(), $orderby, $order, $this->deleted_filter() );
 
 		$this->items           = $page['items'];
 		$this->user_labels     = $this->users->labels(
@@ -193,9 +211,9 @@ final class CreatorsListTable extends WP_List_Table {
 	 * @param Creator $item Creator.
 	 */
 	protected function column_display_name( $item ): string {
-		$edit    = CreatorsAdminPage::edit_url( $item->id );
-		$target  = CreatorStatus::Active === $item->status ? CreatorStatus::Inactive : CreatorStatus::Active;
-		$toggle  = wp_nonce_url(
+		$edit   = CreatorsAdminPage::edit_url( $item->id );
+		$target = CreatorStatus::Active === $item->status ? CreatorStatus::Inactive : CreatorStatus::Active;
+		$toggle = wp_nonce_url(
 			add_query_arg(
 				array(
 					'action'  => CreatorAdminActions::STATUS_ACTION,
@@ -206,6 +224,10 @@ final class CreatorsListTable extends WP_List_Table {
 			),
 			CreatorAdminActions::status_nonce_action( $item->id )
 		);
+		if ( $item->is_deleted() ) {
+			return sprintf( '<strong><a class="row-title" href="%1$s">%2$s</a></strong>', esc_url( $edit ), esc_html( $item->display_name ) );
+		}
+
 		$actions = array(
 			'edit'   => sprintf( '<a href="%1$s">%2$s</a>', esc_url( $edit ), esc_html__( 'Edit', 'merchboard' ) ),
 			'status' => sprintf(
@@ -216,6 +238,8 @@ final class CreatorsListTable extends WP_List_Table {
 		);
 
 		// "View as creator" (step 27.2, ADR-075): only an active creator with a user.
+		$actions['delete'] = sprintf( '<a class="submitdelete" href="%1$s">%2$s</a>', esc_url( CreatorDeletionActions::confirm_url( $item->id ) ), esc_html__( 'Delete', 'merchboard' ) );
+
 		if ( CreatorStatus::Active === $item->status && null !== $item->user_id ) {
 			$actions['impersonate'] = sprintf( '<a href="%1$s">%2$s</a>', esc_url( ImpersonationActions::start_url( $item->id ) ), esc_html__( 'View as creator', 'merchboard' ) );
 		}
@@ -294,6 +318,14 @@ final class CreatorsListTable extends WP_List_Table {
 
 	/**
 	 * Status from the view links, or null for all.
+	 */
+	private function deleted_filter(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
+		return isset( $_GET['status'] ) && self::DELETED_VIEW === sanitize_key( wp_unslash( $_GET['status'] ) );
+	}
+
+	/**
+	 * The status filter (none for the deleted view).
 	 */
 	private function status_filter(): ?CreatorStatus {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter, whitelisted via the enum.

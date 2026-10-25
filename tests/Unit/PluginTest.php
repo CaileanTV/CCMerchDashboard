@@ -333,7 +333,7 @@ final class PluginTest extends TestCase {
 
 		$this->plugin()->boot();
 
-		self::assertSame( 30, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 31, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

@@ -341,6 +341,39 @@ final class ProductCreatorLink {
 	}
 
 	/**
+	 * Removes a product's link to a creator that is being deleted (phase 27,
+	 * step 27.3, ADR-076), manual or category-managed. Only while the link
+	 * points at that creator; anything else is left unchanged. Audited as
+	 * `product_creator_unlinked` with `reason: creator_deleted`, in one
+	 * transaction with the write (ProtectedMetaWrite::for_creator_deletion()).
+	 * The caller (CreatorDeletion) authorizes the deletion.
+	 *
+	 * @param int $product_id Parent product id.
+	 * @param int $creator_id The creator being deleted.
+	 * @return bool Whether the link was removed.
+	 * @throws DatabaseException When the change cannot be stored.
+	 */
+	public function release_for_deleted_creator( int $product_id, int $creator_id ): bool {
+		$product = $product_id > 0 ? $this->products->find( $product_id ) : null;
+
+		if ( null === $product || $creator_id !== $product->creator_id() ) {
+			return false;
+		}
+
+		$source = $product->is_category_managed() ? ProductLinkSource::Category : ProductLinkSource::Admin;
+
+		$this->write(
+			$product,
+			null,
+			$source,
+			ProtectedMetaWrite::for_creator_deletion( $product->id ),
+			fn(): array => array( $this->record_unlinked( $product, $creator_id, ProductLinkSource::Admin, array( 'reason' => 'creator_deleted' ) ) )
+		);
+
+		return true;
+	}
+
+	/**
 	 * Loads a product that may carry a link and authorizes the current user
 	 * for it.
 	 *

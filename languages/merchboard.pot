@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-25T13:01:33+00:00\n"
+"POT-Creation-Date: 2026-10-25T13:58:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -101,7 +101,8 @@ msgstr ""
 
 #: src/Modules/Access/ImpersonationActions.php:112
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:137
+#: src/Modules/Creators/Admin/CreatorDeletionActions.php:96
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:142
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
@@ -118,6 +119,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
+#: src/Modules/Creators/Admin/CreatorDeletionActions.php:103
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -548,379 +550,397 @@ msgstr ""
 msgid "Administrator stopped viewing as the creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:261
+#: src/Modules/Admin/AuditLogFormatter.php:171
+msgid "Creator deleted"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:262
 msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:263
+#: src/Modules/Admin/AuditLogFormatter.php:264
 #, php-format
 msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:266
+#: src/Modules/Admin/AuditLogFormatter.php:267
 #, php-format
 msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:269
+#: src/Modules/Admin/AuditLogFormatter.php:270
 #, php-format
 msgid "Status: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:272
+#: src/Modules/Admin/AuditLogFormatter.php:273
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:275
+#: src/Modules/Admin/AuditLogFormatter.php:276
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:278
+#: src/Modules/Admin/AuditLogFormatter.php:279
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:280
+#: src/Modules/Admin/AuditLogFormatter.php:281
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:283
+#: src/Modules/Admin/AuditLogFormatter.php:284
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:286
+#: src/Modules/Admin/AuditLogFormatter.php:287
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:287
+#: src/Modules/Admin/AuditLogFormatter.php:288
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:288
+#: src/Modules/Admin/AuditLogFormatter.php:289
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:289
+#: src/Modules/Admin/AuditLogFormatter.php:290
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:291
+#: src/Modules/Admin/AuditLogFormatter.php:292
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:296
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:299
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:300
+#: src/Modules/Admin/AuditLogFormatter.php:301
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:300
+#: src/Modules/Admin/AuditLogFormatter.php:301
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:303
+#: src/Modules/Admin/AuditLogFormatter.php:304
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:306
+#: src/Modules/Admin/AuditLogFormatter.php:307
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:309
+#: src/Modules/Admin/AuditLogFormatter.php:310
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:312
+#: src/Modules/Admin/AuditLogFormatter.php:313
 msgid "Previous creator: none"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:314
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:317
+#: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:320
+#: src/Modules/Admin/AuditLogFormatter.php:321
 #, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr ""
 
+#: src/Modules/Admin/AuditLogFormatter.php:324
+msgid "Kept anonymized for its sales, payouts and settlement documents"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:325
+msgid "Deleted completely (no sales, payouts or settlement documents)"
+msgstr ""
+
+#. translators: %s: the creator's former name.
+#: src/Modules/Admin/AuditLogFormatter.php:328
+#, php-format
+msgid "Former name: %s"
+msgstr ""
+
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:323
+#: src/Modules/Admin/AuditLogFormatter.php:331
 #, php-format
 msgid "Session length: %d minutes"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:326
+#: src/Modules/Admin/AuditLogFormatter.php:334
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:329
+#: src/Modules/Admin/AuditLogFormatter.php:337
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:332
+#: src/Modules/Admin/AuditLogFormatter.php:340
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:337
+#: src/Modules/Admin/AuditLogFormatter.php:345
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:340
+#: src/Modules/Admin/AuditLogFormatter.php:348
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:343
+#: src/Modules/Admin/AuditLogFormatter.php:351
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:345
+#: src/Modules/Admin/AuditLogFormatter.php:353
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:345
+#: src/Modules/Admin/AuditLogFormatter.php:353
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:356
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:351
+#: src/Modules/Admin/AuditLogFormatter.php:359
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:354
+#: src/Modules/Admin/AuditLogFormatter.php:362
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:355
+#: src/Modules/Admin/AuditLogFormatter.php:363
 msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:358
+#: src/Modules/Admin/AuditLogFormatter.php:366
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:361
+#: src/Modules/Admin/AuditLogFormatter.php:369
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:364
+#: src/Modules/Admin/AuditLogFormatter.php:372
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:367
+#: src/Modules/Admin/AuditLogFormatter.php:375
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:370
+#: src/Modules/Admin/AuditLogFormatter.php:378
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:411
+#: src/Modules/Admin/AuditLogFormatter.php:419
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:413
+#: src/Modules/Admin/AuditLogFormatter.php:421
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:415
+#: src/Modules/Admin/AuditLogFormatter.php:423
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:428
+#: src/Modules/Admin/AuditLogFormatter.php:436
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:429
+#: src/Modules/Admin/AuditLogFormatter.php:437
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:430
+#: src/Modules/Admin/AuditLogFormatter.php:438
 #: build/dashboard.js:52
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:431
+#: src/Modules/Admin/AuditLogFormatter.php:439
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:432
+#: src/Modules/Admin/AuditLogFormatter.php:440
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:433
+#: src/Modules/Admin/AuditLogFormatter.php:441
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:434
+#: src/Modules/Admin/AuditLogFormatter.php:442
 msgid "Failed"
 msgstr ""
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:444
-#: src/Modules/Admin/AuditLogFormatter.php:470
-#: src/Modules/Admin/AuditLogFormatter.php:529
+#: src/Modules/Admin/AuditLogFormatter.php:452
+#: src/Modules/Admin/AuditLogFormatter.php:478
+#: src/Modules/Admin/AuditLogFormatter.php:537
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:457
+#: src/Modules/Admin/AuditLogFormatter.php:465
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:58
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:458
+#: src/Modules/Admin/AuditLogFormatter.php:466
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:58
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:459
+#: src/Modules/Admin/AuditLogFormatter.php:467
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:58
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:460
+#: src/Modules/Admin/AuditLogFormatter.php:468
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:58
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:488
+#: src/Modules/Admin/AuditLogFormatter.php:496
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:512
+#: src/Modules/Admin/AuditLogFormatter.php:520
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:513
+#: src/Modules/Admin/AuditLogFormatter.php:521
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:514
+#: src/Modules/Admin/AuditLogFormatter.php:522
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:515
+#: src/Modules/Admin/AuditLogFormatter.php:523
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:516
-#: src/Modules/Admin/AuditLogFormatter.php:668
+#: src/Modules/Admin/AuditLogFormatter.php:524
+#: src/Modules/Admin/AuditLogFormatter.php:676
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:517
+#: src/Modules/Admin/AuditLogFormatter.php:525
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:518
-#: src/Modules/Admin/AuditLogFormatter.php:728
+#: src/Modules/Admin/AuditLogFormatter.php:526
+#: src/Modules/Admin/AuditLogFormatter.php:736
 #: src/Modules/Admin/OverviewPage.php:137
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:367
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:54
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:519
+#: src/Modules/Admin/AuditLogFormatter.php:527
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:548
+#: src/Modules/Admin/AuditLogFormatter.php:556
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:563
+#: src/Modules/Admin/AuditLogFormatter.php:571
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -929,7 +949,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:632
+#: src/Modules/Admin/AuditLogFormatter.php:640
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -938,121 +958,121 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:632
+#: src/Modules/Admin/AuditLogFormatter.php:640
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:642
+#: src/Modules/Admin/AuditLogFormatter.php:650
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:643
+#: src/Modules/Admin/AuditLogFormatter.php:651
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:644
+#: src/Modules/Admin/AuditLogFormatter.php:652
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:645
+#: src/Modules/Admin/AuditLogFormatter.php:653
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:646
+#: src/Modules/Admin/AuditLogFormatter.php:654
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:647
+#: src/Modules/Admin/AuditLogFormatter.php:655
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:648
+#: src/Modules/Admin/AuditLogFormatter.php:656
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:649
+#: src/Modules/Admin/AuditLogFormatter.php:657
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:650
+#: src/Modules/Admin/AuditLogFormatter.php:658
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:651
+#: src/Modules/Admin/AuditLogFormatter.php:659
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:652
+#: src/Modules/Admin/AuditLogFormatter.php:660
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:653
+#: src/Modules/Admin/AuditLogFormatter.php:661
 msgid "the administrator stopped viewing as the creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:654
+#: src/Modules/Admin/AuditLogFormatter.php:662
 msgid "the session expired"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:655
+#: src/Modules/Admin/AuditLogFormatter.php:663
 msgid "the administrator logged out"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:656
+#: src/Modules/Admin/AuditLogFormatter.php:664
 msgid "the administrator viewed another creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:669
+#: src/Modules/Admin/AuditLogFormatter.php:677
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:681
+#: src/Modules/Admin/AuditLogFormatter.php:689
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:682
+#: src/Modules/Admin/AuditLogFormatter.php:690
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:702
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:695
+#: src/Modules/Admin/AuditLogFormatter.php:703
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:696
+#: src/Modules/Admin/AuditLogFormatter.php:704
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:728
+#: src/Modules/Admin/AuditLogFormatter.php:736
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:367
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
 #: build/dashboard.js:54
 #: build/dashboard.js:55
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:747
+#: src/Modules/Admin/AuditLogFormatter.php:755
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:748
+#: src/Modules/Admin/AuditLogFormatter.php:756
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:749
+#: src/Modules/Admin/AuditLogFormatter.php:757
 msgid "social links"
 msgstr ""
 
@@ -1208,9 +1228,9 @@ msgstr ""
 #: src/Modules/Admin/OverviewPage.php:121
 #: src/Modules/Alerts/Admin/AlertApiTab.php:118
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:87
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:88
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:238
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:92
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:93
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:262
 msgid "Creators"
 msgstr ""
 
@@ -2833,7 +2853,8 @@ msgid "The longest sound must be empty or a whole number between 1 second and 60
 msgstr ""
 
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:56
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:194
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:208
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:218
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:71
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:99
@@ -2901,7 +2922,7 @@ msgid "Last 24 hours"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:179
-#: src/Modules/Creators/Admin/CreatorsListTable.php:134
+#: src/Modules/Creators/Admin/CreatorsListTable.php:139
 msgid "All"
 msgstr ""
 
@@ -3291,115 +3312,226 @@ msgstr ""
 msgid "The chatbot settings are invalid."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:152
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:157
 msgid "Creator changes are disabled: the Merch Dashboard database tables use a storage engine without transaction support (for example MyISAM), so a change and its audit record could not be saved together. Convert the tables to InnoDB. Details are in the log."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:161
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:166
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:175
 msgid "Creator not found"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:162
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:167
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:176
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:133
 msgid "Back to creators"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:189
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:203
 msgid "Creator created."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:190
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:204
 msgid "Creator updated."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:191
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:205
 msgid "Creator activated."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:192
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:206
 msgid "Creator deactivated."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:193
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:207
 #: src/Modules/Settings/Admin/SettingsPage.php:164
 msgid "No changes were made."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:195
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:209
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:85
 msgid "You are not allowed to manage creators."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:196
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:210
 msgid "Enter a display name of 1 to 191 characters."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:197
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:211
 msgid "Choose a valid status."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:198
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:212
 msgid "The selected WordPress user does not exist."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:199
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:213
 msgid "The selected WordPress user is already linked to another creator."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:200
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:214
+msgid "The creator is deleted and can no longer be changed."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:215
+msgid "The creator was deleted completely."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:216
+msgid "The creator was deleted. Its sales, payouts and settlement documents are kept under an anonymous name."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:217
+msgid "You are not allowed to delete this creator."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:219
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:290
+msgid "The creator is already deleted."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:220
+msgid "Nothing was deleted: type the creator's name exactly as shown."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:221
+msgid "Nothing was deleted: the creator has a payout waiting. Complete or reject it first."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:222
+msgid "Nothing was deleted: products are linked to the creator, and WooCommerce must be active to remove the links."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:223
+msgid "Another creator is being deleted. Try again in a moment."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:224
 msgid "You are not allowed to view as a creator."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:201
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:225
 msgid "You can only view as an active creator with a WordPress user."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:202
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:226
 msgid "You no longer view as the creator."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:203
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:227
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:298
 msgid "A technical error occurred. Please check the creator and try again later."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:239
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:264
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:263
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:352
 msgid "Add New Creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:264
+#. translators: %s: creator name.
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:286
+#, php-format
+msgid "Delete creator: %s"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:287
+msgid "← Back to the creator"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:304
+msgid "The creator has no sales, payouts or settlement documents and is deleted completely."
+msgstr ""
+
+#. translators: %d: creator id.
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:307
+#, php-format
+msgid "The creator has sales, payouts or settlement documents. They are kept unchanged, and the creator is kept as \"Deleted creator #%d\": its name, profile, payment details and WordPress user are removed. Issued settlement documents keep the name they were issued with."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:310
+msgid "Removed in both cases:"
+msgstr ""
+
+#. translators: %d: number of products.
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:312
+#, php-format
+msgid "the link of %d product and the product category, so new orders are no longer the creator's;"
+msgid_plural "the links of %d products and the product category, so new orders are no longer the creator's;"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:313
+msgid "the active discount code and the product markups;"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:314
+msgid "alerts: overlay, history, sounds and images, chatbot connections, API keys and webhooks;"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:315
+msgid "the creator role of the WordPress user (the user itself is never deleted)."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:316
+msgid "The audit log keeps its records. This cannot be undone."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:319
+msgid "The creator has a payout waiting. Complete or reject it before the creator can be deleted."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:325
+msgid "Products are linked to the creator, and WooCommerce must be active to remove the links. Activate WooCommerce first."
+msgstr ""
+
+#. translators: %s: creator name.
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:335
+#, php-format
+msgid "Type the creator's name to confirm: %s"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:337
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:421
+msgid "Delete creator"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:352
 msgid "Edit Creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:265
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:353
 msgid "← Back to creators"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:269
-#: src/Modules/Creators/Admin/CreatorsListTable.php:220
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:357
+msgid "This creator is deleted. It is kept under an anonymous name only because of its sales, payouts and settlement documents, and can no longer be changed."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:364
+#: src/Modules/Creators/Admin/CreatorsListTable.php:244
 msgid "View as creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:270
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:365
 msgid "Opens the creator dashboard as this creator sees it, for one hour. What you change there is changed for the creator and logged with your name. Payouts, gift card codes, connecting chatbots and new secrets stay the creator's own."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:274
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:369
 msgid "Archived when Merch Dashboard was deleted."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:275
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:370
 msgid "This creator is kept as historical documentation only. Reactivating it or linking a WordPress user is not supported: the sales ledger was rebuilt from the products' current creator links, so orders can be attributed to another creator than in its kept settlement documents, and its balance, payouts and documents would not match."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:285
-#: src/Modules/Creators/Admin/CreatorsListTable.php:76
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:380
+#: src/Modules/Creators/Admin/CreatorsListTable.php:81
 #: build/dashboard.js:71
 msgid "Display name"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:289
-#: src/Modules/Creators/Admin/CreatorsListTable.php:78
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:384
+#: src/Modules/Creators/Admin/CreatorsListTable.php:83
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:334
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
@@ -3416,79 +3548,97 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:295
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:390
 msgid "Inactive creators keep their data but will not get dashboard access."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:298
-#: src/Modules/Creators/Admin/CreatorsListTable.php:77
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:393
+#: src/Modules/Creators/Admin/CreatorsListTable.php:82
 msgid "WordPress user"
 msgstr ""
 
 #. translators: %d: WordPress user id.
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:308
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:403
 #, php-format
 msgid "Linked to user #%d, which no longer exists. Clear the field to unlink."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:310
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:405
 msgid "Open WordPress user profile"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:313
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:408
 msgid "Type the login of the account that may use this creator (suggestions appear after two characters), or leave the field empty for no WordPress user. Linking adds the \"Merch Dashboard Creator\" role; unlinking removes it. Neither deletes the user."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:317
-#: src/Modules/Creators/Admin/CreatorsListTable.php:79
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:412
+#: src/Modules/Creators/Admin/CreatorsListTable.php:84
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:210
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:277
 msgid "Created"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:318
-#: src/Modules/Creators/Admin/CreatorsListTable.php:80
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:413
+#: src/Modules/Creators/Admin/CreatorsListTable.php:85
 msgid "Last updated"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:322
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:417
 msgid "Create creator"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:322
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:417
 msgid "Save changes"
 msgstr ""
 
 #. translators: %s: status, e.g. "Inactive".
-#: src/Modules/Creators/Admin/CreatorsAdminPage.php:380
+#: src/Modules/Creators/Admin/CreatorsAdminPage.php:479
 #, php-format
 msgid "%s (archived on uninstall)"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:187
+#. translators: %d: number of deleted creators.
+#: src/Modules/Creators/Admin/CreatorsListTable.php:161
+#, php-format
+msgid "Deleted (%d)"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:205
 msgid "No creators found."
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:210
+#: src/Modules/Creators/Admin/CreatorsListTable.php:232
 #: src/Modules/News/Admin/NewsAdminPage.php:322
 msgid "Edit"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:214
+#: src/Modules/Creators/Admin/CreatorsListTable.php:236
 msgid "Activate"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:214
+#: src/Modules/Creators/Admin/CreatorsListTable.php:236
 msgid "Deactivate"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CreatorsListTable.php:234
+#: src/Modules/Creators/Admin/CreatorsListTable.php:241
+#: build/alerts-global-admin.js:12
+#: build/alerts-global-admin.js:18
+#: build/alerts-presets-admin.js:12
+#: build/alerts-presets-admin.js:18
+#: build/alerts-presets-admin.js:19
+#: build/dashboard.js:38
+#: build/dashboard.js:44
+#: build/dashboard.js:50
+msgid "Delete"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CreatorsListTable.php:258
 msgid "No WordPress user"
 msgstr ""
 
 #. translators: %d: WordPress user id.
-#: src/Modules/Creators/Admin/CreatorsListTable.php:239
+#: src/Modules/Creators/Admin/CreatorsListTable.php:263
 #, php-format
 msgid "Unknown user #%d"
 msgstr ""
@@ -3505,6 +3655,12 @@ msgstr ""
 #: src/Modules/Creators/Admin/UserProfileSection.php:71
 #, php-format
 msgid "Linked to %1$s (%2$s)."
+msgstr ""
+
+#. translators: %d: creator id.
+#: src/Modules/Creators/CreatorDeletion.php:207
+#, php-format
+msgid "Deleted creator #%d"
 msgstr ""
 
 #: src/Modules/Dashboard/DashboardSections.php:63
@@ -7707,17 +7863,6 @@ msgstr ""
 #: build/dashboard.js:38
 #, js-format
 msgid "Delete %s"
-msgstr ""
-
-#: build/alerts-global-admin.js:12
-#: build/alerts-global-admin.js:18
-#: build/alerts-presets-admin.js:12
-#: build/alerts-presets-admin.js:18
-#: build/alerts-presets-admin.js:19
-#: build/dashboard.js:38
-#: build/dashboard.js:44
-#: build/dashboard.js:50
-msgid "Delete"
 msgstr ""
 
 #: build/alerts-global-admin.js:12

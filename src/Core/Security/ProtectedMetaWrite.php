@@ -62,6 +62,15 @@ final class ProtectedMetaWrite {
 	}
 
 	/**
+	 * Deleting a creator (ADR-076): the product's link to it is removed.
+	 *
+	 * @param int $product_id Parent product id.
+	 */
+	public static function for_creator_deletion( int $product_id ): self {
+		return new self( ProtectedMetaPurpose::CreatorDeletion, $product_id );
+	}
+
+	/**
 	 * Whether this write covers meta of the given post.
 	 *
 	 * @param int $post_id Post id the meta belongs to.

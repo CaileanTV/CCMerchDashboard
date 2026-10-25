@@ -74,7 +74,7 @@ final class CreatorRepository {
 		// Local $wpdb so WPCS can verify the query is prepared.
 		$wpdb = $this->wpdb;
 		$row  = $wpdb->get_row(
-			$wpdb->prepare( 'SELECT id, user_id, display_name, status, created_at, updated_at FROM %i WHERE id = %d', $this->table(), $id ),
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $this->table(), $id ),
 			ARRAY_A
 		);
 
@@ -93,7 +93,7 @@ final class CreatorRepository {
 
 		$wpdb = $this->wpdb;
 		$row  = $wpdb->get_row(
-			$wpdb->prepare( 'SELECT id, user_id, display_name, status, created_at, updated_at FROM %i WHERE user_id = %d', $this->table(), $user_id ),
+			$wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d', $this->table(), $user_id ),
 			ARRAY_A
 		);
 
@@ -251,7 +251,7 @@ final class CreatorRepository {
 		$page     = 1;
 
 		do {
-			$items    = $this->paginate( $page, self::MAX_PER_PAGE, null, 'display_name', 'asc' )['items'];
+			$items    = $this->paginate( $page, self::MAX_PER_PAGE, null, 'display_name', 'asc', null )['items'];
 			$creators = array_merge( $creators, $items );
 			$full     = self::MAX_PER_PAGE === count( $items );
 			++$page;
@@ -268,10 +268,11 @@ final class CreatorRepository {
 	 * @param CreatorStatus|null $status   Optional status filter.
 	 * @param string             $orderby  Column; anything outside the whitelist falls back to created_at.
 	 * @param string             $order    'asc' or 'desc' (anything else: desc).
+	 * @param bool|null          $deleted  false: current creators (default); true: deleted ones (ADR-076); null: all.
 	 * @return array{items: list<Creator>, total: int}
 	 * @throws DatabaseException When a stored row is invalid.
 	 */
-	public function paginate( int $page, int $per_page, ?CreatorStatus $status = null, string $orderby = 'created_at', string $order = 'desc' ): array {
+	public function paginate( int $page, int $per_page, ?CreatorStatus $status = null, string $orderby = 'created_at', string $order = 'desc', ?bool $deleted = false ): array {
 		$page     = max( 1, $page );
 		$per_page = max( 1, min( self::MAX_PER_PAGE, $per_page ) );
 		$orderby  = in_array( $orderby, self::SORTABLE_COLUMNS, true ) ? $orderby : 'created_at';
@@ -283,11 +284,18 @@ final class CreatorRepository {
 		// The column goes through %i and is whitelisted above.
 		$direction = 'asc' === strtolower( $order ) ? 'ASC' : 'DESC';
 
+		// The deletion filter is one of three literals; the status goes through %s.
+		$where = match ( $deleted ) {
+			false   => 'WHERE deleted_at IS NULL',
+			true    => 'WHERE deleted_at IS NOT NULL',
+			default => 'WHERE 1=1',
+		};
+
 		if ( null === $status ) {
-			$total = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
+			$total = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i {$where}", $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is a literal.
 			$rows  = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT id, user_id, display_name, status, created_at, updated_at FROM %i ORDER BY %i {$direction}, id {$direction} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $direction is the literal ASC or DESC.
+					"SELECT * FROM %i {$where} ORDER BY %i {$direction}, id {$direction} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where and $direction are literals.
 					$table,
 					$orderby,
 					$per_page,
@@ -296,10 +304,10 @@ final class CreatorRepository {
 				ARRAY_A
 			);
 		} else {
-			$total = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status = %s', $table, $status->value ) );
+			$total = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i {$where} AND status = %s", $table, $status->value ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is a literal.
 			$rows  = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT id, user_id, display_name, status, created_at, updated_at FROM %i WHERE status = %s ORDER BY %i {$direction}, id {$direction} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $direction is the literal ASC or DESC.
+					"SELECT * FROM %i {$where} AND status = %s ORDER BY %i {$direction}, id {$direction} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where and $direction are literals.
 					$table,
 					$status->value,
 					$orderby,
@@ -317,13 +325,14 @@ final class CreatorRepository {
 	}
 
 	/**
-	 * Number of creators per status (every status is present, 0 when none).
+	 * Number of current creators per status (every status is present, 0 when
+	 * none); deleted creators (ADR-076) are counted by deleted_count().
 	 *
 	 * @return array<string, int> Keyed by CreatorStatus value.
 	 */
 	public function status_counts(): array {
 		$wpdb   = $this->wpdb;
-		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS total FROM %i GROUP BY status', $this->table() ), ARRAY_A );
+		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS total FROM %i WHERE deleted_at IS NULL GROUP BY status', $this->table() ), ARRAY_A );
 		$counts = array_fill_keys( array_map( static fn( CreatorStatus $s ): string => $s->value, CreatorStatus::cases() ), 0 );
 
 		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
@@ -335,6 +344,53 @@ final class CreatorRepository {
 		}
 
 		return $counts;
+	}
+
+	/**
+	 * Number of deleted creators (ADR-076).
+	 */
+	public function deleted_count(): int {
+		$wpdb  = $this->wpdb;
+		$total = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE deleted_at IS NOT NULL', $this->table() ) );
+
+		return is_numeric( $total ) ? (int) $total : 0;
+	}
+
+	/**
+	 * Removes a creator row for good (ADR-076: only a creator without
+	 * financial history; CreatorDeletion decides).
+	 *
+	 * @param int $id Creator id.
+	 * @throws InvalidArgumentException|DatabaseException On an invalid id, or when the delete fails or deletes nothing.
+	 */
+	public function delete( int $id ): void {
+		self::assert_positive_id( $id, 'Creator id' );
+
+		if ( 1 !== $this->wpdb->delete( $this->table(), array( 'id' => $id ), array( '%d' ) ) ) {
+			throw new DatabaseException( 'Could not delete creator.' );
+		}
+	}
+
+	/**
+	 * Keeps a creator with history as an anonymous, inactive, deleted row
+	 * (ADR-076): the given name, no user, the deletion time.
+	 *
+	 * @param int               $id           Creator id.
+	 * @param string            $display_name The anonymous name.
+	 * @param DateTimeImmutable $deleted_at   When it was deleted (UTC).
+	 * @throws InvalidArgumentException|DatabaseException On invalid input, or when the creator does not exist or the update fails.
+	 */
+	public function anonymize( int $id, string $display_name, DateTimeImmutable $deleted_at ): Creator {
+		return $this->update(
+			$id,
+			array(
+				'display_name' => self::normalize_display_name( $display_name ),
+				'user_id'      => null,
+				'status'       => CreatorStatus::Inactive->value,
+				'deleted_at'   => $deleted_at->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ),
+			),
+			array( '%s', '%d', '%s', '%s' )
+		);
 	}
 
 	/**
@@ -414,7 +470,9 @@ final class CreatorRepository {
 	}
 
 	/**
-	 * Builds a Creator from a database row, validating every column.
+	 * Builds a Creator from a database row, validating every column. Rows are
+	 * read with `SELECT *`, so a schema before version 31 (no `deleted_at`,
+	 * e.g. during tests of old schemas) reads as not deleted.
 	 *
 	 * @param array<string, mixed> $row Row from get_row( …, ARRAY_A ).
 	 * @throws DatabaseException When the row does not match the schema.
@@ -434,7 +492,8 @@ final class CreatorRepository {
 			$row['display_name'],
 			$status,
 			self::utc( $row['created_at'] ?? null ),
-			self::utc( $row['updated_at'] ?? null )
+			self::utc( $row['updated_at'] ?? null ),
+			null === ( $row['deleted_at'] ?? null ) ? null : self::utc( $row['deleted_at'] )
 		);
 	}
 
