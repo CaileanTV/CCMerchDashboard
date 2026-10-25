@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-25T12:50:18+00:00\n"
+"POT-Creation-Date: 2026-10-25T13:01:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -891,7 +891,7 @@ msgid "Unchanged"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:516
-#: src/Modules/Admin/AuditLogFormatter.php:667
+#: src/Modules/Admin/AuditLogFormatter.php:668
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
@@ -902,7 +902,7 @@ msgid "Ambiguous"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:518
-#: src/Modules/Admin/AuditLogFormatter.php:727
+#: src/Modules/Admin/AuditLogFormatter.php:728
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:367
 #: build/dashboard.js:54
@@ -990,47 +990,51 @@ msgid "an administrator"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:653
-msgid "the session expired"
+msgid "the administrator stopped viewing as the creator"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:654
-msgid "the administrator logged out"
+msgid "the session expired"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:655
+msgid "the administrator logged out"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:656
 msgid "the administrator viewed another creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:668
+#: src/Modules/Admin/AuditLogFormatter.php:669
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:680
+#: src/Modules/Admin/AuditLogFormatter.php:681
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:681
+#: src/Modules/Admin/AuditLogFormatter.php:682
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:693
+#: src/Modules/Admin/AuditLogFormatter.php:694
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:695
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:695
+#: src/Modules/Admin/AuditLogFormatter.php:696
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:727
+#: src/Modules/Admin/AuditLogFormatter.php:728
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:367
@@ -1040,15 +1044,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:746
+#: src/Modules/Admin/AuditLogFormatter.php:747
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:747
+#: src/Modules/Admin/AuditLogFormatter.php:748
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:748
+#: src/Modules/Admin/AuditLogFormatter.php:749
 msgid "social links"
 msgstr ""
 

@@ -650,6 +650,7 @@ final class AuditLogFormatter {
 			'ambiguous'         => __( 'categories of several creators (ambiguous)', 'merchboard' ),
 			'full_sync'         => __( 'full reconciliation', 'merchboard' ),
 			'admin'             => __( 'an administrator', 'merchboard' ),
+			'stopped'           => __( 'the administrator stopped viewing as the creator', 'merchboard' ),
 			'expired'           => __( 'the session expired', 'merchboard' ),
 			'logout'            => __( 'the administrator logged out', 'merchboard' ),
 			'switched'          => __( 'the administrator viewed another creator', 'merchboard' ),

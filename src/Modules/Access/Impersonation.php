@@ -38,7 +38,7 @@ class Impersonation {
 	/**
 	 * Why a session ended.
 	 */
-	public const ENDED_BY_ADMIN = 'admin';
+	public const ENDED_BY_ADMIN = 'stopped';
 	public const ENDED_EXPIRED  = 'expired';
 	public const ENDED_LOGOUT   = 'logout';
 	public const ENDED_SWITCHED = 'switched';

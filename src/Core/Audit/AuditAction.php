@@ -606,7 +606,7 @@ enum AuditAction: string {
 	case CreatorImpersonationStarted = 'creator_impersonation_started';
 
 	/**
-	 * The administrator's "view as creator" session ended (ADR-075). Context: reason (admin, expired, logout or switched).
+	 * The administrator's "view as creator" session ended (ADR-075). Context: reason (stopped, expired, logout or switched).
 	 */
 	case CreatorImpersonationEnded = 'creator_impersonation_ended';
 }

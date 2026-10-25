@@ -118,7 +118,7 @@ final class ImpersonationTest extends IntegrationTestCase {
 		self::assertNull( $context->current() );
 		self::assertSame( '', get_user_meta( 1, ImpersonationSession::META, true ) );
 		self::assertSame( array( 'creator_impersonation_started', 'creator_impersonation_ended' ), array_values( array_filter( array_column( $this->audit_rows(), 'action' ), static fn( string $action ): bool => str_starts_with( $action, 'creator_impersonation' ) ) ) );
-		self::assertSame( array( 'reason' => 'admin' ), json_decode( (string) $this->last_row()['context'], true ) );
+		self::assertSame( array( 'reason' => 'stopped' ), json_decode( (string) $this->last_row()['context'], true ) );
 		self::assertNull( $this->impersonation()->end( Impersonation::ENDED_BY_ADMIN ), 'Ending again does nothing.' );
 	}
 
