@@ -102,8 +102,9 @@ Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper,
 
 - **Commit-format:** [Conventional Commits](https://www.conventionalcommits.org/), kort og i imperativ på engelsk: `feat: add creator capabilities`, `fix: validate creator access`, `docs: update roadmap`, `chore: configure linting`, `refactor: …`, `test: …`, `ci: …`.
 - **Hvornår:** efter hver logisk afsluttet ændring (lille feature, doc-ændring, konfiguration eller bugfix). Bland ikke uafhængige ændringer i ét commit.
-- **Før commit:** gennemgå `git diff`, kør `npm run lint` (og tests), og tjek for secrets.
-- **Push:** efter validering. Tjek at CI er grøn.
+- **Før commit:** gennemgå `git diff`, kør `npm run lint` og `npm test`, og tjek for secrets.
+- **Integrationstests (projektejerens beslutning 2026-10-25):** for hvert trin køres kun de integrationstests, der dækker ændringen (`npm run test:integration -- --filter …`; vælg bredt: modulets tests, og migrations- og afinstallationstests ved ændringer i schema eller options). Den fulde lokale suite (ca. 44 min.) køres kun før et versions-bump (se DEVELOPMENT.md, "Release"). CI kører hele suiten mod MySQL efter hvert push.
+- **Push:** efter validering. Tjek at CI er grøn; en rød CI rettes, før næste trin.
 - **Forbudt uden eksplicit instruktion:** `git push --force`, `git reset --hard` på brugerændringer, rebase/amend af pushede commits, sletning af branches, `--no-verify` og commit af `.env`, credentials, API-nøgler, passwords eller tokens.
 - **Branching:** Indtil videre committes direkte til `main` (én udvikler og CI på hvert push). Når projektet er i produktion eller har flere udviklere, skiftes til korte feature-branches (`phase/NN-navn`, `fix/…`) med PR og grøn CI før merge. Det registreres som ADR.
 

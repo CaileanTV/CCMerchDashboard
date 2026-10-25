@@ -204,7 +204,7 @@ Workflow: [.github/workflows/release.yml](../.github/workflows/release.yml) (✅
 2. Sæt versionen tre steder: `Version:` i headeren i `merchboard.php`, `MERCHBOARD_VERSION` i samme fil og `version` i `package.json` og `package-lock.json` (`npm version X.Y.Z --no-git-tag-version`).
 3. Kør `npm run i18n`, så `Project-Id-Version` i `languages/` får den nye version.
 4. Flyt punkterne under `## [Unreleased]` i [CHANGELOG.md](CHANGELOG.md) til en ny sektion `## [X.Y.Z] - ÅÅÅÅ-MM-DD`. Workflowet bruger sektionen som release notes og fejler, hvis den mangler eller er tom.
-5. `npm run lint`, `npm test` og `npm run package` lokalt. Commit som `chore(release): vX.Y.Z`, push, og vent på grøn CI.
+5. `npm run lint`, `npm test`, den fulde integrationssuite (`npm run test:integration`; kun her køres hele suiten lokalt, projektejerens beslutning 2026-10-25) og `npm run package` lokalt. Commit som `chore(release): vX.Y.Z`, push, og vent på grøn CI.
 
 ### 2. Tag
 
@@ -258,6 +258,8 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ### Produktionsprocedure (alerts og MerchAlert)
 
+*Kørt i produktion 2026-10-25; importen er fjernet i trin 27.1. Historisk.*
+
 Rækkefølgen er låst (ADR-065): **backup → deaktivér MerchAlert → opdatér → import → slå alerts til.**
 
 1. **Backup:** filer og database via hostingen. Notér de installerede versioner af Merch Dashboard (1.0.1) og MerchAlert.
@@ -275,6 +277,8 @@ Rækkefølgen er låst (ADR-065): **backup → deaktivér MerchAlert → opdaté
 8. **Resultat:** notér version, dato, importens tal og eventuelle fund i [PROJECT-STATUS.md](PROJECT-STATUS.md).
 
 ### Produktionsprocedure (migrering fra Product Vendors, fase 26)
+
+*Kørt i produktion 2026-10-25; værktøjet er fjernet i trin 27.1. Historisk.*
 
 Efter alerts-proceduren ovenfor, eller i et separat vindue. Kræver backup og at WooCommerce Product Vendors er **aktivt**, til migreringen er færdig (den læser gennem Product Vendors' eget API, ADR-074).
 

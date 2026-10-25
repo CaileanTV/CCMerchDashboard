@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Removed
+
+- **Importværktøjerne (fase 27, trin 27.1):** fanen "Import" fra MerchAlert og undermenuen "Import fra Product Vendors" er fjernet, nu hvor de er kørt i produktion. De importerede og migrerede data, de gamle OBS-links og audit-posterne bevares. Schema-version 30 sletter værktøjernes optioner.
+
 ## [1.1.0] - 2026-10-25
 
 Alerts (fase 25: MerchAlert integreret i Merch Dashboard med overlay til OBS, lyde, chatbots til Twitch, Kick og YouTube, historik, nyheder, alert-API og webhooks) og migreringen fra WooCommerce Product Vendors (fase 26). Schema-version 29 (migration 18–29 kører ved opdatering fra 1.0.1). Fase 25 er godkendt af projektejeren 2026-10-24 og runtime-testet (71 punkter); alert-API og webhooks er endeligt godkendt 2026-10-25 efter SparkyBot-tjekket. Fase 26 er runtime-testet på Local 2026-10-25. Produktionsproceduren står i DEVELOPMENT.md ("Release 1.1.0").

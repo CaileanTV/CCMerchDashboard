@@ -654,9 +654,10 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 
 ---
 
-## Fase 27 📝 (ønsker registreret 2026-10-25; ikke planlagt i detaljer)
+## Fase 27 🔄 (plan godkendt 2026-10-25)
 
-- **27.1 Fjern importværktøjerne (projektejerens beslutning 2026-10-25):** importen fra MerchAlert og migreringen fra WooCommerce Product Vendors er kørt i produktion 2026-10-25 og skal ikke bruges mere, så de fjernes igen. Ikke implementeret; planen godkendes af projektejeren, før arbejdet starter.
+- **Plan godkendt 2026-10-25** med projektejerens valg: impersonation "se og handle"; sletning af alle creators, hvor creators med historik anonymiseres; rettigheden `merchboard_manage_creators` til begge; optionerne fra importværktøjerne slettes ved opdateringen.
+- **27.1 Fjern importværktøjerne 🔄 (implementeret 2026-10-25, testet automatisk; projektejerens beslutning 2026-10-25):** importen fra MerchAlert og migreringen fra WooCommerce Product Vendors er kørt i produktion 2026-10-25 og fjernet igen. Migration 30 (`RemoveImportOptions`) sletter deres optioner. Testen af, at importerede alerts aldrig vises i de live feeds, er flyttet til `AlertHistoryTest`.
   - **Fjernes:**
     - fanen "Import" under Alerts (MerchAlert-importen, `src/Modules/Alerts/Import/`) med tests og docs;
     - undermenuen "Import fra Product Vendors" (`src/Modules/WooCommerce/VendorImport/`: tørkørsel, migrering og rollefjernelse) med admin-post-handlere, tests, fixture og `bin/mb-26-seed-product-vendors.php` og `bin/mb-26-diagnose-product-vendors.php`.
