@@ -346,6 +346,13 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder. OBS-URL'en sendes aldrig.
 - **Sporbarhed:** start og slut auditeres; ændringer under en session har administratoren som aktør og `impersonating` i konteksten.
 
+## Sletning af creators (fase 27, trin 27.3, ADR-076)
+
+- **Adgang:** `merchboard_manage_creators`, POST med nonce bundet til creatoren og creatorens navn som skrevet bekræftelse. Afvist mens en udbetaling venter, og når produkter er koblet uden WooCommerce aktivt. Én sletning ad gangen (navngiven lås).
+- **Historik bevares:** sales-ledger, udbetalinger, afregningsbilag, momshistorik, rabatkoder, ordreudelukkelser og audit ændres aldrig; en creator med historik bevares anonymt.
+- **Produktkoblinger** fjernes kun gennem den godkendte skrivevej `ProtectedMetaWrite::for_creator_deletion()`, med audit.
+- **Brugeren** slettes aldrig; den mister kun creator-rollen.
+
 ## Migrering fra WooCommerce Product Vendors (fase 26, ADR-074)
 
 - **Adgang:** siden kræver `merchboard_manage_creators`; tørkørslen og migreringen også `merchboard_manage_payouts`. Bruger- og kategorivalget i tørkørslen er GET-parametre, der valideres til heltal; kun vendorens godkendte administratorer og eksisterende kategorier (aldrig standardkategorien) kan vælges.

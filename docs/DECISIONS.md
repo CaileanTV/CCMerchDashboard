@@ -4154,3 +4154,51 @@ Ingen schema-migration. User meta `merchboard_impersonating`; slettes ved opt-in
 
 ## Related
 ADR-007, ADR-022, ADR-023, ADR-026, ADR-073.
+
+# ADR-076: Sletning af creators
+
+## Date
+2026-10-25
+
+## Status
+Accepteret af projektejeren 2026-10-25 (plan for fase 27 godkendt). Implementeret i trin 27.3; testet automatisk, ikke runtime-verificeret.
+
+## Context
+Projektejeren vil kunne slette en creator fra listen (ROADMAP fase 27). Indtil nu kunne creators kun deaktiveres (DATABASE.md, ADMIN.md), fordi audit trail, sales-ledgeren, udbetalinger og afregningsbilag henviser til creator-ID'et, og de må ikke ændres (ADR-023, ADR-037/038, ADR-059).
+
+## Decision
+1. **Hvem (projektejerens valg 2026-10-25):** `merchboard_manage_creators`; afslutningen af en aktiv rabatkode kræver desuden `merchboard_manage_creator_pricing` (som i dag).
+2. **Alle creators kan slettes (projektejerens valg 2026-10-25):**
+   - **uden økonomisk historik** slettes creator-rækken helt;
+   - **med historik** (rækker i `merchboard_sales`, `_sales_line_pricing`, `_payouts`, `_settlement_documents`, `_payout_adjustments`, `_payout_recalculation_items`, `_order_gift_card_payouts`, `_creator_vat_history`, `_creator_codes` eller `_order_exclusions`) bevares rækken anonymt: navnet bliver "Slettet creator #{id}", status inaktiv, ingen bruger, og `deleted_at` sættes (schema-version 31). Den økonomiske historik ændres aldrig; udstedte afregningsbilag beholder deres eget snapshot med det oprindelige navn.
+3. **Afvist** (intet ændres): uden rettigheden, uden creatorens navn skrevet præcist som bekræftelse, for en allerede slettet creator, mens en udbetaling venter, når produkter er koblet til creatoren, men WooCommerce ikke er aktivt, og mens en anden sletning kører (navngiven lås).
+4. **Forløb** (`CreatorDeletion`; hvert trin idempotent, så en afbrudt sletning blot køres igen):
+   1. creatoren deaktiveres (alerts, feeds og adgang stopper);
+   2. hvert moduls `CreatorDataCleaner` (filteret `merchboard_creator_data_cleaners`) fjerner sine data: WooCommerce (kategori-mapping, alle produktkoblinger via en ny godkendt skrivevej `ProtectedMetaWrite::for_creator_deletion()`, så en ny ordre aldrig giver salg til en creator, der ikke findes, en aktiv rabatkode afsluttes, produkt-markups), Alerts (chatbot frakobles hos platformene, overlay, historik, chatbeskeder, API-nøgler, webhooks og leveringer, uploadede lyde og billeder; aldrig MerchAlerts egne filer) og News (læsninger);
+   3. WordPress-brugeren frakobles og mister creator-rollen; selve brugeren slettes aldrig; creator meta slettes;
+   4. i én transaktion med audit `creator_deleted` (`deletion`: deleted/anonymized, `former_name` og antal): rækken slettes eller anonymiseres.
+5. **En slettet creator** kan ikke redigeres, aktiveres eller ses som (ADR-075); listen skjuler den som standard med visningen "Slettede (n)".
+6. **Audit:** posterne bevares (ADR-023). Ved en helt slettet creator viser audit-loggen den som "Creator #id (not found)"; `creator_deleted` har det tidligere navn.
+
+## Alternatives considered
+- **Kun sletning uden historik og arkiv for resten:** fravalgt af projektejeren til fordel for anonymisering.
+- **Slette historikken med:** bryder bogføring og ADR-023/037/038; fravalgt.
+- **En ny status `deleted`:** ville ændre betydningen af "inaktiv" mange steder; fravalgt til fordel for kolonnen `deleted_at`.
+
+## Reason
+Projektejeren vil kunne fjerne fejloprettede og tidligere creators fra listen og fra creatorernes egne data uden at miste den økonomiske historik.
+
+## Security
+- `merchboard_manage_creators`, POST med nonce bundet til creatoren og creatorens navn som skrevet bekræftelse; afvist mens en udbetaling venter.
+- Produktkoblinger fjernes kun gennem den godkendte skrivevej (ADR-030 D6), med audit.
+- Ingen økonomisk historik og ingen audit-poster slettes.
+
+## Migration/data implications
+Schema-version 31 (`AddCreatorDeletedAt`): `merchboard_creators.deleted_at datetime NULL` med indeks. Ingen data ændres ved migrationen.
+
+## Consequences
+- Statusnoter: DATABASE.md ("Creator slettes") og ADMIN.md.
+- Admin: række-handlingen "Slet", knappen "Slet creator" og bekræftelsessiden.
+
+## Related
+ADR-020, ADR-023, ADR-030, ADR-033, ADR-037, ADR-038, ADR-059, ADR-065, ADR-068, ADR-075.

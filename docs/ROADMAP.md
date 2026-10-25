@@ -679,7 +679,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - hvordan `CreatorContext` (ADR-007) får den viste creator uden at ændre den indloggede bruger, og hvor længe en session varer;
     - hvad der skjules også under visning: bankoplysninger, API-nøgler, webhook-hemmeligheder, chatbot-tokens og OBS-URL'er;
     - om creatoren skal kunne se, at en administrator har set med.
-- **27.3 Slet en creator fra listen (projektejerens ønske 2026-10-25):** en knap til at slette en creator under Merch Dashboard → Creators. Ikke implementeret. I dag bevidst fravalgt (DATABASE.md, "Creator slettes": kun deaktivering, fordi audit og salgshistorik henviser til creator-ID'et), så det kræver en ny ADR.
+- **27.3 Slet en creator fra listen 🔄 (implementeret 2026-10-25, testet automatisk; ADR-076; projektejerens valg: alle creators kan slettes, creators med historik anonymiseres, rettigheden `merchboard_manage_creators`):** række-handlingen "Slet" og bekræftelsessiden med navnet som bekræftelse; `CreatorDeletion` med modulernes `CreatorDataCleaner` (WooCommerce, Alerts, News), schema-version 31 (`deleted_at`), visningen "Slettede (n)" og audit `creator_deleted`. Oprindeligt ønske (projektejerens ønske 2026-10-25): en knap til at slette en creator under Merch Dashboard → Creators. Ikke implementeret. I dag bevidst fravalgt (DATABASE.md, "Creator slettes": kun deaktivering, fordi audit og salgshistorik henviser til creator-ID'et), så det kræver en ny ADR.
   - **Anbefalet udgangspunkt:**
     - rigtig sletning kun af en creator uden salg i ledgeren, udbetalinger og afregningsbilag, fx en fejloprettelse eller en test;
     - creators med historik kan kun arkiveres: deaktiveret og skjult fra listen som standard, med et filter til at vise dem.

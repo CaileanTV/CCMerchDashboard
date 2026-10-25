@@ -6,6 +6,8 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Slet en creator (fase 27, trin 27.3, ADR-076):** "Slet" på Creators-listen med en bekræftelsesside (creatorens navn skrives som bekræftelse). En creator uden salg, udbetalinger eller afregningsbilag slettes helt; en creator med historik bevares anonymt som "Slettet creator #id" (schema-version 31). Produktkoblinger, kategori, rabatkode, alerts og brugerens creator-rolle fjernes; den økonomiske historik og audit-loggen bevares. Afvist mens en udbetaling venter.
+
 - **"Se som creator" (fase 27, trin 27.2, ADR-075):** en administrator med `merchboard_manage_creators` kan åbne creator-dashboardet som en aktiv creator og handle der i højst en time (knap på creatorens side og række-handling i listen). Dashboardet viser en bjælke med "Stop med at se som creatoren". Udbetalinger, gavekortkoder, chatbot-forbindelse, YouTube-vilkår og nye hemmeligheder er afvist, og OBS-URL'en vises ikke. Start, slut og alle ændringer under sessionen auditeres.
 
 ### Removed
