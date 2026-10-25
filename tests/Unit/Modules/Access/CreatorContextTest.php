@@ -51,6 +51,8 @@ final class CreatorContextTest extends TestCase {
 
 		Functions\when( 'current_time' )->justReturn( '2026-09-24 12:00:00' );
 		Functions\when( 'get_current_user_id' )->alias( fn(): int => $this->current_user_id );
+		// No "view as creator" session (ADR-075).
+		Functions\when( 'get_user_meta' )->justReturn( '' );
 		// Like WordPress: false for users that do not exist.
 		Functions\when( 'user_can' )->alias(
 			fn( int $user_id, string $capability ): bool => in_array( $capability, $this->user_caps[ $user_id ] ?? array(), true )

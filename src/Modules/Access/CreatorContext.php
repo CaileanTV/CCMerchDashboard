@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Access;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -55,9 +56,30 @@ final class CreatorContext {
 
 	/**
 	 * The active creator of the logged-in user, or null without access.
+	 * During an administrator's "view as creator" session (phase 27, step
+	 * 27.2, ADR-075) it is the viewed creator, while that creator is active.
 	 */
 	public function current(): ?Creator {
-		return $this->for_user( get_current_user_id() );
+		$impersonated = ImpersonationSession::creator_id();
+
+		return null === $impersonated ? $this->for_user( get_current_user_id() ) : $this->active( $impersonated );
+	}
+
+	/**
+	 * A creator by id while it is active, or null (fail closed).
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private function active( int $creator_id ): ?Creator {
+		try {
+			$creator = $this->creators->find( $creator_id );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Creator access check failed; access denied.', array_merge( $e->context(), array( 'creator_id' => $creator_id ) ) );
+
+			return null;
+		}
+
+		return null !== $creator && CreatorStatus::Active === $creator->status ? $creator : null;
 	}
 
 	/**

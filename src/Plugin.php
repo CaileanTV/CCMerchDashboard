@@ -23,6 +23,7 @@ use MerchBoard\Core\Logging\LazyLogger;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Logging\PluginLogger;
 use MerchBoard\Core\Module;
+use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
@@ -235,7 +236,7 @@ final class Plugin {
 
 		$this->container->set(
 			AuditTrail::class,
-			static fn( Container $c ): AuditTrail => new AuditTrail( $c->get( AuditRepository::class ) )
+			static fn( Container $c ): AuditTrail => new AuditTrail( $c->get( AuditRepository::class ), ImpersonationSession::creator_id( ... ) )
 		);
 
 		$this->container->set(

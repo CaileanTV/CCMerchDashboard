@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Dashboard;
 
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Security\ImpersonationSession;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -111,8 +112,11 @@ final class DashboardSections {
 	public function for_current_user(): array {
 		$visible = array();
 
+		// An administrator viewing as a creator (ADR-075) sees the creator's sections.
+		$viewing = null !== ImpersonationSession::creator_id();
+
 		foreach ( $this->all() as $section ) {
-			if ( current_user_can( $section['capability'] ) ) {
+			if ( current_user_can( $section['capability'] ) || ( $viewing && Capabilities::ACCESS_DASHBOARD === $section['capability'] ) ) {
 				unset( $section['capability'] );
 				$visible[] = $section;
 			}

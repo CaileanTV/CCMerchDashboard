@@ -11,6 +11,7 @@ namespace MerchBoard\Core\Audit;
 
 use MerchBoard\Core\Database\ConnectionChangedException;
 use MerchBoard\Core\Database\DatabaseException;
+use Closure;
 use MerchBoard\Core\Logging\LogContext;
 
 defined( 'ABSPATH' ) || exit;
@@ -23,15 +24,21 @@ defined( 'ABSPATH' ) || exit;
  * never a value from the request. Context is passed through the same
  * sanitizer as technical logs as a last line of defence; callers pass only
  * minimal, non-personal data (field names, ids, statuses).
+ *
+ * While an administrator views and acts as a creator (phase 27, step 27.2,
+ * ADR-075), the actor stays the administrator and the context gets
+ * `impersonating` (the viewed creator), so such changes are recognizable.
  */
 final class AuditTrail {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param AuditRepository $repository Storage.
+	 * @param AuditRepository $repository    Storage.
+	 * @param Closure|null    $impersonating The creator the logged-in user views as (Core\Security\ImpersonationSession), or null; none by default.
+	 * @phpstan-param (Closure(): ?int)|null $impersonating
 	 */
-	public function __construct( private AuditRepository $repository ) {
+	public function __construct( private AuditRepository $repository, private ?Closure $impersonating = null ) {
 	}
 
 	/**
@@ -46,7 +53,7 @@ final class AuditTrail {
 	public function record( AuditAction $action, ?int $creator_id, array $context = array() ): int {
 		$actor = get_current_user_id();
 
-		return $this->append( $action, $actor > 0 ? $actor : null, $creator_id, $context );
+		return $this->append( $action, $actor > 0 ? $actor : null, $creator_id, $this->with_session( $action, $context ) );
 	}
 
 	/**
@@ -85,7 +92,7 @@ final class AuditTrail {
 			$action,
 			$actor > 0 ? $actor : null,
 			$creator_id,
-			LogContext::sanitize( $context ),
+			LogContext::sanitize( $this->with_session( $action, $context ) ),
 			current_time( 'mysql', true ),
 			$connection_id
 		);
@@ -115,6 +122,21 @@ final class AuditTrail {
 			current_time( 'mysql', true ),
 			$connection_id
 		);
+	}
+
+	/**
+	 * The context with `impersonating` during a "view as creator" session
+	 * (not on the session's own start and end records).
+	 *
+	 * @param AuditAction          $action  What happened.
+	 * @param array<string, mixed> $context Context.
+	 * @return array<string, mixed>
+	 */
+	private function with_session( AuditAction $action, array $context ): array {
+		$own        = AuditAction::CreatorImpersonationStarted === $action || AuditAction::CreatorImpersonationEnded === $action;
+		$creator_id = null === $this->impersonating || $own ? null : ( $this->impersonating )();
+
+		return null === $creator_id ? $context : array_merge( $context, array( 'impersonating' => $creator_id ) );
 	}
 
 	/**

@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Dashboard;
 
+use MerchBoard\Core\Security\ImpersonationSession;
+use MerchBoard\Modules\Access\ImpersonationActions;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use RuntimeException;
@@ -124,15 +126,17 @@ final class ShellController {
 	 */
 	public function bootstrap(): array {
 		return array(
-			'site_name'     => get_bloginfo( 'name' ),
-			'dashboard_url' => $this->route->url(),
-			'routing'       => '' === (string) get_option( 'permalink_structure' ) ? 'query' : 'path',
-			'logout_url'    => $this->logout_url(),
-			'login_url'     => wp_login_url( $this->route->url() ),
-			'password_url'  => wp_lostpassword_url(),
-			'locale'        => determine_locale(),
-			'sections'      => $this->sections->for_current_user(),
-			'logo'          => $this->logo_data(),
+			'site_name'             => get_bloginfo( 'name' ),
+			'dashboard_url'         => $this->route->url(),
+			'routing'               => '' === (string) get_option( 'permalink_structure' ) ? 'query' : 'path',
+			'logout_url'            => $this->logout_url(),
+			'login_url'             => wp_login_url( $this->route->url() ),
+			'password_url'          => wp_lostpassword_url(),
+			'locale'                => determine_locale(),
+			'sections'              => $this->sections->for_current_user(),
+			'logo'                  => $this->logo_data(),
+			// "View as creator" (step 27.2, ADR-075): the link that ends the session, or null.
+			'impersonation_end_url' => null === ImpersonationSession::creator_id() ? null : ImpersonationActions::end_url(),
 		);
 	}
 

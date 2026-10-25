@@ -13,7 +13,9 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Access\Impersonation;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
@@ -118,6 +120,19 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( $created['overlay']['url'], $again['overlay']['url'], 'Setting up again keeps the overlay.' );
 		self::assertSame( array( 'alert_overlay_created' ), $this->audit_actions( $creator ) );
 		self::assertStringNotContainsString( (string) $this->overlays->find_for_creator( $creator )?->overlay_id, (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ), 'The secret id is never audited.' );
+	}
+
+	public function test_an_administrator_viewing_as_the_creator_never_gets_the_secret_url(): void {
+		$creator = $this->creator( 'nova' );
+		$secret  = (string) $this->data( $this->call( 'POST', self::ROUTE ) )['overlay']['url'];
+
+		wp_set_current_user( 1 );
+		$this->service( Impersonation::class )->start( $creator );
+
+		$url = (string) $this->data( $this->call( 'GET', self::ROUTE ) )['overlay']['url'];
+		self::assertStringContainsString( MeAlertsController::HIDDEN_OVERLAY_ID, $url, 'The URL\'s shape without the secret id (ADR-075).' );
+		self::assertNotSame( $secret, $url );
+		delete_user_meta( 1, ImpersonationSession::META );
 	}
 
 	public function test_settings_change_only_the_form_fields_and_are_normalized(): void {

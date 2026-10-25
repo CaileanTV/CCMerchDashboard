@@ -9,8 +9,12 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Access;
 
+use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
+use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
@@ -21,8 +25,10 @@ defined( 'ABSPATH' ) || exit;
  * Creator access: CreatorContext (phase 8), the policy every creator-facing
  * feature uses, and the restrictions for pure creators (phase 12, ADR-026):
  * login redirect, wp-admin guard, hidden admin bar and no Application
- * Passwords. Depends on the Creators module (CreatorRepository) and the
- * Dashboard module (DashboardRoute); services are resolved when a hook fires.
+ * Passwords. From step 27.2 (ADR-075) also "view as creator": Impersonation,
+ * its guard and its admin entry points. Depends on the Creators module
+ * (CreatorRepository) and the Dashboard module (DashboardRoute); services are
+ * resolved when a hook fires.
  */
 final class AccessModule implements Module {
 
@@ -48,6 +54,34 @@ final class AccessModule implements Module {
 		);
 
 		$container->set( CreatorRestrictions::class, static fn(): CreatorRestrictions => new CreatorRestrictions() );
+
+		// "View as creator" (phase 27, step 27.2, ADR-075).
+		$container->set( Impersonation::class, static fn( Container $c ): Impersonation => new Impersonation( $c->get( CreatorRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( ImpersonationActions::class, static fn( Container $c ): ImpersonationActions => new ImpersonationActions( $c->get( Impersonation::class ), $c->get( DashboardRoute::class ), $c->get( Logger::class ) ) );
+		( new ImpersonationGuard() )->register();
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$container->get( ImpersonationActions::class )->register();
+			}
+		);
+		// An expired session ends on the next request; logging out ends it at once.
+		add_action(
+			'init',
+			static function () use ( $container ): void {
+				if ( null !== ImpersonationSession::stored( get_current_user_id() ) ) {
+					self::change_session( $container, false );
+				}
+			}
+		);
+		add_action(
+			'clear_auth_cookie',
+			static function () use ( $container ): void {
+				if ( null !== ImpersonationSession::stored( get_current_user_id() ) ) {
+					self::change_session( $container, true );
+				}
+			}
+		);
 
 		$container->set(
 			LoginRedirect::class,
@@ -101,5 +135,27 @@ final class AccessModule implements Module {
 			100,
 			2
 		);
+	}
+
+	/**
+	 * Ends the logged-in user's session on logout, or when it has expired,
+	 * from a hook; a database failure is logged and never breaks the request
+	 * (the session then simply stays or expires).
+	 *
+	 * @param Container $container Shared service container.
+	 * @param bool      $logout    Whether the user logs out (else: only an expired session).
+	 */
+	private static function change_session( Container $container, bool $logout ): void {
+		try {
+			$impersonation = $container->get( Impersonation::class );
+
+			if ( $logout ) {
+				$impersonation->end( Impersonation::ENDED_LOGOUT );
+			} else {
+				$impersonation->expire();
+			}
+		} catch ( DatabaseException $e ) {
+			$container->get( Logger::class )->error( 'A "view as creator" session could not be changed.', $e->context() );
+		}
 	}
 }

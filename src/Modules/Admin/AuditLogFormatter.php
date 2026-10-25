@@ -166,6 +166,8 @@ final class AuditLogFormatter {
 			AuditAction::VendorImported        => __( 'Vendor migrated from Product Vendors', 'merchboard' ),
 			AuditAction::VendorImportCompleted => __( 'Migration from Product Vendors completed', 'merchboard' ),
 			AuditAction::VendorRolesRemoved    => __( 'Product Vendors roles removed from the creator\'s user', 'merchboard' ),
+			AuditAction::CreatorImpersonationStarted => __( 'Administrator started viewing as the creator', 'merchboard' ),
+			AuditAction::CreatorImpersonationEnded => __( 'Administrator stopped viewing as the creator', 'merchboard' ),
 		};
 	}
 
@@ -239,7 +241,7 @@ final class AuditLogFormatter {
 
 		return array(
 			'users'      => self::context_user_ids( $entry ),
-			'creators'   => array_merge( self::ids( $entry->context, array( 'previous_creator_id', 'creator_id' ) ), is_array( $creators ) ? self::ids( $creators, array_keys( $creators ) ) : array() ),
+			'creators'   => array_merge( self::ids( $entry->context, array( 'previous_creator_id', 'creator_id', 'impersonating' ) ), is_array( $creators ) ? self::ids( $creators, array_keys( $creators ) ) : array() ),
 			'products'   => self::ids( $entry->context, array( 'product_id' ) ),
 			'categories' => array_merge( self::ids( $entry->context, array( 'term_id' ) ), is_array( $categories ) ? self::ids( $categories, array_keys( $categories ) ) : array() ),
 		);
@@ -313,6 +315,12 @@ final class AuditLogFormatter {
 			case 'creator_id':
 				/* translators: %s: creator name or "#id". */
 				return self::text( __( 'Creator: %s', 'merchboard' ), self::creator( $value, $labels ) );
+			case 'impersonating':
+				/* translators: %s: creator name or "#id". */
+				return self::text( __( 'Done by an administrator viewing as %s', 'merchboard' ), self::creator( $value, $labels ) );
+			case 'minutes':
+				/* translators: %d: minutes. */
+				return esc_html( sprintf( __( 'Session length: %d minutes', 'merchboard' ), is_int( $value ) ? $value : 0 ) );
 			case 'source':
 				/* translators: %s: origin of the product link. */
 				return self::text( __( 'Origin: %s', 'merchboard' ), self::source( $value ) );
@@ -642,6 +650,9 @@ final class AuditLogFormatter {
 			'ambiguous'         => __( 'categories of several creators (ambiguous)', 'merchboard' ),
 			'full_sync'         => __( 'full reconciliation', 'merchboard' ),
 			'admin'             => __( 'an administrator', 'merchboard' ),
+			'expired'           => __( 'the session expired', 'merchboard' ),
+			'logout'            => __( 'the administrator logged out', 'merchboard' ),
+			'switched'          => __( 'the administrator viewed another creator', 'merchboard' ),
 			default             => self::scalar( $value ),
 		};
 	}

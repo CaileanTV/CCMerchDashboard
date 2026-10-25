@@ -35,6 +35,9 @@ final class DashboardSectionsTest extends TestCase {
 		$this->logger = new RecordingLogger();
 
 		Functions\stubTranslationFunctions();
+		// No "view as creator" session (ADR-075).
+		Functions\when( 'get_user_meta' )->justReturn( '' );
+		Functions\when( 'get_current_user_id' )->justReturn( 1 );
 		Functions\when( 'current_user_can' )->alias( fn( string $cap ): bool => in_array( $cap, $this->caps, true ) );
 		Functions\when( 'wp_strip_all_tags' )->alias( static fn( string $text ): string => trim( strip_tags( $text ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- Test stand-in.
 	}

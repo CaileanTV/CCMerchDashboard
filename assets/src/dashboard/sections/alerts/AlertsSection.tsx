@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useId, useState } from '@wordpress/element';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useId,
+	useState,
+} from '@wordpress/element';
 import type { ReactNode } from 'react';
 import { __ } from '@wordpress/i18n';
 
@@ -9,6 +15,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Skeleton } from '../../components/Skeleton';
 import { ToastStack, useToastStack } from '../../components/ToastStack';
+import { ConfigContext } from '../../app/config-context';
 import { useApi } from '../../hooks/useApi';
 import type { AlertsOverlayState, OverlaySettings } from '../../types/alerts';
 import { AlertSoundsCard } from './AlertSoundsCard';
@@ -100,6 +107,10 @@ function BrowserSourceCard( {
 	const api = useOverlayApi();
 	const [ error, setError ] = useState< ApiError | null >( null );
 	const [ shown, setShown ] = useState( false );
+	// While an administrator views as the creator, the server never sends the secret URL (ADR-075).
+	// Outside the dashboard (the admin's global overlay) there is no session.
+	const hidden =
+		useContext( ConfigContext )?.impersonationEndUrl !== undefined;
 
 	// A new URL starts hidden again.
 	useEffect( () => setShown( false ), [ url ] );
@@ -181,44 +192,62 @@ function BrowserSourceCard( {
 				) }
 			</p>
 			{ error !== null && <ApiErrorState error={ error } /> }
-			<div className="merchboard-alerts__url">
-				<label
-					className="merchboard-visually-hidden"
-					htmlFor={ `${ id }-url` }
-				>
-					{ __( 'Overlay URL', 'merchboard' ) }
-				</label>
-				<input
-					id={ `${ id }-url` }
-					type="text"
-					className="merchboard-input"
-					readOnly
-					value={ shown ? url : maskOverlayUrl( url ) }
-					onFocus={ ( event ) => event.target.select() }
-				/>
-			</div>
+			{ hidden && (
+				<Alert>
+					{ __(
+						'The overlay URL is hidden while you view as the creator. Only the creator can copy or open it.',
+						'merchboard'
+					) }
+				</Alert>
+			) }
+			{ ! hidden && (
+				<div className="merchboard-alerts__url">
+					<label
+						className="merchboard-visually-hidden"
+						htmlFor={ `${ id }-url` }
+					>
+						{ __( 'Overlay URL', 'merchboard' ) }
+					</label>
+					<input
+						id={ `${ id }-url` }
+						type="text"
+						className="merchboard-input"
+						readOnly
+						value={ shown ? url : maskOverlayUrl( url ) }
+						onFocus={ ( event ) => event.target.select() }
+					/>
+				</div>
+			) }
 			<div className="merchboard-alerts__actions">
-				<Button variant="secondary" onClick={ copy }>
-					{ __( 'Copy URL', 'merchboard' ) }
-				</Button>
-				<Button
-					variant="secondary"
-					aria-pressed={ shown }
-					onClick={ () => setShown( ! shown ) }
-				>
-					{ shown
-						? __( 'Hide URL', 'merchboard' )
-						: __( 'Show URL', 'merchboard' ) }
-				</Button>
-				{ /* A button, not a link: hovering a link would show the URL in the status bar. */ }
-				<Button
-					variant="secondary"
-					onClick={ () =>
-						window.open( url, '_blank', 'noopener,noreferrer' )
-					}
-				>
-					{ __( 'Open overlay', 'merchboard' ) }
-				</Button>
+				{ ! hidden && (
+					<>
+						<Button variant="secondary" onClick={ copy }>
+							{ __( 'Copy URL', 'merchboard' ) }
+						</Button>
+						<Button
+							variant="secondary"
+							aria-pressed={ shown }
+							onClick={ () => setShown( ! shown ) }
+						>
+							{ shown
+								? __( 'Hide URL', 'merchboard' )
+								: __( 'Show URL', 'merchboard' ) }
+						</Button>
+						{ /* A button, not a link: hovering a link would show the URL in the status bar. */ }
+						<Button
+							variant="secondary"
+							onClick={ () =>
+								window.open(
+									url,
+									'_blank',
+									'noopener,noreferrer'
+								)
+							}
+						>
+							{ __( 'Open overlay', 'merchboard' ) }
+						</Button>
+					</>
+				) }
 				<Button
 					variant="secondary"
 					onClick={ test }

@@ -599,4 +599,14 @@ enum AuditAction: string {
 	 * Product Vendors' roles were removed from a migrated creator's user (phase 26, step 26.3, ADR-074 pkt. 8). Context: roles.
 	 */
 	case VendorRolesRemoved = 'vendor_roles_removed';
+
+	/**
+	 * An administrator started viewing and acting as the creator (phase 27, step 27.2, ADR-075). Context: minutes (the session's length).
+	 */
+	case CreatorImpersonationStarted = 'creator_impersonation_started';
+
+	/**
+	 * The administrator's "view as creator" session ended (ADR-075). Context: reason (admin, expired, logout or switched).
+	 */
+	case CreatorImpersonationEnded = 'creator_impersonation_ended';
 }

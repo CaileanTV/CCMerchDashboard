@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 import { useConfig } from '../config-context';
@@ -108,6 +108,31 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 					{ __( 'Log out', 'merchboard' ) }
 				</a>
 			</header>
+			{ config.impersonationEndUrl !== undefined && (
+				<div className="merchboard-impersonation" role="status">
+					<p className="merchboard-impersonation__text">
+						{ creatorName !== undefined
+							? sprintf(
+									/* translators: %s: creator name. */
+									__(
+										'You view and act as %s. What you change is changed for the creator.',
+										'merchboard'
+									),
+									creatorName
+								)
+							: __(
+									'You view and act as the creator. What you change is changed for the creator.',
+									'merchboard'
+								) }
+					</p>
+					<a
+						className="merchboard-impersonation__end"
+						href={ config.impersonationEndUrl }
+					>
+						{ __( 'Stop viewing as the creator', 'merchboard' ) }
+					</a>
+				</div>
+			) }
 			<nav
 				id={ MOBILE_NAV_ID }
 				className="merchboard-mobile-nav"

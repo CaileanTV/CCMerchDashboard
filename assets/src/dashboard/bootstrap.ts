@@ -99,6 +99,22 @@ function parseLogo( value: unknown, origin: string ): DashboardLogo | null {
 }
 
 /**
+ * The end link of a "view as creator" session (ADR-075), on the page's own
+ * origin; nothing when there is none or it is invalid.
+ *
+ * @param value  Raw value.
+ * @param origin Origin of the current page.
+ */
+function parseImpersonation(
+	value: unknown,
+	origin: string
+): { impersonationEndUrl?: string } {
+	const url = readSameOriginUrl( value, origin );
+
+	return url === null ? {} : { impersonationEndUrl: url };
+}
+
+/**
  * The validated configuration, or null when anything is missing or invalid.
  * All URLs must be on the page's own origin.
  *
@@ -147,5 +163,6 @@ export function parseConfig(
 		locale,
 		sections,
 		logo: parseLogo( raw.logo, origin ),
+		...parseImpersonation( raw.impersonation_end_url, origin ),
 	};
 }

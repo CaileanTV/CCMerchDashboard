@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators\Admin;
 
+use MerchBoard\Modules\Access\ImpersonationActions;
+use MerchBoard\Modules\Access\ImpersonationException;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Lifecycle\RestoredHistory;
 use MerchBoard\Core\Security\Capabilities;
@@ -195,6 +197,9 @@ final class CreatorsAdminPage {
 			CreatorException::INVALID_STATUS           => array( __( 'Choose a valid status.', 'merchboard' ), 'error' ),
 			CreatorException::USER_NOT_FOUND           => array( __( 'The selected WordPress user does not exist.', 'merchboard' ), 'error' ),
 			CreatorException::USER_ALREADY_LINKED      => array( __( 'The selected WordPress user is already linked to another creator.', 'merchboard' ), 'error' ),
+			ImpersonationException::NOT_AUTHORIZED     => array( __( 'You are not allowed to view as a creator.', 'merchboard' ), 'error' ),
+			ImpersonationException::UNAVAILABLE        => array( __( 'You can only view as an active creator with a WordPress user.', 'merchboard' ), 'error' ),
+			ImpersonationActions::ENDED_NOTICE         => array( __( 'You no longer view as the creator.', 'merchboard' ), 'success' ),
 			'error'                                    => array( __( 'A technical error occurred. Please check the creator and try again later.', 'merchboard' ), 'error' ),
 			default                                    => null,
 		};
@@ -258,6 +263,12 @@ final class CreatorsAdminPage {
 
 		echo '<h1>' . esc_html( null === $creator ? __( 'Add New Creator', 'merchboard' ) : __( 'Edit Creator', 'merchboard' ) ) . '</h1>';
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← Back to creators', 'merchboard' ) . '</a></p>';
+
+		// "View as creator" (step 27.2, ADR-075): the dashboard as this creator sees it, acting as the creator.
+		if ( null !== $creator && $creator->is_active() && null !== $creator->user_id ) {
+			echo '<p><a class="button" href="' . esc_url( ImpersonationActions::start_url( $creator->id ) ) . '">' . esc_html__( 'View as creator', 'merchboard' ) . '</a> ';
+			echo '<span class="description">' . esc_html__( 'Opens the creator dashboard as this creator sees it, for one hour. What you change there is changed for the creator and logged with your name. Payouts, gift card codes, connecting chatbots and new secrets stay the creator\'s own.', 'merchboard' ) . '</span></p>';
+		}
 
 		if ( null !== $creator && RestoredHistory::is_archived( $creator->id ) ) {
 			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Archived when Merch Dashboard was deleted.', 'merchboard' ) . '</strong> ';

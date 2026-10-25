@@ -12,6 +12,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Creators\Admin;
 
+use MerchBoard\Modules\Access\ImpersonationActions;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -213,6 +214,11 @@ final class CreatorsListTable extends WP_List_Table {
 				esc_html( CreatorStatus::Active === $target ? __( 'Activate', 'merchboard' ) : __( 'Deactivate', 'merchboard' ) )
 			),
 		);
+
+		// "View as creator" (step 27.2, ADR-075): only an active creator with a user.
+		if ( CreatorStatus::Active === $item->status && null !== $item->user_id ) {
+			$actions['impersonate'] = sprintf( '<a href="%1$s">%2$s</a>', esc_url( ImpersonationActions::start_url( $item->id ) ), esc_html__( 'View as creator', 'merchboard' ) );
+		}
 
 		return sprintf( '<strong><a class="row-title" href="%1$s">%2$s</a></strong>', esc_url( $edit ), esc_html( $item->display_name ) )
 			. $this->row_actions( $actions );

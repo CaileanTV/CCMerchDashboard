@@ -45,11 +45,14 @@ final class CreatorsAdminPageTest extends TestCase {
 
 		Functions\stubTranslationFunctions();
 		Functions\stubEscapeFunctions();
+		// No "view as creator" session (ADR-075).
+		Functions\when( 'get_user_meta' )->justReturn( '' );
 		Functions\when( 'wp_unslash' )->returnArg();
 		Functions\when( 'sanitize_key' )->alias( static fn( string $s ): string => (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $s ) ) );
 		Functions\when( 'absint' )->alias( static fn( mixed $v ): int => abs( (int) $v ) );
 		Functions\when( 'admin_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/wp-admin/' . $path );
 		Functions\when( 'add_query_arg' )->alias( static fn( array $args, string $url ): string => $url . '?' . http_build_query( $args ) );
+		Functions\when( 'wp_create_nonce' )->alias( static fn( string $action ): string => md5( $action ) );
 		Functions\when( 'wp_nonce_field' )->alias(
 			static function ( string $action ): void {
 				echo '<input type="hidden" name="_wpnonce" value="nonce:' . $action . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Test stub.

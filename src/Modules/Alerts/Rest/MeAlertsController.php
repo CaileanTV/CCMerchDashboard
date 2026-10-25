@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Alerts\Rest;
 
+use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
@@ -66,6 +67,12 @@ defined( 'ABSPATH' ) || exit;
  * changing routes answer 404.
  */
 final class MeAlertsController extends RestController {
+
+	/**
+	 * The overlay id sent while an administrator views as the creator
+	 * (ADR-075): the URL's shape without the secret.
+	 */
+	public const HIDDEN_OVERLAY_ID = '00000000000000000000000000000000';
 
 	private const ROUTE = '/me/alerts/overlay';
 
@@ -683,7 +690,8 @@ final class MeAlertsController extends RestController {
 	 */
 	private function overlay( AlertOverlay $overlay ): array {
 		return array_merge(
-			array( 'url' => OverlayRoute::url( $overlay->overlay_id ) ),
+			// While an administrator views as the creator (ADR-075) the secret id is never sent.
+			array( 'url' => OverlayRoute::url( null === ImpersonationSession::creator_id() ? $overlay->overlay_id : self::HIDDEN_OVERLAY_ID ) ),
 			self::look( $overlay->settings, $this->fonts ),
 			array(
 				'audio'  => null === $this->sounds ? null : $this->sounds->describe( $overlay ),

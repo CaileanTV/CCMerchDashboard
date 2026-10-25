@@ -91,9 +91,11 @@ final class ShellControllerTest extends TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		$this->db         = new FakeDatabase();
-		$this->creators   = new CreatorRepository( $this->db );
-		$this->logger     = new RecordingLogger();
+		$this->db       = new FakeDatabase();
+		$this->creators = new CreatorRepository( $this->db );
+		$this->logger   = new RecordingLogger();
+		// No "view as creator" session (ADR-075).
+		Functions\when( 'get_user_meta' )->justReturn( '' );
 		$this->options    = InMemoryOptions::install( array( 'permalink_structure' => '/%postname%/' ) );
 		$this->plugin_dir = sys_get_temp_dir() . '/merchboard-shell-' . bin2hex( random_bytes( 4 ) ) . '/';
 		$this->write_build( "<?php return array( 'dependencies' => array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ), 'version' => 'abc123' );" );
@@ -374,7 +376,8 @@ final class ShellControllerTest extends TestCase {
 
 		$data = json_decode( substr( $inline, strlen( 'window.merchboardDashboard = ' ), -1 ), true );
 		self::assertIsArray( $data );
-		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo' ), array_keys( $data ) );
+		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo', 'impersonation_end_url' ), array_keys( $data ) );
+		self::assertNull( $data['impersonation_end_url'], 'Only while an administrator views as the creator (ADR-075).' );
 		self::assertNull( $data['logo'], 'This fake plugin has no default logo file: the site name is shown as text.' );
 		self::assertSame( 'https://shop.test/wp-login.php?action=lostpassword', $data['password_url'] );
 		self::assertSame( 'Shop <b>&</b> Co', $data['site_name'] );

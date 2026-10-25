@@ -83,6 +83,29 @@
 	border-bottom: 1px solid var(--merchboard-border);
 }
 
+// "View as creator" (ADR-075): always visible while an administrator
+// acts as the creator.
+.merchboard-impersonation {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-3);
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--merchboard-space-2) var(--merchboard-space-4);
+	color: var(--merchboard-text);
+	background: var(--merchboard-warning-bg);
+	border-bottom: 2px solid var(--merchboard-warning);
+}
+
+.merchboard-impersonation__text {
+	margin: 0;
+	font-weight: 600;
+}
+
+.merchboard-impersonation__end {
+	font-weight: 600;
+}
+
 .merchboard-topbar__brand {
 	display: flex;
 	flex: 1;
