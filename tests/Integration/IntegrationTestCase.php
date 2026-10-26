@@ -13,6 +13,7 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Lifecycle\Installer;
+use MerchBoard\Core\Security\ImpersonationSession;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use wpdb;
@@ -41,6 +42,8 @@ abstract class IntegrationTestCase extends TestCase {
 
 		$this->drop_plugin_schema();
 		wp_set_current_user( 1 );
+		// Per request in production; here all tests share one process and run in random order.
+		ImpersonationSession::act( false );
 	}
 
 	protected function tearDown(): void {
