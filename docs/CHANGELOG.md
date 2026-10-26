@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-26
+
+Rettelse til 1.3.0. Ingen databaseændringer (schema-version 33). Opdateringen står i DEVELOPMENT.md ("Release 1.3.1").
+
+### Fixed
+
+- **Foreslåede billeder i Profile:** et foreslået logo, banner eller mobilbanner blev vist som et knækket billede i creatorens dashboard, fordi browseren blokerede det (dashboardets sikkerhedspolitik tillader ikke `blob:`-billeder). Billedet vises nu som en `data:`-adresse, som politikken tillader; politikken er uændret. Fundet af projektejeren på ccmerch.dk (`(blocked:csp)`). Administratorens visning og butikken var ikke berørt.
+
 ## [1.3.0] - 2026-10-26
 
 Fase 28: creatoren foreslår ændringer til sin produktkategori (navn, beskrivelse, logo, bannere, link og sociale links i CCMerch Kategoribannere), og en administrator godkender hver ændring, før den vises i butikken. Pluginet opretter og styrer creatorens rabatkode, hvis rabat er præcis creatorens fortjeneste på egne produkter. Schema-version 33 (migration 32–33 kører ved opdatering fra 1.2.0; bioer og sociale links bliver ventende forslag). Fase 28 er reviewet og runtime-testet på Local 2026-10-26. Opdateringen står i DEVELOPMENT.md ("Release 1.3.0").

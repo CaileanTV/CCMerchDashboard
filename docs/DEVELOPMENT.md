@@ -246,6 +246,17 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.3.1: rettelse af foreslåede billeder i Profile
+
+**Versions-bump og CHANGELOG-sektion 2026-10-26** efter projektejerens ønske samme dag. Det er en patch, fordi den kun retter én fejl. Projektejeren fandt fejlen på ccmerch.dk: et foreslået billede blev blokeret af dashboardets CSP (`blob:`), og det vises nu som en `data:`-adresse. Der er ingen schemaændring (33) og ingen manuelle trin.
+
+1. **Backup:** tag backup af filer og database via hostingen.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.3.1 og schema-version 33 uden advarsler.
+3. **Stikprøve:** en creator med et ventende billedforslag skal se billedet under Profil → "Foreslået". Konsollen må ikke vise `blocked:csp`.
+4. **nginx-reglen** fra "Release 1.3.0" pkt. 5 skal blive stående. Den har ikke noget med fejlen at gøre.
+
+**Tilbagerulning:** installér 1.3.0-ZIP'en igen. Der er ingen data at gendanne.
+
 ## Release 1.3.0: creatorens kategori og rabatkode (fase 28)
 
 **Versions-bump, CHANGELOG-sektion og tagget `v1.3.0` (på `1083f18`) 2026-10-26** efter projektejerens ønske samme dag. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `a0d66b56708f6d8f6434860281ba3d3e8b815382944666699fc363fc3df53c36`). Det er en minor, fordi den indeholder nye features. Fase 28 er reviewet og runtime-testet på Local; se ROADMAP 28.6.

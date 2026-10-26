@@ -4220,6 +4220,8 @@ Accepteret af projektejeren 2026-10-26 (plan for fase 28 godkendt). **Statusnote
 - Et link i kategorien, der ikke er https (fx `http://` fra bannerpluginets egne felter), vises som tomt i dashboardet i stedet for at gøre hele profilen ugyldig.
 - Ikke-gemte ændringer i formularen bevares efter upload, fjernelse og tilbagetrækning.
 
+**Statusnote 2026-10-26 (1.3.1):** dashboardet viste et foreslået billede fra en `blob:`-adresse. Den blokerede dashboardets CSP (`img-src 'self' data:`), så billedet var knækket hos creatoren. Projektejeren fandt fejlen på ccmerch.dk; serveren sendte filen korrekt. Billedet vises nu som en `data:`-adresse; CSP'en er uændret.
+
 **Kendt begrænsning (pkt. 5):**
 - `.htaccess` virker kun på Apache. På nginx (fx Local) kan en ventende fil hentes direkte, hvis man kender dens tilfældige navn på 32 hex-tegn (128 bit). Mappelisten er spærret.
 - Anbefaling til servere med nginx: `location ^~ /wp-content/uploads/merchboard-proposals/ { deny all; }` (SECURITY.md).
