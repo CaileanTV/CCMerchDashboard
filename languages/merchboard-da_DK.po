@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-26T15:45:56+00:00\n"
+"PO-Revision-Date: 2026-10-26T16:22:09+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -115,9 +115,13 @@ msgid "Stop viewing as the creator"
 msgstr "Stop med at se som creatoren"
 
 #: src/Modules/Access/ImpersonationActions.php:141
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:83
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:86
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:123
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:97
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:142
+#: src/Modules/Creators/Admin/ProposalImageDownload.php:100
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
@@ -133,8 +137,10 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:349
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:91
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
+#: src/Modules/Creators/Admin/ProposalImageDownload.php:108
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -1509,6 +1515,8 @@ msgstr "Gem adgang"
 
 #: src/Modules/Alerts/Admin/AlertApiTab.php:175
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:315
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:353
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
 #: build/dashboard.js:52
@@ -1876,6 +1884,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:499
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:333
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 #: build/dashboard.js:74
 msgid "Remove"
@@ -2016,6 +2025,7 @@ msgid "Approved"
 msgstr "Godkendt"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:553
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:275
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr "Godkend"
@@ -3364,6 +3374,136 @@ msgstr "Godkend først privatlivspolitikken og vilkårene for YouTube-chatbotten
 msgid "The chatbot settings are invalid."
 msgstr "Chatbot-indstillingerne er ugyldige."
 
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:78
+msgid "The proposal is approved and shown in the shop."
+msgstr "Forslaget er godkendt og vises i butikken."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:79
+msgid "All proposals of the creator are approved and shown in the shop."
+msgstr "Alle creatorens forslag er godkendt og vises i butikken."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:80
+msgid "Some proposals are approved; the others could not be approved. They are still waiting below."
+msgstr "Nogle forslag er godkendt; de andre kunne ikke godkendes. De venter stadig nedenfor."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:81
+msgid "The proposal is rejected. The creator sees your note."
+msgstr "Forslaget er afvist. Creatoren ser din note."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:82
+msgid "The creator has no product category, so the proposal cannot be approved yet. Map a category on the creator's page first."
+msgstr "Creatoren har ingen produktkategori, så forslaget kan ikke godkendes endnu. Tilknyt først en kategori på creatorens side."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:83
+msgid "This proposal needs WooCommerce and the plugin CCMerch Kategoribannere, which are not active."
+msgstr "Dette forslag kræver WooCommerce og pluginet CCMerch Kategoribannere, som ikke er aktive."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:85
+msgid "The proposal is no longer waiting, e.g. because the creator withdrew or replaced it."
+msgstr "Forslaget venter ikke længere, fx fordi creatoren har trukket det tilbage eller erstattet det."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:87
+msgid "The proposal is no longer valid and was not approved."
+msgstr "Forslaget er ikke længere gyldigt og blev ikke godkendt."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:88
+msgid "A technical error occurred. Nothing was changed. Please try again later."
+msgstr "Der opstod en teknisk fejl. Intet blev ændret. Prøv igen senere."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:99
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:131
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:182
+msgid "Category proposals"
+msgstr "Kategoriforslag"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:103
+msgid "Merch Dashboard Category proposals"
+msgstr "Merch Dashboard Kategoriforslag"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:137
+msgid "What creators propose for their product category in the creator dashboard. Nothing is shown in the shop, and the creator's name does not change, until you approve it. Check images and links for copyright before you approve them."
+msgstr "Det, creators foreslår til deres produktkategori i creator-dashboardet. Intet vises i butikken, og creatorens navn ændres ikke, før du godkender det. Tjek billeder og links for ophavsret, før du godkender dem."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:143
+msgid "The proposals could not be read. Please try again later."
+msgstr "Forslagene kunne ikke læses. Prøv igen senere."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:149
+msgid "No proposals are waiting."
+msgstr "Ingen forslag venter."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:185
+msgid "No proposals from the creator are waiting."
+msgstr "Ingen forslag fra creatoren venter."
+
+#. translators: %d: number of proposals.
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:190
+#, php-format
+msgid "%d proposal from the creator is waiting for approval."
+msgid_plural "%d proposals from the creator are waiting for approval."
+msgstr[0] "%d forslag fra creatoren venter på godkendelse."
+msgstr[1] "%d forslag fra creatoren venter på godkendelse."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:193
+msgid "Review the proposals"
+msgstr "Se forslagene"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:212
+msgid "The creator has no product category. Only a new name can be approved; the other proposals wait until a category is mapped on the creator's page."
+msgstr "Creatoren har ingen produktkategori. Kun et nyt navn kan godkendes; de andre forslag venter, til en kategori er tilknyttet på creatorens side."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:214
+msgid "Product category:"
+msgstr "Produktkategori:"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:220
+msgid "Change"
+msgstr "Ændring"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:221
+msgid "Now"
+msgstr "Nu"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:222
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
+#: build/dashboard.js:74
+msgid "Proposed"
+msgstr "Foreslået"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:223
+msgid "Decision"
+msgstr "Afgørelse"
+
+#. translators: %s: creator name.
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:240
+#, php-format
+msgid "Approve all from %s"
+msgstr "Godkend alle fra %s"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:282
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:283
+msgid "Note to the creator (optional)"
+msgstr "Note til creatoren (valgfri)"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:284
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
+msgid "Reject"
+msgstr "Afvis"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:303
+msgid "No category"
+msgstr "Ingen kategori"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:320
+msgid "Standard banner"
+msgstr "Standardbanner"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:339
+msgid "The image is missing."
+msgstr "Billedet mangler."
+
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:157
 msgid "Creator changes are disabled: the Merch Dashboard database tables use a storage engine without transaction support (for example MyISAM), so a change and its audit record could not be saved together. Convert the tables to InnoDB. Details are in the log."
 msgstr "Ændringer af creators er slået fra: Merch Dashboards databasetabeller bruger en storage engine uden transaktioner (fx MyISAM), så en ændring og dens audit-post kan ikke gemmes samlet. Konvertér tabellerne til InnoDB. Detaljer står i loggen."
@@ -3693,6 +3833,10 @@ msgstr "Ingen WordPress-bruger"
 #, php-format
 msgid "Unknown user #%d"
 msgstr "Ukendt bruger #%d"
+
+#: src/Modules/Creators/Admin/ProposalImageDownload.php:116
+msgid "The image is no longer waiting for approval."
+msgstr "Billedet venter ikke længere på godkendelse."
 
 #: src/Modules/Creators/Admin/UserProfileSection.php:65
 msgid "This user is not linked to a creator."
@@ -6034,12 +6178,6 @@ msgstr "Næste trin"
 msgid "I have reviewed the preview. Approving executes nothing."
 msgstr "Jeg har gennemgået forhåndsvisningen. Godkendelsen udfører intet."
 
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
-msgid "Reject"
-msgstr "Afvis"
-
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:410
 msgid "Execute the approved adjustments"
 msgstr "Udfør de godkendte reguleringer"
@@ -6111,11 +6249,6 @@ msgstr "Tidligere creators: rapporteres kun, udbetales eller modregnes aldrig au
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:509
 msgid "Manual assessment: cannot be recalculated safely"
 msgstr "Manuel vurdering: kan ikke genberegnes sikkert"
-
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
-#: build/dashboard.js:74
-msgid "Proposed"
-msgstr "Foreslået"
 
 #. translators: %s: failure code.
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:523

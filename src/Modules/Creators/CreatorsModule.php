@@ -22,6 +22,9 @@ use MerchBoard\Modules\Creators\Admin\CreatorAdminActions;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\Admin\CreatorUserSearch;
 use MerchBoard\Modules\Creators\Admin\UserProfileSection;
+use MerchBoard\Modules\Creators\Admin\CategoryProposalActions;
+use MerchBoard\Modules\Creators\Admin\CategoryProposalsPage;
+use MerchBoard\Modules\Creators\Admin\ProposalImageDownload;
 use MerchBoard\Modules\Creators\Proposals\CategoryProfileTarget;
 use MerchBoard\Modules\Creators\Proposals\CategoryProposalRepository;
 use MerchBoard\Modules\Creators\Proposals\CategoryProposals;
@@ -182,6 +185,26 @@ final class CreatorsModule implements Module {
 				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( $container->get( CategoryProposalsCleanup::class ) ) );
 			},
 			5
+		);
+
+		// The administrator decides the proposals (step 28.4).
+		$container->set( CategoryProposalsPage::class, static fn( Container $c ): CategoryProposalsPage => new CategoryProposalsPage( $c->get( CategoryProposals::class ), $c->get( CategoryProposalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
+		$container->set( CategoryProposalActions::class, static fn( Container $c ): CategoryProposalActions => new CategoryProposalActions( $c->get( CategoryProposals::class ), $c->get( Logger::class ) ) );
+		$container->set( ProposalImageDownload::class, static fn( Container $c ): ProposalImageDownload => new ProposalImageDownload( $c->get( CategoryProposals::class ), $c->get( ProposalFiles::class ) ) );
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( CategoryProposalsPage::class )->add_menu();
+			},
+			CategoryProposalsPage::PRIORITY
+		);
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$container->get( CategoryProposalsPage::class )->register();
+				$container->get( CategoryProposalActions::class )->register();
+				$container->get( ProposalImageDownload::class )->register();
+			}
 		);
 
 		// Fires after WordPress deleted a user, whatever triggered the deletion.

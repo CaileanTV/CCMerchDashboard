@@ -16,6 +16,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   ├── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger; fase 17 (WooCommerce): afsnittene "Product category" og "Products"
 │   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
+├── Category proposals         ✅ fase 28, trin 28.4 (ADR-077): creatorernes forslag til deres kategori; antal ventende i menuen; kræver merchboard_manage_creators
 ├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo); ✅ fase 25, trin 25.2: "Alerts" (kill switch for købs-alerts, kun med WooCommerce, ADR-065). Tabs General · Access · Advanced kommer, når de får indhold
 ├── Payouts                    ✅ fase 23, trin 23.6 (WooCommerce, ADR-055/056/058): kø og historik for creatorernes payout-anmodninger, afvisning og registrering af manuel overførsel; kræver merchboard_manage_payouts; fulde bank-/PayPal-oplysninger kræver desuden merchboard_view_payout_details
 ├── Order history              ✅ fase 22 (WooCommerce, ADR-051/052): ordrehistorik for sales ledgeren pr. ordre; kræver merchboard_manage_creators; sletning af en testordres historik kræver merchboard_delete_order_history
@@ -43,6 +44,16 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 `Modules/Creators/Admin/CreatorsListTable` (`WP_List_Table`). Kolonner: visningsnavn (link til redigering), WordPress-bruger ("Display Name (login)"; link til `user-edit.php` kun hvis den aktuelle bruger må redigere brugeren), status, oprettet og sidst opdateret (sitets tidszone). Views: Alle / Aktive / Inaktive. Sortering på visningsnavn, status, oprettet og opdateret (whitelisted igen i repositoriet). 20 pr. side.
 
 Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.php` med nonce, der er bundet til creator-ID'et). Fra trin 27.3 også **Slet** (ADR-076; samme som knappen "Slet creator" under redigeringsformularen): bekræftelsessiden viser, om creatoren slettes helt eller bevares anonymt, hvad der fjernes, og hvad der blokerer (en ventende udbetaling; koblede produkter uden WooCommerce). Sletningen kræver creatorens navn skrevet præcist og sendes som POST med nonce. Slettede creators med historik vises kun i visningen **Slettede (n)** og kan ikke redigeres. Fra trin 27.2 også **Se som creator** for aktive creators med en bruger (ADR-075; samme knap øverst på redigeringssiden): åbner creator-dashboardet som creatoren i højst en time; "Stop med at se som creatoren" i dashboardet fører tilbage til creatorens side med beskeden "Du ser ikke længere som creatoren." Ingen bulk actions og **ingen Delete** (se DATABASE.md). E-mails, passwords og andre brugerdata vises aldrig.
+
+### Kategoriforslag ✅ (fase 28, trin 28.4, ADR-077)
+
+"Merch Dashboard → Category proposals" (`CategoryProposalsPage`, slug `merchboard-category-proposals`, `merchboard_manage_creators`). Menupunktet viser antallet af ventende forslag.
+
+- **Kø pr. creator**, ældste først: creatorens navn (link til creatorens side), produktkategorien (link til WooCommerce' redigeringsside) eller en advarsel, når creatoren ingen kategori har.
+- **Pr. forslag:** hvad ændres, hvornår det blev foreslået, værdien **nu** og den **foreslåede** side om side. Tekst vises som tekst, links som links (ny fane), billeder som billeder: det nuværende fra kategorien (med mærket "Standardbanner" for bannerpluginets standardbanner), det foreslåede via `admin-post.php?action=merchboard_category_proposal_image` (`ProposalImageDownload`: capability, nonce bundet til forslaget, kun mens billedet venter; `nosniff`, `no-store`).
+- **Afgørelse:** "Approve" og "Reject" med en valgfri note til creatoren (højst 500 tegn), og "Approve all from …" pr. creator med flere forslag. POST til admin-post (`CategoryProposalActions`): capability → nonce bundet til forslaget eller creatoren → `CategoryProposals`. Post/Redirect/Get med en hvidlistet besked; tekniske fejl logges.
+- Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
+- **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
 
 ### Opret/rediger creator ✅ (fase 6)
 

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T15:45:53+00:00\n"
+"POT-Creation-Date: 2026-10-26T16:22:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -115,9 +115,13 @@ msgid "Stop viewing as the creator"
 msgstr ""
 
 #: src/Modules/Access/ImpersonationActions.php:141
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:83
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:86
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:123
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:97
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:142
+#: src/Modules/Creators/Admin/ProposalImageDownload.php:100
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
@@ -133,8 +137,10 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:349
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:91
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
+#: src/Modules/Creators/Admin/ProposalImageDownload.php:108
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -1509,6 +1515,8 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertApiTab.php:175
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:315
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:353
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
 #: build/dashboard.js:52
@@ -1876,6 +1884,7 @@ msgstr[1] ""
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:499
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:333
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 #: build/dashboard.js:74
 msgid "Remove"
@@ -2016,6 +2025,7 @@ msgid "Approved"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:553
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:275
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -3364,6 +3374,136 @@ msgstr ""
 msgid "The chatbot settings are invalid."
 msgstr ""
 
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:78
+msgid "The proposal is approved and shown in the shop."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:79
+msgid "All proposals of the creator are approved and shown in the shop."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:80
+msgid "Some proposals are approved; the others could not be approved. They are still waiting below."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:81
+msgid "The proposal is rejected. The creator sees your note."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:82
+msgid "The creator has no product category, so the proposal cannot be approved yet. Map a category on the creator's page first."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:83
+msgid "This proposal needs WooCommerce and the plugin CCMerch Kategoribannere, which are not active."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:85
+msgid "The proposal is no longer waiting, e.g. because the creator withdrew or replaced it."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:87
+msgid "The proposal is no longer valid and was not approved."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:88
+msgid "A technical error occurred. Nothing was changed. Please try again later."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:99
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:131
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:182
+msgid "Category proposals"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:103
+msgid "Merch Dashboard Category proposals"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:137
+msgid "What creators propose for their product category in the creator dashboard. Nothing is shown in the shop, and the creator's name does not change, until you approve it. Check images and links for copyright before you approve them."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:143
+msgid "The proposals could not be read. Please try again later."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:149
+msgid "No proposals are waiting."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:185
+msgid "No proposals from the creator are waiting."
+msgstr ""
+
+#. translators: %d: number of proposals.
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:190
+#, php-format
+msgid "%d proposal from the creator is waiting for approval."
+msgid_plural "%d proposals from the creator are waiting for approval."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:193
+msgid "Review the proposals"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:212
+msgid "The creator has no product category. Only a new name can be approved; the other proposals wait until a category is mapped on the creator's page."
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:214
+msgid "Product category:"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:220
+msgid "Change"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:221
+msgid "Now"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:222
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
+#: build/dashboard.js:74
+msgid "Proposed"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:223
+msgid "Decision"
+msgstr ""
+
+#. translators: %s: creator name.
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:240
+#, php-format
+msgid "Approve all from %s"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:282
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:283
+msgid "Note to the creator (optional)"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:284
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
+msgid "Reject"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:303
+msgid "No category"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:320
+msgid "Standard banner"
+msgstr ""
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:339
+msgid "The image is missing."
+msgstr ""
+
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:157
 msgid "Creator changes are disabled: the Merch Dashboard database tables use a storage engine without transaction support (for example MyISAM), so a change and its audit record could not be saved together. Convert the tables to InnoDB. Details are in the log."
 msgstr ""
@@ -3692,6 +3832,10 @@ msgstr ""
 #: src/Modules/Creators/Admin/CreatorsListTable.php:263
 #, php-format
 msgid "Unknown user #%d"
+msgstr ""
+
+#: src/Modules/Creators/Admin/ProposalImageDownload.php:116
+msgid "The image is no longer waiting for approval."
 msgstr ""
 
 #: src/Modules/Creators/Admin/UserProfileSection.php:65
@@ -6034,12 +6178,6 @@ msgstr ""
 msgid "I have reviewed the preview. Approving executes nothing."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
-msgid "Reject"
-msgstr ""
-
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:410
 msgid "Execute the approved adjustments"
 msgstr ""
@@ -6110,11 +6248,6 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:509
 msgid "Manual assessment: cannot be recalculated safely"
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
-#: build/dashboard.js:74
-msgid "Proposed"
 msgstr ""
 
 #. translators: %s: failure code.

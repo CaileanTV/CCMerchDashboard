@@ -6,7 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
-- **Creatorens kategori (fase 28, ADR-077):** Profile i dashboardet viser creatorens produktkategori, som butikken viser den, og creatoren foreslår navn, beskrivelse, logo, banner og mobilbanner med link og sociale links (Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch) i bannerpluginet CCMerch Kategoribannere. Intet ændres, før en administrator har godkendt det. Billeder venter ikke-offentligt; logoet skal være kvadratisk og skaleres ned til 1000 × 1000 px. Schema-version 32–33.
+- **Creatorens kategori (fase 28, ADR-077):** Profile i dashboardet viser creatorens produktkategori, som butikken viser den, og creatoren foreslår navn, beskrivelse, logo, banner og mobilbanner med link og sociale links (Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch) i bannerpluginet CCMerch Kategoribannere. Intet ændres, før en administrator har godkendt det på den nye admin-side "Category proposals" (kø pr. creator, nu og foreslået side om side, godkend, afvis med note, godkend alle; antal ventende i menuen). Billeder venter ikke-offentligt; logoet skal være kvadratisk og skaleres ned til 1000 × 1000 px. Schema-version 32–33.
 
 ### Changed
 
