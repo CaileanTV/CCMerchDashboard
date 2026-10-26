@@ -169,6 +169,37 @@ final class SchemaTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_category_proposals_table_matches_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'id'          => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
+				'creator_id'  => array( 'bigint', 'unsigned', 'NO', '' ),
+				'field'       => array( 'varchar(32)', '', 'NO', '' ),
+				'value'       => array( 'longtext', '', 'NO', '' ),
+				'status'      => array( 'varchar(16)', '', 'NO', '' ),
+				'pending_key' => array( 'varchar(64)', '', 'YES', '' ),
+				'reason'      => array( 'varchar(500)', '', 'YES', '' ),
+				'created_at'  => array( 'datetime', '', 'NO', '' ),
+				'created_by'  => array( 'bigint', 'unsigned', 'YES', '' ),
+				'decided_at'  => array( 'datetime', '', 'YES', '' ),
+				'decided_by'  => array( 'bigint', 'unsigned', 'YES', '' ),
+			),
+			$this->columns( Tables::CATEGORY_PROPOSALS )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'        => array( 'unique', 'id' ),
+				'creator_status' => array( 'non-unique', 'creator_id,status' ),
+				'pending_key'    => array( 'unique', 'pending_key' ),
+				'status_created' => array( 'non-unique', 'status,created_at' ),
+			),
+			$this->indexes( Tables::CATEGORY_PROPOSALS ),
+			'At most one pending proposal per creator and field (ADR-077).'
+		);
+	}
+
 	public function test_the_retired_item_pricing_table_does_not_exist(): void {
 		$this->install();
 

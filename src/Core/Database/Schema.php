@@ -39,6 +39,7 @@ use MerchBoard\Core\Database\Migrations\GrantExistingAlertApiAccess;
 use MerchBoard\Core\Database\Migrations\AddAlertEventImportedFlag;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Migrations\AddCreatorDeletedAt;
+use MerchBoard\Core\Database\Migrations\CreateCategoryProposalsTable;
 use MerchBoard\Core\Database\Migrations\WidenChatbotChannels;
 
 defined( 'ABSPATH' ) || exit;
@@ -89,6 +90,7 @@ final class Schema {
 			29 => new AddAlertEventImportedFlag(),
 			30 => new RemoveImportOptions(),
 			31 => new AddCreatorDeletedAt(),
+			32 => new CreateCategoryProposalsTable(),
 		);
 	}
 }

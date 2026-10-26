@@ -614,4 +614,24 @@ enum AuditAction: string {
 	 * A creator was deleted (phase 27, step 27.3, ADR-076). Context: deletion (deleted or anonymized), former_name, and counts of what was removed.
 	 */
 	case CreatorDeleted = 'creator_deleted';
+
+	/**
+	 * A creator proposed a change of their product category (phase 28, ADR-077). Context: proposal_id, proposal_field.
+	 */
+	case CategoryProposalSubmitted = 'category_proposal_submitted';
+
+	/**
+	 * An administrator approved a category proposal; it was written (ADR-077). Context: proposal_id, proposal_field, term_id (0: the name of a creator without category).
+	 */
+	case CategoryProposalApproved = 'category_proposal_approved';
+
+	/**
+	 * An administrator rejected a category proposal (ADR-077). Context: proposal_id, proposal_field, decision_note.
+	 */
+	case CategoryProposalRejected = 'category_proposal_rejected';
+
+	/**
+	 * The creator withdrew a category proposal (ADR-077). Context: proposal_id, proposal_field.
+	 */
+	case CategoryProposalWithdrawn = 'category_proposal_withdrawn';
 }

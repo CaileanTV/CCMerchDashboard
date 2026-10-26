@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-25T15:24:59+00:00\n"
+"PO-Revision-Date: 2026-10-26T15:16:07+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -165,797 +165,831 @@ msgstr "Merch Dashboard-overblik"
 msgid "Overview"
 msgstr "Overblik"
 
-#: src/Modules/Admin/AuditLogFormatter.php:71
+#: src/Modules/Admin/AuditLogFormatter.php:73
 msgid "Creator created"
 msgstr "Creator oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:72
+#: src/Modules/Admin/AuditLogFormatter.php:74
 msgid "Creator updated"
 msgstr "Creator opdateret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:73
+#: src/Modules/Admin/AuditLogFormatter.php:75
 msgid "Creator activated"
 msgstr "Creator aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:74
+#: src/Modules/Admin/AuditLogFormatter.php:76
 msgid "Creator deactivated"
 msgstr "Creator deaktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:75
+#: src/Modules/Admin/AuditLogFormatter.php:77
 msgid "WordPress user linked"
 msgstr "WordPress-bruger tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:76
+#: src/Modules/Admin/AuditLogFormatter.php:78
 msgid "WordPress user unlinked"
 msgstr "WordPress-bruger frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:77
+#: src/Modules/Admin/AuditLogFormatter.php:79
 msgid "Settings changed"
 msgstr "Indstillinger ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:78
+#: src/Modules/Admin/AuditLogFormatter.php:80
 msgid "Product linked"
 msgstr "Produkt tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:79
+#: src/Modules/Admin/AuditLogFormatter.php:81
 msgid "Product unlinked"
 msgstr "Produkt frakoblet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:80
+#: src/Modules/Admin/AuditLogFormatter.php:82
 msgid "Product category mapped"
 msgstr "Produktkategori tilknyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:81
+#: src/Modules/Admin/AuditLogFormatter.php:83
 msgid "Product category unmapped"
 msgstr "Produktkategori fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:82
+#: src/Modules/Admin/AuditLogFormatter.php:84
 msgid "Category reconciliation completed"
 msgstr "Kategoriafstemning gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:83
+#: src/Modules/Admin/AuditLogFormatter.php:85
 msgid "Sales ledger backfill completed"
 msgstr "Backfill af salgsjournalen gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:84
+#: src/Modules/Admin/AuditLogFormatter.php:86
 msgid "Creator price applied"
 msgstr "Creator-pris anvendt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:85
+#: src/Modules/Admin/AuditLogFormatter.php:87
 msgid "Creator price applied over a changed WooCommerce price"
 msgstr "Creator-pris anvendt over en ændret WooCommerce-pris"
 
-#: src/Modules/Admin/AuditLogFormatter.php:86
+#: src/Modules/Admin/AuditLogFormatter.php:88
 msgid "Default markup changed"
 msgstr "Standardmarkup ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:87
+#: src/Modules/Admin/AuditLogFormatter.php:89
 msgid "Fixed profit set"
 msgstr "Fast profit sat"
 
-#: src/Modules/Admin/AuditLogFormatter.php:88
+#: src/Modules/Admin/AuditLogFormatter.php:90
 msgid "Fixed profit removed"
 msgstr "Fast profit fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:89
+#: src/Modules/Admin/AuditLogFormatter.php:91
 msgid "VAT status changed"
 msgstr "Momsstatus ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:90
+#: src/Modules/Admin/AuditLogFormatter.php:92
 msgid "VAT status registered in the history"
 msgstr "Momsstatus registreret i historikken"
 
-#: src/Modules/Admin/AuditLogFormatter.php:91
+#: src/Modules/Admin/AuditLogFormatter.php:93
 msgid "Master data for settlement documents changed"
 msgstr "Stamdata til afregningsbilag ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:92
+#: src/Modules/Admin/AuditLogFormatter.php:94
 msgid "Product markup set"
 msgstr "Produktmarkup sat"
 
-#: src/Modules/Admin/AuditLogFormatter.php:93
+#: src/Modules/Admin/AuditLogFormatter.php:95
 msgid "Product markup removed"
 msgstr "Produktmarkup fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:94
+#: src/Modules/Admin/AuditLogFormatter.php:96
 msgid "Order history deleted"
 msgstr "Ordrehistorik slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:95
+#: src/Modules/Admin/AuditLogFormatter.php:97
 msgid "Payout requested"
 msgstr "Udbetaling anmodet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:96
+#: src/Modules/Admin/AuditLogFormatter.php:98
 msgid "Payout cancelled"
 msgstr "Udbetaling annulleret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:97
+#: src/Modules/Admin/AuditLogFormatter.php:99
 msgid "Payout rejected"
 msgstr "Udbetaling afvist"
 
-#: src/Modules/Admin/AuditLogFormatter.php:98
+#: src/Modules/Admin/AuditLogFormatter.php:100
 msgid "Payout completed"
 msgstr "Udbetaling gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:99
+#: src/Modules/Admin/AuditLogFormatter.php:101
 msgid "Payout gift card registered"
 msgstr "Payout-gavekort registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:100
+#: src/Modules/Admin/AuditLogFormatter.php:102
 msgid "Payout details viewed"
 msgstr "Udbetalingsoplysninger vist"
 
-#: src/Modules/Admin/AuditLogFormatter.php:101
+#: src/Modules/Admin/AuditLogFormatter.php:103
 msgid "Settlement start changed"
 msgstr "Afregningsstart ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:102
+#: src/Modules/Admin/AuditLogFormatter.php:104
 msgid "Payout settings changed"
 msgstr "Udbetalingsindstillinger ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:103
+#: src/Modules/Admin/AuditLogFormatter.php:105
 msgid "Settlement document issued"
 msgstr "Afregningsbilag udstedt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:104
+#: src/Modules/Admin/AuditLogFormatter.php:106
 msgid "Settlement document corrected"
 msgstr "Afregningsbilag korrigeret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:105
+#: src/Modules/Admin/AuditLogFormatter.php:107
 msgid "Gift card commission rule activated"
 msgstr "Kommissionsregel for payout-gavekort aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:106
+#: src/Modules/Admin/AuditLogFormatter.php:108
 msgid "Payout recalculation previewed"
 msgstr "Genberegning af udbetalinger forhåndsvist"
 
-#: src/Modules/Admin/AuditLogFormatter.php:107
+#: src/Modules/Admin/AuditLogFormatter.php:109
 msgid "Payout recalculation approved"
 msgstr "Genberegning af udbetalinger godkendt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:108
+#: src/Modules/Admin/AuditLogFormatter.php:110
 msgid "Payout recalculation rejected"
 msgstr "Genberegning af udbetalinger afvist"
 
-#: src/Modules/Admin/AuditLogFormatter.php:109
+#: src/Modules/Admin/AuditLogFormatter.php:111
 msgid "Payout recalculation reopened"
 msgstr "Genberegning af udbetalinger genåbnet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:110
+#: src/Modules/Admin/AuditLogFormatter.php:112
 msgid "Payout adjustment executed"
 msgstr "Regulering af udbetaling udført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:111
+#: src/Modules/Admin/AuditLogFormatter.php:113
 msgid "Payout recalculation item failed"
 msgstr "Post i genberegning fejlede"
 
-#: src/Modules/Admin/AuditLogFormatter.php:112
+#: src/Modules/Admin/AuditLogFormatter.php:114
 msgid "Payout recalculation executed"
 msgstr "Genberegning af udbetalinger udført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:113
+#: src/Modules/Admin/AuditLogFormatter.php:115
 msgid "Payout recalculation closed"
 msgstr "Genberegning af udbetalinger afsluttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:114
+#: src/Modules/Admin/AuditLogFormatter.php:116
 msgid "Payout recalculation exported"
 msgstr "Genberegning af udbetalinger eksporteret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:115
+#: src/Modules/Admin/AuditLogFormatter.php:117
 msgid "Payout recalculation export downloaded"
 msgstr "Eksport af genberegning hentet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:116
+#: src/Modules/Admin/AuditLogFormatter.php:118
 msgid "Creator discount code registered"
 msgstr "Creator-rabatkode registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:117
+#: src/Modules/Admin/AuditLogFormatter.php:119
 msgid "Creator discount code ended"
 msgstr "Creator-rabatkode afsluttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:118
+#: src/Modules/Admin/AuditLogFormatter.php:120
 msgid "Order excluded (creator discount code)"
 msgstr "Ordre udelukket (creator-rabatkode)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:119
+#: src/Modules/Admin/AuditLogFormatter.php:121
 msgid "Alert overlay set up"
 msgstr "Alert-overlay oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:120
+#: src/Modules/Admin/AuditLogFormatter.php:122
 msgid "Alert overlay URL replaced"
 msgstr "Alert-overlayets URL udskiftet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:121
+#: src/Modules/Admin/AuditLogFormatter.php:123
 msgid "Google Fonts API key changed"
 msgstr "Google Fonts API-nøgle ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:122
+#: src/Modules/Admin/AuditLogFormatter.php:124
 msgid "Google Fonts catalogue fetched"
 msgstr "Google Fonts-katalog hentet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:123
+#: src/Modules/Admin/AuditLogFormatter.php:125
 msgid "Alert font approved"
 msgstr "Alert-font godkendt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:124
+#: src/Modules/Admin/AuditLogFormatter.php:126
 msgid "Alert font removed"
 msgstr "Alert-font fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:125
+#: src/Modules/Admin/AuditLogFormatter.php:127
 msgid "Global alert overlay set up"
 msgstr "Globalt alert-overlay oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:126
+#: src/Modules/Admin/AuditLogFormatter.php:128
 msgid "Global alert overlay URL replaced"
 msgstr "Globalt alert-overlays URL udskiftet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:127
+#: src/Modules/Admin/AuditLogFormatter.php:129
 msgid "Global alert overlay switched on or off"
 msgstr "Globalt alert-overlay slået til eller fra"
 
-#: src/Modules/Admin/AuditLogFormatter.php:128
+#: src/Modules/Admin/AuditLogFormatter.php:130
 msgid "Standard overlay made"
 msgstr "Standard-overlay oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:129
+#: src/Modules/Admin/AuditLogFormatter.php:131
 msgid "Standard overlay renamed"
 msgstr "Standard-overlay omdøbt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:130
+#: src/Modules/Admin/AuditLogFormatter.php:132
 msgid "Standard overlay deleted"
 msgstr "Standard-overlay slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:131
+#: src/Modules/Admin/AuditLogFormatter.php:133
 msgid "Creator page setup changed"
 msgstr "Opsætningen af creator-siden er ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:132
+#: src/Modules/Admin/AuditLogFormatter.php:134
 msgid "Creator's alerts imported from MerchAlert"
 msgstr "Creatorens alerts er importeret fra MerchAlert"
 
-#: src/Modules/Admin/AuditLogFormatter.php:133
+#: src/Modules/Admin/AuditLogFormatter.php:135
 msgid "Import from MerchAlert completed"
 msgstr "Importen fra MerchAlert er gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:134
+#: src/Modules/Admin/AuditLogFormatter.php:136
 msgid "Sound added to the alert sound library"
 msgstr "Lyd tilføjet til alert-lydbiblioteket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:135
+#: src/Modules/Admin/AuditLogFormatter.php:137
 msgid "Sound removed from the alert sound library"
 msgstr "Lyd fjernet fra alert-lydbiblioteket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:136
+#: src/Modules/Admin/AuditLogFormatter.php:138
 msgid "Sound of the alert sound library renamed"
 msgstr "Lyd i alert-lydbiblioteket omdøbt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:137
+#: src/Modules/Admin/AuditLogFormatter.php:139
 msgid "Creator's alert sound limits changed"
 msgstr "Creatorens grænser for alert-lyde ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:138
+#: src/Modules/Admin/AuditLogFormatter.php:140
 msgid "Image added to the alert image library"
 msgstr "Billede tilføjet til alert-billedbiblioteket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:139
+#: src/Modules/Admin/AuditLogFormatter.php:141
 msgid "Image removed from the alert image library"
 msgstr "Billede fjernet fra alert-billedbiblioteket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:140
+#: src/Modules/Admin/AuditLogFormatter.php:142
 msgid "Image of the alert image library renamed"
 msgstr "Billede i alert-billedbiblioteket omdøbt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:141
+#: src/Modules/Admin/AuditLogFormatter.php:143
 msgid "Twitch app of the alert chatbot saved"
 msgstr "Twitch-app til alert-chatbotten gemt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:142
+#: src/Modules/Admin/AuditLogFormatter.php:144
 msgid "Twitch app of the alert chatbot removed"
 msgstr "Twitch-app til alert-chatbotten fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:143
+#: src/Modules/Admin/AuditLogFormatter.php:145
 msgid "Chatbot account connected"
 msgstr "Chatbot-konto forbundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:144
+#: src/Modules/Admin/AuditLogFormatter.php:146
 msgid "Chatbot account disconnected"
 msgstr "Chatbot-konto afbrudt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:145
+#: src/Modules/Admin/AuditLogFormatter.php:147
 msgid "Chat message format changed"
 msgstr "Format for chatbeskeder ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:146
+#: src/Modules/Admin/AuditLogFormatter.php:148
 msgid "Chatbot added to a creator's channel"
 msgstr "Chatbot tilføjet til en creators kanal"
 
-#: src/Modules/Admin/AuditLogFormatter.php:147
+#: src/Modules/Admin/AuditLogFormatter.php:149
 msgid "Chatbot removed from a creator's channel"
 msgstr "Chatbot fjernet fra en creators kanal"
 
-#: src/Modules/Admin/AuditLogFormatter.php:148
+#: src/Modules/Admin/AuditLogFormatter.php:150
 msgid "Chat message sent as the bot"
 msgstr "Chatbesked sendt som botten"
 
-#: src/Modules/Admin/AuditLogFormatter.php:149
+#: src/Modules/Admin/AuditLogFormatter.php:151
 msgid "Kick app of the alert chatbot saved"
 msgstr "Kick-app til alert-chatbotten gemt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:150
+#: src/Modules/Admin/AuditLogFormatter.php:152
 msgid "Kick app of the alert chatbot removed"
 msgstr "Kick-app til alert-chatbotten fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:151
+#: src/Modules/Admin/AuditLogFormatter.php:153
 msgid "YouTube app of the alert chatbot saved"
 msgstr "YouTube-app til alert-chatbotten gemt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:152
+#: src/Modules/Admin/AuditLogFormatter.php:154
 msgid "YouTube app of the alert chatbot removed"
 msgstr "YouTube-app til alert-chatbotten fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:153
+#: src/Modules/Admin/AuditLogFormatter.php:155
 msgid "Privacy policy and terms of the YouTube chatbot saved"
 msgstr "Privatlivspolitik og vilkår for YouTube-chatbotten gemt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:154
+#: src/Modules/Admin/AuditLogFormatter.php:156
 msgid "Privacy policy and terms of the YouTube chatbot accepted"
 msgstr "Privatlivspolitik og vilkår for YouTube-chatbotten godkendt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:155
+#: src/Modules/Admin/AuditLogFormatter.php:157
 msgid "News message published"
 msgstr "Nyhed udgivet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:156
+#: src/Modules/Admin/AuditLogFormatter.php:158
 msgid "Published news message changed"
 msgstr "Udgivet nyhed ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:157
+#: src/Modules/Admin/AuditLogFormatter.php:159
 msgid "News message withdrawn"
 msgstr "Nyhed trukket tilbage"
 
-#: src/Modules/Admin/AuditLogFormatter.php:158
+#: src/Modules/Admin/AuditLogFormatter.php:160
 msgid "News draft deleted"
 msgstr "Nyhedskladde slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:159
+#: src/Modules/Admin/AuditLogFormatter.php:161
 msgid "Alert API switched on or off"
 msgstr "Alert-API slået til eller fra"
 
-#: src/Modules/Admin/AuditLogFormatter.php:160
+#: src/Modules/Admin/AuditLogFormatter.php:162
 msgid "Alert API key created"
 msgstr "API-nøgle til alerts oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:161
+#: src/Modules/Admin/AuditLogFormatter.php:163
 msgid "Alert API key revoked"
 msgstr "API-nøgle til alerts tilbagekaldt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:162
+#: src/Modules/Admin/AuditLogFormatter.php:164
 msgid "Alert webhook added"
 msgstr "Alert-webhook tilføjet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:163
+#: src/Modules/Admin/AuditLogFormatter.php:165
 msgid "Alert webhook changed"
 msgstr "Alert-webhook ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:164
+#: src/Modules/Admin/AuditLogFormatter.php:166
 msgid "Alert webhook deleted"
 msgstr "Alert-webhook slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:165
+#: src/Modules/Admin/AuditLogFormatter.php:167
 msgid "Creator's access to the alert API changed"
 msgstr "Creatorens adgang til alert-API'en ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:166
+#: src/Modules/Admin/AuditLogFormatter.php:168
 msgid "Vendor migrated from Product Vendors"
 msgstr "Vendor flyttet fra Product Vendors"
 
-#: src/Modules/Admin/AuditLogFormatter.php:167
+#: src/Modules/Admin/AuditLogFormatter.php:169
 msgid "Migration from Product Vendors completed"
 msgstr "Migrering fra Product Vendors gennemført"
 
-#: src/Modules/Admin/AuditLogFormatter.php:168
+#: src/Modules/Admin/AuditLogFormatter.php:170
 msgid "Product Vendors roles removed from the creator's user"
 msgstr "Product Vendors-roller fjernet fra creatorens bruger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:169
+#: src/Modules/Admin/AuditLogFormatter.php:171
 msgid "Administrator started viewing as the creator"
 msgstr "Administrator begyndte at se som creatoren"
 
-#: src/Modules/Admin/AuditLogFormatter.php:170
+#: src/Modules/Admin/AuditLogFormatter.php:172
 msgid "Administrator stopped viewing as the creator"
 msgstr "Administrator stoppede med at se som creatoren"
 
-#: src/Modules/Admin/AuditLogFormatter.php:171
+#: src/Modules/Admin/AuditLogFormatter.php:173
 msgid "Creator deleted"
 msgstr "Creator slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:262
+#: src/Modules/Admin/AuditLogFormatter.php:174
+msgid "Creator proposed a change of their category"
+msgstr "Creator foreslog en ændring af sin kategori"
+
+#: src/Modules/Admin/AuditLogFormatter.php:175
+msgid "Category proposal approved"
+msgstr "Kategoriforslag godkendt"
+
+#: src/Modules/Admin/AuditLogFormatter.php:176
+msgid "Category proposal rejected"
+msgstr "Kategoriforslag afvist"
+
+#: src/Modules/Admin/AuditLogFormatter.php:177
+msgid "Creator withdrew a category proposal"
+msgstr "Creator trak et kategoriforslag tilbage"
+
+#: src/Modules/Admin/AuditLogFormatter.php:268
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:264
+#: src/Modules/Admin/AuditLogFormatter.php:270
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:267
+#: src/Modules/Admin/AuditLogFormatter.php:273
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:270
+#: src/Modules/Admin/AuditLogFormatter.php:276
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:279
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:276
+#: src/Modules/Admin/AuditLogFormatter.php:282
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:279
+#: src/Modules/Admin/AuditLogFormatter.php:285
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:287
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:290
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:287
+#: src/Modules/Admin/AuditLogFormatter.php:293
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:288
+#: src/Modules/Admin/AuditLogFormatter.php:294
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:289
+#: src/Modules/Admin/AuditLogFormatter.php:295
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:290
+#: src/Modules/Admin/AuditLogFormatter.php:296
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:292
+#: src/Modules/Admin/AuditLogFormatter.php:298
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:302
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:299
+#: src/Modules/Admin/AuditLogFormatter.php:305
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:307
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:307
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:304
+#: src/Modules/Admin/AuditLogFormatter.php:310
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogFormatter.php:313
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:316
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:313
+#: src/Modules/Admin/AuditLogFormatter.php:319
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:321
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:318
+#: src/Modules/Admin/AuditLogFormatter.php:324
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:327
 #, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr "Gjort af en administrator, der så som %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:330
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr "Bevaret anonymt på grund af sine salg, udbetalinger og afregningsbilag"
 
-#: src/Modules/Admin/AuditLogFormatter.php:325
+#: src/Modules/Admin/AuditLogFormatter.php:331
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr "Slettet helt (ingen salg, udbetalinger eller afregningsbilag)"
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:328
+#: src/Modules/Admin/AuditLogFormatter.php:334
 #, php-format
 msgid "Former name: %s"
 msgstr "Tidligere navn: %s"
 
+#. translators: %s: proposal id.
+#: src/Modules/Admin/AuditLogFormatter.php:337
+#, php-format
+msgid "Proposal: #%s"
+msgstr "Forslag: #%s"
+
+#. translators: %s: what the proposal changes, e.g. "banner".
+#: src/Modules/Admin/AuditLogFormatter.php:340
+#, php-format
+msgid "Proposed change: %s"
+msgstr "Foreslået ændring: %s"
+
+#. translators: %s: the administrator's note.
+#: src/Modules/Admin/AuditLogFormatter.php:343
+#, php-format
+msgid "Note to the creator: %s"
+msgstr "Note til creatoren: %s"
+
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:331
+#: src/Modules/Admin/AuditLogFormatter.php:346
 #, php-format
 msgid "Session length: %d minutes"
 msgstr "Sessionens længde: %d minutter"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:349
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:337
+#: src/Modules/Admin/AuditLogFormatter.php:352
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:340
+#: src/Modules/Admin/AuditLogFormatter.php:355
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:342
+#: src/Modules/Admin/AuditLogFormatter.php:357
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:345
+#: src/Modules/Admin/AuditLogFormatter.php:360
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:363
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:351
+#: src/Modules/Admin/AuditLogFormatter.php:366
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:353
+#: src/Modules/Admin/AuditLogFormatter.php:368
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:353
+#: src/Modules/Admin/AuditLogFormatter.php:368
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:356
+#: src/Modules/Admin/AuditLogFormatter.php:371
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:359
+#: src/Modules/Admin/AuditLogFormatter.php:374
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:362
+#: src/Modules/Admin/AuditLogFormatter.php:377
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:363
+#: src/Modules/Admin/AuditLogFormatter.php:378
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:366
+#: src/Modules/Admin/AuditLogFormatter.php:381
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:369
+#: src/Modules/Admin/AuditLogFormatter.php:384
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:372
+#: src/Modules/Admin/AuditLogFormatter.php:387
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:375
+#: src/Modules/Admin/AuditLogFormatter.php:390
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:378
+#: src/Modules/Admin/AuditLogFormatter.php:393
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:419
+#: src/Modules/Admin/AuditLogFormatter.php:434
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:421
+#: src/Modules/Admin/AuditLogFormatter.php:436
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:423
+#: src/Modules/Admin/AuditLogFormatter.php:438
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:436
+#: src/Modules/Admin/AuditLogFormatter.php:451
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:437
+#: src/Modules/Admin/AuditLogFormatter.php:452
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:438
+#: src/Modules/Admin/AuditLogFormatter.php:453
 #: build/dashboard.js:52
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:439
+#: src/Modules/Admin/AuditLogFormatter.php:454
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:440
+#: src/Modules/Admin/AuditLogFormatter.php:455
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:441
+#: src/Modules/Admin/AuditLogFormatter.php:456
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:442
+#: src/Modules/Admin/AuditLogFormatter.php:457
 msgid "Failed"
 msgstr "Fejlet"
 
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:452
-#: src/Modules/Admin/AuditLogFormatter.php:478
-#: src/Modules/Admin/AuditLogFormatter.php:537
+#: src/Modules/Admin/AuditLogFormatter.php:467
+#: src/Modules/Admin/AuditLogFormatter.php:493
+#: src/Modules/Admin/AuditLogFormatter.php:552
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:465
+#: src/Modules/Admin/AuditLogFormatter.php:480
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:58
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:466
+#: src/Modules/Admin/AuditLogFormatter.php:481
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:58
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:467
+#: src/Modules/Admin/AuditLogFormatter.php:482
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:58
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:468
+#: src/Modules/Admin/AuditLogFormatter.php:483
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:58
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:496
+#: src/Modules/Admin/AuditLogFormatter.php:511
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:520
+#: src/Modules/Admin/AuditLogFormatter.php:535
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:521
+#: src/Modules/Admin/AuditLogFormatter.php:536
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:522
+#: src/Modules/Admin/AuditLogFormatter.php:537
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:523
+#: src/Modules/Admin/AuditLogFormatter.php:538
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:524
-#: src/Modules/Admin/AuditLogFormatter.php:676
+#: src/Modules/Admin/AuditLogFormatter.php:539
+#: src/Modules/Admin/AuditLogFormatter.php:691
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:525
+#: src/Modules/Admin/AuditLogFormatter.php:540
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:526
-#: src/Modules/Admin/AuditLogFormatter.php:736
+#: src/Modules/Admin/AuditLogFormatter.php:541
+#: src/Modules/Admin/AuditLogFormatter.php:751
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:54
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:527
+#: src/Modules/Admin/AuditLogFormatter.php:542
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:556
+#: src/Modules/Admin/AuditLogFormatter.php:571
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:571
+#: src/Modules/Admin/AuditLogFormatter.php:586
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -964,7 +998,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:655
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -973,103 +1007,103 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:655
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:650
+#: src/Modules/Admin/AuditLogFormatter.php:665
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:651
+#: src/Modules/Admin/AuditLogFormatter.php:666
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:652
+#: src/Modules/Admin/AuditLogFormatter.php:667
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:653
+#: src/Modules/Admin/AuditLogFormatter.php:668
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:654
+#: src/Modules/Admin/AuditLogFormatter.php:669
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:655
+#: src/Modules/Admin/AuditLogFormatter.php:670
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:656
+#: src/Modules/Admin/AuditLogFormatter.php:671
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:657
+#: src/Modules/Admin/AuditLogFormatter.php:672
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:658
+#: src/Modules/Admin/AuditLogFormatter.php:673
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:659
+#: src/Modules/Admin/AuditLogFormatter.php:674
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:660
+#: src/Modules/Admin/AuditLogFormatter.php:675
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:661
+#: src/Modules/Admin/AuditLogFormatter.php:676
 msgid "the administrator stopped viewing as the creator"
 msgstr "administratoren stoppede selv med at se som creatoren"
 
-#: src/Modules/Admin/AuditLogFormatter.php:662
+#: src/Modules/Admin/AuditLogFormatter.php:677
 msgid "the session expired"
 msgstr "sessionen udløb"
 
-#: src/Modules/Admin/AuditLogFormatter.php:663
+#: src/Modules/Admin/AuditLogFormatter.php:678
 msgid "the administrator logged out"
 msgstr "administratoren loggede ud"
 
-#: src/Modules/Admin/AuditLogFormatter.php:664
+#: src/Modules/Admin/AuditLogFormatter.php:679
 msgid "the administrator viewed another creator"
 msgstr "administratoren så som en anden creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:677
+#: src/Modules/Admin/AuditLogFormatter.php:692
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:689
+#: src/Modules/Admin/AuditLogFormatter.php:704
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:690
+#: src/Modules/Admin/AuditLogFormatter.php:705
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:702
+#: src/Modules/Admin/AuditLogFormatter.php:717
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:703
+#: src/Modules/Admin/AuditLogFormatter.php:718
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:704
+#: src/Modules/Admin/AuditLogFormatter.php:719
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:736
+#: src/Modules/Admin/AuditLogFormatter.php:751
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
@@ -1079,15 +1113,15 @@ msgstr "produkterne i én mapping"
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:755
+#: src/Modules/Admin/AuditLogFormatter.php:770
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:756
+#: src/Modules/Admin/AuditLogFormatter.php:771
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:757
+#: src/Modules/Admin/AuditLogFormatter.php:772
 msgid "social links"
 msgstr "sociale links"
 
@@ -3673,10 +3707,34 @@ msgid "Linked to %1$s (%2$s)."
 msgstr "Tilknyttet %1$s (%2$s)."
 
 #. translators: %d: creator id.
-#: src/Modules/Creators/CreatorDeletion.php:230
+#: src/Modules/Creators/CreatorDeletion.php:225
 #, php-format
 msgid "Deleted creator #%d"
 msgstr "Slettet creator #%d"
+
+#: src/Modules/Creators/Proposals/ProposalLabels.php:26
+msgid "name"
+msgstr "navn"
+
+#: src/Modules/Creators/Proposals/ProposalLabels.php:27
+msgid "description"
+msgstr "beskrivelse"
+
+#: src/Modules/Creators/Proposals/ProposalLabels.php:28
+msgid "category image"
+msgstr "kategoribillede"
+
+#: src/Modules/Creators/Proposals/ProposalLabels.php:29
+msgid "banner"
+msgstr "banner"
+
+#: src/Modules/Creators/Proposals/ProposalLabels.php:30
+msgid "mobile banner"
+msgstr "mobilbanner"
+
+#: src/Modules/Creators/Proposals/ProposalLabels.php:31
+msgid "link on the banner"
+msgstr "link på banneret"
 
 #: src/Modules/Dashboard/DashboardSections.php:63
 msgid "Profile"

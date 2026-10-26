@@ -695,6 +695,12 @@ final class WooCommerceModule implements Module {
 			},
 			10
 		);
+		// The creator's category for category proposals (phase 28, ADR-077).
+		$container->set( WooCommerceCategoryProfile::class, static fn( Container $c ): WooCommerceCategoryProfile => new WooCommerceCategoryProfile( $c->get( CreatorCategoryRepository::class ) ) );
+		add_filter(
+			'merchboard_category_profile_target',
+			static fn(): WooCommerceCategoryProfile => $container->get( WooCommerceCategoryProfile::class )
+		);
 		$container->set(
 			PayoutRecalculationActions::class,
 			static fn( Container $c ): PayoutRecalculationActions => new PayoutRecalculationActions( $c->get( PayoutRecalculations::class ), $c->get( Logger::class ), $c->get( PayoutRecalculationExports::class ) )

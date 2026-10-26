@@ -330,10 +330,12 @@ final class PluginTest extends TestCase {
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_api_keys \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_webhooks \(/' ) );
 		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_alert_webhook_deliveries \(/' ) );
+		// 28–31 change data and columns (no dbDelta()); 32 creates the category proposals table.
+		Functions\expect( 'dbDelta' )->once()->ordered()->with( \Mockery::pattern( '/^CREATE TABLE wp_merchboard_category_proposals \(/' ) );
 
 		$this->plugin()->boot();
 
-		self::assertSame( 31, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 32, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {

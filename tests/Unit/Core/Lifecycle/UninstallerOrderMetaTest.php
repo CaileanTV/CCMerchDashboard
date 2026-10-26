@@ -42,6 +42,7 @@ final class UninstallerOrderMetaTest extends TestCase {
 		Functions\when( 'remove_role' )->justReturn( null );
 		Functions\when( 'get_posts' )->justReturn( array() );
 		Functions\when( 'delete_metadata' )->justReturn( true );
+		Functions\when( 'wp_upload_dir' )->justReturn( array( 'basedir' => sys_get_temp_dir() . '/merchboard-no-uploads' ) );
 	}
 
 	public function test_the_alert_username_is_removed_and_merchalerts_stays(): void {

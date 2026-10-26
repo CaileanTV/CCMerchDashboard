@@ -40,10 +40,14 @@ parameters:
         # Stand-in for an active YITH WooCommerce Gift Cards (global constants,
         # class and function; isolated test processes only).
         - tests/Fixtures/yith-gift-cards.php
+        # Stand-in for an active CCMerch Kategoribannere; PHPStan uses tests/Stubs/ccmerch-kategoribannere.stub.
+        - tests/Fixtures/ccmerch-kategoribannere.php
     # Declares the WooCommerce and WP-CLI API the plugin uses (no stubs package, ADR-030 D5).
     scanFiles:
         - tests/Stubs/woocommerce.stub
         - tests/Stubs/wp-cli.stub
+        # The banner plugin CCMerch Kategoribannere (phase 28, ADR-077).
+        - tests/Stubs/ccmerch-kategoribannere.stub
     # Runtime constants of the integration test harness (tests/Integration/config.php).
     bootstrapFiles:
         - tests/phpstan-bootstrap.php

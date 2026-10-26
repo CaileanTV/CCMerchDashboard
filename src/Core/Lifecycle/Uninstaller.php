@@ -29,6 +29,7 @@ use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
+use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
 use WC_Order;
 use WP_User;
 use wpdb;
@@ -196,6 +197,10 @@ final class Uninstaller {
 		$this->remove_order_meta();
 		$this->remove_alert_media();
 		ScheduledJobs::cancel_alert_jobs();
+
+		// Images waiting for approval (ADR-077); approved images belong to their category and stay.
+		ProposalFiles::remove_all();
+		delete_post_meta_by_key( ProposalFiles::MEDIA_META );
 
 		if ( ! $this->archive_creators() ) {
 			// Nothing is dropped; the opt-in survives so a later uninstall can finish.

@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Lifecycle\UninstallBlocked;
 use MerchBoard\Core\Lifecycle\Uninstaller;
+use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
@@ -48,6 +49,8 @@ final class UninstallerTest extends TestCase {
 		parent::setUp();
 		$this->wpdb   = new RecordingWpdb();
 		$this->logger = new RecordingLogger();
+		// No folder of proposed images (ADR-077) to remove.
+		Functions\when( 'wp_upload_dir' )->justReturn( array( 'basedir' => sys_get_temp_dir() . '/merchboard-no-uploads' ) );
 	}
 
 	public function test_without_opt_in_nothing_is_touched(): void {
@@ -156,6 +159,10 @@ final class UninstallerTest extends TestCase {
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
 					'args'  => array( 'wp_3_merchboard_alert_webhook_deliveries' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_category_proposals' ),
 				),
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
@@ -305,8 +312,8 @@ final class UninstallerTest extends TestCase {
 
 		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
 
-		// The alert files' meta is covered by its own test.
-		$deleted = array_values( array_filter( $deleted, static fn( array $call ): bool => ! in_array( $call['key'], array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), true ) ) );
+		// The alert files' meta is covered by its own test; the approved category images keep their files.
+		$deleted = array_values( array_filter( $deleted, static fn( array $call ): bool => ! in_array( $call['key'], array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META, ProposalFiles::MEDIA_META ) ), true ) ) );
 
 		self::assertSame(
 			array(

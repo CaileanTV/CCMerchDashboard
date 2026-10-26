@@ -12,6 +12,8 @@ namespace MerchBoard\Modules\Admin;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditEntry;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Creators\Proposals\ProposalField;
+use MerchBoard\Modules\Creators\Proposals\ProposalLabels;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -169,6 +171,10 @@ final class AuditLogFormatter {
 			AuditAction::CreatorImpersonationStarted => __( 'Administrator started viewing as the creator', 'merchboard' ),
 			AuditAction::CreatorImpersonationEnded => __( 'Administrator stopped viewing as the creator', 'merchboard' ),
 			AuditAction::CreatorDeleted        => __( 'Creator deleted', 'merchboard' ),
+			AuditAction::CategoryProposalSubmitted => __( 'Creator proposed a change of their category', 'merchboard' ),
+			AuditAction::CategoryProposalApproved => __( 'Category proposal approved', 'merchboard' ),
+			AuditAction::CategoryProposalRejected => __( 'Category proposal rejected', 'merchboard' ),
+			AuditAction::CategoryProposalWithdrawn => __( 'Creator withdrew a category proposal', 'merchboard' ),
 		};
 	}
 
@@ -326,6 +332,15 @@ final class AuditLogFormatter {
 			case 'former_name':
 				/* translators: %s: the creator's former name. */
 				return self::text( __( 'Former name: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'proposal_id':
+				/* translators: %s: proposal id. */
+				return self::text( __( 'Proposal: #%s', 'merchboard' ), self::scalar( $value ) );
+			case 'proposal_field':
+				/* translators: %s: what the proposal changes, e.g. "banner". */
+				return self::text( __( 'Proposed change: %s', 'merchboard' ), self::proposal_field( $value ) );
+			case 'decision_note':
+				/* translators: %s: the administrator's note. */
+				return self::text( __( 'Note to the creator: %s', 'merchboard' ), self::scalar( $value ) );
 			case 'minutes':
 				/* translators: %d: minutes. */
 				return esc_html( sprintf( __( 'Session length: %d minutes', 'merchboard' ), is_int( $value ) ? $value : 0 ) );
@@ -760,6 +775,17 @@ final class AuditLogFormatter {
 				$names
 			)
 		);
+	}
+
+	/**
+	 * A readable category proposal field (ADR-077).
+	 *
+	 * @param mixed $value Field value.
+	 */
+	private static function proposal_field( mixed $value ): string {
+		$field = is_string( $value ) ? ProposalField::tryFrom( $value ) : null;
+
+		return null === $field ? self::scalar( $value ) : ProposalLabels::field( $field );
 	}
 
 	/**

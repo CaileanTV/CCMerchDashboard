@@ -1,0 +1,26 @@
+<?php
+/**
+ * The functions of the banner plugin CCMerch Kategoribannere that Merch
+ * Dashboard calls (phase 28, ADR-077), each behind function_exists(). For
+ * PHPStan only.
+ *
+ * @package MerchBoard
+ */
+
+/**
+ * The category's own banner, or null.
+ *
+ * @param int $term_id Term id.
+ * @return array{id: int, mobile: int, link: string, new_tab: bool}|null
+ */
+function ccmkb_category_banner( $term_id ) {
+}
+
+/**
+ * The category's banner: its own, else the default banner.
+ *
+ * @param WP_Term $term Term.
+ * @return array<string, mixed>|null
+ */
+function ccmkb_banner_for_term( $term ) {
+}

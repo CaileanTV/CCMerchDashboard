@@ -242,6 +242,12 @@ final class Tables {
 	public const ALERT_WEBHOOK_DELIVERIES = 'merchboard_alert_webhook_deliveries';
 
 	/**
+	 * A creator's proposals for their product category (phase 28, ADR-077):
+	 * one row per proposed field, pending until an administrator decides.
+	 */
+	public const CATEGORY_PROPOSALS = 'merchboard_category_proposals';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -282,6 +288,7 @@ final class Tables {
 		self::ALERT_API_KEYS,
 		self::ALERT_WEBHOOKS,
 		self::ALERT_WEBHOOK_DELIVERIES,
+		self::CATEGORY_PROPOSALS,
 	);
 
 	/**
