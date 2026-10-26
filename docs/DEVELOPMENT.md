@@ -248,7 +248,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.2.0: oprydning, "Se som creator" og sletning af creators (fase 27)
 
-**Versions-bump og CHANGELOG-sektionen 2026-10-25** efter projektejerens valg samme dag (minor: nye features; fase 27 er reviewet og runtime-testet på Local). Schema-version **31**: migration 30 sletter importværktøjernes optioner, og migration 31 tilføjer `deleted_at` til creators. Ingen import eller manuelle trin. Tagget giver en draft-release; projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til staging eller produktion.
+**Versions-bump, CHANGELOG-sektionen og tagget `v1.2.0` (på `1af0371`) sat 2026-10-25** efter projektejerens valg samme dag (minor: nye features; fase 27 er reviewet og runtime-testet på Local). Schema-version **31**: migration 30 sletter importværktøjernes optioner, og migration 31 tilføjer `deleted_at` til creators. Ingen import eller manuelle trin. Tagget giver en draft-release; projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til staging eller produktion.
 
 1. **Backup:** filer og database via hostingen. Notér den installerede version (1.1.0).
 2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview viser schema-version 31 uden advarsler.

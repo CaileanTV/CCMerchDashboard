@@ -694,6 +694,34 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - samspillet med migreringens tilstand (fase 26) og creatorens uploadede filer.
 - **27.4 Review og runtime-test ✅ (review og runtime-test 2026-10-25):** et uafhængigt kode-review af fase 27 fandt én alvorlig fejl (vagten for "Se som creator" kunne omgås med store bogstaver i ruten) og flere mindre; alle er rettet og testet automatisk (statusnoter i ADR-075 og ADR-076). CI på MySQL fandt derefter, at sletningens afsluttende kontrol også talte koblinger, der aldrig giver salg (variationer, slettede poster, ugyldige koblinger); rettet før releasen (statusnote i ADR-076). Projektejeren har runtime-testet fase 27 på Local 2026-10-25 efter en tjekliste med 28 punkter: 27 OK. Ét punkt er accepteret af projektejeren: "Se som creator" vises også ved creators, som projektejeren opfatter som uden bruger. Koden viser den kun, når creatoren har et bruger-id; årsagen er ikke undersøgt. Projektejerens valg: version **1.2.0** (DEVELOPMENT.md, "Release 1.2.0").
 
+## Fase 28 – Creatorens kategori: navn, beskrivelse og banner ⏳ (projektejerens ønske 2026-10-26; ikke planlagt)
+
+**Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning (billede og banner). Creatoren kan foreslå kategoriens navn, beskrivelse og eget banner med link. **Intet skrives til WooCommerce, før en administrator har godkendt ændringen** (risiko for ophavsret). Kræver en ADR: i dag skriver pluginet ikke til kategorierne selv, kun til produkternes kobling (ADR-033).
+
+- **28.1 Analyse og plan:**
+  - **Bannerpluginet:** projektejeren har lagt det i Merch Dashboard Locals plugin-mappe. Det skal afklares, hvordan det gemmer banner, standardbanner, korttitel og link pr. kategori (fx term meta), og om det har et API. At læse pluginets filer kræver projektejerens udtrykkelige tilladelse (Project Isolation, AI-DEVELOPMENT.md); ellers læses kun dets data på Local gennem WordPress.
+  - Hvordan creatorens kategori findes (kategori-mapping, ADR-033), og hvad der sker med flere kategorier pr. creator.
+  - ADR for skrivning til kategorier og bannerpluginet, godkendelsesflowet og uploads.
+- **28.2 Profile viser og foreslår kategoriens opsætning:**
+  - Profile viser kategoriens billede og banner. Har creatoren intet eget banner, vises pluginets standardbanner.
+  - **Navn:** creatorens navn på dashboardet foreslås som kategoriens navn og som korttitel i bannerpluginet.
+  - **"Bio" bliver "Beskrivelse"** og synkroniseres til kategoriens beskrivelsesfelt.
+  - **Eget banner:** creatoren kan uploade et banner og angive et link på banneret. Fjernes det, vises standardbanneret igen.
+- **28.3 Godkendelse i admin:**
+  - Alle ændringer fra creatoren lægges som forslag på en ny admin-side: nuværende og foreslået værdi side om side, også billeder og link.
+  - Administratoren godkender eller afviser hvert forslag. Først ved godkendelse skrives til WooCommerce og bannerpluginet.
+  - Creatoren ser i dashboardet, at et forslag venter, og om det er godkendt eller afvist.
+  - Forslag, godkendelser og afvisninger auditeres.
+- **28.4 Review og runtime-test.**
+- **Afklares i planen:**
+  - **Navn:** gemmes creatorens visningsnavn i Merch Dashboard stadig straks, mens kategoriens navn og korttitlen venter på godkendelse? Kategoriens slug ændres ikke (URL'er og søgemaskiner).
+  - **Beskrivelse:** ren tekst eller enkel formatering, længde, og hvad der sker med de eksisterende bioer. Skal en ændring foretaget direkte i WooCommerce vises i dashboardet (WooCommerce som kilde)?
+  - **Banner:** filtyper, størrelse og mål; hvor uploads ligger, til de er godkendt (ikke offentligt i mediebiblioteket); oprydning af afviste filer.
+  - **Link:** kun `https`, og om bestemte domæner er tilladt; administratoren godkender også linket.
+  - **Kategoriens billede:** kun visning, eller kan creatoren også foreslå et nyt?
+  - **Rettighed:** `merchboard_manage_creators` eller en ny capability til godkendelse; notifikation til administratoren om nye forslag.
+  - Hvad der sker uden bannerpluginet aktivt (kun navn og beskrivelse), eller hvis creatoren ikke har nogen kategori.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
