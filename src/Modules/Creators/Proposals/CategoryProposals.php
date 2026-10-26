@@ -70,9 +70,10 @@ final class CategoryProposals {
 	 * @param AuditTrail                 $audit       Audit trail.
 	 * @param Transaction                $transaction Database transaction.
 	 * @param wpdb                       $wpdb        Database (images in use).
-	 * @param CategoryProfileTarget|null $target      The category (null without WooCommerce).
+	 * @param Closure                    $target      The category, looked up on use (null without WooCommerce).
 	 * @param Closure                    $clock       Now, in UTC.
 	 *
+	 * @phpstan-param Closure(): ?CategoryProfileTarget $target
 	 * @phpstan-param Closure(): DateTimeImmutable $clock
 	 */
 	public function __construct(
@@ -82,7 +83,7 @@ final class CategoryProposals {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private wpdb $wpdb,
-		private ?CategoryProfileTarget $target,
+		private Closure $target,
 		private Closure $clock
 	) {
 	}
@@ -104,7 +105,7 @@ final class CategoryProposals {
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function category( int $creator_id ): ?CategoryProfile {
-		return $this->target?->current( $creator_id );
+		return $this->target()?->current( $creator_id );
 	}
 
 	/**
@@ -144,8 +145,8 @@ final class CategoryProposals {
 	 * All fields are validated before anything is stored; a value equal to
 	 * the current one withdraws a pending proposal for the field.
 	 *
-	 * @param Creator               $creator Creator from CreatorContext.
-	 * @param array<string, string> $input   Values by field (ProposalField value).
+	 * @param Creator              $creator Creator from CreatorContext.
+	 * @param array<string, mixed> $input   Values by field (ProposalField value); a value that is not a string is invalid.
 	 * @return list<CategoryProposal> The new pending proposals.
 	 * @throws CategoryProposalException When the creator may not propose (NOT_AUTHORIZED) or a field is invalid (INVALID with errors(); nothing is stored).
 	 * @throws DatabaseException When it cannot be stored (nothing is kept).
@@ -273,7 +274,7 @@ final class CategoryProposals {
 		if ( $field->needs_category() ) {
 			$this->assert_available( $field );
 			$category = $this->category( $creator->id ) ?? self::refuse( CategoryProposalException::NO_CATEGORY );
-		} elseif ( null !== $this->target ) {
+		} elseif ( null !== $this->target() ) {
 			$category = $this->category( $creator->id );
 		}
 
@@ -294,8 +295,10 @@ final class CategoryProposals {
 						$this->creators->rename( $creator->id, $proposal->value );
 					}
 
-					if ( null !== $category && null !== $this->target ) {
-						$replaced = $this->target->apply( $creator->id, $field, $field->is_file() ? ( $media > 0 ? (string) $media : '' ) : $proposal->value );
+					$target = $this->target();
+
+					if ( null !== $category && null !== $target ) {
+						$replaced = $target->apply( $creator->id, $field, $field->is_file() ? ( $media > 0 ? (string) $media : '' ) : $proposal->value );
 					}
 
 					if ( ! $this->proposals->end( $proposal->id, ProposalStatus::Approved, null, self::user(), ( $this->clock )() ) ) {
@@ -566,7 +569,9 @@ final class CategoryProposals {
 			return true;
 		}
 
-		return null !== $this->target && ( ! $field->needs_banner_plugin() || $this->target->has_banner_plugin() );
+		$target = $this->target();
+
+		return null !== $target && ( ! $field->needs_banner_plugin() || $target->has_banner_plugin() );
 	}
 
 	/**
@@ -616,6 +621,13 @@ final class CategoryProposals {
 		if ( is_numeric( $inuse ) && 0 === (int) $inuse ) {
 			wp_delete_attachment( $attachment_id, true );
 		}
+	}
+
+	/**
+	 * The creator's category on this site, or null without WooCommerce.
+	 */
+	private function target(): ?CategoryProfileTarget {
+		return ( $this->target )();
 	}
 
 	/**

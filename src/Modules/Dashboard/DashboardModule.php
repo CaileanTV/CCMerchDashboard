@@ -13,7 +13,8 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
-use MerchBoard\Modules\Creators\CreatorProfileService;
+use MerchBoard\Modules\Creators\Proposals\CategoryProposals;
+use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
 use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use MerchBoard\Modules\Dashboard\Branding\LoginBranding;
 use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
@@ -26,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  * route and a standalone shell outside the theme that loads the React app
  * (phase 13, DashboardAssets), and the creator-scope REST routes (phase 14,
  * Rest\MeController). Depends on the Access module for CreatorContext and on
- * the Creators module for CreatorProfileService.
+ * the Creators module for the category proposals (ADR-077).
  */
 final class DashboardModule implements Module {
 
@@ -110,7 +111,8 @@ final class DashboardModule implements Module {
 			MeController::class,
 			static fn( Container $c ): MeController => new MeController(
 				$c->get( CreatorContext::class ),
-				$c->get( CreatorProfileService::class ),
+				$c->get( CategoryProposals::class ),
+				$c->get( ProposalFiles::class ),
 				$c->get( ThemePreference::class ),
 				$c->get( Logger::class )
 			)

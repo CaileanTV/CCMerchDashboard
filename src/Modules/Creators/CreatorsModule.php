@@ -33,8 +33,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Creator domain: data layer (phase 3), administration with audit trail
- * (phase 6), the reaction to deleted WordPress users (phase 8) and the
- * creator's own profile with creator meta (phase 14, CreatorProfileService).
+ * (phase 6), the reaction to deleted WordPress users (phase 8), creator meta
+ * (phase 14) and the creator's proposals for their category (phase 28,
+ * ADR-077).
  * Creator access is decided by the Access module (CreatorContext); the REST
  * endpoints live in the Dashboard module.
  */
@@ -152,24 +153,12 @@ final class CreatorsModule implements Module {
 			static fn( Container $c ): CreatorMetaStore => new CreatorMetaStore( $c->get( wpdb::class ) )
 		);
 
-		$container->set(
-			CreatorProfileService::class,
-			static fn( Container $c ): CreatorProfileService => new CreatorProfileService(
-				$c->get( CreatorRepository::class ),
-				$c->get( CreatorMetaStore::class ),
-				$c->get( AuditTrail::class ),
-				$c->get( Transaction::class )
-			)
-		);
-
 		// The creator's proposals for their category (phase 28, ADR-077); the WooCommerce module provides the category.
 		$container->set( CategoryProposalRepository::class, static fn( Container $c ): CategoryProposalRepository => new CategoryProposalRepository( $c->get( wpdb::class ) ) );
 		$container->set( ProposalFiles::class, static fn(): ProposalFiles => new ProposalFiles() );
 		$container->set(
 			CategoryProposals::class,
 			static function ( Container $c ): CategoryProposals {
-				$target = apply_filters( 'merchboard_category_profile_target', null );
-
 				return new CategoryProposals(
 					$c->get( CategoryProposalRepository::class ),
 					$c->get( ProposalFiles::class ),
@@ -177,7 +166,11 @@ final class CreatorsModule implements Module {
 					$c->get( AuditTrail::class ),
 					$c->get( Transaction::class ),
 					$c->get( wpdb::class ),
-					$target instanceof CategoryProfileTarget ? $target : null,
+					static function (): ?CategoryProfileTarget {
+						$target = apply_filters( 'merchboard_category_profile_target', null );
+
+						return $target instanceof CategoryProfileTarget ? $target : null;
+					},
 					static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
 				);
 			}

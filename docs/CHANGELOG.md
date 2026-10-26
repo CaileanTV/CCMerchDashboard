@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+
+- **Creatorens kategori (fase 28, ADR-077):** Profile i dashboardet viser creatorens produktkategori, som butikken viser den, og creatoren foreslår navn, beskrivelse, logo, banner og mobilbanner med link og sociale links (Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch) i bannerpluginet CCMerch Kategoribannere. Intet ændres, før en administrator har godkendt det. Billeder venter ikke-offentligt; logoet skal være kvadratisk og skaleres ned til 1000 × 1000 px. Schema-version 32–33.
+
+### Changed
+
+- **Profile (fase 28):** "Bio" er blevet til kategoriens beskrivelse, og de sociale links ligger på kategorien. Ved opdateringen bliver creatorernes bioer og links ventende forslag; "Websted" og links uden for platformenes domæner udgår.
+
 ## [1.2.0] - 2026-10-25
 
 Fase 27: importværktøjerne er fjernet, og administratorer kan se som en creator og slette creators. Schema-version 31 (migration 30–31 kører ved opdatering fra 1.1.0). Fase 27 er reviewet og runtime-testet på Local 2026-10-25. Opdateringen står i DEVELOPMENT.md ("Release 1.2.0").

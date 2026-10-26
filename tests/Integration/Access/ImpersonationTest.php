@@ -20,7 +20,8 @@ use MerchBoard\Modules\Access\ImpersonationActions;
 use MerchBoard\Modules\Access\ImpersonationException;
 use MerchBoard\Modules\Access\ImpersonationGuard;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
-use MerchBoard\Modules\Creators\CreatorProfileService;
+use MerchBoard\Modules\Creators\Proposals\CategoryProposal;
+use MerchBoard\Modules\Creators\Proposals\CategoryProposals;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
@@ -134,9 +135,9 @@ final class ImpersonationTest extends IntegrationTestCase {
 		self::assertSame( array( 'creator_updated', '1', $this->nova ), array( $last['action'], (string) $last['actor_user_id'], json_decode( (string) $last['context'], true )['impersonating'] ?? null ) );
 		ImpersonationSession::act( false );
 
-		// The profile can be edited as the creator.
-		$this->service( CreatorProfileService::class )->update( $this->find_nova(), array( 'bio' => 'Edited by support' ) );
-		self::assertSame( 'Edited by support', $this->service( CreatorProfileService::class )->profile( $this->find_nova() )->bio );
+		// The profile can be edited as the creator: a proposal like the creator's own (ADR-077).
+		$proposed = $this->service( CategoryProposals::class )->propose( $this->find_nova(), array( 'display_name' => 'Nova by support' ) );
+		self::assertSame( array( 'Nova by support' ), array_map( static fn( CategoryProposal $p ): string => $p->value, $proposed ) );
 
 		// Another login session (another device, an application password) is never the creator.
 		$stored          = (array) get_user_meta( 1, ImpersonationSession::META, true );

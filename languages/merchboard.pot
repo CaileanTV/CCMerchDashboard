@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T15:16:04+00:00\n"
+"POT-Creation-Date: 2026-10-26T15:45:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -41,7 +41,7 @@ msgstr ""
 #: src/Core/Http/RestController.php:65
 #: src/Core/Http/RestController.php:79
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:282
-#: src/Modules/Dashboard/Rest/MeController.php:229
+#: src/Modules/Dashboard/Rest/MeController.php:514
 msgid "You do not have access to this resource."
 msgstr ""
 
@@ -1221,13 +1221,13 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:250
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "From"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "To"
 msgstr ""
 
@@ -1841,6 +1841,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:456
 #: build/dashboard.js:50
+#: build/dashboard.js:74
 msgid "Name"
 msgstr ""
 
@@ -1876,6 +1877,7 @@ msgstr[1] ""
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:499
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
+#: build/dashboard.js:74
 msgid "Remove"
 msgstr ""
 
@@ -3225,6 +3227,7 @@ msgstr ""
 
 #: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:266
 #: src/Modules/Alerts/Rest/MeAlertsController.php:591
+#: src/Modules/Dashboard/Rest/MeController.php:253
 msgid "The image was not saved."
 msgstr ""
 
@@ -3575,7 +3578,6 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:380
 #: src/Modules/Creators/Admin/CreatorsListTable.php:81
-#: build/dashboard.js:71
 msgid "Display name"
 msgstr ""
 
@@ -3740,11 +3742,17 @@ msgstr ""
 msgid "Profile"
 msgstr ""
 
-#: src/Modules/Dashboard/Rest/MeController.php:206
+#: src/Modules/Dashboard/Rest/MeController.php:245
+#: src/Modules/Dashboard/Rest/MeController.php:279
+#: src/Modules/Dashboard/Rest/MeController.php:311
+msgid "Not found."
+msgstr ""
+
+#: src/Modules/Dashboard/Rest/MeController.php:379
 msgid "The theme is not valid."
 msgstr ""
 
-#: src/Modules/Dashboard/Rest/MeController.php:227
+#: src/Modules/Dashboard/Rest/MeController.php:523
 msgid "Some profile fields are invalid."
 msgstr ""
 
@@ -3886,6 +3894,7 @@ msgid "Preview"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:329
+#: build/dashboard.js:73
 msgid "Withdraw"
 msgstr ""
 
@@ -5081,8 +5090,8 @@ msgstr ""
 #. translators: 1: menu group, e.g. "Alerts", 2: page in the group.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
 #: build/dashboard.js:52
-#: build/dashboard.js:72
 #: build/dashboard.js:75
+#: build/dashboard.js:78
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr ""
@@ -5236,7 +5245,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
 #: build/dashboard.js:53
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Units"
 msgstr ""
 
@@ -5245,29 +5254,29 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:591
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
 #: build/dashboard.js:53
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Orders"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Sales per day (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Net sales per day"
 msgstr ""
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:73
+#: build/dashboard.js:76
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Day"
 msgstr ""
 
@@ -6104,6 +6113,7 @@ msgid "Manual assessment: cannot be recalculated safely"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
+#: build/dashboard.js:74
 msgid "Proposed"
 msgstr ""
 
@@ -6685,7 +6695,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:780
 #: build/dashboard.js:63
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Period"
 msgstr ""
 
@@ -7594,7 +7604,7 @@ msgid "Log out"
 msgstr ""
 
 #: templates/dashboard/shell.php:47
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "Loading your dashboard…"
 msgstr ""
 
@@ -7745,6 +7755,7 @@ msgstr ""
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:29
 #: build/dashboard.js:38
+#: build/dashboard.js:74
 msgid "Uploading…"
 msgstr ""
 
@@ -8445,7 +8456,6 @@ msgstr ""
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:38
-#: build/dashboard.js:71
 msgid "Saving…"
 msgstr ""
 
@@ -9297,7 +9307,7 @@ msgid "This page could not be displayed."
 msgstr ""
 
 #: build/dashboard.js:1
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "Please reload the page."
 msgstr ""
 
@@ -10131,10 +10141,6 @@ msgid "Order pages"
 msgstr ""
 
 #: build/dashboard.js:52
-msgid "Website"
-msgstr ""
-
-#: build/dashboard.js:52
 msgid "This field is required."
 msgstr ""
 
@@ -10143,7 +10149,35 @@ msgid "This text is too long."
 msgstr ""
 
 #: build/dashboard.js:53
-msgid "Enter a full address starting with https://"
+msgid "Enter a full https:// address on the platform, or just the user name."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "This cannot be changed on this shop."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "The image is too large (at most 5 MB)."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Use a JPG, PNG or WebP image."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "The image could not be read."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "The image is too small."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "The image is too big (at most 4096 pixels wide and high)."
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "The logo must be square."
 msgstr ""
 
 #: build/dashboard.js:53
@@ -10171,11 +10205,7 @@ msgid "Loading key figures…"
 msgstr ""
 
 #: build/dashboard.js:54
-msgid "Your profile is still empty."
-msgstr ""
-
-#: build/dashboard.js:54
-msgid "Add a short bio and links to your channels."
+msgid "(opens in a new tab)"
 msgstr ""
 
 #: build/dashboard.js:54
@@ -10183,11 +10213,15 @@ msgid "Edit profile"
 msgstr ""
 
 #: build/dashboard.js:54
-msgid "(opens in a new tab)"
+msgid "Your profile is still empty."
 msgstr ""
 
 #: build/dashboard.js:54
-#: build/dashboard.js:71
+msgid "Add a description and links to your channels."
+msgstr ""
+
+#: build/dashboard.js:54
+#: build/dashboard.js:74
 msgid "Loading your profile…"
 msgstr ""
 
@@ -10368,6 +10402,7 @@ msgid "Your payment details are encrypted, used only for this payout and deleted
 msgstr ""
 
 #: build/dashboard.js:58
+#: build/dashboard.js:74
 msgid "Sending…"
 msgstr ""
 
@@ -10584,167 +10619,277 @@ msgid "Show discount code"
 msgstr ""
 
 #: build/dashboard.js:71
+msgid "Waiting for approval."
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "Waiting for approval: remove the current one."
+msgstr ""
+
+#. translators: %s: the proposed text.
+#: build/dashboard.js:72
+#, js-format
+msgid "Waiting for approval: “%s”"
+msgstr ""
+
+#. translators: %s: field, e.g. "Description".
+#: build/dashboard.js:73
+#, js-format
+msgid "Withdraw the proposal for %s"
+msgstr ""
+
+#: build/dashboard.js:73
+msgid "Your last proposal was not approved."
+msgstr ""
+
+#. translators: %s: the administrator's note.
+#: build/dashboard.js:74
+#, js-format
+msgid "Your last proposal was not approved: %s"
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "None yet."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Now: the shop’s standard banner with your logo."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Now in the shop."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Proposed image"
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Upload new"
+msgstr ""
+
+#: build/dashboard.js:74
 msgid "Light"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Dark black"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Dark green"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Dark blue"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Dark red"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Dark pink"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Theme saved."
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Appearance"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Theme"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "System default follows the light or dark setting of your device."
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "System default"
 msgstr ""
 
-#: build/dashboard.js:71
-msgid "No changes to save."
+#: build/dashboard.js:74
+msgid "Logo (category image)"
 msgstr ""
 
-#: build/dashboard.js:71
-msgid "Profile saved."
+#: build/dashboard.js:74
+msgid "Banner"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
+msgid "Banner on mobile"
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Square, JPG, PNG or WebP, at least 300 × 300 pixels and at most 5 MB. Larger than 1000 × 1000 pixels is scaled down. Without an own banner it is shown in the middle of the shop’s standard banner."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. Remove it to show the standard banner again."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Image sent for approval."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Sent for approval."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Proposal withdrawn."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "No changes to send."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Your changes are sent to the shop for approval. They are shown in the shop when an administrator has approved them."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "You do not have a product category in the shop yet. Your proposals are kept until you get one."
+msgstr ""
+
+#: build/dashboard.js:74
 msgid "About you"
 msgstr ""
 
-#: build/dashboard.js:71
-msgid "Bio"
+#: build/dashboard.js:74
+msgid "Also the name of your category in the shop."
 msgstr ""
 
-#: build/dashboard.js:71
-msgid "Links"
+#: build/dashboard.js:74
+msgid "Description"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
+msgid "Logo and banner"
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Link on the banner"
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Optional, e.g. your Twitch or YouTube channel. Opens in a new tab."
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Social media"
+msgstr ""
+
+#: build/dashboard.js:74
+msgid "Shown as icons on your category page. Enter the full address or just your user name (e.g. @name)."
+msgstr ""
+
+#: build/dashboard.js:74
 msgid "Password"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Change your password"
 msgstr ""
 
-#: build/dashboard.js:71
-msgid "Save profile"
+#: build/dashboard.js:74
+msgid "Send for approval"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Sales per week (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Sales per month (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Net sales per week"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "Net sales per month"
 msgstr ""
 
-#: build/dashboard.js:71
+#: build/dashboard.js:74
 msgid "(the table below has the same figures)"
 msgstr ""
 
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Week"
 msgstr ""
 
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Month"
 msgstr ""
 
-#: build/dashboard.js:72
+#: build/dashboard.js:75
 msgid "Your sales"
 msgstr ""
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "No sales in this period."
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Choose another period, or check back after your next sale."
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Loading sales…"
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "The end date must be on or after the start date."
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Choose period"
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Interval"
 msgstr ""
 
-#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Show"
 msgstr ""
 
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "This section is not available yet."
 msgstr ""
 
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "Page not found"
 msgstr ""
 
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "This page does not exist."
 msgstr ""
 
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "Go to the start page"
 msgstr ""
 
-#: build/dashboard.js:75
+#: build/dashboard.js:78
 msgid "The dashboard could not be started."
 msgstr ""

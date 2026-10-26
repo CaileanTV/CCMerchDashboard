@@ -27,8 +27,11 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | Metode | Route | Formål | Fase |
 | --- | --- | --- | --- |
 | `GET` | `/me` | ✅ Den aktuelle creator: `display_name`, `status`. Rettigheder og sektioner kommer fortsat fra bootstrap-data (sektion-registry i fase 15). | 14 |
-| `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
-| `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
+| `GET` | `/me/profile` | ✅ Profilen: `display_name`, `fields`, `category`, `pending`, `rejected` (fra 28.3, ADR-077) | 14, 28 |
+| `PATCH` | `/me/profile` | ✅ Foreslå navn, beskrivelse, banner-link og sociale links, eller fjernelse af et billede; intet ændres før en administrators godkendelse (ADR-077) | 14, 28 |
+| `POST` | `/me/profile/files/{image\|banner\|banner_mobile}` | ✅ Foreslå et billede (multipart `file`) | 28 |
+| `GET` | `/me/profile/files/{id}` | ✅ Et af creatorens egne foreslåede billeder, der venter (selve billedet, `no-store`, `nosniff`) | 28 |
+| `DELETE` | `/me/profile/proposals/{field}` | ✅ Træk et ventende forslag tilbage | 28 |
 | `PATCH` | `/me/preferences` | ✅ Brugerens dashboard-tema (`theme`; `null` = følg systemet). Ingen `GET` | 21 |
 | `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
 | `GET` | `/me/orders` | ✅ Ordrelinjer med creator'ens produkter **uden kunde-PII** (se nedenfor) | 19 |
@@ -66,8 +69,11 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | Metode | Route | Formål | Fase |
 | --- | --- | --- | --- |
 | `GET` | `/me` | ✅ Den aktuelle creator: `display_name`, `status`. Rettigheder og sektioner kommer fortsat fra bootstrap-data (sektion-registry i fase 15). | 14 |
-| `GET` | `/me/profile` | ✅ Profilen: `display_name`, `bio`, `social_links` | 14 |
-| `PATCH` | `/me/profile` | ✅ Opdater whitelistede profilfelter | 14 |
+| `GET` | `/me/profile` | ✅ Profilen: `display_name`, `fields`, `category`, `pending`, `rejected` (fra 28.3, ADR-077) | 14, 28 |
+| `PATCH` | `/me/profile` | ✅ Foreslå navn, beskrivelse, banner-link og sociale links, eller fjernelse af et billede; intet ændres før en administrators godkendelse (ADR-077) | 14, 28 |
+| `POST` | `/me/profile/files/{image\|banner\|banner_mobile}` | ✅ Foreslå et billede (multipart `file`) | 28 |
+| `GET` | `/me/profile/files/{id}` | ✅ Et af creatorens egne foreslåede billeder, der venter (selve billedet, `no-store`, `nosniff`) | 28 |
+| `DELETE` | `/me/profile/proposals/{field}` | ✅ Træk et ventende forslag tilbage | 28 |
 | `PATCH` | `/me/preferences` | ✅ Brugerens dashboard-tema (`theme`; `null` = følg systemet). Ingen `GET` | 21 |
 | `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
 | `GET` | `/me/orders` | ✅ Ordrelinjer med creator'ens produkter **uden kunde-PII** (se nedenfor) | 19 |
@@ -268,27 +274,55 @@ Alle kræver en aktiv creator for den indloggede bruger (`CreatorContext`). Crea
 { "display_name": "Nova", "status": "active" }
 ```
 
-**`GET /merchboard/v1/me/profile`** → 200 (alle platforme er altid med, `""` når ikke sat)
+**`GET /merchboard/v1/me/profile`** → 200 (fra trin 28.3, ADR-077; erstatter `bio` og `social_links` fra fase 14)
 
 ```json
 {
   "display_name": "Nova",
-  "bio": "Merch & music",
-  "social_links": { "website": "https://nova.example", "instagram": "", "tiktok": "", "youtube": "", "x": "", "facebook": "" }
+  "fields": [ "display_name", "description", "image", "banner", "banner_mobile", "banner_link", "social_instagram", "…", "social_twitch" ],
+  "category": {
+    "name": "Nova Merch",
+    "description": "Merch & music",
+    "image_url": "https://shop.example/…/logo.png",
+    "banner_url": "https://shop.example/…/ccm-bannere/Banner_Nova_Merch.png",
+    "banner_default": true,
+    "banner_mobile_url": "",
+    "banner_link": "",
+    "social_links": { "instagram": "https://www.instagram.com/nova", "tiktok": "", "youtube": "", "x": "", "facebook": "", "kick": "", "twitch": "" }
+  },
+  "pending": {
+    "description": { "id": 12, "value": "New story", "file": null, "remove": false, "created_at": "2026-10-26T10:00:00Z" },
+    "banner": { "id": 13, "value": "", "file": { "mime": "image/png", "width": 1400, "height": 300 }, "remove": false, "created_at": "2026-10-26T10:01:00Z" }
+  },
+  "rejected": {
+    "social_x": { "id": 9, "reason": "Forkert konto", "decided_at": "2026-10-26T11:00:00Z" }
+  }
 }
 ```
 
-**`PATCH /merchboard/v1/me/profile`** (JSON-body, delvis opdatering) → 200 med samme form som `GET /me/profile`.
+- `fields`: de felter, der kan foreslås på sitet: navnet altid; beskrivelse og logo med WooCommerce; banner, mobilbanner, link og sociale links kun med bannerpluginet CCMerch Kategoribannere.
+- `category`: creatorens produktkategori, som den er nu, eller `null` uden kategori. `banner_url` er det egne banner, ellers bannerpluginets standardbanner (`banner_default`).
+- `pending`: ventende forslag pr. felt; et billede vises via `GET /me/profile/files/{id}`. `rejected`: seneste afvisning pr. felt med administratorens note, indtil et nyt forslag til feltet.
+
+**`PATCH /merchboard/v1/me/profile`** (JSON-body) → 200 med samme form som `GET /me/profile`. Hvert sendt felt bliver et forslag; en værdi lig den nuværende trækker et ventende forslag tilbage. Intet ændres i butikken eller i navnet, før en administrator godkender.
 
 | Felt | Regel |
 | --- | --- |
-| `display_name` | Streng, trimmes, 1-191 tegn (samme regel som admin) |
-| `bio` | Streng, ren tekst (tags fjernes med `sanitize_textarea_field`, linjeskift bevares), trimmes, maks. 1000 tegn. `""` sletter |
-| `social_links` | Objekt med kun platformene `website`, `instagram`, `tiktok`, `youtube`, `x`, `facebook`. Hver værdi er `""` (slet) eller en `https`-URL med host, uden credentials, whitespace, kontroltegn eller `<>"'\`, maks. 200 tegn. Platforme, der ikke sendes, bevares |
+| `display_name` | Streng, trimmes, 1-191 tegn |
+| `description` | Ren tekst (`sanitize_textarea_field`, linjeskift bevares), maks. 1000 tegn; `""` foreslår at fjerne den |
+| `banner_link` | `""` eller en `https`-URL (uden skema tilføjes `https://`), maks. 500 tegn |
+| `image`, `banner`, `banner_mobile` | Kun `""`: foreslår at fjerne billedet (et nyt billede uploades med `POST /me/profile/files/{field}`) |
+| `social_links` | Objekt med `instagram`, `tiktok`, `youtube`, `x`, `facebook`, `kick`, `twitch`. Hver værdi er `""`, et brugernavn (`navn` eller `@navn` bliver profil-URL'en) eller en `https`-URL på platformens domæner (ADR-077 pkt. 6), maks. 200 tegn |
 
-- Andre felter (`status`, `user_id`, `id`, `creator_id` …) og query-parametre ignoreres.
-- Ugyldige typer eller ukendte platforme giver 400 `rest_invalid_param` (argument-skema). Regelbrud giver 400 `merchboard_invalid_profile` med `data.fields` = felt → kode (`required`, `invalid`, `too_long`, `invalid_url`, fx `"social_links.x": "invalid_url"`). Input ekkoes aldrig. Ét ugyldigt felt afviser hele opdateringen, og intet gemmes.
-- Uden reelle ændringer skrives intet. Ved ændringer skrives navn (creators-tabellen), bio og links (`merchboard_creatormeta`) og én audit-record `creator_updated` med `changed_fields` (actor = creatorens bruger) i én transaktion.
+- Andre felter (`status`, `user_id`, `id`, `creator_id`, `website` …) ignoreres eller afvises af argument-skemaet (400 `rest_invalid_param`).
+- Regelbrud giver 400 `merchboard_invalid_profile` med `data.fields` = felt → kode (`required`, `invalid`, `too_long`, `invalid_url`, `unavailable`; sociale links som `"social_links.x"`). Input ekkoes aldrig, og intet gemmes.
+- Forslag og audit (`category_proposal_submitted`, `category_proposal_withdrawn`) skrives i én transaktion.
+
+**`POST /merchboard/v1/me/profile/files/{image|banner|banner_mobile}`** (multipart `file`) → 200 med profilen. JPG, PNG eller WebP, højst 5 MB og 4096 px; logoet kvadratisk, mindst 300 × 300 og skaleret ned til højst 1000 × 1000; banneret mindst 1280 px bredt; mobilbanneret mindst 600 px bredt. Fejl: 400 `merchboard_invalid_request` med `data.fields` = { felt: `too_large` | `invalid_type` | `unreadable` | `too_small` | `too_big` | `not_square` | `no_file` | `unavailable` }. Filen gemmes ikke-offentligt (ADR-077 pkt. 5).
+
+**`GET /merchboard/v1/me/profile/files/{id}`** → selve billedet (`Content-Type` = billedets type, `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`), kun for creatorens eget forslag, mens billedet venter; ellers 404.
+
+**`DELETE /merchboard/v1/me/profile/proposals/{field}`** → 200 med profilen; et ukendt felt giver 404.
 
 ## `PATCH /me/preferences` ✅ (fase 21, trin 5, ADR-044)
 

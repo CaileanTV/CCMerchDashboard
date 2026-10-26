@@ -119,15 +119,62 @@ export function mockApi(
 
 export const ME = { display_name: 'Nova', status: 'active' } as const;
 
+/** `GET /me/profile` (ADR-077): every field, a category with the standard banner, nothing pending. */
 export const PROFILE = {
 	display_name: 'Nova',
-	bio: 'Merch & music',
-	social_links: {
-		website: 'https://nova.example',
-		instagram: '',
-		tiktok: '',
-		youtube: '',
-		x: '',
-		facebook: '',
+	fields: [
+		'display_name',
+		'description',
+		'image',
+		'banner',
+		'banner_mobile',
+		'banner_link',
+		'social_instagram',
+		'social_tiktok',
+		'social_youtube',
+		'social_x',
+		'social_facebook',
+		'social_kick',
+		'social_twitch',
+	],
+	category: {
+		name: 'Nova',
+		description: 'Merch & music',
+		image_url: 'https://shop.example/logo.png',
+		banner_url: 'https://shop.example/ccm-bannere/Banner_Nova.png',
+		banner_default: true,
+		banner_mobile_url: '',
+		banner_link: '',
+		social_links: {
+			instagram: 'https://www.instagram.com/nova',
+			tiktok: '',
+			youtube: '',
+			x: '',
+			facebook: '',
+			kick: '',
+			twitch: '',
+		},
 	},
+	pending: {},
+	rejected: {},
 } as const;
+
+/**
+ * The profile fixture with another category description and social links.
+ *
+ * @param description Description.
+ * @param links       Social links that differ.
+ */
+export function profileWith(
+	description: string,
+	links: Readonly< Record< string, string > > = {}
+): Record< string, unknown > {
+	return {
+		...PROFILE,
+		category: {
+			...PROFILE.category,
+			description,
+			social_links: { ...PROFILE.category.social_links, ...links },
+		},
+	};
+}

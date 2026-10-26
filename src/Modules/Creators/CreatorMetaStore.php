@@ -28,9 +28,6 @@ final class CreatorMetaStore {
 	 */
 	public const META_TYPE = 'merchboard_creator';
 
-	public const BIO          = 'bio';
-	public const SOCIAL_LINKS = 'social_links';
-
 	/**
 	 * Master data for settlement documents (ADR-062 K09): legal name,
 	 * address and CVR/SE number, as one array. Written by PayoutSettings only;
@@ -62,7 +59,7 @@ final class CreatorMetaStore {
 	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BIO, self::SOCIAL_LINKS, self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS );
+	private const KEYS = array( self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS );
 
 	/**
 	 * Constructor.

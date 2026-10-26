@@ -350,7 +350,7 @@ final class CategoryProposalsTest extends IntegrationTestCase {
 			$this->service( AuditTrail::class ),
 			$this->service( Transaction::class ),
 			$this->wpdb,
-			new WooCommerceCategoryProfile( new CreatorCategoryRepository( $this->wpdb ) ),
+			fn(): WooCommerceCategoryProfile => new WooCommerceCategoryProfile( new CreatorCategoryRepository( $this->wpdb ) ),
 			static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
 		);
 	}

@@ -96,7 +96,7 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 		$this->nova      = $creators->create( 'Nova', CreatorStatus::Active, $this->nova_user )->id;
 		$this->orion     = $creators->create( 'Orion', CreatorStatus::Active, $this->create_user( 'orion' ) )->id;
 
-		// Nova: a manual and a category-managed product, a category, alerts, a news read, a bio and two files.
+		// Nova: a manual and a category-managed product, a category, alerts, a news read, creator meta and two files.
 		$this->product( 'manual', $this->nova, 'admin' );
 		$this->product( 'category', $this->nova, 'category' );
 		$this->product( 'orion', $this->orion, 'admin' );
@@ -104,7 +104,7 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 		( new AlertOverlayRepository( $this->wpdb ) )->create( $this->nova, OverlayId::generate(), OverlaySettings::defaults() );
 		( new AlertEventRepository( $this->wpdb ) )->insert( new AlertEvent( $this->nova, 77, '1077', 1, 70, 0, 'Hoodie', '', 1, 0, array(), 'fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) ) );
 		$this->wpdb->insert( $this->table( Tables::NEWS_READS ), array( 'news_id' => 1, 'creator_id' => $this->nova ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Test fixture.
-		$this->service( CreatorMetaStore::class )->set( $this->nova, CreatorMetaStore::BIO, 'Merch & music' );
+		$this->service( CreatorMetaStore::class )->set( $this->nova, CreatorMetaStore::ALERT_SOUND_LIMITS, array( 'max_seconds' => 9 ) );
 		$this->file( 'own', $this->nova, false );
 		$this->file( 'merchalert', $this->nova, true );
 
@@ -130,7 +130,7 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 		self::assertSame( (string) $this->orion, get_post_meta( $this->products['orion'], ProtectedProductMeta::LINK_KEY, true ), 'Another creator\'s product stays.' );
 		self::assertNull( ( new CreatorCategoryRepository( $this->wpdb ) )->find( 501 ) );
 		self::assertSame( array( 0, 0, 0 ), array( count( $this->rows( Tables::ALERT_OVERLAYS ) ), count( $this->rows( Tables::ALERT_EVENTS ) ), (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i', $this->table( Tables::NEWS_READS ) ) ) ) );
-		self::assertNull( $this->service( CreatorMetaStore::class )->get( $this->nova, CreatorMetaStore::BIO ) );
+		self::assertNull( $this->service( CreatorMetaStore::class )->get( $this->nova, CreatorMetaStore::ALERT_SOUND_LIMITS ) );
 		self::assertSame( array( 'twitch', 'kick', 'youtube' ), $this->disconnected );
 
 		$user = get_userdata( $this->nova_user );

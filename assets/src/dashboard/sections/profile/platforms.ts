@@ -1,5 +1,3 @@
-import { __ } from '@wordpress/i18n';
-
 import type { SocialPlatform } from '../../types/creator';
 
 /**
@@ -9,8 +7,6 @@ import type { SocialPlatform } from '../../types/creator';
  */
 export function platformLabel( platform: SocialPlatform ): string {
 	switch ( platform ) {
-		case 'website':
-			return __( 'Website', 'merchboard' );
 		case 'instagram':
 			return 'Instagram';
 		case 'tiktok':
@@ -19,7 +15,11 @@ export function platformLabel( platform: SocialPlatform ): string {
 			return 'YouTube';
 		case 'x':
 			return 'X';
-		default:
+		case 'facebook':
 			return 'Facebook';
+		case 'kick':
+			return 'Kick';
+		default:
+			return 'Twitch';
 	}
 }

@@ -1,7 +1,8 @@
 <?php
 /**
- * GET /me, GET and PATCH /me/profile and PATCH /me/preferences against the
- * real WordPress REST server, users, roles and database.
+ * GET /me, the profile with its category proposals (/me/profile, ADR-077)
+ * and PATCH /me/preferences against the real WordPress REST server, users,
+ * roles and database.
  *
  * @package MerchBoard
  */
@@ -10,13 +11,28 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Rest;
 
+use DateTimeImmutable;
+use DateTimeZone;
+use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Creators\Proposals\CategoryProposalRepository;
+use MerchBoard\Modules\Creators\Proposals\CategoryProposals;
+use MerchBoard\Modules\Dashboard\Rest\MeController;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
+use MerchBoard\Modules\WooCommerce\WooCommerceCategoryProfile;
+use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -36,6 +52,17 @@ final class MeEndpointTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		$this->wpdb->query( 'DROP TRIGGER IF EXISTS merchboard_test_fail' );
+		remove_all_filters( 'merchboard_category_profile_target' );
+
+		if ( taxonomy_exists( 'product_cat' ) ) {
+			foreach ( (array) get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false, 'fields' => 'ids' ) ) as $term_id ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short query.
+				wp_delete_term( (int) $term_id, 'product_cat' );
+			}
+
+			unregister_taxonomy( 'product_cat' );
+		}
+
+		ProposalFiles::remove_all();
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server per test.
 		parent::tearDown();
 	}
@@ -43,11 +70,12 @@ final class MeEndpointTest extends IntegrationTestCase {
 	public function test_routes_are_registered_with_permission_callbacks(): void {
 		$routes = rest_get_server()->get_routes( 'merchboard/v1' );
 
-		self::assertSame( array( '/merchboard/v1', '/merchboard/v1/me', '/merchboard/v1/me/profile', '/merchboard/v1/me/preferences', '/merchboard/v1/me/news', '/merchboard/v1/me/news/(?P<id>\d+)/seen', '/merchboard/v1/me/news/(?P<id>\d+)/closed' ), array_keys( $routes ) );
+		$profile = array( '/merchboard/v1/me/profile', '/merchboard/v1/me/profile/files/(?P<field>image|banner|banner_mobile)', '/merchboard/v1/me/profile/files/(?P<id>\d+)', '/merchboard/v1/me/profile/proposals/(?P<field>[a-z_]+)' );
+		self::assertSame( array_merge( array( '/merchboard/v1', '/merchboard/v1/me' ), $profile, array( '/merchboard/v1/me/preferences', '/merchboard/v1/me/news', '/merchboard/v1/me/news/(?P<id>\d+)/seen', '/merchboard/v1/me/news/(?P<id>\d+)/closed' ) ), array_keys( $routes ) );
 
 		$methods = array();
 
-		foreach ( array( '/merchboard/v1/me', '/merchboard/v1/me/profile', '/merchboard/v1/me/preferences' ) as $route ) {
+		foreach ( array_merge( array( '/merchboard/v1/me' ), $profile, array( '/merchboard/v1/me/preferences' ) ) as $route ) {
 			foreach ( $routes[ $route ] as $endpoint ) {
 				self::assertIsCallable( $endpoint['permission_callback'] ?? null, $route );
 				self::assertNotSame( '__return_true', $endpoint['permission_callback'] );
@@ -59,6 +87,9 @@ final class MeEndpointTest extends IntegrationTestCase {
 			array(
 				'/merchboard/v1/me'             => array( 'GET' ),
 				'/merchboard/v1/me/profile'     => array( 'GET', 'PATCH' ),
+				$profile[1]                     => array( 'POST' ),
+				$profile[2]                     => array( 'GET' ),
+				$profile[3]                     => array( 'DELETE' ),
 				'/merchboard/v1/me/preferences' => array( 'PATCH' ),
 			),
 			$methods
@@ -224,8 +255,9 @@ final class MeEndpointTest extends IntegrationTestCase {
 
 		$profile = $this->request( 'GET', '/me/profile' );
 		self::assertSame( 200, $profile->get_status() );
-		self::assertSame( array( 'display_name', 'bio', 'social_links' ), array_keys( (array) $profile->get_data() ) );
-		self::assertSame( array( 'website', 'instagram', 'tiktok', 'youtube', 'x', 'facebook' ), array_keys( ( (array) $profile->get_data() )['social_links'] ) );
+		self::assertSame( array( 'display_name', 'fields', 'category', 'pending', 'rejected' ), array_keys( (array) $profile->get_data() ) );
+		self::assertSame( array( 'display_name' ), ( (array) $profile->get_data() )['fields'], 'Without WooCommerce only the name can be proposed.' );
+		self::assertNull( ( (array) $profile->get_data() )['category'] );
 
 		$json = (string) wp_json_encode( array( $me->get_data(), $profile->get_data() ) );
 		self::assertStringNotContainsString( '@example.org', $json, 'No e-mail.' );
@@ -262,14 +294,14 @@ final class MeEndpointTest extends IntegrationTestCase {
 		wp_set_current_user( $this->user_of_kind( $kind ) );
 
 		foreach ( array( array( 'GET', '/me' ), array( 'GET', '/me/profile' ), array( 'PATCH', '/me/profile' ) ) as [ $method, $route ] ) {
-			$response = $this->request( $method, $route, array( 'bio' => 'hacked' ) );
+			$response = $this->request( $method, $route, array( 'display_name' => 'hacked' ) );
 
 			self::assertSame( $status, $response->get_status(), "{$method} {$route}" );
 			self::assertSame( $code, ( (array) $response->get_data() )['code'] ?? null, "{$method} {$route}" );
 			self::assertStringNotContainsString( 'Bystander', (string) wp_json_encode( $response->get_data() ) );
 		}
 
-		self::assertSame( '', get_metadata( 'merchboard_creator', $this->creator_id( $active ), 'bio', true ), 'Nothing was written.' );
+		self::assertSame( 0, $this->count_rows( Tables::CATEGORY_PROPOSALS ), 'Nothing was written.' );
 	}
 
 	public function test_request_parameters_cannot_select_another_creator(): void {
@@ -286,17 +318,17 @@ final class MeEndpointTest extends IntegrationTestCase {
 		self::assertSame( 'Mine', ( (array) $this->request( 'GET', '/me', array(), $params )->get_data() )['display_name'] );
 		self::assertSame( 'Mine', ( (array) $this->request( 'GET', '/me/profile', array(), $params )->get_data() )['display_name'] );
 
-		$response = $this->request( 'PATCH', '/me/profile', array_merge( $params, array( 'bio' => 'Mine bio', 'status' => 'inactive' ) ), $params ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$response = $this->request( 'PATCH', '/me/profile', array_merge( $params, array( 'display_name' => 'Mine Live', 'status' => 'inactive' ) ), $params ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( 200, $response->get_status() );
 
-		self::assertSame( 'Mine bio', get_metadata( 'merchboard_creator', $this->creator_id( $mine ), 'bio', true ) );
-		self::assertSame( '', get_metadata( 'merchboard_creator', $this->creator_id( $other ), 'bio', true ), 'The other creator is untouched.' );
+		self::assertSame( array( (string) $this->creator_id( $mine ) ), array_column( $this->rows( Tables::CATEGORY_PROPOSALS ), 'creator_id' ), 'Only the own creator proposes.' );
 		self::assertSame( 'active', $this->creator_row( $mine )['status'], 'Status is not creator-editable.' );
 		self::assertSame( (string) $mine, $this->creator_row( $mine )['user_id'] );
 	}
 
-	public function test_patch_updates_the_profile_and_writes_the_audit_record(): void {
+	public function test_patch_proposes_and_nothing_changes_before_an_approval(): void {
 		$user = $this->creator_user( 'editor_of_self', 'Nova', CreatorStatus::Active );
+		$this->with_category( $user );
 		wp_set_current_user( $user );
 		$audit_before = $this->count_rows( Tables::AUDIT_LOG );
 
@@ -305,37 +337,82 @@ final class MeEndpointTest extends IntegrationTestCase {
 			'/me/profile',
 			array(
 				'display_name' => 'Nova Studio',
-				'bio'          => "Merch & music\n<script>alert(1)</script>Back\\slash",
+				'description'  => "Merch & music\n<script>alert(1)</script>Back\\slash",
 				'social_links' => array(
-					'instagram' => 'https://instagram.com/nova',
-					'youtube'   => 'https://youtube.com/@nova',
+					'instagram' => '@nova',
+					'kick'      => 'kick.com/nova',
 				),
+				'banner'       => '',
+				'status'       => 'inactive',
 			)
 		);
 
 		self::assertSame( 200, $response->get_status() );
 		$data = (array) $response->get_data();
-		self::assertSame( 'Nova Studio', $data['display_name'] );
-		self::assertSame( "Merch & music\nBack\\slash", $data['bio'], 'Tags removed, text, line breaks and backslashes kept.' );
-		self::assertSame( 'https://youtube.com/@nova', $data['social_links']['youtube'] );
-		self::assertSame( '', $data['social_links']['x'] );
+		self::assertSame( 'Nova', $data['display_name'], 'The name waits for an approval.' );
+		self::assertSame( 'Old story', $data['category']['description'] );
+		self::assertTrue( $data['category']['banner_default'] );
+		self::assertSame( array( 'display_name', 'description', 'social_instagram', 'social_kick' ), array_keys( (array) $data['pending'] ), 'Removing a banner the category does not have is no proposal.' );
+		$pending = (array) $data['pending'];
+		self::assertSame( "Merch & music\nBack\\slash", $pending['description']['value'], 'Tags removed, text, line breaks and backslashes kept.' );
+		self::assertSame( array( 'https://www.instagram.com/nova', 'https://kick.com/nova' ), array( $pending['social_instagram']['value'], $pending['social_kick']['value'] ) );
+		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', (string) $pending['description']['created_at'] );
 
-		// Stored and readable again, from a cold cache.
+		// Read again from a cold cache.
 		wp_cache_flush();
-		self::assertSame( $data, $this->request( 'GET', '/me/profile' )->get_data() );
-		self::assertSame( 'Nova Studio', ( (array) $this->request( 'GET', '/me' )->get_data() )['display_name'] );
+		self::assertSame( wp_json_encode( $data ), wp_json_encode( $this->request( 'GET', '/me/profile' )->get_data() ) );
+		self::assertSame( 'Nova', ( (array) $this->request( 'GET', '/me' )->get_data() )['display_name'] );
 
 		$audit = array_slice( $this->rows( Tables::AUDIT_LOG ), $audit_before );
-		self::assertSame( array( 'creator_updated' ), array_column( $audit, 'action' ) );
+		self::assertSame( array_fill( 0, 4, 'category_proposal_submitted' ), array_column( $audit, 'action' ) );
 		self::assertSame( (string) $user, $audit[0]['actor_user_id'] );
-		self::assertSame( '{"changed_fields":["display_name","bio","social_links"]}', $audit[0]['context'] );
 
-		$meta = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT meta_key FROM %i ORDER BY meta_key', $this->table( Tables::CREATOR_META ) ), ARRAY_A );
-		self::assertSame( array( 'bio', 'social_links' ), array_column( (array) $meta, 'meta_key' ) );
+		// Withdraw one.
+		$withdrawn = (array) $this->request( 'DELETE', '/me/profile/proposals/description' )->get_data();
+		self::assertSame( array( 'display_name', 'social_instagram', 'social_kick' ), array_keys( (array) $withdrawn['pending'] ) );
+		self::assertSame( 404, $this->request( 'DELETE', '/me/profile/proposals/website' )->get_status() );
+	}
+
+	public function test_an_image_is_uploaded_and_shown_only_to_its_creator(): void {
+		$user  = $this->creator_user( 'uploader', 'Nova', CreatorStatus::Active );
+		$other = $this->creator_user( 'onlooker', 'Orion', CreatorStatus::Active );
+		$this->with_category( $user );
+		wp_set_current_user( $user );
+
+		$response = $this->upload( 'image', AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'logo.png' ) );
+		self::assertInstanceOf( WP_REST_Response::class, $response );
+
+		self::assertSame( 200, $response->get_status() );
+		$pending = (array) ( (array) $response->get_data() )['pending'];
+		self::assertSame(
+			array(
+				'mime'   => 'image/png',
+				'width'  => 400,
+				'height' => 400,
+			),
+			$pending['image']['file']
+		);
+
+		$file = $this->request( 'GET', '/me/profile/files/' . $pending['image']['id'] );
+		self::assertSame( 200, $file->get_status() );
+		self::assertSame( 'image/png', $file->get_headers()['Content-Type'] );
+		self::assertSame( 'nosniff', $file->get_headers()['X-Content-Type-Options'] );
+		self::assertStringStartsWith( "\x89PNG", (string) $file->get_data() );
+
+		wp_set_current_user( $other );
+		self::assertSame( 404, $this->request( 'GET', '/me/profile/files/' . $pending['image']['id'] )->get_status(), 'Never another creator\'s image.' );
+
+		wp_set_current_user( $user );
+		$refused = $this->upload( 'banner', AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'small.png' ) );
+		self::assertInstanceOf( WP_Error::class, $refused );
+		$refused = rest_convert_error_to_response( $refused );
+		self::assertSame( 400, $refused->get_status() );
+		self::assertSame( array( 'banner' => 'too_small' ), ( (array) $refused->get_data() )['data']['fields'] );
 	}
 
 	public function test_invalid_input_gives_400_with_field_codes_and_saves_nothing(): void {
 		$user = $this->creator_user( 'invalid_input', 'Nova', CreatorStatus::Active );
+		$this->with_category( $user );
 		wp_set_current_user( $user );
 		$audit_before = $this->count_rows( Tables::AUDIT_LOG );
 
@@ -344,8 +421,10 @@ final class MeEndpointTest extends IntegrationTestCase {
 			'/me/profile',
 			array(
 				'display_name' => '',
-				'bio'          => str_repeat( 'a', 1001 ),
+				'description'  => str_repeat( 'a', 1001 ),
 				'social_links' => array( 'x' => 'javascript:alert(1)' ),
+				'banner_link'  => 'http://nova.example',
+				'image'        => 'https://nova.example/logo.png',
 			)
 		);
 
@@ -355,18 +434,20 @@ final class MeEndpointTest extends IntegrationTestCase {
 		self::assertSame(
 			array(
 				'display_name'   => 'required',
-				'bio'            => 'too_long',
+				'description'    => 'too_long',
+				'banner_link'    => 'invalid_url',
+				'image'          => 'invalid',
 				'social_links.x' => 'invalid_url',
 			),
 			$data['data']['fields']
 		);
 		self::assertStringNotContainsString( 'javascript', (string) wp_json_encode( $data ), 'Input is not echoed back.' );
 
-		$types = $this->request( 'PATCH', '/me/profile', array( 'bio' => array( 'x' ), 'social_links' => array( 'myspace' => 'https://myspace.com' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		self::assertSame( 400, $types->get_status(), 'Type errors are rejected by the argument schema.' );
+		$types = $this->request( 'PATCH', '/me/profile', array( 'description' => array( 'x' ), 'social_links' => array( 'website' => 'https://nova.example' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 400, $types->get_status(), 'Type errors and "website" are rejected by the argument schema.' );
 
 		self::assertSame( 'Nova', $this->creator_row( $user )['display_name'] );
-		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ) );
+		self::assertSame( 0, $this->count_rows( Tables::CATEGORY_PROPOSALS ) );
 		self::assertSame( $audit_before, $this->count_rows( Tables::AUDIT_LOG ) );
 	}
 
@@ -380,7 +461,7 @@ final class MeEndpointTest extends IntegrationTestCase {
 		wp_set_current_user( $user );
 
 		self::assertSame( 403, $this->request( 'GET', '/me' )->get_status() );
-		self::assertSame( 403, $this->request( 'PATCH', '/me/profile', array( 'bio' => 'x' ) )->get_status() );
+		self::assertSame( 403, $this->request( 'PATCH', '/me/profile', array( 'display_name' => 'x' ) )->get_status() );
 	}
 
 	public function test_database_failure_denies_access_without_details(): void {
@@ -409,22 +490,65 @@ final class MeEndpointTest extends IntegrationTestCase {
 		$this->wpdb->suppress_errors( true );
 		file_put_contents( MERCHBOARD_TEST_LOG, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test log.
 
-		$response = $this->request( 'PATCH', '/me/profile', array( 'display_name' => 'Renamed', 'bio' => 'New bio' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$response = $this->request( 'PATCH', '/me/profile', array( 'display_name' => 'Renamed' ) );
 
 		self::assertSame( 500, $response->get_status() );
 		self::assertSame( 'merchboard_internal_error', ( (array) $response->get_data() )['code'] );
 		self::assertStringNotContainsString( 'forced failure', (string) wp_json_encode( $response->get_data() ) );
-		self::assertSame( 'Nova', $this->creator_row( $user )['display_name'], 'Rename rolled back.' );
-		self::assertSame( 0, $this->count_rows( Tables::CREATOR_META ), 'Meta rolled back.' );
+		self::assertSame( 'Nova', $this->creator_row( $user )['display_name'] );
+		self::assertSame( 0, $this->count_rows( Tables::CATEGORY_PROPOSALS ), 'The proposal rolled back.' );
 		self::assertStringContainsString( 'REST request failed.', (string) file_get_contents( MERCHBOARD_TEST_LOG ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test log.
 
 		wp_cache_flush();
-		self::assertSame( '', ( (array) $this->request( 'GET', '/me/profile' )->get_data() )['bio'] );
+		self::assertSame( array(), (array) ( (array) $this->request( 'GET', '/me/profile' )->get_data() )['pending'] );
 	}
 
 	public function test_uninstall_list_includes_the_meta_table(): void {
 		self::assertContains( Tables::CREATOR_META, Tables::all() );
 		self::assertSame( $this->table( Tables::CREATOR_META ), $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table( Tables::CREATOR_META ) ) ) );
+	}
+
+	/**
+	 * Gives the creator of a user a product category "Nova Merch" with the
+	 * banner plugin active and the WooCommerce category as the target.
+	 *
+	 * @param int $user_id User id.
+	 */
+	private function with_category( int $user_id ): void {
+		require_once dirname( __DIR__, 2 ) . '/Fixtures/ccmerch-kategoribannere.php';
+		register_taxonomy( 'product_cat', 'product' );
+		$term = wp_insert_term( 'Nova Merch', 'product_cat', array( 'description' => 'Old story' ) );
+		self::assertIsArray( $term );
+		( new CreatorCategoryRepository( $this->wpdb ) )->insert( (int) $term['term_id'], $this->creator_id( $user_id ), 1 );
+		add_filter( 'merchboard_category_profile_target', fn(): WooCommerceCategoryProfile => new WooCommerceCategoryProfile( new CreatorCategoryRepository( $this->wpdb ) ) );
+	}
+
+	/**
+	 * Uploads an image through the endpoint (with a test file move: uploads in
+	 * tests are not HTTP uploads).
+	 *
+	 * @phpstan-param array{name: non-empty-string, type: non-empty-string, tmp_name: non-empty-string, error: int<0, 8>, size: int<0, max>} $file
+	 *
+	 * @param string $field Image field.
+	 * @param array  $file  Upload.
+	 */
+	private function upload( string $field, array $file ): WP_REST_Response|WP_Error {
+		$files     = new ProposalFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Test upload move.
+		$proposals = new CategoryProposals(
+			new CategoryProposalRepository( $this->wpdb ),
+			$files,
+			$this->service( CreatorRepository::class ),
+			$this->service( AuditTrail::class ),
+			$this->service( Transaction::class ),
+			$this->wpdb,
+			fn(): WooCommerceCategoryProfile => new WooCommerceCategoryProfile( new CreatorCategoryRepository( $this->wpdb ) ),
+			static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) )
+		);
+		$request   = new WP_REST_Request( 'POST', '/merchboard/v1/me/profile/files/' . $field );
+		$request->set_url_params( array( 'field' => $field ) );
+		$request->set_file_params( array( 'file' => $file ) );
+
+		return ( new MeController( $this->service( CreatorContext::class ), $proposals, $files, $this->service( ThemePreference::class ), $this->service( Logger::class ) ) )->upload_file( $request );
 	}
 
 	/**

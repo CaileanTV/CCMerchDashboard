@@ -114,7 +114,7 @@ final class TranslationsTest extends TestCase {
 		self::assertIsArray( $messages );
 		self::assertSame( 'da_DK', $messages['']['lang'] ?? null );
 		self::assertSame( array( 'Nettosalg (ekskl. moms)' ), $messages['Net sales (excl. VAT)'] ?? null );
-		self::assertSame( array( 'Profilen er gemt.' ), $messages['Profile saved.'] ?? null );
+		self::assertSame( array( 'Sendt til godkendelse.' ), $messages['Sent for approval.'] ?? null );
 		self::assertArrayNotHasKey( 'Overview', $messages, 'Section labels come translated from the server.' );
 
 		$danish = self::entries( self::LANGUAGES . 'merchboard-da_DK.po' );

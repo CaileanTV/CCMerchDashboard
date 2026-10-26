@@ -720,6 +720,48 @@
 	list-style: none;
 }
 
+/* Category proposals in the profile (phase 28, ADR-077). */
+.merchboard-proposal-note {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	margin-block: var(--merchboard-space-2);
+}
+
+.merchboard-profile-image {
+	display: flex;
+	flex-direction: column;
+	gap: var(--merchboard-space-2);
+	padding-block: var(--merchboard-space-3);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
+.merchboard-profile-image__title {
+	margin: 0;
+	font-size: var(--merchboard-text-md);
+}
+
+.merchboard-profile-image__now {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-4);
+	align-items: flex-start;
+
+	figure {
+		margin: 0;
+	}
+}
+
+.merchboard-profile-image__img {
+	display: block;
+	max-width: min(100%, 24rem);
+	max-height: 10rem;
+	object-fit: contain;
+	background: var(--merchboard-surface-muted);
+	border-radius: var(--merchboard-radius-sm);
+}
+
 .merchboard-kpi-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));

@@ -21,23 +21,32 @@ function statusLabel( status: CreatorStatus ): string {
 }
 
 /**
- * Bio and links from `GET /me/profile`. Links are shown only when they pass
- * the same https check as the profile form, and open in a new tab without
- * giving the target page access to the dashboard.
+ * The description and social links of the creator's category, as the shop
+ * shows them now (`GET /me/profile`, ADR-077). Links are shown only when they
+ * pass the same https check as the profile form, and open in a new tab
+ * without giving the target page access to the dashboard.
  */
 function ProfileSummary( { profile }: { readonly profile: Profile } ) {
-	const links = SOCIAL_PLATFORMS.filter(
-		( platform ) =>
-			profile.socialLinks[ platform ] !== '' &&
-			isValidLink( profile.socialLinks[ platform ] )
-	);
+	const description = profile.category?.description ?? '';
+	const socialLinks = profile.category?.socialLinks;
+	const links =
+		socialLinks === undefined
+			? []
+			: SOCIAL_PLATFORMS.filter(
+					( platform ) =>
+						socialLinks[ platform ] !== '' &&
+						isValidLink( socialLinks[ platform ] )
+				);
 
-	if ( profile.bio === '' && links.length === 0 ) {
+	if (
+		description === '' &&
+		( socialLinks === undefined || links.length === 0 )
+	) {
 		return (
 			<EmptyState
 				title={ __( 'Your profile is still empty.', 'merchboard' ) }
 				description={ __(
-					'Add a short bio and links to your channels.',
+					'Add a description and links to your channels.',
 					'merchboard'
 				) }
 				action={
@@ -54,17 +63,17 @@ function ProfileSummary( { profile }: { readonly profile: Profile } ) {
 
 	return (
 		<div className="merchboard-profile-summary">
-			{ profile.bio !== '' && (
+			{ description !== '' && (
 				<p className="merchboard-profile-summary__bio">
-					{ profile.bio }
+					{ description }
 				</p>
 			) }
-			{ links.length > 0 && (
+			{ socialLinks !== undefined && links.length > 0 && (
 				<ul className="merchboard-profile-summary__links">
 					{ links.map( ( platform ) => (
 						<li key={ platform }>
 							<a
-								href={ profile.socialLinks[ platform ] }
+								href={ socialLinks[ platform ] }
 								target="_blank"
 								rel="noopener noreferrer"
 							>

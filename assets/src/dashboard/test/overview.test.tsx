@@ -9,7 +9,7 @@ import {
 import { act } from 'react';
 
 import { App } from '../app/App';
-import { ME, PROFILE, mockApi, response } from '../testing/api';
+import { ME, PROFILE, mockApi, profileWith, response } from '../testing/api';
 import type { FakeResponse, RecordedRequest, Route } from '../testing/api';
 import {
 	CONFIG,
@@ -108,14 +108,12 @@ describe( 'overview section', () => {
 
 	it( 'welcomes the creator, shows the status and the profile summary', async () => {
 		const container = await renderWith( () =>
-			response( 200, {
-				...PROFILE,
-				bio: 'Line one\n<script>alert(1)</script>',
-				social_links: {
-					...PROFILE.social_links,
-					instagram: 'https://instagram.com/nova',
-				},
-			} )
+			response(
+				200,
+				profileWith( 'Line one\n<script>alert(1)</script>', {
+					kick: 'https://kick.com/nova',
+				} )
+			)
 		);
 
 		expect( container.querySelector( 'h1' )?.textContent ).toBe(
@@ -137,8 +135,8 @@ describe( 'overview section', () => {
 			container.querySelectorAll( '.merchboard-profile-summary__links a' )
 		);
 		expect( links.map( ( a ) => a.getAttribute( 'href' ) ) ).toEqual( [
-			'https://nova.example',
-			'https://instagram.com/nova',
+			'https://www.instagram.com/nova',
+			'https://kick.com/nova',
 		] );
 		expect(
 			links.every(
@@ -147,16 +145,14 @@ describe( 'overview section', () => {
 					a.getAttribute( 'target' ) === '_blank'
 			)
 		).toBe( true );
-		expect( links[ 0 ]?.textContent ).toBe( 'Website(opens in a new tab)' );
+		expect( links[ 0 ]?.textContent ).toBe(
+			'Instagram(opens in a new tab)'
+		);
 	} );
 
 	it( 'offers the profile when it is empty and navigates there client-side', async () => {
 		const container = await renderWith( () =>
-			response( 200, {
-				...PROFILE,
-				bio: '',
-				social_links: { ...PROFILE.social_links, website: '' },
-			} )
+			response( 200, profileWith( '', { instagram: '' } ) )
 		);
 
 		expect( container.textContent ).toContain(
@@ -235,13 +231,12 @@ describe( 'overview section', () => {
 		const container = await renderWith( () => {
 			calls++;
 			return calls === 1
-				? response( 200, {
-						...PROFILE,
-						social_links: {
-							...PROFILE.social_links,
+				? response(
+						200,
+						profileWith( 'Merch & music', {
 							x: 'javascript:alert(1)',
-						},
-					} )
+						} )
+					)
 				: response( 200, PROFILE );
 		} );
 

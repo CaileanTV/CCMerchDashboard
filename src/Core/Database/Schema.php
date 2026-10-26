@@ -40,6 +40,7 @@ use MerchBoard\Core\Database\Migrations\AddAlertEventImportedFlag;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Migrations\AddCreatorDeletedAt;
 use MerchBoard\Core\Database\Migrations\CreateCategoryProposalsTable;
+use MerchBoard\Core\Database\Migrations\MoveProfileToProposals;
 use MerchBoard\Core\Database\Migrations\WidenChatbotChannels;
 
 defined( 'ABSPATH' ) || exit;
@@ -91,6 +92,7 @@ final class Schema {
 			30 => new RemoveImportOptions(),
 			31 => new AddCreatorDeletedAt(),
 			32 => new CreateCategoryProposalsTable(),
+			33 => new MoveProfileToProposals(),
 		);
 	}
 }

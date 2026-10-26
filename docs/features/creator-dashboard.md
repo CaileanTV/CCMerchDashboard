@@ -9,8 +9,8 @@ Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser 
 ## User-facing functionality (MVP)
 - Adgang via `/creator-dashboard/` (slug kan konfigureres) efter login.
 - Layout: sidebar (desktop) / off-canvas (mobil), topbar med navn/avatar og log ud.
-- **Overview ✅ (fase 15):** velkomst med navn og status, profil-resumé (bio og links, ellers link til Profile) og nøgletal (fase 20): "Nettosalg (ekskl. moms)", enheder og ordrer for de seneste 30 dage pr. valuta fra `GET /me/sales`, ellers en empty state.
-- **Profile ✅ (fase 14):** se og redigere visningsnavn, bio (maks. 1000 tegn) og sociale links (website, Instagram, TikTok, YouTube, X, Facebook; https). Link til WordPress' password-reset. Bekræftelse med toast.
+- **Overview ✅ (fase 15):** velkomst med navn og status, profil-resumé (kategoriens beskrivelse og sociale links fra 28.3, ellers link til Profile) og nøgletal (fase 20): "Nettosalg (ekskl. moms)", enheder og ordrer for de seneste 30 dage pr. valuta fra `GET /me/sales`, ellers en empty state.
+- **Profile ✅ (fase 14; omlagt i fase 28, trin 28.3, ADR-077):** creatorens navn og produktkategori, som butikken viser dem, og forslag til ændringer: navn (også kategoriens navn), beskrivelse (maks. 1000 tegn), logo (kvadratisk), banner og mobilbanner med link, og sociale links (Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch; brugernavn eller adresse på platformen). Alt sendes til godkendelse; ved hvert felt vises "Venter på godkendelse" med "Træk tilbage" eller en afvisning med administratorens note. Uden kategori gemmes forslagene, til creatoren får en. Link til WordPress' password-reset. Bekræftelse med toast.
 - **Products ✅ (fase 19):** creator'ens udgivne og private produkter med billede, navn, status, aktiv pris og lagerstatus, pagineret. Se [FRONTEND.md](../FRONTEND.md#products-trin-6).
 - **Orders ✅ (fase 19):** creator'ens ordrelinjer med dato, ordrenummer, produkt, antal, status og markeringerne "Refund recorded"/"Not counted", pagineret; ingen kundedata og ingen beløb. Se [FRONTEND.md](../FRONTEND.md#orders-trin-7).
 - **Sales ✅ (fase 20):** valgt periode og interval (dag, uge, måned), nøgletal, egen SVG-søjlegraf og altid en tabel med samme tal, pr. valuta. Se [FRONTEND.md](../FRONTEND.md#sales--fase-20-trin-6-adr-040-adr-041).
@@ -33,11 +33,11 @@ Senere sektioner: Payouts og Settings. Se [FRONTEND.md](../FRONTEND.md#sektioner
 ✅ `src/Modules/Dashboard/{DashboardModule,DashboardRoute,ShellController,ShellResponse}.php`, `src/Core/Lifecycle/Deactivator.php`, `templates/dashboard/{shell,no-access}.php`, `tests/Unit/Modules/Dashboard/*` og `tests/Integration/Access/DashboardAccessTest.php`. ✅ `src/Modules/Dashboard/DashboardAssets.php`, `assets/src/dashboard/**` (fase 13, struktur i [FRONTEND.md](../FRONTEND.md#struktur--fase-13)), `tsconfig.json` og `jest.config.js`. ✅ Fase 19: `src/Modules/WooCommerce/Rest/{MeProductsController,MeOrdersController}.php`, `src/Modules/WooCommerce/Dashboard/*` (read-model for produkter, berigelse af ordrelinjer, sektionsregistrering), `src/Modules/WooCommerce/Sales/{SalesOrderLines,SalesOrderLine}.php` og i frontend `api/{products,orders}.ts`, `hooks/usePagedApi.ts`, `components/{Table,Pagination}.tsx` og `sections/{products,orders}/`.
 
 ## Database/data used
-`merchboard_creators`, `merchboard_creatormeta` (profilfelter: `bio`, `social_links`, `avatar_id`) og `merchboard_settings` (slug og branding).
+`merchboard_creators`, `merchboard_creatormeta` (fra 28.3 uden `bio` og `social_links`, som er flyttet til kategorien via forslag, ADR-077), `merchboard_category_proposals` og `merchboard_settings` (slug og branding).
 
 ## Permissions
 - Route og alle endpoints: `CreatorContext::current()` ≠ null.
-- `PATCH /me/profile`: whitelist `display_name`, `bio` og `social_links`. Nonce via `X-WP-Nonce`.
+- `PATCH /me/profile`: forslag til `display_name`, `description`, `banner_link` og `social_links` (og fjernelse af billeder); `POST /me/profile/files/{field}` til billeder (API.md). Nonce via `X-WP-Nonce`.
 
 ## API endpoints
 | Metode | Route | Beskrivelse |

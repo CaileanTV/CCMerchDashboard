@@ -14,6 +14,8 @@ import {
 	parseMe,
 	parseProfile,
 	updateProfile,
+	uploadProfileImage,
+	withdrawProposal,
 } from '../api/creator';
 import { App } from '../app/App';
 import { validateProfile } from '../sections/profile/validation';
@@ -55,36 +57,132 @@ describe( 'response validation', () => {
 		expect( parseMe( body ) ).toBeNull();
 	} );
 
-	it( 'accepts /me/profile with every platform', () => {
-		expect( parseProfile( PROFILE ) ).toEqual( {
+	it( 'accepts /me/profile with its category and proposals', () => {
+		const pending = {
+			description: {
+				id: 4,
+				value: 'New story',
+				file: null,
+				remove: false,
+				created_at: '2026-10-26T10:00:00Z',
+			},
+			banner: {
+				id: 5,
+				value: '',
+				file: { mime: 'image/png', width: 1400, height: 300 },
+				remove: false,
+				created_at: '2026-10-26T10:01:00Z',
+			},
+		};
+
+		expect(
+			parseProfile( {
+				...PROFILE,
+				pending,
+				rejected: {
+					social_x: {
+						id: 3,
+						reason: 'Wrong account',
+						decided_at: null,
+					},
+				},
+			} )
+		).toEqual( {
 			displayName: 'Nova',
-			bio: 'Merch & music',
-			socialLinks: PROFILE.social_links,
+			fields: PROFILE.fields,
+			category: {
+				name: 'Nova',
+				description: 'Merch & music',
+				imageUrl: 'https://shop.example/logo.png',
+				bannerUrl: 'https://shop.example/ccm-bannere/Banner_Nova.png',
+				bannerDefault: true,
+				bannerMobileUrl: '',
+				bannerLink: '',
+				socialLinks: PROFILE.category.social_links,
+			},
+			pending: {
+				description: {
+					id: 4,
+					value: 'New story',
+					file: null,
+					remove: false,
+					createdAt: '2026-10-26T10:00:00Z',
+				},
+				banner: {
+					id: 5,
+					value: '',
+					file: { mime: 'image/png', width: 1400, height: 300 },
+					remove: false,
+					createdAt: '2026-10-26T10:01:00Z',
+				},
+			},
+			rejected: {
+				social_x: { id: 3, reason: 'Wrong account', decidedAt: null },
+			},
 		} );
+		expect(
+			parseProfile( {
+				...PROFILE,
+				category: null,
+				pending: [],
+				rejected: [],
+			} )?.category
+		).toBeNull();
 	} );
 
 	it.each( [
-		[ 'missing platform', { ...PROFILE, social_links: { website: '' } } ],
 		[
-			'http link',
+			'missing platform',
 			{
 				...PROFILE,
-				social_links: { ...PROFILE.social_links, x: 'http://x.com' },
+				category: {
+					...PROFILE.category,
+					social_links: { instagram: '' },
+				},
 			},
 		],
 		[
 			'javascript link',
 			{
 				...PROFILE,
-				social_links: {
-					...PROFILE.social_links,
-					x: 'javascript:alert(1)',
+				category: {
+					...PROFILE.category,
+					social_links: {
+						...PROFILE.category.social_links,
+						x: 'javascript:alert(1)',
+					},
 				},
 			},
 		],
-		[ 'bio not a string', { ...PROFILE, bio: null } ],
+		[
+			'javascript image',
+			{
+				...PROFILE,
+				category: { ...PROFILE.category, image_url: 'javascript:x' },
+			},
+		],
+		[ 'unknown field', { ...PROFILE, fields: [ 'website' ] } ],
+		[
+			'unknown pending field',
+			{ ...PROFILE, pending: { website: PROFILE.fields } },
+		],
+		[
+			'svg proposal',
+			{
+				...PROFILE,
+				pending: {
+					image: {
+						id: 1,
+						value: '',
+						file: { mime: 'image/svg+xml', width: 1, height: 1 },
+						remove: false,
+						created_at: 'x',
+					},
+				},
+			},
+		],
 		[ 'no display name', { ...PROFILE, display_name: '' } ],
-		[ 'links not an object', { ...PROFILE, social_links: [] } ],
+		[ 'category not an object', { ...PROFILE, category: [] } ],
 	] )( 'rejects a profile with %s', ( _label, body ) => {
 		expect( parseProfile( body ) ).toBeNull();
 	} );
@@ -98,6 +196,10 @@ describe( 'endpoint functions', () => {
 			'GET /merchboard/v1/me': () => response( 200, ME ),
 			'GET /merchboard/v1/me/profile': () => response( 200, PROFILE ),
 			'PATCH /merchboard/v1/me/profile': () => response( 200, PROFILE ),
+			'POST /merchboard/v1/me/profile/files/banner': () =>
+				response( 200, PROFILE ),
+			'DELETE /merchboard/v1/me/profile/proposals/description': () =>
+				response( 200, PROFILE ),
 		} );
 	} );
 
@@ -106,19 +208,28 @@ describe( 'endpoint functions', () => {
 		await getProfile();
 		await updateProfile( {
 			displayName: 'Nova',
-			socialLinks: { x: 'https://x.com/nova' },
+			socialLinks: { kick: '@nova' },
+			remove: [ 'banner' ],
 		} );
+		await uploadProfileImage(
+			'banner',
+			new File( [ 'x' ], 'banner.png', { type: 'image/png' } )
+		);
+		await withdrawProposal( 'description' );
 
 		expect( requests.map( ( r ) => `${ r.method } ${ r.path }` ) ).toEqual(
 			[
 				'GET /merchboard/v1/me',
 				'GET /merchboard/v1/me/profile',
 				'PATCH /merchboard/v1/me/profile',
+				'POST /merchboard/v1/me/profile/files/banner',
+				'DELETE /merchboard/v1/me/profile/proposals/description',
 			]
 		);
 		expect( requests[ 2 ]?.data ).toEqual( {
 			display_name: 'Nova',
-			social_links: { x: 'https://x.com/nova' },
+			social_links: { kick: '@nova' },
+			banner: '',
 		} );
 		expect( JSON.stringify( requests ) ).not.toMatch(
 			/creator_id|user_id|"id"/
@@ -134,7 +245,7 @@ describe( 'endpoint functions', () => {
 					data: {
 						status: 400,
 						fields: {
-							bio: 'too_long',
+							description: 'too_long',
 							'social_links.x': 'invalid_url',
 							'<img>': 'x',
 							display_name: 'Bad <b>value</b>',
@@ -143,7 +254,7 @@ describe( 'endpoint functions', () => {
 				} ),
 		} );
 
-		const result = await updateProfile( { bio: 'x' } );
+		const result = await updateProfile( { description: 'x' } );
 
 		expect( result ).toEqual( {
 			ok: false,
@@ -151,7 +262,10 @@ describe( 'endpoint functions', () => {
 				kind: 'invalid_request',
 				status: 400,
 				code: 'merchboard_invalid_profile',
-				fields: { bio: 'too_long', 'social_links.x': 'invalid_url' },
+				fields: {
+					description: 'too_long',
+					'social_links.x': 'invalid_url',
+				},
 			},
 		} );
 	} );
@@ -160,33 +274,33 @@ describe( 'endpoint functions', () => {
 describe( 'client-side profile validation', () => {
 	const values = {
 		displayName: 'Nova',
-		bio: '',
-		socialLinks: PROFILE.social_links,
+		description: '',
+		bannerLink: '',
+		socialLinks: PROFILE.category.social_links,
 	};
 
-	it( 'mirrors the server rules', () => {
+	it( 'mirrors the server rules (the server checks the domains)', () => {
 		expect( validateProfile( values ) ).toEqual( {} );
 		expect( validateProfile( { ...values, displayName: '  ' } ) ).toEqual( {
 			display_name: 'required',
 		} );
 		expect(
-			validateProfile( { ...values, bio: 'a'.repeat( 1001 ) } )
-		).toEqual( { bio: 'too_long' } );
+			validateProfile( { ...values, description: 'a'.repeat( 1001 ) } )
+		).toEqual( { description: 'too_long' } );
+		expect(
+			validateProfile( { ...values, bannerLink: 'http://nova.example' } )
+		).toEqual( { banner_link: 'invalid_url' } );
 		expect(
 			validateProfile( {
 				...values,
 				socialLinks: {
 					...values.socialLinks,
-					x: 'http://x.com',
-					youtube: 'https://a:b@youtube.com',
+					x: 'x.com/<b>',
+					kick: '@nova',
 					tiktok: 'tiktok.com/@nova',
 				},
 			} )
-		).toEqual( {
-			'social_links.x': 'invalid_url',
-			'social_links.youtube': 'invalid_url',
-			'social_links.tiktok': 'invalid_url',
-		} );
+		).toEqual( { 'social_links.x': 'invalid_url' } );
 	} );
 } );
 
@@ -366,6 +480,8 @@ describe( 'dashboard with the creator API', () => {
 				'GET /merchboard/v1/me/profile': () => response( 200, PROFILE ),
 				'PATCH /merchboard/v1/me/profile': ( request ) =>
 					patchResponse( request ),
+				'DELETE /merchboard/v1/me/profile/proposals/description': () =>
+					response( 200, PROFILE ),
 			} );
 		} );
 
@@ -377,21 +493,28 @@ describe( 'dashboard with the creator API', () => {
 			return id ? container.querySelector( `[id="${ id }"]` ) : null;
 		};
 
-		it( 'shows the saved profile and a password link', async () => {
+		it( 'shows the name, the category now and a password link', async () => {
 			const container = await renderApp();
 
 			expect( container.querySelector( 'h1' )?.textContent ).toBe(
 				'Profile'
 			);
 			expect(
-				( input( container, 'Display name' ) as HTMLInputElement ).value
+				( input( container, 'Name' ) as HTMLInputElement ).value
 			).toBe( 'Nova' );
 			expect(
-				( input( container, 'Bio' ) as HTMLTextAreaElement ).value
+				( input( container, 'Description' ) as HTMLTextAreaElement )
+					.value
 			).toBe( 'Merch & music' );
 			expect(
-				( input( container, 'Website' ) as HTMLInputElement ).value
-			).toBe( 'https://nova.example' );
+				( input( container, 'Instagram' ) as HTMLInputElement ).value
+			).toBe( 'https://www.instagram.com/nova' );
+			expect( input( container, 'Twitch' ) ).not.toBeNull();
+			expect( input( container, 'Website' ) ).toBeNull();
+			expect( container.textContent ).toContain(
+				'Now: the shop’s standard banner with your logo.'
+			);
+			expect( container.textContent ).toContain( 'Square, JPG' );
 			expect(
 				Array.from( container.querySelectorAll( 'a' ) )
 					.find( ( a ) => a.textContent === 'Change your password' )
@@ -399,35 +522,93 @@ describe( 'dashboard with the creator API', () => {
 			).toBe( CONFIG.passwordUrl );
 		} );
 
-		it( 'sends only changed fields, updates the name and confirms with a toast', async () => {
+		it( 'sends only changed fields for approval and shows them as waiting', async () => {
 			patchResponse = () =>
 				response( 200, {
 					...PROFILE,
-					display_name: 'Nova Studio',
-					bio: 'New bio',
+					pending: {
+						display_name: {
+							id: 7,
+							value: 'Nova Studio',
+							file: null,
+							remove: false,
+							created_at: '2026-10-26T10:00:00Z',
+						},
+					},
 				} );
 			const container = await renderApp();
 
-			type( input( container, 'Display name' ), 'Nova Studio' );
-			type( input( container, 'Bio' ), 'New bio' );
+			type( input( container, 'Name' ), 'Nova Studio' );
+			type( input( container, 'Kick' ), '@nova' );
 			await submit( container );
 
 			const patch = requests.find( ( r ) => r.method === 'PATCH' );
 			expect( patch?.data ).toEqual( {
 				display_name: 'Nova Studio',
-				bio: 'New bio',
+				social_links: { kick: '@nova' },
 			} );
 			expect(
 				container.querySelector( '.merchboard-toast-region' )
 					?.textContent
-			).toContain( 'Profile saved.' );
+			).toContain( 'Sent for approval.' );
+			expect( container.textContent ).toContain(
+				'Waiting for approval: “Nova Studio”'
+			);
 			expect(
 				container.querySelector( '.merchboard-topbar__creator' )
 					?.textContent
-			).toBe( 'Nova Studio' );
+			).toBe( 'Nova' );
+		} );
 
-			click( container.querySelector( '.merchboard-toast__dismiss' ) );
-			expect( container.querySelector( '.merchboard-toast' ) ).toBeNull();
+		it( 'withdraws a pending proposal and shows a rejection note', async () => {
+			mockApi( {
+				'GET /merchboard/v1/me': () => response( 200, ME ),
+				'GET /merchboard/v1/me/profile': () =>
+					response( 200, {
+						...PROFILE,
+						pending: {
+							description: {
+								id: 4,
+								value: 'New story',
+								file: null,
+								remove: false,
+								created_at: '2026-10-26T10:00:00Z',
+							},
+						},
+						rejected: {
+							social_x: {
+								id: 3,
+								reason: 'Wrong <b>account</b>',
+								decided_at: null,
+							},
+						},
+					} ),
+				'DELETE /merchboard/v1/me/profile/proposals/description': () =>
+					response( 200, PROFILE ),
+			} );
+			const container = await renderApp();
+
+			expect(
+				( input( container, 'Description' ) as HTMLTextAreaElement )
+					.value
+			).toBe( 'New story' );
+			expect( container.textContent ).toContain(
+				'Your last proposal was not approved: Wrong <b>account</b>'
+			);
+			expect( container.querySelector( 'b' ) ).toBeNull();
+
+			click(
+				container.querySelector(
+					'[aria-label="Withdraw the proposal for Description"]'
+				)
+			);
+			await flush();
+
+			expect(
+				( input( container, 'Description' ) as HTMLTextAreaElement )
+					.value
+			).toBe( 'Merch & music' );
+			expect( container.textContent ).toContain( 'Proposal withdrawn.' );
 		} );
 
 		it( 'does not send a request without changes', async () => {
@@ -438,23 +619,26 @@ describe( 'dashboard with the creator API', () => {
 			expect( requests.some( ( r ) => r.method === 'PATCH' ) ).toBe(
 				false
 			);
-			expect( container.textContent ).toContain( 'No changes to save.' );
+			expect( container.textContent ).toContain( 'No changes to send.' );
 		} );
 
 		it( 'blocks invalid input before sending', async () => {
 			const container = await renderApp();
 
-			type( input( container, 'X' ), 'http://x.com/nova' );
+			type(
+				input( container, 'Link on the banner' ),
+				'http://nova.example'
+			);
 			await submit( container );
 
 			expect( requests.some( ( r ) => r.method === 'PATCH' ) ).toBe(
 				false
 			);
-			const field = input( container, 'X' );
-			expect( field?.getAttribute( 'aria-invalid' ) ).toBe( 'true' );
-			expect( container.textContent ).toContain(
-				'Enter a full address starting with https://'
-			);
+			expect(
+				input( container, 'Link on the banner' )?.getAttribute(
+					'aria-invalid'
+				)
+			).toBe( 'true' );
 		} );
 
 		it( "shows the server's field errors as fixed messages", async () => {
@@ -462,21 +646,23 @@ describe( 'dashboard with the creator API', () => {
 				response( 400, {
 					code: 'merchboard_invalid_profile',
 					message: 'Server <b>text</b>',
-					data: { status: 400, fields: { bio: 'too_long' } },
+					data: {
+						status: 400,
+						fields: { 'social_links.kick': 'invalid_url' },
+					},
 				} );
 			const container = await renderApp();
 
-			type( input( container, 'Bio' ), 'Changed' );
+			type( input( container, 'Kick' ), 'https://twitch.tv/nova' );
 			await submit( container );
 
 			expect(
-				input( container, 'Bio' )?.getAttribute( 'aria-invalid' )
+				input( container, 'Kick' )?.getAttribute( 'aria-invalid' )
 			).toBe( 'true' );
 			expect( container.textContent ).toContain(
-				'Use at most 1000 characters.'
+				'Enter a full https:// address on the platform, or just the user name.'
 			);
 			expect( container.textContent ).not.toContain( 'Server' );
-			expect( container.textContent ).not.toContain( 'Profile saved.' );
 		} );
 
 		it.each( [
@@ -490,15 +676,19 @@ describe( 'dashboard with the creator API', () => {
 					response( status, { code: 'x', message: 'Internal' } );
 				const container = await renderApp();
 
-				type( input( container, 'Bio' ), 'Unsaved text' );
+				type( input( container, 'Description' ), 'Unsaved text' );
 				await submit( container );
 
 				expect(
-					container.querySelector( 'form [role="alert"]' )
-						?.textContent
+					Array.from(
+						container.querySelectorAll( 'form [role="alert"]' )
+					)
+						.map( ( alert ) => alert.textContent )
+						.join( ' ' )
 				).toContain( text );
 				expect(
-					( input( container, 'Bio' ) as HTMLTextAreaElement ).value
+					( input( container, 'Description' ) as HTMLTextAreaElement )
+						.value
 				).toBe( 'Unsaved text' );
 				expect( container.textContent ).not.toContain( 'Internal' );
 			}
@@ -525,7 +715,7 @@ describe( 'dashboard with the creator API', () => {
 			await flush();
 
 			expect(
-				( input( container, 'Display name' ) as HTMLInputElement ).value
+				( input( container, 'Name' ) as HTMLInputElement ).value
 			).toBe( 'Nova' );
 		} );
 	} );
