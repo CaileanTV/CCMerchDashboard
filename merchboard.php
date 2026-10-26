@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Merch Dashboard
  * Description:       Creator and merchandise management: WordPress admin tools and a secure creator dashboard.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Requires at least: 6.7
  * Requires PHP:      8.2
  * WC requires at least: 10.3
@@ -25,7 +25,7 @@ if ( defined( 'MERCHBOARD_VERSION' ) ) {
 	return;
 }
 
-define( 'MERCHBOARD_VERSION', '1.2.0' );
+define( 'MERCHBOARD_VERSION', '1.3.0' );
 
 require_once __DIR__ . '/src/Core/Requirements.php';
 

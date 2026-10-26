@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Merch Dashboard 1.2.0\n"
+"Project-Id-Version: Merch Dashboard 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/CaileanTV/CCMerchDashboard/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T18:49:23+00:00\n"
+"POT-Creation-Date: 2026-10-26T20:16:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -41,7 +41,7 @@ msgstr ""
 #: src/Core/Http/RestController.php:65
 #: src/Core/Http/RestController.php:79
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:282
-#: src/Modules/Dashboard/Rest/MeController.php:514
+#: src/Modules/Dashboard/Rest/MeController.php:516
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 msgid "You do not have access to this resource."
 msgstr ""
@@ -116,7 +116,7 @@ msgid "Stop viewing as the creator"
 msgstr ""
 
 #: src/Modules/Access/ImpersonationActions.php:141
-#: src/Modules/Creators/Admin/CategoryProposalActions.php:83
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:90
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:86
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:123
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
@@ -138,7 +138,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:349
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
-#: src/Modules/Creators/Admin/CategoryProposalActions.php:91
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:98
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
@@ -1516,8 +1516,8 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertApiTab.php:175
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:315
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:353
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:316
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:354
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
 #: build/dashboard.js:52
@@ -1885,7 +1885,7 @@ msgstr[1] ""
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:365
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:499
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:333
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:334
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 #: build/dashboard.js:74
 msgid "Remove"
@@ -2026,7 +2026,7 @@ msgid "Approved"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:553
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:275
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:276
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -3476,32 +3476,32 @@ msgid "Decision"
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:240
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:241
 #, php-format
 msgid "Approve all from %s"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:282
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:283
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:284
 msgid "Note to the creator (optional)"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:284
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:285
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
 msgid "Reject"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:303
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:304
 msgid "No category"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:320
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:321
 msgid "Standard banner"
 msgstr ""
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:339
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:340
 msgid "The image is missing."
 msgstr ""
 
@@ -3894,11 +3894,11 @@ msgstr ""
 msgid "Not found."
 msgstr ""
 
-#: src/Modules/Dashboard/Rest/MeController.php:379
+#: src/Modules/Dashboard/Rest/MeController.php:381
 msgid "The theme is not valid."
 msgstr ""
 
-#: src/Modules/Dashboard/Rest/MeController.php:523
+#: src/Modules/Dashboard/Rest/MeController.php:525
 msgid "Some profile fields are invalid."
 msgstr ""
 
@@ -7439,7 +7439,7 @@ msgstr ""
 msgid "The backfill job could not be queued."
 msgstr ""
 
-#: src/Modules/WooCommerce/CreatorCodes/CreatorProfitCoupon.php:77
+#: src/Modules/WooCommerce/CreatorCodes/CreatorProfitCoupon.php:90
 msgid "Merch Dashboard: the creator's profit"
 msgstr ""
 

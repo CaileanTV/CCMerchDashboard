@@ -246,6 +246,30 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.3.0: creatorens kategori og rabatkode (fase 28)
+
+**Versions-bump og CHANGELOG-sektion 2026-10-26** efter projektejerens ønske samme dag. Det er en minor, fordi den indeholder nye features. Fase 28 er reviewet og runtime-testet på Local; se ROADMAP 28.6.
+
+**Schema-version 33:**
+- Migration 32 opretter `merchboard_category_proposals`.
+- Migration 33 gør creatorernes `bio` og `social_links` til ventende forslag og sletter de gamle værdier.
+- Der er ingen manuelle trin.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til staging eller produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise schema-version 33 uden advarsler.
+3. **Forudsætning:** pluginet CCMerch Kategoribannere skal være aktivt. Uden det kan forslag til banner, mobilbanner, link og sociale links hverken laves eller godkendes; navn, beskrivelse og logo virker.
+4. **Stikprøve:**
+   - Admin-siden "Category proposals" viser creatorernes tidligere bioer og links som ventende forslag. Godkend eller afvis dem.
+   - En creator foreslår en ændring i Profile, og ændringen vises først i butikken, når den er godkendt.
+   - "Opret rabatkode" på en creators side giver en kode, hvis rabat i kurven er creatorens fortjeneste på egne varer.
+   - Eksisterende, manuelt registrerede koder virker som før, indtil der oprettes en ny kode. Siden viser en advarsel ved dem.
+5. **nginx:** kører sitet på nginx, så tilføj `location ^~ /wp-content/uploads/merchboard-proposals/ { deny all; }`. `.htaccess` i mappen virker kun på Apache (SECURITY.md).
+6. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** gendan backuppen. 1.2.0-koden kender ikke forslagstabellen, og bioerne er flyttet til forslag. Installér derfor ikke 1.2.0 oven på schema-version 33.
+
 ## Release 1.2.0: oprydning, "Se som creator" og sletning af creators (fase 27)
 
 **Versions-bump, CHANGELOG-sektionen og tagget `v1.2.0` (på `1af0371`) sat 2026-10-25** efter projektejerens valg samme dag (minor: nye features; fase 27 er reviewet og runtime-testet på Local). Schema-version **31**: migration 30 sletter importværktøjernes optioner, og migration 31 tilføjer `deleted_at` til creators. Ingen import eller manuelle trin. Tagget giver en draft-release; projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til staging eller produktion.

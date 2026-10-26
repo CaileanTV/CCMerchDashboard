@@ -694,7 +694,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - samspillet med migreringens tilstand (fase 26) og creatorens uploadede filer.
 - **27.4 Review og runtime-test ✅ (review og runtime-test 2026-10-25):** et uafhængigt kode-review af fase 27 fandt én alvorlig fejl (vagten for "Se som creator" kunne omgås med store bogstaver i ruten) og flere mindre; alle er rettet og testet automatisk (statusnoter i ADR-075 og ADR-076). CI på MySQL fandt derefter, at sletningens afsluttende kontrol også talte koblinger, der aldrig giver salg (variationer, slettede poster, ugyldige koblinger); rettet før releasen (statusnote i ADR-076). Projektejeren har runtime-testet fase 27 på Local 2026-10-25 efter en tjekliste med 28 punkter: 27 OK. Ét punkt er accepteret af projektejeren: "Se som creator" vises også ved creators, som projektejeren opfatter som uden bruger. Koden viser den kun, når creatoren har et bruger-id; årsagen er ikke undersøgt. Projektejerens valg: version **1.2.0** (DEVELOPMENT.md, "Release 1.2.0").
 
-## Fase 28 – Creatorens kategori: navn, beskrivelse, billede, banner og sociale links 🔄 (plan godkendt 2026-10-26; udgives som 1.3.0; ADR-077)
+## Fase 28 – Creatorens kategori: navn, beskrivelse, billede, banner og sociale links ✅ (plan godkendt 2026-10-26; reviewet og runtime-testet på Local 2026-10-26; udgives i 1.3.0; ADR-077, ADR-078)
 
 **Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning, og creatoren foreslår navn, beskrivelse, kategoribillede, banner og mobilbanner med link og sociale links. **Intet ændres, heller ikke navnet i Merch Dashboard, før en administrator har godkendt det** (risiko for ophavsret). Banner og sociale links gemmes i pluginet **CCMerch Kategoribannere** (`ccmerch-kategoribannere`, også på staging), som projektejeren har givet tilladelse til at læse på Local (AI-DEVELOPMENT.md).
 
@@ -722,11 +722,11 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - Kuponens øvrige indstillinger (brug pr. kunde, kombination med andre kuponer, udløb) og hvad der sker, hvis nogen retter eller sletter kuponen i WooCommerce.
     - Om "Se som creator" (ADR-075) må nulstille koden; begrænsning af gentagne nulstillinger; audit.
     - Samspillet med udelukkelsen af ordrer (ADR-068) og K2.
-- **28.6 Review, runtime-test og release 1.3.0 🔄:**
+- **28.6 Review, runtime-test og release 1.3.0 ✅:**
   - **Runtime-test på Local (2026-10-26):** rabatkode i kurv og ordre, nulstilling, kategoriforslag over HTTP og bannerpluginets visning er gennemført. Kørslen med før- og efter-status, backup og resultater ligger i `MerchBoard-r2-runtime/runs/2026-10-26-fase28-runtime-1.3.0/` uden for repoet.
   - **Hændelse:** en rollback omkring et ordre-gem virkede ikke (WooCommerce' HPOS committer), så caileans aktive kode og testordre 704 blev ændret. Repareret efter projektejerens valg: ny kode via admin, og ordren bliver.
   - **Review:** tre uafhængige reviews. Projektejeren valgte "punkt 1–6", som er rettet og testet automatisk (19a13f8, 916be3c, 7259ee5); se statusnoterne i ADR-077 og ADR-078.
-  - **Udestår:** fuld integrationssuite lokalt, versionsbump til 1.3.0 og release (først når projektejeren beder om det).
+  - **Release:** den fulde integrationssuite er grøn lokalt på `1f529f7` (1066 tests), og CI er grøn. Versions-bump til 1.3.0 2026-10-26 efter projektejerens ønske; projektejeren har afsluttet sin runtime-test. Se DEVELOPMENT.md "Release 1.3.0".
 
 ## Senere (uprioriteret)
 

@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-26
+
+Fase 28: creatoren foreslår ændringer til sin produktkategori (navn, beskrivelse, logo, bannere, link og sociale links i CCMerch Kategoribannere), og en administrator godkender hver ændring, før den vises i butikken. Pluginet opretter og styrer creatorens rabatkode, hvis rabat er præcis creatorens fortjeneste på egne produkter. Schema-version 33 (migration 32–33 kører ved opdatering fra 1.2.0; bioer og sociale links bliver ventende forslag). Fase 28 er reviewet og runtime-testet på Local 2026-10-26. Opdateringen står i DEVELOPMENT.md ("Release 1.3.0").
+
 ### Added
 
 - **Creatorens kategori (fase 28, ADR-077):** Profile i dashboardet viser creatorens produktkategori, som butikken viser den, og creatoren foreslår navn, beskrivelse, logo, banner og mobilbanner med link og sociale links (Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch) i bannerpluginet CCMerch Kategoribannere. Intet ændres, før en administrator har godkendt det på den nye admin-side "Category proposals" (kø pr. creator, nu og foreslået side om side, godkend, afvis med note, godkend alle; antal ventende i menuen). Billeder venter ikke-offentligt; logoet skal være kvadratisk og skaleres ned til 1000 × 1000 px. Schema-version 32–33.
