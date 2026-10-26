@@ -624,6 +624,56 @@ describe( 'dashboard with the creator API', () => {
 			expect( container.textContent ).toContain( 'Proposal withdrawn.' );
 		} );
 
+		it( 'shows a proposed image as a data URL, which the dashboard CSP allows', async () => {
+			const png = new Blob(
+				[ new Uint8Array( [ 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a ] ) ],
+				{ type: 'image/png' }
+			);
+			const fetched = mockApi( {
+				'GET /merchboard/v1/me': () => response( 200, ME ),
+				'GET /merchboard/v1/me/profile': () =>
+					response( 200, {
+						...PROFILE,
+						pending: {
+							image: {
+								id: 9,
+								value: '',
+								file: {
+									mime: 'image/png',
+									width: 400,
+									height: 400,
+								},
+								remove: false,
+								created_at: '2026-10-26T10:00:00Z',
+							},
+						},
+					} ),
+				'GET /merchboard/v1/me/profile/files/9': () => ( {
+					...response( 200, null, { 'Content-Type': 'image/png' } ),
+					blob: () => Promise.resolve( png ),
+				} ),
+			} );
+			const container = await renderApp();
+
+			for ( let i = 0; i < 5; i++ ) {
+				await flush();
+			}
+
+			// Not a blob: URL: the dashboard CSP is `img-src 'self' data:`.
+			expect(
+				container
+					.querySelector( 'img[alt="Proposed image"]' )
+					?.getAttribute( 'src' )
+			).toBe( 'data:image/png;base64,iVBORw0K' );
+
+			type( input( container, 'Name' ), 'Nova Studio' );
+			await flush();
+
+			expect(
+				fetched.filter( ( r ) => r.path.includes( '/files/9' ) )
+			).toHaveLength( 1 );
+		} );
+
 		it( 'keeps unsent edits of other fields after a withdrawal', async () => {
 			mockApi( {
 				'GET /merchboard/v1/me': () => response( 200, ME ),

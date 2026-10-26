@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from '@wordpress/element';
+import { useEffect, useId, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 import { getProposedImage } from '../../api/creator';
@@ -13,9 +13,34 @@ import { ProposalNote } from './ProposalNote';
 
 const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
 
+/** A data URL of one of the image types a proposal can have. */
+const IMAGE_DATA_URL = /^data:image\/(png|jpeg|webp);base64,/;
+
 /**
- * The proposed image, fetched with the creator's session and shown from a
- * local object URL (never a public URL).
+ * The image as a data URL, or null when it cannot be read.
+ *
+ * @param image Image file.
+ */
+function toDataUrl( image: Blob ): Promise< string | null > {
+	return new Promise( ( resolve ) => {
+		const reader = new FileReader();
+		reader.onload = () =>
+			resolve(
+				typeof reader.result === 'string' &&
+					IMAGE_DATA_URL.test( reader.result )
+					? reader.result
+					: null
+			);
+		reader.onerror = () => resolve( null );
+		reader.readAsDataURL( image );
+	} );
+}
+
+/**
+ * The proposed image, fetched with the creator's session and shown as a
+ * data URL (never a public URL). Not an object (`blob:`) URL: the
+ * dashboard's CSP allows only `img-src 'self' data:`, so the browser would
+ * block it. It is fetched again only when the proposal changes.
  *
  * @param props          Props.
  * @param props.proposal Pending image proposal.
@@ -29,28 +54,24 @@ function ProposedImage( {
 	readonly alt: string;
 } ) {
 	const [ url, setUrl ] = useState< string | null >( null );
+	const latest = useRef( proposal );
+	latest.current = proposal;
 
 	useEffect( () => {
 		const controller = new AbortController();
-		let objectUrl: string | null = null;
 
-		void getProposedImage( proposal, controller.signal ).then(
-			( result ) => {
-				if ( result.ok && typeof URL.createObjectURL === 'function' ) {
-					objectUrl = URL.createObjectURL( result.data );
-					setUrl( objectUrl );
+		void getProposedImage( latest.current, controller.signal )
+			.then( ( result ) =>
+				result.ok ? toDataUrl( result.data ) : null
+			)
+			.then( ( dataUrl ) => {
+				if ( ! controller.signal.aborted ) {
+					setUrl( dataUrl );
 				}
-			}
-		);
+			} );
 
-		return () => {
-			controller.abort();
-
-			if ( objectUrl !== null ) {
-				URL.revokeObjectURL( objectUrl );
-			}
-		};
-	}, [ proposal ] );
+		return () => controller.abort();
+	}, [ proposal.id ] );
 
 	return url === null ? null : (
 		<img
