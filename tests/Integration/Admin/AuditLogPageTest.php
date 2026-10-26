@@ -253,11 +253,12 @@ final class AuditLogPageTest extends IntegrationTestCase {
 		self::assertIsArray( $submenu['merchboard'] ?? null );
 		self::assertSame(
 			array(
-				'merchboard'           => Capabilities::MANAGE,
-				'merchboard-creators'  => Capabilities::MANAGE_CREATORS,
-				'merchboard-settings'  => Capabilities::MANAGE_SETTINGS,
-				'merchboard-news'      => Capabilities::MANAGE_CREATORS,
-				'merchboard-audit-log' => Capabilities::VIEW_LOGS,
+				'merchboard'                    => Capabilities::MANAGE,
+				'merchboard-creators'           => Capabilities::MANAGE_CREATORS,
+				'merchboard-category-proposals' => Capabilities::MANAGE_CREATORS,
+				'merchboard-settings'           => Capabilities::MANAGE_SETTINGS,
+				'merchboard-news'               => Capabilities::MANAGE_CREATORS,
+				'merchboard-audit-log'          => Capabilities::VIEW_LOGS,
 			),
 			array_column( $submenu['merchboard'], 1, 2 )
 		);
