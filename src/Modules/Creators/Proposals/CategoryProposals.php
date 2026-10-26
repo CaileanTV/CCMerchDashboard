@@ -279,6 +279,7 @@ final class CategoryProposals {
 		}
 
 		$media = 0;
+		$file  = null;
 
 		if ( $field->is_file() && ! $proposal->is_removal() ) {
 			$file  = $proposal->file() ?? self::refuse( CategoryProposalException::NOT_FOUND );
@@ -291,6 +292,11 @@ final class CategoryProposals {
 		try {
 			$this->transaction->run(
 				function () use ( $proposal, $creator, $field, $category, $media, &$replaced ): void {
+					// Claimed first: a proposal withdrawn or replaced meanwhile changes nothing in the shop.
+					if ( ! $this->proposals->end( $proposal->id, ProposalStatus::Approved, null, self::user(), ( $this->clock )() ) ) {
+						self::refuse( CategoryProposalException::NOT_PENDING );
+					}
+
 					if ( ProposalField::DisplayName === $field ) {
 						$this->creators->rename( $creator->id, $proposal->value );
 					}
@@ -299,10 +305,6 @@ final class CategoryProposals {
 
 					if ( null !== $category && null !== $target ) {
 						$replaced = $target->apply( $creator->id, $field, $field->is_file() ? ( $media > 0 ? (string) $media : '' ) : $proposal->value );
-					}
-
-					if ( ! $this->proposals->end( $proposal->id, ProposalStatus::Approved, null, self::user(), ( $this->clock )() ) ) {
-						self::refuse( CategoryProposalException::NOT_PENDING );
 					}
 
 					$this->audit->record(
@@ -322,10 +324,14 @@ final class CategoryProposals {
 			);
 			$written = true;
 		} finally {
-			// Nothing is kept: the image copied into the Media Library goes again.
+			// Nothing is kept: the image copied into the Media Library goes again; the waiting file stays for a retry.
 			if ( ! $written && $media > 0 ) {
 				wp_delete_attachment( $media, true );
 			}
+		}
+
+		if ( null !== $file ) {
+			$this->files->delete( $file );
 		}
 
 		if ( $replaced > 0 ) {

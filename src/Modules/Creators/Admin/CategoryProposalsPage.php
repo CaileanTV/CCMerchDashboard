@@ -233,6 +233,7 @@ final class CategoryProposalsPage {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="merchboard-proposals__all">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( CategoryProposalActions::APPROVE_ALL ) . '">';
 			echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
+			echo '<input type="hidden" name="' . esc_attr( CategoryProposalActions::SHOWN_FIELD ) . '" value="' . esc_attr( implode( ',', array_map( static fn( CategoryProposal $proposal ): string => (string) $proposal->id, $pending ) ) ) . '">';
 			wp_nonce_field( CategoryProposalActions::nonce_action( CategoryProposalActions::APPROVE_ALL, $creator->id ) );
 			submit_button(
 				sprintf(

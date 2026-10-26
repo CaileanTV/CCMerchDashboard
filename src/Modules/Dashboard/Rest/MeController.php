@@ -330,11 +330,13 @@ final class MeController extends RestController {
 	 *
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
 	 *
-	 * @param bool            $served  Whether the request was already served.
+	 * @param mixed           $served  Whether the request was already served (any type: other plugins' callbacks may return null).
 	 * @param mixed           $result  The response.
 	 * @param WP_REST_Request $request Request.
 	 */
-	public function serve_file( bool $served, mixed $result, WP_REST_Request $request ): bool {
+	public function serve_file( mixed $served, mixed $result, WP_REST_Request $request ): bool {
+		$served = (bool) $served;
+
 		if ( $served || ! $result instanceof WP_REST_Response || 'GET' !== $request->get_method() || 200 !== $result->get_status()
 			|| self::FILE_ROUTE !== $result->get_matched_route() || ! in_array( $result->get_headers()['Content-Type'] ?? null, ProposalFiles::TYPES, true ) ) {
 			return $served;

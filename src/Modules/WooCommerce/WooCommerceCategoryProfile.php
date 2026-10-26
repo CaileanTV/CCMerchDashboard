@@ -111,10 +111,11 @@ final class WooCommerceCategoryProfile implements CategoryProfileTarget {
 		$args     = array( 'slug' => $term->slug );
 		$platform = $field->platform();
 
+		// wp_update_term() unslashes its input, so a "\" in the text would be lost.
 		if ( ProposalField::DisplayName === $field ) {
-			$args['name'] = $value;
+			$args['name'] = wp_slash( $value );
 		} elseif ( ProposalField::Description === $field ) {
-			$args['description'] = $value;
+			$args['description'] = wp_slash( $value );
 		} elseif ( null !== $platform ) {
 			self::write_meta( $term->term_id, 'ccm_social_' . $platform, $value );
 		} elseif ( ProposalField::BannerLink === $field ) {

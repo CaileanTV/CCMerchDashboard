@@ -207,7 +207,8 @@ final class ProposalFiles {
 
 	/**
 	 * Copies an approved file into the Media Library with its image sizes and
-	 * marks it as the creator's; the waiting file is deleted.
+	 * marks it as the creator's. The waiting file stays until the caller has
+	 * stored the approval (then delete()), so a failed approval can be retried.
 	 *
 	 * @param ProposalFile $file       File.
 	 * @param int          $creator_id Creator.
@@ -252,7 +253,6 @@ final class ProposalFiles {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $uploaded['file'] ) );
 		update_post_meta( $id, self::MEDIA_META, (string) $creator_id );
-		$this->delete( $file );
 
 		return $id;
 	}

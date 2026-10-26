@@ -120,15 +120,36 @@ final class CategoryProposalsAdminTest extends IntegrationTestCase {
 	}
 
 	public function test_approve_all_writes_every_proposal_of_the_creator(): void {
-		$this->propose();
+		$ids = $this->propose();
 
-		self::assertStringContainsString( CategoryProposalsPage::RESULT_ARG . '=approved_all', $this->actions()->process( $this->signed( CategoryProposalActions::APPROVE_ALL, $this->nova ) ) );
+		self::assertStringContainsString( 'name="' . CategoryProposalActions::SHOWN_FIELD . '" value="' . implode( ',', $ids ) . '"', $this->render_page(), 'The form carries the proposals it shows.' );
+		self::assertStringContainsString( CategoryProposalsPage::RESULT_ARG . '=approved_all', $this->actions()->process( $this->signed( CategoryProposalActions::APPROVE_ALL, $this->nova ) + array( CategoryProposalActions::SHOWN_FIELD => implode( ',', $ids ) ) ) );
 
 		self::assertSame( array(), $this->proposals()->pending( $this->nova ) );
 		self::assertSame( 'Nova Live', $this->creator()->display_name );
 		self::assertSame( array( 'Nova Live', 'New story' ), array( $this->term_object()->name, $this->term_object()->description ) );
 		self::assertGreaterThan( 0, (int) get_term_meta( $this->term, 'ccm_banner_id', true ) );
 		self::assertStringContainsString( 'No proposals are waiting.', $this->render_page() );
+	}
+
+	public function test_approve_all_never_approves_a_proposal_the_page_did_not_show(): void {
+		$ids = $this->propose();
+
+		// After the page was rendered, the creator replaces the description.
+		wp_set_current_user( $this->nova_user );
+		$this->proposals()->propose( $this->creator(), array( 'description' => 'Swapped \\o/ story' ) );
+		wp_set_current_user( 1 );
+
+		self::assertStringContainsString( CategoryProposalsPage::RESULT_ARG . '=approved_some', $this->actions()->process( $this->signed( CategoryProposalActions::APPROVE_ALL, $this->nova ) + array( CategoryProposalActions::SHOWN_FIELD => implode( ',', $ids ) ) ) );
+		self::assertSame( array( 'description' ), array_keys( $this->proposals()->pending( $this->nova ) ), 'The new description still waits.' );
+		self::assertSame( 'Old story', $this->term_object()->description );
+
+		// Without the list (an old form), nothing is approved.
+		self::assertStringContainsString( CategoryProposalsPage::RESULT_ARG . '=proposal_not_pending', $this->actions()->process( $this->signed( CategoryProposalActions::APPROVE_ALL, $this->nova ) ) );
+
+		$pending = $this->proposals()->pending( $this->nova );
+		$this->actions()->process( $this->signed( CategoryProposalActions::APPROVE, ( $pending['description'] ?? self::fail( 'No description.' ) )->id ) );
+		self::assertSame( 'Swapped \\o/ story', $this->term_object()->description, 'A backslash survives wp_update_term().' );
 	}
 
 	public function test_the_proposed_image_is_shown_only_to_an_administrator_with_a_valid_link(): void {

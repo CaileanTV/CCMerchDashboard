@@ -37,6 +37,13 @@ final class CategoryProposalActions {
 	public const NOTE_FIELD = 'note';
 
 	/**
+	 * The field with the ids of the proposals "Approve all" was shown with
+	 * (comma separated): only those are approved, never one that arrived or
+	 * replaced another after the page was rendered.
+	 */
+	public const SHOWN_FIELD = 'proposal_ids';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CategoryProposals $proposals Proposals.
@@ -106,14 +113,33 @@ final class CategoryProposalActions {
 				return self::result( 'rejected' );
 			}
 
+			$shown   = array_map( 'absint', explode( ',', self::scalar( $input, self::SHOWN_FIELD ) ) );
+			$skipped = 0;
+			$reason  = CategoryProposalException::NOT_PENDING;
+
+			// Each on its own: one that cannot be approved does not stop the others.
 			foreach ( $this->proposals->pending( $id ) as $proposal ) {
-				$this->proposals->approve( $proposal->id );
-				++$approved;
+				if ( ! in_array( $proposal->id, $shown, true ) ) {
+					++$skipped;
+					continue;
+				}
+
+				try {
+					$this->proposals->approve( $proposal->id );
+					++$approved;
+				} catch ( CategoryProposalException $e ) {
+					++$skipped;
+					$reason = $e->reason();
+				}
 			}
 
-			return self::result( 'approved_all' );
+			if ( 0 === $skipped ) {
+				return self::result( $approved > 0 ? 'approved_all' : CategoryProposalException::NOT_PENDING );
+			}
+
+			return self::result( $approved > 0 ? 'approved_some' : $reason );
 		} catch ( CategoryProposalException $e ) {
-			return self::result( $approved > 0 ? 'approved_some' : $e->reason() );
+			return self::result( $e->reason() );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Deciding a category proposal failed.', array_merge( $e->context(), array( 'id' => $id ) ) );
 
