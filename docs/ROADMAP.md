@@ -694,41 +694,22 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - samspillet med migreringens tilstand (fase 26) og creatorens uploadede filer.
 - **27.4 Review og runtime-test ✅ (review og runtime-test 2026-10-25):** et uafhængigt kode-review af fase 27 fandt én alvorlig fejl (vagten for "Se som creator" kunne omgås med store bogstaver i ruten) og flere mindre; alle er rettet og testet automatisk (statusnoter i ADR-075 og ADR-076). CI på MySQL fandt derefter, at sletningens afsluttende kontrol også talte koblinger, der aldrig giver salg (variationer, slettede poster, ugyldige koblinger); rettet før releasen (statusnote i ADR-076). Projektejeren har runtime-testet fase 27 på Local 2026-10-25 efter en tjekliste med 28 punkter: 27 OK. Ét punkt er accepteret af projektejeren: "Se som creator" vises også ved creators, som projektejeren opfatter som uden bruger. Koden viser den kun, når creatoren har et bruger-id; årsagen er ikke undersøgt. Projektejerens valg: version **1.2.0** (DEVELOPMENT.md, "Release 1.2.0").
 
-## Fase 28 – Creatorens kategori: navn, beskrivelse og banner ⏳ (projektejerens ønske 2026-10-26; ikke planlagt)
+## Fase 28 – Creatorens kategori: navn, beskrivelse, billede, banner og sociale links 🔄 (plan godkendt 2026-10-26; udgives som 1.3.0; ADR-077)
 
-**Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning (billede og banner). Creatoren kan foreslå kategoriens navn, beskrivelse, kategoribillede, eget banner med link og sociale links. **Intet skrives til WooCommerce, før en administrator har godkendt ændringen** (risiko for ophavsret). Kræver en ADR: i dag skriver pluginet ikke til kategorierne selv, kun til produkternes kobling (ADR-033).
+**Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning, og creatoren foreslår navn, beskrivelse, kategoribillede, banner og mobilbanner med link og sociale links. **Intet ændres, heller ikke navnet i Merch Dashboard, før en administrator har godkendt det** (risiko for ophavsret). Banner og sociale links gemmes i pluginet **CCMerch Kategoribannere** (`ccmerch-kategoribannere`, også på staging), som projektejeren har givet tilladelse til at læse på Local (AI-DEVELOPMENT.md).
 
-- **28.1 Analyse og plan:**
-  - **Bannerpluginet "CCMerch Kategoribannere"** (`ccmerch-kategoribannere` på Merch Dashboard Local; allerede installeret på staging). Al information om kategoriens banner og sociale links går til det plugin (projektejerens beslutning 2026-10-26). Det skal afklares, hvordan det gemmer banner, standardbanner, korttitel og link pr. kategori (fx term meta), og om det har et API. Projektejeren har 2026-10-26 givet tilladelse til at læse pluginets filer på Local (undtagelse i AI-DEVELOPMENT.md, Project Isolation).
-  - Hvordan creatorens kategori findes (kategori-mapping, ADR-033), og hvad der sker med flere kategorier pr. creator.
-  - ADR for skrivning til kategorier og bannerpluginet, godkendelsesflowet og uploads.
-- **28.2 Profile viser og foreslår kategoriens opsætning:**
-  - Profile viser kategoriens billede og banner. Har creatoren intet eget banner, vises pluginets standardbanner.
-  - **Navn:** creatorens navn på dashboardet foreslås som kategoriens navn og som korttitel i bannerpluginet.
-  - **"Bio" bliver "Beskrivelse"** og synkroniseres til kategoriens beskrivelsesfelt.
-  - **Eget banner:** creatoren kan uploade et banner og angive et link på banneret. Fjernes det, vises standardbanneret igen.
-  - **Kategoribillede:** creatoren kan uploade et nyt billede til kategorien (WooCommerce' kategoribillede; projektejerens tilføjelse 2026-10-26).
-  - **Sociale links** synkroniseres med bannerpluginet (projektejerens tilføjelse og beslutninger 2026-10-26):
-    - Platformene er Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch. Kick og Twitch er nye.
-    - Bannerpluginet får felter på produktkategorien: `ccm_social_instagram`, `ccm_social_tiktok`, `ccm_social_youtube`, `ccm_social_x`, `ccm_social_facebook`, `ccm_social_kick` og `ccm_social_twitch`. Kategorisiden viser de udfyldte som ikoner. Felterne laves i bannerpluginet, ikke af Merch Dashboard.
-    - Ændrede links godkendes af en administrator som de andre ændringer.
-    - Hver platform har sine tilladte domæner.
-    - "Websted" fjernes fra profilens links (i dag `website`, `SocialLinks::PLATFORMS`), og gemte "Websted"-links slettes ved opdateringen.
-- **28.3 Godkendelse i admin:**
-  - Alle ændringer fra creatoren lægges som forslag på en ny admin-side: nuværende og foreslået værdi side om side, også billeder og link.
-  - Administratoren godkender eller afviser hvert forslag. Først ved godkendelse skrives til WooCommerce og bannerpluginet.
-  - Creatoren ser i dashboardet, at et forslag venter, og om det er godkendt eller afvist.
-  - Forslag, godkendelser og afvisninger auditeres.
-- **28.4 Review og runtime-test.**
-- **Afklares i planen:**
-  - **Navn:** gemmes creatorens visningsnavn i Merch Dashboard stadig straks, mens kategoriens navn og korttitlen venter på godkendelse? Kategoriens slug ændres ikke (URL'er og søgemaskiner).
-  - **Beskrivelse:** ren tekst eller enkel formatering, længde, og hvad der sker med de eksisterende bioer. Skal en ændring foretaget direkte i WooCommerce vises i dashboardet (WooCommerce som kilde)?
-  - **Banner:** filtyper, størrelse og mål; hvor uploads ligger, til de er godkendt (ikke offentligt i mediebiblioteket); oprydning af afviste filer.
-  - **Link:** kun `https`, og om bestemte domæner er tilladt; administratoren godkender også linket.
-  - **Kategoribillede:** samme krav til filtyper, størrelse og opbevaring indtil godkendelse som banneret.
-  - **Sociale links:** listen over tilladte domæner pr. platform (fx `instagram.com`, `tiktok.com`, `youtube.com` og `youtu.be`, `x.com` og `twitter.com`, `facebook.com`, `kick.com`, `twitch.tv`), og hvad Merch Dashboard gør, før bannerpluginet har `ccm_social_*`-felterne.
-  - **Rettighed:** `merchboard_manage_creators` eller en ny capability til godkendelse; notifikation til administratoren om nye forslag.
-  - Hvad der sker uden bannerpluginet aktivt (kun navn og beskrivelse), eller hvis creatoren ikke har nogen kategori.
+**Projektejerens beslutninger (2026-10-26):**
+- Alt venter på godkendelse, også navnet; korttitlen er kategoriens navn i WooCommerce.
+- Creatoren kan også uploade et mobilbanner.
+- Sociale links: Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch i bannerpluginets felter `ccm_social_*`; tilladte domæner pr. platform; ændringer godkendes; "Websted" slettes.
+- Eksisterende bioer og sociale links bliver forslag til godkendelse ved opdateringen.
+- Fase 28 udgives som version **1.3.0**.
+
+- **28.1 ADR og plan ✅ (2026-10-26):** ADR-077 (model, filer, domæner, migrering); bannerpluginets data er kortlagt (term meta `ccm_banner_*`, `ccm_social_*`, standardbanneret ud fra `thumbnail_id`).
+- **28.2 Forslag, filer og migrering (backend):** tabellen `merchboard_category_proposals` (schema 32); bio og sociale links bliver forslag (schema 33); forslag pr. felt med godkend, afvis og træk tilbage; ikke-offentlige uploads; `SocialLinks` med syv platforme og domæner; WooCommerce-modulet læser og skriver kategorien og bannerpluginets term meta; audit; oprydning ved sletning af creator og afinstallation.
+- **28.3 Dashboard: Profile:** `/me/profile` med kategoriens værdier, ventende forslag og afvisninger; uploads; Profile med navn, beskrivelse, kategoribillede, banner, mobilbanner, link og sociale links med status og "Træk tilbage"; Overview.
+- **28.4 Admin: Kategoriforslag:** en side med køen pr. creator, nuværende og foreslået side om side, godkend og afvis (med begrundelse) pr. felt og et tælle-badge i menuen.
+- **28.5 Review, runtime-test og release 1.3.0.**
 
 ## Senere (uprioriteret)
 

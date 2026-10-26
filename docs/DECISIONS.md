@@ -4202,3 +4202,55 @@ Schema-version 31 (`AddCreatorDeletedAt`): `merchboard_creators.deleted_at datet
 
 ## Related
 ADR-020, ADR-023, ADR-030, ADR-033, ADR-037, ADR-038, ADR-059, ADR-065, ADR-068, ADR-075.
+
+---
+
+# ADR-077: Creatorens forslag til sin produktkategori
+
+## Date
+2026-10-26
+
+## Status
+Accepteret af projektejeren 2026-10-26 (plan for fase 28 godkendt). Ikke implementeret (trin 28.2–28.4).
+
+## Context
+Projektejeren vil give creators mere indflydelse på deres produktkategori i WooCommerce (ROADMAP fase 28): navn, beskrivelse, kategoribillede, banner med link og sociale links. Banner og sociale links gemmes af pluginet **CCMerch Kategoribannere** som term meta på `product_cat` (læst på Local med projektejerens tilladelse 2026-10-26, AI-DEVELOPMENT.md):
+- `ccm_banner_id`, `ccm_banner_mobile_id`, `ccm_banner_link`, `ccm_banner_new_tab`;
+- `ccm_social_{instagram,tiktok,youtube,x,facebook,kick,twitch}` (fulde URL'er);
+- standardbanneret (`ccm_banner_auto`) laves af pluginet ud fra kategoribilledet (`thumbnail_id`), når kategorien er en creator- eller community-kategori (`ccm_front_group`) uden eget banner; pluginets hook på `edited_product_cat` laver det igen eller fjerner det.
+
+I dag skriver Merch Dashboard aldrig til kategorierne (ADR-033 pkt. 1), profilens `display_name` gemmes straks, og `bio` og `social_links` er creator meta uden forbindelse til WooCommerce.
+
+## Decision
+1. **Kilden:** WooCommerce-kategorien er sandheden for beskrivelse, billede, banner og sociale links. Dashboardet viser kategoriens nuværende værdier og creatorens ventende forslag. Navnet er creatorens `display_name`; ved godkendelse skrives det også som kategoriens navn ("korttitel"). Kategoriens slug ændres aldrig.
+2. **Alt er forslag (projektejerens valg 2026-10-26):** creatoren foreslår; intet ændres, heller ikke navnet i Merch Dashboard, før en administrator med `merchboard_manage_creators` har godkendt det. Formålet er at undgå risiko for ophavsretsbrud.
+3. **Forslag pr. felt:** `display_name`, `description`, `image`, `banner`, `banner_mobile` (projektejerens valg), `banner_link` og `social_{platform}`. Højst ét ventende forslag pr. creator og felt; et nyt erstatter det gamle (dets fil slettes). Creatoren kan trække et forslag tilbage. En tom værdi betyder "fjern" (fx eget banner, så standardbanneret vises igen).
+4. **Godkendelse og afvisning** pr. felt; en afvisning kan have en begrundelse, som creatoren ser. Ved godkendelse skrives: navnet (`CreatorRepository::rename()` og kategoriens navn), beskrivelsen (ren tekst), `thumbnail_id`, `ccm_banner_id`, `ccm_banner_mobile_id`, `ccm_banner_link` (med `ccm_banner_new_tab` = 1) og `ccm_social_*`. Term meta skrives først og derefter `wp_update_term()`, så bannerpluginets hook kører. Hver godkendelse sker i én transaktion med audit.
+5. **Filer:** uploads gemmes ikke-offentligt i `uploads/merchboard-proposals/` med tilfældige navne, `index.php` og `.htaccess` (deny), aldrig i mediebiblioteket; de vises kun via godkendte endpoints for creatoren selv og administratorer. Ved godkendelse flyttes filen ind i mediebiblioteket med billedstørrelser og mærkes som pluginets; en erstattet fil, som pluginet selv har oprettet, slettes, når den ikke bruges. Administratorens egne medier røres aldrig. Typer jpg, png og webp, højst 5 MB og 4096 px; banner mindst 1280 px bredt, mobilbanner mindst 600 px, kategoribillede mindst 300 × 300 px.
+6. **Sociale links:** Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch; "Websted" udgår (projektejerens beslutning 2026-10-26). Kun `https` og højst 200 tegn; et `@navn` bliver til profil-URL'en. Tilladte domæner pr. platform (inkl. `www.`/`m.`): instagram.com; tiktok.com (også `vm.`); youtube.com og youtu.be; x.com og twitter.com; facebook.com og fb.com; kick.com; twitch.tv. Banner-linket kræver `https`; administratoren godkender det.
+7. **Eksisterende data (projektejerens valg 2026-10-26):** ved opdateringen bliver creatorernes `bio` og `social_links` ventende forslag (`description` og `social_*`); `website` og links uden for de tilladte domæner droppes, og de to meta-nøgler slettes.
+8. **Modulgrænse:** Creators-modulet ejer forslagene; WooCommerce-modulet læser og skriver kategorien (`CategoryProfileTarget`). Uden WooCommerce kan kun navnet foreslås; uden bannerpluginet skjules banner, link og sociale links; uden kategori kan forslag gemmes, men ikke godkendes.
+
+## Alternatives considered
+- **Navnet gemmes straks og kun kategorien venter:** fravalgt af projektejeren ("alt venter").
+- **Merch Dashboard gemmer banner og links selv og viser dem:** fravalgt; al information skal i CCMerch Kategoribannere, som også er på staging.
+- **Offentlige uploads i mediebiblioteket før godkendelse:** fravalgt; et ikke-godkendt billede må ikke kunne findes offentligt.
+
+## Reason
+Creators kan selv holde deres kategori opdateret, mens administratoren bevarer kontrollen med, hvad der vises i butikken.
+
+## Security
+- Kun den indloggede creator (eller en administrator, der ser som creatoren, ADR-075) kan foreslå for sin egen creator; kun `merchboard_manage_creators` kan godkende og afvise (POST med nonce bundet til forslaget).
+- Filer valideres efter type og indhold; de streames kun til ejeren og administratorer.
+- Sociale links er begrænset til platformenes domæner; alt godkendes manuelt.
+
+## Migration/data implications
+Schema-version 32 (tabellen `merchboard_category_proposals`) og 33 (`bio` og `social_links` bliver forslag; meta-nøglerne slettes).
+
+## Consequences
+- Omgør ADR-033 pkt. 1 for kategoriens navn, beskrivelse, billede og bannerpluginets term meta, og kun ved en administrators godkendelse.
+- `/me/profile` ændres (API.md); Profile i dashboardet får kategoriens felter; en ny admin-side "Kategoriforslag".
+- Afinstallation fjerner tabellen og forslagsmappen; godkendte medier bliver i kategorien.
+
+## Related
+ADR-007, ADR-023, ADR-033, ADR-075, ADR-076.
