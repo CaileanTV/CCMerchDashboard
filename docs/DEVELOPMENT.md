@@ -248,7 +248,10 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.3.1: rettelse af foreslåede billeder i Profile
 
-**Versions-bump og CHANGELOG-sektion 2026-10-26** efter projektejerens ønske samme dag. Det er en patch, fordi den kun retter én fejl. Projektejeren fandt fejlen på ccmerch.dk: et foreslået billede blev blokeret af dashboardets CSP (`blob:`), og det vises nu som en `data:`-adresse. Der er ingen schemaændring (33) og ingen manuelle trin.
+**Versions-bump og CHANGELOG-sektion (`73ad6c5`) og tagget `v1.3.1` (på `6a3d585`) 2026-10-26** efter projektejerens ønske samme dag.
+- Det er en patch, fordi den kun retter én fejl.
+- Tagget står på commit'en efter bumpet: CI på `73ad6c5` fejlede på en ustabil integrationstest (et statisk flag fra "Se som creator" smittede mellem tests i tilfældig rækkefølge), som `6a3d585` retter i testbasen. Pluginets kode er den samme.
+- Den fulde integrationssuite er grøn lokalt (`906cb8e`, 1066 tests), og draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `9bb40365c65e505d16760e3af7b3b09cc0aebaea25fafe16d851b5d8190ce3fd`). Projektejeren fandt fejlen på ccmerch.dk: et foreslået billede blev blokeret af dashboardets CSP (`blob:`), og det vises nu som en `data:`-adresse. Der er ingen schemaændring (33) og ingen manuelle trin.
 
 1. **Backup:** tag backup af filer og database via hostingen.
 2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.3.1 og schema-version 33 uden advarsler.
