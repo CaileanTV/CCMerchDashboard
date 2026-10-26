@@ -154,6 +154,13 @@ class WC_Coupon extends WC_Data {
 	public function set_amount( $amount ) {}
 
 	/**
+	 * Whether the coupon is virtual (e.g. rebuilt from an order item).
+	 *
+	 * @return bool
+	 */
+	public function get_virtual() {}
+
+	/**
 	 * @param bool $is_individual_use Individual use only.
 	 * @return void
 	 */
@@ -302,6 +309,11 @@ class WC_Order_Item extends WC_Data {
 	 * @return string
 	 */
 	public function get_name( $context = 'view' ) {}
+
+	/**
+	 * @return WC_Order|false
+	 */
+	public function get_order() {}
 }
 
 /**

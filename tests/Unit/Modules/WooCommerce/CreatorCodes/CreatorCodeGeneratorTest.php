@@ -58,7 +58,7 @@ final class CreatorCodeGeneratorTest extends TestCase {
 	public function test_the_code_is_the_name_a_dash_and_four_random_characters( string $name, string $prefix ): void {
 		$code = CreatorCodeGenerator::candidate( $name );
 
-		self::assertMatchesRegularExpression( '/^' . preg_quote( $prefix, '/' ) . '-[' . CreatorCodeGenerator::ALPHABET . ']{4}$/', $code );
+		self::assertMatchesRegularExpression( '/^' . preg_quote( $prefix, '/' ) . '-[' . CreatorCodeGenerator::ALPHABET . ']{' . CreatorCodeGenerator::SUFFIX_LENGTH . '}$/', $code );
 	}
 
 	public function test_the_random_part_has_no_look_alikes_and_varies(): void {

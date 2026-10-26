@@ -15,14 +15,16 @@ defined( 'ABSPATH' ) || exit;
  * A new code for a creator (ADR-078, owner's choice 2026-10-26): the
  * creator's name in capitals without accents (A–Z and 0–9, at most
  * NAME_LENGTH characters; "CREATOR" when nothing is left), a dash and
- * SUFFIX_LENGTH random characters without look-alikes, e.g. `NOVA-7K3Q`.
+ * SUFFIX_LENGTH random characters without look-alikes, e.g. `NOVA-7K3QXP`
+ * (31^6 ≈ 887 million combinations; 4 characters were too few against
+ * guessing, review 28.6).
  * Recognisable for the creator, hard to guess.
  */
 final class CreatorCodeGenerator {
 
 	public const NAME_LENGTH = 10;
 
-	public const SUFFIX_LENGTH = 4;
+	public const SUFFIX_LENGTH = 6;
 
 	/**
 	 * Characters of the random part (no 0/O, 1/I/L).

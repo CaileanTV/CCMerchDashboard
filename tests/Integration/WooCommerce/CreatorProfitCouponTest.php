@@ -116,6 +116,33 @@ final class CreatorProfitCouponTest extends IntegrationTestCase {
 		self::assertFalse( $this->coupon()->applies( 501, 'nova10', $this->shirt ), 'An ended code gives no discount.' );
 	}
 
+	public function test_an_order_keeps_the_registration_that_covered_it(): void {
+		$codes   = new CreatorCodeRepository( $this->wpdb );
+		$active  = $codes->active_for_creator( $this->nova ) ?? self::fail( 'No active code.' );
+		$created = $active->valid_from->modify( '+1 minute' );
+		$before  = $active->valid_from->modify( '-1 minute' );
+
+		$codes->end( $active->id, 1, $created->modify( '+1 hour' ) );
+		$coupon = $this->coupon();
+
+		self::assertFalse( $coupon->applies( 501, 'nova10', $this->shirt ), 'A cart: the code has ended.' );
+		self::assertTrue( $coupon->applies( 501, 'nova10', $this->shirt, $created ), 'An order created while the code was active (e.g. "Recalculate" later).' );
+		self::assertTrue( $coupon->applies( 0, 'NOVA10', $this->shirt, $created ), 'Also when the coupon was trashed (WooCommerce rebuilds it without id).' );
+		self::assertSame( 20.0, $coupon->unit_discount( 0, 'nova10', $this->shirt, 100.0, $created ) );
+		self::assertFalse( $coupon->applies( 501, 'nova10', $this->foreign, $created ), 'Still only the creator\'s products.' );
+		self::assertFalse( $coupon->applies( 501, 'nova10', $this->shirt, $before ), 'An order from before the code.' );
+		self::assertSame( 0.0, $coupon->unit_discount( 501, 'nova10', $this->shirt, 100.0, $created->modify( '+2 hours' ) ), 'An order from after the code ended.' );
+	}
+
+	public function test_the_stored_type_of_an_order_coupon_is_read_from_coupon_info_or_coupon_data(): void {
+		self::assertTrue( CreatorProfitCoupon::stored_type_is_this( '[703,"nova-7k3qxp","merchboard_creator_profit",0]', '' ) );
+		self::assertFalse( CreatorProfitCoupon::stored_type_is_this( '[55,"summer","percent",10]', '' ) );
+		self::assertTrue( CreatorProfitCoupon::stored_type_is_this( '', array( 'discount_type' => 'merchboard_creator_profit' ) ) );
+		self::assertFalse( CreatorProfitCoupon::stored_type_is_this( '', array( 'discount_type' => 'fixed_cart' ) ) );
+		self::assertFalse( CreatorProfitCoupon::stored_type_is_this( 'not json', '' ) );
+		self::assertFalse( CreatorProfitCoupon::stored_type_is_this( '', '' ) );
+	}
+
 	public function test_a_product_whose_owner_changed_follows_the_new_owner(): void {
 		$cap = $this->posts->add( 'Hoodie', 'publish', array( (string) $this->nova ) );
 		self::assertTrue( $this->coupon()->applies( 501, 'nova10', $cap ) );

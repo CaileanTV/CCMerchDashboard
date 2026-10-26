@@ -148,6 +148,15 @@ final class CreatorCodeService {
 					function () use ( $creator, $code, $coupon, $source ): string {
 						$current = $this->codes->active_for_creator( $creator->id, true );
 
+						// Again under the locks: an admin may have ended the code, or a parallel reset used the limit.
+						if ( self::SOURCE_CREATOR === $source ) {
+							if ( null === $current ) {
+								self::refuse( CreatorCodeException::NO_ACTIVE_CODE );
+							}
+
+							$this->assert_below_limit( $creator->id );
+						}
+
 						if ( null !== $this->codes->active_for_code( $code, true ) ) {
 							self::refuse( CreatorCodeException::CODE_TAKEN );
 						}

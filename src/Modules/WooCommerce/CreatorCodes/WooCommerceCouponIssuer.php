@@ -57,7 +57,8 @@ final class WooCommerceCouponIssuer implements CouponIssuer {
 	}
 
 	/**
-	 * Moves a coupon to the trash.
+	 * Moves a coupon to the trash: true when it is in the trash (or gone)
+	 * afterwards, false when WordPress did not trash it.
 	 *
 	 * @param int $coupon_id Coupon id.
 	 */
@@ -66,7 +67,15 @@ final class WooCommerceCouponIssuer implements CouponIssuer {
 			return true;
 		}
 
-		return 'trash' === get_post_status( $coupon_id ) || null !== wp_trash_post( $coupon_id );
+		if ( 'trash' !== get_post_status( $coupon_id ) ) {
+			wp_trash_post( $coupon_id );
+			clean_post_cache( $coupon_id );
+		}
+
+		// Trashed, or deleted at once when the trash is off (EMPTY_TRASH_DAYS 0).
+		$status = get_post_status( $coupon_id );
+
+		return false === $status || 'trash' === $status;
 	}
 
 	/**
