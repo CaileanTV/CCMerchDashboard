@@ -248,7 +248,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.3.0: creatorens kategori og rabatkode (fase 28)
 
-**Versions-bump og CHANGELOG-sektion 2026-10-26** efter projektejerens ønske samme dag. Det er en minor, fordi den indeholder nye features. Fase 28 er reviewet og runtime-testet på Local; se ROADMAP 28.6.
+**Versions-bump, CHANGELOG-sektion og tagget `v1.3.0` (på `1083f18`) 2026-10-26** efter projektejerens ønske samme dag. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `a0d66b56708f6d8f6434860281ba3d3e8b815382944666699fc363fc3df53c36`). Det er en minor, fordi den indeholder nye features. Fase 28 er reviewet og runtime-testet på Local; se ROADMAP 28.6.
 
 **Schema-version 33:**
 - Migration 32 opretter `merchboard_category_proposals`.
