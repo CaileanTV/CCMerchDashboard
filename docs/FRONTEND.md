@@ -120,7 +120,7 @@ assets/src/dashboard/
 ├── sections/products/       # ProductsSection (GET /me/products, fase 19)
 ├── sections/orders/         # OrdersSection (GET /me/orders, fase 19)
 ├── sections/payouts/        # PayoutsSection, PayoutRequestForm, GiftCardReveal, SettlementDocumentView, texts.ts (/me/payouts, fase 23)
-├── sections/profile/        # ProfileSection (formular), DiscountCodeCard (creatorens egen rabatkode, skjult indtil "Vis rabatkode"; GET /me/discount-code, ADR-068), ThemeSettings (temavælger, fase 21), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
+├── sections/profile/        # ProfileSection (formular), DiscountCodeCard (creatorens egen rabatkode, skjult indtil "Vis rabatkode"; GET /me/discount-code, ADR-068; "Nulstil og generér ny rabatkode" med bekræftelse på siden, POST /me/discount-code/reset, ADR-078), ThemeSettings (temavælger, fase 21), validation.ts (klientregler og fejltekster), platforms.ts (platformnavne)
 ├── theme/                   # themes.ts: de seks temaer, navne (i18n), læs/sæt data-theme på <html> (fase 21)
 ├── styles/                  # _tokens.scss, index.scss (kun .merchboard-*-selektorer)
 ├── testing/                 # setup.ts, helpers.tsx (render/act, fixtures), api.ts (apiFetch-dobbelt: mockApi, response)

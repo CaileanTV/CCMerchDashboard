@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T17:56:20+00:00\n"
+"POT-Creation-Date: 2026-10-26T18:03:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -42,6 +42,7 @@ msgstr ""
 #: src/Core/Http/RestController.php:79
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:282
 #: src/Modules/Dashboard/Rest/MeController.php:514
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 msgid "You do not have access to this resource."
 msgstr ""
 
@@ -3889,6 +3890,7 @@ msgstr ""
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:140
 msgid "Not found."
 msgstr ""
 
@@ -4627,6 +4629,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:387
 #: build/dashboard.js:5
 #: build/dashboard.js:50
+#: build/dashboard.js:71
 msgid "Cancel"
 msgstr ""
 
@@ -7659,6 +7662,10 @@ msgstr ""
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182
 msgid "The creator of a product can only be changed in Merch Dashboard."
+msgstr ""
+
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:148
+msgid "The discount code was not reset."
 msgstr ""
 
 #: src/Modules/WooCommerce/Rest/MePayoutsController.php:668
@@ -10752,6 +10759,22 @@ msgid "Product pages"
 msgstr ""
 
 #: build/dashboard.js:71
+msgid "You have already got 3 new discount codes today. Try again tomorrow."
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "You have no discount code to reset. Your first discount code is created by us."
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "Your discount code is being changed right now. Try again in a moment."
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "Your discount code was not reset. Nothing was changed; try again later."
+msgstr ""
+
+#: build/dashboard.js:71
 msgid "Your discount code"
 msgstr ""
 
@@ -10768,11 +10791,31 @@ msgid "Code:"
 msgstr ""
 
 #: build/dashboard.js:71
+msgid "Your new discount code is ready. The old code no longer works."
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen."
+msgstr ""
+
+#: build/dashboard.js:71
 msgid "Hide discount code"
 msgstr ""
 
 #: build/dashboard.js:71
 msgid "Show discount code"
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "Reset and generate a new discount code"
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "The old code stops working at once."
+msgstr ""
+
+#: build/dashboard.js:71
+msgid "Reset discount code"
 msgstr ""
 
 #: build/dashboard.js:71

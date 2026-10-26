@@ -7,7 +7,7 @@ Hver creator får fra virksomheden en WooCommerce-kupon, så creatoren kan købe
 Færdig i version 1.0.1 (trin a og b): registrering af koden på creatoren, creatorens visning af koden og udelukkelse af ordrer, der ikke var afregnet. Trin c er ikke implementeret: tilbageholdelse af afregnede beløb, "Bekræft"/"Ophæv" og spejlrækker for åbne sager (K2). Testet automatisk (unit, Jest, integration mod MariaDB); runtime-test på Merch Dashboard Local udestår.
 
 ## User-facing functionality
-- **Profil → "Din rabatkode":** et kort med forklaringen "Ordrer købt med din egen rabatkode tæller ikke med i dit salg og din fortjeneste." Koden er skjult, indtil creatoren trykker "Vis rabatkode" (projektejerens beslutning 2026-10-18). Først da hentes den fra serveren (`GET /me/discount-code`), og "Skjul rabatkode" fjerner den fra siden igen. Uden aktiv kode står der "Du har endnu ingen rabatkode."
+- **Profil → "Din rabatkode":** et kort med forklaringen "Ordrer købt med din egen rabatkode tæller ikke med i dit salg og din fortjeneste." Koden er skjult, indtil creatoren trykker "Vis rabatkode" (projektejerens beslutning 2026-10-18). Først da hentes den fra serveren (`GET /me/discount-code`), og "Skjul rabatkode" fjerner den fra siden igen. Uden aktiv kode står der "Du har endnu ingen rabatkode." "Nulstil og generér ny rabatkode" (fra trin 28.5, ADR-078) beder om en bekræftelse på siden ("Den gamle kode holder op med at virke med det samme.") og skifter så koden via `POST /me/discount-code/reset`. Det virker også, mens koden er skjult, så en kode vist ved en fejl kan skiftes uden at vise den nye; den nye kode vises kun, hvis koden var vist. Afvisninger får faste tekster (højst 3 nye koder pr. døgn, ingen kode at nulstille, optaget, ellers "intet blev ændret").
 - Creatorens egne varer i en ordre med koden indgår ikke i creatorens salg, fortjeneste, ordreliste eller payout-saldo. Andre creators' varer i samme ordre tæller normalt hos dem. Creatoren ser ingen ordreoplysninger om udelukkelser (K3).
 
 ## Admin functionality
@@ -51,7 +51,7 @@ Færdig i version 1.0.1 (trin a og b): registrering af koden på creatoren, crea
 - `src/Modules/WooCommerce/Sales/SalesSynchronizer.php`, `OrderSnapshot.php`, `WooCommerceOrderSnapshotReader.php`, `LedgerSalesStatistics.php`, `SalesOrderLines.php`
 - `src/Modules/WooCommerce/Pricing/LedgerCreatorProfits.php`, `LedgerCreatorPayouts.php`
 - `assets/src/dashboard/api/discountCode.ts`, `assets/src/dashboard/sections/profile/DiscountCodeCard.tsx`
-- `tests/Integration/WooCommerce/CreatorCodesTest.php`, `tests/Integration/Support/FakeCouponLookup.php`, `assets/src/dashboard/test/discount-code.test.tsx`
+- `tests/Integration/WooCommerce/CreatorCodesTest.php`, `tests/Integration/Support/FakeCouponLookup.php`, `assets/src/dashboard/test/discount-code.test.tsx`, `tests/Integration/Rest/MeDiscountCodeEndpointTest.php`
 
 ## Database/data used
 Schema-version 17: `merchboard_creator_codes` (registreringer, bevares permanent) og `merchboard_order_exclusions` (én afgørelse pr. ordre og creator, slettes aldrig automatisk). Begge bevares ved opt-in-afinstallation. Se [DATABASE.md](../DATABASE.md#creator-rabatkoder--schema-version-17-adr-068). Ordrens kuponkoder læses fra WooCommerce og gemmes kun som den matchede, normaliserede kode på afgørelsen.
@@ -60,9 +60,10 @@ Schema-version 17: `merchboard_creator_codes` (registreringer, bevares permanent
 - Registrering og afslutning: `merchboard_manage_creator_pricing` (K4; ingen ny capability), kontrolleret i admin-handlingen og igen i servicen, med en nonce bundet til handlingen og creatoren.
 - Visning på creatorens side og i ordrehistorikken: `merchboard_manage_creator_pricing` og `merchboard_manage_creators`.
 - `GET /me/discount-code`: en aktiv creator via `CreatorContext` (ADR-007); ruten tager ingen parametre.
+- `POST /me/discount-code/reset` (ADR-078): samme adgang; `CreatorCodeService::issue()` kontrollerer den igen (egen creator eller "Se som creator"), kræver en aktiv kode og tillader højst 3 nye koder pr. døgn.
 
 ## API endpoints
-`GET /merchboard/v1/me/discount-code` → `{ "code": "nova10" }` eller `{ "code": null }`, med `Cache-Control: no-store`. Se [API.md](../API.md).
+`GET /merchboard/v1/me/discount-code` → `{ "code": "nova10" }` eller `{ "code": null }`, med `Cache-Control: no-store`. `POST /merchboard/v1/me/discount-code/reset` → `{ "code": "NOVA-7K3Q" }` (`no-store`) eller 400 `merchboard_code_refused` med `data.reason`. Se [API.md](../API.md).
 
 ## Hooks
 Ingen nye. Bruger `merchboard_creators_edit_sections` (prioritet 9), `admin_post_merchboard_register_creator_code`, `admin_post_merchboard_end_creator_code` og den eksisterende synkronisering af ledgeren.

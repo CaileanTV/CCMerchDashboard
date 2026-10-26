@@ -308,7 +308,8 @@ Kør med `npm run test:js` (indgår i `npm test`) og `npm run typecheck` (indgå
   - en åben sag ved afregnede rækker, hvor den afregnede række fortsat tæller i saldoen;
   - backfill og dry run rapporterer "not counted", når alle linjer er udelukket, og registrerer ellers de andre creators' linjer.
 - **Unit:** tabel-, retention- og migrationslister, audit-handlinger og bindingen i `SalesOrderLines`.
-- **Jest (`discount-code.test.tsx`):** validering af svaret, at koden hverken hentes eller vises før klik, at den kan skjules igen, ingen kode, og fejl med "Prøv igen" uden servermeddelelser.
+- **Jest (`discount-code.test.tsx`):** validering af svaret, at koden hverken hentes eller vises før klik, at den kan skjules igen, ingen kode, og fejl med "Prøv igen" uden servermeddelelser. Fra trin 28.5: nulstilling kun efter bekræftelse, den nye kode vises kun, når koden var vist, og faste tekster for afvisninger.
+- **Integration (`tests/Integration/Rest/MeDiscountCodeEndpointTest.php`, trin 28.5):** `POST /me/discount-code/reset` gennem REST-serveren: ny kode med `no-store`, den gamle kupon trukket tilbage, grænsen 3 pr. døgn (400 `reset_limit`), 403 og 401 uden adgang.
 - **Ikke udført:** runtime-test på Merch Dashboard Local med rigtig WooCommerce (kupon, checkout med koden, HPOS og legacy) og en test med to forbindelser af en udelukkelse samtidig med et afregningsbilag (låseprotokollen genbruger `CreatorRowLocks`, som er testet i `CreatorRowLocksTest`).
 
 ## Kørselsvejledning: opgørelse af skæringsdato (trin 24.5)

@@ -349,7 +349,7 @@ final class WooCommerceModule implements Module {
 		);
 		$container->set(
 			MeDiscountCodeController::class,
-			static fn( Container $c ): MeDiscountCodeController => new MeDiscountCodeController( $c->get( CreatorContext::class ), $c->get( CreatorCodeRepository::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): MeDiscountCodeController => new MeDiscountCodeController( $c->get( CreatorContext::class ), $c->get( CreatorCodeRepository::class ), $c->get( Logger::class ), $c->get( CreatorCodeService::class ) )
 		);
 		$container->set(
 			SalesSynchronizer::class,

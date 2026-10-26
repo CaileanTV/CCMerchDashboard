@@ -584,6 +584,18 @@
 	align-items: center;
 }
 
+.merchboard-discount-code__actions,
+.merchboard-discount-code__confirm {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+}
+
+.merchboard-discount-code__confirm {
+	margin-top: var(--merchboard-space-2);
+}
+
 .merchboard-alert-api__create {
 	display: grid;
 	gap: var(--merchboard-space-2);

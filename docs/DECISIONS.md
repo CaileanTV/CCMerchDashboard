@@ -4263,7 +4263,7 @@ ADR-007, ADR-023, ADR-033, ADR-075, ADR-076.
 2026-10-26
 
 ## Status
-Accepteret af projektejeren 2026-10-26 (plan for trin 28.5 godkendt). Backend og admin implementeret i trin 28.5.1; testet automatisk, ikke runtime-verificeret. Creatorens nulstilling i dashboardet følger i 28.5.2.
+Accepteret af projektejeren 2026-10-26 (plan for trin 28.5 godkendt). Backend og admin implementeret i trin 28.5.1, creatorens nulstilling (`POST /me/discount-code/reset` og dashboardet) i trin 28.5.2; testet automatisk, ikke runtime-verificeret.
 
 ## Context
 Med ADR-068 skriver admin koden på en eksisterende WooCommerce-kupon på creatorens side. Rabatten er kuponens egen indstilling, og ordrer med koden giver creatoren 0 i fortjeneste (udelukkelse pr. creator). Projektejeren vil (2026-10-26):
@@ -4287,7 +4287,7 @@ Designet skal kunne bære en fremtidig fortjeneste i beløb (creators, der selv 
    - **Fejl:** kan registreringen eller andelen ikke læses, gives ingen rabat (logget).
    - **Fremtiden:** `CreatorProfitDiscount` er det ene sted, hvor en fremtidig fortjeneste i beløb kobles på.
 3. **Ny kode og den gamle:** en ny kode afslutter den aktive registrering, og dens kupon (styret eller manuel) flyttes til papirkurven i samme transaktion. **Den gamle kode virker ikke længere med det samme** (projektejerens valg), og kuponen kan gendannes manuelt. Fejler noget, slettes den nye kupon igen, og intet ændres.
-4. **Nulstilling:** creatoren kan nulstille sin egen kode, kun når den har en (den første opretter admin). Det gælder også for en administrator, der ser som creatoren (ADR-075; projektejerens valg). Creatoren kan højst få 3 nye koder pr. døgn.
+4. **Nulstilling:** creatoren kan nulstille sin egen kode med "Nulstil og generér ny rabatkode" (bekræftelse på siden; `POST /me/discount-code/reset`), kun når den har en (den første opretter admin). Det virker også, mens koden er skjult; den nye kode vises kun, hvis koden var vist. Det gælder også for en administrator, der ser som creatoren (ADR-075; projektejerens valg). Creatoren kan højst få 3 nye koder pr. døgn.
 5. **Eksisterende koder** registreret manuelt før 1.3.0 virker som i dag (kuponens egen rabat), indtil admin opretter en ny kode, eller creatoren nulstiller. Creatorens side viser en advarsel ("kuponens rabat er ikke creatorens fortjeneste"). Den advarsel er ikke en afvigelse i vurderingen af ordrer.
 6. **Uændret fra ADR-068:** udelukkelsen af ordrer (pr. creator, perioder, K2), `merchboard_manage_creator_pricing` til admin, K5's kontrol af gavekortkoder (en genereret kode, der er en gavekortkode eller en eksisterende kupon eller registrering, bruges ikke) og ingen e-mailbegrænsning. Ingen schemaændring.
 

@@ -1,7 +1,7 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
-import { getDiscountCode } from '../../api/discountCode';
+import { getDiscountCode, resetDiscountCode } from '../../api/discountCode';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Button } from '../../components/Button';
@@ -13,14 +13,58 @@ type State =
 	| { readonly status: 'shown'; readonly code: string | null }
 	| { readonly status: 'error'; readonly error: ApiError };
 
+type Reset =
+	| { readonly status: 'idle' }
+	| { readonly status: 'confirming' }
+	| { readonly status: 'busy' }
+	| { readonly status: 'done' }
+	| { readonly status: 'refused'; readonly reason: string }
+	| { readonly status: 'error'; readonly error: ApiError };
+
+/**
+ * Fixed text for a refused reset (`data.reason`); server text is never shown.
+ *
+ * @param reason Reason code from the server.
+ */
+function refusal( reason: string ): string {
+	switch ( reason ) {
+		case 'reset_limit':
+			return __(
+				'You have already got 3 new discount codes today. Try again tomorrow.',
+				'merchboard'
+			);
+		case 'no_active_code':
+			return __(
+				'You have no discount code to reset. Your first discount code is created by us.',
+				'merchboard'
+			);
+		case 'busy':
+			return __(
+				'Your discount code is being changed right now. Try again in a moment.',
+				'merchboard'
+			);
+		default:
+			return __(
+				'Your discount code was not reset. Nothing was changed; try again later.',
+				'merchboard'
+			);
+	}
+}
+
 /**
  * The creator's own discount code (ADR-068), hidden until the creator
  * chooses to show it: only then is it requested from the server, and
  * "Hide" removes it from the page again. Orders that use the code do not
  * count in the creator's sales and profit; the card says so.
+ *
+ * "Reset" (ADR-078) asks for a confirmation on the page, then replaces the
+ * code: the old one stops working at once. It works while the code is
+ * hidden, so a code shown by mistake can be replaced without showing the new
+ * one; the new code is shown only when the code was already shown.
  */
 export function DiscountCodeCard() {
 	const [ state, setState ] = useState< State >( { status: 'hidden' } );
+	const [ reset, setReset ] = useState< Reset >( { status: 'idle' } );
 
 	const show = async () => {
 		setState( { status: 'loading' } );
@@ -34,6 +78,29 @@ export function DiscountCodeCard() {
 	};
 
 	const hide = () => setState( { status: 'hidden' } );
+
+	const replace = async () => {
+		setReset( { status: 'busy' } );
+		const result = await resetDiscountCode();
+
+		if ( result.ok ) {
+			setReset( { status: 'done' } );
+			setState( ( current ) =>
+				current.status === 'shown'
+					? { status: 'shown', code: result.data.code }
+					: current
+			);
+			return;
+		}
+
+		const { error } = result;
+
+		setReset(
+			error.kind === 'invalid_request' && error.reason !== undefined
+				? { status: 'refused', reason: error.reason }
+				: { status: 'error', error }
+		);
+	};
 
 	return (
 		<Card title={ __( 'Your discount code', 'merchboard' ) }>
@@ -62,20 +129,83 @@ export function DiscountCodeCard() {
 					</p>
 				) ) }
 
-			{ state.status === 'shown' ? (
-				<Button variant="secondary" onClick={ hide }>
-					{ __( 'Hide discount code', 'merchboard' ) }
-				</Button>
-			) : (
-				state.status !== 'error' && (
-					<Button
-						variant="secondary"
-						onClick={ show }
-						isBusy={ state.status === 'loading' }
-					>
-						{ __( 'Show discount code', 'merchboard' ) }
+			{ reset.status === 'done' && (
+				<p role="status">
+					{ state.status === 'shown'
+						? __(
+								'Your new discount code is ready. The old code no longer works.',
+								'merchboard'
+							)
+						: __(
+								'Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen.',
+								'merchboard'
+							) }
+				</p>
+			) }
+
+			{ reset.status === 'refused' && (
+				<p role="alert">{ refusal( reset.reason ) }</p>
+			) }
+
+			{ reset.status === 'error' && (
+				<ApiErrorState error={ reset.error } />
+			) }
+
+			<div className="merchboard-discount-code__actions">
+				{ state.status === 'shown' ? (
+					<Button variant="secondary" onClick={ hide }>
+						{ __( 'Hide discount code', 'merchboard' ) }
 					</Button>
-				)
+				) : (
+					state.status !== 'error' && (
+						<Button
+							variant="secondary"
+							onClick={ show }
+							isBusy={ state.status === 'loading' }
+						>
+							{ __( 'Show discount code', 'merchboard' ) }
+						</Button>
+					)
+				) }
+
+				{ reset.status !== 'confirming' && reset.status !== 'busy' && (
+					<Button
+						variant="ghost"
+						onClick={ () => setReset( { status: 'confirming' } ) }
+					>
+						{ __(
+							'Reset and generate a new discount code',
+							'merchboard'
+						) }
+					</Button>
+				) }
+			</div>
+
+			{ ( reset.status === 'confirming' || reset.status === 'busy' ) && (
+				<div className="merchboard-discount-code__confirm">
+					<span>
+						{ __(
+							'The old code stops working at once.',
+							'merchboard'
+						) }
+					</span>
+					<Button
+						variant="danger"
+						size="sm"
+						isBusy={ reset.status === 'busy' }
+						onClick={ () => void replace() }
+					>
+						{ __( 'Reset discount code', 'merchboard' ) }
+					</Button>
+					<Button
+						variant="ghost"
+						size="sm"
+						disabled={ reset.status === 'busy' }
+						onClick={ () => setReset( { status: 'idle' } ) }
+					>
+						{ __( 'Cancel', 'merchboard' ) }
+					</Button>
+				</div>
 			) }
 		</Card>
 	);

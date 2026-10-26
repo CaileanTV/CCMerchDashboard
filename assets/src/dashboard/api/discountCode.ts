@@ -45,3 +45,30 @@ export function getDiscountCode(): Promise<
 		parseDiscountCode
 	);
 }
+
+/**
+ * Validates the reset response `{ code: string }`.
+ *
+ * @param body Response body.
+ */
+export function parseResetDiscountCode(
+	body: unknown
+): { code: string } | null {
+	const parsed = parseDiscountCode( body );
+
+	return parsed === null || parsed.code === null
+		? null
+		: { code: parsed.code };
+}
+
+/**
+ * `POST /me/discount-code/reset` (ADR-078): replaces the creator's code with
+ * a new one; the old one stops working at once. A refusal comes back as an
+ * `invalid_request` error with its `reason` (e.g. `reset_limit`).
+ */
+export function resetDiscountCode(): Promise< ApiResult< { code: string } > > {
+	return request(
+		{ path: '/merchboard/v1/me/discount-code/reset', method: 'POST' },
+		parseResetDiscountCode
+	);
+}
