@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-26T16:22:09+00:00\n"
+"PO-Revision-Date: 2026-10-26T17:56:23+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1113,7 +1113,7 @@ msgstr "produkterne i én mapping"
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:209
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:217
 #: build/dashboard.js:54
 #: build/dashboard.js:55
 msgid "Active"
@@ -1226,13 +1226,13 @@ msgid "All events"
 msgstr "Alle hændelser"
 
 #: src/Modules/Admin/AuditLogPage.php:250
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
 #: build/dashboard.js:77
 msgid "From"
 msgstr "Fra"
 
 #: src/Modules/Admin/AuditLogPage.php:256
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
 #: build/dashboard.js:77
 msgid "To"
 msgstr "Til"
@@ -2917,7 +2917,7 @@ msgstr "Længste lyd skal være tom eller et helt tal mellem 1 sekund og 60 minu
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:208
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:218
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:71
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:73
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:99
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:105
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:62
@@ -4709,12 +4709,12 @@ msgid "Sorry, you are not allowed to manage creator discount codes."
 msgstr "Du har ikke tilladelse til at administrere creator-rabatkoder."
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:59
-msgid "Discount code registered. It applies to orders created from now on; earlier orders are not changed."
-msgstr "Rabatkoden er registreret. Den gælder for ordrer, der oprettes fra nu af; tidligere ordrer ændres ikke."
+msgid "Discount code created. Its coupon gives the creator's profit on their own products as discount; it applies to orders created from now on."
+msgstr "Rabatkoden er oprettet. Dens kupon giver creatorens fortjeneste på egne produkter som rabat; den gælder for ordrer oprettet fra nu af."
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:60
-msgid "Discount code changed. The earlier code was ended; orders created before now keep their decision."
-msgstr "Rabatkoden er skiftet. Den tidligere kode er afsluttet; ordrer oprettet før nu beholder deres afgørelse."
+msgid "New discount code created. The earlier code was ended and its coupon moved to the trash, so it no longer works; orders created before now keep their decision."
+msgstr "Ny rabatkode er oprettet. Den tidligere kode er afsluttet, og dens kupon er flyttet til papirkurven, så den virker ikke længere; ordrer oprettet før nu beholder deres afgørelse."
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:61
 msgid "Discount code ended. Orders created from now on with this code count normally; earlier orders keep their decision."
@@ -4741,22 +4741,30 @@ msgid "Not saved: it could not be checked whether this is a gift card code. Try 
 msgstr "Ikke gemt: det kunne ikke kontrolleres, om det er en gavekortkode. Prøv igen senere."
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:67
-msgid "Not saved: this code is the active code of another creator."
-msgstr "Ikke gemt: koden er en anden creators aktive kode."
+msgid "No free code was found. Nothing was changed; try again."
+msgstr "Der blev ikke fundet en ledig kode. Intet blev ændret; prøv igen."
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:68
+msgid "The WooCommerce coupon could not be created. Nothing was changed; try again later."
+msgstr "WooCommerce-kuponen kunne ikke oprettes. Intet blev ændret; prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:69
+msgid "The earlier coupon could not be moved to the trash. Nothing was changed; try again later."
+msgstr "Den tidligere kupon kunne ikke flyttes til papirkurven. Intet blev ændret; prøv igen senere."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:70
 msgid "The creator has no active discount code."
 msgstr "Creatoren har ingen aktiv rabatkode."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:69
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:71
 msgid "Another change of this code is in progress. Nothing was changed; try again."
 msgstr "En anden ændring af koden er i gang. Intet blev ændret; prøv igen."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:70
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:72
 msgid "You are not allowed to manage creator discount codes."
 msgstr "Du har ikke tilladelse til at administrere creator-rabatkoder."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:72
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:74
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:104
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:106
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:77
@@ -4764,94 +4772,100 @@ msgstr "Du har ikke tilladelse til at administrere creator-rabatkoder."
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret; prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:84
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:86
 msgid "The WooCommerce coupon with this code no longer exists."
 msgstr "WooCommerce-kuponen med denne kode findes ikke længere."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:85
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:87
+msgid "The coupon's discount is not the creator's profit: it was registered by hand before Merch Dashboard managed the codes, or its discount type was changed in WooCommerce. Create a new discount code to fix it."
+msgstr "Kuponens rabat er ikke creatorens fortjeneste: den blev registreret manuelt, før Merch Dashboard styrede koderne, eller dens rabattype er ændret i WooCommerce. Opret en ny rabatkode for at rette det."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:88
 msgid "The code now belongs to another WooCommerce coupon than the registered one."
 msgstr "Koden tilhører nu en anden WooCommerce-kupon end den registrerede."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:98
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:102
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
 msgid "Discount code"
 msgstr "Rabatkode"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:99
-msgid "The creator's own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. In an order that uses it, the creator's own products do not count in the creator's sales, profit or payouts, whoever placed the order; other creators' products in the same order count normally. A code applies to orders created from its registration on; earlier orders are never changed."
-msgstr "Creatorens egen WooCommerce-kupon, som lader creatoren købe sit eget merchandise uden at betale for sin fortjeneste. I en ordre, der bruger den, tæller creatorens egne produkter ikke med i creatorens salg, fortjeneste eller udbetalinger, uanset hvem der har købt; andre creators' produkter i samme ordre tæller normalt. En kode gælder for ordrer, der oprettes fra registreringen og frem; tidligere ordrer ændres aldrig."
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:103
+msgid "The creator's own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. Merch Dashboard creates it: its discount is exactly the creator's profit on each of their own products (the creator's or the product's own share), and nothing on other creators' products. It cannot be combined with other coupons. In an order that uses it, the creator's own products do not count in the creator's sales, profit or payouts, whoever placed the order. A code applies to orders created from its creation on; earlier orders are never changed. The creator can reset the code in the dashboard."
+msgstr "Creatorens egen WooCommerce-kupon, så creatoren kan købe sit eget merchandise uden at betale for sin fortjeneste. Merch Dashboard opretter den: rabatten er præcis creatorens fortjeneste på hvert af creatorens egne produkter (creatorens eller produktets egen andel) og intet på andre creators' produkter. Den kan ikke kombineres med andre kuponer. I en ordre, der bruger den, tæller creatorens egne produkter ikke med i creatorens salg, fortjeneste eller udbetalinger, uanset hvem der har bestilt. En kode gælder for ordrer oprettet fra oprettelsen; tidligere ordrer ændres aldrig. Creatoren kan nulstille koden i dashboardet."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:114
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:118
 msgid "The discount codes could not be read. Please try again later."
 msgstr "Rabatkoderne kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:139
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:143
 msgid "No active discount code."
 msgstr "Ingen aktiv rabatkode."
 
 #. translators: 1: discount code, 2: date.
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:146
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:150
 #, php-format
 msgid "Active code: %1$s, since %2$s."
 msgstr "Aktiv kode: %1$s, siden %2$s."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:149
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:153
 msgid "Open the coupon in WooCommerce"
 msgstr "Åbn kuponen i WooCommerce"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:155
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:165
 msgid "Check the coupon:"
 msgstr "Kontrollér kuponen:"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:155
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:165
 msgid "Orders with the registered code are still excluded and are marked with a deviation. The registration is not ended automatically."
 msgstr "Ordrer med den registrerede kode udelukkes fortsat og markeres med en afvigelse. Registreringen afsluttes ikke automatisk."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:162
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:172
 msgid "End code"
 msgstr "Afslut kode"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:162
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:172
 msgid "Orders created from then on with this code count normally."
 msgstr "Ordrer, der derefter oprettes med koden, tæller normalt."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:177
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:179
-msgid "Register code"
-msgstr "Registrér kode"
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:187
+msgid "Create discount code"
+msgstr "Opret rabatkode"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:177
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:179
-msgid "Change code"
-msgstr "Skift kode"
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:187
+msgid "Create new discount code"
+msgstr "Opret ny rabatkode"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:180
-msgid "The code of an existing WooCommerce coupon. A change ends the current code now and registers the new one from now on."
-msgstr "Koden på en eksisterende WooCommerce-kupon. Et skift afslutter den nuværende kode nu og registrerer den nye fra nu af."
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:188
+msgid "Creates a code from the creator's name and a WooCommerce coupon for it."
+msgstr "Opretter en kode ud fra creatorens navn og en WooCommerce-kupon til den."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:196
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:188
+msgid "Ends the current code at once (its coupon goes to the trash) and creates a new one."
+msgstr "Afslutter den nuværende kode med det samme (dens kupon flyttes til papirkurven) og opretter en ny."
+
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:204
 msgid "Discount code history"
 msgstr "Historik over rabatkoder"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
 #: build/dashboard.js:55
 msgid "Code"
 msgstr "Kode"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
 msgid "Coupon ID"
 msgstr "Kupon-ID"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered by"
 msgstr "Registreret af"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:199
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
 msgid "Ended by"
 msgstr "Afsluttet af"
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:225
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:233
 msgid "Unknown user"
 msgstr "Ukendt bruger"
 
@@ -7421,6 +7435,16 @@ msgstr "Action Scheduler er ikke tilgængelig, så intet blev sat i kø."
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:302
 msgid "The backfill job could not be queued."
 msgstr "Backfill-jobbet kunne ikke sættes i kø."
+
+#: src/Modules/WooCommerce/CreatorCodes/CreatorProfitCoupon.php:77
+msgid "Merch Dashboard: the creator's profit"
+msgstr "Merch Dashboard: creatorens fortjeneste"
+
+#. translators: %s: creator name.
+#: src/Modules/WooCommerce/CreatorCodes/WooCommerceCouponIssuer.php:45
+#, php-format
+msgid "Merch Dashboard: the discount code of %s. The discount is the creator's profit on their own products; managed by Merch Dashboard."
+msgstr "Merch Dashboard: rabatkoden for %s. Rabatten er creatorens fortjeneste på egne produkter; styres af Merch Dashboard."
 
 #: src/Modules/WooCommerce/Dashboard/SalesReport.php:188
 msgid "Unknown product"

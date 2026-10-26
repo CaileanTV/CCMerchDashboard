@@ -31,6 +31,10 @@ use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponLookup;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeDeviations;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeService;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponIssuer;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorProfitCoupon;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\WooCommerceCouponIssuer;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfitDiscount;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessor;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\WooCommerceCouponLookup;
@@ -314,10 +318,16 @@ final class WooCommerceModule implements Module {
 				$c->get( CreatorRepository::class ),
 				$c->get( CreatorCodeRepository::class ),
 				$c->get( CouponLookup::class ),
+				$c->get( CouponIssuer::class ),
 				$c->get( Transaction::class ),
 				$c->get( AuditTrail::class )
 			)
 		);
+		// ADR-078: the plugin issues the codes' coupons, whose discount is the creator's profit on their own products.
+		$container->set( CouponIssuer::class, static fn(): CouponIssuer => new WooCommerceCouponIssuer() );
+		$container->set( CreatorProfitDiscount::class, static fn( Container $c ): CreatorProfitDiscount => new CreatorProfitDiscount( $c->get( MarkupResolver::class ) ) );
+		$container->set( CreatorProfitCoupon::class, static fn( Container $c ): CreatorProfitCoupon => new CreatorProfitCoupon( $c->get( CreatorCodeRepository::class ), $c->get( CreatorProfitDiscount::class ), $c->get( Logger::class ) ) );
+		$container->get( CreatorProfitCoupon::class )->register();
 		$container->set(
 			OrderExclusionAssessor::class,
 			static fn( Container $c ): OrderExclusionAssessor => new OrderExclusionAssessor(

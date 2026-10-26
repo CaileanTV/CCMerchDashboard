@@ -24,6 +24,13 @@ final class CreatorCodeDeviations {
 	public const COUPON_CHANGED = 'coupon_changed';
 
 	/**
+	 * The coupon's discount is not the creator's profit (ADR-078): a code
+	 * registered by hand before 1.3.0, or a coupon whose type was changed in
+	 * WooCommerce. Issuing a new code fixes it.
+	 */
+	public const COUPON_NOT_MANAGED = 'coupon_not_managed';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CouponLookup $coupons WooCommerce coupons.
@@ -45,5 +52,18 @@ final class CreatorCodeDeviations {
 		}
 
 		return $coupon->id === $registration->coupon_id ? array() : array( self::COUPON_CHANGED );
+	}
+
+	/**
+	 * Whether the registration's coupon gives a discount other than the
+	 * creator's profit (COUPON_NOT_MANAGED, ADR-078): shown on the creator's
+	 * page only, never part of the order assessment.
+	 *
+	 * @param CreatorCode $registration Registration.
+	 */
+	public function not_managed( CreatorCode $registration ): bool {
+		$coupon = $this->coupons->find( $registration->code );
+
+		return null !== $coupon && $coupon->id === $registration->coupon_id && ! $coupon->managed();
 	}
 }

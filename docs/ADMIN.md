@@ -322,11 +322,12 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
     - den aktive kode med "siden" og "Åbn kuponen i WooCommerce";
     - en advarsel, hvis kuponen ikke længere opfylder K5 (kuponen findes ikke, eller koden tilhører en anden kupon). Registreringen afsluttes ikke, og ordrer med koden udelukkes fortsat;
     - historikken (kode, kupon-ID, fra, til, registreret af, afsluttet af).
-  - **"Registrér kode" / "Skift kode"** (`merchboard_register_creator_code`):
-    - koden skal være en eksisterende kupon og må ikke være en gavekortkode;
-    - kuponen behøver ikke at være begrænset til en e-mailadresse (projektejerens ændring af K5, 2026-10-18): alle ordrer med koden udelukkes, uanset hvem der køber;
-    - højst én aktiv kode pr. creator og én aktiv creator pr. kode;
-    - koden gælder for ordrer, der oprettes fra nu af. Et skift afslutter den aktive kode nu.
+  - **"Opret rabatkode" / "Opret ny rabatkode"** (`merchboard_issue_creator_code`, fra trin 28.5, ADR-078; erstatter "Registrér kode"):
+    - pluginet opretter koden (navn + 4 tilfældige tegn) og en WooCommerce-kupon med rabattypen "Merch Dashboard: creatorens fortjeneste": rabatten er præcis creatorens fortjeneste på hvert af creatorens egne produkter og intet på andres; individuel brug;
+    - en ny kode afslutter den aktive nu, og dens kupon flyttes til papirkurven, så den gamle kode ikke virker længere;
+    - kuponen er ikke begrænset til en e-mailadresse (K5, 2026-10-18): alle ordrer med koden udelukkes, uanset hvem der køber;
+    - koden gælder for ordrer, der oprettes fra nu af;
+    - en kode registreret manuelt før 1.3.0 vises med en advarsel om, at kuponens rabat ikke er creatorens fortjeneste.
   - **"Afslut kode"** (`merchboard_end_creator_code`): ordrer oprettet derefter tæller normalt. Ældre ordrer beholder deres afgørelse.
   - **Resultatkoder:** `code_registered`, `code_changed`, `code_ended`, `code_unchanged`, `invalid_code`, `coupon_not_found`, `gift_card_code`, `gift_card_unverified`, `code_taken`, `no_active_code`, `busy`, `not_authorized`, `creator_not_found`, `error`.
   - **Audit:** `creator_code_registered` og `creator_code_ended` (kode-ID og kupon-ID).

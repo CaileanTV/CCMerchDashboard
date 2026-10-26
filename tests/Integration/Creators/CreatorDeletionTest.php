@@ -45,6 +45,8 @@ use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeService;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\WooCommerceCreatorCleanup;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\FakeCouponIssuer;
+use MerchBoard\Tests\Integration\Support\FakeCouponLookup;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -266,7 +268,7 @@ final class CreatorDeletionTest extends IntegrationTestCase {
 				new PostMetaProductStore(),
 				new ProductCreatorLink( new PostMetaProductStore(), $creators, $audit, $transaction, $this->service( ProtectedProductMeta::class ) ),
 				new CreatorCategoryService( new CreatorCategoryRepository( $this->wpdb ), $creators, $audit, $transaction ),
-				new CreatorCodeService( $creators, new CreatorCodeRepository( $this->wpdb ), $coupons, $transaction, $audit ),
+				new CreatorCodeService( $creators, new CreatorCodeRepository( $this->wpdb ), $coupons, new FakeCouponIssuer( new FakeCouponLookup() ), $transaction, $audit ),
 				new CreatorCodeRepository( $this->wpdb ),
 				$this->wpdb
 			);

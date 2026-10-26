@@ -65,7 +65,7 @@ final class WooCommerceCouponLookup implements CouponLookup {
 			return null;
 		}
 
-		return new CouponRecord( $id, CouponCode::normalize( (string) $coupon->get_code( 'edit' ) ) );
+		return new CouponRecord( $id, CouponCode::normalize( (string) $coupon->get_code( 'edit' ) ), (string) $coupon->get_discount_type( 'edit' ) );
 	}
 
 	/**

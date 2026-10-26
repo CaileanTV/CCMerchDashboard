@@ -13,11 +13,13 @@ Færdig i version 1.0.1 (trin a og b): registrering af koden på creatoren, crea
 ## Admin functionality
 - **Creators → rediger creator → "Rabatkode"** (kun med `merchboard_manage_creator_pricing`, K4):
   - Den aktive kode, siden hvornår den gælder, og et link til kuponen i WooCommerce.
-  - "Registrér kode" eller "Skift kode" (et skift afslutter den aktive kode nu og registrerer den nye fra nu af) og "Afslut kode".
+  - "Opret rabatkode" eller "Opret ny rabatkode" (fra trin 28.5, ADR-078): pluginet opretter koden og dens WooCommerce-kupon, hvis rabat er creatorens fortjeneste på egne produkter; en ny kode afslutter den aktive nu og flytter dens kupon til papirkurven. Og "Afslut kode". (Til og med 1.2.0: "Registrér kode" med en eksisterende kupon.)
   - Historikken over alle registreringer med periode, og hvem der registrerede og afsluttede dem.
   - En advarsel, når kuponen ikke længere er den registrerede (K5): kuponen findes ikke, eller koden tilhører en anden kupon end den registrerede. Registreringen afsluttes ikke automatisk, og ordrer med koden udelukkes fortsat.
 - **Order history:** en ordre med en afgørelse er markeret "Udelukket – creator-rabatkode (creator)" eller "Åben sag – creator-rabatkode (creator)" for hver creator, hvis linjer er udelukket. Andre creators' linjer vises og tæller normalt. Sektionen "Ordrer udelukket af creator-rabatkoder" viser alle afgørelser med creator, kode, ordrens oprettelse og afgørelsestidspunkt, også for ordrer uden ledger-rækker. Den kan filtreres på åbne sager, og på ordrens side forklares afgørelsen.
 - **Audit log:** "Creator-rabatkode registreret", "Creator-rabatkode afsluttet" og "Ordre udelukket (creator-rabatkode)".
+
+**Fra trin 28.5 (ADR-078):** kuponen har rabattypen `merchboard_creator_profit` (`CreatorProfitCoupon`). For hver vare gælder den kun, når kuponen er en aktiv registrering, og produktet (eller variantens forælder) tilhører creatoren; rabatten pr. stk. er stykprisen × den effektive andel (`CreatorProfitDiscount`, ADR-049). Én kode håndterer dermed forskellige andele på forskellige produkter. Koder registreret manuelt før 1.3.0 virker som før, indtil en ny kode oprettes.
 
 ## Technical implementation
 - **Registrering (K1, K5):** `CreatorCodeService` kontrollerer capability'en og normaliserer koden, som WooCommerce gør (`CouponCode`: `wc_format_coupon_code()` + `wc_strtolower()`). Derefter kontrollerer den:

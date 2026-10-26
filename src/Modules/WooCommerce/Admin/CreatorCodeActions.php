@@ -35,14 +35,14 @@ defined( 'ABSPATH' ) || exit;
  */
 final class CreatorCodeActions {
 
-	public const REGISTER_ACTION = 'merchboard_register_creator_code';
-	public const END_ACTION      = 'merchboard_end_creator_code';
-	public const RESULT_ARG      = 'merchboard_code_result';
+	public const ISSUE_ACTION = 'merchboard_issue_creator_code';
+	public const END_ACTION   = 'merchboard_end_creator_code';
+	public const RESULT_ARG   = 'merchboard_code_result';
 
 	/**
 	 * Every admin-post action of the section.
 	 */
-	private const ACTIONS = array( self::REGISTER_ACTION, self::END_ACTION );
+	private const ACTIONS = array( self::ISSUE_ACTION, self::END_ACTION );
 
 	/**
 	 * Constructor.
@@ -102,8 +102,8 @@ final class CreatorCodeActions {
 		}
 
 		try {
-			if ( self::REGISTER_ACTION === $action ) {
-				$code = $this->service->register( $creator_id, sanitize_text_field( self::scalar( $input, 'code' ) ) );
+			if ( self::ISSUE_ACTION === $action ) {
+				$code = $this->service->issue( $creator_id, CreatorCodeService::SOURCE_ADMIN );
 			} else {
 				$this->service->end( $creator_id );
 				$code = 'code_ended';

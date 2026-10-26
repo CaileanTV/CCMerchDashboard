@@ -1,6 +1,6 @@
 <?php
 /**
- * The creators' own discount codes on a real database (ADR-068).
+ * The creators' own discount codes on a real database (ADR-068, ADR-078).
  *
  * @package MerchBoard
  */
@@ -41,6 +41,9 @@ use MerchBoard\Modules\WooCommerce\Sales\SalesPlanner;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 use MerchBoard\Modules\WooCommerce\Sales\SalesSynchronizer;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Core\Security\ImpersonationSession;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponRecord;
+use MerchBoard\Tests\Integration\Support\FakeCouponIssuer;
 use MerchBoard\Tests\Integration\Support\FakeCouponLookup;
 use MerchBoard\Tests\Integration\Support\FakeOrderReader;
 use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
@@ -48,8 +51,9 @@ use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
- * K1 (registration, periods, uniqueness), K4 (capability), K5 (the
- * coupon's restriction), the assessment in the synchronization (no ledger
+ * ADR-078 (the plugin issues the code and its coupon; a new code retires the
+ * old coupon; the creator resets at most three times a day), K1
+ * (registration, periods, uniqueness), K4 (capability), K5 (gift cards), the assessment in the synchronization (no ledger
  * rows for an excluded order, a permanent decision, `open` with settled
  * rows, fail closed on unknown coupon data) and M2 (every read model leaves
  * an excluded order's rows out, settled rows keep counting in the payout
@@ -71,6 +75,15 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	private OrderExclusionRepository $exclusions;
 
 	private FakeCouponLookup $coupons;
+
+	private FakeCouponIssuer $issuer;
+
+	/**
+	 * Codes the generator returns, in order (then "nova10").
+	 *
+	 * @var list<string>
+	 */
+	private array $next = array();
 
 	private FakeOrderReader $reader;
 
@@ -97,6 +110,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		$this->codes      = new CreatorCodeRepository( $this->wpdb );
 		$this->exclusions = new OrderExclusionRepository( $this->wpdb );
 		$this->coupons    = new FakeCouponLookup();
+		$this->issuer     = new FakeCouponIssuer( $this->coupons );
 		$this->reader     = new FakeOrderReader();
 		$this->marker     = new RecordingFailureMarker();
 		$this->sync       = new SalesSynchronizer(
@@ -115,18 +129,24 @@ final class CreatorCodesTest extends IntegrationTestCase {
 				new SalesCache()
 			)
 		);
-
-		$this->coupons->add( 501, 'nova10' );
 	}
 
-	public function test_a_valid_code_is_registered_from_now_on_and_audited(): void {
-		self::assertSame( 'code_registered', $this->code_service()->register( $this->creator, '  NOVA10 ' ) );
+	protected function tearDown(): void {
+		delete_user_meta( 1, ImpersonationSession::META );
+		parent::tearDown();
+	}
+
+	public function test_a_code_is_issued_with_its_own_coupon_from_now_on_and_audited(): void {
+		$this->next = array( '  NOVA10 ' );
+
+		self::assertSame( 'code_registered', $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_ADMIN ) );
 
 		$active = $this->codes->active_for_creator( $this->creator );
 
 		self::assertNotNull( $active );
-		self::assertSame( 'nova10', $active->code );
+		self::assertSame( 'nova10', $active->code, 'Normalized like WooCommerce.' );
 		self::assertSame( 501, $active->coupon_id );
+		self::assertTrue( $this->coupons->find( 'nova10' )?->managed(), 'The coupon gives the creator\'s profit.' );
 		self::assertSame( self::REGISTERED, $active->valid_from->format( 'Y-m-d H:i:s' ) );
 		self::assertNull( $active->valid_to );
 		self::assertSame( 1, $active->created_by );
@@ -136,48 +156,55 @@ final class CreatorCodesTest extends IntegrationTestCase {
 				'coupon_id'                => 501,
 				'previous_creator_code_id' => null,
 				'validation'               => 'passed',
+				'source'                   => 'admin',
 			),
 			$this->audit( AuditAction::CreatorCodeRegistered )[0]
 		);
 	}
 
 	/**
-	 * K5 and the input rules: nothing is stored or audited.
+	 * Refusals: nothing is stored, audited or left as a coupon.
 	 *
-	 * @param string                $code   Entered code.
+	 * @phpstan-param list<string> $codes
+	 *
+	 * @param string[]              $codes  Generated codes.
 	 * @param callable(self): mixed $set_up Arrangement.
 	 * @param string                $reason Expected reason.
 	 */
 	#[DataProvider( 'refusals' )]
-	public function test_a_registration_is_refused( string $code, callable $set_up, string $reason ): void {
+	public function test_an_issue_is_refused( array $codes, callable $set_up, string $reason ): void {
+		$this->next = $codes;
 		$set_up( $this );
 
-		try {
-			$this->code_service()->register( $this->creator, $code );
-			self::fail( 'Expected a refusal.' );
-		} catch ( CreatorCodeException $e ) {
-			self::assertSame( $reason, $e->reason() );
-		}
+		$this->expect_refusal( $reason, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_ADMIN ) );
 
 		self::assertSame( 0, $this->count_rows( Tables::CREATOR_CODES ) );
 		self::assertSame( array(), $this->audit( AuditAction::CreatorCodeRegistered ) );
+		self::assertSame( array(), array_keys( array_filter( $this->coupons->coupons, static fn( CouponRecord $coupon ): bool => $coupon->managed() ) ) );
 	}
 
 	/**
 	 * Refusals.
 	 *
-	 * @return array<string, array{0: string, 1: callable(self): mixed, 2: string}>
+	 * @return array<string, array{0: list<string>, 1: callable(self): mixed, 2: string}>
 	 */
 	public static function refusals(): array {
-		$none = static function (): void {};
+		$none  = static function (): void {};
+		$taken = array_fill( 0, 5, 'nova10' );
 
 		return array(
-			'empty code'          => array( '   ', $none, CreatorCodeException::INVALID_CODE ),
-			'too long'            => array( str_repeat( 'x', 192 ), $none, CreatorCodeException::INVALID_CODE ),
-			'no coupon'           => array( 'missing', $none, CreatorCodeException::COUPON_NOT_FOUND ),
-			'gift card code'      => array( 'nova10', static fn( self $t ) => $t->coupons->set_gift_cards( array( 'nova10' ) ), CreatorCodeException::GIFT_CARD_CODE ),
-			'gift card unchecked' => array( 'nova10', static fn( self $t ) => $t->coupons->set_gift_cards( null ), CreatorCodeException::GIFT_CARD_UNVERIFIED ),
-			'no capability'       => array( 'nova10', static fn() => wp_set_current_user( 0 ), CreatorCodeException::NOT_AUTHORIZED ),
+			'only gift card codes'  => array( $taken, static fn( self $t ) => $t->coupons->set_gift_cards( array( 'nova10' ) ), CreatorCodeException::CODE_TAKEN ),
+			'gift card unchecked'   => array( $taken, static fn( self $t ) => $t->coupons->set_gift_cards( null ), CreatorCodeException::GIFT_CARD_UNVERIFIED ),
+			'only existing coupons' => array( $taken, static fn( self $t ) => $t->coupons->add( 900, 'nova10' ), CreatorCodeException::CODE_TAKEN ),
+			'no capability'         => array( $taken, static fn() => wp_set_current_user( 0 ), CreatorCodeException::NOT_AUTHORIZED ),
+			'coupon not created'    => array(
+				$taken,
+				static function ( self $t ): void {
+						$t->issuer->fail = true;
+				},
+				CreatorCodeException::COUPON_NOT_CREATED,
+			),
+			'empty candidates'      => array( array_fill( 0, 5, '   ' ), $none, CreatorCodeException::CODE_TAKEN ),
 		);
 	}
 
@@ -185,25 +212,26 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		// Owner decision 2026-10-18: K5 no longer requires an e-mail restriction.
 		$this->creators->unlink_user( $this->creator );
 
-		self::assertSame( 'code_registered', $this->code_service()->register( $this->creator, 'nova10' ) );
+		self::assertSame( 'code_registered', $this->register( $this->creator, 'nova10' ) );
 		self::assertNotNull( $this->codes->active_for_creator( $this->creator ) );
 	}
 
 	public function test_one_active_code_per_creator_and_one_creator_per_code(): void {
-		$this->coupons->add( 502, 'lux10' );
-		$this->code_service()->register( $this->creator, 'nova10' );
-		$this->code_service()->register( $this->other, 'lux10' );
+		$this->register( $this->creator, 'nova10' );
+		$this->register( $this->other, 'lux10' );
 
-		$this->expect_refusal( CreatorCodeException::CODE_TAKEN, fn() => $this->code_service()->register( $this->creator, 'lux10' ) );
-		$this->expect_refusal( CreatorCodeException::UNCHANGED, fn() => $this->code_service()->register( $this->creator, 'NOVA10' ) );
+		// A code another creator uses (now or before) is never issued again.
+		$this->next = array( 'lux10', 'nova10', 'nova11' );
+		$this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_ADMIN );
+		self::assertSame( 'nova11', $this->codes->active_for_creator( $this->creator )?->code );
 
 		// The UNIQUE keys hold even without the service.
 		$this->wpdb->suppress_errors( true );
 		$this->expect_database_error( fn() => $this->codes->insert( $this->creator, 'other', 503, null, self::at( self::REGISTERED ) ) );
-		$this->expect_database_error( fn() => $this->codes->insert( $this->other + 100, 'nova10', 501, null, self::at( self::REGISTERED ) ) );
+		$this->expect_database_error( fn() => $this->codes->insert( $this->other + 100, 'lux10', 502, null, self::at( self::REGISTERED ) ) );
 		$this->wpdb->suppress_errors( false );
 
-		self::assertSame( 2, $this->count_rows( Tables::CREATOR_CODES ) );
+		self::assertSame( 3, $this->count_rows( Tables::CREATOR_CODES ) );
 	}
 
 	public function test_registrations_are_serialised_per_creator_and_per_code_across_connections(): void {
@@ -212,29 +240,31 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		try {
 			// Another request holds the code's lock (e.g. registering it for another creator).
 			self::assertSame( '1', (string) $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', 'merchboard_code:' . md5( 'nova10' ) ) ) );
-			$this->expect_refusal( CreatorCodeException::BUSY, fn() => $this->code_service()->register( $this->creator, 'nova10' ) );
+			$this->expect_refusal( CreatorCodeException::BUSY, fn() => $this->register( $this->creator, 'nova10' ) );
 			$other->get_var( $other->prepare( 'SELECT RELEASE_LOCK(%s)', 'merchboard_code:' . md5( 'nova10' ) ) );
+			self::assertSame( array( 501 ), $this->issuer->discarded, 'The coupon of a refused issue is deleted again.' );
 
 			// Another request holds the creator's lock.
 			self::assertSame( '1', (string) $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', 'merchboard_code_creator:' . $this->creator ) ) );
-			$this->expect_refusal( CreatorCodeException::BUSY, fn() => $this->code_service()->register( $this->creator, 'nova10' ) );
+			$this->expect_refusal( CreatorCodeException::BUSY, fn() => $this->register( $this->creator, 'nova10' ) );
 			$other->get_var( $other->prepare( 'SELECT RELEASE_LOCK(%s)', 'merchboard_code_creator:' . $this->creator ) );
 
 			self::assertSame( 0, $this->count_rows( Tables::CREATOR_CODES ), 'Nothing is stored while another request holds a lock.' );
-			self::assertSame( 'code_registered', $this->code_service()->register( $this->creator, 'nova10' ), 'Both locks are released afterwards.' );
+			self::assertSame( 'code_registered', $this->register( $this->creator, 'nova10' ), 'Both locks are released afterwards.' );
 			self::assertSame( '1', (string) $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', 'merchboard_code:' . md5( 'nova10' ) ) ) );
 		} finally {
 			$other->close();
 		}
 	}
 
-	public function test_a_change_ends_the_old_registration_and_an_ending_keeps_the_history(): void {
-		$this->code_service()->register( $this->creator, 'nova10' );
-		$first = $this->codes->active_for_creator( $this->creator );
-		$this->coupons->add( 502, 'nova20' );
+	public function test_a_new_code_ends_the_old_one_retires_its_coupon_and_an_ending_keeps_the_history(): void {
+		$this->register( $this->creator, 'nova10' );
+		$first     = $this->codes->active_for_creator( $this->creator );
 		$this->now = '2026-10-03 08:00:00';
 
-		self::assertSame( 'code_changed', $this->code_service()->register( $this->creator, 'nova20' ) );
+		self::assertSame( 'code_changed', $this->register( $this->creator, 'nova20' ) );
+		self::assertSame( array( $first?->coupon_id ), $this->issuer->retired, 'The old code stops working at once.' );
+		self::assertNull( $this->coupons->find( 'nova10' ) );
 
 		$this->now = '2026-10-04 08:00:00';
 		$this->code_service()->end( $this->creator );
@@ -252,12 +282,18 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	}
 
 	public function test_deviations_are_reported_but_never_end_the_registration(): void {
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$active     = $this->codes->active_for_creator( $this->creator );
 		$deviations = new CreatorCodeDeviations( $this->coupons );
 
 		self::assertNotNull( $active );
 		self::assertSame( array(), $deviations->of( $active ) );
+		self::assertFalse( $deviations->not_managed( $active ) );
+
+		// A coupon whose type was changed in WooCommerce (or a code registered by hand before 1.3.0).
+		$this->coupons->add( 501, 'nova10' );
+		self::assertSame( array(), $deviations->of( $active ), 'Not an integrity deviation of the order assessment.' );
+		self::assertTrue( $deviations->not_managed( $active ) );
 
 		$this->coupons->add( 777, 'nova10' );
 		self::assertSame( array( CreatorCodeDeviations::COUPON_CHANGED ), $deviations->of( $active ) );
@@ -268,7 +304,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	}
 
 	public function test_only_the_code_creators_lines_are_excluded_and_the_decision_is_permanent(): void {
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$this->now = '2026-10-05 10:00:00';
 		$this->order( 41, '2026-10-05 09:00:00', array( 'nova10' ), array( $this->line( 4111, $this->creator ), $this->line( 4112, $this->other ) ) );
 
@@ -301,7 +337,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	}
 
 	public function test_a_code_without_lines_of_its_creator_excludes_nothing(): void {
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$this->order( 42, '2026-10-05 09:00:00', array( 'nova10' ), array( $this->line( 4211, $this->other ) ) );
 
 		$this->sync->sync( 42 );
@@ -311,9 +347,8 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	}
 
 	public function test_codes_of_two_creators_exclude_both_creators_lines(): void {
-		$this->coupons->add( 502, 'lux10' );
-		$this->code_service()->register( $this->creator, 'nova10' );
-		$this->code_service()->register( $this->other, 'lux10' );
+		$this->register( $this->creator, 'nova10' );
+		$this->register( $this->other, 'lux10' );
 		$this->order( 43, '2026-10-05 09:00:00', array( 'nova10', 'lux10' ), array( $this->line( 4311, $this->creator ), $this->line( 4312, $this->other ) ) );
 
 		$this->sync->sync( 43 );
@@ -323,7 +358,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( 0, ( new SalesOrderLines( $this->wpdb ) )->count( $this->other ) );
 	}
 	public function test_only_orders_created_within_the_registration_period_are_covered(): void {
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$this->now = '2026-10-10 08:00:00';
 		$this->code_service()->end( $this->creator );
 
@@ -366,7 +401,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( array( 2, 2, 2, 2, 2 ), $before, 'Two orders, one unknown-profit row each.' );
 
 		// The code is registered afterwards and then added to an order created later (e.g. an admin edit).
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$this->order( 70, '2026-10-05 09:00:00', array( 'nova10' ) );
 		$this->sync->sync( 70 );
 
@@ -380,7 +415,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		$this->sync->sync( 80 );
 		$this->settle( 's:8011:1', 8011, 80 );
 
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$this->order( 80, '2026-10-02 09:00:00', array( 'nova10' ) );
 		$this->sync->sync( 80 );
 
@@ -395,7 +430,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	}
 
 	public function test_the_backfill_reports_an_excluded_order_as_not_counted(): void {
-		$this->code_service()->register( $this->creator, 'nova10' );
+		$this->register( $this->creator, 'nova10' );
 		$this->order( 90, '2026-10-05 09:00:00', array( 'nova10' ) );
 
 		self::assertSame( SalesBackfillStatus::NotCounted, $this->sync->preview( 90 )->status );
@@ -411,17 +446,85 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( array( 's:9112:1' ), $this->keys( 91 ) );
 	}
 
+	public function test_the_creator_resets_their_code_at_most_three_times_a_day(): void {
+		$this->expect_refusal( CreatorCodeException::NOT_AUTHORIZED, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ), 'As an administrator without a session.' );
+
+		wp_set_current_user( $this->user );
+		$this->expect_refusal( CreatorCodeException::NO_ACTIVE_CODE, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ) );
+		$this->expect_refusal( CreatorCodeException::NOT_AUTHORIZED, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_ADMIN ), 'The creator never issues as an administrator.' );
+		$this->expect_refusal( CreatorCodeException::NOT_AUTHORIZED, fn() => $this->code_service()->issue( $this->other, CreatorCodeService::SOURCE_CREATOR ), 'Never another creator\'s code.' );
+
+		wp_set_current_user( 1 );
+		$this->register( $this->creator, 'nova10' );
+		wp_set_current_user( $this->user );
+
+		$this->next = array( 'nova11' );
+		self::assertSame( 'code_changed', $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ) );
+		self::assertSame( 'creator', $this->audit( AuditAction::CreatorCodeRegistered )[1]['source'] );
+		$this->next = array( 'nova12' );
+		$this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR );
+		$this->expect_refusal( CreatorCodeException::RESET_LIMIT, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ), 'Three codes within a day.' );
+
+		$this->now  = '2026-10-02 12:00:01';
+		$this->next = array( 'nova13' );
+		self::assertSame( 'code_changed', $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ), 'A day later again.' );
+		self::assertSame( 'nova13', $this->codes->active_for_creator( $this->creator )?->code );
+		self::assertSame( array( 501, 502, 503 ), $this->issuer->retired );
+	}
+
+	public function test_an_administrator_viewing_as_the_creator_may_reset_the_code(): void {
+		$this->register( $this->creator, 'nova10' );
+		update_user_meta(
+			1,
+			ImpersonationSession::META,
+			array(
+				'creator_id' => $this->creator,
+				'started_at' => time(),
+				'expires_at' => time() + 600,
+				'token'      => ImpersonationSession::token(),
+			)
+		);
+
+		$this->next = array( 'nova11' );
+		self::assertSame( 'code_changed', $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ) );
+	}
+
+	public function test_a_coupon_that_cannot_be_retired_changes_nothing(): void {
+		$this->register( $this->creator, 'nova10' );
+		$this->issuer->fail_retire = true;
+
+		$this->expect_refusal( CreatorCodeException::COUPON_NOT_RETIRED, fn() => $this->register( $this->creator, 'nova20' ) );
+
+		self::assertSame( 'nova10', $this->codes->active_for_creator( $this->creator )?->code );
+		self::assertSame( array( 502 ), $this->issuer->discarded, 'The new coupon is deleted again.' );
+		self::assertCount( 1, $this->audit( AuditAction::CreatorCodeRegistered ) );
+	}
+
 	/**
-	 * The service with the test clock.
+	 * Issues a code as an administrator, with the given code generated.
+	 *
+	 * @param int    $creator Creator.
+	 * @param string $code    The code the generator returns.
+	 */
+	private function register( int $creator, string $code ): string {
+		$this->next = array( $code );
+
+		return $this->code_service()->issue( $creator, CreatorCodeService::SOURCE_ADMIN );
+	}
+
+	/**
+	 * The service with the test clock, coupons and generator.
 	 */
 	private function code_service(): CreatorCodeService {
 		return new CreatorCodeService(
 			$this->creators,
 			$this->codes,
 			$this->coupons,
+			$this->issuer,
 			$this->service( Transaction::class ),
 			$this->service( AuditTrail::class ),
-			fn(): DateTimeImmutable => self::at( $this->now )
+			fn(): DateTimeImmutable => self::at( $this->now ),
+			fn(): string => array() === $this->next ? 'nova10' : (string) array_shift( $this->next )
 		);
 	}
 
@@ -562,15 +665,16 @@ final class CreatorCodesTest extends IntegrationTestCase {
 	/**
 	 * Asserts a refusal with a reason.
 	 *
-	 * @param string   $reason Expected reason.
-	 * @param callable $work   Work.
+	 * @param string   $reason  Expected reason.
+	 * @param callable $work    Work.
+	 * @param string   $message Message on failure.
 	 */
-	private function expect_refusal( string $reason, callable $work ): void {
+	private function expect_refusal( string $reason, callable $work, string $message = '' ): void {
 		try {
 			$work();
-			self::fail( 'Expected ' . $reason . '.' );
+			self::fail( 'Expected ' . $reason . '. ' . $message );
 		} catch ( CreatorCodeException $e ) {
-			self::assertSame( $reason, $e->reason() );
+			self::assertSame( $reason, $e->reason(), $message );
 		}
 	}
 

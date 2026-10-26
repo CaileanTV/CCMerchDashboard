@@ -122,6 +122,53 @@ class WC_Coupon extends WC_Data {
 	 * @return string
 	 */
 	public function get_code( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_discount_type( $context = 'view' ) {}
+
+	/**
+	 * @param string|string[] $type Discount type(s).
+	 * @return bool
+	 */
+	public function is_type( $type ) {}
+
+	/**
+	 * @param string $code Code.
+	 * @return void
+	 */
+	public function set_code( $code ) {}
+
+	/**
+	 * @param string $discount_type Discount type.
+	 * @return void
+	 */
+	public function set_discount_type( $discount_type ) {}
+
+	/**
+	 * @param float|string $amount Amount.
+	 * @return void
+	 */
+	public function set_amount( $amount ) {}
+
+	/**
+	 * @param bool $is_individual_use Individual use only.
+	 * @return void
+	 */
+	public function set_individual_use( $is_individual_use ) {}
+
+	/**
+	 * @param string $description Description.
+	 * @return void
+	 */
+	public function set_description( $description ) {}
+
+	/**
+	 * @return int Coupon id.
+	 */
+	public function save() {}
 }
 
 /**
@@ -293,6 +340,11 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	 * @return string|int|float
 	 */
 	public function get_total_tax( $context = 'view' ) {}
+
+	/**
+	 * @return WC_Product|false|null
+	 */
+	public function get_product() {}
 }
 
 /**

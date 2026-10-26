@@ -56,15 +56,17 @@ final class CreatorCodeSection {
 	 */
 	public static function result_message( string $code ): ?array {
 		return match ( $code ) {
-			'code_registered'                          => array( __( 'Discount code registered. It applies to orders created from now on; earlier orders are not changed.', 'merchboard' ), 'success' ),
-			'code_changed'                             => array( __( 'Discount code changed. The earlier code was ended; orders created before now keep their decision.', 'merchboard' ), 'success' ),
+			'code_registered'                          => array( __( 'Discount code created. Its coupon gives the creator\'s profit on their own products as discount; it applies to orders created from now on.', 'merchboard' ), 'success' ),
+			'code_changed'                             => array( __( 'New discount code created. The earlier code was ended and its coupon moved to the trash, so it no longer works; orders created before now keep their decision.', 'merchboard' ), 'success' ),
 			'code_ended'                               => array( __( 'Discount code ended. Orders created from now on with this code count normally; earlier orders keep their decision.', 'merchboard' ), 'success' ),
 			CreatorCodeException::UNCHANGED            => array( __( 'Nothing was changed: this code is already the creator\'s active code.', 'merchboard' ), 'info' ),
 			CreatorCodeException::INVALID_CODE         => array( __( 'Not saved: enter a coupon code of at most 191 characters.', 'merchboard' ), 'error' ),
 			CreatorCodeException::COUPON_NOT_FOUND     => array( __( 'Not saved: there is no WooCommerce coupon with this code.', 'merchboard' ), 'error' ),
 			CreatorCodeException::GIFT_CARD_CODE       => array( __( 'Not saved: this is a gift card code, not a discount code.', 'merchboard' ), 'error' ),
 			CreatorCodeException::GIFT_CARD_UNVERIFIED => array( __( 'Not saved: it could not be checked whether this is a gift card code. Try again later.', 'merchboard' ), 'error' ),
-			CreatorCodeException::CODE_TAKEN           => array( __( 'Not saved: this code is the active code of another creator.', 'merchboard' ), 'error' ),
+			CreatorCodeException::CODE_TAKEN           => array( __( 'No free code was found. Nothing was changed; try again.', 'merchboard' ), 'error' ),
+			CreatorCodeException::COUPON_NOT_CREATED   => array( __( 'The WooCommerce coupon could not be created. Nothing was changed; try again later.', 'merchboard' ), 'error' ),
+			CreatorCodeException::COUPON_NOT_RETIRED   => array( __( 'The earlier coupon could not be moved to the trash. Nothing was changed; try again later.', 'merchboard' ), 'error' ),
 			CreatorCodeException::NO_ACTIVE_CODE       => array( __( 'The creator has no active discount code.', 'merchboard' ), 'info' ),
 			CreatorCodeException::BUSY                 => array( __( 'Another change of this code is in progress. Nothing was changed; try again.', 'merchboard' ), 'error' ),
 			CreatorCodeException::NOT_AUTHORIZED       => array( __( 'You are not allowed to manage creator discount codes.', 'merchboard' ), 'error' ),
@@ -80,9 +82,11 @@ final class CreatorCodeSection {
 	 * @param string $code CreatorCodeDeviations constant.
 	 */
 	public static function deviation_text( string $code ): string {
-		return CreatorCodeDeviations::COUPON_MISSING === $code
-			? __( 'The WooCommerce coupon with this code no longer exists.', 'merchboard' )
-			: __( 'The code now belongs to another WooCommerce coupon than the registered one.', 'merchboard' );
+		return match ( $code ) {
+			CreatorCodeDeviations::COUPON_MISSING => __( 'The WooCommerce coupon with this code no longer exists.', 'merchboard' ),
+			CreatorCodeDeviations::COUPON_NOT_MANAGED => __( 'The coupon\'s discount is not the creator\'s profit: it was registered by hand before Merch Dashboard managed the codes, or its discount type was changed in WooCommerce. Create a new discount code to fix it.', 'merchboard' ),
+			default => __( 'The code now belongs to another WooCommerce coupon than the registered one.', 'merchboard' ),
+		};
 	}
 
 	/**
@@ -96,7 +100,7 @@ final class CreatorCodeSection {
 		}
 
 		echo '<hr><h2 id="merchboard-discount-code">' . esc_html__( 'Discount code', 'merchboard' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'The creator\'s own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. In an order that uses it, the creator\'s own products do not count in the creator\'s sales, profit or payouts, whoever placed the order; other creators\' products in the same order count normally. A code applies to orders created from its registration on; earlier orders are never changed.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'The creator\'s own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. Merch Dashboard creates it: its discount is exactly the creator\'s profit on each of their own products (the creator\'s or the product\'s own share), and nothing on other creators\' products. It cannot be combined with other coupons. In an order that uses it, the creator\'s own products do not count in the creator\'s sales, profit or payouts, whoever placed the order. A code applies to orders created from its creation on; earlier orders are never changed. The creator can reset the code in the dashboard.', 'merchboard' ) . '</p>';
 
 		// Read-only display parameter; nothing is changed by this request.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
@@ -151,7 +155,13 @@ final class CreatorCodeSection {
 
 		echo '</p>';
 
-		foreach ( $this->deviations->of( $active ) as $deviation ) {
+		$deviations = $this->deviations->of( $active );
+
+		if ( array() === $deviations && $this->deviations->not_managed( $active ) ) {
+			$deviations[] = CreatorCodeDeviations::COUPON_NOT_MANAGED;
+		}
+
+		foreach ( $deviations as $deviation ) {
 			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Check the coupon:', 'merchboard' ) . '</strong> ' . esc_html( self::deviation_text( $deviation ) ) . ' ' . esc_html__( 'Orders with the registered code are still excluded and are marked with a deviation. The registration is not ended automatically.', 'merchboard' ) . '</p></div>';
 		}
 
@@ -164,21 +174,19 @@ final class CreatorCodeSection {
 	}
 
 	/**
-	 * The form to register or change the code.
+	 * The button that creates a (new) code (ADR-078).
 	 *
 	 * @param Creator          $creator Creator.
 	 * @param CreatorCode|null $active  Active registration.
 	 */
 	private function render_form( Creator $creator, ?CreatorCode $active ): void {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( CreatorCodeActions::REGISTER_ACTION ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( CreatorCodeActions::ISSUE_ACTION ) . '">';
 		echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
-		wp_nonce_field( CreatorCodeActions::nonce_action( CreatorCodeActions::REGISTER_ACTION, $creator->id ) );
-		echo '<table class="form-table" role="presentation"><tr><th scope="row"><label for="merchboard-creator-code">' . esc_html( null === $active ? __( 'Register code', 'merchboard' ) : __( 'Change code', 'merchboard' ) ) . '</label></th><td>';
-		echo '<input type="text" id="merchboard-creator-code" name="code" class="regular-text" maxlength="191" autocomplete="off" required> ';
-		echo '<button type="submit" class="button button-primary">' . esc_html( null === $active ? __( 'Register code', 'merchboard' ) : __( 'Change code', 'merchboard' ) ) . '</button>';
-		echo '<p class="description">' . esc_html__( 'The code of an existing WooCommerce coupon. A change ends the current code now and registers the new one from now on.', 'merchboard' ) . '</p>';
-		echo '</td></tr></table></form>';
+		wp_nonce_field( CreatorCodeActions::nonce_action( CreatorCodeActions::ISSUE_ACTION, $creator->id ) );
+		echo '<p><button type="submit" class="button button-primary">' . esc_html( null === $active ? __( 'Create discount code', 'merchboard' ) : __( 'Create new discount code', 'merchboard' ) ) . '</button> ';
+		echo '<span class="description">' . esc_html( null === $active ? __( 'Creates a code from the creator\'s name and a WooCommerce coupon for it.', 'merchboard' ) : __( 'Ends the current code at once (its coupon goes to the trash) and creates a new one.', 'merchboard' ) ) . '</span></p>';
+		echo '</form>';
 	}
 
 	/**

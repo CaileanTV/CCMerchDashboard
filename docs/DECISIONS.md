@@ -4254,3 +4254,62 @@ Schema-version 32 (tabellen `merchboard_category_proposals`) og 33 (`bio` og `so
 
 ## Related
 ADR-007, ADR-023, ADR-033, ADR-075, ADR-076.
+
+---
+
+# ADR-078: Pluginet styrer creatorens rabatkode, og rabatten er creatorens fortjeneste
+
+## Date
+2026-10-26
+
+## Status
+Accepteret af projektejeren 2026-10-26 (plan for trin 28.5 godkendt). Backend og admin implementeret i trin 28.5.1; testet automatisk, ikke runtime-verificeret. Creatorens nulstilling i dashboardet følger i 28.5.2.
+
+## Context
+Med ADR-068 skriver admin koden på en eksisterende WooCommerce-kupon på creatorens side. Rabatten er kuponens egen indstilling, og ordrer med koden giver creatoren 0 i fortjeneste (udelukkelse pr. creator). Projektejeren vil (2026-10-26):
+- at rabatten fjerner præcis creatorens fortjeneste på hver vare: forskellige procenter på forskellige produkter (fx 20 % på en T-shirt og 25 % på en kop), både creatorens standardprocent og produktets egen;
+- at pluginet styrer kuponen;
+- at creatoren kan nulstille en kode, der er vist ved en fejl.
+
+Designet skal kunne bære en fremtidig fortjeneste i beløb (creators, der selv opretter produkter oven på en grundpris). De nuværende produkter har låste priser og procenter.
+
+## Decision
+1. **Pluginet udsteder koden:** "Opret rabatkode" på creatorens side opretter en kode (creatorens navn + 4 tilfældige tegn uden forvekslelige tegn, fx `NOVA-7K3Q`) og en WooCommerce-kupon til den via WooCommerce CRUD. Kuponen har:
+   - rabattypen `merchboard_creator_profit`, beløb 0;
+   - individuel brug (kan ikke kombineres med andre kuponer);
+   - ingen udløb og ingen grænser;
+   - post meta `_merchboard_creator_code` = creator-id.
+
+   Manuel registrering af en eksisterende kupon fjernes (projektejerens valg).
+2. **Rabatten:** typen `merchboard_creator_profit` er en produktkupontype.
+   - **Hvilke varer:** pr. vare gælder den kun, når kuponen er en **aktiv registrering** (samme kupon-id), og produktet (eller variantens forælder) tilhører den creator (`woocommerce_coupon_is_valid_for_product`). Andre creators' varer får ingen rabat.
+   - **Beløbet:** rabatten pr. stk. er stykprisen × den effektive andel (ADR-049: produktets egen andel ellers creatorens standard; `woocommerce_coupon_get_discount_amount` i `WC_Discounts::apply_coupon_custom()`). Den beregnes med 4 decimaler, og WooCommerce afrunder linjen. Stykprisen er den pris, butikken regner med (inkl. moms, når priser indtastes inkl. moms); WooCommerce sætter momsen ned forholdsmæssigt.
+   - **Fejl:** kan registreringen eller andelen ikke læses, gives ingen rabat (logget).
+   - **Fremtiden:** `CreatorProfitDiscount` er det ene sted, hvor en fremtidig fortjeneste i beløb kobles på.
+3. **Ny kode og den gamle:** en ny kode afslutter den aktive registrering, og dens kupon (styret eller manuel) flyttes til papirkurven i samme transaktion. **Den gamle kode virker ikke længere med det samme** (projektejerens valg), og kuponen kan gendannes manuelt. Fejler noget, slettes den nye kupon igen, og intet ændres.
+4. **Nulstilling:** creatoren kan nulstille sin egen kode, kun når den har en (den første opretter admin). Det gælder også for en administrator, der ser som creatoren (ADR-075; projektejerens valg). Creatoren kan højst få 3 nye koder pr. døgn.
+5. **Eksisterende koder** registreret manuelt før 1.3.0 virker som i dag (kuponens egen rabat), indtil admin opretter en ny kode, eller creatoren nulstiller. Creatorens side viser en advarsel ("kuponens rabat er ikke creatorens fortjeneste"). Den advarsel er ikke en afvigelse i vurderingen af ordrer.
+6. **Uændret fra ADR-068:** udelukkelsen af ordrer (pr. creator, perioder, K2), `merchboard_manage_creator_pricing` til admin, K5's kontrol af gavekortkoder (en genereret kode, der er en gavekortkode eller en eksisterende kupon eller registrering, bruges ikke) og ingen e-mailbegrænsning. Ingen schemaændring.
+
+## Alternatives considered
+- **Admin vælger fortsat en eksisterende kupon:** fravalgt; nulstilling kræver alligevel, at pluginet kan oprette kuponer.
+- **Rabat på alle varer i kurven:** fravalgt; andre creators ville miste deres fortjeneste.
+- **Konvertere eksisterende kuponer ved opdateringen:** fravalgt; de erstattes ved næste oprettelse.
+
+## Reason
+Creatoren betaler ikke for sin egen fortjeneste uanset procent pr. produkt, og den fortjeneste udelukkes samtidig fra creatorens salg (ADR-068). Det giver ét konsistent billede, og en lækket kode kan erstattes med det samme.
+
+## Security
+- Admin: `merchboard_manage_creator_pricing`, POST og nonce bundet til creatoren. Creatoren: kun sin egen kode (eller under "Se som creator").
+- Kuponens rabat beregnes altid server-side ud fra registreringen og andelen; en kupon af typen uden registrering giver ingen rabat.
+- Højst 3 nulstillinger pr. døgn; alt auditeres (`creator_code_registered` med `source` `admin`/`creator`).
+
+## Migration/data implications
+Ingen schemaændring. Pluginet skriver nu WooCommerce-kuponer (kun gennem `WooCommerceCouponIssuer`).
+
+## Consequences
+- Omgør ADR-068's manuelle registrering (K5's krav om en eksisterende kupon).
+- Admin-afsnittet "Rabatkode" har "Opret rabatkode" / "Opret ny rabatkode" og "Afslut kode".
+
+## Related
+ADR-049, ADR-064, ADR-068, ADR-075, ADR-077.

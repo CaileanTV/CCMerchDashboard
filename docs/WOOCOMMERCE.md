@@ -114,7 +114,7 @@ Cyklus 1 og senere cyklusser er bevidst asymmetriske (brutto + refunds mod reste
 | --- | --- |
 | Creator-profit | salgspris × markup % |
 | Udbetaling, momsregistreret | = creator-profit |
-| Udbetaling, ikke momsregistreret | = creator-profit (20 %-fradraget er fjernet, ADR-063) |
+| Udbetaling, ikke momsregistreret | = andelen af salgsprisen ekskl. moms (ADR-064; 20 %-fradraget er fjernet med ADR-063) |
 
 **Forudsætninger:** WooCommerce-prisen, kunden betaler, er inkl. moms; profitten beregnes af det faktisk betalte beløb inkl. moms. Mangler data, er profit og udbetaling ukendte, aldrig 0. Rækker, der allerede indgår i et afregningsbilag, beholder den udbetaling, der er gemt i bilaget (ADR-060); historiske afregninger efter ADR-049's fradrag reguleres ikke automatisk, kun via genberegningen (ADR-063) (ADR-063).
 
