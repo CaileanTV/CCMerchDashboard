@@ -112,6 +112,8 @@ describe( 'overview section', () => {
 				200,
 				profileWith( 'Line one\n<script>alert(1)</script>', {
 					kick: 'https://kick.com/nova',
+					x: 'javascript:alert(1)',
+					twitch: 'http://twitch.tv/nova',
 				} )
 			)
 		);
@@ -231,12 +233,10 @@ describe( 'overview section', () => {
 		const container = await renderWith( () => {
 			calls++;
 			return calls === 1
-				? response(
-						200,
-						profileWith( 'Merch & music', {
-							x: 'javascript:alert(1)',
-						} )
-					)
+				? response( 200, {
+						...PROFILE,
+						category: { ...PROFILE.category, social_links: 'x' },
+					} )
 				: response( 200, PROFILE );
 		} );
 

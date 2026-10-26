@@ -60,11 +60,20 @@ function isField( value: unknown ): value is ProposalField {
 	);
 }
 
-function isHttpsOrEmpty( value: unknown ): value is string {
-	return (
-		typeof value === 'string' &&
-		( value === '' || value.startsWith( 'https://' ) )
-	);
+/**
+ * A link of the category: the value when it is an https URL, '' for any
+ * other string, and null for a non-string. Links entered outside Merch
+ * Dashboard (e.g. `http://` in the banner plugin's own fields) are then not
+ * shown, instead of making the whole profile invalid.
+ *
+ * @param value Value from the server.
+ */
+function categoryLink( value: unknown ): string | null {
+	if ( typeof value !== 'string' ) {
+		return null;
+	}
+
+	return value.startsWith( 'https://' ) ? value : '';
 }
 
 function parseSocialLinks( value: unknown ): SocialLinks | null {
@@ -75,9 +84,9 @@ function parseSocialLinks( value: unknown ): SocialLinks | null {
 	const links: Partial< Record< SocialPlatform, string > > = {};
 
 	for ( const platform of SOCIAL_PLATFORMS ) {
-		const url = value[ platform ];
+		const url = categoryLink( value[ platform ] );
 
-		if ( ! isHttpsOrEmpty( url ) ) {
+		if ( url === null ) {
 			return null;
 		}
 
@@ -97,11 +106,12 @@ function parseCategory( value: unknown ): CategoryNow | null | undefined {
 	}
 
 	const socialLinks = parseSocialLinks( value.social_links );
+	const bannerLink = categoryLink( value.banner_link );
 
 	if (
 		typeof value.name !== 'string' ||
 		typeof value.description !== 'string' ||
-		! isHttpsOrEmpty( value.banner_link ) ||
+		bannerLink === null ||
 		typeof value.banner_default !== 'boolean' ||
 		socialLinks === null
 	) {
@@ -131,7 +141,7 @@ function parseCategory( value: unknown ): CategoryNow | null | undefined {
 		bannerUrl,
 		bannerDefault: value.banner_default,
 		bannerMobileUrl,
-		bannerLink: value.banner_link,
+		bannerLink,
 		socialLinks,
 	};
 }

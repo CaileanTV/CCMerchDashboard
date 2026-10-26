@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-26T18:03:39+00:00\n"
+"PO-Revision-Date: 2026-10-26T18:49:26+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -10759,8 +10759,8 @@ msgid "Product pages"
 msgstr "Produktsider"
 
 #: build/dashboard.js:71
-msgid "You have already got 3 new discount codes today. Try again tomorrow."
-msgstr "Du har allerede fået 3 nye rabatkoder i dag. Prøv igen i morgen."
+msgid "Your discount code has already been replaced 3 times in the last 24 hours. Try again later."
+msgstr "Din rabatkode er allerede skiftet 3 gange inden for de seneste 24 timer. Prøv igen senere."
 
 #: build/dashboard.js:71
 msgid "You have no discount code to reset. Your first discount code is created by us."

@@ -1,4 +1,4 @@
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { FormEvent } from 'react';
 
@@ -56,6 +56,38 @@ function initialValues( profile: Profile ): ProfileValues {
 		displayName: text( 'display_name', profile.displayName ),
 		description: text( 'description', profile.category?.description ?? '' ),
 		bannerLink: text( 'banner_link', profile.category?.bannerLink ?? '' ),
+		socialLinks: links as SocialLinks,
+	};
+}
+
+/**
+ * New starting values that keep the fields the creator has edited but not
+ * sent yet (after an upload, removal or withdrawal of another field).
+ *
+ * @param previous Starting values before the request.
+ * @param current  Form values now.
+ * @param next     Starting values from the new profile.
+ */
+function withEdits(
+	previous: ProfileValues,
+	current: ProfileValues,
+	next: ProfileValues
+): ProfileValues {
+	const pick = ( key: 'displayName' | 'description' | 'bannerLink' ) =>
+		current[ key ] === previous[ key ] ? next[ key ] : current[ key ];
+	const links: Partial< Record< SocialPlatform, string > > = {};
+
+	for ( const platform of SOCIAL_PLATFORMS ) {
+		links[ platform ] =
+			current.socialLinks[ platform ] === previous.socialLinks[ platform ]
+				? next.socialLinks[ platform ]
+				: current.socialLinks[ platform ];
+	}
+
+	return {
+		displayName: pick( 'displayName' ),
+		description: pick( 'description' ),
+		bannerLink: pick( 'bannerLink' ),
 		socialLinks: links as SocialLinks,
 	};
 }
@@ -134,6 +166,7 @@ function ProfileForm( { profile, onChange }: ProfileFormProps ) {
 	const config = useConfig();
 	const [ initial, setInitial ] = useState( () => initialValues( profile ) );
 	const [ values, setValues ] = useState( initial );
+	const initialRef = useRef( initial );
 	const [ errors, setErrors ] = useState< FieldErrors >( {} );
 	const [ saveError, setSaveError ] = useState< ApiError | null >( null );
 	const [ busy, setBusy ] = useState< string | null >( null );
@@ -143,16 +176,22 @@ function ProfileForm( { profile, onChange }: ProfileFormProps ) {
 	const category = profile.category;
 
 	/**
-	 * Takes a new profile from the server; the form starts from it again.
+	 * Takes a new profile from the server; the form starts from it again,
+	 * except for edits not sent yet when another field was changed.
 	 *
-	 * @param next    New profile.
-	 * @param message Toast.
+	 * @param next      New profile.
+	 * @param message   Toast.
+	 * @param keepEdits Keep the creator's unsent edits.
 	 */
-	const accept = ( next: Profile, message: string ) => {
+	const accept = ( next: Profile, message: string, keepEdits: boolean ) => {
 		const start = initialValues( next );
+		const previous = initialRef.current;
+		initialRef.current = start;
 		onChange( next );
 		setInitial( start );
-		setValues( start );
+		setValues( ( current ) =>
+			keepEdits ? withEdits( previous, current, start ) : start
+		);
 		setErrors( {} );
 		setToast( message );
 	};
@@ -175,7 +214,7 @@ function ProfileForm( { profile, onChange }: ProfileFormProps ) {
 		setBusy( null );
 
 		if ( result.ok ) {
-			accept( result.data, message );
+			accept( result.data, message, key !== 'save' );
 			return;
 		}
 

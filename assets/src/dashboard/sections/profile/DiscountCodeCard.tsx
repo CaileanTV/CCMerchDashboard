@@ -30,7 +30,7 @@ function refusal( reason: string ): string {
 	switch ( reason ) {
 		case 'reset_limit':
 			return __(
-				'You have already got 3 new discount codes today. Try again tomorrow.',
+				'Your discount code has already been replaced 3 times in the last 24 hours. Try again later.',
 				'merchboard'
 			);
 		case 'no_active_code':

@@ -198,7 +198,7 @@ describe( 'DiscountCodeCard', () => {
 	} );
 
 	it.each( [
-		[ 'reset_limit', 'Try again tomorrow.' ],
+		[ 'reset_limit', '3 times in the last 24 hours' ],
 		[ 'no_active_code', 'You have no discount code to reset.' ],
 		[ 'busy', 'Try again in a moment.' ],
 		[ 'coupon_not_created', 'Nothing was changed; try again later.' ],

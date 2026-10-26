@@ -142,16 +142,10 @@ describe( 'response validation', () => {
 			},
 		],
 		[
-			'javascript link',
+			'link not a string',
 			{
 				...PROFILE,
-				category: {
-					...PROFILE.category,
-					social_links: {
-						...PROFILE.category.social_links,
-						x: 'javascript:alert(1)',
-					},
-				},
+				category: { ...PROFILE.category, banner_link: 42 },
 			},
 		],
 		[
@@ -185,6 +179,25 @@ describe( 'response validation', () => {
 		[ 'category not an object', { ...PROFILE, category: [] } ],
 	] )( 'rejects a profile with %s', ( _label, body ) => {
 		expect( parseProfile( body ) ).toBeNull();
+	} );
+
+	it( 'drops category links that are not https instead of rejecting the profile', () => {
+		const category = parseProfile( {
+			...PROFILE,
+			category: {
+				...PROFILE.category,
+				banner_link: 'http://nova.example',
+				social_links: {
+					...PROFILE.category.social_links,
+					x: 'javascript:alert(1)',
+					twitch: 'http://twitch.tv/nova',
+				},
+			},
+		} )?.category;
+
+		expect( category?.bannerLink ).toBe( '' );
+		expect( category?.socialLinks.x ).toBe( '' );
+		expect( category?.socialLinks.twitch ).toBe( '' );
 	} );
 } );
 
@@ -609,6 +622,48 @@ describe( 'dashboard with the creator API', () => {
 					.value
 			).toBe( 'Merch & music' );
 			expect( container.textContent ).toContain( 'Proposal withdrawn.' );
+		} );
+
+		it( 'keeps unsent edits of other fields after a withdrawal', async () => {
+			mockApi( {
+				'GET /merchboard/v1/me': () => response( 200, ME ),
+				'GET /merchboard/v1/me/profile': () =>
+					response( 200, {
+						...PROFILE,
+						pending: {
+							description: {
+								id: 4,
+								value: 'New story',
+								file: null,
+								remove: false,
+								created_at: '2026-10-26T10:00:00Z',
+							},
+						},
+					} ),
+				'DELETE /merchboard/v1/me/profile/proposals/description': () =>
+					response( 200, PROFILE ),
+			} );
+			const container = await renderApp();
+
+			type( input( container, 'Name' ), 'Nova Studio' );
+			type( input( container, 'Kick' ), '@nova' );
+			click(
+				container.querySelector(
+					'[aria-label="Withdraw the proposal for Description"]'
+				)
+			);
+			await flush();
+
+			expect(
+				( input( container, 'Description' ) as HTMLTextAreaElement )
+					.value
+			).toBe( 'Merch & music' );
+			expect(
+				( input( container, 'Name' ) as HTMLInputElement ).value
+			).toBe( 'Nova Studio' );
+			expect(
+				( input( container, 'Kick' ) as HTMLInputElement ).value
+			).toBe( '@nova' );
 		} );
 
 		it( 'does not send a request without changes', async () => {
