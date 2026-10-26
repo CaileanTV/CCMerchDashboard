@@ -696,7 +696,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 
 ## Fase 28 – Creatorens kategori: navn, beskrivelse og banner ⏳ (projektejerens ønske 2026-10-26; ikke planlagt)
 
-**Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning (billede og banner). Creatoren kan foreslå kategoriens navn, beskrivelse og eget banner med link. **Intet skrives til WooCommerce, før en administrator har godkendt ændringen** (risiko for ophavsret). Kræver en ADR: i dag skriver pluginet ikke til kategorierne selv, kun til produkternes kobling (ADR-033).
+**Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning (billede og banner). Creatoren kan foreslå kategoriens navn, beskrivelse, kategoribillede, eget banner med link og sociale links. **Intet skrives til WooCommerce, før en administrator har godkendt ændringen** (risiko for ophavsret). Kræver en ADR: i dag skriver pluginet ikke til kategorierne selv, kun til produkternes kobling (ADR-033).
 
 - **28.1 Analyse og plan:**
   - **Bannerpluginet:** projektejeren har lagt det i Merch Dashboard Locals plugin-mappe. Det skal afklares, hvordan det gemmer banner, standardbanner, korttitel og link pr. kategori (fx term meta), og om det har et API. At læse pluginets filer kræver projektejerens udtrykkelige tilladelse (Project Isolation, AI-DEVELOPMENT.md); ellers læses kun dets data på Local gennem WordPress.
@@ -707,6 +707,8 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **Navn:** creatorens navn på dashboardet foreslås som kategoriens navn og som korttitel i bannerpluginet.
   - **"Bio" bliver "Beskrivelse"** og synkroniseres til kategoriens beskrivelsesfelt.
   - **Eget banner:** creatoren kan uploade et banner og angive et link på banneret. Fjernes det, vises standardbanneret igen.
+  - **Kategoribillede:** creatoren kan uploade et nyt billede til kategorien (WooCommerce' kategoribillede; projektejerens tilføjelse 2026-10-26).
+  - **Sociale links** synkroniseres med bannerpluginet (projektejerens tilføjelse 2026-10-26). Platformene er Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch: Kick og Twitch er nye, og "Websted" fjernes fra profilens links (i dag `website`, `SocialLinks::PLATFORMS`).
 - **28.3 Godkendelse i admin:**
   - Alle ændringer fra creatoren lægges som forslag på en ny admin-side: nuværende og foreslået værdi side om side, også billeder og link.
   - Administratoren godkender eller afviser hvert forslag. Først ved godkendelse skrives til WooCommerce og bannerpluginet.
@@ -718,7 +720,8 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **Beskrivelse:** ren tekst eller enkel formatering, længde, og hvad der sker med de eksisterende bioer. Skal en ændring foretaget direkte i WooCommerce vises i dashboardet (WooCommerce som kilde)?
   - **Banner:** filtyper, størrelse og mål; hvor uploads ligger, til de er godkendt (ikke offentligt i mediebiblioteket); oprydning af afviste filer.
   - **Link:** kun `https`, og om bestemte domæner er tilladt; administratoren godkender også linket.
-  - **Kategoriens billede:** kun visning, eller kan creatoren også foreslå et nyt?
+  - **Kategoribillede:** samme krav til filtyper, størrelse og opbevaring indtil godkendelse som banneret.
+  - **Sociale links:** hvordan bannerpluginet gemmer dem, og om det understøtter alle syv platforme; om ændrede links også skal godkendes af administratoren; hvad der sker med gemte "Websted"-links (slettes ved opdateringen eller bevares skjult); tilladte domæner pr. platform.
   - **Rettighed:** `merchboard_manage_creators` eller en ny capability til godkendelse; notifikation til administratoren om nye forslag.
   - Hvad der sker uden bannerpluginet aktivt (kun navn og beskrivelse), eller hvis creatoren ikke har nogen kategori.
 
