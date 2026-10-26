@@ -714,7 +714,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - Pluginet opretter og styrer kuponen: admin trykker "Opret rabatkode" på creatorens side og kobler dermed profilen til en kupon i WooCommerce.
     - Rabatten er præcis creatorens fortjeneste pr. vare og gælder **kun creatorens egne produkter**; andre creators' produkter i samme kurv får ingen rabat.
     - Én kode håndterer forskellige fortjenester på forskellige produkter (fx 20 % på en T-shirt og 25 % på en kop), uanset om fortjenesten er creatorens standardprocent eller produktets egen.
-    - "Din rabatkode" i dashboardet får knappen "Nulstil og generér ny rabatkode", hvis koden er vist ved en fejl. En ny kode er creatorens navn + tilfældige tegn (fx `NOVA-7K3Q`), og **den gamle virker ikke længere med det samme**.
+    - "Din rabatkode" i dashboardet får knappen "Nulstil og generér ny rabatkode", hvis koden er vist ved en fejl. En ny kode er creatorens navn + tilfældige tegn (fx `NOVA-7K3Q`; fra trin 28.6 6 tegn), og **den gamle virker ikke længere med det samme**.
     - Nuværende produkter er oprettet af admin med låste priser og fortjenester. Designet skal også kunne håndtere en fremtidig fortjeneste i beløb (creators, der selv opretter produkter og lægger fortjeneste oven i en grundpris).
   - **Afklares i planen:**
     - Hvordan rabatten beregnes i WooCommerce (fx `woocommerce_coupon_get_discount_amount` og `woocommerce_coupon_is_valid_for_product`) med og uden priser inkl. moms, varianter, salgspriser og afrunding, så rabatten svarer til fortjenesten i ledgeren (ADR-049/064).
@@ -722,7 +722,11 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
     - Kuponens øvrige indstillinger (brug pr. kunde, kombination med andre kuponer, udløb) og hvad der sker, hvis nogen retter eller sletter kuponen i WooCommerce.
     - Om "Se som creator" (ADR-075) må nulstille koden; begrænsning af gentagne nulstillinger; audit.
     - Samspillet med udelukkelsen af ordrer (ADR-068) og K2.
-- **28.6 Review, runtime-test og release 1.3.0.**
+- **28.6 Review, runtime-test og release 1.3.0 🔄:**
+  - **Runtime-test på Local (2026-10-26):** rabatkode i kurv og ordre, nulstilling, kategoriforslag over HTTP og bannerpluginets visning er gennemført. Kørslen med før- og efter-status, backup og resultater ligger i `MerchBoard-r2-runtime/runs/2026-10-26-fase28-runtime-1.3.0/` uden for repoet.
+  - **Hændelse:** en rollback omkring et ordre-gem virkede ikke (WooCommerce' HPOS committer), så caileans aktive kode og testordre 704 blev ændret. Repareret efter projektejerens valg: ny kode via admin, og ordren bliver.
+  - **Review:** tre uafhængige reviews. Projektejeren valgte "punkt 1–6", som er rettet og testet automatisk (19a13f8, 916be3c, 7259ee5); se statusnoterne i ADR-077 og ADR-078.
+  - **Udestår:** fuld integrationssuite lokalt, versionsbump til 1.3.0 og release (først når projektejeren beder om det).
 
 ## Senere (uprioriteret)
 

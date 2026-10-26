@@ -8,12 +8,24 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 - **Creatorens kategori (fase 28, ADR-077):** Profile i dashboardet viser creatorens produktkategori, som butikken viser den, og creatoren foreslår navn, beskrivelse, logo, banner og mobilbanner med link og sociale links (Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch) i bannerpluginet CCMerch Kategoribannere. Intet ændres, før en administrator har godkendt det på den nye admin-side "Category proposals" (kø pr. creator, nu og foreslået side om side, godkend, afvis med note, godkend alle; antal ventende i menuen). Billeder venter ikke-offentligt; logoet skal være kvadratisk og skaleres ned til 1000 × 1000 px. Schema-version 32–33.
 
-- **Creatorens rabatkode (fase 28, trin 28.5, ADR-078):** "Opret rabatkode" på creatorens side opretter koden og en WooCommerce-kupon, hvis rabat er præcis creatorens fortjeneste på hvert af creatorens egne produkter (forskellige andele pr. produkt) og intet på andre creators' varer; kan ikke kombineres med andre kuponer. En ny kode gør den gamle ugyldig med det samme. Creatoren kan selv nulstille koden i "Din rabatkode" ("Nulstil og generér ny rabatkode", højst 3 gange pr. døgn; `POST /me/discount-code/reset`).
+- **Creatorens rabatkode (fase 28, trin 28.5, ADR-078):** "Opret rabatkode" på creatorens side opretter koden og en WooCommerce-kupon, hvis rabat er præcis creatorens fortjeneste på hvert af creatorens egne produkter (forskellige andele pr. produkt) og intet på andre creators' varer; kan ikke kombineres med andre kuponer. En ny kode gør den gamle ugyldig med det samme. Creatoren kan selv nulstille koden i "Din rabatkode" ("Nulstil og generér ny rabatkode", højst 3 nye koder inden for 24 timer; `POST /me/discount-code/reset`). Koden er navn + 6 tilfældige tegn.
 
 ### Changed
 
 - **Rabatkoder (fase 28, trin 28.5, ADR-078):** manuel registrering af en eksisterende kupon er fjernet. Koder registreret før 1.3.0 virker som før, indtil en ny kode oprettes.
 - **Profile (fase 28):** "Bio" er blevet til kategoriens beskrivelse, og de sociale links ligger på kategorien. Ved opdateringen bliver creatorernes bioer og links ventende forslag; "Websted" og links uden for platformenes domæner udgår.
+
+### Fixed
+
+- **Review før 1.3.0 (fase 28, trin 28.6):**
+  - "Godkend alle" godkender kun de kategoriforslag, admin har set; et billede, der kom til bagefter, venter.
+  - En godkendelse, der fejler, mister ikke længere det foreslåede billede.
+  - `\` i kategoriens navn og beskrivelse bevares.
+  - Et `http://`-link i kategorien (fra bannerpluginet) gør ikke længere Profile og Overview ugyldige.
+  - Ikke-gemte ændringer i profilformularen bevares efter en upload.
+  - "Genberegn" på en ordre med creatorens kode efter en nulstilling fordeler ikke længere rabatten på andre creators' varer.
+  - En kupon, der ikke kunne flyttes til papirkurven, tolkes ikke længere som gennemført.
+  - Et andet plugins `rest_pre_serve_request`-filter, der returnerer `null`, får ikke længere alle REST-kald til at fejle.
 
 ## [1.2.0] - 2026-10-25
 

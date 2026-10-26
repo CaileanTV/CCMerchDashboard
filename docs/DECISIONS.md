@@ -4213,6 +4213,17 @@ ADR-020, ADR-023, ADR-030, ADR-033, ADR-037, ADR-038, ADR-059, ADR-065, ADR-068,
 ## Status
 Accepteret af projektejeren 2026-10-26 (plan for fase 28 godkendt). **Statusnote 2026-10-26 (trin 28.2):** forslagene, filerne og skrivningen til kategorien er implementeret og testet automatisk (schema-version 32); endnu uden REST, dashboard og admin-side (28.3–28.4). Projektejerens tilføjelse samme dag: kategoribilledet (logoet) skal være kvadratisk og skaleres ned til højst 1000 × 1000 px ved upload. Overførslen af `bio` og `social_links` til forslag (pkt. 7) og fjernelsen af "Websted" fra profilen sker i 28.3 sammen med det nye profil-API, så profilen virker undervejs. **Statusnote 2026-10-26 (trin 28.3):** profil-API'et og Profile i dashboardet er implementeret og testet automatisk; schema-version 33 flytter bio og sociale links til forslag; `CreatorProfileService` og `SocialLinks` er fjernet. Admin-siden til godkendelse følger i 28.4. **Statusnote 2026-10-26 (trin 28.4):** admin-siden "Category proposals" (kø pr. creator, nu og foreslået side om side, godkend, afvis med note og godkend alle) og administratorens visning af foreslåede billeder er implementeret og testet automatisk.
 
+**Statusnote 2026-10-26 (trin 28.6, review og runtime-test på Local):** forslag, uploads, afvisninger, godkendelse og fjernelse via forslag er runtime-testet over HTTP. Bannerpluginet viser det godkendte banner, mobilbanner, link og sociale links, og standardbanneret kommer tilbage efter fjernelse. Rettet efter review (projektejerens valg "punkt 1–6"):
+- "Godkend alle" godkender kun de forslag, siden viste (formularen sender deres id'er). Et forslag, der er kommet til eller erstattet efter visningen, venter. Hvert forslag godkendes for sig.
+- En godkendelse tager forslaget, før kategorien skrives. Den ventende fil slettes først, når godkendelsen er gemt.
+- `\` i navn og beskrivelse bevares.
+- Et link i kategorien, der ikke er https (fx `http://` fra bannerpluginets egne felter), vises som tomt i dashboardet i stedet for at gøre hele profilen ugyldig.
+- Ikke-gemte ændringer i formularen bevares efter upload, fjernelse og tilbagetrækning.
+
+**Kendt begrænsning (pkt. 5):**
+- `.htaccess` virker kun på Apache. På nginx (fx Local) kan en ventende fil hentes direkte, hvis man kender dens tilfældige navn på 32 hex-tegn (128 bit). Mappelisten er spærret.
+- Anbefaling til servere med nginx: `location ^~ /wp-content/uploads/merchboard-proposals/ { deny all; }` (SECURITY.md).
+
 ## Context
 Projektejeren vil give creators mere indflydelse på deres produktkategori i WooCommerce (ROADMAP fase 28): navn, beskrivelse, kategoribillede, banner med link og sociale links. Banner og sociale links gemmes af pluginet **CCMerch Kategoribannere** som term meta på `product_cat` (læst på Local med projektejerens tilladelse 2026-10-26, AI-DEVELOPMENT.md):
 - `ccm_banner_id`, `ccm_banner_mobile_id`, `ccm_banner_link`, `ccm_banner_new_tab`;
@@ -4265,6 +4276,24 @@ ADR-007, ADR-023, ADR-033, ADR-075, ADR-076.
 ## Status
 Accepteret af projektejeren 2026-10-26 (plan for trin 28.5 godkendt). Backend og admin implementeret i trin 28.5.1, creatorens nulstilling (`POST /me/discount-code/reset` og dashboardet) i trin 28.5.2; testet automatisk, ikke runtime-verificeret.
 
+**Statusnote 2026-10-26 (trin 28.6, review og runtime-test på Local med WooCommerce 11.2.1):**
+
+Runtime-verificeret:
+- én kode giver præcis creatorens andel pr. produkt (16,67 % og 25 % i samme kurv), 0 på andre creators' og ejerløse varer, og det gælder med priser både inkl. og ekskl. moms;
+- en kurv med kun andres varer afviser koden;
+- en nulstillet kode afvises med det samme, og den nye virker;
+- en ordre med koden har samme rabat som kurven og er udelukket for creatoren.
+
+Rettet efter review (projektejerens valg "punkt 1–6"):
+- **Genberegning af ordrer:** "Genberegn" på en ordre, hvis kode siden er nulstillet, fik WooCommerce til at genopbygge kuponen som `fixed_cart` fordelt på alle varer, også andre creators'. Det er bekræftet på Local.
+  - Nu beholder en midlertidig (virtuel) kupon af typen sin type (`woocommerce_order_recalculate_coupons_coupon_object`).
+  - I en ordre gælder den registrering, der dækkede ordrens oprettelse, som i udelukkelsen. Det gælder også, efter koden er nulstillet eller afsluttet.
+  - Andelen er den nuværende, ikke ordrens snapshot (kendt begrænsning; andele ændres sjældent).
+- **Papirkurv:** en mislykket flytning til papirkurven tolkes ikke længere som gennemført (`COUPON_NOT_RETIRED`).
+- **Låsen:** creatorens nulstilling kontrollerer igen under låsene, at koden stadig er aktiv, og at grænsen ikke er nået.
+- **Kodeformat (pkt. 1):** den tilfældige del har nu **6 tegn** (fx `NOVA-7K3QXP`; 31⁶ ≈ 887 mio. kombinationer) mod gætning. Koder gemmes og vises med små bogstaver, som WooCommerce bruger dem.
+- **Grænsen (pkt. 4):** højst 3 nye koder inden for de seneste 24 timer (løbende), uanset om admin eller creatoren oprettede dem. Dashboardets tekst siger det nu præcist.
+
 ## Context
 Med ADR-068 skriver admin koden på en eksisterende WooCommerce-kupon på creatorens side. Rabatten er kuponens egen indstilling, og ordrer med koden giver creatoren 0 i fortjeneste (udelukkelse pr. creator). Projektejeren vil (2026-10-26):
 - at rabatten fjerner præcis creatorens fortjeneste på hver vare: forskellige procenter på forskellige produkter (fx 20 % på en T-shirt og 25 % på en kop), både creatorens standardprocent og produktets egen;
@@ -4274,7 +4303,7 @@ Med ADR-068 skriver admin koden på en eksisterende WooCommerce-kupon på creato
 Designet skal kunne bære en fremtidig fortjeneste i beløb (creators, der selv opretter produkter oven på en grundpris). De nuværende produkter har låste priser og procenter.
 
 ## Decision
-1. **Pluginet udsteder koden:** "Opret rabatkode" på creatorens side opretter en kode (creatorens navn + 4 tilfældige tegn uden forvekslelige tegn, fx `NOVA-7K3Q`) og en WooCommerce-kupon til den via WooCommerce CRUD. Kuponen har:
+1. **Pluginet udsteder koden:** "Opret rabatkode" på creatorens side opretter en kode (creatorens navn + 4 tilfældige tegn uden forvekslelige tegn, fx `NOVA-7K3Q`; fra trin 28.6 6 tegn, se statusnoten) og en WooCommerce-kupon til den via WooCommerce CRUD. Kuponen har:
    - rabattypen `merchboard_creator_profit`, beløb 0;
    - individuel brug (kan ikke kombineres med andre kuponer);
    - ingen udløb og ingen grænser;
