@@ -699,7 +699,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 **Mål:** creatoren får mere indflydelse på sin produktkategori i WooCommerce. Profile i dashboardet viser kategoriens opsætning (billede og banner). Creatoren kan foreslå kategoriens navn, beskrivelse, kategoribillede, eget banner med link og sociale links. **Intet skrives til WooCommerce, før en administrator har godkendt ændringen** (risiko for ophavsret). Kræver en ADR: i dag skriver pluginet ikke til kategorierne selv, kun til produkternes kobling (ADR-033).
 
 - **28.1 Analyse og plan:**
-  - **Bannerpluginet:** projektejeren har lagt det i Merch Dashboard Locals plugin-mappe. Det skal afklares, hvordan det gemmer banner, standardbanner, korttitel og link pr. kategori (fx term meta), og om det har et API. At læse pluginets filer kræver projektejerens udtrykkelige tilladelse (Project Isolation, AI-DEVELOPMENT.md); ellers læses kun dets data på Local gennem WordPress.
+  - **Bannerpluginet "CCMerch Kategoribannere"** (`ccmerch-kategoribannere` på Merch Dashboard Local; allerede installeret på staging). Al information om kategoriens banner og sociale links går til det plugin (projektejerens beslutning 2026-10-26). Det skal afklares, hvordan det gemmer banner, standardbanner, korttitel og link pr. kategori (fx term meta), og om det har et API. Projektejeren har 2026-10-26 givet tilladelse til at læse pluginets filer på Local (undtagelse i AI-DEVELOPMENT.md, Project Isolation).
   - Hvordan creatorens kategori findes (kategori-mapping, ADR-033), og hvad der sker med flere kategorier pr. creator.
   - ADR for skrivning til kategorier og bannerpluginet, godkendelsesflowet og uploads.
 - **28.2 Profile viser og foreslår kategoriens opsætning:**
@@ -708,7 +708,12 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **"Bio" bliver "Beskrivelse"** og synkroniseres til kategoriens beskrivelsesfelt.
   - **Eget banner:** creatoren kan uploade et banner og angive et link på banneret. Fjernes det, vises standardbanneret igen.
   - **Kategoribillede:** creatoren kan uploade et nyt billede til kategorien (WooCommerce' kategoribillede; projektejerens tilføjelse 2026-10-26).
-  - **Sociale links** synkroniseres med bannerpluginet (projektejerens tilføjelse 2026-10-26). Platformene er Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch: Kick og Twitch er nye, og "Websted" fjernes fra profilens links (i dag `website`, `SocialLinks::PLATFORMS`).
+  - **Sociale links** synkroniseres med bannerpluginet (projektejerens tilføjelse og beslutninger 2026-10-26):
+    - Platformene er Instagram, TikTok, YouTube, X, Facebook, Kick og Twitch. Kick og Twitch er nye.
+    - Bannerpluginet får felter på produktkategorien: `ccm_social_instagram`, `ccm_social_tiktok`, `ccm_social_youtube`, `ccm_social_x`, `ccm_social_facebook`, `ccm_social_kick` og `ccm_social_twitch`. Kategorisiden viser de udfyldte som ikoner. Felterne laves i bannerpluginet, ikke af Merch Dashboard.
+    - Ændrede links godkendes af en administrator som de andre ændringer.
+    - Hver platform har sine tilladte domæner.
+    - "Websted" fjernes fra profilens links (i dag `website`, `SocialLinks::PLATFORMS`), og gemte "Websted"-links slettes ved opdateringen.
 - **28.3 Godkendelse i admin:**
   - Alle ændringer fra creatoren lægges som forslag på en ny admin-side: nuværende og foreslået værdi side om side, også billeder og link.
   - Administratoren godkender eller afviser hvert forslag. Først ved godkendelse skrives til WooCommerce og bannerpluginet.
@@ -721,7 +726,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **Banner:** filtyper, størrelse og mål; hvor uploads ligger, til de er godkendt (ikke offentligt i mediebiblioteket); oprydning af afviste filer.
   - **Link:** kun `https`, og om bestemte domæner er tilladt; administratoren godkender også linket.
   - **Kategoribillede:** samme krav til filtyper, størrelse og opbevaring indtil godkendelse som banneret.
-  - **Sociale links:** hvordan bannerpluginet gemmer dem, og om det understøtter alle syv platforme; om ændrede links også skal godkendes af administratoren; hvad der sker med gemte "Websted"-links (slettes ved opdateringen eller bevares skjult); tilladte domæner pr. platform.
+  - **Sociale links:** listen over tilladte domæner pr. platform (fx `instagram.com`, `tiktok.com`, `youtube.com` og `youtu.be`, `x.com` og `twitter.com`, `facebook.com`, `kick.com`, `twitch.tv`), og hvad Merch Dashboard gør, før bannerpluginet har `ccm_social_*`-felterne.
   - **Rettighed:** `merchboard_manage_creators` eller en ny capability til godkendelse; notifikation til administratoren om nye forslag.
   - Hvad der sker uden bannerpluginet aktivt (kun navn og beskrivelse), eller hvis creatoren ikke har nogen kategori.
 

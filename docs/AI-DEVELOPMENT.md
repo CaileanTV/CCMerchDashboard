@@ -18,6 +18,8 @@ Alt andet er **off-limits**. Det omfatter andre WordPress-projekter, LocalWP-sit
 
 **Undtagelse (projektejerens tilladelse 2026-10-18, ADR-065):** GitHub-repoet `github.com/CaileanTV/MerchAlert` må **læses** som funktionel reference til integrationen af alerts (fase 25). Det må kun læses via GitHub (`gh api`), ikke klones til eller kopieres ind i andre mapper, og det må ikke ændres. Kode porteres efter projektets egne konventioner og kopieres ikke ukritisk. Undtagelsen gælder ikke en lokal kopi af MerchAlert, andre repos eller MerchAlert-installationer på andre sites.
 
+**Undtagelse (projektejerens tilladelse 2026-10-26, fase 28):** pluginet **CCMerch Kategoribannere** i Merch Dashboard Locals plugin-mappe (`app\public\wp-content\plugins\ccmerch-kategoribannere`) må **læses** som reference til, hvordan kategoribannere, korttitel, link og sociale links gemmes og vises. Kun den mappe; filerne må ikke ændres, kopieres ud eller indgå i dette repo. Merch Dashboard integreres med pluginet gennem dets gemte data (fx term meta), ikke ved at kopiere dets kode. Undtagelsen gælder ikke de øvrige plugins på Local (fx Product Vendors), andre sites eller pluginets installation på staging eller i produktion.
+
 ### Eksterne services og connectors
 
 At en connector eller integration er *tilgængelig* i udviklingsmiljøet (fx MCP-/claude.ai-connectors), betyder **ikke**, at projektet må bruge den. Connectors må hverken bruges, aktiveres eller godkendes på projektets vegne. En ekstern service bliver først en del af projektet, når projektejeren eksplicit har godkendt en konkret integration, og beslutningen er registreret som ADR.
