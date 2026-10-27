@@ -4353,7 +4353,16 @@ ADR-049, ADR-064, ADR-068, ADR-075, ADR-077.
 2026-10-27
 
 ## Status
-Accepteret af projektejeren 2026-10-27 (plan for fase 29 godkendt; udgives som 1.4.0). Ikke implementeret.
+Accepteret af projektejeren 2026-10-27 (plan for fase 29 godkendt; udgives som 1.4.0).
+
+**Statusnote 2026-10-27 (trin 29.2):** kernen er implementeret og testet automatisk:
+- modulet, migration 34, kataloget med 36 typer (27 til creators, 9 til administratoren), admin-valgene, creatorens fravalg, `Notifier` (`merchboard_notify`), afsendelse via Action Scheduler med op til 3 forsøg og `shutdown` uden kø;
+- skabelonen `templates/emails/layout.php` med WooCommerce' farver, logo, skrift, sidefod og afsender;
+- danske oversættelser.
+
+Endnu udløser intet notifikationer (29.5–29.6), og der er ingen admin-side (29.3) og ingen klokke (29.4).
+
+**Afvigelse fra pkt. 4:** `JobQueue`/`ActionSchedulerQueue` er ikke flyttet til Core, fordi det ville ændre 23 filer i Alerts og WooCommerce. Notifikationsmodulet bruger `ActionSchedulerQueue` direkte; den er tilgængelig, når Action Scheduler er indlæst, og ellers sendes mailen ved `shutdown`.
 
 ## Context
 Merch Dashboard giver i dag ingen besked, når noget sker:

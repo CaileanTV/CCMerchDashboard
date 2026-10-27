@@ -4,7 +4,7 @@
 Creators og administratorer får besked, når noget sker, så de ikke selv skal holde øje med dashboardet og køerne. Beskeden kommer som e-mail og, for creators, ved et ikon (klokken) øverst i dashboardet ([ADR-079](../DECISIONS.md), ROADMAP fase 29).
 
 ## Current status
-Planlagt (fase 29, version 1.4.0; plan godkendt 2026-10-27). Ikke implementeret.
+I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) er implementeret og testet automatisk; endnu udløser intet notifikationer, og admin-siden og klokken mangler.
 
 ## User-facing functionality
 - **Klokken:** et lille ikon i dashboardets topbar med en rød boble med antal ulæste (9+ over 9).
@@ -76,7 +76,10 @@ Merch Dashboard → **Notifikationer** (`merchboard_manage_settings`):
 - **Skabeloner:** `templates/emails/` med inline-CSS og tekstversion. Farver, logo, skrift, sidefod og afsender fra WooCommerce' e-mailindstillinger, når WooCommerce er aktivt.
 
 ## Relevant files
-Udfyldes under implementeringen (fase 29).
+- `src/Modules/Notifications/` (`NotificationsModule`, `NotificationTypes` og `Catalog/CreatorTypes`/`AdminTypes`, `NotificationSettings`, `NotificationPreferences`, `Notifier`, `NotificationSender`, `NotificationRepository`, `Email/EmailRenderer`, `Email/EmailStyle`, `Email/Mailer`)
+- `templates/emails/layout.php`
+- `src/Core/Database/Migrations/CreateNotificationsTable.php`
+- `tests/Integration/Notifications/NotificationsTest.php`, `tests/Integration/Support/RecordingMailer.php`
 
 ## Database/data used
 - `merchboard_notifications` (schema-version 34).
@@ -105,7 +108,12 @@ Se [API.md](../API.md), når de er implementeret.
 - WooCommerce' e-mailindstillinger til designet, når WooCommerce er aktivt.
 
 ## Tests
-Udfyldes under implementeringen.
+- `NotificationsTest`:
+  - alle 36 typer renderes med eksempeldata og escaping;
+  - dedupe, administratorens og creatorens valg (vigtige ignorerer fravalg), creator uden bruger og administrator-mails;
+  - afsendelse med forsøg efter 1 og 5 minutter, derefter `failed`; uden kø ved `shutdown`;
+  - klokkens læst-markering, beskæring og oprydning ved sletning af en creator;
+  - admin-valg med audit.
 
 ## Known limitations
 - En creator uden WordPress-bruger får ingen mail.

@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -113,7 +114,7 @@ final class Uninstaller {
 	 * (Modules\Alerts\Legal\YouTubeTerms::META, step 8.5); a test keeps them
 	 * equal, so core does not depend on the modules.
 	 */
-	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize', 'merchboard_youtube_terms_accepted', 'merchboard_impersonating' );
+	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize', 'merchboard_youtube_terms_accepted', 'merchboard_impersonating', 'merchboard_notification_email_off' );
 
 	/**
 	 * Attachment meta keys of the alerts' files: the sounds and images of
@@ -230,6 +231,7 @@ final class Uninstaller {
 		}
 
 		delete_option( AlertApiSwitch::OPTION );
+		delete_option( NotificationSettings::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

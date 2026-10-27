@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-26T21:43:25+00:00\n"
+"PO-Revision-Date: 2026-10-27T17:27:38+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -245,6 +245,7 @@ msgid "Fixed profit removed"
 msgstr "Fast profit fjernet"
 
 #: src/Modules/Admin/AuditLogFormatter.php:91
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:799
 msgid "VAT status changed"
 msgstr "Momsstatus ændret"
 
@@ -281,6 +282,7 @@ msgid "Payout rejected"
 msgstr "Udbetaling afvist"
 
 #: src/Modules/Admin/AuditLogFormatter.php:100
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:322
 msgid "Payout completed"
 msgstr "Udbetaling gennemført"
 
@@ -305,6 +307,7 @@ msgid "Settlement document issued"
 msgstr "Afregningsbilag udstedt"
 
 #: src/Modules/Admin/AuditLogFormatter.php:106
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:434
 msgid "Settlement document corrected"
 msgstr "Afregningsbilag korrigeret"
 
@@ -581,10 +584,12 @@ msgid "Creator proposed a change of their category"
 msgstr "Creator foreslog en ændring af sin kategori"
 
 #: src/Modules/Admin/AuditLogFormatter.php:175
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:522
 msgid "Category proposal approved"
 msgstr "Kategoriforslag godkendt"
 
 #: src/Modules/Admin/AuditLogFormatter.php:176
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:553
 msgid "Category proposal rejected"
 msgstr "Kategoriforslag afvist"
 
@@ -922,6 +927,7 @@ msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
 #: src/Modules/Admin/AuditLogFormatter.php:480
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:142
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:58
 msgid "Sale"
@@ -940,6 +946,7 @@ msgid "Reversal"
 msgstr "Tilbageførsel"
 
 #: src/Modules/Admin/AuditLogFormatter.php:483
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:458
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:58
 msgid "Correction"
@@ -1149,6 +1156,12 @@ msgstr "Hændelse"
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/News/Admin/NewsAdminPage.php:334
+#: src/Modules/Notifications/Catalog/AdminTypes.php:114
+#: src/Modules/Notifications/Catalog/AdminTypes.php:145
+#: src/Modules/Notifications/Catalog/AdminTypes.php:176
+#: src/Modules/Notifications/Catalog/AdminTypes.php:257
+#: src/Modules/Notifications/Catalog/AdminTypes.php:306
+#: src/Modules/Notifications/Catalog/AdminTypes.php:335
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:390
@@ -1585,6 +1598,7 @@ msgstr "Merch Dashboard Alerts"
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:79
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:94
 #: src/Modules/Alerts/Dashboard/AlertsDashboardSection.php:105
+#: src/Modules/Notifications/NotificationTypes.php:69
 #: build/dashboard.js:23
 msgid "Alerts"
 msgstr "Alerts"
@@ -3004,6 +3018,10 @@ msgid "Orders with alerts"
 msgstr "Ordrer med alerts"
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:243
+#: src/Modules/Notifications/Catalog/AdminTypes.php:175
+#: src/Modules/Notifications/Catalog/AdminTypes.php:205
+#: src/Modules/Notifications/Catalog/AdminTypes.php:282
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:186
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
@@ -3458,10 +3476,14 @@ msgid "Product category:"
 msgstr "Produktkategori:"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:220
+#: src/Modules/Notifications/Catalog/AdminTypes.php:146
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:536
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:570
 msgid "Change"
 msgstr "Ændring"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:221
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:778
 msgid "Now"
 msgstr "Nu"
 
@@ -3914,6 +3936,7 @@ msgstr "Merch Dashboard Nyheder"
 #: src/Modules/News/Admin/NewsAdminPage.php:66
 #: src/Modules/News/Admin/NewsAdminPage.php:180
 #: src/Modules/News/NewsDashboardSection.php:43
+#: src/Modules/Notifications/NotificationTypes.php:68
 msgid "News"
 msgstr "Nyheder"
 
@@ -4077,6 +4100,1260 @@ msgstr "Kladde"
 #: src/Modules/News/MeNewsController.php:132
 msgid "The news message was not found."
 msgstr "Nyheden blev ikke fundet."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:85
+msgid "This message was sent by Merch Dashboard."
+msgstr "Denne besked er sendt af Merch Dashboard."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:96
+#: src/Modules/Notifications/Catalog/AdminTypes.php:111
+msgid "New payout request"
+msgstr "Ny udbetalingsanmodning"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:97
+msgid "When a creator requests a payout that must be processed."
+msgstr "Når en creator anmoder om en udbetaling, der skal behandles."
+
+#. translators: 1: creator name, 2: amount.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:107
+#, php-format
+msgid "%1$s requested a payout of %2$s."
+msgstr "%1$s har anmodet om en udbetaling på %2$s."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:110
+#, php-format
+msgid "New payout request from %s"
+msgstr "Ny udbetalingsanmodning fra %s"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:112
+msgid "A creator requested a payout. It waits for you under Payouts."
+msgstr "En creator har anmodet om en udbetaling. Den venter på dig under Udbetalinger."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:115
+#: src/Modules/Notifications/Catalog/AdminTypes.php:336
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:270
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:305
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:344
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:384
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
+#: build/dashboard.js:58
+#: build/dashboard.js:59
+#: build/dashboard.js:69
+msgid "Amount"
+msgstr "Beløb"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:116
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:271
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:345
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
+#: build/dashboard.js:69
+msgid "Method"
+msgstr "Metode"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:118
+#: src/Modules/Notifications/Catalog/AdminTypes.php:283
+#: src/Modules/Notifications/Catalog/AdminTypes.php:338
+msgid "Open Payouts"
+msgstr "Åbn Udbetalinger"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:129
+#: src/Modules/Notifications/Catalog/AdminTypes.php:142
+msgid "New category proposal"
+msgstr "Nyt kategoriforslag"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:130
+msgid "When a creator proposes a change to their category that must be approved."
+msgstr "Når en creator foreslår en ændring af sin kategori, som skal godkendes."
+
+#. translators: 1: creator name, 2: the changed field.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:138
+#, php-format
+msgid "%1$s proposed a new %2$s."
+msgstr "%1$s har foreslået ny %2$s."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:141
+#, php-format
+msgid "New category proposal from %s"
+msgstr "Nyt kategoriforslag fra %s"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:143
+msgid "A creator proposed a change to their category. Nothing changes in the shop until you approve it."
+msgstr "En creator har foreslået en ændring af sin kategori. Intet ændres i butikken, før du godkender den."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:148
+msgid "Open Category proposals"
+msgstr "Åbn Kategoriforslag"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:159
+msgid "Order needs a decision"
+msgstr "Ordre kræver en beslutning"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:160
+msgid "When an order with a creator's own discount code concerns sales that are already settled (open case)."
+msgstr "Når en ordre med en creators egen rabatkode vedrører salg, der allerede er afregnet (åben sag)."
+
+#. translators: 1: order number, 2: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:168
+#, php-format
+msgid "Order #%1$s with %2$s's discount code needs a decision."
+msgstr "Ordre #%1$s med %2$ss rabatkode kræver en beslutning."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:171
+#, php-format
+msgid "Order #%s needs a decision"
+msgstr "Ordre #%s kræver en beslutning"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:172
+msgid "An order needs a decision"
+msgstr "En ordre kræver en beslutning"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:173
+msgid "An order used a creator's own discount code, but the creator's sales in it are already settled. It is an open case until you decide."
+msgstr "En ordre har brugt en creators egen rabatkode, men creatorens salg i den er allerede afregnet. Den er en åben sag, indtil du beslutter."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:178
+#: src/Modules/Notifications/Catalog/AdminTypes.php:208
+msgid "Open Order history"
+msgstr "Åbn Ordrehistorik"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:189
+msgid "Order could not be counted"
+msgstr "Ordre kunne ikke tælles med"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:190
+msgid "When an order could not be added to the creators' sales."
+msgstr "Når en ordre ikke kunne føjes til creatorernes salg."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:198
+#, php-format
+msgid "Order #%s could not be counted in the creators' sales."
+msgstr "Ordre #%s kunne ikke tælles med i creatorernes salg."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:201
+#, php-format
+msgid "Order #%s could not be counted"
+msgstr "Ordre #%s kunne ikke tælles med"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:202
+msgid "An order could not be counted"
+msgstr "En ordre kunne ikke tælles med"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:203
+msgid "An order could not be added to the creators' sales. It is tried again when the order is saved; the log has the details."
+msgstr "En ordre kunne ikke føjes til creatorernes salg. Det prøves igen, når ordren gemmes; loggen har detaljerne."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:206
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:386
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:465
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:463
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:863
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:553
+msgid "Reason"
+msgstr "Begrundelse"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:219
+#: src/Modules/Notifications/Catalog/AdminTypes.php:227
+msgid "Category reconciliation failed"
+msgstr "Kategoriafstemning fejlede"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:220
+msgid "When the automatic linking of products by category gives up after its retries."
+msgstr "Når den automatiske kobling af produkter via kategori giver op efter sine genforsøg."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:224
+msgid "An automatic category reconciliation was given up."
+msgstr "En automatisk kategoriafstemning er opgivet."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:226
+msgid "A category reconciliation failed"
+msgstr "En kategoriafstemning fejlede"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:228
+msgid "Linking products to creators by category failed three times and was given up. Run a full reconciliation under Creators when the cause is fixed; the log has the details."
+msgstr "Koblingen af produkter til creators via kategori fejlede tre gange og er opgivet. Kør en fuld afstemning under Creators, når årsagen er rettet; loggen har detaljerne."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:229
+msgid "Run"
+msgstr "Kørsel"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:230
+#: src/Modules/Notifications/Catalog/AdminTypes.php:307
+msgid "Open Creators"
+msgstr "Åbn Creators"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:241
+msgid "Adjustment failed"
+msgstr "Regulering fejlede"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:242
+msgid "When an adjustment of a creator's earlier settlements could not be carried out."
+msgstr "Når en regulering af en creators tidligere afregninger ikke kunne gennemføres."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:250
+#, php-format
+msgid "An adjustment for %s failed."
+msgstr "En regulering for %s fejlede."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:253
+#, php-format
+msgid "An adjustment for %s failed"
+msgstr "En regulering for %s fejlede"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:254
+msgid "An adjustment failed"
+msgstr "En regulering fejlede"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:255
+msgid "An adjustment of earlier settlements could not be carried out. Nothing was changed for this creator; see the recalculation for the reason."
+msgstr "En regulering af tidligere afregninger kunne ikke gennemføres. Intet er ændret for denne creator; se genberegningen for årsagen."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:258
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:501
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:467
+msgid "Reference"
+msgstr "Reference"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:260
+msgid "Open Recalculations"
+msgstr "Åbn Genberegninger"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:271
+msgid "Payout gift card refused as a coupon"
+msgstr "Udbetalingsgavekort afvist som kupon"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:272
+msgid "When a gift card from a payout is refused as a coupon on an order in wp-admin or the REST API."
+msgstr "Når et gavekort fra en udbetaling afvises som kupon på en ordre i wp-admin eller REST API'et."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:277
+#, php-format
+msgid "A payout gift card was refused as a coupon on order #%s."
+msgstr "Et udbetalingsgavekort blev afvist som kupon på ordre #%s."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:279
+msgid "A payout gift card was refused as a coupon"
+msgstr "Et udbetalingsgavekort blev afvist som kupon"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:280
+msgid "Gift card refused as a coupon"
+msgstr "Gavekort afvist som kupon"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:281
+msgid "Someone tried to use a gift card from a creator payout as a coupon on an order, and it was refused. The log has the details."
+msgstr "Nogen forsøgte at bruge et gavekort fra en creator-udbetaling som kupon på en ordre, og det blev afvist. Loggen har detaljerne."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:294
+msgid "Creator reset their discount code"
+msgstr "Creator har nulstillet sin rabatkode"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:295
+msgid "When a creator replaces their own discount code in the dashboard."
+msgstr "Når en creator udskifter sin egen rabatkode i dashboardet."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:300
+#, php-format
+msgid "%s reset their discount code."
+msgstr "%s har nulstillet sin rabatkode."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:303
+#, php-format
+msgid "%s reset their discount code"
+msgstr "%s har nulstillet sin rabatkode"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:304
+msgid "A discount code was reset"
+msgstr "En rabatkode er nulstillet"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:305
+msgid "A creator replaced their own discount code. The old code no longer works."
+msgstr "En creator har udskiftet sin egen rabatkode. Den gamle kode virker ikke længere."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:318
+msgid "Creator cancelled a payout request"
+msgstr "Creator har annulleret en udbetalingsanmodning"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:319
+msgid "When a creator cancels a payout request before it is processed."
+msgstr "Når en creator annullerer en udbetalingsanmodning, før den er behandlet."
+
+#. translators: 1: creator name, 2: amount.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:328
+#, php-format
+msgid "%1$s cancelled a payout request of %2$s."
+msgstr "%1$s har annulleret en udbetalingsanmodning på %2$s."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:331
+#, php-format
+msgid "%s cancelled a payout request"
+msgstr "%s har annulleret en udbetalingsanmodning"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:332
+msgid "A payout request was cancelled"
+msgstr "En udbetalingsanmodning er annulleret"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:333
+msgid "A creator cancelled a payout request. It is no longer waiting for you."
+msgstr "En creator har annulleret en udbetalingsanmodning. Den venter ikke længere på dig."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:94
+msgid "Thank you for creating with us."
+msgstr "Tak, fordi du skaber med os."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:104
+msgid "New sale"
+msgstr "Nyt salg"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:105
+msgid "When an order with the creator's products is paid; one per order."
+msgstr "Når en ordre med creatorens produkter er betalt; én pr. ordre."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:130
+#, php-format
+msgid "New sale in order #%s."
+msgstr "Nyt salg i ordre #%s."
+
+#. translators: 1: order number, 2: the creator's profit.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:132
+#, php-format
+msgid "New sale in order #%1$s: your profit is %2$s."
+msgstr "Nyt salg i ordre #%1$s: din fortjeneste er %2$s."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:135
+#, php-format
+msgid "New sale: order #%s"
+msgstr "Nyt salg: ordre #%s"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:136
+msgid "You made a sale"
+msgstr "Du har solgt noget"
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:138
+#, php-format
+msgid "Your products were sold in order #%s. Here is what was bought:"
+msgstr "Dine produkter er solgt i ordre #%s. Her er, hvad der blev købt:"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:143
+msgid "Your profit"
+msgstr "Din fortjeneste"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:149
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:776
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
+#: build/dashboard.js:52
+#: build/dashboard.js:65
+#: build/dashboard.js:69
+msgid "Product"
+msgstr "Produkt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:149
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
+#: build/dashboard.js:52
+msgid "Quantity"
+msgstr "Antal"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:149
+#: build/dashboard.js:69
+msgid "Price"
+msgstr "Pris"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:153
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:191
+msgid "See your sales"
+msgstr "Se dit salg"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:167
+msgid "Sale refunded or cancelled"
+msgstr "Salg refunderet eller annulleret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:168
+msgid "When an order with the creator's products is refunded, cancelled or changed after the sale."
+msgstr "Når en ordre med creatorens produkter refunderes, annulleres eller ændres efter salget."
+
+#. translators: 1: order number, 2: changed amount (negative).
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:179
+#, php-format
+msgid "Order #%1$s was refunded or changed: %2$s."
+msgstr "Ordre #%1$s er refunderet eller ændret: %2$s."
+
+#. translators: %s: order number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:182
+#, php-format
+msgid "Order #%s was refunded or changed"
+msgstr "Ordre #%s er refunderet eller ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:183
+msgid "A sale was changed"
+msgstr "Et salg er ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:184
+msgid "An order with your products was refunded, cancelled or changed. Your sales and profit are updated."
+msgstr "En ordre med dine produkter er refunderet, annulleret eller ændret. Dit salg og din fortjeneste er opdateret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:187
+msgid "Change in sales"
+msgstr "Ændring i salg"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:205
+msgid "Balance ready for payout"
+msgstr "Saldo klar til udbetaling"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:206
+msgid "Once a day, when more of the creator's profit can be paid out."
+msgstr "Én gang om dagen, når mere af creatorens fortjeneste kan udbetales."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:216
+#, php-format
+msgid "%s is ready to be paid out."
+msgstr "%s er klar til udbetaling."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:219
+#, php-format
+msgid "%s is ready to be paid out"
+msgstr "%s er klar til udbetaling"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:220
+msgid "Your balance is ready"
+msgstr "Din saldo er klar"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:221
+msgid "More of your profit has passed the holding period and can now be paid out. You can request a payout in your dashboard."
+msgstr "Mere af din fortjeneste har passeret tilbageholdelsesperioden og kan nu udbetales. Du kan anmode om en udbetaling i dit dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:222
+msgid "Ready for payout"
+msgstr "Klar til udbetaling"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:225
+#: build/dashboard.js:58
+msgid "Request a payout"
+msgstr "Anmod om udbetaling"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:239
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:1002
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
+#: build/dashboard.js:56
+msgid "PayPal"
+msgstr "PayPal"
+
+#. translators: 1: gift card plugin, 2: the card's id in it.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:240
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:1003
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1245
+#: build/dashboard.js:56
+msgid "Gift card"
+msgstr "Gavekort"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:241
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:1001
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
+#: build/dashboard.js:56
+msgid "Bank transfer"
+msgstr "Bankoverførsel"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:252
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:267
+msgid "Payout request received"
+msgstr "Udbetalingsanmodning modtaget"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:253
+msgid "When the creator requests a payout."
+msgstr "Når creatoren anmoder om en udbetaling."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:264
+#, php-format
+msgid "We received your payout request of %s."
+msgstr "Vi har modtaget din udbetalingsanmodning på %s."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:266
+msgid "We received your payout request"
+msgstr "Vi har modtaget din udbetalingsanmodning"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:268
+msgid "Thank you. We will process your request and let you know when the money is on its way."
+msgstr "Tak. Vi behandler din anmodning og giver besked, når pengene er på vej."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:275
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:308
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:353
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:387
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:466
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:508
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:817
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:849
+msgid "See your payouts"
+msgstr "Se dine udbetalinger"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:289
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:303
+msgid "Payout request cancelled"
+msgstr "Udbetalingsanmodning annulleret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:290
+msgid "When the creator cancels a payout request."
+msgstr "Når creatoren annullerer en udbetalingsanmodning."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:300
+#, php-format
+msgid "Your payout request of %s was cancelled."
+msgstr "Din udbetalingsanmodning på %s er annulleret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:302
+msgid "Your payout request was cancelled"
+msgstr "Din udbetalingsanmodning er annulleret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:304
+msgid "Your payout request was cancelled. The amount is part of your balance again."
+msgstr "Din udbetalingsanmodning er annulleret. Beløbet er igen en del af din saldo."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:323
+msgid "When an administrator completes a payout; the settlement document is issued at the same time."
+msgstr "Når en administrator gennemfører en udbetaling; afregningsbilaget udstedes samtidig."
+
+#. translators: 1: amount, 2: settlement document number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:335
+#, php-format
+msgid "Your payout of %1$s is on its way. Settlement document %2$s is ready."
+msgstr "Din udbetaling på %1$s er på vej. Afregningsbilag %2$s er klar."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:338
+#, php-format
+msgid "Your payout of %s is on its way"
+msgstr "Din udbetaling på %s er på vej"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:339
+msgid "Your payout is on its way"
+msgstr "Din udbetaling er på vej"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:340
+msgid "We have paid out your profit. Your settlement document is ready in your dashboard."
+msgstr "Vi har udbetalt din fortjeneste. Dit afregningsbilag er klar i dit dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:346
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:615
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:636
+msgid "Settlement document"
+msgstr "Afregningsbilag"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:367
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:382
+msgid "Payout request rejected"
+msgstr "Udbetalingsanmodning afvist"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:368
+msgid "When an administrator rejects a payout request, with the reason."
+msgstr "Når en administrator afviser en udbetalingsanmodning, med begrundelsen."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:379
+#, php-format
+msgid "Your payout request of %s was rejected."
+msgstr "Din udbetalingsanmodning på %s er afvist."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:381
+msgid "Your payout request was rejected"
+msgstr "Din udbetalingsanmodning er afvist"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:383
+msgid "We could not complete your payout request. The amount is part of your balance again, and you can request a new payout."
+msgstr "Vi kunne ikke gennemføre din udbetalingsanmodning. Beløbet er igen en del af din saldo, og du kan anmode om en ny udbetaling."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:401
+msgid "Gift card ready"
+msgstr "Gavekort klar"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:402
+msgid "When an administrator registers the gift card of a payout. The code is never in the e-mail."
+msgstr "Når en administrator registrerer gavekortet til en udbetaling. Koden står aldrig i mailen."
+
+#. translators: %s: amount.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:412
+#, php-format
+msgid "Your gift card of %s is ready. See the code under Payouts."
+msgstr "Dit gavekort på %s er klar. Se koden under Udbetalinger."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:414
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:415
+msgid "Your gift card is ready"
+msgstr "Dit gavekort er klar"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:416
+msgid "Your payout as a gift card is ready. For your security, the code is only shown in your dashboard."
+msgstr "Din udbetaling som gavekort er klar. Af hensyn til din sikkerhed vises koden kun i dit dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:417
+#: build/dashboard.js:55
+msgid "Value"
+msgstr "Værdi"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:420
+msgid "See your gift card"
+msgstr "Se dit gavekort"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:435
+msgid "When an administrator issues a correction of a settlement document."
+msgstr "Når en administrator udsteder en rettelse af et afregningsbilag."
+
+#. translators: 1: document number, 2: correction number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:448
+#, php-format
+msgid "Settlement document %1$s was corrected (%2$s)."
+msgstr "Afregningsbilag %1$s er rettet (%2$s)."
+
+#. translators: %s: document number.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:451
+#, php-format
+msgid "Settlement document %s was corrected"
+msgstr "Afregningsbilag %s er rettet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:452
+msgid "A settlement document was corrected"
+msgstr "Et afregningsbilag er rettet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:453
+msgid "We issued a correction of one of your settlement documents. You can see both in your dashboard."
+msgstr "Vi har udstedt en rettelse af et af dine afregningsbilag. Du kan se begge i dit dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:457
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
+msgid "Document"
+msgstr "Bilag"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:459
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
+#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
+#: build/dashboard.js:59
+msgid "Difference"
+msgstr "Forskel"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:480
+msgid "Earlier settlement adjusted"
+msgstr "Tidligere afregning reguleret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:481
+msgid "When an administrator adjusts earlier settlements; the amount is settled with the next payout."
+msgstr "Når en administrator regulerer tidligere afregninger; beløbet afregnes med næste udbetaling."
+
+#. translators: %s: amount (positive or negative).
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:492
+#, php-format
+msgid "An earlier settlement was adjusted by %s."
+msgstr "En tidligere afregning er reguleret med %s."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:494
+msgid "An earlier settlement was adjusted"
+msgstr "En tidligere afregning er reguleret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:495
+msgid "Settlement adjusted"
+msgstr "Afregning reguleret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:496
+msgid "We recalculated earlier settlements. The adjustment is settled with your next payout."
+msgstr "Vi har genberegnet tidligere afregninger. Reguleringen afregnes med din næste udbetaling."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:500
+msgid "Adjustment"
+msgstr "Regulering"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:523
+msgid "When an administrator approves a change the creator proposed for their category."
+msgstr "Når en administrator godkender en ændring, creatoren har foreslået for sin kategori."
+
+#. translators: %s: the changed field, e.g. "Banner".
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:530
+#, php-format
+msgid "Your proposal for %s was approved and is now in the shop."
+msgstr "Dit forslag til %s er godkendt og vises nu i butikken."
+
+#. translators: %s: the changed field.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:533
+#, php-format
+msgid "Your proposal for %s was approved"
+msgstr "Dit forslag til %s er godkendt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:534
+msgid "Your proposal was approved"
+msgstr "Dit forslag er godkendt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:535
+msgid "Your change is approved and now shown in the shop."
+msgstr "Din ændring er godkendt og vises nu i butikken."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:539
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:573
+msgid "See your profile"
+msgstr "Se din profil"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:554
+msgid "When an administrator rejects a proposed change, with the note."
+msgstr "Når en administrator afviser en foreslået ændring, med noten."
+
+#. translators: %s: the changed field.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:564
+#, php-format
+msgid "Your proposal for %s was not approved."
+msgstr "Dit forslag til %s er ikke godkendt."
+
+#. translators: %s: the changed field.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:567
+#, php-format
+msgid "Your proposal for %s was not approved"
+msgstr "Dit forslag til %s er ikke godkendt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:568
+msgid "Your proposal was not approved"
+msgstr "Dit forslag er ikke godkendt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:569
+msgid "Your change was not approved, so nothing changed in the shop. You are welcome to propose it again."
+msgstr "Din ændring er ikke godkendt, så intet er ændret i butikken. Du er velkommen til at foreslå den igen."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:572
+msgid "Note from us"
+msgstr "Note fra os"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:587
+msgid "Discount code created"
+msgstr "Rabatkode oprettet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:588
+msgid "When an administrator creates the creator's first discount code. The code is never in the e-mail."
+msgstr "Når en administrator opretter creatorens første rabatkode. Koden står aldrig i mailen."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:594
+msgid "Your own discount code is ready. See it under Profile."
+msgstr "Din egen rabatkode er klar. Se den under Profil."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:596
+msgid "Your own discount code is ready"
+msgstr "Din egen rabatkode er klar"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:597
+msgid "Your discount code is ready"
+msgstr "Din rabatkode er klar"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:599
+msgid "With your own discount code you can buy your own merchandise without paying for your profit."
+msgstr "Med din egen rabatkode kan du købe dit eget merchandise uden at betale for din fortjeneste."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:600
+msgid "For your security, the code is only shown in your dashboard. Orders with your own code do not count in your sales and profit."
+msgstr "Af hensyn til din sikkerhed vises koden kun i dit dashboard. Ordrer med din egen kode tæller ikke med i dit salg og din fortjeneste."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:605
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:637
+msgid "See your discount code"
+msgstr "Se din rabatkode"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:619
+msgid "Discount code reset"
+msgstr "Rabatkode nulstillet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:620
+msgid "When the creator's discount code is replaced by a new one (security message)."
+msgstr "Når creatorens rabatkode udskiftes med en ny (sikkerhedsbesked)."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:626
+msgid "Your discount code was reset. The old code no longer works."
+msgstr "Din rabatkode er nulstillet. Den gamle kode virker ikke længere."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:628
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:629
+msgid "Your discount code was reset"
+msgstr "Din rabatkode er nulstillet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:631
+msgid "Your discount code was replaced by a new one, and the old code no longer works. You can see the new code in your dashboard."
+msgstr "Din rabatkode er udskiftet med en ny, og den gamle kode virker ikke længere. Du kan se den nye kode i dit dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:632
+msgid "If you did not ask for this, please contact us."
+msgstr "Hvis det ikke var dig, så kontakt os venligst."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:651
+msgid "Discount code ended"
+msgstr "Rabatkode afsluttet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:652
+msgid "When an administrator ends the creator's discount code."
+msgstr "Når en administrator afslutter creatorens rabatkode."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:658
+msgid "Your discount code was ended and no longer works."
+msgstr "Din rabatkode er afsluttet og virker ikke længere."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:660
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:661
+msgid "Your discount code was ended"
+msgstr "Din rabatkode er afsluttet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:662
+msgid "Your discount code no longer works. Please contact us if you need a new one."
+msgstr "Din rabatkode virker ikke længere. Kontakt os, hvis du har brug for en ny."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:666
+msgid "Go to your dashboard"
+msgstr "Gå til dit dashboard"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:680
+msgid "Welcome"
+msgstr "Velkommen"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:681
+msgid "When a creator is created with a user, or a user is linked to a creator."
+msgstr "Når en creator oprettes med en bruger, eller en bruger tilknyttes en creator."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:687
+msgid "Welcome to Merch Dashboard."
+msgstr "Velkommen til Merch Dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:689
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:690
+msgid "Welcome to Merch Dashboard"
+msgstr "Velkommen til Merch Dashboard"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:692
+msgid "Your creator account is ready. In your dashboard you follow your sales and profit, request payouts and keep your profile up to date."
+msgstr "Din creator-konto er klar. I dit dashboard følger du dit salg og din fortjeneste, anmoder om udbetalinger og holder din profil opdateret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:693
+msgid "Log in with your usual user name and password."
+msgstr "Log ind med dit sædvanlige brugernavn og din adgangskode."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:698
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:728
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:910
+msgid "Open your dashboard"
+msgstr "Åbn dit dashboard"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:700
+msgid "We look forward to working with you."
+msgstr "Vi glæder os til samarbejdet."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:712
+msgid "Account deactivated or activated"
+msgstr "Konto deaktiveret eller aktiveret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:713
+msgid "When an administrator deactivates the creator or activates them again."
+msgstr "Når en administrator deaktiverer creatoren eller aktiverer den igen."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:719
+msgid "Your creator account is active again."
+msgstr "Din creator-konto er aktiv igen."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:719
+msgid "Your creator account was deactivated."
+msgstr "Din creator-konto er deaktiveret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:722
+msgid "Your creator account is active again"
+msgstr "Din creator-konto er aktiv igen"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:723
+msgid "Your account is active again"
+msgstr "Din konto er aktiv igen"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:724
+msgid "Your creator account is active again, and you can use your dashboard as before."
+msgstr "Din creator-konto er aktiv igen, og du kan bruge dit dashboard som før."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:733
+msgid "Your creator account was deactivated"
+msgstr "Din creator-konto er deaktiveret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:734
+msgid "Your account was deactivated"
+msgstr "Din konto er deaktiveret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:735
+msgid "Your creator account was deactivated, so your dashboard is not available for now. Please contact us if you have questions."
+msgstr "Din creator-konto er deaktiveret, så dit dashboard er ikke tilgængeligt lige nu. Kontakt os, hvis du har spørgsmål."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:753
+msgid "Profit changed"
+msgstr "Fortjeneste ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:754
+msgid "When an administrator changes the creator's profit, by default or for a product."
+msgstr "Når en administrator ændrer creatorens fortjeneste, som standard eller for et produkt."
+
+#. translators: 1: previous profit, 2: new profit.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:766
+#, php-format
+msgid "Your profit was changed from %1$s to %2$s."
+msgstr "Din fortjeneste er ændret fra %1$s til %2$s."
+
+#. translators: 1: product, 2: previous profit, 3: new profit.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:768
+#, php-format
+msgid "Your profit on %1$s was changed from %2$s to %3$s."
+msgstr "Din fortjeneste på %1$s er ændret fra %2$s til %3$s."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:770
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:771
+msgid "Your profit was changed"
+msgstr "Din fortjeneste er ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:772
+msgid "The change applies to sales from now on. Earlier sales keep their profit."
+msgstr "Ændringen gælder salg fra nu af. Tidligere salg beholder deres fortjeneste."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:776
+msgid "All your products (your standard)"
+msgstr "Alle dine produkter (din standard)"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:777
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
+#: build/dashboard.js:59
+msgid "Before"
+msgstr "Før"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:785
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:881
+msgid "See your products"
+msgstr "Se dine produkter"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:800
+msgid "When an administrator changes whether the creator is VAT registered."
+msgstr "Når en administrator ændrer, om creatoren er momsregistreret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:806
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:811
+msgid "You are now registered as VAT registered."
+msgstr "Du er nu registreret som momsregistreret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:806
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:811
+msgid "You are no longer registered as VAT registered."
+msgstr "Du er ikke længere registreret som momsregistreret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:808
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:809
+msgid "Your VAT status was changed"
+msgstr "Din momsstatus er ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:812
+msgid "This affects your payouts for sales from now on. Earlier sales are not changed."
+msgstr "Det påvirker dine udbetalinger for salg fra nu af. Tidligere salg ændres ikke."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:831
+msgid "Billing details changed"
+msgstr "Stamdata ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:832
+msgid "When an administrator changes the details shown on the creator's settlement documents."
+msgstr "Når en administrator ændrer oplysningerne på creatorens afregningsbilag."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:838
+msgid "The details on your settlement documents were changed."
+msgstr "Oplysningerne på dine afregningsbilag er ændret."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:840
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:841
+msgid "Your billing details were changed"
+msgstr "Dine stamdata er ændret"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:843
+msgid "The details shown on your settlement documents (name, address and registration numbers) were changed. They are used on documents from now on."
+msgstr "Oplysningerne på dine afregningsbilag (navn, adresse og registreringsnumre) er ændret. De bruges på bilag fra nu af."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:844
+msgid "If something is wrong, please contact us."
+msgstr "Hvis noget er forkert, så kontakt os venligst."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:863
+msgid "New product in your shop"
+msgstr "Nyt produkt i din butik"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:864
+msgid "When a product is linked to the creator."
+msgstr "Når et produkt kobles til creatoren."
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:871
+#, php-format
+msgid "%s is now one of your products."
+msgstr "%s er nu et af dine produkter."
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:874
+#, php-format
+msgid "New product: %s"
+msgstr "Nyt produkt: %s"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:875
+msgid "A new product in your shop"
+msgstr "Et nyt produkt i din butik"
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:877
+#, php-format
+msgid "%s is now one of your products, and its sales count as yours."
+msgstr "%s er nu et af dine produkter, og salget tæller som dit."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:895
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:904
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:905
+msgid "An administrator viewed your dashboard"
+msgstr "En administrator har set dit dashboard"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:896
+msgid "When an administrator starts \"View as creator\" for the creator."
+msgstr "Når en administrator starter \"Se som creator\" for creatoren."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:902
+msgid "An administrator viewed your dashboard, e.g. to help you."
+msgstr "En administrator har set dit dashboard, fx for at hjælpe dig."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:906
+msgid "An administrator opened your dashboard as you see it, for example to help you. Changes made there are logged."
+msgstr "En administrator har åbnet dit dashboard, som du ser det, for eksempel for at hjælpe dig. Ændringer foretaget der bliver logget."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:924
+msgid "News from Merch Dashboard"
+msgstr "Nyheder fra Merch Dashboard"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:925
+msgid "When an administrator publishes news."
+msgstr "Når en administrator udgiver en nyhed."
+
+#. translators: %s: news title.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:932
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:935
+#, php-format
+msgid "News: %s"
+msgstr "Nyhed: %s"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:937
+msgid "There is news from Merch Dashboard. Read it in your dashboard."
+msgstr "Der er nyt fra Merch Dashboard. Læs det i dit dashboard."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:941
+msgid "Read the news"
+msgstr "Læs nyheden"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:955
+msgid "Chatbot lost access"
+msgstr "Chatbot mistede adgang"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:956
+msgid "When a platform refuses the chatbot's access to the creator's channel; once until it is connected again."
+msgstr "Når en platform afviser chatbottens adgang til creatorens kanal; én gang, indtil den er forbundet igen."
+
+#. translators: %s: platform, e.g. Twitch.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:963
+#, php-format
+msgid "The chatbot lost access to your %s channel. Connect it again under Alerts."
+msgstr "Chatbotten har mistet adgangen til din %s-kanal. Forbind den igen under Alerts."
+
+#. translators: %s: platform.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:966
+#, php-format
+msgid "The chatbot lost access to your %s channel"
+msgstr "Chatbotten har mistet adgangen til din %s-kanal"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:967
+msgid "Your chatbot needs to be connected again"
+msgstr "Din chatbot skal forbindes igen"
+
+#. translators: %s: platform.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:969
+#, php-format
+msgid "%s no longer lets the chatbot write in your channel, so purchases are not announced in your chat. Connect the channel again under Alerts."
+msgstr "%s lader ikke længere chatbotten skrive i din kanal, så køb bliver ikke annonceret i din chat. Forbind kanalen igen under Alerts."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:973
+msgid "Connect again"
+msgstr "Forbind igen"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:987
+msgid "Webhook paused"
+msgstr "Webhook sat på pause"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:988
+msgid "When one of the creator's webhooks is paused after 10 failed deliveries in a row."
+msgstr "Når en af creatorens webhooks sættes på pause efter 10 fejlede leveringer i træk."
+
+#. translators: %s: webhook name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:995
+#, php-format
+msgid "Your webhook \"%s\" was paused after 10 failed deliveries."
+msgstr "Din webhook \"%s\" er sat på pause efter 10 fejlede leveringer."
+
+#. translators: %s: webhook name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:998
+#, php-format
+msgid "Your webhook \"%s\" was paused"
+msgstr "Din webhook \"%s\" er sat på pause"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:999
+msgid "Your webhook was paused"
+msgstr "Din webhook er sat på pause"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1000
+msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
+msgstr "De seneste 10 leveringer til din webhook fejlede, så vi har sat den på pause. Tjek modtageren, og genoptag derefter webhooken under Alerts."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1001
+msgid "Webhook"
+msgstr "Webhook"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1004
+msgid "See your webhooks"
+msgstr "Se dine webhooks"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1018
+msgid "New YouTube terms"
+msgstr "Nye YouTube-vilkår"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
+msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
+msgstr "Når en administrator fornyer YouTube-chatbottens vilkår, som alle creators skal acceptere igen."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1025
+msgid "Please accept the new terms of the YouTube chatbot under Alerts."
+msgstr "Acceptér venligst YouTube-chatbottens nye vilkår under Alerts."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1027
+msgid "Please accept the new YouTube terms"
+msgstr "Acceptér venligst de nye YouTube-vilkår"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1028
+msgid "New terms for the YouTube chatbot"
+msgstr "Nye vilkår for YouTube-chatbotten"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1029
+msgid "The terms of the YouTube chatbot were updated. Until you accept them, the chatbot does not write in your YouTube chat."
+msgstr "YouTube-chatbottens vilkår er opdateret. Indtil du accepterer dem, skriver chatbotten ikke i din YouTube-chat."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1033
+msgid "Read and accept"
+msgstr "Læs og acceptér"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1047
+msgid "API key created or revoked"
+msgstr "API-nøgle oprettet eller tilbagekaldt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1048
+msgid "When an API key is created for the creator, or an administrator revokes their keys (security message)."
+msgstr "Når der oprettes en API-nøgle til creatoren, eller en administrator tilbagekalder creatorens nøgler (sikkerhedsbesked)."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1058
+msgid "An administrator revoked your API keys."
+msgstr "En administrator har tilbagekaldt dine API-nøgler."
+
+#. translators: %s: key name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1060
+#, php-format
+msgid "A new API key \"%s\" was created."
+msgstr "En ny API-nøgle \"%s\" er oprettet."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1063
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1064
+msgid "Your API keys were revoked"
+msgstr "Dine API-nøgler er tilbagekaldt"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1065
+msgid "An administrator revoked your API keys, so they no longer work. Please contact us if you have questions."
+msgstr "En administrator har tilbagekaldt dine API-nøgler, så de virker ikke længere. Kontakt os, hvis du har spørgsmål."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1069
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1083
+msgid "See your API keys"
+msgstr "Se dine API-nøgler"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1074
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1075
+msgid "A new API key was created"
+msgstr "En ny API-nøgle er oprettet"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1077
+msgid "A new API key was created for your account."
+msgstr "Der er oprettet en ny API-nøgle til din konto."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1078
+msgid "If you did not create it, revoke it under Alerts and contact us."
+msgstr "Hvis du ikke selv har oprettet den, så tilbagekald den under Alerts, og kontakt os."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1080
+msgid "Key"
+msgstr "Nøgle"
+
+#. translators: %s: recipient's name.
+#: src/Modules/Notifications/Email/EmailRenderer.php:113
+#, php-format
+msgid "Hi %s,"
+msgstr "Hej %s,"
+
+#: src/Modules/Notifications/NotificationTypes.php:63
+#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:78
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:50
+msgid "Sales"
+msgstr "Salg"
+
+#: src/Modules/Notifications/NotificationTypes.php:64
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:90
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:143
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:225
+#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
+msgid "Payouts"
+msgstr "Udbetalinger"
+
+#: src/Modules/Notifications/NotificationTypes.php:65
+msgid "Profile and category"
+msgstr "Profil og kategori"
+
+#: src/Modules/Notifications/NotificationTypes.php:66
+#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:102
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+msgid "Discount code"
+msgstr "Rabatkode"
+
+#: src/Modules/Notifications/NotificationTypes.php:67
+msgid "Account and prices"
+msgstr "Konto og priser"
+
+#: src/Modules/Notifications/NotificationTypes.php:70
+msgid "To the administrator"
+msgstr "Til administratoren"
 
 #: src/Modules/Settings/Admin/SettingsActions.php:130
 #: src/Modules/Settings/Admin/SettingsPage.php:183
@@ -4357,19 +5634,6 @@ msgstr "Intet kræver opmærksomhed."
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:206
 msgid "The reconciliation does not decide these products. Fix them in WooCommerce (product categories) or on the creator's page (manual link, mapping, status). Nothing here is changed automatically."
 msgstr "Afstemningen afgør ikke disse produkter. Ret dem i WooCommerce (produktkategorier) eller på creatorens side (manuel tilknytning, mapping, status). Intet her ændres automatisk."
-
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
-#: build/dashboard.js:52
-#: build/dashboard.js:65
-#: build/dashboard.js:69
-msgid "Product"
-msgstr "Produkt"
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:230
 msgid "Why"
@@ -4787,11 +6051,6 @@ msgstr "Kuponens rabat er ikke creatorens fortjeneste: den blev registreret manu
 msgid "The code now belongs to another WooCommerce coupon than the registered one."
 msgstr "Koden tilhører nu en anden WooCommerce-kupon end den registrerede."
 
-#: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:102
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
-msgid "Discount code"
-msgstr "Rabatkode"
-
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:103
 msgid "The creator's own WooCommerce coupon, which lets the creator buy their own merchandise without paying for their profit. Merch Dashboard creates it: its discount is exactly the creator's profit on each of their own products (the creator's or the product's own share), and nothing on other creators' products. It cannot be combined with other coupons. In an order that uses it, the creator's own products do not count in the creator's sales, profit or payouts, whoever placed the order. A code applies to orders created from its creation on; earlier orders are never changed. The creator can reset the code in the dashboard."
 msgstr "Creatorens egen WooCommerce-kupon, så creatoren kan købe sit eget merchandise uden at betale for sin fortjeneste. Merch Dashboard opretter den: rabatten er præcis creatorens fortjeneste på hvert af creatorens egne produkter (creatorens eller produktets egen andel) og intet på andre creators' produkter. Den kan ikke kombineres med andre kuponer. I en ordre, der bruger den, tæller creatorens egne produkter ikke med i creatorens salg, fortjeneste eller udbetalinger, uanset hvem der har bestilt. En kode gælder for ordrer oprettet fra oprettelsen; tidligere ordrer ændres aldrig. Creatoren kan nulstille koden i dashboardet."
@@ -5032,15 +6291,6 @@ msgstr "Kontrolleret"
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Documentation reference"
 msgstr "Dokumentationsreference"
-
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:463
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:863
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:553
-msgid "Reason"
-msgstr "Begrundelse"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:199
 msgid "Register VAT status"
@@ -5358,11 +6608,6 @@ msgstr "Tilknyttet %s"
 msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"
 
-#: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:78
-#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:50
-msgid "Sales"
-msgstr "Salg"
-
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:91
 msgid "The sales could not be loaded. Try again later; details are in the log."
 msgstr "Salget kunne ikke indlæses. Prøv igen senere; detaljerne står i loggen."
@@ -5655,12 +6900,6 @@ msgstr "Ledger-hændelser"
 #: build/dashboard.js:52
 msgid "Date"
 msgstr "Dato"
-
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
-#: build/dashboard.js:52
-msgid "Quantity"
-msgstr "Antal"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
 msgid "Stored tax"
@@ -6037,11 +7276,6 @@ msgid "No recalculations yet."
 msgstr "Ingen genberegninger endnu."
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:467
-msgid "Reference"
-msgstr "Reference"
-
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:214
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:495
 msgid "Closed"
@@ -6159,14 +7393,6 @@ msgstr "Oprindeligt"
 msgid "Recalculated"
 msgstr "Genberegnet"
 
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:59
-msgid "Difference"
-msgstr "Forskel"
-
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:357
 msgid "A settled row does not reproduce from its stored values. Nothing is recalculated for this creator and currency; assess it manually."
 msgstr "En afregnet række kan ikke genskabes ud fra sine gemte værdier. Der genberegnes intet for denne creator og valuta; vurder den manuelt."
@@ -6176,10 +7402,6 @@ msgstr "En afregnet række kan ikke genskabes ud fra sine gemte værdier. Der ge
 #, php-format
 msgid "%s completed payouts have no settlement document (completed before settlement documents were introduced): their rows are not known. Assess them manually."
 msgstr "%s gennemførte udbetalinger har intet afregningsbilag (gennemført før afregningsbilag blev indført): deres rækker kendes ikke. Vurder dem manuelt."
-
-#: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-msgid "Document"
-msgstr "Bilag"
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1019
@@ -6318,13 +7540,6 @@ msgstr "Ikke gemt: et CVR- eller SE-nummer har otte cifre. Lad feltet være tomt
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:76
 msgid "Not saved: a field is too long or contains line breaks or other control characters."
 msgstr "Ikke gemt: et felt er for langt eller indeholder linjeskift eller andre kontroltegn."
-
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:90
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:143
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:225
-#: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
-msgid "Payouts"
-msgstr "Udbetalinger"
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:96
 msgid "Holding period (days)"
@@ -6652,21 +7867,6 @@ msgid "Payout"
 msgstr "Udbetaling"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
-#: build/dashboard.js:58
-#: build/dashboard.js:59
-#: build/dashboard.js:69
-msgid "Amount"
-msgstr "Beløb"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
-#: build/dashboard.js:69
-msgid "Method"
-msgstr "Metode"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:456
 msgid "Destination"
 msgstr "Modtager"
@@ -6740,14 +7940,6 @@ msgstr "Udbetalingsreference"
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:1003
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1245
-#: build/dashboard.js:56
-msgid "Gift card"
-msgstr "Gavekort"
-
-#. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
 #, php-format
 msgid "%1$s, card #%2$s"
 msgstr "%1$s, kort #%2$s"
@@ -6803,11 +7995,6 @@ msgstr "Gavekortet kan ikke læses nu."
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:598
 msgid "Open the card in the plugin"
 msgstr "Åbn kortet i pluginet"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:615
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:636
-msgid "Settlement document"
-msgstr "Afregningsbilag"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:621
 #: src/Modules/WooCommerce/Admin/SettlementPdfDownload.php:151
@@ -6998,12 +8185,6 @@ msgstr "Retter %1$s (original: %2$s)."
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
 #: build/dashboard.js:59
-msgid "Before"
-msgstr "Før"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:59
 msgid "Corrected"
 msgstr "Korrigeret"
 
@@ -7160,18 +8341,6 @@ msgstr "Skriv aldrig et kontonummer, en IBAN eller en e-mailadresse: begrundelse
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:968
 msgid "Reject request"
 msgstr "Afvis anmodning"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:1001
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
-#: build/dashboard.js:56
-msgid "Bank transfer"
-msgstr "Bankoverførsel"
-
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:1002
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
-#: build/dashboard.js:56
-msgid "PayPal"
-msgstr "PayPal"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1014
 #: build/dashboard.js:56
@@ -7783,6 +8952,10 @@ msgstr "Dashboardet er midlertidigt utilgængeligt."
 #: templates/dashboard/shell.php:53
 msgid "Please try again later."
 msgstr "Prøv igen senere."
+
+#: templates/emails/layout.php:121
+msgid "Questions? Just reply to this e-mail."
+msgstr "Spørgsmål? Svar blot på denne mail."
 
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
@@ -10432,10 +11605,6 @@ msgid "Show gift card"
 msgstr "Vis gavekort"
 
 #: build/dashboard.js:55
-msgid "Value"
-msgstr "Værdi"
-
-#: build/dashboard.js:55
 msgid "Balance now"
 msgstr "Saldo nu"
 
@@ -10520,10 +11689,6 @@ msgstr "Anmodningen er allerede behandlet og kan ikke længere annulleres."
 #: build/dashboard.js:58
 msgid "The request was not accepted."
 msgstr "Anmodningen blev ikke accepteret."
-
-#: build/dashboard.js:58
-msgid "Request a payout"
-msgstr "Anmod om udbetaling"
 
 #: build/dashboard.js:58
 msgid "No payout method is available right now, so no payout can be requested. Please contact us."
@@ -10707,10 +11872,6 @@ msgstr "Dine produkter"
 #: build/dashboard.js:69
 msgid "Private"
 msgstr "Privat"
-
-#: build/dashboard.js:69
-msgid "Price"
-msgstr "Pris"
 
 #: build/dashboard.js:69
 msgid "No price"

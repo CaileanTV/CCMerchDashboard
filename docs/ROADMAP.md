@@ -746,7 +746,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 
 **Trin:**
 - **29.1 ADR og plan ✅ (2026-10-27):** ADR-079, kataloget og trinene.
-- **29.2 Kerne:**
+- **29.2 Kerne 🔄 (implementeret 2026-10-27, testet automatisk):**
   - modulet `Notifications`, migration 34 (`merchboard_notifications`), kataloget, admin-valgene, `Notifier` og repository;
   - afsendelse via Action Scheduler med op til 3 forsøg og `shutdown` som fallback; `JobQueue` flyttes til Core;
   - `EmailRenderer` og alle skabeloner i `templates/emails/` med eksempeldata.

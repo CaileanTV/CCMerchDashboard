@@ -28,6 +28,7 @@ use MerchBoard\Core\Database\Migrations\CreateCreatorMetaTable;
 use MerchBoard\Core\Database\Migrations\CreateCreatorPricingTables;
 use MerchBoard\Core\Database\Migrations\CreateCreatorsTable;
 use MerchBoard\Core\Database\Migrations\CreateGiftCardAssessmentTables;
+use MerchBoard\Core\Database\Migrations\CreateNotificationsTable;
 use MerchBoard\Core\Database\Migrations\CreateNewsTables;
 use MerchBoard\Core\Database\Migrations\CreateOperationsTable;
 use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationExportsTable;
@@ -93,6 +94,7 @@ final class Schema {
 			31 => new AddCreatorDeletedAt(),
 			32 => new CreateCategoryProposalsTable(),
 			33 => new MoveProfileToProposals(),
+			34 => new CreateNotificationsTable(),
 		);
 	}
 }

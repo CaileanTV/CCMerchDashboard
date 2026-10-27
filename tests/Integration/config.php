@@ -73,11 +73,24 @@ ini_set( 'error_log', MERCHBOARD_TEST_LOG ); // phpcs:ignore WordPress.PHP.IniSe
 // No mail from the test site (pluggable; defined before WordPress loads).
 if ( ! function_exists( 'wp_mail' ) ) {
 	/**
-	 * Discards mail.
+	 * Keeps mail in $GLOBALS['merchboard_test_mails'] instead of sending it.
 	 *
+	 * @param string|string[] $to          Recipients.
+	 * @param string          $subject     Subject.
+	 * @param string          $message     Body.
+	 * @param string|string[] $headers     Headers.
+	 * @param string|string[] $attachments Attachments.
+	 * @param string|string[] $embeds      Embedded files.
 	 * @return bool
 	 */
-	function wp_mail(): bool {
+	function wp_mail( $to, $subject, $message, $headers = '', $attachments = array(), $embeds = array() ): bool { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- WordPress' signature.
+		$GLOBALS['merchboard_test_mails'][] = array(
+			'to'      => $to,
+			'subject' => $subject,
+			'message' => $message,
+			'headers' => $headers,
+		);
+
 		return true;
 	}
 }

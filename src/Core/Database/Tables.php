@@ -248,6 +248,13 @@ final class Tables {
 	public const CATEGORY_PROPOSALS = 'merchboard_category_proposals';
 
 	/**
+	 * Notifications to creators and administrators (phase 29, ADR-079): one
+	 * row per notification with its e-mail state; dashboard rows also carry
+	 * when they were read.
+	 */
+	public const NOTIFICATIONS = 'merchboard_notifications';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -289,6 +296,7 @@ final class Tables {
 		self::ALERT_WEBHOOKS,
 		self::ALERT_WEBHOOK_DELIVERIES,
 		self::CATEGORY_PROPOSALS,
+		self::NOTIFICATIONS,
 	);
 
 	/**

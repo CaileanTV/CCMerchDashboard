@@ -30,6 +30,8 @@ use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
 use MerchBoard\Modules\Alerts\Webhooks\WebhookDispatcher;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\ThemePreference;
+use MerchBoard\Modules\Notifications\NotificationPreferences;
+use MerchBoard\Modules\Notifications\NotificationSender;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
@@ -163,6 +165,10 @@ final class UninstallerTest extends TestCase {
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
 					'args'  => array( 'wp_3_merchboard_category_proposals' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_notifications' ),
 				),
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
@@ -377,13 +383,14 @@ final class UninstallerTest extends TestCase {
 
 		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
 
-		self::assertSame( array( ThemePreference::META_KEY, MeAlertsHistoryController::ANONYMIZE_META, YouTubeTerms::META, ImpersonationSession::META ), Uninstaller::USER_META_KEYS );
+		self::assertSame( array( ThemePreference::META_KEY, MeAlertsHistoryController::ANONYMIZE_META, YouTubeTerms::META, ImpersonationSession::META, NotificationPreferences::META ), Uninstaller::USER_META_KEYS );
 		self::assertSame(
 			array(
 				array( 'user', 0, 'merchboard_dashboard_theme', '', true, true ),
 				array( 'user', 0, 'merchboard_alerts_anonymize', '', true, true ),
 				array( 'user', 0, 'merchboard_youtube_terms_accepted', '', true, true ),
 				array( 'user', 0, 'merchboard_impersonating', '', true, true ),
+				array( 'user', 0, 'merchboard_notification_email_off', '', true, true ),
 			),
 			$calls,
 			'Exact key, every user, through the meta API, while the opt-in still exists.'
@@ -424,7 +431,7 @@ final class UninstallerTest extends TestCase {
 
 		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
 		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
-		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK ), $hooks, 'Queued chat messages and webhook deliveries are cancelled.' );
+		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK ), $hooks, 'Queued chat messages, webhook deliveries and notification e-mails are cancelled.' );
 	}
 
 	private function uninstaller(): Uninstaller {
