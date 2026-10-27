@@ -437,6 +437,7 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		$paused = $this->find( $hook->id );
 		self::assertNotNull( $paused->paused_at );
 		self::assertSame( WebhookDispatcher::PAUSE_AFTER, $paused->failures );
+		self::assertSame( array( 'webhook_paused' ), array_values( array_filter( array_column( $this->rows( Tables::NOTIFICATIONS ), 'type' ), static fn( mixed $type ): bool => 'webhook_paused' === $type ) ), 'The creator is told once.' );
 
 		$sent = count( $this->requests );
 		$this->dispatcher->order_paid( $this->paid_order() );

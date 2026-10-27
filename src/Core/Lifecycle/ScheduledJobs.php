@@ -46,7 +46,7 @@ final class ScheduledJobs {
 	 * NotificationSender::HOOK; a test keeps them equal, ADR-079). Cancelled on
 	 * uninstall with the opt-in, like the alerts' jobs.
 	 */
-	public const NOTIFICATION_HOOKS = array( 'merchboard_notification_send' );
+	public const NOTIFICATION_HOOKS = array( 'merchboard_notification_send', 'merchboard_notification_balance_check' );
 
 	/**
 	 * Cancels the pending backfill pages; never throws.

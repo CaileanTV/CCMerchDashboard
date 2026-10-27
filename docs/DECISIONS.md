@@ -4376,6 +4376,8 @@ Endnu udløser intet notifikationer (29.5–29.6), og der er ingen admin-side (2
 - Kun manuelle produktkoblinger giver en notifikation; koblinger fra kategoriafstemningen kan komme mange ad gangen og giver ingen.
 - "Nyt salg" sendes uden fortjeneste (pkt. 9 "når den kendes"); beløbene er linjernes nettobeløb fra ledgeren.
 
+**Statusnote 2026-10-27 (trin 29.6):** alerts, administrator-mails og det daglige saldo-job er implementeret og testet automatisk. Afvigelse fra pkt. 4: saldo-jobbet er ikke en recurring action, men en enkelt action, der planlægger den næste efter 24 timer (som pluginets øvrige jobs); en sideindlæsning i wp-admin planlægger det, hvis intet venter. Første kørsel noterer kun beløbene (ingen besked til alle ved udgivelsen).
+
 ## Context
 Merch Dashboard giver i dag ingen besked, når noget sker:
 - creatoren skal selv åbne dashboardet for at opdage et salg, en udbetaling eller et afvist forslag;

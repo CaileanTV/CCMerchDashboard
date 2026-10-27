@@ -197,6 +197,7 @@ final class PayoutRequests {
 		);
 
 		PayoutNotice::send( 'payout_requested', $payout );
+		PayoutNotice::admin( 'admin_payout_requested', $payout );
 
 		return $payout;
 	}
@@ -242,6 +243,7 @@ final class PayoutRequests {
 		);
 
 		PayoutNotice::send( 'payout_cancelled', $payout );
+		PayoutNotice::admin( 'admin_payout_cancelled', $payout );
 
 		return $payout;
 	}

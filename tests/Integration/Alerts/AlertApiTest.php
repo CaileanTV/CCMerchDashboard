@@ -350,6 +350,23 @@ final class AlertApiTest extends IntegrationTestCase {
 		self::assertSame( 2, count( array_keys( $actions_audited, 'alert_api_key_revoked', true ) ) );
 		self::assertContains( 'alert_api_switched', $actions_audited );
 
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'api_key_changed' === $row['type'] ) );
+		self::assertSame(
+			array(
+				array(
+					'action' => 'created',
+					'key'    => 'One',
+				),
+				array(
+					'action' => 'created',
+					'key'    => 'Two',
+				),
+				array( 'action' => 'revoked' ),
+			),
+			array_map( static fn( array $row ): mixed => json_decode( (string) $row['data'], true ), $notices ),
+			'Each new key by name, and one notice for all revoked keys; never a key.'
+		);
+
 		wp_set_current_user( $this->user );
 
 		try {

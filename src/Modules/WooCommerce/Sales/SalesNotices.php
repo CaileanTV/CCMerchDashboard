@@ -98,7 +98,7 @@ final class SalesNotices {
 	 *
 	 * @param int $order_id Order.
 	 */
-	private static function order_number( int $order_id ): string {
+	public static function order_number( int $order_id ): string {
 		$order = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : false;
 
 		return $order instanceof \WC_Order ? (string) $order->get_order_number() : (string) $order_id;

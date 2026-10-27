@@ -455,6 +455,11 @@ final class CategoryProposals {
 			}
 		}
 
+		// One e-mail to the administrator per submission, naming its fields.
+		if ( array() !== $ids ) {
+			do_action( 'merchboard_notify', 'admin_proposal_submitted', $creator_id, array( 'field' => implode( ',', array_keys( $submit ) ) ), 'proposal:' . $ids[0] );
+		}
+
 		return $ids;
 	}
 

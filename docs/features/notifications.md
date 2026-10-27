@@ -4,7 +4,7 @@
 Creators og administratorer får besked, når noget sker, så de ikke selv skal holde øje med dashboardet og køerne. Beskeden kommer som e-mail og, for creators, ved et ikon (klokken) øverst i dashboardet ([ADR-079](../DECISIONS.md), ROADMAP fase 29).
 
 ## Current status
-I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) 29.3 (admin-siden med til/fra, eksempler, testmail og log) og 29.4 (klokken og creatorens e-mailvalg under Profil) og 29.5 (creator-hændelserne udløser notifikationer) er implementeret og testet automatisk. Saldo-jobbet, alerts og administrator-mails mangler (29.6).
+I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) 29.3 (admin-siden med til/fra, eksempler, testmail og log) og 29.4 (klokken og creatorens e-mailvalg under Profil) 29.5 (creator-hændelserne) og 29.6 (alerts, administrator-mails og det daglige saldo-job) er implementeret og testet automatisk. Mangler: review, runtime-test og release (29.7).
 
 ## User-facing functionality
 - **Klokken:** et lille ikon i dashboardets topbar med en rød boble med antal ulæste (9+ over 9).
@@ -114,6 +114,9 @@ Se [API.md](../API.md).
 - Rabatkode: `CreatorCodeService::issue` (første kode eller nulstilling) og `end`; aldrig koden.
 - Konto: `CreatorService` (velkomst, når en bruger tilknyttes; én gang pr. creator og bruger), statusskift, `CreatorPricingSettings` (fortjeneste som standard eller pr. produkt, nuværende momsstatus), `PayoutSettings::set_billing_details` (aldrig værdierne), `ProductCreatorLink::link` (manuel kobling) og `Impersonation::start` (aldrig hvem).
 - Nyheder: `NewsService::publish` → `merchboard_news_published`.
+- Alerts (29.6): `ChatSender` (botten afvist; én gang pr. forbindelse, til creatoren forbinder igen), `WebhookDispatcher` (sat på pause), `YouTubeLegal` → action `merchboard_youtube_terms_renewed` (hver creator med YouTube-kanal, én gang pr. version), `AlertApiKeys` (ny nøgle med navn; administratorens tilbagekaldelse; aldrig nøglen).
+- Administrator-mails (29.6), kun til `admin_email`; creatorens navn slås op af `Notifier`: udbetalingsanmodning og annullering (`PayoutNotice::admin`), kategoriforslag (én pr. indsendelse med felterne), åben sag (`OrderExclusionAssessor::committed`, én pr. ordre), fejl i salgssynkroniseringen (én pr. ordre og fejlkode), kategoriafstemning opgivet, regulering fejlet, gavekort afvist som kupon (aldrig koden) og creatorens egen nulstilling af rabatkoden.
+- Saldo-jobbet (29.6): `BalanceReadyNotices` på Action Scheduler-hooket `merchboard_notification_balance_check` kører én gang i døgnet og planlægger selv den næste kørsel; en sideindlæsning i wp-admin planlægger det, hvis intet venter. Pr. aktiv creator og valuta gemmes det beløb, der kan udbetales, i creatormeta (`balance_notified`). Er beløbet steget, får creatoren `balance_ready`. Første kørsel noterer kun beløbet, så udgivelsen ikke giver alle en besked på én gang.
 - Dedupe-nøglen er `{type}:{creator}:{hændelse}`, så en gentaget handling (samme idempotensnøgle, et dobbeltklik, en ny synkronisering, en genudgivelse) ikke giver en ny notifikation.
 - Action Scheduler-hooks `merchboard_notification_send` og `merchboard_notification_balance_check`.
 

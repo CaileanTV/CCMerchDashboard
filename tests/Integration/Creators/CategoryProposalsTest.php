@@ -209,6 +209,9 @@ final class CategoryProposalsTest extends IntegrationTestCase {
 
 		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'proposal_approved' === $row['type'] ) );
 		self::assertCount( 5, $notices, 'One per approved proposal.' );
+		$submitted = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'admin_proposal_submitted' === $row['type'] ) );
+		self::assertCount( 1, $submitted, 'One e-mail to the administrator per submission.' );
+		self::assertSame( 'display_name,description,social_instagram,banner_link,social_kick', json_decode( (string) $submitted[0]['data'], true )['field'] ?? null );
 		self::assertSame( (string) $this->nova, (string) $notices[0]['creator_id'] );
 	}
 

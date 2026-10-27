@@ -201,6 +201,11 @@ final class CreatorCodeService {
 		// Never the code: the creator reads it in the dashboard.
 		do_action( 'merchboard_notify', 'code_registered' === $result ? 'code_issued' : 'code_reset', $creator->id, array(), '' );
 
+		// A reset from the dashboard (the creator or "View as creator") is told to the administrator.
+		if ( self::SOURCE_CREATOR === $source ) {
+			do_action( 'merchboard_notify', 'admin_code_reset', $creator->id, array(), '' );
+		}
+
 		return $result;
 	}
 

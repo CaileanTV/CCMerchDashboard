@@ -221,6 +221,16 @@ final class YouTubeLegal {
 			false
 		);
 
+		// Renewed terms: the creators with a YouTube channel must accept them again.
+		if ( $publish && $version > 1 ) {
+			/**
+			 * Fires after the YouTube chatbot's terms were renewed (ADR-079).
+			 *
+			 * @param int $version The new version.
+			 */
+			do_action( 'merchboard_youtube_terms_renewed', $version );
+		}
+
 		return match ( true ) {
 			$pending => 'legal_draft',
 			$publish && 1 === $version => 'legal_published',

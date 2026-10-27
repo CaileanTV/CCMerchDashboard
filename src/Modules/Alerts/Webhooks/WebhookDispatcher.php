@@ -527,6 +527,8 @@ class WebhookDispatcher {
 					'creator_id' => $webhook->creator_id,
 				)
 			);
+			// Once per pause: a webhook paused again later is told again.
+			do_action( 'merchboard_notify', 'webhook_paused', $webhook->creator_id, array( 'webhook' => $webhook->name ), 'webhook:' . $webhook->id . ':' . ( $this->clock )()->format( 'YmdHis' ) );
 		}
 	}
 

@@ -373,6 +373,11 @@ final class ChatSender {
 		$final = in_array( $result['result'], array( 'dropped', 'forbidden', 'unauthorized' ), true ) || $attempts >= self::MAX_ATTEMPTS;
 		$this->log->note( $creator_id, $platform, $order_id, $order_item_id, $final ? ChatMessageRepository::FAILED : ChatMessageRepository::WAITING, '' !== $result['reason'] ? $result['reason'] : $result['result'] );
 
+		// The bot lost its access: told once per connection, until the creator connects it again.
+		if ( 'unauthorized' === $result['result'] ) {
+			do_action( 'merchboard_notify', 'chatbot_lost_access', $creator_id, array( 'platform' => $channel->platform->label() ), 'channel:' . $channel->platform->value . ':' . $channel->authorized_at );
+		}
+
 		if ( ! $final ) {
 			$this->again( $creator_id, $order_id, $platform, $result['retry_after'] ?? self::RETRY_DELAY );
 		}

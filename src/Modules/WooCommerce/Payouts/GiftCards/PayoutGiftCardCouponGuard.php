@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\WooCommerce\Payouts\GiftCards;
 use Closure;
 use Exception;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\WooCommerce\Sales\SalesNotices;
 use Throwable;
 use WC_Abstract_Order;
 use WC_Coupon;
@@ -120,6 +121,8 @@ final class PayoutGiftCardCouponGuard {
 		}
 
 		$this->logger->warning( 'A payout gift card was refused as a coupon on an order.', array( 'order_id' => (int) $order->get_id() ) );
+		// Never the code: only the order.
+		do_action( 'merchboard_notify', 'admin_gift_card_coupon', null, array( 'order_number' => SalesNotices::order_number( (int) $order->get_id() ) ), 'order:' . (int) $order->get_id() );
 
 		throw new Exception( esc_html__( 'This gift card was issued as a creator payout. It can only be redeemed at checkout, not added to an order here.', 'merchboard' ) );
 	}

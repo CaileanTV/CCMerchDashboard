@@ -41,4 +41,15 @@ final class PayoutNotice {
 			'payout:' . $payout->id
 		);
 	}
+
+	/**
+	 * Tells the administrator about the payout (the creator is named by the
+	 * notifications): its amount, currency and method.
+	 *
+	 * @param string $type   Administrator type, e.g. `admin_payout_requested`.
+	 * @param Payout $payout The payout as stored after the change.
+	 */
+	public static function admin( string $type, Payout $payout ): void {
+		self::send( $type, $payout, array( 'method' => $payout->method->value ) );
+	}
 }

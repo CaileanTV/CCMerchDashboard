@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Alerts;
 
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
@@ -295,6 +296,24 @@ final class AlertsModule implements Module {
 		);
 		$container->set( ChatbotFormat::class, static fn( Container $c ): ChatbotFormat => new ChatbotFormat( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ChatbotChannelRepository::class, static fn( Container $c ): ChatbotChannelRepository => new ChatbotChannelRepository( $c->get( wpdb::class ) ) );
+
+		// Renewed YouTube terms (ADR-079): every creator with a YouTube channel is told once per version.
+		add_action(
+			'merchboard_youtube_terms_renewed',
+			static function ( mixed $version ) use ( $container ): void {
+				try {
+					$channels = $container->get( ChatbotChannelRepository::class )->connected( ChatPlatform::YouTube );
+				} catch ( DatabaseException ) {
+					$container->get( Logger::class )->error( 'The YouTube channels to notify of renewed terms could not be read.' );
+
+					return;
+				}
+
+				foreach ( $channels as $channel ) {
+					do_action( 'merchboard_notify', 'youtube_terms_renewed', $channel->creator_id, array(), 'terms:' . ( is_scalar( $version ) ? (string) $version : '' ) );
+				}
+			}
+		);
 		$container->set( ChatMessageRepository::class, static fn( Container $c ): ChatMessageRepository => new ChatMessageRepository( $c->get( wpdb::class ) ) );
 		$container->set( ChatLogRepository::class, static fn( Container $c ): ChatLogRepository => new ChatLogRepository( $c->get( wpdb::class ) ) );
 		$container->set( ChatMessages::class, static fn( Container $c ): ChatMessages => new ChatMessages( $c->get( AlertTemplate::class ) ) );

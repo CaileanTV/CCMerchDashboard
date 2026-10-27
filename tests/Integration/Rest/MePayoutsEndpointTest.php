@@ -28,6 +28,7 @@ use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\BalanceReadyNotices;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardAvailability;
@@ -66,6 +67,7 @@ use MerchBoard\Tests\Integration\Support\PostMetaPricingProductStore;
 use MerchBoard\Tests\Integration\Support\PostMetaProductStore;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Integration\Support\RecordingFailureMarker;
+use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\DataProvider;
 use WP_REST_Request;
@@ -473,6 +475,48 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( 'AFR-000001', 'AFR-000001-K1', '-10.0000', 'The markup was wrong.' ), array( $data[9]['document_number'] ?? null, $data[9]['correction_number'] ?? null, $data[9]['difference'] ?? null, $data[9]['reason'] ?? null ) );
 		self::assertStringNotContainsString( self::ACCOUNT, (string) wp_json_encode( $data ), 'Never the payment details.' );
 		self::assertStringNotContainsString( '5678', (string) wp_json_encode( $data ) );
+
+		// The administrator (admin_email) hears of each request with the creator's name; cancellations are off by default.
+		$admin = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'admin' === $row['audience'] ) );
+		self::assertSame( array( 'admin_payout_requested', 'admin_payout_requested', 'admin_payout_requested' ), array_column( $admin, 'type' ) );
+		self::assertSame( array( null ), array_values( array_unique( array_column( $admin, 'creator_id' ) ) ) );
+		self::assertSame(
+			array(
+				'amount'   => '5.0000',
+				'currency' => 'DKK',
+				'method'   => 'bank',
+				'creator'  => 'Mine',
+			),
+			json_decode( (string) $admin[0]['data'], true )
+		);
+	}
+
+	public function test_the_daily_check_tells_the_creator_when_more_can_be_paid_out(): void {
+		$mine    = $this->creator_user( 'mine', 'Mine' );
+		$creator = $this->creator_id( $mine );
+		$clock   = static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-11-30 12:00:00', new DateTimeZone( 'UTC' ) );
+		$queue   = new FakeJobQueue();
+		$meta    = new CreatorMetaStore( $this->wpdb );
+		$check   = new BalanceReadyNotices( new CreatorRepository( $this->wpdb ), new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock ), $meta, $queue, new RecordingLogger() );
+		$this->earn( $mine, 1 );
+
+		self::assertSame( 0, $check->run(), 'The first check only notes the amount (no notification for everyone at release).' );
+		self::assertSame( array( 'DKK' => 200000 ), $meta->get( $creator, CreatorMetaStore::BALANCE_NOTIFIED ) );
+		self::assertSame( array( BalanceReadyNotices::HOOK ), array_column( $queue->queued, 'hook' ), 'It schedules the next check.' );
+		self::assertSame( 0, $check->run(), 'Unchanged: nothing.' );
+
+		$this->earn( $mine, 1 );
+		self::assertSame( 1, $check->run() );
+		self::assertSame( 0, $check->run(), 'The new amount is noted: nothing until it grows again.' );
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'balance_ready' === $row['type'] ) );
+		self::assertCount( 1, $notices );
+		self::assertSame(
+			array(
+				'available' => '40.0000',
+				'currency'  => 'DKK',
+			),
+			json_decode( (string) $notices[0]['data'], true )
+		);
 	}
 
 	public function test_the_settlement_document_is_shown_only_to_its_creator_and_never_cached(): void {

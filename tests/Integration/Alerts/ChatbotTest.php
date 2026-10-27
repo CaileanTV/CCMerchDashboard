@@ -742,6 +742,30 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( 'apptoken0002', $this->account->app_token() );
 	}
 
+	public function test_a_bot_that_lost_its_access_is_told_once_per_connection(): void {
+		$nova = $this->connected_creator( 'nova' );
+
+		foreach ( array( 600, 601 ) as $order ) {
+			$this->alert( $nova, $order, 1, 'Hoodie' );
+			$this->answer( self::MESSAGES_URL, 401, array( 'message' => 'invalid token' ) );
+			$this->answer(
+				self::TOKEN_URL,
+				200,
+				array(
+					'access_token' => 'apptoken' . $order,
+					'expires_in'   => 5000000,
+				)
+			);
+			$this->answer( self::MESSAGES_URL, 401, array( 'message' => 'invalid token' ) );
+			$this->sender->order_paid( $order );
+			$this->run_jobs();
+		}
+
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'chatbot_lost_access' === $row['type'] ) );
+		self::assertSame( array( (string) $nova ), array_map( static fn( array $row ): string => (string) $row['creator_id'], $notices ), 'Once, not per refused message.' );
+		self::assertSame( array( 'platform' => 'Twitch' ), json_decode( (string) $notices[0]['data'], true ) );
+	}
+
 	public function test_nothing_is_sent_while_alerts_or_the_creators_messages_are_off(): void {
 		$nova = $this->connected_creator( 'nova' );
 		$this->alert( $nova, 500, 1, 'Hoodie' );
@@ -1798,6 +1822,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( 'legal_empty', $this->legal->save( array( 'terms_da' => '<p> </p>' ) + $texts, true ) );
 		self::assertSame( 'legal_renewed', $this->legal->save( $texts, true ) );
 		self::assertSame( 2, $this->legal->version() );
+		self::assertSame( array(), array_values( array_filter( array_column( $this->rows( Tables::NOTIFICATIONS ), 'type' ), static fn( mixed $type ): bool => 'youtube_terms_renewed' === $type ) ), 'No YouTube channel: nobody to tell.' );
 		$audit = $this->rows( Tables::AUDIT_LOG );
 		self::assertSame( array( 'version' => 2, 'renewed' => true ), json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertStringNotContainsString( 'Merchvej', (string) wp_json_encode( $audit ), 'The text is not audited.' );

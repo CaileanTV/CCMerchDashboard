@@ -36,6 +36,13 @@ final class CreatorMetaStore {
 	public const BILLING_DETAILS = 'billing_details';
 
 	/**
+	 * The amounts available for payout at the last daily check (phase 29,
+	 * ADR-079): `{ currency: units }`. Written by the WooCommerce module's
+	 * BalanceReadyNotices only.
+	 */
+	public const BALANCE_NOTIFIED = 'balance_notified';
+
+	/**
 	 * The creator's own limits of uploaded alert sounds (phase 25, step
 	 * 25.9.2): `{ max_bytes?: int, max_seconds?: int }`, each instead of the
 	 * site-wide limit. Written by the Alerts module's CreatorSoundLimits only.
@@ -59,7 +66,7 @@ final class CreatorMetaStore {
 	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS );
+	private const KEYS = array( self::BILLING_DETAILS, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS );
 
 	/**
 	 * Constructor.

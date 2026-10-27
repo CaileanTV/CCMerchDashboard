@@ -19,6 +19,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\CreatorRowLocks;
 use MerchBoard\Modules\WooCommerce\Sales\OrderSnapshot;
 use MerchBoard\Modules\WooCommerce\Sales\SalesCacheInvalidator;
 use MerchBoard\Modules\WooCommerce\Sales\SalesLedgerState;
+use MerchBoard\Modules\WooCommerce\Sales\SalesNotices;
 use MerchBoard\Modules\WooCommerce\Sales\SalesRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -182,6 +183,13 @@ final class OrderExclusionAssessor {
 	public function committed( OrderExclusionAssessment $assessment ): void {
 		if ( array() !== $assessment->invalidate ) {
 			$this->cache->invalidate( $assessment->invalidate );
+		}
+
+		// An open case (K2) waits for the administrator; told once per order and creator.
+		foreach ( $assessment->exclusions as $exclusion ) {
+			if ( OrderExclusionStatus::Open === $exclusion->status ) {
+				do_action( 'merchboard_notify', 'admin_order_decision', $exclusion->creator_id, array( 'order_number' => SalesNotices::order_number( $exclusion->order_id ) ), 'order:' . $exclusion->order_id );
+			}
 		}
 	}
 

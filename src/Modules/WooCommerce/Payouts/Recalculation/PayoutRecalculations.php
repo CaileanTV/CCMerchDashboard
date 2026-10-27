@@ -413,6 +413,7 @@ final class PayoutRecalculations {
 								'failure'   => $failure,
 							)
 						);
+						do_action( 'merchboard_notify', 'admin_adjustment_failed', $item->creator_id, array( 'reference' => $run->reference() ), 'item:' . $item->id . ':' . $failure );
 
 						throw new PayoutException( PayoutException::RECALCULATION_ITEM_FAILED );
 					}

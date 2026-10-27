@@ -171,6 +171,11 @@ class Notifier {
 			$reachable = null !== $creator->user_id;
 			$email     = $email && ( ! $reachable || $this->preferences->wants_email( (int) $creator->user_id, $type ) );
 		} else {
+			// The administrator's e-mail names the creator it is about.
+			if ( null !== $creator_id && ! isset( $data['creator'] ) ) {
+				$data['creator'] = $this->creators->find( $creator_id )->display_name ?? '';
+			}
+
 			$creator_id = null;
 		}
 

@@ -109,7 +109,7 @@ class AlertApiKeys {
 			self::refuse( AlertApiException::INVALID_NAME );
 		}
 
-		return $this->transaction->run(
+		$key = $this->transaction->run(
 			function () use ( $creator_id, $name ): string {
 				if ( count( $this->keys->active_for( $creator_id ) ) >= self::MAX_KEYS ) {
 					self::refuse( AlertApiException::KEY_LIMIT );
@@ -124,6 +124,20 @@ class AlertApiKeys {
 				return AlertApiKey::PREFIX . $lookup . '_' . $secret;
 			}
 		);
+
+		// Security message: the key's name, never the key.
+		do_action(
+			'merchboard_notify',
+			'api_key_changed',
+			$creator_id,
+			array(
+				'action' => 'created',
+				'key'    => $name,
+			),
+			''
+		);
+
+		return $key;
 	}
 
 	/**
@@ -168,7 +182,7 @@ class AlertApiKeys {
 			self::refuse( AlertApiException::NOT_AUTHORIZED );
 		}
 
-		return $this->transaction->run(
+		$revoked = $this->transaction->run(
 			function () use ( $creator_id ): int {
 				$revoked = 0;
 
@@ -189,6 +203,12 @@ class AlertApiKeys {
 				return $revoked;
 			}
 		);
+
+		if ( $revoked > 0 ) {
+			do_action( 'merchboard_notify', 'api_key_changed', $creator_id, array( 'action' => 'revoked' ), '' );
+		}
+
+		return $revoked;
 	}
 
 	/**

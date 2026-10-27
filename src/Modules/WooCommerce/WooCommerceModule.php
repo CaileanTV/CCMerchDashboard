@@ -52,6 +52,7 @@ use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsSections;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
 use MerchBoard\Modules\WooCommerce\Admin\SettlementPdfDownload;
+use MerchBoard\Modules\WooCommerce\Payouts\BalanceReadyNotices;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutRecalculationExportRepository;
@@ -906,6 +907,24 @@ final class WooCommerceModule implements Module {
 		);
 		// The dashboard sections that need WooCommerce (Products).
 		( new DashboardSectionRegistration() )->register();
+
+		// "Balance ready for payout" once a day (ADR-079).
+		$container->set(
+			BalanceReadyNotices::class,
+			static fn( Container $c ): BalanceReadyNotices => new BalanceReadyNotices( $c->get( CreatorRepository::class ), $c->get( PayoutBalances::class ), $c->get( CreatorMetaStore::class ), $c->get( JobQueue::class ), $c->get( Logger::class ) )
+		);
+		add_action(
+			BalanceReadyNotices::HOOK,
+			static function () use ( $container ): void {
+				$container->get( BalanceReadyNotices::class )->run();
+			}
+		);
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				BalanceReadyNotices::ensure_scheduled( $container->get( JobQueue::class ) );
+			}
+		);
 
 		// "Order history" (ADR-051). Hooked directly: WordPress fires
 		// admin_menu before admin_init, so it cannot wait for admin_init.

@@ -436,6 +436,11 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( 1, $earned['DKK']->unknown_rows, 'The settled row still counts in the balance.' );
 		self::assertSame( 1, $this->exclusions->count( OrderExclusionStatus::Open ) );
 		self::assertCount( 1, $this->exclusions->page( OrderExclusionStatus::Open, new Pagination( 1, 20 ) ) );
+
+		$this->sync->sync( 80 );
+		$cases = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'admin_order_decision' === $row['type'] ) );
+		self::assertCount( 1, $cases, 'The administrator is told once per open case, also after a new sync.' );
+		self::assertSame( '80', json_decode( (string) $cases[0]['data'], true )['order_number'] ?? null );
 	}
 
 	public function test_the_backfill_reports_an_excluded_order_as_not_counted(): void {

@@ -135,6 +135,7 @@ final class CategoryReconciliationJobs {
 				$this->logger->warning( 'Category reconciliation page failed; repeat queued.', $context );
 			} else {
 				$this->logger->error( 'Category reconciliation run given up after retries; not completed.', $context );
+				do_action( 'merchboard_notify', 'admin_reconciliation_failed', null, array( 'run' => substr( (string) $state->run_id->value, 0, 12 ) ), 'run:' . $state->run_id->value );
 			}
 
 			throw $e;

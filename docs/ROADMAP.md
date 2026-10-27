@@ -755,7 +755,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - klokken med den røde boble og panelet (`GET /me/notifications`, `POST /me/notifications/read`);
   - creatorens e-mailvalg under Profil (`GET`/`PATCH /me/notification-preferences`).
 - **29.5 Creator-hændelser 🔄 (implementeret 2026-10-27, testet automatisk):** salg, udbetalinger, bilag, kategoriforslag, rabatkode, konto, priser og nyheder (post-commit `merchboard_notify`).
-- **29.6 Alerts, administrator-mails og det daglige saldo-job.**
+- **29.6 Alerts, administrator-mails og det daglige saldo-job 🔄 (implementeret 2026-10-27, testet automatisk).**
 - **29.7 Review, runtime-test og release 1.4.0:** review og runtime-test på Local udføres automatisk af AI-agenten (AI-DEVELOPMENT.md, projektejerens beslutning 2026-10-27).
 
 ## Senere (uprioriteret)

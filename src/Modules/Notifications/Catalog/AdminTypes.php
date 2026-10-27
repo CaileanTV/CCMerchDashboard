@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Notifications\Catalog;
 
 use Closure;
+use MerchBoard\Modules\Creators\Proposals\ProposalField;
+use MerchBoard\Modules\Creators\Proposals\ProposalLabels;
 use MerchBoard\Modules\Notifications\EmailMessage;
 use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationType;
@@ -64,6 +66,35 @@ final class AdminTypes {
 	}
 
 	/**
+	 * The method of a payout in words.
+	 *
+	 * @param NotificationData $d Data with `method`.
+	 */
+	private static function method( NotificationData $d ): string {
+		return match ( $d->text( 'method' ) ) {
+			'paypal'    => __( 'PayPal', 'merchboard' ),
+			'gift_card' => __( 'Gift card', 'merchboard' ),
+			default     => __( 'Bank transfer', 'merchboard' ),
+		};
+	}
+
+	/**
+	 * The names of a submission's fields (`field`: keys separated by commas).
+	 *
+	 * @param NotificationData $d Data with `field`.
+	 */
+	private static function fields( NotificationData $d ): string {
+		$names = array();
+
+		foreach ( explode( ',', $d->text( 'field' ) ) as $key ) {
+			$field   = ProposalField::tryFrom( trim( $key ) );
+			$names[] = null === $field ? trim( $key ) : ProposalLabels::field( $field );
+		}
+
+		return implode( ', ', array_filter( $names ) );
+	}
+
+	/**
 	 * A plain administrator e-mail: no greeting, the facts and a button.
 	 *
 	 * @param string                            $subject Subject.
@@ -101,7 +132,7 @@ final class AdminTypes {
 				'creator'  => 'Nova',
 				'amount'   => '1250.00',
 				'currency' => 'DKK',
-				'method'   => 'Bank transfer',
+				'method'   => 'bank',
 			),
 			/* translators: 1: creator name, 2: amount. */
 			static fn( NotificationData $d ): string => sprintf( __( '%1$s requested a payout of %2$s.', 'merchboard' ), $d->text( 'creator' ), $d->money( 'amount' ) ),
@@ -113,7 +144,7 @@ final class AdminTypes {
 				array(
 					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
 					array( __( 'Amount', 'merchboard' ), $d->money( 'amount' ) ),
-					array( __( 'Method', 'merchboard' ), $d->text( 'method' ) ),
+					array( __( 'Method', 'merchboard' ), self::method( $d ) ),
 				),
 				__( 'Open Payouts', 'merchboard' )
 			)
@@ -132,10 +163,10 @@ final class AdminTypes {
 			'merchboard-category-proposals',
 			array(
 				'creator' => 'Nova',
-				'field'   => 'Banner',
+				'field'   => 'banner,description',
 			),
 			/* translators: 1: creator name, 2: the changed field. */
-			static fn( NotificationData $d ): string => sprintf( __( '%1$s proposed a new %2$s.', 'merchboard' ), $d->text( 'creator' ), $d->text( 'field' ) ),
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s proposed a new %2$s.', 'merchboard' ), $d->text( 'creator' ), self::fields( $d ) ),
 			static fn( NotificationData $d ): EmailMessage => self::message(
 				/* translators: %s: creator name. */
 				sprintf( __( 'New category proposal from %s', 'merchboard' ), $d->text( 'creator' ) ),
@@ -143,7 +174,7 @@ final class AdminTypes {
 				__( 'A creator proposed a change to their category. Nothing changes in the shop until you approve it.', 'merchboard' ),
 				array(
 					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
-					array( __( 'Change', 'merchboard' ), $d->text( 'field' ) ),
+					array( __( 'Change', 'merchboard' ), self::fields( $d ) ),
 				),
 				__( 'Open Category proposals', 'merchboard' )
 			)

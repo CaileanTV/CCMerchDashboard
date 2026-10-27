@@ -554,6 +554,17 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 		if ( ! $deleting ) {
 			$this->marker->record( $order_id, $result->code, ( $this->clock )() );
+			// Once per order and failure, however often it is retried.
+			do_action(
+				'merchboard_notify',
+				'admin_sync_failed',
+				null,
+				array(
+					'order_number' => SalesNotices::order_number( $order_id ),
+					'reason'       => $result->code->value,
+				),
+				'order:' . $order_id . ':' . $result->code->value
+			);
 		}
 	}
 
