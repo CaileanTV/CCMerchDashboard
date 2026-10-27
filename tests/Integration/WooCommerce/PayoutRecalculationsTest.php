@@ -219,6 +219,11 @@ final class PayoutRecalculationsTest extends IntegrationTestCase {
 
 		$this->recalculations->approve( $id );
 		self::assertSame( 1, $this->recalculations->execute( $id ), 'The approved basis is not stale.' );
+
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'payout_adjusted' === $row['type'] ) );
+		self::assertCount( 1, $notices, 'The creator hears of the executed adjustment.' );
+		self::assertSame( array( 'currency', 'reference' ), array_keys( array_diff_key( (array) json_decode( (string) $notices[0]['data'], true ), array( 'amount' => true ) ) ) );
+		self::assertSame( 'R2-' . str_pad( (string) $id, 6, '0', STR_PAD_LEFT ), json_decode( (string) $notices[0]['data'], true )['reference'] ?? null );
 	}
 
 	public function test_the_preview_shows_only_the_removed_deduction_and_changes_nothing(): void {

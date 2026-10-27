@@ -99,12 +99,23 @@ class NewsService {
 			self::reject( NewsException::NOT_DRAFT );
 		}
 
+		$published = $message->published_at ?? new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+
 		$this->transaction->run(
-			function () use ( $message ): void {
-				$this->news->set_status( $message->id, NewsMessage::PUBLISHED, $message->published_at ?? new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) );
+			function () use ( $message, $published ): void {
+				$this->news->set_status( $message->id, NewsMessage::PUBLISHED, $published );
 				$this->audit->record( AuditAction::NewsPublished, null, array( 'news_id' => $message->id ) );
 			}
 		);
+
+		/**
+		 * Fires after a news message was published (ADR-079: the creators who see it are notified).
+		 *
+		 * @param int               $id        Message.
+		 * @param string            $title     Title.
+		 * @param DateTimeImmutable $published Publication time (UTC); creators created after it do not see it.
+		 */
+		do_action( 'merchboard_news_published', $message->id, $message->title, $published );
 	}
 
 	/**

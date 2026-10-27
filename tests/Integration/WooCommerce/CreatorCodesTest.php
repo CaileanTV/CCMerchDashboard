@@ -279,6 +279,10 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertCount( 2, $this->audit( AuditAction::CreatorCodeEnded ) );
 		self::assertSame( $first?->id, $this->audit( AuditAction::CreatorCodeRegistered )[1]['previous_creator_code_id'] );
 		$this->expect_refusal( CreatorCodeException::NO_ACTIVE_CODE, fn() => $this->code_service()->end( $this->creator ) );
+
+		$notices = $this->rows( Tables::NOTIFICATIONS );
+		self::assertSame( array( 'code_issued', 'code_reset', 'code_ended' ), array_column( $notices, 'type' ) );
+		self::assertStringNotContainsString( 'nova', strtolower( (string) wp_json_encode( array_column( $notices, 'data' ) ) ), 'Never the code.' );
 	}
 
 	public function test_deviations_are_reported_but_never_end_the_registration(): void {
@@ -334,6 +338,10 @@ final class CreatorCodesTest extends IntegrationTestCase {
 
 		self::assertSame( array( 's:4112:1', 'r:4112:901' ), $this->keys( 41 ) );
 		self::assertCount( 1, $this->audit( AuditAction::OrderExcludedByCreatorCode ) );
+
+		// Only creator B hears of the sale and its refund; A's excluded line is never notified.
+		$sales = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => str_starts_with( (string) $row['type'], 'sale_' ) ) );
+		self::assertSame( array( array( 'sale_new', (string) $this->other ), array( 'sale_reversed', (string) $this->other ) ), array_map( static fn( array $row ): array => array( $row['type'], (string) $row['creator_id'] ), $sales ) );
 	}
 
 	public function test_a_code_without_lines_of_its_creator_excludes_nothing(): void {
@@ -356,6 +364,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( 0, $this->ledger_rows( 43 ) );
 		self::assertSame( array( $this->creator, $this->other ), array_map( static fn( $decision ): int => $decision->creator_id, $this->exclusions->for_order( 43 ) ) );
 		self::assertSame( 0, ( new SalesOrderLines( $this->wpdb ) )->count( $this->other ) );
+		self::assertSame( array(), array_values( array_filter( array_column( $this->rows( Tables::NOTIFICATIONS ), 'type' ), static fn( string $type ): bool => str_starts_with( $type, 'sale_' ) ) ), 'An order with the creators\' own codes notifies nobody of a sale.' );
 	}
 	public function test_only_orders_created_within_the_registration_period_are_covered(): void {
 		$this->register( $this->creator, 'nova10' );

@@ -68,6 +68,8 @@ final class NotificationsTest extends IntegrationTestCase {
 		$this->mail          = new RecordingMailer();
 		$this->nova_user     = $this->create_user( 'nova' );
 		$this->nova          = $this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $this->nova_user )->id;
+		// Without the welcome the creation fired (29.5).
+		$this->execute( 'DELETE FROM %i', $this->table( Tables::NOTIFICATIONS ) );
 	}
 
 	protected function tearDown(): void {

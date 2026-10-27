@@ -133,7 +133,7 @@ final class CreatorPricingSettings {
 		$reference      = self::history_text( $reference, self::MAX_REFERENCE, false, PricingException::INVALID_REFERENCE );
 		$reason         = self::history_text( $reason, self::MAX_REASON, true, PricingException::INVALID_REASON );
 
-		return $this->transaction->run(
+		$result = $this->transaction->run(
 			function () use ( $vat, $history, $creator_id, $vat_registered, $effective_from, $checked_on, $reference, $reason, $now, $today ): string {
 				if ( ! $history->lock_creator( $creator_id ) ) {
 					throw new PricingException( PricingException::CREATOR_NOT_FOUND );
@@ -180,6 +180,17 @@ final class CreatorPricingSettings {
 				return $current !== $previous ? 'vat_saved' : 'vat_recorded';
 			}
 		);
+
+		// Only a change of the current status (the reference and reason stay internal); it is
+		// committed, so a failed read only skips the notification.
+		if ( 'vat_saved' === $result ) {
+			try {
+				do_action( 'merchboard_notify', 'vat_changed', $creator_id, array( 'registered' => true === $vat->find( $creator_id ) ), '' );
+			} catch ( DatabaseException ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch -- See above.
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -259,6 +270,8 @@ final class CreatorPricingSettings {
 			}
 		);
 
+		self::markup_changed( $creator_id, '', $previous, $markup );
+
 		return true;
 	}
 
@@ -282,6 +295,7 @@ final class CreatorPricingSettings {
 		}
 
 		$product = new ProductMarkup( $product_id, $owner, $markup );
+		$default = $this->markups->find( $owner );
 
 		$this->transaction->run(
 			function () use ( $product, $previous, $owner, $product_id ): void {
@@ -297,6 +311,8 @@ final class CreatorPricingSettings {
 				);
 			}
 		);
+
+		self::markup_changed( $owner, (string) get_the_title( $product_id ), null !== $previous && $previous->belongs_to( $owner ) ? $previous->markup : $default, $product->markup );
 
 		return true;
 	}
@@ -319,6 +335,8 @@ final class CreatorPricingSettings {
 			return false;
 		}
 
+		$default = $this->markups->find( $owner );
+
 		$this->transaction->run(
 			function () use ( $previous, $owner, $product_id ): void {
 				$this->products->delete( $product_id );
@@ -333,7 +351,33 @@ final class CreatorPricingSettings {
 			}
 		);
 
+		self::markup_changed( $owner, (string) get_the_title( $product_id ), $previous->markup, $default );
+
 		return true;
+	}
+
+	/**
+	 * Tells the creator that their profit changed (ADR-079), after the commit.
+	 *
+	 * @param int            $creator_id Creator.
+	 * @param string         $product    Product name ('' for the default markup).
+	 * @param MarkupBps|null $previous   The markup before.
+	 * @param MarkupBps|null $current    The markup now.
+	 */
+	private static function markup_changed( int $creator_id, string $product, ?MarkupBps $previous, ?MarkupBps $current ): void {
+		$text = static fn( ?MarkupBps $markup ): string => null === $markup ? '–' : number_format_i18n( $markup->bps / 100, 0 === $markup->bps % 100 ? 0 : 2 ) . ' %';
+
+		do_action(
+			'merchboard_notify',
+			'pricing_changed',
+			$creator_id,
+			array(
+				'product'  => $product,
+				'previous' => $text( $previous ),
+				'new'      => $text( $current ),
+			),
+			''
+		);
 	}
 
 	/**

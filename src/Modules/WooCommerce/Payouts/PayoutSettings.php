@@ -132,7 +132,7 @@ final class PayoutSettings {
 		$details = CreatorBillingDetails::from_input( $values );
 		$billing = $this->billing ?? throw new PayoutException( PayoutException::NOT_FOUND );
 
-		return $this->transaction->run(
+		$changed = $this->transaction->run(
 			function () use ( $billing, $creator_id, $details ): bool {
 				// Locks the creator's row (and refuses an unknown creator) until the commit.
 				$this->payouts->settlement_start( $creator_id, true );
@@ -148,6 +148,13 @@ final class PayoutSettings {
 				return true;
 			}
 		);
+
+		// Only that they changed: never the values.
+		if ( $changed ) {
+			do_action( 'merchboard_notify', 'billing_details_changed', $creator_id, array(), '' );
+		}
+
+		return $changed;
 	}
 
 	/**

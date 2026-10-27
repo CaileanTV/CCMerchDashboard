@@ -162,7 +162,7 @@ final class ProductCreatorLink {
 		$creator = $this->active_creator( $creator_id );
 		$this->assert_replaceable( $product, $replace_existing );
 
-		return $this->write(
+		$changes = $this->write(
 			$product,
 			$creator->id,
 			$source,
@@ -190,6 +190,10 @@ final class ProductCreatorLink {
 				return $changes;
 			}
 		);
+
+		do_action( 'merchboard_notify', 'product_linked', $creator->id, array( 'product' => (string) get_the_title( $product->id ) ), '' );
+
+		return $changes;
 	}
 
 	/**

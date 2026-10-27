@@ -338,6 +338,8 @@ final class CategoryProposals {
 			$this->release_image( $replaced );
 		}
 
+		do_action( 'merchboard_notify', 'proposal_approved', $creator->id, array( 'field' => $field->value ), 'proposal:' . $proposal->id );
+
 		return $this->proposals->find( $proposal->id ) ?? self::fail( 'Approved category proposal could not be read back.' );
 	}
 
@@ -377,6 +379,17 @@ final class CategoryProposals {
 		if ( null !== $file ) {
 			$this->files->delete( $file );
 		}
+
+		do_action(
+			'merchboard_notify',
+			'proposal_rejected',
+			$creator->id,
+			array(
+				'field' => $proposal->field->value,
+				'note'  => $note,
+			),
+			'proposal:' . $proposal->id
+		);
 
 		return $this->proposals->find( $proposal->id ) ?? self::fail( 'Rejected category proposal could not be read back.' );
 	}

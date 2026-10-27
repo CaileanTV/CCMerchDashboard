@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Notifications\Catalog;
 
 use Closure;
+use MerchBoard\Modules\Creators\Proposals\ProposalField;
+use MerchBoard\Modules\Creators\Proposals\ProposalLabels;
 use MerchBoard\Modules\Notifications\EmailMessage;
 use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationType;
@@ -85,6 +87,18 @@ final class CreatorTypes {
 	 */
 	private static function type( string $key, string $group, Closure $label, Closure $describe, bool $email, bool $dashboard, bool $important, string $path, array $sample, Closure $text, Closure $message ): NotificationType {
 		return new NotificationType( $key, NotificationType::CREATOR, $group, $label, $describe, $email, $dashboard, $important, $path, $sample, $text, $message );
+	}
+
+	/**
+	 * The name of a proposal's field (`field` is the field's key), in the
+	 * language of the reader.
+	 *
+	 * @param NotificationData $d Data.
+	 */
+	private static function field( NotificationData $d ): string {
+		$field = ProposalField::tryFrom( $d->text( 'field' ) );
+
+		return null === $field ? $d->text( 'field' ) : ProposalLabels::field( $field );
 	}
 
 	/**
@@ -525,15 +539,15 @@ final class CreatorTypes {
 			true,
 			false,
 			'profile',
-			array( 'field' => 'Banner' ),
+			array( 'field' => 'banner' ),
 			/* translators: %s: the changed field, e.g. "Banner". */
-			static fn( NotificationData $d ): string => sprintf( __( 'Your proposal for %s was approved and is now in the shop.', 'merchboard' ), $d->text( 'field' ) ),
+			static fn( NotificationData $d ): string => sprintf( __( 'Your proposal for %s was approved and is now in the shop.', 'merchboard' ), self::field( $d ) ),
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
 				/* translators: %s: the changed field. */
-				sprintf( __( 'Your proposal for %s was approved', 'merchboard' ), $d->text( 'field' ) ),
+				sprintf( __( 'Your proposal for %s was approved', 'merchboard' ), self::field( $d ) ),
 				__( 'Your proposal was approved', 'merchboard' ),
 				array( __( 'Your change is approved and now shown in the shop.', 'merchboard' ) ),
-				array( array( __( 'Change', 'merchboard' ), $d->text( 'field' ) ) ),
+				array( array( __( 'Change', 'merchboard' ), self::field( $d ) ) ),
 				null,
 				null,
 				__( 'See your profile', 'merchboard' ),
@@ -557,17 +571,17 @@ final class CreatorTypes {
 			false,
 			'profile',
 			array(
-				'field' => 'Logo',
+				'field' => 'image',
 				'note'  => 'The logo must not show another brand. Please upload your own.',
 			),
 			/* translators: %s: the changed field. */
-			static fn( NotificationData $d ): string => sprintf( __( 'Your proposal for %s was not approved.', 'merchboard' ), $d->text( 'field' ) ),
+			static fn( NotificationData $d ): string => sprintf( __( 'Your proposal for %s was not approved.', 'merchboard' ), self::field( $d ) ),
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
 				/* translators: %s: the changed field. */
-				sprintf( __( 'Your proposal for %s was not approved', 'merchboard' ), $d->text( 'field' ) ),
+				sprintf( __( 'Your proposal for %s was not approved', 'merchboard' ), self::field( $d ) ),
 				__( 'Your proposal was not approved', 'merchboard' ),
 				array( __( 'Your change was not approved, so nothing changed in the shop. You are welcome to propose it again.', 'merchboard' ) ),
-				array( array( __( 'Change', 'merchboard' ), $d->text( 'field' ) ) ),
+				array( array( __( 'Change', 'merchboard' ), self::field( $d ) ) ),
 				null,
 				'' === $d->text( 'note' ) ? null : array( __( 'Note from us', 'merchboard' ), $d->text( 'note' ) ),
 				__( 'See your profile', 'merchboard' ),

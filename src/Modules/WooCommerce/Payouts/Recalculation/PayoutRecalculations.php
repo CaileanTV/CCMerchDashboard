@@ -600,6 +600,18 @@ final class PayoutRecalculations {
 				}
 			)
 		);
+
+		do_action(
+			'merchboard_notify',
+			'payout_adjusted',
+			$item->creator_id,
+			array(
+				'amount'    => SalesAmount::format( (int) $item->difference_units ),
+				'currency'  => $item->currency,
+				'reference' => $run->reference(),
+			),
+			'adjustment:' . $item->id
+		);
 	}
 
 	/**

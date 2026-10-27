@@ -148,7 +148,7 @@ final class PayoutRequests {
 
 		$decimals = $this->store->decimals();
 
-		return $this->payouts->with_creator_lock(
+		$payout = $this->payouts->with_creator_lock(
 			$creator_id,
 			fn(): Payout => $this->transaction->run(
 				function () use ( $creator_id, $currency, $amount, $type, $destination, $idempotency_key, $user_id, $decimals ): Payout {
@@ -195,6 +195,10 @@ final class PayoutRequests {
 				}
 			)
 		);
+
+		PayoutNotice::send( 'payout_requested', $payout );
+
+		return $payout;
 	}
 
 	/**
@@ -208,7 +212,7 @@ final class PayoutRequests {
 	 * @throws DatabaseException When a read or write fails (rolled back).
 	 */
 	public function cancel( int $creator_id, int $payout_id, ?int $user_id ): Payout {
-		return $this->payouts->with_creator_lock(
+		$payout = $this->payouts->with_creator_lock(
 			$creator_id,
 			fn(): Payout => $this->transaction->run(
 				function () use ( $creator_id, $payout_id, $user_id ): Payout {
@@ -236,6 +240,10 @@ final class PayoutRequests {
 				}
 			)
 		);
+
+		PayoutNotice::send( 'payout_cancelled', $payout );
+
+		return $payout;
 	}
 
 	/**

@@ -523,6 +523,9 @@ final class PayoutsTest extends IntegrationTestCase {
 		self::assertTrue( $this->settings->set_billing_details( $this->creator, array( 'legal_name' => 'Payout Alpha ApS' ) ), 'Emptied fields are removed.' );
 		self::assertSame( array( 'legal_name' => 'Payout Alpha ApS' ), $this->settings->billing_details( $this->creator )->to_stored() );
 
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'billing_details_changed' === $row['type'] ) );
+		self::assertSame( array( '[]', '[]' ), array_column( $notices, 'data' ), 'Once per change ("unchanged" tells nothing), never the values.' );
+
 		$audit = $this->audit_rows( AuditAction::CreatorBillingDetailsChanged );
 		self::assertSame(
 			array(

@@ -96,6 +96,7 @@ final class CreatorService {
 
 		if ( null !== $user_id ) {
 			$this->users->grant_creator_role( $user_id );
+			self::welcome( $creator->id, $user_id );
 		}
 
 		return $creator;
@@ -168,6 +169,7 @@ final class CreatorService {
 
 		if ( $relink && null !== $user_id ) {
 			$this->users->grant_creator_role( $user_id );
+			self::welcome( $current->id, $user_id );
 		}
 
 		if ( $restatus ) {
@@ -255,6 +257,17 @@ final class CreatorService {
 		}
 
 		return $changes;
+	}
+
+	/**
+	 * Welcomes a creator's newly linked user (ADR-079), after the commit.
+	 *
+	 * @param int $creator_id Creator id.
+	 * @param int $user_id    The linked user.
+	 */
+	private static function welcome( int $creator_id, int $user_id ): void {
+		// Once per creator and user, also when the same user is linked again.
+		do_action( 'merchboard_notify', 'account_welcome', $creator_id, array(), 'user:' . $user_id );
 	}
 
 	/**

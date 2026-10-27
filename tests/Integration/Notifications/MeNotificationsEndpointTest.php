@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Notifications;
 
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Access\Impersonation;
 use MerchBoard\Modules\Access\ImpersonationGuard;
@@ -57,6 +58,8 @@ final class MeNotificationsEndpointTest extends IntegrationTestCase {
 		$this->nova_user     = $this->create_user( 'nova' );
 		$this->nova          = $this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $this->nova_user )->id;
 		$this->orion         = $this->service( CreatorService::class )->create( 'Orion', CreatorStatus::Active, $this->create_user( 'orion' ) )->id;
+		// Without the welcomes the creations fired (29.5).
+		$this->execute( 'DELETE FROM %i', $this->table( Tables::NOTIFICATIONS ) );
 
 		$controller     = $this->service( MeNotificationsController::class );
 		$this->register = static function () use ( $controller ): void {
@@ -146,10 +149,11 @@ final class MeNotificationsEndpointTest extends IntegrationTestCase {
 
 		wp_set_current_user( 1 );
 		$this->service( Impersonation::class )->start( $this->nova );
-		self::assertSame( array( 'unread' => 1 ), $this->data( $this->call( 'POST', '/merchboard/v1/me/notifications/read', array( 'all' => true ) ) ) );
+		// 2: the one left and the notice that an administrator viewed the dashboard.
+		self::assertSame( array( 'unread' => 2 ), $this->data( $this->call( 'POST', '/merchboard/v1/me/notifications/read', array( 'all' => true ) ) ) );
 		self::assertNull( $this->notifications->find( $other )?->read_at, 'Viewing as the creator leaves the bell as it was.' );
 		$listed = $this->data( $this->call( 'GET', '/merchboard/v1/me/notifications' ) );
-		self::assertSame( 1, $listed['unread'] );
+		self::assertSame( array( 2, 'impersonation_started' ), array( $listed['unread'], $listed['items'][0]['type'] ?? null ) );
 
 		delete_user_meta( 1, ImpersonationSession::META );
 		ImpersonationSession::act( false );

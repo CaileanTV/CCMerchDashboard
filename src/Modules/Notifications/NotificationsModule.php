@@ -119,6 +119,26 @@ final class NotificationsModule implements Module {
 			4
 		);
 
+		// A news message was published: the creators who see it.
+		add_action(
+			'merchboard_news_published',
+			static function ( mixed $id, mixed $title = '', mixed $published = null ) use ( $container ): void {
+				$container->get( Notifier::class )->news_published( $id, $title, $published );
+			},
+			10,
+			3
+		);
+
+		// A creator was activated or deactivated (fired after the commit).
+		add_action(
+			'merchboard_creator_status_changed',
+			static function ( mixed $creator_id, mixed $status = '' ) use ( $container ): void {
+				$container->get( Notifier::class )->notify( 'account_status', $creator_id, array( 'active' => 'active' === $status ), '' );
+			},
+			10,
+			2
+		);
+
 		add_action(
 			'admin_menu',
 			static function () use ( $container ): void {

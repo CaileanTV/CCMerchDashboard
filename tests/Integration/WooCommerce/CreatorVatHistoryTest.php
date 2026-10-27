@@ -123,6 +123,9 @@ final class CreatorVatHistoryTest extends IntegrationTestCase {
 		self::assertCount( 2, $audit );
 		self::assertSame( array( true, false ), array( $audit[1]['current_vat_registered'] ?? null, $audit[1]['current_changed'] ?? null ) );
 		self::assertCount( 1, $this->audit_contexts( 'creator_vat_status_changed' ), 'Only the change of the current status.' );
+
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'vat_changed' === $row['type'] ) );
+		self::assertSame( array( array( 'registered' => true ) ), array_map( static fn( array $row ): mixed => json_decode( (string) $row['data'], true ), $notices ), 'Told once, without the reference or reason.' );
 	}
 
 	public function test_the_audit_records_the_registration_without_its_texts(): void {

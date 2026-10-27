@@ -437,6 +437,44 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( 'rejected', 'The account is closed.', '2026-11-30T12:00:00Z' ), array( $item['status'], $item['rejection_reason'], $item['decided_at'] ) );
 	}
 
+	public function test_the_creator_is_notified_of_sales_and_every_payout_step_after_the_commit(): void {
+		$mine    = $this->creator_user( 'mine', 'Mine' );
+		$creator = $this->creator_id( $mine );
+		$this->earn( $mine, 2 );
+		$this->sync->sync( $this->next_order - 1 );
+		wp_set_current_user( $mine );
+		$cancelled = (int) ( (array) $this->create( '5', 'key-note-0001' )->get_data() )['id'];
+		$this->cancel( $cancelled );
+		$this->create( '5', 'key-note-0001' );
+		$completed = (int) ( (array) $this->create( '15', 'key-note-0002' )->get_data() )['id'];
+		$rejected  = (int) ( (array) $this->create( '5', 'key-note-0003' )->get_data() )['id'];
+
+		wp_set_current_user( 1 );
+		$this->decisions()->complete( $completed );
+		$this->decisions()->complete( $completed );
+		$this->decisions()->reject( $rejected, 'The account is closed.' );
+		$documents = $this->documents();
+		$shown     = $documents->for_payout( $completed );
+		self::assertNotNull( $shown );
+		$documents->correct( $completed, $shown['document']->id, 'The markup was wrong.', '30', '0' );
+
+		$rows = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => (string) $creator === (string) $row['creator_id'] ) );
+		self::assertSame(
+			array( 'account_welcome', 'sale_new', 'sale_new', 'payout_requested', 'payout_cancelled', 'payout_requested', 'payout_requested', 'payout_completed', 'payout_rejected', 'settlement_corrected' ),
+			array_column( $rows, 'type' ),
+			'One per order (a repeated sync adds none) and one per payout and step (a resent key or a second click adds none).'
+		);
+
+		$data = array_map( static fn( array $row ): array => (array) json_decode( (string) $row['data'], true ), $rows );
+		self::assertSame( array( 'MB-PAY line', '1', '80.0000' ), array_values( $data[1]['items'][0] ?? array() ) );
+		self::assertSame( array( '80.0000', 'DKK' ), array( $data[1]['total'] ?? null, $data[1]['currency'] ?? null ) );
+		self::assertSame( array( '15.0000', 'DKK', 'AFR-000001' ), array( $data[7]['amount'] ?? null, $data[7]['currency'] ?? null, $data[7]['document_number'] ?? null ) );
+		self::assertSame( 'The account is closed.', $data[8]['reason'] ?? null );
+		self::assertSame( array( 'AFR-000001', 'AFR-000001-K1', '-10.0000', 'The markup was wrong.' ), array( $data[9]['document_number'] ?? null, $data[9]['correction_number'] ?? null, $data[9]['difference'] ?? null, $data[9]['reason'] ?? null ) );
+		self::assertStringNotContainsString( self::ACCOUNT, (string) wp_json_encode( $data ), 'Never the payment details.' );
+		self::assertStringNotContainsString( '5678', (string) wp_json_encode( $data ) );
+	}
+
 	public function test_the_settlement_document_is_shown_only_to_its_creator_and_never_cached(): void {
 		$mine  = $this->creator_user( 'mine', 'Mine' );
 		$other = $this->creator_user( 'other', 'Other' );
@@ -651,6 +689,17 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 			wp_set_current_user( 1 );
 			$this->gift_cards->register( $id, 'MB-REST-CODE-55' );
 			wp_set_current_user( $mine );
+
+			$notices = array_column( $this->rows( Tables::NOTIFICATIONS ), 'data', 'type' );
+			self::assertSame(
+				array(
+					'amount'   => '20.0000',
+					'currency' => 'DKK',
+				),
+				json_decode( (string) ( $notices['payout_gift_card'] ?? '' ), true ),
+				'Never the code (ADR-057).'
+			);
+			self::assertArrayNotHasKey( 'payout_completed', $notices, 'A gift card is told once, as a gift card.' );
 
 			$response = $this->get( '/' . $id . '/gift-card' );
 			self::assertSame( 200, $response->get_status() );

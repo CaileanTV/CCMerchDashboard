@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Notifications;
 
+use DateTimeInterface;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -28,7 +29,8 @@ defined( 'ABSPATH' ) || exit;
  *   on); the e-mail is queued (`merchboard_notification_send`) or, without
  *   a queue, sent at the end of the request.
  * - The creator's own choice turns the e-mail off, except for important types.
- * - A dedupe key ('' for none) makes the same event notify once.
+ * - A dedupe key ('' for none) makes the same event notify the same
+ *   recipient once.
  * - It never throws: a notification must not break what triggered it.
  */
 class Notifier {
@@ -92,6 +94,40 @@ class Notifier {
 	}
 
 	/**
+	 * A published news message (`merchboard_news_published`): one
+	 * notification for each current creator who sees it (created at or
+	 * before its publication), once per message.
+	 *
+	 * @param mixed $id        Message.
+	 * @param mixed $title     Title.
+	 * @param mixed $published Publication time.
+	 * @return int The notifications created.
+	 */
+	public function news_published( mixed $id, mixed $title, mixed $published ): int {
+		if ( ! is_numeric( $id ) || ! is_string( $title ) || ! $published instanceof DateTimeInterface ) {
+			return 0;
+		}
+
+		try {
+			$creators = $this->creators->all();
+		} catch ( Throwable $e ) {
+			$this->logger->error( 'The creators to notify of news could not be read.', array( 'exception' => get_class( $e ) ) );
+
+			return 0;
+		}
+
+		$created = 0;
+
+		foreach ( $creators as $creator ) {
+			if ( ! $creator->is_deleted() && $creator->created_at <= $published && null !== $this->notify( 'news_published', $creator->id, array( 'title' => $title ), 'news:' . (int) $id ) ) {
+				++$created;
+			}
+		}
+
+		return $created;
+	}
+
+	/**
 	 * Sends the notifications of this request that had no queue.
 	 */
 	public function send_pending(): void {
@@ -143,7 +179,8 @@ class Notifier {
 		}
 
 		$status = $email ? ( $reachable ? Notification::EMAIL_PENDING : Notification::EMAIL_SKIPPED ) : Notification::EMAIL_NONE;
-		$id     = $this->notifications->insert( $type->key, $type->audience, $creator_id, $data, '' === $dedupe ? '' : $type->key . ':' . $dedupe, $dashboard, $status );
+		// Per type and recipient: the same event (a news message) can notify several creators once each.
+		$id = $this->notifications->insert( $type->key, $type->audience, $creator_id, $data, '' === $dedupe ? '' : $type->key . ':' . ( $creator_id ?? 0 ) . ':' . $dedupe, $dashboard, $status );
 
 		if ( null === $id ) {
 			return null;

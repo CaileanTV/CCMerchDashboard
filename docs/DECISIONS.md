@@ -4370,6 +4370,12 @@ Endnu udløser intet notifikationer (29.5–29.6), og der er ingen admin-side (2
 - Tekstlinjen bygges på serveren som ren tekst i creatorens sprog (samme katalog og oversættelser som mailen) og vises i React som tekst, aldrig som HTML. Så findes de 27 tekster kun ét sted.
 - Antallet af ulæste sendes ikke med i bootstrap. Klokken henter det selv, når creatoren er kendt, og igen hvert minut, mens fanen er synlig.
 
+**Statusnote 2026-10-27 (trin 29.5):** creator-hændelserne udløser notifikationer efter commit (se features/notifications.md, "Udløsersteder"). Præciseringer:
+- Dedupe-nøglen er `{type}:{creator}:{hændelse}` (pkt. 3), så én hændelse kan give flere creators hver sin notifikation (en nyhed).
+- Nyheder udløses via den nye action `merchboard_news_published`, så News-modulet ikke kender creatorlisten. Kontostatus bruger den eksisterende `merchboard_creator_status_changed`.
+- Kun manuelle produktkoblinger giver en notifikation; koblinger fra kategoriafstemningen kan komme mange ad gangen og giver ingen.
+- "Nyt salg" sendes uden fortjeneste (pkt. 9 "når den kendes"); beløbene er linjernes nettobeløb fra ledgeren.
+
 ## Context
 Merch Dashboard giver i dag ingen besked, når noget sker:
 - creatoren skal selv åbne dashboardet for at opdage et salg, en udbetaling eller et afvist forslag;

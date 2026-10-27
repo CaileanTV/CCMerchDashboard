@@ -4,7 +4,7 @@
 Creators og administratorer får besked, når noget sker, så de ikke selv skal holde øje med dashboardet og køerne. Beskeden kommer som e-mail og, for creators, ved et ikon (klokken) øverst i dashboardet ([ADR-079](../DECISIONS.md), ROADMAP fase 29).
 
 ## Current status
-I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) 29.3 (admin-siden med til/fra, eksempler, testmail og log) og 29.4 (klokken og creatorens e-mailvalg under Profil) er implementeret og testet automatisk; endnu udløser intet notifikationer (29.5–29.6).
+I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) 29.3 (admin-siden med til/fra, eksempler, testmail og log) og 29.4 (klokken og creatorens e-mailvalg under Profil) og 29.5 (creator-hændelserne udløser notifikationer) er implementeret og testet automatisk. Saldo-jobbet, alerts og administrator-mails mangler (29.6).
 
 ## User-facing functionality
 - **Klokken:** et lille ikon i dashboardets topbar med en rød boble med antal ulæste (9+ over 9).
@@ -104,6 +104,17 @@ Se [API.md](../API.md).
 
 ## Hooks
 - Action `merchboard_notify` (udløses af modulerne).
+- Action `merchboard_news_published` (`$id`, `$title`, `$published`): en nyhed er udgivet; modulet giver hver creator, der ser den, én notifikation.
+- Action `merchboard_creator_status_changed` (findes fra fase 9) giver `account_status`.
+
+**Udløsersteder (29.5), alle efter commit:**
+- Salg: `SalesSynchronizer` (kun live-synkronisering, aldrig backfill) via `SalesNotices`: `sale_new` én pr. ordre, cyklus og creator; `sale_reversed` for refunderings-, tilbageførsels- og rettelsesrækker. Linjer udelukket af creatorens egen kode giver ingen rækker og derfor ingen notifikation.
+- Udbetalinger: `PayoutRequests` (anmodning, annullering), `PayoutDecisions` (gennemført med bilagsnummer, afvist med begrundelse) og `PayoutGiftCards` (gavekort, aldrig koden) via `PayoutNotice`; `SettlementDocuments::correct`; `PayoutRecalculations` (pr. udført regulering).
+- Kategoriforslag: `CategoryProposals::approve`/`reject` (feltets nøgle; navnet oversættes ved visning).
+- Rabatkode: `CreatorCodeService::issue` (første kode eller nulstilling) og `end`; aldrig koden.
+- Konto: `CreatorService` (velkomst, når en bruger tilknyttes; én gang pr. creator og bruger), statusskift, `CreatorPricingSettings` (fortjeneste som standard eller pr. produkt, nuværende momsstatus), `PayoutSettings::set_billing_details` (aldrig værdierne), `ProductCreatorLink::link` (manuel kobling) og `Impersonation::start` (aldrig hvem).
+- Nyheder: `NewsService::publish` → `merchboard_news_published`.
+- Dedupe-nøglen er `{type}:{creator}:{hændelse}`, så en gentaget handling (samme idempotensnøgle, et dobbeltklik, en ny synkronisering, en genudgivelse) ikke giver en ny notifikation.
 - Action Scheduler-hooks `merchboard_notification_send` og `merchboard_notification_balance_check`.
 
 ## Dependencies
@@ -125,6 +136,8 @@ Se [API.md](../API.md).
 ## Known limitations
 - En creator uden WordPress-bruger får ingen mail.
 - Administrator-mails går kun til sitets admin-e-mail.
+- Produkter, der kobles via creatorens kategori (afstemningen), giver ingen notifikation; kun manuelle koblinger.
+- "Nyt salg" viser ikke fortjenesten endnu (feltet er valgfrit i skabelonen).
 
 ## Future improvements
 - Daglig eller ugentlig opsamling som et valg for creatoren.

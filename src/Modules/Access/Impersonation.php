@@ -94,6 +94,9 @@ class Impersonation {
 			}
 		);
 
+		// The creator can see that support looked (never who).
+		do_action( 'merchboard_notify', 'impersonation_started', $creator->id, array(), '' );
+
 		return $creator;
 	}
 

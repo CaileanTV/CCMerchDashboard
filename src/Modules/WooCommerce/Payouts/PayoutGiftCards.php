@@ -112,7 +112,7 @@ final class PayoutGiftCards {
 
 		$creator_id = $found->creator_id;
 
-		return $this->payouts->with_creator_lock(
+		$payout = $this->payouts->with_creator_lock(
 			$creator_id,
 			fn(): Payout => $this->transaction->run(
 				function () use ( $creator_id, $payout_id, $code ): Payout {
@@ -168,6 +168,11 @@ final class PayoutGiftCards {
 				}
 			)
 		);
+
+		// Never the code: the creator reads it in the dashboard (ADR-057).
+		PayoutNotice::send( 'payout_gift_card', $payout );
+
+		return $payout;
 	}
 
 	/**

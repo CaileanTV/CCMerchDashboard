@@ -206,6 +206,10 @@ final class CategoryProposalsTest extends IntegrationTestCase {
 		self::assertCount( 5, $approved );
 		self::assertSame( $this->term, $approved[0]['term_id'] );
 		self::assertSame( array( array( 'display_name' ) ), array_column( $this->audit( 'creator_updated' ), 'changed_fields' ) );
+
+		$notices = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'proposal_approved' === $row['type'] ) );
+		self::assertCount( 5, $notices, 'One per approved proposal.' );
+		self::assertSame( (string) $this->nova, (string) $notices[0]['creator_id'] );
 	}
 
 	public function test_a_rejection_writes_nothing_and_the_creator_sees_the_note(): void {
@@ -220,6 +224,14 @@ final class CategoryProposalsTest extends IntegrationTestCase {
 		self::assertSame( array( 'description' ), array_keys( $rejected ) );
 		self::assertSame( 'Please no links in the text', $rejected['description']->reason );
 		self::assertSame( 'Please no links in the text', $this->audit( 'category_proposal_rejected' )[0]['decision_note'] );
+		$notices = array_column( $this->rows( Tables::NOTIFICATIONS ), 'data', 'type' );
+		self::assertSame(
+			array(
+				'field' => 'description',
+				'note'  => 'Please no links in the text',
+			),
+			json_decode( (string) ( $notices['proposal_rejected'] ?? '' ), true )
+		);
 
 		// A decided proposal cannot be decided again; a new proposal hides the old rejection.
 		self::assertSame( CategoryProposalException::NOT_PENDING, $this->refusal( fn() => $this->proposals()->approve( $ids[1] ) ) );

@@ -198,6 +198,9 @@ final class CreatorCodeService {
 			}
 		}
 
+		// Never the code: the creator reads it in the dashboard.
+		do_action( 'merchboard_notify', 'code_registered' === $result ? 'code_issued' : 'code_reset', $creator->id, array(), '' );
+
 		return $result;
 	}
 
@@ -226,6 +229,8 @@ final class CreatorCodeService {
 				}
 			)
 		);
+
+		do_action( 'merchboard_notify', 'code_ended', $creator->id, array(), '' );
 	}
 
 	/**

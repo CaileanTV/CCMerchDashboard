@@ -297,7 +297,7 @@ final class SettlementDocuments {
 			throw new PayoutException( PayoutException::DOCUMENT_NOT_CORRECTABLE );
 		}
 
-		return $this->payouts->with_creator_lock(
+		$document = $this->payouts->with_creator_lock(
 			$found->creator_id,
 			fn(): SettlementDocument => $this->transaction->run(
 				function () use ( $payout_id, $document_id, $reason, $incl, $untaxed ): SettlementDocument {
@@ -404,6 +404,23 @@ final class SettlementDocuments {
 				}
 			)
 		);
+
+		$correction = $document->snapshot[ SettlementCorrection::SNAPSHOT_KEY ] ?? null;
+		do_action(
+			'merchboard_notify',
+			'settlement_corrected',
+			$document->creator_id,
+			array(
+				'document_number'   => (string) ( $document->snapshot['corrects'] ?? '' ),
+				'correction_number' => $document->number,
+				'difference'        => is_array( $correction ) && is_array( $correction['difference'] ?? null ) ? (string) ( $correction['difference']['commission'] ?? '' ) : '',
+				'currency'          => $document->currency,
+				'reason'            => $reason,
+			),
+			'document:' . $document->id
+		);
+
+		return $document;
 	}
 
 	/**

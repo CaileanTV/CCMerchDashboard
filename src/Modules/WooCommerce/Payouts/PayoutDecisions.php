@@ -98,7 +98,7 @@ final class PayoutDecisions {
 			throw new PayoutException( PayoutException::INVALID_REASON );
 		}
 
-		return $this->decide(
+		$payout = $this->decide(
 			$payout_id,
 			PayoutStatus::Rejected,
 			function ( Payout $payout ) use ( $reason ): void {
@@ -112,6 +112,10 @@ final class PayoutDecisions {
 				$this->audit->record( AuditAction::PayoutRejected, $payout->creator_id, PayoutAudit::context( $payout, array( 'has_reason' => true ) ) );
 			}
 		);
+
+		PayoutNotice::send( 'payout_rejected', $payout, array( 'reason' => (string) $payout->decision_reason ) );
+
+		return $payout;
 	}
 
 	/**
@@ -130,7 +134,7 @@ final class PayoutDecisions {
 			throw new PayoutException( PayoutException::INVALID_REFERENCE );
 		}
 
-		return $this->decide(
+		$payout = $this->decide(
 			$payout_id,
 			PayoutStatus::Completed,
 			function ( Payout $payout ) use ( $reference ): void {
@@ -163,6 +167,17 @@ final class PayoutDecisions {
 				$this->audit->record( AuditAction::PayoutCompleted, $payout->creator_id, PayoutAudit::context( $payout, array( 'has_reference' => '' !== $reference ) ) );
 			}
 		);
+
+		// The completion has committed: a failed read only leaves the number out.
+		try {
+			$number = $this->documents->numbers_for_payouts( array( $payout->id ) )[ $payout->id ] ?? '';
+		} catch ( DatabaseException ) {
+			$number = '';
+		}
+
+		PayoutNotice::send( 'payout_completed', $payout, array( 'document_number' => $number ) );
+
+		return $payout;
 	}
 
 	/**

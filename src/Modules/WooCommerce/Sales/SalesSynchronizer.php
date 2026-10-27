@@ -442,12 +442,13 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 				$admitted   = true;
 				$assessment = null;
 				$nothing    = false;
+				$written    = null;
 
 				$this->excluded = false;
 
 				$this->repository->write(
 					$order_id,
-					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted, &$assessment, &$nothing ): ?SalesLedgerWrite {
+					function ( SalesLedgerState $state ) use ( $order, $now, $admit, $observe, &$failure, &$admitted, &$assessment, &$nothing, &$written ): ?SalesLedgerWrite {
 						// Null: the repository writes nothing, not even a G1 `pending` (D1, T5b).
 						if ( null !== $admit && ! $admit( $state ) ) {
 							$admitted = false;
@@ -485,6 +486,8 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 							$observe( $result->write );
 						}
 
+						$written = $result->write;
+
 						return $result->write;
 					}
 				);
@@ -497,6 +500,16 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 				if ( $assessment instanceof OrderExclusionAssessment ) {
 					$this->excluded = $nothing;
 					$this->exclusions?->committed( $assessment );
+				}
+
+				// The live synchronization tells the creators (ADR-079); a backfill ($admit) never does.
+				if ( null === $admit && $written instanceof SalesLedgerWrite ) {
+					try {
+						SalesNotices::send( $written );
+					} catch ( Throwable ) {
+						// Committed: a notification never turns the synchronization into a failure.
+						$this->logger->error( 'Could not notify the creators of new sales rows.', array( 'order_id' => $order_id ) );
+					}
 				}
 
 				return $failure ?? true;

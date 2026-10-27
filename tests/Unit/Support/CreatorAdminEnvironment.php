@@ -71,6 +71,8 @@ trait CreatorAdminEnvironment {
 		Functions\when( 'get_current_user_id' )->alias( fn(): int => $this->current_user_id );
 		Functions\when( 'current_time' )->alias( fn(): string => $this->now );
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+		// Product names in notifications (ADR-079).
+		Functions\when( 'get_the_title' )->alias( static fn( mixed $post ): string => 'Product ' . ( is_scalar( $post ) ? (string) $post : '' ) );
 
 		$this->service = new CreatorService(
 			new CreatorRepository( $this->db ),

@@ -628,7 +628,7 @@ Notifikationer til creators (e-mail og klokken i dashboardet) og til administrat
 | `audience` | `varchar(10)` | `creator` eller `admin` |
 | `creator_id` | `bigint unsigned NULL` | Creatoren (NULL for administratorens) |
 | `data` | `longtext` | Værdierne som JSON (id'er, beløb, navne, begrundelse); aldrig gavekortkoder, rabatkoder, bankoplysninger eller hemmeligheder |
-| `dedupe_key` | `varchar(191) NULL` | `{type}:{hændelse}`, unik, så samme hændelse (fx en ordre, der synkroniseres igen) kun giver én notifikation |
+| `dedupe_key` | `varchar(191) NULL` | `{type}:{creator}:{hændelse}` (creator 0 for administratoren), unik, så samme hændelse (fx en ordre, der synkroniseres igen) kun giver én notifikation |
 | `in_dashboard` | `tinyint(1)` | Vises ved creatorens klokke |
 | `created_at`, `read_at` | `datetime`, `datetime NULL` | UTC; læst ved klokken |
 | `email_status` | `varchar(10)` | `none`, `pending`, `sent`, `failed` eller `skipped` (ingen modtager) |
