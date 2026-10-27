@@ -71,7 +71,7 @@ final class MeEndpointTest extends IntegrationTestCase {
 		$routes = rest_get_server()->get_routes( 'merchboard/v1' );
 
 		$profile = array( '/merchboard/v1/me/profile', '/merchboard/v1/me/profile/files/(?P<field>image|banner|banner_mobile)', '/merchboard/v1/me/profile/files/(?P<id>\d+)', '/merchboard/v1/me/profile/proposals/(?P<field>[a-z_]+)' );
-		self::assertSame( array_merge( array( '/merchboard/v1', '/merchboard/v1/me' ), $profile, array( '/merchboard/v1/me/preferences', '/merchboard/v1/me/news', '/merchboard/v1/me/news/(?P<id>\d+)/seen', '/merchboard/v1/me/news/(?P<id>\d+)/closed' ) ), array_keys( $routes ) );
+		self::assertSame( array_merge( array( '/merchboard/v1', '/merchboard/v1/me' ), $profile, array( '/merchboard/v1/me/preferences', '/merchboard/v1/me/news', '/merchboard/v1/me/news/(?P<id>\d+)/seen', '/merchboard/v1/me/news/(?P<id>\d+)/closed', '/merchboard/v1/me/notifications', '/merchboard/v1/me/notifications/read', '/merchboard/v1/me/notification-preferences' ) ), array_keys( $routes ) );
 
 		$methods = array();
 
