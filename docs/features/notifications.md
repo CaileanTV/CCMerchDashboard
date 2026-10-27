@@ -4,15 +4,16 @@
 Creators og administratorer får besked, når noget sker, så de ikke selv skal holde øje med dashboardet og køerne. Beskeden kommer som e-mail og, for creators, ved et ikon (klokken) øverst i dashboardet ([ADR-079](../DECISIONS.md), ROADMAP fase 29).
 
 ## Current status
-I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) og 29.3 (admin-siden med til/fra, eksempler, testmail og log) er implementeret og testet automatisk; endnu udløser intet notifikationer, og klokken mangler.
+I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) 29.3 (admin-siden med til/fra, eksempler, testmail og log) og 29.4 (klokken og creatorens e-mailvalg under Profil) er implementeret og testet automatisk; endnu udløser intet notifikationer (29.5–29.6).
 
 ## User-facing functionality
 - **Klokken:** et lille ikon i dashboardets topbar med en rød boble med antal ulæste (9+ over 9).
   - Et klik åbner et panel med notifikationerne som korte tekstlinjer: nyeste først, tidspunkt og et link til den relevante side. Her er "Markér alle som læst" og "Vis flere".
   - At åbne panelet markerer de viste som læst.
+  - Antallet hentes, når dashboardet åbner, og igen hvert minut, mens fanen er synlig.
   - Ikke en popup som Nyheder, og ikke mailens layout.
 - **E-mail** i butikkens design (som projektejerens nye WooCommerce-mails): butiksnavn, et kort med farvet topkant, overskrift, hilsen, tekst, en infoboks eller tabel, en knap til dashboardet og en sidefod med butikkens navn og adresse.
-- **Valg:** under Profil kan creatoren slå mails fra for typer, der ikke er vigtige. Vigtige mails (udbetalinger, afregningsbilag, sikkerhed og konto) kan ikke slås fra.
+- **Valg:** under Profil (kortet "E-mailnotifikationer") kan creatoren slå mails fra for typer, der ikke er vigtige, og som administratoren sender som mail. Valget gemmes straks. Vigtige mails (udbetalinger, afregningsbilag, sikkerhed og konto) kan ikke slås fra.
 - **Følsomme data:** mails indeholder aldrig gavekortkoder, rabatkoder, bankoplysninger eller CVR. De fortæller, at noget er sket, og linker til dashboardet.
 
 ## Katalog
@@ -80,7 +81,9 @@ Merch Dashboard → **Notifikationer** (`merchboard_manage_settings`):
 - `src/Modules/Notifications/Admin/` (`NotificationsAdminPage`, `NotificationsAdminActions`)
 - `templates/emails/layout.php`
 - `src/Core/Database/Migrations/CreateNotificationsTable.php`
-- `tests/Integration/Notifications/NotificationsTest.php`, `tests/Integration/Notifications/NotificationsAdminTest.php`, `tests/Integration/Support/RecordingMailer.php`
+- `src/Modules/Notifications/MeNotificationsController.php`
+- Dashboard: `assets/src/dashboard/api/notifications.ts`, `components/NotificationBell.tsx`, `sections/profile/EmailNotificationsCard.tsx`
+- `tests/Integration/Notifications/NotificationsTest.php`, `tests/Integration/Notifications/NotificationsAdminTest.php`, `tests/Integration/Notifications/MeNotificationsEndpointTest.php`, `tests/Integration/Support/RecordingMailer.php`, `assets/src/dashboard/test/notifications.test.tsx`
 
 ## Database/data used
 - `merchboard_notifications` (schema-version 34).
@@ -95,9 +98,9 @@ Se [DATABASE.md](../DATABASE.md), når tabellen er implementeret.
 ## API endpoints
 - `GET /me/notifications`
 - `POST /me/notifications/read`
-- `PATCH /me/notification-preferences`
+- `GET`, `PATCH /me/notification-preferences`
 
-Se [API.md](../API.md), når de er implementeret.
+Se [API.md](../API.md).
 
 ## Hooks
 - Action `merchboard_notify` (udløses af modulerne).
@@ -115,6 +118,9 @@ Se [API.md](../API.md), når de er implementeret.
   - afsendelse med forsøg efter 1 og 5 minutter, derefter `failed`; uden kø ved `shutdown`;
   - klokkens læst-markering, beskæring og oprydning ved sletning af en creator;
   - admin-valg med audit.
+- `NotificationsAdminTest`: admin-siden.
+- `MeNotificationsEndpointTest`: kun egne notifikationer, læst-markering (ikke under "Se som creator"), e-mailvalg (kun ikke-vigtige; valg for typer, administratoren har slået fra, bevares) og `PATCH` afvist under "Se som creator".
+- Jest (`notifications.test.tsx`): validering (også links, der ikke er dashboard-stier), boblen (9+), panelet som ren tekst, læst-markering, "Vis flere", "Markér alle som læst", Escape og klik udenfor, opdatering hvert minut og e-mailvalgene.
 
 ## Known limitations
 - En creator uden WordPress-bruger får ingen mail.

@@ -28,6 +28,7 @@ import type {
 	SocialPlatform,
 } from '../../types/creator';
 import { DiscountCodeCard } from './DiscountCodeCard';
+import { EmailNotificationsCard } from './EmailNotificationsCard';
 import { ImageProposal } from './ImageProposal';
 import { platformLabel } from './platforms';
 import { ProposalNote } from './ProposalNote';
@@ -551,6 +552,7 @@ export function ProfileSection() {
 		<>
 			<ProfileContent />
 			<DiscountCodeCard />
+			<EmailNotificationsCard />
 			<ThemeSettings />
 		</>
 	);

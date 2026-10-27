@@ -6,7 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
-- **Notifikationer (fase 29, ADR-079):** grundlaget for notifikationer på mail i butikkens design (WooCommerce' farver, logo, skrift og afsender) og ved en klokke i dashboardet, med et katalog over 36 notifikationer til creators og administratoren. Ny admin-side Merch Dashboard → Notifikationer med til/fra pr. notifikation og kanal, eksempel på hver mail, testmail og log. Schema-version 34. Notifikationerne udløses i de følgende trin.
+- **Notifikationer (fase 29, ADR-079):** grundlaget for notifikationer på mail i butikkens design (WooCommerce' farver, logo, skrift og afsender) og ved en klokke i dashboardet, med et katalog over 36 notifikationer til creators og administratoren. Ny admin-side Merch Dashboard → Notifikationer med til/fra pr. notifikation og kanal, eksempel på hver mail, testmail og log. I creatorens dashboard en klokke øverst med en rød boble med antal ulæste og et panel med notifikationerne som tekst, og under Profil kortet "E-mailnotifikationer", hvor creatoren kan slå mails fra, der ikke er vigtige. Schema-version 34. Notifikationerne udløses i de følgende trin.
 
 ## [1.3.1] - 2026-10-26
 

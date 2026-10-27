@@ -1499,3 +1499,163 @@ input:disabled + .merchboard-sounds__upload {
 		justify-content: space-between;
 	}
 }
+
+// The notification bell in the top bar (phase 29, ADR-079).
+.merchboard-bell {
+	position: relative;
+}
+
+.merchboard-bell__button {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	color: var(--merchboard-text);
+	cursor: pointer;
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-full);
+
+	&:hover {
+		background: var(--merchboard-hover-bg);
+	}
+}
+
+.merchboard-bell__badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	font-size: var(--merchboard-text-xs);
+	font-weight: 700;
+	line-height: 20px;
+	color: var(--merchboard-on-danger);
+	text-align: center;
+	background: var(--merchboard-danger);
+	border: 2px solid var(--merchboard-surface);
+	border-radius: var(--merchboard-radius-full);
+	box-sizing: content-box;
+}
+
+.merchboard-bell__panel {
+	position: absolute;
+	top: calc(100% + var(--merchboard-space-2));
+	right: 0;
+	z-index: calc(var(--merchboard-z-nav) + 1);
+	width: min(24rem, calc(100vw - 2 * var(--merchboard-space-4)));
+	max-height: min(32rem, calc(100vh - 6rem));
+	overflow-y: auto;
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+	box-shadow: var(--merchboard-shadow);
+}
+
+.merchboard-bell__header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: baseline;
+	justify-content: space-between;
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
+.merchboard-bell__title {
+	margin: 0;
+	font-size: var(--merchboard-text-md);
+}
+
+.merchboard-bell__action {
+	padding: 0;
+	font: inherit;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-link);
+	text-decoration: underline;
+	cursor: pointer;
+	background: none;
+	border: 0;
+}
+
+.merchboard-bell__more {
+	display: block;
+	margin: var(--merchboard-space-3) auto;
+}
+
+.merchboard-bell__list {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.merchboard-bell__item + .merchboard-bell__item {
+	border-top: 1px solid var(--merchboard-border);
+}
+
+.merchboard-bell__link {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	color: var(--merchboard-text);
+	text-decoration: none;
+
+	&:hover {
+		background: var(--merchboard-hover-bg);
+	}
+}
+
+.merchboard-bell__item--unread .merchboard-bell__link {
+	background: var(--merchboard-selected-bg);
+
+	.merchboard-bell__text {
+		font-weight: 600;
+	}
+}
+
+.merchboard-bell__time {
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-bell__empty {
+	padding: var(--merchboard-space-4);
+	margin: 0;
+	color: var(--merchboard-text-muted);
+}
+
+// The creator's e-mail choices under Profile (phase 29).
+.merchboard-email-choices {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	padding: 0;
+	margin: var(--merchboard-space-4) 0 0;
+	list-style: none;
+}
+
+.merchboard-email-choices__item {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0 var(--merchboard-space-3);
+	align-items: start;
+
+	input {
+		margin-top: 3px;
+	}
+}
+
+.merchboard-email-choices__name {
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.merchboard-email-choices__description {
+	grid-column: 2;
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text-muted);
+}

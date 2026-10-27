@@ -50,6 +50,8 @@ final class ImpersonationGuard {
 		array( 'POST', '#^/merchboard/v1/me/alerts/chatbot/[a-z]+/(connect|terms)$#i' ),
 		array( 'POST', '#^/merchboard/v1/me/alerts/api/keys$#i' ),
 		array( 'POST', '#^/merchboard/v1/me/alerts/api/webhooks/\d+/secret$#i' ),
+		// The creator's own e-mail choices (ADR-079 pkt. 8).
+		array( 'PATCH', '#^/merchboard/v1/me/notification-preferences$#i' ),
 	);
 
 	/**

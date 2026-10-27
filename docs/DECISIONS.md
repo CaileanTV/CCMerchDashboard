@@ -4364,6 +4364,12 @@ Endnu udløser intet notifikationer (29.5–29.6), og der er ingen admin-side (2
 
 **Afvigelse fra pkt. 4:** `JobQueue`/`ActionSchedulerQueue` er ikke flyttet til Core, fordi det ville ændre 23 filer i Alerts og WooCommerce. Notifikationsmodulet bruger `ActionSchedulerQueue` direkte; den er tilgængelig, når Action Scheduler er indlæst, og ellers sendes mailen ved `shutdown`.
 
+**Statusnote 2026-10-27 (trin 29.3–29.4):** admin-siden (29.3) og klokken med creatorens e-mailvalg under Profil (29.4) er implementeret og testet automatisk.
+
+**Afvigelser fra pkt. 7:**
+- Tekstlinjen bygges på serveren som ren tekst i creatorens sprog (samme katalog og oversættelser som mailen) og vises i React som tekst, aldrig som HTML. Så findes de 27 tekster kun ét sted.
+- Antallet af ulæste sendes ikke med i bootstrap. Klokken henter det selv, når creatoren er kendt, og igen hvert minut, mens fanen er synlig.
+
 ## Context
 Merch Dashboard giver i dag ingen besked, når noget sker:
 - creatoren skal selv åbne dashboardet for at opdage et salg, en udbetaling eller et afvist forslag;

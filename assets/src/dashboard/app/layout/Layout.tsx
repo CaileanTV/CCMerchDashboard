@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
+import { NotificationBell } from '../../components/NotificationBell';
 import { useConfig } from '../config-context';
 import { WhatsNew } from '../../sections/news/WhatsNew';
 import { Navigation } from './Navigation';
@@ -50,7 +51,7 @@ function Brand() {
 }
 
 /**
- * App frame: skip link, top bar (logo and/or site name, creator name, menu button below lg, log out),
+ * App frame: skip link, top bar (logo and/or site name, creator name, notification bell, menu button below lg, log out),
  * sidebar (lg and up), off-canvas navigation (below lg) and the main region.
  */
 export function Layout( { title, creatorName, children }: LayoutProps ) {
@@ -101,6 +102,8 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 						{ creatorName }
 					</p>
 				) }
+				{ /* The bell once the creator is known (phase 29). */ }
+				{ creatorName !== undefined && <NotificationBell /> }
 				<a
 					className="merchboard-topbar__logout"
 					href={ config.logoutUrl }

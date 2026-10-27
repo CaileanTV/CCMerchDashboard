@@ -14,6 +14,7 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Notifications\Admin\NotificationsAdminActions;
@@ -86,6 +87,17 @@ final class NotificationsModule implements Module {
 			)
 		);
 		$container->set( NotificationsAdminActions::class, static fn( Container $c ): NotificationsAdminActions => new NotificationsAdminActions( $c->get( NotificationSettings::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSender::class ), $c->get( Logger::class ) ) );
+		$container->set(
+			MeNotificationsController::class,
+			static fn( Container $c ): MeNotificationsController => new MeNotificationsController(
+				$c->get( CreatorContext::class ),
+				$c->get( NotificationRepository::class ),
+				$c->get( NotificationTypes::class ),
+				$c->get( NotificationSettings::class ),
+				$c->get( NotificationPreferences::class ),
+				$c->get( Logger::class )
+			)
+		);
 		$container->set( NotificationsCreatorCleanup::class, static fn( Container $c ): NotificationsCreatorCleanup => new NotificationsCreatorCleanup( $c->get( NotificationRepository::class ) ) );
 
 		// Deleting a creator (ADR-076): their notifications.
@@ -118,6 +130,13 @@ final class NotificationsModule implements Module {
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( NotificationsAdminActions::class )->register();
+			}
+		);
+
+		add_action(
+			'rest_api_init',
+			static function () use ( $container ): void {
+				$container->get( MeNotificationsController::class )->register_routes();
 			}
 		);
 

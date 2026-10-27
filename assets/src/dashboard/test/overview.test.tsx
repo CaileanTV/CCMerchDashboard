@@ -294,9 +294,14 @@ describe( 'overview section', () => {
 			expect(
 				paths.some( ( path ) => path.includes( 'overview' ) )
 			).toBe( false );
-			expect( paths.some( ( path ) => path.includes( '?' ) ) ).toBe(
-				false
-			);
+			// The bell (phase 29) pages its own list.
+			expect(
+				paths.some(
+					( path ) =>
+						path.includes( '?' ) &&
+						! path.includes( '/me/notifications' )
+				)
+			).toBe( false );
 		} );
 
 		it( 'shows sales (incl. VAT), units and orders of one currency with the period and the explanation', async () => {
