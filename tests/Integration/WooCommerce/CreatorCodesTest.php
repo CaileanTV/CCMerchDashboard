@@ -364,7 +364,7 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( 0, $this->ledger_rows( 43 ) );
 		self::assertSame( array( $this->creator, $this->other ), array_map( static fn( $decision ): int => $decision->creator_id, $this->exclusions->for_order( 43 ) ) );
 		self::assertSame( 0, ( new SalesOrderLines( $this->wpdb ) )->count( $this->other ) );
-		self::assertSame( array(), array_values( array_filter( array_column( $this->rows( Tables::NOTIFICATIONS ), 'type' ), static fn( string $type ): bool => str_starts_with( $type, 'sale_' ) ) ), 'An order with the creators\' own codes notifies nobody of a sale.' );
+		self::assertSame( array(), array_values( array_filter( array_column( $this->rows( Tables::NOTIFICATIONS ), 'type' ), static fn( mixed $type ): bool => str_starts_with( (string) $type, 'sale_' ) ) ), 'An order with the creators\' own codes notifies nobody of a sale.' );
 	}
 	public function test_only_orders_created_within_the_registration_period_are_covered(): void {
 		$this->register( $this->creator, 'nova10' );
