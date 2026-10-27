@@ -128,6 +128,7 @@ final class AdminPhase10Test extends IntegrationTestCase {
 				'merchboard-creators'           => Capabilities::MANAGE_CREATORS,
 				'merchboard-category-proposals' => Capabilities::MANAGE_CREATORS,
 				'merchboard-settings'           => Capabilities::MANAGE_SETTINGS,
+				'merchboard-notifications'      => Capabilities::MANAGE_SETTINGS,
 				'merchboard-news'               => Capabilities::MANAGE_CREATORS,
 				'merchboard-audit-log'          => Capabilities::VIEW_LOGS,
 			),
