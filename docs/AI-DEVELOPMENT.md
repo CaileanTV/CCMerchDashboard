@@ -53,6 +53,13 @@ Det gælder også, selvom et andet projekt ser relateret eller nyttigt ud. Antag
 - Nye kritiske rækker rapporteres og vurderes; de antages ikke at være projektejerens. En ændring i eksisterende kritiske data kan stoppe den berørte test. Uafhængige, sikre opgaver fortsætter, og intet repareres automatisk.
 - Eksisterende bilag, payouts, audit og tællere ændres ikke uden projektejerens udtrykkelige godkendelse.
 
+**Automatisk review og runtime-test (projektejerens beslutning 2026-10-27, foreløbig, fra fase 29):** review og runtime-test udføres af AI-agenten selv, uden at projektejeren først skal godkende en tjekliste eller teste. Det gælder fasernes review- og testtrin og testen før en release.
+
+- **Review:** uafhængige reviews af fasens ændringer. Fundene rettes efter projektejerens valg, når de ændrer adfærd eller omfang.
+- **Runtime-test:** kun på Merch Dashboard Local. Før skrivende tests tages før-status og en verificeret backup, og bagefter en efter-status. Kørslen dokumenteres i `C:\Users\jnn\MerchBoard-r2-runtime\runs\<dato>-<navn>\` (README og MANIFEST), som tidligere kørsler.
+- **Testdata:** testskrivninger må laves og bruge testdata (testordrer, forslag, koder), men ingen bilag eller payouts uden særskilt godkendelse. Reglerne ovenfor gælder fortsat: intet repareres automatisk, ordre 428 og projektejerens egne data røres ikke, og der bruges ingen rollback omkring WooCommerce' ordre-gem.
+- **Rapport:** resultatet, inkl. fund og eventuelle uheld, rapporteres til projektejeren. Projektejeren tester fortsat selv på staging og i produktion og afgør, hvornår en release udgives.
+
 **Staging og produktion:** AI-agenter må ikke tilgå staging (`devpage.ccmerch.dk`) eller produktion (ingen login, credentials, SSH, fjern-WP-CLI eller databaseadgang), heller ikke som erstatning for det lokale testmiljø. Test på staging udføres af projektejeren.
 
 **Hvis du finder noget relevant uden for projektet**, må du kun skrive: *"Jeg har identificeret noget uden for projektets scope, som potentielt kunne være relevant, men jeg har ikke brugt det."* Vent derefter på eksplicit instruktion.
