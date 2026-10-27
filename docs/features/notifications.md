@@ -4,7 +4,7 @@
 Creators og administratorer får besked, når noget sker, så de ikke selv skal holde øje med dashboardet og køerne. Beskeden kommer som e-mail og, for creators, ved et ikon (klokken) øverst i dashboardet ([ADR-079](../DECISIONS.md), ROADMAP fase 29).
 
 ## Current status
-I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) er implementeret og testet automatisk; endnu udløser intet notifikationer, og admin-siden og klokken mangler.
+I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog, lager, valg, afsendelse og mailskabelonen) og 29.3 (admin-siden med til/fra, eksempler, testmail og log) er implementeret og testet automatisk; endnu udløser intet notifikationer, og klokken mangler.
 
 ## User-facing functionality
 - **Klokken:** et lille ikon i dashboardets topbar med en rød boble med antal ulæste (9+ over 9).
@@ -77,9 +77,10 @@ Merch Dashboard → **Notifikationer** (`merchboard_manage_settings`):
 
 ## Relevant files
 - `src/Modules/Notifications/` (`NotificationsModule`, `NotificationTypes` og `Catalog/CreatorTypes`/`AdminTypes`, `NotificationSettings`, `NotificationPreferences`, `Notifier`, `NotificationSender`, `NotificationRepository`, `Email/EmailRenderer`, `Email/EmailStyle`, `Email/Mailer`)
+- `src/Modules/Notifications/Admin/` (`NotificationsAdminPage`, `NotificationsAdminActions`)
 - `templates/emails/layout.php`
 - `src/Core/Database/Migrations/CreateNotificationsTable.php`
-- `tests/Integration/Notifications/NotificationsTest.php`, `tests/Integration/Support/RecordingMailer.php`
+- `tests/Integration/Notifications/NotificationsTest.php`, `tests/Integration/Notifications/NotificationsAdminTest.php`, `tests/Integration/Support/RecordingMailer.php`
 
 ## Database/data used
 - `merchboard_notifications` (schema-version 34).

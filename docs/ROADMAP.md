@@ -750,7 +750,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - modulet `Notifications`, migration 34 (`merchboard_notifications`), kataloget, admin-valgene, `Notifier` og repository;
   - afsendelse via Action Scheduler med op til 3 forsøg og `shutdown` som fallback; `JobQueue` flyttes til Core;
   - `EmailRenderer` og alle skabeloner i `templates/emails/` med eksempeldata.
-- **29.3 Admin-siden "Notifikationer":** kontakter pr. type og kanal, eksempel i en sandkasset iframe, testmail og log.
+- **29.3 Admin-siden "Notifikationer" 🔄 (implementeret 2026-10-27, testet automatisk; tjekket read-only på Local):** kontakter pr. type og kanal, eksempel i en sandkasset iframe, testmail og log.
 - **29.4 Dashboard:**
   - klokken med den røde boble og panelet (`GET /me/notifications`, `POST /me/notifications/read`);
   - creatorens e-mailvalg under Profil.

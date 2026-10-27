@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+
+- **Notifikationer (fase 29, ADR-079):** grundlaget for notifikationer på mail i butikkens design (WooCommerce' farver, logo, skrift og afsender) og ved en klokke i dashboardet, med et katalog over 36 notifikationer til creators og administratoren. Ny admin-side Merch Dashboard → Notifikationer med til/fra pr. notifikation og kanal, eksempel på hver mail, testmail og log. Schema-version 34. Notifikationerne udløses i de følgende trin.
+
 ## [1.3.1] - 2026-10-26
 
 Rettelse til 1.3.0. Ingen databaseændringer (schema-version 33). Opdateringen står i DEVELOPMENT.md ("Release 1.3.1").

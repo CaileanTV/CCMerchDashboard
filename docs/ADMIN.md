@@ -18,6 +18,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 │   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
 ├── Category proposals         ✅ fase 28, trin 28.4 (ADR-077): creatorernes forslag til deres kategori; antal ventende i menuen; kræver merchboard_manage_creators
 ├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo); ✅ fase 25, trin 25.2: "Alerts" (kill switch for købs-alerts, kun med WooCommerce, ADR-065). Tabs General · Access · Advanced kommer, når de får indhold
+├── Notifikationer (Notifications) ✅ fase 29, trin 29.3 (ADR-079): til/fra pr. notifikation og kanal, eksempel på mailen og dashboardteksten, testmail til dig selv og log over de seneste mails; kræver merchboard_manage_settings
 ├── Payouts                    ✅ fase 23, trin 23.6 (WooCommerce, ADR-055/056/058): kø og historik for creatorernes payout-anmodninger, afvisning og registrering af manuel overførsel; kræver merchboard_manage_payouts; fulde bank-/PayPal-oplysninger kræver desuden merchboard_view_payout_details
 ├── Order history              ✅ fase 22 (WooCommerce, ADR-051/052): ordrehistorik for sales ledgeren pr. ordre; kræver merchboard_manage_creators; sletning af en testordres historik kræver merchboard_delete_order_history
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
@@ -54,6 +55,19 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 - **Afgørelse:** "Approve" og "Reject" med en valgfri note til creatoren (højst 500 tegn), og "Approve all from …" pr. creator med flere forslag. POST til admin-post (`CategoryProposalActions`): capability → nonce bundet til forslaget eller creatoren → `CategoryProposals`. Post/Redirect/Get med en hvidlistet besked; tekniske fejl logges.
 - Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
 - **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
+
+### Notifikationer ✅ (fase 29, trin 29.3, ADR-079)
+
+Merch Dashboard → **Notifikationer** (`NotificationsAdminPage`/`NotificationsAdminActions`, `merchboard_manage_settings`):
+- **Oversigt:** alle 36 notifikationer i tabeller pr. modtager og emne (salg, udbetalinger, profil og kategori, rabatkode, konto og priser, nyheder, alerts, til administratoren).
+  - Hver har navn, hvornår den sendes, mærket "Vigtig" (creatoren kan ikke slå mailen fra) og kontakterne "E-mail" og "Dashboard"; administratorens har kun "E-mail".
+  - "Gem notifikationsindstillinger" gemmer med POST, nonce og PRG; hver ændring auditeres som `settings_updated` (`notifications.{type}.{kanal}`).
+- **Modtager og afsender:** siden viser, at administrator-mails går til sitets admin-e-mail, og hvilken afsender og hvilke farver mailene bruger (WooCommerce → Indstillinger → E-mails).
+- **"Vis eksempel":**
+  - mailen med eksempeldata i en sandkasset iframe (`sandbox` uden tilladelser: ingen scripts, formularer eller adgang til siden), emnet og tekstversionen;
+  - dashboardtekstlinjen for creator-typer;
+  - "Send en testmail til mig" sender eksemplet til den indloggede administrators e-mail.
+- **"Seneste mails":** de 50 seneste notifikationsmails med tidspunkt, notifikation, modtager (creatorens navn eller "Administrator"), status (venter, sendt, fejlet eller ikke sendt), forsøg og kort fejlårsag.
 
 ### Opret/rediger creator ✅ (fase 6)
 

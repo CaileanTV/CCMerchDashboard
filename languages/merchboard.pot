@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-27T17:27:36+00:00\n"
+"POT-Creation-Date: 2026-10-27T17:57:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -143,6 +143,7 @@ msgstr ""
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
 #: src/Modules/News/Admin/NewsAdminActions.php:75
+#: src/Modules/Notifications/Admin/NotificationsAdminActions.php:74
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
@@ -913,6 +914,7 @@ msgid "Busy"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:457
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:345
 msgid "Failed"
 msgstr ""
 
@@ -1141,6 +1143,7 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogListTable.php:91
 #: src/Modules/Alerts/Admin/OrderLogTab.php:244
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
 #: build/dashboard.js:23
 msgid "Time"
 msgstr ""
@@ -2699,6 +2702,7 @@ msgid "Latest message"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:459
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:227
 #: build/dashboard.js:48
 msgid "On"
 msgstr ""
@@ -3748,6 +3752,7 @@ msgstr ""
 #: src/Modules/Creators/Admin/CreatorsListTable.php:83
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:334
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
@@ -4101,6 +4106,188 @@ msgstr ""
 msgid "The news message was not found."
 msgstr ""
 
+#: src/Modules/Notifications/Admin/NotificationsAdminActions.php:67
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:129
+msgid "Sorry, you are not allowed to manage the notifications."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:79
+msgid "Merch Dashboard Notifications"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:80
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:137
+msgid "Notifications"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:114
+msgid "The notification settings are saved."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:115
+msgid "The test e-mail was sent to you. Check your inbox (and the spam folder)."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:116
+msgid "The test e-mail could not be sent. Check that the site can send e-mail; the log has the reason."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:117
+msgid "That notification does not exist."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:118
+msgid "You are not allowed to change the notifications."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:119
+msgid "A technical error occurred. Nothing was changed; try again or check the log."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:161
+msgid "Choose which notifications are sent. Creators get them by e-mail and at the bell in their dashboard; the administrator gets them by e-mail. Creators can turn off e-mails that are not marked as important."
+msgstr ""
+
+#. translators: %s: the site's admin e-mail address.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:164
+#, php-format
+msgid "Administrator e-mails go to the site's admin e-mail: %s (Settings → General)."
+msgstr ""
+
+#. translators: 1: sender name, 2: sender e-mail.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:167
+#, php-format
+msgid "E-mails are sent from %1$s <%2$s>, in the colors of WooCommerce → Settings → Emails."
+msgstr ""
+
+#. translators: %s: group name.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:184
+#, php-format
+msgid "To the creator: %s"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:186
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+msgid "Notification"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:187
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:251
+msgid "E-mail"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:190
+#: build/dashboard.js:2
+msgid "Dashboard"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:193
+msgid "Example"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:203
+msgid "Save notification settings"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:220
+msgid "Important"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:230
+msgid "Show example"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:240
+msgid "Nova"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:242
+msgid "All notifications"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:244
+msgid "The example uses sample data."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:247
+msgid "At the bell in the dashboard"
+msgstr ""
+
+#. translators: %s: e-mail subject.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:253
+#, php-format
+msgid "Subject: %s"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:255
+msgid "E-mail example"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:257
+msgid "Text version"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:264
+msgid "Send a test e-mail to me"
+msgstr ""
+
+#. translators: %s: the administrator's e-mail address.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:266
+#, php-format
+msgid "To %s, with the sample data."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:274
+msgid "Latest e-mails"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:279
+msgid "The log could not be read."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:285
+msgid "No notification e-mails yet."
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:713
+msgid "Recipient"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+msgid "Attempts"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+#: src/Modules/Notifications/Catalog/AdminTypes.php:206
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:386
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:465
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:463
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:863
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:553
+msgid "Reason"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:322
+msgid "Administrator"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:343
+#: build/dashboard.js:45
+msgid "Waiting"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:344
+msgid "Sent"
+msgstr ""
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:346
+msgid "Not sent (no recipient)"
+msgstr ""
+
 #: src/Modules/Notifications/Catalog/AdminTypes.php:85
 msgid "This message was sent by Merch Dashboard."
 msgstr ""
@@ -4248,18 +4435,6 @@ msgstr ""
 
 #: src/Modules/Notifications/Catalog/AdminTypes.php:203
 msgid "An order could not be added to the creators' sales. It is tried again when the order is saved; the log has the details."
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:206
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:386
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:465
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:463
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:863
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:553
-msgid "Reason"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/AdminTypes.php:219
@@ -8741,10 +8916,6 @@ msgstr ""
 msgid "CVR/SE no.: %s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:713
-msgid "Recipient"
-msgstr ""
-
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:782
 msgid "Payment method"
 msgstr ""
@@ -10691,10 +10862,6 @@ msgid "You view and act as the creator. What you change is changed for the creat
 msgstr ""
 
 #: build/dashboard.js:2
-msgid "Dashboard"
-msgstr ""
-
-#: build/dashboard.js:2
 msgid "Loading the API keys…"
 msgstr ""
 
@@ -11197,10 +11364,6 @@ msgstr ""
 #: build/dashboard.js:45
 #, js-format
 msgid "Delivered (%d)"
-msgstr ""
-
-#: build/dashboard.js:45
-msgid "Waiting"
 msgstr ""
 
 #: build/dashboard.js:45

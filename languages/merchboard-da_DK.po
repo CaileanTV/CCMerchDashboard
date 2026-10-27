@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-27T17:27:38+00:00\n"
+"PO-Revision-Date: 2026-10-27T17:58:01+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -143,6 +143,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
 #: src/Modules/News/Admin/NewsAdminActions.php:75
+#: src/Modules/Notifications/Admin/NotificationsAdminActions.php:74
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
@@ -913,6 +914,7 @@ msgid "Busy"
 msgstr "Optaget"
 
 #: src/Modules/Admin/AuditLogFormatter.php:457
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:345
 msgid "Failed"
 msgstr "Fejlet"
 
@@ -1141,6 +1143,7 @@ msgstr "sociale links"
 
 #: src/Modules/Admin/AuditLogListTable.php:91
 #: src/Modules/Alerts/Admin/OrderLogTab.php:244
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
 #: build/dashboard.js:23
 msgid "Time"
 msgstr "Tidspunkt"
@@ -2699,6 +2702,7 @@ msgid "Latest message"
 msgstr "Seneste besked"
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:459
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:227
 #: build/dashboard.js:48
 msgid "On"
 msgstr "Til"
@@ -3748,6 +3752,7 @@ msgstr "Visningsnavn"
 #: src/Modules/Creators/Admin/CreatorsListTable.php:83
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:334
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
@@ -4101,6 +4106,188 @@ msgstr "Kladde"
 msgid "The news message was not found."
 msgstr "Nyheden blev ikke fundet."
 
+#: src/Modules/Notifications/Admin/NotificationsAdminActions.php:67
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:129
+msgid "Sorry, you are not allowed to manage the notifications."
+msgstr "Du har desværre ikke adgang til at administrere notifikationerne."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:79
+msgid "Merch Dashboard Notifications"
+msgstr "Merch Dashboard-notifikationer"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:80
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:137
+msgid "Notifications"
+msgstr "Notifikationer"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:114
+msgid "The notification settings are saved."
+msgstr "Notifikationsindstillingerne er gemt."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:115
+msgid "The test e-mail was sent to you. Check your inbox (and the spam folder)."
+msgstr "Testmailen er sendt til dig. Tjek din indbakke (og spammappen)."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:116
+msgid "The test e-mail could not be sent. Check that the site can send e-mail; the log has the reason."
+msgstr "Testmailen kunne ikke sendes. Tjek, at sitet kan sende mail; loggen har årsagen."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:117
+msgid "That notification does not exist."
+msgstr "Den notifikation findes ikke."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:118
+msgid "You are not allowed to change the notifications."
+msgstr "Du har ikke adgang til at ændre notifikationerne."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:119
+msgid "A technical error occurred. Nothing was changed; try again or check the log."
+msgstr "Der opstod en teknisk fejl. Intet er ændret; prøv igen, eller tjek loggen."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:161
+msgid "Choose which notifications are sent. Creators get them by e-mail and at the bell in their dashboard; the administrator gets them by e-mail. Creators can turn off e-mails that are not marked as important."
+msgstr "Vælg, hvilke notifikationer der sendes. Creators får dem på mail og ved klokken i deres dashboard; administratoren får dem på mail. Creators kan slå mails fra, der ikke er markeret som vigtige."
+
+#. translators: %s: the site's admin e-mail address.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:164
+#, php-format
+msgid "Administrator e-mails go to the site's admin e-mail: %s (Settings → General)."
+msgstr "Administrator-mails går til sitets admin-e-mail: %s (Indstillinger → Generelt)."
+
+#. translators: 1: sender name, 2: sender e-mail.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:167
+#, php-format
+msgid "E-mails are sent from %1$s <%2$s>, in the colors of WooCommerce → Settings → Emails."
+msgstr "Mails sendes fra %1$s <%2$s> i farverne fra WooCommerce → Indstillinger → E-mails."
+
+#. translators: %s: group name.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:184
+#, php-format
+msgid "To the creator: %s"
+msgstr "Til creatoren: %s"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:186
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+msgid "Notification"
+msgstr "Notifikation"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:187
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:251
+msgid "E-mail"
+msgstr "E-mail"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:190
+#: build/dashboard.js:2
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:193
+msgid "Example"
+msgstr "Eksempel"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:203
+msgid "Save notification settings"
+msgstr "Gem notifikationsindstillinger"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:220
+msgid "Important"
+msgstr "Vigtig"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:230
+msgid "Show example"
+msgstr "Vis eksempel"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:240
+msgid "Nova"
+msgstr "Nova"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:242
+msgid "All notifications"
+msgstr "Alle notifikationer"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:244
+msgid "The example uses sample data."
+msgstr "Eksemplet bruger eksempeldata."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:247
+msgid "At the bell in the dashboard"
+msgstr "Ved klokken i dashboardet"
+
+#. translators: %s: e-mail subject.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:253
+#, php-format
+msgid "Subject: %s"
+msgstr "Emne: %s"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:255
+msgid "E-mail example"
+msgstr "Eksempel på mail"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:257
+msgid "Text version"
+msgstr "Tekstversion"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:264
+msgid "Send a test e-mail to me"
+msgstr "Send en testmail til mig"
+
+#. translators: %s: the administrator's e-mail address.
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:266
+#, php-format
+msgid "To %s, with the sample data."
+msgstr "Til %s, med eksempeldataene."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:274
+msgid "Latest e-mails"
+msgstr "Seneste mails"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:279
+msgid "The log could not be read."
+msgstr "Loggen kunne ikke læses."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:285
+msgid "No notification e-mails yet."
+msgstr "Endnu ingen notifikationsmails."
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:713
+msgid "Recipient"
+msgstr "Modtager"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+msgid "Attempts"
+msgstr "Forsøg"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+#: src/Modules/Notifications/Catalog/AdminTypes.php:206
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:386
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:465
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:463
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:863
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:553
+msgid "Reason"
+msgstr "Begrundelse"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:322
+msgid "Administrator"
+msgstr "Administrator"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:343
+#: build/dashboard.js:45
+msgid "Waiting"
+msgstr "Venter"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:344
+msgid "Sent"
+msgstr "Sendt"
+
+#: src/Modules/Notifications/Admin/NotificationsAdminPage.php:346
+msgid "Not sent (no recipient)"
+msgstr "Ikke sendt (ingen modtager)"
+
 #: src/Modules/Notifications/Catalog/AdminTypes.php:85
 msgid "This message was sent by Merch Dashboard."
 msgstr "Denne besked er sendt af Merch Dashboard."
@@ -4249,18 +4436,6 @@ msgstr "En ordre kunne ikke tælles med"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:203
 msgid "An order could not be added to the creators' sales. It is tried again when the order is saved; the log has the details."
 msgstr "En ordre kunne ikke føjes til creatorernes salg. Det prøves igen, når ordren gemmes; loggen har detaljerne."
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:206
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:386
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:465
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:198
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:463
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:753
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:863
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:553
-msgid "Reason"
-msgstr "Begrundelse"
 
 #: src/Modules/Notifications/Catalog/AdminTypes.php:219
 #: src/Modules/Notifications/Catalog/AdminTypes.php:227
@@ -8741,10 +8916,6 @@ msgstr "Adresse: %s"
 msgid "CVR/SE no.: %s"
 msgstr "CVR/SE-nr.: %s"
 
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:713
-msgid "Recipient"
-msgstr "Modtager"
-
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:782
 msgid "Payment method"
 msgstr "Betalingsmetode"
@@ -10691,10 +10862,6 @@ msgid "You view and act as the creator. What you change is changed for the creat
 msgstr "Du ser og handler som creatoren. Det, du ændrer, ændres for creatoren."
 
 #: build/dashboard.js:2
-msgid "Dashboard"
-msgstr "Dashboard"
-
-#: build/dashboard.js:2
 msgid "Loading the API keys…"
 msgstr "Indlæser API-nøglerne…"
 
@@ -11198,10 +11365,6 @@ msgstr "Indlæser dit overlay…"
 #, js-format
 msgid "Delivered (%d)"
 msgstr "Leveret (%d)"
-
-#: build/dashboard.js:45
-msgid "Waiting"
-msgstr "Venter"
 
 #: build/dashboard.js:45
 msgid "Not sent (switched off)"

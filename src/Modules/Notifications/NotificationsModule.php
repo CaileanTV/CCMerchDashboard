@@ -16,6 +16,8 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
+use MerchBoard\Modules\Notifications\Admin\NotificationsAdminActions;
+use MerchBoard\Modules\Notifications\Admin\NotificationsAdminPage;
 use MerchBoard\Modules\Notifications\Email\EmailRenderer;
 use MerchBoard\Modules\Notifications\Email\Mailer;
 use MerchBoard\Modules\WooCommerce\ActionSchedulerQueue;
@@ -73,6 +75,17 @@ final class NotificationsModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		$container->set(
+			NotificationsAdminPage::class,
+			static fn( Container $c ): NotificationsAdminPage => new NotificationsAdminPage(
+				$c->get( NotificationTypes::class ),
+				$c->get( NotificationSettings::class ),
+				$c->get( NotificationSender::class ),
+				$c->get( NotificationRepository::class ),
+				$c->get( CreatorRepository::class )
+			)
+		);
+		$container->set( NotificationsAdminActions::class, static fn( Container $c ): NotificationsAdminActions => new NotificationsAdminActions( $c->get( NotificationSettings::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSender::class ), $c->get( Logger::class ) ) );
 		$container->set( NotificationsCreatorCleanup::class, static fn( Container $c ): NotificationsCreatorCleanup => new NotificationsCreatorCleanup( $c->get( NotificationRepository::class ) ) );
 
 		// Deleting a creator (ADR-076): their notifications.
@@ -92,6 +105,20 @@ final class NotificationsModule implements Module {
 			},
 			10,
 			4
+		);
+
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( NotificationsAdminPage::class )->add_menu();
+			},
+			NotificationsAdminPage::PRIORITY
+		);
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$container->get( NotificationsAdminActions::class )->register();
+			}
 		);
 
 		add_action(
