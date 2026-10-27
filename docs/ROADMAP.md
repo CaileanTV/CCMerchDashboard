@@ -756,7 +756,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - creatorens e-mailvalg under Profil (`GET`/`PATCH /me/notification-preferences`).
 - **29.5 Creator-hændelser 🔄 (implementeret 2026-10-27, testet automatisk):** salg, udbetalinger, bilag, kategoriforslag, rabatkode, konto, priser og nyheder (post-commit `merchboard_notify`).
 - **29.6 Alerts, administrator-mails og det daglige saldo-job 🔄 (implementeret 2026-10-27, testet automatisk).**
-- **29.7 Review, runtime-test og release 1.4.0:** review og runtime-test på Local udføres automatisk af AI-agenten (AI-DEVELOPMENT.md, projektejerens beslutning 2026-10-27).
+- **29.7 Review, runtime-test og release 1.4.0:** review og runtime-test på Local udføres automatisk af AI-agenten (AI-DEVELOPMENT.md, projektejerens beslutning 2026-10-27). Runtime-testen bruger creatoren "Test Creator Cailean" (creator 1, bruger 1 på Local), så projektejeren selv kan se notifikationerne ved klokken og mailene (projektejerens ønske 2026-10-27).
 
 ## Senere (uprioriteret)
 
