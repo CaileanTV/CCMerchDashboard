@@ -22,7 +22,9 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Alerts | 25 | MerchAlert integreres: købs-alerts i creatorens OBS-overlay med lyd og chatbot på Twitch, Kick og YouTube, aktiveret af creatorens kategori, som sektion i creator-dashboardet, plus alert-API og webhooks til creatorens egne bots (✅ godkendt 2026-10-24; alert-API og webhooks endeligt efter SparkyBot-tjekket; udgives med fase 26 som 1.1.0; ADR-065–067, ADR-069–073) |
 | Migrering | 26 | Vendors fra WooCommerce Product Vendors flyttes til Merch Dashboard: creator, brugerkobling, produkter og produktkategori (✅ udgivet i 1.1.0, kørt i produktion 2026-10-25) |
 | Oprydning og admin-værktøjer | 27 | Importen fra MerchAlert og migreringen fra Product Vendors fjernes igen; "Se som creator" (impersonation) og sletning af creators (planlagt) |
-| Senere | – | Notifications, integrations, campaigns, support, reporting, hardening og E2E |
+| Kategori og rabatkode | 28 | Creatorens forslag til produktkategorien med godkendelse og den plugin-styrede rabatkode (✅ udgivet i 1.3.0/1.3.1) |
+| Notifikationer | 29 | E-mail i butikkens design og klokken i dashboardet, admin-side med til/fra og eksempler (plan godkendt 2026-10-27; udgives som 1.4.0; ADR-079) |
+| Senere | – | Integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
 
@@ -728,13 +730,41 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **Review:** tre uafhængige reviews. Projektejeren valgte "punkt 1–6", som er rettet og testet automatisk (19a13f8, 916be3c, 7259ee5); se statusnoterne i ADR-077 og ADR-078.
   - **Release:** den fulde integrationssuite er grøn lokalt på `1f529f7` (1066 tests), og CI er grøn. Versions-bump til 1.3.0 2026-10-26 efter projektejerens ønske; projektejeren har afsluttet sin runtime-test. Se DEVELOPMENT.md "Release 1.3.0".
 
+## Fase 29 – Notifikationer 📝 (plan godkendt 2026-10-27; udgives som 1.4.0; ADR-079)
+
+**Projektejerens ønske (2026-10-27):**
+- Notifikationer via e-mail (WordPress' indbyggede mail) i samme design som butikkens nye WooCommerce-mails (`email-forhaandsvisning.html`).
+- I dashboardet: et lille ikon øverst med en rød boble med antal ulæste, hvor notifikationerne vises som almindelig tekst (ikke som Nyheder).
+- En admin-side, hvor hver notifikation kan slås til og fra og ses som eksempel.
+- Kataloget (alle notifikationer) står i [features/notifications.md](features/notifications.md).
+
+**Projektejerens valg (2026-10-27):**
+- Nyt salg: én mail pr. ordre.
+- Creators må slå mails fra, undtagen vigtige (udbetalinger, bilag, sikkerhed og konto).
+- Administrator-mails går kun til sitets admin-e-mail.
+- "Din saldo er klar til udbetaling" kommer med via et dagligt job.
+
+**Trin:**
+- **29.1 ADR og plan ✅ (2026-10-27):** ADR-079, kataloget og trinene.
+- **29.2 Kerne:**
+  - modulet `Notifications`, migration 34 (`merchboard_notifications`), kataloget, admin-valgene, `Notifier` og repository;
+  - afsendelse via Action Scheduler med op til 3 forsøg og `shutdown` som fallback; `JobQueue` flyttes til Core;
+  - `EmailRenderer` og alle skabeloner i `templates/emails/` med eksempeldata.
+- **29.3 Admin-siden "Notifikationer":** kontakter pr. type og kanal, eksempel i en sandkasset iframe, testmail og log.
+- **29.4 Dashboard:**
+  - klokken med den røde boble og panelet (`GET /me/notifications`, `POST /me/notifications/read`);
+  - creatorens e-mailvalg under Profil.
+- **29.5 Creator-hændelser:** salg, udbetalinger, bilag, kategoriforslag, rabatkode, konto, priser og nyheder (post-commit `merchboard_notify`).
+- **29.6 Alerts, administrator-mails og det daglige saldo-job.**
+- **29.7 Review, runtime-test og release 1.4.0.**
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
 | --- | --- |
 | Payouts | Manuelle udbetalinger i fase 23–24. Senere: eksport og evt. integration med betalingsudbyder (kræver ADR efter ADR-016) |
 | Creator-aftaler | Overvejelse, ikke godkendt: digital registrering af creatorens accept af vilkårene for omvendt fakturering i Merch Dashboard. Aftaler indgås i dag uden for pluginet; ikke en afhængighed for fase 23 |
-| Notifications | E-mail (via `wp_mail`) og in-app. Fx "nyt salg" og "udbetaling klar" |
+| Notifications | Flyttet til fase 29 (ADR-079). Senere: daglig eller ugentlig opsamling som valg og flere modtagere af administrator-mails |
 | Integrations | Framework for eksterne tjenester med webhooks og HMAC. Hver konkret tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016). |
 | CVR-register | Udskudt fra første version 2026-10-18 (ADR-062, statusnote): integration med CVR-registret via API, validering af udsteders og creatorens CVR-numre og håndtering af virksomhedsoplysninger. K09's CVR-felter findes, men der registreres ingen værdier før da. Ekstern tjeneste: kræver ADR og projektejerens godkendelse |
 | Campaigns | Tidsbegrænsede kampagner/drops pr. creator |

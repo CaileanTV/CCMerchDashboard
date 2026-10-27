@@ -4344,3 +4344,96 @@ Ingen schemaændring. Pluginet skriver nu WooCommerce-kuponer (kun gennem `WooCo
 
 ## Related
 ADR-049, ADR-064, ADR-068, ADR-075, ADR-077.
+
+---
+
+# ADR-079: Notifikationer via e-mail og klokken i dashboardet
+
+## Date
+2026-10-27
+
+## Status
+Accepteret af projektejeren 2026-10-27 (plan for fase 29 godkendt; udgives som 1.4.0). Ikke implementeret.
+
+## Context
+Merch Dashboard giver i dag ingen besked, når noget sker:
+- creatoren skal selv åbne dashboardet for at opdage et salg, en udbetaling eller et afvist forslag;
+- administratoren skal selv tjekke køerne for udbetalinger og kategoriforslag.
+
+ROADMAP havde notifikationer under "Senere" ("E-mail (via `wp_mail`) og in-app"). Projektejeren vil have dem i 1.4.0 (2026-10-27):
+- mails i samme design som butikkens nye WooCommerce-mails;
+- et lille ikon øverst i dashboardet med en rød boble med antal ulæste, hvor notifikationerne vises som almindelig tekst;
+- en admin-side, hvor hver notifikation kan slås til og fra og ses som eksempel.
+
+Udgangspunktet i koden:
+- Der findes intet `wp_mail`, ingen WP-Cron og kun få post-commit-hooks.
+- Audit-posterne skrives inde i `Transaction::run()`, som ikke har en after-commit-mekanisme.
+
+## Decision
+1. **Katalog:** et fast katalog af notifikationstyper i `NotificationTypes` (se features/notifications.md).
+   - Hver type har modtager (creator eller administrator), gruppe, kanaler (e-mail og/eller dashboard), standardindstilling, om den er **vigtig** (creatoren kan ikke slå mailen fra), eksempeldata, tekst til dashboardet og mailens indhold.
+   - Nye typer kræver en ændring i kataloget, ikke en ADR, så længe de følger reglerne her.
+2. **Udløsning efter commit:** hvert sted, hvor noget sker, kalder `do_action( 'merchboard_notify', $type, $creator_id, $data )`, når transaktionen er gennemført.
+   - En rullet transaktion giver ingen notifikation.
+   - Servicen kender ikke notifikationsmodulet.
+   - `$data` indeholder kun ikke-følsomme felter: id'er, beløb, antal, navne og begrundelse eller note.
+3. **Lager:** tabellen `merchboard_notifications` (migration 34).
+   - Hver række har modtager, type, data (JSON), oprettet og læst, samt e-mailstatus (`none`, `pending`, `sent`, `failed`, `skipped`), antal forsøg og fejl.
+   - En unik `dedupe_key` sikrer, at samme hændelse (fx en ordre, der synkroniseres igen) kun giver én notifikation.
+   - Rækker ældre end 180 dage beskæres. Creator-sletning fjerner creatorens rækker. Tabellen indgår i `Tables::all()` og slettes kun ved afinstallation med opt-in.
+4. **Afsendelse:**
+   - Notifikationen gemmes med det samme.
+   - Mailen sendes af Action Scheduler (`merchboard_notification_send`, gruppe `merchboard`) med højst 3 forsøg (efter 1, 5 og 15 minutter). Uden Action Scheduler sendes mailen ved `shutdown` i samme request.
+   - `JobQueue`/`ActionSchedulerQueue` flyttes fra WooCommerce-modulet til Core.
+   - "Saldo klar til udbetaling" findes af den daglige recurring action `merchboard_notification_balance_check`, som sammenligner med den sidst kendte udbetalbare saldo pr. creator.
+   - Begge hooks annulleres ved deaktivering og afinstallation (`ScheduledJobs`).
+5. **E-mailen:**
+   - Pluginets egne skabeloner (`templates/emails/`) i projektejerens design: butiksnavn, kort med farvet topkant, overskrift, hilsen, tekst, infoboks, tabel, knap til dashboardet og sidefod.
+   - Inline-CSS og en tekstversion.
+   - Farver, logo, skrift og sidefod hentes fra WooCommerce → Indstillinger → E-mails, når WooCommerce er aktivt; ellers designets standard. Afsenderen er WooCommerce' afsendernavn og -adresse, ellers sitets.
+   - Mailen sendes på modtagerens sprog.
+   - **Aldrig i en mail:** gavekortkoder, rabatkoder, bankoplysninger, CVR eller hemmeligheder. Mailen fortæller, at noget er sket, og linker til dashboardet.
+6. **Modtagere:**
+   - Creatorens WordPress-bruger. En creator uden bruger får kun notifikationen i dashboardet, når en bruger tilknyttes; mailen springes over.
+   - Administrator-mails går **kun til sitets admin-e-mail** (`admin_email`; projektejerens valg).
+7. **Dashboardet:**
+   - Et ikon i topbaren med en rød boble med antal ulæste. Et klik åbner et panel med tekstlinjer: nyeste først, tidspunkt og et link til den relevante side.
+   - Teksten bygges i React ud fra type og data, aldrig som HTML fra serveren.
+   - At åbne panelet markerer de viste som læst. Under "Se som creator" (ADR-075) markeres intet.
+   - REST: `GET /me/notifications` og `POST /me/notifications/read`.
+8. **Valg:**
+   - Administratoren slår hver type til eller fra pr. kanal på siden Merch Dashboard → Notifikationer (`merchboard_manage_settings`), med eksempel, testmail og en log over de seneste afsendelser.
+   - Creatoren kan slå mails fra for typer, der ikke er vigtige; vigtige er udbetalinger, afregningsbilag, sikkerhed og konto (projektejerens valg). Creatoren gør det under Profil (user meta); "Se som creator" kan ikke ændre valgene.
+9. **Nyt salg:** én mail pr. ordre pr. creator (projektejerens valg). I dashboardet altid én notifikation pr. ordre. Ordrer, der er udelukket af creatorens egen kode, og backfill giver ingen notifikation.
+
+## Alternatives considered
+- **Udløse fra audit-loggen:** fravalgt. Audit skrives inde i transaktionen, og en rullet transaktion ville give falske beskeder.
+- **WooCommerce' mailklasser (`WC_Email`):** fravalgt. De kræver WooCommerce, og vores mails handler ikke om ordrer. Designet genskabes i egne skabeloner med WooCommerce' farver.
+- **Daglig opsamling af salg:** fravalgt af projektejeren til fordel for én mail pr. ordre.
+- **Notifikationer som Nyheder (popup):** fravalgt af projektejeren til fordel for klokken med tekstlinjer.
+- **Flere modtageradresser til administrator-mails:** fravalgt af projektejeren; kun `admin_email`.
+
+## Reason
+Creators og administratorer får besked med det samme uden at skulle holde øje med dashboardet. Kun hændelser, der faktisk er gemt, giver besked, og mails kan ikke lække hemmeligheder. Mails og klokke bygger på samme katalog og samme valg.
+
+## Security
+- **Ingen følsomme data i mails eller notifikationsdata** (pkt. 5).
+- **REST:** `/me`-scope via `CreatorContext` (ADR-007), og creatoren ser kun sine egne notifikationer. Læst-markering sker kun som creatoren selv.
+- **Admin-siden:** `merchboard_manage_settings`, POST, nonce og PRG; ændringer auditeres som `settings_updated`.
+- **Eksemplet** vises i en sandkasset iframe uden scripts. Testmailen går kun til den indloggede administrator.
+- **Dashboardet:** teksten renderes af React, så der er ingen HTML-indsættelse.
+
+## Migration/data implications
+Schema-version 34: tabellen `merchboard_notifications`. Nye optioner/meta:
+- admin-valgene;
+- creatorens fravalg (user meta);
+- sidst kendte udbetalbare saldo (creatormeta).
+
+Alle ryddes ved afinstallation. Ingen eksisterende data ændres.
+
+## Consequences
+- Følgende services får et post-commit-kald til `merchboard_notify`: salgssynkronisering, udbetalinger, bilag, reguleringer, kategoriforslag, rabatkoder, creator-konto, priser og moms, nyheder, impersonation og alerts.
+- Den første recurring Action Scheduler-action indføres (det daglige saldo-tjek).
+
+## Related
+ADR-007, ADR-029, ADR-049, ADR-062, ADR-068, ADR-072, ADR-075, ADR-077, ADR-078.
