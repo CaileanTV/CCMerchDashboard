@@ -730,7 +730,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **Review:** tre uafhængige reviews. Projektejeren valgte "punkt 1–6", som er rettet og testet automatisk (19a13f8, 916be3c, 7259ee5); se statusnoterne i ADR-077 og ADR-078.
   - **Release:** den fulde integrationssuite er grøn lokalt på `1f529f7` (1066 tests), og CI er grøn. Versions-bump til 1.3.0 2026-10-26 efter projektejerens ønske; projektejeren har afsluttet sin runtime-test. Se DEVELOPMENT.md "Release 1.3.0".
 
-## Fase 29 – Notifikationer 📝 (plan godkendt 2026-10-27; udgives som 1.4.0; ADR-079)
+## Fase 29 – Notifikationer ✅ (plan godkendt 2026-10-27; reviewet og runtime-testet 2026-10-28; udgives som 1.4.0; ADR-079)
 
 **Projektejerens ønske (2026-10-27):**
 - Notifikationer via e-mail (WordPress' indbyggede mail) i samme design som butikkens nye WooCommerce-mails (`email-forhaandsvisning.html`).
@@ -746,17 +746,19 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 
 **Trin:**
 - **29.1 ADR og plan ✅ (2026-10-27):** ADR-079, kataloget og trinene.
-- **29.2 Kerne 🔄 (implementeret 2026-10-27, testet automatisk):**
+- **29.2 Kerne ✅ (implementeret 2026-10-27, testet automatisk):**
   - modulet `Notifications`, migration 34 (`merchboard_notifications`), kataloget, admin-valgene, `Notifier` og repository;
   - afsendelse via Action Scheduler med op til 3 forsøg og `shutdown` som fallback; `JobQueue` flyttes til Core;
   - `EmailRenderer` og alle skabeloner i `templates/emails/` med eksempeldata.
-- **29.3 Admin-siden "Notifikationer" 🔄 (implementeret 2026-10-27, testet automatisk; tjekket read-only på Local):** kontakter pr. type og kanal, eksempel i en sandkasset iframe, testmail og log.
-- **29.4 Dashboard 🔄 (implementeret 2026-10-27, testet automatisk):**
+- **29.3 Admin-siden "Notifikationer" ✅ (implementeret 2026-10-27, testet automatisk; tjekket read-only på Local):** kontakter pr. type og kanal, eksempel i en sandkasset iframe, testmail og log.
+- **29.4 Dashboard ✅ (implementeret 2026-10-27, testet automatisk):**
   - klokken med den røde boble og panelet (`GET /me/notifications`, `POST /me/notifications/read`);
   - creatorens e-mailvalg under Profil (`GET`/`PATCH /me/notification-preferences`).
-- **29.5 Creator-hændelser 🔄 (implementeret 2026-10-27, testet automatisk):** salg, udbetalinger, bilag, kategoriforslag, rabatkode, konto, priser og nyheder (post-commit `merchboard_notify`).
-- **29.6 Alerts, administrator-mails og det daglige saldo-job 🔄 (implementeret 2026-10-27, testet automatisk).**
-- **29.7 Review, runtime-test og release 1.4.0:** review og runtime-test på Local udføres automatisk af AI-agenten (AI-DEVELOPMENT.md, projektejerens beslutning 2026-10-27). Runtime-testen bruger creatoren "Test Creator Cailean" (creator 1, bruger 1 på Local), så projektejeren selv kan se notifikationerne ved klokken og mailene (projektejerens ønske 2026-10-27).
+- **29.5 Creator-hændelser ✅ (implementeret 2026-10-27, testet automatisk):** salg, udbetalinger, bilag, kategoriforslag, rabatkode, konto, priser og nyheder (post-commit `merchboard_notify`).
+- **29.6 Alerts, administrator-mails og det daglige saldo-job ✅ (implementeret 2026-10-27, testet automatisk).**
+- **29.7 Review, runtime-test og release 1.4.0 ✅:** review og runtime-test på Local udføres automatisk af AI-agenten (AI-DEVELOPMENT.md, projektejerens beslutning 2026-10-27). Runtime-testen bruger creatoren "Test Creator Cailean" (creator 1, bruger 1 på Local), så projektejeren selv kan se notifikationerne ved klokken og mailene (projektejerens ønske 2026-10-27).
+  - **Review og runtime-test ✅ (2026-10-28):** runtime-testen er udført på Local med creator 1 (8 notifikationer, 5 mails i Mailpit). Fundet dobbelt punktum efter beløb er rettet. Det uafhængige review fandt 11 fejl og intet sikkerhedsproblem; alle er rettet (`adcf44d`). Projektejerens regler (kundens data når aldrig creatoren; "ny ordre" til admin sender WooCommerce) er låst af tests. Kørslen ligger i `MerchBoard-r2-runtime/runs/2026-10-28-fase29-runtime-1.4.0`.
+  - **Release:** den fulde integrationssuite er grøn lokalt på `adcf44d` (1088 tests), og CI er grøn. Versions-bump til 1.4.0 2026-10-28 efter projektejerens ønske. Se DEVELOPMENT.md "Release 1.4.0".
 
 ## Senere (uprioriteret)
 

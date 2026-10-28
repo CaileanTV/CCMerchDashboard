@@ -246,6 +246,32 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.4.0: notifikationer (fase 29)
+
+**Versions-bump og CHANGELOG-sektion 2026-10-28.** Projektejeren bad samme dag om at starte bump og release, når den fulde suite og CI var grønne.
+- Det er en minor, fordi den indeholder nye features.
+- Fase 29 er reviewet og runtime-testet på Local med "Test Creator Cailean" (ROADMAP 29.7).
+- Den fulde integrationssuite er grøn lokalt på `adcf44d` (1088 tests), og CI er grøn.
+
+**Schema-version 34:**
+- Migration 34 opretter `merchboard_notifications`.
+- Der er ingen manuelle trin.
+- Det daglige saldo-tjek planlægges ved den første sideindlæsning i wp-admin. Den første kørsel noterer kun beløbene, så ingen creator får en "saldo klar"-mail ved udgivelsen.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til staging eller produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.4.0 og schema-version 34 uden advarsler.
+3. **Mail:** WordPress skal kunne sende mail (fx et SMTP-plugin). Send en testmail fra Merch Dashboard → Notifikationer, og tjek design og afsender. Afsender, farver og logo kommer fra WooCommerce → Indstillinger → E-mails.
+4. **Valg:** gennemgå kontakterne på siden Notifikationer. "Creator har nulstillet sin rabatkode" og "Creator har annulleret en udbetaling" er slået fra som standard. Administrator-mails går til sitets admin-e-mail.
+5. **Stikprøve:**
+   - En testordre med en creators produkt giver creatoren "Nyt salg" (mail og klokken) uden kundens data.
+   - Klokken øverst i dashboardet viser en rød boble, og et klik viser teksten.
+   - Under Profil viser kortet "E-mailnotifikationer" de mails, creatoren kan slå fra.
+6. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.3.1-ZIP'en igen. Tabellen `merchboard_notifications` bliver liggende uden at blive brugt. 1.3.1 tjekker kun, at schemaet ikke er ældre end sit eget, så den virker med schema-version 34.
+
 ## Release 1.3.1: rettelse af foreslåede billeder i Profile
 
 **Versions-bump og CHANGELOG-sektion (`73ad6c5`) og tagget `v1.3.1` (på `6a3d585`) 2026-10-26** efter projektejerens ønske samme dag.

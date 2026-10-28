@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-28
+
+Fase 29: notifikationer på mail i butikkens design og ved en klokke i creatorens dashboard, en admin-side til at slå hver notifikation til og fra, og administrator-mails. Schema-version 34 (migration 34 opretter `merchboard_notifications` ved opdatering fra 1.3.x; ingen manuelle trin). Fase 29 er reviewet og runtime-testet på Local 2026-10-28. Opdateringen står i DEVELOPMENT.md ("Release 1.4.0").
+
 ### Added
 
 - **Notifikationer (fase 29, ADR-079):** grundlaget for notifikationer på mail i butikkens design (WooCommerce' farver, logo, skrift og afsender) og ved en klokke i dashboardet, med et katalog over 36 notifikationer til creators og administratoren. Ny admin-side Merch Dashboard → Notifikationer med til/fra pr. notifikation og kanal, eksempel på hver mail, testmail og log. I creatorens dashboard en klokke øverst med en rød boble med antal ulæste og et panel med notifikationerne som tekst, og under Profil kortet "E-mailnotifikationer", hvor creatoren kan slå mails fra, der ikke er vigtige. Notifikationerne udløses af salg, udbetalinger, afregningsbilag, kategoriforslag, rabatkoden, kontoen, priser, nyheder og alerts (chatbot, webhooks, YouTube-vilkår og API-nøgler). Administratoren får mails om nye udbetalinger, kategoriforslag, åbne sager og fejl. Én gang i døgnet får creatoren besked, når mere kan udbetales. Schema-version 34.
