@@ -802,7 +802,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 - **30.6 Grundprodukter i admin:** sider, farver, størrelser, grundpris, skabeloneditor og kliparts.
 - **30.7 PSD-import** (ag-psd i admin).
 - **30.8 Designer-UI** (Fabric) med uploads, kladder og validering.
-- **30.9 Indsendelse:** rendering, filvalidering og fortjeneste med live-pris. Nye notifikationer (projektejerens ønske 2026-10-28): til admin "nyt produkt/ændring til godkendelse", til creatoren en kvittering; mockup-fejl til admin.
+- **30.9 Indsendelse:** rendering, filvalidering og fortjeneste med live-pris. Designerens notifikationer hører til designeren: de defineres i ProductDesigner-modulet og vises på designerens admin-side (fanen Notifikationer), ikke i fase 29's katalog; afsendelsen genbruger fase 29's motor (projektejerens ønske 2026-10-28). Nye notifikationer: til admin "nyt produkt/ændring til godkendelse", til creatoren en kvittering; mockup-fejl til admin.
 - **30.10 Godkendelse og anvendelse i WooCommerce:** idempotent og kan genoptages; printfiler på ordren. Notifikationer: til creatoren "godkendt og i butikken", "ændring godkendt" og "afvist med note"; til admin "kunne ikke lægges i butikken".
 - **30.11 Ny grundpris:** genprisning og pensionering. Notifikationer til creatoren: "ny pris" og "taget ud af butikken".
 - **30.12 Printful:** katalog, signeret URL og mockup-tasks. Admin-siden for Printful viser opsætningsvejledningen fra features/product-designer.md (projektejerens ønske 2026-10-28).

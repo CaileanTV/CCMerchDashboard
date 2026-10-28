@@ -15,7 +15,11 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Pris:** creatoren vælger sin fortjeneste i procent af grundprisen eller som et fast beløb og ser kundens pris med det samme (grundpris + fortjeneste, inkl. moms).
 - **Indsendelse:** creatoren sender produktet til godkendelse. Indtil admin har godkendt, er det ikke i butikken. En ændring af et godkendt produkt venter også på godkendelse; imens sælges den godkendte version uændret.
 - **Status:** creatoren ser sine produkter som kladde, venter, i butikken eller afvist med admins note.
-- **Notifikationer** (nye typer i kataloget fra ADR-079, med til/fra, eksempel og testmail på siden Notifikationer; projektejerens ønske 2026-10-28). Mail og klokke følger standarden for den enkelte type:
+- **Notifikationer** (projektejerens ønske 2026-10-28). De hører til designeren og står ikke i fase 29's katalog:
+  - Typerne defineres i ProductDesigner-modulet og registreres via et filter.
+  - Til/fra, eksempel og testmail ligger på designerens admin-side (fanen Notifikationer), ikke på den generelle side Notifikationer.
+  - Afsendelsen genbruger fase 29's motor: mailskabelonen, klokken, køen og creatorens e-mailvalg.
+  - Typerne:
   - **admin:**
     - nyt designer-produkt til godkendelse;
     - ændring af et produkt til godkendelse;

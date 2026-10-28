@@ -4520,7 +4520,11 @@ Dagens model (ADR-049) er en andel af den betalte pris. En rabat rammer altså v
    - Et designer-produkt har versioner: kladde → ventende → godkendt/afvist/trukket tilbage → erstattet. Der er højst én ventende ændring pr. produkt.
    - Den godkendte version sælges uændret, indtil en ændring er godkendt og anvendt.
    - Afvisning sker med en note til creatoren.
-   - Alt auditeres, og notifikationerne går gennem ADR-079.
+   - Alt auditeres.
+   - Notifikationerne hører til designeren (projektejerens valg 2026-10-28):
+     - typerne defineres i ProductDesigner-modulet og registreres via et filter i ADR-079's katalog;
+     - til/fra, eksempel og testmail ligger på designerens admin-side, ikke på siden Notifikationer;
+     - afsendelse, mailskabelon, klokke, kø og creatorens e-mailvalg genbruges fra ADR-079.
 4. **Designeren:**
    - Bygget i React med Fabric.js (MIT), version 7.2 eller nyere. Ældre versioner har en sårbarhed i SVG-eksporten, og vi eksporterer kun PNG.
    - Fabric er den første runtime-JS-afhængighed. Den bundles, indlæses lazy i designer-sektionen og bruger ingen CDN. ADR-004 gælder kun PHP-afhængigheder.
