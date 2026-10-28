@@ -802,9 +802,9 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 - **30.6 Grundprodukter i admin:** sider, farver, størrelser, grundpris, skabeloneditor og kliparts.
 - **30.7 PSD-import** (ag-psd i admin).
 - **30.8 Designer-UI** (Fabric) med uploads, kladder og validering.
-- **30.9 Indsendelse:** rendering, filvalidering, fortjeneste med live-pris og notifikationer.
-- **30.10 Godkendelse og anvendelse i WooCommerce:** idempotent og kan genoptages; printfiler på ordren.
-- **30.11 Ny grundpris:** genprisning, notifikation og pensionering.
+- **30.9 Indsendelse:** rendering, filvalidering og fortjeneste med live-pris. Nye notifikationer (projektejerens ønske 2026-10-28): til admin "nyt produkt/ændring til godkendelse", til creatoren en kvittering; mockup-fejl til admin.
+- **30.10 Godkendelse og anvendelse i WooCommerce:** idempotent og kan genoptages; printfiler på ordren. Notifikationer: til creatoren "godkendt og i butikken", "ændring godkendt" og "afvist med note"; til admin "kunne ikke lægges i butikken".
+- **30.11 Ny grundpris:** genprisning og pensionering. Notifikationer til creatoren: "ny pris" og "taget ud af butikken".
 - **30.12 Printful:** katalog, signeret URL og mockup-tasks. Admin-siden for Printful viser opsætningsvejledningen fra features/product-designer.md (projektejerens ønske 2026-10-28).
 - **30.13 Gelato:** katalog, kobling til Gelato-skabelon og mockups via create-from-template (projektejerens valg 2026-10-28). Admin-siden for Gelato viser opsætningsvejledningen fra features/product-designer.md (projektejerens ønske 2026-10-28).
 - **30.14 Creatorens Produkter:** levende, ventende og afviste produkter.

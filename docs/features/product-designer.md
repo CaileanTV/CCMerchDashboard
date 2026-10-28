@@ -15,9 +15,20 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Pris:** creatoren vælger sin fortjeneste i procent af grundprisen eller som et fast beløb og ser kundens pris med det samme (grundpris + fortjeneste, inkl. moms).
 - **Indsendelse:** creatoren sender produktet til godkendelse. Indtil admin har godkendt, er det ikke i butikken. En ændring af et godkendt produkt venter også på godkendelse; imens sælges den godkendte version uændret.
 - **Status:** creatoren ser sine produkter som kladde, venter, i butikken eller afvist med admins note.
-- **Notifikationer** (ADR-079):
-  - admin: nyt produkt eller ændring til godkendelse;
-  - creator: godkendt, afvist (med note) og ny pris, når grundprisen ændres.
+- **Notifikationer** (nye typer i kataloget fra ADR-079, med til/fra, eksempel og testmail på siden Notifikationer; projektejerens ønske 2026-10-28). Mail og klokke følger standarden for den enkelte type:
+  - **admin:**
+    - nyt designer-produkt til godkendelse;
+    - ændring af et produkt til godkendelse;
+    - mockups kunne ikke laves (Printful/Gelato);
+    - et godkendt produkt kunne ikke lægges i butikken;
+  - **creator:**
+    - produktet er sendt til godkendelse (kvittering);
+    - produktet er godkendt og i butikken;
+    - ændringen er godkendt;
+    - produktet eller ændringen er afvist (med admins note);
+    - ny pris, fordi grundprisen er ændret;
+    - produktet er taget ud af butikken (fx et grundprodukt udgår).
+  - Notifikationerne udløses efter commit og har dedupe som de øvrige. De indeholder aldrig printfiler eller filer, kun produktnavn, status, pris og link til dashboardet eller admin-siden.
 
 ## Admin functionality
 - **Grundprodukter:**
