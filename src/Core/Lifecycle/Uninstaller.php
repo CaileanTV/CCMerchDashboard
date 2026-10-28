@@ -22,6 +22,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotFormat;
 use MerchBoard\Modules\Alerts\Chatbot\KickAccount;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
+use MerchBoard\Modules\WooCommerce\Payouts\BalanceReadyNotices;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
@@ -235,6 +236,7 @@ final class Uninstaller {
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );
+		delete_transient( BalanceReadyNotices::CHECKED );
 		delete_option( Settings::OPTION );
 
 		$this->logger->info( 'Merch Dashboard data deleted on uninstall.', array( 'kept_tables' => implode( ', ', Tables::retained_on_uninstall() ) ) );

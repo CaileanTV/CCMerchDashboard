@@ -4376,6 +4376,21 @@ Endnu udløser intet notifikationer (29.5–29.6), og der er ingen admin-side (2
 - Kun manuelle produktkoblinger giver en notifikation; koblinger fra kategoriafstemningen kan komme mange ad gangen og giver ingen.
 - "Nyt salg" sendes uden fortjeneste (pkt. 9 "når den kendes"); beløbene er linjernes nettobeløb fra ledgeren.
 
+**Statusnote 2026-10-28 (trin 29.7, review og runtime-test):**
+- **Runtime-test:** udført på Local med "Test Creator Cailean". Fundet dobbelt punktum efter beløb ("10,00 kr..") er rettet.
+- **Review-rettelser:**
+  - udbetalingsmails viser den rigtige metode;
+  - saldo-jobbet planlægger altid næste kørsel, fordi den kørende action tæller som planlagt i Action Scheduler;
+  - en ny creators første udbetalbare fortjeneste meldes, fordi `balance_notified` altid har `amounts`;
+  - planlægningen tjekkes højst én gang i timen og aldrig ved AJAX;
+  - produktnavne gemmes rå, ikke HTML-kodede;
+  - en fortjeneste, der ikke ændrede sig, giver ingen besked;
+  - administrator-dedupe sker pr. creator;
+  - klokkens tekst er højst 500 tegn;
+  - en afsendelse, der kaster en fejl, tæller som et fejlet forsøg;
+  - "Vis flere" viser aldrig en linje to gange.
+- **Projektejerens regler (2026-10-28):** kundens data når aldrig creatoren, og "ny ordre" til administratoren sender WooCommerce, ikke Merch Dashboard. Begge er låst af tests.
+
 **Statusnote 2026-10-27 (trin 29.6):** alerts, administrator-mails og det daglige saldo-job er implementeret og testet automatisk. Afvigelse fra pkt. 4: saldo-jobbet er ikke en recurring action, men en enkelt action, der planlægger den næste efter 24 timer (som pluginets øvrige jobs); en sideindlæsning i wp-admin planlægger det, hvis intet venter. Første kørsel noterer kun beløbene (ingen besked til alle ved udgivelsen).
 
 ## Context
@@ -4406,10 +4421,10 @@ Udgangspunktet i koden:
    - Rækker ældre end 180 dage beskæres. Creator-sletning fjerner creatorens rækker. Tabellen indgår i `Tables::all()` og slettes kun ved afinstallation med opt-in.
 4. **Afsendelse:**
    - Notifikationen gemmes med det samme.
-   - Mailen sendes af Action Scheduler (`merchboard_notification_send`, gruppe `merchboard`) med højst 3 forsøg (efter 1, 5 og 15 minutter). Uden Action Scheduler sendes mailen ved `shutdown` i samme request.
+   - Mailen sendes af Action Scheduler (`merchboard_notification_send`, gruppe `merchboard`) med højst 3 forsøg (det første straks, så efter 1 og 5 minutter). Uden Action Scheduler sendes mailen ved `shutdown` i samme request.
    - `JobQueue`/`ActionSchedulerQueue` flyttes fra WooCommerce-modulet til Core.
    - "Saldo klar til udbetaling" findes af den daglige recurring action `merchboard_notification_balance_check`, som sammenligner med den sidst kendte udbetalbare saldo pr. creator.
-   - Begge hooks annulleres ved deaktivering og afinstallation (`ScheduledJobs`).
+   - Begge hooks annulleres ved afinstallation (`ScheduledJobs`). (Statusnote 29.7: ikke ved deaktivering, som pluginets øvrige alert- og notifikationsjobs; en action uden callback, mens pluginet er slået fra, markeres blot som fejlet af Action Scheduler.)
 5. **E-mailen:**
    - Pluginets egne skabeloner (`templates/emails/`) i projektejerens design: butiksnavn, kort med farvet topkant, overskrift, hilsen, tekst, infoboks, tabel, knap til dashboardet og sidefod.
    - Inline-CSS og en tekstversion.

@@ -37,7 +37,8 @@ final class CreatorMetaStore {
 
 	/**
 	 * The amounts available for payout at the last daily check (phase 29,
-	 * ADR-079): `{ currency: units }`. Written by the WooCommerce module's
+	 * ADR-079): `{ amounts: { currency: units } }`, also for a creator without
+	 * a balance yet. Written by the WooCommerce module's
 	 * BalanceReadyNotices only.
 	 */
 	public const BALANCE_NOTIFIED = 'balance_notified';

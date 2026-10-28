@@ -469,6 +469,9 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 
 		$data = array_map( static fn( array $row ): array => (array) json_decode( (string) $row['data'], true ), $rows );
 		self::assertSame( array( 'MB-PAY line', '1', '80.0000' ), array_values( $data[1]['items'][0] ?? array() ) );
+		// Owner's rule 2026-10-28: the customer's data (e-mail, name, address) never reaches the creator.
+		self::assertSame( array( 'order_number', 'currency', 'items', 'total' ), array_keys( $data[1] ) );
+		self::assertSame( array( 'name', 'quantity', 'amount' ), array_keys( $data[1]['items'][0] ?? array() ) );
 		self::assertSame( array( '80.0000', 'DKK' ), array( $data[1]['total'] ?? null, $data[1]['currency'] ?? null ) );
 		self::assertSame( array( '15.0000', 'DKK', 'AFR-000001' ), array( $data[7]['amount'] ?? null, $data[7]['currency'] ?? null, $data[7]['document_number'] ?? null ) );
 		self::assertSame( 'The account is closed.', $data[8]['reason'] ?? null );
@@ -501,8 +504,8 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		$this->earn( $mine, 1 );
 
 		self::assertSame( 0, $check->run(), 'The first check only notes the amount (no notification for everyone at release).' );
-		self::assertSame( array( 'DKK' => 200000 ), $meta->get( $creator, CreatorMetaStore::BALANCE_NOTIFIED ) );
-		self::assertSame( array( BalanceReadyNotices::HOOK ), array_column( $queue->queued, 'hook' ), 'It schedules the next check.' );
+		self::assertSame( array( 'amounts' => array( 'DKK' => 200000 ) ), $meta->get( $creator, CreatorMetaStore::BALANCE_NOTIFIED ) );
+		self::assertSame( array( BalanceReadyNotices::HOOK ), array_column( $queue->queued, 'hook' ), 'Every run queues the next check (the running action counts as scheduled in Action Scheduler).' );
 		self::assertSame( 0, $check->run(), 'Unchanged: nothing.' );
 
 		$this->earn( $mine, 1 );
@@ -517,6 +520,14 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 			),
 			json_decode( (string) $notices[0]['data'], true )
 		);
+		self::assertCount( 4, $queue->queued, 'One next run per run.' );
+
+		// A new creator without any balance yet is known after the first check, so the first payable profit is told.
+		$later = $this->creator_user( 'later', 'Later' );
+		$check->run();
+		self::assertSame( array( 'amounts' => array() ), $meta->get( $this->creator_id( $later ), CreatorMetaStore::BALANCE_NOTIFIED ) );
+		$this->earn( $later, 1 );
+		self::assertSame( 1, $check->run() );
 	}
 
 	public function test_the_settlement_document_is_shown_only_to_its_creator_and_never_cached(): void {
@@ -739,6 +750,7 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 				array(
 					'amount'   => '20.0000',
 					'currency' => 'DKK',
+					'method'   => 'gift_card',
 				),
 				json_decode( (string) ( $notices['payout_gift_card'] ?? '' ), true ),
 				'Never the code (ADR-057).'

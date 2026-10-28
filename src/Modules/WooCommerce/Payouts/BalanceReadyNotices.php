@@ -22,16 +22,24 @@ defined( 'ABSPATH' ) || exit;
  * Once a day (ADR-079, owner's choice 2026-10-27), each current creator
  * whose amount available for payout has grown since the last check is told
  * (`balance_ready`), per currency. The last known amount is kept in the
- * creator meta (`balance_notified`); a creator checked for the first time
- * is only noted, so the release does not notify everyone at once. A smaller
+ * creator meta (`balance_notified`: `{ amounts: { currency: units } }`,
+ * also for a creator without any balance yet); a creator checked for the
+ * first time is only noted, so the release does not notify everyone at
+ * once, while a new creator's first payable profit is told. A smaller
  * amount (a payout) is noted too, so the next growth is told again.
  *
- * The job reschedules itself 24 hours later (one pending action); an
- * administrator page load schedules it when none is pending.
+ * The job queues the next run 24 hours later every time it runs; an
+ * administrator page load (at most once an hour, never an AJAX request)
+ * schedules it when none is queued.
  */
 final class BalanceReadyNotices {
 
 	public const HOOK = 'merchboard_notification_balance_check';
+
+	/**
+	 * Transient: an administrator page load checked the schedule within the hour.
+	 */
+	public const CHECKED = 'merchboard_balance_check_scheduled';
 
 	/**
 	 * Constructor.
@@ -57,6 +65,12 @@ final class BalanceReadyNotices {
 	 * @param JobQueue $queue Queue.
 	 */
 	public static function ensure_scheduled( JobQueue $queue ): void {
+		if ( wp_doing_ajax() || false !== get_transient( self::CHECKED ) ) {
+			return;
+		}
+
+		set_transient( self::CHECKED, 1, HOUR_IN_SECONDS );
+
 		if ( $queue->available() && ! $queue->has_any( self::HOOK ) ) {
 			$queue->enqueue( self::HOOK, array(), DAY_IN_SECONDS );
 		}
@@ -68,7 +82,8 @@ final class BalanceReadyNotices {
 	 * @return int Notifications fired.
 	 */
 	public function run(): int {
-		if ( $this->queue->available() && ! $this->queue->has_pending( self::HOOK, array() ) ) {
+		// The running action counts as scheduled, so the next run is always queued here.
+		if ( $this->queue->available() ) {
 			$this->queue->enqueue( self::HOOK, array(), DAY_IN_SECONDS );
 		}
 
@@ -112,9 +127,10 @@ final class BalanceReadyNotices {
 	private function check( int $creator_id ): int {
 		$stored = $this->meta->get( $creator_id, CreatorMetaStore::BALANCE_NOTIFIED );
 		$known  = is_array( $stored );
-		$last   = $known ? $stored : array();
-		$now    = array();
-		$fired  = 0;
+		// 29.7 runtime test: an early value without `amounts` holds the amounts itself.
+		$last  = $known ? ( is_array( $stored['amounts'] ?? null ) ? $stored['amounts'] : $stored ) : array();
+		$now   = array();
+		$fired = 0;
 
 		foreach ( $this->balances->for_creator( $creator_id ) as $currency => $balance ) {
 			$units = $balance->available_units();
@@ -142,8 +158,9 @@ final class BalanceReadyNotices {
 			}
 		}
 
-		if ( ! $known || $now !== $last ) {
-			$this->meta->set( $creator_id, CreatorMetaStore::BALANCE_NOTIFIED, $now );
+		// Never empty: a creator without a balance yet is known, so the first growth is told.
+		if ( ! $known || ! isset( $stored['amounts'] ) || $now !== $last ) {
+			$this->meta->set( $creator_id, CreatorMetaStore::BALANCE_NOTIFIED, array( 'amounts' => $now ) );
 		}
 
 		return $fired;

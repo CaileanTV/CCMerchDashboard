@@ -81,6 +81,11 @@ final class NotificationsTest extends IntegrationTestCase {
 		$sender = $this->sender();
 
 		self::assertCount( 36, $this->types->all(), '27 creator and 9 administrator notifications (features/notifications.md).' );
+		self::assertSame(
+			array( 'admin_payout_requested', 'admin_proposal_submitted', 'admin_order_decision', 'admin_sync_failed', 'admin_reconciliation_failed', 'admin_adjustment_failed', 'admin_gift_card_coupon', 'admin_code_reset', 'admin_payout_cancelled' ),
+			array_values( array_filter( array_keys( $this->types->all() ), static fn( string $key ): bool => str_starts_with( $key, 'admin_' ) ) ),
+			'No "new order" e-mail to the administrator: WooCommerce sends it (owner 2026-10-28).'
+		);
 
 		foreach ( $this->types->all() as $type ) {
 			$data                 = $type->sample;
@@ -93,6 +98,7 @@ final class NotificationsTest extends IntegrationTestCase {
 			self::assertStringContainsString( EmailStyle::DEFAULT_BASE, $mail['html'], $type->key . ': the accent color' );
 			self::assertNotSame( '', trim( $mail['text'] ), $type->key );
 			self::assertNotSame( '', $type->text( new NotificationData( $type->sample ) ), $type->key );
+			self::assertStringNotContainsString( 'kr..', $type->text( new NotificationData( $type->sample ) ) . $mail['subject'] . $mail['text'], $type->key . ': one full stop after an amount at the end of a sentence' );
 			self::assertNotSame( '', $type->label(), $type->key );
 			self::assertArrayHasKey( $type->group, NotificationTypes::groups(), $type->key );
 			self::assertFalse( NotificationType::ADMIN === $type->audience && $type->dashboard, $type->key . ': no bell for the administrator' );

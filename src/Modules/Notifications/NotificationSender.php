@@ -17,15 +17,17 @@ use MerchBoard\Modules\Notifications\Email\EmailRenderer;
 use MerchBoard\Modules\Notifications\Email\EmailStyle;
 use MerchBoard\Modules\Notifications\Email\Mailer;
 use MerchBoard\Modules\WooCommerce\JobQueue;
+use Throwable;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The Action Scheduler job `merchboard_notification_send` (ADR-079 pkt. 4):
  * renders and sends one pending notification e-mail in the recipient's
- * language. A failed sending is tried again after 1, 5 and 15 minutes, at
- * most MAX_ATTEMPTS times; then the notification is `failed`. Without a
- * queue there is no retry.
+ * language. A failed sending (also one that throws, e.g. in a mail plugin's
+ * filter) is tried again after 1 and 5 minutes, at most MAX_ATTEMPTS times
+ * in all; then the notification is `failed`. Without a queue there is no
+ * retry.
  */
 class NotificationSender {
 
@@ -149,6 +151,16 @@ class NotificationSender {
 
 		try {
 			$error = $this->send_to( $type, $notification->data, $to, $name );
+		} catch ( Throwable $e ) {
+			// E.g. a mail plugin's filter: a failed attempt like any other, never a stuck `pending`.
+			$error = NotificationsException::NOT_SENT;
+			$this->logger->error(
+				'Sending a notification e-mail threw.',
+				array(
+					'notification_id' => $notification->id,
+					'exception'       => $e::class,
+				)
+			);
 		} finally {
 			if ( $switched ) {
 				restore_previous_locale();
@@ -163,7 +175,7 @@ class NotificationSender {
 			return;
 		}
 
-		$retry = $attempts < self::MAX_ATTEMPTS && $this->queue->available() && $this->queue->enqueue( self::HOOK, array( $notification->id ), self::RETRY[ $attempts ] ?? 900 );
+		$retry = $attempts < self::MAX_ATTEMPTS && $this->queue->available() && $this->queue->enqueue( self::HOOK, array( $notification->id ), self::RETRY[ $attempts ] ?? 300 );
 
 		$this->notifications->update_email( $notification->id, $retry ? Notification::EMAIL_PENDING : Notification::EMAIL_FAILED, $attempts, $error );
 		$this->logger->warning(

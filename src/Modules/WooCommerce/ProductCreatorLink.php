@@ -191,7 +191,7 @@ final class ProductCreatorLink {
 			}
 		);
 
-		do_action( 'merchboard_notify', 'product_linked', $creator->id, array( 'product' => (string) get_the_title( $product->id ) ), '' );
+		do_action( 'merchboard_notify', 'product_linked', $creator->id, array( 'product' => (string) get_post_field( 'post_title', $product->id, 'raw' ) ), '' );
 
 		return $changes;
 	}

@@ -96,10 +96,19 @@ export function NotificationBell() {
 			return;
 		}
 
+		// A notification that arrived meanwhile shifts the pages: never a line twice.
 		setItems( ( current ) =>
 			next === 1
 				? result.data.items
-				: [ ...current, ...result.data.items ]
+				: [
+						...current,
+						...result.data.items.filter(
+							( item ) =>
+								! current.some(
+									( shown ) => shown.id === item.id
+								)
+						),
+					]
 		);
 		setPage( next );
 		setPages( result.data.pages );

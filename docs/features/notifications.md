@@ -15,6 +15,8 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 - **E-mail** i butikkens design (som projektejerens nye WooCommerce-mails): butiksnavn, et kort med farvet topkant, overskrift, hilsen, tekst, en infoboks eller tabel, en knap til dashboardet og en sidefod med butikkens navn og adresse.
 - **Valg:** under Profil (kortet "E-mailnotifikationer") kan creatoren slå mails fra for typer, der ikke er vigtige, og som administratoren sender som mail. Valget gemmes straks. Vigtige mails (udbetalinger, afregningsbilag, sikkerhed og konto) kan ikke slås fra.
 - **Følsomme data:** mails indeholder aldrig gavekortkoder, rabatkoder, bankoplysninger eller CVR. De fortæller, at noget er sket, og linker til dashboardet.
+- **Kundens data når aldrig creatoren** (projektejerens regel 2026-10-28): "Nyt salg" og "Refunderet" har kun ordrenummer, varenavne, antal, beløb og valuta; aldrig kundens e-mail, navn eller adresse, og afsenderen er butikken. Låst af en integrationstest.
+- **Ordremails til administratoren** sender WooCommerce selv ("Ny ordre"); Merch Dashboard sender ingen (projektejerens beslutning 2026-10-28). Administrator-mails handler kun om udbetalinger, kategoriforslag, sager og fejl.
 
 ## Katalog
 **M** = e-mail, **D** = klokken i dashboardet. Kanalerne er standardindstillingen; administratoren kan ændre dem. **Vigtig** = creatoren kan ikke slå mailen fra.

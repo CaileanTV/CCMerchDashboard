@@ -135,7 +135,18 @@ class Notifier {
 		$this->at_shutdown = array();
 
 		foreach ( $ids as $id ) {
-			$this->sender->run( $id );
+			// One failing e-mail never keeps the others of the request from being sent.
+			try {
+				$this->sender->run( $id );
+			} catch ( Throwable $e ) {
+				$this->logger->error(
+					'A notification e-mail could not be sent at the end of the request.',
+					array(
+						'notification_id' => $id,
+						'exception'       => $e::class,
+					)
+				);
+			}
 		}
 	}
 
@@ -171,9 +182,10 @@ class Notifier {
 			$reachable = null !== $creator->user_id;
 			$email     = $email && ( ! $reachable || $this->preferences->wants_email( (int) $creator->user_id, $type ) );
 		} else {
-			// The administrator's e-mail names the creator it is about.
-			if ( null !== $creator_id && ! isset( $data['creator'] ) ) {
-				$data['creator'] = $this->creators->find( $creator_id )->display_name ?? '';
+			// The administrator's e-mail names the creator it is about; the same event of two creators is two e-mails.
+			if ( null !== $creator_id ) {
+				$data['creator'] ??= $this->creators->find( $creator_id )->display_name ?? '';
+				$dedupe            = '' === $dedupe ? '' : 'creator:' . $creator_id . ':' . $dedupe;
 			}
 
 			$creator_id = null;

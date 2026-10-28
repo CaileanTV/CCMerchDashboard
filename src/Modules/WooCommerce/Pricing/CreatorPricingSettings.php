@@ -312,7 +312,7 @@ final class CreatorPricingSettings {
 			}
 		);
 
-		self::markup_changed( $owner, (string) get_the_title( $product_id ), null !== $previous && $previous->belongs_to( $owner ) ? $previous->markup : $default, $product->markup );
+		self::markup_changed( $owner, (string) get_post_field( 'post_title', $product_id, 'raw' ), null !== $previous && $previous->belongs_to( $owner ) ? $previous->markup : $default, $product->markup );
 
 		return true;
 	}
@@ -351,7 +351,10 @@ final class CreatorPricingSettings {
 			}
 		);
 
-		self::markup_changed( $owner, (string) get_the_title( $product_id ), $previous->markup, $default );
+		// A share of a former owner did not apply to this creator (EffectiveMarkup): their profit did not change.
+		if ( $previous->belongs_to( $owner ) ) {
+			self::markup_changed( $owner, (string) get_post_field( 'post_title', $product_id, 'raw' ), $previous->markup, $default );
+		}
 
 		return true;
 	}
@@ -365,6 +368,11 @@ final class CreatorPricingSettings {
 	 * @param MarkupBps|null $current    The markup now.
 	 */
 	private static function markup_changed( int $creator_id, string $product, ?MarkupBps $previous, ?MarkupBps $current ): void {
+		// The profit in force did not change (e.g. a product share equal to the default).
+		if ( $previous?->bps === $current?->bps ) {
+			return;
+		}
+
 		$text = static fn( ?MarkupBps $markup ): string => null === $markup ? '–' : number_format_i18n( $markup->bps / 100, 0 === $markup->bps % 100 ? 0 : 2 ) . ' %';
 
 		do_action(

@@ -15,8 +15,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Tells the creator about their payout (ADR-079), after the transaction
- * that changed it has committed. Only the amount, the currency and the
- * given extras are passed: never details, hints or references. One
+ * that changed it has committed. Only the amount, the currency, the method
+ * and the given extras are passed: never details, hints or references. One
  * notification per type and payout, so a repeated call (an idempotent
  * request, a second click) notifies once.
  */
@@ -37,6 +37,7 @@ final class PayoutNotice {
 			array(
 				'amount'   => SalesAmount::format( $payout->amount_units ),
 				'currency' => $payout->currency,
+				'method'   => $payout->method->value,
 			) + $extra,
 			'payout:' . $payout->id
 		);
@@ -50,6 +51,6 @@ final class PayoutNotice {
 	 * @param Payout $payout The payout as stored after the change.
 	 */
 	public static function admin( string $type, Payout $payout ): void {
-		self::send( $type, $payout, array( 'method' => $payout->method->value ) );
+		self::send( $type, $payout );
 	}
 }

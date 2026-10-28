@@ -308,6 +308,8 @@ final class WooCommerceModuleTest extends TestCase {
 	 * run hooks on do_action()).
 	 */
 	private static function run_admin_init(): void {
+		// The daily balance check's scheduling skips AJAX requests (ADR-079).
+		Functions\when( 'wp_doing_ajax' )->justReturn( true );
 		Actions\expectAdded( 'admin_init' )
 			->zeroOrMoreTimes()
 			->whenHappen(

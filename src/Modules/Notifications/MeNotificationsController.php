@@ -154,7 +154,8 @@ final class MeNotificationsController extends RestController {
 					$items[] = array(
 						'id'         => $notification->id,
 						'type'       => $notification->type,
-						'text'       => $type->text( new NotificationData( $notification->data ) ),
+						// At most 500 characters, as the dashboard accepts (a long product name).
+						'text'       => mb_substr( $type->text( new NotificationData( $notification->data ) ), 0, 500 ),
 						'link'       => $type->link,
 						'created_at' => self::time( $notification->created_at ),
 						'read'       => null !== $notification->read_at,

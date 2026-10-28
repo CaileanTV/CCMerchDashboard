@@ -92,7 +92,7 @@ final class NotificationType {
 	 * @param NotificationData $data Data.
 	 */
 	public function text( NotificationData $data ): string {
-		return ( $this->text )( $data );
+		return self::tidy( ( $this->text )( $data ) );
 	}
 
 	/**
@@ -101,6 +101,28 @@ final class NotificationType {
 	 * @param NotificationData $data Data.
 	 */
 	public function message( NotificationData $data ): EmailMessage {
-		return ( $this->message )( $data );
+		$message = ( $this->message )( $data );
+
+		return new EmailMessage(
+			self::tidy( $message->subject ),
+			self::tidy( $message->heading ),
+			array_map( self::tidy( ... ), $message->paragraphs ),
+			$message->details,
+			$message->table,
+			$message->note,
+			$message->button,
+			$message->url,
+			$message->closing,
+			$message->greet
+		);
+	}
+
+	/**
+	 * One full stop where an amount ending in "kr." ends a sentence ("10,00 kr.").
+	 *
+	 * @param string $text Text.
+	 */
+	private static function tidy( string $text ): string {
+		return (string) preg_replace( '/(?<!\.)\.\.(?!\.)/u', '.', $text );
 	}
 }

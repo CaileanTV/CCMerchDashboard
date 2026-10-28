@@ -252,7 +252,8 @@ final class CreatorTypes {
 		return match ( $d->text( 'method' ) ) {
 			'paypal'    => __( 'PayPal', 'merchboard' ),
 			'gift_card' => __( 'Gift card', 'merchboard' ),
-			default     => __( 'Bank transfer', 'merchboard' ),
+			'bank'      => __( 'Bank transfer', 'merchboard' ),
+			default     => '',
 		};
 	}
 
@@ -280,9 +281,14 @@ final class CreatorTypes {
 				__( 'We received your payout request', 'merchboard' ),
 				__( 'Payout request received', 'merchboard' ),
 				array( __( 'Thank you. We will process your request and let you know when the money is on its way.', 'merchboard' ) ),
-				array(
-					array( __( 'Amount', 'merchboard' ), $d->money( 'amount' ) ),
-					array( __( 'Method', 'merchboard' ), self::method( $d ) ),
+				array_values(
+					array_filter(
+						array(
+							array( __( 'Amount', 'merchboard' ), $d->money( 'amount' ) ),
+							array( __( 'Method', 'merchboard' ), self::method( $d ) ),
+						),
+						static fn( array $line ): bool => '' !== $line[1]
+					)
 				),
 				null,
 				null,

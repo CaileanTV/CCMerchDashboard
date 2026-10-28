@@ -74,7 +74,8 @@ final class AdminTypes {
 		return match ( $d->text( 'method' ) ) {
 			'paypal'    => __( 'PayPal', 'merchboard' ),
 			'gift_card' => __( 'Gift card', 'merchboard' ),
-			default     => __( 'Bank transfer', 'merchboard' ),
+			'bank'      => __( 'Bank transfer', 'merchboard' ),
+			default     => '',
 		};
 	}
 
