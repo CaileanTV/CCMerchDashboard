@@ -639,6 +639,36 @@ Indexes: `PRIMARY KEY (id)`, `UNIQUE KEY dedupe_key`, `KEY creator_dashboard (cr
 
 Rækker ældre end 180 dage beskæres ved hver ny notifikation (200 ad gangen). Sletning af en creator fjerner creatorens rækker. Administratorens valg ligger i option `merchboard_notifications` og creatorens fravalg i user meta `merchboard_notification_email_off`.
 
+### Produktdesigner 🔄 (schema-version 35, ADR-080–082)
+
+Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. Beløb er `decimal(19,4)` inkl. moms, som i ledgeren. JSON-kolonner er `longtext`.
+
+- **`merchboard_designer_bases`** (grundprodukter):
+  - kolonner: `status` (`draft`/`active`/`retired`), `source` (`own`/`printful`/`gelato`), `provider_ref` (leverandørens produkt), `provider_template` (Gelato-skabelon), `name`, `description`, `base_price`, `currency`, `category_id` (standardkategori);
+  - JSON: `colors`, `sizes` og `views` (mockup-skabelon pr. side);
+  - `version`, som øges ved hver ændring af pris eller skabelon.
+- **`merchboard_designer_products`**:
+  - `creator_id`, `base_id`, `live_version_id` og `status` (`draft`/`live`/`retired`);
+  - `wc_product_id` (UNIQUE, NULL indtil første anvendelse);
+  - `creation_token` (UNIQUE, legacy-værnet).
+- **`merchboard_designer_versions`**:
+  - `status` (`draft` → `pending` → `approved`/`rejected`/`withdrawn` → `superseded`);
+  - `pending_key` (UNIQUE, sat kun mens versionen venter: højst én ventende ændring pr. produkt);
+  - `base_version`, `title`, `description`;
+  - JSON: `colors`, `sizes`, `sides` og `design`;
+  - `profit_kind` (`percent`/`fixed`), `profit_value` og `quoted_price`;
+  - `files` (JSON) og `provider_ref` (Gelato-produkt);
+  - `mockup_state`, `apply_state`, `apply_step` og `apply_error`;
+  - `note` (afvisning) og tidspunkter.
+  - UNIQUE (`design_product_id`, `number`).
+- **`merchboard_designer_assets`**: creatorens uploads (`creator_id`) og admins kliparts (`creator_id` NULL) med `kind`, `name`, `file` (tilfældigt navn), `mime`, mål og `bytes`. Filerne ligger privat (fra trin 30.6).
+- **`merchboard_designer_provider_tasks`**: mockup-tasks hos Printful eller Gelato med `provider`, `side`, `task_key`, `status`, `attempts`, `next_poll_at`, `result` (JSON) og `error`.
+- **`merchboard_designer_campaigns`**: virksomhedens kampagner (ADR-080 pkt. 9) med `name`, `starts_at`, `ends_at`, `coupon_codes` (JSON) og `sale_prices`.
+
+**Sletning af en creator:** creatorens uploads og de designer-produkter (med versioner og tasks), der aldrig kom i butikken, slettes. Produkter i butikken bevares af hensyn til ordrehistorikken.
+
+**Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled` og `gelato_enabled` (alle fra som standard).
+
 ### Fremtidige (ikke designet i detaljer)
 
 - `merchboard_creator_members` – hvis flere brugere (fx en manager) skal have adgang til samme creator. Erstatter `user_id`-kolonnen. Ændringen bliver lokal, fordi al opslag af "nuværende creator" går gennem `CreatorContext`.
@@ -765,6 +795,7 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 | Options `merchboard_alert_fonts_key` (Google Fonts API-nøglen) og `merchboard_alert_fonts_approved`, transient `merchboard_alert_fonts_catalog` (fase 25, trin 25.5, ADR-067) | Ja, sammen med de øvrige options |
 | Options `merchboard_alert_twitch` (Twitch-app, bot og krypterede hemmeligheder), `merchboard_alert_kick` (Kick-app, trin 25.8.2), `merchboard_alert_youtube` (Google-app og bottens krypterede tokens, trin 25.8.4), `merchboard_alert_youtube_legal` (privatlivspolitik og vilkår, trin 25.8.5), `merchboard_alert_global_overlay` (det globale overlay, trin 25.9.4), `merchboard_alert_overlay_presets` (standard-overlays, trin 25.9.5) og `merchboard_alert_chatbot_format` (fase 25, trin 25.8, ADR-066/069/070); transient `merchboard_kick_public_key` | Ja, sammen med de øvrige options. Creatorens Kick- og Google-tokens ligger i `merchboard_alert_chatbot` og forsvinder med tabellen. Tokens tilbagekaldes ikke hos platformene ved afinstallation |
 | Tabellen `merchboard_category_proposals` og mappen `uploads/merchboard-proposals/` (fase 28, ADR-077) | Ja: tabellen droppes med de øvrige; mappen med ventende billeder slettes. Godkendte billeder hører til kategorien og bevares; kun deres post meta `_merchboard_category_media_creator` slettes |
+| Produktdesignerens seks tabeller (fase 30, ADR-080) | Ja: tabellerne droppes. Designer-produkter i WooCommerce og deres billeder i mediebiblioteket bevares (de er butikkens produkter) |
 | Tabellen `merchboard_notifications`, option `merchboard_notifications`, user meta `merchboard_notification_email_off` og ventende Action Scheduler-jobs `merchboard_notification_send` (fase 29, ADR-079) | Ja: tabellen droppes, optionen og user meta slettes, og jobbene annulleres sammen med alert-jobbene |
 | Option `merchboard_settings` (inkl. opt-in'en) | Ja, **sidst** |
 | Rollen `merchboard_creator` | Ja: fjernes fra brugere (andre roller bevares) og derefter som rolle |

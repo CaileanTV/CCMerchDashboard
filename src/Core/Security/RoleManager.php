@@ -38,8 +38,9 @@ final class RoleManager {
 	 * 4: `merchboard_delete_order_history` for administrators (phase 22, ADR-052).
 	 * 5: `merchboard_manage_payouts` and `merchboard_view_payout_details` for administrators (phase 23, ADR-058).
 	 * 6: `merchboard_manage_alerts` for administrators (phase 25, ADR-065).
+	 * 7: `merchboard_manage_designer` for administrators (phase 30, ADR-080).
 	 */
-	public const VERSION = 6;
+	public const VERSION = 7;
 
 	/**
 	 * Option holding the synchronised version (integer).

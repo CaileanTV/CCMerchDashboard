@@ -34,6 +34,7 @@ use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\News\NewsModule;
 use MerchBoard\Modules\Notifications\NotificationsModule;
+use MerchBoard\Modules\ProductDesigner\ProductDesignerModule;
 use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
@@ -282,6 +283,8 @@ final class Plugin {
 			$modules[] = new WooCommerceModule();
 			// Purchase alerts use the WooCommerce module's product attribution (ADR-065).
 			$modules[] = new AlertsModule();
+			// The creators' product designer makes WooCommerce products (phase 30, ADR-080).
+			$modules[] = new ProductDesignerModule();
 		}
 
 		$woocommerce->register_notice();

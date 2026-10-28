@@ -126,6 +126,24 @@ final class Settings {
 	public const ALERTS_ENABLED = 'alerts_enabled';
 
 	/**
+	 * Whether creators can use the product designer (phase 30, ADR-080). Off
+	 * by default; enabled only by exactly boolean true.
+	 */
+	public const DESIGNER_ENABLED = 'designer_enabled';
+
+	/**
+	 * Whether Printful is used for base products and mockups (ADR-081). Off
+	 * by default; enabled only by exactly boolean true.
+	 */
+	public const PRINTFUL_ENABLED = 'printful_enabled';
+
+	/**
+	 * Whether Gelato is used for base products and mockups (ADR-082). Off by
+	 * default; enabled only by exactly boolean true.
+	 */
+	public const GELATO_ENABLED = 'gelato_enabled';
+
+	/**
 	 * Whether customers get an optional "username" field in the checkout
 	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
 	 * are on; enabled only by exactly boolean true.
@@ -223,7 +241,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -242,6 +260,9 @@ final class Settings {
 			self::CHECKOUT_USERNAME_HELP    => '',
 			self::SOUND_MAX_BYTES           => self::DEFAULT_SOUND_MAX_BYTES,
 			self::SOUND_MAX_SECONDS         => self::DEFAULT_SOUND_MAX_SECONDS,
+			self::DESIGNER_ENABLED          => false,
+			self::PRINTFUL_ENABLED          => false,
+			self::GELATO_ENABLED            => false,
 		);
 	}
 
@@ -252,7 +273,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -283,6 +304,9 @@ final class Settings {
 			self::CHECKOUT_USERNAME_HELP    => is_string( $help ) && self::valid_line( $help, self::CHECKOUT_USERNAME_HELP_MAX_LENGTH ) ? $help : '',
 			self::SOUND_MAX_BYTES           => is_int( $bytes ) && self::valid_sound_max_bytes( $bytes ) ? $bytes : self::DEFAULT_SOUND_MAX_BYTES,
 			self::SOUND_MAX_SECONDS         => is_int( $secs ) && self::valid_sound_max_seconds( $secs ) ? $secs : self::DEFAULT_SOUND_MAX_SECONDS,
+			self::DESIGNER_ENABLED          => true === ( $values[ self::DESIGNER_ENABLED ] ?? false ),
+			self::PRINTFUL_ENABLED          => true === ( $values[ self::PRINTFUL_ENABLED ] ?? false ),
+			self::GELATO_ENABLED            => true === ( $values[ self::GELATO_ENABLED ] ?? false ),
 		);
 	}
 
@@ -406,7 +430,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -522,6 +546,27 @@ final class Settings {
 	 */
 	public static function alerts_enabled(): bool {
 		return self::all()[ self::ALERTS_ENABLED ];
+	}
+
+	/**
+	 * Whether creators can use the product designer (ADR-080).
+	 */
+	public static function designer_enabled(): bool {
+		return self::all()[ self::DESIGNER_ENABLED ];
+	}
+
+	/**
+	 * Whether Printful is switched on (ADR-081).
+	 */
+	public static function printful_enabled(): bool {
+		return self::all()[ self::PRINTFUL_ENABLED ];
+	}
+
+	/**
+	 * Whether Gelato is switched on (ADR-082).
+	 */
+	public static function gelato_enabled(): bool {
+		return self::all()[ self::GELATO_ENABLED ];
 	}
 
 	/**

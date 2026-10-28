@@ -255,6 +255,38 @@ final class Tables {
 	public const NOTIFICATIONS = 'merchboard_notifications';
 
 	/**
+	 * Base products of the product designer (phase 30, ADR-080): colours,
+	 * sizes, base price and a mockup template per side.
+	 */
+	public const DESIGNER_BASES = 'merchboard_designer_bases';
+
+	/**
+	 * Creators' designer products and their WooCommerce product (ADR-080).
+	 */
+	public const DESIGNER_PRODUCTS = 'merchboard_designer_products';
+
+	/**
+	 * Versions of a designer product, approved by an administrator (ADR-080).
+	 */
+	public const DESIGNER_VERSIONS = 'merchboard_designer_versions';
+
+	/**
+	 * Creators' uploaded images and the administrator's cliparts (ADR-080).
+	 */
+	public const DESIGNER_ASSETS = 'merchboard_designer_assets';
+
+	/**
+	 * Mockup tasks at Printful or Gelato (ADR-081/082).
+	 */
+	public const DESIGNER_PROVIDER_TASKS = 'merchboard_designer_provider_tasks';
+
+	/**
+	 * The company's campaigns, in which a discount is shared with the
+	 * creator (ADR-080 pkt. 9).
+	 */
+	public const DESIGNER_CAMPAIGNS = 'merchboard_designer_campaigns';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -297,6 +329,12 @@ final class Tables {
 		self::ALERT_WEBHOOK_DELIVERIES,
 		self::CATEGORY_PROPOSALS,
 		self::NOTIFICATIONS,
+		self::DESIGNER_BASES,
+		self::DESIGNER_PRODUCTS,
+		self::DESIGNER_VERSIONS,
+		self::DESIGNER_ASSETS,
+		self::DESIGNER_PROVIDER_TASKS,
+		self::DESIGNER_CAMPAIGNS,
 	);
 
 	/**

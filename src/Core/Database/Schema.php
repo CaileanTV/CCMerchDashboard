@@ -34,6 +34,7 @@ use MerchBoard\Core\Database\Migrations\CreateOperationsTable;
 use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationExportsTable;
 use MerchBoard\Core\Database\Migrations\CreatePayoutRecalculationTables;
 use MerchBoard\Core\Database\Migrations\CreatePayoutTables;
+use MerchBoard\Core\Database\Migrations\CreateProductDesignerTables;
 use MerchBoard\Core\Database\Migrations\CreateSalesLedgerTables;
 use MerchBoard\Core\Database\Migrations\CreateSettlementTables;
 use MerchBoard\Core\Database\Migrations\GrantExistingAlertApiAccess;
@@ -95,6 +96,7 @@ final class Schema {
 			32 => new CreateCategoryProposalsTable(),
 			33 => new MoveProfileToProposals(),
 			34 => new CreateNotificationsTable(),
+			35 => new CreateProductDesignerTables(),
 		);
 	}
 }

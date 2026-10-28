@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+
+- **Produktdesigner (fase 30, ADR-080–082), fundament:** tabellerne til grundprodukter, designer-produkter, versioner, filer, leverandør-tasks og kampagner (schema-version 35), rettigheden `merchboard_manage_designer` og kill switches for produktdesigneren, Printful og Gelato under Settings (alle fra som standard). Designeren kommer i de følgende trin.
+
 ## [1.4.0] - 2026-10-28
 
 Fase 29: notifikationer på mail i butikkens design og ved en klokke i creatorens dashboard, en admin-side til at slå hver notifikation til og fra, og administrator-mails. Schema-version 34 (migration 34 opretter `merchboard_notifications` ved opdatering fra 1.3.x; ingen manuelle trin). Fase 29 er reviewet og runtime-testet på Local 2026-10-28. Opdateringen står i DEVELOPMENT.md ("Release 1.4.0").

@@ -110,6 +110,12 @@ final class Capabilities {
 	public const MANAGE_ALERTS = 'merchboard_manage_alerts';
 
 	/**
+	 * Manage the product designer: base products, campaigns and the approval
+	 * of creators' designer products (phase 30, ADR-080).
+	 */
+	public const MANAGE_DESIGNER = 'merchboard_manage_designer';
+
+	/**
 	 * WordPress' capability for editorial work. Not owned by the plugin and never
 	 * granted by it; only checked to tell editors apart from pure creators
 	 * (ADR-026).
@@ -170,6 +176,7 @@ final class Capabilities {
 			self::MANAGE_PAYOUTS,
 			self::VIEW_PAYOUT_DETAILS,
 			self::MANAGE_ALERTS,
+			self::MANAGE_DESIGNER,
 		);
 	}
 

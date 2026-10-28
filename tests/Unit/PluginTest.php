@@ -31,6 +31,7 @@ use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Modules\Alerts\AlertsModule;
+use MerchBoard\Modules\ProductDesigner\ProductDesignerModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
 use MerchBoard\Plugin;
@@ -336,7 +337,7 @@ final class PluginTest extends TestCase {
 
 		$this->plugin()->boot();
 
-		self::assertSame( 34, $this->options->options[ Migrator::VERSION_OPTION ] );
+		self::assertSame( 35, $this->options->options[ Migrator::VERSION_OPTION ] );
 	}
 
 	public function test_creators_module_registers_admin_hooks(): void {
@@ -482,7 +483,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 9 === count( $modules ) && $modules[5] instanceof NewsModule && $modules[6] instanceof NotificationsModule && $modules[7] instanceof WooCommerceModule && $modules[8] instanceof AlertsModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 10 === count( $modules ) && $modules[5] instanceof NewsModule && $modules[6] instanceof NotificationsModule && $modules[7] instanceof WooCommerceModule && $modules[8] instanceof AlertsModule && $modules[9] instanceof ProductDesignerModule ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 
@@ -499,7 +500,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 7 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule ) ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 7 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule || $module instanceof ProductDesignerModule ) ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 

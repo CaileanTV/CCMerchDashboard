@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-28T16:35:55+00:00\n"
+"PO-Revision-Date: 2026-10-28T19:23:33+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -144,6 +144,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Notifications/Admin/NotificationsAdminActions.php:74
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:87
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
@@ -1468,6 +1469,7 @@ msgstr "Ændringen kunne ikke gemmes. Prøv igen."
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:49
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:45
 #: src/Modules/Settings/Admin/SettingsPage.php:165
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
 msgid "You are not allowed to change these settings."
@@ -5543,6 +5545,63 @@ msgstr "Konto og priser"
 #: src/Modules/Notifications/NotificationTypes.php:70
 msgid "To the administrator"
 msgstr "Til administratoren"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:81
+msgid "Sorry, you are not allowed to manage the product designer."
+msgstr "Du har ikke tilladelse til at administrere produktdesigneren."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:43
+msgid "The product designer settings were saved."
+msgstr "Indstillingerne for produktdesigneren er gemt."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:44
+msgid "No changes were made to the product designer settings."
+msgstr "Der blev ikke ændret noget i indstillingerne for produktdesigneren."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:46
+msgid "A technical error occurred. The product designer settings were not changed."
+msgstr "Der opstod en teknisk fejl. Indstillingerne for produktdesigneren blev ikke ændret."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:64
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:83
+msgid "Product designer"
+msgstr "Produktdesigner"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:65
+msgid "Creators can design their own products"
+msgstr "Creators kan designe deres egne produkter"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:66
+msgid "Off by default. New products and changes always wait for an administrator's approval. Products that were not made in the designer are never changed by it."
+msgstr "Fra som standard. Nye produkter og ændringer venter altid på godkendelse fra en administrator. Produkter, der ikke er lavet i designeren, ændres aldrig af den."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:70
+msgid "Printful"
+msgstr "Printful"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:71
+msgid "Use Printful for base products and mockups"
+msgstr "Brug Printful til grundprodukter og mockups"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:72
+msgid "Off by default. Only the catalog and the mockup generator are used; orders are not sent to Printful."
+msgstr "Fra som standard. Kun kataloget og mockup-generatoren bruges; ordrer sendes ikke til Printful."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:76
+msgid "Gelato"
+msgstr "Gelato"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:77
+msgid "Use Gelato for base products and mockups"
+msgstr "Brug Gelato til grundprodukter og mockups"
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:78
+msgid "Off by default. Only the catalog and mockups from your Gelato templates are used; orders are not sent to Gelato."
+msgstr "Fra som standard. Kun kataloget og mockups fra jeres Gelato-skabeloner bruges; ordrer sendes ikke til Gelato."
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:102
+msgid "Save product designer settings"
+msgstr "Gem indstillinger for produktdesigneren"
 
 #: src/Modules/Settings/Admin/SettingsActions.php:130
 #: src/Modules/Settings/Admin/SettingsPage.php:183

@@ -139,6 +139,9 @@ final class SettingsTest extends TestCase {
 				Settings::CHECKOUT_USERNAME_HELP    => '',
 				Settings::SOUND_MAX_BYTES           => 10485760,
 				Settings::SOUND_MAX_SECONDS         => 30,
+				Settings::DESIGNER_ENABLED          => false,
+				Settings::PRINTFUL_ENABLED          => false,
+				Settings::GELATO_ENABLED            => false,
 			),
 			Settings::all()
 		);

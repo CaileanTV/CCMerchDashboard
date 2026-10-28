@@ -791,7 +791,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 
 **Trin:**
 - **30.1 ADR'er og plan ✅ (2026-10-28):** ADR-080 (designer og afregning), ADR-081 (Printful) og ADR-082 (Gelato, mockups via Gelato-skabeloner) samt [features/product-designer.md](features/product-designer.md). Endpoints og Fabric er verificeret mod dokumentationen.
-- **30.2 Fundament:** migration 35, `Tables`, afinstallation og creator-oprydning, capability, modulskelet og kill switches.
+- **30.2 Fundament 🔄 (implementeret 2026-10-28, testet automatisk):** migration 35 (seks tabeller), `Tables`, afinstallation og creator-oprydning, capability `merchboard_manage_designer` (rolleversion 7), modulet `ProductDesigner` og kill switches (designer, Printful og Gelato) under Settings.
 - **30.3 Afregning:**
   - snapshot `designer` og kampagne ved snapshottet;
   - designer-grene i `RealizedProfit`/`RealizedPayout` og SQL-summerne;
@@ -805,8 +805,8 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 - **30.9 Indsendelse:** rendering, filvalidering, fortjeneste med live-pris og notifikationer.
 - **30.10 Godkendelse og anvendelse i WooCommerce:** idempotent og kan genoptages; printfiler på ordren.
 - **30.11 Ny grundpris:** genprisning, notifikation og pensionering.
-- **30.12 Printful:** katalog, signeret URL og mockup-tasks.
-- **30.13 Gelato:** katalog, kobling til Gelato-skabelon og mockups via create-from-template (projektejerens valg 2026-10-28).
+- **30.12 Printful:** katalog, signeret URL og mockup-tasks. Admin-siden for Printful viser opsætningsvejledningen fra features/product-designer.md (projektejerens ønske 2026-10-28).
+- **30.13 Gelato:** katalog, kobling til Gelato-skabelon og mockups via create-from-template (projektejerens valg 2026-10-28). Admin-siden for Gelato viser opsætningsvejledningen fra features/product-designer.md (projektejerens ønske 2026-10-28).
 - **30.14 Creatorens Produkter:** levende, ventende og afviste produkter.
 - **30.15 Review, runtime-test og release 1.5.0:**
   - review og runtime-test på Local med "Test Creator Cailean" udføres automatisk (AI-DEVELOPMENT.md);

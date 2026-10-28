@@ -403,6 +403,36 @@ final class TransactionTest extends TestCase {
 				'engine'       => 'InnoDB',
 				'transactions' => 'YES',
 			),
+			array(
+				'name'         => 'wp_merchboard_designer_bases',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_designer_products',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_designer_versions',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_designer_assets',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_designer_provider_tasks',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
+			array(
+				'name'         => 'wp_merchboard_designer_campaigns',
+				'engine'       => 'InnoDB',
+				'transactions' => 'YES',
+			),
 		);
 
 		return new Transaction( $wpdb, new TransactionSupport( $wpdb ) );
