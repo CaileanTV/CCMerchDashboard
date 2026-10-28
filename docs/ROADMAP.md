@@ -790,7 +790,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 - Printful runtime-testes på devpage af projektejeren.
 
 **Trin:**
-- **30.1 ADR'er og plan ✅ (2026-10-28):** ADR-080 (designer og afregning), ADR-081 (Printful) og ADR-082 (Gelato) samt [features/product-designer.md](features/product-designer.md). Endpoints og Fabric er verificeret mod dokumentationen.
+- **30.1 ADR'er og plan ✅ (2026-10-28):** ADR-080 (designer og afregning), ADR-081 (Printful) og ADR-082 (Gelato, mockups via Gelato-skabeloner) samt [features/product-designer.md](features/product-designer.md). Endpoints og Fabric er verificeret mod dokumentationen.
 - **30.2 Fundament:** migration 35, `Tables`, afinstallation og creator-oprydning, capability, modulskelet og kill switches.
 - **30.3 Afregning:**
   - snapshot `designer` og kampagne ved snapshottet;
@@ -806,7 +806,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 - **30.10 Godkendelse og anvendelse i WooCommerce:** idempotent og kan genoptages; printfiler på ordren.
 - **30.11 Ny grundpris:** genprisning, notifikation og pensionering.
 - **30.12 Printful:** katalog, signeret URL og mockup-tasks.
-- **30.13 Gelato:** katalog og egne skabeloner.
+- **30.13 Gelato:** katalog, kobling til Gelato-skabelon og mockups via create-from-template (projektejerens valg 2026-10-28).
 - **30.14 Creatorens Produkter:** levende, ventende og afviste produkter.
 - **30.15 Review, runtime-test og release 1.5.0:**
   - review og runtime-test på Local med "Test Creator Cailean" udføres automatisk (AI-DEVELOPMENT.md);

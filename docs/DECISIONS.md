@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, kun katalog), kun til produktdesigneren (ADR-080).
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080).
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -4667,41 +4667,63 @@ Professionelle mockups til Printful-produkter, mens designet forbliver vores ege
 ## Related
 ADR-016, ADR-080, ADR-082.
 
-# ADR-082: Gelato som produktkatalog
+# ADR-082: Gelato som produktkatalog og mockups via Gelato-skabeloner
 
 ## Date
 2026-10-28
 
 ## Status
-Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Gelato 2026-10-28, kun til katalog (ADR-016). Ikke implementeret endnu.
+Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Gelato 2026-10-28 til katalog og mockups via Gelatos skabelon-flow (ADR-016). Mockups via skabeloner er valgt samme dag efter Gelatos guide "Creating Products Via API From Template". Ikke implementeret endnu.
 
 ## Context
-Admin vil kunne tilbyde produkter fra Gelatos katalog med Gelatos mockups. Gelatos offentlige API har ingen selvstændig mockup-generator. Mockups opstår kun, når der oprettes et produkt i en Gelato-butik ud fra en skabelon, som er lavet i Gelatos egen brugerflade, og Mockup Studio er et webværktøj.
+Admin vil kunne tilbyde produkter fra Gelatos katalog med Gelatos mockups. Designet laves i vores designer (ADR-080). Gelatos API har ingen selvstændig mockup-generator. Mockups laves, når der oprettes et produkt i en Gelato-butik ud fra en skabelon, som admin har lavet i Gelatos dashboard. Skabelonen har et navngivet billedlag ("image placeholder") pr. side. Gelato opretter varianter og mockups i baggrunden.
 
 ## Decision
-1. **Godkendte endpoints** (`https://product.gelatoapis.com`, header `X-API-KEY`):
-   - `GET /v3/catalogs` og `GET /v3/catalogs/{catalogUid}`;
-   - `POST /v3/catalogs/{catalogUid}/products:search`;
-   - `GET /v3/products/{productUid}` og `GET /v3/products/{productUid}/prices`.
-   - Ethvert andet endpoint kræver en ny ADR.
-2. **Katalogimport:** et Gelato-produkt bliver et grundprodukt med Gelatos produkt-uid pr. variant. Mockups laves med vores egne skabeloner (PSD-import, ADR-080 pkt. 2).
-3. **Kald, nøgle og kill switch:** som ADR-081 (sodium-krypteret nøgle, 15 s timeout, ingen redirects, kan slås fra i Settings).
-4. **Data, der sendes:** kun katalogforespørgsler. Ingen design, ingen kundedata og ingen creatordata.
+1. **Godkendte endpoints** (header `X-API-KEY`):
+   - **Katalog** (`https://product.gelatoapis.com`):
+     - `GET /v3/catalogs` og `GET /v3/catalogs/{catalogUid}`;
+     - `POST /v3/catalogs/{catalogUid}/products:search`;
+     - `GET /v3/products/{productUid}` og `GET /v3/products/{productUid}/prices`.
+   - **Mockups** (`https://ecommerce.gelatoapis.com`):
+     - `GET /v1/templates/{templateId}`;
+     - `POST /v1/stores/{storeId}/products:create-from-template`;
+     - `GET /v1/stores/{storeId}/products/{productId}`;
+     - download af mockup-billeder fra den vært, Gelato returnerer.
+   - Ethvert andet endpoint (fx ordrer) kræver en ny ADR.
+2. **Grundprodukt fra Gelato:**
+   - Admin importerer et katalogprodukt og angiver id'et på en Gelato-skabelon, som admin selv har lavet i Gelatos dashboard.
+   - Hver side kobles til skabelonens billedlag.
+   - Farver og størrelser kobles til skabelonens varianter (`templateVariantId`).
+3. **Mockups:** ved indsendelse oprettes et produkt fra skabelonen i jeres Gelato-butik (`storeId` i Settings). Printfilen pr. side sendes som en kortlivet signeret URL (som ADR-081 pkt. 4).
+   - Et job i Action Scheduler poller produktet med begrænsede forsøg.
+   - Når mockups er klar, hentes, valideres og gemmes de som versionens mockups.
+   - Godkendelse kræver, at mockups er klar.
+4. **Gelato-butikken skal være en ren API-butik** uden tilknyttet salgskanal, så produkterne aldrig publiceres andre steder. Det er admins ansvar og står i Settings-teksten.
+   - Produkterne bliver liggende i butikken: der er ikke fundet et API-kald til at slette dem.
+   - Gelato-produktets id gemmes på versionen.
+5. **Kald, nøgle og kill switch:** som ADR-081. Nøglen krypteres med sodium (eget domæne), timeout er 15 s, der er ingen redirects, og 429 håndteres. Gelato kan slås fra i Settings.
+6. **Data, der sendes:** produkt- og skabelon-id'er, titel (designets navn) og printfilens URL. Ingen kundedata. Designet gemmes hos Gelato.
 
 ## Alternatives considered
-**Gelatos "create product from template"-flow for mockups.** Det kræver en Gelato-butik og skabeloner i Gelatos brugerflade og opretter produkter hos Gelato. Fravalgt; kan genovervejes, hvis Gelato offentliggør en mockup-API.
+**Kun katalog med egne skabeloner (PSD-import).** Det oprindelige valg 2026-10-28. Fravalgt samme dag til fordel for Gelatos egne mockups. Egne skabeloner kan stadig bruges på et Gelato-grundprodukt uden Gelato-skabelon.
 
 ## Reason
-Gelatos produkter kan tilbydes som grundprodukter uden at sende designs ud af huset.
+Gelato-produkter får Gelatos professionelle mockups, mens designet laves i vores designer.
 
 ## Security
-Som ADR-081.
+- Som ADR-081: nøglen er krypteret, kun de godkendte endpoints bruges, signerede URL'er udløber efter 1 time, og resultater valideres.
+- Gelato-butikken må ikke være koblet til en salgskanal.
 
 ## Migration/data implications
-Option med krypteret nøgle; slettes ved afinstallation.
+- Option med krypteret nøgle og butiks-id.
+- Leverandør-tasks i migration 35.
+- Afinstallation sletter dem; produkterne hos Gelato bevares.
 
 ## Consequences
-Mockups af Gelato-produkter kræver, at admin importerer en skabelon (PSD eller PNG-lag) til hvert produkt.
+- Admin skal lave en Gelato-skabelon pr. Gelato-grundprodukt.
+- Designs og testprodukter samler sig i Gelato-butikken.
+- Runtime-test kræver en offentlig URL (devpage) og en Gelato-butik.
+- Automatisk produktion hos Gelato kræver en ny ADR.
 
 ## Related
-ADR-016, ADR-080, ADR-081.
+ADR-016, ADR-080, ADR-081. Kilder: Gelatos guide "Creating Products From Template" og API-referencen (Get template, Create product from template, Get product).

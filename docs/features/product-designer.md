@@ -72,7 +72,7 @@ Planen (ADR-080–082):
   - prisskrivning kun i `WooCommerceDesignerWriter`;
   - arkitekturtest.
 - **Printful:** mockup-generator med kortlivet signeret URL til printfilen.
-- **Gelato:** kun katalog.
+- **Gelato:** katalog og mockups via en Gelato-skabelon pr. grundprodukt (produkt oprettes i en ren API-butik hos Gelato).
 
 ## Permissions
 - Admin: `merchboard_manage_designer`.
@@ -82,7 +82,7 @@ Planen (ADR-080–082):
 ## Known limitations
 - Kopper vises fladt (ingen perspektiv eller kurve).
 - Printful kan kun testes med en offentlig URL (devpage).
-- Gelato-mockups kræver egne skabeloner.
+- Gelato-mockups kræver en skabelon i Gelatos dashboard pr. grundprodukt, og designs samler sig som produkter i Gelato-butikken.
 - Ordrer produceres manuelt.
 
 ## Future improvements
