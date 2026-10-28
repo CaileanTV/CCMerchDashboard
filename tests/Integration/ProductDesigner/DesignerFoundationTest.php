@@ -67,7 +67,7 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 		$unique = array_column( (array) $this->wpdb->get_results( $this->wpdb->prepare( 'SHOW INDEX FROM %i WHERE Non_unique = 0', $this->table( Tables::DESIGNER_VERSIONS ) ), ARRAY_A ), 'Key_name' );
 		self::assertContains( 'pending_key', $unique, 'At most one pending change per designer product.' );
 		self::assertContains( 'product_number', $unique );
-		self::assertSame( 35, (int) get_option( 'merchboard_db_version' ) );
+		self::assertSame( 36, (int) get_option( 'merchboard_db_version' ) );
 	}
 
 	public function test_only_administrators_get_the_designer_capability(): void {

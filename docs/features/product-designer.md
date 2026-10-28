@@ -71,6 +71,9 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 | 80 kr. rabat fra virksomhedens kupon, ingen kampagne | 0 (virksomheden får 120; kun muligt, fordi rabatten er virksomhedens egen) |
 | 20 kr. rabat i virksomhedens kampagne | 45 (50 × 180/200) |
 
+- **Sådan regnes det (trin 30.3):** fortjenesten og udbetalingen beregnes én gang, når salget registreres, og gemmes ved salgsrækken. Saldo, statistik og afregningsbilag bruger de gemte beløb. En refundering af hele stk. tager præcis deres fortjeneste tilbage. En refundering kun af et beløb ændrer intet for creatoren.
+- **Priser:** grundprisen afrundes aldrig ned, og kundens pris er altid grundpris + fortjeneste.
+
 ## Legacy-produkter berøres ikke (ADR-080 pkt. 7)
 - **Hvilke produkter pluginet skriver til:** kun produkter, som designeren selv har oprettet. Det skal kunne ses på tre måder:
   - en række i designer-tabellen;

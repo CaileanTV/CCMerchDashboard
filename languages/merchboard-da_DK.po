@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-28T19:23:33+00:00\n"
+"PO-Revision-Date: 2026-10-28T20:45:49+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1151,7 +1151,7 @@ msgstr "Tidspunkt"
 
 #: src/Modules/Admin/AuditLogListTable.php:92
 #: src/Modules/Admin/AuditLogPage.php:235
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 msgid "Event"
 msgstr "Hændelse"
 
@@ -1167,10 +1167,10 @@ msgstr "Hændelse"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:338
 #: src/Modules/Notifications/Catalog/AdminTypes.php:367
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:390
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:389
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
@@ -1231,7 +1231,7 @@ msgid "Business changes to creators and settings: who changed what, and when. Re
 msgstr "Forretningsændringer af creators og indstillinger: hvem ændrede hvad og hvornår. Poster kan ikke ændres eller slettes her."
 
 #: src/Modules/Admin/AuditLogPage.php:195
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:235
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:234
 msgid "Some filter values were invalid and have been ignored."
 msgstr "Nogle filterværdier var ugyldige og er ignoreret."
 
@@ -1262,7 +1262,7 @@ msgid "Creator #%s"
 msgstr "Creator #%s"
 
 #: src/Modules/Admin/AuditLogPage.php:267
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:405
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:404
 msgid "Filter"
 msgstr "Filtrér"
 
@@ -2980,16 +2980,16 @@ msgid "No orders with alerts in this period. Alerts are recorded when an order w
 msgstr "Ingen ordrer med alerts i denne periode. Alerts registreres, når en ordre med en creators produkter er betalt (behandles eller gennemført), mens alerts er slået til."
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:158
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:327
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:653
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:326
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:652
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:323
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:411
 msgid "&laquo; Previous"
 msgstr "&laquo; Forrige"
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:159
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:328
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:654
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:327
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:653
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:412
 msgid "Next &raquo;"
@@ -3028,8 +3028,8 @@ msgstr "Ordrer med alerts"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:237
 #: src/Modules/Notifications/Catalog/AdminTypes.php:314
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:200
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1017
 #: build/dashboard.js:24
@@ -3757,7 +3757,7 @@ msgstr "Visningsnavn"
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:208
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
@@ -4669,7 +4669,7 @@ msgstr "Din fortjeneste"
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
 #: build/dashboard.js:53
 #: build/dashboard.js:66
@@ -4678,7 +4678,7 @@ msgid "Product"
 msgstr "Produkt"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:163
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
 #: build/dashboard.js:53
 msgid "Quantity"
@@ -5534,7 +5534,7 @@ msgstr "Profil og kategori"
 
 #: src/Modules/Notifications/NotificationTypes.php:66
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:102
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 msgid "Discount code"
 msgstr "Rabatkode"
 
@@ -6495,8 +6495,7 @@ msgid "Product #%1$d: %2$s"
 msgstr "Produkt #%1$d: %2$s"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:162
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:872
-#: src/Modules/WooCommerce/Admin/PricingLabels.php:31
+#: src/Modules/WooCommerce/Admin/PricingLabels.php:33
 msgid "Creator markup"
 msgstr "Creatorens markup"
 
@@ -6515,7 +6514,7 @@ msgstr "0–100 %, højst to decimaler. Eksempel: en salgspris på 100,00 med 20
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:187
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:192
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:866
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:865
 msgid "VAT registered"
 msgstr "Momsregistreret"
 
@@ -6573,8 +6572,7 @@ msgid "Applies today"
 msgstr "Gælder i dag"
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:268
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:872
-#: src/Modules/WooCommerce/Admin/PricingLabels.php:31
+#: src/Modules/WooCommerce/Admin/PricingLabels.php:32
 msgid "Product markup"
 msgstr "Produktmarkup"
 
@@ -6935,79 +6933,79 @@ msgid "Day"
 msgstr "Dag"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryActions.php:73
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:556
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:555
 msgid "Sorry, you are not allowed to delete order history."
 msgstr "Du har ikke adgang til at slette ordrehistorik."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:137
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:136
 msgid "Merch Dashboard Order History"
 msgstr "Merch Dashboard ordrehistorik"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:138
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:222
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:137
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:221
 msgid "Order history"
 msgstr "Ordrehistorik"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:217
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:216
 msgid "Sorry, you are not allowed to view the order history."
 msgstr "Du har ikke adgang til at se ordrehistorikken."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:223
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:222
 msgid "What Merch Dashboard has stored in its sales ledger, per WooCommerce order. One row per order; open an order to see its ledger events, order lines and why its profit is complete or not. The stored history is append-only; only the history of an order that is in the WooCommerce trash or deleted (e.g. a test order) can be deleted, on the order's page."
 msgstr "Det, Merch Dashboard har gemt i sin salgsledger, pr. WooCommerce-ordre. Én række pr. ordre; åbn en ordre for at se dens ledger-hændelser, ordrelinjer og hvorfor profitten er komplet eller ej. Den gemte historik er append-only; kun historikken for en ordre, der ligger i WooCommerce-papirkurven eller er slettet (fx en testordre), kan slettes, på ordrens side."
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:227
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:226
 #, php-format
 msgid "The stored history of order #%d was deleted. The WooCommerce order was not changed."
 msgstr "Den gemte historik for ordre #%d er slettet. WooCommerce-ordren er ikke ændret."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:247
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:246
 msgid "The order history could not be read. Please try again later."
 msgstr "Ordrehistorikken kunne ikke læses. Prøv igen senere."
 
 #. translators: %s: number of orders.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:270
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:269
 #, php-format
 msgid "%s order without profit data is hidden: it was stored before Merch Dashboard saved profit snapshots and tax, or its lines had no creator when they were created. Nothing is deleted."
 msgid_plural "%s orders without profit data are hidden: they were stored before Merch Dashboard saved profit snapshots and tax, or their lines had no creator when they were created. Nothing is deleted."
 msgstr[0] "%s ordre uden profitdata er skjult: den blev gemt, før Merch Dashboard gemte profit-snapshots og moms, eller dens linjer havde ingen creator, da de blev oprettet. Intet er slettet."
 msgstr[1] "%s ordrer uden profitdata er skjult: de blev gemt, før Merch Dashboard gemte profit-snapshots og moms, eller deres linjer havde ingen creator, da de blev oprettet. Intet er slettet."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:271
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:270
 msgid "Show all orders"
 msgstr "Vis alle ordrer"
 
 #. translators: %s: number of orders.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:280
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:279
 #, php-format
 msgid "%s order"
 msgid_plural "%s orders"
 msgstr[0] "%s ordre"
 msgstr[1] "%s ordrer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:283
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:282
 msgid "No stored orders match the filter."
 msgstr "Ingen gemte ordrer matcher filteret."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:294
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:792
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:293
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:791
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:588
 msgid "Gift card plugin does not support order registration lookup"
 msgstr "Gavekort-pluginet understøtter ikke opslag af ordreregistreringer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:298
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:796
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:297
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:795
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:588
 #: src/Modules/WooCommerce/Payouts/GiftCards/PayoutGiftCardCouponGuard.php:116
 msgid "Gift card order registration could not be checked"
 msgstr "Gavekortregistreringen kunne ikke kontrolleres"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 msgid "Ledger dates"
 msgstr "Ledger-datoer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:781
@@ -7015,145 +7013,145 @@ msgstr "Ledger-datoer"
 msgid "Currency"
 msgstr "Valuta"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 msgid "Events / lines"
 msgstr "Hændelser / linjer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:458
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 msgid "Stored net amount"
 msgstr "Gemt nettobeløb"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 msgid "Tax data"
 msgstr "Momsdata"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:398
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:397
 msgid "Profit data"
 msgstr "Profitdata"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:303
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 msgid "Settlement"
 msgstr "Afregning"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:350
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:787
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:349
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:786
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:591
 msgid "Registered by gift card plugin — payout status not confirmed"
 msgstr "Registreret af gavekort-plugin — payout-status er ikke bekræftet"
 
 #. translators: 1: number of ledger events, 2: number of order lines.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:362
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:361
 #, php-format
 msgid "%1$d events / %2$d lines"
 msgstr "%1$d hændelser / %2$d linjer"
 
 #. translators: 1: rows with stored tax, 2: all rows.
 #. translators: 1: settled ledger rows, 2: all ledger rows.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:365
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:373
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:364
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:372
 #, php-format
 msgid "%1$d of %2$d rows"
 msgstr "%1$d af %2$d rækker"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:370
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:503
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:369
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:502
 msgid "Not settled"
 msgstr "Ikke afregnet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:388
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:387
 msgid "Order ID"
 msgstr "Ordre-ID"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:391
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:390
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:155
 msgid "All creators"
 msgstr "Alle creators"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:399
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:398
 msgid "All orders"
 msgstr "Alle ordrer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:406
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:405
 msgid "Reset"
 msgstr "Nulstil"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:417
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:416
 msgid "← All orders"
 msgstr "← Alle ordrer"
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:426
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:425
 #, php-format
 msgid "Merch Dashboard has no stored history for order #%d."
 msgstr "Merch Dashboard har ingen gemt historik for ordre #%d."
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:433
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:432
 #, php-format
 msgid "Order #%d"
 msgstr "Ordre #%d"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:434
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:433
 msgid "WooCommerce:"
 msgstr "WooCommerce:"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:437
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:436
 msgid "Open in WooCommerce"
 msgstr "Åbn i WooCommerce"
 
 #. translators: 1: cycle number, 2: open or closed, 3: date.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:446
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:445
 #, php-format
 msgid "Cycle %1$d %2$s %3$s"
 msgstr "Cyklus %1$d %2$s %3$s"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:448
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:447
 msgid "opened"
 msgstr "åbnet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:448
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:447
 msgid "closed"
 msgstr "lukket"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:453
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:452
 msgid "No cycle events."
 msgstr "Ingen cyklushændelser."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:455
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:454
 msgid "Order lines"
 msgstr "Ordrelinjer"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:458
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 msgid "Order line"
 msgstr "Ordrelinje"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:458
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
 msgid "Events"
 msgstr "Hændelser"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:458
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:457
 msgid "Profit snapshot"
 msgstr "Profit-snapshot"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:473
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:472
 msgid "Ledger events"
 msgstr "Ledger-hændelser"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: build/dashboard.js:53
 msgid "Date"
 msgstr "Dato"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 msgid "Stored tax"
 msgstr "Gemt moms"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:478
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: build/dashboard.js:53
 #: build/dashboard.js:54
@@ -7161,13 +7159,13 @@ msgstr "Gemt moms"
 msgid "Profit"
 msgstr "Profit"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:496
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:857
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:495
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:856
 msgid "Missing"
 msgstr "Mangler"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:498
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:824
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:497
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:823
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:374
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:429
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
@@ -7180,210 +7178,216 @@ msgstr "Mangler"
 msgid "Unknown"
 msgstr "Ukendt"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:525
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:540
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:524
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:539
 msgid "Delete stored history"
 msgstr "Slet gemt historik"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:528
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:527
 msgid "The stored history can only be deleted when the WooCommerce order is in the trash or deleted, e.g. a test order. Move the order to the trash in WooCommerce first."
 msgstr "Den gemte historik kan kun slettes, når WooCommerce-ordren ligger i papirkurven eller er slettet, fx en testordre. Flyt først ordren til papirkurven i WooCommerce."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:532
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:531
 msgid "Permanently deletes what Merch Dashboard has stored for this order: its ledger rows, cycle events, stored tax and profit snapshots. The order disappears from the creator's sales, statistics and profit. The WooCommerce order is not changed. If it is restored from the trash later, it is registered again without profit data. This cannot be undone."
 msgstr "Sletter permanent det, Merch Dashboard har gemt for denne ordre: ledger-rækker, cyklushændelser, gemt moms og profit-snapshots. Ordren forsvinder fra creatorens salg, statistik og profit. WooCommerce-ordren ændres ikke. Gendannes den senere fra papirkurven, registreres den igen uden profitdata. Det kan ikke fortrydes."
 
 #. translators: %d: order id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:538
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:537
 #, php-format
 msgid "Type the order ID (%d) to confirm"
 msgstr "Skriv ordre-ID'et (%d) for at bekræfte"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:551
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:550
 msgid "Nothing was deleted: the typed order ID did not match."
 msgstr "Intet blev slettet: det indtastede ordre-ID passede ikke."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:552
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:551
 msgid "Nothing was deleted: the WooCommerce order is not in the trash or deleted."
 msgstr "Intet blev slettet: WooCommerce-ordren ligger ikke i papirkurven og er ikke slettet."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:553
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:552
 msgid "Nothing was deleted: Merch Dashboard has no stored history for the order."
 msgstr "Intet blev slettet: Merch Dashboard har ingen gemt historik for ordren."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:554
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:553
 msgid "Nothing was deleted: the order is being synchronized right now. Please try again."
 msgstr "Intet blev slettet: ordren synkroniseres lige nu. Prøv igen."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:555
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:554
 msgid "Nothing was deleted: the order is part of a settlement document, so its history is kept."
 msgstr "Intet blev slettet: ordren indgår i et afregningsbilag, så dens historik bevares."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:557
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:556
 msgid "Nothing was deleted: the order history could not be deleted. Please try again later."
 msgstr "Intet blev slettet: ordrehistorikken kunne ikke slettes. Prøv igen senere."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:568
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:567
 msgid "Open case – creator discount code"
 msgstr "Åben sag – creator-rabatkode"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:569
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:568
 msgid "Excluded – creator discount code"
 msgstr "Udelukket – creator-rabatkode"
 
 #. translators: 1: status, 2: creator name.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:579
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:578
 #, php-format
 msgid "%1$s (%2$s)"
 msgstr "%1$s (%2$s)"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:604
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:603
 msgid "Orders excluded by creator discount codes"
 msgstr "Ordrer udelukket af creator-rabatkoder"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:605
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:604
 msgid "When an order used a creator's own discount code, that creator's lines of the order count nowhere: not in sales, profit, payouts or new settlement documents. Other creators' lines of the same order count normally. The decision is made once and is permanent. An open case is a creator whose lines of the order were already settled; those settled rows and documents are not changed, and the case is not resolved automatically."
 msgstr "Har en ordre brugt en creators egen rabatkode, tæller den creators linjer i ordren ingen steder: hverken i salg, fortjeneste, udbetalinger eller nye afregningsbilag. Andre creators' linjer i samme ordre tæller normalt. Afgørelsen træffes én gang og er varig. En åben sag er en creator, hvis linjer i ordren allerede var afregnet; de afregnede rækker og bilag ændres ikke, og sagen afgøres ikke automatisk."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:607
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:606
 msgid "All excluded orders"
 msgstr "Alle udelukkede ordrer"
 
 #. translators: %s: number of open cases.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:610
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:609
 #, php-format
 msgid "Open cases (%s)"
 msgstr "Åbne sager (%s)"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:618
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:617
 msgid "No orders are excluded."
 msgstr "Ingen ordrer er udelukket."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 msgid "Order created"
 msgstr "Ordre oprettet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:624
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:212
 msgid "Decided"
 msgstr "Afgjort"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:635
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:634
 msgid "The coupon deviated from the registration when the order was decided."
 msgstr "Kuponen afveg fra registreringen, da ordren blev afgjort."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:673
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:672
 msgid "This creator's lines of the order were already in a settlement document. Those rows and documents are not changed; the creator's other rows of the order do not count. The case is not resolved automatically."
 msgstr "Denne creators linjer i ordren lå allerede i et afregningsbilag. De rækker og bilag ændres ikke; creatorens øvrige rækker i ordren tæller ikke. Sagen afgøres ikke automatisk."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:674
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:673
 msgid "None of this creator's lines of the order count in sales, profit, payouts or new settlement documents, and no new ledger events are stored for them. Other creators' lines count normally."
 msgstr "Ingen af denne creators linjer i ordren tæller i salg, fortjeneste, udbetalinger eller nye afregningsbilag, og der gemmes ingen nye ledger-hændelser for dem. Andre creators' linjer tæller normalt."
 
 #. translators: 1: creator name, 2: discount code, 3: date.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:677
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:676
 #, php-format
 msgid "the order used the discount code of %1$s (%2$s); decided %3$s."
 msgstr "ordren brugte rabatkoden fra %1$s (%2$s); afgjort %3$s."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:680
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:679
 msgid "The coupon deviated from the registration when the order was decided (it was missing or had another ID). The creator's lines are excluded all the same."
 msgstr "Kuponen afveg fra registreringen, da ordren blev afgjort (den manglede eller havde et andet ID). Creatorens linjer er udelukket alligevel."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:691
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:690
 msgid "About the profit data"
 msgstr "Om profitdata"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:694
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:693
 msgid "Complete: every ledger row of the order has its profit snapshot and its stored tax, so the creator profit can be calculated (ADR-049)."
 msgstr "Komplet: alle ordrens ledger-rækker har deres profit-snapshot og gemte moms, så creator-profitten kan beregnes (ADR-049)."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:695
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:694
 msgid "Incomplete: some rows have the data, others do not. Unknown: no row has it. Missing history is never filled in, recalculated from current settings or shown as 0."
 msgstr "Ufuldstændig: nogle rækker har data, andre ikke. Ukendt: ingen række har dem. Manglende historik udfyldes aldrig, genberegnes aldrig ud fra nuværende indstillinger og vises aldrig som 0."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:698
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:697
 msgid "The sales ledger, profit snapshots and stored tax are append-only. The one exception: an administrator can delete the stored history of one order once the WooCommerce order is in the trash or deleted, e.g. a test order. That removes the order from the creator's sales and profit and is recorded in the audit log."
 msgstr "Salgsledgeren, profit-snapshots og gemt moms er append-only. Den eneste undtagelse: en administrator kan slette den gemte historik for én ordre, når WooCommerce-ordren ligger i papirkurven eller er slettet, fx en testordre. Det fjerner ordren fra creatorens salg og profit og registreres i audit-loggen."
 
 #. translators: 1: rows with known profit, 2: rows without the data.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:722
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:721
 #, php-format
 msgid "%1$d known, %2$d without data"
 msgstr "%1$d kendte, %2$d uden data"
 
 #. translators: %d: payout id.
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:780
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:779
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:450
 #, php-format
 msgid "Payout #%d"
 msgstr "Udbetaling #%d"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:786
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:785
 msgid "How such orders count towards the creator's commission is not decided yet (G1); the ledger, the balances and the settlement documents treat this order like any other order."
 msgstr "Hvordan sådanne ordrer tæller med i creatorens kommission, er endnu ikke besluttet (G1); ledgeren, saldoen og afregningsbilagene behandler ordren som alle andre ordrer."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:821
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:820
 msgid "With profit data (complete or incomplete)"
 msgstr "Med profitdata (komplet eller ufuldstændig)"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:822
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:821
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:295
 msgid "Complete"
 msgstr "Komplet"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:823
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:822
 #: build/dashboard.js:53
 msgid "Incomplete"
 msgstr "Ufuldstændig"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:835
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:834
 msgid "No profit snapshot: snapshots are taken when an order line is created and only if its product then has a creator. Order lines created before Merch Dashboard recorded snapshots, or before their product was linked to the creator, never have one."
 msgstr "Intet profit-snapshot: snapshots tages, når en ordrelinje oprettes, og kun hvis produktet da har en creator. Ordrelinjer oprettet, før Merch Dashboard gemte snapshots, eller før produktet blev koblet til creatoren, får aldrig et."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:836
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:835
 msgid "The stored profit snapshot of this order line cannot be read."
 msgstr "Ordrelinjens gemte profit-snapshot kan ikke læses."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:837
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:836
 msgid "The snapshot is from the withdrawn pricing model and has no share of the sale price."
 msgstr "Snapshottet er fra den tilbagetrukne prismodel og har ingen andel af salgsprisen."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:838
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:837
 msgid "The snapshot belongs to another creator, product, variation, order or currency than this ledger row."
 msgstr "Snapshottet hører til en anden creator, et andet produkt, en anden variation, ordre eller valuta end denne ledger-række."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:839
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:838
 msgid "No stored tax: ledger rows registered before Merch Dashboard stored the actual tax have none, so the amount paid incl. VAT is unknown."
 msgstr "Ingen gemt moms: ledger-rækker registreret, før Merch Dashboard gemte den faktiske moms, har ingen, så det betalte beløb inkl. moms er ukendt."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:840
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:839
 msgid "The stored tax is in another currency than the ledger row."
 msgstr "Den gemte moms er i en anden valuta end ledger-rækken."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:841
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:840
 msgid "The profit cannot be calculated from the stored data."
 msgstr "Profitten kan ikke beregnes ud fra de gemte data."
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:853
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:852
 msgid "Unreadable"
 msgstr "Ulæselig"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:861
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:860
 msgid "Withdrawn model (no share)"
 msgstr "Tilbagetrukket model (ingen andel)"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:865
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:864
 msgid "VAT status unknown"
 msgstr "Momsstatus ukendt"
 
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:866
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:865
 msgid "Not VAT registered"
 msgstr "Ikke momsregistreret"
 
-#. translators: 1: share in percent, 2: source of the share, 3: VAT status.
+#. translators: 1: base price per unit, 2: the creator's profit per unit, 3: VAT status.
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:870
+#, php-format
+msgid "Designer product: base price %1$s + profit %2$s · %3$s"
+msgstr "Designer-produkt: grundpris %1$s + fortjeneste %2$s · %3$s"
+
+#. translators: 1: share in percent, 2: source of the share, 3: VAT status.
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:879
 #, php-format
 msgid "%1$s (%2$s) · %3$s"
 msgstr "%1$s (%2$s) · %3$s"
@@ -8600,16 +8604,20 @@ msgstr "Afventer"
 msgid "Cancelled"
 msgstr "Annulleret"
 
+#: src/Modules/WooCommerce/Admin/PricingLabels.php:34
+msgid "Designer product"
+msgstr "Designer-produkt"
+
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
-#: src/Modules/WooCommerce/Admin/PricingLabels.php:48
+#: src/Modules/WooCommerce/Admin/PricingLabels.php:52
 #: build/dashboard.js:71
 #, js-format,php-format
 msgid "%1$s %2$s"
 msgstr "%1$s %2$s"
 
 #. translators: %s: percentage with two decimals.
-#: src/Modules/WooCommerce/Admin/PricingLabels.php:75
+#: src/Modules/WooCommerce/Admin/PricingLabels.php:79
 #, php-format
 msgid "%s %%"
 msgstr "%s %%"

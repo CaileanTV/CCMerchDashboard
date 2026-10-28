@@ -47,6 +47,13 @@ final class RealizedPayout {
 			return null;
 		}
 
-		return CreatorShare::payout( SalesAmount::parse( $entry->net_amount ), $tax['tax'], $snapshot->share_bps, $snapshot->vat_registered, $snapshot->price_decimals );
+		$net = SalesAmount::parse( $entry->net_amount );
+
+		// A designer product (ADR-080): the profit, without the sale's VAT when not VAT registered.
+		if ( $snapshot->is_designer() ) {
+			return DesignerRowAmounts::payout( $profit, $net, SalesAmount::add( $net, $tax['tax'] ), $snapshot->vat_registered, $snapshot->price_decimals );
+		}
+
+		return CreatorShare::payout( $net, $tax['tax'], $snapshot->share_bps, $snapshot->vat_registered, $snapshot->price_decimals );
 	}
 }

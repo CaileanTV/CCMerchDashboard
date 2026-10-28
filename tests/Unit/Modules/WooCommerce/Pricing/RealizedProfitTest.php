@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Unit\Modules\WooCommerce\Pricing;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerPrice;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
 use MerchBoard\Modules\WooCommerce\Pricing\RealizedPayout;
 use MerchBoard\Modules\WooCommerce\Pricing\RealizedProfit;
@@ -161,6 +162,37 @@ final class RealizedProfitTest extends TestCase {
 
 		self::assertSame( 200000, RealizedProfit::for_entry( $sale, $no_status, $tax ) );
 		self::assertNull( RealizedPayout::for_entry( $sale, $no_status, $tax ), 'Unknown VAT status: unknown payout.' );
+	}
+
+	/**
+	 * Designer product (ADR-080 pkt. 8), base 150 + profit 50 = 200 incl. 25 % VAT:
+	 * the company keeps the base price, a discount comes off the profit, and the
+	 * payout without VAT registration is the profit's share excl. VAT.
+	 */
+	public function test_a_designer_row_keeps_the_base_price_for_the_company(): void {
+		$snapshot = self::designer( false );
+
+		self::assertSame( '50.0000', SalesAmount::format( (int) RealizedProfit::for_entry( self::entry( SalesEntryType::Sale, 1, '160.0000' ), $snapshot, self::tax( '40.0000' ) ) ) );
+		self::assertSame( '40.0000', SalesAmount::format( (int) RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 1, '160.0000' ), $snapshot, self::tax( '40.0000' ) ) ) );
+		// A coupon of 20 incl. VAT: paid 180, profit 30.
+		self::assertSame( '30.0000', SalesAmount::format( (int) RealizedProfit::for_entry( self::entry( SalesEntryType::Sale, 1, '144.0000' ), $snapshot, self::tax( '36.0000' ) ) ) );
+		self::assertSame( '24.0000', SalesAmount::format( (int) RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 1, '144.0000' ), $snapshot, self::tax( '36.0000' ) ) ) );
+		// A coupon of 80: paid 120, below the base price; the profit is 0, never negative.
+		self::assertSame( 0, RealizedProfit::for_entry( self::entry( SalesEntryType::Sale, 1, '96.0000' ), $snapshot, self::tax( '24.0000' ) ) );
+		// Refund of the discounted unit: the profit is taken back exactly.
+		self::assertSame( '-30.0000', SalesAmount::format( (int) RealizedProfit::for_entry( self::entry( SalesEntryType::Refund, -1, '-144.0000', 7001 ), $snapshot, self::tax( '-36.0000' ) ) ) );
+		// VAT registered: the payout is the profit.
+		self::assertSame( '50.0000', SalesAmount::format( (int) RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 1, '160.0000' ), self::designer( true ), self::tax( '40.0000' ) ) ) );
+		self::assertNull( RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 1, '160.0000' ), self::designer( null ), self::tax( '40.0000' ) ), 'Unknown VAT status: unknown payout.' );
+	}
+
+	/**
+	 * A designer snapshot of order line 501: base 150, profit 50.
+	 *
+	 * @param bool|null $vat_registered VAT status.
+	 */
+	private static function designer( ?bool $vat_registered ): SalesLinePricing {
+		return SalesLinePricing::capture_designer( 501, 900, 20, 0, 'DKK', new DesignerPrice( 7, SalesAmount::parse( '150' ), SalesAmount::parse( '50' ), 'DKK' ), 2, $vat_registered, self::time() );
 	}
 
 	/**

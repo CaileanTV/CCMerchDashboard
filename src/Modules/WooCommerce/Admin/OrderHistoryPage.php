@@ -21,7 +21,6 @@ use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\PayoutGiftCardOrders;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
-use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitGap;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitSummary;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricing;
@@ -865,11 +864,21 @@ final class OrderHistoryPage {
 			? __( 'VAT status unknown', 'merchboard' )
 			: ( $snapshot->vat_registered ? __( 'VAT registered', 'merchboard' ) : __( 'Not VAT registered', 'merchboard' ) );
 
+		if ( $snapshot->is_designer() ) {
+			return sprintf(
+				/* translators: 1: base price per unit, 2: the creator's profit per unit, 3: VAT status. */
+				__( 'Designer product: base price %1$s + profit %2$s · %3$s', 'merchboard' ),
+				PricingLabels::money( $snapshot->base_units, $snapshot->currency, $snapshot->price_decimals ),
+				PricingLabels::money( $snapshot->profit_units, $snapshot->currency, $snapshot->price_decimals ),
+				$vat
+			);
+		}
+
 		return sprintf(
 			/* translators: 1: share in percent, 2: source of the share, 3: VAT status. */
 			__( '%1$s (%2$s) · %3$s', 'merchboard' ),
 			PricingLabels::markup( $snapshot->share_bps ),
-			MarkupSource::Product === $snapshot->share_source ? __( 'Product markup', 'merchboard' ) : __( 'Creator markup', 'merchboard' ),
+			PricingLabels::source( $snapshot->share_source ),
 			$vat
 		);
 	}

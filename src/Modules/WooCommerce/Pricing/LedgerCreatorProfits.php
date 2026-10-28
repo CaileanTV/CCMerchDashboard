@@ -43,6 +43,12 @@ defined( 'ABSPATH' ) || exit;
  * with a share (ADR-049) that matches the row's order, creator, currency,
  * product and variation, and the row's stored tax in the row's currency. The
  * known rows are summed; the others are only counted (ProfitSummary).
+ *
+ * A designer product's row (snapshot source `designer`, ADR-080 pkt. 8)
+ * reads the profit stored with its tax instead (SalesRepository computes it
+ * once with DesignerRowAmounts when the row is written), so the base price
+ * rule needs no division in SQL. The snapshot is captured when the order line
+ * is created, before any ledger row of it, so every designer row has it.
  */
 final class LedgerCreatorProfits implements CreatorProfits {
 
@@ -58,22 +64,23 @@ final class LedgerCreatorProfits implements CreatorProfits {
 	 * When a row's profit is known (RealizedProfit::for_entry()).
 	 */
 	public const KNOWN = "( p.share_bps IS NOT NULL AND p.share_bps <= 10000
-		AND p.share_source IN ( 'creator', 'product' )
+		AND ( p.share_source IN ( 'creator', 'product' ) OR ( p.share_source = 'designer' AND t.designer_profit IS NOT NULL ) )
 		AND p.price_decimals IS NOT NULL AND p.price_decimals <= 4
 		AND p.order_id = r.order_id AND p.creator_id = r.creator_id AND p.currency = r.currency
 		AND p.product_id = r.product_id AND p.variation_id = r.variation_id
 		AND t.event_key IS NOT NULL AND t.currency = r.currency )";
 
 	/**
-	 * A row's profit (ADR-049), rounded to the snapshot's store precision.
+	 * A row's profit (ADR-049), rounded to the snapshot's store precision;
+	 * the stored profit of a designer product's row (ADR-080 pkt. 8).
 	 */
-	public const PROFIT = 'CASE p.price_decimals
+	public const PROFIT = "CASE WHEN p.share_source = 'designer' THEN t.designer_profit ELSE CASE p.price_decimals
 		WHEN 0 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 0 )
 		WHEN 1 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 1 )
 		WHEN 2 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 2 )
 		WHEN 3 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 3 )
 		WHEN 4 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 4 )
-	END';
+	END END";
 
 	/**
 	 * Most ids per query (the REST pages have at most 100).

@@ -35,6 +35,11 @@ defined( 'ABSPATH' ) || exit;
  * price. Unknown (null) without a matching snapshot with a share (e.g. lines
  * from before schema version 8), or without the row's stored tax in the
  * row's currency (rows from before schema version 7).
+ *
+ * A designer product's row (snapshot `designer`, ADR-080 pkt. 8) follows
+ * DesignerRowAmounts: the company keeps the base price, and a discount is
+ * taken from the creator's profit, never below 0. The same amount is stored
+ * with the row when it is written, which the SQL sums read.
  */
 final class RealizedProfit {
 
@@ -62,6 +67,10 @@ final class RealizedProfit {
 			|| $snapshot->product_id !== $entry->product_id
 			|| $snapshot->variation_id !== $entry->variation_id ) {
 			return null;
+		}
+
+		if ( $snapshot->is_designer() ) {
+			return DesignerRowAmounts::profit( $entry->quantity, $sale, $snapshot->base_units, $snapshot->profit_units, false, $snapshot->price_decimals );
 		}
 
 		return CreatorShare::profit( $sale, $snapshot->share_bps, $snapshot->price_decimals );

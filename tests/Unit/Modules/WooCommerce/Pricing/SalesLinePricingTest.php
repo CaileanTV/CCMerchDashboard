@@ -12,12 +12,14 @@ namespace MerchBoard\Tests\Unit\Modules\WooCommerce\Pricing;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerPrice;
 use MerchBoard\Modules\WooCommerce\Pricing\EffectiveMarkup;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupBps;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
 use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkup;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricing;
 use MerchBoard\Modules\WooCommerce\Pricing\SnapshotStatus;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use ReflectionProperty;
@@ -90,6 +92,19 @@ final class SalesLinePricingTest extends TestCase {
 		}
 	}
 
+	public function test_a_designer_snapshot_keeps_base_price_profit_and_list_price(): void {
+		$snapshot = SalesLinePricing::capture_designer( 501, 500, 20, 31, 'DKK', new DesignerPrice( 7, SalesAmount::parse( '150' ), SalesAmount::parse( '50' ), 'DKK' ), 2, false, self::time() );
+
+		self::assertTrue( $snapshot->is_designer() );
+		self::assertTrue( $snapshot->has_share() );
+		self::assertSame( SnapshotStatus::Designer, $snapshot->status );
+		self::assertSame( MarkupSource::Designer, $snapshot->share_source );
+		self::assertSame( 2500, $snapshot->share_bps, 'The effective share: profit / list price.' );
+		self::assertSame( array( 1500000, 500000, 2000000 ), array( $snapshot->base_units, $snapshot->profit_units, $snapshot->price_units ) );
+		self::assertSame( 7, $snapshot->creator_id );
+		self::assertFalse( self::capture( new EffectiveMarkup( self::CREATOR_A, new MarkupBps( 2000 ), MarkupSource::Creator ) )->is_designer(), 'A share snapshot is never a designer snapshot.' );
+	}
+
 	public function test_snapshot_must_be_coherent(): void {
 		$invalid = array(
 			'share without source'       => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Share, 'DKK', self::time(), 2000, null, 2 ),
@@ -100,6 +115,14 @@ final class SalesLinePricingTest extends TestCase {
 			'precision above 4'          => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Share, 'DKK', self::time(), 2000, MarkupSource::Creator, 5 ),
 			'invalid currency'           => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Share, 'dkk', self::time(), 2000, MarkupSource::Creator, 2 ),
 			'invalid reference'          => static fn() => new SalesLinePricing( 0, 500, 7, 20, 0, SnapshotStatus::Share, 'DKK', self::time(), 2000, MarkupSource::Creator, 2 ),
+			'designer without amounts'   => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Designer, 'DKK', self::time(), 2500, MarkupSource::Designer, 2 ),
+			'designer with share source' => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Designer, 'DKK', self::time(), 2500, MarkupSource::Creator, 2, false, 1500000, 500000, 2000000 ),
+			'share with designer source' => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Share, 'DKK', self::time(), 2500, MarkupSource::Designer, 2 ),
+			'share with amounts'         => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Share, 'DKK', self::time(), 2500, MarkupSource::Creator, 2, false, 1500000, 500000, 2000000 ),
+			'list price below base'      => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Designer, 'DKK', self::time(), 2500, MarkupSource::Designer, 2, false, 1500000, 500000, 1900000 ),
+			'negative profit'            => static fn() => new SalesLinePricing( 501, 500, 7, 20, 0, SnapshotStatus::Designer, 'DKK', self::time(), 0, MarkupSource::Designer, 2, false, 1500000, -100000, 1400000 ),
+			'designer price in dkk'      => static fn() => new DesignerPrice( 7, 1500000, 500000, 'dkk' ),
+			'designer price negative'    => static fn() => new DesignerPrice( 7, 1500000, -1, 'DKK' ),
 		);
 
 		foreach ( $invalid as $label => $factory ) {

@@ -250,12 +250,16 @@ final class SchemaTest extends IntegrationTestCase {
 
 		self::assertSame(
 			array(
-				'event_key'     => array( 'varchar(64)', '', 'NO', '' ),
-				'order_id'      => array( 'bigint', 'unsigned', 'NO', '' ),
-				'order_item_id' => array( 'bigint', 'unsigned', 'NO', '' ),
-				'tax_amount'    => array( 'decimal(19,4)', '', 'NO', '' ),
-				'currency'      => array( 'char(3)', '', 'NO', '' ),
-				'created_at'    => array( 'datetime', '', 'NO', '' ),
+				'event_key'       => array( 'varchar(64)', '', 'NO', '' ),
+				'order_id'        => array( 'bigint', 'unsigned', 'NO', '' ),
+				'order_item_id'   => array( 'bigint', 'unsigned', 'NO', '' ),
+				'tax_amount'      => array( 'decimal(19,4)', '', 'NO', '' ),
+				'currency'        => array( 'char(3)', '', 'NO', '' ),
+				'created_at'      => array( 'datetime', '', 'NO', '' ),
+				// Migration 36 (ADR-080 pkt. 8): designer products only, NULL for every other row.
+				'designer_profit' => array( 'decimal(19,4)', '', 'YES', '' ),
+				'designer_payout' => array( 'decimal(19,4)', '', 'YES', '' ),
+				'campaign_id'     => array( 'bigint', 'unsigned', 'YES', '' ),
 			),
 			$this->columns( Tables::SALES_TAX )
 		);

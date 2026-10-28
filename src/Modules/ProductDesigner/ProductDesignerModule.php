@@ -16,6 +16,8 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsSection;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
+use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -25,7 +27,9 @@ defined( 'ABSPATH' ) || exit;
  * docs/features/product-designer.md). Loaded only with WooCommerce, because
  * designer products become WooCommerce products. Step 30.2 adds the
  * foundation: the switches on the settings screen and the creator cleanup;
- * the following steps add base products, the designer, approval and the
+ * 30.3 the price source of the settlement (always registered, also with the
+ * designer switched off, so a designer product never falls back to the
+ * share model); the following steps add base products, the designer, approval and the
  * providers.
  */
 final class ProductDesignerModule implements Module {
@@ -45,6 +49,7 @@ final class ProductDesignerModule implements Module {
 	public function register( Container $container ): void {
 		$container->set( DesignerSettings::class, static fn( Container $c ): DesignerSettings => new DesignerSettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ) ) );
+		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
 		$container->set( DesignerCreatorCleanup::class, static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup( $c->get( wpdb::class ) ) );
 
 		// Deleting a creator (ADR-076): designer data that never reached the shop.

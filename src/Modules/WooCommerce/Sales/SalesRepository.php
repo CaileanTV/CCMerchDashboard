@@ -18,6 +18,8 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\WooCommerce\Payouts\G1\G1AssessmentRow;
 use MerchBoard\Modules\WooCommerce\Payouts\G1\G1StateRow;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerRowAmounts;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use Throwable;
 use wpdb;
 
@@ -492,11 +494,13 @@ final class SalesRepository {
 	private function insert_tax( SalesEntry $entry, int $tax ): void {
 		$this->assert_locked( $entry->order_id );
 
-		$wpdb     = $this->wpdb;
-		$table    = $this->table( Tables::SALES_TAX );
+		$wpdb    = $this->wpdb;
+		$table   = $this->table( Tables::SALES_TAX );
+		$amounts = $this->designer_amounts( $entry, $tax );
+		// A designer product's row (ADR-080 pkt. 8) stores the creator's profit and payout with its tax; '' is stored as NULL.
 		$inserted = $this->guarded_insert(
 			$wpdb->prepare(
-				'INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at) SELECT %s, %d, %d, %s, %s, %s FROM DUAL WHERE CONNECTION_ID() = %d',
+				"INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at, designer_profit, designer_payout) SELECT %s, %d, %d, %s, %s, %s, NULLIF( %s, '' ), NULLIF( %s, '' ) FROM DUAL WHERE CONNECTION_ID() = %d",
 				$table,
 				$entry->event_key,
 				$entry->order_id,
@@ -504,6 +508,8 @@ final class SalesRepository {
 				SalesAmount::format( $tax ),
 				$entry->currency,
 				current_time( 'mysql', true ),
+				$amounts[0] ?? '',
+				$amounts[1] ?? '',
 				$this->lock_connection
 			),
 			$entry->order_id
@@ -512,6 +518,38 @@ final class SalesRepository {
 		if ( ! $inserted && null === $wpdb->get_var( $wpdb->prepare( 'SELECT event_key FROM %i WHERE event_key = %s FOR UPDATE', $table, $entry->event_key ) ) ) {
 			throw new DatabaseException( 'Could not store the sales tax.', array( 'order_id' => $entry->order_id ) );
 		}
+	}
+
+	/**
+	 * The creator's profit and payout of a designer product's row (ADR-080
+	 * pkt. 8), computed once here from the line's snapshot; null for every
+	 * other row (legacy rows keep the share model, ADR-049). The payout is
+	 * null when the creator's VAT status was unknown.
+	 *
+	 * @param SalesEntry $entry Row written now.
+	 * @param int        $tax   The row's actual tax in units.
+	 * @return array{0: string, 1: string|null}|null Profit and payout as decimals.
+	 * @throws DatabaseException When the snapshot cannot be read.
+	 */
+	private function designer_amounts( SalesEntry $entry, int $tax ): ?array {
+		$snapshot = ( new SalesLinePricingRepository( $this->wpdb ) )->find( $entry->order_item_id );
+
+		if ( null === $snapshot
+			|| ! $snapshot->is_designer()
+			|| $snapshot->order_id !== $entry->order_id
+			|| $snapshot->creator_id !== $entry->creator_id
+			|| $snapshot->currency !== $entry->currency
+			|| $snapshot->product_id !== $entry->product_id
+			|| $snapshot->variation_id !== $entry->variation_id ) {
+			return null;
+		}
+
+		$net    = SalesAmount::parse( $entry->net_amount );
+		$paid   = SalesAmount::add( $net, $tax );
+		$profit = DesignerRowAmounts::profit( $entry->quantity, $paid, $snapshot->base_units, $snapshot->profit_units, false, $snapshot->price_decimals );
+		$payout = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $snapshot->price_decimals );
+
+		return array( SalesAmount::format( $profit ), null === $payout ? null : SalesAmount::format( $payout ) );
 	}
 
 	/**

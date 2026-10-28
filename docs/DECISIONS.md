@@ -4484,6 +4484,14 @@ ADR-007, ADR-029, ADR-049, ADR-062, ADR-068, ADR-072, ADR-075, ADR-077, ADR-078.
 ## Status
 Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen er godkendt samme dag. Ikke implementeret endnu. Undtagelse fra ADR-049 pkt. 1 (kun for designer-produkter). Supplerer ADR-007, ADR-034/035, ADR-047, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078 og ADR-079.
 
+**Statusnote 2026-10-28 (trin 30.3, afregning implementeret, testet automatisk):** pkt. 8 er implementeret med disse præciseringer:
+- **Beløbene gemmes pr. række:** `SalesRepository` beregner fortjeneste og udbetaling for en designer-række én gang, når rækken skrives (`DesignerRowAmounts`), og gemmer dem sammen med rækkens moms i `merchboard_sales_tax` (`designer_profit`, `designer_payout`; schema-version 36). SQL-summerne læser de gemte beløb, så der ikke divideres i SQL (ADR-050). PHP (`RealizedProfit`/`RealizedPayout`) giver præcis de samme beløb, hvilket integrationstests låser. Snapshottet tages, når ordrelinjen oprettes, altså før rækken skrives.
+- **Formlen uden division:** fortjeneste = fortegn × min(antal × fortjeneste, max(0, |betalt| − antal × grundpris)). Det er det samme som pkt. 8's formel pr. stk. Rækker uden antal (en refundering kun af et beløb eller en korrektion) giver 0; den rabat bærer virksomheden.
+- **Kampagne:** betalt × fortjeneste / listepris, rundet én gang til butikkens præcision. Kampagnen afgøres i 30.4 (`campaign_id` er klar i `merchboard_sales_tax`); indtil da er ingen række i kampagne.
+- **Afregningsbilag:** andelen på en designer-række er den effektive andel (fortjeneste / listepris i basispunkter) til visning. Beløbene på bilaget er de gemte.
+- **Pris nu (`DesignerPrices`):** grundprisen afrundes op til butikkens præcision, og fortjenesten (procent eller beløb) afrundes halvt væk fra nul. Listeprisen er summen, så den aldrig er under grundpris + fortjeneste. Et designer-produkt, der ikke kan prissættes, falder aldrig tilbage til andelsmodellen; dets fortjeneste er ukendt. Det gælder også et salg i en anden valuta end grundprisens.
+- **Rabatkoden:** rabat pr. stk. = fortjeneste × den pris, WooCommerce giver rabat på / listeprisen. Det er præcis fortjenesten ved listeprisen inkl. moms og fortjenesten ekskl. moms, når butikken regner ekskl. moms, så virksomheden beholder grundprisen.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

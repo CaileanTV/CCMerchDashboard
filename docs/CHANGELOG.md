@@ -7,6 +7,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 ### Added
 
 - **Produktdesigner (fase 30, ADR-080–082), fundament:** tabellerne til grundprodukter, designer-produkter, versioner, filer, leverandør-tasks og kampagner (schema-version 35), rettigheden `merchboard_manage_designer` og kill switches for produktdesigneren, Printful og Gelato under Settings (alle fra som standard). Designeren kommer i de følgende trin.
+- **Produktdesigner, afregning (ADR-080 pkt. 8):** et designer-produkt afregnes med sikret grundpris. Virksomheden får altid grundprisen, en rabat tages fra creatorens fortjeneste (aldrig under 0), og creatorens egen rabatkode giver højst fortjenesten i rabat. Fortjeneste og udbetaling gemmes pr. salgsrække (schema-version 36). Legacy-produkter afregnes uændret.
 
 ## [1.4.0] - 2026-10-28
 

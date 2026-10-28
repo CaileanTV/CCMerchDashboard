@@ -28,7 +28,11 @@ final class PricingLabels {
 	 * @param MarkupSource $source Source.
 	 */
 	public static function source( MarkupSource $source ): string {
-		return MarkupSource::Product === $source ? __( 'Product markup', 'merchboard' ) : __( 'Creator markup', 'merchboard' );
+		return match ( $source ) {
+			MarkupSource::Product  => __( 'Product markup', 'merchboard' ),
+			MarkupSource::Creator  => __( 'Creator markup', 'merchboard' ),
+			MarkupSource::Designer => __( 'Designer product', 'merchboard' ),
+		};
 	}
 
 	/**

@@ -41,13 +41,15 @@ final class SalesLinePricingRecorder {
 	 * @param SalesLinePricingRepository $snapshots Append-only storage.
 	 * @param Logger                     $logger    Logger.
 	 * @param CreatorVatRepository|null  $vat       Creators' VAT status (ADR-048); null leaves it unknown.
+	 * @param DesignerPriceSource|null   $designer  Designer products' prices (ADR-080); null: none.
 	 */
 	public function __construct(
 		private PricingProductStore $products,
 		private MarkupResolver $markups,
 		private SalesLinePricingRepository $snapshots,
 		private Logger $logger,
-		private ?CreatorVatRepository $vat = null
+		private ?CreatorVatRepository $vat = null,
+		private ?DesignerPriceSource $designer = null
 	) {
 	}
 
@@ -73,6 +75,38 @@ final class SalesLinePricingRecorder {
 			if ( null === $unit || $unit->product_id() !== $product_id ) {
 				// Unknown product, or a line whose variation does not belong to its product.
 				return null;
+			}
+
+			// A designer product (ADR-080 pkt. 8): base price, profit and list price; never the share model.
+			$designer = $this->designer?->price( $product_id );
+
+			if ( null !== $designer ) {
+				if ( $designer->currency !== $order_currency ) {
+					// Amounts in another currency than the order's are never converted: the profit stays unknown.
+					$this->logger->warning(
+						'A designer product was sold in another currency than its base price; its profit stays unknown.',
+						array(
+							'order_id'      => $order_id,
+							'order_item_id' => $order_item_id,
+						)
+					);
+
+					return null;
+				}
+
+				$snapshot = SalesLinePricing::capture_designer(
+					$order_item_id,
+					$order_id,
+					$product_id,
+					$variation_id,
+					$order_currency,
+					$designer,
+					$this->products->decimals(),
+					null === $this->vat ? null : $this->vat->find( $designer->creator_id ),
+					PricingRows::now()
+				);
+
+				return $this->snapshots->insert( $snapshot ) ? $snapshot : null;
 			}
 
 			$markup = $this->markups->resolve( $product_id );

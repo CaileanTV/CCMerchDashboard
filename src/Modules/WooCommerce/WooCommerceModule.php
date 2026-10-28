@@ -103,6 +103,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
 use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorProfits;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatHistoryRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupResolver;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
 use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkupRepository;
@@ -209,7 +210,9 @@ final class WooCommerceModule implements Module {
 					$c->get( MarkupResolver::class ),
 					new SalesLinePricingRepository( $c->get( wpdb::class ) ),
 					$c->get( Logger::class ),
-					new CreatorVatRepository( $c->get( wpdb::class ) )
+					new CreatorVatRepository( $c->get( wpdb::class ) ),
+					// Registered by the ProductDesigner module (ADR-080); absent without it.
+					$c->has( DesignerPriceSource::class ) ? $c->get( DesignerPriceSource::class ) : null
 				)
 			)
 		);
@@ -326,7 +329,7 @@ final class WooCommerceModule implements Module {
 		);
 		// ADR-078: the plugin issues the codes' coupons, whose discount is the creator's profit on their own products.
 		$container->set( CouponIssuer::class, static fn(): CouponIssuer => new WooCommerceCouponIssuer() );
-		$container->set( CreatorProfitDiscount::class, static fn( Container $c ): CreatorProfitDiscount => new CreatorProfitDiscount( $c->get( MarkupResolver::class ) ) );
+		$container->set( CreatorProfitDiscount::class, static fn( Container $c ): CreatorProfitDiscount => new CreatorProfitDiscount( $c->get( MarkupResolver::class ), $c->has( DesignerPriceSource::class ) ? $c->get( DesignerPriceSource::class ) : null ) );
 		$container->set( CreatorProfitCoupon::class, static fn( Container $c ): CreatorProfitCoupon => new CreatorProfitCoupon( $c->get( CreatorCodeRepository::class ), $c->get( CreatorProfitDiscount::class ), $c->get( Logger::class ) ) );
 		$container->get( CreatorProfitCoupon::class )->register();
 		$container->set(

@@ -792,12 +792,13 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 **Trin:**
 - **30.1 ADR'er og plan ✅ (2026-10-28):** ADR-080 (designer og afregning), ADR-081 (Printful) og ADR-082 (Gelato, mockups via Gelato-skabeloner) samt [features/product-designer.md](features/product-designer.md). Endpoints og Fabric er verificeret mod dokumentationen.
 - **30.2 Fundament 🔄 (implementeret 2026-10-28, testet automatisk):** migration 35 (seks tabeller), `Tables`, afinstallation og creator-oprydning, capability `merchboard_manage_designer` (rolleversion 7), modulet `ProductDesigner` og kill switches (designer, Printful og Gelato) under Settings.
-- **30.3 Afregning:**
-  - snapshot `designer` og kampagne ved snapshottet;
+- **30.3 Afregning 🔄 (implementeret 2026-10-28, testet automatisk):**
+  - snapshot `designer` med grundpris, fortjeneste og listepris (`DesignerPrices` læser den levende version og grundproduktet);
+  - fortjeneste og udbetaling beregnes, når ledger-rækken skrives, og gemmes i `merchboard_sales_tax` (migration 36);
   - designer-grene i `RealizedProfit`/`RealizedPayout` og SQL-summerne;
-  - bilagsrækker uden andel og rabatkodens designer-gren;
-  - udtømmende tests.
-- **30.4 Kampagner:** admin-siden.
+  - bilagsrækker med den effektive andel og rabatkodens designer-gren;
+  - tests af grundprisreglen (alle rabatter, refunderinger, afrunding) og SQL = PHP.
+- **30.4 Kampagner:** admin-siden og kampagnen ved salget (`campaign_id`, delt rabat).
 - **30.5 Legacy-værn og writer:** markør, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtest.
 - **30.6 Grundprodukter i admin:** sider, farver, størrelser, grundpris, skabeloneditor og kliparts.
 - **30.7 PSD-import** (ag-psd i admin).

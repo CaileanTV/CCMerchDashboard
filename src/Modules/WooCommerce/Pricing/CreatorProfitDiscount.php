@@ -18,8 +18,14 @@ defined( 'ABSPATH' ) || exit;
  * The discount of a creator's own code (ADR-078): on each of the creator's
  * products exactly the creator's profit (ADR-049), whatever share applies to
  * that product (the creator's default or the product's own). The one place
- * the profit of a unit is computed for a discount; a later profit as an
- * amount (creators' own products on a base price) plugs in here.
+ * the profit of a unit is computed for a discount.
+ *
+ * A designer product (ADR-080 pkt. 8) is discounted by the creator's profit
+ * in proportion to the price WooCommerce discounts: profit × unit price /
+ * list price. At the list price incl. VAT that is exactly the profit, so the
+ * company keeps the base price; excl. VAT it is the profit excl. VAT; below
+ * the list price (only the company sets one) the base price's share stays
+ * with the company. The code can never take more than the profit.
  *
  * The price is the unit price WooCommerce discounts (including VAT when the
  * shop enters prices including VAT, otherwise excluding it); WooCommerce
@@ -37,9 +43,10 @@ final class CreatorProfitDiscount {
 	/**
 	 * Constructor.
 	 *
-	 * @param MarkupResolver $markups The share of a product now.
+	 * @param MarkupResolver           $markups  The share of a product now.
+	 * @param DesignerPriceSource|null $designer The price of a designer product now; null without the designer.
 	 */
-	public function __construct( private MarkupResolver $markups ) {
+	public function __construct( private MarkupResolver $markups, private ?DesignerPriceSource $designer = null ) {
 	}
 
 	/**
@@ -50,6 +57,12 @@ final class CreatorProfitDiscount {
 	 * @throws DatabaseException When the pricing data cannot be read.
 	 */
 	public function owns( int $product_id, int $creator_id ): bool {
+		$designer = $this->designer?->price( $product_id );
+
+		if ( null !== $designer ) {
+			return $creator_id === $designer->creator_id;
+		}
+
 		return $creator_id === $this->markups->resolve( $product_id )?->creator_id;
 	}
 
@@ -63,6 +76,22 @@ final class CreatorProfitDiscount {
 	 * @throws DatabaseException When the pricing data cannot be read.
 	 */
 	public function per_unit( int $product_id, int $creator_id, float $unit_price ): ?float {
+		$designer = $this->designer?->price( $product_id );
+
+		if ( null !== $designer ) {
+			if ( $creator_id !== $designer->creator_id ) {
+				return null;
+			}
+
+			if ( $unit_price <= 0.0 ) {
+				return 0.0;
+			}
+
+			$profit = PricingMath::mul_div_round( $designer->profit_units, SalesAmount::parse( number_format( $unit_price, self::DECIMALS, '.', '' ) ), $designer->price_units() );
+
+			return min( $unit_price, (float) SalesAmount::format( $profit ) );
+		}
+
 		$markup = $this->markups->resolve( $product_id );
 
 		if ( null === $markup || $creator_id !== $markup->creator_id ) {

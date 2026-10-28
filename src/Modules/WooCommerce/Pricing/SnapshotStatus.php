@@ -15,7 +15,9 @@ defined( 'ABSPATH' ) || exit;
  * `share`: the snapshot holds the creator share of ADR-049 (written since
  * schema version 8). `priced` and `unpriced` are the withdrawn model of
  * ADR-047 (base price + profit): such rows stay unchanged in the table, but
- * they hold no share, so their profit and payout are unknown.
+ * they hold no share, so their profit and payout are unknown. `designer`: a
+ * designer product (ADR-080 pkt. 8) with base price, profit and list price
+ * per unit and the share profit ÷ price (written since schema version 36).
  */
 enum SnapshotStatus: string {
 
@@ -24,4 +26,6 @@ enum SnapshotStatus: string {
 	case Priced = 'priced';
 
 	case Unpriced = 'unpriced';
+
+	case Designer = 'designer';
 }

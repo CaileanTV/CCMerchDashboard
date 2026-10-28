@@ -18,6 +18,7 @@ use MerchBoard\Core\Database\Migrations\CreateAlertChatbotTables;
 use MerchBoard\Core\Database\Migrations\CreateAlertOverlaysTable;
 use MerchBoard\Core\Database\Migrations\AddCreatorVatAndSalesTax;
 use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
+use MerchBoard\Core\Database\Migrations\AddSalesDesignerAmounts;
 use MerchBoard\Core\Database\Migrations\CreateAlertApiKeysTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertWebhookTables;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
@@ -97,6 +98,7 @@ final class Schema {
 			33 => new MoveProfileToProposals(),
 			34 => new CreateNotificationsTable(),
 			35 => new CreateProductDesignerTables(),
+			36 => new AddSalesDesignerAmounts(),
 		);
 	}
 }

@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\WooCommerce\Pricing;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class SalesLinePricingRepository {
 
-	private const COLUMNS = 'order_item_id, order_id, creator_id, product_id, variation_id, status, currency, captured_at, share_bps, share_source, price_decimals, vat_registered';
+	private const COLUMNS = 'order_item_id, order_id, creator_id, product_id, variation_id, status, currency, captured_at, share_bps, share_source, price_decimals, vat_registered, base_unit, profit_unit, price_unit';
 
 	/**
 	 * Constructor.
@@ -61,9 +62,13 @@ final class SalesLinePricingRepository {
 				'share_source'   => $snapshot->share_source?->value,
 				'price_decimals' => $snapshot->price_decimals,
 				'vat_registered' => null === $snapshot->vat_registered ? null : ( $snapshot->vat_registered ? 1 : 0 ),
+				// Designer products only (ADR-080); the columns of ADR-047's withdrawn model.
+				'base_unit'      => null === $snapshot->base_units ? null : SalesAmount::format( $snapshot->base_units ),
+				'profit_unit'    => null === $snapshot->profit_units ? null : SalesAmount::format( $snapshot->profit_units ),
+				'price_unit'     => null === $snapshot->price_units ? null : SalesAmount::format( $snapshot->price_units ),
 			),
 			// wpdb writes NULL for null values regardless of the format.
-			array( '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d' )
+			array( '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( 1 !== $inserted ) {
@@ -136,7 +141,11 @@ final class SalesLinePricingRepository {
 					'0'     => false,
 					'1'     => true,
 					default => throw new DatabaseException( 'Invalid sales line pricing row.' ),
-				}
+				},
+				// Legacy rows of ADR-047 keep their amounts, but only a designer row reads them.
+				SnapshotStatus::Designer === $status ? self::optional_amount( $row['base_unit'] ?? null ) : null,
+				SnapshotStatus::Designer === $status ? self::optional_amount( $row['profit_unit'] ?? null ) : null,
+				SnapshotStatus::Designer === $status ? self::optional_amount( $row['price_unit'] ?? null ) : null
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid sales line pricing row.' );
@@ -159,6 +168,24 @@ final class SalesLinePricingRepository {
 		}
 
 		return (int) $value;
+	}
+
+	/**
+	 * An optional decimal amount column in units.
+	 *
+	 * @param mixed $value Raw value.
+	 * @throws DatabaseException When it is neither null nor a decimal.
+	 */
+	private static function optional_amount( mixed $value ): ?int {
+		if ( null === $value ) {
+			return null;
+		}
+
+		try {
+			return SalesAmount::parse( (string) $value );
+		} catch ( InvalidArgumentException ) {
+			throw new DatabaseException( 'Invalid sales line pricing row.' );
+		}
 	}
 
 	/**
