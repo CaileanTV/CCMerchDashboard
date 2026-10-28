@@ -248,7 +248,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.4.0: notifikationer (fase 29)
 
-**Versions-bump og CHANGELOG-sektion 2026-10-28.** Projektejeren bad samme dag om at starte bump og release, når den fulde suite og CI var grønne.
+**Versions-bump og CHANGELOG-sektion (`17e3f3b`) og tagget `v1.4.0` (på `17e3f3b`) 2026-10-28.** Projektejeren bad samme dag om at starte bump og release, når den fulde suite og CI var grønne. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `1df06c7687782629832f8a53bfa804f34fb2942490b864420d120ef4d6ac1802`).
 - Det er en minor, fordi den indeholder nye features.
 - Fase 29 er reviewet og runtime-testet på Local med "Test Creator Cailean" (ROADMAP 29.7).
 - Den fulde integrationssuite er grøn lokalt på `adcf44d` (1088 tests), og CI er grøn.
