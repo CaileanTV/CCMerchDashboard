@@ -42,13 +42,19 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **I en kampagne** deles rabatten forholdsmæssigt.
 - Udbetalingen følger momsreglerne (ADR-062/064).
 - Legacy-produkter afregnes som i dag (andel af prisen, ADR-049).
+- **Kun virksomheden kan bringe sig under grundprisen:**
+  - fortjenesten kan ikke være negativ;
+  - creatorens egen rabatkode giver højst fortjenesten i rabat;
+  - creatoren kan ikke sætte tilbudspriser eller oprette kuponer.
+  - Kun virksomhedens egne kuponer, tilbudspriser og kampagner kan give den mindre end grundprisen.
 
 | Eksempel (grundpris 150, fortjeneste 50, pris 200) | Creatorens fortjeneste |
 | --- | --- |
 | Ingen rabat | 50 |
-| 20 kr. rabat, ingen kampagne | 30 |
-| 80 kr. rabat, ingen kampagne | 0 (virksomheden får 120) |
-| 20 kr. rabat i kampagne | 45 (50 × 180/200) |
+| Creatorens egen rabatkode | 0 (rabatten er fortjenesten; virksomheden får 150) |
+| 20 kr. rabat fra virksomhedens kupon, ingen kampagne | 30 |
+| 80 kr. rabat fra virksomhedens kupon, ingen kampagne | 0 (virksomheden får 120; kun muligt, fordi rabatten er virksomhedens egen) |
+| 20 kr. rabat i virksomhedens kampagne | 45 (50 × 180/200) |
 
 ## Technical implementation
 Planen (ADR-080–082):

@@ -4560,6 +4560,13 @@ Dagens model (ADR-049) er en andel af den betalte pris. En rabat rammer altså v
    - **Afregningsbilag** gemmer beløbene pr. række; andelen er tom for designer-rækker.
    - **Rabatkoden (ADR-078):** rabat pr. stk. = fortjenesten. Ordren udelukkes fortsat for creatoren (ADR-068).
    - **Legacy-salg** regnes som i dag.
+   - **Kun virksomheden kan bringe sig under grundprisen** (projektejerens regel 2026-10-28). Intet, som creatoren styrer, må føre til det:
+     - fortjenesten kan ikke være negativ, og en procent eller et beløb under 0 afvises på serveren;
+     - kundens pris afrundes aldrig under grundpris + fortjeneste;
+     - creatorens egen rabatkode giver højst fortjenesten pr. stk. i rabat, også efter afrunding;
+     - creatoren kan ikke sætte tilbudspriser eller oprette kuponer eller kampagner.
+     - Kun rabatter, som virksomheden selv giver (dens kuponer, tilbudspriser og kampagner), kan give virksomheden mindre end grundprisen.
+     - Reglen er låst af tests.
 9. **Kampagner:**
    - Admin opretter kampagner med navn, start, slut, kuponkoder og "omfatter tilbudspriser".
    - En ordrelinje er i kampagne, når en aktiv kampagne ved snapshottet omfatter en af ordrens kuponer eller linjens tilbudspris.
