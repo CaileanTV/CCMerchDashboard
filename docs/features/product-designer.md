@@ -56,6 +56,42 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 | 80 kr. rabat fra virksomhedens kupon, ingen kampagne | 0 (virksomheden får 120; kun muligt, fordi rabatten er virksomhedens egen) |
 | 20 kr. rabat i virksomhedens kampagne | 45 (50 × 180/200) |
 
+## Legacy-produkter berøres ikke (ADR-080 pkt. 7)
+- **Hvilke produkter pluginet skriver til:** kun produkter, som designeren selv har oprettet. Det skal kunne ses på tre måder:
+  - en række i designer-tabellen;
+  - en beskyttet markør, som kun designeren kan skrive;
+  - et token, der passer.
+- **Alle andre produkter er legacy.** Det gælder alle eksisterende produkter og alle, der oprettes i WooCommerce på anden vis. De får aldrig ændret pris, billeder, varianter, kategori eller kobling af designeren, genprisningen eller Printful/Gelato.
+- **Prisskrivning** sker ét sted (`WooCommerceDesignerWriter`) og kun på et produkt, som værnet har godkendt. En arkitekturtest fejler, hvis prisskrivning dukker op andre steder.
+- **Printful og Gelato** får aldrig adgang til WooCommerce. De ser kun printfiler af designer-produkter via kortlivede URL'er.
+- **Afregningen af legacy-salg** er uændret (andel af prisen, ADR-049).
+- **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
+
+## Opsætning af Printful og Gelato (projektejeren)
+Nøglerne indtastes i Merch Dashboard → Settings, når 30.12/30.13 er implementeret. De gemmes krypteret og vises aldrig igen.
+
+**Printful** (ADR-081: kun katalog og mockups):
+1. **Butik:** opret en konto på printful.com og en butik af typen "Manual order platform / API". Den må ikke være koblet til en webshop, så intet publiceres eller sælges via Printful.
+2. **Token:** gå til Printfuls Developer Portal (developers.printful.com), og opret en **privat token** med adgang til **én butik** (den fra pkt. 1).
+   - Med adgang til én butik skal vi ikke sende butiks-id. En konto-token kræver header'en `X-PF-Store-Id`.
+   - **Scopes:** vi bruger kun kataloget (kræver intet scope) og mockup-generatoren (kræver en gyldig token). Vælg færrest muligt. Kræver portalen mindst ét scope, så vælg et skrivebeskyttet, fx `file_library/read`.
+   - Vælg **ikke** `orders`, `sync_products` eller `webhooks`. Vi opretter aldrig ordrer eller produkter hos Printful.
+3. **Merch Dashboard:** indsæt token'en i Settings → Printful, og slå Printful til.
+4. **Grundprodukter:** importér produkter fra Printfuls katalog under Merch Dashboard → Grundprodukter (vælg produkt, farver og størrelser, sæt grundpris).
+5. **Begrænsninger:** 120 kald pr. minut og 2–10 mockup-tasks pr. minut. Vi venter selv ved 429.
+
+**Gelato** (ADR-082: katalog og mockups via Gelato-skabeloner):
+1. **Butik:** opret en konto på gelato.com og en **ren API-butik** uden tilknyttet salgskanal (ikke Shopify eller Etsy), så produkterne aldrig publiceres. Notér butikkens id (`storeId`).
+2. **API-nøgle:** gå til Developer → API Keys i Gelato-dashboardet, opret en nøgle, og kopiér den med det samme (den kan ikke ses igen). Nøglen giver adgang til ordrer, så den skal opbevares sikkert. Vi bruger den kun til kataloget og til skabelon-flowet.
+3. **Skabelon pr. grundprodukt:** under Templates laver du en skabelon på det Gelato-produkt, du vil tilbyde, med mockups.
+   - Tilføj et **billedlag pr. side** med et entydigt navn, fx `front` og `back`. Navnet bruges som "image placeholder" i API'et.
+   - Gem, og kopiér skabelonens **Template ID**.
+4. **Merch Dashboard:** indsæt nøgle og `storeId` i Settings → Gelato, og slå Gelato til.
+5. **Grundprodukter:** importér produktet fra Gelatos katalog under Grundprodukter, og angiv Template ID. Vi henter skabelonens varianter og billedlag, og du kobler farver, størrelser og sider til dem.
+6. **Bemærk:** hver indsendelse opretter et produkt i Gelato-butikken (her laves mockups). Produkterne bliver liggende dér.
+
+**Begge:** runtime-test kræver, at sitet kan nås fra internettet (devpage), fordi Printful og Gelato henter printfilen via en URL. Local kan ikke nås udefra.
+
 ## Technical implementation
 Planen (ADR-080–082):
 - **Modul:** `src/Modules/ProductDesigner/`.
