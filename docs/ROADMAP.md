@@ -760,13 +760,65 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - **Review og runtime-test ✅ (2026-10-28):** runtime-testen er udført på Local med creator 1 (8 notifikationer, 5 mails i Mailpit). Fundet dobbelt punktum efter beløb er rettet. Det uafhængige review fandt 11 fejl og intet sikkerhedsproblem; alle er rettet (`adcf44d`). Projektejerens regler (kundens data når aldrig creatoren; "ny ordre" til admin sender WooCommerce) er låst af tests. Kørslen ligger i `MerchBoard-r2-runtime/runs/2026-10-28-fase29-runtime-1.4.0`.
   - **Release:** den fulde integrationssuite er grøn lokalt på `adcf44d` (1088 tests), og CI er grøn. Versions-bump til 1.4.0 2026-10-28 efter projektejerens ønske. Se DEVELOPMENT.md "Release 1.4.0".
 
+## Fase 30 – Produktdesigner 📝 (plan godkendt 2026-10-28; udgives som 1.5.0; ADR-080–082)
+
+**Projektejerens ønske (2026-10-28):**
+- Creators designer selv deres produkter i dashboardet, så virksomheden ikke skal lave design til alle creators.
+- Designeren er fuld som i eksemplet: produkt, skabeloner, kliparts, upload, tekst, former, lag, fortryd/gentag, sider og zoom.
+- Ét designvindue gælder for alle farver, og antallet af sider kan vælges.
+- Eksisterende PSD- og AI-mockupfiler (fx kopper) kan bruges.
+- Produkter fra Printful og Gelato kan tilbydes; designet laves i vores designer, så oplevelsen er ens.
+- Alle nye produkter og alle ændringer godkendes af admin.
+- Admin sætter grundprisen, og creatoren lægger sin fortjeneste ovenpå (procent eller beløb).
+- Legacy-produkter må ikke kunne berøres.
+- Virksomheden får altid grundprisen, medmindre det er virksomhedens egne kampagner.
+
+**Projektejerens valg (2026-10-28):**
+- **Designer:** vores egen i dashboardet.
+- **Printful/Gelato:** kun katalog og mockups; ordrer produceres manuelt.
+- **Pris:** grundpris + fortjeneste, begge inkl. moms, uden grænser og med én grundpris pr. grundprodukt. Priserne følger med, når grundprisen ændres.
+- **Filer:** PSD-import med lag og én printfil pr. side.
+- **Afregning:**
+  - Uden for kampagner tages en rabat fra creatorens fortjeneste (aldrig under 0).
+  - I en kampagne, som admin opretter, deles rabatten forholdsmæssigt.
+
+**Antagelser (planen):**
+- Farve og størrelse er lokale attributter.
+- Kopper vises fladt; perspektiv og kurve kommer senere.
+- Admin kan ikke indsende under "Se som creator".
+- En slettet creators designer-produkter afpubliceres.
+- Printful runtime-testes på devpage af projektejeren.
+
+**Trin:**
+- **30.1 ADR'er og plan ✅ (2026-10-28):** ADR-080 (designer og afregning), ADR-081 (Printful) og ADR-082 (Gelato) samt [features/product-designer.md](features/product-designer.md). Endpoints og Fabric er verificeret mod dokumentationen.
+- **30.2 Fundament:** migration 35, `Tables`, afinstallation og creator-oprydning, capability, modulskelet og kill switches.
+- **30.3 Afregning:**
+  - snapshot `designer` og kampagne ved snapshottet;
+  - designer-grene i `RealizedProfit`/`RealizedPayout` og SQL-summerne;
+  - bilagsrækker uden andel og rabatkodens designer-gren;
+  - udtømmende tests.
+- **30.4 Kampagner:** admin-siden.
+- **30.5 Legacy-værn og writer:** markør, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtest.
+- **30.6 Grundprodukter i admin:** sider, farver, størrelser, grundpris, skabeloneditor og kliparts.
+- **30.7 PSD-import** (ag-psd i admin).
+- **30.8 Designer-UI** (Fabric) med uploads, kladder og validering.
+- **30.9 Indsendelse:** rendering, filvalidering, fortjeneste med live-pris og notifikationer.
+- **30.10 Godkendelse og anvendelse i WooCommerce:** idempotent og kan genoptages; printfiler på ordren.
+- **30.11 Ny grundpris:** genprisning, notifikation og pensionering.
+- **30.12 Printful:** katalog, signeret URL og mockup-tasks.
+- **30.13 Gelato:** katalog og egne skabeloner.
+- **30.14 Creatorens Produkter:** levende, ventende og afviste produkter.
+- **30.15 Review, runtime-test og release 1.5.0:**
+  - review og runtime-test på Local med "Test Creator Cailean" udføres automatisk (AI-DEVELOPMENT.md);
+  - den fulde suite køres før bump;
+  - bump og release sker efter projektejerens ønske.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
 | --- | --- |
 | Payouts | Manuelle udbetalinger i fase 23–24. Senere: eksport og evt. integration med betalingsudbyder (kræver ADR efter ADR-016) |
 | Creator-aftaler | Overvejelse, ikke godkendt: digital registrering af creatorens accept af vilkårene for omvendt fakturering i Merch Dashboard. Aftaler indgås i dag uden for pluginet; ikke en afhængighed for fase 23 |
-| Notifications | Flyttet til fase 29 (ADR-079). Senere: daglig eller ugentlig opsamling som valg og flere modtagere af administrator-mails |
 | Integrations | Framework for eksterne tjenester med webhooks og HMAC. Hver konkret tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016). |
 | CVR-register | Udskudt fra første version 2026-10-18 (ADR-062, statusnote): integration med CVR-registret via API, validering af udsteders og creatorens CVR-numre og håndtering af virksomhedsoplysninger. K09's CVR-felter findes, men der registreres ingen værdier før da. Ekstern tjeneste: kræver ADR og projektejerens godkendelse |
 | Campaigns | Tidsbegrænsede kampagner/drops pr. creator |
@@ -776,5 +828,4 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
 | Branding | Brand-font (self-hosted). Logo, temaer og branded login er flyttet til fase 21 |
-| ~~Alerts: SparkyBot-tjek (25.12.3)~~ ✅ 2026-10-25 | Gennemført: SparkyBots udvikler har bekræftet integrationen, og alert-API og webhooks er endeligt godkendt (se 25.12.3 og 25.12.5). Oprindeligt: flyttet fra fase 25 2026-10-24: en fælles test med SparkyBot-udvikleren af webhook-integrationen (adresse, hemmelighed fra SparkyBots dashboard, signaturtjek, dubletter via hændelses-id) og eventuelle justeringer, når udvikleren svarer. SparkyBots format er allerede bygget ind i 25.12.2; afvigelsen er ét forsøg pr. levering i stedet for begrænsede genforsøg (projektejerens valg 2026-10-23). Se 25.12.3 i fase 25. Tjekket er den endelige godkendelse af alert-API og webhooks (projektejerens beslutning 2026-10-24) |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |

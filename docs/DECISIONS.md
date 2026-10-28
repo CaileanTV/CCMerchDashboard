@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten.
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, kun katalog), kun til produktdesigneren (ADR-080).
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -4475,3 +4475,226 @@ Alle ryddes ved afinstallation. Ingen eksisterende data ændres.
 
 ## Related
 ADR-007, ADR-029, ADR-049, ADR-062, ADR-068, ADR-072, ADR-075, ADR-077, ADR-078.
+
+# ADR-080: Produktdesigner, designer-produkter og afregning med sikret grundpris
+
+## Date
+2026-10-28
+
+## Status
+Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen er godkendt samme dag. Ikke implementeret endnu. Undtagelse fra ADR-049 pkt. 1 (kun for designer-produkter). Supplerer ADR-007, ADR-034/035, ADR-047, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078 og ADR-079.
+
+## Context
+I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
+
+**Krav (2026-10-28):**
+- En fuld produktdesigner med produkt, skabeloner, kliparts, upload, tekst, former, lag, fortryd/gentag, sider og zoom.
+- Ét design gælder for alle farver, og der kan vælges sider.
+- PSD-mockups kan importeres.
+- Printful og Gelato kan bruges som produktkilder (ADR-081/082).
+- Alle nye produkter og alle ændringer godkendes af admin.
+- Kundens pris er grundpris plus creatorens fortjeneste.
+- Legacy-produkter må aldrig berøres.
+
+**Projektejerens valg (2026-10-28):**
+- **Designer:** vores egen i dashboardet.
+- **Printful/Gelato:** kun katalog og mockups, ikke produktion af ordrer.
+- **Pris:** grundpris + fortjeneste. Fortjenesten er i procent af grundprisen eller et fast beløb, begge inkl. moms og uden grænser. Grundprisen er én pr. grundprodukt.
+- **Ny grundpris:** priserne på eksisterende designer-produkter følger med.
+- **Filer:** PSD-import med navngivne lag og én printfil pr. side.
+- **Grundprisen er sikret:** virksomheden får altid grundprisen, undtagen i kampagner, som admin opretter. Uden for kampagner tages en rabat fra creatorens fortjeneste (aldrig under 0). I en kampagne deles rabatten forholdsmæssigt.
+
+Dagens model (ADR-049) er en andel af den betalte pris. En rabat rammer altså virksomhed og creator forholdsmæssigt, og pluginet skriver aldrig priser.
+
+## Decision
+1. **Modul og adgang:**
+   - Nyt modul `ProductDesigner`. Det indlæses kun sammen med WooCommerce.
+   - Ny capability `merchboard_manage_designer` til grundprodukter, kampagner og godkendelse.
+   - Creators bruger kun `/me/designer/…`, og creatoren afgøres af `CreatorContext` (ADR-007).
+   - Under "Se som creator" (ADR-075) kan admin se og redigere kladder, men ikke indsende.
+2. **Grundprodukter:**
+   - Admin opretter grundprodukter med kilde (egen, Printful eller Gelato), farver, størrelser, grundpris inkl. moms og sider.
+   - Hver side har en mockup-skabelon: lag og printområde i px, mm og dpi.
+   - PSD-filer læses i admins browser med et MIT-licenseret bibliotek (ag-psd), så PSD'en aldrig uploades. Lagkonventionen er `mb_background`, `mb_color`, `mb_shading`, `mb_highlight` og `mb_print_area`.
+3. **Designs og godkendelse (samme model som ADR-077):**
+   - Et designer-produkt har versioner: kladde → ventende → godkendt/afvist/trukket tilbage → erstattet. Der er højst én ventende ændring pr. produkt.
+   - Den godkendte version sælges uændret, indtil en ændring er godkendt og anvendt.
+   - Afvisning sker med en note til creatoren.
+   - Alt auditeres, og notifikationerne går gennem ADR-079.
+4. **Designeren:**
+   - Bygget i React med Fabric.js (MIT), version 7.2 eller nyere. Ældre versioner har en sårbarhed i SVG-eksporten, og vi eksporterer kun PNG.
+   - Fabric er den første runtime-JS-afhængighed. Den bundles, indlæses lazy i designer-sektionen og bruger ingen CDN. ADR-004 gælder kun PHP-afhængigheder.
+   - Skrifttyper er de godkendte Google Fonts (ADR-067; formålet udvides til designeren).
+   - Creatorens uploads må være jpg, png eller webp, ikke SVG.
+   - Dashboardets CSP ændres ikke. Previews vises som `data:` (lektien fra 1.3.1). Kræver Fabric `blob:` eller workers, skal det besluttes med en statusnote.
+5. **Rendering og filer:**
+   - Ved indsendelse renderer creatorens browser én transparent print-PNG pr. side i skabelonens opløsning (fx 300 dpi) og mockups pr. side × farve.
+   - Serveren validerer type, præcise pixelmål, bytes, kvote og design-JSON: kun tilladte objekter, egne filer og godkendte skrifttyper.
+   - Admin godkender de faktiske filer.
+   - Filerne ligger privat i `uploads/merchboard-designer/` som i ADR-077: tilfældige navne, `.htaccess` deny og nginx-regel.
+   - Mockups bliver produktbilleder i mediebiblioteket. Printfiler forbliver private og hentes af admin på produktet og ordren.
+6. **Designer-produkter i WooCommerce (undtagelse fra ADR-049 pkt. 1):**
+   - Ved godkendelse opretter eller opdaterer pluginet et variabelt produkt: farve × størrelse som lokale attributter og prisen grundpris + fortjeneste på alle varianter.
+   - Produktet får creatorens kategori (ellers grundproduktets standard) og kobles via `ProductCreatorLink` med kilden `designer`.
+   - Hvert trin er idempotent og kan genoptages via Action Scheduler. Der bruges ingen rollback omkring WooCommerce-gem (hændelsen 2026-10-26).
+   - Udgåede varianter sættes til private og slettes aldrig.
+   - Butikken skal indtaste priser inkl. moms; ellers anvendes intet.
+   - Ordrelinjen gemmer designversionens id.
+7. **Legacy-værn:**
+   - Pluginet skriver kun priser og produktdata på designer-produkter.
+   - Et produkt er et designer-produkt, når alle tre ting gælder:
+     - det har en række i designer-tabellen;
+     - det har en markør-meta i `ProtectedProductMeta::KEYS`, der kun skrives via `ProtectedMetaWrite::for_designer()` (ADR-034/035);
+     - token'et passer.
+   - Kun `WooCommerceDesignerWriter` skriver priser, og kun på et produkt, som værnet har godkendt (`GuardedProduct`). En arkitekturtest sikrer det.
+   - Kategoriafstemningen springer designer-produkter over.
+   - Alle andre produkter er legacy og behandles præcis som i dag.
+8. **Afregning med sikret grundpris:**
+   - **Snapshot:** ved salget gemmes en ny status `designer` med grundpris, fortjeneste og listepris pr. stk. (inkl. moms), kampagnens id og momsstatus. De ubrugte kolonner fra ADR-047 genbruges, og snapshottet ændres aldrig bagefter.
+   - **Fortjeneste pr. række**, hvor betalt pr. stk. = (net + moms) / antal:
+     - uden kampagne: antal × min(fortjeneste, max(0, betalt pr. stk. − grundpris));
+     - i kampagne: (net + moms) × fortjeneste / listepris;
+     - refunderinger og tilbageførsler bruger samme formel med fortegn.
+   - **Udbetaling** som ADR-064: momsregistreret får fortjenesten; ikke-registreret får fortjeneste × net / (net + moms).
+   - **Fælles beregninger:** PHP (`RealizedProfit`/`RealizedPayout`) og SQL (`LedgerCreatorProfits`/`LedgerCreatorPayouts`) giver samme resultat (ADR-050).
+   - **Afregningsbilag** gemmer beløbene pr. række; andelen er tom for designer-rækker.
+   - **Rabatkoden (ADR-078):** rabat pr. stk. = fortjenesten. Ordren udelukkes fortsat for creatoren (ADR-068).
+   - **Legacy-salg** regnes som i dag.
+9. **Kampagner:**
+   - Admin opretter kampagner med navn, start, slut, kuponkoder og "omfatter tilbudspriser".
+   - En ordrelinje er i kampagne, når en aktiv kampagne ved snapshottet omfatter en af ordrens kuponer eller linjens tilbudspris.
+   - Kampagner ændrer aldrig afregnede rækker.
+10. **Ny grundpris:**
+    - Ved hver ny grundpris genberegner et job pr. levende produkt prisen. Creatorens procent eller beløb bevares, og kun priserne skrives (via writeren).
+    - Der skrives audit, og creatoren får en notifikation.
+    - Solgte ordrer bevarer deres snapshot.
+
+## Alternatives considered
+- **Et tredjepartsplugin som designer** (fx Fancy Product Designer). Fravalgt af projektejeren: godkendelse og legacy-værn kan ikke sikres.
+- **Fortjeneste som andel af prisen (genbrug af ADR-049).** Først valgt, men opgivet: virksomheden ville bære en del af alle rabatter. Det strider mod kravet om sikret grundpris.
+- **Server-rendering (GD/Imagick).** Fravalgt: tekst og effekter ville ikke svare til lærredet, og admin godkender alligevel de faktiske filer.
+
+## Reason
+Creators kan selv lave produkter, mens admin styrer kvaliteten. Virksomhedens grundpris er sikret. Legacy og den eksisterende afregning ændres ikke.
+
+## Security
+- Creatorens data og filer er `/me`-scoped.
+- Filerne er private og valideres på serveren.
+- SVG er ikke tilladt.
+- Skrifttyper og filer i designet er whitelistet.
+- Legacy-værnet har fire lag, og der er arkitekturtest.
+- Indsendelse er blokeret under "Se som creator".
+- Printfiler forlader kun det private lager via en kortlivet signeret URL til Printful (ADR-081).
+
+## Migration/data implications
+- Migration 35: tabeller for grundprodukter, designer-produkter, versioner, filer, leverandør-tasks og kampagner.
+- Alle tabeller kommer i `Tables::all()`.
+- Opt-in-afinstallation sletter tabeller og filer; creator-oprydningen gælder også.
+- Designer-produkter i WooCommerce og mediebiblioteket bevares ved afinstallation (de er butikkens produkter).
+- En slettet creators designer-produkter afpubliceres og bevares af hensyn til ordrehistorikken.
+
+## Consequences
+- Pluginet ejer prisen på designer-produkter. Admin skal ikke rette dem direkte i WooCommerce, fordi writeren overskriver dem ved næste anvendelse eller genprisning.
+- Afregningen har to modeller: andel for legacy og sikret grundpris for designer.
+- Kopper vises fladt med skygger fra PSD'en; perspektiv og kurve kommer senere.
+
+## Related
+ADR-049, ADR-050, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078, ADR-079, ADR-081, ADR-082. Se [features/product-designer.md](features/product-designer.md).
+
+# ADR-081: Printful som produktkatalog og mockup-generator
+
+## Date
+2026-10-28
+
+## Status
+Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Printful 2026-10-28, kun til katalog og mockups (ADR-016). Ikke implementeret endnu.
+
+## Context
+Admin vil kunne tilbyde produkter fra Printfuls katalog. Designet laves i vores designer (ADR-080), og de færdige mockups kommer fra Printfuls mockup-generator. Ordrer produceres fortsat manuelt.
+
+## Decision
+1. **Godkendte endpoints** (`https://api.printful.com`):
+   - `GET /products`, `GET /products/{id}` og `GET /products/variant/{id}`;
+   - `GET /mockup-generator/printfiles/{id}` og `GET /mockup-generator/templates/{id}`;
+   - `POST /mockup-generator/create-task/{id}` og `GET /mockup-generator/task?task_key=…`;
+   - download af mockup-resultater fra den CDN-vært, Printful returnerer.
+   - Ethvert andet endpoint (fx ordrer) kræver en ny ADR.
+2. **Kald:**
+   - `Authorization: Bearer` med en privat token.
+   - `wp_safe_remote_*` med 15 s timeout og ingen redirects.
+   - Respekt for 120 kald/min og 2–10 mockup-tasks/min: ved 429 ventes `Retry-After`, og task-oprettelse sættes i kø.
+   - Ingen SDK (ADR-004), og HTTP kan injiceres i tests.
+3. **Token:** krypteres med sodium (eget nøgledomæne, som ChatCipher) i en option uden autoload. Den vises aldrig igen og kommer aldrig i logs eller audit.
+4. **Data, der sendes:** produkt- og variant-id'er, placering og printfilens URL.
+   - Ingen kundedata og ingen creatordata ud over designet.
+   - Printfilen sendes som en kortlivet signeret URL: HMAC med eget domæne, 1 time, kun printfiler fra ventende eller godkendte versioner, `no-store`. Printful kræver en offentlig URL.
+5. **Mockups:** én task pr. side ved indsendelse, i Action Scheduler.
+   - Opgaven polles med begrænsede forsøg.
+   - Resultaterne hentes, valideres og gemmes som versionens mockups.
+   - Godkendelse kræver, at mockups er klar.
+6. **Kill switch:** Printful kan slås fra i Settings. Så oprettes ingen tasks, og der importeres intet.
+7. **Personoplysninger:** ingen. Designet kan indeholde creatorens billeder; det er creatorens ansvar (godkendes af admin).
+
+## Alternatives considered
+- **Printfuls File Library** (`POST /files`). Den kræver også en offentlig URL og gemmer filen permanent hos Printful. Fravalgt.
+- **Printfuls egen designer.** Fravalgt, så designoplevelsen er ens på tværs af grundprodukter.
+
+## Reason
+Professionelle mockups til Printful-produkter, mens designet forbliver vores eget.
+
+## Security
+- Token krypteret.
+- Kun de godkendte endpoints, uden redirects.
+- Signerede URL'er udløber efter 1 time og giver kun adgang til printfiler.
+- Resultatfiler valideres som uploads.
+
+## Migration/data implications
+- Option med krypteret token.
+- Tabellen for leverandør-tasks (migration 35).
+- Afinstallation sletter begge.
+
+## Consequences
+- Runtime-test kræver en offentlig URL, fx devpage (projektejeren). Local kan ikke nås af Printful.
+- Automatisk produktion hos Printful kræver en ny ADR.
+
+## Related
+ADR-016, ADR-080, ADR-082.
+
+# ADR-082: Gelato som produktkatalog
+
+## Date
+2026-10-28
+
+## Status
+Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Gelato 2026-10-28, kun til katalog (ADR-016). Ikke implementeret endnu.
+
+## Context
+Admin vil kunne tilbyde produkter fra Gelatos katalog med Gelatos mockups. Gelatos offentlige API har ingen selvstændig mockup-generator. Mockups opstår kun, når der oprettes et produkt i en Gelato-butik ud fra en skabelon, som er lavet i Gelatos egen brugerflade, og Mockup Studio er et webværktøj.
+
+## Decision
+1. **Godkendte endpoints** (`https://product.gelatoapis.com`, header `X-API-KEY`):
+   - `GET /v3/catalogs` og `GET /v3/catalogs/{catalogUid}`;
+   - `POST /v3/catalogs/{catalogUid}/products:search`;
+   - `GET /v3/products/{productUid}` og `GET /v3/products/{productUid}/prices`.
+   - Ethvert andet endpoint kræver en ny ADR.
+2. **Katalogimport:** et Gelato-produkt bliver et grundprodukt med Gelatos produkt-uid pr. variant. Mockups laves med vores egne skabeloner (PSD-import, ADR-080 pkt. 2).
+3. **Kald, nøgle og kill switch:** som ADR-081 (sodium-krypteret nøgle, 15 s timeout, ingen redirects, kan slås fra i Settings).
+4. **Data, der sendes:** kun katalogforespørgsler. Ingen design, ingen kundedata og ingen creatordata.
+
+## Alternatives considered
+**Gelatos "create product from template"-flow for mockups.** Det kræver en Gelato-butik og skabeloner i Gelatos brugerflade og opretter produkter hos Gelato. Fravalgt; kan genovervejes, hvis Gelato offentliggør en mockup-API.
+
+## Reason
+Gelatos produkter kan tilbydes som grundprodukter uden at sende designs ud af huset.
+
+## Security
+Som ADR-081.
+
+## Migration/data implications
+Option med krypteret nøgle; slettes ved afinstallation.
+
+## Consequences
+Mockups af Gelato-produkter kræver, at admin importerer en skabelon (PSD eller PNG-lag) til hvert produkt.
+
+## Related
+ADR-016, ADR-080, ADR-081.
