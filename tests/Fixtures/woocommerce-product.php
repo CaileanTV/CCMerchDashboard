@@ -405,6 +405,25 @@ class WC_Product_Variable extends WC_Product {
 			'sale_price'    => array(),
 		);
 	}
+
+	/**
+	 * Records the price sync of a parent.
+	 *
+	 * @param WC_Product|int $product Product or id.
+	 * @param bool           $save    Whether to save.
+	 * @return WC_Product|int
+	 */
+	public static function sync( $product, $save = true ) {
+		WcProductStorage::$synced[] = is_int( $product ) ? $product : $product->get_id();
+
+		return $product;
+	}
+}
+
+/**
+ * A variation.
+ */
+class WC_Product_Variation extends WC_Product {
 }
 
 /**
@@ -528,7 +547,11 @@ function wc_get_product( $the_product = false ) {
 		return false;
 	}
 
-	return 'variable' === WcProductStorage::$products[ $id ]['type'] ? new WC_Product_Variable( $id ) : new WC_Product( $id );
+	return match ( WcProductStorage::$products[ $id ]['type'] ) {
+		'variable'  => new WC_Product_Variable( $id ),
+		'variation' => new WC_Product_Variation( $id ),
+		default     => new WC_Product( $id ),
+	};
 }
 
 /**

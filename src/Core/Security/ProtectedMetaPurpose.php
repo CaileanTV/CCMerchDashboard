@@ -33,4 +33,10 @@ enum ProtectedMetaPurpose: string {
 	 * link, whatever its origin.
 	 */
 	case CreatorDeletion = 'creator_deletion';
+
+	/**
+	 * The product designer (phase 30, ADR-080 pkt. 7): marks a product it
+	 * created as a designer product (DesignerProductGuard).
+	 */
+	case Designer = 'designer';
 }

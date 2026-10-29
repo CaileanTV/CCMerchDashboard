@@ -361,6 +361,18 @@ final class UninstallerTest extends TestCase {
 					'settings'     => true,
 				),
 				array(
+					'key'          => ProtectedProductMeta::DESIGNER_KEY,
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+				array(
+					'key'          => Uninstaller::DESIGNER_PENDING_META,
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+				array(
 					'key'          => '_merchboard_ledger_failure',
 					'opt_in_still' => true,
 					'tables_left'  => true,

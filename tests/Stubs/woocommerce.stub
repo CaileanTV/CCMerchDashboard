@@ -512,6 +512,22 @@ class WC_Product extends WC_Data {
 	public function set_regular_price( $price ) {}
 
 	/**
+	 * Sets the name.
+	 *
+	 * @param string $name Name.
+	 * @return void
+	 */
+	public function set_name( $name ) {}
+
+	/**
+	 * Sets the post status.
+	 *
+	 * @param string $status Status.
+	 * @return void
+	 */
+	public function set_status( $status ) {}
+
+	/**
 	 * Saves the product through its data store.
 	 *
 	 * @return int Product id.
@@ -539,6 +555,15 @@ class WC_Product_Variable extends WC_Product {
 	 * @return array<string, array<int, string|float>>
 	 */
 	public function get_variation_prices( $for_display = false ) {}
+
+	/**
+	 * Syncs the parent's prices and stock from its variations.
+	 *
+	 * @param WC_Product|int $product Product or id.
+	 * @param bool           $save    Whether to save.
+	 * @return WC_Product|int
+	 */
+	public static function sync( $product, $save = true ) {}
 }
 
 /**
@@ -567,6 +592,20 @@ function get_woocommerce_currency() {}
  * @return int Number of decimals of prices (store setting).
  */
 function wc_get_price_decimals() {}
+
+/**
+ * Whether taxes are enabled (wc-core-functions.php).
+ *
+ * @return bool
+ */
+function wc_tax_enabled() {}
+
+/**
+ * Whether the store enters prices including tax (wc-core-functions.php).
+ *
+ * @return bool
+ */
+function wc_prices_include_tax() {}
 
 /**
  * @param string|float|int $number     Number.

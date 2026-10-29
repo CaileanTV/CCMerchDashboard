@@ -15,8 +15,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * One explicitly approved internal operation that may write the protected
- * product meta (`_merchboard_creator_id`, `_merchboard_creator_link_source`)
- * of exactly one product, for a named purpose.
+ * product meta (`_merchboard_creator_id`, `_merchboard_creator_link_source`,
+ * `_merchboard_designer_token`) of exactly one product, for a named purpose.
  *
  * Only ProtectedProductMeta::run() gives it effect, and only for the duration
  * of that call; the guard accepts each instance once. It carries no user: the
@@ -68,6 +68,16 @@ final class ProtectedMetaWrite {
 	 */
 	public static function for_creator_deletion( int $product_id ): self {
 		return new self( ProtectedMetaPurpose::CreatorDeletion, $product_id );
+	}
+
+	/**
+	 * The product designer marks a product it created (ADR-080 pkt. 7). Used
+	 * only by DesignerProductGuard (architecture test).
+	 *
+	 * @param int $product_id Parent product id.
+	 */
+	public static function for_designer( int $product_id ): self {
+		return new self( ProtectedMetaPurpose::Designer, $product_id );
 	}
 
 	/**

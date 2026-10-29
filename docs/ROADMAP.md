@@ -803,7 +803,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - kampagnen afgøres ved ordrelinjens første designer-række: kuponkode eller tilbudspris, inden for kampagnens periode ved købet; senere rækker af linjen beholder den;
   - ordrelæseren læser linjens subtotal før kuponer, så en tilbudspris kan genkendes;
   - rettelse fra 30.3: designerens pris- og kampagnekilder slås op, når de bruges (`ContainerDesignerSources`), fordi WooCommerce-modulets hooks oprettes, før ProductDesigner-modulet registrerer dem.
-- **30.5 Legacy-værn og writer:** markør, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtest.
+- **30.5 Legacy-værn og writer 🔄 (implementeret 2026-10-29, testet automatisk):** den beskyttede markør `_merchboard_designer_token`, `DesignerProductGuard` (række + markør + token, krav på en kladde), `WooCommerceDesignerWriter` (kladde og priser, kun på et `GuardedProduct`, kun med priser inkl. moms) og arkitekturtesten; opt-in-uninstall sletter også markøren og den ventende meta.
 - **30.6 Grundprodukter i admin:** sider, farver, størrelser, grundpris, skabeloneditor og kliparts.
 - **30.7 PSD-import** (ag-psd i admin).
 - **30.8 Designer-UI** (Fabric) med uploads, kladder og validering.

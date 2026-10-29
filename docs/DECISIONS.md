@@ -4499,6 +4499,14 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Kun virksomhedens koder:** en creators egen rabatkode (enhver registrering) afvises som kampagnekode. En kampagne, der dækker salg, kan ikke slettes, kun afsluttes.
 - **Rettelse af 30.3:** WooCommerce-modulet opretter sine hooks (snapshot, rabatkode og synkronisering), før ProductDesigner-modulet registrerer `DesignerPriceSource` og `DesignerCampaignSource`. Kilderne slås derfor op, når de bruges (`ContainerDesignerSources`), så et designer-produkt aldrig prissættes efter andelsmodellen på grund af modulernes rækkefølge.
 
+**Statusnote 2026-10-29 (trin 30.5, legacy-værn og writer implementeret, testet automatisk):** pkt. 7 er implementeret:
+- **Markøren** er product meta `_merchboard_designer_token` med rækkens hemmelige `creation_token` og er tilføjet `ProtectedProductMeta::KEYS`, så alle generiske skriveveje (REST, CSV, quick edit, `update_post_meta()` m.fl.) afvises, og WooCommerce' duplikering kopierer den ikke. Kun `DesignerProductGuard` skriver den, med `ProtectedMetaWrite::for_designer()`.
+- **Værnet** (`DesignerProductGuard::guard()`) giver kun et `GuardedProduct`, når en række i `merchboard_designer_products` peger på produktet, produktet har præcis én markør, og markøren er lig rækkens token. Ellers er produktet legacy. En række, hvis produkt mangler markøren, logges og repareres aldrig af værnet.
+- **Oprettelse:** `WooCommerceDesignerWriter::create_draft()` opretter en skjult kladde af et variabelt produkt med token'et i den ubeskyttede `_merchboard_designer_pending`. Værnet gør derefter krav på den: rækken kobles først, derefter sættes markøren, og den ventende meta fjernes. Afbrydes det, finder næste kørsel den samme kladde, så der aldrig oprettes to produkter. Et produkt, der ikke er oprettet til rækken, kan ikke gøres krav på.
+- **Writeren** er det eneste sted, der opretter WooCommerce-produkter og skriver priser. Den tager kun `GuardedProduct` for eksisterende produkter, skriver kun den almindelige pris på produktets egne varianter (en tilbudspris, som kun virksomheden sætter, bevares) og skriver intet, når butikken indtaster priser ekskl. moms.
+- **Arkitekturtesten** (`LegacyGuardArchitectureTest`) fejler, hvis prissættere, prismeta-nøgler, `new WC_Product*`, `new GuardedProduct` eller markørens skrivning findes andre steder i `src/`, eller hvis writeren får en ny offentlig metode.
+- **Kategoriafstemningen** rører ikke designer-produkter: de kobles med kilden `designer` (trin 30.10), som afstemningen behandler som en manuel kobling, og kladden har hverken kategori eller kobling, før den er markeret.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

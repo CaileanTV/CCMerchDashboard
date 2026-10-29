@@ -62,8 +62,10 @@ defined( 'ABSPATH' ) || exit;
  * `merchboard_`: a role or capability another plugin or a site owner happens
  * to name with that prefix is not ours to delete. A capability that is ever
  * retired from Capabilities must stay listed for this cleanup (ADR-025).
- * 3. the product meta `_merchboard_creator_id` and
- *    `_merchboard_creator_link_source` from every post (ADR-030 D4), through
+ * 3. the product meta `_merchboard_creator_id`,
+ *    `_merchboard_creator_link_source`, the designer marker
+ *    `_merchboard_designer_token` and the pending token of a designer draft
+ *    from every post (ADR-030 D4, ADR-080 pkt. 7), through
  *    WordPress' meta API with `delete_post_meta_by_key()`, which matches every
  *    key spelling under MySQL's case-insensitive collation. Never direct SQL.
  *    When the plugin is loaded in this request (e.g. WP-CLI
@@ -94,6 +96,13 @@ defined( 'ABSPATH' ) || exit;
  * a lifecycle operation, and the audit log itself is being deleted.
  */
 final class Uninstaller {
+
+	/**
+	 * The pending token of a designer product draft not claimed yet
+	 * (ADR-080 pkt. 7); Modules\ProductDesigner\Shop\DesignerProductGuard::PENDING_KEY
+	 * is this constant. Deleted with the protected product meta.
+	 */
+	public const DESIGNER_PENDING_META = '_merchboard_designer_pending';
 
 	/**
 	 * Order meta keys owned by the plugin: the sales ledger failure marker
@@ -399,7 +408,7 @@ final class Uninstaller {
 	 * API. Idempotent: WordPress reports false when there was nothing to delete.
 	 */
 	private function remove_product_meta(): void {
-		foreach ( ProtectedProductMeta::KEYS as $key ) {
+		foreach ( array_merge( ProtectedProductMeta::KEYS, array( self::DESIGNER_PENDING_META ) ) as $key ) {
 			delete_post_meta_by_key( $key );
 		}
 	}

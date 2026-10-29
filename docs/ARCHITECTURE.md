@@ -158,7 +158,7 @@ Afinstallation (slet plugin) uden eksplicit opt-in
 → data bevares
 
 Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the plugin is deleted")
-→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030) og `_merchboard_creator_link_source` (ADR-033)
+→ Merch Dashboards egne data slettes, inkl. product meta `_merchboard_creator_id` (fra fase 17, ADR-030), `_merchboard_creator_link_source` (ADR-033) og designer-markøren `_merchboard_designer_token` (ADR-080 pkt. 7)
 → alle andre WordPress- og WooCommerce-data bevares
 ```
 

@@ -35,6 +35,10 @@ final class DesignerException extends RuntimeException {
 
 	public const CAMPAIGN_IN_USE = 'campaign_in_use';
 
+	public const NOT_DESIGNER_PRODUCT = 'not_designer_product';
+
+	public const PRICES_EXCL_TAX = 'prices_excl_tax';
+
 	/**
 	 * Constructor.
 	 *

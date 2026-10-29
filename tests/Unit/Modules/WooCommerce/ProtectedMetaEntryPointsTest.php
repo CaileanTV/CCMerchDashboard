@@ -151,7 +151,7 @@ final class ProtectedMetaEntryPointsTest extends TestCase {
 	}
 
 	public function test_duplicates_start_without_the_protected_meta(): void {
-		self::assertSame( array( '_sku', self::LINK, ProductCreatorLink::SOURCE_META_KEY ), $this->entry->exclude_from_duplicate( array( '_sku', self::LINK ) ) );
+		self::assertSame( array( '_sku', self::LINK, ProductCreatorLink::SOURCE_META_KEY, ProtectedProductMeta::DESIGNER_KEY ), $this->entry->exclude_from_duplicate( array( '_sku', self::LINK ) ) );
 		self::assertSame( ProtectedProductMeta::KEYS, $this->entry->exclude_from_duplicate( null ) );
 	}
 

@@ -84,6 +84,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Prisskrivning** sker ét sted (`WooCommerceDesignerWriter`) og kun på et produkt, som værnet har godkendt. En arkitekturtest fejler, hvis prisskrivning dukker op andre steder.
 - **Printful og Gelato** får aldrig adgang til WooCommerce. De ser kun printfiler af designer-produkter via kortlivede URL'er.
 - **Afregningen af legacy-salg** er uændret (andel af prisen, ADR-049).
+- **Implementeret (trin 30.5):** markøren `_merchboard_designer_token`, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtesten `LegacyGuardArchitectureTest`.
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
 ## Opsætning af Printful og Gelato (projektejeren)

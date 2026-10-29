@@ -99,6 +99,13 @@ final class WcProductStorage {
 	public static array $lookups = array();
 
 	/**
+	 * Parents whose prices were synced (WC_Product_Variable::sync()).
+	 *
+	 * @var list<int>
+	 */
+	public static array $synced = array();
+
+	/**
 	 * Sets more product fields (price, regular_price, stock_status, image_id,
 	 * variation_prices) on a product added with add().
 	 *

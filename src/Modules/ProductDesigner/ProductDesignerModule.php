@@ -14,12 +14,15 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignActions;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
 use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignRepository;
 use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
+use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsSection;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerCampaignSource;
@@ -38,7 +41,9 @@ defined( 'ABSPATH' ) || exit;
  * 30.3 the price source of the settlement (always registered, also with the
  * designer switched off, so a designer product never falls back to the
  * share model); 30.4 the company's campaigns (Merch Dashboard → Campaigns
- * and the campaign of each designer line at the sale); the following steps add base products, the designer, approval and the
+ * and the campaign of each designer line at the sale); 30.5 the legacy guard
+ * and the only writer of designer products (used from 30.10 on); the
+ * following steps add base products, the designer, approval and the
  * providers.
  */
 final class ProductDesignerModule implements Module {
@@ -64,6 +69,9 @@ final class ProductDesignerModule implements Module {
 		$container->set( DesignerCampaignSource::class, static fn( Container $c ): DesignerCampaignSource => new DesignerCampaigns( $c->get( CampaignRepository::class ), new SalesLinePricingRepository( $c->get( wpdb::class ) ) ) );
 		$container->set( CampaignsPage::class, static fn( Container $c ): CampaignsPage => new CampaignsPage( $c->get( CampaignRepository::class ) ) );
 		$container->set( CampaignActions::class, static fn( Container $c ): CampaignActions => new CampaignActions( $c->get( CampaignService::class ), $c->get( Logger::class ) ) );
+		// The legacy guard and the only writer of designer products (ADR-080 pkt. 7).
+		$container->set( DesignerProductGuard::class, static fn( Container $c ): DesignerProductGuard => new DesignerProductGuard( $c->get( wpdb::class ), $c->get( ProtectedProductMeta::class ), $c->get( Logger::class ) ) );
+		$container->set( WooCommerceDesignerWriter::class, static fn( Container $c ): WooCommerceDesignerWriter => new WooCommerceDesignerWriter( $c->get( DesignerProductGuard::class ) ) );
 		$container->set( DesignerCreatorCleanup::class, static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup( $c->get( wpdb::class ) ) );
 
 		// Deleting a creator (ADR-076): designer data that never reached the shop.

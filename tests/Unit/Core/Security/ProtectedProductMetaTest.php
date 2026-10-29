@@ -79,6 +79,8 @@ final class ProtectedProductMetaTest extends TestCase {
 			'source key'         => array( self::SOURCE ),
 			'link key, cased'    => array( '_Merchboard_Creator_ID' ),
 			'source key, padded' => array( ' _MERCHBOARD_CREATOR_LINK_SOURCE ' ),
+			'designer marker'    => array( '_merchboard_designer_token' ),
+			'designer, cased'    => array( '_MerchBoard_Designer_Token ' ),
 		);
 	}
 
@@ -322,7 +324,13 @@ final class ProtectedProductMetaTest extends TestCase {
 	public function test_core_owns_the_unchanged_key_names(): void {
 		self::assertSame( '_merchboard_creator_id', ProtectedProductMeta::LINK_KEY );
 		self::assertSame( '_merchboard_creator_link_source', ProtectedProductMeta::SOURCE_KEY );
-		self::assertSame( array( ProtectedProductMeta::LINK_KEY, ProtectedProductMeta::SOURCE_KEY ), ProtectedProductMeta::KEYS );
+		self::assertSame( '_merchboard_designer_token', ProtectedProductMeta::DESIGNER_KEY );
+		self::assertSame( array( ProtectedProductMeta::LINK_KEY, ProtectedProductMeta::SOURCE_KEY, ProtectedProductMeta::DESIGNER_KEY ), ProtectedProductMeta::KEYS );
+	}
+
+	public function test_the_designer_write_authorizes_exactly_its_product(): void {
+		self::assertNull( $this->guard->run( ProtectedMetaWrite::for_designer( 10 ), fn(): mixed => $this->guard->filter_add( null, 10, '_merchboard_designer_token' ) ) );
+		self::assertFalse( $this->guard->run( ProtectedMetaWrite::for_designer( 10 ), fn(): mixed => $this->guard->filter_add( null, 11, '_merchboard_designer_token' ) ), 'Never another product.' );
 	}
 
 	/**

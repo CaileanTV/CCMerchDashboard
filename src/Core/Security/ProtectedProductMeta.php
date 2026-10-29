@@ -18,8 +18,9 @@ use WeakMap;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Keeps `_merchboard_creator_id` and `_merchboard_creator_link_source` from
- * being added, changed, renamed or deleted through any generic write path.
+ * Keeps `_merchboard_creator_id`, `_merchboard_creator_link_source` and the
+ * designer marker `_merchboard_designer_token` (ADR-080 pkt. 7) from being
+ * added, changed, renamed or deleted through any generic write path.
  *
  * Why: the product → creator link is ownership (ADR-030/033/034). It may only
  * change through Merch Dashboard's approved paths, which validate, authorize
@@ -66,9 +67,16 @@ final class ProtectedProductMeta {
 	public const SOURCE_KEY = '_merchboard_creator_link_source';
 
 	/**
+	 * Product meta key of a designer product's marker (ADR-080 pkt. 7): its
+	 * creation token. Written only through the designer's ProtectedMetaWrite,
+	 * so no other path can turn a legacy product into a designer product.
+	 */
+	public const DESIGNER_KEY = '_merchboard_designer_token';
+
+	/**
 	 * Protected keys (lower case).
 	 */
-	public const KEYS = array( self::LINK_KEY, self::SOURCE_KEY );
+	public const KEYS = array( self::LINK_KEY, self::SOURCE_KEY, self::DESIGNER_KEY );
 
 	/**
 	 * Runs after other plugins' pre-hooks, so a protected write is denied

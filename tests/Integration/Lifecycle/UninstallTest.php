@@ -351,7 +351,7 @@ final class UninstallTest extends IntegrationTestCase {
 			remove_filter( 'delete_post_metadata', $spy, 10 );
 		}
 
-		self::assertSame( array( array( ProtectedProductMeta::LINK_KEY, true ), array( ProtectedProductMeta::SOURCE_KEY, true ) ), $seen, 'WordPress\' meta API (delete_post_meta_by_key), which the guard sees.' );
+		self::assertSame( array( array( ProtectedProductMeta::LINK_KEY, true ), array( ProtectedProductMeta::SOURCE_KEY, true ), array( ProtectedProductMeta::DESIGNER_KEY, true ) ), $seen, 'WordPress\' meta API (delete_post_meta_by_key), which the guard sees.' );
 		self::assertSame( 1000, has_filter( 'delete_post_metadata', array( $guard, 'filter_delete' ) ), 'No hook was removed.' );
 
 		// After the uninstall the opt-in is gone, so the window is closed again
