@@ -133,22 +133,29 @@ Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful
    - **Scopes:** vi bruger kun kataloget (kræver intet scope) og mockup-generatoren (kræver en gyldig token). Vælg færrest muligt. Kræver portalen mindst ét scope, så vælg et skrivebeskyttet, fx `file_library/read`.
    - Vælg **ikke** `orders`, `sync_products` eller `webhooks`. Vi opretter aldrig ordrer eller produkter hos Printful.
 3. **Merch Dashboard:** indsæt token'en i Settings → Produktdesigner → "Printful API token", slå Printful til, og gem.
-4. **Grundprodukter:** under Merch Dashboard → Grundprodukter → "Importér fra Printful" indtaster du Printful-produktets id (tallet i produktets adresse hos Printful) og grundprisen inkl. moms. Produktet bliver en kladde med farver, størrelser og sider (skabelonbillede og printområde). Tjek det, tilføj gerne en farvemaske, så editoren kan farve produktet, og aktivér det.
+4. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Grundprodukter → "Nyt grundprodukt" → "Fra Printfuls katalog" søger du på ord (fx "gildan tee") og/eller kategori og vælger produktet. Sæt flueben ved farver, størrelser og sider (forside og bagside er valgt på forhånd), angiv grundprisen inkl. moms, og vælg "Opret og importér".
+   - Kladden oprettes straks. I baggrunden (et par minutter) renderer Printful produktet uden design i hver valgt farve og én gang med en farvet markør pr. side. Vi tager ét rent foto pr. farve og side og måler printområdet der, hvor markøren lander. Designeren viser altid produktets eget foto i den valgte farve; Printfuls skabelongrafik bruges ikke længere.
+   - Tjek hvert printområde, og aktivér så grundproduktet. Fejler importen, står årsagen, det afviste kald og Printfuls egen besked på grundproduktet sammen med "Prøv igen", og du får en notifikation. "Vis leverandørens svar" viser Printfuls svar om produktet (uden token) til fejlfinding.
+   - Printful henter vores gennemsigtige fil og markørfiler fra `wp-content/plugins/merchboard/assets/designer/`. Sitet skal derfor kunne nås fra internettet.
+   - Et afvist kald (401/403) betyder, at token'en mangler adgang til butikken eller er udløbet; lav en ny med adgang til butikken fra pkt. 1.
    - Når et design på et Printful-grundprodukt sendes til godkendelse, laver Printful mockups (det tager typisk under et minut). Indtil da viser Designs creatorens egne mockups og kan ikke godkende. Fejler Printful, bruges creatorens mockups, og du får en mail.
    - Printful henter printfilen fra en kortlivet adresse på sitet. Det virker derfor kun på et site, Printful kan nå (devpage eller produktion), ikke på Local.
 5. **Begrænsninger:** 120 kald pr. minut og 2–10 mockup-tasks pr. minut. Vi venter selv ved 429.
 
-**Gelato** (ADR-082: katalog og mockups via Gelato-skabeloner):
+**Gelato** (ADR-082: katalog og mockups via én Gelato-skabelon pr. grundprodukt som "render-motor"):
 1. **Butik:** opret en konto på gelato.com og en **ren API-butik** uden tilknyttet salgskanal (ikke Shopify eller Etsy), så produkterne aldrig publiceres. Notér butikkens id (`storeId`).
 2. **API-nøgle:** gå til Developer → API Keys i Gelato-dashboardet, opret en nøgle, og kopiér den med det samme (den kan ikke ses igen). Nøglen giver adgang til ordrer, så den skal opbevares sikkert. Vi bruger den kun til kataloget og til skabelon-flowet.
-3. **Skabelon pr. grundprodukt:** under Templates laver du en skabelon på det Gelato-produkt, du vil tilbyde, med mockups.
-   - Tilføj et **billedlag pr. side** med et entydigt navn, fx `front` og `back`. Navnet bruges som "image placeholder" i API'et.
-   - Gem, og kopiér skabelonens **Template ID**.
+3. **Skabelon pr. grundprodukt:** Gelato renderer kun produkter ud fra en skabelon. Under Templates laver du én skabelon af det katalogprodukt, du vil tilbyde:
+   - vælg de farver og størrelser, creators må vælge imellem;
+   - tilføj et **billedfelt pr. side** (fx forside og bagside);
+   - designet i skabelonen er ligegyldigt og vises aldrig: vi erstatter det altid med en tom fil og senere med creatorernes printfiler;
+   - gem, og kopiér skabelonens **Template ID** fra dens adresse.
 4. **Merch Dashboard:** indsæt nøglen i Settings → Produktdesigner → "Gelato API key" og butiks-id'et i "Gelato store id", slå Gelato til, og gem.
-5. **Grundprodukter:** under Merch Dashboard → Grundprodukter → "Importér fra Gelato" indtaster du skabelonens Template ID og grundprisen inkl. moms. Skabelonen bliver en kladde med farver og størrelser fra varianterne og én side pr. billedlag med printstørrelsen i mm.
-   - Gelato giver ingen farvekoder og intet skabelonbillede pr. side. Sæt farvekoderne, flyt printområdet ind på produktet (skabelonens forhåndsvisning er baggrund på alle sider), eller læg dine egne lag/PSD på, og aktivér så produktet.
-   - Farver og størrelser skal hedde det samme som i skabelonen; ellers kan vi ikke finde skabelonvarianten, og mockups fejler.
-6. **Mockups:** hver indsendelse opretter et produkt i Gelato-butikken med én variant pr. valgt farve og printfilerne i billedlagene. Når Gelato har lavet billederne (typisk 1–2 minutter, vi venter højst 20), bliver de designets mockups på første side; de øvrige sider beholder creatorens mockups. Imens kan designet ikke godkendes. Fejler det, bruges creatorens mockups, og du får en mail. Produkterne bliver liggende i Gelato-butikken.
+5. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Grundprodukter → "Nyt grundprodukt" → "Fra Gelatos katalog" vælger du produktets katalog (fx T-shirts), indtaster skabelonens Template ID og vælger "Hent". Sæt flueben ved farver, størrelser og sider, angiv grundprisen inkl. moms, og vælg "Opret og importér".
+   - Farver og størrelser tages fra katalogets attributter i hver variants `productUid` (ikke fra skabelonens egne navne), og varianterne genkendes på deres id. Omdøbning i skabelonen gør derfor intet.
+   - I baggrunden opretter vi to skjulte produkter fra skabelonen: et med en tom fil i hvert billedfelt (ét rent foto pr. farve og side) og et med en farvet markør pr. side. Vi måler printområdet og finder ud af, hvilket af Gelatos billeder der viser hvilken side. Farvekoderne måles på de rene fotos. Når produkterne er aktive (typisk 1–2 minutter), er grundproduktet klar.
+   - Tjek printområder og farvekoder, og aktivér så grundproduktet. Fejl, "Prøv igen" og "Vis leverandørens svar" virker som for Printful.
+6. **Mockups:** hver indsendelse opretter et produkt i Gelato-butikken med én variant pr. valgt farve og printfilerne i billedfelterne. Når Gelato har lavet billederne (typisk 1–2 minutter, vi venter højst 20), bliver de designets mockups pr. side og farve; et grundprodukt importeret før review 30.15 får dem kun på første side. Imens kan designet ikke godkendes. Fejler det, bruges creatorens mockups, og du får en mail. Produkterne bliver liggende i Gelato-butikken (også importens to).
 
 **Begge:** runtime-test kræver, at sitet kan nås fra internettet (devpage), fordi Printful og Gelato henter printfilen via en URL. Local kan ikke nås udefra.
 
@@ -169,6 +176,8 @@ Planen (ADR-080–082):
   - arkitekturtest.
 - **Printful:** mockup-generator med kortlivet signeret URL til printfilen.
 - **Gelato:** katalog og mockups via en Gelato-skabelon pr. grundprodukt (produkt oprettes i en ren API-butik hos Gelato).
+- **Katalogimport (review 30.15):** `CatalogImport` (jobbet `merchboard_designer_import`, en lås pr. grundprodukt) med `PrintfulCatalog`/`GelatoCatalog` som `CatalogRenderer`. `ImageProbe` (PHP-udvidelsen GD) sammenligner det tomme og markør-renderingen og finder printområdet som afgrænsningsboksen for markørens farvetone. De statiske filer ligger i `assets/designer/` (`blank.png`, `marker-1.png` … `marker-6.png`). Fremdriften ligger i `import_state`/`import_data` (migration 38).
+- **Baggrund pr. farve (review 30.15):** en side kan have et foto pr. farve (lagnøglen `background:<farve>`); designeren og mockups bruger farvens foto og farver ikke masken.
 
 ## Permissions
 - Admin: `merchboard_manage_designer`.
@@ -179,6 +188,7 @@ Planen (ADR-080–082):
 - Kopper vises fladt (ingen perspektiv eller kurve).
 - Printful kan kun testes med en offentlig URL (devpage).
 - Gelato-mockups kræver en skabelon i Gelatos dashboard pr. grundprodukt, og designs samler sig som produkter i Gelato-butikken.
+- Katalogimporten er eksperimentel: Printfuls og Gelatos svar er taget fra deres API-dokumentation og ikke verificeret mod de rigtige API'er. Den kræver GD på serveren og et site, leverandørerne kan nå. En side, hvis markør ikke kan ses på fotoene (fx en etiket), udelades.
 - Ordrer produceres manuelt.
 
 ## Future improvements

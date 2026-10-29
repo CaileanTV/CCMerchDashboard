@@ -59,9 +59,11 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 - Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
 - **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
 
-**Printful, fra trin 30.12:** Settings → Produktdesigner har feltet "Printful API token" (krypteret, kan fjernes) og opsætningsvejledningen. Grundprodukter har "Importér fra Printful" (produkt-id og grundpris), når Printful er slået til. Designs viser, om mockups kommer fra Printful, stadig laves eller fejlede.
+**Printful, fra trin 30.12:** Settings → Produktdesigner har feltet "Printful API token" (krypteret, kan fjernes) og opsætningsvejledningen. Designs viser, om mockups kommer fra Printful, stadig laves eller fejlede.
 
-**Gelato, fra trin 30.13:** Settings → Produktdesigner har felterne "Gelato API key" (krypteret, kan fjernes) og "Gelato store id" og opsætningsvejledningen. Grundprodukter har "Importér fra Gelato" (skabelon-id og grundpris), når Gelato er slået til. Designs viser mockup-tilstanden som for Printful.
+**Gelato, fra trin 30.13:** Settings → Produktdesigner har felterne "Gelato API key" (krypteret, kan fjernes) og "Gelato store id" og opsætningsvejledningen. Designs viser mockup-tilstanden som for Printful.
+
+**Katalogimport, fra review 30.15 (eksperimentel):** "Nyt grundprodukt" har kilderne "Eget grundprodukt", "Fra Printfuls katalog" (søg på ord og kategori, vælg produktet) og "Fra Gelatos katalog" (vælg katalog, indtast skabelon-id), når leverandøren er slået til. Derefter vælger admin farver, størrelser og sider og grundpris og vælger "Opret og importér". Kladden oprettes straks; listen viser "importerer…" eller "import fejlet". Grundproduktet viser importens tilstand, ved fejl årsagen, kaldet og leverandørens besked med "Prøv igen", og "Vis leverandørens svar" (uden nøgler). Mens importen kører, kan grundproduktet ikke aktiveres eller slettes. Hver side kan også have en **baggrund pr. farve** (upload pr. farve under siden). De gamle felter "Importér fra Printful/Gelato" er fjernet.
 
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 

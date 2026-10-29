@@ -21,6 +21,11 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Settings med faner:** Merch Dashboard → Settings er delt i fanerne Generelt, Salg og udbetalinger, Alerts og Produktdesigner. Efter gem kommer man tilbage til samme fane.
 - **Produktdesigner, creatorens Produkter:** sektionen Produkter viser "Dine designs": designer-produkter i butikken (pris og link), til godkendelse (ny eller ændring), afvist med admins note og taget ud af butikken, med en knap til designeren.
 - **Produktdesigner, Gelato:** Gelato-API-nøgle (krypteret), butiks-id og opsætningsvejledning under Settings → Produktdesigner, "Importér fra Gelato" på Grundprodukter (en Gelato-skabelon bliver en kladde med farver, størrelser og en side pr. billedfelt) og mockups fra Gelato, når et design på et Gelato-grundprodukt sendes til godkendelse: der oprettes et produkt fra skabelonen i Gelato-butikken, og dets billeder bliver designets mockups. Fejler Gelato, bruges mockups fra creatorens browser, og admin får besked.
+- **Produktdesigner, grundprodukter fra kataloget (eksperimentel, schema-version 38):** "Nyt grundprodukt" kan vælge produktet direkte i Printfuls katalog (søgning på ord og kategori) eller i et Gelato-katalog med én skabelon som render-motor. Farver, størrelser og sider vælges med flueben. Leverandøren renderer produktet uden design i hver farve og med en markør pr. side i baggrunden; printområdet måles automatisk, og designeren viser ét rent foto pr. farve (ny baggrund pr. farve på hver side). Gelatos farver og størrelser kommer fra kataloget, farvekoderne måles, og Gelato-mockups placeres pr. side. En fejlet import viser årsag, kald og leverandørens besked med "Prøv igen", og admin får notifikationen "Grundprodukt kunne ikke importeres"; "Vis leverandørens svar" hjælper med fejlfinding. Kræver PHP-udvidelsen GD.
+
+### Changed
+
+- **Produktdesigner:** "Importér fra Printful" (produkt-id) og "Importér fra Gelato" (skabelon-id med skabelonens forhåndsvisning som baggrund) er erstattet af katalogvalget. Printfuls layout-skabeloner bruges ikke længere.
 
 ## [1.4.0] - 2026-10-28
 
