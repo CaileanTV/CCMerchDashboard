@@ -14,10 +14,18 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\ProductDesigner\Admin\CampaignActions;
+use MerchBoard\Modules\ProductDesigner\Admin\CampaignsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
+use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignRepository;
+use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignService;
+use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsSection;
+use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerCampaignSource;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,7 +37,8 @@ defined( 'ABSPATH' ) || exit;
  * foundation: the switches on the settings screen and the creator cleanup;
  * 30.3 the price source of the settlement (always registered, also with the
  * designer switched off, so a designer product never falls back to the
- * share model); the following steps add base products, the designer, approval and the
+ * share model); 30.4 the company's campaigns (Merch Dashboard → Campaigns
+ * and the campaign of each designer line at the sale); the following steps add base products, the designer, approval and the
  * providers.
  */
 final class ProductDesignerModule implements Module {
@@ -50,6 +59,11 @@ final class ProductDesignerModule implements Module {
 		$container->set( DesignerSettings::class, static fn( Container $c ): DesignerSettings => new DesignerSettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
+		$container->set( CampaignRepository::class, static fn( Container $c ): CampaignRepository => new CampaignRepository( $c->get( wpdb::class ) ) );
+		$container->set( CampaignService::class, static fn( Container $c ): CampaignService => new CampaignService( $c->get( CampaignRepository::class ), $c->get( CreatorCodeRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( DesignerCampaignSource::class, static fn( Container $c ): DesignerCampaignSource => new DesignerCampaigns( $c->get( CampaignRepository::class ), new SalesLinePricingRepository( $c->get( wpdb::class ) ) ) );
+		$container->set( CampaignsPage::class, static fn( Container $c ): CampaignsPage => new CampaignsPage( $c->get( CampaignRepository::class ) ) );
+		$container->set( CampaignActions::class, static fn( Container $c ): CampaignActions => new CampaignActions( $c->get( CampaignService::class ), $c->get( Logger::class ) ) );
 		$container->set( DesignerCreatorCleanup::class, static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup( $c->get( wpdb::class ) ) );
 
 		// Deleting a creator (ADR-076): designer data that never reached the shop.
@@ -63,9 +77,17 @@ final class ProductDesignerModule implements Module {
 
 		( new DesignerSettingsSection() )->register();
 		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( CampaignsPage::class )->add_menu();
+			},
+			CampaignsPage::PRIORITY
+		);
+		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( DesignerSettingsActions::class )->register();
+				$container->get( CampaignActions::class )->register();
 			}
 		);
 	}

@@ -175,6 +175,9 @@ final class AuditLogFormatter {
 			AuditAction::CategoryProposalApproved => __( 'Category proposal approved', 'merchboard' ),
 			AuditAction::CategoryProposalRejected => __( 'Category proposal rejected', 'merchboard' ),
 			AuditAction::CategoryProposalWithdrawn => __( 'Creator withdrew a category proposal', 'merchboard' ),
+			AuditAction::DesignerCampaignCreated => __( 'Campaign created', 'merchboard' ),
+			AuditAction::DesignerCampaignChanged => __( 'Campaign changed', 'merchboard' ),
+			AuditAction::DesignerCampaignDeleted => __( 'Campaign deleted', 'merchboard' ),
 		};
 	}
 
@@ -341,6 +344,20 @@ final class AuditLogFormatter {
 			case 'decision_note':
 				/* translators: %s: the administrator's note. */
 				return self::text( __( 'Note to the creator: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'campaign_id':
+				/* translators: %s: campaign id. */
+				return self::text( __( 'Campaign: #%s', 'merchboard' ), self::scalar( $value ) );
+			case 'campaign_name':
+				/* translators: %s: campaign name. */
+				return self::text( __( 'Campaign name: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'period':
+				/* translators: %s: start and end in UTC. */
+				return self::text( __( 'Period (UTC): %s', 'merchboard' ), self::scalar( $value ) );
+			case 'coupon_codes':
+				/* translators: %s: comma-separated coupon codes. */
+				return self::text( __( 'Coupon codes: %s', 'merchboard' ), '' === $value ? '—' : self::scalar( $value ) );
+			case 'sale_prices':
+				return true === $value ? esc_html__( 'Covers sale prices: yes', 'merchboard' ) : esc_html__( 'Covers sale prices: no', 'merchboard' );
 			case 'minutes':
 				/* translators: %d: minutes. */
 				return esc_html( sprintf( __( 'Session length: %d minutes', 'merchboard' ), is_int( $value ) ? $value : 0 ) );

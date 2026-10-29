@@ -4492,6 +4492,13 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Pris nu (`DesignerPrices`):** grundprisen afrundes op til butikkens præcision, og fortjenesten (procent eller beløb) afrundes halvt væk fra nul. Listeprisen er summen, så den aldrig er under grundpris + fortjeneste. Et designer-produkt, der ikke kan prissættes, falder aldrig tilbage til andelsmodellen; dets fortjeneste er ukendt. Det gælder også et salg i en anden valuta end grundprisens.
 - **Rabatkoden:** rabat pr. stk. = fortjeneste × den pris, WooCommerce giver rabat på / listeprisen. Det er præcis fortjenesten ved listeprisen inkl. moms og fortjenesten ekskl. moms, når butikken regner ekskl. moms, så virksomheden beholder grundprisen.
 
+**Statusnote 2026-10-29 (trin 30.4, kampagner implementeret, testet automatisk):** pkt. 9 er implementeret med disse præciseringer:
+- **Tidspunkt:** "aktiv ved snapshottet" betyder, at kampagnen kørte på ordrelinjens snapshot-tidspunkt (købet). Kuponkoderne og linjens subtotal læses, når linjen registreres i ledgeren, under ordrens lås. Er ordrens kupondata ukendt, mens en kampagne kunne dække en designer-linje, fejler synkroniseringen og skriver intet (aldrig "ingen kupon").
+- **Tilbudspris:** linjens subtotal før kuponer inkl. moms er mindst ét butikstrin under antal × listepris. Kun virksomheden sætter tilbudspriser eller ændrer en linjes pris, så begge er virksomhedens egen rabat.
+- **Én afgørelse pr. ordrelinje:** kampagnen gemmes ved linjens første designer-række i `merchboard_sales_tax.campaign_id`, og alle senere rækker (refunderinger, tilbageførsler, korrektioner og senere cyklusser) bruger den gemte. En refundering tager derfor præcis det tilbage, salget gav, og en ændret kampagne ændrer aldrig en linje, der allerede er i ledgeren. Dækker flere kampagner, vinder den ældste (laveste id).
+- **Kun virksomhedens koder:** en creators egen rabatkode (enhver registrering) afvises som kampagnekode. En kampagne, der dækker salg, kan ikke slettes, kun afsluttes.
+- **Rettelse af 30.3:** WooCommerce-modulet opretter sine hooks (snapshot, rabatkode og synkronisering), før ProductDesigner-modulet registrerer `DesignerPriceSource` og `DesignerCampaignSource`. Kilderne slås derfor op, når de bruges (`ContainerDesignerSources`), så et designer-produkt aldrig prissættes efter andelsmodellen på grund af modulernes rækkefølge.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

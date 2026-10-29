@@ -85,6 +85,22 @@ final class WooCommerceOrderSnapshotReaderTest extends TestCase {
 		self::assertSame( array( 13, 20, 25, 'Hoodie – L', 1, SalesAmount::parse( '40' ), 3 ), self::line( $lines[13] ), 'A variation line gets its parent product\'s creator.' );
 	}
 
+	public function test_the_subtotal_before_coupons_incl_tax_is_read_and_unknown_values_stay_unknown(): void {
+		$sale              = WcOrderStorage::item( 11, 20, 0, 'T-shirt', 1, '144', array() );
+		$sale['total_tax'] = '36';
+		// Sold at 200 incl. VAT before a coupon of 20.
+		$sale['subtotal']     = '160';
+		$sale['subtotal_tax'] = '40';
+		$odd                  = WcOrderStorage::item( 12, 20, 0, 'Mug', 1, '10' );
+		$odd['subtotal']      = 10.5;
+		WcOrderStorage::add_order( 7, 'processing', array( $sale, $odd ) );
+
+		$lines = $this->reader->read( 7 )?->lines_by_item() ?? array();
+
+		self::assertSame( SalesAmount::parse( '200' ), $lines[11]->subtotal );
+		self::assertNull( $lines[12]->subtotal, 'A float is unknown, never guessed.' );
+	}
+
 	public function test_refunds_are_queried_directly_and_the_deleted_refund_is_left_out(): void {
 		WcOrderStorage::add_order( 7, 'completed', array( WcOrderStorage::item( 11, 20, 0, 'T-shirt', 2, '100' ) ) );
 		WcOrderStorage::add_refund( 100, 7, array( WcOrderStorage::item( 900, 20, 0, 'T-shirt', -1, '-50.25', array( '_refunded_item_id' => '11' ) ) ) );

@@ -187,6 +187,28 @@ final class RealizedProfitTest extends TestCase {
 	}
 
 	/**
+	 * In the company's own campaign (stored with the row's tax) the discount
+	 * is shared: paid 180 → profit 45, and its refund takes back the same.
+	 */
+	public function test_a_designer_row_in_a_campaign_shares_the_discount(): void {
+		$campaign = array(
+			'tax'         => SalesAmount::parse( '36' ),
+			'currency'    => 'DKK',
+			'campaign_id' => 3,
+		);
+		$refund   = array(
+			'tax'         => SalesAmount::parse( '-36' ),
+			'currency'    => 'DKK',
+			'campaign_id' => 3,
+		);
+
+		self::assertSame( '45.0000', SalesAmount::format( (int) RealizedProfit::for_entry( self::entry( SalesEntryType::Sale, 1, '144.0000' ), self::designer( false ), $campaign ) ) );
+		self::assertSame( '36.0000', SalesAmount::format( (int) RealizedPayout::for_entry( self::entry( SalesEntryType::Sale, 1, '144.0000' ), self::designer( false ), $campaign ) ) );
+		self::assertSame( '-45.0000', SalesAmount::format( (int) RealizedProfit::for_entry( self::entry( SalesEntryType::Refund, -1, '-144.0000', 7001 ), self::designer( false ), $refund ) ) );
+		self::assertSame( '30.0000', SalesAmount::format( (int) RealizedProfit::for_entry( self::entry( SalesEntryType::Sale, 1, '144.0000' ), self::designer( false ), array_merge( $campaign, array( 'campaign_id' => null ) ) ) ), 'No campaign: the company keeps the base price.' );
+	}
+
+	/**
 	 * A designer snapshot of order line 501: base 150, profit 50.
 	 *
 	 * @param bool|null $vat_registered VAT status.

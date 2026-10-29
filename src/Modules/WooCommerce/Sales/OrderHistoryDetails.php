@@ -42,7 +42,7 @@ final class OrderHistoryDetails {
 	 *
 	 * @param int $order_id Order id.
 	 * @return array{
-	 *     events: list<array{entry: SalesEntry, tax: array{tax: int, currency: string}|null, diagnosis: ProfitDiagnosis}>,
+	 *     events: list<array{entry: SalesEntry, tax: array{tax: int, currency: string, campaign_id?: int|null}|null, diagnosis: ProfitDiagnosis}>,
 	 *     lines: array<int, array{snapshot: SalesLinePricing|null, invalid_snapshot: bool, events: int, net: int}>,
 	 *     cycles: SalesCycleState
 	 * }|null

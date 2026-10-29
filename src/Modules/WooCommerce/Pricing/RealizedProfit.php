@@ -38,8 +38,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * A designer product's row (snapshot `designer`, ADR-080 pkt. 8) follows
  * DesignerRowAmounts: the company keeps the base price, and a discount is
- * taken from the creator's profit, never below 0. The same amount is stored
- * with the row when it is written, which the SQL sums read.
+ * taken from the creator's profit, never below 0; in the company's own
+ * campaign (`campaign_id` stored with the row's tax) the discount is shared.
+ * The same amount is stored with the row when it is written, which the SQL
+ * sums read.
  */
 final class RealizedProfit {
 
@@ -50,9 +52,9 @@ final class RealizedProfit {
 	 * rows carry the original order line, so they match its snapshot. The
 	 * row's amount is the line amount, so the quantity is never multiplied.
 	 *
-	 * @param SalesEntry                             $entry    Ledger row.
-	 * @param SalesLinePricing|null                  $snapshot The row's order line snapshot, null when there is none.
-	 * @param array{tax: int, currency: string}|null $tax      The row's stored actual tax, null when none.
+	 * @param SalesEntry                                                     $entry    Ledger row.
+	 * @param SalesLinePricing|null                                          $snapshot The row's order line snapshot, null when there is none.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax      The row's stored actual tax, null when none.
 	 */
 	public static function for_entry( SalesEntry $entry, ?SalesLinePricing $snapshot, ?array $tax ): ?int {
 		$sale = self::sale_units( $entry, $tax );
@@ -70,7 +72,7 @@ final class RealizedProfit {
 		}
 
 		if ( $snapshot->is_designer() ) {
-			return DesignerRowAmounts::profit( $entry->quantity, $sale, $snapshot->base_units, $snapshot->profit_units, false, $snapshot->price_decimals );
+			return DesignerRowAmounts::profit( $entry->quantity, $sale, $snapshot->base_units, $snapshot->profit_units, isset( $tax['campaign_id'] ), $snapshot->price_decimals );
 		}
 
 		return CreatorShare::profit( $sale, $snapshot->share_bps, $snapshot->price_decimals );
@@ -80,8 +82,8 @@ final class RealizedProfit {
 	 * The row's sale price incl. VAT in units (net + actual tax), signed;
 	 * null when the row has no stored tax in its currency.
 	 *
-	 * @param SalesEntry                             $entry Ledger row.
-	 * @param array{tax: int, currency: string}|null $tax   The row's stored actual tax.
+	 * @param SalesEntry                                                     $entry Ledger row.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax   The row's stored actual tax.
 	 */
 	public static function sale_units( SalesEntry $entry, ?array $tax ): ?int {
 		if ( null === $tax || $tax['currency'] !== $entry->currency ) {

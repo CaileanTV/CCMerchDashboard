@@ -59,6 +59,14 @@ class WC_Order_Item_Product {
 		return 'edit' === $context ? ( $this->data['total_tax'] ?? '0' ) : 999.99;
 	}
 
+	public function get_subtotal( $context = 'view' ) {
+		return 'edit' === $context ? ( $this->data['subtotal'] ?? $this->data['total'] ) : 999.99;
+	}
+
+	public function get_subtotal_tax( $context = 'view' ) {
+		return 'edit' === $context ? ( $this->data['subtotal_tax'] ?? $this->data['total_tax'] ?? '0' ) : 999.99;
+	}
+
 	public function get_meta( $key = '', $single = true, $context = 'view' ) {
 		return 'edit' === $context ? ( $this->data['meta'][ $key ] ?? '' ) : '999';
 	}

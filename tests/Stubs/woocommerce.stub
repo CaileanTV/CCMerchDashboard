@@ -354,6 +354,22 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	public function get_total_tax( $context = 'view' ) {}
 
 	/**
+	 * The line's subtotal before coupons, excl. tax.
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|int|float
+	 */
+	public function get_subtotal( $context = 'view' ) {}
+
+	/**
+	 * The line's tax before coupons.
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string|int|float
+	 */
+	public function get_subtotal_tax( $context = 'view' ) {}
+
+	/**
 	 * @return WC_Product|false|null
 	 */
 	public function get_product() {}

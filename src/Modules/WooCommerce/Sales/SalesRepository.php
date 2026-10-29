@@ -299,7 +299,7 @@ final class SalesRepository {
 
 						// The row's actual tax (ADR-048), only for a row written now.
 						if ( isset( $write->taxes[ $entry->event_key ] ) ) {
-							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ] );
+							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ], $write->campaigns );
 						}
 					} else {
 						$skipped_entries[] = $entry->event_key;
@@ -487,20 +487,21 @@ final class SalesRepository {
 	 * guard as the row. Requires the order's lock; used by write() right after
 	 * the row was inserted. Append-only: an existing tax row is kept.
 	 *
-	 * @param SalesEntry $entry The row just inserted.
-	 * @param int        $tax   Its signed tax in 1/10000 units.
+	 * @param SalesEntry      $entry     The row just inserted.
+	 * @param int             $tax       Its signed tax in 1/10000 units.
+	 * @param array<int, int> $campaigns Campaign id by order item of the order's covered designer lines.
 	 * @throws DatabaseException When the lock is not held or the tax cannot be stored.
 	 */
-	private function insert_tax( SalesEntry $entry, int $tax ): void {
+	private function insert_tax( SalesEntry $entry, int $tax, array $campaigns ): void {
 		$this->assert_locked( $entry->order_id );
 
 		$wpdb    = $this->wpdb;
 		$table   = $this->table( Tables::SALES_TAX );
-		$amounts = $this->designer_amounts( $entry, $tax );
-		// A designer product's row (ADR-080 pkt. 8) stores the creator's profit and payout with its tax; '' is stored as NULL.
+		$amounts = $this->designer_amounts( $entry, $tax, $campaigns );
+		// A designer product's row (ADR-080 pkt. 8–9) stores the creator's profit, payout and campaign with its tax; '' and 0 are stored as NULL.
 		$inserted = $this->guarded_insert(
 			$wpdb->prepare(
-				"INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at, designer_profit, designer_payout) SELECT %s, %d, %d, %s, %s, %s, NULLIF( %s, '' ), NULLIF( %s, '' ) FROM DUAL WHERE CONNECTION_ID() = %d",
+				"INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at, designer_profit, designer_payout, campaign_id) SELECT %s, %d, %d, %s, %s, %s, NULLIF( %s, '' ), NULLIF( %s, '' ), NULLIF( %d, 0 ) FROM DUAL WHERE CONNECTION_ID() = %d",
 				$table,
 				$entry->event_key,
 				$entry->order_id,
@@ -510,6 +511,7 @@ final class SalesRepository {
 				current_time( 'mysql', true ),
 				$amounts[0] ?? '',
 				$amounts[1] ?? '',
+				$amounts[2] ?? 0,
 				$this->lock_connection
 			),
 			$entry->order_id
@@ -526,12 +528,19 @@ final class SalesRepository {
 	 * other row (legacy rows keep the share model, ADR-049). The payout is
 	 * null when the creator's VAT status was unknown.
 	 *
-	 * @param SalesEntry $entry Row written now.
-	 * @param int        $tax   The row's actual tax in units.
-	 * @return array{0: string, 1: string|null}|null Profit and payout as decimals.
-	 * @throws DatabaseException When the snapshot cannot be read.
+	 * The campaign (pkt. 9) is decided once per order line: the line's first
+	 * designer row takes it from the synchronization, and every later row
+	 * (refunds, reversals, corrections, a later cycle) keeps the stored one,
+	 * so a refund takes back exactly what the sale gave and a changed
+	 * campaign never changes a line already in the ledger.
+	 *
+	 * @param SalesEntry      $entry     Row written now.
+	 * @param int             $tax       The row's actual tax in units.
+	 * @param array<int, int> $campaigns Campaign id by order item, for a line's first row.
+	 * @return array{0: string, 1: string|null, 2: int|null}|null Profit and payout as decimals, and the campaign.
+	 * @throws DatabaseException When the snapshot or the line's earlier rows cannot be read.
 	 */
-	private function designer_amounts( SalesEntry $entry, int $tax ): ?array {
+	private function designer_amounts( SalesEntry $entry, int $tax, array $campaigns ): ?array {
 		$snapshot = ( new SalesLinePricingRepository( $this->wpdb ) )->find( $entry->order_item_id );
 
 		if ( null === $snapshot
@@ -544,12 +553,22 @@ final class SalesRepository {
 			return null;
 		}
 
-		$net    = SalesAmount::parse( $entry->net_amount );
-		$paid   = SalesAmount::add( $net, $tax );
-		$profit = DesignerRowAmounts::profit( $entry->quantity, $paid, $snapshot->base_units, $snapshot->profit_units, false, $snapshot->price_decimals );
-		$payout = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $snapshot->price_decimals );
+		$wpdb    = $this->wpdb;
+		$earlier = $wpdb->get_row( $wpdb->prepare( 'SELECT campaign_id FROM %i WHERE order_item_id = %d AND order_id = %d AND designer_profit IS NOT NULL LIMIT 1', $this->table( Tables::SALES_TAX ), $entry->order_item_id, $entry->order_id ), ARRAY_A );
 
-		return array( SalesAmount::format( $profit ), null === $payout ? null : SalesAmount::format( $payout ) );
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the campaign of the order line.', array( 'order_id' => $entry->order_id ) );
+		}
+
+		$campaign = is_array( $earlier )
+			? ( null === $earlier['campaign_id'] ? null : (int) $earlier['campaign_id'] )
+			: ( $campaigns[ $entry->order_item_id ] ?? null );
+		$net      = SalesAmount::parse( $entry->net_amount );
+		$paid     = SalesAmount::add( $net, $tax );
+		$profit   = DesignerRowAmounts::profit( $entry->quantity, $paid, $snapshot->base_units, $snapshot->profit_units, null !== $campaign, $snapshot->price_decimals );
+		$payout   = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $snapshot->price_decimals );
+
+		return array( SalesAmount::format( $profit ), null === $payout ? null : SalesAmount::format( $payout ), $campaign );
 	}
 
 	/**

@@ -21,6 +21,20 @@ final class DesignerException extends RuntimeException {
 
 	public const NOT_AUTHORIZED = 'not_authorized';
 
+	public const CAMPAIGN_NAME = 'campaign_name';
+
+	public const CAMPAIGN_PERIOD = 'campaign_period';
+
+	public const CAMPAIGN_SCOPE = 'campaign_scope';
+
+	public const CAMPAIGN_CODES = 'campaign_codes';
+
+	public const CAMPAIGN_CREATOR_CODE = 'campaign_creator_code';
+
+	public const CAMPAIGN_UNKNOWN = 'campaign_unknown';
+
+	public const CAMPAIGN_IN_USE = 'campaign_in_use';
+
 	/**
 	 * Constructor.
 	 *

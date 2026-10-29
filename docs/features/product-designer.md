@@ -73,6 +73,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 
 - **Sådan regnes det (trin 30.3):** fortjenesten og udbetalingen beregnes én gang, når salget registreres, og gemmes ved salgsrækken. Saldo, statistik og afregningsbilag bruger de gemte beløb. En refundering af hele stk. tager præcis deres fortjeneste tilbage. En refundering kun af et beløb ændrer intet for creatoren.
 - **Priser:** grundprisen afrundes aldrig ned, og kundens pris er altid grundpris + fortjeneste.
+- **Kampagner (trin 30.4):** admin opretter dem under Merch Dashboard → Kampagner. En ordrelinje er i en kampagne, når kampagnen kørte, da linjen blev købt, og ordren brugte en af kampagnens kuponkoder, eller kampagnen omfatter tilbudspriser, og linjen blev solgt under sin pris før kuponer. Afgørelsen tages én gang pr. ordrelinje: en senere refundering bruger samme kampagne, også hvis kampagnen er ændret. En creators egen rabatkode kan ikke være kampagnekode.
 
 ## Legacy-produkter berøres ikke (ADR-080 pkt. 7)
 - **Hvilke produkter pluginet skriver til:** kun produkter, som designeren selv har oprettet. Det skal kunne ses på tre måder:

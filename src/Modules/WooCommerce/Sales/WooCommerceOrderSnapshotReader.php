@@ -14,6 +14,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use OverflowException;
 use WC_DateTime;
 use WC_Order;
 use WC_Order_Item_Coupon;
@@ -163,7 +164,8 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			WooCommerceAmount::quantity( $item->get_quantity( 'edit' ) ),
 			WooCommerceAmount::units( $item->get_total( 'edit' ) ),
 			$product_id > 0 ? $this->links->creator_id( $product_id ) : null,
-			self::tax( $item )
+			self::tax( $item ),
+			self::subtotal( $item )
 		);
 	}
 
@@ -231,6 +233,23 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 		try {
 			return WooCommerceAmount::units( '' === $tax ? '0' : $tax );
 		} catch ( InvalidArgumentException ) {
+			return null;
+		}
+	}
+
+	/**
+	 * The line's subtotal before coupons incl. tax in 1/10000 units, or null
+	 * when WooCommerce' values are not decimal strings.
+	 *
+	 * @param WC_Order_Item_Product $item Line.
+	 */
+	private static function subtotal( WC_Order_Item_Product $item ): ?int {
+		$net = $item->get_subtotal( 'edit' );
+		$tax = $item->get_subtotal_tax( 'edit' );
+
+		try {
+			return SalesAmount::add( WooCommerceAmount::units( '' === $net ? '0' : $net ), WooCommerceAmount::units( '' === $tax ? '0' : $tax ) );
+		} catch ( InvalidArgumentException | OverflowException ) {
 			return null;
 		}
 	}

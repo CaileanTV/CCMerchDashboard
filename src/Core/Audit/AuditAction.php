@@ -634,4 +634,19 @@ enum AuditAction: string {
 	 * The creator withdrew a category proposal (ADR-077). Context: proposal_id, proposal_field.
 	 */
 	case CategoryProposalWithdrawn = 'category_proposal_withdrawn';
+
+	/**
+	 * An administrator created one of the company's campaigns (ADR-080 pkt. 9). Context: campaign_id, campaign_name, starts_at, ends_at, coupon_codes, sale_prices.
+	 */
+	case DesignerCampaignCreated = 'designer_campaign_created';
+
+	/**
+	 * An administrator changed a campaign (ADR-080 pkt. 9); rows already in the ledger keep their amounts. Context: campaign_id, campaign_name, starts_at, ends_at, coupon_codes, sale_prices, previous.
+	 */
+	case DesignerCampaignChanged = 'designer_campaign_changed';
+
+	/**
+	 * An administrator deleted an unused campaign (ADR-080 pkt. 9). Context: campaign_id, campaign_name.
+	 */
+	case DesignerCampaignDeleted = 'designer_campaign_deleted';
 }

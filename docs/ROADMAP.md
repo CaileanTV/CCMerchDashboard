@@ -798,7 +798,11 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - designer-grene i `RealizedProfit`/`RealizedPayout` og SQL-summerne;
   - bilagsrækker med den effektive andel og rabatkodens designer-gren;
   - tests af grundprisreglen (alle rabatter, refunderinger, afrunding) og SQL = PHP.
-- **30.4 Kampagner:** admin-siden og kampagnen ved salget (`campaign_id`, delt rabat).
+- **30.4 Kampagner 🔄 (implementeret 2026-10-29, testet automatisk):**
+  - admin-siden Merch Dashboard → Kampagner med audit; en creators egen rabatkode afvises som kampagnekode, og en brugt kampagne kan ikke slettes;
+  - kampagnen afgøres ved ordrelinjens første designer-række: kuponkode eller tilbudspris, inden for kampagnens periode ved købet; senere rækker af linjen beholder den;
+  - ordrelæseren læser linjens subtotal før kuponer, så en tilbudspris kan genkendes;
+  - rettelse fra 30.3: designerens pris- og kampagnekilder slås op, når de bruges (`ContainerDesignerSources`), fordi WooCommerce-modulets hooks oprettes, før ProductDesigner-modulet registrerer dem.
 - **30.5 Legacy-værn og writer:** markør, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtest.
 - **30.6 Grundprodukter i admin:** sider, farver, størrelser, grundpris, skabeloneditor og kliparts.
 - **30.7 PSD-import** (ag-psd i admin).

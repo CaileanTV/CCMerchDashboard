@@ -17,6 +17,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessment;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionView;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\OrderExclusionAssessor;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerCampaignSource;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
@@ -108,6 +109,7 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 	 * @param Logger                      $logger     Technical log.
 	 * @param Closure|null                $clock      Processing time; UTC now by default.
 	 * @param OrderExclusionAssessor|null $exclusions Creator code exclusion (ADR-068); null assesses nothing.
+	 * @param DesignerCampaignSource|null $campaigns  The company's campaigns of designer lines (ADR-080 pkt. 9); null: none.
 	 */
 	public function __construct(
 		private SalesRepository $repository,
@@ -116,7 +118,8 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 		private SalesFailureMarker $marker,
 		private Logger $logger,
 		?Closure $clock = null,
-		private ?OrderExclusionAssessor $exclusions = null
+		private ?OrderExclusionAssessor $exclusions = null,
+		private ?DesignerCampaignSource $campaigns = null
 	) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 	}
@@ -482,13 +485,16 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 							return null;
 						}
 
+						// ADR-080 pkt. 9: decided under the lock, stored with a line's first designer row.
+						$planned = null === $this->campaigns ? $result->write : $result->write->with_campaigns( $this->campaigns->campaigns( $order ) );
+
 						if ( null !== $observe ) {
-							$observe( $result->write );
+							$observe( $planned );
 						}
 
-						$written = $result->write;
+						$written = $planned;
 
-						return $result->write;
+						return $planned;
 					}
 				);
 

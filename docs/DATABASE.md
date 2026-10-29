@@ -333,7 +333,7 @@ Den faktiske WooCommerce-moms pr. sales ledger-række. Den er en følgetabel til
 | `currency` | `char(3) NOT NULL` | Rækkens valuta |
 | `created_at` | `datetime NOT NULL` | UTC |
 | `designer_profit`, `designer_payout` | `decimal(19,4) NULL` | Kun designer-rækker (schema-version 36, ADR-080 pkt. 8): creatorens fortjeneste og udbetaling med fortegn, beregnet én gang, når rækken skrives. Udbetalingen er NULL ved ukendt momsstatus. NULL for alle andre rækker |
-| `campaign_id` | `bigint(20) unsigned NULL` | Virksomhedens kampagne, der dækker rækken (sættes fra trin 30.4) |
+| `campaign_id` | `bigint(20) unsigned NULL` | Virksomhedens kampagne, der dækker en designer-række (trin 30.4, ADR-080 pkt. 9). Afgøres ved ordrelinjens første designer-række; alle senere rækker af linjen får samme værdi |
 
 Indexes: `PRIMARY KEY (event_key)`, `KEY order_id (order_id)`.
 
