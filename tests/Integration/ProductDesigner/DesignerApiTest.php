@@ -1,6 +1,6 @@
 <?php
 /**
- * The creator's designer API on a real database (step 30.8).
+ * The creator's designer API on a real database (steps 30.8 and 30.9).
  *
  * @package MerchBoard
  */
@@ -24,6 +24,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerDashboardSection;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -39,6 +40,8 @@ use WP_REST_Response;
  * only the current creator's products and files, and only a design that
  * passes the whitelist (approved fonts, own uploads and cliparts, the base
  * product's sides) is stored. The price follows the base price and profit.
+ * A draft is submitted with the files its browser rendered (exact sizes, the
+ * used sides and chosen colours), waits once and can be withdrawn.
  */
 final class DesignerApiTest extends IntegrationTestCase {
 
@@ -98,9 +101,9 @@ final class DesignerApiTest extends IntegrationTestCase {
 					'y'         => '100',
 					'width'     => '200',
 					'height'    => '200',
-					'width_mm'  => '300',
-					'height_mm' => '400',
-					'dpi'       => '300',
+					'width_mm'  => '30',
+					'height_mm' => '40',
+					'dpi'       => '100',
 					'remove'    => false,
 					'clear'     => array(),
 					'uploads'   => array( 'color' => AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'color.png' ) ),
@@ -120,7 +123,8 @@ final class DesignerApiTest extends IntegrationTestCase {
 			$this->service( CreatorContext::class ),
 			$bases,
 			$products,
-			new DesignerDrafts( $products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 ),
+			new DesignerDrafts( $products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $files ),
+			new DesignerSubmissions( $products, $bases, $files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 ),
 			$assets,
 			$files,
 			new CreatorUploads( $assets, $files ),
@@ -164,7 +168,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		self::assertSame( array( 'Organic tee' ), array_column( $overview['bases'], 'name' ), 'Only active base products.' );
 		self::assertSame( array( 'front' ), array_column( $overview['bases'][0]['views'], 'key' ) );
-		self::assertSame( array( 3543, 4724 ), array( $overview['bases'][0]['views'][0]['print_width'], $overview['bases'][0]['views'][0]['print_height'] ) );
+		self::assertSame( array( 118, 157 ), array( $overview['bases'][0]['views'][0]['print_width'], $overview['bases'][0]['views'][0]['print_height'] ), '30 × 40 mm at 100 dpi.' );
 		self::assertSame( array( 'Star' ), array_column( $overview['cliparts'], 'name' ) );
 		self::assertSame( array( 'Roboto' ), array_column( $overview['fonts'], 'family' ) );
 
@@ -259,6 +263,135 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		wp_set_current_user( $this->create_user( 'not-a-creator' ) );
 		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/me/designer' )->get_status() );
+	}
+
+	public function test_a_creator_submits_a_draft_with_its_rendered_files_and_can_withdraw_it(): void {
+		$notified = array();
+		$listener = static function ( mixed ...$args ) use ( &$notified ): void {
+			$notified[] = $args;
+		};
+		add_action( 'merchboard_notify', $listener, 1, 4 );
+
+		wp_set_current_user( $this->user );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+
+		self::assertSame( array( 400, 'design_empty' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ), 'Nothing on the product yet.' );
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::text(), array_merge( self::rect(), array( 'hidden' => true ) ) ) ) )->get_status() );
+		self::assertSame( array( 400, 'submission_files' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ), 'No files yet.' );
+
+		$refused = array(
+			array( 'print:front', AlertImagesTest::png( 100, 157 ) ),
+			array( 'print:back', AlertImagesTest::png( 118, 157 ) ),
+			array( 'mockup:front:green', AlertImagesTest::png( 400, 400 ) ),
+			array( 'mockup:front:black', AlertImagesTest::png( 118, 157 ) ),
+			array( 'cover', AlertImagesTest::png( 400, 400 ) ),
+		);
+
+		foreach ( $refused as [ $slot, $png ] ) {
+			self::assertSame( array( 400, 'submission_file' ), $this->refusal( $this->attach( $product, $slot, $png ) ), $slot );
+		}
+
+		self::assertSame( array(), $this->stored_files(), 'A refused file is not kept.' );
+		self::assertSame( 200, $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 400, 400 ) )->get_status() );
+		self::assertSame( array( 400, 'submission_files' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ), 'A mockup per chosen colour.' );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:sand', AlertImagesTest::png( 400, 400 ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:sand', AlertImagesTest::png( 400, 400 ) )->get_status(), 'A file can be sent again.' );
+		self::assertCount( 3, $this->stored_files(), 'The replaced file is deleted.' );
+
+		wp_set_current_user( $this->other );
+		self::assertSame( 404, $this->call( 'POST', $route . '/submit' )->get_status() );
+		self::assertSame( 404, $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) )->get_status() );
+		wp_set_current_user( $this->user );
+
+		$submitted = $this->data( $this->call( 'POST', $route . '/submit' ) );
+		self::assertNull( $submitted['draft'] );
+		self::assertSame( array( 1, 'Stream tee', '179.9400' ), array( $submitted['pending']['number'], $submitted['pending']['title'], $submitted['pending']['price'] ) );
+		self::assertSame( array( 'pending' ), array_column( $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) )['products'], 'status' ) );
+		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ) );
+		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'PUT', $route, $this->draft( array( self::text() ) ) ) ), 'A waiting design cannot be changed.' );
+		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'DELETE', $route ) ), 'Nor deleted.' );
+
+		$queue = ( new DesignerProductRepository( $this->wpdb ) )->pending_queue();
+		self::assertSame( array( array( $product, 'Stream tee', '179.9400', null ) ), array_map( static fn( array $row ): array => array( (int) $row['design_product_id'], $row['title'], $row['quoted_price'], $row['live_version_id'] ), $queue ) );
+
+		self::assertSame(
+			array(
+				array( 'admin_designer_submitted', 'Stream tee', '179.9400', 'DKK' ),
+				array( 'designer_submitted', 'Stream tee', '179.9400', 'DKK' ),
+			),
+			array_map( static fn( array $call ): array => array( $call[0], $call[2]['title'], $call[2]['price'], $call[2]['currency'] ), $notified ),
+			'The administrator and the creator are notified once.'
+		);
+
+		$withdrawn = $this->data( $this->call( 'POST', $route . '/withdraw' ) );
+		self::assertNull( $withdrawn['pending'] );
+		self::assertSame( array( 2, 'Stream tee' ), array( $withdrawn['draft']['number'], $withdrawn['draft']['title'] ) );
+		self::assertSame( array( 400, 'not_pending' ), $this->refusal( $this->call( 'POST', $route . '/withdraw' ) ) );
+		self::assertSame( array( 'withdrawn', 'draft' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT status FROM %i ORDER BY number', $this->table( Tables::DESIGNER_VERSIONS ) ) ) );
+
+		// The files went with the new draft: it can be sent again as it is.
+		self::assertSame( 200, $this->call( 'POST', $route . '/submit' )->get_status() );
+		self::assertSame( 200, $this->call( 'POST', $route . '/withdraw' )->get_status() );
+
+		$audit = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT action FROM %i WHERE action LIKE %s OR action LIKE %s ORDER BY id', $this->table( Tables::AUDIT_LOG ), 'designer_product_%', 'designer_version_%' ) );
+		self::assertSame( array( 'designer_product_created', 'designer_version_submitted', 'designer_version_withdrawn', 'designer_version_submitted', 'designer_version_withdrawn' ), $audit );
+
+		// A changed draft needs new files; deleting the product deletes them.
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::rect() ) ) )->get_status() );
+		self::assertSame( array( 400, 'submission_files' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ) );
+		self::assertSame( array(), $this->data( $this->call( 'DELETE', $route ) )['products'], 'Never approved: it can be deleted.' );
+		self::assertSame( array(), $this->stored_files() );
+
+		remove_action( 'merchboard_notify', $listener, 1 );
+	}
+
+	public function test_a_draft_on_a_changed_base_product_must_be_saved_again(): void {
+		wp_set_current_user( $this->user );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		self::assertSame( 200, $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $this->draft( array( self::text() ) ) )->get_status() );
+		$this->execute( 'UPDATE %i SET version = version + 1 WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), $this->base );
+
+		self::assertSame( array( 400, 'design_stale' ), $this->refusal( $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) ) ) );
+		self::assertSame( array( 400, 'design_stale' ), $this->refusal( $this->call( 'POST', '/merchboard/v1/me/designer/products/' . $product . '/submit' ) ) );
+		self::assertSame( array(), $this->stored_files() );
+	}
+
+	/**
+	 * Sends a file of the submission as the current user.
+	 *
+	 * @param int    $product Designer product.
+	 * @param string $slot    Slot.
+	 * @param string $png     Bytes.
+	 */
+	private function attach( int $product, string $slot, string $png ): WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', '/merchboard/v1/me/designer/products/' . $product . '/files' );
+		$request->set_body_params( array( 'slot' => $slot ) );
+		$request->set_file_params( array( 'file' => AlertImagesTest::upload( $png, 'render.png' ) ) );
+
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * Status and reason of a refusal.
+	 *
+	 * @param WP_REST_Response $response Answer.
+	 * @return array{0: int, 1: mixed}
+	 */
+	private function refusal( WP_REST_Response $response ): array {
+		return array( $response->get_status(), $response->get_data()['data']['reason'] ?? null );
+	}
+
+	/**
+	 * The images in the designer's folder other than template layers and cliparts.
+	 *
+	 * @return list<string>
+	 */
+	private function stored_files(): array {
+		$known = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT file FROM %i', $this->table( Tables::DESIGNER_ASSETS ) ) );
+
+		return array_values( array_diff( array_map( static fn( mixed $path ): string => basename( (string) $path ), (array) glob( DesignerFiles::directory() . '/*.{png,jpg,webp}', GLOB_BRACE ) ), $known ) );
 	}
 
 	/**

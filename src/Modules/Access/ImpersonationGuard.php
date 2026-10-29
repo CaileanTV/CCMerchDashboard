@@ -25,7 +25,8 @@ defined( 'ABSPATH' ) || exit;
  * - connecting a chatbot platform and accepting YouTube's terms (OAuth and
  *   the acceptance are bound to the logged-in user);
  * - new secrets shown once: an alert API key, a webhook signing secret
- *   (also a JSON webhook created without the receiver's secret).
+ *   (also a JSON webhook created without the receiver's secret);
+ * - submitting a design for approval and its files (ADR-080 pkt. 1).
  *
  * Routes match without regard to case, like WordPress' own routing (27.4
  * review). A creator-facing request (`/merchboard/v1/me…`) is marked for the
@@ -52,6 +53,8 @@ final class ImpersonationGuard {
 		array( 'POST', '#^/merchboard/v1/me/alerts/api/webhooks/\d+/secret$#i' ),
 		// The creator's own e-mail choices (ADR-079 pkt. 8).
 		array( 'PATCH', '#^/merchboard/v1/me/notification-preferences$#i' ),
+		// Submitting a design and its files (ADR-080 pkt. 1, step 30.9); drafts stay editable.
+		array( 'POST', '#^/merchboard/v1/me/designer/products/\d+/(submit|files)$#i' ),
 	);
 
 	/**

@@ -15,10 +15,7 @@ use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Notifications\Email\EmailStyle;
 use MerchBoard\Modules\Notifications\Notification;
-use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationRepository;
-use MerchBoard\Modules\Notifications\NotificationSender;
-use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Modules\Notifications\NotificationsException;
 use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
@@ -29,7 +26,8 @@ defined( 'ABSPATH' ) || exit;
  * The administrator's notification page (ADR-079 pkt. 8,
  * `merchboard_manage_settings`):
  *
- * - every type grouped by recipient and topic, with "E-mail" and
+ * - every type of the catalog grouped by recipient and topic (a module's
+ *   own types are on its page, NotificationTypes), with "E-mail" and
  *   "Dashboard" switches (important types are marked) and "Show example";
  * - the example: the e-mail with sample data in a sandboxed iframe (no
  *   scripts, no same origin), its text part, the dashboard line and "Send a
@@ -56,15 +54,13 @@ final class NotificationsAdminPage {
 	 * Constructor.
 	 *
 	 * @param NotificationTypes      $types         Catalog.
-	 * @param NotificationSettings   $settings      Administrator's choices.
-	 * @param NotificationSender     $sender        Renders the examples.
+	 * @param NotificationSwitches   $switches      Switches and examples.
 	 * @param NotificationRepository $notifications The log.
 	 * @param CreatorRepository      $creators      Creator names in the log.
 	 */
 	public function __construct(
 		private NotificationTypes $types,
-		private NotificationSettings $settings,
-		private NotificationSender $sender,
+		private NotificationSwitches $switches,
 		private NotificationRepository $notifications,
 		private CreatorRepository $creators
 	) {
@@ -142,8 +138,8 @@ final class NotificationsAdminPage {
 			echo '<div class="notice notice-' . esc_attr( $message[1] ) . ' is-dismissible"><p>' . esc_html( $message[0] ) . '</p></div>';
 		}
 
-		if ( null !== $type ) {
-			$this->render_preview( $type );
+		if ( null !== $type && isset( NotificationTypes::groups()[ $type->group ] ) ) {
+			$this->switches->preview( $type, self::url(), NotificationsAdminActions::ACTION );
 		} else {
 			$this->render_settings();
 			$this->render_log();
@@ -173,7 +169,7 @@ final class NotificationsAdminPage {
 		wp_nonce_field( NotificationsAdminActions::ACTION );
 
 		foreach ( NotificationTypes::groups() as $group => $name ) {
-			$types = array_filter( $this->types->all(), static fn( NotificationType $type ): bool => $type->group === $group );
+			$types = $this->types->in_groups( array( $group ) );
 
 			if ( array() === $types ) {
 				continue;
@@ -181,89 +177,10 @@ final class NotificationsAdminPage {
 
 			$admin = 'admin' === $group;
 
-			echo '<h2>' . esc_html( $admin ? $name : sprintf( /* translators: %s: group name. */ __( 'To the creator: %s', 'merchboard' ), $name ) ) . '</h2>';
-			echo '<table class="widefat striped merchboard-notifications__table"><thead><tr>';
-			echo '<th scope="col">' . esc_html__( 'Notification', 'merchboard' ) . '</th>';
-			echo '<th scope="col" style="width:7em">' . esc_html__( 'E-mail', 'merchboard' ) . '</th>';
-
-			if ( ! $admin ) {
-				echo '<th scope="col" style="width:7em">' . esc_html__( 'Dashboard', 'merchboard' ) . '</th>';
-			}
-
-			echo '<th scope="col" style="width:9em"><span class="screen-reader-text">' . esc_html__( 'Example', 'merchboard' ) . '</span></th>';
-			echo '</tr></thead><tbody>';
-
-			foreach ( $types as $type ) {
-				$this->render_row( $type, $admin );
-			}
-
-			echo '</tbody></table>';
+			$this->switches->table( $admin ? $name : sprintf( /* translators: %s: group name. */ __( 'To the creator: %s', 'merchboard' ), $name ), $types, $admin, self::preview_url( ... ) );
 		}
 
 		submit_button( __( 'Save notification settings', 'merchboard' ) );
-		echo '</form>';
-	}
-
-	/**
-	 * One type with its switches.
-	 *
-	 * @param NotificationType $type  Type.
-	 * @param bool             $admin Whether it is an administrator group.
-	 */
-	private function render_row( NotificationType $type, bool $admin ): void {
-		$id = 'merchboard-notification-' . $type->key;
-
-		echo '<tr>';
-		echo '<td><strong>' . esc_html( $type->label() ) . '</strong>';
-
-		if ( $type->important ) {
-			echo ' <span class="merchboard-notifications__badge" style="display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;background:#f0f0f1;font-size:12px">' . esc_html__( 'Important', 'merchboard' ) . '</span>';
-		}
-
-		echo '<br><span class="description">' . esc_html( $type->description() ) . '</span></td>';
-
-		foreach ( $admin ? array( NotificationSettings::EMAIL ) : array( NotificationSettings::EMAIL, NotificationSettings::DASHBOARD ) as $channel ) {
-			echo '<td><label for="' . esc_attr( $id . '-' . $channel ) . '"><input type="checkbox" id="' . esc_attr( $id . '-' . $channel ) . '" name="' . esc_attr( 'notifications[' . $type->key . '][' . $channel . ']' ) . '" value="1"' . checked( $this->settings->enabled( $type, $channel ), true, false ) . '> ';
-			echo esc_html__( 'On', 'merchboard' ) . '<span class="screen-reader-text"> ' . esc_html( $type->label() ) . '</span></label></td>';
-		}
-
-		echo '<td><a href="' . esc_url( self::preview_url( $type->key ) ) . '">' . esc_html__( 'Show example', 'merchboard' ) . '</a></td>';
-		echo '</tr>';
-	}
-
-	/**
-	 * A type's example: the e-mail, its text part and the dashboard line.
-	 *
-	 * @param NotificationType $type Type.
-	 */
-	private function render_preview( NotificationType $type ): void {
-		$mail = $this->sender->compose( $type, $type->sample, NotificationType::ADMIN === $type->audience ? '' : __( 'Nova', 'merchboard' ) );
-
-		echo '<p><a href="' . esc_url( self::url() ) . '">&larr; ' . esc_html__( 'All notifications', 'merchboard' ) . '</a></p>';
-		echo '<h2>' . esc_html( $type->label() ) . '</h2>';
-		echo '<p class="description">' . esc_html( $type->description() ) . ' ' . esc_html__( 'The example uses sample data.', 'merchboard' ) . '</p>';
-
-		if ( $type->has_dashboard() ) {
-			echo '<h3>' . esc_html__( 'At the bell in the dashboard', 'merchboard' ) . '</h3>';
-			echo '<p style="max-width:40rem;padding:10px 14px;background:#fff;border:1px solid #dcdcde;border-radius:6px">' . esc_html( $type->text( new NotificationData( $type->sample ) ) ) . '</p>';
-		}
-
-		echo '<h3>' . esc_html__( 'E-mail', 'merchboard' ) . '</h3>';
-		/* translators: %s: e-mail subject. */
-		echo '<p><strong>' . esc_html( sprintf( __( 'Subject: %s', 'merchboard' ), $mail['subject'] ) ) . '</strong></p>';
-		// A sandbox without permissions: no scripts, no forms, no access to this page.
-		echo '<iframe title="' . esc_attr__( 'E-mail example', 'merchboard' ) . '" sandbox="" srcdoc="' . esc_attr( $mail['html'] ) . '" style="width:100%;max-width:680px;height:760px;border:1px solid #dcdcde;border-radius:6px;background:#fff"></iframe>';
-
-		echo '<details style="margin:12px 0"><summary>' . esc_html__( 'Text version', 'merchboard' ) . '</summary><pre style="white-space:pre-wrap;max-width:680px">' . esc_html( $mail['text'] ) . '</pre></details>';
-
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( NotificationsAdminActions::ACTION ) . '">';
-		echo '<input type="hidden" name="do" value="test">';
-		echo '<input type="hidden" name="type" value="' . esc_attr( $type->key ) . '">';
-		wp_nonce_field( NotificationsAdminActions::ACTION );
-		submit_button( __( 'Send a test e-mail to me', 'merchboard' ), 'secondary', 'submit', false );
-		/* translators: %s: the administrator's e-mail address. */
-		echo ' <span class="description">' . esc_html( sprintf( __( 'To %s, with the sample data.', 'merchboard' ), wp_get_current_user()->user_email ) ) . '</span>';
 		echo '</form>';
 	}
 

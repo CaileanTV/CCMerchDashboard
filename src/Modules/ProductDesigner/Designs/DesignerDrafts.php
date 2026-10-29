@@ -19,6 +19,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
 
@@ -31,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  * creator is the one the caller resolved through CreatorContext (ADR-007);
  * every product is looked up with the creator, so another creator's product
  * is "not found". An administrator viewing as a creator (ADR-075) may edit
- * drafts; submitting follows in 30.9 and is refused to them there.
+ * drafts; submitting (DesignerSubmissions, step 30.9) is refused to them.
  *
  * A draft holds the title, description, chosen colours and sizes, the
  * profit (a percent of the base price or a fixed amount, incl. VAT, never
@@ -52,13 +53,15 @@ class DesignerDrafts {
 	 * @param AuditTrail                $audit       Audit trail.
 	 * @param Transaction               $transaction Transaction.
 	 * @param int                       $decimals    Store price decimals.
+	 * @param DesignerFiles             $files       Files (a deleted product's submission files).
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
 		private BaseProductRepository $bases,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private int $decimals
+		private int $decimals,
+		private DesignerFiles $files
 	) {
 	}
 
@@ -161,15 +164,24 @@ class DesignerDrafts {
 			self::refuse( DesignerException::DESIGN_UNKNOWN );
 		}
 
-		$this->transaction->run(
-			function () use ( $creator, $product ): void {
+		$files = $this->transaction->run(
+			function () use ( $creator, $product ): array {
+				$files = $this->products->files_of( $product );
+
 				if ( ! $this->products->delete_draft_product( $product ) ) {
 					throw new DesignerException( DesignerException::DESIGN_NOT_DRAFT );
 				}
 
 				$this->audit->record( AuditAction::DesignerProductDeleted, $creator->id, array( 'design_product_id' => $product ) );
+
+				return $files;
 			}
 		);
+
+		// The submission files of its drafts and withdrawn versions (step 30.9), once the rows are gone.
+		foreach ( $files as $name ) {
+			$this->files->delete( $name );
+		}
 	}
 
 	/**

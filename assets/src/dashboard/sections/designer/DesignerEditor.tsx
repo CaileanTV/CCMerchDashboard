@@ -3,11 +3,14 @@
  * for every colour, a canvas per side on the base product's mockup
  * template, and the tools Product, Text, Shapes, Cliparts, Upload and
  * Layers, with undo and redo, zoom and a saved draft. Fabric is loaded only
- * when the editor opens (fabric-stage.ts). Submitting for approval follows
- * in step 30.9.
+ * when the editor opens (fabric-stage.ts). "Send for approval" (step 30.9)
+ * saves the draft, renders and sends its files (submission.ts) and submits;
+ * a waiting version can be withdrawn and edited again. During "view as
+ * creator" the administrator cannot send.
  */
 import {
 	useCallback,
+	useContext,
 	useEffect,
 	useId,
 	useMemo,
@@ -22,6 +25,7 @@ import {
 	designerAssetUrl,
 	saveDesignerDraft,
 	uploadDesignerImage,
+	withdrawDesign,
 } from '../../api/designer';
 import type {
 	DesignerAsset,
@@ -30,6 +34,7 @@ import type {
 	DesignerProduct,
 	ProfitKind,
 } from '../../api/designer';
+import { ConfigContext } from '../../app/config-context';
 import { Alert } from '../../components/Alert';
 import { Button } from '../../components/Button';
 import { useHistory } from '../alerts/history';
@@ -51,6 +56,7 @@ import type {
 	TextObject,
 } from './design-model';
 import type { FabricStage } from './fabric-stage';
+import { submissionSize, submitWithFiles } from './submission';
 import { TemplateLayers } from './TemplateLayers';
 
 type Tab = 'product' | 'text' | 'shapes' | 'cliparts' | 'uploads' | 'layers';
@@ -66,6 +72,8 @@ export interface DesignerEditorProps {
 	readonly locale: string;
 	readonly onBack: () => void;
 	readonly onOverview: ( overview: DesignerOverview ) => void;
+	/** The product after a submission or withdrawal. */
+	readonly onProduct: ( product: DesignerProduct ) => void;
 }
 
 /**
@@ -115,6 +123,10 @@ export function DesignerEditor( props: DesignerEditorProps ) {
 	);
 	const draft = product.draft;
 
+	if ( base !== undefined && draft === null && product.pending !== null ) {
+		return <Waiting { ...props } />;
+	}
+
 	if ( base === undefined || draft === null ) {
 		return (
 			<>
@@ -145,6 +157,7 @@ export function DesignerEditor( props: DesignerEditorProps ) {
 			locale={ locale }
 			onBack={ onBack }
 			onOverview={ onOverview }
+			onProduct={ props.onProduct }
 		/>
 	);
 }
@@ -160,7 +173,11 @@ interface EditorProps extends DesignerEditorProps {
  * @param props Props.
  */
 function Editor( props: EditorProps ) {
-	const { overview, product, base, locale, onBack, onOverview } = props;
+	const { overview, product, base, locale, onBack, onOverview, onProduct } =
+		props;
+	const impersonating = useContext( ConfigContext )?.impersonating === true;
+	const [ confirming, setConfirming ] = useState( false );
+	const [ sending, setSending ] = useState( false );
 	const draft = product.draft!;
 	const history = useHistory< DesignDocument >( props.design );
 	const [ title, setTitle ] = useState( draft.title );
@@ -500,7 +517,8 @@ function Editor( props: EditorProps ) {
 		}
 	};
 
-	const save = async () => {
+	/** Saves the draft; the saved product, or null after a message. */
+	const persist = async (): Promise< DesignerProduct | null > => {
 		setSaving( true );
 		setMessage( null );
 		const result = await saveDesignerDraft( product.id, {
@@ -520,14 +538,105 @@ function Editor( props: EditorProps ) {
 				text: saveError( result.error.reason ),
 			} );
 
-			return;
+			return null;
 		}
 
 		setSaved( { design, price: result.data.draft?.price ?? null } );
-		setMessage( {
-			tone: 'success',
-			text: __( 'Your design is saved.', 'merchboard' ),
-		} );
+
+		return result.data;
+	};
+
+	const save = async () => {
+		if ( ( await persist() ) !== null ) {
+			setMessage( {
+				tone: 'success',
+				text: __( 'Your design is saved.', 'merchboard' ),
+			} );
+		}
+	};
+
+	/** A file as a `data:` URL: loaded already, or fetched now. */
+	const imageOf = async ( id: number ): Promise< string | null > => {
+		const known = images.get( id );
+
+		if ( known !== undefined ) {
+			return known;
+		}
+
+		const asset = allAssets.find( ( candidate ) => candidate.id === id );
+
+		return designerAssetUrl( { id, mime: asset?.mime ?? 'image/png' } );
+	};
+
+	/** Waits for the fonts of a design's texts. */
+	const fontsOf = async ( shown: DesignDocument ): Promise< void > => {
+		const families = new Set(
+			Object.values( shown.sides )
+				.flat()
+				.flatMap( ( object ) =>
+					object.type === 'text' ? [ object.font ] : []
+				)
+		);
+
+		await Promise.all(
+			Array.from( families ).map( ( family ) => {
+				const font = fonts.find(
+					( candidate ) => candidate.family === family
+				);
+
+				return font === undefined
+					? Promise.resolve()
+					: loadFont( font.family, font.weights );
+			} )
+		);
+	};
+
+	const send = async () => {
+		setConfirming( false );
+		setSending( true );
+		const stored = await persist();
+		const storedDraft = stored?.draft ?? null;
+
+		if ( storedDraft === null ) {
+			setSending( false );
+
+			return;
+		}
+
+		const result = await submitWithFiles(
+			{
+				product: product.id,
+				base,
+				design: storedDraft.design,
+				colors: storedDraft.colors,
+				image: imageOf,
+				fonts: () => fontsOf( storedDraft.design ),
+			},
+			( done, total ) =>
+				setMessage( {
+					tone: 'info',
+					text: sprintf(
+						/* translators: 1: files sent, 2: all files. */ __(
+							'Preparing your design for approval: %1$d of %2$d files sent…',
+							'merchboard'
+						),
+						done,
+						total
+					),
+				} )
+		);
+		setSending( false );
+
+		if ( ! result.ok ) {
+			setMessage( {
+				tone: 'danger',
+				text: submitError( result.reason ),
+			} );
+
+			return;
+		}
+
+		onProduct( result.product );
 	};
 
 	const onKeyDown = ( event: KeyboardEvent< HTMLDivElement > ) => {
@@ -639,7 +748,57 @@ function Editor( props: EditorProps ) {
 						? __( 'Save draft', 'merchboard' )
 						: __( 'Saved', 'merchboard' ) }
 				</Button>
+				{ impersonating ? null : (
+					<Button
+						variant="secondary"
+						onClick={ () => setConfirming( true ) }
+						isBusy={ sending }
+						disabled={ sending || saving || confirming }
+					>
+						{ __( 'Send for approval', 'merchboard' ) }
+					</Button>
+				) }
 			</div>
+
+			{ impersonating ? (
+				<Alert tone="info">
+					{ __(
+						'You view the dashboard as the creator: you can edit the draft, but only the creator can send it for approval.',
+						'merchboard'
+					) }
+				</Alert>
+			) : null }
+
+			{ confirming ? (
+				<Alert tone="info">
+					{ sprintf(
+						/* translators: 1: number of files, 2: the customer's price. */ __(
+							'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval; until then it cannot be changed, but you can withdraw it. Customer price incl. VAT: %2$s.',
+							'merchboard'
+						),
+						submissionSize( design, colors ),
+						price === null
+							? '–'
+							: moneyText(
+									price.toFixed( overview.priceDecimals ),
+									base.currency,
+									locale
+								)
+					) }{ ' ' }
+					<span className="merchboard-designer__actions">
+						<Button size="sm" onClick={ () => void send() }>
+							{ __( 'Send', 'merchboard' ) }
+						</Button>
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={ () => setConfirming( false ) }
+						>
+							{ __( 'Cancel', 'merchboard' ) }
+						</Button>
+					</span>
+				</Alert>
+			) : null }
 
 			{ message === null ? null : (
 				<Alert tone={ message.tone }>{ message.text }</Alert>
@@ -1024,6 +1183,112 @@ function saveError( reason: string | undefined ): string {
 				'merchboard'
 			);
 	}
+}
+
+/**
+ * The message of a refused submission.
+ *
+ * @param reason The server's (or the renderer's) reason.
+ */
+function submitError( reason: string ): string {
+	switch ( reason ) {
+		case 'design_empty':
+			return __(
+				'Add something to your product before you send it.',
+				'merchboard'
+			);
+		case 'design_stale':
+			return __(
+				'The product was changed by us in the meantime. Open your design again and send it.',
+				'merchboard'
+			);
+		case 'submission_pending':
+		case 'design_not_draft':
+			return __(
+				'This product already waits for approval.',
+				'merchboard'
+			);
+		case 'file_too_large':
+			return __(
+				'An image of your design is too large to send. Please contact us.',
+				'merchboard'
+			);
+		case 'render':
+			return __(
+				'Your design could not be drawn in this browser. Please try again, or use another browser.',
+				'merchboard'
+			);
+		default:
+			return __(
+				'Your design could not be sent. Please try again.',
+				'merchboard'
+			);
+	}
+}
+
+/**
+ * A product that waits for approval: what was sent and "Withdraw".
+ *
+ * @param props Props.
+ */
+function Waiting( props: DesignerEditorProps ) {
+	const { product, overview, locale, onBack, onProduct } = props;
+	const pending = product.pending!;
+	const currency =
+		overview.bases.find( ( base ) => base.id === product.baseId )
+			?.currency ?? '';
+	const [ busy, setBusy ] = useState( false );
+	const [ failed, setFailed ] = useState( false );
+
+	const withdraw = async () => {
+		setBusy( true );
+		setFailed( false );
+		const result = await withdrawDesign( product.id );
+		setBusy( false );
+
+		if ( result.ok ) {
+			onProduct( result.data );
+		} else {
+			setFailed( true );
+		}
+	};
+
+	return (
+		<>
+			<Alert tone="info">
+				{ sprintf(
+					/* translators: 1: product title, 2: the customer's price. */ __(
+						'%1$s waits for our approval (customer price incl. VAT: %2$s). We let you know when it has been reviewed. Until then nothing changes in the shop.',
+						'merchboard'
+					),
+					pending.title,
+					pending.price === null
+						? '–'
+						: moneyText( pending.price, currency, locale )
+				) }
+			</Alert>
+			{ failed ? (
+				<Alert tone="danger">
+					{ __(
+						'The design could not be withdrawn. Please try again.',
+						'merchboard'
+					) }
+				</Alert>
+			) : null }
+			<div className="merchboard-designer__actions">
+				<Button variant="secondary" onClick={ onBack }>
+					{ __( 'Back to my designs', 'merchboard' ) }
+				</Button>
+				<Button
+					variant="ghost"
+					onClick={ () => void withdraw() }
+					isBusy={ busy }
+				>
+					{ __( 'Withdraw and edit', 'merchboard' ) }
+				</Button>
+			</div>
+		</>
+	);
 }
 
 interface ProductPanelProps {

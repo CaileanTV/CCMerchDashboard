@@ -24,6 +24,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
 ├── Alerts                     ✅ fase 25, trin 25.5 (WooCommerce, ADR-065/067): fanen "Fonts" (Google Fonts API-nøgle, katalog og godkendte fonte); trin 25.6.3: fanen "Sounds" (lydbibliotek); trin 25.6.10: fanen "Images" (billedbibliotek til tekstfyld); trin 25.8: fanen "Chatbot" (Twitch, fra 25.8.2 også Kick, fra 25.8.4 også YouTube); trin 25.8.5: fanen "YouTube-vilkår" (privatlivspolitik og vilkår); trin 25.9.3: fanen "Ordrelog" (første fane og standard); trin 25.9.4: fanen "Globalt overlay"; trin 25.9.5: fanen "Standard-overlays"; trin 25.9.6: fanen "Creator-siden"; trin 25.10.1: fanen "Import"; trin 25.12.1: fanen "API" (alert-API til creators' egne bots, ADR-073); kræver merchboard_manage_alerts
 ├── Nyheder (News)             ✅ fase 25, trin 25.11 (ADR-072): beskeder til creators ("Hvad er nyt"): skriv, forhåndsvis, udgiv, ret, træk tilbage; set/lukket pr. creator; kræver merchboard_manage_creators
+├── Designs                    🔄 fase 30, trin 30.9 (WooCommerce, ADR-080 pkt. 3): designs, der venter på godkendelse, og fanen "Notifikationer" (designerens notifikationer; kræver også merchboard_manage_settings); kræver merchboard_manage_designer
 ├── Grundprodukter (Base products) 🔄 fase 30, trin 30.6 (WooCommerce, ADR-080 pkt. 2): grundprodukter med grundpris, farver, størrelser og sider (skabelonlag og printområde) samt fanen "Kliparts"; kræver merchboard_manage_designer
 ├── Kampagner (Campaigns)      🔄 fase 30, trin 30.4 (WooCommerce, ADR-080 pkt. 9): virksomhedens egne kampagner for designer-produkter (navn, periode, kuponkoder, tilbudspriser); kræver merchboard_manage_designer
 ├── (Import fra Product Vendors: fase 26, fjernet i trin 27.1 efter kørslen i produktion; se [features/vendor-import.md](features/vendor-import.md))
@@ -57,6 +58,13 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 - **Afgørelse:** "Approve" og "Reject" med en valgfri note til creatoren (højst 500 tegn), og "Approve all from …" pr. creator med flere forslag. POST til admin-post (`CategoryProposalActions`): capability → nonce bundet til forslaget eller creatoren → `CategoryProposals`. Post/Redirect/Get med en hvidlistet besked; tekniske fejl logges.
 - Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
 - **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
+
+### Designs 🔄 (fase 30, trin 30.9, ADR-080 pkt. 3)
+
+Merch Dashboard → **Designs** (`DesignsPage`/`DesignerNotificationActions`, `merchboard_manage_designer`; kun med WooCommerce):
+
+- **Til godkendelse:** de ventende designs, ældste først (indsendt, creator, produkt og version, grundprodukt, nyt produkt eller ændring, kundens pris). Godkend og afvis kommer i 30.10.
+- **Notifikationer** (også `merchboard_manage_settings`): designerens notifikationer med til/fra, eksempel og testmail, som på siden Notifikationer. Siden Notifikationer viser og gemmer ikke designerens typer.
 
 ### Grundprodukter 🔄 (fase 30, trin 30.6, ADR-080 pkt. 2)
 

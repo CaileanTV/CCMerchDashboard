@@ -1,6 +1,7 @@
 /**
- * `/me/designer` (phase 30, step 30.8, ADR-080): the base products, files,
- * fonts and designer products of the creator the server resolves. Every
+ * `/me/designer` (phase 30, steps 30.8–30.9, ADR-080): the base products,
+ * files, fonts and designer products of the creator the server resolves, and
+ * the submission of a draft with the files the browser rendered. Every
  * answer is validated; files are fetched with the session and shown as
  * `data:` URLs (the dashboard's CSP allows only `img-src 'self' data:`).
  */
@@ -103,11 +104,20 @@ export interface DesignerDraft {
 	readonly updatedAt: string;
 }
 
+/** The version waiting for approval. */
+export interface DesignerPending {
+	readonly number: number;
+	readonly title: string;
+	readonly price: string | null;
+	readonly submittedAt: string;
+}
+
 export interface DesignerProduct {
 	readonly id: number;
 	readonly baseId: number;
 	readonly inShop: boolean;
 	readonly draft: DesignerDraft | null;
+	readonly pending: DesignerPending | null;
 }
 
 const isInt = ( value: unknown, min = 0 ): value is number =>
@@ -363,12 +373,19 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 		return null;
 	}
 
+	const pending = parsePending( body.pending );
+
+	if ( pending === undefined ) {
+		return null;
+	}
+
 	if ( body.draft === null ) {
 		return {
 			id: body.id,
 			baseId: body.base_id,
 			inShop: body.in_shop,
 			draft: null,
+			pending,
 		};
 	}
 
@@ -411,6 +428,35 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 			price: draft.price,
 			updatedAt: draft.updated_at,
 		},
+		pending,
+	};
+}
+
+/**
+ * The waiting version: null when none waits, undefined when invalid.
+ *
+ * @param value Response field (missing: none waits).
+ */
+function parsePending( value: unknown ): DesignerPending | null | undefined {
+	if ( value === null || value === undefined ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		! isInt( value.number, 1 ) ||
+		! isString( value.title ) ||
+		( value.price !== null && ! isString( value.price ) ) ||
+		! isString( value.submitted_at )
+	) {
+		return undefined;
+	}
+
+	return {
+		number: value.number,
+		title: value.title,
+		price: value.price,
+		submittedAt: value.submitted_at,
 	};
 }
 
@@ -545,6 +591,59 @@ export function deleteDesignerProduct(
 	return request(
 		{ path: `${ PATH }/products/${ id }`, method: 'DELETE' },
 		parseOverview
+	);
+}
+
+/**
+ * Sends one rendered file of the submission (`print:<side>` or
+ * `mockup:<side>:<colour>`).
+ *
+ * @param id   Designer product.
+ * @param slot Slot.
+ * @param file The rendered image.
+ * @param name File name (its extension matches the type).
+ */
+export function uploadSubmissionFile(
+	id: number,
+	slot: string,
+	file: Blob,
+	name: string
+): Promise< ApiResult< DesignerProduct > > {
+	const body = new FormData();
+	body.append( 'slot', slot );
+	body.append( 'file', file, name );
+
+	return request(
+		{ path: `${ PATH }/products/${ id }/files`, method: 'POST', body },
+		parseProduct
+	);
+}
+
+/**
+ * Sends the draft for approval.
+ *
+ * @param id Designer product.
+ */
+export function submitDesign(
+	id: number
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/submit`, method: 'POST' },
+		parseProduct
+	);
+}
+
+/**
+ * Withdraws the waiting version; a new draft continues it.
+ *
+ * @param id Designer product.
+ */
+export function withdrawDesign(
+	id: number
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/withdraw`, method: 'POST' },
+		parseProduct
 	);
 }
 

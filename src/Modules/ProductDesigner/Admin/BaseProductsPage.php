@@ -129,7 +129,7 @@ final class BaseProductsPage {
 			DesignerException::BASE_CATEGORY        => array( __( 'The category is not a product category.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_COLORS          => array( __( 'Enter one colour per line: a name and a colour code such as #1a2b3c. Names must differ.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_SIZES           => array( __( 'Sizes must differ and have at most 20 characters.', 'merchboard' ), 'error' ),
-			DesignerException::BASE_VIEW            => array( __( 'Check the sides: each needs a unique name, a background or colour mask, a print area inside the template and a print size of 1–2000 mm at 72–600 dpi.', 'merchboard' ), 'error' ),
+			DesignerException::BASE_VIEW            => array( __( 'Check the sides: each needs a unique name, a background or colour mask, a print area inside the template and a print size of 1–2000 mm at 72–600 dpi that gives a print file of at most 8000 × 8000 pixels.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_LAYER_SIZE      => array( __( 'All layers of a side must have the same size in pixels.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_INCOMPLETE      => array( __( 'An active base product needs at least one colour, one size and one side.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_UNKNOWN         => array( __( 'The base product no longer exists.', 'merchboard' ), 'error' ),

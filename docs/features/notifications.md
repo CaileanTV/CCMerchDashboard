@@ -79,6 +79,7 @@ Merch Dashboard → **Notifikationer** (`merchboard_manage_settings`):
 - **Skabeloner:** `templates/emails/` med inline-CSS og tekstversion. Farver, logo, skrift, sidefod og afsender fra WooCommerce' e-mailindstillinger, når WooCommerce er aktivt.
 
 ## Relevant files
+- Moduler kan lægge egne typer til via filteret `merchboard_notification_types` i en egen gruppe (fase 30: produktdesigneren, `DesignerNotifications`). Siden Notifikationer viser og gemmer kun katalogets grupper; modulets egen admin-side har typernes til/fra (`Admin/NotificationSwitches` genbruges).
 - `src/Modules/Notifications/` (`NotificationsModule`, `NotificationTypes` og `Catalog/CreatorTypes`/`AdminTypes`, `NotificationSettings`, `NotificationPreferences`, `Notifier`, `NotificationSender`, `NotificationRepository`, `Email/EmailRenderer`, `Email/EmailStyle`, `Email/Mailer`)
 - `src/Modules/Notifications/Admin/` (`NotificationsAdminPage`, `NotificationsAdminActions`)
 - `templates/emails/layout.php`

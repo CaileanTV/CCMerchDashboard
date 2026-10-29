@@ -149,6 +149,7 @@ export function DesignerSection() {
 					load();
 				} }
 				onOverview={ setOverview }
+				onProduct={ setOpen }
 			/>
 		);
 	}

@@ -4,9 +4,18 @@
  * the design document of one side and reports changes; the document stays
  * the truth (design-model.ts). Coordinates are print file pixels: the
  * viewport transform places the print file on the template's print area,
- * and a clip path hides what lies outside it.
+ * and a clip path hides what lies outside it. renderPrintFile() draws a
+ * side's print file for the submission (step 30.9) with the same objects.
  */
-import { Canvas, Ellipse, FabricImage, Rect, Textbox, Triangle } from 'fabric';
+import {
+	Canvas,
+	Ellipse,
+	FabricImage,
+	Rect,
+	StaticCanvas,
+	Textbox,
+	Triangle,
+} from 'fabric';
 import type { FabricObject } from 'fabric';
 
 import type { DesignObject, TextObject } from './design-model';
@@ -215,6 +224,49 @@ export class FabricStage {
 		// The canvas already shows this state: the next render() is a no-op.
 		this.rendered = JSON.stringify( next ) + '|' + this.imagesKey;
 		this.callbacks.onChange( next );
+	}
+}
+
+/**
+ * A side's print file: its visible objects at their print file pixels on a
+ * transparent canvas of the print file's size (step 30.9, ADR-080 pkt. 5).
+ *
+ * @param objects Objects, bottom first.
+ * @param images  `data:` URL by asset id (every image of the objects).
+ * @param width   Print file width (px).
+ * @param height  Print file height (px).
+ */
+export async function renderPrintFile(
+	objects: readonly DesignObject[],
+	images: ReadonlyMap< number, string >,
+	width: number,
+	height: number
+): Promise< HTMLCanvasElement > {
+	const canvas = new StaticCanvas( undefined, {
+		width,
+		height,
+		enableRetinaScaling: false,
+		renderOnAddRemove: false,
+	} );
+
+	try {
+		const built = await Promise.all(
+			objects
+				.filter( ( object ) => ! object.hidden )
+				.map( ( object ) => build( object, images ) )
+		);
+
+		for ( const object of built ) {
+			if ( object !== null ) {
+				canvas.add( object );
+			}
+		}
+
+		canvas.renderAll();
+
+		return canvas.toCanvasElement( 1 );
+	} finally {
+		void canvas.dispose();
 	}
 }
 

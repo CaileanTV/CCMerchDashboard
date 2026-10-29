@@ -1,5 +1,5 @@
 /**
- * Tests for the product designer's model and API (phase 30, step 30.8).
+ * Tests for the product designer's model and API (phase 30, steps 30.8–30.9).
  */
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act } from 'react';
@@ -20,6 +20,7 @@ import {
 	parseDesign,
 	quotePrice,
 	updateObject,
+	usedSides,
 	withObjects,
 } from '../sections/designer/design-model';
 
@@ -28,7 +29,8 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 	default: jest.fn(),
 } ) );
 
-// jsdom has no canvas: the editor gets a stand-in for the Fabric stage.
+// jsdom has no canvas: the editor gets a stand-in for the Fabric stage and
+// the rendering of the submission's files.
 jest.mock( '../sections/designer/fabric-stage', () => ( {
 	FabricStage: class {
 		setView(): void {}
@@ -38,7 +40,29 @@ jest.mock( '../sections/designer/fabric-stage', () => ( {
 		select(): void {}
 		dispose(): void {}
 	},
+	renderPrintFile: () => Promise.resolve( mockCanvas() ),
 } ) );
+
+jest.mock( '../sections/designer/mockup', () => ( {
+	composeMockup: () => Promise.resolve( mockBlob( 'image/jpeg' ) ),
+	pngOf: () => Promise.resolve( mockBlob( 'image/png' ) ),
+} ) );
+
+/**
+ * A rendered image (the mocks run after the module loaded).
+ *
+ * @param type MIME type.
+ */
+function mockBlob( type: string ): Blob {
+	return new Blob( [ 'x' ], { type } );
+}
+
+/**
+ * A print file canvas.
+ */
+function mockCanvas(): HTMLCanvasElement {
+	return document.createElement( 'canvas' );
+}
 
 const OVERVIEW = {
 	bases: [
@@ -170,6 +194,37 @@ describe( 'the designer API', () => {
 				?.draft
 		).toBeNull();
 	} );
+
+	it( 'reads the version waiting for approval', () => {
+		const waiting = parseProduct( {
+			id: 5,
+			base_id: 3,
+			in_shop: false,
+			draft: null,
+			pending: {
+				number: 1,
+				title: 'Tee',
+				price: '179.9400',
+				submitted_at: '2026-10-29T10:00:00+00:00',
+			},
+		} );
+
+		expect( waiting?.pending ).toEqual( {
+			number: 1,
+			title: 'Tee',
+			price: '179.9400',
+			submittedAt: '2026-10-29T10:00:00+00:00',
+		} );
+		expect(
+			parseProduct( {
+				id: 5,
+				base_id: 3,
+				in_shop: false,
+				draft: null,
+				pending: { number: 0, title: 'Tee' },
+			} )
+		).toBeNull();
+	} );
 } );
 
 describe( 'the design model', () => {
@@ -221,8 +276,16 @@ describe( 'the design model', () => {
 			} )[ 1 ]?.hidden
 		).toBe( true );
 
+		expect( usedSides( design ) ).toEqual( [ 'front' ] );
+		expect(
+			usedSides(
+				withObjects( design, 'back', [ { ...a, hidden: true } ] )
+			)
+		).toEqual( [ 'front' ] );
+
 		design = withObjects( design, 'front', [] );
 		expect( design.sides ).toEqual( {} );
+		expect( usedSides( design ) ).toEqual( [] );
 		expect( objectsOf( design, 'back' ) ).toEqual( [] );
 	} );
 
@@ -332,4 +395,199 @@ describe( 'DesignerSection', () => {
 			'Your design is saved.'
 		);
 	} );
+
+	it( 'sends a draft with its files for approval and withdraws it', async () => {
+		const draft = {
+			number: 1,
+			title: 'Organic tee',
+			description: '',
+			colors: [ 'black' ],
+			sizes: [ 'S', 'M' ],
+			design: {
+				version: 1,
+				sides: {
+					front: [
+						{
+							type: 'rect',
+							id: 'r1',
+							x: 100,
+							y: 100,
+							width: 50,
+							height: 50,
+							angle: 0,
+							scaleX: 1,
+							scaleY: 1,
+							flipX: false,
+							flipY: false,
+							opacity: 1,
+							locked: false,
+							hidden: false,
+							fill: '#000000',
+							stroke: null,
+							strokeWidth: 0,
+							radius: 0,
+						},
+					],
+				},
+			},
+			profit_kind: 'fixed',
+			profit_value: '0.0000',
+			price: '149.9500',
+			base_version: 2,
+			updated_at: '2026-10-29T10:00:00+00:00',
+		};
+		const product = { id: 5, base_id: 3, in_shop: false, draft };
+		const waiting = {
+			...product,
+			draft: null,
+			pending: {
+				number: 1,
+				title: 'Organic tee',
+				price: '149.9500',
+				submitted_at: '2026-10-29T10:00:00+00:00',
+			},
+		};
+		let layer = true;
+		const requests = mockApi( {
+			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),
+			'GET /merchboard/v1/me/designer/products/5': () =>
+				response( 200, product ),
+			'PATCH /merchboard/v1/me/designer/products/5': () =>
+				response( 200, product ),
+			'GET /merchboard/v1/me/designer/assets/7': () =>
+				layer
+					? {
+							...response(
+								200,
+								{},
+								{ 'Content-Type': 'image/png' }
+							),
+							blob: () =>
+								Promise.resolve(
+									new Blob( [ 'png' ], { type: 'image/png' } )
+								),
+						}
+					: response( 404, {} ),
+			'POST /merchboard/v1/me/designer/products/5/files': () =>
+				response( 200, product ),
+			'POST /merchboard/v1/me/designer/products/5/submit': () =>
+				response( 200, waiting ),
+			'POST /merchboard/v1/me/designer/products/5/withdraw': () =>
+				response( 200, { ...product, draft: { ...draft, number: 2 } } ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+		click( button( rendered, 'Edit' ) );
+		await flush();
+		click( button( rendered, 'Send for approval' ) );
+		expect( rendered.container.textContent ).toContain(
+			'sent with 2 images'
+		);
+		click( button( rendered, 'Send' ) );
+		await flush();
+		await flush();
+
+		const sent = requests.filter( ( request ) =>
+			request.path.endsWith( '/files' )
+		);
+		expect(
+			sent.map( ( request ) =>
+				( request.body as FormData ).get( 'slot' )
+			)
+		).toEqual( [ 'print:front', 'mockup:front:black' ] );
+		expect(
+			requests.map( ( request ) => request.method + ' ' + request.path )
+		).toContain( 'POST /merchboard/v1/me/designer/products/5/submit' );
+		expect( rendered.container.textContent ).toContain(
+			'waits for our approval'
+		);
+
+		click( button( rendered, 'Withdraw and edit' ) );
+		await flush();
+		expect( button( rendered, 'Send for approval' ) ).not.toBeNull();
+
+		// A template layer that cannot be fetched: nothing is sent.
+		layer = false;
+		rendered.unmount();
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+		click( button( rendered, 'Edit' ) );
+		await flush();
+		const before = requests.length;
+		click( button( rendered, 'Send for approval' ) );
+		click( button( rendered, 'Send' ) );
+		await flush();
+		expect( rendered.container.textContent ).toContain(
+			'could not be drawn in this browser'
+		);
+		expect(
+			requests
+				.slice( before )
+				.some( ( request ) => request.path.endsWith( '/files' ) )
+		).toBe( false );
+	} );
+
+	it( 'never offers sending while the administrator views as the creator', async () => {
+		mockApi( {
+			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),
+			'GET /merchboard/v1/me/designer/products/5': () =>
+				response( 200, {
+					id: 5,
+					base_id: 3,
+					in_shop: false,
+					draft: {
+						number: 1,
+						title: 'Tee',
+						description: '',
+						colors: [ 'black' ],
+						sizes: [ 'S' ],
+						design: { version: 1, sides: [] },
+						profit_kind: 'fixed',
+						profit_value: '0.0000',
+						price: '149.9500',
+						base_version: 2,
+						updated_at: '2026-10-29T10:00:00+00:00',
+					},
+				} ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider
+				value={ { ...CONFIG, impersonating: true } }
+			>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+		click( button( rendered, 'Edit' ) );
+		await flush();
+
+		expect( button( rendered, 'Send for approval' ) ).toBeNull();
+		expect( rendered.container.textContent ).toContain(
+			'only the creator can send it'
+		);
+	} );
 } );
+
+/**
+ * A button by its text.
+ *
+ * @param rendered The rendered tree.
+ * @param text     Its text.
+ */
+function button( rendered: Rendered, text: string ): HTMLElement | null {
+	return (
+		Array.from( rendered.container.querySelectorAll( 'button' ) ).find(
+			( element ) => element.textContent === text
+		) ?? null
+	);
+}

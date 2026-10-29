@@ -4525,6 +4525,15 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Kladden** gemmer titel, beskrivelse, valgte farver og størrelser, fortjeneste (procent eller beløb, aldrig under 0) og den pris, den giver nu. Creatorens uploads har en kvote på 200 filer og 1 GB.
 - **Editoren** viser skabelonen som lag: baggrund og farvemaske (farvet i den valgte produktfarve) under designet, skygge (multiply) og highlight (screen) over det. Printområdet vises stiplet, og designet klippes til det.
 
+**Statusnote 2026-10-29 (trin 30.9, indsendelse implementeret, testet automatisk):** pkt. 3 og 5 er præciseret:
+- **Filerne sendes én ad gangen**, så en request aldrig bliver stor (PHP's upload-grænser): først gemmes kladden, så renderer browseren en transparent PNG pr. brugt side (mindst ét synligt element) i sidens præcise printstørrelse (Fabric `StaticCanvas` med de samme objekter som editoren) og en JPEG-mockup pr. brugt side og valgt farve i skabelonens størrelse (2D-canvas: baggrund, farvet maske, printfilen på printområdet, skygge `multiply` og highlight `screen`). Til sidst indsendes kladden.
+- **Serveren** kontrollerer hver fils type (som andre designer-filer), præcise pixelmål og plads (side og farve skal være i kladden) og gemmer dem i versionens `files` med et stempel (hash af design, farver og grundproduktets version). Indsendelse kræver et aktivt, uændret grundprodukt, et design der viser noget og præcis de filer, kladden kræver, med kladdens stempel. Prisen beregnes igen ud fra grundprisen nu.
+- **Én ventende version pr. produkt** (`pending_key`). Creatoren kan trække den tilbage; den bliver `withdrawn`, og en ny kladde med samme indhold og filer fortsætter den. Et produkt, der aldrig er godkendt, kan stadig slettes (med filerne).
+- **"Se som creator":** filer og indsendelse afvises af `ImpersonationGuard`; kladder kan stadig redigeres.
+- **Notifikationer:** `merchboard_notification_types` er et nyt filter, hvor et modul lægger sine typer i en egen gruppe. Siden Notifikationer viser og gemmer kun katalogets grupper; designerens typer slås til og fra på Merch Dashboard → Designs (fanen Notifikationer). 30.9 har kvitteringen til creatoren og "nyt produkt"/"ændring" til admin. **Mockup-fejl til admin** kommer først med Printful/Gelato (30.12–30.13), fordi egne skabeloner renderes i creatorens browser, og en fejl dér vises straks for creatoren.
+- **Grundprodukter:** en side må højst give en printfil på 8000 × 8000 px (samme grænse som andre designer-filer).
+- **Printfiler og mockups** følger versionen; de slettes med en kladde eller en slettet creators produkter, der aldrig kom i butikken. Godkendelse og anvendelse kommer i 30.10.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

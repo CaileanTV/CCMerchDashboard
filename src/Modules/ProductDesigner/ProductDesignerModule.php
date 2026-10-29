@@ -17,12 +17,19 @@ use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
+use MerchBoard\Modules\Notifications\NotificationSender;
+use MerchBoard\Modules\Notifications\NotificationSettings;
+use MerchBoard\Modules\Notifications\NotificationTypes;
 use MerchBoard\Modules\ProductDesigner\Admin\BaseProductActions;
 use MerchBoard\Modules\ProductDesigner\Admin\BaseProductsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignActions;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignRepository;
@@ -30,6 +37,7 @@ use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -99,7 +107,8 @@ final class ProductDesignerModule implements Module {
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
-		$container->set( DesignerDrafts::class, static fn( Container $c ): DesignerDrafts => new DesignerDrafts( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals() ) );
+		$container->set( DesignerDrafts::class, static fn( Container $c ): DesignerDrafts => new DesignerDrafts( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerFiles::class ) ) );
+		$container->set( DesignerSubmissions::class, static fn( Container $c ): DesignerSubmissions => new DesignerSubmissions( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals() ) );
 		$container->set( CreatorUploads::class, static fn( Container $c ): CreatorUploads => new CreatorUploads( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		$container->set(
 			MeDesignerController::class,
@@ -108,6 +117,7 @@ final class ProductDesignerModule implements Module {
 				$c->get( BaseProductRepository::class ),
 				$c->get( DesignerProductRepository::class ),
 				$c->get( DesignerDrafts::class ),
+				$c->get( DesignerSubmissions::class ),
 				$c->get( DesignerAssetRepository::class ),
 				$c->get( DesignerFiles::class ),
 				$c->get( CreatorUploads::class ),
@@ -115,7 +125,10 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
-		$container->set( DesignerCreatorCleanup::class, static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup( $c->get( wpdb::class ) ) );
+		// The approval queue and the designer's notifications (step 30.9).
+		$container->set( DesignsPage::class, static fn( Container $c ): DesignsPage => new DesignsPage( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( CreatorRepository::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSwitches::class ), $c->get( PricingProductStore::class )->decimals() ) );
+		$container->set( DesignerNotificationActions::class, static fn( Container $c ): DesignerNotificationActions => new DesignerNotificationActions( $c->get( NotificationSettings::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSender::class ), $c->get( Logger::class ) ) );
+		$container->set( DesignerCreatorCleanup::class, static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup( $c->get( wpdb::class ), $c->get( DesignerFiles::class ) ) );
 
 		// Deleting a creator (ADR-076): designer data that never reached the shop.
 		add_filter(
@@ -127,6 +140,7 @@ final class ProductDesignerModule implements Module {
 		);
 
 		( new DesignerSettingsSection() )->register();
+		DesignerNotifications::register();
 		( new DesignerDashboardSection() )->register();
 		add_action(
 			'rest_api_init',
@@ -137,6 +151,7 @@ final class ProductDesignerModule implements Module {
 		add_action(
 			'admin_menu',
 			static function () use ( $container ): void {
+				$container->get( DesignsPage::class )->add_menu();
 				$container->get( BaseProductsPage::class )->add_menu();
 				$container->get( CampaignsPage::class )->add_menu();
 			},
@@ -149,6 +164,7 @@ final class ProductDesignerModule implements Module {
 				$container->get( CampaignActions::class )->register();
 				$container->get( BaseProductActions::class )->register();
 				$container->get( DesignerAssetDownload::class )->register();
+				$container->get( DesignerNotificationActions::class )->register();
 			}
 		);
 	}

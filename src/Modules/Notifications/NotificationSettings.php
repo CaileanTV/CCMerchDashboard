@@ -58,23 +58,27 @@ final class NotificationSettings {
 	}
 
 	/**
-	 * Saves the administrator's choices for every type; one audit record per
-	 * change, nothing when nothing changed. A DatabaseException from the
-	 * transaction means nothing was kept.
+	 * Saves the administrator's choices for the types of a form; one audit
+	 * record per change, nothing when nothing changed. The choices of other
+	 * types are kept. A DatabaseException from the transaction means nothing
+	 * was kept.
 	 *
-	 * @param array<mixed> $choices `{ key: { email: bool, dashboard: bool } }`; a missing channel is off.
+	 * @phpstan-param list<string>|null $groups
+	 *
+	 * @param array<mixed>  $choices `{ key: { email: bool, dashboard: bool } }`; a missing channel is off.
+	 * @param string[]|null $groups  The groups the form shows; null: the catalog's (the Notifications page).
 	 * @return int Number of changed choices.
 	 * @throws NotificationsException When the current user may not.
 	 */
-	public function save( array $choices ): int {
+	public function save( array $choices, ?array $groups = null ): int {
 		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			throw new NotificationsException( NotificationsException::NOT_AUTHORIZED );
 		}
 
-		$next    = array();
+		$next    = self::stored();
 		$changes = array();
 
-		foreach ( $this->types->all() as $type ) {
+		foreach ( $this->types->in_groups( $groups ?? array_keys( NotificationTypes::groups() ) ) as $type ) {
 			$chosen = is_array( $choices[ $type->key ] ?? null ) ? $choices[ $type->key ] : array();
 
 			foreach ( array( self::EMAIL, self::DASHBOARD ) as $channel ) {

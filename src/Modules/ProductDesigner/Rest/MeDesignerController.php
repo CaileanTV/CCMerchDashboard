@@ -23,6 +23,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -50,6 +51,10 @@ defined( 'ABSPATH' ) || exit;
  * - `POST /me/designer/products` `{ base_id }`, `GET|PUT|DELETE
  *   /me/designer/products/{id}`: start, read, save the draft of and delete a
  *   designer product.
+ * - `POST …/products/{id}/files` (multipart `file` and `slot`), `POST
+ *   …/submit`, `POST …/withdraw` (step 30.9): the submission's files, the
+ *   submission and its withdrawal (DesignerSubmissions); each answers the
+ *   product. Files and submission are refused during "view as creator".
  */
 final class MeDesignerController extends RestController {
 
@@ -63,7 +68,8 @@ final class MeDesignerController extends RestController {
 	 * @param CreatorContext            $context  The current creator.
 	 * @param BaseProductRepository     $bases    Base products.
 	 * @param DesignerProductRepository $products Designer products.
-	 * @param DesignerDrafts            $drafts   Drafts.
+	 * @param DesignerDrafts            $drafts      Drafts.
+	 * @param DesignerSubmissions       $submissions Submissions.
 	 * @param DesignerAssetRepository   $assets   File records.
 	 * @param DesignerFiles             $files    Files.
 	 * @param CreatorUploads            $uploads  The creator's uploads.
@@ -75,6 +81,7 @@ final class MeDesignerController extends RestController {
 		private BaseProductRepository $bases,
 		private DesignerProductRepository $products,
 		private DesignerDrafts $drafts,
+		private DesignerSubmissions $submissions,
 		private DesignerAssetRepository $assets,
 		private DesignerFiles $files,
 		private CreatorUploads $uploads,
@@ -89,25 +96,34 @@ final class MeDesignerController extends RestController {
 	 */
 	public function register_routes(): void {
 		$routes = array(
-			''                                   => array(
+			''                                            => array(
 				WP_REST_Server::READABLE => 'overview',
 			),
-			'/uploads'                           => array(
+			'/uploads'                                    => array(
 				WP_REST_Server::CREATABLE => 'upload',
 			),
-			'/uploads/(?P<id>[1-9][0-9]{0,18})'  => array(
+			'/uploads/(?P<id>[1-9][0-9]{0,18})'           => array(
 				WP_REST_Server::DELETABLE => 'delete_upload',
 			),
-			'/assets/(?P<id>[1-9][0-9]{0,18})'   => array(
+			'/assets/(?P<id>[1-9][0-9]{0,18})'            => array(
 				WP_REST_Server::READABLE => 'asset',
 			),
-			'/products'                          => array(
+			'/products'                                   => array(
 				WP_REST_Server::CREATABLE => 'create_product',
 			),
-			'/products/(?P<id>[1-9][0-9]{0,18})' => array(
+			'/products/(?P<id>[1-9][0-9]{0,18})'          => array(
 				WP_REST_Server::READABLE  => 'product',
 				WP_REST_Server::EDITABLE  => 'save_product',
 				WP_REST_Server::DELETABLE => 'delete_product',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/files'    => array(
+				WP_REST_Server::CREATABLE => 'attach_file',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/submit'   => array(
+				WP_REST_Server::CREATABLE => 'submit_product',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/withdraw' => array(
+				WP_REST_Server::CREATABLE => 'withdraw_product',
 			),
 		);
 
@@ -300,6 +316,77 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
+	 * `POST /me/designer/products/{id}/files`: one file of the submission.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function attach_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/files',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id    = (int) $request->get_param( 'id' );
+				$files = $request->get_file_params();
+				$slot  = $request->get_param( 'slot' );
+
+				try {
+					$this->submissions->attach( $creator, $id, is_string( $slot ) ? $slot : '', is_array( $files['file'] ?? null ) ? $files['file'] : array() );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
+			}
+		);
+	}
+
+	/**
+	 * `POST /me/designer/products/{id}/submit`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function submit_product( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/submit',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id = (int) $request->get_param( 'id' );
+
+				try {
+					$this->submissions->submit( $creator, $id );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
+			}
+		);
+	}
+
+	/**
+	 * `POST /me/designer/products/{id}/withdraw`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function withdraw_product( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/withdraw',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id = (int) $request->get_param( 'id' );
+
+				try {
+					$this->submissions->withdraw( $creator, $id );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
+			}
+		);
+	}
+
+	/**
 	 * `rest_pre_serve_request`: sends a successful asset response as the image
 	 * itself instead of JSON; every other response is left to the server.
 	 *
@@ -390,6 +477,7 @@ final class MeDesignerController extends RestController {
 	private function product_response( Creator $creator, int $id, int $status ): WP_REST_Response|WP_Error {
 		$product = $this->products->find( $creator->id, $id );
 		$draft   = null === $product ? null : $this->products->draft( $id );
+		$pending = null === $product ? null : $this->products->pending( $id );
 
 		if ( null === $product ) {
 			return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
@@ -418,6 +506,12 @@ final class MeDesignerController extends RestController {
 					'price'        => null === $draft['quoted_price'] ? null : SalesAmount::format( SalesAmount::parse( (string) $draft['quoted_price'] ) ),
 					'base_version' => (int) $draft['base_version'],
 					'updated_at'   => mysql_to_rfc3339( (string) $draft['updated_at'] ),
+				),
+				'pending' => null === $pending ? null : array(
+					'number'       => (int) $pending['number'],
+					'title'        => (string) $pending['title'],
+					'price'        => null === $pending['quoted_price'] ? null : SalesAmount::format( SalesAmount::parse( (string) $pending['quoted_price'] ) ),
+					'submitted_at' => mysql_to_rfc3339( (string) $pending['submitted_at'] ),
 				),
 			),
 			$status

@@ -23,6 +23,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsSection;
 use MerchBoard\Modules\ProductDesigner\DesignerCreatorCleanup;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerSettings;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -139,7 +140,7 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 
 		$found = $this->service( CreatorRepository::class )->find( $creator->id );
 		self::assertNotNull( $found );
-		$counts = ( new DesignerCreatorCleanup( $this->wpdb ) )->remove( $found );
+		$counts = ( new DesignerCreatorCleanup( $this->wpdb, new DesignerFiles() ) )->remove( $found );
 
 		self::assertSame(
 			array(
@@ -147,6 +148,7 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 				'versions' => 1,
 				'products' => 1,
 				'assets'   => 1,
+				'files'    => 1,
 			),
 			$counts
 		);

@@ -684,4 +684,14 @@ enum AuditAction: string {
 	 * A creator deleted a designer product that never left the draft (ADR-080 pkt. 3). Context: design_product_id.
 	 */
 	case DesignerProductDeleted = 'designer_product_deleted';
+
+	/**
+	 * A creator submitted a designer product or a change of it for approval (ADR-080 pkt. 3). Context: design_product_id, version_id, number, price.
+	 */
+	case DesignerVersionSubmitted = 'designer_version_submitted';
+
+	/**
+	 * A creator withdrew a submission; a new draft continues it (ADR-080 pkt. 3). Context: design_product_id, version_id, number.
+	 */
+	case DesignerVersionWithdrawn = 'designer_version_withdrawn';
 }

@@ -661,7 +661,7 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
   - `base_version`, `title`, `description`;
   - JSON: `colors`, `sizes`, `sides` og `design`;
   - `profit_kind` (`percent`/`fixed`), `profit_value` og `quoted_price`;
-  - `files` (JSON) og `provider_ref` (Gelato-produkt);
+  - `files` (JSON, trin 30.9: `{ stamp, print: { side: fil }, mockups: { side: { farve: fil } } }`, hvor en fil er `{ file, mime, width, height, bytes }`; stemplet er en hash af design, farver og grundproduktets version) og `provider_ref` (Gelato-produkt);
   - `mockup_state`, `apply_state`, `apply_step` og `apply_error`;
   - `note` (afvisning) og tidspunkter.
   - UNIQUE (`design_product_id`, `number`).
@@ -669,7 +669,7 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 - **`merchboard_designer_provider_tasks`**: mockup-tasks hos Printful eller Gelato med `provider`, `side`, `task_key`, `status`, `attempts`, `next_poll_at`, `result` (JSON) og `error`.
 - **`merchboard_designer_campaigns`**: virksomhedens kampagner (ADR-080 pkt. 9) med `name`, `starts_at`, `ends_at`, `coupon_codes` (JSON) og `sale_prices`.
 
-**Sletning af en creator:** creatorens uploads og de designer-produkter (med versioner og tasks), der aldrig kom i butikken, slettes. Produkter i butikken bevares af hensyn til ordrehistorikken.
+**Sletning af en creator:** creatorens uploads og de designer-produkter (med versioner og tasks), der aldrig kom i butikken, slettes, også deres filer (fra trin 30.9). Produkter i butikken bevares af hensyn til ordrehistorikken.
 
 **Afregning (migration 36, `AddSalesDesignerAmounts`, trin 30.3):** et designer-salgs snapshot i `merchboard_sales_line_pricing` har status `designer`, kilden `designer`, grundpris, fortjeneste og listepris pr. stk. inkl. moms (`base_unit`, `profit_unit` og `price_unit` fra ADR-047 genbruges) og den effektive andel. Rækkens fortjeneste og udbetaling gemmes i `merchboard_sales_tax` (se ovenfor), og SQL-summerne læser dem.
 

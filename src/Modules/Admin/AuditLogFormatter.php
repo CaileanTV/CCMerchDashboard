@@ -185,6 +185,8 @@ final class AuditLogFormatter {
 			AuditAction::DesignerClipartDeleted => __( 'Clipart deleted', 'merchboard' ),
 			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
+			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),
+			AuditAction::DesignerVersionWithdrawn => __( 'Creator withdrew a design from approval', 'merchboard' ),
 		};
 	}
 

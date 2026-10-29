@@ -427,7 +427,7 @@ class BaseProductService {
 		}
 
 		try {
-			return new BaseView(
+			$view = new BaseView(
 				$plan['key'],
 				$plan['name'],
 				$plan['width'],
@@ -446,6 +446,13 @@ class BaseProductService {
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
+
+		// The creator's browser renders the print file, which is stored like any designer file (step 30.9).
+		if ( max( $view->print_pixels() ) > DesignerFiles::MAX_PIXELS ) {
+			self::reject( DesignerException::BASE_VIEW );
+		}
+
+		return $view;
 	}
 
 	/**

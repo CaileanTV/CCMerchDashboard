@@ -19,6 +19,7 @@ use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
 use MerchBoard\Modules\Notifications\Admin\NotificationsAdminActions;
 use MerchBoard\Modules\Notifications\Admin\NotificationsAdminPage;
+use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
 use MerchBoard\Modules\Notifications\Email\EmailRenderer;
 use MerchBoard\Modules\Notifications\Email\Mailer;
 use MerchBoard\Modules\WooCommerce\ActionSchedulerQueue;
@@ -76,12 +77,12 @@ final class NotificationsModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		$container->set( NotificationSwitches::class, static fn( Container $c ): NotificationSwitches => new NotificationSwitches( $c->get( NotificationSettings::class ), $c->get( NotificationSender::class ) ) );
 		$container->set(
 			NotificationsAdminPage::class,
 			static fn( Container $c ): NotificationsAdminPage => new NotificationsAdminPage(
 				$c->get( NotificationTypes::class ),
-				$c->get( NotificationSettings::class ),
-				$c->get( NotificationSender::class ),
+				$c->get( NotificationSwitches::class ),
 				$c->get( NotificationRepository::class ),
 				$c->get( CreatorRepository::class )
 			)

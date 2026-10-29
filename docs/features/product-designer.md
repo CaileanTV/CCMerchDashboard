@@ -39,9 +39,17 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - "Design et nyt produkt" viser de aktive grundprodukter; et design starter som kladde med grundproduktets navn, første farve og alle størrelser.
 - Værktøjer: **Produkt** (titel, beskrivelse, farver, størrelser, fortjeneste i beløb eller procent og kundens pris inkl. moms), **Tekst** (godkendte Google Fonts, tykkelse, kursiv, justering, farve), **Former** (rektangel, cirkel, trekant), **Kliparts**, **Upload** (egne billeder, PNG/JPG/WebP) og **Lag** (rækkefølge, skjul, lås, slet).
 - Over lærredet: sider, forhåndsvisningsfarve, zoom, fortryd/gentag og "Gem kladde". Delete sletter det valgte element; Ctrl+Z/Ctrl+Y fortryder og gentager.
-- Indsendelse til godkendelse, printfiler og mockups kommer i 30.9.
+- Indsendelse: se nedenfor (trin 30.9).
+
+## Indsendelse (trin 30.9)
+- **"Send til godkendelse"** i designeren (ikke under "Se som creator"). Creatoren ser antallet af billeder og kundens pris og bekræfter.
+- Designet gemmes, og browseren laver filerne: en printfil (transparent PNG) pr. side med mindst ét synligt element i sidens printstørrelse og et produktbillede (JPEG) pr. side og valgt farve. De sendes én ad gangen med fremdrift ("3 af 9 filer sendt").
+- Serveren tjekker mål og plads og at filerne hører til den gemte kladde. Har vi ændret grundproduktet i mellemtiden, skal designet åbnes og sendes igen.
+- Designet **venter** derefter og kan ikke ændres. Creatoren kan **trække det tilbage**; så bliver det en kladde igen med samme indhold.
+- **Notifikationer (30.9):** kvittering til creatoren (mail og klokke) og "nyt designer-produkt"/"ændring af designer-produkt" til admin. Til/fra, eksempel og testmail: Merch Dashboard → Designs → Notifikationer.
 
 ## Admin functionality
+- **Designs (trin 30.9):** Merch Dashboard → Designs viser de ventende designs (creator, produkt, version, grundprodukt, nyt/ændring, kundens pris), ældste først. Godkend og afvis kommer i 30.10. Fanen Notifikationer kræver også `merchboard_manage_settings`.
 - **Grundprodukter:**
   - kilde: egen, Printful eller Gelato;
   - farver, størrelser og grundpris inkl. moms;

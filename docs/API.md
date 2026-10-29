@@ -536,9 +536,9 @@ Additive felter; de eksisterende beløb ekskl. moms er uændrede.
 
 Manglende moms regnes aldrig som 0. Dashboardet viser beløbene inkl. moms, når `vat.status` er `complete`, og ellers beløbene ekskl. moms med tydelig mærkning og en forklaring. `/me/sales`-cachens format er `v3`.
 
-## `/me/designer` 🔄 (fase 30, trin 30.8, ADR-080)
+## `/me/designer` 🔄 (fase 30, trin 30.8–30.9, ADR-080)
 
-Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabled`), for den creator `CreatorContext` afgør. Afviste ændringer giver 400 (404 for ukendt produkt, upload eller grundprodukt) med `code: merchboard_designer_refused` og `data.reason` (fx `design_invalid`, `design_title`, `design_profit`, `design_options`, `upload_quota`).
+Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabled`), for den creator `CreatorContext` afgør. Afviste ændringer giver 400 (404 for ukendt produkt, upload eller grundprodukt) med `code: merchboard_designer_refused` og `data.reason` (fx `design_invalid`, `design_title`, `design_profit`, `design_options`, `upload_quota`; fra 30.9 også `design_not_draft`, `design_empty`, `design_stale`, `submission_file`, `submission_files`, `submission_pending`, `not_pending`).
 
 | Metode og sti | Svar |
 | --- | --- |
@@ -547,9 +547,12 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 | `DELETE /me/designer/uploads/{id}` | Tilstanden som `GET` (kun creatorens egne uploads) |
 | `GET /me/designer/assets/{id}` | Filen selv (`no-store`, `nosniff`): creatorens uploads, kliparts og skabelonlag. Dashboardet viser den som `data:` |
 | `POST /me/designer/products` `{ base_id }` | 201 med produktet og dets første kladde (kun aktive grundprodukter) |
-| `GET /me/designer/products/{id}` | Produktet med kladden: `title`, `description`, `colors`, `sizes`, `design`, `profit_kind`, `profit_value`, `price` (kundens pris inkl. moms), `base_version` |
+| `GET /me/designer/products/{id}` | Produktet med kladden: `title`, `description`, `colors`, `sizes`, `design`, `profit_kind`, `profit_value`, `price` (kundens pris inkl. moms), `base_version`; og `pending` (fra 30.9: den ventende version med `number`, `title`, `price`, `submitted_at`, ellers `null`) |
 | `PATCH /me/designer/products/{id}` | Gemmer kladden. Design-dokumentet valideres mod en whitelist (`DesignValidator`): `{ version: 1, sides: { <side>: [ objekt, … ] } }` med `text`, `image` (egen upload eller klipart) og `rect`/`ellipse`/`triangle`; positioner i printfilens pixels, talområder, `#rrggbb`, godkendte skrifttyper, højst 100 objekter pr. side og 256 KB |
-| `DELETE /me/designer/products/{id}` | Tilstanden som `GET`; kun et produkt, der aldrig er indsendt |
+| `DELETE /me/designer/products/{id}` | Tilstanden som `GET`; kun et produkt, der hverken venter eller er godkendt (kun kladder og trukne versioner); dets filer slettes |
+| `POST /me/designer/products/{id}/files` (multipart `file`, `slot`) 🔄 30.9 | Produktet. Én fil til indsendelsen af den gemte kladde: `slot` = `print:<side>` (transparent PNG i sidens præcise printstørrelse) eller `mockup:<side>:<farve>` (PNG, JPG eller WebP i skabelonens præcise størrelse); kun brugte sider (mindst ét synligt element) og valgte farver. En fil af en tidligere version af kladden erstattes. Afvist under "Se som creator" |
+| `POST /me/designer/products/{id}/submit` 🔄 30.9 | Produktet med `pending`. Kladden venter på godkendelse, når grundproduktet er aktivt og uændret, designet viser noget, og filerne er komplette. Prisen beregnes igen. Admin og creatoren får en notifikation. Afvist under "Se som creator" |
+| `POST /me/designer/products/{id}/withdraw` 🔄 30.9 | Produktet med en ny kladde (samme indhold og filer); den ventende version trækkes tilbage |
 
 ## Test-krav
 

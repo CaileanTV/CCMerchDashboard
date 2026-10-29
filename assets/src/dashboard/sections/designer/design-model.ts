@@ -378,6 +378,21 @@ export function newImage(
 }
 
 /**
+ * The sides that show something (at least one visible object), in the
+ * document's order: the sides a submission renders (the server's
+ * `SubmissionFiles::used_sides()`).
+ *
+ * @param design The document.
+ */
+export function usedSides( design: DesignDocument ): string[] {
+	return Object.entries( design.sides )
+		.filter( ( [ , objects ] ) =>
+			objects.some( ( object ) => ! object.hidden )
+		)
+		.map( ( [ side ] ) => side );
+}
+
+/**
  * The objects of a side.
  *
  * @param design Design.

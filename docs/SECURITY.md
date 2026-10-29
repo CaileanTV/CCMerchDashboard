@@ -344,7 +344,7 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 
 - **Adgang:** kun `merchboard_manage_creators`, kun for en aktiv creator med en bruger; start og stop med nonce. Sessionen (user meta `merchboard_impersonating`) varer højst 60 minutter, tæller kun, mens rettigheden findes, og ender ved logud.
 - **Creatoren afgøres stadig server-side** i `CreatorContext` (ADR-007); klienten sender aldrig et creator-ID.
-- **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder og (fra trin 29.4) creatorens e-mailvalg. OBS-URL'en sendes aldrig. Klokkens notifikationer markeres ikke som læst under en session.
+- **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder og (fra trin 29.4) creatorens e-mailvalg og (fra trin 30.9) indsendelse af et design og dets filer. OBS-URL'en sendes aldrig. Klokkens notifikationer markeres ikke som læst under en session.
 - **Sporbarhed:** start og slut auditeres; ændringer under en session har administratoren som aktør og `impersonating` i konteksten.
 
 ## Sletning af creators (fase 27, trin 27.3, ADR-076)

@@ -87,6 +87,18 @@ final class DesignerException extends RuntimeException {
 
 	public const UPLOAD_UNKNOWN = 'upload_unknown';
 
+	public const DESIGN_EMPTY = 'design_empty';
+
+	public const DESIGN_STALE = 'design_stale';
+
+	public const SUBMISSION_FILE = 'submission_file';
+
+	public const SUBMISSION_FILES = 'submission_files';
+
+	public const SUBMISSION_PENDING = 'submission_pending';
+
+	public const NOT_PENDING = 'not_pending';
+
 	/**
 	 * Constructor.
 	 *
