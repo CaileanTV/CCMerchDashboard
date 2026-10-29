@@ -146,6 +146,67 @@ class BaseProductRepository {
 	}
 
 	/**
+	 * Marks a base product as imported from a provider (step 30.12).
+	 *
+	 * @param int    $id       Id.
+	 * @param string $source   `printful` or `gelato`.
+	 * @param string $ref      The provider's product id.
+	 * @param string $template JSON: the provider's placement by side key.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_provider( int $id, string $source, string $ref, string $template ): void {
+		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table(),
+			array(
+				'source'            => $source,
+				'provider_ref'      => $ref,
+				'provider_template' => $template,
+			),
+			array( 'id' => $id )
+		);
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not store the provider of the base product.' );
+		}
+	}
+
+	/**
+	 * The provider data of a base product: source, product id and the
+	 * provider's placement by side key; null for an own base product.
+	 *
+	 * @param int $id Id.
+	 * @return array{source: string, ref: string, placements: array<string, string>}|null
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function provider( int $id ): ?array {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT source, provider_ref, provider_template FROM %i WHERE id = %d', $this->table(), $id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the provider of the base product.' );
+		}
+
+		if ( ! is_array( $row ) || 'own' === $row['source'] || ! is_string( $row['provider_ref'] ) || '' === $row['provider_ref'] ) {
+			return null;
+		}
+
+		$decoded    = json_decode( (string) $row['provider_template'], true );
+		$placements = array();
+
+		foreach ( is_array( $decoded ) ? $decoded : array() as $key => $placement ) {
+			if ( is_string( $placement ) ) {
+				$placements[ (string) $key ] = $placement;
+			}
+		}
+
+		return array(
+			'source'     => (string) $row['source'],
+			'ref'        => $row['provider_ref'],
+			'placements' => $placements,
+		);
+	}
+
+	/**
 	 * How many designer products use a base product.
 	 *
 	 * @param int $id Id.

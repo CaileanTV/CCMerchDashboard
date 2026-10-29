@@ -98,6 +98,11 @@ class DesignerReview {
 					self::refuse( DesignerException::BASE_RETIRED );
 				}
 
+				// Printful's mockups (step 30.12) are approved only once they are in.
+				if ( 'running' === ( $version['mockup_state'] ?? '' ) ) {
+					self::refuse( DesignerException::MOCKUPS_PENDING );
+				}
+
 				if ( null === $base || $base->version !== (int) $version['base_version'] ) {
 					self::refuse( DesignerException::DESIGN_STALE );
 				}

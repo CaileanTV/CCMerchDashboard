@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
@@ -18,6 +19,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 
 defined( 'ABSPATH' ) || exit;
@@ -62,8 +64,9 @@ final class BaseProductsPage {
 	 * @param string                  $currency   Store currency.
 	 * @param string                  $plugin_dir Plugin directory with a trailing slash (the PSD import bundle).
 	 * @param string                  $plugin_url Plugin URL with a trailing slash.
+	 * @param bool                    $printful_ready Whether a Printful token is stored.
 	 */
-	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '' ) {
+	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false ) {
 	}
 
 	/**
@@ -122,6 +125,13 @@ final class BaseProductsPage {
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
 			'deleted'                               => array( __( 'The base product was deleted.', 'merchboard' ), 'success' ),
+			'imported'                              => array( __( 'The product was imported from Printful as a draft. Check the colours, sizes and sides, then activate it.', 'merchboard' ), 'success' ),
+			PrintfulException::NOT_CONFIGURED       => array( __( 'Printful is switched off or has no API token.', 'merchboard' ), 'error' ),
+			PrintfulException::UNAUTHORIZED         => array( __( 'Printful refused the API token. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
+			PrintfulException::NOT_FOUND            => array( __( 'Printful does not know that product id.', 'merchboard' ), 'error' ),
+			PrintfulException::RATE_LIMITED         => array( __( 'Printful asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
+			PrintfulException::INVALID              => array( __( 'The Printful product has no usable templates or variants.', 'merchboard' ), 'error' ),
+			PrintfulException::FAILED               => array( __( 'Printful could not be reached. Please try again later.', 'merchboard' ), 'error' ),
 			'retired'                               => array( __( 'The base product is retired. Its products are being taken out of the shop, and the creators are told.', 'merchboard' ), 'success' ),
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
@@ -210,6 +220,7 @@ final class BaseProductsPage {
 	 */
 	private function render_list(): void {
 		echo '<p>' . esc_html__( 'The products creators design on. The base price incl. VAT is what the company always keeps outside its own campaigns; the creator\'s profit comes on top. A base product is a draft until it is activated.', 'merchboard' ) . '</p>';
+		$this->render_printful_import();
 
 		$bases = $this->bases->all();
 
@@ -400,6 +411,32 @@ final class BaseProductsPage {
 		}
 
 		echo '</form>';
+	}
+
+	/**
+	 * The Printful import (step 30.12): a catalog product id and the base price.
+	 */
+	private function render_printful_import(): void {
+		if ( ! Settings::printful_enabled() ) {
+			return;
+		}
+
+		echo '<details style="margin:12px 0"><summary><strong>' . esc_html__( 'Import from Printful', 'merchboard' ) . '</strong></summary>';
+
+		if ( ! $this->printful_ready ) {
+			echo '<p>' . esc_html__( 'Enter the Printful API token under Settings → Product designer first.', 'merchboard' ) . '</p></details>';
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'The product id is the number in the catalog product\'s address at Printful (or in its API). The colours, sizes and sides with their templates and print areas are imported as a draft; check them, add a colour mask if you want the editor to tint the product, and activate it. Mockups of designs on it come from Printful.', 'merchboard' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="printful_import">';
+		wp_nonce_field( BaseProductActions::ACTION );
+		echo '<p><label>' . esc_html__( 'Printful product id', 'merchboard' ) . ' <input type="number" min="1" name="printful_product" required class="small-text"></label> ';
+		echo '<label>' . esc_html__( 'Base price incl. VAT', 'merchboard' ) . ' <input type="text" name="base_price" required class="small-text" inputmode="decimal"></label> ';
+		submit_button( __( 'Import', 'merchboard' ), 'secondary', 'submit', false );
+		echo '</p></form></details>';
 	}
 
 	/**

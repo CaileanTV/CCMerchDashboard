@@ -207,6 +207,8 @@ class DesignerSubmissions {
 
 		do_action( 'merchboard_notify', null === $row['live_version_id'] ? DesignerNotifications::SUBMITTED : DesignerNotifications::CHANGE_SUBMITTED, $creator->id, $data, $dedup );
 		do_action( 'merchboard_notify', DesignerNotifications::RECEIPT, $creator->id, $data, $dedup );
+		// A provider's mockups (Printful, step 30.12) replace the browser's after the commit.
+		do_action( 'merchboard_designer_submitted', $submitted['version'] );
 	}
 
 	/**

@@ -64,12 +64,12 @@ class DesignerProductRepository {
 
 	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, created_at, updated_at';
 
-	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, files, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
+	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
 
 	/**
 	 * VERSION_COLUMNS of the alias v (joined with the product).
 	 */
-	private const VERSION_COLUMNS_V = 'v.id, v.design_product_id, v.creator_id, v.number, v.status, v.base_version, v.title, v.description, v.colors, v.sizes, v.sides, v.design, v.profit_kind, v.profit_value, v.quoted_price, v.files, v.apply_state, v.apply_step, v.apply_error, v.note, v.updated_at, v.submitted_at, v.decided_at, v.decided_by';
+	private const VERSION_COLUMNS_V = 'v.id, v.design_product_id, v.creator_id, v.number, v.status, v.base_version, v.title, v.description, v.colors, v.sizes, v.sides, v.design, v.profit_kind, v.profit_value, v.quoted_price, v.files, v.mockup_state, v.apply_state, v.apply_step, v.apply_error, v.note, v.updated_at, v.submitted_at, v.decided_at, v.decided_by';
 
 	/**
 	 * Constructor.
@@ -637,6 +637,48 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * The state of a version's mockups from a provider (step 30.12):
+	 * `none` (rendered in the browser), `running`, `ready` or `failed`.
+	 *
+	 * @param int    $version_id Version.
+	 * @param string $state      State.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_mockup_state( int $version_id, string $state ): void {
+		$done = $this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'mockup_state' => $state ), array( 'id' => $version_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not store the mockup state of the design.' );
+		}
+	}
+
+	/**
+	 * Stores the files of a pending version (a provider's mockups replace
+	 * the browser's, step 30.12).
+	 *
+	 * @param int    $version_id Pending version.
+	 * @param string $files      JSON.
+	 * @return bool Whether it was still pending.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_pending_files( int $version_id, string $files ): bool {
+		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table( Tables::DESIGNER_VERSIONS ),
+			array( 'files' => $files ),
+			array(
+				'id'     => $version_id,
+				'status' => self::PENDING,
+			)
+		);
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not store the mockups of the design.' );
+		}
+
+		return 1 === $done;
+	}
+
+	/**
 	 * Approved versions not applied yet (waiting, running or failed), oldest first.
 	 *
 	 * @return list<array<string, mixed>>
@@ -663,7 +705,7 @@ class DesignerProductRepository {
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT v.id, v.design_product_id, v.creator_id, v.number, v.title, v.description, v.colors, v.sizes, v.files, v.profit_kind, v.profit_value, v.quoted_price, v.submitted_at, p.base_id, p.live_version_id
+				'SELECT v.id, v.design_product_id, v.creator_id, v.number, v.title, v.description, v.colors, v.sizes, v.files, v.mockup_state, v.profit_kind, v.profit_value, v.quoted_price, v.submitted_at, p.base_id, p.live_version_id
 				FROM %i v
 				JOIN %i p ON p.id = v.design_product_id
 				WHERE v.status = %s

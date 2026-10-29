@@ -14,6 +14,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerSettings;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
@@ -39,10 +40,11 @@ final class DesignerSettingsActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param DesignerSettings $settings Switches.
-	 * @param Logger           $logger   Technical log.
+	 * @param DesignerSettings   $settings Switches.
+	 * @param Logger             $logger   Technical log.
+	 * @param PrintfulToken|null $token  The Printful token (step 30.12).
 	 */
-	public function __construct( private DesignerSettings $settings, private Logger $logger ) {
+	public function __construct( private DesignerSettings $settings, private Logger $logger, private ?PrintfulToken $token = null ) {
 	}
 
 	/**
@@ -93,8 +95,19 @@ final class DesignerSettingsActions {
 			$values[ $key ] = '1' === ( is_scalar( $input[ $key ] ?? null ) ? (string) $input[ $key ] : '' );
 		}
 
+		$token  = is_string( $input['printful_token'] ?? null ) ? trim( $input['printful_token'] ) : '';
+		$remove = '1' === ( is_scalar( $input['printful_token_remove'] ?? null ) ? (string) $input['printful_token_remove'] : '' );
+
 		try {
 			$changed = $this->settings->save( $values );
+
+			if ( null !== $this->token && '' !== $token ) {
+				$this->token->set( $token );
+				$changed[] = 'printful_token';
+			} elseif ( null !== $this->token && $remove ) {
+				$this->token->clear();
+				$changed[] = 'printful_token';
+			}
 		} catch ( DesignerException $e ) {
 			return self::url( $e->reason() );
 		} catch ( DatabaseException $e ) {

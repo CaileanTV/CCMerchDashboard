@@ -15,6 +15,7 @@ use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -31,7 +32,8 @@ defined( 'ABSPATH' ) || exit;
  * shop, change approved, rejected with the note (to the creator) and "could
  * not be put in the shop" (to the administrator). Step 30.11: a new price
  * after a new base price and "taken out of the shop" (a retired base
- * product), to the creator. The data never hold files,
+ * product), to the creator. Step 30.12: "mockups could not be made"
+ * (Printful), to the administrator. The data never hold files,
  * only the product's title, the version, the price and its currency (and
  * the note or the reason).
  */
@@ -56,6 +58,8 @@ final class DesignerNotifications {
 	public const PRICE_CHANGED = 'designer_price_changed';
 
 	public const UNPUBLISHED = 'designer_unpublished';
+
+	public const MOCKUPS_FAILED = 'admin_designer_mockups_failed';
 
 	/**
 	 * Adds the types to the catalog.
@@ -82,6 +86,7 @@ final class DesignerNotifications {
 			self::unpublished(),
 			self::submitted(),
 			self::change_submitted(),
+			self::mockups_failed(),
 			self::apply_failed(),
 		);
 	}
@@ -323,6 +328,43 @@ final class DesignerNotifications {
 	}
 
 	/**
+	 * Printful could not make the mockups of a submitted design.
+	 */
+	private static function mockups_failed(): NotificationType {
+		return new NotificationType(
+			self::MOCKUPS_FAILED,
+			NotificationType::ADMIN,
+			self::GROUP,
+			static fn(): string => __( 'Mockups could not be made', 'merchboard' ),
+			static fn(): string => __( 'When Printful could not make the mockups of a submitted design. The mockups the creator\'s browser made stay, and the design can still be approved.', 'merchboard' ),
+			true,
+			false,
+			false,
+			DesignsPage::SLUG,
+			array_merge( self::sample(), array( 'reason' => PrintfulException::FAILED ) ),
+			/* translators: 1: product title, 2: creator name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'Printful could not make the mockups of %1$s by %2$s.', 'merchboard' ), $d->text( 'title' ), $d->text( 'creator' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product title. */
+				sprintf( __( 'Mockups of %s could not be made', 'merchboard' ), $d->text( 'title' ) ),
+				__( 'Printful could not make the mockups', 'merchboard' ),
+				array( __( 'Printful could not make the mockups of a design waiting for approval. The mockups the creator\'s browser made are used instead; check them under Designs before you approve.', 'merchboard' ) ),
+				array(
+					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
+					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
+					array( __( 'Reason', 'merchboard' ), self::reason( $d->text( 'reason' ) ) ),
+				),
+				null,
+				null,
+				__( 'Open Designs', 'merchboard' ),
+				'',
+				__( 'This message was sent by Merch Dashboard.', 'merchboard' ),
+				false
+			)
+		);
+	}
+
+	/**
 	 * Why an apply failed, in words.
 	 *
 	 * @param string $reason Code (a DesignerException reason or "error").
@@ -335,6 +377,12 @@ final class DesignerNotifications {
 			'creator'                               => __( 'The creator is no longer active.', 'merchboard' ),
 			'link'                                  => __( 'The product could not be linked to the creator.', 'merchboard' ),
 			'reprice'                               => __( 'The new base price could not be written to the product; it keeps its earlier price.', 'merchboard' ),
+			PrintfulException::NOT_CONFIGURED       => __( 'Printful is switched off or has no API token (Settings → Product designer).', 'merchboard' ),
+			PrintfulException::UNAUTHORIZED         => __( 'Printful refused the API token. Enter a new one under Settings → Product designer.', 'merchboard' ),
+			PrintfulException::NOT_FOUND            => __( 'Printful does not know the product.', 'merchboard' ),
+			PrintfulException::INVALID              => __( 'Printful answered with something that cannot be used.', 'merchboard' ),
+			PrintfulException::FAILED              => __( 'Printful could not be reached or answered with an error.', 'merchboard' ),
+			'task'                                  => __( 'Printful could not make a mockup (or took too long).', 'merchboard' ),
 			default                                 => __( 'A technical error; the log has the details.', 'merchboard' ),
 		};
 	}

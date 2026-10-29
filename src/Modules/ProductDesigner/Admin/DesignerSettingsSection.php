@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -28,6 +29,17 @@ final class DesignerSettingsSection {
 	/**
 	 * Registers the section on the settings screen.
 	 */
+	/**
+	 * Constructor.
+	 *
+	 * @param PrintfulToken|null $token The Printful token (step 30.12).
+	 */
+	public function __construct( private ?PrintfulToken $token = null ) {
+	}
+
+	/**
+	 * Hooks the section into the Settings page.
+	 */
 	public function register(): void {
 		add_action( 'merchboard_settings_sections', array( $this, 'render' ) );
 	}
@@ -43,6 +55,7 @@ final class DesignerSettingsSection {
 			'saved'                           => array( __( 'The product designer settings were saved.', 'merchboard' ), 'success' ),
 			'no_changes'                      => array( __( 'No changes were made to the product designer settings.', 'merchboard' ), 'info' ),
 			DesignerException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
+			DesignerException::PRINTFUL_TOKEN => array( __( 'The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _).', 'merchboard' ), 'error' ),
 			'error'                           => array( __( 'A technical error occurred. The product designer settings were not changed.', 'merchboard' ), 'error' ),
 			default                           => null,
 		};
@@ -98,6 +111,33 @@ final class DesignerSettingsSection {
 			echo '</td></tr>';
 		}
 
+		$configured = null !== $this->token && $this->token->configured();
+
+		echo '<tr><th scope="row"><label for="merchboard-printful-token">' . esc_html__( 'Printful API token', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="password" id="merchboard-printful-token" name="printful_token" value="" class="regular-text" autocomplete="off"> ';
+		echo '<span>' . esc_html( $configured ? __( 'A token is stored.', 'merchboard' ) : __( 'No token yet.', 'merchboard' ) ) . '</span>';
+
+		if ( $configured ) {
+			echo '<br><label><input type="checkbox" name="printful_token_remove" value="1"> ' . esc_html__( 'Remove the stored token', 'merchboard' ) . '</label>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'A private token from the Printful Developer Portal with as few scopes as possible (the catalog and the mockup generator need no store access). It is stored encrypted and never shown again; leave the field empty to keep the stored one.', 'merchboard' ) . '</p>';
+		echo '<details style="margin-top:8px"><summary>' . esc_html__( 'How to set up Printful', 'merchboard' ) . '</summary><ol>';
+
+		foreach (
+			array(
+				__( 'Create an account at printful.com and a store of the type "Manual order platform / API" that is not connected to a web shop, so nothing is published or sold through Printful.', 'merchboard' ),
+				__( 'In Printful\'s Developer Portal (developers.printful.com), create a private token with access to that one store and as few scopes as possible. Do not choose orders, sync products or webhooks: Merch Dashboard never creates orders or products at Printful.', 'merchboard' ),
+				__( 'Paste the token above, switch Printful on and save.', 'merchboard' ),
+				__( 'Import catalog products under Merch Dashboard → Base products ("Import from Printful"), check them, set the base price and activate them.', 'merchboard' ),
+				__( 'Printful fetches print files from a short-lived link on this site, so mockups from Printful only work on a site Printful can reach (not on a local test site).', 'merchboard' ),
+			) as $step
+		) {
+			echo '<li>' . esc_html( $step ) . '</li>';
+		}
+
+		echo '</ol></details>';
+		echo '</td></tr>';
 		echo '</tbody></table>';
 		submit_button( __( 'Save product designer settings', 'merchboard' ), 'secondary' );
 		echo '</form>';

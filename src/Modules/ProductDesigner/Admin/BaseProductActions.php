@@ -15,13 +15,16 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Saves, activates, deactivates, retires (step 30.11, with a confirmation)
- * and deletes base products and adds and deletes cliparts (step 30.6). Order of checks: capability
+ * and deletes base products, imports one from Printful (step 30.12) and
+ * adds and deletes cliparts (step 30.6). Order of checks: capability
  * `merchboard_manage_designer` → nonce → the services (which check again
  * and validate every value and file). Post/Redirect/Get with an outcome.
  */
@@ -35,11 +38,12 @@ final class BaseProductActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param BaseProductService $bases    Base products.
-	 * @param ClipartLibrary     $cliparts Cliparts.
-	 * @param Logger             $logger   Technical log.
+	 * @param BaseProductService   $bases    Base products.
+	 * @param ClipartLibrary       $cliparts Cliparts.
+	 * @param Logger               $logger   Technical log.
+	 * @param PrintfulCatalog|null $printful Printful import (step 30.12).
 	 */
-	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger ) {
+	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?PrintfulCatalog $printful = null ) {
 	}
 
 	/**
@@ -94,6 +98,12 @@ final class BaseProductActions {
 					$this->bases->set_active( $id, 'activate' === $do );
 
 					return BaseProductsPage::edit_url( $id, 'activate' === $do ? 'activated' : 'deactivated' );
+				case 'printful_import':
+					if ( null === $this->printful ) {
+						return BaseProductsPage::url( PrintfulException::NOT_CONFIGURED );
+					}
+
+					return BaseProductsPage::edit_url( $this->printful->import( absint( $text( 'printful_product' ) ), $text( 'base_price' ) ), 'imported' );
 				case 'retire':
 					if ( '1' !== $text( 'confirm_retire' ) ) {
 						return BaseProductsPage::edit_url( $id, 'retire_unconfirmed' );
@@ -117,7 +127,13 @@ final class BaseProductActions {
 				default:
 					return BaseProductsPage::url( 'error' );
 			}
+		} catch ( PrintfulException $e ) {
+			return BaseProductsPage::url( $e->reason() );
 		} catch ( DesignerException $e ) {
+			if ( 'printful_import' === $do ) {
+				return BaseProductsPage::url( $e->reason() );
+			}
+
 			if ( str_starts_with( $do, 'clipart_' ) ) {
 				return BaseProductsPage::cliparts_url( $e->reason() );
 			}

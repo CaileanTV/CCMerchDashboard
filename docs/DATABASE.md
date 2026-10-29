@@ -671,6 +671,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Sletning af en creator:** creatorens uploads og de designer-produkter (med versioner og tasks), der aldrig kom i butikken, slettes, også deres filer (fra trin 30.9). Produkter i butikken bliver kladder igen (fra trin 30.10).
 
+**Printful (trin 30.12):** `merchboard_designer_bases.provider_ref` (Printful-produktets id) og `provider_template` (JSON: Printfuls placering pr. side-nøgle); `merchboard_designer_versions.mockup_state` (`none`, `running`, `ready`, `failed`); `merchboard_designer_provider_tasks` har én række pr. side (`queued` → `pending` → `done`/`failed`) med `task_key`, `attempts` og variant → farve i `result`. Option `merchboard_designer_printful_token` (krypteret, uden autoload; slettes ved afinstallation).
+
 **Butikkens pris (trin 30.11, migration 37):** `merchboard_designer_products.shop_price` og `shop_base_price` (decimal inkl. moms, NULL før første anvendelse): prisen i WooCommerce og grundprisen bag den; afregningen bruger `shop_base_price`. `status` kan også være `retired` (grundproduktet er pensioneret, produktet er en kladde i WooCommerce).
 
 **Versioner (trin 30.10):** `status` = `draft`, `pending`, `withdrawn`, `rejected` (med `note`), `approved` (med `apply_state` `queued`/`running`/`failed`/`done`, `apply_step` og `apply_error`) og `superseded`. `merchboard_designer_products.status` bliver `live`, når `live_version_id` sættes. Ordrelinjer gemmer versionen i item meta `_merchboard_designer_version`; mockups i mediebiblioteket bærer `_merchboard_designer_mockup` og produktet `_merchboard_designer_attributes` (attributnavnene). Produkter i butikken bevares af hensyn til ordrehistorikken.

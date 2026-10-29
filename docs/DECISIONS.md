@@ -4685,7 +4685,14 @@ ADR-049, ADR-050, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078, ADR-079,
 2026-10-28
 
 ## Status
-Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Printful 2026-10-28, kun til katalog og mockups (ADR-016). Ikke implementeret endnu.
+Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Printful 2026-10-28, kun til katalog og mockups (ADR-016).
+
+**Statusnote 2026-10-29 (trin 30.12, implementeret og testet automatisk med falsk HTTP; ikke afprøvet mod Printful):** pkt. 1–6 er implementeret med disse præciseringer:
+- **Endpoints** som pkt. 1 (`PrintfulApi`): `GET /products/{id}`, `GET /mockup-generator/printfiles/{id}`, `GET /mockup-generator/templates/{id}`, `POST /mockup-generator/create-task/{id}`, `GET /mockup-generator/task?task_key=…` og download af filer, Printful returnerer (kun https; `wp_safe_remote_*` afviser private adresser). `GET /products` (listen) bruges ikke: admin indtaster produkt-id'et. Svarformerne er tjekket mod Printfuls dokumentation 2026-10-29. Mockuppen læses fra `mockup_url` og ellers fra `extra[0].url`.
+- **Token** (`PrintfulToken`): sodium med nøgledomænet `designer-printful` (ChatCipher), option `merchboard_designer_printful_token` uden autoload; auditeres kun som "sat"/"fjernet". Feltet ligger under Settings → Produktdesigner med opsætningsvejledningen.
+- **Katalogimport** (`PrintfulCatalog`, Grundprodukter → "Importér fra Printful"): produkt-id + grundpris giver en kladde med kilden `printful`, farver (navn og farvekode) og størrelser fra varianterne og én side pr. placering i første variants layout-skabeloner: skabelonbilledet som baggrundslag (konverteres til PNG), skabelonens printområde (skaleret til billedet) og printfilens størrelse i mm ved dens dpi (72–600). Sidens nøgle og Printfuls placering gemmes i `provider_template`.
+- **Mockups** (`PrintfulMockups`, job `merchboard_designer_printful`, lås pr. version): efter indsendelse (`merchboard_designer_submitted`) én task pr. brugt side med én variant pr. valgt farve (første valgte størrelse), formatet jpg og printfilen som signeret URL (`SignedPrintFiles`: `GET /merchboard/v1/designer-print/{version}/{side}`, HMAC med eget domæne, højst 1 time, kun ventende eller godkendte versioner, `no-store`). Tasken polles hvert 15. sekund (højst 40 gange). Resultatet hentes, valideres som en upload og erstatter browserens mockups. Imens er `mockup_state` `running`, og versionen kan ikke godkendes. Ved fejl beholdes browserens mockups, `mockup_state` bliver `failed`, og admin får "mockups kunne ikke laves" (den notifikation, ROADMAP satte i 30.9). Ved 429 ventes `Retry-After`.
+- **Kill switch:** slået fra eller uden token sendes intet til Printful; designet bruger browserens mockups.
 
 ## Context
 Admin vil kunne tilbyde produkter fra Printfuls katalog. Designet laves i vores designer (ADR-080), og de færdige mockups kommer fra Printfuls mockup-generator. Ordrer produceres fortsat manuelt.

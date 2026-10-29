@@ -48,6 +48,12 @@ use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
+use MerchBoard\Modules\ProductDesigner\Providers\ProviderTaskRepository;
+use MerchBoard\Modules\ProductDesigner\Providers\SignedPrintFiles;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerOrderFiles;
@@ -97,7 +103,34 @@ final class ProductDesignerModule implements Module {
 	 */
 	public function register( Container $container ): void {
 		$container->set( DesignerSettings::class, static fn( Container $c ): DesignerSettings => new DesignerSettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ) ) );
+		// Printful (step 30.12, ADR-081): the token, the API, the import and the mockups.
+		$container->set( PrintfulToken::class, static fn( Container $c ): PrintfulToken => new PrintfulToken( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( PrintfulApi::class, static fn( Container $c ): PrintfulApi => new PrintfulApi( $c->get( PrintfulToken::class ) ) );
+		$container->set( ProviderTaskRepository::class, static fn( Container $c ): ProviderTaskRepository => new ProviderTaskRepository( $c->get( wpdb::class ) ) );
+		$container->set( SignedPrintFiles::class, static fn( Container $c ): SignedPrintFiles => new SignedPrintFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
+		$container->set(
+			PrintfulCatalog::class,
+			static fn( Container $c ): PrintfulCatalog => new PrintfulCatalog(
+				$c->get( PrintfulApi::class ),
+				// Downloaded template images are our own temporary files: they are moved, not taken as uploads.
+				new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), self::downloads(), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ),
+				$c->get( BaseProductRepository::class )
+			)
+		);
+		$container->set(
+			PrintfulMockups::class,
+			static fn( Container $c ): PrintfulMockups => new PrintfulMockups(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( PrintfulApi::class ),
+				$c->get( ProviderTaskRepository::class ),
+				self::downloads(),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
 		$container->set( CampaignRepository::class, static fn( Container $c ): CampaignRepository => new CampaignRepository( $c->get( wpdb::class ) ) );
 		$container->set( CampaignService::class, static fn( Container $c ): CampaignService => new CampaignService( $c->get( CampaignRepository::class ), $c->get( CreatorCodeRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
@@ -113,8 +146,8 @@ final class ProductDesignerModule implements Module {
 		$container->set( BaseProductRepository::class, static fn( Container $c ): BaseProductRepository => new BaseProductRepository( $c->get( wpdb::class ) ) );
 		$container->set( BaseProductService::class, static fn( Container $c ): BaseProductService => new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ) );
 		$container->set( ClipartLibrary::class, static fn( Container $c ): ClipartLibrary => new ClipartLibrary( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ) ) );
-		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ) ) );
+		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured() ) );
+		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( PrintfulCatalog::class ) ) );
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
@@ -232,7 +265,19 @@ final class ProductDesignerModule implements Module {
 			40
 		);
 
-		( new DesignerSettingsSection() )->register();
+		( new DesignerSettingsSection( $container->get( PrintfulToken::class ) ) )->register();
+		add_action(
+			'merchboard_designer_submitted',
+			static function ( mixed $version ) use ( $container ): void {
+				$container->get( PrintfulMockups::class )->submitted( $version );
+			}
+		);
+		add_action(
+			PrintfulMockups::HOOK,
+			static function ( mixed $version ) use ( $container ): void {
+				$container->get( PrintfulMockups::class )->run( $version );
+			}
+		);
 		DesignerNotifications::register();
 		( new DesignerDashboardSection() )->register();
 		$container->get( DesignerOrderFiles::class )->register();
@@ -272,6 +317,7 @@ final class ProductDesignerModule implements Module {
 			'rest_api_init',
 			static function () use ( $container ): void {
 				$container->get( MeDesignerController::class )->register_routes();
+				$container->get( SignedPrintFiles::class )->register_routes();
 			}
 		);
 		add_action(
@@ -295,5 +341,13 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerVersionFiles::class )->register();
 			}
 		);
+	}
+
+	/**
+	 * Designer files that come from our own downloads (Printful), moved into
+	 * the private folder instead of being taken as uploads.
+	 */
+	private static function downloads(): DesignerFiles {
+		return new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Our own temporary download.
 	}
 }

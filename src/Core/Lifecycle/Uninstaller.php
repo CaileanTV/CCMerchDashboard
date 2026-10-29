@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Modules\Notifications\NotificationSettings;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -246,6 +247,7 @@ final class Uninstaller {
 
 		delete_option( AlertApiSwitch::OPTION );
 		delete_option( NotificationSettings::OPTION );
+		delete_option( PrintfulToken::OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

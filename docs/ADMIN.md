@@ -59,6 +59,8 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 - Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
 - **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
 
+**Printful, fra trin 30.12:** Settings → Produktdesigner har feltet "Printful API token" (krypteret, kan fjernes) og opsætningsvejledningen. Grundprodukter har "Importér fra Printful" (produkt-id og grundpris), når Printful er slået til. Designs viser, om mockups kommer fra Printful, stadig laves eller fejlede.
+
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 
 ### Designs 🔄 (fase 30, trin 30.9, ADR-080 pkt. 3)

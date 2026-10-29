@@ -105,6 +105,10 @@ final class DesignerException extends RuntimeException {
 
 	public const BASE_RETIRED = 'base_retired';
 
+	public const PRINTFUL_TOKEN = 'printful_token';
+
+	public const MOCKUPS_PENDING = 'mockups_pending';
+
 	/**
 	 * Constructor.
 	 *

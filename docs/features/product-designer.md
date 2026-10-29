@@ -123,7 +123,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
 ## Opsætning af Printful og Gelato (projektejeren)
-Nøglerne indtastes i Merch Dashboard → Settings, når 30.12/30.13 er implementeret. De gemmes krypteret og vises aldrig igen.
+Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful fra trin 30.12, Gelato fra 30.13). De gemmes krypteret og vises aldrig igen. Vejledningen herunder står også på Settings-siden.
 
 **Printful** (ADR-081: kun katalog og mockups):
 1. **Butik:** opret en konto på printful.com og en butik af typen "Manual order platform / API". Den må ikke være koblet til en webshop, så intet publiceres eller sælges via Printful.
@@ -131,8 +131,10 @@ Nøglerne indtastes i Merch Dashboard → Settings, når 30.12/30.13 er implemen
    - Med adgang til én butik skal vi ikke sende butiks-id. En konto-token kræver header'en `X-PF-Store-Id`.
    - **Scopes:** vi bruger kun kataloget (kræver intet scope) og mockup-generatoren (kræver en gyldig token). Vælg færrest muligt. Kræver portalen mindst ét scope, så vælg et skrivebeskyttet, fx `file_library/read`.
    - Vælg **ikke** `orders`, `sync_products` eller `webhooks`. Vi opretter aldrig ordrer eller produkter hos Printful.
-3. **Merch Dashboard:** indsæt token'en i Settings → Printful, og slå Printful til.
-4. **Grundprodukter:** importér produkter fra Printfuls katalog under Merch Dashboard → Grundprodukter (vælg produkt, farver og størrelser, sæt grundpris).
+3. **Merch Dashboard:** indsæt token'en i Settings → Produktdesigner → "Printful API token", slå Printful til, og gem.
+4. **Grundprodukter:** under Merch Dashboard → Grundprodukter → "Importér fra Printful" indtaster du Printful-produktets id (tallet i produktets adresse hos Printful) og grundprisen inkl. moms. Produktet bliver en kladde med farver, størrelser og sider (skabelonbillede og printområde). Tjek det, tilføj gerne en farvemaske, så editoren kan farve produktet, og aktivér det.
+   - Når et design på et Printful-grundprodukt sendes til godkendelse, laver Printful mockups (det tager typisk under et minut). Indtil da viser Designs creatorens egne mockups og kan ikke godkende. Fejler Printful, bruges creatorens mockups, og du får en mail.
+   - Printful henter printfilen fra en kortlivet adresse på sitet. Det virker derfor kun på et site, Printful kan nå (devpage eller produktion), ikke på Local.
 5. **Begrænsninger:** 120 kald pr. minut og 2–10 mockup-tasks pr. minut. Vi venter selv ved 429.
 
 **Gelato** (ADR-082: katalog og mockups via Gelato-skabeloner):
