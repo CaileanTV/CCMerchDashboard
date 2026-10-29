@@ -24,6 +24,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerDashboardSection;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
@@ -32,6 +33,7 @@ use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -267,6 +269,48 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		wp_set_current_user( $this->create_user( 'not-a-creator' ) );
 		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/me/designer' )->get_status() );
+	}
+
+	public function test_a_product_rejected_before_it_was_ever_approved_can_be_deleted(): void {
+		wp_set_current_user( $this->user );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::rect() ) ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) )->get_status() );
+
+		foreach ( array( 'black', 'sand' ) as $color ) {
+			self::assertSame( 200, $this->attach( $product, 'mockup:front:' . $color, AlertImagesTest::png( 400, 400 ) )->get_status() );
+		}
+
+		self::assertSame( 200, $this->call( 'POST', $route . '/submit' )->get_status() );
+
+		$products = new DesignerProductRepository( $this->wpdb );
+		wp_set_current_user( 1 );
+		( new DesignerReview( $products, new BaseProductRepository( $this->wpdb ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), new FakeJobQueue(), 2, static function (): void {} ) )->reject( (int) ( $products->pending( $product )['id'] ?? 0 ), 'Not like this.' );
+
+		wp_set_current_user( $this->user );
+		self::assertSame( array(), $this->data( $this->call( 'DELETE', $route ) )['products'], 'Rejected and never approved: it can be deleted.' );
+		self::assertSame( 0, $this->count_rows( Tables::DESIGNER_VERSIONS ) );
+		self::assertSame( array(), $this->stored_files(), 'Its files are deleted too.' );
+	}
+
+	public function test_a_template_layer_is_seen_only_on_an_active_base_product_or_one_with_the_creator_s_design(): void {
+		wp_set_current_user( $this->user );
+		$overview = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) );
+		$layer    = (int) ( (array) $overview['bases'][0]['views'][0]['layers'] )['color'];
+		self::assertSame( 200, $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $layer )->get_status() );
+		$this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) );
+
+		// The base product becomes a draft again: only a creator with a design on it still sees its layers.
+		wp_set_current_user( 1 );
+		$files = new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Test files.
+		( new BaseProductService( new BaseProductRepository( $this->wpdb ), new DesignerAssetRepository( $this->wpdb ), $files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, 'DKK' ) )->set_active( $this->base, false );
+
+		$route = '/merchboard/v1/me/designer/assets/' . $layer;
+		wp_set_current_user( $this->user );
+		self::assertSame( 200, $this->call( 'GET', $route )->get_status(), 'The creator with a design on it.' );
+		wp_set_current_user( $this->other );
+		self::assertSame( 404, $this->call( 'GET', $route )->get_status(), 'Another creator.' );
 	}
 
 	public function test_a_creator_submits_a_draft_with_its_rendered_files_and_can_withdraw_it(): void {

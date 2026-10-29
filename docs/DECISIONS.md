@@ -4564,6 +4564,12 @@ Pkt. 2, 6 og 10 er præciseret (fejl fundet i reviewet, rettet uden ændret adf�
 - **Fastlåst anvendelse:** en version, der har stået som "running" i over 10 minutter (jobbet døde, fx ved en fatal fejl), kan prøves igen under Designs.
 - **Grundproduktets version:** også en omdøbt eller fjernet farve eller størrelse hæver `version` (projektejerens valg 2026-10-29), så ventende designs skal gemmes og sendes igen. En ny farve eller størrelse gør ikke.
 - **Mockups fra Printful og Gelato (ADR-081, ADR-082):** et mockup-job hænger aldrig fast i `running`. Afviser køen jobbet, bliver mockups `failed` med det samme. En optaget version polles igen, og en ventende version uden grundprodukt eller leverandør fejler. Er ingen opgave rørt i 30 minutter (jobbet døde), kan designet godkendes med creatorens mockups. Mockups, der allerede er hentet, slettes, når en senere download fejler. Gelatos billeder tages kun, når produktets status er `active`. Leverandørens filer er begrænset af `DesignerFiles::MAX_BYTES` og ikke af sitets upload-grænse, og Printfuls skabelonbillede tjekkes for pixelstørrelse, før det afkodes. I Settings gemmes nøglerne før kontakterne, så en afvist nøgle ikke ændrer noget.
+- **Creator-siden (ADR-007):**
+  - Et produkt, der blev afvist, før det nogensinde blev godkendt, kan slettes.
+  - Sletningen låser versionerne først, så en samtidig indsendelse eller fil ikke kan smutte imellem.
+  - Upload-kvoten tjekkes under en lås pr. creator, så samtidige uploads ikke kan komme over den.
+  - Et skabelonlag kan kun hentes for et aktivt grundprodukt eller et, creatoren selv har et design på.
+  - "Se som creator" må fortsat uploade og slette billeder i creatorens bibliotek (projektejerens valg 2026-10-29); det auditeres med administratoren som aktør.
 
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.

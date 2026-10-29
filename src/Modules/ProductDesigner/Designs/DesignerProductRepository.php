@@ -822,8 +822,27 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * Locks a designer product's versions for a deletion (inside a
+	 * transaction, before its files are read): a submission or an attached
+	 * file waits until the deletion is decided (review 30.15).
+	 *
+	 * @param int $product_id Designer product.
+	 * @throws DatabaseException When they cannot be locked.
+	 */
+	public function lock_versions( int $product_id ): void {
+		$wpdb = $this->wpdb;
+		$wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE design_product_id = %d FOR UPDATE', $this->table( Tables::DESIGNER_VERSIONS ), $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A locking read; never cached.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not lock the design.' );
+		}
+	}
+
+	/**
 	 * Deletes a designer product that is neither waiting nor was ever
-	 * approved: only drafts and withdrawn versions (its versions too).
+	 * approved: only drafts, withdrawn and rejected versions (its versions
+	 * too; review 30.15: a product rejected before it was ever approved can
+	 * be deleted).
 	 *
 	 * @param int $product_id Designer product.
 	 * @return bool Whether it was deleted (false: it waits, was approved or is in the shop).
@@ -831,8 +850,8 @@ class DesignerProductRepository {
 	 */
 	public function delete_draft_product( int $product_id ): bool {
 		$wpdb   = $this->wpdb;
-		$others = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE design_product_id = %d AND status NOT IN ( %s, %s )', $this->table( Tables::DESIGNER_VERSIONS ), $product_id, self::DRAFT, self::WITHDRAWN ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
-		$shop   = $wpdb->get_var( $wpdb->prepare( 'SELECT wc_product_id FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_PRODUCTS ), $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+		$others = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE design_product_id = %d AND status NOT IN ( %s, %s, %s ) FOR UPDATE', $this->table( Tables::DESIGNER_VERSIONS ), $product_id, self::DRAFT, self::WITHDRAWN, self::REJECTED ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a locking read.
+		$shop   = $wpdb->get_var( $wpdb->prepare( 'SELECT wc_product_id FROM %i WHERE id = %d FOR UPDATE', $this->table( Tables::DESIGNER_PRODUCTS ), $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a locking read.
 
 		if ( '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the designer product.' );

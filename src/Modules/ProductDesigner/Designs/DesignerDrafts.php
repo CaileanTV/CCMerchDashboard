@@ -166,6 +166,8 @@ class DesignerDrafts {
 
 		$files = $this->transaction->run(
 			function () use ( $creator, $product ): array {
+				// Locked first, so a submission or an attached file cannot slip in between (review 30.15).
+				$this->products->lock_versions( $product );
 				$files = $this->products->files_of( $product );
 
 				if ( ! $this->products->delete_draft_product( $product ) ) {

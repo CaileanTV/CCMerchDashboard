@@ -37,6 +37,31 @@ class DesignerAssetRepository {
 	}
 
 	/**
+	 * Takes the named lock of an owner's files (waits up to 10 seconds).
+	 *
+	 * @param int $owner_id Creator.
+	 * @throws DatabaseException When it stays busy.
+	 */
+	public function lock_owner( int $owner_id ): void {
+		$wpdb     = $this->wpdb;
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', 'merchboard_designer_uploads_' . $owner_id, 10 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
+
+		if ( ! is_numeric( $acquired ) || 1 !== (int) $acquired ) {
+			throw new DatabaseException( 'The creator\'s uploads are busy.' );
+		}
+	}
+
+	/**
+	 * Releases the named lock of an owner's files.
+	 *
+	 * @param int $owner_id Creator.
+	 */
+	public function unlock_owner( int $owner_id ): void {
+		$wpdb = $this->wpdb;
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', 'merchboard_designer_uploads_' . $owner_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releases the named lock.
+	}
+
+	/**
 	 * Records a stored file: the administrator's (no creator) or a creator's upload.
 	 *
 	 * @param string                                                                 $kind       LAYER, CLIPART or CreatorUploads::UPLOAD.

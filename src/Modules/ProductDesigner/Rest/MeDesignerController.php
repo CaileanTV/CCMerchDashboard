@@ -234,7 +234,7 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/assets/{id}',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				$asset = $this->assets->find( (int) $request->get_param( 'id' ) );
-				$path  = null === $asset || ! CreatorUploads::may_see( $creator->id, $asset ) ? null : $this->files->path( $asset['file'] );
+				$path  = null === $asset || ! CreatorUploads::may_see( $creator->id, $asset ) || ! $this->layer_visible( $creator, $asset ) ? null : $this->files->path( $asset['file'] );
 				$body  = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
 
 				if ( null === $asset || false === $body ) {
@@ -254,6 +254,31 @@ final class MeDesignerController extends RestController {
 				return $response;
 			}
 		);
+	}
+
+	/**
+	 * Whether a template layer belongs to a base product the creator may see:
+	 * an active one, or one the creator has a design on (review 30.15). Any
+	 * other asset is not a layer and passes.
+	 *
+	 * @param Creator                                            $creator The creator.
+	 * @param array{id: int, kind: string, creator_id: int|null} $asset   Asset record.
+	 * @throws DatabaseException When the base products cannot be read.
+	 */
+	private function layer_visible( Creator $creator, array $asset ): bool {
+		if ( DesignerAssetRepository::LAYER !== $asset['kind'] ) {
+			return true;
+		}
+
+		$own = array_flip( array_map( static fn( array $row ): int => (int) $row['base_id'], $this->products->for_creator( $creator->id ) ) );
+
+		foreach ( $this->bases->all() as $base ) {
+			if ( ( BaseProduct::ACTIVE === $base->status || isset( $own[ (int) $base->id ] ) ) && in_array( $asset['id'], $base->layer_assets(), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

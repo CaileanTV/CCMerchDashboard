@@ -54,24 +54,31 @@ class CreatorUploads {
 	 * @throws DatabaseException When it cannot be stored (the file is deleted again).
 	 */
 	public function add( int $creator_id, array $upload ): array {
-		$own   = $this->assets->owned( $creator_id, self::UPLOAD );
-		$bytes = array_sum( array_column( $own, 'bytes' ) );
-		$size  = is_string( $upload['tmp_name'] ?? null ) && is_file( $upload['tmp_name'] ) ? (int) filesize( $upload['tmp_name'] ) : 0;
-
-		if ( count( $own ) >= self::MAX_FILES || $bytes + $size > self::MAX_TOTAL_BYTES ) {
-			self::refuse( DesignerException::UPLOAD_QUOTA );
-		}
-
-		$stored = $this->files->store( $upload );
-		$name   = is_string( $upload['name'] ?? null ) ? sanitize_file_name( $upload['name'] ) : '';
-		$id     = null;
+		// One upload of a creator at a time, so parallel uploads cannot pass the quota together (review 30.15).
+		$this->assets->lock_owner( $creator_id );
 
 		try {
-			$id = $this->assets->insert( self::UPLOAD, '' === $name ? 'image' : $name, $stored, $creator_id );
-		} finally {
-			if ( null === $id ) {
-				$this->files->delete( $stored['file'] );
+			$own   = $this->assets->owned( $creator_id, self::UPLOAD );
+			$bytes = array_sum( array_column( $own, 'bytes' ) );
+			$size  = is_string( $upload['tmp_name'] ?? null ) && is_file( $upload['tmp_name'] ) ? (int) filesize( $upload['tmp_name'] ) : 0;
+
+			if ( count( $own ) >= self::MAX_FILES || $bytes + $size > self::MAX_TOTAL_BYTES ) {
+				self::refuse( DesignerException::UPLOAD_QUOTA );
 			}
+
+			$stored = $this->files->store( $upload );
+			$name   = is_string( $upload['name'] ?? null ) ? sanitize_file_name( $upload['name'] ) : '';
+			$id     = null;
+
+			try {
+				$id = $this->assets->insert( self::UPLOAD, '' === $name ? 'image' : $name, $stored, $creator_id );
+			} finally {
+				if ( null === $id ) {
+					$this->files->delete( $stored['file'] );
+				}
+			}
+		} finally {
+			$this->assets->unlock_owner( $creator_id );
 		}
 
 		return $this->stored( $id );
