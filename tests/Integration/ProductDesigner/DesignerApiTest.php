@@ -144,8 +144,10 @@ final class DesignerApiTest extends IntegrationTestCase {
 			remove_action( 'rest_api_init', $this->register );
 		}
 
-		// The designer's routes must not stay on the shared REST server for later tests.
+		// The designer's routes, its approved font and its switch must not stay for later tests.
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server after the test.
+		delete_option( AlertFonts::APPROVED_OPTION );
+		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => false ) ) );
 		DesignerFiles::remove_all();
 		parent::tearDown();
 	}
