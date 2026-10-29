@@ -41,7 +41,13 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
   - sider med mockup-skabelon og printområde i mm og dpi.
   - Skabelonen kan importeres fra en PSD med lagene `mb_background`, `mb_color`, `mb_shading`, `mb_highlight` og `mb_print_area`. AI-filer eksporteres først til PSD.
 - **Kliparts og startdesigns**, som creatorne kan bruge.
-- **Implementeret (trin 30.6):** Merch Dashboard → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde; PSD-import følger i 30.7.
+- **Implementeret (trin 30.6):** Merch Dashboard → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde.
+- **PSD-import (trin 30.7):** "Importér fra PSD" pr. side. Sådan laves PSD'en (projektejeren):
+  1. Ét dokument pr. side i skabelonens størrelse (fx 2000 × 2000 px), 8 bit pr. kanal (Billede → Tilstand → 8 bit/kanal). AI-filer eksporteres først til PSD.
+  2. Lagene navngives præcis: `mb_background` (fotoet uden produktets farve), `mb_color` (produktets form som maske; farves i hver produktfarve), `mb_shading` (folder og skygger, ganges på), `mb_highlight` (lys, lægges ovenpå). Mindst `mb_background` eller `mb_color` skal findes. Lagene må gerne ligge i grupper.
+  3. `mb_print_area`: et fyldt rektangel, hvor designet må stå.
+  4. Vælg PSD'en i feltet, tjek forhåndsvisningen efter gem, og angiv printstørrelsen i mm og dpi (fx 300 × 400 mm ved 300 dpi).
+  - Lagenes opacitet bruges; blend modes og lageffekter gør ikke (designeren ganger skygge og lægger highlight ovenpå selv). Flad effekter ud i laget, hvis de skal med.
 - **Godkendelse:**
   - en kø med preview af mockups og printfiler og creatorens pris;
   - godkend eller afvis med note;

@@ -71,7 +71,8 @@ Merch Dashboard → **Grundprodukter** (`BaseProductsPage`/`BaseProductActions`,
 - **Fanen "Kliparts":** upload (PNG, JPG eller WebP) med navn og sletning.
 - Filer vises via `DesignerAssetDownload` (nonce pr. fil). Afviste filer slettes straks, og et erstattet lag slettes, når ændringen er gemt.
 - Audit: `designer_base_created`, `designer_base_changed` (med `changed_fields` og `version`), `designer_base_deleted`, `designer_clipart_added` og `designer_clipart_deleted`.
-- PSD-import kommer i 30.7, Printful og Gelato i 30.12–30.13.
+- **"Importér fra PSD" (trin 30.7)** pr. side: PSD'en læses i browseren (ag-psd, `build/base-products-admin.js`) og uploades aldrig. Lagene `mb_background`, `mb_color`, `mb_shading` og `mb_highlight` lægges som PNG i sidens lagfelter, printområdet udfyldes fra `mb_print_area`, og et tomt sidenavn får PSD'ens filnavn. Administratoren angiver printstørrelsen i mm og dpi og gemmer. Uden en build vises feltet ikke, og formularen virker som før.
+- Printful og Gelato kommer i 30.12–30.13.
 
 ### Kampagner 🔄 (fase 30, trin 30.4, ADR-080 pkt. 9)
 

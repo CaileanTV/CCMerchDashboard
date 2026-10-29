@@ -4514,6 +4514,11 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Filer:** `DesignerFiles` gemmer dem i `uploads/merchboard-designer/` (pkt. 5) med 25 MB og 8000 px som grænse. Afviste filer slettes straks, erstattede lag efter gem. Admin ser dem via et nonce-beskyttet admin-post-endpoint.
 - **Farvenøgler** udledes af navnet; at omdøbe en farve giver en ny farve.
 
+**Statusnote 2026-10-29 (trin 30.7, PSD-import implementeret, testet automatisk):** pkt. 2 og 4 er præciseret:
+- **ag-psd** (MIT) er nu den første runtime-JS-afhængighed, ikke Fabric. Den er låst til version 31.0.3 (udgivet 2026-10-07; de nyere 32–34 kom inden for få dage og bruges ikke endnu) og bundles kun i admin-bundlen `build/base-products-admin.js` (285 KiB, kun på grundproduktets formular). Den tilføjer ingen fund i `npm audit`.
+- **Importen** læser PSD'en i administratorens browser (den uploades aldrig; feltet har intet navn). Lagene `mb_background`, `mb_color`, `mb_shading` og `mb_highlight` findes overalt i lagtræet efter navn (uanset store/små bogstaver og skjult eller ej) og bliver PNG'er i dokumentets fulde størrelse med lagets opacitet; blend modes og effekter anvendes ikke. `mb_print_area` giver printområdet som boksen om lagets synlige pixels. Printstørrelsen i mm og dpi indtastes stadig.
+- **Grænser** som serverens: 8 bit pr. kanal og højst 8000 × 8000 px; et lag må kun findes én gang, og `mb_background` eller `mb_color` skal findes. Formularen gemmes som før, så serveren validerer PNG-lagene som enhver anden upload.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

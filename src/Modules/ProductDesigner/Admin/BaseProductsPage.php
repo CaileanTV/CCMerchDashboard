@@ -58,10 +58,12 @@ final class BaseProductsPage {
 	 *
 	 * @param BaseProductRepository   $bases    Base products.
 	 * @param DesignerAssetRepository $assets   File records.
-	 * @param int                     $decimals Store price decimals.
-	 * @param string                  $currency Store currency.
+	 * @param int                     $decimals   Store price decimals.
+	 * @param string                  $currency   Store currency.
+	 * @param string                  $plugin_dir Plugin directory with a trailing slash (the PSD import bundle).
+	 * @param string                  $plugin_url Plugin URL with a trailing slash.
 	 */
-	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency ) {
+	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '' ) {
 	}
 
 	/**
@@ -244,6 +246,7 @@ final class BaseProductsPage {
 		$id      = (int) ( $base->id ?? 0 );
 		$designs = null === $base ? 0 : $this->bases->products( $id );
 		$colors  = implode( "\n", array_map( static fn( array $color ): string => $color['name'] . ' ' . $color['hex'], $base->colors ?? array() ) );
+		$psd     = $this->enqueue_psd_import();
 
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← All base products', 'merchboard' ) . '</a></p>';
 
@@ -276,10 +279,10 @@ final class BaseProductsPage {
 		$index = 0;
 
 		foreach ( $base->views ?? array() as $view ) {
-			$this->render_view( $index++, $view );
+			$this->render_view( $index++, $view, $psd );
 		}
 
-		$this->render_view( $index, null );
+		$this->render_view( $index, null, $psd );
 
 		echo '<p><button type="submit" class="button button-primary">' . esc_html( null === $base ? __( 'Create base product', 'merchboard' ) : __( 'Save base product', 'merchboard' ) ) . '</button></p>';
 		echo '</form>';
@@ -294,8 +297,9 @@ final class BaseProductsPage {
 	 *
 	 * @param int           $index Index in the form.
 	 * @param BaseView|null $view  The side.
+	 * @param bool          $psd   Whether the PSD import is loaded.
 	 */
-	private function render_view( int $index, ?BaseView $view ): void {
+	private function render_view( int $index, ?BaseView $view, bool $psd ): void {
 		$field = static fn( string $name ): string => 'views[' . $index . '][' . $name . ']';
 		$value = static fn( ?int $number ): string => null === $number ? '' : (string) $number;
 
@@ -310,7 +314,15 @@ final class BaseProductsPage {
 			echo ' <span class="description">' . esc_html( sprintf( __( 'Template %1$d × %2$d px', 'merchboard' ), $view->width, $view->height ) ) . '</span>';
 		}
 
-		echo '</p><table class="widefat" style="max-width:60rem"><tbody>';
+		echo '</p>';
+
+		if ( $psd ) {
+			// Read in the browser only: the field has no name, so the PSD is never sent.
+			echo '<p><label>' . esc_html__( 'Import from PSD', 'merchboard' ) . ' <input type="file" accept=".psd,image/vnd.adobe.photoshop" data-merchboard-psd="' . esc_attr( (string) $index ) . '"></label> ';
+			echo '<span class="description" id="' . esc_attr( 'merchboard-psd-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'Layers mb_background, mb_color, mb_shading, mb_highlight and mb_print_area. The PSD stays on your computer; only the PNG layers are uploaded when you save.', 'merchboard' ) . '</span></p>';
+		}
+
+		echo '<table class="widefat" style="max-width:60rem"><tbody>';
 
 		foreach ( BaseView::LAYERS as $layer ) {
 			$asset = $view->layers[ $layer ] ?? null;
@@ -373,6 +385,26 @@ final class BaseProductsPage {
 		}
 
 		echo '</form>';
+	}
+
+	/**
+	 * Loads the PSD import (build/base-products-admin.js); false without a
+	 * build, when the form works without it.
+	 */
+	private function enqueue_psd_import(): bool {
+		$file  = $this->plugin_dir . 'build/base-products-admin.asset.php';
+		$asset = '' !== $this->plugin_dir && is_readable( $file ) && is_readable( $this->plugin_dir . 'build/base-products-admin.js' ) ? require $file : null;
+
+		if ( ! is_array( $asset ) || ! is_string( $asset['version'] ?? null ) || ! is_array( $asset['dependencies'] ?? null ) ) {
+			return false;
+		}
+
+		$dependencies = array_values( array_filter( $asset['dependencies'], static fn( mixed $dependency ): bool => is_string( $dependency ) && '' !== $dependency ) );
+
+		wp_enqueue_script( 'merchboard-base-products-admin', $this->plugin_url . 'build/base-products-admin.js', $dependencies, $asset['version'], true );
+		wp_set_script_translations( 'merchboard-base-products-admin', 'merchboard', $this->plugin_dir . 'languages' );
+
+		return true;
 	}
 
 	/**
