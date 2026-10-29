@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 
 defined( 'ABSPATH' ) || exit;
@@ -32,9 +33,10 @@ final class DesignerSettingsSection {
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintfulToken|null $token The Printful token (step 30.12).
+	 * @param PrintfulToken|null $token  The Printful token (step 30.12).
+	 * @param GelatoAccount|null $gelato The Gelato key and store (step 30.13).
 	 */
-	public function __construct( private ?PrintfulToken $token = null ) {
+	public function __construct( private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null ) {
 	}
 
 	/**
@@ -56,6 +58,7 @@ final class DesignerSettingsSection {
 			'no_changes'                      => array( __( 'No changes were made to the product designer settings.', 'merchboard' ), 'info' ),
 			DesignerException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			DesignerException::PRINTFUL_TOKEN => array( __( 'The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _).', 'merchboard' ), 'error' ),
+			DesignerException::GELATO_ACCOUNT => array( __( 'The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store\'s address (a UUID).', 'merchboard' ), 'error' ),
 			'error'                           => array( __( 'A technical error occurred. The product designer settings were not changed.', 'merchboard' ), 'error' ),
 			default                           => null,
 		};
@@ -138,8 +141,45 @@ final class DesignerSettingsSection {
 
 		echo '</ol></details>';
 		echo '</td></tr>';
+		$this->render_gelato();
 		echo '</tbody></table>';
 		submit_button( __( 'Save product designer settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
+	}
+
+	/**
+	 * The Gelato API key and store id with the setup guide (step 30.13).
+	 */
+	private function render_gelato(): void {
+		$stored = null !== $this->gelato && null !== $this->gelato->key();
+		$store  = null === $this->gelato ? null : $this->gelato->store();
+
+		echo '<tr><th scope="row"><label for="merchboard-gelato-key">' . esc_html__( 'Gelato API key', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="password" id="merchboard-gelato-key" name="gelato_key" value="" class="regular-text" autocomplete="off"> ';
+		echo '<span>' . esc_html( $stored ? __( 'A key is stored.', 'merchboard' ) : __( 'No key yet.', 'merchboard' ) ) . '</span>';
+
+		if ( $stored ) {
+			echo '<br><label><input type="checkbox" name="gelato_key_remove" value="1"> ' . esc_html__( 'Remove the stored key', 'merchboard' ) . '</label>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'An API key from Gelato\'s dashboard. It is stored encrypted and never shown again; leave the field empty to keep the stored one.', 'merchboard' ) . '</p>';
+		echo '<p><label for="merchboard-gelato-store">' . esc_html__( 'Gelato store id', 'merchboard' ) . '</label><br>';
+		echo '<input type="text" id="merchboard-gelato-store" name="gelato_store" value="' . esc_attr( (string) $store ) . '" class="regular-text" autocomplete="off" pattern="[0-9a-fA-F-]{36}"></p>';
+		echo '<details style="margin-top:8px"><summary>' . esc_html__( 'How to set up Gelato', 'merchboard' ) . '</summary><ol>';
+
+		foreach (
+			array(
+				__( 'Create an account at gelato.com and a store that is only used through the API and is not connected to a web shop or sales channel, so nothing is published or sold through Gelato. Products made for mockups stay in that store.', 'merchboard' ),
+				__( 'Create an API key in Gelato\'s dashboard (Developer → API keys) and copy the store id from the store\'s address.', 'merchboard' ),
+				__( 'Paste the key and the store id above, switch Gelato on and save.', 'merchboard' ),
+				__( 'In Gelato\'s dashboard, make a template per product: the product, the colours and sizes creators may choose, and one image placeholder per side. Import it under Merch Dashboard → Base products ("Import from Gelato") with its template id, check it, set the base price and activate it.', 'merchboard' ),
+				__( 'Gelato fetches print files from a short-lived link on this site, so mockups from Gelato only work on a site Gelato can reach (not on a local test site).', 'merchboard' ),
+			) as $step
+		) {
+			echo '<li>' . esc_html( $step ) . '</li>';
+		}
+
+		echo '</ol></details>';
+		echo '</td></tr>';
 	}
 }

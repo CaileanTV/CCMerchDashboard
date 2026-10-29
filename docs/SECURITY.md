@@ -344,10 +344,12 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 
 - **Adgang:** kun `merchboard_manage_creators`, kun for en aktiv creator med en bruger; start og stop med nonce. Sessionen (user meta `merchboard_impersonating`) varer højst 60 minutter, tæller kun, mens rettigheden findes, og ender ved logud.
 - **Creatoren afgøres stadig server-side** i `CreatorContext` (ADR-007); klienten sender aldrig et creator-ID.
-- **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder og (fra trin 29.4) creatorens e-mailvalg og (fra trin 30.9) indsendelse af et design og dets filer.
-
-**Printful (trin 30.12, ADR-081):** token'en krypteres med sodium (nøgledomænet `designer-printful`) og vises, logges og auditeres aldrig. Kun de godkendte endpoints kaldes, med `wp_safe_remote_*`, 15 s og uden redirects. Den eneste offentlige rute, `GET /merchboard/v1/designer-print/{version}/{side}`, kræver en HMAC-signatur med eget domæne, der udløber efter højst 1 time, og giver kun printfilen af en ventende eller godkendt version (`no-store`, `nosniff`; alt andet er 404). Hentede filer valideres som uploads. En ændring af et produkt i butikken kan startes (det er en kladde). OBS-URL'en sendes aldrig. Klokkens notifikationer markeres ikke som læst under en session.
+- **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder og (fra trin 29.4) creatorens e-mailvalg og (fra trin 30.9) indsendelse af et design og dets filer. En ændring af et produkt i butikken kan startes (det er en kladde). OBS-URL'en sendes aldrig. Klokkens notifikationer markeres ikke som læst under en session.
 - **Sporbarhed:** start og slut auditeres; ændringer under en session har administratoren som aktør og `impersonating` i konteksten.
+
+**Printful (trin 30.12, ADR-081):** token'en krypteres med sodium (nøgledomænet `designer-printful`) og vises, logges og auditeres aldrig. Kun de godkendte endpoints kaldes, med `wp_safe_remote_*`, 15 s og uden redirects. Den eneste offentlige rute, `GET /merchboard/v1/designer-print/{version}/{side}`, kræver en HMAC-signatur med eget domæne, der udløber efter højst 1 time, og giver kun printfilen af en ventende eller godkendt version (`no-store`, `nosniff`; alt andet er 404). Hentede filer valideres som uploads.
+
+**Gelato (trin 30.13, ADR-082):** API-nøglen krypteres med sodium (nøgledomænet `designer-gelato`) og vises, logges og auditeres aldrig. Kun de tre godkendte endpoints på `ecommerce.gelatoapis.com` og download af Gelatos billeder (kun https) kaldes, med `wp_safe_remote_*`, 15 s og uden redirects; id'er i stier valideres (bogstaver, tal og `-`). Gelato får kun skabelon- og variant-id'er, designets titel og printfilernes signerede URL'er (samme rute som Printful). Butikken skal være en ren API-butik uden salgskanal (står i vejledningen). Hentede billeder valideres som uploads.
 
 ## Sletning af creators (fase 27, trin 27.3, ADR-076)
 

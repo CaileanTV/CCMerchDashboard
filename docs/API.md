@@ -555,9 +555,9 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 | `POST /me/designer/products/{id}/withdraw` 🔄 30.9 | Produktet med en ny kladde (samme indhold og filer); den ventende version trækkes tilbage |
 | `POST /me/designer/products/{id}/change` 🔄 30.10 | Produktet med en ny kladde af den levende version (uden dens filer). Kun et produkt i butikken uden kladde eller ventende version (`submission_pending`, `not_live`) |
 
-## `/designer-print/{version}/{side}` 🔄 (fase 30, trin 30.12, ADR-081)
+## `/designer-print/{version}/{side}` 🔄 (fase 30, trin 30.12–30.13, ADR-081, ADR-082)
 
-Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, `no-store`, `nosniff`) til Printfuls mockup-generator, når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
+Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, `no-store`, `nosniff`) til Printfuls mockup-generator og Gelatos skabelonprodukter (fra trin 30.13), når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
 
 ## Test-krav
 

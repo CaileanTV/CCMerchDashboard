@@ -107,6 +107,8 @@ final class DesignerException extends RuntimeException {
 
 	public const PRINTFUL_TOKEN = 'printful_token';
 
+	public const GELATO_ACCOUNT = 'gelato_account';
+
 	public const MOCKUPS_PENDING = 'mockups_pending';
 
 	/**

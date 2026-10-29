@@ -15,6 +15,7 @@ use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 
 defined( 'ABSPATH' ) || exit;
@@ -328,7 +329,7 @@ final class DesignerNotifications {
 	}
 
 	/**
-	 * Printful could not make the mockups of a submitted design.
+	 * Printful or Gelato could not make the mockups of a submitted design.
 	 */
 	private static function mockups_failed(): NotificationType {
 		return new NotificationType(
@@ -336,19 +337,27 @@ final class DesignerNotifications {
 			NotificationType::ADMIN,
 			self::GROUP,
 			static fn(): string => __( 'Mockups could not be made', 'merchboard' ),
-			static fn(): string => __( 'When Printful could not make the mockups of a submitted design. The mockups the creator\'s browser made stay, and the design can still be approved.', 'merchboard' ),
+			static fn(): string => __( 'When Printful or Gelato could not make the mockups of a submitted design. The mockups the creator\'s browser made stay, and the design can still be approved.', 'merchboard' ),
 			true,
 			false,
 			false,
 			DesignsPage::SLUG,
-			array_merge( self::sample(), array( 'reason' => PrintfulException::FAILED ) ),
-			/* translators: 1: product title, 2: creator name. */
-			static fn( NotificationData $d ): string => sprintf( __( 'Printful could not make the mockups of %1$s by %2$s.', 'merchboard' ), $d->text( 'title' ), $d->text( 'creator' ) ),
+			array_merge(
+				self::sample(),
+				array(
+					'reason'   => PrintfulException::FAILED,
+					'provider' => 'Printful',
+				)
+			),
+			/* translators: 1: Printful or Gelato, 2: product title, 3: creator name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s could not make the mockups of %2$s by %3$s.', 'merchboard' ), self::provider( $d ), $d->text( 'title' ), $d->text( 'creator' ) ),
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
 				/* translators: %s: product title. */
 				sprintf( __( 'Mockups of %s could not be made', 'merchboard' ), $d->text( 'title' ) ),
-				__( 'Printful could not make the mockups', 'merchboard' ),
-				array( __( 'Printful could not make the mockups of a design waiting for approval. The mockups the creator\'s browser made are used instead; check them under Designs before you approve.', 'merchboard' ) ),
+				/* translators: %s: Printful or Gelato. */
+				sprintf( __( '%s could not make the mockups', 'merchboard' ), self::provider( $d ) ),
+				/* translators: %s: Printful or Gelato. */
+				array( sprintf( __( '%s could not make the mockups of a design waiting for approval. The mockups the creator\'s browser made are used instead; check them under Designs before you approve.', 'merchboard' ), self::provider( $d ) ) ),
 				array(
 					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
 					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
@@ -362,6 +371,15 @@ final class DesignerNotifications {
 				false
 			)
 		);
+	}
+
+	/**
+	 * The provider of a mockups notification (Printful before step 30.13).
+	 *
+	 * @param NotificationData $d Data.
+	 */
+	private static function provider( NotificationData $d ): string {
+		return 'Gelato' === $d->text( 'provider' ) ? 'Gelato' : 'Printful';
 	}
 
 	/**
@@ -383,6 +401,12 @@ final class DesignerNotifications {
 			PrintfulException::INVALID              => __( 'Printful answered with something that cannot be used.', 'merchboard' ),
 			PrintfulException::FAILED              => __( 'Printful could not be reached or answered with an error.', 'merchboard' ),
 			'task'                                  => __( 'Printful could not make a mockup (or took too long).', 'merchboard' ),
+			GelatoException::NOT_CONFIGURED         => __( 'Gelato is switched off or has no API key or store id (Settings → Product designer).', 'merchboard' ),
+			GelatoException::UNAUTHORIZED           => __( 'Gelato refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ),
+			GelatoException::NOT_FOUND              => __( 'Gelato does not know the template or the product.', 'merchboard' ),
+			GelatoException::INVALID                => __( 'Gelato answered with something that cannot be used.', 'merchboard' ),
+			GelatoException::FAILED                 => __( 'Gelato could not be reached or answered with an error.', 'merchboard' ),
+			'gelato_task'                           => __( 'Gelato could not make the product\'s images (or took too long).', 'merchboard' ),
 			default                                 => __( 'A technical error; the log has the details.', 'merchboard' ),
 		};
 	}

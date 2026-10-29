@@ -653,6 +653,21 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * The provider's product made for a version's mockups (Gelato, step 30.13).
+	 *
+	 * @param int    $version_id Version.
+	 * @param string $ref        The provider's product id.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_provider_ref( int $version_id, string $ref ): void {
+		$done = $this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'provider_ref' => $ref ), array( 'id' => $version_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not store the provider product of the design.' );
+		}
+	}
+
+	/**
 	 * Stores the files of a pending version (a provider's mockups replace
 	 * the browser's, step 30.12).
 	 *

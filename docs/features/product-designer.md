@@ -143,9 +143,11 @@ Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful
 3. **Skabelon pr. grundprodukt:** under Templates laver du en skabelon på det Gelato-produkt, du vil tilbyde, med mockups.
    - Tilføj et **billedlag pr. side** med et entydigt navn, fx `front` og `back`. Navnet bruges som "image placeholder" i API'et.
    - Gem, og kopiér skabelonens **Template ID**.
-4. **Merch Dashboard:** indsæt nøgle og `storeId` i Settings → Gelato, og slå Gelato til.
-5. **Grundprodukter:** importér produktet fra Gelatos katalog under Grundprodukter, og angiv Template ID. Vi henter skabelonens varianter og billedlag, og du kobler farver, størrelser og sider til dem.
-6. **Bemærk:** hver indsendelse opretter et produkt i Gelato-butikken (her laves mockups). Produkterne bliver liggende dér.
+4. **Merch Dashboard:** indsæt nøglen i Settings → Produktdesigner → "Gelato API key" og butiks-id'et i "Gelato store id", slå Gelato til, og gem.
+5. **Grundprodukter:** under Merch Dashboard → Grundprodukter → "Importér fra Gelato" indtaster du skabelonens Template ID og grundprisen inkl. moms. Skabelonen bliver en kladde med farver og størrelser fra varianterne og én side pr. billedlag med printstørrelsen i mm.
+   - Gelato giver ingen farvekoder og intet skabelonbillede pr. side. Sæt farvekoderne, flyt printområdet ind på produktet (skabelonens forhåndsvisning er baggrund på alle sider), eller læg dine egne lag/PSD på, og aktivér så produktet.
+   - Farver og størrelser skal hedde det samme som i skabelonen; ellers kan vi ikke finde skabelonvarianten, og mockups fejler.
+6. **Mockups:** hver indsendelse opretter et produkt i Gelato-butikken med én variant pr. valgt farve og printfilerne i billedlagene. Når Gelato har lavet billederne (typisk 1–2 minutter, vi venter højst 20), bliver de designets mockups på første side; de øvrige sider beholder creatorens mockups. Imens kan designet ikke godkendes. Fejler det, bruges creatorens mockups, og du får en mail. Produkterne bliver liggende i Gelato-butikken.
 
 **Begge:** runtime-test kræver, at sitet kan nås fra internettet (devpage), fordi Printful og Gelato henter printfilen via en URL. Local kan ikke nås udefra.
 

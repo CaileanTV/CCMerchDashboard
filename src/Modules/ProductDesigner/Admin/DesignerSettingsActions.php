@@ -14,6 +14,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerSettings;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
@@ -43,8 +44,9 @@ final class DesignerSettingsActions {
 	 * @param DesignerSettings   $settings Switches.
 	 * @param Logger             $logger   Technical log.
 	 * @param PrintfulToken|null $token  The Printful token (step 30.12).
+	 * @param GelatoAccount|null $gelato The Gelato key and store (step 30.13).
 	 */
-	public function __construct( private DesignerSettings $settings, private Logger $logger, private ?PrintfulToken $token = null ) {
+	public function __construct( private DesignerSettings $settings, private Logger $logger, private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null ) {
 	}
 
 	/**
@@ -97,6 +99,9 @@ final class DesignerSettingsActions {
 
 		$token  = is_string( $input['printful_token'] ?? null ) ? trim( $input['printful_token'] ) : '';
 		$remove = '1' === ( is_scalar( $input['printful_token_remove'] ?? null ) ? (string) $input['printful_token_remove'] : '' );
+		$key    = is_string( $input['gelato_key'] ?? null ) ? $input['gelato_key'] : '';
+		$store  = is_string( $input['gelato_store'] ?? null ) ? $input['gelato_store'] : '';
+		$drop   = '1' === ( is_scalar( $input['gelato_key_remove'] ?? null ) ? (string) $input['gelato_key_remove'] : '' );
 
 		try {
 			$changed = $this->settings->save( $values );
@@ -107,6 +112,15 @@ final class DesignerSettingsActions {
 			} elseif ( null !== $this->token && $remove ) {
 				$this->token->clear();
 				$changed[] = 'printful_token';
+			}
+
+			if ( null !== $this->gelato && $this->gelato->set( $key, $store ) ) {
+				$changed[] = 'gelato';
+			}
+
+			if ( null !== $this->gelato && $drop && '' === trim( $key ) ) {
+				$this->gelato->clear();
+				$changed[] = 'gelato_key';
 			}
 		} catch ( DesignerException $e ) {
 			return self::url( $e->reason() );

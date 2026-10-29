@@ -49,6 +49,10 @@ use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoApi;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
@@ -130,7 +134,31 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
-		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ) ) );
+		// Gelato (step 30.13, ADR-082): the key and store, the API, the template import and the mockups.
+		$container->set( GelatoAccount::class, static fn( Container $c ): GelatoAccount => new GelatoAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( GelatoApi::class, static fn( Container $c ): GelatoApi => new GelatoApi( $c->get( GelatoAccount::class ) ) );
+		$container->set(
+			GelatoCatalog::class,
+			static fn( Container $c ): GelatoCatalog => new GelatoCatalog(
+				$c->get( GelatoApi::class ),
+				new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), self::downloads(), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ),
+				$c->get( BaseProductRepository::class )
+			)
+		);
+		$container->set(
+			GelatoMockups::class,
+			static fn( Container $c ): GelatoMockups => new GelatoMockups(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( GelatoApi::class ),
+				$c->get( ProviderTaskRepository::class ),
+				self::downloads(),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
 		$container->set( CampaignRepository::class, static fn( Container $c ): CampaignRepository => new CampaignRepository( $c->get( wpdb::class ) ) );
 		$container->set( CampaignService::class, static fn( Container $c ): CampaignService => new CampaignService( $c->get( CampaignRepository::class ), $c->get( CreatorCodeRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
@@ -146,8 +174,8 @@ final class ProductDesignerModule implements Module {
 		$container->set( BaseProductRepository::class, static fn( Container $c ): BaseProductRepository => new BaseProductRepository( $c->get( wpdb::class ) ) );
 		$container->set( BaseProductService::class, static fn( Container $c ): BaseProductService => new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ) );
 		$container->set( ClipartLibrary::class, static fn( Container $c ): ClipartLibrary => new ClipartLibrary( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured() ) );
-		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( PrintfulCatalog::class ) ) );
+		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured() ) );
+		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ) ) );
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
@@ -265,17 +293,24 @@ final class ProductDesignerModule implements Module {
 			40
 		);
 
-		( new DesignerSettingsSection( $container->get( PrintfulToken::class ) ) )->register();
+		( new DesignerSettingsSection( $container->get( PrintfulToken::class ), $container->get( GelatoAccount::class ) ) )->register();
 		add_action(
 			'merchboard_designer_submitted',
 			static function ( mixed $version ) use ( $container ): void {
 				$container->get( PrintfulMockups::class )->submitted( $version );
+				$container->get( GelatoMockups::class )->submitted( $version );
 			}
 		);
 		add_action(
 			PrintfulMockups::HOOK,
 			static function ( mixed $version ) use ( $container ): void {
 				$container->get( PrintfulMockups::class )->run( $version );
+			}
+		);
+		add_action(
+			GelatoMockups::HOOK,
+			static function ( mixed $version ) use ( $container ): void {
+				$container->get( GelatoMockups::class )->run( $version );
 			}
 		);
 		DesignerNotifications::register();

@@ -15,6 +15,8 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
@@ -42,8 +44,9 @@ final class BaseProductActions {
 	 * @param ClipartLibrary       $cliparts Cliparts.
 	 * @param Logger               $logger   Technical log.
 	 * @param PrintfulCatalog|null $printful Printful import (step 30.12).
+	 * @param GelatoCatalog|null   $gelato   Gelato import (step 30.13).
 	 */
-	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?PrintfulCatalog $printful = null ) {
+	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null ) {
 	}
 
 	/**
@@ -104,6 +107,12 @@ final class BaseProductActions {
 					}
 
 					return BaseProductsPage::edit_url( $this->printful->import( absint( $text( 'printful_product' ) ), $text( 'base_price' ) ), 'imported' );
+				case 'gelato_import':
+					if ( null === $this->gelato ) {
+						return BaseProductsPage::url( GelatoException::NOT_CONFIGURED );
+					}
+
+					return BaseProductsPage::edit_url( $this->gelato->import( $text( 'gelato_template' ), $text( 'base_price' ) ), 'gelato_imported' );
 				case 'retire':
 					if ( '1' !== $text( 'confirm_retire' ) ) {
 						return BaseProductsPage::edit_url( $id, 'retire_unconfirmed' );
@@ -127,10 +136,10 @@ final class BaseProductActions {
 				default:
 					return BaseProductsPage::url( 'error' );
 			}
-		} catch ( PrintfulException $e ) {
+		} catch ( PrintfulException | GelatoException $e ) {
 			return BaseProductsPage::url( $e->reason() );
 		} catch ( DesignerException $e ) {
-			if ( 'printful_import' === $do ) {
+			if ( 'printful_import' === $do || 'gelato_import' === $do ) {
 				return BaseProductsPage::url( $e->reason() );
 			}
 

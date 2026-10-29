@@ -61,6 +61,8 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 
 **Printful, fra trin 30.12:** Settings → Produktdesigner har feltet "Printful API token" (krypteret, kan fjernes) og opsætningsvejledningen. Grundprodukter har "Importér fra Printful" (produkt-id og grundpris), når Printful er slået til. Designs viser, om mockups kommer fra Printful, stadig laves eller fejlede.
 
+**Gelato, fra trin 30.13:** Settings → Produktdesigner har felterne "Gelato API key" (krypteret, kan fjernes) og "Gelato store id" og opsætningsvejledningen. Grundprodukter har "Importér fra Gelato" (skabelon-id og grundpris), når Gelato er slået til. Designs viser mockup-tilstanden som for Printful.
+
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 
 ### Designs 🔄 (fase 30, trin 30.9, ADR-080 pkt. 3)
@@ -86,7 +88,7 @@ Merch Dashboard → **Grundprodukter** (`BaseProductsPage`/`BaseProductActions`,
 - Filer vises via `DesignerAssetDownload` (nonce pr. fil). Afviste filer slettes straks, og et erstattet lag slettes, når ændringen er gemt.
 - Audit: `designer_base_created`, `designer_base_changed` (med `changed_fields` og `version`), `designer_base_deleted`, `designer_clipart_added` og `designer_clipart_deleted`.
 - **"Importér fra PSD" (trin 30.7)** pr. side: PSD'en læses i browseren (ag-psd, `build/base-products-admin.js`) og uploades aldrig. Lagene `mb_background`, `mb_color`, `mb_shading` og `mb_highlight` lægges som PNG i sidens lagfelter, printområdet udfyldes fra `mb_print_area`, og et tomt sidenavn får PSD'ens filnavn. Administratoren angiver printstørrelsen i mm og dpi og gemmer. Uden en build vises feltet ikke, og formularen virker som før.
-- Printful og Gelato kommer i 30.12–30.13.
+- Import fra Printful (30.12) og Gelato (30.13): se afsnittene ovenfor.
 
 ### Kampagner 🔄 (fase 30, trin 30.4, ADR-080 pkt. 9)
 

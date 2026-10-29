@@ -19,6 +19,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 
@@ -65,8 +66,9 @@ final class BaseProductsPage {
 	 * @param string                  $plugin_dir Plugin directory with a trailing slash (the PSD import bundle).
 	 * @param string                  $plugin_url Plugin URL with a trailing slash.
 	 * @param bool                    $printful_ready Whether a Printful token is stored.
+	 * @param bool                    $gelato_ready   Whether a Gelato key and store are stored.
 	 */
-	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false ) {
+	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false ) {
 	}
 
 	/**
@@ -132,6 +134,13 @@ final class BaseProductsPage {
 			PrintfulException::RATE_LIMITED         => array( __( 'Printful asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
 			PrintfulException::INVALID              => array( __( 'The Printful product has no usable templates or variants.', 'merchboard' ), 'error' ),
 			PrintfulException::FAILED               => array( __( 'Printful could not be reached. Please try again later.', 'merchboard' ), 'error' ),
+			'gelato_imported'                       => array( __( 'The template was imported from Gelato as a draft. Set the colour codes, check the sides and move the print areas onto the product, then activate it.', 'merchboard' ), 'success' ),
+			GelatoException::NOT_CONFIGURED         => array( __( 'Gelato is switched off or has no API key or store id.', 'merchboard' ), 'error' ),
+			GelatoException::UNAUTHORIZED           => array( __( 'Gelato refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
+			GelatoException::NOT_FOUND              => array( __( 'Gelato does not know that template id.', 'merchboard' ), 'error' ),
+			GelatoException::RATE_LIMITED           => array( __( 'Gelato asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
+			GelatoException::INVALID                => array( __( 'The Gelato template has no usable variants, image placeholders or preview.', 'merchboard' ), 'error' ),
+			GelatoException::FAILED                 => array( __( 'Gelato could not be reached. Please try again later.', 'merchboard' ), 'error' ),
 			'retired'                               => array( __( 'The base product is retired. Its products are being taken out of the shop, and the creators are told.', 'merchboard' ), 'success' ),
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
@@ -221,6 +230,7 @@ final class BaseProductsPage {
 	private function render_list(): void {
 		echo '<p>' . esc_html__( 'The products creators design on. The base price incl. VAT is what the company always keeps outside its own campaigns; the creator\'s profit comes on top. A base product is a draft until it is activated.', 'merchboard' ) . '</p>';
 		$this->render_printful_import();
+		$this->render_gelato_import();
 
 		$bases = $this->bases->all();
 
@@ -434,6 +444,32 @@ final class BaseProductsPage {
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="printful_import">';
 		wp_nonce_field( BaseProductActions::ACTION );
 		echo '<p><label>' . esc_html__( 'Printful product id', 'merchboard' ) . ' <input type="number" min="1" name="printful_product" required class="small-text"></label> ';
+		echo '<label>' . esc_html__( 'Base price incl. VAT', 'merchboard' ) . ' <input type="text" name="base_price" required class="small-text" inputmode="decimal"></label> ';
+		submit_button( __( 'Import', 'merchboard' ), 'secondary', 'submit', false );
+		echo '</p></form></details>';
+	}
+
+	/**
+	 * The Gelato import (step 30.13): a template id and the base price.
+	 */
+	private function render_gelato_import(): void {
+		if ( ! Settings::gelato_enabled() ) {
+			return;
+		}
+
+		echo '<details style="margin:12px 0"><summary><strong>' . esc_html__( 'Import from Gelato', 'merchboard' ) . '</strong></summary>';
+
+		if ( ! $this->gelato_ready ) {
+			echo '<p>' . esc_html__( 'Enter the Gelato API key and store id under Settings → Product designer first.', 'merchboard' ) . '</p></details>';
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'Make a template in the Gelato dashboard first: the product, the colours and sizes creators may choose, and one image placeholder per side. The template id is in the template\'s address at Gelato. The colours, sizes and sides are imported as a draft with the template\'s preview as the background; set the colour codes, move each print area onto the product (or add your own layers) and activate it. Mockups of designs on it come from Gelato.', 'merchboard' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="gelato_import">';
+		wp_nonce_field( BaseProductActions::ACTION );
+		echo '<p><label>' . esc_html__( 'Gelato template id', 'merchboard' ) . ' <input type="text" name="gelato_template" required class="regular-text" pattern="[A-Za-z0-9-]{1,100}" autocomplete="off"></label> ';
 		echo '<label>' . esc_html__( 'Base price incl. VAT', 'merchboard' ) . ' <input type="text" name="base_price" required class="small-text" inputmode="decimal"></label> ';
 		submit_button( __( 'Import', 'merchboard' ), 'secondary', 'submit', false );
 		echo '</p></form></details>';
