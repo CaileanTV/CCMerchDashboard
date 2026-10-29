@@ -665,7 +665,7 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
   - `mockup_state`, `apply_state`, `apply_step` og `apply_error`;
   - `note` (afvisning) og tidspunkter.
   - UNIQUE (`design_product_id`, `number`).
-- **`merchboard_designer_assets`**: creatorens uploads (`creator_id`) og admins filer (`creator_id` NULL) med `kind` (`layer` = skabelonlag, `clipart`; trin 30.6), `name`, `file` (tilfældigt navn), `mime`, mål og `bytes`. Filerne ligger privat i `uploads/merchboard-designer/` (SECURITY.md).
+- **`merchboard_designer_assets`**: creatorens uploads (`creator_id`) og admins filer (`creator_id` NULL) med `kind` (`layer` = skabelonlag, `clipart`; trin 30.6; `upload` = creatorens billede, trin 30.8), `name`, `file` (tilfældigt navn), `mime`, mål og `bytes`. Filerne ligger privat i `uploads/merchboard-designer/` (SECURITY.md).
 - **`merchboard_designer_provider_tasks`**: mockup-tasks hos Printful eller Gelato med `provider`, `side`, `task_key`, `status`, `attempts`, `next_poll_at`, `result` (JSON) og `error`.
 - **`merchboard_designer_campaigns`**: virksomhedens kampagner (ADR-080 pkt. 9) med `name`, `starts_at`, `ends_at`, `coupon_codes` (JSON) og `sale_prices`.
 

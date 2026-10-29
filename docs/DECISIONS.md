@@ -4519,6 +4519,12 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Importen** læser PSD'en i administratorens browser (den uploades aldrig; feltet har intet navn). Lagene `mb_background`, `mb_color`, `mb_shading` og `mb_highlight` findes overalt i lagtræet efter navn (uanset store/små bogstaver og skjult eller ej) og bliver PNG'er i dokumentets fulde størrelse med lagets opacitet; blend modes og effekter anvendes ikke. `mb_print_area` giver printområdet som boksen om lagets synlige pixels. Printstørrelsen i mm og dpi indtastes stadig.
 - **Grænser** som serverens: 8 bit pr. kanal og højst 8000 × 8000 px; et lag må kun findes én gang, og `mb_background` eller `mb_color` skal findes. Formularen gemmes som før, så serveren validerer PNG-lagene som enhver anden upload.
 
+**Statusnote 2026-10-29 (trin 30.8, designeren implementeret, testet automatisk):** pkt. 4 og 5 er præciseret:
+- **Fabric 7.4.0** (MIT, udgivet 2026-05-18) er låst og indlæses lazy i en separat chunk (`build/663.js`, 276 KiB), kun når editoren åbner. Den bruger hverken workers eller `blob:`: billeder hentes med sessionen og vises som `data:`, så dashboardets CSP er uændret (`script-src 'self'` dækker chunken). Fabrics valgfrie Node-pakker (`canvas`, `jsdom`) bruges kun i udviklingsmiljøet og pakkes aldrig.
+- **Design-dokumentet** er vores eget, ikke Fabrics JSON: `{ version: 1, sides: { <side>: [ objekt ] } }` med `text`, `image` og `rect`/`ellipse`/`triangle`, positioneret i printfilens pixels. Serveren gemmer kun det normaliserede dokument efter whitelisten (`DesignValidator`): talområder, `#rrggbb`, godkendte skrifttyper (ADR-067's liste, formålet udvidet til designeren), egne uploads og kliparts, højst 100 objekter pr. side og 256 KB.
+- **Kladden** gemmer titel, beskrivelse, valgte farver og størrelser, fortjeneste (procent eller beløb, aldrig under 0) og den pris, den giver nu. Creatorens uploads har en kvote på 200 filer og 1 GB.
+- **Editoren** viser skabelonen som lag: baggrund og farvemaske (farvet i den valgte produktfarve) under designet, skygge (multiply) og highlight (screen) over det. Printområdet vises stiplet, og designet klippes til det.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

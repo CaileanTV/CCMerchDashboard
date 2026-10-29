@@ -536,6 +536,21 @@ Additive felter; de eksisterende beløb ekskl. moms er uændrede.
 
 Manglende moms regnes aldrig som 0. Dashboardet viser beløbene inkl. moms, når `vat.status` er `complete`, og ellers beløbene ekskl. moms med tydelig mærkning og en forklaring. `/me/sales`-cachens format er `v3`.
 
+## `/me/designer` 🔄 (fase 30, trin 30.8, ADR-080)
+
+Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabled`), for den creator `CreatorContext` afgør. Afviste ændringer giver 400 (404 for ukendt produkt, upload eller grundprodukt) med `code: merchboard_designer_refused` og `data.reason` (fx `design_invalid`, `design_title`, `design_profit`, `design_options`, `upload_quota`).
+
+| Metode og sti | Svar |
+| --- | --- |
+| `GET /me/designer` | `bases` (aktive grundprodukter: `base_price`, `currency`, `colors`, `sizes`, `views` med `layers` (asset-id pr. lag), `area`, `print_width`/`print_height`, `dpi`), `cliparts`, `uploads` (creatorens), `fonts` (godkendte Google Fonts), `products` (creatorens designer-produkter med nyeste versions titel og status) og `limits` (`max_upload_bytes`, `max_uploads`, `max_objects`, `price_decimals`) |
+| `POST /me/designer/uploads` (multipart `file`) | 201 med asset (`id`, `name`, `width`, `height`, `mime`). PNG, JPG eller WebP, højst 25 MB og 8000 px; højst 200 filer og 1 GB pr. creator |
+| `DELETE /me/designer/uploads/{id}` | Tilstanden som `GET` (kun creatorens egne uploads) |
+| `GET /me/designer/assets/{id}` | Filen selv (`no-store`, `nosniff`): creatorens uploads, kliparts og skabelonlag. Dashboardet viser den som `data:` |
+| `POST /me/designer/products` `{ base_id }` | 201 med produktet og dets første kladde (kun aktive grundprodukter) |
+| `GET /me/designer/products/{id}` | Produktet med kladden: `title`, `description`, `colors`, `sizes`, `design`, `profit_kind`, `profit_value`, `price` (kundens pris inkl. moms), `base_version` |
+| `PATCH /me/designer/products/{id}` | Gemmer kladden. Design-dokumentet valideres mod en whitelist (`DesignValidator`): `{ version: 1, sides: { <side>: [ objekt, … ] } }` med `text`, `image` (egen upload eller klipart) og `rect`/`ellipse`/`triangle`; positioner i printfilens pixels, talområder, `#rrggbb`, godkendte skrifttyper, højst 100 objekter pr. side og 256 KB |
+| `DELETE /me/designer/products/{id}` | Tilstanden som `GET`; kun et produkt, der aldrig er indsendt |
+
 ## Test-krav
 
 Hvert creator-endpoint skal have integrationstests for mindst:

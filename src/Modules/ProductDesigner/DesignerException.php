@@ -69,6 +69,24 @@ final class DesignerException extends RuntimeException {
 
 	public const CLIPART_UNKNOWN = 'clipart_unknown';
 
+	public const DESIGNER_DISABLED = 'designer_disabled';
+
+	public const DESIGN_INVALID = 'design_invalid';
+
+	public const DESIGN_UNKNOWN = 'design_unknown';
+
+	public const DESIGN_NOT_DRAFT = 'design_not_draft';
+
+	public const DESIGN_TITLE = 'design_title';
+
+	public const DESIGN_PROFIT = 'design_profit';
+
+	public const DESIGN_OPTIONS = 'design_options';
+
+	public const UPLOAD_QUOTA = 'upload_quota';
+
+	public const UPLOAD_UNKNOWN = 'upload_unknown';
+
 	/**
 	 * Constructor.
 	 *

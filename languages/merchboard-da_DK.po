@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-29T08:47:58+00:00\n"
+"PO-Revision-Date: 2026-10-29T09:17:13+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -634,354 +634,362 @@ msgstr "Klipart tilføjet"
 msgid "Clipart deleted"
 msgstr "Klipart slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:276
+#: src/Modules/Admin/AuditLogFormatter.php:186
+msgid "Creator started a designer product"
+msgstr "Creator startede et designer-produkt"
+
+#: src/Modules/Admin/AuditLogFormatter.php:187
+msgid "Creator deleted a designer draft"
+msgstr "Creator slettede en designkladde"
+
+#: src/Modules/Admin/AuditLogFormatter.php:278
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:278
+#: src/Modules/Admin/AuditLogFormatter.php:280
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:281
+#: src/Modules/Admin/AuditLogFormatter.php:283
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:284
+#: src/Modules/Admin/AuditLogFormatter.php:286
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:287
+#: src/Modules/Admin/AuditLogFormatter.php:289
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:290
+#: src/Modules/Admin/AuditLogFormatter.php:292
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:293
+#: src/Modules/Admin/AuditLogFormatter.php:295
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:295
+#: src/Modules/Admin/AuditLogFormatter.php:297
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:300
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:303
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:302
+#: src/Modules/Admin/AuditLogFormatter.php:304
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:303
+#: src/Modules/Admin/AuditLogFormatter.php:305
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:304
+#: src/Modules/Admin/AuditLogFormatter.php:306
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:306
+#: src/Modules/Admin/AuditLogFormatter.php:308
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:312
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:313
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:317
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:317
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:318
+#: src/Modules/Admin/AuditLogFormatter.php:320
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:323
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:326
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:329
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:329
+#: src/Modules/Admin/AuditLogFormatter.php:331
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:332
+#: src/Modules/Admin/AuditLogFormatter.php:334
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:335
+#: src/Modules/Admin/AuditLogFormatter.php:337
 #, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr "Gjort af en administrator, der så som %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:338
+#: src/Modules/Admin/AuditLogFormatter.php:340
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr "Bevaret anonymt på grund af sine salg, udbetalinger og afregningsbilag"
 
-#: src/Modules/Admin/AuditLogFormatter.php:339
+#: src/Modules/Admin/AuditLogFormatter.php:341
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr "Slettet helt (ingen salg, udbetalinger eller afregningsbilag)"
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:342
+#: src/Modules/Admin/AuditLogFormatter.php:344
 #, php-format
 msgid "Former name: %s"
 msgstr "Tidligere navn: %s"
 
 #. translators: %s: proposal id.
-#: src/Modules/Admin/AuditLogFormatter.php:345
+#: src/Modules/Admin/AuditLogFormatter.php:347
 #, php-format
 msgid "Proposal: #%s"
 msgstr "Forslag: #%s"
 
 #. translators: %s: what the proposal changes, e.g. "banner".
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:350
 #, php-format
 msgid "Proposed change: %s"
 msgstr "Foreslået ændring: %s"
 
 #. translators: %s: the administrator's note.
-#: src/Modules/Admin/AuditLogFormatter.php:351
+#: src/Modules/Admin/AuditLogFormatter.php:353
 #, php-format
 msgid "Note to the creator: %s"
 msgstr "Note til creatoren: %s"
 
 #. translators: %s: campaign id.
-#: src/Modules/Admin/AuditLogFormatter.php:354
+#: src/Modules/Admin/AuditLogFormatter.php:356
 #, php-format
 msgid "Campaign: #%s"
 msgstr "Kampagne: #%s"
 
 #. translators: %s: campaign name.
-#: src/Modules/Admin/AuditLogFormatter.php:357
+#: src/Modules/Admin/AuditLogFormatter.php:359
 #, php-format
 msgid "Campaign name: %s"
 msgstr "Kampagnens navn: %s"
 
 #. translators: %s: start and end in UTC.
-#: src/Modules/Admin/AuditLogFormatter.php:360
+#: src/Modules/Admin/AuditLogFormatter.php:362
 #, php-format
 msgid "Period (UTC): %s"
 msgstr "Periode (UTC): %s"
 
 #. translators: %s: comma-separated coupon codes.
-#: src/Modules/Admin/AuditLogFormatter.php:363
+#: src/Modules/Admin/AuditLogFormatter.php:365
 #, php-format
 msgid "Coupon codes: %s"
 msgstr "Kuponkoder: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:365
+#: src/Modules/Admin/AuditLogFormatter.php:367
 msgid "Covers sale prices: yes"
 msgstr "Omfatter tilbudspriser: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:365
+#: src/Modules/Admin/AuditLogFormatter.php:367
 msgid "Covers sale prices: no"
 msgstr "Omfatter tilbudspriser: nej"
 
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:368
+#: src/Modules/Admin/AuditLogFormatter.php:370
 #, php-format
 msgid "Session length: %d minutes"
 msgstr "Sessionens længde: %d minutter"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:371
+#: src/Modules/Admin/AuditLogFormatter.php:373
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:374
+#: src/Modules/Admin/AuditLogFormatter.php:376
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:379
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:379
+#: src/Modules/Admin/AuditLogFormatter.php:381
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:384
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:387
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:388
+#: src/Modules/Admin/AuditLogFormatter.php:390
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:390
+#: src/Modules/Admin/AuditLogFormatter.php:392
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:390
+#: src/Modules/Admin/AuditLogFormatter.php:392
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:393
+#: src/Modules/Admin/AuditLogFormatter.php:395
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:398
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:399
+#: src/Modules/Admin/AuditLogFormatter.php:401
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:402
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:405
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:406
+#: src/Modules/Admin/AuditLogFormatter.php:408
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:411
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:412
+#: src/Modules/Admin/AuditLogFormatter.php:414
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:415
+#: src/Modules/Admin/AuditLogFormatter.php:417
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:456
+#: src/Modules/Admin/AuditLogFormatter.php:458
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:458
+#: src/Modules/Admin/AuditLogFormatter.php:460
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:460
+#: src/Modules/Admin/AuditLogFormatter.php:462
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:473
+#: src/Modules/Admin/AuditLogFormatter.php:475
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:474
+#: src/Modules/Admin/AuditLogFormatter.php:476
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:475
-#: build/dashboard.js:53
+#: src/Modules/Admin/AuditLogFormatter.php:477
+#: build/dashboard.js:55
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:476
+#: src/Modules/Admin/AuditLogFormatter.php:478
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:477
+#: src/Modules/Admin/AuditLogFormatter.php:479
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:478
+#: src/Modules/Admin/AuditLogFormatter.php:480
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:479
+#: src/Modules/Admin/AuditLogFormatter.php:481
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:345
 msgid "Failed"
 msgstr "Fejlet"
@@ -989,91 +997,91 @@ msgstr "Fejlet"
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:489
-#: src/Modules/Admin/AuditLogFormatter.php:515
-#: src/Modules/Admin/AuditLogFormatter.php:574
+#: src/Modules/Admin/AuditLogFormatter.php:491
+#: src/Modules/Admin/AuditLogFormatter.php:517
+#: src/Modules/Admin/AuditLogFormatter.php:576
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:502
+#: src/Modules/Admin/AuditLogFormatter.php:504
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:156
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:503
+#: src/Modules/Admin/AuditLogFormatter.php:505
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:504
+#: src/Modules/Admin/AuditLogFormatter.php:506
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:505
+#: src/Modules/Admin/AuditLogFormatter.php:507
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:478
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:533
+#: src/Modules/Admin/AuditLogFormatter.php:535
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:557
+#: src/Modules/Admin/AuditLogFormatter.php:559
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:558
+#: src/Modules/Admin/AuditLogFormatter.php:560
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:559
+#: src/Modules/Admin/AuditLogFormatter.php:561
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:560
+#: src/Modules/Admin/AuditLogFormatter.php:562
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:561
-#: src/Modules/Admin/AuditLogFormatter.php:713
+#: src/Modules/Admin/AuditLogFormatter.php:563
+#: src/Modules/Admin/AuditLogFormatter.php:715
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:562
+#: src/Modules/Admin/AuditLogFormatter.php:564
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:563
-#: src/Modules/Admin/AuditLogFormatter.php:773
+#: src/Modules/Admin/AuditLogFormatter.php:565
+#: src/Modules/Admin/AuditLogFormatter.php:775
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:564
+#: src/Modules/Admin/AuditLogFormatter.php:566
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:593
+#: src/Modules/Admin/AuditLogFormatter.php:595
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:610
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -1082,7 +1090,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:677
+#: src/Modules/Admin/AuditLogFormatter.php:679
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -1091,122 +1099,122 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:677
+#: src/Modules/Admin/AuditLogFormatter.php:679
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:687
+#: src/Modules/Admin/AuditLogFormatter.php:689
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:688
+#: src/Modules/Admin/AuditLogFormatter.php:690
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:689
+#: src/Modules/Admin/AuditLogFormatter.php:691
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:690
+#: src/Modules/Admin/AuditLogFormatter.php:692
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:691
+#: src/Modules/Admin/AuditLogFormatter.php:693
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:692
+#: src/Modules/Admin/AuditLogFormatter.php:694
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:693
+#: src/Modules/Admin/AuditLogFormatter.php:695
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:696
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:695
+#: src/Modules/Admin/AuditLogFormatter.php:697
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:696
+#: src/Modules/Admin/AuditLogFormatter.php:698
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:697
+#: src/Modules/Admin/AuditLogFormatter.php:699
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:698
+#: src/Modules/Admin/AuditLogFormatter.php:700
 msgid "the administrator stopped viewing as the creator"
 msgstr "administratoren stoppede selv med at se som creatoren"
 
-#: src/Modules/Admin/AuditLogFormatter.php:699
+#: src/Modules/Admin/AuditLogFormatter.php:701
 msgid "the session expired"
 msgstr "sessionen udløb"
 
-#: src/Modules/Admin/AuditLogFormatter.php:700
+#: src/Modules/Admin/AuditLogFormatter.php:702
 msgid "the administrator logged out"
 msgstr "administratoren loggede ud"
 
-#: src/Modules/Admin/AuditLogFormatter.php:701
+#: src/Modules/Admin/AuditLogFormatter.php:703
 msgid "the administrator viewed another creator"
 msgstr "administratoren så som en anden creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:714
+#: src/Modules/Admin/AuditLogFormatter.php:716
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:726
+#: src/Modules/Admin/AuditLogFormatter.php:728
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:727
+#: src/Modules/Admin/AuditLogFormatter.php:729
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:739
+#: src/Modules/Admin/AuditLogFormatter.php:741
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:740
+#: src/Modules/Admin/AuditLogFormatter.php:742
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:741
+#: src/Modules/Admin/AuditLogFormatter.php:743
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:773
+#: src/Modules/Admin/AuditLogFormatter.php:775
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:484
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:217
-#: build/dashboard.js:55
-#: build/dashboard.js:56
+#: build/dashboard.js:57
+#: build/dashboard.js:58
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:792
+#: src/Modules/Admin/AuditLogFormatter.php:794
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:793
+#: src/Modules/Admin/AuditLogFormatter.php:795
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:794
+#: src/Modules/Admin/AuditLogFormatter.php:796
 msgid "social links"
 msgstr "sociale links"
 
@@ -1313,13 +1321,13 @@ msgstr "Alle hændelser"
 
 #: src/Modules/Admin/AuditLogPage.php:250
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "From"
 msgstr "Fra"
 
 #: src/Modules/Admin/AuditLogPage.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "To"
 msgstr "Til"
 
@@ -1445,7 +1453,7 @@ msgstr "Transaktionsunderstøttelse"
 
 #: src/Modules/Admin/OverviewPage.php:192
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Available"
 msgstr "Tilgængelig"
 
@@ -1606,7 +1614,7 @@ msgstr "Gem adgang"
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:354
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:382
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:590
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "None"
 msgstr "Ingen"
 
@@ -1945,7 +1953,7 @@ msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne lyde."
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:184
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:222
 #: build/dashboard.js:51
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Name"
 msgstr "Navn"
 
@@ -1965,7 +1973,7 @@ msgstr "Afspil"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Actions"
 msgstr "Handlinger"
 
@@ -1983,7 +1991,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:334
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:333
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Remove"
 msgstr "Fjern"
 
@@ -2023,6 +2031,7 @@ msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne billeder og de f�
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
+#: build/dashboard.js:54
 msgid "Image"
 msgstr "Billede"
 
@@ -2077,6 +2086,7 @@ msgstr "Ingen fonte er godkendt. Creators kan kun bruge standardfonten."
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
+#: build/dashboard.js:54
 msgid "Font"
 msgstr "Font"
 
@@ -2118,6 +2128,7 @@ msgstr "Højst %d fonte, de mest populære først."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:551
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
+#: build/dashboard.js:54
 msgid "Approved"
 msgstr "Godkendt"
 
@@ -2877,7 +2888,7 @@ msgstr "Åbn livestreamen hos YouTube"
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:674
-#: build/dashboard.js:61
+#: build/dashboard.js:63
 msgid "Yes"
 msgstr "Ja"
 
@@ -2901,7 +2912,7 @@ msgstr "YouTubes chat (indlejret)"
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:249
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:675
-#: build/dashboard.js:61
+#: build/dashboard.js:63
 msgid "No"
 msgstr "Nej"
 
@@ -2960,7 +2971,7 @@ msgstr "CVR-nummer"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:688
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:688
-#: build/dashboard.js:61
+#: build/dashboard.js:63
 msgid "Not registered"
 msgstr "Ikke registreret"
 
@@ -2972,8 +2983,8 @@ msgstr "Angives i sektionen \"CVR-nummer på afregningsbilag\" på denne side. [
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:256
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:766
-#: build/dashboard.js:64
-#: build/dashboard.js:67
+#: build/dashboard.js:66
+#: build/dashboard.js:69
 msgid "Address"
 msgstr "Adresse"
 
@@ -3112,8 +3123,8 @@ msgstr "Ordrer med alerts"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1017
 #: build/dashboard.js:24
-#: build/dashboard.js:53
-#: build/dashboard.js:66
+#: build/dashboard.js:55
+#: build/dashboard.js:68
 msgid "Order"
 msgstr "Ordre"
 
@@ -3240,6 +3251,7 @@ msgid "Terms of service"
 msgstr "Vilkår"
 
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:92
+#: build/dashboard.js:54
 msgid "Open"
 msgstr "Åbn"
 
@@ -3574,7 +3586,7 @@ msgstr "Nu"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:222
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Proposed"
 msgstr "Foreslået"
 
@@ -3844,9 +3856,9 @@ msgstr "Visningsnavn"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:457
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-#: build/dashboard.js:70
+#: build/dashboard.js:55
+#: build/dashboard.js:58
+#: build/dashboard.js:72
 msgid "Status"
 msgstr "Status"
 
@@ -3912,6 +3924,7 @@ msgstr "Ingen creators fundet."
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:232
 #: src/Modules/News/Admin/NewsAdminPage.php:322
+#: build/dashboard.js:54
 msgid "Edit"
 msgstr "Redigér"
 
@@ -3934,6 +3947,7 @@ msgstr "Deaktivér"
 #: build/dashboard.js:39
 #: build/dashboard.js:45
 #: build/dashboard.js:51
+#: build/dashboard.js:54
 msgid "Delete"
 msgstr "Slet"
 
@@ -4002,6 +4016,8 @@ msgstr "Profil"
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:207
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:395
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:140
 msgid "Not found."
 msgstr "Ikke fundet."
@@ -4096,12 +4112,13 @@ msgstr "Ingen beskeder endnu."
 
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:268
+#: build/dashboard.js:54
 msgid "Title"
 msgstr "Titel"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:415
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Published"
 msgstr "Udgivet"
 
@@ -4153,7 +4170,7 @@ msgid "Preview"
 msgstr "Forhåndsvis"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:329
-#: build/dashboard.js:74
+#: build/dashboard.js:76
 msgid "Withdraw"
 msgstr "Træk tilbage"
 
@@ -4185,6 +4202,7 @@ msgstr "Trukket tilbage"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:486
+#: build/dashboard.js:54
 msgid "Draft"
 msgstr "Kladde"
 
@@ -4380,7 +4398,7 @@ msgstr "Ikke sendt (ingen modtager)"
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:253
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1002
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "PayPal"
 msgstr "PayPal"
 
@@ -4390,7 +4408,7 @@ msgstr "PayPal"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1003
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1245
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Gift card"
 msgstr "Gavekort"
 
@@ -4398,7 +4416,7 @@ msgstr "Gavekort"
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:255
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1001
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Bank transfer"
 msgstr "Bankoverførsel"
 
@@ -4440,9 +4458,9 @@ msgstr "En creator har anmodet om en udbetaling. Den venter på dig under Udbeta
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
-#: build/dashboard.js:59
-#: build/dashboard.js:60
-#: build/dashboard.js:70
+#: build/dashboard.js:61
+#: build/dashboard.js:62
+#: build/dashboard.js:72
 msgid "Amount"
 msgstr "Beløb"
 
@@ -4451,7 +4469,7 @@ msgstr "Beløb"
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:365
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Method"
 msgstr "Metode"
 
@@ -4743,6 +4761,7 @@ msgid "Your products were sold in order #%s. Here is what was bought:"
 msgstr "Dine produkter er solgt i ordre #%s. Her er, hvad der blev købt:"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:157
+#: build/dashboard.js:54
 msgid "Your profit"
 msgstr "Din fortjeneste"
 
@@ -4756,20 +4775,21 @@ msgstr "Din fortjeneste"
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
 #: build/dashboard.js:53
-#: build/dashboard.js:66
-#: build/dashboard.js:70
+#: build/dashboard.js:55
+#: build/dashboard.js:68
+#: build/dashboard.js:72
 msgid "Product"
 msgstr "Produkt"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:163
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Quantity"
 msgstr "Antal"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:163
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Price"
 msgstr "Pris"
 
@@ -4843,7 +4863,7 @@ msgid "Ready for payout"
 msgstr "Klar til udbetaling"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:239
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Request a payout"
 msgstr "Anmod om udbetaling"
 
@@ -4981,7 +5001,7 @@ msgid "Your payout as a gift card is ready. For your security, the code is only 
 msgstr "Din udbetaling som gavekort er klar. Af hensyn til din sikkerhed vises koden kun i dit dashboard."
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:437
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Value"
 msgstr "Værdi"
 
@@ -5023,7 +5043,7 @@ msgstr "Bilag"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:60
+#: build/dashboard.js:62
 msgid "Difference"
 msgstr "Forskel"
 
@@ -5308,7 +5328,7 @@ msgstr "Alle dine produkter (din standard)"
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:797
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:60
+#: build/dashboard.js:62
 msgid "Before"
 msgstr "Før"
 
@@ -5744,6 +5764,7 @@ msgid "New base product"
 msgstr "Nyt grundprodukt"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:173
+#: build/dashboard.js:53
 msgid "Cliparts"
 msgstr "Kliparts"
 
@@ -5765,16 +5786,19 @@ msgstr "Grundpris"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:219
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:272
+#: build/dashboard.js:54
 msgid "Colours"
 msgstr "Farver"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:219
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:273
+#: build/dashboard.js:54
 msgid "Sizes"
 msgstr "Størrelser"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:219
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:276
+#: build/dashboard.js:53
 msgid "Sides"
 msgstr "Sider"
 
@@ -5805,7 +5829,8 @@ msgid "Creators have designs on this base product. A new base price or template 
 msgstr "Creators har designs på dette grundprodukt. En ny grundpris eller skabelon hæver versionen; designer-produkterne genprisses i et senere trin, og allerede registrerede salg beholder deres beløb."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:268
-#: build/dashboard.js:75
+#: build/dashboard.js:54
+#: build/dashboard.js:77
 msgid "Description"
 msgstr "Beskrivelse"
 
@@ -5933,6 +5958,7 @@ msgid "Add clipart"
 msgstr "Tilføj klipart"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:427
+#: build/dashboard.js:53
 msgid "No cliparts yet."
 msgstr "Ingen kliparts endnu."
 
@@ -6038,8 +6064,8 @@ msgstr "Ingen kampagner endnu."
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:184
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:780
-#: build/dashboard.js:64
-#: build/dashboard.js:76
+#: build/dashboard.js:66
+#: build/dashboard.js:78
 msgid "Period"
 msgstr "Periode"
 
@@ -6171,6 +6197,21 @@ msgstr "Fra som standard. Kun kataloget og mockups fra jeres Gelato-skabeloner b
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:102
 msgid "Save product designer settings"
 msgstr "Gem indstillinger for produktdesigneren"
+
+#: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:41
+msgid "Designer"
+msgstr "Designer"
+
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:491
+msgid "The product designer is not available."
+msgstr "Produktdesigneren er ikke tilgængelig."
+
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:510
+msgid "The product designer refused the change."
+msgstr "Produktdesigneren afviste ændringen."
 
 #: src/Modules/Settings/Admin/SettingsActions.php:130
 #: src/Modules/Settings/Admin/SettingsPage.php:183
@@ -6710,7 +6751,7 @@ msgstr "Map kategori"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:387
 #: build/dashboard.js:6
 #: build/dashboard.js:51
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Cancel"
 msgstr "Annullér"
 
@@ -6927,7 +6968,7 @@ msgid "Discount code history"
 msgstr "Historik over rabatkoder"
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Code"
 msgstr "Kode"
 
@@ -7316,8 +7357,8 @@ msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger admini
 #. translators: 1: menu group, e.g. "Alerts", 2: page in the group.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
 #: build/dashboard.js:53
-#: build/dashboard.js:76
-#: build/dashboard.js:79
+#: build/dashboard.js:78
+#: build/dashboard.js:81
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr "%1$s: %2$s"
@@ -7429,7 +7470,7 @@ msgstr "Salget kunne ikke indlæses. Prøv igen senere; detaljerne står i logge
 
 #. translators: 1: first day, 2: last day (both included).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:99
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 #, js-format,php-format
 msgid "Last 30 days: %1$s – %2$s"
 msgstr "Seneste 30 dage: %1$s – %2$s"
@@ -7439,34 +7480,34 @@ msgid "The shop's sales of this creator's products after discounts, including VA
 msgstr "Butikkens salg af creatorens produkter efter rabatter, inkl. moms, ekskl. fragt og gebyrer. Det er ikke en udbetaling. Tallene og deres definitioner er de samme som i creatorens dashboard; datoer er i sitets tidszone."
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:109
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "No sales in the last 30 days."
 msgstr "Intet salg de seneste 30 dage."
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:115
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The figures are shown per currency and never added together."
 msgstr "Tallene vises pr. valuta og lægges aldrig sammen."
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "Sales (incl. VAT)"
 msgstr "Salg (inkl. moms)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "Net sales (excl. VAT)"
 msgstr "Nettosalg (ekskl. moms)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:140
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "VAT is missing for some older sales in this period, so the amounts are shown excluding VAT."
 msgstr "Momsen mangler for nogle ældre salg i perioden, så beløbene vises ekskl. moms."
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
-#: build/dashboard.js:54
-#: build/dashboard.js:76
+#: build/dashboard.js:56
+#: build/dashboard.js:78
 msgid "Units"
 msgstr "Enheder"
 
@@ -7474,30 +7515,30 @@ msgstr "Enheder"
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:164
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:591
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
-#: build/dashboard.js:54
-#: build/dashboard.js:76
+#: build/dashboard.js:56
+#: build/dashboard.js:78
 msgid "Orders"
 msgstr "Ordrer"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Sales per day (incl. VAT)"
 msgstr "Salg pr. dag (inkl. moms)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Net sales per day"
 msgstr "Nettosalg pr. dag"
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:77
+#: build/dashboard.js:79
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr "Salg, enheder og ordrer pr. periode (%s)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:76
+#: build/dashboard.js:78
 msgid "Day"
 msgstr "Dag"
 
@@ -7578,7 +7619,7 @@ msgstr "Ledger-datoer"
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:781
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Currency"
 msgstr "Valuta"
 
@@ -7712,7 +7753,7 @@ msgid "Ledger events"
 msgstr "Ledger-hændelser"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Date"
 msgstr "Dato"
 
@@ -7722,9 +7763,10 @@ msgstr "Gemt moms"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: build/dashboard.js:53
 #: build/dashboard.js:54
-#: build/dashboard.js:72
+#: build/dashboard.js:55
+#: build/dashboard.js:56
+#: build/dashboard.js:74
 msgid "Profit"
 msgstr "Profit"
 
@@ -7740,10 +7782,10 @@ msgstr "Mangler"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:676
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1246
-#: build/dashboard.js:53
-#: build/dashboard.js:61
-#: build/dashboard.js:67
-#: build/dashboard.js:72
+#: build/dashboard.js:55
+#: build/dashboard.js:63
+#: build/dashboard.js:69
+#: build/dashboard.js:74
 msgid "Unknown"
 msgstr "Ukendt"
 
@@ -7901,7 +7943,7 @@ msgid "Complete"
 msgstr "Komplet"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:822
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Incomplete"
 msgstr "Ufuldstændig"
 
@@ -8226,7 +8268,7 @@ msgstr "%s gennemførte udbetalinger har intet afregningsbilag (gennemført før
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1019
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "Type"
 msgstr "Type"
 
@@ -8257,7 +8299,7 @@ msgstr "Udfør de poster, der endnu ikke er udført. Udførte poster udføres al
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:415
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:418
 #: build/dashboard.js:2
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Close"
 msgstr "Luk"
 
@@ -8285,7 +8327,8 @@ msgstr "Creator #%d"
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:492
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1016
-#: build/dashboard.js:57
+#: build/dashboard.js:54
+#: build/dashboard.js:59
 msgid "Rejected"
 msgstr "Afvist"
 
@@ -8694,13 +8737,13 @@ msgstr "Modtager"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:458
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Requested"
 msgstr "Anmodet"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:459
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Handled"
 msgstr "Behandlet"
 
@@ -8724,9 +8767,9 @@ msgstr "Reserveret"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:648
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1015
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:821
-#: build/dashboard.js:57
-#: build/dashboard.js:66
-#: build/dashboard.js:67
+#: build/dashboard.js:59
+#: build/dashboard.js:68
+#: build/dashboard.js:69
 msgid "Paid out"
 msgstr "Udbetalt"
 
@@ -8735,7 +8778,7 @@ msgid "Balance"
 msgstr "Saldo"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:360
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Outstanding"
 msgstr "Udestående"
 
@@ -8828,15 +8871,15 @@ msgstr "Denne udbetaling har intet afregningsbilag: den blev gennemført, før a
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:635
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:642
-#: build/dashboard.js:62
+#: build/dashboard.js:64
 msgid "Preliminary, not approved by an auditor or SKAT."
 msgstr "Foreløbigt, ikke godkendt af revisor/SKAT."
 
 #. translators: 1: number of the corrected document, 2: number of the original settlement document.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:638
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:745
-#: build/dashboard.js:60
-#: build/dashboard.js:67
+#: build/dashboard.js:62
+#: build/dashboard.js:69
 msgid "Download PDF"
 msgstr "Hent PDF"
 
@@ -8846,19 +8889,19 @@ msgstr "Bilagsnummer"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:642
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:638
-#: build/dashboard.js:64
+#: build/dashboard.js:66
 msgid "Issued"
 msgstr "Udstedt"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:778
-#: build/dashboard.js:64
+#: build/dashboard.js:66
 msgid "Whole history"
 msgstr "Hele historikken"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:645
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:668
-#: build/dashboard.js:64
+#: build/dashboard.js:66
 msgid "VAT registered at issue"
 msgstr "Momsregistreret ved udstedelsen"
 
@@ -8866,20 +8909,20 @@ msgstr "Momsregistreret ved udstedelsen"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:790
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:573
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:813
-#: build/dashboard.js:59
-#: build/dashboard.js:64
+#: build/dashboard.js:61
+#: build/dashboard.js:66
 msgid "Commission in the period"
 msgstr "Kommission i perioden"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:647
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:812
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "Carried from earlier"
 msgstr "Overført fra tidligere"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:649
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:839
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "Carried forward"
 msgstr "Overføres til næste bilag"
 
@@ -8891,8 +8934,8 @@ msgstr "Afregnede salgsrækker"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:793
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:576
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:878
-#: build/dashboard.js:59
-#: build/dashboard.js:64
+#: build/dashboard.js:61
+#: build/dashboard.js:66
 msgid "Commission excl. VAT"
 msgstr "Kommission ekskl. moms"
 
@@ -8901,8 +8944,8 @@ msgstr "Kommission ekskl. moms"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:795
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:578
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:880
-#: build/dashboard.js:60
-#: build/dashboard.js:65
+#: build/dashboard.js:62
+#: build/dashboard.js:67
 #, php-format,js-format
 msgid "VAT (%s %%)"
 msgstr "Moms (%s %%)"
@@ -8911,8 +8954,8 @@ msgstr "Moms (%s %%)"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:796
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:579
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:881
-#: build/dashboard.js:60
-#: build/dashboard.js:65
+#: build/dashboard.js:62
+#: build/dashboard.js:67
 msgid "Commission incl. VAT"
 msgstr "Kommission inkl. moms"
 
@@ -8920,55 +8963,55 @@ msgstr "Kommission inkl. moms"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:800
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:583
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:885
-#: build/dashboard.js:60
-#: build/dashboard.js:65
+#: build/dashboard.js:62
+#: build/dashboard.js:67
 msgid "Commission without VAT (not VAT registered when sold)"
 msgstr "Kommission uden moms (ikke momsregistreret ved salget)"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:672
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:921
-#: build/dashboard.js:65
+#: build/dashboard.js:67
 msgid "Commission of sales while not VAT registered, incl. VAT"
 msgstr "Kommission af salg uden momsregistrering, inkl. moms"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:673
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:922
-#: build/dashboard.js:65
+#: build/dashboard.js:67
 msgid "VAT deducted (not VAT registered when sold)"
 msgstr "Moms fratrukket (ikke momsregistreret ved salget)"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:674
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:923
-#: build/dashboard.js:65
+#: build/dashboard.js:67
 msgid "Commission of sales while not VAT registered, paid out"
 msgstr "Kommission af salg uden momsregistrering, udbetales"
 
 #. translators: %s: references of the recalculations, e.g. R2-000001.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:680
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:818
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 #, php-format,js-format
 msgid "Adjustments (%s)"
 msgstr "Reguleringer (%s)"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:690
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:765
-#: build/dashboard.js:64
-#: build/dashboard.js:67
+#: build/dashboard.js:66
+#: build/dashboard.js:69
 msgid "Legal name"
 msgstr "Juridisk navn"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:692
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:767
-#: build/dashboard.js:64
-#: build/dashboard.js:67
+#: build/dashboard.js:66
+#: build/dashboard.js:69
 msgid "CVR/SE no."
 msgstr "CVR/SE-nr."
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:693
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:770
-#: build/dashboard.js:64
-#: build/dashboard.js:67
+#: build/dashboard.js:66
+#: build/dashboard.js:69
 msgid "Issuer CVR no."
 msgstr "Udsteders CVR-nr."
 
@@ -8998,18 +9041,18 @@ msgstr "Retter %1$s (original: %2$s)."
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:60
+#: build/dashboard.js:62
 msgid "Corrected"
 msgstr "Korrigeret"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:768
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:712
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Issued by"
 msgstr "Udstedt af"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:769
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Issuer address"
 msgstr "Udsteders adresse"
 
@@ -9105,17 +9148,17 @@ msgid "The details cannot be shown. Please try again later."
 msgstr "Oplysningerne kan ikke vises. Prøv igen senere."
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:924
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Registration number"
 msgstr "Registreringsnummer"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:925
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Account number"
 msgstr "Kontonummer"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:927
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "PayPal email address"
 msgstr "E-mailadresse til PayPal"
 
@@ -9157,12 +9200,12 @@ msgid "Reject request"
 msgstr "Afvis anmodning"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1014
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Pending"
 msgstr "Afventer"
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1017
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Cancelled"
 msgstr "Annulleret"
 
@@ -9173,7 +9216,7 @@ msgstr "Designer-produkt"
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:52
-#: build/dashboard.js:71
+#: build/dashboard.js:73
 #, js-format,php-format
 msgid "%1$s %2$s"
 msgstr "%1$s %2$s"
@@ -9453,20 +9496,20 @@ msgid "This gift card was issued as a creator payout. It can only be redeemed at
 msgstr "Dette gavekort er udstedt som udbetaling til en creator. Det kan kun indløses i kassen, ikke tilføjes til en ordre her."
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:256
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Tax and reporting"
 msgstr "Skat og indberetning"
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:257
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "You are responsible for finding out about and meeting your own tax and reporting obligations to the Danish Tax Agency. Depending on your situation, this may include whether the amount must be included in your taxable income and whether you have VAT obligations. This document shows the payout and its basis according to the information registered in the system. It is not tax advice and has not been approved by an auditor or the Danish Tax Agency."
 msgstr "Du er selv ansvarlig for at undersøge og opfylde dine skatte- og indberetningsforpligtelser over for Skattestyrelsen. Det kan blandt andet afhænge af din situation, om beløbet skal medregnes i din skattepligtige indkomst, og om du har momsforpligtelser. Dette bilag viser udbetalingen og grundlaget for den ud fra de oplysninger, der er registreret i systemet. Bilaget er ikke skatterådgivning og er ikke godkendt af en revisor eller Skattestyrelsen."
 
 #. translators: %s: document number.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:358
-#: build/dashboard.js:61
-#: build/dashboard.js:62
 #: build/dashboard.js:63
+#: build/dashboard.js:64
+#: build/dashboard.js:65
 #, js-format,php-format
 msgid "Settlement document %s"
 msgstr "Afregningsbilag %s"
@@ -9520,7 +9563,7 @@ msgstr "Rettelse af beløbene"
 
 #. translators: 1: company name, 2: creator name.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:651
-#: build/dashboard.js:64
+#: build/dashboard.js:66
 #, js-format,php-format
 msgid "Self-billing: issued by %1$s on behalf of %2$s."
 msgstr "Omvendt fakturering: udstedt af %1$s på vegne af %2$s."
@@ -9588,7 +9631,7 @@ msgid "VAT deducted from the payout"
 msgstr "Moms fratrukket udbetalingen"
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:958
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "Settled sales"
 msgstr "Afregnede salg"
 
@@ -9597,17 +9640,17 @@ msgid "No sales rows were settled with this document."
 msgstr "Der er ikke afregnet nogen salgsrækker med dette bilag."
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1021
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "Net"
 msgstr "Netto"
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1022
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "VAT on the sale"
 msgstr "Moms på salget"
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1023
-#: build/dashboard.js:66
+#: build/dashboard.js:68
 msgid "Commission"
 msgstr "Kommission"
 
@@ -9617,7 +9660,7 @@ msgstr "Korrektioner"
 
 #. translators: 1: number of the correction document, 2: date, 3: reason.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1069
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 #, js-format,php-format
 msgid "Corrected by %1$s (%2$s): %3$s"
 msgstr "Korrigeret af %1$s (%2$s): %3$s"
@@ -9752,7 +9795,7 @@ msgid "Log out"
 msgstr "Log ud"
 
 #: templates/dashboard/shell.php:47
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "Loading your dashboard…"
 msgstr "Indlæser dit dashboard …"
 
@@ -9907,7 +9950,8 @@ msgstr "Erstat lyd"
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:30
 #: build/dashboard.js:39
-#: build/dashboard.js:75
+#: build/dashboard.js:53
+#: build/dashboard.js:77
 msgid "Uploading…"
 msgstr "Uploader…"
 
@@ -10094,9 +10138,11 @@ msgid "Image deleted."
 msgstr "Billedet er slettet."
 
 #. translators: %s: file name.
+#. translators: %s: design title.
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
+#: build/dashboard.js:54
 #, js-format
 msgid "Delete %s"
 msgstr "Slet %s"
@@ -10590,12 +10636,14 @@ msgstr "Fast tekststørrelse"
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
+#: build/dashboard.js:54
 msgid "Left"
 msgstr "Venstre"
 
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
+#: build/dashboard.js:54
 msgid "Right"
 msgstr "Højre"
 
@@ -10653,7 +10701,7 @@ msgstr "Skriv en tekst til alerten."
 #: build/alerts-global-admin.js:14
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 #, js-format
 msgid "Use at most %d characters."
 msgstr "Brug højst %d tegn."
@@ -10662,6 +10710,8 @@ msgstr "Brug højst %d tegn."
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
+#: build/dashboard.js:53
+#: build/dashboard.js:54
 msgid "Text"
 msgstr "Tekst"
 
@@ -10722,6 +10772,7 @@ msgstr "Tekstfarve"
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
+#: build/dashboard.js:54
 msgid "Alignment"
 msgstr "Justering"
 
@@ -10918,12 +10969,6 @@ msgstr "Produktbillede"
 #: build/alerts-global-admin.js:14
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
-msgid "Designer"
-msgstr "Designer"
-
-#: build/alerts-global-admin.js:14
-#: build/alerts-presets-admin.js:14
-#: build/dashboard.js:41
 msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
 msgstr "Træk boksene for at placere dem, og træk i nederste højre hjørne for at ændre deres størrelse. Shift- eller Ctrl-klik (eller Shift+Enter) vælger flere bokse; træk i en af dem for at flytte dem sammen, eller justér dem nedenfor. Lærredet er din browser source på 1920 × 1080. Forhåndsvisningen bruger eksempelværdier."
 
@@ -11022,12 +11067,14 @@ msgstr "Nulstil til standardlayoutet"
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15
 #: build/dashboard.js:42
+#: build/dashboard.js:53
 msgid "Undo"
 msgstr "Fortryd"
 
 #: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15
 #: build/dashboard.js:42
+#: build/dashboard.js:53
 msgid "Redo"
 msgstr "Gentag"
 
@@ -11076,12 +11123,14 @@ msgstr "Du har %d designs, hvilket er det højeste antal. Slet eller overskriv e
 #: build/alerts-presets-admin.js:16
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:43
+#: build/dashboard.js:55
 msgid "Design"
 msgstr "Design"
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:43
+#: build/dashboard.js:54
 msgid "My designs"
 msgstr "Mine designs"
 
@@ -11496,7 +11545,7 @@ msgid "This page could not be displayed."
 msgstr "Siden kunne ikke vises."
 
 #: build/dashboard.js:1
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "Please reload the page."
 msgstr "Genindlæs siden."
 
@@ -12286,863 +12335,1151 @@ msgid "Sends a test purchase, marked \"test\", to each switched-on webhook at on
 msgstr "Sender med det samme et testkøb, markeret \"test\", til hver webhook, der er slået til, og viser svaret fra hver. Tests tæller aldrig med i en pause."
 
 #: build/dashboard.js:53
+msgid "The base product of this design is no longer available."
+msgstr "Grundproduktet til dette design er ikke længere tilgængeligt."
+
+#: build/dashboard.js:53
+msgid "This design has been submitted and cannot be edited here."
+msgstr "Dette design er indsendt og kan ikke redigeres her."
+
+#: build/dashboard.js:53
+msgid "Back to my designs"
+msgstr "Tilbage til mine designs"
+
+#. translators: %d: most objects per side.
+#: build/dashboard.js:53
+#, js-format
+msgid "A side can have at most %d elements."
+msgstr "En side kan højst have %d elementer."
+
+#: build/dashboard.js:53
+msgid "The base product has no sides yet."
+msgstr "Grundproduktet har ingen sider endnu."
+
+#: build/dashboard.js:53
+msgid "Shapes"
+msgstr "Former"
+
+#: build/dashboard.js:53
+msgid "Upload"
+msgstr "Upload"
+
+#: build/dashboard.js:53
+msgid "Layers"
+msgstr "Lag"
+
+#: build/dashboard.js:53
+msgid "← My designs"
+msgstr "← Mine designs"
+
+#: build/dashboard.js:53
+msgid "Zoom"
+msgstr "Zoom"
+
+#: build/dashboard.js:53
+msgid "Your design is saved."
+msgstr "Dit design er gemt."
+
+#: build/dashboard.js:53
+msgid "Save draft"
+msgstr "Gem kladde"
+
+#: build/dashboard.js:53
+msgid "Saved"
+msgstr "Gemt"
+
+#: build/dashboard.js:53
+msgid "Designer tools"
+msgstr "Designerens værktøjer"
+
+#: build/dashboard.js:53
+msgid "Your text"
+msgstr "Din tekst"
+
+#: build/dashboard.js:53
+msgid "No fonts are available yet. Please contact us."
+msgstr "Der er ingen skrifttyper endnu. Kontakt os."
+
+#: build/dashboard.js:53
+msgid "Add text"
+msgstr "Tilføj tekst"
+
+#: build/dashboard.js:53
+msgid "Select a text on the product to change its font, size and colour."
+msgstr "Vælg en tekst på produktet for at ændre skrifttype, størrelse og farve."
+
+#: build/dashboard.js:53
+#: build/dashboard.js:54
+msgid "Rectangle"
+msgstr "Rektangel"
+
+#: build/dashboard.js:53
+#: build/dashboard.js:54
+msgid "Circle"
+msgstr "Cirkel"
+
+#: build/dashboard.js:53
+#: build/dashboard.js:54
+msgid "Triangle"
+msgstr "Trekant"
+
+#: build/dashboard.js:53
+msgid "Upload an image"
+msgstr "Upload et billede"
+
+#: build/dashboard.js:53
+msgid "The image is too large."
+msgstr "Billedet er for stort."
+
+#: build/dashboard.js:53
+msgid "You have used all your space for uploads. Delete an upload first."
+msgstr "Du har brugt al din plads til uploads. Slet en upload først."
+
+#: build/dashboard.js:53
+msgid "The image could not be uploaded. Use PNG, JPG or WebP of at most 8000 × 8000 pixels."
+msgstr "Billedet kunne ikke uploades. Brug PNG, JPG eller WebP på højst 8000 × 8000 pixels."
+
+#: build/dashboard.js:53
+msgid "PNG, JPG or WebP. Use PNG for a transparent background. Only images you have the rights to."
+msgstr "PNG, JPG eller WebP. Brug PNG til gennemsigtig baggrund. Kun billeder, du har rettighederne til."
+
+#: build/dashboard.js:53
+msgid "No uploads yet."
+msgstr "Ingen uploads endnu."
+
+#: build/dashboard.js:53
+msgid "Preview colour"
+msgstr "Forhåndsvisningsfarve"
+
+#. translators: %s: side name, e.g. "Front".
+#: build/dashboard.js:53
+#, js-format
+msgid "Design of the side %s"
+msgstr "Design af siden %s"
+
+#: build/dashboard.js:53
+msgid "The designer could not be loaded. Please reload the page."
+msgstr "Designeren kunne ikke indlæses. Genindlæs siden."
+
+#: build/dashboard.js:53
+msgid "Drag, scale and rotate the elements on the product. The dashed frame is the print area."
+msgstr "Træk, skalér og rotér elementerne på produktet. Den stiplede ramme er printområdet."
+
+#. translators: 1: print width in px, 2: print height in px, 3: resolution in dpi.
+#: build/dashboard.js:54
+#, js-format
+msgid "Print file: %1$d × %2$d px at %3$d dpi."
+msgstr "Printfil: %1$d × %2$d px ved %3$d dpi."
+
+#. translators: %s: price.
+#: build/dashboard.js:54
+#, js-format
+msgid "Saved price: %s"
+msgstr "Gemt pris: %s"
+
+#: build/dashboard.js:54
+msgid "Give your product a title of at most 120 characters."
+msgstr "Giv dit produkt en titel på højst 120 tegn."
+
+#: build/dashboard.js:54
+msgid "Your profit must be a number of at least 0."
+msgstr "Din fortjeneste skal være et tal på mindst 0."
+
+#: build/dashboard.js:54
+msgid "Choose at least one colour and one size."
+msgstr "Vælg mindst én farve og én størrelse."
+
+#: build/dashboard.js:54
+msgid "The design contains something that cannot be used (an unknown font, a removed image or too many elements)."
+msgstr "Designet indeholder noget, der ikke kan bruges (en ukendt skrifttype, et fjernet billede eller for mange elementer)."
+
+#: build/dashboard.js:54
+msgid "Your design could not be saved. Please try again."
+msgstr "Dit design kunne ikke gemmes. Prøv igen."
+
+#. translators: %s: currency code.
+#: build/dashboard.js:54
+#, js-format
+msgid "Amount (%s)"
+msgstr "Beløb (%s)"
+
+#: build/dashboard.js:54
+msgid "Percent of the base price"
+msgstr "Procent af grundprisen"
+
+#. translators: %s: base price.
+#: build/dashboard.js:54
+#, js-format
+msgid "Base price: %s"
+msgstr "Grundpris: %s"
+
+#: build/dashboard.js:54
+msgid "Enter a profit of at least 0."
+msgstr "Angiv en fortjeneste på mindst 0."
+
+#. translators: %s: the customer's price.
+#: build/dashboard.js:54
+#, js-format
+msgid "Customer price incl. VAT: %s"
+msgstr "Kundens pris inkl. moms: %s"
+
+#: build/dashboard.js:54
+msgid "The company always keeps the base price; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
+msgstr "Virksomheden beholder altid grundprisen; en rabat tages fra din fortjeneste, aldrig under 0. I virksomhedens egne kampagner deles rabatten."
+
+#: build/dashboard.js:54
+msgid "This side has no elements yet."
+msgstr "Denne side har ingen elementer endnu."
+
+#: build/dashboard.js:54
+msgid "Forward"
+msgstr "Frem"
+
+#: build/dashboard.js:54
+msgid "Backward"
+msgstr "Tilbage"
+
+#: build/dashboard.js:54
+#: build/dashboard.js:80
+msgid "Show"
+msgstr "Vis"
+
+#: build/dashboard.js:54
+msgid "Hide"
+msgstr "Skjul"
+
+#: build/dashboard.js:54
+msgid "Unlock"
+msgstr "Lås op"
+
+#: build/dashboard.js:54
+msgid "Lock"
+msgstr "Lås"
+
+#: build/dashboard.js:54
+msgid "Weight"
+msgstr "Tykkelse"
+
+#: build/dashboard.js:54
+msgid "Italic"
+msgstr "Kursiv"
+
+#: build/dashboard.js:54
+msgid "Centre"
+msgstr "Centreret"
+
+#: build/dashboard.js:54
+msgid "Colour"
+msgstr "Farve"
+
+#: build/dashboard.js:54
+msgid "Fill"
+msgstr "Fyld"
+
+#: build/dashboard.js:54
+msgid "Outline"
+msgstr "Kant"
+
+#: build/dashboard.js:54
+msgid "Opacity"
+msgstr "Dækkevne"
+
+#: build/dashboard.js:54
+msgid "Waiting for approval"
+msgstr "Venter på godkendelse"
+
+#: build/dashboard.js:54
+msgid "Loading the designer…"
+msgstr "Indlæser designeren …"
+
+#: build/dashboard.js:54
+msgid "No designs yet."
+msgstr "Ingen designs endnu."
+
+#: build/dashboard.js:54
+msgid "Choose a product below and design it."
+msgstr "Vælg et produkt nedenfor, og design det."
+
+#: build/dashboard.js:54
+msgid "The design could not be opened. Please try again."
+msgstr "Designet kunne ikke åbnes. Prøv igen."
+
+#: build/dashboard.js:54
+msgid "Only a draft can be deleted."
+msgstr "Kun en kladde kan slettes."
+
+#: build/dashboard.js:54
+msgid "Design a new product"
+msgstr "Design et nyt produkt"
+
+#: build/dashboard.js:54
+msgid "No products to design yet."
+msgstr "Ingen produkter at designe endnu."
+
+#. translators: 1: base price, 2: number of colours, 3: sizes.
+#: build/dashboard.js:55
+#, js-format
+msgid "Base price %1$s · %2$d colours · %3$s"
+msgstr "Grundpris %1$s · %2$d farver · %3$s"
+
+#: build/dashboard.js:55
+msgid "The design could not be started. Please try again."
+msgstr "Designet kunne ikke startes. Prøv igen."
+
+#: build/dashboard.js:55
 msgid "Not available"
 msgstr "Ikke tilgængelig"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Profit is your share of what customers paid, including VAT, with the markup that applied when each order line was created. It is not your payout."
 msgstr "Profit er din andel af det, kunderne betalte inkl. moms, med den markup, der gjaldt, da hver ordrelinje blev oprettet. Det er ikke din udbetaling."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Incomplete: some sales lack the historical data needed to calculate profit, so no total is shown."
 msgstr "Ufuldstændig: nogle salg mangler de historiske oplysninger, der skal til for at beregne profitten, så der vises ingen sum."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Unknown: the sales lack the historical data needed to calculate profit."
 msgstr "Ukendt: salgene mangler de historiske oplysninger, der skal til for at beregne profitten."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Refund recorded"
 msgstr "Refundering registreret"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Order total:"
 msgstr "Ordre i alt:"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Your order lines"
 msgstr "Dine ordrelinjer"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Unnamed product"
 msgstr "Produkt uden navn"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Notes"
 msgstr "Bemærkninger"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Loading orders…"
 msgstr "Indlæser ordrer…"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "There are no order lines on this page."
 msgstr "Der er ingen ordrelinjer på denne side."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "You have no orders yet."
 msgstr "Du har ingen ordrer endnu."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Orders with your products will appear here."
 msgstr "Ordrer med dine produkter vises her."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Refund recorded: at least one refund applies to this order line."
 msgstr "Refundering registreret: mindst én refundering gælder for denne ordrelinje."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Not counted: the order does not currently count as a sale."
 msgstr "Tæller ikke: ordren tæller ikke som et salg lige nu."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "Order pages"
 msgstr "Ordresider"
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "This field is required."
 msgstr "Feltet skal udfyldes."
 
-#: build/dashboard.js:53
+#: build/dashboard.js:55
 msgid "This text is too long."
 msgstr "Teksten er for lang."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "Enter a full https:// address on the platform, or just the user name."
 msgstr "Skriv en fuld https://-adresse på platformen eller bare brugernavnet."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "This cannot be changed on this shop."
 msgstr "Dette kan ikke ændres i denne butik."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The image is too large (at most 5 MB)."
 msgstr "Billedet er for stort (højst 5 MB)."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "Use a JPG, PNG or WebP image."
 msgstr "Brug et JPG-, PNG- eller WebP-billede."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The image could not be read."
 msgstr "Billedet kunne ikke læses."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The image is too small."
 msgstr "Billedet er for lille."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The image is too big (at most 4096 pixels wide and high)."
 msgstr "Billedet er for stort (højst 4096 pixels i bredde og højde)."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The logo must be square."
 msgstr "Logoet skal være kvadratisk."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "This value is not valid."
 msgstr "Værdien er ikke gyldig."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "The shop's sales of your products after discounts, including VAT, excluding shipping and fees. It is not your payout."
 msgstr "Butikkens salg af dine produkter efter rabatter, inkl. moms, ekskl. fragt og gebyrer. Det er ikke din udbetaling."
 
-#: build/dashboard.js:54
+#: build/dashboard.js:56
 msgid "Sales figures are not available."
 msgstr "Salgstal er ikke tilgængelige."
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Sales of your products will appear here."
 msgstr "Salg af dine produkter vises her."
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Profit applies to the same 30 days as the sales figures."
 msgstr "Profitten gælder de samme 30 dage som salgstallene."
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Loading key figures…"
 msgstr "Indlæser nøgletal…"
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "(opens in a new tab)"
 msgstr "(åbner i en ny fane)"
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Edit profile"
 msgstr "Redigér profil"
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Your profile is still empty."
 msgstr "Din profil er stadig tom."
 
-#: build/dashboard.js:55
+#: build/dashboard.js:57
 msgid "Add a description and links to your channels."
 msgstr "Tilføj en beskrivelse og links til dine kanaler."
 
-#: build/dashboard.js:55
-#: build/dashboard.js:75
+#: build/dashboard.js:57
+#: build/dashboard.js:77
 msgid "Loading your profile…"
 msgstr "Indlæser din profil …"
 
 #. translators: %s: creator display name.
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 #, js-format
 msgid "Welcome, %s"
 msgstr "Velkommen, %s"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "This is your creator dashboard. Here you will follow your merch and keep your profile up to date."
 msgstr "Dette er dit creator-dashboard. Her følger du din merch og holder din profil opdateret."
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Account status:"
 msgstr "Kontostatus:"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Your profile"
 msgstr "Din profil"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Key figures"
 msgstr "Nøgletal"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Disabled"
 msgstr "Deaktiveret"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Expired"
 msgstr "Udløbet"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Not usable"
 msgstr "Kan ikke bruges"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "The gift card cannot be shown right now. Please try again later."
 msgstr "Gavekortet kan ikke vises lige nu. Prøv igen senere."
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Show gift card"
 msgstr "Vis gavekort"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Balance now"
 msgstr "Saldo nu"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Expires"
 msgstr "Udløber"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Hide code"
 msgstr "Skjul kode"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Show code"
 msgstr "Vis kode"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "The code was copied."
 msgstr "Koden er kopieret."
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "The code could not be copied. Show it and copy it by hand."
 msgstr "Koden kunne ikke kopieres. Vis den, og kopiér den manuelt."
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Copy code"
 msgstr "Kopiér kode"
 
-#: build/dashboard.js:56
+#: build/dashboard.js:58
 msgid "Hide gift card"
 msgstr "Skjul gavekort"
 
 #. translators: %s: payout id.
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 #, js-format
 msgid "Gift card of payout #%s. Anyone who has the code can use it; keep it to yourself."
 msgstr "Gavekort for udbetaling #%s. Alle, der har koden, kan bruge den; hold den for dig selv."
 
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Fill in all fields of the request."
 msgstr "Udfyld alle felter i anmodningen."
 
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Enter an amount greater than 0 with at most as many decimals as the shop uses."
 msgstr "Indtast et beløb større end 0 med højst lige så mange decimaler, som butikken bruger."
 
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "The amount is more than you can request right now."
 msgstr "Beløbet er større end det, du kan anmode om lige nu."
 
-#: build/dashboard.js:57
+#: build/dashboard.js:59
 msgid "Your balance cannot be calculated right now, because some sales lack the data needed. No payout can be requested until it is known."
 msgstr "Din saldo kan ikke beregnes lige nu, fordi nogle salg mangler de nødvendige oplysninger. Der kan ikke anmodes om udbetaling, før den kendes."
 
 #. translators: %d: maximum number of pending requests.
-#: build/dashboard.js:58
+#: build/dashboard.js:60
 #, js-format
 msgid "You already have %d pending requests. Wait until one is handled, or cancel one."
 msgstr "Du har allerede %d ventende anmodninger. Vent, til en er behandlet, eller annullér en."
 
 #. translators: %d: maximum number of requests per 24 hours.
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 #, js-format
 msgid "You have made %d requests in the last 24 hours. Please try again later."
 msgstr "Du har lavet %d anmodninger inden for de seneste 24 timer. Prøv igen senere."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "This payout method is not available right now."
 msgstr "Denne udbetalingsmetode er ikke tilgængelig lige nu."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Check the payment details: a registration number has 4 digits, an account number 1–10 digits, and PayPal needs a valid email address."
 msgstr "Tjek betalingsoplysningerne: et registreringsnummer har 4 cifre, et kontonummer 1–10 cifre, og PayPal kræver en gyldig e-mailadresse."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Another payout of yours is being processed. Please try again in a moment."
 msgstr "En anden af dine udbetalinger behandles lige nu. Prøv igen om et øjeblik."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "The request has already been handled, so it can no longer be cancelled."
 msgstr "Anmodningen er allerede behandlet og kan ikke længere annulleres."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "The request was not accepted."
 msgstr "Anmodningen blev ikke accepteret."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "No payout method is available right now, so no payout can be requested. Please contact us."
 msgstr "Ingen udbetalingsmetode er tilgængelig lige nu, så der kan ikke anmodes om udbetaling. Kontakt os."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "There is nothing to request yet. Your balance appears here once your sales have passed the holding period."
 msgstr "Der er intet at anmode om endnu. Din saldo vises her, når dine salg har passeret karensperioden."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Your request has been sent. It is reserved until it is handled."
 msgstr "Din anmodning er sendt. Beløbet er reserveret, indtil den er behandlet."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Available:"
 msgstr "Disponibelt:"
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Request the full available amount"
 msgstr "Anmod om hele det disponible beløb"
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Payout method"
 msgstr "Udbetalingsmetode"
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "4 digits"
 msgstr "4 cifre"
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "1–10 digits"
 msgstr "1–10 cifre"
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "You receive a gift card for the shop of the requested amount, without VAT. It appears here when we have created it. Treat its code like cash: anyone who has it can use it."
 msgstr "Du får et gavekort til butikken på det ønskede beløb, uden moms. Det vises her, når vi har oprettet det. Behandl koden som kontanter: alle, der har den, kan bruge den."
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Your payment details are encrypted, used only for this payout and deleted when it has been handled. Afterwards only a masked version is shown."
 msgstr "Dine betalingsoplysninger krypteres, bruges kun til denne udbetaling og slettes, når den er behandlet. Derefter vises kun en maskeret version."
 
-#: build/dashboard.js:59
-#: build/dashboard.js:75
+#: build/dashboard.js:61
+#: build/dashboard.js:77
 msgid "Sending…"
 msgstr "Sender…"
 
-#: build/dashboard.js:59
+#: build/dashboard.js:61
 msgid "Request payout"
 msgstr "Anmod om udbetaling"
 
-#: build/dashboard.js:60
+#: build/dashboard.js:62
 msgid "The correction document does not change the original document or the completed payout. The difference is not settled automatically."
 msgstr "Rettelsesbilaget ændrer ikke originalbilaget eller den gennemførte udbetaling. Forskellen afregnes ikke automatisk."
 
-#: build/dashboard.js:61
+#: build/dashboard.js:63
 msgid "The settlement document cannot be shown right now. Please try again later."
 msgstr "Afregningsbilaget kan ikke vises lige nu. Prøv igen senere."
 
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Print or save as PDF"
 msgstr "Udskriv eller gem som PDF"
 
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "The PDF cannot be downloaded right now. Please try again later."
 msgstr "PDF'en kan ikke hentes lige nu. Prøv igen senere."
 
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Requested, pending"
 msgstr "Anmodet, afventer"
 
-#: build/dashboard.js:67
+#: build/dashboard.js:69
 msgid "Earned after the holding period"
 msgstr "Optjent efter karensperioden"
 
 #. translators: %d: number of sales.
-#: build/dashboard.js:68
+#: build/dashboard.js:70
 #, js-format
 msgid "Your balance is unknown: %d sales lack the data needed to calculate your payout. No payout can be requested until this is resolved."
 msgstr "Din saldo er ukendt: %d salg mangler de oplysninger, der skal til for at beregne din udbetaling. Der kan ikke anmodes om udbetaling, før det er løst."
 
-#: build/dashboard.js:68
+#: build/dashboard.js:70
 msgid "Your balance"
 msgstr "Din saldo"
 
 #. translators: %d: number of days.
-#: build/dashboard.js:69
+#: build/dashboard.js:71
 #, js-format
 msgid "Sales count after a holding period of %d days. Refunds count at once."
 msgstr "Salg tæller med efter en karensperiode på %d dage. Refunderinger tæller med det samme."
 
-#: build/dashboard.js:69
+#: build/dashboard.js:71
 msgid "All your sales count."
 msgstr "Alle dine salg tæller med."
 
 #. translators: %s: date.
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 #, js-format
 msgid "Sales from %s count."
 msgstr "Salg fra %s tæller med."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Payout methods: bank transfer and PayPal."
 msgstr "Udbetalingsmetoder: bankoverførsel og PayPal."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Bank transfer and PayPal are not available right now."
 msgstr "Bankoverførsel og PayPal er ikke tilgængelige lige nu."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "You can also choose a gift card for the shop."
 msgstr "Du kan også vælge et gavekort til butikken."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "You have no earnings to pay out yet."
 msgstr "Du har endnu ingen indtjening at udbetale."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "This request could not be found."
 msgstr "Anmodningen blev ikke fundet."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "The request could not be cancelled. Please try again in a moment."
 msgstr "Anmodningen kunne ikke annulleres. Prøv igen om et øjeblik."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Confirm cancellation"
 msgstr "Bekræft annullering"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Keep"
 msgstr "Behold"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Cancel request"
 msgstr "Annullér anmodning"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Not yet"
 msgstr "Ikke endnu"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "The request has been cancelled."
 msgstr "Anmodningen er annulleret."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Your payout requests"
 msgstr "Dine anmodninger om udbetaling"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Loading your balance…"
 msgstr "Indlæser din saldo…"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Loading payout requests…"
 msgstr "Indlæser anmodninger om udbetaling…"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "There are no payout requests on this page."
 msgstr "Der er ingen anmodninger om udbetaling på denne side."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "You have no payout requests yet."
 msgstr "Du har endnu ingen anmodninger om udbetaling."
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Payout request pages"
 msgstr "Sider med anmodninger om udbetaling"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "No image"
 msgstr "Intet billede"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "No sales"
 msgstr "Intet salg"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Your products"
 msgstr "Dine produkter"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "Private"
 msgstr "Privat"
 
-#: build/dashboard.js:70
+#: build/dashboard.js:72
 msgid "No price"
 msgstr "Ingen pris"
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr "%1$s–%2$s %3$s"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Stock"
 msgstr "Lager"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "In stock"
 msgstr "På lager"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Out of stock"
 msgstr "Udsolgt"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "On backorder"
 msgstr "I restordre"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Loading products…"
 msgstr "Indlæser produkter…"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "There are no products on this page."
 msgstr "Der er ingen produkter på denne side."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "You have no products yet."
 msgstr "Du har ingen produkter endnu."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Products linked to you in the shop will appear here."
 msgstr "Produkter, der er koblet til dig i butikken, vises her."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Product pages"
 msgstr "Produktsider"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your discount code has already been replaced 3 times in the last 24 hours. Try again later."
 msgstr "Din rabatkode er allerede skiftet 3 gange inden for de seneste 24 timer. Prøv igen senere."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "You have no discount code to reset. Your first discount code is created by us."
 msgstr "Du har ingen rabatkode at nulstille. Din første rabatkode opretter vi."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your discount code is being changed right now. Try again in a moment."
 msgstr "Din rabatkode bliver ændret lige nu. Prøv igen om et øjeblik."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your discount code was not reset. Nothing was changed; try again later."
 msgstr "Din rabatkode blev ikke nulstillet. Intet blev ændret; prøv igen senere."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your discount code"
 msgstr "Din rabatkode"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "With your own discount code you can buy your own merchandise without paying for your profit. Orders bought with your own discount code do not count in your sales and your profit."
 msgstr "Med din egen rabatkode kan du købe dit eget merchandise uden at betale for din fortjeneste. Ordrer købt med din egen rabatkode tæller ikke med i dit salg og din fortjeneste."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "You have no discount code yet."
 msgstr "Du har endnu ingen rabatkode."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Code:"
 msgstr "Kode:"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your new discount code is ready. The old code no longer works."
 msgstr "Din nye rabatkode er klar. Den gamle kode virker ikke længere."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen."
 msgstr "Din nye rabatkode er klar. Den gamle kode virker ikke længere. Vis den nye kode, når ingen andre kan se din skærm."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Hide discount code"
 msgstr "Skjul rabatkode"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Show discount code"
 msgstr "Vis rabatkode"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Reset and generate a new discount code"
 msgstr "Nulstil og generér ny rabatkode"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "The old code stops working at once."
 msgstr "Den gamle kode holder op med at virke med det samme."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Reset discount code"
 msgstr "Nulstil rabatkode"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "E-mail notifications"
 msgstr "E-mailnotifikationer"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Loading e-mail notifications…"
 msgstr "Indlæser e-mailnotifikationer…"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Choose which e-mails you want. E-mails about payouts, settlement documents, your discount code, security and your account are always sent. All notifications are also shown at the bell at the top of the dashboard."
 msgstr "Vælg, hvilke e-mails du vil have. E-mails om udbetalinger, afregningsbilag, din rabatkode, sikkerhed og din konto sendes altid. Alle notifikationer vises også ved klokken øverst i dashboardet."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Your creator profile has no login, so no e-mails are sent."
 msgstr "Din creatorprofil har intet login, så der sendes ingen e-mails."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "There are no e-mails you can turn off right now."
 msgstr "Der er ingen e-mails, du kan slå fra lige nu."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "E-mail notifications saved."
 msgstr "E-mailnotifikationerne er gemt."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Waiting for approval."
 msgstr "Venter på godkendelse."
 
-#: build/dashboard.js:72
+#: build/dashboard.js:74
 msgid "Waiting for approval: remove the current one."
 msgstr "Venter på godkendelse: fjern det nuværende."
 
 #. translators: %s: the proposed text.
-#: build/dashboard.js:73
+#: build/dashboard.js:75
 #, js-format
 msgid "Waiting for approval: “%s”"
 msgstr "Venter på godkendelse: “%s”"
 
 #. translators: %s: field, e.g. "Description".
-#: build/dashboard.js:74
+#: build/dashboard.js:76
 #, js-format
 msgid "Withdraw the proposal for %s"
 msgstr "Træk forslaget til %s tilbage"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:76
 msgid "Your last proposal was not approved."
 msgstr "Dit seneste forslag blev ikke godkendt."
 
 #. translators: %s: the administrator's note.
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 #, js-format
 msgid "Your last proposal was not approved: %s"
 msgstr "Dit seneste forslag blev ikke godkendt: %s"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "None yet."
 msgstr "Intet endnu."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Now: the shop’s standard banner with your logo."
 msgstr "Nu: butikkens standardbanner med dit logo."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Now in the shop."
 msgstr "Nu i butikken."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Proposed image"
 msgstr "Foreslået billede"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Upload new"
 msgstr "Upload nyt"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Light"
 msgstr "Lys"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Dark black"
 msgstr "Mørk sort"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Dark green"
 msgstr "Mørk grøn"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Dark blue"
 msgstr "Mørk blå"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Dark red"
 msgstr "Mørk rød"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Dark pink"
 msgstr "Mørk pink"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Theme saved."
 msgstr "Temaet er gemt."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Appearance"
 msgstr "Udseende"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Theme"
 msgstr "Tema"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "System default follows the light or dark setting of your device."
 msgstr "Systemstandard følger den lyse eller mørke indstilling på din enhed."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "System default"
 msgstr "Systemstandard"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Logo (category image)"
 msgstr "Logo (kategoribillede)"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Banner"
 msgstr "Banner"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Banner on mobile"
 msgstr "Banner på mobil"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Square, JPG, PNG or WebP, at least 300 × 300 pixels and at most 5 MB. Larger than 1000 × 1000 pixels is scaled down. Without an own banner it is shown in the middle of the shop’s standard banner."
 msgstr "Kvadratisk, JPG, PNG eller WebP, mindst 300 × 300 pixels og højst 5 MB. Større end 1000 × 1000 pixels skaleres ned. Uden eget banner vises det midt i butikkens standardbanner."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. Remove it to show the standard banner again."
 msgstr "JPG, PNG eller WebP, mindst 1280 pixels bredt og højst 5 MB, fx 2000 × 394 pixels. Fjern det for at vise standardbanneret igen."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB."
 msgstr "Valgfrit, til skærme under 768 pixels: JPG, PNG eller WebP, mindst 600 pixels bredt og højst 5 MB."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Image sent for approval."
 msgstr "Billedet er sendt til godkendelse."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Sent for approval."
 msgstr "Sendt til godkendelse."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Proposal withdrawn."
 msgstr "Forslaget er trukket tilbage."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "No changes to send."
 msgstr "Ingen ændringer at sende."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Your changes are sent to the shop for approval. They are shown in the shop when an administrator has approved them."
 msgstr "Dine ændringer sendes til butikken til godkendelse. De vises i butikken, når en administrator har godkendt dem."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "You do not have a product category in the shop yet. Your proposals are kept until you get one."
 msgstr "Du har endnu ingen produktkategori i butikken. Dine forslag gemmes, til du får en."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "About you"
 msgstr "Om dig"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Also the name of your category in the shop."
 msgstr "Også navnet på din kategori i butikken."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Logo and banner"
 msgstr "Logo og banner"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Link on the banner"
 msgstr "Link på banneret"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Optional, e.g. your Twitch or YouTube channel. Opens in a new tab."
 msgstr "Valgfrit, fx din Twitch- eller YouTube-kanal. Åbner i en ny fane."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Social media"
 msgstr "Sociale medier"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Shown as icons on your category page. Enter the full address or just your user name (e.g. @name)."
 msgstr "Vises som ikoner på din kategoriside. Skriv hele adressen eller bare dit brugernavn (fx @navn)."
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Password"
 msgstr "Adgangskode"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Change your password"
 msgstr "Skift din adgangskode"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Send for approval"
 msgstr "Send til godkendelse"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Sales per week (incl. VAT)"
 msgstr "Salg pr. uge (inkl. moms)"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Sales per month (incl. VAT)"
 msgstr "Salg pr. måned (inkl. moms)"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Net sales per week"
 msgstr "Nettosalg pr. uge"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "Net sales per month"
 msgstr "Nettosalg pr. måned"
 
-#: build/dashboard.js:75
+#: build/dashboard.js:77
 msgid "(the table below has the same figures)"
 msgstr "(tabellen nedenfor har de samme tal)"
 
-#: build/dashboard.js:76
+#: build/dashboard.js:78
 msgid "Week"
 msgstr "Uge"
 
-#: build/dashboard.js:76
+#: build/dashboard.js:78
 msgid "Month"
 msgstr "Måned"
 
-#: build/dashboard.js:76
+#: build/dashboard.js:78
 msgid "Your sales"
 msgstr "Dit salg"
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr "Periode: %1$s – %2$s · Interval: %3$s"
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "No sales in this period."
 msgstr "Intet salg i denne periode."
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "Choose another period, or check back after your next sale."
 msgstr "Vælg en anden periode, eller kig igen efter dit næste salg."
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "Loading sales…"
 msgstr "Indlæser salg…"
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr "Perioden kan ikke vises. Vælg højst 366 dage, uger eller måneder og højst fem år."
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "The end date must be on or after the start date."
 msgstr "Slutdatoen skal være samme dag som eller efter startdatoen."
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "Choose period"
 msgstr "Vælg periode"
 
-#: build/dashboard.js:78
+#: build/dashboard.js:80
 msgid "Interval"
 msgstr "Interval"
 
-#: build/dashboard.js:78
-msgid "Show"
-msgstr "Vis"
-
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "This section is not available yet."
 msgstr "Denne sektion er ikke tilgængelig endnu."
 
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "Page not found"
 msgstr "Siden blev ikke fundet"
 
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "This page does not exist."
 msgstr "Siden findes ikke."
 
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "Go to the start page"
 msgstr "Gå til forsiden"
 
-#: build/dashboard.js:79
+#: build/dashboard.js:81
 msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."

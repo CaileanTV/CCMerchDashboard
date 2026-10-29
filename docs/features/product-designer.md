@@ -34,6 +34,13 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
     - produktet er taget ud af butikken (fx et grundprodukt udgår).
   - Notifikationerne udløses efter commit og har dedupe som de øvrige. De indeholder aldrig printfiler eller filer, kun produktnavn, status, pris og link til dashboardet eller admin-siden.
 
+## Designeren i dashboardet (trin 30.8)
+- Sektionen **Designer** vises kun, når designeren er slået til under Settings.
+- "Design et nyt produkt" viser de aktive grundprodukter; et design starter som kladde med grundproduktets navn, første farve og alle størrelser.
+- Værktøjer: **Produkt** (titel, beskrivelse, farver, størrelser, fortjeneste i beløb eller procent og kundens pris inkl. moms), **Tekst** (godkendte Google Fonts, tykkelse, kursiv, justering, farve), **Former** (rektangel, cirkel, trekant), **Kliparts**, **Upload** (egne billeder, PNG/JPG/WebP) og **Lag** (rækkefølge, skjul, lås, slet).
+- Over lærredet: sider, forhåndsvisningsfarve, zoom, fortryd/gentag og "Gem kladde". Delete sletter det valgte element; Ctrl+Z/Ctrl+Y fortryder og gentager.
+- Indsendelse til godkendelse, printfiler og mockups kommer i 30.9.
+
 ## Admin functionality
 - **Grundprodukter:**
   - kilde: egen, Printful eller Gelato;

@@ -37,19 +37,20 @@ class DesignerAssetRepository {
 	}
 
 	/**
-	 * Records a stored file of the administrator.
+	 * Records a stored file: the administrator's (no creator) or a creator's upload.
 	 *
-	 * @param string                                                                 $kind   LAYER or CLIPART.
-	 * @param string                                                                 $name   Name shown to administrators (and creators for cliparts).
-	 * @param array{file: string, mime: string, width: int, height: int, bytes: int} $stored DesignerFiles::store().
+	 * @param string                                                                 $kind       LAYER, CLIPART or CreatorUploads::UPLOAD.
+	 * @param string                                                                 $name       Name shown in the designer.
+	 * @param array{file: string, mime: string, width: int, height: int, bytes: int} $stored     DesignerFiles::store().
+	 * @param int|null                                                               $creator_id The uploading creator; null for the administrator's files.
 	 * @return int The asset id.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function insert( string $kind, string $name, array $stored ): int {
+	public function insert( string $kind, string $name, array $stored, ?int $creator_id = null ): int {
 		$done = $this->wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- The designer's own table.
 			$this->table(),
 			array(
-				'creator_id' => null,
+				'creator_id' => $creator_id,
 				'kind'       => $kind,
 				'name'       => mb_substr( $name, 0, 191 ),
 				'file'       => $stored['file'],
@@ -102,6 +103,25 @@ class DesignerAssetRepository {
 	public function shared( string $kind ): array {
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id IS NULL AND kind = %s ORDER BY id DESC', $this->table(), $kind ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant columns; the designer's own table.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the designer files.' );
+		}
+
+		return array_map( self::hydrate( ... ), $rows );
+	}
+
+	/**
+	 * A creator's assets of a kind, newest first.
+	 *
+	 * @param int    $creator_id Creator.
+	 * @param string $kind       Kind.
+	 * @return list<array{id: int, creator_id: int|null, kind: string, name: string, file: string, mime: string, width: int, height: int, bytes: int, created_at: string}>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function owned( int $creator_id, string $kind ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT ' . self::COLUMNS . ' FROM %i WHERE creator_id = %d AND kind = %s ORDER BY id DESC', $this->table(), $creator_id, $kind ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant columns; the designer's own table.
 
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new DatabaseException( 'Could not read the designer files.' );

@@ -183,6 +183,8 @@ final class AuditLogFormatter {
 			AuditAction::DesignerBaseDeleted => __( 'Base product deleted', 'merchboard' ),
 			AuditAction::DesignerClipartAdded => __( 'Clipart added', 'merchboard' ),
 			AuditAction::DesignerClipartDeleted => __( 'Clipart deleted', 'merchboard' ),
+			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
+			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 		};
 	}
 

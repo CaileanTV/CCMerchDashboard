@@ -7,6 +7,7 @@ import { AlertsChatbotSection } from '../sections/alerts/AlertsChatbotSection';
 import { AlertsHistorySection } from '../sections/alerts/AlertsHistorySection';
 import { AlertsSection } from '../sections/alerts/AlertsSection';
 import { AlertsWebhooksSection } from '../sections/alerts/AlertsWebhooksSection';
+import { DesignerSection } from '../sections/designer/DesignerSection';
 import { NewsSection } from '../sections/news/NewsSection';
 import { OrdersSection } from '../sections/orders/OrdersSection';
 import { OverviewSection } from '../sections/overview/OverviewSection';
@@ -28,6 +29,7 @@ const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	news: () => <NewsSection />,
 	sales: () => <SalesSection />,
 	products: () => <ProductsSection />,
+	designer: () => <DesignerSection />,
 	orders: () => <OrdersSection />,
 	payouts: () => <PayoutsSection />,
 	alerts: () => <AlertsSection />,

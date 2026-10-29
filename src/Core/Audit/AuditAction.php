@@ -674,4 +674,14 @@ enum AuditAction: string {
 	 * An administrator deleted a clipart (ADR-080). Context: asset_id, asset_name.
 	 */
 	case DesignerClipartDeleted = 'designer_clipart_deleted';
+
+	/**
+	 * A creator started a designer product (ADR-080 pkt. 3). Context: design_product_id, base_id.
+	 */
+	case DesignerProductCreated = 'designer_product_created';
+
+	/**
+	 * A creator deleted a designer product that never left the draft (ADR-080 pkt. 3). Context: design_product_id.
+	 */
+	case DesignerProductDeleted = 'designer_product_deleted';
 }

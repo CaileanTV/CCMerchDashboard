@@ -38,6 +38,7 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
-    "ag-psd": "31.0.3"
+    "ag-psd": "31.0.3",
+    "fabric": "7.4.0"
   }
 }
