@@ -1,6 +1,6 @@
 <?php
 /**
- * Base products from Printful's catalog.
+ * Printful's catalog for base products.
  *
  * @package MerchBoard
  */
@@ -9,271 +9,458 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\ProductDesigner\Providers;
 
-use MerchBoard\Core\Database\DatabaseException;
-use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
-use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
-use MerchBoard\Modules\ProductDesigner\DesignerException;
-use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-081 (step 30.12): a Printful catalog product becomes a base product
- * (a draft, source `printful`): its title and description, the colours
- * (name and colour code) and sizes of its variants, and one side per
- * placement of its first variant's layout templates, with the template
- * image as the background layer, the template's print area and the print
- * file's size in millimetres at its dpi. The administrator sets the base
- * price and activates it after a look. The side keys are mapped to
- * Printful's placements for the mockup generator. Template images are
- * downloaded through PrintfulApi and stored like uploaded layers.
+ * ADR-081 (step 30.12, catalog import from review 30.15): the administrator
+ * searches Printful's catalog (title, type, brand or model, optionally in a
+ * category with its subcategories) and picks a product. Its colours (name
+ * and colour code), sizes and placements with the print file's size in
+ * millimetres at its dpi are offered to tick. The blank photos and print
+ * areas come from two tasks of the mockup generator (CatalogImport): every
+ * picked colour with a transparent file in each placement, and the first
+ * colour with a marker per placement. The catalog list and the categories
+ * are cached for an hour.
  */
-class PrintfulCatalog {
+class PrintfulCatalog implements CatalogRenderer {
+
+	public const SOURCE = 'printful';
 
 	/**
-	 * Most sides imported.
+	 * The cached catalog (transient).
 	 */
-	private const MAX_SIDES = 6;
+	public const CACHE = 'merchboard_printful_catalog';
+
+	/**
+	 * The cached categories (transient).
+	 */
+	public const CATEGORIES = 'merchboard_printful_categories';
+
+	/**
+	 * Most search results shown.
+	 */
+	public const MAX_RESULTS = 48;
+
+	private const POLL_DELAY = 15;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintfulApi           $api      Printful.
-	 * @param BaseProductService    $service  Base products (stores files by moving them).
-	 * @param BaseProductRepository $bases    Base products.
+	 * @param PrintfulApi $api Printful.
 	 */
-	public function __construct( private PrintfulApi $api, private BaseProductService $service, private BaseProductRepository $bases ) {
+	public function __construct( private PrintfulApi $api ) {
 	}
 
 	/**
-	 * Imports a catalog product as a base product draft.
-	 *
-	 * @param int    $product_id Printful product id.
-	 * @param string $base_price Base price incl. VAT (as typed).
-	 * @return int The base product's id.
-	 * @throws PrintfulException When Printful refuses or fails.
-	 * @throws DesignerException When the product cannot be a base product.
-	 * @throws DatabaseException When it cannot be stored.
+	 * Whether Printful may be used.
 	 */
-	public function import( int $product_id, string $base_price ): int {
-		if ( $product_id < 1 ) {
-			self::fail( PrintfulException::NOT_FOUND );
-		}
+	public function available(): bool {
+		return $this->api->available();
+	}
 
-		$catalog    = $this->api->product( $product_id );
-		$printfiles = $this->api->printfiles( $product_id );
-		$templates  = $this->api->templates( $product_id );
-		$product    = is_array( $catalog['product'] ?? null ) ? $catalog['product'] : array();
-		$variants   = array_values( array_filter( is_array( $catalog['variants'] ?? null ) ? $catalog['variants'] : array(), 'is_array' ) );
+	/**
+	 * Catalog products whose title, type, brand or model holds every word,
+	 * in a category (and its subcategories) when one is given.
+	 *
+	 * @param string $query    Words.
+	 * @param int    $category Category; 0 for all.
+	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int}>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function search( string $query, int $category = 0 ): array {
+		$split    = preg_split( '/\s+/u', mb_strtolower( trim( $query ) ) );
+		$words    = array_values( array_filter( false === $split ? array() : $split, static fn( string $word ): bool => '' !== $word ) );
+		$included = $category > 0 ? $this->descendants( $category ) : array();
+		$found    = array();
 
-		if ( array() === $variants ) {
-			self::fail( PrintfulException::INVALID );
-		}
+		foreach ( $this->products() as $product ) {
+			if ( array() !== $included && ! isset( $included[ $product['category'] ] ) ) {
+				continue;
+			}
 
-		$temporary = array();
+			$text = mb_strtolower( $product['title'] . ' ' . $product['type'] . ' ' . $product['brand'] . ' ' . $product['model'] );
 
-		try {
-			[ $views, $placements ] = $this->views( (int) ( $variants[0]['id'] ?? 0 ), $printfiles, $templates, $temporary );
-			$id                     = $this->service->save(
-				null,
-				array(
-					'name'        => mb_substr( trim( (string) ( $product['title'] ?? $product['model'] ?? 'Printful ' . $product_id ) ), 0, 191 ),
-					'description' => mb_substr( wp_strip_all_tags( (string) ( $product['description'] ?? '' ) ), 0, 2000 ),
-					'base_price'  => $base_price,
-					'category_id' => '0',
-					'colors'      => self::colors( $variants ),
-					'sizes'       => self::sizes( $variants ),
-				),
-				$views
-			);
-		} finally {
-			foreach ( $temporary as $path ) {
-				if ( is_file( $path ) ) {
-					wp_delete_file( $path );
+			foreach ( $words as $word ) {
+				if ( ! str_contains( $text, $word ) ) {
+					continue 2;
 				}
 			}
-		}
 
-		$this->bases->set_provider( $id, 'printful', (string) $product_id, (string) wp_json_encode( $placements ) );
+			$found[] = $product;
 
-		return $id;
-	}
-
-	/**
-	 * The sides of the first variant's templates, as the base product form
-	 * sends them, and the Printful placement by side key.
-	 *
-	 * @phpstan-param list<string> $temporary
-	 *
-	 * @param int                  $variant    First variant.
-	 * @param array<string, mixed> $printfiles Print files answer.
-	 * @param array<string, mixed> $templates  Templates answer.
-	 * @param string[]             $temporary  Temporary files (cleaned by the caller).
-	 * @return array{0: list<array<string, mixed>>, 1: array<string, string>}
-	 * @throws PrintfulException When there is no usable template.
-	 */
-	private function views( int $variant, array $printfiles, array $templates, array &$temporary ): array {
-		$mapping = array();
-
-		foreach ( is_array( $templates['variant_mapping'] ?? null ) ? $templates['variant_mapping'] : array() as $entry ) {
-			if ( is_array( $entry ) && (int) ( $entry['variant_id'] ?? 0 ) === $variant && is_array( $entry['templates'] ?? null ) ) {
-				$mapping = $entry['templates'];
+			if ( count( $found ) >= self::MAX_RESULTS ) {
 				break;
 			}
 		}
 
-		$by_id  = array();
-		$files  = array();
-		$labels = is_array( $printfiles['available_placements'] ?? null ) ? $printfiles['available_placements'] : array();
+		return $found;
+	}
 
-		foreach ( is_array( $templates['templates'] ?? null ) ? $templates['templates'] : array() as $template ) {
-			if ( is_array( $template ) ) {
-				$by_id[ (int) ( $template['template_id'] ?? 0 ) ] = $template;
+	/**
+	 * The catalog's categories, by title.
+	 *
+	 * @return list<array{id: int, parent: int, title: string}>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function categories(): array {
+		$cached     = get_transient( self::CATEGORIES );
+		$categories = array();
+
+		if ( is_array( $cached ) ) {
+			$list = $cached;
+		} else {
+			$answer = $this->api->categories();
+			$list   = is_array( $answer['categories'] ?? null ) ? $answer['categories'] : array();
+		}
+
+		// The cache is read like Printful's answer: every entry is checked again.
+		foreach ( $list as $category ) {
+			$parent = is_array( $category ) ? ( $category['parent_id'] ?? $category['parent'] ?? 0 ) : 0;
+
+			if ( is_array( $category ) && is_numeric( $category['id'] ?? null ) && is_string( $category['title'] ?? null ) ) {
+				$categories[] = array(
+					'id'     => (int) $category['id'],
+					'parent' => is_numeric( $parent ) ? (int) $parent : 0,
+					'title'  => mb_substr( sanitize_text_field( $category['title'] ), 0, 100 ),
+				);
 			}
 		}
 
-		foreach ( is_array( $printfiles['printfiles'] ?? null ) ? $printfiles['printfiles'] : array() as $file ) {
-			if ( is_array( $file ) ) {
-				$files[ (int) ( $file['printfile_id'] ?? 0 ) ] = $file;
-			}
+		usort( $categories, static fn( array $a, array $b ): int => strcasecmp( $a['title'], $b['title'] ) );
+
+		if ( ! is_array( $cached ) ) {
+			set_transient( self::CATEGORIES, $categories, HOUR_IN_SECONDS );
 		}
 
-		$views      = array();
-		$placements = array();
+		return $categories;
+	}
 
-		foreach ( $mapping as $entry ) {
-			$placement = is_array( $entry ) && is_string( $entry['placement'] ?? null ) ? $entry['placement'] : '';
-			$template  = $by_id[ (int) ( is_array( $entry ) ? ( $entry['template_id'] ?? 0 ) : 0 ) ] ?? null;
-			$file      = null === $template ? null : ( $files[ (int) ( $template['printfile_id'] ?? 0 ) ] ?? null );
+	/**
+	 * What the administrator can pick from a catalog product: the colours
+	 * and sizes of its variants and the placements of its first variant
+	 * with a print file.
+	 *
+	 * @param string $ref Printful product id.
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>, variants: array<string, array<string, string>>}
+	 * @throws PrintfulException When Printful refuses or fails, or the product cannot be a base product.
+	 */
+	public function choice( string $ref ): array {
+		$id = 1 === preg_match( '/^\d{1,10}$/', $ref ) ? (int) $ref : 0;
 
-			if ( '' === $placement || null === $template || null === $file || ! is_string( $template['image_url'] ?? null ) || count( $views ) >= self::MAX_SIDES ) {
+		if ( $id < 1 ) {
+			self::fail( PrintfulException::NOT_FOUND );
+		}
+
+		$catalog    = $this->api->product( $id );
+		$printfiles = $this->api->printfiles( $id );
+		$product    = is_array( $catalog['product'] ?? null ) ? $catalog['product'] : array();
+		$colors     = array();
+		$sizes      = array();
+		$variants   = array();
+		$first      = 0;
+
+		foreach ( is_array( $catalog['variants'] ?? null ) ? $catalog['variants'] : array() as $variant ) {
+			$color = is_array( $variant ) ? mb_substr( trim( sanitize_text_field( (string) ( $variant['color'] ?? '' ) ) ), 0, 60 ) : '';
+			$size  = is_array( $variant ) ? mb_substr( trim( sanitize_text_field( (string) ( $variant['size'] ?? '' ) ) ), 0, 20 ) : '';
+
+			if ( '' === $color || '' === $size || ! is_numeric( $variant['id'] ?? null ) ) {
 				continue;
 			}
 
-			$name = mb_substr( trim( is_string( $labels[ $placement ] ?? null ) ? $labels[ $placement ] : ucfirst( str_replace( '_', ' ', $placement ) ) ), 0, 60 );
-			$key  = substr( sanitize_title( $name ), 0, 32 );
-
-			if ( '' === $key || isset( $placements[ $key ] ) ) {
-				continue;
+			if ( ! isset( $colors[ $color ] ) && count( $colors ) < BaseProduct::MAX_COLORS ) {
+				$hex              = is_string( $variant['color_code'] ?? null ) && 1 === preg_match( '/^#?([0-9a-fA-F]{6})$/', $variant['color_code'], $match ) ? '#' . strtolower( $match[1] ) : '#ffffff';
+				$colors[ $color ] = array(
+					'name' => $color,
+					'hex'  => $hex,
+				);
 			}
 
-			[ $path, $width ] = $this->template_image( $template['image_url'], $temporary );
-			$scale            = $width / max( 1, (int) ( $template['template_width'] ?? $width ) );
-			$dpi              = min( BaseView::MAX_DPI, max( BaseView::MIN_DPI, (int) ( $file['dpi'] ?? 150 ) ) );
+			if ( ! in_array( $size, $sizes, true ) && count( $sizes ) < BaseProduct::MAX_SIZES ) {
+				$sizes[] = $size;
+			}
 
-			$placements[ $key ] = $placement;
-			$views[]            = array(
-				'key'       => '',
-				'name'      => $name,
-				'x'         => (string) (int) round( (float) ( $template['print_area_left'] ?? 0 ) * $scale ),
-				'y'         => (string) (int) round( (float) ( $template['print_area_top'] ?? 0 ) * $scale ),
-				'width'     => (string) (int) round( (float) ( $template['print_area_width'] ?? 0 ) * $scale ),
-				'height'    => (string) (int) round( (float) ( $template['print_area_height'] ?? 0 ) * $scale ),
-				'width_mm'  => (string) max( 1, (int) round( (int) ( $file['width'] ?? 0 ) * 25.4 / $dpi ) ),
-				'height_mm' => (string) max( 1, (int) round( (int) ( $file['height'] ?? 0 ) * 25.4 / $dpi ) ),
-				'dpi'       => (string) $dpi,
-				'remove'    => false,
-				'clear'     => array(),
-				'uploads'   => array(
-					'background' => array(
-						'name'     => 'template.png',
-						'type'     => 'image/png',
-						'tmp_name' => $path,
-						'error'    => UPLOAD_ERR_OK,
-						'size'     => (int) filesize( $path ),
-					),
+			$variants[ $color ][ $size ] ??= (string) (int) $variant['id'];
+			$first                         = 0 === $first ? (int) $variant['id'] : $first;
+		}
+
+		$sides = self::sides( $printfiles, $first );
+
+		if ( array() === $colors || array() === $sizes || array() === $sides ) {
+			self::fail( PrintfulException::INVALID );
+		}
+
+		return array(
+			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $product['title'] ?? $product['model'] ?? 'Printful ' . $id ) ) ), 0, 191 ),
+			'description' => mb_substr( wp_strip_all_tags( (string) ( $product['description'] ?? '' ) ), 0, 2000 ),
+			'image'       => is_string( $product['image'] ?? null ) ? $product['image'] : '',
+			'colors'      => array_values( $colors ),
+			'sizes'       => $sizes,
+			'sides'       => $sides,
+			'variants'    => $variants,
+		);
+	}
+
+	/**
+	 * Creates a task at the mockup generator.
+	 *
+	 * @param string               $kind   `blank` or `marker`.
+	 * @param array<string, mixed> $import Import data.
+	 * @return string The task key.
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function render( string $kind, array $import ): string {
+		$colors   = is_array( $import['colors'] ?? null ) ? array_values( $import['colors'] ) : array();
+		$variants = array_map( 'intval', 'marker' === $kind ? array_slice( $colors, 0, 1 ) : $colors );
+		$files    = array();
+
+		foreach ( is_array( $import['sides'] ?? null ) ? array_values( $import['sides'] ) : array() as $index => $side ) {
+			$width  = is_array( $side ) ? (int) ( $side['width'] ?? 0 ) : 0;
+			$height = is_array( $side ) ? (int) ( $side['height'] ?? 0 ) : 0;
+			$url    = 'marker' === $kind ? ( $import['markers'][ $index ] ?? null ) : ( $import['blank'] ?? null );
+
+			if ( ! is_array( $side ) || ! is_string( $side['placement'] ?? null ) || ! is_string( $url ) || $width < 1 || $height < 1 ) {
+				self::fail( PrintfulException::INVALID );
+			}
+
+			$files[] = array(
+				'placement' => $side['placement'],
+				'image_url' => $url,
+				'position'  => array(
+					'area_width'  => $width,
+					'area_height' => $height,
+					'width'       => $width,
+					'height'      => $height,
+					'top'         => 0,
+					'left'        => 0,
 				),
 			);
 		}
 
-		if ( array() === $views ) {
+		if ( array() === $variants || array() === $files ) {
 			self::fail( PrintfulException::INVALID );
 		}
 
-		return array( $views, $placements );
+		$answer = $this->api->create_task(
+			(int) ( $import['ref'] ?? 0 ),
+			array(
+				'variant_ids' => $variants,
+				'format'      => 'jpg',
+				'files'       => $files,
+			)
+		);
+		$key    = is_string( $answer['task_key'] ?? null ) ? $answer['task_key'] : '';
+
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_-]{1,190}$/', $key ) ) {
+			self::fail( PrintfulException::INVALID );
+		}
+
+		return $key;
 	}
 
 	/**
-	 * A template image as a temporary PNG and its width.
+	 * A task's state, with its mockups by placement and colour when done.
 	 *
-	 * @phpstan-param list<string> $temporary
-	 *
-	 * @param string   $url       Image URL from Printful.
-	 * @param string[] $temporary Temporary files.
-	 * @return array{0: string, 1: int}
-	 * @throws PrintfulException When it is not an image.
+	 * @param string               $key    Task key.
+	 * @param array<string, mixed> $import Import data.
+	 * @return array{status: string, error?: string, images?: array<int|string, array<string, string>>}
+	 * @throws PrintfulException When Printful refuses or fails.
 	 */
-	private function template_image( string $url, array &$temporary ): array {
-		$body = $this->api->download( $url );
-		$path = wp_tempnam( 'merchboard-printful' );
+	public function check( string $key, array $import ): array {
+		$answer = $this->api->task( $key );
+		$status = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
 
-		$temporary[] = $path;
-
-		if ( false === file_put_contents( $path, $body ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A temporary file of the import.
-			self::fail( PrintfulException::INVALID );
+		if ( 'failed' === $status || ( is_string( $answer['error'] ?? null ) && '' !== $answer['error'] ) ) {
+			return array(
+				'status' => 'failed',
+				'error'  => mb_substr( sanitize_text_field( is_string( $answer['error'] ?? null ) ? $answer['error'] : 'failed' ), 0, 300 ),
+			);
 		}
 
-		$size = wp_getimagesize( $path );
-
-		// The pixel size is checked before an image is decoded (review 30.15).
-		if ( ! is_array( $size ) || $size[0] > DesignerFiles::MAX_PIXELS || $size[1] > DesignerFiles::MAX_PIXELS ) {
-			self::fail( PrintfulException::INVALID );
+		if ( 'completed' !== $status ) {
+			return array( 'status' => 'pending' );
 		}
 
-		if ( IMAGETYPE_PNG !== $size[2] ) {
-			$editor = wp_get_image_editor( $path );
-			$png    = $path . '.png';
-
-			if ( is_wp_error( $editor ) || is_wp_error( $editor->save( $png, 'image/png' ) ) ) {
-				self::fail( PrintfulException::INVALID );
-			}
-
-			$temporary[] = $png;
-			$path        = $png;
-		}
-
-		return array( $path, (int) $size[0] );
-	}
-
-	/**
-	 * The variants' colours, one per line ("Name #hex"), in order.
-	 *
-	 * @param list<array<mixed>> $variants Variants.
-	 */
-	private static function colors( array $variants ): string {
 		$colors = array();
+		$images = array();
 
-		foreach ( $variants as $variant ) {
-			$name = trim( (string) ( $variant['color'] ?? '' ) );
-			$hex  = is_string( $variant['color_code'] ?? null ) && 1 === preg_match( '/^#?[0-9a-fA-F]{6}$/', $variant['color_code'] ) ? ltrim( $variant['color_code'], '#' ) : 'ffffff';
+		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
+			$colors[ (string) $variant ] = (string) $color;
+		}
 
-			if ( '' !== $name && ! isset( $colors[ $name ] ) ) {
-				$colors[ $name ] = $name . ' #' . $hex;
+		foreach ( is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array() as $mockup ) {
+			$placement = is_array( $mockup ) && is_string( $mockup['placement'] ?? null ) ? $mockup['placement'] : '';
+			$url       = is_array( $mockup ) && is_string( $mockup['mockup_url'] ?? null ) ? $mockup['mockup_url'] : '';
+
+			foreach ( '' !== $placement && '' !== $url && is_array( $mockup['variant_ids'] ?? null ) ? $mockup['variant_ids'] : array() as $variant ) {
+				$color = is_scalar( $variant ) ? ( $colors[ (string) $variant ] ?? null ) : null;
+
+				if ( null !== $color ) {
+					$images[ $placement ][ $color ] ??= $url;
+				}
 			}
 		}
 
-		return implode( "\n", $colors );
+		return array(
+			'status' => 'done',
+			'images' => $images,
+		);
 	}
 
 	/**
-	 * The variants' sizes, in order.
+	 * A file Printful returned.
 	 *
-	 * @param list<array<mixed>> $variants Variants.
+	 * @param string $url URL.
+	 * @throws PrintfulException When it cannot be downloaded.
 	 */
-	private static function sizes( array $variants ): string {
-		$sizes = array();
+	public function download( string $url ): string {
+		return $this->api->download( $url );
+	}
 
-		foreach ( $variants as $variant ) {
-			$size = trim( (string) ( $variant['size'] ?? '' ) );
+	/**
+	 * Seconds between two looks at a task.
+	 */
+	public function poll_delay(): int {
+		return self::POLL_DELAY;
+	}
 
-			if ( '' !== $size ) {
-				$sizes[ $size ] = $size;
+	/**
+	 * Printful's answers about a catalog product.
+	 *
+	 * @param string $ref Printful product id.
+	 * @return array<string, mixed>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function diagnose( string $ref ): array {
+		$id = (int) $ref;
+
+		return array(
+			'GET /products/' . $id                    => $this->api->product( $id ),
+			'GET /mockup-generator/printfiles/' . $id => $this->api->printfiles( $id ),
+		);
+	}
+
+	/**
+	 * The catalog's products that are not discontinued (cached).
+	 *
+	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int}>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	private function products(): array {
+		$cached   = get_transient( self::CACHE );
+		$products = array();
+		$text     = static fn( array $product, string $field ): string => is_string( $product[ $field ] ?? null ) ? mb_substr( sanitize_text_field( $product[ $field ] ), 0, 191 ) : '';
+
+		// The cache is read like Printful's answer: every entry is checked again.
+		foreach ( is_array( $cached ) ? $cached : $this->api->products() as $product ) {
+			if ( ! is_array( $product ) || ! is_numeric( $product['id'] ?? null ) || true === ( $product['is_discontinued'] ?? false ) ) {
+				continue;
+			}
+
+			$category   = $product['main_category_id'] ?? $product['category'] ?? 0;
+			$products[] = array(
+				'id'       => (int) $product['id'],
+				'title'    => $text( $product, 'title' ),
+				'type'     => $text( $product, isset( $product['type_name'] ) ? 'type_name' : 'type' ),
+				'brand'    => $text( $product, 'brand' ),
+				'model'    => $text( $product, 'model' ),
+				'image'    => is_string( $product['image'] ?? null ) && 'https' === wp_parse_url( $product['image'], PHP_URL_SCHEME ) ? $product['image'] : '',
+				'category' => is_numeric( $category ) ? (int) $category : 0,
+			);
+		}
+
+		if ( ! is_array( $cached ) ) {
+			set_transient( self::CACHE, $products, HOUR_IN_SECONDS );
+		}
+
+		return $products;
+	}
+
+	/**
+	 * A category and its subcategories.
+	 *
+	 * @param int $category Category.
+	 * @return array<int, true>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	private function descendants( int $category ): array {
+		$children = array();
+
+		foreach ( $this->categories() as $entry ) {
+			$children[ $entry['parent'] ][] = $entry['id'];
+		}
+
+		$found = array( $category => true );
+		$queue = array( $category );
+
+		while ( array() !== $queue ) {
+			foreach ( $children[ array_shift( $queue ) ] ?? array() as $child ) {
+				if ( ! isset( $found[ $child ] ) ) {
+					$found[ $child ] = true;
+					$queue[]         = $child;
+				}
 			}
 		}
 
-		return implode( ', ', $sizes );
+		return $found;
 	}
+
+	/**
+	 * The placements with a print file of a variant (the first one), with
+	 * the print file's size.
+	 *
+	 * @param array<string, mixed> $printfiles Print files answer.
+	 * @param int                  $variant    Variant.
+	 * @return list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>
+	 */
+	private static function sides( array $printfiles, int $variant ): array {
+		$files   = array();
+		$mapping = array();
+		$labels  = is_array( $printfiles['available_placements'] ?? null ) ? $printfiles['available_placements'] : array();
+
+		foreach ( is_array( $printfiles['printfiles'] ?? null ) ? $printfiles['printfiles'] : array() as $file ) {
+			if ( is_array( $file ) && is_numeric( $file['printfile_id'] ?? null ) ) {
+				$files[ (int) $file['printfile_id'] ] = $file;
+			}
+		}
+
+		foreach ( is_array( $printfiles['variant_printfiles'] ?? null ) ? $printfiles['variant_printfiles'] : array() as $entry ) {
+			if ( is_array( $entry ) && ( (int) ( $entry['variant_id'] ?? 0 ) === $variant || array() === $mapping ) && is_array( $entry['placements'] ?? null ) ) {
+				$mapping = $entry['placements'];
+			}
+		}
+
+		$sides = array();
+
+		foreach ( $labels as $placement => $label ) {
+			$file   = $files[ (int) ( $mapping[ $placement ] ?? 0 ) ] ?? null;
+			$width  = is_array( $file ) ? (int) ( $file['width'] ?? 0 ) : 0;
+			$height = is_array( $file ) ? (int) ( $file['height'] ?? 0 ) : 0;
+			$dpi    = min( BaseView::MAX_DPI, max( BaseView::MIN_DPI, is_array( $file ) ? (int) ( $file['dpi'] ?? 150 ) : 150 ) );
+			$name   = mb_substr( trim( sanitize_text_field( is_string( $label ) ? $label : ucfirst( str_replace( '_', ' ', (string) $placement ) ) ) ), 0, 60 );
+			$mm_w   = (int) round( $width * 25.4 / $dpi );
+			$mm_h   = (int) round( $height * 25.4 / $dpi );
+
+			if ( ! is_string( $placement ) || '' === $name || $mm_w < 1 || $mm_h < 1 || max( $mm_w, $mm_h ) > BaseView::MAX_MM ) {
+				continue;
+			}
+
+			$sides[] = array(
+				'placement' => $placement,
+				'name'      => $name,
+				'width_mm'  => $mm_w,
+				'height_mm' => $mm_h,
+				'dpi'       => $dpi,
+				'width'     => $width,
+				'height'    => $height,
+			);
+		}
+
+		return $sides;
+	}
+
 	/**
 	 * Fails with a reason.
 	 *

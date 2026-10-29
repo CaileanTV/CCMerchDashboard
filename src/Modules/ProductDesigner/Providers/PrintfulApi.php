@@ -20,16 +20,20 @@ defined( 'ABSPATH' ) || exit;
  * ADR-081 pkt. 1–2: the only Printful calls Merch Dashboard makes, on
  * `https://api.printful.com` with the private token as Bearer:
  *
+ * - `GET /products` and `GET /categories` (the catalog search, review 30.15);
  * - `GET /products/{id}`;
- * - `GET /mockup-generator/printfiles/{id}` and `GET /mockup-generator/templates/{id}`;
+ * - `GET /mockup-generator/printfiles/{id}`;
  * - `POST /mockup-generator/create-task/{id}` and `GET /mockup-generator/task?task_key=…`;
  * - a download of a file Printful returned (https, any host Printful names).
  *
+ * The layout templates (`/mockup-generator/templates/{id}`) are no longer
+ * read: their images are guide graphics, not product photos (review 30.15).
  * Every call uses `wp_safe_remote_*` (no private addresses) with a 15 s
  * timeout and no redirects; the HTTP function can be replaced in tests.
  * A 429 throws RATE_LIMITED with `Retry-After`; other statuses and
- * unreadable answers throw. Nothing runs while Printful is switched off or
- * has no token. The token is never logged.
+ * unreadable answers throw, naming the call and Printful's own message.
+ * Nothing runs while Printful is switched off or has no token. The token
+ * is never logged.
  */
 class PrintfulApi {
 
@@ -66,6 +70,27 @@ class PrintfulApi {
 	}
 
 	/**
+	 * The catalog's products (`id`, `title`, `type_name`, `brand`,
+	 * `model`, `image`, `main_category_id`, `is_discontinued`).
+	 *
+	 * @return array<mixed>
+	 * @throws PrintfulException When the call fails.
+	 */
+	public function products(): array {
+		return $this->call( 'GET', '/products' );
+	}
+
+	/**
+	 * The catalog's categories (`categories` with `id`, `parent_id`, `title`).
+	 *
+	 * @return array<string, mixed>
+	 * @throws PrintfulException When the call fails.
+	 */
+	public function categories(): array {
+		return $this->call( 'GET', '/categories' );
+	}
+
+	/**
 	 * A catalog product with its variants (`product`, `variants`).
 	 *
 	 * @param int $id Printful product.
@@ -85,17 +110,6 @@ class PrintfulApi {
 	 */
 	public function printfiles( int $id ): array {
 		return $this->call( 'GET', '/mockup-generator/printfiles/' . $id );
-	}
-
-	/**
-	 * The layout templates of a catalog product (`variant_mapping`, `templates`).
-	 *
-	 * @param int $id Printful product.
-	 * @return array<string, mixed>
-	 * @throws PrintfulException When the call fails.
-	 */
-	public function templates( int $id ): array {
-		return $this->call( 'GET', '/mockup-generator/templates/' . $id );
 	}
 
 	/**
@@ -126,7 +140,7 @@ class PrintfulApi {
 	}
 
 	/**
-	 * A file Printful returned (a template or a mockup): https only, at most
+	 * A file Printful returned (a mockup): https only, at most
 	 * the designer's file size.
 	 *
 	 * @param string $url URL from a Printful answer.
@@ -190,34 +204,53 @@ class PrintfulApi {
 		}
 
 		$response = ( $this->http )( $method, self::BASE . $path, $args );
+		$call     = $method . ' ' . (string) strtok( $path, '?' );
 
 		if ( $response instanceof WP_Error ) {
-			throw new PrintfulException( PrintfulException::FAILED );
+			throw new PrintfulException( PrintfulException::FAILED, 0, $call );
 		}
 
-		$status = (int) wp_remote_retrieve_response_code( $response );
+		$status  = (int) wp_remote_retrieve_response_code( $response );
+		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+		$detail  = self::detail( $status, $decoded );
 
 		if ( 429 === $status ) {
 			$wait = wp_remote_retrieve_header( $response, 'retry-after' );
 
-			throw new PrintfulException( PrintfulException::RATE_LIMITED, is_numeric( $wait ) ? max( 1, (int) $wait ) : 60 );
+			throw new PrintfulException( PrintfulException::RATE_LIMITED, is_numeric( $wait ) ? max( 1, (int) $wait ) : 60, $call, $detail );
 		}
 
 		if ( 401 === $status || 403 === $status ) {
-			throw new PrintfulException( PrintfulException::UNAUTHORIZED );
+			throw new PrintfulException( PrintfulException::UNAUTHORIZED, 0, $call, $detail );
 		}
 
 		if ( 404 === $status ) {
-			throw new PrintfulException( PrintfulException::NOT_FOUND );
+			throw new PrintfulException( PrintfulException::NOT_FOUND, 0, $call, $detail );
 		}
 
-		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
-
 		if ( 200 !== $status || ! is_array( $decoded ) || ! is_array( $decoded['result'] ?? null ) ) {
-			throw new PrintfulException( PrintfulException::FAILED );
+			throw new PrintfulException( PrintfulException::FAILED, 0, $call, $detail );
 		}
 
 		return $decoded['result'];
+	}
+
+	/**
+	 * The status and Printful's own message of a refused call (`error.message`
+	 * or a text `result`), shortened and as plain text.
+	 *
+	 * @param int   $status  HTTP status.
+	 * @param mixed $decoded Decoded answer.
+	 */
+	private static function detail( int $status, mixed $decoded ): string {
+		$message = '';
+
+		if ( is_array( $decoded ) ) {
+			$error   = $decoded['error'] ?? null;
+			$message = is_array( $error ) && is_string( $error['message'] ?? null ) ? $error['message'] : ( is_string( $decoded['result'] ?? null ) ? $decoded['result'] : '' );
+		}
+
+		return mb_substr( trim( 'HTTP ' . $status . ' ' . sanitize_text_field( $message ) ), 0, 300 );
 	}
 
 	/**

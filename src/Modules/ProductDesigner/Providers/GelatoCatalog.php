@@ -1,6 +1,6 @@
 <?php
 /**
- * Base products from Gelato templates.
+ * Gelato's catalog and templates for base products.
  *
  * @package MerchBoard
  */
@@ -9,29 +9,34 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\ProductDesigner\Providers;
 
-use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
-use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
-use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
-use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-082 pkt. 2 (step 30.13): a template the administrator made in the
- * Gelato dashboard becomes a base product (a draft, source `gelato`): its
- * title and description, the colours and sizes of its variants'
- * `variantOptions` (a variant without a colour is "Standard", without a
- * size "One size") and one side per image placeholder of its first
- * variant, with the print size in millimetres. The template's preview is
- * the background of every side and the print area starts in its middle;
- * the administrator adjusts both (or adds a colour mask) and sets the
- * colour codes, which Gelato does not give, before activating it. The
- * side keys are mapped to the placeholder names for the mockups.
+ * ADR-082 pkt. 2 (step 30.13, catalog import from review 30.15): the
+ * administrator picks a product catalog at Gelato and one template made of
+ * a product from it, which is only Gelato's render engine: its own design
+ * is always replaced by our files. The colours and sizes come from each
+ * template variant's `productUid` (the catalog attributes `gco_` and `gsi_`;
+ * the variant's own options, "Standard" or "One size" when it has none),
+ * the sides from the first variant's image placeholders with their print
+ * size in millimetres. The blank photos and print areas come from two
+ * products made from the template (CatalogImport): every picked colour with
+ * a transparent file in each placeholder, and the first colour with a
+ * marker per placeholder. The products stay hidden in the API store
+ * (Gelato has no call to delete them). The catalogs are cached for an hour.
  */
-class GelatoCatalog {
+class GelatoCatalog implements CatalogRenderer {
+
+	public const SOURCE = 'gelato';
+
+	/**
+	 * The cached catalogs (transient).
+	 */
+	public const CACHE = 'merchboard_gelato_catalogs';
 
 	/**
 	 * The colour of a variant without one.
@@ -44,7 +49,7 @@ class GelatoCatalog {
 	public const ONE_SIZE = 'One size';
 
 	/**
-	 * Most sides imported.
+	 * Most sides offered.
 	 */
 	private const MAX_SIDES = 6;
 
@@ -53,74 +58,314 @@ class GelatoCatalog {
 	 */
 	private const DPI = 300;
 
-	/**
-	 * The stored placeholder map's largest size (`provider_template`).
-	 */
-	private const MAX_MAP = 191;
+	private const POLL_DELAY = 30;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param GelatoApi             $api     Gelato.
-	 * @param BaseProductService    $service Base products (stores files by moving them).
-	 * @param BaseProductRepository $bases   Base products.
+	 * @param GelatoApi $api Gelato.
 	 */
-	public function __construct( private GelatoApi $api, private BaseProductService $service, private BaseProductRepository $bases ) {
+	public function __construct( private GelatoApi $api ) {
 	}
 
 	/**
-	 * Imports a template as a base product draft.
-	 *
-	 * @param string $template_id Gelato template id.
-	 * @param string $base_price  Base price incl. VAT (as typed).
-	 * @return int The base product's id.
-	 * @throws GelatoException When Gelato refuses or fails.
-	 * @throws DesignerException When the template cannot be a base product.
-	 * @throws DatabaseException When it cannot be stored.
+	 * Whether Gelato may be used.
 	 */
-	public function import( string $template_id, string $base_price ): int {
-		$template_id = trim( $template_id );
-		$template    = $this->api->template( $template_id );
-		$variants    = self::variants( $template );
-		$preview     = is_string( $template['previewUrl'] ?? null ) ? $template['previewUrl'] : '';
+	public function available(): bool {
+		return $this->api->available();
+	}
 
-		if ( array() === $variants || '' === $preview ) {
+	/**
+	 * The product catalogs whose title holds every word.
+	 *
+	 * @param string $query Words.
+	 * @return list<array{uid: string, title: string}>
+	 * @throws GelatoException When Gelato refuses or fails.
+	 */
+	public function catalogs( string $query = '' ): array {
+		$cached   = get_transient( self::CACHE );
+		$catalogs = array();
+
+		if ( is_array( $cached ) ) {
+			$list = $cached;
+		} else {
+			$answer = $this->api->catalogs();
+			$list   = is_array( $answer['data'] ?? null ) ? $answer['data'] : $answer;
+		}
+
+		// The cache is read like Gelato's answer: every entry is checked again.
+		foreach ( $list as $catalog ) {
+			$uid = is_array( $catalog ) ? ( $catalog['catalogUid'] ?? $catalog['uid'] ?? null ) : null;
+
+			if ( is_array( $catalog ) && is_string( $uid ) && 1 === preg_match( '/^[a-z0-9_-]{1,100}$/i', $uid ) ) {
+				$catalogs[] = array(
+					'uid'   => $uid,
+					'title' => mb_substr( sanitize_text_field( is_string( $catalog['title'] ?? null ) ? $catalog['title'] : $uid ), 0, 100 ),
+				);
+			}
+		}
+
+		if ( ! is_array( $cached ) ) {
+			set_transient( self::CACHE, $catalogs, HOUR_IN_SECONDS );
+		}
+
+		$split = preg_split( '/\s+/u', mb_strtolower( trim( $query ) ) );
+		$words = array_filter( false === $split ? array() : $split, static fn( string $word ): bool => '' !== $word );
+
+		return array_values(
+			array_filter(
+				$catalogs,
+				static function ( array $catalog ) use ( $words ): bool {
+					foreach ( $words as $word ) {
+						if ( ! str_contains( mb_strtolower( $catalog['title'] . ' ' . $catalog['uid'] ), $word ) ) {
+							return false;
+						}
+					}
+
+					return true;
+				}
+			)
+		);
+	}
+
+	/**
+	 * What the administrator can pick from a template: the colours and
+	 * sizes of its variants and the image placeholders of the first one.
+	 *
+	 * @param string $ref Template id.
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>, variants: array<string, array<string, string>>}
+	 * @throws GelatoException When Gelato refuses or fails, or the template cannot be a base product.
+	 */
+	public function choice( string $ref ): array {
+		$template = $this->api->template( trim( $ref ) );
+		$variants = self::variants( $template );
+		$colors   = array();
+		$sizes    = array();
+		$map      = array();
+
+		foreach ( $variants as $variant ) {
+			$color = self::color_of( $variant );
+			$size  = self::size_of( $variant );
+
+			if ( ! is_scalar( $variant['id'] ?? null ) || '' === (string) $variant['id'] ) {
+				continue;
+			}
+
+			if ( ! isset( $colors[ $color ] ) && count( $colors ) < BaseProduct::MAX_COLORS ) {
+				// Gelato names no colour codes: CatalogImport measures them on the blank photos.
+				$colors[ $color ] = array(
+					'name' => $color,
+					'hex'  => '#ffffff',
+				);
+			}
+
+			if ( ! in_array( $size, $sizes, true ) && count( $sizes ) < BaseProduct::MAX_SIZES ) {
+				$sizes[] = $size;
+			}
+
+			$map[ $color ][ $size ] ??= (string) $variant['id'];
+		}
+
+		$sides = array() === $variants ? array() : self::sides( $variants[0] );
+
+		if ( array() === $colors || array() === $sides ) {
 			self::fail( GelatoException::INVALID );
 		}
 
-		$temporary = array();
+		return array(
+			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $template['title'] ?? $template['templateName'] ?? 'Gelato ' . $ref ) ) ), 0, 191 ),
+			'description' => mb_substr( wp_strip_all_tags( (string) ( $template['description'] ?? '' ) ), 0, 2000 ),
+			'image'       => is_string( $template['previewUrl'] ?? null ) ? $template['previewUrl'] : '',
+			'colors'      => array_values( $colors ),
+			'sizes'       => $sizes,
+			'sides'       => $sides,
+			'variants'    => $map,
+		);
+	}
 
-		try {
-			[ $views, $placeholders ] = $this->views( $variants[0], $preview, $temporary );
-			$map                      = (string) wp_json_encode( $placeholders );
+	/**
+	 * Creates a hidden product from the template in the API store.
+	 *
+	 * @param string               $kind   `blank` or `marker`.
+	 * @param array<string, mixed> $import Import data.
+	 * @return string The product id.
+	 * @throws GelatoException When Gelato refuses or fails.
+	 */
+	public function render( string $kind, array $import ): string {
+		$colors   = is_array( $import['colors'] ?? null ) ? array_values( $import['colors'] ) : array();
+		$variants = 'marker' === $kind ? array_slice( $colors, 0, 1 ) : $colors;
+		$images   = array();
 
-			if ( strlen( $map ) > self::MAX_MAP ) {
+		foreach ( is_array( $import['sides'] ?? null ) ? array_values( $import['sides'] ) : array() as $index => $side ) {
+			$url = 'marker' === $kind ? ( $import['markers'][ $index ] ?? null ) : ( $import['blank'] ?? null );
+
+			if ( ! is_array( $side ) || ! is_string( $side['placement'] ?? null ) || ! is_string( $url ) ) {
 				self::fail( GelatoException::INVALID );
 			}
 
-			$id = $this->service->save(
-				null,
-				array(
-					'name'        => mb_substr( trim( (string) ( $template['title'] ?? $template['templateName'] ?? 'Gelato ' . $template_id ) ), 0, 191 ),
-					'description' => mb_substr( wp_strip_all_tags( (string) ( $template['description'] ?? '' ) ), 0, 2000 ),
-					'base_price'  => $base_price,
-					'category_id' => '0',
-					'colors'      => self::colors( $variants ),
-					'sizes'       => self::sizes( $variants ),
-				),
-				$views
+			$images[] = array(
+				'name'      => $side['placement'],
+				'fileUrl'   => $url,
+				'fitMethod' => 'slice',
 			);
-		} finally {
-			foreach ( $temporary as $path ) {
-				if ( is_file( $path ) ) {
-					wp_delete_file( $path );
+		}
+
+		if ( array() === $variants || array() === $images ) {
+			self::fail( GelatoException::INVALID );
+		}
+
+		$answer  = $this->api->create_from_template(
+			array(
+				'templateId'                => (string) ( $import['ref'] ?? '' ),
+				'title'                     => 'Merch Dashboard import (' . $kind . ')',
+				'description'               => '',
+				'isVisibleInTheOnlineStore' => false,
+				'variants'                  => array_map(
+					static fn( mixed $variant ): array => array(
+						'templateVariantId' => (string) $variant,
+						'imagePlaceholders' => $images,
+					),
+					$variants
+				),
+			)
+		);
+		$product = is_scalar( $answer['id'] ?? null ) ? (string) $answer['id'] : '';
+
+		if ( 1 !== preg_match( '/^[A-Za-z0-9-]{1,100}$/', $product ) ) {
+			self::fail( GelatoException::INVALID );
+		}
+
+		return $product;
+	}
+
+	/**
+	 * A product's state, with its images by position and colour once it is
+	 * active.
+	 *
+	 * @param string               $key    Product id.
+	 * @param array<string, mixed> $import Import data.
+	 * @return array{status: string, error?: string, images?: array<int|string, array<string, string>>}
+	 * @throws GelatoException When Gelato refuses or fails.
+	 */
+	public function check( string $key, array $import ): array {
+		$answer = $this->api->product( $key );
+		$status = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
+
+		if ( 'publishing_error' === $status ) {
+			return array(
+				'status' => 'failed',
+				'error'  => 'publishing_error',
+			);
+		}
+
+		if ( 'active' !== $status ) {
+			return array( 'status' => 'pending' );
+		}
+
+		$colors = array();
+
+		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
+			$colors[ (string) $color ] = (string) $variant;
+		}
+
+		$images = array();
+
+		foreach ( self::variant_images( $answer, $colors ) as $color => $urls ) {
+			foreach ( $urls as $slot => $url ) {
+				$images[ (string) $slot ][ $color ] = $url;
+			}
+		}
+
+		return array(
+			'status' => 'done',
+			'images' => $images,
+		);
+	}
+
+	/**
+	 * A file Gelato returned.
+	 *
+	 * @param string $url URL.
+	 * @throws GelatoException When it cannot be downloaded.
+	 */
+	public function download( string $url ): string {
+		return $this->api->download( $url );
+	}
+
+	/**
+	 * Seconds between two looks at a product.
+	 */
+	public function poll_delay(): int {
+		return self::POLL_DELAY;
+	}
+
+	/**
+	 * Gelato's answer about a template.
+	 *
+	 * @param string $ref Template id.
+	 * @return array<string, mixed>
+	 * @throws GelatoException When Gelato refuses or fails.
+	 */
+	public function diagnose( string $ref ): array {
+		return array( 'GET /v1/templates/' . $ref => $this->api->template( $ref ) );
+	}
+
+	/**
+	 * A product's images per colour key, in Gelato's order: the images tied
+	 * to a variant (`productVariantIds`) for its colour (the variant's
+	 * `templateVariantId`, else its `productUid` colour), and images tied to
+	 * no variant for the only colour of a one-colour product.
+	 *
+	 * @param array<string, mixed>  $answer Product answer.
+	 * @param array<string, string> $colors Template variant by colour key.
+	 * @return array<string, list<string>>
+	 */
+	public static function variant_images( array $answer, array $colors ): array {
+		$by_template = array_flip( array_filter( $colors, static fn( string $variant ): bool => '' !== $variant ) );
+		$by_variant  = array();
+		$images      = array();
+
+		foreach ( is_array( $answer['variants'] ?? null ) ? $answer['variants'] : array() as $variant ) {
+			if ( ! is_array( $variant ) || ! is_scalar( $variant['id'] ?? null ) ) {
+				continue;
+			}
+
+			$template = is_scalar( $variant['templateVariantId'] ?? null ) ? (string) $variant['templateVariantId'] : '';
+			$key      = (string) ( $by_template[ $template ] ?? substr( sanitize_title( self::color_of( $variant ) ), 0, 32 ) );
+
+			if ( isset( $colors[ $key ] ) ) {
+				$by_variant[ (string) $variant['id'] ] = $key;
+			}
+		}
+
+		$only = 1 === count( $colors ) ? (string) array_key_first( $colors ) : null;
+
+		foreach ( is_array( $answer['productImages'] ?? null ) ? $answer['productImages'] : array() as $image ) {
+			$url  = is_array( $image ) && is_string( $image['fileUrl'] ?? null ) ? $image['fileUrl'] : '';
+			$tied = is_array( $image ) && is_array( $image['productVariantIds'] ?? null ) ? $image['productVariantIds'] : array();
+
+			if ( '' === $url ) {
+				continue;
+			}
+
+			if ( array() === $tied && null !== $only ) {
+				$images[ $only ][] = $url;
+			}
+
+			foreach ( $tied as $variant ) {
+				$key = is_scalar( $variant ) ? ( $by_variant[ (string) $variant ] ?? null ) : null;
+
+				if ( null !== $key && ! in_array( $url, $images[ $key ] ?? array(), true ) ) {
+					$images[ $key ][] = $url;
 				}
 			}
 		}
 
-		$this->bases->set_provider( $id, 'gelato', $template_id, $map );
+		if ( null !== $only && ! isset( $images[ $only ] ) && is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ) {
+			$images[ $only ][] = $answer['previewUrl'];
+		}
 
-		return $id;
+		return $images;
 	}
 
 	/**
@@ -134,155 +379,76 @@ class GelatoCatalog {
 	}
 
 	/**
-	 * A variant's colour (`variantOptions` "Color" or "Colour").
+	 * A variant's colour: the catalog's `gco_` in its `productUid`, else its
+	 * option "Color" or "Colour", else "Standard".
 	 *
 	 * @param array<mixed> $variant Variant.
 	 */
 	public static function color_of( array $variant ): string {
-		return mb_substr( self::option( $variant, '/^colou?r$/i' ) ?? self::STANDARD_COLOR, 0, 60 );
+		$value = self::attribute( $variant, 'gco' );
+		$name  = null === $value ? null : ucfirst( str_replace( '-', ' ', $value ) );
+
+		return mb_substr( $name ?? self::option( $variant, '/^colou?r$/i' ) ?? self::STANDARD_COLOR, 0, 60 );
 	}
 
 	/**
-	 * A variant's size (`variantOptions` "Size"; a comma separates sizes).
+	 * A variant's size: the catalog's `gsi_` in its `productUid`, else its
+	 * option "Size" (a comma separates sizes), else "One size".
 	 *
 	 * @param array<mixed> $variant Variant.
 	 */
 	public static function size_of( array $variant ): string {
-		return mb_substr( str_replace( ',', ' ', self::option( $variant, '/^size$/i' ) ?? self::ONE_SIZE ), 0, 20 );
+		$value = self::attribute( $variant, 'gsi' );
+		$name  = null;
+
+		if ( null !== $value ) {
+			$name = 1 === preg_match( '/^[a-z0-9]{1,4}$/', $value ) ? strtoupper( $value ) : ucfirst( str_replace( '-', ' ', $value ) );
+		}
+
+		return mb_substr( str_replace( ',', ' ', $name ?? self::option( $variant, '/^size$/i' ) ?? self::ONE_SIZE ), 0, 20 );
 	}
 
 	/**
-	 * The sides of a variant's image placeholders, as the base product form
-	 * sends them, and the placeholder name by side key.
+	 * The sides of a variant's image placeholders with their print size.
 	 *
-	 * @phpstan-param list<string> $temporary
-	 *
-	 * @param array<mixed> $variant   First variant.
-	 * @param string       $preview   The template's preview URL.
-	 * @param string[]     $temporary Temporary files (cleaned by the caller).
-	 * @return array{0: list<array<string, mixed>>, 1: array<string, string>}
-	 * @throws GelatoException When there is no usable placeholder.
+	 * @param array<mixed> $variant First variant.
+	 * @return list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>
 	 */
-	private function views( array $variant, string $preview, array &$temporary ): array {
-		$body         = $this->api->download( $preview );
-		$views        = array();
-		$placeholders = array();
-		$image        = null;
+	private static function sides( array $variant ): array {
+		$sides = array();
+		$keys  = array();
 
 		foreach ( is_array( $variant['imagePlaceholders'] ?? null ) ? $variant['imagePlaceholders'] : array() as $placeholder ) {
 			$name      = is_array( $placeholder ) && is_string( $placeholder['name'] ?? null ) ? $placeholder['name'] : '';
 			$width_mm  = is_array( $placeholder ) ? (int) round( (float) ( $placeholder['width'] ?? 0 ) ) : 0;
 			$height_mm = is_array( $placeholder ) ? (int) round( (float) ( $placeholder['height'] ?? 0 ) ) : 0;
 
-			if ( '' === $name || $width_mm < 1 || $height_mm < 1 || max( $width_mm, $height_mm ) > BaseView::MAX_MM || count( $views ) >= self::MAX_SIDES ) {
+			if ( '' === $name || $width_mm < 1 || $height_mm < 1 || max( $width_mm, $height_mm ) > BaseView::MAX_MM || count( $sides ) >= self::MAX_SIDES ) {
 				continue;
 			}
 
 			$label = is_string( $placeholder['printArea'] ?? null ) && '' !== trim( $placeholder['printArea'] ) ? $placeholder['printArea'] : $name;
-			$label = mb_substr( trim( ucfirst( str_replace( array( '_', '-' ), ' ', $label ) ) ), 0, 60 );
+			$label = mb_substr( trim( sanitize_text_field( ucfirst( str_replace( array( '_', '-' ), ' ', $label ) ) ) ), 0, 60 );
 			$key   = substr( sanitize_title( $label ), 0, 32 );
 
-			if ( '' === $key || isset( $placeholders[ $key ] ) ) {
+			if ( '' === $key || isset( $keys[ $key ] ) ) {
 				continue;
 			}
 
-			$path                 = $this->template_image( $body, $temporary );
-			$image              ??= wp_getimagesize( $path );
-			$width                = is_array( $image ) ? (int) $image[0] : 0;
-			$height               = is_array( $image ) ? (int) $image[1] : 0;
-			$area                 = self::area( $width, $height, $width_mm, $height_mm );
-			$placeholders[ $key ] = $name;
-			$views[]              = array(
-				'key'       => '',
+			$dpi          = self::dpi( max( $width_mm, $height_mm ) );
+			$keys[ $key ] = true;
+			$sides[]      = array(
+				'placement' => $name,
 				'name'      => $label,
-				'x'         => (string) $area[0],
-				'y'         => (string) $area[1],
-				'width'     => (string) $area[2],
-				'height'    => (string) $area[3],
-				'width_mm'  => (string) $width_mm,
-				'height_mm' => (string) $height_mm,
-				'dpi'       => (string) self::dpi( max( $width_mm, $height_mm ) ),
-				'remove'    => false,
-				'clear'     => array(),
-				'uploads'   => array(
-					'background' => array(
-						'name'     => 'template.png',
-						'type'     => 'image/png',
-						'tmp_name' => $path,
-						'error'    => UPLOAD_ERR_OK,
-						'size'     => (int) filesize( $path ),
-					),
-				),
+				'width_mm'  => $width_mm,
+				'height_mm' => $height_mm,
+				'dpi'       => $dpi,
+				'width'     => (int) round( $width_mm * $dpi / 25.4 ),
+				'height'    => (int) round( $height_mm * $dpi / 25.4 ),
 			);
 		}
 
-		if ( array() === $views ) {
-			self::fail( GelatoException::INVALID );
-		}
-
-		return array( $views, $placeholders );
-	}
-
-	/**
-	 * The template's preview as a temporary PNG (one copy per side: saving
-	 * moves it).
-	 *
-	 * @phpstan-param list<string> $temporary
-	 *
-	 * @param string   $body      Image bytes.
-	 * @param string[] $temporary Temporary files.
-	 * @throws GelatoException When it is not an image.
-	 */
-	private function template_image( string $body, array &$temporary ): string {
-		$path = wp_tempnam( 'merchboard-gelato' );
-
-		$temporary[] = $path;
-
-		if ( false === file_put_contents( $path, $body ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A temporary file of the import.
-			self::fail( GelatoException::INVALID );
-		}
-
-		$size = wp_getimagesize( $path );
-
-		if ( ! is_array( $size ) || $size[0] > DesignerFiles::MAX_PIXELS || $size[1] > DesignerFiles::MAX_PIXELS ) {
-			self::fail( GelatoException::INVALID );
-		}
-
-		if ( IMAGETYPE_PNG !== $size[2] ) {
-			$editor = wp_get_image_editor( $path );
-			$png    = $path . '.png';
-
-			if ( is_wp_error( $editor ) || is_wp_error( $editor->save( $png, 'image/png' ) ) ) {
-				self::fail( GelatoException::INVALID );
-			}
-
-			$temporary[] = $png;
-			$path        = $png;
-		}
-
-		return $path;
-	}
-
-	/**
-	 * A starting print area: half the template's width (or 80 % of its
-	 * height) in the middle, in the print size's proportions.
-	 *
-	 * @param int $width     Template width.
-	 * @param int $height    Template height.
-	 * @param int $width_mm  Print width.
-	 * @param int $height_mm Print height.
-	 * @return array{0: int, 1: int, 2: int, 3: int} x, y, width, height.
-	 */
-	private static function area( int $width, int $height, int $width_mm, int $height_mm ): array {
-		$area_width  = max( 1, (int) round( $width / 2 ) );
-		$area_height = max( 1, (int) round( $area_width * $height_mm / $width_mm ) );
-
-		if ( $area_height > $height * 0.8 ) {
-			$area_height = max( 1, (int) round( $height * 0.8 ) );
-			$area_width  = max( 1, min( $width, (int) round( $area_height * $width_mm / $height_mm ) ) );
-		}
-
-		return array( (int) floor( ( $width - $area_width ) / 2 ), (int) floor( ( $height - $area_height ) / 2 ), $area_width, $area_height );
+		return $sides;
 	}
 
 	/**
@@ -292,6 +458,22 @@ class GelatoCatalog {
 	 */
 	private static function dpi( int $mm ): int {
 		return max( BaseView::MIN_DPI, min( self::DPI, (int) floor( DesignerFiles::MAX_PIXELS * 25.4 / $mm ) ) );
+	}
+
+	/**
+	 * A catalog attribute of a variant's `productUid` (the part after
+	 * `_<code>_`), or null.
+	 *
+	 * @param array<mixed> $variant Variant.
+	 * @param string       $code    Attribute code, e.g. `gco`.
+	 */
+	private static function attribute( array $variant, string $code ): ?string {
+		$uid   = is_string( $variant['productUid'] ?? null ) ? strtolower( $variant['productUid'] ) : '';
+		$parts = explode( '_', $uid );
+		$at    = array_search( $code, $parts, true );
+		$value = false === $at ? '' : (string) ( $parts[ $at + 1 ] ?? '' );
+
+		return 1 === preg_match( '/^[a-z0-9][a-z0-9-]{0,40}$/', $value ) ? $value : null;
 	}
 
 	/**
@@ -308,45 +490,6 @@ class GelatoCatalog {
 		}
 
 		return null;
-	}
-
-	/**
-	 * The variants' colours, one per line ("Name #ffffff"; Gelato gives no
-	 * colour codes), in order.
-	 *
-	 * @param list<array<mixed>> $variants Variants.
-	 */
-	private static function colors( array $variants ): string {
-		$colors = array();
-
-		foreach ( $variants as $variant ) {
-			$name = self::color_of( $variant );
-
-			if ( ! isset( $colors[ $name ] ) && count( $colors ) < BaseProduct::MAX_COLORS ) {
-				$colors[ $name ] = $name . ' #ffffff';
-			}
-		}
-
-		return implode( "\n", $colors );
-	}
-
-	/**
-	 * The variants' sizes, in order.
-	 *
-	 * @param list<array<mixed>> $variants Variants.
-	 */
-	private static function sizes( array $variants ): string {
-		$sizes = array();
-
-		foreach ( $variants as $variant ) {
-			$size = self::size_of( $variant );
-
-			if ( count( $sizes ) < BaseProduct::MAX_SIZES ) {
-				$sizes[ $size ] = $size;
-			}
-		}
-
-		return implode( ', ', $sizes );
 	}
 
 	/**

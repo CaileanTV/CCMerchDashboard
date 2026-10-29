@@ -49,6 +49,7 @@ use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
+use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoApi;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
@@ -112,15 +113,7 @@ final class ProductDesignerModule implements Module {
 		$container->set( PrintfulApi::class, static fn( Container $c ): PrintfulApi => new PrintfulApi( $c->get( PrintfulToken::class ) ) );
 		$container->set( ProviderTaskRepository::class, static fn( Container $c ): ProviderTaskRepository => new ProviderTaskRepository( $c->get( wpdb::class ) ) );
 		$container->set( SignedPrintFiles::class, static fn( Container $c ): SignedPrintFiles => new SignedPrintFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
-		$container->set(
-			PrintfulCatalog::class,
-			static fn( Container $c ): PrintfulCatalog => new PrintfulCatalog(
-				$c->get( PrintfulApi::class ),
-				// Downloaded template images are our own temporary files: they are moved, not taken as uploads.
-				new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), self::downloads(), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ),
-				$c->get( BaseProductRepository::class )
-			)
-		);
+		$container->set( PrintfulCatalog::class, static fn( Container $c ): PrintfulCatalog => new PrintfulCatalog( $c->get( PrintfulApi::class ) ) );
 		$container->set(
 			PrintfulMockups::class,
 			static fn( Container $c ): PrintfulMockups => new PrintfulMockups(
@@ -137,12 +130,21 @@ final class ProductDesignerModule implements Module {
 		// Gelato (step 30.13, ADR-082): the key and store, the API, the template import and the mockups.
 		$container->set( GelatoAccount::class, static fn( Container $c ): GelatoAccount => new GelatoAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( GelatoApi::class, static fn( Container $c ): GelatoApi => new GelatoApi( $c->get( GelatoAccount::class ) ) );
+		$container->set( GelatoCatalog::class, static fn( Container $c ): GelatoCatalog => new GelatoCatalog( $c->get( GelatoApi::class ) ) );
+		// The catalog import (review 30.15): the providers' photos are our own downloads, moved, not taken as uploads.
 		$container->set(
-			GelatoCatalog::class,
-			static fn( Container $c ): GelatoCatalog => new GelatoCatalog(
-				$c->get( GelatoApi::class ),
+			CatalogImport::class,
+			static fn( Container $c ): CatalogImport => new CatalogImport(
+				$c->get( wpdb::class ),
+				$c->get( BaseProductRepository::class ),
 				new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), self::downloads(), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ),
-				$c->get( BaseProductRepository::class )
+				self::downloads(),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class ),
+				$c->get( PricingProductStore::class )->decimals(),
+				plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ) . 'assets/designer/',
+				$c->get( PrintfulCatalog::class ),
+				$c->get( GelatoCatalog::class )
 			)
 		);
 		$container->set(
@@ -174,8 +176,8 @@ final class ProductDesignerModule implements Module {
 		$container->set( BaseProductRepository::class, static fn( Container $c ): BaseProductRepository => new BaseProductRepository( $c->get( wpdb::class ) ) );
 		$container->set( BaseProductService::class, static fn( Container $c ): BaseProductService => new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ) );
 		$container->set( ClipartLibrary::class, static fn( Container $c ): ClipartLibrary => new ClipartLibrary( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured() ) );
-		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ) ) );
+		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured(), $c->get( CatalogImport::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ) ) );
+		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( CatalogImport::class ) ) );
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
@@ -314,6 +316,12 @@ final class ProductDesignerModule implements Module {
 			GelatoMockups::HOOK,
 			static function ( mixed $version ) use ( $container ): void {
 				$container->get( GelatoMockups::class )->run( $version );
+			}
+		);
+		add_action(
+			CatalogImport::HOOK,
+			static function ( mixed $base ) use ( $container ): void {
+				$container->get( CatalogImport::class )->run( $base );
 			}
 		);
 		DesignerNotifications::register();

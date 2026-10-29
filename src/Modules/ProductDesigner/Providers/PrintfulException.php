@@ -42,8 +42,10 @@ final class PrintfulException extends RuntimeException {
 	 *
 	 * @param string $reason      Reason constant.
 	 * @param int    $retry_after Seconds to wait (rate limited).
+	 * @param string $call        The refused call ("GET /products/71"), for the administrator (review 30.15).
+	 * @param string $detail      Printful's own error message, shortened (never holds the token).
 	 */
-	public function __construct( private string $reason, public readonly int $retry_after = 0 ) {
+	public function __construct( private string $reason, public readonly int $retry_after = 0, public readonly string $call = '', public readonly string $detail = '' ) {
 		parent::__construct( 'Printful call failed: ' . $reason );
 	}
 

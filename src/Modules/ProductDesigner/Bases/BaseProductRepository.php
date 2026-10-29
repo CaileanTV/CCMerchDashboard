@@ -150,8 +150,12 @@ class BaseProductRepository {
 	 *
 	 * @param int    $id       Id.
 	 * @param string $source   `printful` or `gelato`.
-	 * @param string $ref      The provider's product id.
-	 * @param string $template JSON: the provider's placement by side key.
+	 * @param string $ref      The provider's product (Printful) or template (Gelato).
+	 * @param string $template JSON: `placements` (the provider's placement by
+	 *                         side key), `variants` (the provider's variant by
+	 *                         colour key and size) and `slots` (the image of
+	 *                         each side among a variant's images); before the
+	 *                         catalog import (review 30.15) only the placements.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function set_provider( int $id, string $source, string $ref, string $template ): void {
@@ -171,11 +175,13 @@ class BaseProductRepository {
 	}
 
 	/**
-	 * The provider data of a base product: source, product id and the
-	 * provider's placement by side key; null for an own base product.
+	 * The provider data of a base product: source, product or template, the
+	 * provider's placement by side key, its variant by colour key and size,
+	 * and the image of each side (empty for one imported before review
+	 * 30.15); null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -190,20 +196,98 @@ class BaseProductRepository {
 			return null;
 		}
 
-		$decoded    = json_decode( (string) $row['provider_template'], true );
-		$placements = array();
+		$decoded = json_decode( (string) $row['provider_template'], true );
+		$decoded = is_array( $decoded ) ? $decoded : array();
+		// Before review 30.15 the column held only the placements.
+		$current  = is_array( $decoded['placements'] ?? null );
+		$variants = array();
 
-		foreach ( is_array( $decoded ) ? $decoded : array() as $key => $placement ) {
-			if ( is_string( $placement ) ) {
-				$placements[ (string) $key ] = $placement;
+		foreach ( $current && is_array( $decoded['variants'] ?? null ) ? $decoded['variants'] : array() as $color => $sizes ) {
+			foreach ( is_array( $sizes ) ? $sizes : array() as $size => $variant ) {
+				if ( is_scalar( $variant ) ) {
+					$variants[ (string) $color ][ (string) $size ] = (string) $variant;
+				}
 			}
 		}
 
 		return array(
 			'source'     => (string) $row['source'],
 			'ref'        => $row['provider_ref'],
-			'placements' => $placements,
+			'placements' => self::strings( $current ? $decoded['placements'] : $decoded ),
+			'variants'   => $variants,
+			'slots'      => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
 		);
+	}
+
+	/**
+	 * Stores the state of a base product's catalog import (review 30.15).
+	 *
+	 * @param int         $id    Id.
+	 * @param string      $state `none`, `running`, `ready` or `failed`.
+	 * @param string|null $data  JSON: the import's progress, or null.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_import( int $id, string $state, ?string $data ): void {
+		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table(),
+			array(
+				'import_state' => $state,
+				'import_data'  => $data,
+			),
+			array( 'id' => $id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
+		if ( false === $done || '' !== $this->wpdb->last_error ) {
+			throw new DatabaseException( 'Could not store the import of the base product.' );
+		}
+	}
+
+	/**
+	 * The state and progress of a base product's catalog import; null when
+	 * the base product does not exist.
+	 *
+	 * @param int $id Id.
+	 * @return array{state: string, data: array<string, mixed>}|null
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function import( int $id ): ?array {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT import_state, import_data FROM %i WHERE id = %d', $this->table(), $id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; read live by the import job.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the import of the base product.' );
+		}
+
+		if ( ! is_array( $row ) ) {
+			return null;
+		}
+
+		$data = json_decode( (string) ( $row['import_data'] ?? '' ), true );
+
+		return array(
+			'state' => is_string( $row['import_state'] ?? null ) ? $row['import_state'] : 'none',
+			'data'  => is_array( $data ) ? $data : array(),
+		);
+	}
+
+	/**
+	 * The string values of a map, by string key.
+	 *
+	 * @param array<mixed> $map Map.
+	 * @return array<string, string>
+	 */
+	private static function strings( array $map ): array {
+		$strings = array();
+
+		foreach ( $map as $key => $value ) {
+			if ( is_scalar( $value ) ) {
+				$strings[ (string) $key ] = (string) $value;
+			}
+		}
+
+		return $strings;
 	}
 
 	/**

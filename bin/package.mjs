@@ -48,6 +48,8 @@ const TRACKED = [
 	'templates',
 	'languages',
 	'assets/js',
+	// The product designer's transparent and marker files for the providers' renders.
+	'assets/designer',
 ];
 
 /** Generated runtime directory (gitignored). */
@@ -64,6 +66,7 @@ const REQUIRED = [
 	'templates/dashboard/no-access.php',
 	'templates/alerts/overlay.php',
 	'assets/js/creator-user-search.js',
+	'assets/designer/blank.png',
 	'build/dashboard.js',
 	'build/dashboard.css',
 	'build/dashboard-rtl.css',

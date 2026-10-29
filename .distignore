@@ -2,7 +2,7 @@
 #
 # The package itself is built from an allowlist by bin/package.mjs
 # (`npm run package`): merchboard.php, uninstall.php, src/, templates/,
-# languages/, assets/js/ and build/. Keep this list in sync with it for tools
+# languages/, assets/js/, assets/designer/ and build/. Keep this list in sync with it for tools
 # that read .distignore (e.g. `wp dist-archive`). The plugin needs no vendor/
 # at runtime (own autoloader, ADR-017).
 /.git

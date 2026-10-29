@@ -15,9 +15,8 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
-use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
-use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 
@@ -25,8 +24,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Saves, activates, deactivates, retires (step 30.11, with a confirmation)
- * and deletes base products, imports one from Printful (step 30.12) and
- * adds and deletes cliparts (step 30.6). Order of checks: capability
+ * and deletes base products, creates one from Printful's or Gelato's
+ * catalog and tries a failed import again (review 30.15; nothing is
+ * activated or deleted while it is imported) and adds and deletes cliparts
+ * (step 30.6). Order of checks: capability
  * `merchboard_manage_designer` → nonce → the services (which check again
  * and validate every value and file). Post/Redirect/Get with an outcome.
  */
@@ -40,13 +41,12 @@ final class BaseProductActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param BaseProductService   $bases    Base products.
-	 * @param ClipartLibrary       $cliparts Cliparts.
-	 * @param Logger               $logger   Technical log.
-	 * @param PrintfulCatalog|null $printful Printful import (step 30.12).
-	 * @param GelatoCatalog|null   $gelato   Gelato import (step 30.13).
+	 * @param BaseProductService $bases    Base products.
+	 * @param ClipartLibrary     $cliparts Cliparts.
+	 * @param Logger             $logger   Technical log.
+	 * @param CatalogImport|null $catalog  The catalog import (review 30.15).
 	 */
-	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null ) {
+	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?CatalogImport $catalog = null ) {
 	}
 
 	/**
@@ -98,21 +98,35 @@ final class BaseProductActions {
 					return BaseProductsPage::edit_url( $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) ), 'saved' );
 				case 'activate':
 				case 'deactivate':
+					if ( true === $this->catalog?->running( $id ) ) {
+						return BaseProductsPage::edit_url( $id, DesignerException::IMPORT_RUNNING );
+					}
+
 					$this->bases->set_active( $id, 'activate' === $do );
 
 					return BaseProductsPage::edit_url( $id, 'activate' === $do ? 'activated' : 'deactivated' );
-				case 'printful_import':
-					if ( null === $this->printful ) {
+				case 'catalog_create':
+					if ( null === $this->catalog ) {
 						return BaseProductsPage::url( PrintfulException::NOT_CONFIGURED );
 					}
 
-					return BaseProductsPage::edit_url( $this->printful->import( absint( $text( 'printful_product' ) ), $text( 'base_price' ) ), 'imported' );
-				case 'gelato_import':
-					if ( null === $this->gelato ) {
-						return BaseProductsPage::url( GelatoException::NOT_CONFIGURED );
-					}
+					return BaseProductsPage::edit_url(
+						$this->catalog->create(
+							sanitize_key( $text( 'source' ) ),
+							trim( $text( 'ref' ) ),
+							array(
+								'colors'     => is_array( $input['colors'] ?? null ) ? $input['colors'] : array(),
+								'sizes'      => is_array( $input['sizes'] ?? null ) ? $input['sizes'] : array(),
+								'sides'      => is_array( $input['sides'] ?? null ) ? $input['sides'] : array(),
+								'base_price' => $text( 'base_price' ),
+							)
+						),
+						'importing'
+					);
+				case 'import_retry':
+					$this->catalog?->retry( $id );
 
-					return BaseProductsPage::edit_url( $this->gelato->import( $text( 'gelato_template' ), $text( 'base_price' ) ), 'gelato_imported' );
+					return BaseProductsPage::edit_url( $id, 'importing' );
 				case 'retire':
 					if ( '1' !== $text( 'confirm_retire' ) ) {
 						return BaseProductsPage::edit_url( $id, 'retire_unconfirmed' );
@@ -122,6 +136,10 @@ final class BaseProductActions {
 
 					return BaseProductsPage::edit_url( $id, 'retired' );
 				case 'delete':
+					if ( true === $this->catalog?->running( $id ) ) {
+						return BaseProductsPage::edit_url( $id, DesignerException::IMPORT_RUNNING );
+					}
+
 					$this->bases->delete( $id );
 
 					return BaseProductsPage::url( 'deleted' );
@@ -139,7 +157,7 @@ final class BaseProductActions {
 		} catch ( PrintfulException | GelatoException $e ) {
 			return BaseProductsPage::url( $e->reason() );
 		} catch ( DesignerException $e ) {
-			if ( 'printful_import' === $do || 'gelato_import' === $do ) {
+			if ( 'catalog_create' === $do ) {
 				return BaseProductsPage::url( $e->reason() );
 			}
 

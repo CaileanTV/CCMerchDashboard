@@ -35,8 +35,11 @@ defined( 'ABSPATH' ) || exit;
  * The Gelato product's id is stored on the version. The job then polls the
  * product every 30 seconds (at most 40 times) until Gelato has made its
  * images, downloads them (validated like uploads) and puts them in place of
- * the creator's mockups of the first used side: an image tied to variants
- * for their colour, and the product's preview for the first colour without one.
+ * the creator's mockups: for a base product from the catalog import (review
+ * 30.15) each used side's image of each colour (its position among the
+ * variant's images was measured on import), else on the first used side an
+ * image tied to variants for their colour, and the product's preview for
+ * the first colour without one.
  * Gelato's image fields are taken from its API reference and not yet
  * verified against a real answer.
  *
@@ -194,9 +197,9 @@ class GelatoMockups {
 			}
 
 			if ( ProviderTaskRepository::QUEUED === $task['status'] ) {
-				$this->create( $id, $provider['ref'], $provider['placements'], $version, $base, $task );
+				$this->create( $id, $provider['ref'], $provider['placements'], $version, $base, $task, $provider['variants'] );
 			} elseif ( ProviderTaskRepository::PENDING === $task['status'] ) {
-				$this->poll( $id, $provider['placements'], $version, $task );
+				$this->poll( $id, $provider['placements'], $version, $task, $provider['slots'] );
 			}
 
 			$status = '';
@@ -220,17 +223,18 @@ class GelatoMockups {
 	/**
 	 * Creates the product from the template at Gelato.
 	 *
-	 * @param int                   $id           Version.
-	 * @param string                $template     Gelato template.
-	 * @param array<string, string> $placeholders Placeholder by side.
-	 * @param array<string, mixed>  $version      Version.
-	 * @param BaseProduct           $base         Base product.
-	 * @param array<string, mixed>  $task         Task row.
+	 * @param int                                  $id           Version.
+	 * @param string                               $template     Gelato template.
+	 * @param array<string, string>                $placeholders Placeholder by side.
+	 * @param array<string, mixed>                 $version      Version.
+	 * @param BaseProduct                          $base         Base product.
+	 * @param array<string, mixed>                 $task         Task row.
+	 * @param array<string, array<string, string>> $known        Template variant by colour key and size (the catalog import).
 	 * @throws GelatoException When Gelato refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function create( int $id, string $template, array $placeholders, array $version, BaseProduct $base, array $task ): void {
-		$variants = $this->variants( $template, $version, $base );
+	private function create( int $id, string $template, array $placeholders, array $version, BaseProduct $base, array $task, array $known = array() ): void {
+		$variants = $this->variants( $template, $version, $base, $known );
 		$sides    = self::sides( $version, $placeholders );
 
 		if ( array() === $variants || array() === $sides ) {
@@ -276,7 +280,12 @@ class GelatoMockups {
 			array(
 				'status'   => ProviderTaskRepository::PENDING,
 				'task_key' => $product,
-				'result'   => (string) wp_json_encode( array( 'colors' => array_values( $variants ) ) ),
+				'result'   => (string) wp_json_encode(
+					array(
+						'colors'   => array_values( $variants ),
+						'variants' => array_flip( $variants ),
+					)
+				),
 			)
 		);
 	}
@@ -288,18 +297,25 @@ class GelatoMockups {
 	 * @param array<string, string> $placeholders Placeholder by side.
 	 * @param array<string, mixed>  $version      Version.
 	 * @param array<string, mixed>  $task         Task row.
+	 * @param array<string, string> $slots        The image of each side among a variant's images (the catalog import).
 	 * @throws GelatoException When Gelato refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a mockup is not a valid image.
 	 */
-	private function poll( int $id, array $placeholders, array $version, array $task ): void {
+	private function poll( int $id, array $placeholders, array $version, array $task, array $slots = array() ): void {
 		$attempts = (int) $task['attempts'] + 1;
 		$answer   = $this->api->product( (string) $task['task_key'] );
 		$status   = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
 		$map      = json_decode( (string) $task['result'], true );
 		$colors   = array_values( array_filter( is_array( $map['colors'] ?? null ) ? $map['colors'] : array(), 'is_string' ) );
+		$variants = array();
+
+		foreach ( $colors as $color ) {
+			$variants[ $color ] = is_array( $map['variants'] ?? null ) && is_scalar( $map['variants'][ $color ] ?? null ) ? (string) $map['variants'][ $color ] : '';
+		}
+
 		// Only an active product has its images; any other status is waited for (review 30.15).
-		$images = 'active' === $status ? $this->images( $answer, $colors ) : array();
+		$images = 'active' === $status ? $this->images( $answer, $variants, self::sides( $version, $placeholders ), $slots ) : array();
 
 		if ( 'publishing_error' === $status ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -313,48 +329,53 @@ class GelatoMockups {
 			return;
 		}
 
-		$this->store( $id, self::sides( $version, $placeholders )[0] ?? '', $images );
+		foreach ( $images as $side => $by_color ) {
+			$this->store( $id, $side, $by_color );
+		}
+
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
 	/**
-	 * The product's image URL by colour key: `productImages` tied to
-	 * variants (`productVariantIds`) for their variant's colour, and the
-	 * product's `previewUrl` for the first colour without one.
+	 * The product's image URL by side and colour key (GelatoCatalog::variant_images()).
+	 * With the catalog import's image per side (review 30.15), each used
+	 * side takes its image of each colour; before it, the first used side
+	 * takes each colour's first image, and the product's `previewUrl` the
+	 * first colour without one.
 	 *
-	 * @phpstan-param list<string> $colors
+	 * @phpstan-param list<string> $sides
 	 *
-	 * @param array<string, mixed> $answer Product answer.
-	 * @param string[]             $colors Colour keys of the variants sent, in order.
-	 * @return array<string, string>
+	 * @param array<string, mixed>  $answer   Product answer.
+	 * @param array<string, string> $variants Template variant by colour key ('' when unknown), in the order sent.
+	 * @param string[]              $sides    The used sides with a placeholder.
+	 * @param array<string, string> $slots    The image of each side among a variant's images.
+	 * @return array<string, array<string, string>>
 	 */
-	private function images( array $answer, array $colors ): array {
-		$by_variant = array();
-		$known      = array_flip( $colors );
-		$images     = array();
+	private function images( array $answer, array $variants, array $sides, array $slots ): array {
+		$lists  = GelatoCatalog::variant_images( $answer, $variants );
+		$images = array();
 
-		foreach ( is_array( $answer['variants'] ?? null ) ? $answer['variants'] : array() as $variant ) {
-			$key = is_array( $variant ) ? substr( sanitize_title( GelatoCatalog::color_of( $variant ) ), 0, 32 ) : '';
-
-			if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) && isset( $known[ $key ] ) ) {
-				$by_variant[ (string) $variant['id'] ] = $key;
-			}
-		}
-
-		foreach ( is_array( $answer['productImages'] ?? null ) ? $answer['productImages'] : array() as $image ) {
-			$url = is_array( $image ) && is_string( $image['fileUrl'] ?? null ) ? $image['fileUrl'] : '';
-
-			foreach ( is_array( $image ) && is_array( $image['productVariantIds'] ?? null ) ? $image['productVariantIds'] : array() as $variant ) {
-				$key = is_scalar( $variant ) ? ( $by_variant[ (string) $variant ] ?? null ) : null;
-
-				if ( null !== $key && '' !== $url && ! isset( $images[ $key ] ) ) {
-					$images[ $key ] = $url;
+		if ( array() !== $slots ) {
+			foreach ( $sides as $side ) {
+				foreach ( isset( $slots[ $side ] ) ? $lists : array() as $color => $urls ) {
+					if ( isset( $urls[ (int) $slots[ $side ] ] ) ) {
+						$images[ $side ][ $color ] = $urls[ (int) $slots[ $side ] ];
+					}
 				}
 			}
+
+			return $images;
 		}
 
-		if ( isset( $colors[0] ) && ! isset( $images[ $colors[0] ] ) && is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ) {
-			$images[ $colors[0] ] = $answer['previewUrl'];
+		$first = $sides[0] ?? null;
+		$color = array_key_first( $variants );
+
+		foreach ( null === $first ? array() : $lists as $key => $urls ) {
+			$images[ $first ][ $key ] = $urls[0];
+		}
+
+		if ( null !== $first && null !== $color && ! isset( $images[ $first ][ $color ] ) && is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ) {
+			$images[ $first ][ $color ] = $answer['previewUrl'];
 		}
 
 		return $images;
@@ -443,17 +464,36 @@ class GelatoMockups {
 
 	/**
 	 * One template variant per chosen colour (the first chosen size it
-	 * has): colour key by template variant id.
+	 * has): colour key by template variant id. From the catalog import's
+	 * variant map (review 30.15), else from the template by the colours' names.
 	 *
-	 * @param string               $template Gelato template.
-	 * @param array<string, mixed> $version  Version.
-	 * @param BaseProduct          $base     Base product.
+	 * @param string                               $template Gelato template.
+	 * @param array<string, mixed>                 $version  Version.
+	 * @param BaseProduct                          $base     Base product.
+	 * @param array<string, array<string, string>> $known    Template variant by colour key and size.
 	 * @return array<string, string>
 	 * @throws GelatoException When Gelato refuses or fails.
 	 */
-	private function variants( string $template, array $version, BaseProduct $base ): array {
-		$chosen   = json_decode( (string) $version['colors'], true );
-		$sizes    = json_decode( (string) $version['sizes'], true );
+	private function variants( string $template, array $version, BaseProduct $base, array $known = array() ): array {
+		$chosen = json_decode( (string) $version['colors'], true );
+		$sizes  = json_decode( (string) $version['sizes'], true );
+
+		if ( array() !== $known ) {
+			$map = array();
+
+			foreach ( is_array( $chosen ) ? $chosen : array() as $key ) {
+				foreach ( is_array( $sizes ) ? $sizes : array() as $size ) {
+					$variant = $known[ (string) $key ][ (string) $size ] ?? null;
+
+					if ( null !== $variant && ! in_array( (string) $key, $map, true ) ) {
+						$map[ $variant ] = (string) $key;
+					}
+				}
+			}
+
+			return $map;
+		}
+
 		$names    = array_column( $base->colors, 'name', 'key' );
 		$variants = GelatoCatalog::variants( $this->api->template( $template ) );
 		$map      = array();

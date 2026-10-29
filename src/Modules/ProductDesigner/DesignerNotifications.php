@@ -14,6 +14,7 @@ use MerchBoard\Modules\Notifications\EmailMessage;
 use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
+use MerchBoard\Modules\ProductDesigner\Admin\BaseProductsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
@@ -34,7 +35,8 @@ defined( 'ABSPATH' ) || exit;
  * not be put in the shop" (to the administrator). Step 30.11: a new price
  * after a new base price and "taken out of the shop" (a retired base
  * product), to the creator. Step 30.12: "mockups could not be made"
- * (Printful), to the administrator. The data never hold files,
+ * (Printful), to the administrator. Review 30.15: "a base product could not
+ * be imported" from a catalog, to the administrator. The data never hold files,
  * only the product's title, the version, the price and its currency (and
  * the note or the reason).
  */
@@ -62,6 +64,8 @@ final class DesignerNotifications {
 
 	public const MOCKUPS_FAILED = 'admin_designer_mockups_failed';
 
+	public const IMPORT_FAILED = 'admin_designer_import_failed';
+
 	/**
 	 * Adds the types to the catalog.
 	 */
@@ -88,6 +92,7 @@ final class DesignerNotifications {
 			self::submitted(),
 			self::change_submitted(),
 			self::mockups_failed(),
+			self::import_failed(),
 			self::apply_failed(),
 		);
 	}
@@ -374,6 +379,47 @@ final class DesignerNotifications {
 	}
 
 	/**
+	 * Printful or Gelato could not import a base product from its catalog (review 30.15).
+	 */
+	private static function import_failed(): NotificationType {
+		return new NotificationType(
+			self::IMPORT_FAILED,
+			NotificationType::ADMIN,
+			self::GROUP,
+			static fn(): string => __( 'Base product could not be imported', 'merchboard' ),
+			static fn(): string => __( 'When the photos and print areas of a base product picked in Printful\'s or Gelato\'s catalog could not be imported. It can be tried again under Base products.', 'merchboard' ),
+			true,
+			false,
+			false,
+			BaseProductsPage::SLUG,
+			array(
+				'title'    => 'Stream tee',
+				'reason'   => DesignerException::IMPORT_TIMEOUT,
+				'provider' => 'Gelato',
+			),
+			/* translators: 1: base product name, 2: Printful or Gelato. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s could not be imported from %2$s.', 'merchboard' ), $d->text( 'title' ), self::provider( $d ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: base product name. */
+				sprintf( __( '%s could not be imported', 'merchboard' ), $d->text( 'title' ) ),
+				/* translators: %s: Printful or Gelato. */
+				sprintf( __( 'A base product could not be imported from %s', 'merchboard' ), self::provider( $d ) ),
+				array( __( 'The base product stays a draft without photos. Open it under Base products to see the reason and the provider\'s answer, and choose "Try again".', 'merchboard' ) ),
+				array(
+					array( __( 'Base product', 'merchboard' ), $d->text( 'title' ) ),
+					array( __( 'Reason', 'merchboard' ), self::reason( $d->text( 'reason' ) ) ),
+				),
+				null,
+				null,
+				__( 'Open Base products', 'merchboard' ),
+				'',
+				__( 'This message was sent by Merch Dashboard.', 'merchboard' ),
+				false
+			)
+		);
+	}
+
+	/**
 	 * The provider of a mockups notification (Printful before step 30.13).
 	 *
 	 * @param NotificationData $d Data.
@@ -408,6 +454,13 @@ final class DesignerNotifications {
 			GelatoException::INVALID                => __( 'Gelato answered with something that cannot be used.', 'merchboard' ),
 			GelatoException::FAILED                 => __( 'Gelato could not be reached or answered with an error.', 'merchboard' ),
 			'gelato_task'                           => __( 'Gelato could not make the product\'s images (or took too long).', 'merchboard' ),
+			DesignerException::IMPORT_RENDER        => __( 'The provider could not render the product; its own message is shown on the base product.', 'merchboard' ),
+			DesignerException::IMPORT_TIMEOUT       => __( 'The provider took too long to render the product.', 'merchboard' ),
+			DesignerException::IMPORT_NO_AREA       => __( 'The print areas could not be found on the provider\'s photos.', 'merchboard' ),
+			DesignerException::IMPORT_IMAGE         => __( 'A photo from the provider could not be read.', 'merchboard' ),
+			DesignerException::IMPORT_GD            => __( 'The server cannot measure images (the PHP extension GD is missing).', 'merchboard' ),
+			DesignerException::IMPORT_QUEUE         => __( 'The import could not be queued (Action Scheduler is not available).', 'merchboard' ),
+			DesignerException::NOT_AUTHORIZED       => __( 'The administrator who started it may no longer manage the product designer.', 'merchboard' ),
 			default                                 => __( 'A technical error; the log has the details.', 'merchboard' ),
 		};
 	}

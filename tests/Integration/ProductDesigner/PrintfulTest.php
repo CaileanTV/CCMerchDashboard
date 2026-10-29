@@ -17,6 +17,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\ProductDesigner\Admin\BaseProductsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
@@ -30,6 +31,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
@@ -40,6 +42,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\SignedPrintFiles;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
+use MerchBoard\Tests\Unit\Support\Photo;
 use PHPUnit\Framework\Attributes\CoversClass;
 use WP_Error;
 use WP_REST_Request;
@@ -54,11 +57,14 @@ use WP_REST_Request;
 #[CoversClass( PrintfulApi::class )]
 #[CoversClass( PrintfulToken::class )]
 #[CoversClass( PrintfulCatalog::class )]
+#[CoversClass( CatalogImport::class )]
 #[CoversClass( PrintfulMockups::class )]
 #[CoversClass( SignedPrintFiles::class )]
 final class PrintfulTest extends IntegrationTestCase {
 
 	private const TOKEN = 'pf_test_token_1234567890abcdef';
+
+	private const ASSETS = 'https://shop.example/wp-content/plugins/merchboard/assets/designer/';
 
 	/**
 	 * Calls made: [method, url, args].
@@ -113,7 +119,7 @@ final class PrintfulTest extends IntegrationTestCase {
 			function ( string $method, string $url, array $args ): array|WP_Error {
 				$this->calls[] = array( $method, $url, $args );
 				$answer        = $this->answers[ $url ] ?? null;
-				$answer        = is_callable( $answer ) ? $answer() : $answer;
+				$answer        = is_callable( $answer ) ? $answer( $args ) : $answer;
 
 				return is_array( $answer ) ? $answer : new WP_Error( 'http_request_failed', 'No route.' );
 			}
@@ -132,6 +138,8 @@ final class PrintfulTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		remove_action( 'merchboard_notify', $this->listener, 1 );
 		delete_option( PrintfulToken::OPTION );
+		delete_transient( PrintfulCatalog::CACHE );
+		delete_transient( PrintfulCatalog::CATEGORIES );
 		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => false, Settings::PRINTFUL_ENABLED => false ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server after the test.
 		DesignerFiles::remove_all();
@@ -202,7 +210,7 @@ final class PrintfulTest extends IntegrationTestCase {
 		$before = count( $this->calls );
 
 		try {
-			$this->api->templates( 71 );
+			$this->api->printfiles( 71 );
 			self::fail( 'Switched off.' );
 		} catch ( PrintfulException $e ) {
 			self::assertSame( PrintfulException::NOT_CONFIGURED, $e->reason() );
@@ -211,7 +219,35 @@ final class PrintfulTest extends IntegrationTestCase {
 		self::assertCount( $before, $this->calls );
 	}
 
-	public function test_a_catalog_product_becomes_a_base_product_draft(): void {
+	public function test_the_catalog_is_searched_by_words_and_category_and_cached(): void {
+		$this->token->set( self::TOKEN );
+		$catalog = new PrintfulCatalog( $this->api );
+
+		self::assertSame( array( 71 ), array_column( $catalog->search( 'gildan TEE' ), 'id' ) );
+		self::assertSame( array( 71, 72 ), array_column( $catalog->search( '', 6 ), 'id' ), 'A category with its subcategories.' );
+		self::assertSame( array(), $catalog->search( 'poster' ), 'Discontinued products are left out.' );
+		self::assertSame( array( '' ), array_column( $catalog->search( 'hoodie' ), 'image' ), 'Only https images are shown.' );
+		self::assertSame( array( 'Clothing', 'Mugs', 'T-shirts' ), array_column( $catalog->categories(), 'title' ) );
+
+		$before = count( $this->calls );
+		$catalog->search( 'tee', 24 );
+		self::assertCount( $before, $this->calls, 'The catalog and its categories are cached.' );
+
+		$choice = $catalog->choice( '71' );
+		self::assertSame( array( 'front', 'back' ), array_column( $choice['sides'], 'placement' ), 'A placement without a print file is not offered.' );
+		self::assertSame( array( 76, 102, 100 ), array( $choice['sides'][0]['width_mm'], $choice['sides'][0]['height_mm'], $choice['sides'][0]['dpi'] ), '300 × 400 px at 100 dpi.' );
+
+		try {
+			$this->catalog()->create( 'printful', '71', array( 'colors' => array( 'Black' ), 'sizes' => array( 'XL' ), 'sides' => array( 'front' ), 'base_price' => '149,95' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			self::fail( 'No variant in a ticked size.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_PICK, $e->reason() );
+		}
+
+		self::assertSame( array(), $this->bases->all(), 'Nothing is created.' );
+	}
+
+	public function test_a_picked_catalog_product_is_imported_with_a_photo_per_colour_and_a_measured_print_area(): void {
 		$this->token->set( self::TOKEN );
 		$base = $this->bases->find( $this->import() );
 
@@ -219,13 +255,119 @@ final class PrintfulTest extends IntegrationTestCase {
 		self::assertSame( array( BaseProduct::DRAFT, 'printful', 'Gildan tee', 1499500 ), array( $base->status, $base->source, $base->name, $base->base_units ) );
 		self::assertSame( array( array( 'black', 'Black', '#111111' ), array( 'white', 'White', '#ffffff' ) ), array_map( static fn( array $color ): array => array( $color['key'], $color['name'], $color['hex'] ), $base->colors ) );
 		self::assertSame( array( 'S', 'M' ), $base->sizes );
+		self::assertSame( 'ready', $this->bases->import( (int) $base->id )['state'] ?? null );
 
 		$view = $base->views[0];
+		self::assertCount( 1, $base->views );
 		self::assertSame( array( 'front-print', 'Front print', 200, 200 ), array( $view->key, $view->name, $view->width, $view->height ) );
-		self::assertSame( array( 50, 30, 100, 130 ), array( $view->area['x'], $view->area['y'], $view->area['width'], $view->area['height'] ), 'The template\'s print area, scaled to the image.' );
-		self::assertSame( array( 76, 102, 100 ), array( $view->width_mm, $view->height_mm, $view->dpi ), '300 × 400 px at 100 dpi.' );
-		self::assertArrayHasKey( 'background', $view->layers );
-		self::assertSame( array( 'front-print' => 'front' ), $this->bases->provider( (int) $base->id )['placements'] ?? null );
+		self::assertSame( array( 'background', 'background:white' ), array_keys( $view->layers ), 'The black photo is the background, the white one the white colour\'s own.' );
+
+		foreach ( array( 70, 50, 60, 80 ) as $index => $expected ) {
+			self::assertEqualsWithDelta( $expected, array_values( $view->area )[ $index ], 2, 'Where the marker showed on the black photo.' );
+		}
+
+		self::assertSame( array( 76, 102, 100 ), array( $view->width_mm, $view->height_mm, $view->dpi ) );
+		self::assertSame(
+			array(
+				'source'     => 'printful',
+				'ref'        => '71',
+				'placements' => array( 'front-print' => 'front' ),
+				'variants'   => array(
+					'black' => array(
+						'S' => '101',
+						'M' => '102',
+					),
+					'white' => array(
+						'S' => '201',
+						'M' => '202',
+					),
+				),
+				'slots'      => array( 'front-print' => 'front' ),
+			),
+			$this->bases->provider( (int) $base->id )
+		);
+
+		$tasks = $this->calls_to( 'POST', 'https://api.printful.com/mockup-generator/create-task/71' );
+		self::assertCount( 2, $tasks, 'One blank and one marker render.' );
+		$blank  = json_decode( (string) ( $tasks[0][2]['body'] ?? '' ), true );
+		$marker = json_decode( (string) ( $tasks[1][2]['body'] ?? '' ), true );
+		self::assertSame( array( array( 101, 201 ), 'front', self::ASSETS . 'blank.png', 300, 400 ), array( $blank['variant_ids'] ?? null, $blank['files'][0]['placement'] ?? null, $blank['files'][0]['image_url'] ?? null, $blank['files'][0]['position']['area_width'] ?? null, $blank['files'][0]['position']['area_height'] ?? null ) );
+		self::assertSame( array( array( 101 ), self::ASSETS . 'marker-1.png' ), array( $marker['variant_ids'] ?? null, $marker['files'][0]['image_url'] ?? null ), 'The first colour with the first side\'s marker.' );
+		self::assertCount( 2, (array) glob( DesignerFiles::directory() . '/*.png' ), 'Only the two photos are kept.' );
+		self::assertSame( array(), $this->notified );
+	}
+
+	public function test_the_admin_page_searches_picks_and_shows_a_failed_import_with_the_provider_s_answer(): void {
+		$this->token->set( self::TOKEN );
+		$this->answers['https://api.printful.com/mockup-generator/task?task_key=tk-blank'] = self::answer( 200, array( 'result' => array( 'status' => 'failed', 'error' => '<b>Gone</b>' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$catalog = $this->catalog();
+		$page    = new BaseProductsPage( $this->bases, new DesignerAssetRepository( $this->wpdb ), 2, 'DKK', '', '', true, false, $catalog, new PrintfulCatalog( $this->api ) );
+		$render  = static function ( array $query ) use ( $page ): string {
+			$_GET = $query;
+			ob_start();
+			$page->render();
+
+			return (string) ob_get_clean();
+		};
+
+		$search = $render( array( 'view' => 'new', 'source' => 'printful', 'q' => 'tee' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( 'Gildan tee', $search );
+		self::assertStringContainsString( 'pick=71', $search );
+		self::assertStringContainsString( '<option value="24"', $search, 'The categories to narrow the search.' );
+
+		$pick = $render( array( 'view' => 'new', 'source' => 'printful', 'pick' => '71' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertStringContainsString( 'name="do" value="catalog_create"', $pick );
+		self::assertStringContainsString( 'name="colors[]" value="Black" checked', $pick );
+		self::assertStringContainsString( 'name="sides[]" value="front" checked', $pick );
+		self::assertStringContainsString( 'name="sides[]" value="back" checked', $pick, 'Front and back are ticked by default.' );
+
+		$id = $this->import();
+		self::assertSame( 'failed', $this->bases->import( $id )['state'] ?? null );
+
+		$failed = $render( array( 'base' => (string) $id ) );
+		self::assertStringContainsString( 'name="do" value="import_retry"', $failed );
+		self::assertStringContainsString( '<code>blank: Gone</code>', $failed, 'The provider message is stored as plain text.' );
+		self::assertStringContainsString( 'diagnose=1', $failed );
+
+		$diagnosis = $render(
+			array(
+				'base'     => (string) $id,
+				'diagnose' => '1',
+			)
+		);
+		self::assertStringContainsString( 'GET /mockup-generator/printfiles/71', $diagnosis );
+		self::assertStringNotContainsString( self::TOKEN, $diagnosis, 'Never the token.' );
+		$_GET = array();
+	}
+
+	public function test_a_failed_render_fails_the_import_and_it_can_be_tried_again(): void {
+		$this->token->set( self::TOKEN );
+		$marker = $this->answers['https://api.printful.com/mockup-generator/task?task_key=tk-marker'];
+		$this->answers['https://api.printful.com/mockup-generator/task?task_key=tk-marker'] = self::answer(
+			200,
+			array(
+				'result' => array(
+					'status' => 'failed',
+					'error'  => 'Placement not available',
+				),
+			)
+		);
+		$id     = $this->import();
+		$import = $this->bases->import( $id );
+
+		self::assertSame( 'failed', $import['state'] ?? null );
+		self::assertSame( array( DesignerException::IMPORT_RENDER, 'marker: Placement not available' ), array( $import['data']['error'] ?? null, $import['data']['detail'] ?? null ) );
+		self::assertSame( array( DesignerNotifications::IMPORT_FAILED ), $this->notified );
+		self::assertSame( array(), $this->bases->find( $id )->views ?? null );
+		self::assertSame( array(), (array) glob( DesignerFiles::directory() . '/*.png' ), 'No photo is left behind.' );
+
+		$this->answers['https://api.printful.com/mockup-generator/task?task_key=tk-marker'] = $marker;
+		$catalog = $this->catalog();
+		$catalog->retry( $id );
+		$this->drain_import( $catalog );
+
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null );
+		self::assertCount( 1, $this->bases->find( $id )->views ?? array() );
 	}
 
 	public function test_printful_makes_the_mockups_of_a_submitted_design(): void {
@@ -249,8 +391,9 @@ final class PrintfulTest extends IntegrationTestCase {
 
 		$this->drain( $mockups );
 
-		$task = $this->call( 'POST', 'https://api.printful.com/mockup-generator/create-task/71' );
-		self::assertNotNull( $task );
+		$tasks = $this->calls_to( 'POST', 'https://api.printful.com/mockup-generator/create-task/71' );
+		$task  = end( $tasks );
+		self::assertNotFalse( $task, 'The design task comes after the import renders.' );
 		$body = json_decode( (string) ( $task[2]['body'] ?? '' ), true );
 		self::assertSame( array( 101, 201 ), $body['variant_ids'] ?? null, 'A variant per chosen colour, the first chosen size.' );
 		self::assertSame( 'front', $body['files'][0]['placement'] ?? null );
@@ -362,12 +505,48 @@ final class PrintfulTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Imports product 71 at 149,95.
+	 * Picks product 71 (black and white, S and M, the front) at 149,95 and
+	 * runs its import.
 	 */
 	private function import(): int {
+		$catalog = $this->catalog();
+		$id      = $catalog->create(
+			'printful',
+			'71',
+			array(
+				'colors'     => array( 'Black', 'White' ),
+				'sizes'      => array( 'S', 'M' ),
+				'sides'      => array( 'front' ),
+				'base_price' => '149,95',
+			)
+		);
+
+		$this->drain_import( $catalog );
+
+		return $id;
+	}
+
+	/**
+	 * The catalog import.
+	 */
+	private function catalog(): CatalogImport {
 		$service = new BaseProductService( $this->bases, new DesignerAssetRepository( $this->wpdb ), $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, 'DKK' );
 
-		return ( new PrintfulCatalog( $this->api, $service, $this->bases ) )->import( 71, '149,95' );
+		return new CatalogImport( $this->wpdb, $this->bases, $service, $this->files, $this->queue, $this->service( Logger::class ), 2, self::ASSETS, new PrintfulCatalog( $this->api ) );
+	}
+
+	/**
+	 * Runs the queued import rounds.
+	 *
+	 * @param CatalogImport $catalog The import.
+	 */
+	private function drain_import( CatalogImport $catalog ): void {
+		$this->queue->drain(
+			static function ( string $hook, array $args ) use ( $catalog ): void {
+				$catalog->run( $args[0] ?? 0 );
+			},
+			50
+		);
 	}
 
 	/**
@@ -471,6 +650,17 @@ final class PrintfulTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * Every call of a method and URL, in order.
+	 *
+	 * @param string $method Method.
+	 * @param string $url    URL.
+	 * @return list<array{0: string, 1: string, 2: array<string, mixed>}>
+	 */
+	private function calls_to( string $method, string $url ): array {
+		return array_values( array_filter( $this->calls, static fn( array $call ): bool => $method === $call[0] && $url === $call[1] ) );
+	}
+
+	/**
 	 * A request of the signed print file route.
 	 *
 	 * @param int                  $version Version.
@@ -517,38 +707,87 @@ final class PrintfulTest extends IntegrationTestCase {
 					),
 				)
 			),
+			$api . '/products'                           => self::answer(
+				200,
+				array(
+					'result' => array(
+						array( 'id' => 71, 'title' => 'Gildan tee', 'type_name' => 'T-Shirt', 'brand' => 'Gildan', 'model' => '64000', 'image' => 'https://files.cdn.printful.com/71.jpg', 'main_category_id' => 24 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						array( 'id' => 72, 'title' => 'Hoodie', 'type_name' => 'Hoodie', 'brand' => 'Cotton Heritage', 'model' => 'M2580', 'image' => 'http://insecure.example/72.jpg', 'main_category_id' => 6 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						array( 'id' => 73, 'title' => 'Poster', 'is_discontinued' => true, 'main_category_id' => 55 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						array( 'id' => 74, 'title' => 'Mug', 'main_category_id' => 30 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					),
+				)
+			),
+			$api . '/categories'                         => self::answer(
+				200,
+				array(
+					'result' => array(
+						'categories' => array(
+							array( 'id' => 24, 'parent_id' => 6, 'title' => 'T-shirts' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+							array( 'id' => 6, 'parent_id' => 0, 'title' => 'Clothing' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+							array( 'id' => 30, 'parent_id' => 0, 'title' => 'Mugs' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						),
+					),
+				)
+			),
 			$api . '/mockup-generator/printfiles/71'     => self::answer(
 				200,
 				array(
 					'result' => array(
-						'available_placements' => array( 'front' => 'Front print' ),
-						'printfiles'           => array( array( 'printfile_id' => 5, 'width' => 300, 'height' => 400, 'dpi' => 100 ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-					),
-				)
-			),
-			$api . '/mockup-generator/templates/71'      => self::answer(
-				200,
-				array(
-					'result' => array(
-						'variant_mapping' => array( array( 'variant_id' => 101, 'templates' => array( array( 'placement' => 'front', 'template_id' => 9 ) ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-						'templates'       => array(
+						'available_placements' => array(
+							'front'         => 'Front print',
+							'back'          => 'Back print',
+							'label_outside' => 'Outside label',
+						),
+						'printfiles'           => array(
+							array( 'printfile_id' => 5, 'width' => 300, 'height' => 400, 'dpi' => 100 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+							array( 'printfile_id' => 6, 'width' => 300, 'height' => 400, 'dpi' => 100 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						),
+						'variant_printfiles'   => array(
 							array(
-								'template_id'       => 9,
-								'image_url'         => 'https://cdn.example/template.png',
-								'printfile_id'      => 5,
-								'template_width'    => 400,
-								'template_height'   => 400,
-								'print_area_width'  => 200,
-								'print_area_height' => 260,
-								'print_area_top'    => 60,
-								'print_area_left'   => 100,
+								'variant_id' => 101,
+								'placements' => array(
+									'front' => 5,
+									'back'  => 6,
+								),
 							),
 						),
 					),
 				)
 			),
-			'https://cdn.example/template.png'           => self::file( AlertImagesTest::png( 200, 200 ) ),
-			$api . '/mockup-generator/create-task/71'    => self::answer( 200, array( 'result' => array( 'task_key' => 'tk1', 'status' => 'pending' ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			// The import's blank and marker renders, and then the design's task.
+			$api . '/mockup-generator/create-task/71'    => static function ( array $args ): array {
+				$url = (string) ( json_decode( (string) ( $args['body'] ?? '' ), true )['files'][0]['image_url'] ?? '' );
+				$key = str_ends_with( $url, 'blank.png' ) ? 'tk-blank' : ( str_contains( $url, 'marker-' ) ? 'tk-marker' : 'tk1' );
+
+				return self::answer( 200, array( 'result' => array( 'task_key' => $key, 'status' => 'pending' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			},
+			$api . '/mockup-generator/task?task_key=tk-blank' => self::answer(
+				200,
+				array(
+					'result' => array(
+						'status'  => 'completed',
+						'mockups' => array(
+							array( 'placement' => 'front', 'variant_ids' => array( 101, 102 ), 'mockup_url' => 'https://cdn.example/blank-black.png' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+							array( 'placement' => 'front', 'variant_ids' => array( 201, 202 ), 'mockup_url' => 'https://cdn.example/blank-white.png' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						),
+					),
+				)
+			),
+			$api . '/mockup-generator/task?task_key=tk-marker' => self::answer(
+				200,
+				array(
+					'result' => array(
+						'status'  => 'completed',
+						'mockups' => array(
+							array( 'placement' => 'front', 'variant_ids' => array( 101 ), 'mockup_url' => 'https://cdn.example/marker-black.png' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						),
+					),
+				)
+			),
+			'https://cdn.example/blank-black.png'        => self::file( Photo::png( 200, 200, array( 240, 240, 240 ), array( array( 40, 30, 120, 150, array( 17, 17, 17 ) ) ) ) ),
+			'https://cdn.example/blank-white.png'        => self::file( Photo::png( 200, 200, array( 240, 240, 240 ), array( array( 40, 30, 120, 150, array( 252, 252, 252 ) ) ) ) ),
+			'https://cdn.example/marker-black.png'       => self::file( Photo::png( 200, 200, array( 240, 240, 240 ), array( array( 40, 30, 120, 150, array( 17, 17, 17 ) ), array( 70, 50, 60, 80, array( 230, 20, 225 ) ) ) ) ),
 			$api . '/mockup-generator/task?task_key=tk1' => static function () use ( &$polls ): array {
 				++$polls;
 

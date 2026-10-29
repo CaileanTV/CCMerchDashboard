@@ -17,9 +17,14 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
+use MerchBoard\Modules\ProductDesigner\Providers\CatalogRenderer;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 
@@ -37,7 +42,11 @@ defined( 'ABSPATH' ) || exit;
  *
  * Every change goes through BaseProductActions; files are shown through
  * DesignerAssetDownload. PSD import follows in step 30.7, Printful and
- * Gelato in 30.12–30.13.
+ * Gelato in 30.12–30.13. From review 30.15 a new base product can be
+ * searched and picked in Printful's or Gelato's catalog (read-only GET
+ * requests; the provider's answers are escaped), and an imported one shows
+ * its import's state, a failure's reason with "Try again" and, on request,
+ * the provider's answers.
  */
 final class BaseProductsPage {
 
@@ -67,8 +76,11 @@ final class BaseProductsPage {
 	 * @param string                  $plugin_url Plugin URL with a trailing slash.
 	 * @param bool                    $printful_ready Whether a Printful token is stored.
 	 * @param bool                    $gelato_ready   Whether a Gelato key and store are stored.
+	 * @param CatalogImport|null      $catalog        The catalog import (review 30.15).
+	 * @param PrintfulCatalog|null    $printful       Printful's catalog.
+	 * @param GelatoCatalog|null      $gelato         Gelato's catalogs and templates.
 	 */
-	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false ) {
+	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false, private ?CatalogImport $catalog = null, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null ) {
 	}
 
 	/**
@@ -127,19 +139,20 @@ final class BaseProductsPage {
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
 			'deleted'                               => array( __( 'The base product was deleted.', 'merchboard' ), 'success' ),
-			'imported'                              => array( __( 'The product was imported from Printful as a draft. Check the colours, sizes and sides, then activate it.', 'merchboard' ), 'success' ),
+			'importing'                             => array( __( 'The base product was created as a draft. Its photos and print areas are imported in the background; this takes a few minutes.', 'merchboard' ), 'success' ),
+			DesignerException::BASE_PICK            => array( __( 'Tick at least one colour, one size and one side.', 'merchboard' ), 'error' ),
+			DesignerException::IMPORT_RUNNING       => array( __( 'The base product is being imported. Wait until the import is done.', 'merchboard' ), 'error' ),
 			PrintfulException::NOT_CONFIGURED       => array( __( 'Printful is switched off or has no API token.', 'merchboard' ), 'error' ),
 			PrintfulException::UNAUTHORIZED         => array( __( 'Printful refused the API token. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
-			PrintfulException::NOT_FOUND            => array( __( 'Printful does not know that product id.', 'merchboard' ), 'error' ),
+			PrintfulException::NOT_FOUND            => array( __( 'Printful does not know that product.', 'merchboard' ), 'error' ),
 			PrintfulException::RATE_LIMITED         => array( __( 'Printful asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
-			PrintfulException::INVALID              => array( __( 'The Printful product has no usable templates or variants.', 'merchboard' ), 'error' ),
+			PrintfulException::INVALID              => array( __( 'The Printful product has no variants or print files that can be used.', 'merchboard' ), 'error' ),
 			PrintfulException::FAILED               => array( __( 'Printful could not be reached. Please try again later.', 'merchboard' ), 'error' ),
-			'gelato_imported'                       => array( __( 'The template was imported from Gelato as a draft. Set the colour codes, check the sides and move the print areas onto the product, then activate it.', 'merchboard' ), 'success' ),
 			GelatoException::NOT_CONFIGURED         => array( __( 'Gelato is switched off or has no API key or store id.', 'merchboard' ), 'error' ),
 			GelatoException::UNAUTHORIZED           => array( __( 'Gelato refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
 			GelatoException::NOT_FOUND              => array( __( 'Gelato does not know that template id.', 'merchboard' ), 'error' ),
 			GelatoException::RATE_LIMITED           => array( __( 'Gelato asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
-			GelatoException::INVALID                => array( __( 'The Gelato template has no usable variants, image placeholders or preview.', 'merchboard' ), 'error' ),
+			GelatoException::INVALID                => array( __( 'The Gelato template has no usable variants or image placeholders.', 'merchboard' ), 'error' ),
 			GelatoException::FAILED                 => array( __( 'Gelato could not be reached. Please try again later.', 'merchboard' ), 'error' ),
 			'retired'                               => array( __( 'The base product is retired. Its products are being taken out of the shop, and the creators are told.', 'merchboard' ), 'success' ),
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
@@ -203,7 +216,7 @@ final class BaseProductsPage {
 			if ( 'cliparts' === $view ) {
 				$this->render_cliparts();
 			} elseif ( 'new' === $view ) {
-				$this->render_form( null );
+				$this->render_new();
 			} elseif ( $id > 0 ) {
 				$base = $this->bases->find( $id );
 
@@ -229,8 +242,6 @@ final class BaseProductsPage {
 	 */
 	private function render_list(): void {
 		echo '<p>' . esc_html__( 'The products creators design on. The base price incl. VAT is what the company always keeps outside its own campaigns; the creator\'s profit comes on top. A base product is a draft until it is activated.', 'merchboard' ) . '</p>';
-		$this->render_printful_import();
-		$this->render_gelato_import();
 
 		$bases = $this->bases->all();
 
@@ -247,7 +258,7 @@ final class BaseProductsPage {
 				'<tr><td><a href="%1$s"><strong>%2$s</strong></a></td><td>%3$s</td><td>%4$s</td><td>%5$s</td><td>%6$s</td><td>%7$s</td><td>%8$s</td><td>%9$s</td></tr>',
 				esc_url( self::edit_url( (int) $base->id ) ),
 				esc_html( $base->name ),
-				esc_html( self::status( $base->status ) ),
+				esc_html( self::status( $base->status ) . self::import_label( $this->bases->import( (int) $base->id )['state'] ?? CatalogImport::NONE ) ),
 				esc_html( $this->money( $base->base_units ) . ' ' . $base->currency ),
 				esc_html( (string) count( $base->colors ) ),
 				esc_html( implode( ', ', $base->sizes ) ),
@@ -277,6 +288,10 @@ final class BaseProductsPage {
 		if ( null !== $base ) {
 			/* translators: 1: status, 2: version, 3: number of designs. */
 			echo '<p>' . esc_html( sprintf( __( 'Status: %1$s · Version %2$d · %3$d designs', 'merchboard' ), self::status( $base->status ), $base->version, $designs ) ) . '</p>';
+		}
+
+		if ( null !== $base ) {
+			$this->render_import( $base );
 		}
 
 		if ( $designs > 0 ) {
@@ -442,55 +457,349 @@ final class BaseProductsPage {
 	}
 
 	/**
-	 * The Printful import (step 30.12): a catalog product id and the base price.
+	 * "New base product": an own one, or one picked in Printful's or
+	 * Gelato's catalog (review 30.15).
+	 *
+	 * @throws DatabaseException When a base product cannot be read.
 	 */
-	private function render_printful_import(): void {
-		if ( ! Settings::printful_enabled() ) {
-			return;
+	private function render_new(): void {
+		// Read-only parameters; nothing is changed by this request.
+		$source  = isset( $_GET['source'] ) ? sanitize_key( wp_unslash( $_GET['source'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$sources = array( '' => __( 'Own base product', 'merchboard' ) );
+
+		if ( Settings::printful_enabled() && null !== $this->printful ) {
+			$sources[ PrintfulCatalog::SOURCE ] = __( 'From Printful\'s catalog', 'merchboard' );
 		}
 
-		echo '<details style="margin:12px 0"><summary><strong>' . esc_html__( 'Import from Printful', 'merchboard' ) . '</strong></summary>';
-
-		if ( ! $this->printful_ready ) {
-			echo '<p>' . esc_html__( 'Enter the Printful API token under Settings → Product designer first.', 'merchboard' ) . '</p></details>';
-
-			return;
+		if ( Settings::gelato_enabled() && null !== $this->gelato ) {
+			$sources[ GelatoCatalog::SOURCE ] = __( 'From Gelato\'s catalog', 'merchboard' );
 		}
 
-		echo '<p>' . esc_html__( 'The product id is the number in the catalog product\'s address at Printful (or in its API). The colours, sizes and sides with their templates and print areas are imported as a draft; check them, add a colour mask if you want the editor to tint the product, and activate it. Mockups of designs on it come from Printful.', 'merchboard' ) . '</p>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="printful_import">';
-		wp_nonce_field( BaseProductActions::ACTION );
-		echo '<p><label>' . esc_html__( 'Printful product id', 'merchboard' ) . ' <input type="number" min="1" name="printful_product" required class="small-text"></label> ';
-		echo '<label>' . esc_html__( 'Base price incl. VAT', 'merchboard' ) . ' <input type="text" name="base_price" required class="small-text" inputmode="decimal"></label> ';
-		submit_button( __( 'Import', 'merchboard' ), 'secondary', 'submit', false );
-		echo '</p></form></details>';
+		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← All base products', 'merchboard' ) . '</a></p>';
+
+		if ( count( $sources ) > 1 ) {
+			$links = array();
+
+			foreach ( $sources as $key => $label ) {
+				$links[] = $key === $source ? '<strong>' . esc_html( $label ) . '</strong>' : '<a href="' . esc_url( self::new_url( array( 'source' => $key ) ) ) . '">' . esc_html( $label ) . '</a>';
+			}
+
+			echo '<p class="subsubsub" style="float:none">' . implode( ' | ', $links ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+		}
+
+		if ( PrintfulCatalog::SOURCE === $source && null !== $this->printful && isset( $sources[ $source ] ) ) {
+			$this->render_printful_catalog( $this->printful );
+		} elseif ( GelatoCatalog::SOURCE === $source && null !== $this->gelato && isset( $sources[ $source ] ) ) {
+			$this->render_gelato_catalog( $this->gelato );
+		} else {
+			$this->render_form( null );
+		}
 	}
 
 	/**
-	 * The Gelato import (step 30.13): a template id and the base price.
+	 * Printful's catalog: search by words and category, then pick a product.
+	 *
+	 * @param PrintfulCatalog $printful Printful's catalog.
 	 */
-	private function render_gelato_import(): void {
-		if ( ! Settings::gelato_enabled() ) {
+	private function render_printful_catalog( PrintfulCatalog $printful ): void {
+		if ( ! $this->printful_ready ) {
+			echo '<p>' . esc_html__( 'Enter the Printful API token under Settings → Product designer first.', 'merchboard' ) . '</p>';
+
 			return;
 		}
 
-		echo '<details style="margin:12px 0"><summary><strong>' . esc_html__( 'Import from Gelato', 'merchboard' ) . '</strong></summary>';
+		// Read-only parameters; nothing is changed by this request.
+		$query    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$pick     = isset( $_GET['pick'] ) ? absint( $_GET['pick'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 
+		if ( $pick > 0 ) {
+			$this->render_pick( $printful, PrintfulCatalog::SOURCE, (string) $pick );
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'Search Printful\'s catalog and pick the product. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them.', 'merchboard' ) . '</p>';
+
+		try {
+			$categories = $printful->categories();
+		} catch ( PrintfulException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintfulCatalog::SOURCE ) . '">';
+		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> ';
+		echo '<label>' . esc_html__( 'Category', 'merchboard' ) . ' <select name="category"><option value="0">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
+
+		foreach ( $categories as $entry ) {
+			echo '<option value="' . esc_attr( (string) $entry['id'] ) . '"' . selected( $category, $entry['id'], false ) . '>' . esc_html( $entry['title'] ) . '</option>';
+		}
+
+		echo '</select></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
+
+		if ( '' === $query && 0 === $category ) {
+			return;
+		}
+
+		try {
+			$products = $printful->search( $query, $category );
+		} catch ( PrintfulException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		if ( array() === $products ) {
+			echo '<p>' . esc_html__( 'No products found.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<div style="display:flex;flex-wrap:wrap;gap:1em">';
+
+		foreach ( $products as $product ) {
+			echo '<div class="card" style="margin:0;width:11rem;padding:.6em">';
+
+			if ( '' !== $product['image'] ) {
+				echo '<img src="' . esc_url( $product['image'] ) . '" alt="" loading="lazy" style="width:100%;height:9rem;object-fit:contain">';
+			}
+
+			echo '<p><strong>' . esc_html( $product['title'] ) . '</strong><br><span class="description">' . esc_html( trim( $product['brand'] . ' ' . $product['model'] ) ) . '</span></p>';
+			echo '<p><a class="button" href="' . esc_url( self::new_url( array( 'source' => PrintfulCatalog::SOURCE, 'pick' => $product['id'] ) ) ) . '">' . esc_html__( 'Pick', 'merchboard' ) . '</a></p></div>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+
+		echo '</div>';
+
+		if ( count( $products ) >= PrintfulCatalog::MAX_RESULTS ) {
+			echo '<p class="description">' . esc_html__( 'Only the first results are shown. Add words to narrow the search.', 'merchboard' ) . '</p>';
+		}
+	}
+
+	/**
+	 * Gelato's catalogs: pick one, then the template made of a product from it.
+	 *
+	 * @param GelatoCatalog $gelato Gelato.
+	 */
+	private function render_gelato_catalog( GelatoCatalog $gelato ): void {
 		if ( ! $this->gelato_ready ) {
-			echo '<p>' . esc_html__( 'Enter the Gelato API key and store id under Settings → Product designer first.', 'merchboard' ) . '</p></details>';
+			echo '<p>' . esc_html__( 'Enter the Gelato API key and store id under Settings → Product designer first.', 'merchboard' ) . '</p>';
 
 			return;
 		}
 
-		echo '<p>' . esc_html__( 'Make a template in the Gelato dashboard first: the product, the colours and sizes creators may choose, and one image placeholder per side. The template id is in the template\'s address at Gelato. The colours, sizes and sides are imported as a draft with the template\'s preview as the background; set the colour codes, move each print area onto the product (or add your own layers) and activate it. Mockups of designs on it come from Gelato.', 'merchboard' ) . '</p>';
+		// Read-only parameters; nothing is changed by this request.
+		$query    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$catalog  = isset( $_GET['catalog'] ) ? sanitize_key( wp_unslash( $_GET['catalog'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$template = isset( $_GET['template'] ) ? sanitize_text_field( wp_unslash( $_GET['template'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+
+		if ( '' !== $template ) {
+			$this->render_pick( $gelato, GelatoCatalog::SOURCE, $template );
+
+			return;
+		}
+
+		try {
+			$catalogs = $gelato->catalogs( '' === $catalog ? $query : '' );
+		} catch ( GelatoException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		if ( '' !== $catalog ) {
+			$title = $catalog;
+
+			foreach ( $catalogs as $entry ) {
+				$title = $entry['uid'] === $catalog ? $entry['title'] : $title;
+			}
+
+			/* translators: %s: Gelato catalog title. */
+			echo '<p><strong>' . esc_html( sprintf( __( 'Catalog: %s', 'merchboard' ), $title ) ) . '</strong> · <a href="' . esc_url( self::new_url( array( 'source' => GelatoCatalog::SOURCE ) ) ) . '">' . esc_html__( 'Another catalog', 'merchboard' ) . '</a></p>';
+			echo '<p>' . esc_html__( 'Gelato renders products only from a template. Make one template in the Gelato dashboard of the product from this catalog you want, with the colours and sizes creators may choose and one image placeholder per side. Any design in it is never shown: we replace it with an empty file and later with the creators\' print files. The template id is in the template\'s address at Gelato.', 'merchboard' ) . '</p>';
+			echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '"><input type="hidden" name="catalog" value="' . esc_attr( $catalog ) . '">';
+			echo '<p><label>' . esc_html__( 'Gelato template id', 'merchboard' ) . ' <input type="text" name="template" required class="regular-text" pattern="[A-Za-z0-9-]{1,100}" autocomplete="off"></label> <button type="submit" class="button">' . esc_html__( 'Fetch', 'merchboard' ) . '</button></p></form>';
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'Pick the catalog of the product at Gelato, for example t-shirts or mugs.', 'merchboard' ) . '</p>';
+		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '">';
+		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
+
+		if ( array() === $catalogs ) {
+			echo '<p>' . esc_html__( 'No catalogs found.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<ul>';
+
+		foreach ( $catalogs as $entry ) {
+			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => GelatoCatalog::SOURCE, 'catalog' => $entry['uid'] ) ) ) . '">' . esc_html( $entry['title'] ) . '</a></li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+
+		echo '</ul>';
+	}
+
+	/**
+	 * The picked product: tick its colours, sizes and sides, set the base
+	 * price and create it.
+	 *
+	 * @param CatalogRenderer $renderer The provider.
+	 * @param string          $source   `printful` or `gelato`.
+	 * @param string          $ref      The provider's product or template.
+	 */
+	private function render_pick( CatalogRenderer $renderer, string $source, string $ref ): void {
+		try {
+			$choice = $renderer->choice( $ref );
+		} catch ( PrintfulException | GelatoException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		$defaults = array_values( array_intersect( array( 'front', 'back' ), array_column( $choice['sides'], 'placement' ) ) );
+		$defaults = PrintfulCatalog::SOURCE === $source ? $defaults : array_column( $choice['sides'], 'placement' );
+		$defaults = array() === $defaults ? array_slice( array_column( $choice['sides'], 'placement' ), 0, 1 ) : $defaults;
+
+		echo '<h2>' . esc_html( $choice['name'] ) . '</h2>';
+
+		if ( '' !== $choice['image'] && 'https' === wp_parse_url( $choice['image'], PHP_URL_SCHEME ) ) {
+			echo '<img src="' . esc_url( $choice['image'] ) . '" alt="" style="max-width:12rem;max-height:12rem;object-fit:contain">';
+		}
+
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="gelato_import">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="catalog_create">';
+		echo '<input type="hidden" name="source" value="' . esc_attr( $source ) . '"><input type="hidden" name="ref" value="' . esc_attr( $ref ) . '">';
 		wp_nonce_field( BaseProductActions::ACTION );
-		echo '<p><label>' . esc_html__( 'Gelato template id', 'merchboard' ) . ' <input type="text" name="gelato_template" required class="regular-text" pattern="[A-Za-z0-9-]{1,100}" autocomplete="off"></label> ';
-		echo '<label>' . esc_html__( 'Base price incl. VAT', 'merchboard' ) . ' <input type="text" name="base_price" required class="small-text" inputmode="decimal"></label> ';
-		submit_button( __( 'Import', 'merchboard' ), 'secondary', 'submit', false );
-		echo '</p></form></details>';
+		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Colours', 'merchboard' ) . '</th><td>';
+
+		foreach ( $choice['colors'] as $color ) {
+			echo '<label style="display:inline-block;margin:0 1em .4em 0"><input type="checkbox" name="colors[]" value="' . esc_attr( $color['name'] ) . '" checked> <span style="display:inline-block;width:1em;height:1em;vertical-align:middle;border:1px solid #8c8f94;background:' . esc_attr( $color['hex'] ) . '"></span> ' . esc_html( $color['name'] ) . '</label>';
+		}
+
+		echo '</td></tr><tr><th scope="row">' . esc_html__( 'Sizes', 'merchboard' ) . '</th><td>';
+
+		foreach ( $choice['sizes'] as $size ) {
+			echo '<label style="display:inline-block;margin:0 1em .4em 0"><input type="checkbox" name="sizes[]" value="' . esc_attr( $size ) . '" checked> ' . esc_html( $size ) . '</label>';
+		}
+
+		echo '</td></tr><tr><th scope="row">' . esc_html__( 'Sides', 'merchboard' ) . '</th><td>';
+
+		foreach ( $choice['sides'] as $side ) {
+			/* translators: 1: side name, 2: width in mm, 3: height in mm. */
+			$label = sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $side['name'], $side['width_mm'], $side['height_mm'] );
+			echo '<label style="display:block;margin-bottom:.4em"><input type="checkbox" name="sides[]" value="' . esc_attr( $side['placement'] ) . '"' . checked( in_array( $side['placement'], $defaults, true ), true, false ) . '> ' . esc_html( $label ) . '</label>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) . '</p></td></tr>';
+		/* translators: %s: currency code, e.g. "DKK". */
+		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required></td></tr>';
+		echo '</tbody></table>';
+		echo '<p>' . esc_html__( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) . '</p>';
+		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create and import', 'merchboard' ) . '</button></p></form>';
+	}
+
+	/**
+	 * The import of a base product from a catalog: its state, a failure's
+	 * reason with "Try again", and on request the provider's answers.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @throws DatabaseException When the import cannot be read.
+	 */
+	private function render_import( BaseProduct $base ): void {
+		$import = $this->bases->import( (int) $base->id );
+		$state  = $import['state'] ?? CatalogImport::NONE;
+		$data   = $import['data'] ?? array();
+		$name   = GelatoCatalog::SOURCE === ( $data['source'] ?? $base->source ) ? 'Gelato' : 'Printful';
+
+		if ( CatalogImport::NONE === $state ) {
+			return;
+		}
+
+		if ( CatalogImport::RUNNING === $state ) {
+			/* translators: %s: Printful or Gelato. */
+			echo '<div class="notice notice-info inline"><p>' . esc_html( sprintf( __( 'The photos and print areas are being imported from %s in the background. Reload the page to see when they are done; the base product cannot be activated meanwhile.', 'merchboard' ), $name ) ) . '</p></div>';
+		} elseif ( CatalogImport::FAILED === $state ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html( sprintf( /* translators: 1: Printful or Gelato, 2: reason. */ __( 'The import from %1$s failed: %2$s', 'merchboard' ), $name, DesignerNotifications::reason( is_string( $data['error'] ?? null ) ? $data['error'] : 'error' ) ) ) . '</p>';
+
+			foreach ( array( 'call', 'detail' ) as $field ) {
+				if ( is_string( $data[ $field ] ?? null ) && '' !== $data[ $field ] ) {
+					echo '<p><code>' . esc_html( $data[ $field ] ) . '</code></p>';
+				}
+			}
+
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="import_retry"><input type="hidden" name="base_id" value="' . esc_attr( (string) $base->id ) . '">';
+			wp_nonce_field( BaseProductActions::ACTION );
+			echo '<p><button type="submit" class="button">' . esc_html__( 'Try again', 'merchboard' ) . '</button></p></form></div>';
+		} else {
+			/* translators: %s: Printful or Gelato. */
+			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ), $name ) ) . '</p></div>';
+		}
+
+		// Read-only parameter; nothing is changed by this request.
+		$diagnose = isset( $_GET['diagnose'] ) && '1' === $_GET['diagnose']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+
+		if ( ! $diagnose || null === $this->catalog ) {
+			echo '<p><a href="' . esc_url( add_query_arg( 'diagnose', '1', self::edit_url( (int) $base->id ) ) ) . '">' . esc_html__( 'Show the provider\'s answer', 'merchboard' ) . '</a></p>';
+
+			return;
+		}
+
+		try {
+			$answer = $this->catalog->diagnose( (int) $base->id );
+		} catch ( DesignerException $e ) {
+			$notice = self::result_message( $e->reason() );
+			echo '<div class="notice notice-error inline"><p>' . esc_html( $notice[0] ?? $e->reason() ) . '</p></div>';
+
+			return;
+		}
+
+		echo '<details open><summary>' . esc_html__( 'The provider\'s answer (no keys)', 'merchboard' ) . '</summary><pre style="max-height:30rem;overflow:auto;background:#f6f7f7;padding:1em">' . esc_html( (string) wp_json_encode( $answer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) . '</pre></details>';
+	}
+
+	/**
+	 * A provider's refusal with the call and its own message.
+	 *
+	 * @param string $reason The provider exception's reason.
+	 * @param string $call   The call.
+	 * @param string $detail The provider's message.
+	 */
+	private function provider_error( string $reason, string $call, string $detail ): void {
+		$notice = self::result_message( $reason );
+
+		echo '<div class="notice notice-error inline"><p>' . esc_html( $notice[0] ?? $reason ) . '</p>';
+
+		if ( '' !== $call || '' !== $detail ) {
+			echo '<p><code>' . esc_html( trim( $call . ' · ' . $detail, ' ·' ) ) . '</code></p>';
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * A URL of "New base product" with query arguments.
+	 *
+	 * @param array<string, int|string> $args Query arguments.
+	 */
+	private static function new_url( array $args ): string {
+		return self::page_url( array_merge( array( 'view' => 'new' ), array_filter( $args, static fn( int|string $value ): bool => '' !== $value && 0 !== $value ) ), '' );
+	}
+
+	/**
+	 * The import's state after the status in the list, or ''.
+	 *
+	 * @param string $state Import state.
+	 */
+	private static function import_label( string $state ): string {
+		return match ( $state ) {
+			CatalogImport::RUNNING => ' · ' . __( 'importing…', 'merchboard' ),
+			CatalogImport::FAILED  => ' · ' . __( 'import failed', 'merchboard' ),
+			default                => '',
+		};
 	}
 
 	/**

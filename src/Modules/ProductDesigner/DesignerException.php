@@ -111,6 +111,30 @@ final class DesignerException extends RuntimeException {
 
 	public const MOCKUPS_PENDING = 'mockups_pending';
 
+	/** The catalog import (review 30.15): no colour, size or side was ticked. */
+	public const BASE_PICK = 'base_pick';
+
+	/** The base product is being imported and cannot be changed meanwhile. */
+	public const IMPORT_RUNNING = 'import_running';
+
+	/** A render of the provider failed. */
+	public const IMPORT_RENDER = 'import_render';
+
+	/** The renders took too long. */
+	public const IMPORT_TIMEOUT = 'import_timeout';
+
+	/** No side's marker was found in the renders. */
+	public const IMPORT_NO_AREA = 'import_no_area';
+
+	/** A render could not be read as an image. */
+	public const IMPORT_IMAGE = 'import_image';
+
+	/** The server has no GD to measure the renders. */
+	public const IMPORT_GD = 'import_gd';
+
+	/** The import could not be queued. */
+	public const IMPORT_QUEUE = 'import_queue';
+
 	/**
 	 * Constructor.
 	 *

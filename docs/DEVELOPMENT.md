@@ -181,12 +181,13 @@ Lokale overrides (fx `phpcs.xml` eller `phpstan.neon` uden `.dist`) kan oprettes
 | `src/` | Al PHP-kode inkl. egen autoloader (ADR-017) |
 | `templates/` | Dashboard-shell, 403-side og alert-overlayets side |
 | `assets/js/` | Admin-scripts uden build (brugersøgning i creator-formularen) |
+| `assets/designer/` | Produktdesignerens gennemsigtige fil og markørfiler, som Printful og Gelato henter, når et grundprodukt importeres fra kataloget (trin 30.15) |
 | `build/` | Dashboardets bundle: `dashboard.js`, `dashboard.css`, `dashboard-rtl.css` og `dashboard.asset.php`, alert-overlayets: `overlay.js`, `overlay.css`, `overlay-rtl.css` og `overlay.asset.php`, og admin-chatvinduets (trin 25.8): `alerts-admin.js` og `alerts-admin.asset.php`. Uden source maps |
 | `languages/` | `merchboard.pot`, `merchboard-da_DK.po`/`.mo` og JS-oversættelsen (`merchboard-da_DK-<md5(build/dashboard.js)>.json`) |
 
 **Aldrig med:** `vendor/` (ingen runtime-dependencies), `node_modules/`, `assets/src/` (TypeScript-kilder og Jest-tests), `tests/`, `docs/`, `bin/`, `.git*`, `.github/`, `.tools/`, konfiguration (`composer.*`, `package*.json`, `tsconfig.json`, `jest.config.js`, lint/test-konfiguration), caches, logs, databaser, `.env` og credentials. `.distignore` og `export-ignore` i `.gitattributes` er holdt i sync med allowlisten.
 
-**Sikkerhedsnet i scriptet:** Det afbryder, hvis runtime-filerne afviger fra `HEAD` (ændrede eller utrackede filer i `src/`, `templates/`, `languages/`, `assets/js/` eller hovedfilerne), hvis en påkrævet runtime-fil mangler (fx bundle, MO eller JS-oversættelse), eller hvis en forbudt fil slipper med (fx `.map`, `.ts`, `vendor/`, `tests/`, `.env`, `composer.json`).
+**Sikkerhedsnet i scriptet:** Det afbryder, hvis runtime-filerne afviger fra `HEAD` (ændrede eller utrackede filer i `src/`, `templates/`, `languages/`, `assets/js/`, `assets/designer/` eller hovedfilerne), hvis en påkrævet runtime-fil mangler (fx bundle, MO eller JS-oversættelse), eller hvis en forbudt fil slipper med (fx `.map`, `.ts`, `vendor/`, `tests/`, `.env`, `composer.json`).
 
 **Reproducerbar:** Samme `HEAD` og samme build giver byte-identisk ZIP (sorterede entries, tidsstempel fra `HEAD`-committen, faste rettigheder). Scriptet udskriver sti, version, filantal, størrelse og SHA-256.
 

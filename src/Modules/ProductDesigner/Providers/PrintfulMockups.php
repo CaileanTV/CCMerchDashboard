@@ -194,7 +194,7 @@ class PrintfulMockups {
 
 		foreach ( $this->tasks->for_version( $id ) as $task ) {
 			if ( ProviderTaskRepository::QUEUED === $task['status'] ) {
-				$this->create( $id, $product, $version, $base, $provider['placements'], $task );
+				$this->create( $id, $product, $version, $base, $provider, $task );
 			} elseif ( ProviderTaskRepository::PENDING === $task['status'] ) {
 				$this->poll( $id, $task );
 			}
@@ -220,19 +220,22 @@ class PrintfulMockups {
 	/**
 	 * Creates the task of a side at Printful.
 	 *
-	 * @param int                   $id         Version.
-	 * @param int                   $product    Printful product.
-	 * @param array<string, mixed>  $version    Version.
-	 * @param BaseProduct           $base       Base product.
-	 * @param array<string, string> $placements Printful placement by side.
-	 * @param array<string, mixed>  $task       Task row.
+	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>} $provider
+	 *
+	 * @param int                  $id       Version.
+	 * @param int                  $product  Printful product.
+	 * @param array<string, mixed> $version  Version.
+	 * @param BaseProduct          $base     Base product.
+	 * @param array                $provider The base product's provider data.
+	 * @param array<string, mixed> $task     Task row.
 	 * @throws PrintfulException When Printful refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function create( int $id, int $product, array $version, BaseProduct $base, array $placements, array $task ): void {
-		$side     = (string) $task['side'];
-		$variants = $this->variants( $product, $version, $base );
-		$view     = null;
+	private function create( int $id, int $product, array $version, BaseProduct $base, array $provider, array $task ): void {
+		$side       = (string) $task['side'];
+		$placements = $provider['placements'];
+		$variants   = $this->variants( $product, $version, $base, $provider['variants'] );
+		$view       = null;
 
 		foreach ( $base->views as $candidate ) {
 			if ( $candidate->key === $side ) {
@@ -413,17 +416,37 @@ class PrintfulMockups {
 
 	/**
 	 * One Printful variant per chosen colour (the first chosen size it has):
-	 * colour key by variant id.
+	 * colour key by variant id. From the catalog import's variant map (review
+	 * 30.15), else from the catalog by the colours' names.
 	 *
-	 * @param int                  $product Printful product.
-	 * @param array<string, mixed> $version Version.
-	 * @param BaseProduct          $base    Base product.
+	 * @param int                                  $product Printful product.
+	 * @param array<string, mixed>                 $version Version.
+	 * @param BaseProduct                          $base    Base product.
+	 * @param array<string, array<string, string>> $known   Variant by colour key and size.
 	 * @return array<int, string>
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
-	private function variants( int $product, array $version, BaseProduct $base ): array {
-		$chosen   = json_decode( (string) $version['colors'], true );
-		$sizes    = json_decode( (string) $version['sizes'], true );
+	private function variants( int $product, array $version, BaseProduct $base, array $known = array() ): array {
+		$chosen = json_decode( (string) $version['colors'], true );
+		$sizes  = json_decode( (string) $version['sizes'], true );
+		$map    = array();
+
+		if ( array() !== $known ) {
+			foreach ( is_array( $chosen ) ? $chosen : array() as $key ) {
+				foreach ( is_array( $sizes ) ? $sizes : array() as $size ) {
+					$variant = $known[ (string) $key ][ (string) $size ] ?? null;
+
+					if ( null !== $variant && ! in_array( (string) $key, $map, true ) ) {
+						$map[ (int) $variant ] = (string) $key;
+					}
+				}
+			}
+
+			unset( $map[0] );
+
+			return $map;
+		}
+
 		$names    = array_column( $base->colors, 'name', 'key' );
 		$catalog  = $this->api->product( $product );
 		$variants = is_array( $catalog['variants'] ?? null ) ? $catalog['variants'] : array();

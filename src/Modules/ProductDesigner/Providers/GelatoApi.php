@@ -17,23 +17,26 @@ use WP_Error;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-082 pkt. 1 and 5: the Gelato calls Merch Dashboard makes, on
- * `https://ecommerce.gelatoapis.com` with the key as `X-API-KEY`:
+ * ADR-082 pkt. 1 and 5: the Gelato calls Merch Dashboard makes, with the
+ * key as `X-API-KEY`:
  *
- * - `GET /v1/templates/{templateId}`;
- * - `POST /v1/stores/{storeId}/products:create-from-template`;
- * - `GET /v1/stores/{storeId}/products/{productId}`;
+ * - `GET https://product.gelatoapis.com/v3/catalogs` (the catalog search, review 30.15);
+ * - on `https://ecommerce.gelatoapis.com`: `GET /v1/templates/{templateId}`,
+ *   `POST /v1/stores/{storeId}/products:create-from-template` and
+ *   `GET /v1/stores/{storeId}/products/{productId}`;
  * - a download of a file Gelato returned (https, any host Gelato names).
  *
- * The approved catalog endpoints (`product.gelatoapis.com`) are not needed:
- * the template names the products, variants and print areas. Every call
- * uses `wp_safe_remote_*` with a 15 s timeout and no redirects; the HTTP
- * function can be replaced in tests. A 429 throws RATE_LIMITED. Nothing
- * runs while Gelato is switched off or has no key and store.
+ * The template names the products (`productUid`), variants and image
+ * placeholders. Every call uses `wp_safe_remote_*` with a 15 s timeout and
+ * no redirects; the HTTP function can be replaced in tests. A 429 throws
+ * RATE_LIMITED; a refused call names the call and Gelato's own message.
+ * Nothing runs while Gelato is switched off or has no key and store.
  */
 class GelatoApi {
 
 	public const BASE = 'https://ecommerce.gelatoapis.com';
+
+	public const CATALOG_BASE = 'https://product.gelatoapis.com';
 
 	private const TIMEOUT = 15;
 
@@ -63,6 +66,16 @@ class GelatoApi {
 	 */
 	public function available(): bool {
 		return Settings::gelato_enabled() && $this->account->configured();
+	}
+
+	/**
+	 * The product catalogs (`catalogUid`, `title`).
+	 *
+	 * @return array<mixed>
+	 * @throws GelatoException When the call fails.
+	 */
+	public function catalogs(): array {
+		return $this->call( 'GET', '/v3/catalogs', null, self::CATALOG_BASE );
 	}
 
 	/**
@@ -142,10 +155,11 @@ class GelatoApi {
 	 * @param string                    $method Method.
 	 * @param string                    $path   Path.
 	 * @param array<string, mixed>|null $body   JSON body.
+	 * @param string                    $base   API host.
 	 * @return array<string, mixed>
 	 * @throws GelatoException When the call fails.
 	 */
-	private function call( string $method, string $path, ?array $body = null ): array {
+	private function call( string $method, string $path, ?array $body = null, string $base = self::BASE ): array {
 		$this->require_available();
 
 		$args = array(
@@ -162,35 +176,49 @@ class GelatoApi {
 			$args['body']                    = (string) wp_json_encode( $body );
 		}
 
-		$response = ( $this->http )( $method, self::BASE . $path, $args );
+		$response = ( $this->http )( $method, $base . $path, $args );
+		$call     = $method . ' ' . (string) wp_parse_url( $base, PHP_URL_HOST ) . $path;
 
 		if ( $response instanceof WP_Error ) {
-			self::fail( GelatoException::FAILED );
+			self::fail( GelatoException::FAILED, $call );
 		}
 
-		$status = (int) wp_remote_retrieve_response_code( $response );
+		$status  = (int) wp_remote_retrieve_response_code( $response );
+		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+		$detail  = self::detail( $status, $decoded );
 
 		if ( 429 === $status ) {
 			$wait = wp_remote_retrieve_header( $response, 'retry-after' );
 
-			throw new GelatoException( GelatoException::RATE_LIMITED, is_numeric( $wait ) ? max( 1, (int) $wait ) : 60 );
+			throw new GelatoException( GelatoException::RATE_LIMITED, is_numeric( $wait ) ? max( 1, (int) $wait ) : 60, $call, $detail );
 		}
 
 		if ( 401 === $status || 403 === $status ) {
-			self::fail( GelatoException::UNAUTHORIZED );
+			self::fail( GelatoException::UNAUTHORIZED, $call, $detail );
 		}
 
 		if ( 404 === $status ) {
-			self::fail( GelatoException::NOT_FOUND );
+			self::fail( GelatoException::NOT_FOUND, $call, $detail );
 		}
 
-		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
-
 		if ( $status < 200 || $status > 299 || ! is_array( $decoded ) ) {
-			self::fail( GelatoException::FAILED );
+			self::fail( GelatoException::FAILED, $call, $detail );
 		}
 
 		return $decoded;
+	}
+
+	/**
+	 * The status and Gelato's own message of a call (`message`), shortened
+	 * and as plain text.
+	 *
+	 * @param int   $status  HTTP status.
+	 * @param mixed $decoded Decoded answer.
+	 */
+	private static function detail( int $status, mixed $decoded ): string {
+		$message = is_array( $decoded ) && is_string( $decoded['message'] ?? null ) ? $decoded['message'] : '';
+
+		return mb_substr( trim( 'HTTP ' . $status . ' ' . sanitize_text_field( $message ) ), 0, 300 );
 	}
 
 	/**
@@ -222,9 +250,11 @@ class GelatoApi {
 	 * Fails with a reason.
 	 *
 	 * @param string $reason GelatoException reason.
+	 * @param string $call   The call.
+	 * @param string $detail Gelato's message.
 	 * @throws GelatoException Always.
 	 */
-	private static function fail( string $reason ): never {
-		throw new GelatoException( $reason );
+	private static function fail( string $reason, string $call = '', string $detail = '' ): never {
+		throw new GelatoException( $reason, 0, $call, $detail );
 	}
 }

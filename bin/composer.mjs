@@ -30,6 +30,8 @@ const REQUIRED_EXTENSIONS = [
 	'fileinfo',
 	// Integration tests connect to MySQL/MariaDB through WordPress' wpdb.
 	'mysqli',
+	// The product designer measures the providers' renders with GD.
+	'gd',
 ];
 
 function run( command, commandArgs ) {
