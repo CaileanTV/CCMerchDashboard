@@ -285,6 +285,7 @@ Beslutningerne står i ADR-039 (inkl. præciseringen af P7); API-kontrakterne i 
 - **Lager:** kun lagerstatus (In stock, Out of stock, On backorder; ukendt → "Unknown"), aldrig lagerantal. Status vises som "Published"/"Private".
 - **Billede:** kun en thumbnail med samme origin (serveren sender ellers `null`, og klienten tjekker igen); `alt` er produktnavnet. Uden billede vises en pladsholder med `role="img"` og label "No image". CSP'en er uændret.
 - Produkt-id'et bruges kun som rækkenøgle og vises ikke.
+- **Dine designs (🔄 fase 30, trin 30.14):** mens sektionen Designer findes, viser `sections/products/DesignerProductsCard.tsx` creatorens designer-produkter under produktlisten (`GET /me/designer/products` via `getDesignerShopProducts`, valideret af `parseShopProducts`): i butikken (med link til produktsiden, kun samme origin), venter på godkendelse (ny eller ændring, med dato og prisen efter godkendelse), afvist (med admins note) og taget ud af butikken. Kladder vises kun som et antal; knappen "Open the designer" fører til Designer. Uden sektionen Designer sendes intet kald. Jest: `test/designer-products.test.tsx`.
 
 ### Orders (trin 7)
 

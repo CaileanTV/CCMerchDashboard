@@ -48,6 +48,10 @@ defined( 'ABSPATH' ) || exit;
  *   (answers the state, as does deleting a product).
  * - `GET /me/designer/assets/{id}`: a file the creator may see, sent as the
  *   image itself (no-store, nosniff); the dashboard shows it as `data:`.
+ * - `GET /me/designer/products` (step 30.14): every designer product of the
+ *   creator with its state for the section Products: in the shop (price
+ *   and link), waiting for approval (new or a change), rejected (the
+ *   administrator's note), taken out of the shop, or a draft.
  * - `POST /me/designer/products` `{ base_id }`, `GET|PUT|DELETE
  *   /me/designer/products/{id}`: start, read, save the draft of and delete a
  *   designer product.
@@ -112,6 +116,7 @@ final class MeDesignerController extends RestController {
 				WP_REST_Server::READABLE => 'asset',
 			),
 			'/products'                                   => array(
+				WP_REST_Server::READABLE  => 'products',
 				WP_REST_Server::CREATABLE => 'create_product',
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})'          => array(
@@ -165,6 +170,13 @@ final class MeDesignerController extends RestController {
 	 */
 	public function overview(): WP_REST_Response|WP_Error {
 		return $this->with_creator( self::ROUTE, fn( Creator $creator ): WP_REST_Response => new WP_REST_Response( $this->describe( $creator ), 200 ) );
+	}
+
+	/**
+	 * `GET /me/designer/products` (step 30.14).
+	 */
+	public function products(): WP_REST_Response|WP_Error {
+		return $this->with_creator( self::ROUTE . '/products', fn( Creator $creator ): WP_REST_Response => new WP_REST_Response( $this->states( $creator ), 200 ) );
 	}
 
 	/**
@@ -493,6 +505,66 @@ final class MeDesignerController extends RestController {
 				'price_decimals'   => function_exists( 'wc_get_price_decimals' ) ? (int) wc_get_price_decimals() : 2,
 			),
 		);
+	}
+
+	/**
+	 * The creator's designer products with their state, newest first: `retired`
+	 * (taken out of the shop with its base product), `in_shop` (a live
+	 * version), `waiting` (a new product waiting for approval), `rejected`
+	 * (the last decision was a rejection) or `draft`. A product in the shop
+	 * can have a change waiting or rejected next to it.
+	 *
+	 * @param Creator $creator The creator.
+	 * @return list<array<string, mixed>>
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	private function states( Creator $creator ): array {
+		$currencies = array();
+		$states     = array();
+		$price      = static fn( mixed $value ): ?string => null === $value ? null : SalesAmount::format( SalesAmount::parse( (string) $value ) );
+
+		foreach ( $this->bases->all() as $base ) {
+			$currencies[ (int) $base->id ] = $base->currency;
+		}
+
+		foreach ( $this->products->for_creator( $creator->id ) as $row ) {
+			$id      = (int) $row['id'];
+			$product = $this->products->find( $creator->id, $id );
+			$live    = $this->products->live( $id );
+			$pending = $this->products->pending( $id );
+			$refusal = $this->products->last_rejection( $id );
+			$wc_id   = is_numeric( $product['wc_product_id'] ?? null ) ? (int) $product['wc_product_id'] : 0;
+			$retired = DesignerProductRepository::RETIRED === ( $product['status'] ?? null );
+			$state   = match ( true ) {
+				$retired          => 'retired',
+				null !== $live    => 'in_shop',
+				null !== $pending => 'waiting',
+				null !== $refusal => 'rejected',
+				default           => 'draft',
+			};
+			$url      = 'in_shop' === $state && $wc_id > 0 && 'publish' === get_post_status( $wc_id ) ? get_permalink( $wc_id ) : false;
+			$states[] = array(
+				'id'        => $id,
+				'title'     => (string) ( $live['title'] ?? $row['title'] ),
+				'state'     => $state,
+				'currency'  => $currencies[ (int) $row['base_id'] ] ?? '',
+				'price'     => null === $live ? null : $price( $product['shop_price'] ?? $live['quoted_price'] ),
+				'url'       => is_string( $url ) ? $url : null,
+				'pending'   => null === $pending || $retired ? null : array(
+					'number'       => (int) $pending['number'],
+					'price'        => $price( $pending['quoted_price'] ),
+					'submitted_at' => mysql_to_rfc3339( (string) $pending['submitted_at'] ),
+				),
+				'rejection' => null === $refusal || null !== $pending || $retired ? null : array(
+					'number'     => (int) $refusal['number'],
+					'note'       => (string) $refusal['note'],
+					'decided_at' => mysql_to_rfc3339( (string) $refusal['decided_at'] ),
+				),
+				'draft'     => null !== $this->products->draft( $id ),
+			);
+		}
+
+		return $states;
 	}
 
 	/**

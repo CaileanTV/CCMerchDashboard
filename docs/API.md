@@ -536,7 +536,7 @@ Additive felter; de eksisterende beløb ekskl. moms er uændrede.
 
 Manglende moms regnes aldrig som 0. Dashboardet viser beløbene inkl. moms, når `vat.status` er `complete`, og ellers beløbene ekskl. moms med tydelig mærkning og en forklaring. `/me/sales`-cachens format er `v3`.
 
-## `/me/designer` 🔄 (fase 30, trin 30.8–30.10, ADR-080)
+## `/me/designer` 🔄 (fase 30, trin 30.8–30.10 og 30.14, ADR-080)
 
 Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabled`), for den creator `CreatorContext` afgør. Afviste ændringer giver 400 (404 for ukendt produkt, upload eller grundprodukt) med `code: merchboard_designer_refused` og `data.reason` (fx `design_invalid`, `design_title`, `design_profit`, `design_options`, `upload_quota`; fra 30.9 også `design_not_draft`, `design_empty`, `design_stale`, `submission_file`, `submission_files`, `submission_pending`, `not_pending`).
 
@@ -546,6 +546,7 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 | `POST /me/designer/uploads` (multipart `file`) | 201 med asset (`id`, `name`, `width`, `height`, `mime`). PNG, JPG eller WebP, højst 25 MB og 8000 px; højst 200 filer og 1 GB pr. creator |
 | `DELETE /me/designer/uploads/{id}` | Tilstanden som `GET` (kun creatorens egne uploads) |
 | `GET /me/designer/assets/{id}` | Filen selv (`no-store`, `nosniff`): creatorens uploads, kliparts og skabelonlag. Dashboardet viser den som `data:` |
+| `GET /me/designer/products` 🔄 30.14 | Creatorens designer-produkter, nyeste først, til sektionen Products: `id`, `title`, `state` (`in_shop`, `waiting`, `rejected`, `retired` eller `draft`), `currency`, `price` (butikkens pris inkl. moms, mens produktet er i butikken, ellers `null`), `url` (produktsiden, kun når produktet er publiceret), `pending` (`number`, `price`, `submitted_at` for en ventende ny version eller ændring, ellers `null`), `rejection` (`number`, `note`, `decided_at`, når den nyeste afgørelse er en afvisning og intet venter, ellers `null`) og `draft` (om der er en kladde). Et pensioneret produkt har hverken `pending` eller `rejection` |
 | `POST /me/designer/products` `{ base_id }` | 201 med produktet og dets første kladde (kun aktive grundprodukter) |
 | `GET /me/designer/products/{id}` | Produktet med kladden: `title`, `description`, `colors`, `sizes`, `design`, `profit_kind`, `profit_value`, `price` (kundens pris inkl. moms), `base_version`; og `pending` (fra 30.9: den ventende version med `number`, `title`, `price`, `submitted_at`, ellers `null`); fra 30.10 `live` (`number`, `title`, `price`) og `rejection` (`number`, `note`, `decided_at` for den nyeste afgørelse, når den er en afvisning) |
 | `PATCH /me/designer/products/{id}` | Gemmer kladden. Design-dokumentet valideres mod en whitelist (`DesignValidator`): `{ version: 1, sides: { <side>: [ objekt, … ] } }` med `text`, `image` (egen upload eller klipart) og `rect`/`ellipse`/`triangle`; positioner i printfilens pixels, talområder, `#rrggbb`, godkendte skrifttyper, højst 100 objekter pr. side og 256 KB |

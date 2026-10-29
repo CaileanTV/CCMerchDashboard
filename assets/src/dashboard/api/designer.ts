@@ -1,5 +1,5 @@
 /**
- * `/me/designer` (phase 30, steps 30.8–30.10, ADR-080): the base products,
+ * `/me/designer` (phase 30, steps 30.8–30.10 and 30.14, ADR-080): the base products,
  * files, fonts and designer products of the creator the server resolves, and
  * the submission of a draft with the files the browser rendered. Every
  * answer is validated; files are fetched with the session and shown as
@@ -7,7 +7,7 @@
  */
 import { request, requestFile } from './client';
 import type { ApiResult } from './client';
-import { isRecord } from './validate';
+import { isRecord, readSameOriginUrl } from './validate';
 import type { UnknownRecord } from './validate';
 import type { DesignDocument } from '../sections/designer/design-model';
 import { parseDesign } from '../sections/designer/design-model';
@@ -125,6 +125,29 @@ export interface DesignerRejection {
 	readonly number: number;
 	readonly note: string;
 	readonly decidedAt: string;
+}
+
+/** A designer product's state in the section Products (step 30.14). */
+export type DesignerShopState =
+	'in_shop' | 'waiting' | 'rejected' | 'retired' | 'draft';
+
+/** A designer product as the section Products shows it. */
+export interface DesignerShopProduct {
+	readonly id: number;
+	readonly title: string;
+	readonly state: DesignerShopState;
+	readonly currency: string;
+	/** The price in the shop (incl. VAT), while in the shop. */
+	readonly price: string | null;
+	/** The product page, while published. */
+	readonly url: string | null;
+	readonly pending: {
+		readonly number: number;
+		readonly price: string | null;
+		readonly submittedAt: string;
+	} | null;
+	readonly rejection: DesignerRejection | null;
+	readonly draft: boolean;
 }
 
 export interface DesignerProduct {
@@ -599,6 +622,115 @@ export function createDesignerProduct(
 			data: { base_id: baseId },
 		},
 		parseProduct
+	);
+}
+
+const SHOP_STATES: readonly DesignerShopState[] = [
+	'in_shop',
+	'waiting',
+	'rejected',
+	'retired',
+	'draft',
+];
+
+/**
+ * The waiting version of a designer product in the section Products: null
+ * when there is none, undefined when malformed.
+ *
+ * @param value Value.
+ */
+function parseShopPending(
+	value: unknown
+): DesignerShopProduct[ 'pending' ] | undefined {
+	if ( value === null ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		! isInt( value.number, 1 ) ||
+		( value.price !== null &&
+			! ( isString( value.price ) && DECIMAL.test( value.price ) ) ) ||
+		! isString( value.submitted_at )
+	) {
+		return undefined;
+	}
+
+	return {
+		number: value.number,
+		price: value.price,
+		submittedAt: value.submitted_at,
+	};
+}
+
+/**
+ * A designer product of `GET /me/designer/products`, or null.
+ *
+ * @param value Value.
+ */
+function parseShopProduct( value: unknown ): DesignerShopProduct | null {
+	if (
+		! isRecord( value ) ||
+		! isInt( value.id, 1 ) ||
+		! isString( value.title ) ||
+		! SHOP_STATES.includes( value.state as DesignerShopState ) ||
+		! isString( value.currency ) ||
+		( value.price !== null &&
+			! ( isString( value.price ) && DECIMAL.test( value.price ) ) ) ||
+		( value.url !== null && ! isString( value.url ) ) ||
+		typeof value.draft !== 'boolean'
+	) {
+		return null;
+	}
+
+	const pending = parseShopPending( value.pending );
+	const rejection = parseRejection( value.rejection );
+
+	if ( pending === undefined || rejection === undefined ) {
+		return null;
+	}
+
+	return {
+		id: value.id,
+		title: value.title,
+		state: value.state as DesignerShopState,
+		currency: value.currency,
+		price: value.price,
+		url:
+			value.url === null
+				? null
+				: readSameOriginUrl( value.url, window.location.origin ),
+		pending,
+		rejection,
+		draft: value.draft,
+	};
+}
+
+/**
+ * Validates `GET /me/designer/products`.
+ *
+ * @param body Response body.
+ */
+export function parseShopProducts(
+	body: unknown
+): DesignerShopProduct[] | null {
+	return list( body, parseShopProduct );
+}
+
+/**
+ * The creator's designer products with their state (step 30.14).
+ *
+ * @param signal Abort signal.
+ */
+export function getDesignerShopProducts(
+	signal?: AbortSignal
+): Promise< ApiResult< DesignerShopProduct[] > > {
+	return request(
+		{
+			path: `${ PATH }/products`,
+			...( signal === undefined ? {} : { signal } ),
+		},
+		parseShopProducts
 	);
 }
 

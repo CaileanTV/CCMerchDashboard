@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-29T17:10:19+00:00\n"
+"PO-Revision-Date: 2026-10-29T17:48:21+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1370,13 +1370,13 @@ msgstr "Alle hændelser"
 
 #: src/Modules/Admin/AuditLogPage.php:250
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "From"
 msgstr "Fra"
 
 #: src/Modules/Admin/AuditLogPage.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "To"
 msgstr "Til"
 
@@ -2002,7 +2002,7 @@ msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne lyde."
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:184
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:222
 #: build/dashboard.js:51
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Name"
 msgstr "Navn"
 
@@ -2040,7 +2040,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:334
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:357
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Remove"
 msgstr "Fjern"
 
@@ -3637,7 +3637,7 @@ msgstr "Nu"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:222
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Proposed"
 msgstr "Foreslået"
 
@@ -3912,6 +3912,8 @@ msgstr "Visningsnavn"
 #: build/dashboard.js:55
 #: build/dashboard.js:58
 #: build/dashboard.js:72
+#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Status"
 msgstr "Status"
 
@@ -4069,8 +4071,8 @@ msgstr "Profil"
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:229
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:515
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:241
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:587
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:140
 msgid "Not found."
 msgstr "Ikke fundet."
@@ -4171,7 +4173,7 @@ msgstr "Titel"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:415
-#: build/dashboard.js:72
+#: build/dashboard.js:77
 msgid "Published"
 msgstr "Udgivet"
 
@@ -4223,7 +4225,7 @@ msgid "Preview"
 msgstr "Forhåndsvis"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:329
-#: build/dashboard.js:76
+#: build/dashboard.js:81
 msgid "Withdraw"
 msgstr "Træk tilbage"
 
@@ -4256,6 +4258,7 @@ msgstr "Trukket tilbage"
 #: src/Modules/News/Admin/NewsAdminPage.php:417
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:574
 #: build/dashboard.js:54
+#: build/dashboard.js:74
 msgid "Draft"
 msgstr "Kladde"
 
@@ -4858,7 +4861,8 @@ msgstr "Din fortjeneste"
 #: build/dashboard.js:53
 #: build/dashboard.js:55
 #: build/dashboard.js:68
-#: build/dashboard.js:72
+#: build/dashboard.js:74
+#: build/dashboard.js:77
 msgid "Product"
 msgstr "Produkt"
 
@@ -4870,7 +4874,7 @@ msgid "Quantity"
 msgstr "Antal"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:163
-#: build/dashboard.js:72
+#: build/dashboard.js:77
 msgid "Price"
 msgstr "Pris"
 
@@ -5991,7 +5995,7 @@ msgstr "Creators har designs på dette grundprodukt. En ny grundpris eller skabe
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:292
 #: build/dashboard.js:54
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Description"
 msgstr "Beskrivelse"
 
@@ -6288,7 +6292,7 @@ msgstr "Ingen kampagner endnu."
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:643
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:780
 #: build/dashboard.js:66
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Period"
 msgstr "Periode"
 
@@ -6723,6 +6727,7 @@ msgstr "Kundens pris inkl. moms"
 #: src/Modules/ProductDesigner/DesignerNotifications.php:218
 #: src/Modules/ProductDesigner/DesignerNotifications.php:255
 #: src/Modules/ProductDesigner/DesignerNotifications.php:287
+#: build/dashboard.js:76
 msgid "Open the designer"
 msgstr "Åbn designeren"
 
@@ -7049,11 +7054,11 @@ msgstr "En creator har ændret et designer-produkt i butikken. Butikken beholder
 msgid "We no longer offer this base product, so the design cannot be approved. You are welcome to design on another product."
 msgstr "Vi tilbyder ikke længere dette grundprodukt, så designet kan ikke godkendes. Du er velkommen til at designe på et andet produkt."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:627
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:699
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:646
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:718
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -7615,7 +7620,7 @@ msgstr "Map kategori"
 #: build/dashboard.js:6
 #: build/dashboard.js:51
 #: build/dashboard.js:53
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Cancel"
 msgstr "Annullér"
 
@@ -8221,8 +8226,8 @@ msgstr "WooCommerce-produkter, der tilhører denne creator. Tilknytninger admini
 #. translators: 1: menu group, e.g. "Alerts", 2: page in the group.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:159
 #: build/dashboard.js:53
-#: build/dashboard.js:78
-#: build/dashboard.js:81
+#: build/dashboard.js:83
+#: build/dashboard.js:86
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr "%1$s: %2$s"
@@ -8371,7 +8376,7 @@ msgstr "Momsen mangler for nogle ældre salg i perioden, så beløbene vises eks
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
 #: build/dashboard.js:56
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Units"
 msgstr "Enheder"
 
@@ -8380,29 +8385,29 @@ msgstr "Enheder"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:591
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
 #: build/dashboard.js:56
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Orders"
 msgstr "Ordrer"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Sales per day (incl. VAT)"
 msgstr "Salg pr. dag (inkl. moms)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Net sales per day"
 msgstr "Nettosalg pr. dag"
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:79
+#: build/dashboard.js:84
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr "Salg, enheder og ordrer pr. periode (%s)"
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Day"
 msgstr "Dag"
 
@@ -8630,7 +8635,7 @@ msgstr "Gemt moms"
 #: build/dashboard.js:54
 #: build/dashboard.js:55
 #: build/dashboard.js:56
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Profit"
 msgstr "Profit"
 
@@ -8649,7 +8654,7 @@ msgstr "Mangler"
 #: build/dashboard.js:55
 #: build/dashboard.js:63
 #: build/dashboard.js:69
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Unknown"
 msgstr "Ukendt"
 
@@ -9193,6 +9198,7 @@ msgstr "Creator #%d"
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1016
 #: build/dashboard.js:54
 #: build/dashboard.js:59
+#: build/dashboard.js:74
 msgid "Rejected"
 msgstr "Afvist"
 
@@ -10080,7 +10086,7 @@ msgstr "Designer-produkt"
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:52
-#: build/dashboard.js:73
+#: build/dashboard.js:78
 #, js-format,php-format
 msgid "%1$s %2$s"
 msgstr "%1$s %2$s"
@@ -10659,7 +10665,7 @@ msgid "Log out"
 msgstr "Log ud"
 
 #: templates/dashboard/shell.php:47
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "Loading your dashboard…"
 msgstr "Indlæser dit dashboard …"
 
@@ -10808,7 +10814,7 @@ msgstr "Erstat lyd"
 #: build/dashboard.js:30
 #: build/dashboard.js:39
 #: build/dashboard.js:53
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Uploading…"
 msgstr "Uploader…"
 
@@ -12402,7 +12408,7 @@ msgid "This page could not be displayed."
 msgstr "Siden kunne ikke vises."
 
 #: build/dashboard.js:1
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "Please reload the page."
 msgstr "Genindlæs siden."
 
@@ -13253,7 +13259,7 @@ msgid "Saved"
 msgstr "Gemt"
 
 #: build/dashboard.js:53
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Send for approval"
 msgstr "Send til godkendelse"
 
@@ -13475,7 +13481,7 @@ msgid "Backward"
 msgstr "Tilbage"
 
 #: build/dashboard.js:54
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "Show"
 msgstr "Vis"
 
@@ -13516,6 +13522,7 @@ msgid "Opacity"
 msgstr "Dækkevne"
 
 #: build/dashboard.js:54
+#: build/dashboard.js:73
 msgid "In the shop"
 msgstr "I butikken"
 
@@ -13702,7 +13709,7 @@ msgid "Add a description and links to your channels."
 msgstr "Tilføj en beskrivelse og links til dine kanaler."
 
 #: build/dashboard.js:57
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Loading your profile…"
 msgstr "Indlæser din profil …"
 
@@ -13875,7 +13882,7 @@ msgid "Your payment details are encrypted, used only for this payout and deleted
 msgstr "Dine betalingsoplysninger krypteres, bruges kun til denne udbetaling og slettes, når den er behandlet. Derefter vises kun en maskeret version."
 
 #: build/dashboard.js:61
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Sending…"
 msgstr "Sender…"
 
@@ -14001,412 +14008,472 @@ msgstr "Du har endnu ingen anmodninger om udbetaling."
 msgid "Payout request pages"
 msgstr "Sider med anmodninger om udbetaling"
 
-#: build/dashboard.js:72
+#. translators: %s: date the change was sent.
+#: build/dashboard.js:73
+#, js-format
+msgid "In the shop · a change waits for approval (sent %s)"
+msgstr "I butikken · en ændring venter på godkendelse (sendt %s)"
+
+#: build/dashboard.js:73
+msgid "In the shop · your change was rejected"
+msgstr "I butikken · din ændring blev afvist"
+
+#. translators: %s: date the product was sent.
+#: build/dashboard.js:74
+#, js-format
+msgid "Waiting for approval (sent %s)"
+msgstr "Venter på godkendelse (sendt %s)"
+
+#: build/dashboard.js:74
+msgid "Taken out of the shop"
+msgstr "Taget ud af butikken"
+
+#: build/dashboard.js:74
+msgid "Your designs"
+msgstr "Dine designs"
+
+#. translators: %s: the administrator's note.
+#: build/dashboard.js:75
+#, js-format
+msgid "Note: %s"
+msgstr "Note: %s"
+
+#: build/dashboard.js:75
+msgid "Price incl. VAT"
+msgstr "Pris inkl. moms"
+
+#. translators: 1: price in the shop, 2: price after the change is approved.
+#: build/dashboard.js:76
+#, js-format
+msgid "%1$s (after approval %2$s)"
+msgstr "%1$s (efter godkendelse %2$s)"
+
+#: build/dashboard.js:76
+msgid "Loading your designs…"
+msgstr "Indlæser dine designs…"
+
+#: build/dashboard.js:76
+msgid "No designs in the shop or waiting for approval yet."
+msgstr "Ingen designs i butikken eller til godkendelse endnu."
+
+#: build/dashboard.js:76
+msgid "Design a product in the designer and send it for approval."
+msgstr "Design et produkt i designeren, og send det til godkendelse."
+
+#. translators: %d: number of drafts.
+#: build/dashboard.js:77
+#, js-format
+msgid "You have %d draft in the designer."
+msgid_plural "You have %d drafts in the designer."
+msgstr[0] "Du har %d kladde i designeren."
+msgstr[1] "Du har %d kladder i designeren."
+
+#: build/dashboard.js:77
 msgid "No image"
 msgstr "Intet billede"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:77
 msgid "No sales"
 msgstr "Intet salg"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:77
 msgid "Your products"
 msgstr "Dine produkter"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:77
 msgid "Private"
 msgstr "Privat"
 
-#: build/dashboard.js:72
+#: build/dashboard.js:77
 msgid "No price"
 msgstr "Ingen pris"
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr "%1$s–%2$s %3$s"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Stock"
 msgstr "Lager"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "In stock"
 msgstr "På lager"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Out of stock"
 msgstr "Udsolgt"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "On backorder"
 msgstr "I restordre"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Loading products…"
 msgstr "Indlæser produkter…"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "There are no products on this page."
 msgstr "Der er ingen produkter på denne side."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "You have no products yet."
 msgstr "Du har ingen produkter endnu."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Products linked to you in the shop will appear here."
 msgstr "Produkter, der er koblet til dig i butikken, vises her."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Product pages"
 msgstr "Produktsider"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your discount code has already been replaced 3 times in the last 24 hours. Try again later."
 msgstr "Din rabatkode er allerede skiftet 3 gange inden for de seneste 24 timer. Prøv igen senere."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "You have no discount code to reset. Your first discount code is created by us."
 msgstr "Du har ingen rabatkode at nulstille. Din første rabatkode opretter vi."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your discount code is being changed right now. Try again in a moment."
 msgstr "Din rabatkode bliver ændret lige nu. Prøv igen om et øjeblik."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your discount code was not reset. Nothing was changed; try again later."
 msgstr "Din rabatkode blev ikke nulstillet. Intet blev ændret; prøv igen senere."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your discount code"
 msgstr "Din rabatkode"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "With your own discount code you can buy your own merchandise without paying for your profit. Orders bought with your own discount code do not count in your sales and your profit."
 msgstr "Med din egen rabatkode kan du købe dit eget merchandise uden at betale for din fortjeneste. Ordrer købt med din egen rabatkode tæller ikke med i dit salg og din fortjeneste."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "You have no discount code yet."
 msgstr "Du har endnu ingen rabatkode."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Code:"
 msgstr "Kode:"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your new discount code is ready. The old code no longer works."
 msgstr "Din nye rabatkode er klar. Den gamle kode virker ikke længere."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen."
 msgstr "Din nye rabatkode er klar. Den gamle kode virker ikke længere. Vis den nye kode, når ingen andre kan se din skærm."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Hide discount code"
 msgstr "Skjul rabatkode"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Show discount code"
 msgstr "Vis rabatkode"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Reset and generate a new discount code"
 msgstr "Nulstil og generér ny rabatkode"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "The old code stops working at once."
 msgstr "Den gamle kode holder op med at virke med det samme."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Reset discount code"
 msgstr "Nulstil rabatkode"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "E-mail notifications"
 msgstr "E-mailnotifikationer"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Loading e-mail notifications…"
 msgstr "Indlæser e-mailnotifikationer…"
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Choose which e-mails you want. E-mails about payouts, settlement documents, your discount code, security and your account are always sent. All notifications are also shown at the bell at the top of the dashboard."
 msgstr "Vælg, hvilke e-mails du vil have. E-mails om udbetalinger, afregningsbilag, din rabatkode, sikkerhed og din konto sendes altid. Alle notifikationer vises også ved klokken øverst i dashboardet."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Your creator profile has no login, so no e-mails are sent."
 msgstr "Din creatorprofil har intet login, så der sendes ingen e-mails."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "There are no e-mails you can turn off right now."
 msgstr "Der er ingen e-mails, du kan slå fra lige nu."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "E-mail notifications saved."
 msgstr "E-mailnotifikationerne er gemt."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Waiting for approval."
 msgstr "Venter på godkendelse."
 
-#: build/dashboard.js:74
+#: build/dashboard.js:79
 msgid "Waiting for approval: remove the current one."
 msgstr "Venter på godkendelse: fjern det nuværende."
 
 #. translators: %s: the proposed text.
-#: build/dashboard.js:75
+#: build/dashboard.js:80
 #, js-format
 msgid "Waiting for approval: “%s”"
 msgstr "Venter på godkendelse: “%s”"
 
 #. translators: %s: field, e.g. "Description".
-#: build/dashboard.js:76
+#: build/dashboard.js:81
 #, js-format
 msgid "Withdraw the proposal for %s"
 msgstr "Træk forslaget til %s tilbage"
 
-#: build/dashboard.js:76
+#: build/dashboard.js:81
 msgid "Your last proposal was not approved."
 msgstr "Dit seneste forslag blev ikke godkendt."
 
 #. translators: %s: the administrator's note.
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 #, js-format
 msgid "Your last proposal was not approved: %s"
 msgstr "Dit seneste forslag blev ikke godkendt: %s"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "None yet."
 msgstr "Intet endnu."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Now: the shop’s standard banner with your logo."
 msgstr "Nu: butikkens standardbanner med dit logo."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Now in the shop."
 msgstr "Nu i butikken."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Proposed image"
 msgstr "Foreslået billede"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Upload new"
 msgstr "Upload nyt"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Light"
 msgstr "Lys"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Dark black"
 msgstr "Mørk sort"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Dark green"
 msgstr "Mørk grøn"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Dark blue"
 msgstr "Mørk blå"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Dark red"
 msgstr "Mørk rød"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Dark pink"
 msgstr "Mørk pink"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Theme saved."
 msgstr "Temaet er gemt."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Appearance"
 msgstr "Udseende"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Theme"
 msgstr "Tema"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "System default follows the light or dark setting of your device."
 msgstr "Systemstandard følger den lyse eller mørke indstilling på din enhed."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "System default"
 msgstr "Systemstandard"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Logo (category image)"
 msgstr "Logo (kategoribillede)"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Banner"
 msgstr "Banner"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Banner on mobile"
 msgstr "Banner på mobil"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Square, JPG, PNG or WebP, at least 300 × 300 pixels and at most 5 MB. Larger than 1000 × 1000 pixels is scaled down. Without an own banner it is shown in the middle of the shop’s standard banner."
 msgstr "Kvadratisk, JPG, PNG eller WebP, mindst 300 × 300 pixels og højst 5 MB. Større end 1000 × 1000 pixels skaleres ned. Uden eget banner vises det midt i butikkens standardbanner."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. Remove it to show the standard banner again."
 msgstr "JPG, PNG eller WebP, mindst 1280 pixels bredt og højst 5 MB, fx 2000 × 394 pixels. Fjern det for at vise standardbanneret igen."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB."
 msgstr "Valgfrit, til skærme under 768 pixels: JPG, PNG eller WebP, mindst 600 pixels bredt og højst 5 MB."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Image sent for approval."
 msgstr "Billedet er sendt til godkendelse."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Sent for approval."
 msgstr "Sendt til godkendelse."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Proposal withdrawn."
 msgstr "Forslaget er trukket tilbage."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "No changes to send."
 msgstr "Ingen ændringer at sende."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Your changes are sent to the shop for approval. They are shown in the shop when an administrator has approved them."
 msgstr "Dine ændringer sendes til butikken til godkendelse. De vises i butikken, når en administrator har godkendt dem."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "You do not have a product category in the shop yet. Your proposals are kept until you get one."
 msgstr "Du har endnu ingen produktkategori i butikken. Dine forslag gemmes, til du får en."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "About you"
 msgstr "Om dig"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Also the name of your category in the shop."
 msgstr "Også navnet på din kategori i butikken."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Logo and banner"
 msgstr "Logo og banner"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Link on the banner"
 msgstr "Link på banneret"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Optional, e.g. your Twitch or YouTube channel. Opens in a new tab."
 msgstr "Valgfrit, fx din Twitch- eller YouTube-kanal. Åbner i en ny fane."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Social media"
 msgstr "Sociale medier"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Shown as icons on your category page. Enter the full address or just your user name (e.g. @name)."
 msgstr "Vises som ikoner på din kategoriside. Skriv hele adressen eller bare dit brugernavn (fx @navn)."
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Password"
 msgstr "Adgangskode"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Change your password"
 msgstr "Skift din adgangskode"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Sales per week (incl. VAT)"
 msgstr "Salg pr. uge (inkl. moms)"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Sales per month (incl. VAT)"
 msgstr "Salg pr. måned (inkl. moms)"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Net sales per week"
 msgstr "Nettosalg pr. uge"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "Net sales per month"
 msgstr "Nettosalg pr. måned"
 
-#: build/dashboard.js:77
+#: build/dashboard.js:82
 msgid "(the table below has the same figures)"
 msgstr "(tabellen nedenfor har de samme tal)"
 
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Week"
 msgstr "Uge"
 
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Month"
 msgstr "Måned"
 
-#: build/dashboard.js:78
+#: build/dashboard.js:83
 msgid "Your sales"
 msgstr "Dit salg"
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr "Periode: %1$s – %2$s · Interval: %3$s"
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "No sales in this period."
 msgstr "Intet salg i denne periode."
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "Choose another period, or check back after your next sale."
 msgstr "Vælg en anden periode, eller kig igen efter dit næste salg."
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "Loading sales…"
 msgstr "Indlæser salg…"
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr "Perioden kan ikke vises. Vælg højst 366 dage, uger eller måneder og højst fem år."
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "The end date must be on or after the start date."
 msgstr "Slutdatoen skal være samme dag som eller efter startdatoen."
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "Choose period"
 msgstr "Vælg periode"
 
-#: build/dashboard.js:80
+#: build/dashboard.js:85
 msgid "Interval"
 msgstr "Interval"
 
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "This section is not available yet."
 msgstr "Denne sektion er ikke tilgængelig endnu."
 
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "Page not found"
 msgstr "Siden blev ikke fundet"
 
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "This page does not exist."
 msgstr "Siden findes ikke."
 
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "Go to the start page"
 msgstr "Gå til forsiden"
 
-#: build/dashboard.js:81
+#: build/dashboard.js:86
 msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."

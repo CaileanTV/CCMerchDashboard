@@ -1935,3 +1935,14 @@ input:disabled + .merchboard-sounds__upload {
 	display: inline-flex;
 	gap: var(--merchboard-space-2);
 }
+
+// The administrator's note under a rejected design (Products, step 30.14).
+.merchboard-designer__note {
+	display: block;
+	margin-top: var(--merchboard-space-1);
+	white-space: pre-line;
+}
+
+.merchboard-designer__drafts {
+	margin: var(--merchboard-space-3) 0 0;
+}

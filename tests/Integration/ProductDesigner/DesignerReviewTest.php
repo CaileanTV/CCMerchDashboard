@@ -15,6 +15,9 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
@@ -34,7 +37,9 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
+use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerOrderFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
@@ -47,6 +52,8 @@ use MerchBoard\Tests\Integration\Support\RecordingDesignerWriter;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
+use WP_Error;
+use WP_REST_Response;
 
 /**
  * A submitted design is approved with a frozen price and applied in steps
@@ -67,6 +74,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass( DesignerRepricing::class )]
 #[CoversClass( DesignerRetirement::class )]
 #[CoversClass( DesignerPrices::class )]
+#[CoversClass( MeDesignerController::class )]
 final class DesignerReviewTest extends IntegrationTestCase {
 
 	private DesignerFiles $files;
@@ -230,6 +238,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		$this->posts->remove_all();
 		DesignerFiles::remove_all();
+		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => false ) ) );
 		parent::tearDown();
 	}
 
@@ -586,6 +595,90 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		$this->repricing->run( $product );
 		self::assertSame( array(), $this->writer->prices, 'A retired product is never repriced.' );
+	}
+
+	public function test_the_creator_sees_each_product_s_state_in_the_section_products(): void {
+		$live = $this->submitted();
+		$this->review->approve( $this->pending_id( $live ) );
+		$this->drain();
+		$this->submissions->change( $this->creator, $live );
+		$this->save( $live, '30' );
+		$this->send_files( $live );
+		$this->submissions->submit( $this->creator, $live );
+		$waiting  = $this->submitted();
+		$rejected = $this->submitted();
+		$this->review->reject( $this->pending_id( $rejected ), 'Please use a sharper logo.' );
+		$draft = $this->drafts->create( $this->creator, $this->base );
+		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => true ) ) );
+		wp_set_current_user( (int) $this->creator->user_id );
+
+		$states = $this->states();
+		self::assertSame(
+			array(
+				$draft    => array( 'draft', null, null, null, true ),
+				$rejected => array( 'rejected', null, null, 'Please use a sharper logo.', true ),
+				$waiting  => array( 'waiting', null, '179.9400', null, false ),
+				$live     => array( 'in_shop', '179.9400', '194.9400', null, false ),
+			),
+			array_map( static fn( array $state ): array => array( $state['state'], $state['price'], $state['pending']['price'] ?? null, $state['rejection']['note'] ?? null, $state['draft'] ), array_column( $states, null, 'id' ) )
+		);
+		self::assertSame( array( 'DKK' ), array_values( array_unique( array_column( $states, 'currency' ) ) ) );
+		self::assertNull( array_column( $states, 'url', 'id' )[ $live ], 'A product that is not published has no link.' );
+
+		$shop = (int) ( $this->products->product( $live )['wc_product_id'] ?? 0 );
+		$this->wpdb->update( $this->wpdb->posts, array( 'post_status' => 'publish' ), array( 'ID' => $shop ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: the shop publishes the product.
+		clean_post_cache( $shop );
+		$link = get_permalink( $shop );
+		self::assertSame( is_string( $link ) ? $link : null, array_column( $this->states(), 'url', 'id' )[ $live ] );
+
+		wp_set_current_user( 1 );
+		$this->bases->retire( $this->base );
+		$this->drain_retirement();
+		wp_set_current_user( (int) $this->creator->user_id );
+		$retired = array_column( $this->states(), null, 'id' );
+		self::assertSame( array( 'retired', null, null ), array( $retired[ $live ]['state'], $retired[ $live ]['pending'], $retired[ $live ]['rejection'] ) );
+		self::assertSame( 'rejected', $retired[ $waiting ]['state'], 'Retiring rejects what waits.' );
+
+		wp_set_current_user( $this->create_user( 'other-creator' ) );
+		$refused = $this->controller()->products();
+		self::assertInstanceOf( WP_Error::class, $refused, 'Only a creator gets an answer.' );
+		self::assertSame( 403, rest_convert_error_to_response( $refused )->get_status() );
+	}
+
+	/**
+	 * The creator's states from `GET /me/designer/products`.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function states(): array {
+		$response = $this->controller()->products();
+		self::assertInstanceOf( WP_REST_Response::class, $response );
+		self::assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		self::assertIsArray( $data );
+
+		return array_values( $data );
+	}
+
+	/**
+	 * The creator's designer API.
+	 */
+	private function controller(): MeDesignerController {
+		$assets = new DesignerAssetRepository( $this->wpdb );
+		$bases  = new BaseProductRepository( $this->wpdb );
+
+		return new MeDesignerController(
+			$this->service( CreatorContext::class ),
+			$bases,
+			$this->products,
+			$this->drafts,
+			$this->submissions,
+			$assets,
+			$this->files,
+			new CreatorUploads( $assets, $this->files ),
+			new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ),
+			$this->service( Logger::class )
+		);
 	}
 
 	/**

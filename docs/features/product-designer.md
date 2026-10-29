@@ -14,7 +14,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
   - Ét design gælder for alle de valgte farver.
 - **Pris:** creatoren vælger sin fortjeneste i procent af grundprisen eller som et fast beløb og ser kundens pris med det samme (grundpris + fortjeneste, inkl. moms).
 - **Indsendelse:** creatoren sender produktet til godkendelse. Indtil admin har godkendt, er det ikke i butikken. En ændring af et godkendt produkt venter også på godkendelse; imens sælges den godkendte version uændret.
-- **Status:** creatoren ser sine produkter som kladde, venter, i butikken eller afvist med admins note.
+- **Status:** creatoren ser sine produkter som kladde, venter, i butikken eller afvist med admins note. Fra trin 30.14 viser sektionen Produkter også kortet "Dine designs": i butikken (pris og link), venter på godkendelse (ny eller ændring, med prisen efter godkendelse), afvist (med admins note) og taget ud af butikken. Kladder står i Designer.
 - **Notifikationer** (projektejerens ønske 2026-10-28). De hører til designeren og står ikke i fase 29's katalog:
   - Typerne defineres i ProductDesigner-modulet og registreres via et filter.
   - Til/fra, eksempel og testmail ligger på designerens admin-side (fanen Notifikationer), ikke på den generelle side Notifikationer.

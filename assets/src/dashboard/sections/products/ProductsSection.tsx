@@ -10,6 +10,7 @@ import { ProfitLegend, ProfitValue } from '../../components/ProfitValue';
 import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
 import { usePagedApi } from '../../hooks/usePagedApi';
+import { DesignerProductsCard } from './DesignerProductsCard';
 import type {
 	Product,
 	ProductPrice,
@@ -144,7 +145,8 @@ function ProductProfit( { product }: { readonly product: Product } ) {
  * Products (ADR-039): the creator's products from `GET /me/products`, read
  * only, a page at a time. Status and stock are text, not colour. While a page
  * loads the pagination stays (disabled) with the last known number of pages,
- * so keyboard focus is not lost.
+ * so keyboard focus is not lost. While the designer is on, the creator's
+ * designs follow (step 30.14).
  */
 export function ProductsSection() {
 	const { state, page, setPage, retry } = usePagedApi( getProducts );
@@ -157,57 +159,65 @@ export function ProductsSection() {
 	}, [ state ] );
 
 	if ( state.status === 'error' ) {
-		return <ApiErrorState error={ state.error } onRetry={ retry } />;
+		return (
+			<>
+				<ApiErrorState error={ state.error } onRetry={ retry } />
+				<DesignerProductsCard />
+			</>
+		);
 	}
 
 	const title = __( 'Your products', 'merchboard' );
 
 	return (
-		<Card title={ title }>
-			<Table
-				caption={ title }
-				captionHidden
-				columns={ columns() }
-				rows={ state.status === 'success' ? state.data.items : [] }
-				rowKey={ ( product ) => product.id }
-				loading={ state.status === 'loading' }
-				loadingLabel={ __( 'Loading products…', 'merchboard' ) }
-				empty={
-					page > 1 ? (
-						<EmptyState
-							title={ __(
-								'There are no products on this page.',
-								'merchboard'
-							) }
-						/>
-					) : (
-						<EmptyState
-							title={ __(
-								'You have no products yet.',
-								'merchboard'
-							) }
-							description={ __(
-								'Products linked to you in the shop will appear here.',
-								'merchboard'
-							) }
-						/>
-					)
-				}
-			/>
-			{ state.status === 'success' && state.data.items.length > 0 && (
-				<ProfitLegend />
-			) }
-			<Pagination
-				page={ page }
-				totalPages={
-					state.status === 'success'
-						? state.data.totalPages
-						: knownPages
-				}
-				onChange={ setPage }
-				label={ __( 'Product pages', 'merchboard' ) }
-				disabled={ state.status === 'loading' }
-			/>
-		</Card>
+		<>
+			<Card title={ title }>
+				<Table
+					caption={ title }
+					captionHidden
+					columns={ columns() }
+					rows={ state.status === 'success' ? state.data.items : [] }
+					rowKey={ ( product ) => product.id }
+					loading={ state.status === 'loading' }
+					loadingLabel={ __( 'Loading products…', 'merchboard' ) }
+					empty={
+						page > 1 ? (
+							<EmptyState
+								title={ __(
+									'There are no products on this page.',
+									'merchboard'
+								) }
+							/>
+						) : (
+							<EmptyState
+								title={ __(
+									'You have no products yet.',
+									'merchboard'
+								) }
+								description={ __(
+									'Products linked to you in the shop will appear here.',
+									'merchboard'
+								) }
+							/>
+						)
+					}
+				/>
+				{ state.status === 'success' && state.data.items.length > 0 && (
+					<ProfitLegend />
+				) }
+				<Pagination
+					page={ page }
+					totalPages={
+						state.status === 'success'
+							? state.data.totalPages
+							: knownPages
+					}
+					onChange={ setPage }
+					label={ __( 'Product pages', 'merchboard' ) }
+					disabled={ state.status === 'loading' }
+				/>
+			</Card>
+			<DesignerProductsCard />
+		</>
 	);
 }
