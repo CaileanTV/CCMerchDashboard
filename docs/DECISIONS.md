@@ -4570,6 +4570,7 @@ Pkt. 2, 6 og 10 er præciseret (fejl fundet i reviewet, rettet uden ændret adf�
   - Upload-kvoten tjekkes under en lås pr. creator, så samtidige uploads ikke kan komme over den.
   - Et skabelonlag kan kun hentes for et aktivt grundprodukt eller et, creatoren selv har et design på.
   - "Se som creator" må fortsat uploade og slette billeder i creatorens bibliotek (projektejerens valg 2026-10-29); det auditeres med administratoren som aktør.
+- **Ordrelinjens version (runtime-test 30.15 på Local):** versionen gemmes nu også på en ordrelinje, der oprettes uden for checkout (en ordre, admin opretter, eller REST-API'et; `woocommerce_new_order_item`), så printfilen altid kan hentes på ordren.
 
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.

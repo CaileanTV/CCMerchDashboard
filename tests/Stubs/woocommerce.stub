@@ -734,6 +734,17 @@ function get_woocommerce_currency() {}
 function wc_get_price_decimals() {}
 
 /**
+ * Adds meta to an order item (wc-order-item-functions.php).
+ *
+ * @param int    $item_id    Item id.
+ * @param string $meta_key   Key.
+ * @param mixed  $meta_value Value.
+ * @param bool   $unique     Whether the key may exist once.
+ * @return int|false Meta id.
+ */
+function wc_add_order_item_meta( $item_id, $meta_key, $meta_value, $unique = false ) {}
+
+/**
  * Whether taxes are enabled (wc-core-functions.php).
  *
  * @return bool

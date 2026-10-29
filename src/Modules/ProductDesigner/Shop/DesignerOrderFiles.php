@@ -52,8 +52,40 @@ class DesignerOrderFiles {
 	 */
 	public function register(): void {
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'remember' ), 10, 1 );
+		// An order line made outside the checkout (an order the administrator creates, the REST API; review 30.15).
+		add_action( 'woocommerce_new_order_item', array( $this, 'remember_saved' ), 10, 2 );
 		add_action( 'woocommerce_after_order_itemmeta', array( $this, 'render_item' ), 10, 2 );
 		add_action( 'add_meta_boxes_product', array( $this, 'add_box' ), 10, 1 );
+	}
+
+	/**
+	 * Stores the live version on an order line saved without the checkout
+	 * (the checkout's lines have it already); never breaks the save.
+	 *
+	 * @param mixed $item_id Item id.
+	 * @param mixed $item    The order line.
+	 */
+	public function remember_saved( mixed $item_id, mixed $item ): void {
+		if ( ! is_numeric( $item_id ) || ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) || ! method_exists( $item, 'get_meta' ) || '' !== (string) $item->get_meta( self::ITEM_META, true ) ) {
+			return;
+		}
+
+		try {
+			$product_id = (int) $item->get_product_id();
+			$version    = $product_id > 0 && null !== $this->guard->guard( $product_id ) ? $this->products->live_for_shop_product( $product_id ) : null;
+
+			if ( null !== $version ) {
+				wc_add_order_item_meta( (int) $item_id, self::ITEM_META, (string) $version, true );
+			}
+		} catch ( Throwable $e ) {
+			$this->logger->error(
+				'The design of an order line could not be stored.',
+				array(
+					'product_id' => $product_id ?? 0,
+					'exception'  => $e::class,
+				)
+			);
+		}
 	}
 
 	/**
