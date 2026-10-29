@@ -41,6 +41,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
   - sider med mockup-skabelon og printområde i mm og dpi.
   - Skabelonen kan importeres fra en PSD med lagene `mb_background`, `mb_color`, `mb_shading`, `mb_highlight` og `mb_print_area`. AI-filer eksporteres først til PSD.
 - **Kliparts og startdesigns**, som creatorne kan bruge.
+- **Implementeret (trin 30.6):** Merch Dashboard → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde; PSD-import følger i 30.7.
 - **Godkendelse:**
   - en kø med preview af mockups og printfiler og creatorens pris;
   - godkend eller afvis med note;

@@ -4507,6 +4507,13 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Arkitekturtesten** (`LegacyGuardArchitectureTest`) fejler, hvis prissættere, prismeta-nøgler, `new WC_Product*`, `new GuardedProduct` eller markørens skrivning findes andre steder i `src/`, eller hvis writeren får en ny offentlig metode.
 - **Kategoriafstemningen** rører ikke designer-produkter: de kobles med kilden `designer` (trin 30.10), som afstemningen behandler som en manuel kobling, og kladden har hverken kategori eller kobling, før den er markeret.
 
+**Statusnote 2026-10-29 (trin 30.6, grundprodukter implementeret, testet automatisk):** pkt. 2 er implementeret med en formular i admin (PSD-import følger i 30.7):
+- **Skabelonen** pr. side er fire PNG-lag (baggrund, farvemaske, skygge, highlight) i samme størrelse; mindst baggrund eller farvemaske kræves. Printområdet angives i skabelonens px, og printstørrelsen i hele mm ved 72–600 dpi (printfilen er mm × dpi / 25,4 px).
+- **Version:** en ny grundpris eller en ændret skabelon/printområde hæver `version`; navn, beskrivelse, kategori, farver og størrelser gør ikke.
+- **Status:** kladde → aktiv kræver mindst én farve, størrelse og side; et aktivt grundprodukt kan ikke gemmes ufuldstændigt. Et grundprodukt med designs slettes aldrig (pensionering i 30.11).
+- **Filer:** `DesignerFiles` gemmer dem i `uploads/merchboard-designer/` (pkt. 5) med 25 MB og 8000 px som grænse. Afviste filer slettes straks, erstattede lag efter gem. Admin ser dem via et nonce-beskyttet admin-post-endpoint.
+- **Farvenøgler** udledes af navnet; at omdøbe en farve giver en ny farve.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

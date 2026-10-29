@@ -649,4 +649,29 @@ enum AuditAction: string {
 	 * An administrator deleted an unused campaign (ADR-080 pkt. 9). Context: campaign_id, campaign_name.
 	 */
 	case DesignerCampaignDeleted = 'designer_campaign_deleted';
+
+	/**
+	 * An administrator created a base product of the product designer (ADR-080 pkt. 2). Context: base_id, base_name, version.
+	 */
+	case DesignerBaseCreated = 'designer_base_created';
+
+	/**
+	 * An administrator changed a base product (ADR-080 pkt. 2). Context: base_id, base_name, version, changed_fields, status.
+	 */
+	case DesignerBaseChanged = 'designer_base_changed';
+
+	/**
+	 * An administrator deleted an unused base product (ADR-080 pkt. 2). Context: base_id, base_name.
+	 */
+	case DesignerBaseDeleted = 'designer_base_deleted';
+
+	/**
+	 * An administrator added a clipart for the designer (ADR-080). Context: asset_id, asset_name.
+	 */
+	case DesignerClipartAdded = 'designer_clipart_added';
+
+	/**
+	 * An administrator deleted a clipart (ADR-080). Context: asset_id, asset_name.
+	 */
+	case DesignerClipartDeleted = 'designer_clipart_deleted';
 }

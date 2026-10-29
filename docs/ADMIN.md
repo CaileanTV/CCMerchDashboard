@@ -24,6 +24,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
 ├── Alerts                     ✅ fase 25, trin 25.5 (WooCommerce, ADR-065/067): fanen "Fonts" (Google Fonts API-nøgle, katalog og godkendte fonte); trin 25.6.3: fanen "Sounds" (lydbibliotek); trin 25.6.10: fanen "Images" (billedbibliotek til tekstfyld); trin 25.8: fanen "Chatbot" (Twitch, fra 25.8.2 også Kick, fra 25.8.4 også YouTube); trin 25.8.5: fanen "YouTube-vilkår" (privatlivspolitik og vilkår); trin 25.9.3: fanen "Ordrelog" (første fane og standard); trin 25.9.4: fanen "Globalt overlay"; trin 25.9.5: fanen "Standard-overlays"; trin 25.9.6: fanen "Creator-siden"; trin 25.10.1: fanen "Import"; trin 25.12.1: fanen "API" (alert-API til creators' egne bots, ADR-073); kræver merchboard_manage_alerts
 ├── Nyheder (News)             ✅ fase 25, trin 25.11 (ADR-072): beskeder til creators ("Hvad er nyt"): skriv, forhåndsvis, udgiv, ret, træk tilbage; set/lukket pr. creator; kræver merchboard_manage_creators
+├── Grundprodukter (Base products) 🔄 fase 30, trin 30.6 (WooCommerce, ADR-080 pkt. 2): grundprodukter med grundpris, farver, størrelser og sider (skabelonlag og printområde) samt fanen "Kliparts"; kræver merchboard_manage_designer
 ├── Kampagner (Campaigns)      🔄 fase 30, trin 30.4 (WooCommerce, ADR-080 pkt. 9): virksomhedens egne kampagner for designer-produkter (navn, periode, kuponkoder, tilbudspriser); kræver merchboard_manage_designer
 ├── (Import fra Product Vendors: fase 26, fjernet i trin 27.1 efter kørslen i produktion; se [features/vendor-import.md](features/vendor-import.md))
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
@@ -56,6 +57,21 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 - **Afgørelse:** "Approve" og "Reject" med en valgfri note til creatoren (højst 500 tegn), og "Approve all from …" pr. creator med flere forslag. POST til admin-post (`CategoryProposalActions`): capability → nonce bundet til forslaget eller creatoren → `CategoryProposals`. Post/Redirect/Get med en hvidlistet besked; tekniske fejl logges.
 - Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
 - **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
+
+### Grundprodukter 🔄 (fase 30, trin 30.6, ADR-080 pkt. 2)
+
+Merch Dashboard → **Grundprodukter** (`BaseProductsPage`/`BaseProductActions`, `merchboard_manage_designer`; kun med WooCommerce):
+- **Liste:** navn, status (kladde, aktiv), grundpris, antal farver, størrelser, sider, version og antal designs.
+- **Formular:**
+  - navn, beskrivelse, grundpris inkl. moms i butikkens valuta og præcision og standardkategori (til creators uden egen kategori);
+  - farver (én pr. linje: navn og `#rrggbb`) og størrelser (adskilt med komma);
+  - sider: navn, fire PNG-lag (baggrund, farvemaske, skygge, highlight) i samme størrelse og printområdet i skabelonens px samt printstørrelsen i mm ved en dpi (72–600). Siden viser printfilens størrelse i px.
+- **Status:** et nyt grundprodukt er en kladde. "Aktivér" kræver mindst én farve, størrelse og side; "Tilbage til kladde" stopper nye designs, men rører ikke produkter i butikken. Et grundprodukt med designs kan ikke slettes (pensionering kommer i 30.11).
+- **Version:** ny grundpris eller ny skabelon/printområde hæver `version` (genprisning i 30.11).
+- **Fanen "Kliparts":** upload (PNG, JPG eller WebP) med navn og sletning.
+- Filer vises via `DesignerAssetDownload` (nonce pr. fil). Afviste filer slettes straks, og et erstattet lag slettes, når ændringen er gemt.
+- Audit: `designer_base_created`, `designer_base_changed` (med `changed_fields` og `version`), `designer_base_deleted`, `designer_clipart_added` og `designer_clipart_deleted`.
+- PSD-import kommer i 30.7, Printful og Gelato i 30.12–30.13.
 
 ### Kampagner 🔄 (fase 30, trin 30.4, ADR-080 pkt. 9)
 

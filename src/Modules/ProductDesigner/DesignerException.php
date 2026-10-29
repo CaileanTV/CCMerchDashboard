@@ -39,6 +39,36 @@ final class DesignerException extends RuntimeException {
 
 	public const PRICES_EXCL_TAX = 'prices_excl_tax';
 
+	public const FILE_MISSING = 'file_missing';
+
+	public const FILE_TOO_LARGE = 'file_too_large';
+
+	public const FILE_TYPE = 'file_type';
+
+	public const BASE_NAME = 'base_name';
+
+	public const BASE_PRICE = 'base_price';
+
+	public const BASE_CATEGORY = 'base_category';
+
+	public const BASE_COLORS = 'base_colors';
+
+	public const BASE_SIZES = 'base_sizes';
+
+	public const BASE_VIEW = 'base_view';
+
+	public const BASE_LAYER_SIZE = 'base_layer_size';
+
+	public const BASE_INCOMPLETE = 'base_incomplete';
+
+	public const BASE_UNKNOWN = 'base_unknown';
+
+	public const BASE_IN_USE = 'base_in_use';
+
+	public const CLIPART_NAME = 'clipart_name';
+
+	public const CLIPART_UNKNOWN = 'clipart_unknown';
+
 	/**
 	 * Constructor.
 	 *

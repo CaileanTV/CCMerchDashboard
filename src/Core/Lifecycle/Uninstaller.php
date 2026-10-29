@@ -32,6 +32,7 @@ use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use WC_Order;
 use WP_User;
 use wpdb;
@@ -212,6 +213,9 @@ final class Uninstaller {
 		// Images waiting for approval (ADR-077); approved images belong to their category and stay.
 		ProposalFiles::remove_all();
 		delete_post_meta_by_key( ProposalFiles::MEDIA_META );
+
+		// The product designer's private files (ADR-080 pkt. 5): template layers, cliparts and later uploads and print files.
+		DesignerFiles::remove_all();
 
 		if ( ! $this->archive_creators() ) {
 			// Nothing is dropped; the opt-in survives so a later uninstall can finish.

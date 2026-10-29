@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-29T06:48:27+00:00\n"
+"PO-Revision-Date: 2026-10-29T08:04:20+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -144,7 +144,9 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Notifications/Admin/NotificationsAdminActions.php:74
+#: src/Modules/ProductDesigner/Admin/BaseProductActions.php:79
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
+#: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:87
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -612,354 +614,374 @@ msgstr "Kampagne ændret"
 msgid "Campaign deleted"
 msgstr "Kampagne slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:271
+#: src/Modules/Admin/AuditLogFormatter.php:181
+msgid "Base product created"
+msgstr "Grundprodukt oprettet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:182
+msgid "Base product changed"
+msgstr "Grundprodukt ændret"
+
+#: src/Modules/Admin/AuditLogFormatter.php:183
+msgid "Base product deleted"
+msgstr "Grundprodukt slettet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:184
+msgid "Clipart added"
+msgstr "Klipart tilføjet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:185
+msgid "Clipart deleted"
+msgstr "Klipart slettet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:276
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:273
+#: src/Modules/Admin/AuditLogFormatter.php:278
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:276
+#: src/Modules/Admin/AuditLogFormatter.php:281
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:279
+#: src/Modules/Admin/AuditLogFormatter.php:284
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:282
+#: src/Modules/Admin/AuditLogFormatter.php:287
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:285
+#: src/Modules/Admin/AuditLogFormatter.php:290
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:288
+#: src/Modules/Admin/AuditLogFormatter.php:293
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:290
+#: src/Modules/Admin/AuditLogFormatter.php:295
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:293
+#: src/Modules/Admin/AuditLogFormatter.php:298
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:296
+#: src/Modules/Admin/AuditLogFormatter.php:301
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:297
+#: src/Modules/Admin/AuditLogFormatter.php:302
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:298
+#: src/Modules/Admin/AuditLogFormatter.php:303
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:299
+#: src/Modules/Admin/AuditLogFormatter.php:304
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:301
+#: src/Modules/Admin/AuditLogFormatter.php:306
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:305
+#: src/Modules/Admin/AuditLogFormatter.php:310
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:308
+#: src/Modules/Admin/AuditLogFormatter.php:313
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:315
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:315
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:313
+#: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:316
+#: src/Modules/Admin/AuditLogFormatter.php:321
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:319
+#: src/Modules/Admin/AuditLogFormatter.php:324
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:322
+#: src/Modules/Admin/AuditLogFormatter.php:327
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:329
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:332
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:330
+#: src/Modules/Admin/AuditLogFormatter.php:335
 #, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr "Gjort af en administrator, der så som %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:333
+#: src/Modules/Admin/AuditLogFormatter.php:338
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr "Bevaret anonymt på grund af sine salg, udbetalinger og afregningsbilag"
 
-#: src/Modules/Admin/AuditLogFormatter.php:334
+#: src/Modules/Admin/AuditLogFormatter.php:339
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr "Slettet helt (ingen salg, udbetalinger eller afregningsbilag)"
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:337
+#: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
 msgid "Former name: %s"
 msgstr "Tidligere navn: %s"
 
 #. translators: %s: proposal id.
-#: src/Modules/Admin/AuditLogFormatter.php:340
+#: src/Modules/Admin/AuditLogFormatter.php:345
 #, php-format
 msgid "Proposal: #%s"
 msgstr "Forslag: #%s"
 
 #. translators: %s: what the proposal changes, e.g. "banner".
-#: src/Modules/Admin/AuditLogFormatter.php:343
+#: src/Modules/Admin/AuditLogFormatter.php:348
 #, php-format
 msgid "Proposed change: %s"
 msgstr "Foreslået ændring: %s"
 
 #. translators: %s: the administrator's note.
-#: src/Modules/Admin/AuditLogFormatter.php:346
+#: src/Modules/Admin/AuditLogFormatter.php:351
 #, php-format
 msgid "Note to the creator: %s"
 msgstr "Note til creatoren: %s"
 
 #. translators: %s: campaign id.
-#: src/Modules/Admin/AuditLogFormatter.php:349
+#: src/Modules/Admin/AuditLogFormatter.php:354
 #, php-format
 msgid "Campaign: #%s"
 msgstr "Kampagne: #%s"
 
 #. translators: %s: campaign name.
-#: src/Modules/Admin/AuditLogFormatter.php:352
+#: src/Modules/Admin/AuditLogFormatter.php:357
 #, php-format
 msgid "Campaign name: %s"
 msgstr "Kampagnens navn: %s"
 
 #. translators: %s: start and end in UTC.
-#: src/Modules/Admin/AuditLogFormatter.php:355
+#: src/Modules/Admin/AuditLogFormatter.php:360
 #, php-format
 msgid "Period (UTC): %s"
 msgstr "Periode (UTC): %s"
 
 #. translators: %s: comma-separated coupon codes.
-#: src/Modules/Admin/AuditLogFormatter.php:358
+#: src/Modules/Admin/AuditLogFormatter.php:363
 #, php-format
 msgid "Coupon codes: %s"
 msgstr "Kuponkoder: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:360
+#: src/Modules/Admin/AuditLogFormatter.php:365
 msgid "Covers sale prices: yes"
 msgstr "Omfatter tilbudspriser: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:360
+#: src/Modules/Admin/AuditLogFormatter.php:365
 msgid "Covers sale prices: no"
 msgstr "Omfatter tilbudspriser: nej"
 
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:363
+#: src/Modules/Admin/AuditLogFormatter.php:368
 #, php-format
 msgid "Session length: %d minutes"
 msgstr "Sessionens længde: %d minutter"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:366
+#: src/Modules/Admin/AuditLogFormatter.php:371
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:369
+#: src/Modules/Admin/AuditLogFormatter.php:374
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:372
+#: src/Modules/Admin/AuditLogFormatter.php:377
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:374
+#: src/Modules/Admin/AuditLogFormatter.php:379
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:382
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:380
+#: src/Modules/Admin/AuditLogFormatter.php:385
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:383
+#: src/Modules/Admin/AuditLogFormatter.php:388
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:390
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:390
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:388
+#: src/Modules/Admin/AuditLogFormatter.php:393
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:391
+#: src/Modules/Admin/AuditLogFormatter.php:396
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:399
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:395
+#: src/Modules/Admin/AuditLogFormatter.php:400
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:398
+#: src/Modules/Admin/AuditLogFormatter.php:403
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:401
+#: src/Modules/Admin/AuditLogFormatter.php:406
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:404
+#: src/Modules/Admin/AuditLogFormatter.php:409
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:407
+#: src/Modules/Admin/AuditLogFormatter.php:412
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:410
+#: src/Modules/Admin/AuditLogFormatter.php:415
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:451
+#: src/Modules/Admin/AuditLogFormatter.php:456
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:453
+#: src/Modules/Admin/AuditLogFormatter.php:458
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:455
+#: src/Modules/Admin/AuditLogFormatter.php:460
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:468
+#: src/Modules/Admin/AuditLogFormatter.php:473
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:469
+#: src/Modules/Admin/AuditLogFormatter.php:474
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:470
+#: src/Modules/Admin/AuditLogFormatter.php:475
 #: build/dashboard.js:53
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:471
+#: src/Modules/Admin/AuditLogFormatter.php:476
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:472
+#: src/Modules/Admin/AuditLogFormatter.php:477
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:473
+#: src/Modules/Admin/AuditLogFormatter.php:478
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:474
+#: src/Modules/Admin/AuditLogFormatter.php:479
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:345
 msgid "Failed"
 msgstr "Fejlet"
@@ -967,91 +989,91 @@ msgstr "Fejlet"
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:484
-#: src/Modules/Admin/AuditLogFormatter.php:510
-#: src/Modules/Admin/AuditLogFormatter.php:569
+#: src/Modules/Admin/AuditLogFormatter.php:489
+#: src/Modules/Admin/AuditLogFormatter.php:515
+#: src/Modules/Admin/AuditLogFormatter.php:574
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:497
+#: src/Modules/Admin/AuditLogFormatter.php:502
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:156
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:59
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:498
+#: src/Modules/Admin/AuditLogFormatter.php:503
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:59
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:499
+#: src/Modules/Admin/AuditLogFormatter.php:504
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:59
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:500
+#: src/Modules/Admin/AuditLogFormatter.php:505
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:478
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:59
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:528
+#: src/Modules/Admin/AuditLogFormatter.php:533
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:552
+#: src/Modules/Admin/AuditLogFormatter.php:557
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:553
+#: src/Modules/Admin/AuditLogFormatter.php:558
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:554
+#: src/Modules/Admin/AuditLogFormatter.php:559
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:555
+#: src/Modules/Admin/AuditLogFormatter.php:560
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:556
-#: src/Modules/Admin/AuditLogFormatter.php:708
+#: src/Modules/Admin/AuditLogFormatter.php:561
+#: src/Modules/Admin/AuditLogFormatter.php:713
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:557
+#: src/Modules/Admin/AuditLogFormatter.php:562
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:558
-#: src/Modules/Admin/AuditLogFormatter.php:768
+#: src/Modules/Admin/AuditLogFormatter.php:563
+#: src/Modules/Admin/AuditLogFormatter.php:773
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:55
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:559
+#: src/Modules/Admin/AuditLogFormatter.php:564
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:588
+#: src/Modules/Admin/AuditLogFormatter.php:593
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:603
+#: src/Modules/Admin/AuditLogFormatter.php:608
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -1060,7 +1082,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:672
+#: src/Modules/Admin/AuditLogFormatter.php:677
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -1069,121 +1091,122 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:672
+#: src/Modules/Admin/AuditLogFormatter.php:677
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:682
+#: src/Modules/Admin/AuditLogFormatter.php:687
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:683
+#: src/Modules/Admin/AuditLogFormatter.php:688
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:684
+#: src/Modules/Admin/AuditLogFormatter.php:689
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:685
+#: src/Modules/Admin/AuditLogFormatter.php:690
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:686
+#: src/Modules/Admin/AuditLogFormatter.php:691
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:687
+#: src/Modules/Admin/AuditLogFormatter.php:692
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:688
+#: src/Modules/Admin/AuditLogFormatter.php:693
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:689
+#: src/Modules/Admin/AuditLogFormatter.php:694
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:690
+#: src/Modules/Admin/AuditLogFormatter.php:695
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:691
+#: src/Modules/Admin/AuditLogFormatter.php:696
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:692
+#: src/Modules/Admin/AuditLogFormatter.php:697
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:693
+#: src/Modules/Admin/AuditLogFormatter.php:698
 msgid "the administrator stopped viewing as the creator"
 msgstr "administratoren stoppede selv med at se som creatoren"
 
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:699
 msgid "the session expired"
 msgstr "sessionen udløb"
 
-#: src/Modules/Admin/AuditLogFormatter.php:695
+#: src/Modules/Admin/AuditLogFormatter.php:700
 msgid "the administrator logged out"
 msgstr "administratoren loggede ud"
 
-#: src/Modules/Admin/AuditLogFormatter.php:696
+#: src/Modules/Admin/AuditLogFormatter.php:701
 msgid "the administrator viewed another creator"
 msgstr "administratoren så som en anden creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:709
+#: src/Modules/Admin/AuditLogFormatter.php:714
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:721
+#: src/Modules/Admin/AuditLogFormatter.php:726
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:722
+#: src/Modules/Admin/AuditLogFormatter.php:727
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:734
+#: src/Modules/Admin/AuditLogFormatter.php:739
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:735
+#: src/Modules/Admin/AuditLogFormatter.php:740
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:736
+#: src/Modules/Admin/AuditLogFormatter.php:741
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:768
+#: src/Modules/Admin/AuditLogFormatter.php:773
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:452
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:217
 #: build/dashboard.js:55
 #: build/dashboard.js:56
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:787
+#: src/Modules/Admin/AuditLogFormatter.php:792
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:788
+#: src/Modules/Admin/AuditLogFormatter.php:793
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:789
+#: src/Modules/Admin/AuditLogFormatter.php:794
 msgid "social links"
 msgstr "sociale links"
 
@@ -1801,6 +1824,7 @@ msgstr "Biblioteket er fuldt. Fjern et billede først."
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:90
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:105
 #: src/Modules/News/Admin/NewsAdminPage.php:160
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:142
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:113
 msgid "A technical error occurred. Nothing was changed."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret."
@@ -1914,6 +1938,10 @@ msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne lyde."
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:409
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:438
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:456
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:264
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:304
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:388
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:184
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:222
 #: build/dashboard.js:51
@@ -1953,6 +1981,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:419
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:499
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:334
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 #: build/dashboard.js:75
 msgid "Remove"
@@ -3805,6 +3834,7 @@ msgstr "Visningsnavn"
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:334
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:291
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
@@ -3886,6 +3916,7 @@ msgid "Edit"
 msgstr "Redigér"
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:236
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:368
 msgid "Activate"
 msgstr "Aktivér"
 
@@ -3894,6 +3925,7 @@ msgid "Deactivate"
 msgstr "Deaktivér"
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:241
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:408
 #: build/alerts-global-admin.js:12
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:12
@@ -4152,6 +4184,7 @@ msgid "Withdrawn"
 msgstr "Trukket tilbage"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:454
 msgid "Draft"
 msgstr "Kladde"
 
@@ -5597,6 +5630,328 @@ msgstr "Konto og priser"
 msgid "To the administrator"
 msgstr "Til administratoren"
 
+#: src/Modules/ProductDesigner/Admin/BaseProductActions.php:70
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:152
+#: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:81
+msgid "Sorry, you are not allowed to manage the product designer."
+msgstr "Du har ikke tilladelse til at administrere produktdesigneren."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:73
+msgid "Merch Dashboard Base products"
+msgstr "Merch Dashboard-grundprodukter"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:74
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:162
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:170
+msgid "Base products"
+msgstr "Grundprodukter"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:119
+msgid "The base product was saved."
+msgstr "Grundproduktet er gemt."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:120
+msgid "The base product is active: creators can design on it."
+msgstr "Grundproduktet er aktivt: creators kan designe på det."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:121
+msgid "The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected."
+msgstr "Grundproduktet er en kladde igen: creators kan ikke starte nye designs på det. Produkter i butikken påvirkes ikke."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:122
+msgid "The base product was deleted."
+msgstr "Grundproduktet er slettet."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:123
+msgid "The clipart was added."
+msgstr "Klipartet er tilføjet."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:124
+msgid "The clipart was deleted."
+msgstr "Klipartet er slettet."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:125
+#: src/Modules/ProductDesigner/Admin/CampaignsPage.php:105
+msgid "Enter a name of at most 191 characters."
+msgstr "Angiv et navn på højst 191 tegn."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:126
+msgid "Enter a base price above 0 with at most the store's decimals."
+msgstr "Angiv en grundpris over 0 med højst butikkens antal decimaler."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:127
+msgid "The category is not a product category."
+msgstr "Kategorien er ikke en produktkategori."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:128
+msgid "Enter one colour per line: a name and a colour code such as #1a2b3c. Names must differ."
+msgstr "Angiv én farve pr. linje: et navn og en farvekode som #1a2b3c. Navnene skal være forskellige."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:129
+msgid "Sizes must differ and have at most 20 characters."
+msgstr "Størrelserne skal være forskellige og have højst 20 tegn."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:130
+msgid "Check the sides: each needs a unique name, a background or colour mask, a print area inside the template and a print size of 1–2000 mm at 72–600 dpi."
+msgstr "Tjek siderne: hver skal have et unikt navn, en baggrund eller farvemaske, et printområde inden for skabelonen og en printstørrelse på 1–2000 mm ved 72–600 dpi."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:131
+msgid "All layers of a side must have the same size in pixels."
+msgstr "Alle lag på en side skal have samme størrelse i pixels."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:132
+msgid "An active base product needs at least one colour, one size and one side."
+msgstr "Et aktivt grundprodukt skal have mindst én farve, én størrelse og én side."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:133
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:187
+msgid "The base product no longer exists."
+msgstr "Grundproduktet findes ikke længere."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:134
+msgid "The base product has designs and cannot be deleted."
+msgstr "Grundproduktet har designs og kan ikke slettes."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:135
+msgid "Enter a name of at most 100 characters for the clipart."
+msgstr "Angiv et navn på højst 100 tegn til klipartet."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:136
+msgid "The clipart no longer exists."
+msgstr "Klipartet findes ikke længere."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:137
+msgid "The file could not be uploaded. Please try again."
+msgstr "Filen kunne ikke uploades. Prøv igen."
+
+#. translators: %s: largest file size, e.g. "25 MB".
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:139
+#, php-format
+msgid "The image is too large: at most %s and 8000 × 8000 pixels."
+msgstr "Billedet er for stort: højst %s og 8000 × 8000 pixels."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:140
+msgid "Use PNG, JPG or WebP images; template layers must be PNG."
+msgstr "Brug PNG-, JPG- eller WebP-billeder; skabelonlag skal være PNG."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:141
+msgid "You are not allowed to manage the product designer."
+msgstr "Du har ikke adgang til at administrere produktdesigneren."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:165
+msgid "New base product"
+msgstr "Nyt grundprodukt"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:171
+msgid "Cliparts"
+msgstr "Kliparts"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:195
+msgid "The product designer's data could not be read. Please try again later."
+msgstr "Produktdesignerens data kunne ikke læses. Prøv igen senere."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:207
+msgid "The products creators design on. The base price incl. VAT is what the company always keeps outside its own campaigns; the creator's profit comes on top. A base product is a draft until it is activated."
+msgstr "De produkter, creators designer på. Grundprisen inkl. moms er det, virksomheden altid beholder uden for sine egne kampagner; creatorens fortjeneste lægges oveni. Et grundprodukt er en kladde, indtil det aktiveres."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:212
+msgid "No base products yet."
+msgstr "Ingen grundprodukter endnu."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+msgid "Base price"
+msgstr "Grundpris"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:269
+msgid "Colours"
+msgstr "Farver"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:270
+msgid "Sizes"
+msgstr "Størrelser"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:273
+msgid "Sides"
+msgstr "Sider"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+msgid "Version"
+msgstr "Version"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:217
+#: build/alerts-global-admin.js:15
+#: build/alerts-page-admin.js:1
+#: build/alerts-presets-admin.js:15
+#: build/dashboard.js:42
+msgid "Designs"
+msgstr "Designs"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:248
+msgid "← All base products"
+msgstr "← Alle grundprodukter"
+
+#. translators: 1: status, 2: version, 3: number of designs.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:252
+#, php-format
+msgid "Status: %1$s · Version %2$d · %3$d designs"
+msgstr "Status: %1$s · Version %2$d · %3$d designs"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:256
+msgid "Creators have designs on this base product. A new base price or template raises the version; the designer products are repriced in a later step, and sales already registered keep their amounts."
+msgstr "Creators har designs på dette grundprodukt. En ny grundpris eller skabelon hæver versionen; designer-produkterne genprisses i et senere trin, og allerede registrerede salg beholder deres beløb."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:265
+#: build/dashboard.js:75
+msgid "Description"
+msgstr "Beskrivelse"
+
+#. translators: %s: currency code, e.g. "DKK".
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:267
+#, php-format
+msgid "Base price incl. VAT (%s)"
+msgstr "Grundpris inkl. moms (%s)"
+
+#. translators: %s: currency code, e.g. "DKK".
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:267
+msgid "What the company keeps per unit outside its own campaigns. Creators add their profit on top."
+msgstr "Det, virksomheden beholder pr. stk. uden for sine egne kampagner. Creators lægger deres fortjeneste oveni."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:268
+msgid "Default category"
+msgstr "Standardkategori"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:268
+msgid "Used for a creator without their own product category."
+msgstr "Bruges til en creator uden egen produktkategori."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:269
+msgid "One per line: a name and a colour code, e.g. \"Black #111111\"."
+msgstr "Én pr. linje: et navn og en farvekode, fx \"Sort #111111\"."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:270
+msgid "Separated by commas, e.g. \"S, M, L, XL\"."
+msgstr "Adskilt med komma, fx \"S, M, L, XL\"."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:274
+msgid "Each side has a mockup template of PNG layers of the same size: the background, the colour mask (tinted in the product colour), the shading and the highlight. The print area is where the design is placed on the template (in pixels) and its real size when printed (millimetres at a resolution in dpi)."
+msgstr "Hver side har en mockup-skabelon af PNG-lag i samme størrelse: baggrunden, farvemasken (farves i produktets farve), skyggen og highlight. Printområdet er der, hvor designet placeres på skabelonen (i pixels), og dets rigtige størrelse ved print (millimeter ved en opløsning i dpi)."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:284
+msgid "Create base product"
+msgstr "Opret grundprodukt"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:284
+msgid "Save base product"
+msgstr "Gem grundprodukt"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:302
+msgid "New side"
+msgstr "Ny side"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:307
+msgid "Leave empty to add no side."
+msgstr "Lad feltet stå tomt for ikke at tilføje en side."
+
+#. translators: 1: width in px, 2: height in px.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:310
+#, php-format
+msgid "Template %1$d × %2$d px"
+msgstr "Skabelon %1$d × %2$d px"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:328
+msgid "Print area in the template (px):"
+msgstr "Printområde i skabelonen (px):"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:333
+msgid "Width"
+msgstr "Bredde"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:334
+msgid "Height"
+msgstr "Højde"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:339
+msgid "Print size:"
+msgstr "Printstørrelse:"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:340
+msgid "Width (mm)"
+msgstr "Bredde (mm)"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:341
+msgid "Height (mm)"
+msgstr "Højde (mm)"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:342
+msgid "Resolution (dpi)"
+msgstr "Opløsning (dpi)"
+
+#. translators: 1: width in px, 2: height in px.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:347
+#, php-format
+msgid "Print file: %1$d × %2$d px"
+msgstr "Printfil: %1$d × %2$d px"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:348
+msgid "Remove this side"
+msgstr "Fjern denne side"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:366
+msgid "Back to draft"
+msgstr "Tilbage til kladde"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:366
+msgid "Creators can no longer start designs on it."
+msgstr "Creators kan ikke længere starte designs på det."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:368
+msgid "Creators can design on it."
+msgstr "Creators kan designe på det."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:372
+msgid "Delete base product"
+msgstr "Slet grundprodukt"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:384
+msgid "Images every creator can use in the designer. PNG, JPG or WebP; use PNG for transparency."
+msgstr "Billeder, som alle creators kan bruge i designeren. PNG, JPG eller WebP; brug PNG til gennemsigtighed."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:390
+msgid "Add clipart"
+msgstr "Tilføj klipart"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:395
+msgid "No cliparts yet."
+msgstr "Ingen kliparts endnu."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:427
+msgid "— None —"
+msgstr "— Ingen —"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:453
+msgid "Retired"
+msgstr "Udgået"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:465
+msgid "Background"
+msgstr "Baggrund"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:466
+msgid "Colour mask"
+msgstr "Farvemaske"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:467
+msgid "Shading"
+msgstr "Skygge"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:468
+msgid "Highlight"
+msgstr "Highlight"
+
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:68
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:123
 msgid "Sorry, you are not allowed to manage campaigns."
@@ -5626,10 +5981,6 @@ msgstr "Kampagnen er slettet."
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:104
 msgid "Enter a valid start and end."
 msgstr "Angiv en gyldig start og slut."
-
-#: src/Modules/ProductDesigner/Admin/CampaignsPage.php:105
-msgid "Enter a name of at most 191 characters."
-msgstr "Angiv et navn på højst 191 tegn."
 
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:106
 msgid "The end must be after the start."
@@ -5756,9 +6107,9 @@ msgstr "Planlagt"
 msgid "Ended"
 msgstr "Afsluttet"
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:81
-msgid "Sorry, you are not allowed to manage the product designer."
-msgstr "Du har ikke tilladelse til at administrere produktdesigneren."
+#: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
+msgid "The file no longer exists."
+msgstr "Filen findes ikke længere."
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:43
 msgid "The product designer settings were saved."
@@ -10688,13 +11039,6 @@ msgid "Design saved."
 msgstr "Designet er gemt."
 
 #: build/alerts-global-admin.js:15
-#: build/alerts-page-admin.js:1
-#: build/alerts-presets-admin.js:15
-#: build/dashboard.js:42
-msgid "Designs"
-msgstr "Designs"
-
-#: build/alerts-global-admin.js:15
 #: build/alerts-presets-admin.js:15
 #: build/dashboard.js:42
 msgid "Save your overlay's design (look, texts and sounds) under a name and use it again later, e.g. one design for each part of your stream. Only you see your designs. You can also start from a standard overlay. Your overlay URL always stays."
@@ -12628,10 +12972,6 @@ msgstr "Om dig"
 #: build/dashboard.js:75
 msgid "Also the name of your category in the shop."
 msgstr "Også navnet på din kategori i butikken."
-
-#: build/dashboard.js:75
-msgid "Description"
-msgstr "Beskrivelse"
 
 #: build/dashboard.js:75
 msgid "Logo and banner"

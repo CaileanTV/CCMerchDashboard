@@ -178,6 +178,11 @@ final class AuditLogFormatter {
 			AuditAction::DesignerCampaignCreated => __( 'Campaign created', 'merchboard' ),
 			AuditAction::DesignerCampaignChanged => __( 'Campaign changed', 'merchboard' ),
 			AuditAction::DesignerCampaignDeleted => __( 'Campaign deleted', 'merchboard' ),
+			AuditAction::DesignerBaseCreated => __( 'Base product created', 'merchboard' ),
+			AuditAction::DesignerBaseChanged => __( 'Base product changed', 'merchboard' ),
+			AuditAction::DesignerBaseDeleted => __( 'Base product deleted', 'merchboard' ),
+			AuditAction::DesignerClipartAdded => __( 'Clipart added', 'merchboard' ),
+			AuditAction::DesignerClipartDeleted => __( 'Clipart deleted', 'merchboard' ),
 		};
 	}
 

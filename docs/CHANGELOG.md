@@ -10,6 +10,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Produktdesigner, afregning (ADR-080 pkt. 8):** et designer-produkt afregnes med sikret grundpris. Virksomheden får altid grundprisen, en rabat tages fra creatorens fortjeneste (aldrig under 0), og creatorens egen rabatkode giver højst fortjenesten i rabat. Fortjeneste og udbetaling gemmes pr. salgsrække (schema-version 36). Legacy-produkter afregnes uændret.
 - **Produktdesigner, kampagner (ADR-080 pkt. 9):** ny admin-side Merch Dashboard → Kampagner. I virksomhedens egne kampagner (kuponkoder og/eller tilbudspriser i en periode) deles rabatten på designer-produkter forholdsmæssigt med creatoren; uden for kampagner får virksomheden fortsat grundprisen. En creators egen rabatkode kan ikke være kampagnekode.
 - **Produktdesigner, legacy-værn (ADR-080 pkt. 7):** en beskyttet markør på designer-produkter, et værn, der kun godkender produkter med række, markør og matchende token, og én writer, som er det eneste sted, der opretter produkter og skriver priser. En arkitekturtest sikrer, at legacy-produkter aldrig berøres.
+- **Produktdesigner, grundprodukter (ADR-080 pkt. 2):** ny admin-side Merch Dashboard → Grundprodukter med grundpris, farver, størrelser og sider (PNG-lag og printområde i px, mm og dpi) samt kliparts. Filerne ligger privat i `uploads/merchboard-designer/`; på nginx skal mappen nægtes adgang (SECURITY.md).
 
 ## [1.4.0] - 2026-10-28
 
