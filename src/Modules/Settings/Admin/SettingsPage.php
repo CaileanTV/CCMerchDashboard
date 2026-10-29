@@ -33,6 +33,11 @@ defined( 'ABSPATH' ) || exit;
  * and S11). It fires only after the capability check; each section checks
  * the capability again, renders its own form, nonce and notices and escapes
  * its own output.
+ *
+ * The screen has tabs (`&tab=`): "General" (the dashboard slug, the logo,
+ * sections of the tab `general` and "Data on uninstall") and the tabs
+ * modules add with add_tab(). The action gets the open tab, and a section
+ * renders only on its own tab; a section's form returns to it with url().
  */
 final class SettingsPage {
 
@@ -72,12 +77,89 @@ final class SettingsPage {
 	public const LOGO_SCRIPT = 'merchboard-settings-logo';
 
 	/**
-	 * URL of the settings screen, optionally with a notice code.
+	 * Query argument of the open tab.
+	 */
+	public const TAB_ARG = 'tab';
+
+	/**
+	 * The first tab.
+	 */
+	public const GENERAL = 'general';
+
+	/**
+	 * The tabs' order; other tabs follow in the order they were added.
+	 */
+	private const ORDER = array( self::GENERAL, 'sales', 'alerts', 'designer' );
+
+	/**
+	 * Adds a tab for a module's sections.
+	 *
+	 * @param string   $id    Tab id (a-z, 0-9, - and _).
+	 * @param callable $label Label (translated when the screen is shown).
+	 * @phpstan-param callable(): string $label
+	 */
+	public static function add_tab( string $id, callable $label ): void {
+		add_filter(
+			'merchboard_settings_tabs',
+			static function ( mixed $tabs ) use ( $id, $label ): array {
+				$tabs = is_array( $tabs ) ? $tabs : array();
+
+				$tabs[ $id ] ??= $label();
+
+				return $tabs;
+			}
+		);
+	}
+
+	/**
+	 * The tabs (id => label), "General" first.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function tabs(): array {
+		$tabs  = array( self::GENERAL => __( 'General', 'merchboard' ) );
+		$added = apply_filters( 'merchboard_settings_tabs', array() );
+
+		foreach ( is_array( $added ) ? $added : array() as $id => $label ) {
+			if ( is_string( $id ) && is_string( $label ) && '' !== $label && sanitize_key( $id ) === $id && ! isset( $tabs[ $id ] ) ) {
+				$tabs[ $id ] = $label;
+			}
+		}
+
+		uksort(
+			$tabs,
+			static function ( string $a, string $b ): int {
+				$rank = static fn( string $id ): int => false === array_search( $id, self::ORDER, true ) ? count( self::ORDER ) : (int) array_search( $id, self::ORDER, true );
+
+				return $rank( $a ) <=> $rank( $b );
+			}
+		);
+
+		return $tabs;
+	}
+
+	/**
+	 * The open tab: a known tab from the request, else "General".
+	 */
+	public static function current_tab(): string {
+		// Read-only navigation; nothing is changed by this request.
+		$tab = isset( $_GET[ self::TAB_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::TAB_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
+
+		return isset( self::tabs()[ $tab ] ) ? $tab : self::GENERAL;
+	}
+
+	/**
+	 * URL of the settings screen, optionally with a notice code and a tab.
 	 *
 	 * @param string $notice Notice code.
+	 * @param string $tab    Tab ('' or "general" for the first).
 	 */
-	public static function url( string $notice = '' ): string {
+	public static function url( string $notice = '', string $tab = '' ): string {
 		$args = array( 'page' => self::SLUG );
+
+		if ( '' !== $tab && self::GENERAL !== $tab ) {
+			$args[ self::TAB_ARG ] = $tab;
+		}
 
 		if ( '' !== $notice ) {
 			$args[ CreatorsAdminPage::NOTICE_ARG ] = $notice;
@@ -188,11 +270,22 @@ final class SettingsPage {
 		$notice  = self::notice_message( $code );
 		$enabled = Settings::delete_data_on_uninstall();
 
+		$tab = self::current_tab();
+
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Merch Dashboard Settings', 'merchboard' ) . '</h1>';
+		$this->render_tabs( $tab );
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( self::GENERAL !== $tab ) {
+			/** This action is documented below. */
+			do_action( 'merchboard_settings_sections', $tab );
+			echo '</div>';
+
+			return;
 		}
 
 		$this->render_dashboard_slug();
@@ -201,9 +294,12 @@ final class SettingsPage {
 		/**
 		 * Fires between the dashboard slug and "Data on uninstall" so other
 		 * modules can add their own settings sections (own form, nonce, notices
-		 * and escaping; ADR-038 S1).
+		 * and escaping; ADR-038 S1). On another tab it fires alone. A section
+		 * renders only when the open tab is its own.
+		 *
+		 * @param string $tab The open tab.
 		 */
-		do_action( 'merchboard_settings_sections' );
+		do_action( 'merchboard_settings_sections', $tab );
 
 		echo '<h2>' . esc_html__( 'Data on uninstall', 'merchboard' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here.', 'merchboard' ) . '</p>';
@@ -242,6 +338,27 @@ final class SettingsPage {
 		echo '</tbody></table>';
 		submit_button( __( 'Save settings', 'merchboard' ) );
 		echo '</form></div>';
+	}
+
+	/**
+	 * The tab bar (links; the open tab is marked for screen readers).
+	 *
+	 * @param string $current The open tab.
+	 */
+	private function render_tabs( string $current ): void {
+		echo '<nav class="nav-tab-wrapper" aria-label="' . esc_attr__( 'Settings sections', 'merchboard' ) . '">';
+
+		foreach ( self::tabs() as $id => $label ) {
+			printf(
+				'<a href="%1$s" class="nav-tab%2$s"%3$s>%4$s</a>',
+				esc_url( self::url( '', $id ) ),
+				$id === $current ? ' nav-tab-active' : '',
+				$id === $current ? ' aria-current="page"' : '',
+				esc_html( $label )
+			);
+		}
+
+		echo '</nav>';
 	}
 
 	/**

@@ -14,6 +14,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
+use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,6 +27,11 @@ defined( 'ABSPATH' ) || exit;
  * escaped at output.
  */
 final class DesignerSettingsSection {
+
+	/**
+	 * The settings tab of the section.
+	 */
+	public const TAB = 'designer';
 
 	/**
 	 * Registers the section on the settings screen.
@@ -43,6 +49,7 @@ final class DesignerSettingsSection {
 	 * Hooks the section into the Settings page.
 	 */
 	public function register(): void {
+		SettingsPage::add_tab( self::TAB, static fn(): string => __( 'Product designer', 'merchboard' ) );
 		add_action( 'merchboard_settings_sections', array( $this, 'render' ) );
 	}
 
@@ -66,8 +73,14 @@ final class DesignerSettingsSection {
 
 	/**
 	 * Renders the section.
+	 *
+	 * @param mixed $tab The open settings tab (only its own renders).
 	 */
-	public function render(): void {
+	public function render( mixed $tab = self::TAB ): void {
+		if ( self::TAB !== $tab ) {
+			return;
+		}
+
 		if ( ! current_user_can( Capabilities::MANAGE_DESIGNER ) ) {
 			return;
 		}

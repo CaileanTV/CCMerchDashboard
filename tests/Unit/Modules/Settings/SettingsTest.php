@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\Settings;
 
+use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -617,6 +618,62 @@ final class SettingsTest extends TestCase {
 		self::assertSame( 1, substr_count( $html, '[section:' ) );
 		self::assertGreaterThan( (int) strpos( $html, 'Save dashboard URL' ), $section );
 		self::assertLessThan( (int) strpos( $html, 'Data on uninstall' ), $section );
+	}
+
+	public function test_the_tabs_show_general_first_and_the_modules_in_order(): void {
+		Filters\expectApplied( 'merchboard_settings_tabs' )->andReturn(
+			array(
+				'designer' => 'Product designer',
+				'zz-extra' => 'Extra',
+				'alerts'   => 'Alerts',
+				'sales'    => 'Sales and payouts',
+				'general'  => 'Not General',
+				'Bad Id'   => 'Forged',
+			)
+		);
+		$_GET[ SettingsPage::TAB_ARG ] = 'alerts';
+		$hooks                         = array();
+		Functions\when( 'do_action' )->alias(
+			static function ( string $hook, mixed ...$args ) use ( &$hooks ): void {
+				$hooks[] = array( $hook, $args );
+			}
+		);
+
+		try {
+			$html = $this->render_page();
+		} finally {
+			unset( $_GET[ SettingsPage::TAB_ARG ] );
+		}
+
+		preg_match_all( '/class="nav-tab( nav-tab-active)?"[^>]*>([^<]+)</', $html, $tabs );
+		self::assertSame( array( 'General', 'Sales and payouts', 'Alerts', 'Product designer', 'Extra' ), $tabs[2] );
+		self::assertSame( array( '', '', ' nav-tab-active', '', '' ), $tabs[1] );
+		self::assertStringContainsString( 'page=merchboard-settings&tab=sales', $html );
+		self::assertSame( array( array( 'merchboard_settings_sections', array( 'alerts' ) ) ), $hooks, 'Only the open tab\'s sections.' );
+		self::assertStringNotContainsString( 'Save dashboard URL', $html );
+		self::assertStringNotContainsString( 'Data on uninstall', $html );
+	}
+
+	public function test_an_unknown_tab_opens_general(): void {
+		$_GET[ SettingsPage::TAB_ARG ] = 'nope';
+		$hooks                         = array();
+		Functions\when( 'do_action' )->alias(
+			static function ( string $hook, mixed ...$args ) use ( &$hooks ): void {
+				$hooks[] = $args;
+			}
+		);
+
+		try {
+			$html = $this->render_page();
+		} finally {
+			unset( $_GET[ SettingsPage::TAB_ARG ] );
+		}
+
+		self::assertSame( array( array( SettingsPage::GENERAL ) ), $hooks );
+		self::assertStringContainsString( 'Save dashboard URL', $html );
+		self::assertStringContainsString( 'Data on uninstall', $html );
+		self::assertSame( 'https://shop.test/wp-admin/admin.php?page=merchboard-settings', SettingsPage::url( '', SettingsPage::GENERAL ) );
+		self::assertSame( 'https://shop.test/wp-admin/admin.php?page=merchboard-settings&tab=designer', SettingsPage::url( '', 'designer' ) );
 	}
 
 	public function test_only_whitelisted_notices_are_shown(): void {

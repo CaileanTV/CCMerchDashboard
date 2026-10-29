@@ -423,7 +423,7 @@ final class SalesLedgerSettingsTest extends TestCase {
 	public function test_handler_saves_with_capability_and_nonce(): void {
 		$url = $this->actions()->save( $this->form( array( 'wc-on-hold', 'completed' ) ) );
 
-		self::assertSame( 'https://shop.test/wp-admin/admin.php?page=merchboard-settings&merchboard_sales_ledger_result=saved', $url );
+		self::assertSame( 'https://shop.test/wp-admin/admin.php?page=merchboard-settings&tab=sales&merchboard_sales_ledger_result=saved', $url );
 		self::assertSame( array( 'completed', 'on-hold' ), Settings::counted_order_statuses() );
 		self::assertSame( array( SalesLedgerSettingsActions::SAVE_ACTION ), $this->nonces );
 	}

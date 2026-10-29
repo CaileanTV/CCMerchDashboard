@@ -14,6 +14,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\AlertSettingsException;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
+use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -28,6 +29,11 @@ defined( 'ABSPATH' ) || exit;
 final class AlertsSettingsSection {
 
 	/**
+	 * The settings tab of the section.
+	 */
+	public const TAB = 'alerts';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param AlertsAvailability $availability Kill switch and MerchAlert guard.
@@ -39,6 +45,7 @@ final class AlertsSettingsSection {
 	 * Registers the section on the settings screen.
 	 */
 	public function register(): void {
+		SettingsPage::add_tab( self::TAB, static fn(): string => __( 'Alerts', 'merchboard' ) );
 		add_action( 'merchboard_settings_sections', array( $this, 'render' ) );
 	}
 
@@ -61,8 +68,14 @@ final class AlertsSettingsSection {
 
 	/**
 	 * Renders the section.
+	 *
+	 * @param mixed $tab The open settings tab (only its own renders).
 	 */
-	public function render(): void {
+	public function render( mixed $tab = self::TAB ): void {
+		if ( self::TAB !== $tab ) {
+			return;
+		}
+
 		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
 			return;
 		}

@@ -317,7 +317,7 @@ final class PayoutSettingsActions {
 	 * @param string $result Outcome code.
 	 */
 	public static function settings_url( string $result ): string {
-		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-payouts';
+		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url( '', PayoutSettingsSections::TAB ) ) . '#merchboard-payouts';
 	}
 
 	/**

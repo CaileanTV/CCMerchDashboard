@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\WooCommerce\Admin;
 
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Settings\Admin\SettingsPage;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatusException;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatusSettings;
 
@@ -30,6 +31,11 @@ defined( 'ABSPATH' ) || exit;
 final class SalesLedgerSettingsSection {
 
 	/**
+	 * The settings tab of the section.
+	 */
+	public const TAB = 'sales';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CountedOrderStatusSettings $settings Choices.
@@ -41,6 +47,7 @@ final class SalesLedgerSettingsSection {
 	 * Registers the section on the settings screen.
 	 */
 	public function register(): void {
+		SettingsPage::add_tab( self::TAB, static fn(): string => __( 'Sales and payouts', 'merchboard' ) );
 		add_action( 'merchboard_settings_sections', array( $this, 'render' ) );
 	}
 
@@ -65,8 +72,14 @@ final class SalesLedgerSettingsSection {
 
 	/**
 	 * Renders the section.
+	 *
+	 * @param mixed $tab The open settings tab (only its own renders).
 	 */
-	public function render(): void {
+	public function render( mixed $tab = self::TAB ): void {
+		if ( self::TAB !== $tab ) {
+			return;
+		}
+
 		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			return;
 		}

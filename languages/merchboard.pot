@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-29T17:48:16+00:00\n"
+"POT-Creation-Date: 2026-10-29T18:07:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -1528,7 +1528,7 @@ msgid "WooCommerce"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:198
-#: src/Modules/Settings/Admin/SettingsPage.php:208
+#: src/Modules/Settings/Admin/SettingsPage.php:304
 msgid "Data on uninstall"
 msgstr ""
 
@@ -1541,7 +1541,7 @@ msgid "Kept when the plugin is deleted"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:206
-#: src/Modules/Settings/Admin/SettingsPage.php:96
+#: src/Modules/Settings/Admin/SettingsPage.php:178
 msgid "Settings"
 msgstr ""
 
@@ -1588,15 +1588,15 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertApiTab.php:69
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:118
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:145
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:56
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:118
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:196
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:63
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:131
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:209
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:49
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:59
-#: src/Modules/Settings/Admin/SettingsPage.php:165
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:57
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:66
+#: src/Modules/Settings/Admin/SettingsPage.php:247
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:64
 msgid "You are not allowed to change these settings."
 msgstr ""
 
@@ -1719,7 +1719,8 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:78
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:177
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:76
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:48
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:89
 #: src/Modules/Alerts/Admin/OrderLogTab.php:200
 #: src/Modules/Alerts/Admin/OrderLogTab.php:209
 #: src/Modules/Alerts/Admin/OrderLogTab.php:246
@@ -1754,7 +1755,7 @@ msgid "The font was removed. Overlays that used it show the default font."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:117
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:60
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:67
 msgid "Nothing was changed."
 msgstr ""
 
@@ -2188,196 +2189,196 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:53
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:60
 msgid "Purchase alerts are switched on."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:54
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:61
 msgid "Purchase alerts are switched off. No new alerts are recorded."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:55
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:62
 msgid "No changes were made to the alert settings."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:57
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:64
 msgid "A technical error occurred. The alert settings were not changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:83
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:96
 msgid "MerchAlert is active on this site, so Merch Dashboard sends no alerts. Deactivate MerchAlert before you switch alerts on."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:86
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:99
 msgid "When an order is paid (processing or completed), the creator each product is attributed to gets an alert. Mapping a product category to a creator attributes its products, so the category turns the alerts on. Only active creators get alerts."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:87
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:100
 msgid "Status:"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:93
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:106
 msgid "Purchase alerts"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:95
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:108
 msgid "Record purchase alerts for creators"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:96
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:109
 msgid "Off by default. Orders paid while alerts are off get no alerts later."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:99
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:112
 msgid "Save alert settings"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:114
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:127
 msgid "The sound limits were saved. They apply to new uploads."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:115
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:128
 msgid "No changes were made to the sound limits."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:116
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:129
 msgid "The largest file must be a whole number between 100 KB and 500 MB. Nothing was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:117
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:130
 msgid "The longest sound must be a whole number between 1 second and 60 minutes. Nothing was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:119
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:132
 msgid "A technical error occurred. The sound limits were not changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:138
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:151
 msgid "Sound file limits"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:144
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:157
 msgid "The largest file and the longest sound creators and the sound library can upload (MP3, WAV or OGG). The limits apply to new uploads; sounds already uploaded stay."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:151
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:164
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:105
 msgid "Largest file"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:155
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:168
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:109
 msgid "Unit of the largest file"
 msgstr ""
 
 #. translators: %s: the site's upload limit, e.g. "8 MB".
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:161
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:174
 #, php-format
 msgid "100 KB to 500 MB; default 10 MB. This site accepts uploads of at most %s, so that is the limit now."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:162
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:175
 msgid "100 KB to 500 MB; default 10 MB."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:167
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:180
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:116
 msgid "Longest sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:171
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:184
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:120
 msgid "Unit of the longest sound"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:173
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:186
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:122
 msgid "seconds"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:175
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:188
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:124
 msgid "minutes"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:176
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:189
 msgid "1 second to 60 minutes; default 30 seconds."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:179
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:192
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:128
 msgid "Save sound limits"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:192
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:205
 msgid "The checkout username field was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:193
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:206
 msgid "No changes were made to the checkout username field."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:194
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:207
 msgid "The label must be one line of at most 100 characters. Nothing was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:195
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:208
 msgid "The checkbox text must be one line of at most 300 characters. Nothing was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:197
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:210
 msgid "A technical error occurred. The checkout username field was not changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:211
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:224
 msgid "Username in the checkout"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:217
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:230
 msgid "An optional field in the classic and the block checkout, where customers can give the username shown in the creator's alert and chat ($UserName). The customer first ticks a checkbox that says the name is shown publicly; then the field appears. Both are shown only while purchase alerts are switched on and the cart holds a creator's product. Without a username, alerts show \"Anonymous\"."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:222
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:235
 msgid "Username field"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:224
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:237
 msgid "Show the field in the checkout"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:225
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:238
 msgid "Off by default."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:228
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:241
 msgid "Label"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:233
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:246
 msgid "Empty for the default, e.g. \"Twitch username\"."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:237
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:250
 msgid "Checkbox text"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:242
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:255
 msgid "The text of the checkbox that shows the field. Empty for the default. Tell customers that the name is shown publicly."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:245
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:258
 msgid "Save checkout field"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:257
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:270
 msgid "Off. No alerts are recorded."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:261
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:274
 msgid "Switched on, but paused while MerchAlert is active."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:262
+#: src/Modules/Alerts/Admin/AlertsSettingsSection.php:275
 msgid "On. Alerts are recorded when orders are paid."
 msgstr ""
 
@@ -2967,57 +2968,57 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:45
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:46
 msgid "The company details were saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:46
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:47
 msgid "No changes were made to the company details."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:47
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:48
 msgid "The company name must be one line of at most 200 characters. Nothing was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:48
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:49
 msgid "The contact e-mail is not a valid e-mail address. Nothing was saved."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:51
 msgid "A technical error occurred. The company details were not changed."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:69
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:76
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:69
 msgid "Company details"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:75
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:82
 msgid "These details fill the placeholders of the YouTube chatbot's privacy policy and terms ([COMPANY], [CVR], [ADDRESS], [EMAIL]) when the pages are shown."
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:82
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:89
 msgid "Company name"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:86
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:93
 msgid "The legal name of the business, e.g. \"Merch ApS\". [COMPANY]"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:90
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:97
 msgid "Contact e-mail"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:93
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:100
 msgid "Where people write about privacy and the terms. [EMAIL]"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:97
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:104
 msgid "CVR number"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:98
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:104
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:105
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:111
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:74
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:688
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
@@ -3026,12 +3027,12 @@ msgstr ""
 msgid "Not registered"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:99
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:106
 msgid "Set in the section \"CVR number on settlement documents\" on this page. [CVR]"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:103
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:256
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:110
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:269
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:691
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:766
 #: build/dashboard.js:66
@@ -3039,15 +3040,15 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:105
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:112
 msgid "WooCommerce's store address, as on the settlement documents. [ADDRESS]"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:107
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:114
 msgid "Edit in WooCommerce"
 msgstr ""
 
-#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:110
+#: src/Modules/Alerts/Admin/CompanyDetailsSection.php:117
 msgid "Save company details"
 msgstr ""
 
@@ -3082,7 +3083,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:73
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:99
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:105
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:62
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:69
 msgid "The creator does not exist."
 msgstr ""
 
@@ -3708,7 +3709,7 @@ msgid "Creator deactivated."
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:207
-#: src/Modules/Settings/Admin/SettingsPage.php:164
+#: src/Modules/Settings/Admin/SettingsPage.php:246
 msgid "No changes were made."
 msgstr ""
 
@@ -5711,7 +5712,7 @@ msgid "Sales"
 msgstr ""
 
 #: src/Modules/Notifications/NotificationTypes.php:95
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:90
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:103
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:143
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:225
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:68
@@ -6373,157 +6374,158 @@ msgstr ""
 msgid "The file no longer exists."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:57
-msgid "The product designer settings were saved."
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:58
-msgid "No changes were made to the product designer settings."
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:60
-msgid "The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _)."
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:61
-msgid "The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store's address (a UUID)."
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:62
-msgid "A technical error occurred. The product designer settings were not changed."
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:80
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:99
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:52
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:93
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:112
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:128
 msgid "Product designer"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:81
-msgid "Creators can design their own products"
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:64
+msgid "The product designer settings were saved."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:82
-msgid "Off by default. New products and changes always wait for an administrator's approval. Products that were not made in the designer are never changed by it."
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:65
+msgid "No changes were made to the product designer settings."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:86
-msgid "Printful"
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:67
+msgid "The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _)."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:87
-msgid "Use Printful for base products and mockups"
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:68
+msgid "The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store's address (a UUID)."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:88
-msgid "Off by default. Only the catalog and the mockup generator are used; orders are not sent to Printful."
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:92
-msgid "Gelato"
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:93
-msgid "Use Gelato for base products and mockups"
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:69
+msgid "A technical error occurred. The product designer settings were not changed."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:94
+msgid "Creators can design their own products"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:95
+msgid "Off by default. New products and changes always wait for an administrator's approval. Products that were not made in the designer are never changed by it."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:99
+msgid "Printful"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:100
+msgid "Use Printful for base products and mockups"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:101
+msgid "Off by default. Only the catalog and the mockup generator are used; orders are not sent to Printful."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:105
+msgid "Gelato"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:106
+msgid "Use Gelato for base products and mockups"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:107
 msgid "Off by default. Only the catalog and mockups from your Gelato templates are used; orders are not sent to Gelato."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:119
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:132
 msgid "Printful API token"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:121
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:134
 msgid "A token is stored."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:121
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:134
 msgid "No token yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:124
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:137
 msgid "Remove the stored token"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:127
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:140
 msgid "A private token from the Printful Developer Portal with as few scopes as possible (the catalog and the mockup generator need no store access). It is stored encrypted and never shown again; leave the field empty to keep the stored one."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:128
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:141
 msgid "How to set up Printful"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:132
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:145
 msgid "Create an account at printful.com and a store of the type \"Manual order platform / API\" that is not connected to a web shop, so nothing is published or sold through Printful."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:133
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:146
 msgid "In Printful's Developer Portal (developers.printful.com), create a private token with access to that one store and as few scopes as possible. Do not choose orders, sync products or webhooks: Merch Dashboard never creates orders or products at Printful."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:134
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:147
 msgid "Paste the token above, switch Printful on and save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:135
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:148
 msgid "Import catalog products under Merch Dashboard → Base products (\"Import from Printful\"), check them, set the base price and activate them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:136
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:149
 msgid "Printful fetches print files from a short-lived link on this site, so mockups from Printful only work on a site Printful can reach (not on a local test site)."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:146
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:159
 msgid "Save product designer settings"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:157
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:170
 msgid "Gelato API key"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:159
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:172
 msgid "A key is stored."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:159
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:172
 msgid "No key yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:162
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:175
 msgid "Remove the stored key"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:165
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:178
 msgid "An API key from Gelato's dashboard. It is stored encrypted and never shown again; leave the field empty to keep the stored one."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:166
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:179
 msgid "Gelato store id"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:168
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:181
 msgid "How to set up Gelato"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:172
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:185
 msgid "Create an account at gelato.com and a store that is only used through the API and is not connected to a web shop or sales channel, so nothing is published or sold through Gelato. Products made for mockups stay in that store."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:173
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:186
 msgid "Create an API key in Gelato's dashboard (Developer → API keys) and copy the store id from the store's address."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:174
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:187
 msgid "Paste the key and the store id above, switch Gelato on and save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:175
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:188
 msgid "In Gelato's dashboard, make a template per product: the product, the colours and sizes creators may choose, and one image placeholder per side. Import it under Merch Dashboard → Base products (\"Import from Gelato\") with its template id, check it, set the base price and activate it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:176
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:189
 msgid "Gelato fetches print files from a short-lived link on this site, so mockups from Gelato only work on a site Gelato can reach (not on a local test site)."
 msgstr ""
 
@@ -7082,204 +7084,212 @@ msgid "Colour"
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsActions.php:130
-#: src/Modules/Settings/Admin/SettingsPage.php:183
+#: src/Modules/Settings/Admin/SettingsPage.php:265
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:93
 msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:95
-#: src/Modules/Settings/Admin/SettingsPage.php:192
+#: src/Modules/Settings/Admin/SettingsPage.php:120
+msgid "General"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:177
+#: src/Modules/Settings/Admin/SettingsPage.php:276
 msgid "Merch Dashboard Settings"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:138
+#: src/Modules/Settings/Admin/SettingsPage.php:220
 msgid "Choose the Merch Dashboard logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:139
+#: src/Modules/Settings/Admin/SettingsPage.php:221
 msgid "Use this logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:140
+#: src/Modules/Settings/Admin/SettingsPage.php:222
 msgid "Logo chosen. Save the logo to use it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:163
+#: src/Modules/Settings/Admin/SettingsPage.php:245
 #: build/alerts-global-admin.js:14
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
 msgid "Settings saved."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:166
+#: src/Modules/Settings/Admin/SettingsPage.php:248
 msgid "Permanent deletion was not enabled: type DELETE in the confirmation field to enable it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:167
+#: src/Modules/Settings/Admin/SettingsPage.php:249
 msgid "The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:168
+#: src/Modules/Settings/Admin/SettingsPage.php:250
 msgid "The dashboard slug was not changed: a page, post, product or archive already uses it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:169
+#: src/Modules/Settings/Admin/SettingsPage.php:251
 msgid "The logo was not changed: choose an image from the Media Library."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:170
+#: src/Modules/Settings/Admin/SettingsPage.php:252
 msgid "The logo was not changed: use a PNG, JPEG or WebP image. SVG is not allowed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:171
+#: src/Modules/Settings/Admin/SettingsPage.php:253
 msgid "The logo was not changed: the image must be at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:172
+#: src/Modules/Settings/Admin/SettingsPage.php:254
 msgid "The logo was not changed: the image must be stored on this site, not on another domain."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:173
+#: src/Modules/Settings/Admin/SettingsPage.php:255
 msgid "A technical error occurred. The settings were not changed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:209
+#: src/Modules/Settings/Admin/SettingsPage.php:305
 msgid "Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:212
+#: src/Modules/Settings/Admin/SettingsPage.php:308
 msgid "Permanent deletion is ENABLED."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:213
+#: src/Modules/Settings/Admin/SettingsPage.php:309
 msgid "When the plugin is deleted from the Plugins screen, the Merch Dashboard data listed below is permanently removed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:216
+#: src/Modules/Settings/Admin/SettingsPage.php:312
 msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:219
+#: src/Modules/Settings/Admin/SettingsPage.php:315
 msgid "If enabled, deleting the plugin permanently removes: the sales ledger, pricing and VAT data, creator metadata and categories, the encrypted payment details of payout requests, the creators' links to products and WordPress users, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:220
+#: src/Modules/Settings/Admin/SettingsPage.php:316
 msgid "Kept as historical documentation: the payout history, the settlement documents with their rows and numbering, the audit log and the creators. Every creator is archived: set to inactive and unlinked from its WordPress user, so no one gets dashboard access. Payment details are only kept masked (e.g. the last four digits of an account)."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:221
+#: src/Modules/Settings/Admin/SettingsPage.php:317
 msgid "Installing the plugin again shows this history, but only as documentation: reactivating an archived creator and normal payouts for it are not supported. The sales ledger is then rebuilt from the products' current creator links, so orders can be attributed to another creator than in the kept settlement documents, and balances, payouts and documents would not match."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:222
+#: src/Modules/Settings/Admin/SettingsPage.php:318
 msgid "While a payout is pending, deleting the plugin deletes nothing and is refused, so the pending payouts can still be handled."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:223
+#: src/Modules/Settings/Admin/SettingsPage.php:319
 msgid "Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:229
+#: src/Modules/Settings/Admin/SettingsPage.php:325
 msgid "Permanent deletion"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:231
+#: src/Modules/Settings/Admin/SettingsPage.php:327
 msgid "Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:235
+#: src/Modules/Settings/Admin/SettingsPage.php:331
 msgid "Confirmation"
 msgstr ""
 
 #. translators: %s: the word to type, "DELETE".
-#: src/Modules/Settings/Admin/SettingsPage.php:238
+#: src/Modules/Settings/Admin/SettingsPage.php:334
 #, php-format
 msgid "To enable permanent deletion, also type %s here."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:243
+#: src/Modules/Settings/Admin/SettingsPage.php:339
 msgid "Save settings"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:265
+#: src/Modules/Settings/Admin/SettingsPage.php:349
+msgid "Settings sections"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:382
 msgid "Whether payouts are pending cannot be checked right now. Deleting the plugin is refused until it can."
 msgstr ""
 
 #. translators: %d: number of pending payouts.
-#: src/Modules/Settings/Admin/SettingsPage.php:267
+#: src/Modules/Settings/Admin/SettingsPage.php:384
 #, php-format
 msgid "%d payout is pending. Deleting the plugin now deletes nothing and is refused; handle it under Payouts first."
 msgid_plural "%d payouts are pending. Deleting the plugin now deletes nothing and is refused; handle them under Payouts first."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:283
+#: src/Modules/Settings/Admin/SettingsPage.php:400
 msgid "Branding"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:284
+#: src/Modules/Settings/Admin/SettingsPage.php:401
 msgid "The logo is shown at the top of the creator dashboard and on the WordPress login page when creators log in to their dashboard. Other login pages are not changed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:287
+#: src/Modules/Settings/Admin/SettingsPage.php:404
 msgid "The chosen logo can no longer be used (deleted, changed or not on this site), so the default logo is shown."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:295
+#: src/Modules/Settings/Admin/SettingsPage.php:412
 msgid "Logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:298
+#: src/Modules/Settings/Admin/SettingsPage.php:415
 msgid "Current logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:301
+#: src/Modules/Settings/Admin/SettingsPage.php:418
 msgid "A custom logo is in use."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:301
+#: src/Modules/Settings/Admin/SettingsPage.php:418
 msgid "The default Merch Dashboard logo is in use."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:302
+#: src/Modules/Settings/Admin/SettingsPage.php:419
 msgid "Choose logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:303
+#: src/Modules/Settings/Admin/SettingsPage.php:420
 msgid "PNG, JPEG or WebP from the Media Library, at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high. SVG is not allowed. Use a logo that is readable on a light background; on dark dashboard themes it is shown on a light plate."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:306
+#: src/Modules/Settings/Admin/SettingsPage.php:423
 msgid "Save logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:310
+#: src/Modules/Settings/Admin/SettingsPage.php:427
 msgid "Use the default logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:324
+#: src/Modules/Settings/Admin/SettingsPage.php:441
 #: templates/alerts/legal.php:103
 #: templates/dashboard/shell.php:35
 msgid "Creator dashboard"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:325
+#: src/Modules/Settings/Admin/SettingsPage.php:442
 msgid "Creators log in and use their dashboard at this address:"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:328
+#: src/Modules/Settings/Admin/SettingsPage.php:445
 msgid "Plain permalinks are active, so the slug is not used; the dashboard address above works regardless."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:335
+#: src/Modules/Settings/Admin/SettingsPage.php:452
 msgid "Dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:337
+#: src/Modules/Settings/Admin/SettingsPage.php:454
 msgid "Lowercase letters, digits and hyphens. Changing it moves the dashboard: the old address stops working and bookmarks must be updated. Pages, posts, products and archives that already use a slug cannot be chosen."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:339
+#: src/Modules/Settings/Admin/SettingsPage.php:456
 msgid "Save dashboard URL"
 msgstr ""
 
@@ -7761,7 +7771,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:74
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:104
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:106
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:77
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:84
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:202
 msgid "A technical error occurred. Nothing was changed; try again later."
 msgstr ""
@@ -9237,181 +9247,186 @@ msgstr ""
 msgid "Manual assessment"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:59
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:53
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:50
+msgid "Sales and payouts"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:66
 msgid "Saved. Available payout amounts are calculated with the new value from now on."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:61
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:68
 msgid "You are not allowed to manage payouts."
 msgstr ""
 
 #. translators: %d: maximum number of days.
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:66
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:73
 #, php-format
 msgid "Not saved: enter a whole number of days between 0 and %d."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:71
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:78
 msgid "Not saved: enter a valid date that is not in the future, or leave the field empty for the whole history."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:72
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:79
 msgid "Not saved: the creator already has a settlement document, so the settlement start can no longer be changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:73
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:80
 msgid "Not saved: a payout of this creator is being processed. Try again in a moment."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:74
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:81
 msgid "Not saved: choose one of the listed gift card plugins, or none."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:75
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:82
 msgid "Not saved: a CVR or SE number has eight digits. Leave the field empty when there is none."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:76
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:83
 msgid "Not saved: a field is too long or contains line breaks or other control characters."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:96
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:109
 msgid "Holding period (days)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:103
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:116
 msgid "A sale counts towards the available payout amount when it is older than this. Refunds and other negative amounts count at once. Changing it changes no sales history."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:105
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:118
 msgid "Save holding period"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:121
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:134
 msgid "CVR number on settlement documents"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:127
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:140
 msgid "The CVR number of the business that issues the settlement documents. New documents show it with the shop's name and WooCommerce address; issued documents keep what they were issued with. Leave it empty when it is not registered: the document then says so."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:130
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:143
 msgid "Not registered: new settlement documents show the CVR number as not registered."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:134
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:147
 msgid "Save CVR number"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:147
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:160
 msgid "Payout gift cards"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:148
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:161
 msgid "Creators can choose a gift card as payout only when a gift card plugin is chosen here and available. You create each card by hand in that plugin and register it on the payout. Bank transfer and PayPal do not depend on this."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:153
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:166
 msgid "Status: available."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:154
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:167
 msgid "Status: the chosen gift card plugin is not supported. Gift cards are not available."
 msgstr ""
 
 #. translators: %s: reason code, e.g. inactive.
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:157
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:170
 #, php-format
 msgid "Status: not available (%s). Gift cards cannot be requested or registered."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:168
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:181
 msgid "Gift card plugin"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:170
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:183
 msgid "None (gift cards off)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:177
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:190
 msgid "Save gift card plugin"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:191
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:204
 msgid "Payout settlement start"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:197
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:210
 msgid "The settlement start could not be read."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:202
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:215
 msgid "Only sales on or after this date count towards the creator's payouts; refunds and corrections follow their sale. Leave it empty to count the whole history. Older sales are never changed or filled in."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:208
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:221
 msgid "Settlement start"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:215
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:228
 msgid "Save settlement start"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:228
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:241
 msgid "Master data for settlement documents"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:234
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:247
 msgid "The master data could not be read."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:239
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:252
 msgid "Shown on new settlement documents of this creator; issued documents keep what they were issued with. Fields that are left empty are shown as not registered. Without a legal name, the display name is used."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:243
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:256
 msgid "legal name"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:244
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:257
 msgid "address"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:245
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:258
 msgid "CVR/SE number"
 msgstr ""
 
 #. translators: %s: list of missing fields.
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:251
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:264
 #, php-format
 msgid "Not registered: %s."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:255
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:268
 msgid "Legal name (person or business)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:257
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:270
 msgid "Address, line 2"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:258
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:271
 msgid "Postcode"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:259
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:272
 msgid "City"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:260
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:273
 msgid "Country"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:261
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:274
 msgid "CVR/SE number (if any)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:288
+#: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:301
 msgid "Save master data"
 msgstr ""
 
@@ -10107,86 +10122,86 @@ msgstr ""
 msgid "%s (inactive)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:55
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:62
 msgid "Counted order statuses saved. They apply from the next synchronization of an order; nothing was recalculated."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:56
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:63
 msgid "No changes were made to the counted order statuses."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:58
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:65
 msgid "The counted order statuses were not changed: WooCommerce is not available."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:59
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:66
 msgid "The counted order statuses were not changed: choose at least one status."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:60
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:67
 msgid "The counted order statuses were not changed: a chosen status cannot count. Reload the page and try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:61
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:68
 msgid "A technical error occurred. The counted order statuses were not changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:78
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:91
 msgid "Sales ledger"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:88
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:101
 msgid "WooCommerce is not available, so the counted order statuses cannot be changed now."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:93
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:106
 msgid "Orders in these statuses count as sales in the sales ledger."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:94
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:107
 msgid "A change applies only to future synchronizations: an order is evaluated with the new list the next time it is saved or synchronized, also if it already exists. Nothing is recalculated now, and the sales history is never changed."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:100
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:101
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:113
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:114
 msgid "Counted order statuses"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:108
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:121
 msgid "not registered"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:115
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:128
 msgid "At least one status is required. Pending payment, failed, cancelled, refunded, draft and trashed orders never count. A status marked \"not registered\" is no longer known to WooCommerce (for example because the plugin that adds it is inactive); it still counts, can be removed, but cannot be added again until it is registered."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:119
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:132
 msgid "Save counted statuses"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:134
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:147
 msgid "Not supported"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:135
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:148
 msgid "These statuses are registered by WooCommerce or another plugin, but they cannot count as sales and cannot be chosen: only statuses with a \"wc-\" key and a slug that both order storages (HPOS and legacy) keep unchanged are supported."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:155
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:168
 msgid "the key must be \"wc-\" followed by the status slug, without an empty or repeated \"wc-\""
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:159
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:172
 msgid "the key does not start with \"wc-\""
 msgstr ""
 
 #. translators: %d: maximum number of characters.
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:162
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:175
 #, php-format
 msgid "longer than %d characters without \"wc-\""
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:165
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:178
 msgid "only lowercase letters, digits, \"_\" and \"-\" are supported"
 msgstr ""
 

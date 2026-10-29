@@ -13,6 +13,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\AlertSettingsException;
 use MerchBoard\Modules\Alerts\Legal\CompanyDetails;
+use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,8 +55,14 @@ final class CompanyDetailsSection {
 
 	/**
 	 * Renders the section.
+	 *
+	 * @param mixed $tab The open settings tab (only its own renders).
 	 */
-	public function render(): void {
+	public function render( mixed $tab = SettingsPage::GENERAL ): void {
+		if ( SettingsPage::GENERAL !== $tab ) {
+			return;
+		}
+
 		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) ) {
 			return;
 		}

@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\WooCommerce\Admin;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\Creator;
+use MerchBoard\Modules\Settings\Admin\SettingsPage;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
@@ -32,6 +33,11 @@ defined( 'ABSPATH' ) || exit;
 final class PayoutSettingsSections {
 
 	/**
+	 * The settings tab of the section.
+	 */
+	public const TAB = 'sales';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PayoutSettings         $settings  Current values.
@@ -44,6 +50,7 @@ final class PayoutSettingsSections {
 	 * Registers both sections.
 	 */
 	public function register(): void {
+		SettingsPage::add_tab( self::TAB, static fn(): string => __( 'Sales and payouts', 'merchboard' ) );
 		add_action( 'merchboard_settings_sections', array( $this, 'render_settings' ) );
 		add_action( 'merchboard_creators_edit_sections', array( $this, 'render_creator' ), 9 );
 	}
@@ -81,8 +88,14 @@ final class PayoutSettingsSections {
 
 	/**
 	 * The "Payouts" section on the settings screen.
+	 *
+	 * @param mixed $tab The open settings tab (only its own renders).
 	 */
-	public function render_settings(): void {
+	public function render_settings( mixed $tab = self::TAB ): void {
+		if ( self::TAB !== $tab ) {
+			return;
+		}
+
 		if ( ! current_user_can( Capabilities::MANAGE_PAYOUTS ) ) {
 			return;
 		}

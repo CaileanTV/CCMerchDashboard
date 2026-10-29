@@ -63,7 +63,7 @@ final class SalesLedgerSettingsActions {
 	 * @param string $result Outcome code.
 	 */
 	public static function url( string $result ): string {
-		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url() );
+		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url( '', SalesLedgerSettingsSection::TAB ) );
 	}
 
 	/**

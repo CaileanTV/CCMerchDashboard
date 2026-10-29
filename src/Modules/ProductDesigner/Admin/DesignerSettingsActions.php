@@ -55,7 +55,7 @@ final class DesignerSettingsActions {
 	 * @param string $result Outcome code.
 	 */
 	public static function url( string $result ): string {
-		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-designer';
+		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url( '', DesignerSettingsSection::TAB ) ) . '#merchboard-designer';
 	}
 
 	/**

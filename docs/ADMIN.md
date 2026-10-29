@@ -160,6 +160,14 @@ Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), 
 
 ### Settings
 
+**Faner (2026-10-29, projektejerens ønske):** siden er delt i faner (`&tab=`), så afsnittene er lettere at finde:
+- **Generelt:** creator-dashboardets adresse, logo, virksomhedsoplysninger og "Data on uninstall";
+- **Salg og udbetalinger** (`sales`): salgsledger og udbetalinger;
+- **Alerts** (`alerts`): alerts, brugernavn i checkout og grænser for lydfiler;
+- **Produktdesigner** (`designer`): designeren, Printful og Gelato.
+
+Et modul tilføjer sin fane med `SettingsPage::add_tab()` (filteret `merchboard_settings_tabs`). Handlingen `merchboard_settings_sections` får den åbne fane, og en sektion vises kun på sin egen fane. Efter gem kommer man tilbage til samme fane (`SettingsPage::url( $notice, $tab )`). En fane, man ikke har adgang til, viser intet; en ukendt fane åbner Generelt.
+
 ✅ **Fase 9:** `Modules/Settings`: `SettingsPage` (submenu "Settings", capability `merchboard_manage_settings`), `SettingsActions` (`admin-post.php?action=merchboard_save_settings`) og `SettingsService`. Samme mønster som creator-administrationen: capability → nonce → whitelistede felter → service (tjekker capability igen) → Post/Redirect/Get med whitelistede notice-koder. WordPress' Settings API (`options.php`) bruges bevidst ikke, fordi den som standard kræver `manage_options`. Pluginet autoriserer med sin egen `merchboard_manage_settings`.
 
 **"Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)"** (default fra; før ADR-059 "Delete all Merch Dashboard data when the plugin is deleted"):

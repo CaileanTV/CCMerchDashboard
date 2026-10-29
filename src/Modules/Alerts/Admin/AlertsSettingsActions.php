@@ -151,7 +151,7 @@ final class AlertsSettingsActions {
 	 * @param string $result Outcome code.
 	 */
 	public static function url( string $result ): string {
-		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-alerts';
+		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url( '', AlertsSettingsSection::TAB ) ) . '#merchboard-alerts';
 	}
 
 	/**
@@ -170,7 +170,7 @@ final class AlertsSettingsActions {
 	 * @param string $result Outcome code.
 	 */
 	public static function sounds_url( string $result ): string {
-		return add_query_arg( array( self::SOUNDS_RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-sound-limits';
+		return add_query_arg( array( self::SOUNDS_RESULT_ARG => $result ), SettingsPage::url( '', AlertsSettingsSection::TAB ) ) . '#merchboard-sound-limits';
 	}
 
 	/**
@@ -233,7 +233,7 @@ final class AlertsSettingsActions {
 	 * @param string $result Outcome code.
 	 */
 	public static function checkout_url( string $result ): string {
-		return add_query_arg( array( self::CHECKOUT_RESULT_ARG => $result ), SettingsPage::url() ) . '#merchboard-checkout-username';
+		return add_query_arg( array( self::CHECKOUT_RESULT_ARG => $result ), SettingsPage::url( '', AlertsSettingsSection::TAB ) ) . '#merchboard-checkout-username';
 	}
 
 	/**
