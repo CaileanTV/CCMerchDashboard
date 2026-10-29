@@ -1,4 +1,4 @@
-# Fase 30 – Afregning og kampagner (trin 30.3–30.4)
+# Fase 30 – Afregning, kampagner og legacy-værn (trin 30.3–30.5)
 
 **Dato:** 2026-10-29.
 
@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 30.3 Afregning med sikret grundpris | `335af63` | 535 berørte integrationstests grønne; CI grøn |
 | 30.4 Kampagner | `3129633` | 472 berørte integrationstests grønne; lint og `npm test` grønne (2231 PHPUnit, 569 Jest); CI grøn |
+| 30.5 Legacy-værn og writer | `480a41a` | 147 berørte integrationstests grønne (efter en rettet testforventning); lint og `npm test` grønne (2241 PHPUnit, 569 Jest); CI grøn |
 
 ## 1. Hvad der er lavet
 
@@ -29,6 +30,18 @@
   - en kampagne, der dækker registrerede salg, kan ikke slettes, kun afsluttes ved at flytte slutdatoen;
   - er ordrens kupondata ukendt, skrives intet; der gættes aldrig.
 
+**Legacy-værn (30.5, ADR-080 pkt. 7):**
+- Et designer-produkt får en beskyttet markør (`_merchboard_designer_token`). Ingen anden vej kan sætte eller ændre den (REST, CSV-import, hurtig-redigering eller anden kode), og WooCommerces kopiering af produkter tager den ikke med.
+- Et produkt godkendes kun som designer-produkt, når der er en række i designer-tabellen, markøren findes, og dens hemmelige token passer til rækken. Alle andre produkter er legacy og bliver aldrig rørt.
+- `WooCommerceDesignerWriter` er det eneste sted, der opretter WooCommerce-produkter og skriver priser:
+  - kun på godkendte produkter;
+  - kun den almindelige pris på produktets egne varianter, så en tilbudspris, virksomheden selv har sat, bevares;
+  - intet, hvis butikken indtaster priser ekskl. moms.
+- Bliver en oprettelse afbrudt, genbruger næste forsøg den samme kladde, så der aldrig opstår to produkter.
+- En arkitekturtest fejler, hvis prisskrivning, produktoprettelse eller markøren dukker op andre steder i koden.
+- Afinstallation med slettemuligheden slået til fjerner også markøren.
+- Writeren bruges først fra 30.10, så der er intet at runtime-teste endnu.
+
 ## 2. Fejl fundet og rettet undervejs
 
 - **Pris-kilden blev aldrig brugt i butikken (fra 30.3, rettet i 30.4):** WooCommerce-modulet opretter sine hooks, før ProductDesigner-modulet registrerer designerens pris-kilde. Designer-produkter ville derfor være blevet afregnet efter den gamle andelsmodel. Det har ikke ramt noget, da der ingen designer-produkter findes. Kilderne slås nu op, når en ordre kommer (`ContainerDesignerSources`), og en unit-test låser det.
@@ -46,5 +59,5 @@ Valg, jeg har truffet ud fra ADR-080, og som kan rettes, hvis du ønsker det and
 
 ## 4. Næste
 
-- 30.5 Legacy-værn og writer: markør, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtest.
-- Runtime-test af afregning og kampagner i 30.15.
+- 30.6 Grundprodukter i admin (i gang).
+- Runtime-test af afregning, kampagner og legacy-værnet i 30.15.
