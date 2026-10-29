@@ -144,6 +144,8 @@ final class DesignerApiTest extends IntegrationTestCase {
 			remove_action( 'rest_api_init', $this->register );
 		}
 
+		// The designer's routes must not stay on the shared REST server for later tests.
+		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server after the test.
 		DesignerFiles::remove_all();
 		parent::tearDown();
 	}
