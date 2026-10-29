@@ -35,9 +35,9 @@ final class RealizedPayout {
 	/**
 	 * Payout of one ledger row in units (1/10 000), or null when unknown.
 	 *
-	 * @param SalesEntry                                                     $entry    Ledger row.
-	 * @param SalesLinePricing|null                                          $snapshot The row's order line snapshot.
-	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax      The row's stored actual tax, null when none.
+	 * @param SalesEntry                                                                                                             $entry    Ledger row.
+	 * @param SalesLinePricing|null                                                                                                  $snapshot The row's order line snapshot.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax      The row's stored actual tax, null when none.
 	 */
 	public static function for_entry( SalesEntry $entry, ?SalesLinePricing $snapshot, ?array $tax ): ?int {
 		$profit = RealizedProfit::for_entry( $entry, $snapshot, $tax );
@@ -49,8 +49,12 @@ final class RealizedPayout {
 
 		$net = SalesAmount::parse( $entry->net_amount );
 
-		// A designer product (ADR-080): the profit, without the sale's VAT when not VAT registered.
+		// A designer product (ADR-080): the profit, without the sale's VAT when not VAT registered; the stored amount when there is one.
 		if ( $snapshot->is_designer() ) {
+			if ( array_key_exists( 'designer_payout', $tax ) && array_key_exists( 'designer_profit', $tax ) ) {
+				return $tax['designer_payout'];
+			}
+
 			return DesignerRowAmounts::payout( $profit, $net, SalesAmount::add( $net, $tax['tax'] ), $snapshot->vat_registered, $snapshot->price_decimals );
 		}
 

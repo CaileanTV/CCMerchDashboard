@@ -101,6 +101,30 @@ final class WooCommerceOrderSnapshotReaderTest extends TestCase {
 		self::assertNull( $lines[12]->subtotal, 'A float is unknown, never guessed.' );
 	}
 
+	public function test_a_line_sold_without_vat_carries_the_shop_s_vat_rate(): void {
+		WcOrderStorage::$taxes      = true;
+		WcOrderStorage::$base_rates = array(
+			''        => array( array( 'rate' => '25.0000' ) ),
+			'reduced' => array( array( 'rate' => '0.0000' ) ),
+		);
+		$export                     = WcOrderStorage::item( 11, 20, 0, 'T-shirt', 1, '160' );
+		$taxed                      = WcOrderStorage::item( 12, 20, 0, 'Mug', 1, '80' );
+		$taxed['total_tax']         = '20';
+		$zero                       = WcOrderStorage::item( 13, 20, 0, 'Book', 1, '50' );
+		$zero['tax_class']          = 'reduced';
+		$free                       = WcOrderStorage::item( 14, 20, 0, 'Gift', 1, '0' );
+		$plain                      = WcOrderStorage::item( 15, 20, 0, 'Sticker', 1, '10' );
+		$plain['tax_status']        = 'none';
+		WcOrderStorage::add_order( 7, 'processing', array( $export, $taxed, $zero, $free, $plain ) );
+
+		$lines = $this->reader->read( 7 )?->lines_by_item() ?? array();
+
+		self::assertSame( array( 2500, null, null, null, null ), array_map( static fn( OrderLineSnapshot $line ): ?int => $line->exempt_vat_bps, array_values( $lines ) ) );
+
+		WcOrderStorage::$taxes = false;
+		self::assertNull( ( $this->reader->read( 7 )?->lines_by_item() ?? array() )[11]->exempt_vat_bps, 'Without taxes nothing is VAT-free.' );
+	}
+
 	public function test_refunds_are_queried_directly_and_the_deleted_refund_is_left_out(): void {
 		WcOrderStorage::add_order( 7, 'completed', array( WcOrderStorage::item( 11, 20, 0, 'T-shirt', 2, '100' ) ) );
 		WcOrderStorage::add_refund( 100, 7, array( WcOrderStorage::item( 900, 20, 0, 'T-shirt', -1, '-50.25', array( '_refunded_item_id' => '11' ) ) ) );

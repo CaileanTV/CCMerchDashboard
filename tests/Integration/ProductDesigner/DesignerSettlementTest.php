@@ -175,7 +175,7 @@ final class DesignerSettlementTest extends IntegrationTestCase {
 			$this->recorder->record( $base + 41, $base + 4, $designer, 0, 'DKK' );
 			$this->order( $base + 4, array( $this->line( $base + 41, $designer, 3, '479.992', '119.998' ) ) );
 
-			// A partial amount-only refund of 15: the company bears it.
+			// A partial amount-only refund of 15: it takes back the profit in proportion (review 30.15).
 			$this->recorder->record( $base + 51, $base + 5, $designer, 0, 'DKK' );
 			$line = $this->line( $base + 51, $designer, 1, '160', '40' );
 			$this->order( $base + 5, array( $line ), array( self::refund( $base + 501, $base + 51, 0, '-12', '-3' ) ) );
@@ -203,8 +203,10 @@ final class DesignerSettlementTest extends IntegrationTestCase {
 				$paid    = abs( SalesAmount::add( SalesAmount::parse( $entry->net_amount ), $row['tax'] ) );
 				$profit  = abs( (int) $row['profit'] );
 				$minimum = min( $paid, abs( $entry->quantity ) * (int) $snapshot->base_units );
-				self::assertGreaterThanOrEqual( $minimum, $paid - $profit, $entry->event_key );
-				self::assertLessThanOrEqual( abs( $entry->quantity ) * (int) $snapshot->profit_units, $profit, $entry->event_key );
+				if ( 0 !== $entry->quantity ) {
+					self::assertGreaterThanOrEqual( $minimum, $paid - $profit, $entry->event_key );
+					self::assertLessThanOrEqual( abs( $entry->quantity ) * (int) $snapshot->profit_units, $profit, $entry->event_key );
+				}
 			} else {
 				self::assertSame( array( null, null ), array( $stored['designer_profit'], $stored['designer_payout'] ), 'A legacy row stores no designer amounts.' );
 			}
@@ -255,6 +257,40 @@ final class DesignerSettlementTest extends IntegrationTestCase {
 		self::assertSame( '30.0000', $profits->by_order_line( $this->creator, array( 6001 ) )[6011]['profit']->to_array()['amount'], 'Coupon 20: the company keeps 150, the creator 30.' );
 		self::assertSame( '0.0000', $profits->by_order_line( $this->creator, array( 6002 ) )[6021]['profit']->to_array()['amount'], 'Coupon 80: the creator gets 0, never negative.' );
 		self::assertSame( '24.0000', ( new LedgerCreatorPayouts( $this->wpdb ) )->earned( $this->creator, null, self::at( '2027-01-01 00:00:00' ), 0 )['DKK']->to_array()['amount'], 'Not VAT registered: 30 × 144 / 180.' );
+	}
+
+	public function test_refunds_take_back_the_profit_in_proportion_and_a_line_sold_without_vat_compares_without_vat(): void {
+		$this->vat->save( $this->creator, true );
+		$designer = $this->designer_product( '150', '50' );
+		$line     = $this->line( 7011, $designer, 1, '160', '40' );
+
+		// Sold at 200 (+50), half refunded as an amount only (-25), then the unit (-25): the line ends at 0.
+		$this->recorder->record( 7011, 7001, $designer, 0, 'DKK' );
+		$this->order( 7001, array( $line ) );
+		$this->order( 7001, array( $line ), array( self::refund( 7101, 7011, 0, '-80', '-20' ) ) );
+		$this->order( 7001, array( $line ), array( self::refund( 7101, 7011, 0, '-80', '-20' ), self::refund( 7102, 7011, -1, '-80', '-20' ) ) );
+
+		$profits = new LedgerCreatorProfits( $this->wpdb );
+		self::assertSame( array( '50.0000', '-25.0000', '-25.0000' ), $this->stored_profits( 7011 ) );
+		self::assertSame( '0.0000', $profits->by_order_line( $this->creator, array( 7001 ) )[7011]['profit']->to_array()['amount'] );
+
+		// An export at the full price (160 without VAT): base 120 and profit 40 without VAT, so the creator gets 40.
+		$this->recorder->record( 7021, 7002, $designer, 0, 'DKK' );
+		$export = $this->line( 7021, $designer, 1, '160', '0', 2500 );
+		$this->order( 7002, array( $export ) );
+		// With a coupon of 20 (140 without VAT): 140 − 120 = 20.
+		$this->recorder->record( 7031, 7003, $designer, 0, 'DKK' );
+		$this->order( 7003, array( $this->line( 7031, $designer, 1, '140', '0', 2500 ) ) );
+		// The export refunded in full: back to 0.
+		$this->order( 7002, array( $export ), array( self::refund( 7201, 7021, -1, '-160', '0' ) ) );
+
+		self::assertSame( array( '40.0000', '-40.0000' ), $this->stored_profits( 7021 ) );
+		self::assertSame( array( '20.0000' ), $this->stored_profits( 7031 ) );
+
+		// PHP reads what is stored, so every sum equals PHP.
+		foreach ( $this->ledger_rows() as $row ) {
+			self::assertSame( $this->stored_profits( $row['entry']->order_item_id, $row['entry']->event_key ), array( SalesAmount::format( (int) $row['profit'] ) ) );
+		}
 	}
 
 	public function test_a_designer_product_in_another_currency_is_unknown_and_never_a_share(): void {
@@ -461,16 +497,28 @@ final class DesignerSettlementTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * The stored profits of an order line's rows (or one row), in order.
+	 *
+	 * @param int         $item      Order item.
+	 * @param string|null $event_key One row only.
+	 * @return list<string>
+	 */
+	private function stored_profits( int $item, ?string $event_key = null ): array {
+		return array_map( 'strval', (array) $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT t.designer_profit FROM %i t JOIN %i s ON s.event_key = t.event_key WHERE t.order_item_id = %d AND ( %s = \'\' OR t.event_key = %s ) ORDER BY s.id', $this->table( Tables::SALES_TAX ), $this->table( Tables::SALES ), $item, (string) $event_key, (string) $event_key ) ) );
+	}
+
+	/**
 	 * An order line of creator A.
 	 *
-	 * @param int    $item     Order item.
-	 * @param int    $product  Product.
-	 * @param int    $quantity Quantity.
-	 * @param string $net      Amount excl. VAT.
-	 * @param string $tax      Actual tax.
+	 * @param int      $item     Order item.
+	 * @param int      $product  Product.
+	 * @param int      $quantity Quantity.
+	 * @param string   $net      Amount excl. VAT.
+	 * @param string   $tax      Actual tax.
+	 * @param int|null $exempt   The VAT rate the line was sold without (basis points).
 	 */
-	private function line( int $item, int $product, int $quantity, string $net, string $tax ): OrderLineSnapshot {
-		return new OrderLineSnapshot( $item, $product, 0, 'MB-DES line', $quantity, SalesAmount::parse( $net ), $this->creator, SalesAmount::parse( $tax ) );
+	private function line( int $item, int $product, int $quantity, string $net, string $tax, ?int $exempt = null ): OrderLineSnapshot {
+		return new OrderLineSnapshot( $item, $product, 0, 'MB-DES line', $quantity, SalesAmount::parse( $net ), $this->creator, SalesAmount::parse( $tax ), null, $exempt );
 	}
 
 	/**

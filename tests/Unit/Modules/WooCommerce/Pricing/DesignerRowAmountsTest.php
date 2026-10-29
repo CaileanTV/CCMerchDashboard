@@ -92,6 +92,46 @@ final class DesignerRowAmountsTest extends TestCase {
 		self::assertSame( '13.0000', SalesAmount::format( DesignerRowAmounts::profit( 1, SalesAmount::parse( '100' ), SalesAmount::parse( '99.95' ), SalesAmount::parse( '15.05' ), true, 0 ) ), 'Whole kroner.' );
 	}
 
+	public function test_a_refund_takes_back_the_profit_in_proportion_and_a_full_refund_ends_at_zero(): void {
+		$parse = static fn( string $amount ): int => SalesAmount::parse( $amount );
+		$back  = static fn( string $paid, string $returned, string $returned_profit, string $sold = '200', string $profit = '100' ): string => SalesAmount::format( DesignerRowAmounts::refund( $parse( $paid ), $parse( $sold ), $parse( $profit ), $parse( $returned ), $parse( $returned_profit ), 2 ) );
+
+		// Base 100 + profit 100 sold at 200: half refunded takes back half.
+		self::assertSame( '-50.0000', $back( '-100', '0', '0' ) );
+		// The rest of the line (an amount-only refund) takes back the rest: the line ends at 0.
+		self::assertSame( '-50.0000', $back( '-100', '-100', '-50' ) );
+		// Never more than the line gave, also when more is refunded than was paid.
+		self::assertSame( '0.0000', $back( '-50', '-200', '-100' ) );
+		self::assertSame( '-100.0000', $back( '-250', '0', '0' ) );
+		// A discounted sale (paid 180, profit 80): a full refund takes back 80, a third takes back a third.
+		self::assertSame( '-80.0000', $back( '-180', '0', '0', '180', '80' ) );
+		self::assertSame( '-26.6700', $back( '-60', '0', '0', '180', '80' ) );
+		self::assertSame( '-53.3300', $back( '-120', '-60', '-26.67', '180', '80' ), 'Rounded once on the total, so the parts add up.' );
+		// Nothing sold, or no profit: nothing to take back.
+		self::assertSame( '0.0000', $back( '-100', '0', '0', '0', '0' ) );
+		self::assertSame( '0.0000', $back( '-100', '0', '0', '200', '0' ) );
+	}
+
+	public function test_a_line_sold_without_vat_compares_without_vat(): void {
+		$base   = DesignerRowAmounts::without_vat( SalesAmount::parse( '100' ), 2500, true, 2 );
+		$profit = DesignerRowAmounts::without_vat( SalesAmount::parse( '100' ), 2500, false, 2 );
+
+		self::assertSame( array( '80.0000', '80.0000' ), array( SalesAmount::format( $base ), SalesAmount::format( $profit ) ) );
+		// An export at the full price (160 without VAT): the creator gets the profit without VAT.
+		self::assertSame( '80.0000', SalesAmount::format( DesignerRowAmounts::profit( 1, SalesAmount::parse( '160' ), $base, $profit, false, 2 ) ) );
+		// The base price is rounded up: 99.95 / 1.25 = 79.96; 99.99 / 1.25 = 79.992 → 80.00, the profit half: 15.05 / 1.25 = 12.04.
+		self::assertSame( '79.9600', SalesAmount::format( DesignerRowAmounts::without_vat( SalesAmount::parse( '99.95' ), 2500, true, 2 ) ) );
+		self::assertSame( '80.0000', SalesAmount::format( DesignerRowAmounts::without_vat( SalesAmount::parse( '99.99' ), 2500, true, 2 ) ) );
+		self::assertSame( '79.9900', SalesAmount::format( DesignerRowAmounts::without_vat( SalesAmount::parse( '99.99' ), 2500, false, 2 ) ) );
+		self::assertSame( '12.0400', SalesAmount::format( DesignerRowAmounts::without_vat( SalesAmount::parse( '15.05' ), 2500, false, 2 ) ) );
+	}
+
+	public function test_a_campaign_never_gives_more_than_the_units_profit(): void {
+		// Paid above the list price (a price changed meanwhile): 250 × 50 / 200 = 62.50 is capped at 50.
+		self::assertSame( '50.0000', SalesAmount::format( DesignerRowAmounts::profit( 1, SalesAmount::parse( '250' ), SalesAmount::parse( '150' ), SalesAmount::parse( '50' ), true, 2 ) ) );
+		self::assertSame( '-50.0000', SalesAmount::format( DesignerRowAmounts::profit( -1, SalesAmount::parse( '-250' ), SalesAmount::parse( '150' ), SalesAmount::parse( '50' ), true, 2 ) ) );
+	}
+
 	public function test_invalid_inputs_are_refused(): void {
 		$refused = 0;
 

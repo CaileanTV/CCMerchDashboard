@@ -29,6 +29,10 @@ defined( 'ABSPATH' ) || exit;
  * - `creator_id` is the product's current, valid creator link (the parent's
  *   for a variation), or null. It only matters for a line without ledger
  *   history; a line with history keeps its snapshot creator (ADR-038, B3).
+ * - `exempt_vat_bps` is the shop's VAT rate of the product (basis points)
+ *   when the line was sold without VAT although the shop's prices include
+ *   it (a VAT-exempt customer, an export), else null. Only a designer
+ *   product's row reads it (review 30.15).
  */
 final readonly class OrderLineSnapshot {
 
@@ -44,7 +48,8 @@ final readonly class OrderLineSnapshot {
 	 * @param int|null $creator_id   Current creator of the product, or null.
 	 * @param int|null $tax          Actual line tax in 1/10000 units, or null when unknown.
 	 * @param int|null $subtotal     Line subtotal before coupons incl. tax in 1/10000 units, or null when unknown.
-	 * @throws InvalidArgumentException When an id is invalid.
+	 * @param int|null $exempt_vat_bps The VAT rate the line was sold without (basis points), or null.
+	 * @throws InvalidArgumentException When an id or the rate is invalid.
 	 */
 	public function __construct(
 		public int $item_id,
@@ -55,9 +60,10 @@ final readonly class OrderLineSnapshot {
 		public int $net,
 		public ?int $creator_id,
 		public ?int $tax = null,
-		public ?int $subtotal = null
+		public ?int $subtotal = null,
+		public ?int $exempt_vat_bps = null
 	) {
-		if ( $item_id < 1 || $product_id < 0 || $variation_id < 0 || ( null !== $creator_id && ( $creator_id < 1 || $product_id < 1 ) ) ) {
+		if ( $item_id < 1 || $product_id < 0 || $variation_id < 0 || ( null !== $creator_id && ( $creator_id < 1 || $product_id < 1 ) ) || ( null !== $exempt_vat_bps && ( $exempt_vat_bps < 1 || $exempt_vat_bps > 100000 ) ) ) {
 			throw new InvalidArgumentException( 'Invalid order line snapshot.' );
 		}
 	}

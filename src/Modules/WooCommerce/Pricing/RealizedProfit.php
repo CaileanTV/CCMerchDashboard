@@ -40,8 +40,9 @@ defined( 'ABSPATH' ) || exit;
  * DesignerRowAmounts: the company keeps the base price, and a discount is
  * taken from the creator's profit, never below 0; in the company's own
  * campaign (`campaign_id` stored with the row's tax) the discount is shared.
- * The same amount is stored with the row when it is written, which the SQL
- * sums read.
+ * The amount is computed once when the row is written and stored with its
+ * tax (`designer_profit`); that stored amount is returned here when the tax
+ * row carries it, so PHP and the SQL sums always agree.
  */
 final class RealizedProfit {
 
@@ -52,9 +53,9 @@ final class RealizedProfit {
 	 * rows carry the original order line, so they match its snapshot. The
 	 * row's amount is the line amount, so the quantity is never multiplied.
 	 *
-	 * @param SalesEntry                                                     $entry    Ledger row.
-	 * @param SalesLinePricing|null                                          $snapshot The row's order line snapshot, null when there is none.
-	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax      The row's stored actual tax, null when none.
+	 * @param SalesEntry                                                                                                             $entry    Ledger row.
+	 * @param SalesLinePricing|null                                                                                                  $snapshot The row's order line snapshot, null when there is none.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax      The row's stored actual tax, null when none.
 	 */
 	public static function for_entry( SalesEntry $entry, ?SalesLinePricing $snapshot, ?array $tax ): ?int {
 		$sale = self::sale_units( $entry, $tax );
@@ -72,6 +73,11 @@ final class RealizedProfit {
 		}
 
 		if ( $snapshot->is_designer() ) {
+			// The amount stored with the row is the profit (refunds depend on the line's earlier rows, review 30.15).
+			if ( null !== $tax && array_key_exists( 'designer_profit', $tax ) ) {
+				return $tax['designer_profit'];
+			}
+
 			return DesignerRowAmounts::profit( $entry->quantity, $sale, $snapshot->base_units, $snapshot->profit_units, isset( $tax['campaign_id'] ), $snapshot->price_decimals );
 		}
 
@@ -82,8 +88,8 @@ final class RealizedProfit {
 	 * The row's sale price incl. VAT in units (net + actual tax), signed;
 	 * null when the row has no stored tax in its currency.
 	 *
-	 * @param SalesEntry                                                     $entry Ledger row.
-	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax   The row's stored actual tax.
+	 * @param SalesEntry                                                                                                             $entry Ledger row.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax   The row's stored actual tax.
 	 */
 	public static function sale_units( SalesEntry $entry, ?array $tax ): ?int {
 		if ( null === $tax || $tax['currency'] !== $entry->currency ) {

@@ -487,6 +487,8 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 
 						// ADR-080 pkt. 9: decided under the lock, stored with a line's first designer row.
 						$planned = null === $this->campaigns ? $result->write : $result->write->with_campaigns( $this->campaigns->campaigns( $order ) );
+						// Review 30.15: a designer line sold without VAT compares without VAT.
+						$planned = $planned->with_vat_exempt( array_filter( array_map( static fn( OrderLineSnapshot $line ): ?int => $line->exempt_vat_bps, $order->lines_by_item() ), static fn( ?int $bps ): bool => null !== $bps ) );
 
 						if ( null !== $observe ) {
 							$observe( $planned );

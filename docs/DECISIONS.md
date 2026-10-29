@@ -4551,6 +4551,12 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Anvendelse:** pipelinen (30.10) beregner nu prisen ud fra grundprisen, når versionen lægges i butikken (ikke prisen fra godkendelsen), gemmer butikkens pris og genpriser produktet, hvis grundprisen ændrede sig under kørslen.
 - **Pensionering** (`BaseProductService::retire()`, med bekræftelse, endelig): et pensioneret grundprodukt kan ikke ændres eller aktiveres igen. Efter commit (`merchboard_designer_base_retired`) afvises ventende designs med en note, og ét job `merchboard_designer_retire` pr. produkt med et WooCommerce-produkt gør det til en kladde (writerens `unpublish()`), markerer rækken `retired`, auditerer og giver creatoren "taget ud af butikken" (vigtig: kan ikke fravælges). Godkendelse, anvendelse, genprisning og "Lav en ændring" afvises for et pensioneret grundprodukt.
 
+**Statusnote 2026-10-29 (trin 30.15, review; projektejerens valg samme dag):** pkt. 8 er ændret:
+- **Refundering (ændrer 30.3):** en refundering eller tilbageførsel uden for en kampagne tager linjens fortjeneste tilbage i forhold til den refunderede andel af det betalte (`DesignerRowAmounts::refund()`, ud fra linjens tidligere rækker). En fuldt refunderet linje ender derfor altid på 0 for creatoren, også når den refunderes i dele eller kun som beløb. Før kunne en refundering kun af et beløb lade creatoren beholde fortjenesten.
+- **Salg uden moms:** sælges en linje uden moms (momsfritaget kunde, eksport), mens butikkens priser er inkl. moms, sammenlignes betalingen med grundpris og fortjeneste uden moms (butikkens momssats for produktets momsklasse; grundprisen afrundes op). Et eksportsalg til fuld pris giver creatoren fortjenesten uden moms, og linjen tæller aldrig som "tilbudspris" i en kampagne.
+- **Kampagne:** fortjenesten er højst antal × fortjeneste pr. stk., også når der er betalt over listeprisen (en pris, der er ændret imens).
+- **PHP = SQL:** `RealizedProfit`/`RealizedPayout` returnerer de gemte beløb for en designer-række, så PHP og SQL-summerne altid er ens, også når en refundering afhænger af linjens tidligere rækker.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

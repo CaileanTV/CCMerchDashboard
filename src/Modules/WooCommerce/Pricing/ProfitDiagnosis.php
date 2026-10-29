@@ -34,10 +34,10 @@ final readonly class ProfitDiagnosis {
 	/**
 	 * Diagnoses a ledger row.
 	 *
-	 * @param SalesEntry                                                     $entry            Ledger row.
-	 * @param SalesLinePricing|null                                          $snapshot         The row's order line snapshot, null when none (or unreadable).
-	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax              The row's stored tax, null when none.
-	 * @param bool                                                           $invalid_snapshot A snapshot row exists but could not be read.
+	 * @param SalesEntry                                                                                                             $entry            Ledger row.
+	 * @param SalesLinePricing|null                                                                                                  $snapshot         The row's order line snapshot, null when none (or unreadable).
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax              The row's stored tax, null when none.
+	 * @param bool                                                                                                                   $invalid_snapshot A snapshot row exists but could not be read.
 	 */
 	public static function of( SalesEntry $entry, ?SalesLinePricing $snapshot, ?array $tax, bool $invalid_snapshot = false ): self {
 		$profit = RealizedProfit::for_entry( $entry, $snapshot, $tax );
@@ -52,10 +52,10 @@ final readonly class ProfitDiagnosis {
 	/**
 	 * The first missing piece, in RealizedProfit's order.
 	 *
-	 * @param SalesEntry                                                     $entry            Ledger row.
-	 * @param SalesLinePricing|null                                          $snapshot         Snapshot.
-	 * @param array{tax: int, currency: string, campaign_id?: int|null}|null $tax              Stored tax.
-	 * @param bool                                                           $invalid_snapshot Unreadable snapshot row.
+	 * @param SalesEntry                                                                                                             $entry            Ledger row.
+	 * @param SalesLinePricing|null                                                                                                  $snapshot         Snapshot.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax              Stored tax.
+	 * @param bool                                                                                                                   $invalid_snapshot Unreadable snapshot row.
 	 */
 	private static function gap( SalesEntry $entry, ?SalesLinePricing $snapshot, ?array $tax, bool $invalid_snapshot ): ProfitGap {
 		if ( null === $snapshot ) {

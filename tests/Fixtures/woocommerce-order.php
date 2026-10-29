@@ -70,6 +70,32 @@ class WC_Order_Item_Product {
 	public function get_meta( $key = '', $single = true, $context = 'view' ) {
 		return 'edit' === $context ? ( $this->data['meta'][ $key ] ?? '' ) : '999';
 	}
+
+	public function get_tax_class( $context = 'view' ) {
+		return 'edit' === $context ? ( $this->data['tax_class'] ?? '' ) : 'filtered';
+	}
+
+	public function get_tax_status() {
+		return $this->data['tax_status'] ?? 'taxable';
+	}
+}
+
+/**
+ * Tax rates.
+ */
+class WC_Tax {
+
+	public static function get_base_tax_rates( $tax_class = '' ) {
+		return WcOrderStorage::$base_rates[ $tax_class ] ?? array();
+	}
+}
+
+function wc_tax_enabled() {
+	return WcOrderStorage::$taxes;
+}
+
+function wc_prices_include_tax() {
+	return WcOrderStorage::$taxes;
 }
 
 /**

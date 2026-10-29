@@ -20,6 +20,7 @@ use WC_Order;
 use WC_Order_Item_Coupon;
 use WC_Order_Item_Product;
 use WC_Order_Refund;
+use WC_Tax;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -165,8 +166,32 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			WooCommerceAmount::units( $item->get_total( 'edit' ) ),
 			$product_id > 0 ? $this->links->creator_id( $product_id ) : null,
 			self::tax( $item ),
-			self::subtotal( $item )
+			self::subtotal( $item ),
+			self::exempt_vat( $item )
 		);
+	}
+
+	/**
+	 * The shop's VAT rate of a line sold without VAT (a VAT-exempt customer,
+	 * an export) while the shop's prices include VAT, in basis points; null
+	 * when the line has tax, taxes are off or the product has no VAT rate.
+	 *
+	 * @param WC_Order_Item_Product $item Line.
+	 */
+	private static function exempt_vat( WC_Order_Item_Product $item ): ?int {
+		if ( ! wc_tax_enabled() || ! wc_prices_include_tax() || 'taxable' !== $item->get_tax_status() || 0.0 !== (float) $item->get_total_tax( 'edit' ) || 0.0 !== (float) $item->get_subtotal_tax( 'edit' ) || (float) $item->get_subtotal( 'edit' ) <= 0.0 ) {
+			return null;
+		}
+
+		$rate = 0.0;
+
+		foreach ( WC_Tax::get_base_tax_rates( (string) $item->get_tax_class( 'edit' ) ) as $base ) {
+			$rate += is_numeric( $base['rate'] ?? null ) ? (float) $base['rate'] : 0.0;
+		}
+
+		$bps = (int) round( $rate * 100 );
+
+		return $bps > 0 && $bps <= 100000 ? $bps : null;
 	}
 
 	/**

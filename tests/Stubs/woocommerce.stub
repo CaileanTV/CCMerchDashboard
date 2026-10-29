@@ -370,9 +370,38 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	public function get_subtotal_tax( $context = 'view' ) {}
 
 	/**
+	 * The line's tax class ('' for standard).
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_tax_class( $context = 'view' ) {}
+
+	/**
+	 * The product's tax status ('taxable', 'shipping' or 'none').
+	 *
+	 * @return string
+	 */
+	public function get_tax_status() {}
+
+	/**
 	 * @return WC_Product|false|null
 	 */
 	public function get_product() {}
+}
+
+/**
+ * Tax rates (class-wc-tax.php).
+ */
+class WC_Tax {
+
+	/**
+	 * The shop base location's rates of a tax class.
+	 *
+	 * @param string $tax_class Tax class.
+	 * @return array<int|string, array<string, mixed>>
+	 */
+	public static function get_base_tax_rates( $tax_class = '' ) {}
 }
 
 /**

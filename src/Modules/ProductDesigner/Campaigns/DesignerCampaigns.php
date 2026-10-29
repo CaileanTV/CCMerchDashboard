@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\ProductDesigner\Campaigns;
 
 use InvalidArgumentException;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerCampaignSource;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerRowAmounts;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricing;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
@@ -91,6 +92,8 @@ final class DesignerCampaigns implements DesignerCampaignSource {
 
 	/**
 	 * Whether a designer line was sold below its list price before coupons.
+	 * A line sold without VAT is compared with the list price without VAT
+	 * (review 30.15), so leaving out the VAT is never a sale price.
 	 *
 	 * @param OrderLineSnapshot $line     The order line.
 	 * @param SalesLinePricing  $snapshot Its designer snapshot.
@@ -100,7 +103,8 @@ final class DesignerCampaigns implements DesignerCampaignSource {
 			return false;
 		}
 
-		$list = PricingMath::mul_div_round( $line->quantity, $snapshot->price_units, 1 );
+		$price = null === $line->exempt_vat_bps ? $snapshot->price_units : DesignerRowAmounts::without_vat( $snapshot->price_units, $line->exempt_vat_bps, false, $snapshot->price_decimals );
+		$list  = PricingMath::mul_div_round( $line->quantity, $price, 1 );
 
 		return $list - $line->subtotal >= PricingMath::step( $snapshot->price_decimals );
 	}

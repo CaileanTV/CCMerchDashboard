@@ -59,15 +59,31 @@ final class WcOrderStorage {
 	public static array $lookups = array();
 
 	/**
+	 * Whether taxes are on with prices incl. tax (wc_tax_enabled(), wc_prices_include_tax()).
+	 *
+	 * @var bool
+	 */
+	public static bool $taxes = false;
+
+	/**
+	 * The shop's base tax rates by tax class (WC_Tax::get_base_tax_rates()).
+	 *
+	 * @var array<string, list<array<string, mixed>>>
+	 */
+	public static array $base_rates = array();
+
+	/**
 	 * Resets everything.
 	 */
 	public static function reset(): void {
-		self::$orders    = array();
-		self::$meta      = array();
-		self::$queries   = array();
-		self::$saves     = array();
-		self::$fail_save = false;
-		self::$lookups   = array();
+		self::$orders     = array();
+		self::$meta       = array();
+		self::$queries    = array();
+		self::$saves      = array();
+		self::$fail_save  = false;
+		self::$lookups    = array();
+		self::$taxes      = false;
+		self::$base_rates = array();
 	}
 
 	/**

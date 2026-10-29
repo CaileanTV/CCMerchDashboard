@@ -299,7 +299,7 @@ final class SalesRepository {
 
 						// The row's actual tax (ADR-048), only for a row written now.
 						if ( isset( $write->taxes[ $entry->event_key ] ) ) {
-							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ], $write->campaigns );
+							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ], $write->campaigns, $write->vat_exempt );
 						}
 					} else {
 						$skipped_entries[] = $entry->event_key;
@@ -489,15 +489,16 @@ final class SalesRepository {
 	 *
 	 * @param SalesEntry      $entry     The row just inserted.
 	 * @param int             $tax       Its signed tax in 1/10000 units.
-	 * @param array<int, int> $campaigns Campaign id by order item of the order's covered designer lines.
+	 * @param array<int, int> $campaigns  Campaign id by order item of the order's covered designer lines.
+	 * @param array<int, int> $vat_exempt VAT rate by order item of lines sold without VAT.
 	 * @throws DatabaseException When the lock is not held or the tax cannot be stored.
 	 */
-	private function insert_tax( SalesEntry $entry, int $tax, array $campaigns ): void {
+	private function insert_tax( SalesEntry $entry, int $tax, array $campaigns, array $vat_exempt = array() ): void {
 		$this->assert_locked( $entry->order_id );
 
 		$wpdb    = $this->wpdb;
 		$table   = $this->table( Tables::SALES_TAX );
-		$amounts = $this->designer_amounts( $entry, $tax, $campaigns );
+		$amounts = $this->designer_amounts( $entry, $tax, $campaigns, $vat_exempt );
 		// A designer product's row (ADR-080 pkt. 8–9) stores the creator's profit, payout and campaign with its tax; '' and 0 are stored as NULL.
 		$inserted = $this->guarded_insert(
 			$wpdb->prepare(
@@ -534,13 +535,19 @@ final class SalesRepository {
 	 * so a refund takes back exactly what the sale gave and a changed
 	 * campaign never changes a line already in the ledger.
 	 *
-	 * @param SalesEntry      $entry     Row written now.
-	 * @param int             $tax       The row's actual tax in units.
-	 * @param array<int, int> $campaigns Campaign id by order item, for a line's first row.
+	 * Outside a campaign a refund or reversal takes back the line's profit in
+	 * proportion to the refunded share of what was paid (the line's earlier
+	 * rows, review 30.15), and a sale of a line sold without VAT compares
+	 * with the base price and profit without VAT.
+	 *
+	 * @param SalesEntry      $entry      Row written now.
+	 * @param int             $tax        The row's actual tax in units.
+	 * @param array<int, int> $campaigns  Campaign id by order item, for a line's first row.
+	 * @param array<int, int> $vat_exempt VAT rate by order item of lines sold without VAT.
 	 * @return array{0: string, 1: string|null, 2: int|null}|null Profit and payout as decimals, and the campaign.
 	 * @throws DatabaseException When the snapshot or the line's earlier rows cannot be read.
 	 */
-	private function designer_amounts( SalesEntry $entry, int $tax, array $campaigns ): ?array {
+	private function designer_amounts( SalesEntry $entry, int $tax, array $campaigns, array $vat_exempt = array() ): ?array {
 		$snapshot = ( new SalesLinePricingRepository( $this->wpdb ) )->find( $entry->order_item_id );
 
 		if ( null === $snapshot
@@ -565,10 +572,66 @@ final class SalesRepository {
 			: ( $campaigns[ $entry->order_item_id ] ?? null );
 		$net      = SalesAmount::parse( $entry->net_amount );
 		$paid     = SalesAmount::add( $net, $tax );
-		$profit   = DesignerRowAmounts::profit( $entry->quantity, $paid, $snapshot->base_units, $snapshot->profit_units, null !== $campaign, $snapshot->price_decimals );
-		$payout   = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $snapshot->price_decimals );
+		$base     = $snapshot->base_units;
+		$per_unit = $snapshot->profit_units;
+		$rate     = $vat_exempt[ $entry->order_item_id ] ?? null;
+
+		if ( null === $campaign && $paid < 0 ) {
+			$line   = $this->designer_line( $entry );
+			$profit = DesignerRowAmounts::refund( $paid, $line['sold'], $line['sold_profit'], $line['returned'], $line['returned_profit'], $snapshot->price_decimals );
+		} else {
+			if ( null === $campaign && null !== $rate && 0 === $tax ) {
+				$base     = DesignerRowAmounts::without_vat( $base, $rate, true, $snapshot->price_decimals );
+				$per_unit = DesignerRowAmounts::without_vat( $per_unit, $rate, false, $snapshot->price_decimals );
+			}
+
+			$profit = SalesAmount::add( $base, $per_unit ) < 1 ? 0 : DesignerRowAmounts::profit( $entry->quantity, $paid, $base, $per_unit, null !== $campaign, $snapshot->price_decimals );
+		}
+
+		$payout = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $snapshot->price_decimals );
 
 		return array( SalesAmount::format( $profit ), null === $payout ? null : SalesAmount::format( $payout ), $campaign );
+	}
+
+	/**
+	 * What a designer line's earlier rows were paid and gave: the positive
+	 * rows (sold) and the negative ones (returned), each with its profit.
+	 * Read under the order's lock, so rows written earlier in the same
+	 * synchronization count.
+	 *
+	 * @param SalesEntry $entry Row written now.
+	 * @return array{sold: int, sold_profit: int, returned: int, returned_profit: int}
+	 * @throws DatabaseException When the rows cannot be read.
+	 */
+	private function designer_line( SalesEntry $entry ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT s.net_amount, t.tax_amount, t.designer_profit FROM %i s JOIN %i t ON t.event_key = s.event_key WHERE s.order_id = %d AND s.order_item_id = %d AND s.event_key <> %s AND t.designer_profit IS NOT NULL', $this->table( Tables::SALES ), $this->table( Tables::SALES_TAX ), $entry->order_id, $entry->order_item_id, $entry->event_key ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The ledger's own tables, under the order's lock.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the order line\'s earlier rows.', array( 'order_id' => $entry->order_id ) );
+		}
+
+		$line = array(
+			'sold'            => 0,
+			'sold_profit'     => 0,
+			'returned'        => 0,
+			'returned_profit' => 0,
+		);
+
+		foreach ( $rows as $row ) {
+			$paid   = SalesAmount::add( SalesAmount::parse( (string) $row['net_amount'] ), SalesAmount::parse( (string) $row['tax_amount'] ) );
+			$profit = SalesAmount::parse( (string) $row['designer_profit'] );
+
+			if ( $paid > 0 ) {
+				$line['sold']        = SalesAmount::add( $line['sold'], $paid );
+				$line['sold_profit'] = SalesAmount::add( $line['sold_profit'], $profit );
+			} elseif ( $paid < 0 ) {
+				$line['returned']        = SalesAmount::add( $line['returned'], $paid );
+				$line['returned_profit'] = SalesAmount::add( $line['returned_profit'], $profit );
+			}
+		}
+
+		return $line;
 	}
 
 	/**
