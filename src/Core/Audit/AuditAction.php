@@ -719,4 +719,19 @@ enum AuditAction: string {
 	 * A creator started a change of a live designer product as a new draft (ADR-080 pkt. 3). Context: design_product_id, version_id.
 	 */
 	case DesignerChangeStarted = 'designer_change_started';
+
+	/**
+	 * An administrator retired a base product; its products leave the shop (ADR-080 pkt. 10). Context: base_id, base_name.
+	 */
+	case DesignerBaseRetired = 'designer_base_retired';
+
+	/**
+	 * A designer product in the shop got a new price after a new base price (system, ADR-080 pkt. 10). Context: design_product_id, product_id, previous_price, price, base_price.
+	 */
+	case DesignerProductRepriced = 'designer_product_repriced';
+
+	/**
+	 * A designer product was taken out of the shop (system, ADR-080 pkt. 10). Context: design_product_id, product_id, reason.
+	 */
+	case DesignerProductUnpublished = 'designer_product_unpublished';
 }

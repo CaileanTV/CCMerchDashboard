@@ -24,8 +24,11 @@ defined( 'ABSPATH' ) || exit;
  * new draft). Step 30.10: the administrator approves (pending → approved,
  * then applied to WooCommerce and live; the version that was live is
  * superseded) or rejects with a note (continued by a new draft); a creator
- * starts a change of a live product as a new draft. Writes only through
- * DesignerDrafts, DesignerSubmissions, DesignerReview and DesignerApply.
+ * starts a change of a live product as a new draft. Step 30.11: the price
+ * in the shop and its base price (`shop_price`, `shop_base_price`) follow a
+ * new base price; a retired base product's products are `retired`. Writes
+ * only through DesignerDrafts, DesignerSubmissions, DesignerReview,
+ * DesignerApply, DesignerRepricing and DesignerRetirement.
  */
 class DesignerProductRepository {
 
@@ -44,6 +47,11 @@ class DesignerProductRepository {
 	public const LIVE = 'live';
 
 	/**
+	 * A designer product of a retired base product, out of the shop.
+	 */
+	public const RETIRED = 'retired';
+
+	/**
 	 * `apply_state` of an approved version: waiting for, being applied, failed, done.
 	 */
 	public const APPLY_QUEUED = 'queued';
@@ -54,7 +62,7 @@ class DesignerProductRepository {
 
 	public const APPLY_DONE = 'done';
 
-	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, created_at, updated_at';
+	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, created_at, updated_at';
 
 	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, files, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
 
@@ -521,6 +529,110 @@ class DesignerProductRepository {
 
 		if ( false === $superseded || 1 !== $applied || 1 !== $live ) {
 			throw new DatabaseException( 'Could not make the design live.' );
+		}
+	}
+
+	/**
+	 * A designer product, whoever owns it (system work), or null.
+	 *
+	 * @param int $product_id Designer product.
+	 * @return array<string, mixed>|null
+	 * @throws DatabaseException When it cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function product( int $product_id ): ?array {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT ' . self::PRODUCT_COLUMNS . ' FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_PRODUCTS ), $product_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant columns; the designer's own table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the designer product.' );
+		}
+
+		return is_array( $row ) ? $row : null;
+	}
+
+	/**
+	 * The designer products of a base product that have a WooCommerce
+	 * product, optionally only the live ones.
+	 *
+	 * @param int  $base_id   Base product.
+	 * @param bool $live_only Only products whose status is live.
+	 * @return list<int> Designer product ids.
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function in_shop_of_base( int $base_id, bool $live_only ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $live_only
+			? $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE base_id = %d AND wc_product_id IS NOT NULL AND status = %s ORDER BY id', $this->table( Tables::DESIGNER_PRODUCTS ), $base_id, self::LIVE ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			: $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE base_id = %d AND wc_product_id IS NOT NULL ORDER BY id', $this->table( Tables::DESIGNER_PRODUCTS ), $base_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the designer products of the base product.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * The pending versions of a base product's designer products.
+	 *
+	 * @param int $base_id Base product.
+	 * @return list<int> Version ids.
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function pending_of_base( int $base_id ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT v.id FROM %i v JOIN %i p ON p.id = v.design_product_id WHERE p.base_id = %d AND v.status = %s ORDER BY v.id', $this->table( Tables::DESIGNER_VERSIONS ), $this->table( Tables::DESIGNER_PRODUCTS ), $base_id, self::PENDING ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the waiting designs of the base product.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * Stores the price the shop has now and the base price behind it.
+	 *
+	 * @param int    $product_id Designer product.
+	 * @param string $price      Customer's price (decimal).
+	 * @param string $base_price Base price (decimal).
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_shop_price( int $product_id, string $price, string $base_price ): void {
+		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table( Tables::DESIGNER_PRODUCTS ),
+			array(
+				'shop_price'      => $price,
+				'shop_base_price' => $base_price,
+				'updated_at'      => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $product_id )
+		);
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not store the price of the designer product.' );
+		}
+	}
+
+	/**
+	 * Marks a designer product as out of the shop for good (retired base product).
+	 *
+	 * @param int $product_id Designer product.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function retire( int $product_id ): void {
+		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table( Tables::DESIGNER_PRODUCTS ),
+			array(
+				'status'     => self::RETIRED,
+				'updated_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $product_id )
+		);
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not retire the designer product.' );
 		}
 	}
 

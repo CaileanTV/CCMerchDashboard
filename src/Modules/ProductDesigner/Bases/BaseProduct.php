@@ -17,9 +17,10 @@ defined( 'ABSPATH' ) || exit;
  * A product the administrator offers for designs (ADR-080 pkt. 2): source,
  * name, description, base price incl. VAT (1/10 000 units, in the store
  * currency), the default product category, colours, sizes and sides.
- * `version` grows with every change of price or template (step 30.11
- * reprices the designer products of a new version). Creators design only on
- * an `active` base product.
+ * `version` grows with every change of a template or print area (from step
+ * 30.11 not with a new price; the designer products follow a new price).
+ * Creators design only on an `active` base product; a `retired` one is
+ * out of the shop for good.
  */
 final readonly class BaseProduct {
 

@@ -40,6 +40,8 @@ use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
@@ -153,7 +155,38 @@ final class ProductDesignerModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$c->get( Logger::class ),
+				$c->get( PricingProductStore::class )->decimals(),
+				static function ( int $product ) use ( $c ): void {
+					$c->get( DesignerRepricing::class )->schedule( $product );
+				}
+			)
+		);
+		// A new base price and a retired base product (step 30.11).
+		$container->set(
+			DesignerRepricing::class,
+			static fn( Container $c ): DesignerRepricing => new DesignerRepricing(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( DesignerProductGuard::class ),
+				$c->get( WooCommerceDesignerWriter::class ),
+				$c->get( JobQueue::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Logger::class ),
 				$c->get( PricingProductStore::class )->decimals()
+			)
+		);
+		$container->set(
+			DesignerRetirement::class,
+			static fn( Container $c ): DesignerRetirement => new DesignerRetirement(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( DesignerProductGuard::class ),
+				$c->get( WooCommerceDesignerWriter::class ),
+				$c->get( JobQueue::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( Logger::class )
 			)
 		);
 		$container->set(
@@ -207,6 +240,32 @@ final class ProductDesignerModule implements Module {
 			DesignerApply::HOOK,
 			static function ( mixed $version ) use ( $container ): void {
 				$container->get( DesignerApply::class )->run( $version );
+			}
+		);
+		add_action(
+			DesignerRepricing::HOOK,
+			static function ( mixed $product, mixed $attempt = 1 ) use ( $container ): void {
+				$container->get( DesignerRepricing::class )->run( $product, $attempt );
+			},
+			10,
+			2
+		);
+		add_action(
+			DesignerRetirement::HOOK,
+			static function ( mixed $product ) use ( $container ): void {
+				$container->get( DesignerRetirement::class )->run( $product );
+			}
+		);
+		add_action(
+			BaseProductService::PRICE_CHANGED,
+			static function ( mixed $base ) use ( $container ): void {
+				$container->get( DesignerRepricing::class )->base_changed( $base );
+			}
+		);
+		add_action(
+			BaseProductService::RETIRED,
+			static function ( mixed $base ) use ( $container ): void {
+				$container->get( DesignerRetirement::class )->base_retired( $base );
 			}
 		);
 		add_action(

@@ -118,10 +118,13 @@ final class BaseProductsPage {
 		$size = size_format( DesignerFiles::max_bytes() );
 
 		return match ( $code ) {
-			'saved'                                 => array( __( 'The base product was saved.', 'merchboard' ), 'success' ),
+			'saved'                                 => array( __( 'The base product was saved. A new base price reaches the designer products in the shop in the background.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
 			'deleted'                               => array( __( 'The base product was deleted.', 'merchboard' ), 'success' ),
+			'retired'                               => array( __( 'The base product is retired. Its products are being taken out of the shop, and the creators are told.', 'merchboard' ), 'success' ),
+			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
+			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
 			'clipart_added'                         => array( __( 'The clipart was added.', 'merchboard' ), 'success' ),
 			'clipart_deleted'                       => array( __( 'The clipart was deleted.', 'merchboard' ), 'success' ),
 			DesignerException::BASE_NAME            => array( __( 'Enter a name of at most 191 characters.', 'merchboard' ), 'error' ),
@@ -374,14 +377,26 @@ final class BaseProductsPage {
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="base_id" value="' . esc_attr( (string) $base->id ) . '">';
 		wp_nonce_field( BaseProductActions::ACTION );
 
+		if ( BaseProduct::RETIRED === $base->status ) {
+			echo '<p>' . esc_html__( 'This base product is retired: its products are out of the shop, and it cannot be changed or activated again.', 'merchboard' ) . '</p></form>';
+
+			return;
+		}
+
 		if ( BaseProduct::ACTIVE === $base->status ) {
-			echo '<p><button type="submit" name="do" value="deactivate" class="button">' . esc_html__( 'Back to draft', 'merchboard' ) . '</button> <span class="description">' . esc_html__( 'Creators can no longer start designs on it.', 'merchboard' ) . '</span></p>';
+			echo '<p><button type="submit" name="do" value="deactivate" class="button">' . esc_html__( 'Back to draft', 'merchboard' ) . '</button> <span class="description">' . esc_html__( 'Creators can no longer start designs on it. Products in the shop are not affected.', 'merchboard' ) . '</span></p>';
 		} else {
 			echo '<p><button type="submit" name="do" value="activate" class="button button-primary">' . esc_html__( 'Activate', 'merchboard' ) . '</button> <span class="description">' . esc_html__( 'Creators can design on it.', 'merchboard' ) . '</span></p>';
 		}
 
 		if ( 0 === $designs ) {
 			echo '<p><button type="submit" name="do" value="delete" class="button-link button-link-delete">' . esc_html__( 'Delete base product', 'merchboard' ) . '</button></p>';
+		} else {
+			echo '<fieldset style="margin-top:12px;padding:8px 12px;border:1px solid #d63638"><legend>' . esc_html__( 'Retire', 'merchboard' ) . '</legend>';
+			echo '<p>' . esc_html__( 'Retiring takes every product of this base product out of the shop (they become drafts and stay for the order history), rejects the designs waiting for approval and tells the creators. It cannot be undone.', 'merchboard' ) . '</p>';
+			echo '<p><label><input type="checkbox" name="confirm_retire" value="1"> ' . esc_html__( 'Yes, retire this base product for good.', 'merchboard' ) . '</label></p>';
+			echo '<p><button type="submit" name="do" value="retire" class="button button-link-delete">' . esc_html__( 'Retire base product', 'merchboard' ) . '</button></p>';
+			echo '</fieldset>';
 		}
 
 		echo '</form>';

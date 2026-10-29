@@ -24,7 +24,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * DesignerPriceSource on the designer's own tables (ADR-080 pkt. 8): the base
- * price of the product's base product now and the creator's profit of the
+ * price behind the product's price in the shop (`shop_base_price`, step
+ * 30.11), so a sale is settled at the price the customer saw even before a
+ * new base price reached the shop; the base product's price now while no
+ * version was applied. The creator's profit is the one of the
  * live version, a percent of the base price or a fixed amount, both incl.
  * VAT. Each is rounded to the store precision on its own, the base price up
  * and the profit half away from zero, so the list price (base + profit) is
@@ -57,6 +60,7 @@ final class DesignerPrices implements DesignerPriceSource {
 	 *
 	 * @param int $product_id Parent product.
 	 * @throws DatabaseException When the designer's data cannot be read or the product cannot be priced.
+	 * @phpstan-impure Reads the database.
 	 */
 	public function price( int $product_id ): ?DesignerPrice {
 		if ( $product_id < 1 ) {
@@ -66,7 +70,7 @@ final class DesignerPrices implements DesignerPriceSource {
 		$wpdb = $this->wpdb;
 		$row  = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables; a price is read once per order line or cart item.
 			$wpdb->prepare(
-				'SELECT p.creator_id, p.live_version_id, v.profit_kind, v.profit_value, b.base_price, b.currency
+				'SELECT p.creator_id, p.live_version_id, p.shop_base_price, v.profit_kind, v.profit_value, b.base_price, b.currency
 				FROM %i p
 				LEFT JOIN %i v ON v.id = p.live_version_id AND v.design_product_id = p.id
 				LEFT JOIN %i b ON b.id = p.base_id
@@ -92,7 +96,7 @@ final class DesignerPrices implements DesignerPriceSource {
 		}
 
 		try {
-			return self::compute( (int) $row['creator_id'], (string) $row['base_price'], (string) $row['profit_kind'], (string) $row['profit_value'], (string) $row['currency'], $this->products->decimals() );
+			return self::compute( (int) $row['creator_id'], (string) ( $row['shop_base_price'] ?? $row['base_price'] ), (string) $row['profit_kind'], (string) $row['profit_value'], (string) $row['currency'], $this->products->decimals() );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			throw new DatabaseException( 'The designer product cannot be priced.', array( 'product_id' => $product_id ) );
 		}

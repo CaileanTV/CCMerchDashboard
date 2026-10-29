@@ -31,6 +31,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $contents = array();
 
 	/**
+	 * Written prices: [WooCommerce product, units].
+	 *
+	 * @var list<array{0: int, 1: int}>
+	 */
+	public array $prices = array();
+
+	/**
 	 * Unpublished products.
 	 *
 	 * @var list<int>
@@ -95,6 +102,17 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 		}
 
 		$this->contents[] = array( $product->wc_product_id, $content );
+	}
+
+	/**
+	 * Records a price.
+	 *
+	 * @param GuardedProduct $product     Proof.
+	 * @param int            $price_units Price in units.
+	 * @param int            $decimals    Decimals.
+	 */
+	public function set_prices( GuardedProduct $product, int $price_units, int $decimals ): void {
+		$this->prices[] = array( $product->wc_product_id, $price_units );
 	}
 
 	/**

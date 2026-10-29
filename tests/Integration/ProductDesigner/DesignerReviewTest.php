@@ -1,6 +1,7 @@
 <?php
 /**
- * Approval and the apply pipeline on a real database (step 30.10).
+ * Approval, the apply pipeline, a new base price and a retired base product
+ * on a real database (steps 30.10 and 30.11).
  *
  * @package MerchBoard
  */
@@ -23,9 +24,12 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
+use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
@@ -37,6 +41,7 @@ use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\PostMetaPricingProductStore;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
 use MerchBoard\Tests\Integration\Support\RecordingDesignerWriter;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
@@ -49,13 +54,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
  * mockup twice), or rejected with a note into a new draft. A live product
  * gets changes the same way; the change supersedes the live version. The
  * order line keeps the sold version, and only the administrator gets its
- * print files.
+ * print files. A new base price reaches the shop (the creator's percent
+ * stays) without making waiting designs stale, and a sale is settled at the
+ * price the shop had; a retired base product takes its products out of the
+ * shop and rejects its waiting designs.
  */
 #[CoversClass( DesignerReview::class )]
 #[CoversClass( DesignerApply::class )]
 #[CoversClass( DesignerMedia::class )]
 #[CoversClass( DesignerOrderFiles::class )]
 #[CoversClass( DesignerVersionFiles::class )]
+#[CoversClass( DesignerRepricing::class )]
+#[CoversClass( DesignerRetirement::class )]
+#[CoversClass( DesignerPrices::class )]
 final class DesignerReviewTest extends IntegrationTestCase {
 
 	private DesignerFiles $files;
@@ -79,6 +90,19 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	private FakeJobQueue $queue;
 
 	private Creator $creator;
+
+	private BaseProductService $bases;
+
+	private DesignerRepricing $repricing;
+
+	private DesignerRetirement $retirement;
+
+	/**
+	 * The base product hooks of this test.
+	 *
+	 * @var list<array{0: string, 1: callable}>
+	 */
+	private array $hooks = array();
 
 	private int $base;
 
@@ -118,6 +142,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->guard    = new DesignerProductGuard( $this->wpdb, $this->service( ProtectedProductMeta::class ), new RecordingLogger() );
 		$this->writer   = new RecordingDesignerWriter( $this->guard, $this->posts );
 		$service        = new BaseProductService( $bases, $assets, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, 'DKK' );
+		$this->bases    = $service;
 
 		$this->base = $service->save(
 			null,
@@ -170,9 +195,21 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			$this->service( AuditTrail::class ),
 			$this->service( Transaction::class ),
 			$this->service( Logger::class ),
-			2
+			2,
+			fn( int $product ) => $this->repricing->schedule( $product )
 		);
-		$this->review      = new DesignerReview( $this->products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, fn( int $version ) => $this->apply->run( $version ) );
+		$this->repricing   = new DesignerRepricing( $this->wpdb, $this->products, $bases, $this->guard, $this->writer, $this->queue, $this->service( AuditTrail::class ), $this->service( Logger::class ), 2 );
+		$this->retirement  = new DesignerRetirement( $this->wpdb, $this->products, $this->guard, $this->writer, $this->queue, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
+		$this->hooks       = array(
+			array( BaseProductService::PRICE_CHANGED, fn( mixed $base ) => $this->repricing->base_changed( $base ) ),
+			array( BaseProductService::RETIRED, fn( mixed $base ) => $this->retirement->base_retired( $base ) ),
+		);
+
+		foreach ( $this->hooks as [ $hook, $callback ] ) {
+			add_action( $hook, $callback );
+		}
+
+		$this->review = new DesignerReview( $this->products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, fn( int $version ) => $this->apply->run( $version ) );
 
 		$this->listener = function ( mixed $type, mixed $creator, mixed $data ): void {
 			$this->notified[] = array( (string) $type, is_array( $data ) ? $data : array() );
@@ -182,6 +219,10 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		remove_action( 'merchboard_notify', $this->listener, 1 );
+
+		foreach ( $this->hooks as [ $hook, $callback ] ) {
+			remove_action( $hook, $callback );
+		}
 
 		foreach ( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'meta_key' => DesignerMedia::META ) ) as $attachment ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Test cleanup.
 			wp_delete_attachment( (int) $attachment, true );
@@ -206,7 +247,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( array( 'approved', 'done', '179.9400' ), $this->state( $version ) );
 		$row = $this->products->find( $this->creator->id, $product );
 		self::assertNotNull( $row );
-		self::assertSame( array( (string) $version, 'live' ), array( (string) $row['live_version_id'], $row['status'] ) );
+		self::assertSame( array( (string) $version, 'live', '179.9400', '149.9500' ), array( (string) $row['live_version_id'], $row['status'], $row['shop_price'], $row['shop_base_price'] ) );
 		self::assertNotNull( $this->guard->guard( (int) $row['wc_product_id'] ), 'The shop product is a proven designer product.' );
 		self::assertSame( array( array( (int) $row['wc_product_id'], $this->creator->id ) ), $this->links );
 
@@ -470,6 +511,142 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		ob_start();
 		$files->render_item( 1, $line );
 		self::assertSame( '', (string) ob_get_clean() );
+	}
+
+	public function test_a_new_base_price_reaches_the_shop_and_the_settlement_follows_the_shop(): void {
+		$product = $this->submitted();
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+		$waiting = $this->submitted();
+		$shop    = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		$prices  = new DesignerPrices( $this->wpdb, new PostMetaPricingProductStore() );
+
+		$this->bases->save( $this->base, $this->base_fields( '159,95' ), $this->base_views() );
+
+		self::assertSame( 1, $this->bases_version(), 'A new price does not make designs stale.' );
+		self::assertSame( array( array( DesignerRepricing::HOOK, array( $product, 1 ) ) ), array_map( static fn( array $job ): array => array( $job['hook'], $job['args'] ), array_values( array_filter( $this->queue->pending, static fn( array $job ): bool => DesignerRepricing::HOOK === $job['hook'] ) ) ), 'Only the product in the shop.' );
+		self::assertSame( 1499500, ( $prices->price( $shop ) ?? self::fail( 'No price.' ) )->base_units, 'Until the shop has the new price, a sale is settled at the old one.' );
+
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				$this->repricing->run( ...$args );
+			}
+		);
+
+		self::assertSame( array( array( $shop, 1919400 ) ), $this->writer->prices, '159.95 + 20 %.' );
+		self::assertSame( array( '191.9400', '159.9500' ), array( $this->products->product( $product )['shop_price'] ?? null, $this->products->product( $product )['shop_base_price'] ?? null ) );
+		self::assertSame( 1599500, ( $prices->price( $shop ) ?? self::fail( 'No price.' ) )->base_units );
+		self::assertSame( array( array( '191.9400', '179.9400' ) ), array_map( static fn( array $n ): array => array( $n[1]['price'], $n[1]['previous_price'] ), array_values( array_filter( $this->notified, static fn( array $n ): bool => DesignerNotifications::PRICE_CHANGED === $n[0] ) ) ) );
+		self::assertSame( array( 'designer_product_repriced' ), $this->audit( 'designer_product_repriced' ) );
+
+		$this->repricing->run( $product );
+		self::assertCount( 1, $this->writer->prices, 'Unchanged: nothing written.' );
+
+		$this->review->approve( $this->pending_id( $waiting ) );
+		$this->drain();
+		self::assertSame( 1919400, $this->writer->contents[1][1]->price_units, 'A design approved before is put in the shop at the new base price.' );
+	}
+
+	public function test_a_retired_base_product_takes_its_products_out_of_the_shop(): void {
+		$product = $this->submitted();
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+		$waiting = $this->submitted();
+		$version = $this->pending_id( $waiting );
+		$shop    = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+
+		$this->bases->retire( $this->base );
+
+		self::assertSame( 'rejected', $this->state( $version )[0], 'A waiting design is rejected.' );
+		self::assertStringContainsString( 'no longer offer', (string) ( $this->products->version( $version )['note'] ?? '' ) );
+		$this->drain_retirement();
+
+		self::assertSame( array( $shop ), $this->writer->unpublished );
+		self::assertSame( 'retired', $this->products->product( $product )['status'] ?? null );
+		self::assertSame( array( DesignerNotifications::REJECTED, DesignerNotifications::UNPUBLISHED ), $this->types( DesignerNotifications::REJECTED, DesignerNotifications::UNPUBLISHED ) );
+		self::assertSame( array( 'designer_base_retired', 'designer_product_unpublished' ), $this->audit( 'designer_base_retired', 'designer_product_unpublished' ) );
+
+		$this->retirement->run( $product );
+		self::assertCount( 1, $this->writer->unpublished, 'Once.' );
+
+		foreach (
+			array(
+				fn() => $this->bases->save( $this->base, $this->base_fields( '99' ), $this->base_views() ),
+				fn() => $this->bases->set_active( $this->base, true ),
+				fn() => $this->submissions->change( $this->creator, $product ),
+			) as $operation
+		) {
+			try {
+				$operation();
+				self::fail( 'A retired base product is final.' );
+			} catch ( DesignerException $e ) {
+				self::assertSame( DesignerException::BASE_RETIRED, $e->reason() );
+			}
+		}
+
+		$this->repricing->run( $product );
+		self::assertSame( array(), $this->writer->prices, 'A retired product is never repriced.' );
+	}
+
+	/**
+	 * Runs the queued retirement jobs.
+	 */
+	private function drain_retirement(): void {
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				if ( DesignerRetirement::HOOK === $hook ) {
+					$this->retirement->run( $args[0] ?? 0 );
+				}
+			}
+		);
+	}
+
+	/**
+	 * The base product's version.
+	 */
+	private function bases_version(): int {
+		return (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT version FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), $this->base ) );
+	}
+
+	/**
+	 * The base product's fields with a price.
+	 *
+	 * @param string $price Base price.
+	 * @return array<string, string>
+	 */
+	private function base_fields( string $price ): array {
+		return array(
+			'name'        => 'Organic tee',
+			'description' => '',
+			'base_price'  => $price,
+			'category_id' => '0',
+			'colors'      => "Black #111111\nSand #d8c8a8",
+			'sizes'       => 'S, M',
+		);
+	}
+
+	/**
+	 * The base product's side as stored (no new upload).
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function base_views(): array {
+		return array(
+			array(
+				'key'       => 'front',
+				'name'      => 'Front',
+				'x'         => '100',
+				'y'         => '100',
+				'width'     => '200',
+				'height'    => '200',
+				'width_mm'  => '30',
+				'height_mm' => '40',
+				'dpi'       => '100',
+				'remove'    => false,
+				'clear'     => array(),
+				'uploads'   => array(),
+			),
+		);
 	}
 
 	/**

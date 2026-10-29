@@ -48,7 +48,7 @@ final class OperationsTableTest extends IntegrationTestCase {
 	public function test_a_fresh_install_creates_the_registry(): void {
 		$this->install();
 
-		self::assertSame( '36', (string) get_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '37', (string) get_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( Tables::OPERATIONS ) ) ) );
 		self::assertSame(
 			array( 'operation_id' ),
@@ -73,7 +73,7 @@ final class OperationsTableTest extends IntegrationTestCase {
 
 	public function test_a_failing_table_keeps_the_schema_version_at_12(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20], $migrations[21], $migrations[22], $migrations[23], $migrations[24], $migrations[25], $migrations[26], $migrations[27], $migrations[28], $migrations[29], $migrations[30], $migrations[31], $migrations[32], $migrations[33], $migrations[34], $migrations[35], $migrations[36] );
+		unset( $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20], $migrations[21], $migrations[22], $migrations[23], $migrations[24], $migrations[25], $migrations[26], $migrations[27], $migrations[28], $migrations[29], $migrations[30], $migrations[31], $migrations[32], $migrations[33], $migrations[34], $migrations[35], $migrations[36], $migrations[37] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		self::assertSame( '12', (string) get_option( Migrator::VERSION_OPTION ) );
 
@@ -111,7 +111,7 @@ final class OperationsTableTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( '36', (string) get_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '37', (string) get_option( Migrator::VERSION_OPTION ) );
 		self::assertSame( array( self::ROW ), $this->registry(), 'Migration 13 changed no kept row.' );
 	}
 

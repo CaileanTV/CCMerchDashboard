@@ -14,6 +14,8 @@ use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Lifecycle\Deactivator;
 use MerchBoard\Core\Lifecycle\ScheduledJobs;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillScheduler;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
@@ -30,7 +32,7 @@ final class ScheduledJobsTest extends TestCase {
 
 	public function test_core_names_the_same_hook_as_the_module(): void {
 		self::assertSame( SalesBackfillScheduler::HOOK, ScheduledJobs::SALES_BACKFILL_HOOK );
-		self::assertSame( array( DesignerApply::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
+		self::assertSame( array( DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
 	}
 
 	public function test_only_the_backfill_hook_is_cancelled(): void {

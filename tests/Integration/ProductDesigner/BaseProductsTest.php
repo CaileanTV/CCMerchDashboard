@@ -110,9 +110,9 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertNull( $this->assets->find( $old ) );
 		self::assertNull( $this->files->path( $file ) );
 
-		// A new base price raises the version again.
+		// A new base price keeps the version (step 30.11: designs stay valid; the shop is repriced).
 		$this->service->save( $id, array_merge( self::fields(), array( 'base_price' => '159,95' ) ), array( self::existing( 'front' ) ) );
-		self::assertSame( array( 3, 1599500 ), array( $this->bases->find( $id )?->version, $this->bases->find( $id )?->base_units ) );
+		self::assertSame( array( 2, 1599500 ), array( $this->bases->find( $id )?->version, $this->bases->find( $id )?->base_units ) );
 
 		$audit = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT action FROM %i WHERE action LIKE %s ORDER BY id', $this->table( Tables::AUDIT_LOG ), 'designer_base_%' ) );
 		self::assertSame( array( 'designer_base_created', 'designer_base_changed', 'designer_base_changed', 'designer_base_changed' ), $audit );

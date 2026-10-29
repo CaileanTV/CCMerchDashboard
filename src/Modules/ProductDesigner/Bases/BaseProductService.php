@@ -34,13 +34,28 @@ defined( 'ABSPATH' ) || exit;
  *   recorded inside it; when the change is refused they are deleted again.
  *   All layers of a side have the same size, which is the template's size.
  *   A replaced or removed layer is deleted after the change is stored.
- * - **Version:** a change of the base price or of a side's template or print
- *   area raises `version` (step 30.11 reprices the designer products).
+ * - **Version:** a change of a side's template or print area raises
+ *   `version`; designs made on an earlier version must be saved and sent
+ *   again. A new base price does not (step 30.11): it fires
+ *   `merchboard_designer_base_price_changed` after the commit, and the
+ *   designer products in the shop are repriced (DesignerRepricing).
  * - **Status:** a new base product is a draft; it is activated only with
  *   colours, sizes and sides. A base product with designs is never
- *   deleted (retiring it follows in step 30.11).
+ *   deleted; it is retired (step 30.11, final): `merchboard_designer_base_retired`
+ *   takes its products out of the shop (DesignerRetirement). A retired base
+ *   product cannot be changed or activated again.
  */
 class BaseProductService {
+
+	/**
+	 * Fired after a base product's price changed: `( int $base_id )`.
+	 */
+	public const PRICE_CHANGED = 'merchboard_designer_base_price_changed';
+
+	/**
+	 * Fired after a base product was retired: `( int $base_id )`.
+	 */
+	public const RETIRED = 'merchboard_designer_base_retired';
 
 	/**
 	 * Constructor.
@@ -85,6 +100,11 @@ class BaseProductService {
 		self::authorize();
 
 		$existing = null === $id ? null : $this->existing( $id );
+
+		if ( BaseProduct::RETIRED === ( $existing->status ?? '' ) ) {
+			self::reject( DesignerException::BASE_RETIRED );
+		}
+
 		$name     = trim( sanitize_text_field( $fields['name'] ?? '' ) );
 		$price    = $this->price( $fields['base_price'] ?? '' );
 		$category = self::category( $fields['category_id'] ?? '' );
@@ -157,6 +177,10 @@ class BaseProductService {
 
 		$this->forget_layers( $saved[1] );
 
+		if ( null !== $existing && $existing->base_units !== $price ) {
+			do_action( 'merchboard_designer_base_price_changed', $saved[0] );
+		}
+
 		return $saved[0];
 	}
 
@@ -173,6 +197,10 @@ class BaseProductService {
 
 		$base   = $this->existing( $id );
 		$status = $active ? BaseProduct::ACTIVE : BaseProduct::DRAFT;
+
+		if ( BaseProduct::RETIRED === $base->status ) {
+			self::reject( DesignerException::BASE_RETIRED );
+		}
 
 		if ( $status === $base->status ) {
 			return;
@@ -196,6 +224,43 @@ class BaseProductService {
 				);
 			}
 		);
+	}
+
+	/**
+	 * Retires a base product for good: no new designs, its products are
+	 * taken out of the shop and its waiting designs rejected (after the
+	 * commit, `merchboard_designer_base_retired`).
+	 *
+	 * @param int $id Base product.
+	 * @throws DesignerException When the user may not or it is unknown.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function retire( int $id ): void {
+		self::authorize();
+
+		$base = $this->existing( $id );
+
+		if ( BaseProduct::RETIRED === $base->status ) {
+			return;
+		}
+
+		$changed = $this->with_status( $base, BaseProduct::RETIRED );
+
+		$this->transaction->run(
+			function () use ( $id, $changed ): void {
+				$this->bases->update( $id, $changed );
+				$this->audit->record(
+					AuditAction::DesignerBaseRetired,
+					null,
+					array(
+						'base_id'   => $id,
+						'base_name' => $changed->name,
+					)
+				);
+			}
+		);
+
+		do_action( 'merchboard_designer_base_retired', $id );
 	}
 
 	/**
@@ -475,7 +540,7 @@ class BaseProductService {
 	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views ): BaseProduct {
 		$version = $existing->version ?? 1;
 
-		if ( null !== $existing && ( $existing->base_units !== $price || self::templates( $existing->views ) !== self::templates( $views ) ) ) {
+		if ( null !== $existing && self::templates( $existing->views ) !== self::templates( $views ) ) {
 			++$version;
 		}
 

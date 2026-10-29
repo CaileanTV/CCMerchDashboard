@@ -49,11 +49,12 @@ final class ScheduledJobs {
 	public const NOTIFICATION_HOOKS = array( 'merchboard_notification_send', 'merchboard_notification_balance_check' );
 
 	/**
-	 * Action Scheduler hook of the product designer's apply pipeline
-	 * (Modules\ProductDesigner\Designs\DesignerApply::HOOK; a test keeps them
-	 * equal, ADR-080). Cancelled on uninstall with the opt-in.
+	 * Action Scheduler hooks of the product designer: the apply pipeline,
+	 * the repricing and the retirement (Modules\ProductDesigner\Designs\
+	 * DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK;
+	 * a test keeps them equal, ADR-080). Cancelled on uninstall with the opt-in.
 	 */
-	public const DESIGNER_HOOKS = array( 'merchboard_designer_apply' );
+	public const DESIGNER_HOOKS = array( 'merchboard_designer_apply', 'merchboard_designer_reprice', 'merchboard_designer_retire' );
 
 	/**
 	 * Cancels the pending backfill pages; never throws.

@@ -20,8 +20,8 @@ use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Saves, activates, deactivates and deletes base products and adds and
- * deletes cliparts (step 30.6). Order of checks: capability
+ * Saves, activates, deactivates, retires (step 30.11, with a confirmation)
+ * and deletes base products and adds and deletes cliparts (step 30.6). Order of checks: capability
  * `merchboard_manage_designer` → nonce → the services (which check again
  * and validate every value and file). Post/Redirect/Get with an outcome.
  */
@@ -94,6 +94,14 @@ final class BaseProductActions {
 					$this->bases->set_active( $id, 'activate' === $do );
 
 					return BaseProductsPage::edit_url( $id, 'activate' === $do ? 'activated' : 'deactivated' );
+				case 'retire':
+					if ( '1' !== $text( 'confirm_retire' ) ) {
+						return BaseProductsPage::edit_url( $id, 'retire_unconfirmed' );
+					}
+
+					$this->bases->retire( $id );
+
+					return BaseProductsPage::edit_url( $id, 'retired' );
 				case 'delete':
 					$this->bases->delete( $id );
 

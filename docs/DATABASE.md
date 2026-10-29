@@ -671,6 +671,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Sletning af en creator:** creatorens uploads og de designer-produkter (med versioner og tasks), der aldrig kom i butikken, slettes, også deres filer (fra trin 30.9). Produkter i butikken bliver kladder igen (fra trin 30.10).
 
+**Butikkens pris (trin 30.11, migration 37):** `merchboard_designer_products.shop_price` og `shop_base_price` (decimal inkl. moms, NULL før første anvendelse): prisen i WooCommerce og grundprisen bag den; afregningen bruger `shop_base_price`. `status` kan også være `retired` (grundproduktet er pensioneret, produktet er en kladde i WooCommerce).
+
 **Versioner (trin 30.10):** `status` = `draft`, `pending`, `withdrawn`, `rejected` (med `note`), `approved` (med `apply_state` `queued`/`running`/`failed`/`done`, `apply_step` og `apply_error`) og `superseded`. `merchboard_designer_products.status` bliver `live`, når `live_version_id` sættes. Ordrelinjer gemmer versionen i item meta `_merchboard_designer_version`; mockups i mediebiblioteket bærer `_merchboard_designer_mockup` og produktet `_merchboard_designer_attributes` (attributnavnene). Produkter i butikken bevares af hensyn til ordrehistorikken.
 
 **Afregning (migration 36, `AddSalesDesignerAmounts`, trin 30.3):** et designer-salgs snapshot i `merchboard_sales_line_pricing` har status `designer`, kilden `designer`, grundpris, fortjeneste og listepris pr. stk. inkl. moms (`base_unit`, `profit_unit` og `price_unit` fra ADR-047 genbruges) og den effektive andel. Rækkens fortjeneste og udbetaling gemmes i `merchboard_sales_tax` (se ovenfor), og SQL-summerne læser dem.

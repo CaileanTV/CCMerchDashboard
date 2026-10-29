@@ -262,6 +262,11 @@ class DesignerSubmissions {
 				}
 
 				$live = $this->products->live( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+				$base = $this->bases->find( (int) $live['base_id'] );
+
+				if ( null === $base || BaseProduct::ACTIVE !== $base->status ) {
+					self::refuse( DesignerException::BASE_RETIRED );
+				}
 				$this->audit->record(
 					AuditAction::DesignerChangeStarted,
 					$creator->id,

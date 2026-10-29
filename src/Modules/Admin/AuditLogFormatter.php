@@ -192,6 +192,9 @@ final class AuditLogFormatter {
 			AuditAction::DesignerVersionApplied => __( 'Design put in the shop', 'merchboard' ),
 			AuditAction::DesignerApplyRetried => __( 'Design queued for the shop again', 'merchboard' ),
 			AuditAction::DesignerChangeStarted => __( 'Creator started a change of a designer product', 'merchboard' ),
+			AuditAction::DesignerBaseRetired => __( 'Base product retired', 'merchboard' ),
+			AuditAction::DesignerProductRepriced => __( 'Designer product repriced', 'merchboard' ),
+			AuditAction::DesignerProductUnpublished => __( 'Designer product taken out of the shop', 'merchboard' ),
 		};
 	}
 

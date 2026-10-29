@@ -15,6 +15,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
@@ -29,9 +30,10 @@ defined( 'ABSPATH' ) || exit;
  * Approval (step 30.10, ADR-080 pkt. 3), `merchboard_manage_designer`:
  *
  * - approve(): the pending version is approved with the price it gives now
- *   (frozen; the base product must be active and unchanged since the
- *   submission) and queued for DesignerApply (Action Scheduler; without a
- *   queue at the end of the request).
+ *   (recorded; the base product must be unchanged since the submission and
+ *   not retired; the shop gets the price of the base price when it is
+ *   applied, step 30.11) and queued for DesignerApply (Action Scheduler;
+ *   without a queue at the end of the request).
  * - reject(): with a note to the creator; a new draft with the same content
  *   and files continues it, so the creator can change it and send again.
  * - retry(): an approved version that failed is queued again.
@@ -91,6 +93,10 @@ class DesignerReview {
 			function () use ( $version_id ): array {
 				$version = $this->pending( $version_id );
 				$base    = $this->bases->find( (int) $version['base_id'] );
+
+				if ( null !== $base && BaseProduct::RETIRED === $base->status ) {
+					self::refuse( DesignerException::BASE_RETIRED );
+				}
 
 				if ( null === $base || $base->version !== (int) $version['base_version'] ) {
 					self::refuse( DesignerException::DESIGN_STALE );

@@ -29,7 +29,9 @@ defined( 'ABSPATH' ) || exit;
  * Step 30.9: a new product or a change waiting for approval (to the
  * administrator) and the creator's receipt. Step 30.10: approved and in the
  * shop, change approved, rejected with the note (to the creator) and "could
- * not be put in the shop" (to the administrator). The data never hold files,
+ * not be put in the shop" (to the administrator). Step 30.11: a new price
+ * after a new base price and "taken out of the shop" (a retired base
+ * product), to the creator. The data never hold files,
  * only the product's title, the version, the price and its currency (and
  * the note or the reason).
  */
@@ -50,6 +52,10 @@ final class DesignerNotifications {
 	public const REJECTED = 'designer_rejected';
 
 	public const APPLY_FAILED = 'admin_designer_apply_failed';
+
+	public const PRICE_CHANGED = 'designer_price_changed';
+
+	public const UNPUBLISHED = 'designer_unpublished';
 
 	/**
 	 * Adds the types to the catalog.
@@ -72,6 +78,8 @@ final class DesignerNotifications {
 			self::approved( false ),
 			self::approved( true ),
 			self::rejected(),
+			self::price_changed(),
+			self::unpublished(),
 			self::submitted(),
 			self::change_submitted(),
 			self::apply_failed(),
@@ -209,6 +217,75 @@ final class DesignerNotifications {
 	}
 
 	/**
+	 * A product in the shop has a new price: the base price changed, the
+	 * creator's percent or amount stays.
+	 */
+	private static function price_changed(): NotificationType {
+		return new NotificationType(
+			self::PRICE_CHANGED,
+			NotificationType::CREATOR,
+			self::GROUP,
+			static fn(): string => __( 'New price of a designer product', 'merchboard' ),
+			static fn(): string => __( 'When the base price of a designer product changes, so the customer\'s price in the shop changes too. The creator\'s percent or amount stays the same.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'designer',
+			array_merge( self::sample(), array( 'previous_price' => '229.00' ) ),
+			/* translators: 1: product title, 2: new price, 3: previous price. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s now costs %2$s in the shop (before: %3$s), because its base price changed.', 'merchboard' ), $d->text( 'title' ), $d->money( 'price' ), $d->money( 'previous_price' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product title. */
+				sprintf( __( 'New price of %s', 'merchboard' ), $d->text( 'title' ) ),
+				__( 'Your product has a new price', 'merchboard' ),
+				array( __( 'The base price of your product changed, so its price in the shop changed too. Your profit setting (percent or amount) is the same. Orders placed before keep their price.', 'merchboard' ) ),
+				array(
+					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
+					array( __( 'New customer price incl. VAT', 'merchboard' ), $d->money( 'price' ) ),
+					array( __( 'Before', 'merchboard' ), $d->money( 'previous_price' ) ),
+				),
+				null,
+				null,
+				__( 'Open the designer', 'merchboard' ),
+				'',
+				__( 'Thank you for creating with us.', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A product was taken out of the shop because its base product is retired.
+	 */
+	private static function unpublished(): NotificationType {
+		return new NotificationType(
+			self::UNPUBLISHED,
+			NotificationType::CREATOR,
+			self::GROUP,
+			static fn(): string => __( 'Designer product taken out of the shop', 'merchboard' ),
+			static fn(): string => __( 'When a designer product leaves the shop because its base product is no longer offered.', 'merchboard' ),
+			true,
+			true,
+			true,
+			'designer',
+			self::sample(),
+			/* translators: %s: product title. */
+			static fn( NotificationData $d ): string => sprintf( __( '%s was taken out of the shop: its base product is no longer offered.', 'merchboard' ), $d->text( 'title' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product title. */
+				sprintf( __( '%s was taken out of the shop', 'merchboard' ), $d->text( 'title' ) ),
+				__( 'Your product was taken out of the shop', 'merchboard' ),
+				array( __( 'We no longer offer the base product of your design, so the product was taken out of the shop. Your earnings from earlier orders are not affected. You are welcome to design on another product.', 'merchboard' ) ),
+				array( array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ) ),
+				null,
+				null,
+				__( 'Open the designer', 'merchboard' ),
+				'',
+				__( 'Thank you for creating with us.', 'merchboard' )
+			)
+		);
+	}
+
+	/**
 	 * An approved version could not be put in the shop.
 	 */
 	private static function apply_failed(): NotificationType {
@@ -257,6 +334,7 @@ final class DesignerNotifications {
 			DesignerException::NOT_DESIGNER_PRODUCT => __( 'The product in the shop is no longer the designer product (changed or deleted in WooCommerce).', 'merchboard' ),
 			'creator'                               => __( 'The creator is no longer active.', 'merchboard' ),
 			'link'                                  => __( 'The product could not be linked to the creator.', 'merchboard' ),
+			'reprice'                               => __( 'The new base price could not be written to the product; it keeps its earlier price.', 'merchboard' ),
 			default                                 => __( 'A technical error; the log has the details.', 'merchboard' ),
 		};
 	}

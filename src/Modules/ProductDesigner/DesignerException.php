@@ -103,6 +103,8 @@ final class DesignerException extends RuntimeException {
 
 	public const NOT_LIVE = 'not_live';
 
+	public const BASE_RETIRED = 'base_retired';
+
 	/**
 	 * Constructor.
 	 *
