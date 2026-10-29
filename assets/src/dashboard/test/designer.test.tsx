@@ -123,6 +123,23 @@ describe( 'the designer API', () => {
 			color: 7,
 		} );
 		expect( overview?.bases[ 0 ]?.views[ 0 ]?.printWidth ).toBe( 3543 );
+		expect( overview?.bases[ 0 ]?.views[ 0 ]?.backgrounds ).toEqual( {} );
+		expect(
+			parseOverview( {
+				...OVERVIEW,
+				bases: [
+					{
+						...OVERVIEW.bases[ 0 ],
+						views: [
+							{
+								...OVERVIEW.bases[ 0 ]?.views[ 0 ],
+								layers: { color: 7, 'background:black': 8 },
+							},
+						],
+					},
+				],
+			} )?.bases[ 0 ]?.views[ 0 ]
+		).toMatchObject( { layers: { color: 7 }, backgrounds: { black: 8 } } );
 		expect( overview?.fonts ).toEqual( [
 			{ family: 'Roboto', weights: [ 400, 700 ] },
 		] );

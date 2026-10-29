@@ -35,6 +35,12 @@ export interface DesignerView {
 	readonly width: number;
 	readonly height: number;
 	readonly layers: Partial< Record< LayerKind, number > >;
+	/**
+	 * A colour's own background (a photo of the product in that colour,
+	 * e.g. rendered by Printful or Gelato), by colour key: drawn instead of
+	 * the background and the tinted colour mask.
+	 */
+	readonly backgrounds: Readonly< Record< string, number > >;
 	readonly area: {
 		readonly x: number;
 		readonly y: number;
@@ -264,6 +270,18 @@ function parseView( value: unknown ): DesignerView | null {
 		}
 	}
 
+	const backgrounds: Record< string, number > = {};
+
+	for ( const [ name, id ] of Object.entries( value.layers ) ) {
+		if ( name.startsWith( 'background:' ) ) {
+			if ( ! isInt( id, 1 ) ) {
+				return null;
+			}
+
+			backgrounds[ name.slice( 'background:'.length ) ] = id;
+		}
+	}
+
 	const area = value.area as UnknownRecord;
 
 	if (
@@ -281,6 +299,7 @@ function parseView( value: unknown ): DesignerView | null {
 		width: value.width,
 		height: value.height,
 		layers,
+		backgrounds,
 		area: { x: area.x, y: area.y, width: area.width, height: area.height },
 		printWidth: value.print_width,
 		printHeight: value.print_height,

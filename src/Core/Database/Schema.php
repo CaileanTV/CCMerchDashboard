@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\Migrations\AddAlertEventAmounts;
 use MerchBoard\Core\Database\Migrations\AddAlertOrderLogIndexes;
 use MerchBoard\Core\Database\Migrations\AddChatbotPlatforms;
 use MerchBoard\Core\Database\Migrations\AddCreatorShareModel;
+use MerchBoard\Core\Database\Migrations\AddDesignerBaseImport;
 use MerchBoard\Core\Database\Migrations\AddDesignerShopPrice;
 use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertChatbotTables;
@@ -101,6 +102,7 @@ final class Schema {
 			35 => new CreateProductDesignerTables(),
 			36 => new AddSalesDesignerAmounts(),
 			37 => new AddDesignerShopPrice(),
+			38 => new AddDesignerBaseImport(),
 		);
 	}
 }

@@ -187,6 +187,15 @@ final class BaseProductActions {
 				}
 			}
 
+			// A colour's own background (`layer_<side>_bg_<colour key>`).
+			foreach ( $files as $name => $upload ) {
+				$prefix = 'layer_' . $index . '_bg_';
+
+				if ( is_string( $name ) && is_array( $upload ) && str_starts_with( $name, $prefix ) && BaseView::valid_layer( BaseView::color_layer( substr( $name, strlen( $prefix ) ) ) ) ) {
+					$uploads[ BaseView::color_layer( substr( $name, strlen( $prefix ) ) ) ] = $upload;
+				}
+			}
+
 			$views[] = array(
 				'key'       => $value( 'key' ),
 				'name'      => $value( 'name' ),
@@ -198,7 +207,7 @@ final class BaseProductActions {
 				'height_mm' => $value( 'height_mm' ),
 				'dpi'       => $value( 'dpi' ),
 				'remove'    => '1' === $value( 'remove' ),
-				'clear'     => array_values( array_filter( is_array( $view['clear'] ?? null ) ? $view['clear'] : array(), static fn( mixed $layer ): bool => in_array( $layer, BaseView::LAYERS, true ) ) ),
+				'clear'     => array_values( array_filter( is_array( $view['clear'] ?? null ) ? $view['clear'] : array(), static fn( mixed $layer ): bool => is_string( $layer ) && BaseView::valid_layer( $layer ) ) ),
 				'uploads'   => $uploads,
 			);
 		}

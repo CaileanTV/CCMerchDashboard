@@ -46,6 +46,8 @@ export interface TemplateLayersProps {
 	/** `data:` URL by asset id. */
 	readonly images: ReadonlyMap< number, string >;
 	readonly color: string;
+	/** The colour's key: its own background, when the side has one, replaces the background and the mask. */
+	readonly colorKey?: string;
 	readonly part: 'under' | 'over';
 }
 
@@ -55,9 +57,11 @@ export interface TemplateLayersProps {
  * @param props Props.
  */
 export function TemplateLayers( props: TemplateLayersProps ) {
-	const { view, images, color, part } = props;
+	const { view, images, color, colorKey, part } = props;
+	const own =
+		colorKey === undefined ? undefined : view.backgrounds[ colorKey ];
 	const mask =
-		view.layers.color === undefined
+		own !== undefined || view.layers.color === undefined
 			? undefined
 			: images.get( view.layers.color );
 	const [ tinted, setTinted ] = useState< string | null >( null );
@@ -99,8 +103,8 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 
 	return part === 'under' ? (
 		<>
-			{ layer( view.layers.background ) }
-			{ tinted === null ? null : (
+			{ layer( own ?? view.layers.background ) }
+			{ tinted === null || own !== undefined ? null : (
 				<img
 					className="merchboard-designer__layer"
 					src={ tinted }

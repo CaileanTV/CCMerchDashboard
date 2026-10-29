@@ -118,7 +118,7 @@ class BaseProductService {
 		$stored = array();
 
 		try {
-			$plans = $this->plan_views( $existing, $views, $stored );
+			$plans = $this->plan_views( $existing, $views, $stored, array_column( $colors, 'key' ) );
 
 			$saved = $this->transaction->run(
 				function () use ( $id, $existing, $name, $fields, $price, $category, $colors, $sizes, $plans ): array {
@@ -371,11 +371,12 @@ class BaseProductService {
 	 * @param BaseProduct|null                                                             $existing Stored base product.
 	 * @param list<array<string, mixed>>                                                   $views    Sides as entered.
 	 * @param list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored   Files stored so far (for clean-up).
+	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
 	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
-	private function plan_views( ?BaseProduct $existing, array $views, array &$stored ): array {
+	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array() ): array {
 		$current = array();
 
 		foreach ( $existing->views ?? array() as $view ) {
@@ -413,7 +414,14 @@ class BaseProductService {
 			$new     = array();
 			$uploads = is_array( $input['uploads'] ?? null ) ? $input['uploads'] : array();
 
-			foreach ( BaseView::LAYERS as $layer ) {
+			// A colour's own background (`background:<key>`) only for a colour of the base product.
+			foreach ( array_keys( $layers ) as $layer ) {
+				if ( str_starts_with( $layer, BaseView::COLOR_BACKGROUND ) && ! in_array( substr( $layer, strlen( BaseView::COLOR_BACKGROUND ) ), $colors, true ) ) {
+					unset( $layers[ $layer ] );
+				}
+			}
+
+			foreach ( array_merge( BaseView::LAYERS, array_map( static fn( string $color ): string => BaseView::color_layer( $color ), $colors ) ) as $layer ) {
 				$upload = $uploads[ $layer ] ?? null;
 
 				if ( is_array( $upload ) && UPLOAD_ERR_NO_FILE !== ( $upload['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
@@ -488,6 +496,13 @@ class BaseProductService {
 		foreach ( BaseView::LAYERS as $layer ) {
 			if ( isset( $layers[ $layer ] ) ) {
 				$sorted[ $layer ] = $layers[ $layer ];
+			}
+		}
+
+		// The colours' own backgrounds after the shared layers.
+		foreach ( $layers as $layer => $asset ) {
+			if ( str_starts_with( $layer, BaseView::COLOR_BACKGROUND ) ) {
+				$sorted[ $layer ] = $asset;
 			}
 		}
 

@@ -285,7 +285,10 @@ function Editor( props: EditorProps ) {
 	useEffect( () => {
 		if ( view !== undefined ) {
 			ensureImages(
-				Object.values( view.layers ).map( ( id ) => ( {
+				[
+					...Object.values( view.layers ),
+					...Object.values( view.backgrounds ),
+				].map( ( id ) => ( {
 					id,
 					mime: 'image/png',
 				} ) )
@@ -1054,6 +1057,7 @@ function Editor( props: EditorProps ) {
 								view={ view }
 								images={ images }
 								color={ hex }
+								colorKey={ previewColor }
 								part="under"
 							/>
 							<div className="merchboard-designer__canvas">

@@ -16,6 +16,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -116,6 +117,40 @@ final class BaseProductsTest extends IntegrationTestCase {
 
 		$audit = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT action FROM %i WHERE action LIKE %s ORDER BY id', $this->table( Tables::AUDIT_LOG ), 'designer_base_%' ) );
 		self::assertSame( array( 'designer_base_created', 'designer_base_changed', 'designer_base_changed', 'designer_base_changed' ), $audit );
+	}
+
+	public function test_a_colour_can_have_its_own_background_which_goes_with_the_colour(): void {
+		$id   = $this->service->save( null, self::fields(), array( self::side( 'Front', array( 'background' => 1000 ) ) ) );
+		$side = self::existing( 'front' );
+
+		$side['uploads'][ BaseView::color_layer( 'black' ) ] = AlertImagesTest::upload( AlertImagesTest::png( 1000, 1000 ), 'black.png' );
+		$side['uploads'][ BaseView::color_layer( 'pink' ) ]  = AlertImagesTest::upload( AlertImagesTest::png( 1000, 1000 ), 'pink.png' );
+		$this->service->save( $id, self::fields(), array( $side ) );
+		$view = $this->bases->find( $id )?->views[0];
+
+		self::assertNotNull( $view );
+		self::assertSame( array( 'black' ), array_keys( $view->color_backgrounds() ), 'Only a colour of the base product gets a background.' );
+		self::assertContains( $view->color_backgrounds()['black'], $this->bases->find( $id )?->layer_assets() ?? array() );
+
+		// A colour's background must have the template's size.
+		$wrong = self::existing( 'front' );
+
+		$wrong['uploads'][ BaseView::color_layer( 'sand' ) ] = AlertImagesTest::upload( AlertImagesTest::png( 500, 500 ), 'sand.png' );
+
+		try {
+			$this->service->save( $id, self::fields(), array( $wrong ) );
+			self::fail( 'Another size.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_LAYER_SIZE, $e->reason() );
+		}
+
+		// Removing the colour removes its background and deletes its file.
+		$asset  = $view->color_backgrounds()['black'];
+		$fields = array_merge( self::fields(), array( 'colors' => 'Sand #d8c8a8' ) );
+		$this->service->save( $id, $fields, array( self::existing( 'front' ) ) );
+
+		self::assertSame( array(), $this->bases->find( $id )?->views[0]->color_backgrounds() );
+		self::assertNull( $this->assets->find( $asset ) );
 	}
 
 	public function test_refused_changes_keep_no_file_and_change_nothing(): void {

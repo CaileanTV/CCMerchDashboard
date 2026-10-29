@@ -20,7 +20,10 @@ defined( 'ABSPATH' ) || exit;
  * - The template is `width` × `height` px; its layers (template assets, all
  *   of that size) are the background, the colour mask (tinted in the
  *   product colour), the shading (multiplied) and the highlight (screened).
- *   At least the background or the colour mask is needed.
+ *   A colour can have its own background instead (`background:<key>`, a
+ *   photo of the product in that colour, e.g. rendered by Printful or
+ *   Gelato; review 30.15). At least one background or the colour mask is
+ *   needed.
  * - The print area is the rectangle of the template (px) where the design
  *   is shown, and the physical print size in whole millimetres at `dpi`.
  *   The print file of the side is width_mm × height_mm at that dpi.
@@ -31,6 +34,48 @@ final readonly class BaseView {
 	 * The template layers, in the order they are drawn.
 	 */
 	public const LAYERS = array( 'background', 'color', 'shading', 'highlight' );
+
+	/**
+	 * The prefix of a colour's own background (`background:<colour key>`):
+	 * a photo of the product in that colour, drawn instead of the background
+	 * and the tinted colour mask (review 30.15, the owner's choice).
+	 */
+	public const COLOR_BACKGROUND = 'background:';
+
+	/**
+	 * The layer key of a colour's own background.
+	 *
+	 * @param string $color Colour key.
+	 */
+	public static function color_layer( string $color ): string {
+		return self::COLOR_BACKGROUND . $color;
+	}
+
+	/**
+	 * Whether a layer key is a known layer or a colour's background.
+	 *
+	 * @param string $layer Layer key.
+	 */
+	public static function valid_layer( string $layer ): bool {
+		return in_array( $layer, self::LAYERS, true ) || 1 === preg_match( '/^' . preg_quote( self::COLOR_BACKGROUND, '/' ) . '[a-z0-9][a-z0-9_-]{0,31}$/', $layer );
+	}
+
+	/**
+	 * The colours' own backgrounds: asset id by colour key.
+	 *
+	 * @return array<string, int>
+	 */
+	public function color_backgrounds(): array {
+		$backgrounds = array();
+
+		foreach ( $this->layers as $layer => $asset ) {
+			if ( str_starts_with( $layer, self::COLOR_BACKGROUND ) ) {
+				$backgrounds[ substr( $layer, strlen( self::COLOR_BACKGROUND ) ) ] = $asset;
+			}
+		}
+
+		return $backgrounds;
+	}
 
 	/**
 	 * Smallest and largest print resolution.
@@ -51,7 +96,7 @@ final readonly class BaseView {
 	 * @param string                                         $name      Name shown to creators.
 	 * @param int                                            $width     Template width in px.
 	 * @param int                                            $height    Template height in px.
-	 * @param array<string, int>                             $layers    Asset id by layer (LAYERS); missing layers are left out.
+	 * @param array<string, int>                             $layers    Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
 	 * @param array{x: int, y: int, width: int, height: int} $area Print area in template px.
 	 * @param int                                            $width_mm  Print width in mm.
 	 * @param int                                            $height_mm Print height in mm.
@@ -78,12 +123,12 @@ final readonly class BaseView {
 		}
 
 		foreach ( $layers as $layer => $asset ) {
-			if ( ! in_array( $layer, self::LAYERS, true ) || $asset < 1 ) {
+			if ( ! self::valid_layer( (string) $layer ) || $asset < 1 ) {
 				throw new InvalidArgumentException( 'Invalid template layer.' );
 			}
 		}
 
-		if ( ! isset( $layers['background'] ) && ! isset( $layers['color'] ) ) {
+		if ( ! isset( $layers['background'] ) && ! isset( $layers['color'] ) && array() === $this->color_backgrounds() ) {
 			throw new InvalidArgumentException( 'A side needs a background or a colour mask.' );
 		}
 

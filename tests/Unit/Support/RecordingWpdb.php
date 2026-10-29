@@ -224,6 +224,16 @@ final class RecordingWpdb extends wpdb {
 			return ( $this->columns_exist ?? $this->tables_exist ) || isset( $this->added_indexes[ $key ] ) ? array( 'Key_name' => $prepared['args'][1] ) : null;
 		}
 
+		if ( null !== $prepared && 'SHOW COLUMNS FROM %i LIKE %s' === $prepared['query'] ) {
+			// An existing column is reported as already widened to longtext (migration 38).
+			$column = (string) $prepared['args'][1];
+
+			return ( $this->columns_exist ?? $this->tables_exist ) || isset( $this->added_columns[ $prepared['args'][0] . '.' . $column ] ) ? array(
+				'Field' => $column,
+				'Type'  => 'longtext',
+			) : null;
+		}
+
 		return array_shift( $this->rows );
 	}
 

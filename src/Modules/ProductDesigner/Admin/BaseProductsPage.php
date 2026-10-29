@@ -303,10 +303,10 @@ final class BaseProductsPage {
 		$index = 0;
 
 		foreach ( $base->views ?? array() as $view ) {
-			$this->render_view( $index++, $view, $psd );
+			$this->render_view( $index++, $view, $psd, $base->colors ?? array() );
 		}
 
-		$this->render_view( $index, null, $psd );
+		$this->render_view( $index, null, $psd, $base->colors ?? array() );
 
 		echo '<p><button type="submit" class="button button-primary">' . esc_html( null === $base ? __( 'Create base product', 'merchboard' ) : __( 'Save base product', 'merchboard' ) ) . '</button></p>';
 		echo '</form>';
@@ -319,11 +319,14 @@ final class BaseProductsPage {
 	/**
 	 * One side of the form; null for the empty "new side".
 	 *
-	 * @param int           $index Index in the form.
-	 * @param BaseView|null $view  The side.
-	 * @param bool          $psd   Whether the PSD import is loaded.
+	 * @phpstan-param list<array{key: string, name: string, hex: string}> $colors
+	 *
+	 * @param int           $index  Index in the form.
+	 * @param BaseView|null $view   The side.
+	 * @param bool          $psd    Whether the PSD import is loaded.
+	 * @param array[]       $colors The base product's colours (a background per colour).
 	 */
-	private function render_view( int $index, ?BaseView $view, bool $psd ): void {
+	private function render_view( int $index, ?BaseView $view, bool $psd, array $colors = array() ): void {
 		$field = static fn( string $name ): string => 'views[' . $index . '][' . $name . ']';
 		$value = static fn( ?int $number ): string => null === $number ? '' : (string) $number;
 
@@ -358,6 +361,21 @@ final class BaseProductsPage {
 			}
 
 			echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_' . $layer ) . '" accept="image/png"></td></tr>';
+		}
+
+		// A colour's own background (a photo of the product in that colour; review 30.15): used instead of the background and the tinted mask.
+		foreach ( $colors as $color ) {
+			$layer = BaseView::color_layer( $color['key'] );
+			$asset = $view->layers[ $layer ] ?? null;
+			/* translators: %s: colour name. */
+			echo '<tr><th scope="row" style="width:12rem">' . esc_html( sprintf( __( 'Background in %s', 'merchboard' ), $color['name'] ) ) . '</th><td>';
+
+			if ( null !== $asset ) {
+				echo '<img src="' . esc_url( DesignerAssetDownload::url( $asset ) ) . '" alt="" style="max-width:80px;max-height:80px;vertical-align:middle"> ';
+				echo '<label><input type="checkbox" name="' . esc_attr( $field( 'clear' ) ) . '[]" value="' . esc_attr( $layer ) . '"> ' . esc_html__( 'Remove', 'merchboard' ) . '</label> ';
+			}
+
+			echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_bg_' . $color['key'] ) . '" accept="image/png"></td></tr>';
 		}
 
 		echo '</tbody></table>';

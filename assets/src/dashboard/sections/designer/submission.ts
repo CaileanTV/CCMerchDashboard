@@ -134,10 +134,25 @@ export async function submitWithFiles(
 			const color = input.base.colors.find(
 				( candidate ) => candidate.key === colorKey
 			);
+			// The colour's own background replaces the background and the tinted mask.
+			const own = view.backgrounds[ colorKey ];
+			const ownUrl = own === undefined ? null : await input.image( own );
+			const colorLayers: Partial< Record< LayerKind, string > > =
+				ownUrl === null ? layers : { ...layers, background: ownUrl };
+
+			if ( ownUrl !== null ) {
+				delete colorLayers.color;
+			}
+
 			const mockup =
-				color === undefined
+				color === undefined || ( own !== undefined && ownUrl === null )
 					? null
-					: await composeMockup( view, layers, color.hex, print );
+					: await composeMockup(
+							view,
+							colorLayers,
+							color.hex,
+							print
+						);
 
 			if ( mockup === null ) {
 				return { ok: false, reason: 'render' };
