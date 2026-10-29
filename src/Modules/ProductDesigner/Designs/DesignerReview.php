@@ -51,6 +51,11 @@ class DesignerReview {
 	public const MAX_NOTE = 2000;
 
 	/**
+	 * Seconds after which a running apply counts as stuck and may be tried again.
+	 */
+	public const STALE = 600;
+
+	/**
 	 * Versions to apply at the end of this request (no queue).
 	 *
 	 * @var list<int>
@@ -191,7 +196,7 @@ class DesignerReview {
 		self::authorize();
 		$version = $this->products->version( $version_id );
 
-		if ( null === $version || DesignerProductRepository::APPROVED !== $version['status'] || DesignerProductRepository::APPLY_FAILED !== $version['apply_state'] ) {
+		if ( null === $version || DesignerProductRepository::APPROVED !== $version['status'] || ! self::retryable( $version ) ) {
 			self::refuse( DesignerException::NOT_PENDING );
 		}
 
@@ -205,6 +210,23 @@ class DesignerReview {
 			)
 		);
 		$this->schedule( $version_id );
+	}
+
+	/**
+	 * Whether an approved version may be tried again: it failed, or it has
+	 * been running for longer than STALE seconds (the job died, e.g. on a
+	 * fatal error or a timeout; review 30.15).
+	 *
+	 * @param array<string, mixed> $version Version (apply_state, updated_at).
+	 */
+	public static function retryable( array $version ): bool {
+		if ( DesignerProductRepository::APPLY_FAILED === ( $version['apply_state'] ?? null ) ) {
+			return true;
+		}
+
+		$since = is_string( $version['updated_at'] ?? null ) ? strtotime( $version['updated_at'] . ' UTC' ) : false;
+
+		return DesignerProductRepository::APPLY_RUNNING === ( $version['apply_state'] ?? null ) && false !== $since && time() - $since > self::STALE;
 	}
 
 	/**

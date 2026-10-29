@@ -156,7 +156,9 @@ class DesignerRepricing {
 		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', self::LOCK . $id, 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
 
 		if ( ! is_numeric( $acquired ) || 1 !== (int) $acquired ) {
-			// Another run holds the product: it reprices it with the newest base price.
+			// Another job holds the product (it may have read the base price already): try again a little later (review 30.15).
+			$this->schedule( $id, $attempt, 30 );
+
 			return;
 		}
 

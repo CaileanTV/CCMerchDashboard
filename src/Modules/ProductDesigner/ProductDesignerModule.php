@@ -219,6 +219,9 @@ final class ProductDesignerModule implements Module {
 				$c->get( PricingProductStore::class )->decimals(),
 				static function ( int $product ) use ( $c ): void {
 					$c->get( DesignerRepricing::class )->schedule( $product );
+				},
+				static function ( int $version ) use ( $c ): void {
+					$c->get( JobQueue::class )->enqueue( DesignerApply::HOOK, array( $version ), 30 );
 				}
 			)
 		);
@@ -332,9 +335,11 @@ final class ProductDesignerModule implements Module {
 		);
 		add_action(
 			DesignerRetirement::HOOK,
-			static function ( mixed $product ) use ( $container ): void {
-				$container->get( DesignerRetirement::class )->run( $product );
-			}
+			static function ( mixed $product, mixed $attempt = 1 ) use ( $container ): void {
+				$container->get( DesignerRetirement::class )->run( $product, $attempt );
+			},
+			10,
+			2
 		);
 		add_action(
 			BaseProductService::PRICE_CHANGED,

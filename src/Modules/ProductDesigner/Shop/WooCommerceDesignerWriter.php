@@ -40,6 +40,9 @@ defined( 'ABSPATH' ) || exit;
  *   price, and makes variations that are no longer offered private (never
  *   deleted: orders keep pointing at them). The attribute names are chosen
  *   once per product and kept, so a variation keeps its attributes.
+ * - publish() puts a designer product in the shop; the apply pipeline calls
+ *   it at a first approval only after the price used for the settlement is
+ *   stored (review 30.15), so no sale is made before it.
  * - unpublish() takes a designer product out of the shop (draft).
  *
  * WooCommerce CRUD only, no direct SQL; no transaction around WooCommerce
@@ -203,6 +206,21 @@ class WooCommerceDesignerWriter {
 		}
 
 		WC_Product_Variable::sync( $product->wc_product_id );
+	}
+
+	/**
+	 * Puts a designer product in the shop (published).
+	 *
+	 * @param GuardedProduct $product The guard's proof.
+	 * @throws DatabaseException When it cannot be saved.
+	 */
+	public function publish( GuardedProduct $product ): void {
+		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( $parent instanceof WC_Product_Variable && 'publish' !== $parent->get_status( 'edit' ) ) {
+			$parent->set_status( 'publish' );
+			self::save( $parent );
+		}
 	}
 
 	/**

@@ -54,6 +54,7 @@ use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use WP_Error;
 use WP_REST_Response;
+use wpdb;
 
 /**
  * A submitted design is approved with a frozen price and applied in steps
@@ -204,7 +205,10 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			$this->service( Transaction::class ),
 			$this->service( Logger::class ),
 			2,
-			fn( int $product ) => $this->repricing->schedule( $product )
+			fn( int $product ) => $this->repricing->schedule( $product ),
+			function ( int $version ): void {
+				$this->queue->enqueue( DesignerApply::HOOK, array( $version ), 30 );
+			}
 		);
 		$this->repricing   = new DesignerRepricing( $this->wpdb, $this->products, $bases, $this->guard, $this->writer, $this->queue, $this->service( AuditTrail::class ), $this->service( Logger::class ), 2 );
 		$this->retirement  = new DesignerRetirement( $this->wpdb, $this->products, $this->guard, $this->writer, $this->queue, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
@@ -262,7 +266,8 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		[ $shop, $content ] = $this->writer->contents[0];
 		self::assertSame( (int) $row['wc_product_id'], $shop );
-		self::assertSame( array( 'Stream tee', true, 1799400, array( 'S', 'M' ), array( 'black', 'sand' ) ), array( $content->name, $content->publish, $content->price_units, $content->sizes, array_column( $content->colors, 'key' ) ) );
+		self::assertSame( array( 'Stream tee', false, 1799400, array( 'S', 'M' ), array( 'black', 'sand' ) ), array( $content->name, $content->publish, $content->price_units, $content->sizes, array_column( $content->colors, 'key' ) ) );
+		self::assertSame( array( (int) $row['wc_product_id'] ), $this->writer->published, 'Published only after the settlement price is stored (review 30.15).' );
 		self::assertCount( 2, $content->images, 'A product image per colour.' );
 		self::assertSame( array( 'black', 'sand' ), array_keys( $content->color_images ) );
 		self::assertSame( 'attachment', get_post_type( $content->images[0] ) );
@@ -376,9 +381,113 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( 'superseded', $this->products->version( $first )['status'] ?? null );
 		self::assertSame( (string) $second, (string) ( $this->products->find( $this->creator->id, $product )['live_version_id'] ?? '' ) );
 		self::assertFalse( $this->writer->contents[1][1]->publish, 'A change keeps the product\'s status.' );
+		self::assertCount( 1, $this->writer->published, 'Only the first approval publishes.' );
 		self::assertSame( 1949400, $this->writer->contents[1][1]->price_units );
 		self::assertContains( DesignerNotifications::CHANGE_APPROVED, array_column( $this->notified, 0 ) );
 		self::assertNotNull( $this->products->version( $first )['files'] ?? null, 'Orders of the first version keep its print files.' );
+	}
+
+	public function test_an_older_version_tried_again_never_replaces_a_newer_live_one(): void {
+		$product = $this->submitted();
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		// Version 2 fails; the creator makes version 3, which goes live.
+		$this->submissions->change( $this->creator, $product );
+		$this->save( $product, '30' );
+		$this->send_files( $product );
+		$this->submissions->submit( $this->creator, $product );
+		$second                     = $this->pending_id( $product );
+		$this->writer->fail_content = 1;
+		$this->review->approve( $second );
+		$this->drain();
+		self::assertSame( 'failed', $this->state( $second )[1] );
+
+		$this->submissions->change( $this->creator, $product );
+		$this->save( $product, '40' );
+		$this->send_files( $product );
+		$this->submissions->submit( $this->creator, $product );
+		$third = $this->pending_id( $product );
+		$this->review->approve( $third );
+		$this->drain();
+		self::assertSame( (string) $third, (string) ( $this->products->find( $this->creator->id, $product )['live_version_id'] ?? '' ) );
+		self::assertSame( 'superseded', $this->state( $second )[0], 'The newer live version puts the older failed one aside.' );
+
+		// Trying version 2 again is refused: version 3 stays live.
+		try {
+			$this->review->retry( $second );
+			self::fail( 'An older version is never applied over a newer one.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_PENDING, $e->reason() );
+		}
+
+		// Even a job of version 2 that still runs later (queued before) leaves the shop alone.
+		$contents = count( $this->writer->contents );
+		$this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'status' => DesignerProductRepository::APPROVED ), array( 'id' => $second ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: the state of a job queued before version 3 went live.
+		$this->apply->run( $second );
+
+		self::assertSame( 'superseded', $this->state( $second )[0] );
+		self::assertSame( (string) $third, (string) ( $this->products->find( $this->creator->id, $product )['live_version_id'] ?? '' ) );
+		self::assertCount( $contents, $this->writer->contents, 'The shop is not written.' );
+	}
+
+	public function test_a_stuck_apply_can_be_tried_again_and_a_busy_product_is_queued_again(): void {
+		$product = $this->submitted();
+		$version = $this->pending_id( $product );
+		$this->review->approve( $version );
+		$this->queue->queued = array();
+
+		// The job died while running (a fatal error): after ten minutes it may be tried again.
+		$this->products->set_apply( $version, DesignerProductRepository::APPLY_RUNNING, 'media', null );
+		self::assertFalse( DesignerReview::retryable( (array) $this->products->version( $version ) ) );
+		$this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'updated_at' => gmdate( 'Y-m-d H:i:s', time() - DesignerReview::STALE - 5 ) ), array( 'id' => $version ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: the job stopped long ago.
+		self::assertTrue( DesignerReview::retryable( (array) $this->products->version( $version ) ) );
+		$this->review->retry( $version );
+
+		// Another connection holds the product (a repricing runs): the job is queued again, nothing is written.
+		$lock  = 'merchboard_designer_product_' . $product;
+		$other = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		self::assertSame( '1', (string) $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) );
+		$queued              = $this->queue->queued;
+		$this->queue->queued = array();
+
+		foreach ( $queued as $job ) {
+			$this->apply->run( $job['args'][0] ?? 0 );
+		}
+
+		self::assertSame( array(), $this->writer->contents );
+		self::assertSame( array( array( DesignerApply::HOOK, array( $version ) ) ), array_map( static fn( array $job ): array => array( $job['hook'], $job['args'] ), $this->queue->queued ) );
+		$other->get_var( $other->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		$other->close();
+
+		$this->drain();
+		self::assertSame( 'done', $this->state( $version )[1] );
+	}
+
+	public function test_a_renamed_colour_or_a_removed_size_makes_waiting_designs_outdated(): void {
+		$product = $this->submitted();
+		$version = $this->pending_id( $product );
+		$before  = $this->bases_version();
+		$fields  = $this->base_fields( '149,95' );
+
+		$fields['colors'] = "Black #111111\nSand #d8c8a8\nRed #ff0000";
+		$this->bases->save( $this->base, $fields, $this->base_views() );
+		self::assertSame( $before, $this->bases_version(), 'A new colour does not.' );
+
+		$fields['colors'] = "Jet black #111111\nSand #d8c8a8";
+		$this->bases->save( $this->base, $fields, $this->base_views() );
+		self::assertSame( $before + 1, $this->bases_version(), 'A renamed colour does.' );
+
+		try {
+			$this->review->approve( $version );
+			self::fail( 'Outdated.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_STALE, $e->reason() );
+		}
+
+		$fields['sizes'] = 'S';
+		$this->bases->save( $this->base, $fields, $this->base_views() );
+		self::assertSame( $before + 2, $this->bases_version(), 'A removed size does.' );
 	}
 
 	public function test_a_design_on_a_changed_base_product_cannot_be_approved(): void {

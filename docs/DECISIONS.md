@@ -4557,6 +4557,13 @@ Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen e
 - **Kampagne:** fortjenesten er højst antal × fortjeneste pr. stk., også når der er betalt over listeprisen (en pris, der er ændret imens).
 - **PHP = SQL:** `RealizedProfit`/`RealizedPayout` returnerer de gemte beløb for en designer-række, så PHP og SQL-summerne altid er ens, også når en refundering afhænger af linjens tidligere rækker.
 
+Pkt. 2, 6 og 10 er præciseret (fejl fundet i reviewet, rettet uden ændret adfærd):
+- **Én lås pr. produkt:** anvendelse, genprisning og pensionering deler låsen `merchboard_designer_product_<id>`. Er produktet optaget, køes anvendelsen og genprisningen igen efter 30 sekunder i stedet for at blive tabt. En fejlet pensionering prøves igen efter 5 minutter, højst 5 gange.
+- **Publicering:** et nyt produkt publiceres først i et eget trin (`publish`, ny writer-metode `publish()`), når versionen er live, og butikkens pris og grundpris er gemt til afregningen. Der kan derfor ikke sælges et designer-produkt, hvis fortjeneste er ukendt. Grundprodukt og creator tjekkes igen under låsen, før versionen går live; et produkt, der er pensioneret imens, forbliver pensioneret.
+- **Rækkefølge:** når en version går live, lægges kun ældre godkendte versioner til side. En godkendt version, som en nyere levende version har overhalet, anvendes aldrig, men lægges til side.
+- **Fastlåst anvendelse:** en version, der har stået som "running" i over 10 minutter (jobbet døde, fx ved en fatal fejl), kan prøves igen under Designs.
+- **Grundproduktets version:** også en omdøbt eller fjernet farve eller størrelse hæver `version` (projektejerens valg 2026-10-29), så ventende designs skal gemmes og sendes igen. En ny farve eller størrelse gør ikke.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 

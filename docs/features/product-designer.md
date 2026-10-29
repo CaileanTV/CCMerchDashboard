@@ -51,14 +51,14 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 ## Godkendelse og butikken (trin 30.10)
 - Admin godkender eller afviser under **Designs**. En afvisning kræver en note; creatoren får den (mail og klokke) og ser den over designeren, og designet er en kladde igen.
 - Et godkendt design lægges i butikken i baggrunden: et variabelt produkt med farve × størrelse, mockups som billeder, kategori (creatorens, ellers grundproduktets) og prisen ud fra grundprisen, når det lægges i butikken (fra 30.11). Første gang udgives det; creatoren får "godkendt og i butikken".
-- Går det galt (fx butikken bruger priser ekskl. moms), står årsagen under Designs med **Prøv igen**, og admin får en mail. Intet i butikken ændres halvt: næste forsøg fortsætter, hvor det stoppede.
+- Går det galt (fx butikken bruger priser ekskl. moms), står årsagen under Designs med **Prøv igen**, og admin får en mail. Intet i butikken ændres halvt: næste forsøg fortsætter, hvor det stoppede. Er et forsøg gået i stå i mere end 10 minutter, kan det også prøves igen. Et nyt produkt bliver først synligt i butikken, når prisen til afregningen er gemt (review 30.15).
 - **Ændringer:** et produkt i butikken har **Lav en ændring** i designeren. Ændringen sendes som et nyt design; butikken viser den godkendte version, til ændringen er godkendt. Udgåede farver/størrelser skjules (varianterne slettes aldrig).
 - **Printfiler:** på ordren under hver designer-linje (den solgte version) og i boksen "Produktdesigner" på produktet. Kun admin kan hente dem.
 - Pluginet skriver prisen, varianterne og billederne på designer-produkter; ret dem ikke i WooCommerce, de overskrives ved næste godkendelse.
 
 ## Ny grundpris og pensionering (trin 30.11)
 - **Ny grundpris:** gem grundproduktet med den nye pris. Produkterne i butikken får den nye pris i baggrunden; creatorens procent eller beløb bevares, og creatoren får "ny pris" (før/efter). Ordrer lagt før beholder deres pris, og et salg afregnes efter den pris, butikken havde.
-- En ny pris gør ikke ventende designs forældede; det gør kun en ændret skabelon eller et ændret printområde.
+- En ny pris gør ikke ventende designs forældede; det gør kun en ændret skabelon, et ændret printområde eller en omdøbt eller fjernet farve eller størrelse (fra review 30.15). En ny farve eller størrelse gør ikke.
 - **Pensionér** (på grundproduktet, med afkrydsning): dets produkter tages ud af butikken (de bliver kladder og bevares til ordrehistorikken), ventende designs afvises med en note, og creatorne får besked. Det kan ikke fortrydes; brug "Tilbage til kladde", hvis du kun vil stoppe nye designs.
 
 ## Admin functionality

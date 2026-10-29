@@ -22,6 +22,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 
@@ -208,14 +209,16 @@ final class DesignsPage {
 		echo '</tr></thead><tbody>';
 
 		foreach ( $applying as $row ) {
-			$failed = DesignerProductRepository::APPLY_FAILED === $row['apply_state'];
+			$failed = DesignerReview::retryable( $row );
 
 			echo '<tr>';
 			echo '<td>' . esc_html( get_date_from_gmt( (string) $row['decided_at'], 'Y-m-d H:i' ) ) . '</td>';
 			echo '<td>' . esc_html( $this->creator_name( (int) $row['creator_id'], $names ) ) . '</td>';
 			/* translators: %d: version number. */
 			echo '<td>' . esc_html( (string) $row['title'] ) . ' ' . esc_html( sprintf( __( '(version %d)', 'merchboard' ), (int) $row['number'] ) ) . '</td>';
-			echo '<td>' . esc_html( $failed ? DesignerNotifications::reason( (string) $row['apply_error'] ) : __( 'Being put in the shop…', 'merchboard' ) ) . '</td>';
+			$status = DesignerProductRepository::APPLY_FAILED === $row['apply_state'] ? DesignerNotifications::reason( (string) $row['apply_error'] ) : ( $failed ? __( 'It stopped on the way to the shop (more than 10 minutes ago). Try again.', 'merchboard' ) : __( 'Being put in the shop…', 'merchboard' ) );
+
+			echo '<td>' . esc_html( $status ) . '</td>';
 			echo '<td>';
 
 			if ( $failed ) {

@@ -35,13 +35,19 @@ defined( 'ABSPATH' ) || exit;
  *   guard's proof, never deleted (orders point at it), the row `retired`,
  *   audited (system) and the creator told when it was in the shop.
  *
- * Never throws; a failed job is logged and tried again by the next one.
+ * Never throws; a failed job is logged and tried again after 5 minutes, at
+ * most ATTEMPTS times (review 30.15).
  */
 class DesignerRetirement {
 
 	public const HOOK = 'merchboard_designer_retire';
 
 	private const LOCK = 'merchboard_designer_product_';
+
+	/**
+	 * Most runs of a product's job.
+	 */
+	private const ATTEMPTS = 5;
 
 	/**
 	 * Products to take out at the end of this request (no queue).
@@ -137,10 +143,12 @@ class DesignerRetirement {
 	 * Takes one product out of the shop (the job); never throws.
 	 *
 	 * @param mixed $product_id Designer product.
+	 * @param mixed $attempt    Attempt (1 for the first).
 	 */
-	public function run( mixed $product_id ): void {
-		$id   = is_numeric( $product_id ) ? (int) $product_id : 0;
-		$wpdb = $this->wpdb;
+	public function run( mixed $product_id, mixed $attempt = 1 ): void {
+		$id      = is_numeric( $product_id ) ? (int) $product_id : 0;
+		$attempt = is_numeric( $attempt ) ? max( 1, (int) $attempt ) : 1;
+		$wpdb    = $this->wpdb;
 
 		if ( $id < 1 ) {
 			return;
@@ -150,7 +158,7 @@ class DesignerRetirement {
 
 		if ( ! is_numeric( $acquired ) || 1 !== (int) $acquired ) {
 			$this->logger->warning( 'A designer product of a retired base product was busy; it is taken out of the shop later.', array( 'design_product_id' => $id ) );
-			$this->queue->enqueue( self::HOOK, array( $id ), 60 );
+				$this->queue->enqueue( self::HOOK, array( $id, $attempt ), 60 );
 
 			return;
 		}
@@ -165,9 +173,14 @@ class DesignerRetirement {
 					array(
 						'design_product_id' => $id,
 						'exception'         => $e::class,
+						'attempt'           => $attempt,
 					)
 				)
 			);
+
+			if ( $attempt < self::ATTEMPTS ) {
+				$this->queue->enqueue( self::HOOK, array( $id, $attempt + 1 ), 300 );
+			}
 		} finally {
 			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::LOCK . $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releases the named lock.
 		}

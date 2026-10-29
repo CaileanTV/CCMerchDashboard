@@ -540,7 +540,9 @@ class BaseProductService {
 	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views ): BaseProduct {
 		$version = $existing->version ?? 1;
 
-		if ( null !== $existing && self::templates( $existing->views ) !== self::templates( $views ) ) {
+		// A changed template, or a colour or size that is renamed or removed (the owner's choice
+		// 2026-10-29, review 30.15), makes waiting designs outdated. A new colour or size does not.
+		if ( null !== $existing && ( self::templates( $existing->views ) !== self::templates( $views ) || array() !== array_diff( array_map( static fn( array $color ): string => $color['key'] . '|' . $color['name'], $existing->colors ), array_map( static fn( array $color ): string => $color['key'] . '|' . $color['name'], $colors ) ) || array() !== array_diff( $existing->sizes, $sizes ) ) ) {
 			++$version;
 		}
 

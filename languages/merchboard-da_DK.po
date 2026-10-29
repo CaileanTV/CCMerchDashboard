@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-29T18:07:13+00:00\n"
+"PO-Revision-Date: 2026-10-29T20:25:14+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1287,7 +1287,7 @@ msgstr "Hændelse"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:289
 #: src/Modules/Notifications/Catalog/AdminTypes.php:338
 #: src/Modules/Notifications/Catalog/AdminTypes.php:367
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:204
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:205
 #: src/Modules/ProductDesigner/DesignerNotifications.php:317
 #: src/Modules/ProductDesigner/DesignerNotifications.php:362
 #: src/Modules/ProductDesigner/DesignerNotifications.php:483
@@ -2086,7 +2086,7 @@ msgid "Image"
 msgstr "Billede"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:409
-#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:237
+#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:255
 msgid "Size"
 msgstr "Størrelse"
 
@@ -2178,7 +2178,7 @@ msgid "At most %d fonts, the most popular first."
 msgstr "Højst %d fonte, de mest populære først."
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:551
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:204
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:205
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr "Godkendt"
@@ -3658,7 +3658,7 @@ msgid "Note to the creator (optional)"
 msgstr "Note til creatoren (valgfri)"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:285
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:299
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:302
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
@@ -3901,7 +3901,7 @@ msgstr "Visningsnavn"
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:243
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:184
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:204
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:205
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
@@ -4279,39 +4279,39 @@ msgstr "Merch Dashboard-notifikationer"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:76
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:133
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:150
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:151
 #: build/dashboard.js:1
 #: build/dashboard.js:2
 msgid "Notifications"
 msgstr "Notifikationer"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:110
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:119
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:120
 msgid "The notification settings are saved."
 msgstr "Notifikationsindstillingerne er gemt."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:111
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:120
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:121
 msgid "The test e-mail was sent to you. Check your inbox (and the spam folder)."
 msgstr "Testmailen er sendt til dig. Tjek din indbakke (og spammappen)."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:112
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:121
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:122
 msgid "The test e-mail could not be sent. Check that the site can send e-mail; the log has the reason."
 msgstr "Testmailen kunne ikke sendes. Tjek, at sitet kan sende mail; loggen har årsagen."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:113
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:122
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:123
 msgid "That notification does not exist."
 msgstr "Den notifikation findes ikke."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:114
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:123
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:124
 msgid "You are not allowed to change the notifications."
 msgstr "Du har ikke adgang til at ændre notifikationerne."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:115
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:124
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:125
 msgid "A technical error occurred. Nothing was changed; try again or check the log."
 msgstr "Der opstod en teknisk fejl. Intet er ændret; prøv igen, eller tjek loggen."
 
@@ -4338,7 +4338,7 @@ msgid "To the creator: %s"
 msgstr "Til creatoren: %s"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:183
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:349
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:352
 msgid "Save notification settings"
 msgstr "Gem notifikationsindstillinger"
 
@@ -4843,7 +4843,7 @@ msgstr "Din fortjeneste"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:163
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:796
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:204
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:205
 #: src/Modules/ProductDesigner/DesignerNotifications.php:133
 #: src/Modules/ProductDesigner/DesignerNotifications.php:181
 #: src/Modules/ProductDesigner/DesignerNotifications.php:215
@@ -5734,7 +5734,7 @@ msgid "Account and prices"
 msgstr "Konto og priser"
 
 #: src/Modules/Notifications/NotificationTypes.php:101
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:347
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:350
 msgid "To the administrator"
 msgstr "Til administratoren"
 
@@ -5744,7 +5744,7 @@ msgstr "Til administratoren"
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:85
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:133
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:134
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:135
 msgid "Sorry, you are not allowed to manage the product designer."
 msgstr "Du har ikke tilladelse til at administrere produktdesigneren."
 
@@ -5918,7 +5918,7 @@ msgid "Use PNG, JPG or WebP images; template layers must be PNG."
 msgstr "Brug PNG-, JPG- eller WebP-billeder; skabelonlag skal være PNG."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:165
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:118
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:119
 msgid "You are not allowed to manage the product designer."
 msgstr "Du har ikke adgang til at administrere produktdesigneren."
 
@@ -5932,7 +5932,7 @@ msgid "Cliparts"
 msgstr "Kliparts"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:219
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:182
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:183
 msgid "The product designer's data could not be read. Please try again later."
 msgstr "Produktdesignerens data kunne ikke læses. Prøv igen senere."
 
@@ -5971,8 +5971,8 @@ msgid "Version"
 msgstr "Version"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:243
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:76
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:145
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:77
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:146
 #: build/alerts-global-admin.js:15
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:15
@@ -6529,70 +6529,74 @@ msgstr "Lav i Gelatos dashboard en skabelon pr. produkt: produktet, de farver og
 msgid "Gelato fetches print files from a short-lived link on this site, so mockups from Gelato only work on a site Gelato can reach (not on a local test site)."
 msgstr "Gelato henter printfiler fra et kortlivet link på dette site, så mockups fra Gelato virker kun på et site, Gelato kan nå (ikke på et lokalt testsite)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:75
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:76
 msgid "Merch Dashboard Designs"
 msgstr "Merch Dashboard Designs"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:110
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:111
 msgid "The design is approved. It is being put in the shop; the creator gets a notification when it is there."
 msgstr "Designet er godkendt. Det lægges nu i butikken; creatoren får en notifikation, når det er der."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:111
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:112
 msgid "The design is rejected. The creator gets your note and can change it."
 msgstr "Designet er afvist. Creatoren får din note og kan ændre det."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:112
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:113
 msgid "The design is being put in the shop again."
 msgstr "Designet lægges i butikken igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:113
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:114
 msgid "Printful is still making the mockups of this design. Try again in a minute."
 msgstr "Printful laver stadig mockups af dette design. Prøv igen om et minut."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:114
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:115
 msgid "The base product changed after the design was sent. Reject it with a note so the creator sends it again."
 msgstr "Grundproduktet er ændret, efter designet blev sendt. Afvis det med en note, så creatoren sender det igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:115
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:116
 msgid "The price of the design could not be computed."
 msgstr "Designets pris kunne ikke beregnes."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:116
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:117
 msgid "The design is no longer waiting (withdrawn or decided already)."
 msgstr "Designet venter ikke længere (trukket tilbage eller allerede afgjort)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:117
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:118
 msgid "Write a note of at most 2000 characters to the creator."
 msgstr "Skriv en note på højst 2000 tegn til creatoren."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:147
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:148
 #: build/dashboard.js:54
 msgid "Waiting for approval"
 msgstr "Venter på godkendelse"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:188
 msgid "Designs that creators sent for approval, oldest first. Nothing is in the shop before you approve it; an approved design becomes a product (or changes one) with the mockups as product images. The print files stay private: download them here, on the product and on the order."
 msgstr "Designs, som creators har sendt til godkendelse, ældste først. Intet kommer i butikken, før du godkender det; et godkendt design bliver et produkt (eller ændrer et) med mockups som produktbilleder. Printfilerne forbliver private: hent dem her, på produktet og på ordren."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:190
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:191
 msgid "No designs are waiting for approval."
 msgstr "Ingen designs venter på godkendelse."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:201
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:202
 msgid "On the way to the shop"
 msgstr "På vej i butikken"
 
 #. translators: %d: version number.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:217
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:218
 #, php-format
 msgid "(version %d)"
 msgstr "(version %d)"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:218
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:219
+msgid "It stopped on the way to the shop (more than 10 minutes ago). Try again."
+msgstr "Det gik i stå på vej i butikken (for mere end 10 minutter siden). Prøv igen."
+
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:219
 msgid "Being put in the shop…"
 msgstr "Lægges i butikken …"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:222
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:225
 #: build/alerts-global-admin.js:1
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:1
@@ -6601,85 +6605,85 @@ msgid "Try again"
 msgstr "Prøv igen"
 
 #. translators: 1: product title, 2: version number.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:247
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:250
 #, php-format
 msgid "%1$s (version %2$d)"
 msgstr "%1$s (version %2$d)"
 
 #. translators: 1: creator name, 2: date and time.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:250
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:253
 #, php-format
 msgid "By %1$s, sent %2$s."
 msgstr "Af %1$s, sendt %2$s."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:251
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:254
 msgid "A new product."
 msgstr "Et nyt produkt."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:251
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:254
 msgid "A change of a product in the shop; the shop keeps the approved version until you approve this one."
 msgstr "En ændring af et produkt i butikken; butikken beholder den godkendte version, indtil du godkender denne."
 
 #. translators: %s: base product name.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:254
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:257
 #, php-format
 msgid "Base product: %s"
 msgstr "Grundprodukt: %s"
 
 #. translators: %s: colour names.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:256
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:259
 #, php-format
 msgid "Colours: %s"
 msgstr "Farver: %s"
 
 #. translators: %s: sizes.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:258
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:261
 #, php-format
 msgid "Sizes: %s"
 msgstr "Størrelser: %s"
 
 #. translators: %s: price.
 #. translators: %s: the customer's price.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:260
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:263
 #: build/dashboard.js:54
 #, js-format,php-format
 msgid "Customer price incl. VAT: %s"
 msgstr "Kundens pris inkl. moms: %s"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:268
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:271
 msgid "Printful is making the mockups; the creator's mockups are shown until then."
 msgstr "Printful laver mockups; creatorens mockups vises indtil da."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:270
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:273
 msgid "Printful could not make the mockups; the creator's mockups are shown."
 msgstr "Printful kunne ikke lave mockups; creatorens mockups vises."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:272
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:275
 msgid "Mockups from Printful."
 msgstr "Mockups fra Printful."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:281
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:284
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:106
 msgid "Print files:"
 msgstr "Printfiler:"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:290
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:293
 msgid "Approve and put in the shop"
 msgstr "Godkend og læg i butikken"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:297
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:300
 msgid "Note to the creator"
 msgstr "Note til creatoren"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:298
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:301
 msgid "Note to the creator: why, and what to change"
 msgstr "Note til creatoren: hvorfor, og hvad der skal ændres"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:336
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:339
 msgid "Choose which of the product designer's notifications are sent. They use the same e-mail template, bell and log as the other notifications (Merch Dashboard → Notifications)."
 msgstr "Vælg, hvilke af produktdesignerens notifikationer der sendes. De bruger samme mailskabelon, klokke og log som de øvrige notifikationer (Merch Dashboard → Notifikationer)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:346
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:349
 msgid "To the creator"
 msgstr "Til creatoren"
 
@@ -7052,7 +7056,7 @@ msgstr "Ændring af designer-produkt fra %s til godkendelse"
 msgid "A creator changed a designer product in the shop. The shop keeps the approved version until you approve the change."
 msgstr "En creator har ændret et designer-produkt i butikken. Butikken beholder den godkendte version, indtil du godkender ændringen."
 
-#: src/Modules/ProductDesigner/Designs/DesignerRetirement.php:225
+#: src/Modules/ProductDesigner/Designs/DesignerRetirement.php:238
 msgid "We no longer offer this base product, so the design cannot be approved. You are welcome to design on another product."
 msgstr "Vi tilbyder ikke længere dette grundprodukt, så designet kan ikke godkendes. Du er velkommen til at designe på et andet produkt."
 
@@ -7078,7 +7082,7 @@ msgstr "I butikken: version %d."
 msgid "none stored"
 msgstr "ingen gemt"
 
-#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:237
+#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:255
 #: build/dashboard.js:54
 msgid "Colour"
 msgstr "Farve"

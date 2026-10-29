@@ -491,44 +491,57 @@ class DesignerProductRepository {
 	}
 
 	/**
-	 * Makes an applied version the live one: the version that was live is
-	 * superseded.
+	 * Makes an applied version the live one: older approved versions are
+	 * superseded. The apply pipeline marks the version done afterwards
+	 * (set_apply()), once the product is in the shop.
 	 *
 	 * @param int $product_id Designer product.
 	 * @param int $version_id Applied version.
+	 * @param int $number     Its number.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function go_live( int $product_id, int $version_id ): void {
+	public function go_live( int $product_id, int $version_id, int $number ): void {
 		$wpdb = $this->wpdb;
 		$now  = gmdate( 'Y-m-d H:i:s' );
 
-		$sql        = $wpdb->prepare( 'UPDATE %i SET status = %s, updated_at = %s WHERE design_product_id = %d AND status = %s AND id <> %d', $this->table( Tables::DESIGNER_VERSIONS ), self::SUPERSEDED, $now, $product_id, self::APPROVED, $version_id );
+		// Only older approved versions are superseded: a newer one still waiting to be applied wins later (review 30.15).
+		$sql        = $wpdb->prepare( 'UPDATE %i SET status = %s, updated_at = %s WHERE design_product_id = %d AND status = %s AND id <> %d AND number < %d', $this->table( Tables::DESIGNER_VERSIONS ), self::SUPERSEDED, $now, $product_id, self::APPROVED, $version_id, $number );
 		$superseded = is_string( $sql ) ? $wpdb->query( $sql ) : false; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; the designer's own table.
-		$applied    = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+		// A product taken out of the shop meanwhile stays retired.
+		$sql  = $wpdb->prepare( 'UPDATE %i SET live_version_id = %d, status = %s, updated_at = %s WHERE id = %d AND status <> %s', $this->table( Tables::DESIGNER_PRODUCTS ), $version_id, self::LIVE, $now, $product_id, self::RETIRED );
+		$live = is_string( $sql ) ? $wpdb->query( $sql ) : false; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; the designer's own table.
+		$row  = $this->product( $product_id );
+
+		if ( false === $superseded || false === $live || null === $row || (int) $row['live_version_id'] !== $version_id || self::LIVE !== $row['status'] ) {
+			throw new DatabaseException( 'Could not make the design live.' );
+		}
+	}
+
+	/**
+	 * Puts aside an approved version that a newer live version overtook
+	 * (review 30.15): superseded, never applied.
+	 *
+	 * @param int $version_id Version.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function supersede( int $version_id ): void {
+		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 			$this->table( Tables::DESIGNER_VERSIONS ),
 			array(
+				'status'      => self::SUPERSEDED,
 				'apply_state' => self::APPLY_DONE,
 				'apply_step'  => null,
 				'apply_error' => null,
-				'updated_at'  => $now,
+				'updated_at'  => gmdate( 'Y-m-d H:i:s' ),
 			),
 			array(
 				'id'     => $version_id,
 				'status' => self::APPROVED,
 			)
 		);
-		$live       = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
-			$this->table( Tables::DESIGNER_PRODUCTS ),
-			array(
-				'live_version_id' => $version_id,
-				'status'          => self::LIVE,
-				'updated_at'      => $now,
-			),
-			array( 'id' => $product_id )
-		);
 
-		if ( false === $superseded || 1 !== $applied || 1 !== $live ) {
-			throw new DatabaseException( 'Could not make the design live.' );
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not put the design aside.' );
 		}
 	}
 
@@ -701,7 +714,7 @@ class DesignerProductRepository {
 	 */
 	public function applying(): array {
 		$wpdb = $this->wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT v.id, v.design_product_id, v.creator_id, v.number, v.title, v.quoted_price, v.apply_state, v.apply_step, v.apply_error, v.decided_at, p.base_id, p.live_version_id FROM %i v JOIN %i p ON p.id = v.design_product_id WHERE v.status = %s AND v.apply_state <> %s ORDER BY v.decided_at ASC, v.id ASC', $this->table( Tables::DESIGNER_VERSIONS ), $this->table( Tables::DESIGNER_PRODUCTS ), self::APPROVED, self::APPLY_DONE ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT v.id, v.design_product_id, v.creator_id, v.number, v.title, v.quoted_price, v.apply_state, v.apply_step, v.apply_error, v.decided_at, v.updated_at, p.base_id, p.live_version_id FROM %i v JOIN %i p ON p.id = v.design_product_id WHERE v.status = %s AND v.apply_state <> %s ORDER BY v.decided_at ASC, v.id ASC', $this->table( Tables::DESIGNER_VERSIONS ), $this->table( Tables::DESIGNER_PRODUCTS ), self::APPROVED, self::APPLY_DONE ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables.
 
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new DatabaseException( 'Could not read the approved designs.' );

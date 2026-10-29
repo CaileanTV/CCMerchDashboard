@@ -76,9 +76,9 @@ final class LegacyGuardArchitectureTest extends TestCase {
 			$public[ $name ] = trim( $params );
 		}
 
-		self::assertSame( array( '__construct', 'create_draft', 'set_prices', 'set_content', 'unpublish' ), array_keys( $public ), 'A new public method needs a review against the legacy guard.' );
+		self::assertSame( array( '__construct', 'create_draft', 'set_prices', 'set_content', 'publish', 'unpublish' ), array_keys( $public ), 'A new public method needs a review against the legacy guard.' );
 
-		foreach ( array( 'set_prices', 'set_content', 'unpublish' ) as $method ) {
+		foreach ( array( 'set_prices', 'set_content', 'publish', 'unpublish' ) as $method ) {
 			self::assertStringStartsWith( 'GuardedProduct $product', $public[ $method ], $method );
 		}
 	}
