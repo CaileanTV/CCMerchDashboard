@@ -45,6 +45,9 @@ defined( 'ABSPATH' ) || exit;
  *    creator a receipt, after the commit.
  * 3. withdraw(): the waiting version is withdrawn and continued as a new
  *    draft with the same content and files.
+ * 4. change() (step 30.10): a live product gets a new draft with the live
+ *    version's content; the shop keeps the live version until the change
+ *    is approved and applied.
  */
 class DesignerSubmissions {
 
@@ -231,6 +234,40 @@ class DesignerSubmissions {
 						'design_product_id' => $product,
 						'version_id'        => (int) $pending['id'],
 						'number'            => (int) $pending['number'],
+					)
+				);
+			}
+		);
+	}
+
+	/**
+	 * Starts a change of a live product: a new draft with the live version's
+	 * content (step 30.10). The live version keeps its files (orders point at
+	 * them); the change gets new ones when it is sent.
+	 *
+	 * @param Creator $creator The creator.
+	 * @param int     $product Designer product.
+	 * @throws DesignerException When it is not live, or a draft or a pending version exists.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function change( Creator $creator, int $product ): void {
+		if ( null === $this->products->find( $creator->id, $product ) ) {
+			self::refuse( DesignerException::DESIGN_UNKNOWN );
+		}
+
+		$this->transaction->run(
+			function () use ( $creator, $product ): void {
+				if ( null !== $this->products->draft( $product, true ) || null !== $this->products->pending( $product, true ) ) {
+					self::refuse( DesignerException::SUBMISSION_PENDING );
+				}
+
+				$live = $this->products->live( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+				$this->audit->record(
+					AuditAction::DesignerChangeStarted,
+					$creator->id,
+					array(
+						'design_product_id' => $product,
+						'version_id'        => $this->products->copy_as_draft( $live, false ),
 					)
 				);
 			}

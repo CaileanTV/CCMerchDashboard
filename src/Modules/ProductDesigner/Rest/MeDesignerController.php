@@ -55,6 +55,9 @@ defined( 'ABSPATH' ) || exit;
  *   …/submit`, `POST …/withdraw` (step 30.9): the submission's files, the
  *   submission and its withdrawal (DesignerSubmissions); each answers the
  *   product. Files and submission are refused during "view as creator".
+ * - `POST …/products/{id}/change` (step 30.10): a new draft of a live
+ *   product. The product answers its live version and the note of a
+ *   rejection that a draft continues.
  */
 final class MeDesignerController extends RestController {
 
@@ -124,6 +127,9 @@ final class MeDesignerController extends RestController {
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/withdraw' => array(
 				WP_REST_Server::CREATABLE => 'withdraw_product',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/change'   => array(
+				WP_REST_Server::CREATABLE => 'change_product',
 			),
 		);
 
@@ -387,6 +393,29 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
+	 * `POST /me/designer/products/{id}/change`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function change_product( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/change',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id = (int) $request->get_param( 'id' );
+
+				try {
+					$this->submissions->change( $creator, $id );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
+			}
+		);
+	}
+
+	/**
 	 * `rest_pre_serve_request`: sends a successful asset response as the image
 	 * itself instead of JSON; every other response is left to the server.
 	 *
@@ -478,6 +507,9 @@ final class MeDesignerController extends RestController {
 		$product = $this->products->find( $creator->id, $id );
 		$draft   = null === $product ? null : $this->products->draft( $id );
 		$pending = null === $product ? null : $this->products->pending( $id );
+		$live    = null === $product ? null : $this->products->live( $id );
+		$refusal = null === $product ? null : $this->products->last_rejection( $id );
+		$price   = static fn( mixed $value ): ?string => null === $value ? null : SalesAmount::format( SalesAmount::parse( (string) $value ) );
 
 		if ( null === $product ) {
 			return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
@@ -491,10 +523,10 @@ final class MeDesignerController extends RestController {
 
 		return new WP_REST_Response(
 			array(
-				'id'      => (int) $product['id'],
-				'base_id' => (int) $product['base_id'],
-				'in_shop' => null !== $product['wc_product_id'],
-				'draft'   => null === $draft ? null : array(
+				'id'        => (int) $product['id'],
+				'base_id'   => (int) $product['base_id'],
+				'in_shop'   => null !== $product['wc_product_id'],
+				'draft'     => null === $draft ? null : array(
 					'number'       => (int) $draft['number'],
 					'title'        => (string) $draft['title'],
 					'description'  => (string) $draft['description'],
@@ -507,11 +539,21 @@ final class MeDesignerController extends RestController {
 					'base_version' => (int) $draft['base_version'],
 					'updated_at'   => mysql_to_rfc3339( (string) $draft['updated_at'] ),
 				),
-				'pending' => null === $pending ? null : array(
+				'pending'   => null === $pending ? null : array(
 					'number'       => (int) $pending['number'],
 					'title'        => (string) $pending['title'],
-					'price'        => null === $pending['quoted_price'] ? null : SalesAmount::format( SalesAmount::parse( (string) $pending['quoted_price'] ) ),
+					'price'        => $price( $pending['quoted_price'] ),
 					'submitted_at' => mysql_to_rfc3339( (string) $pending['submitted_at'] ),
+				),
+				'live'      => null === $live ? null : array(
+					'number' => (int) $live['number'],
+					'title'  => (string) $live['title'],
+					'price'  => $price( $live['quoted_price'] ),
+				),
+				'rejection' => null === $refusal ? null : array(
+					'number'     => (int) $refusal['number'],
+					'note'       => (string) $refusal['note'],
+					'decided_at' => mysql_to_rfc3339( (string) $refusal['decided_at'] ),
 				),
 			),
 			$status

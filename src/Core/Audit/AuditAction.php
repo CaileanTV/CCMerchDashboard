@@ -694,4 +694,29 @@ enum AuditAction: string {
 	 * A creator withdrew a submission; a new draft continues it (ADR-080 pkt. 3). Context: design_product_id, version_id, number.
 	 */
 	case DesignerVersionWithdrawn = 'designer_version_withdrawn';
+
+	/**
+	 * An administrator approved a designer version; it is queued for the shop (ADR-080 pkt. 3). Context: design_product_id, version_id, number, price.
+	 */
+	case DesignerVersionApproved = 'designer_version_approved';
+
+	/**
+	 * An administrator rejected a designer version with a note; a new draft continues it (ADR-080 pkt. 3). Context: design_product_id, version_id, number.
+	 */
+	case DesignerVersionRejected = 'designer_version_rejected';
+
+	/**
+	 * An approved designer version is in the shop and live (system, ADR-080 pkt. 6). Context: design_product_id, version_id, number, product_id.
+	 */
+	case DesignerVersionApplied = 'designer_version_applied';
+
+	/**
+	 * An administrator queued a failed designer version again (ADR-080 pkt. 6). Context: design_product_id, version_id.
+	 */
+	case DesignerApplyRetried = 'designer_apply_retried';
+
+	/**
+	 * A creator started a change of a live designer product as a new draft (ADR-080 pkt. 3). Context: design_product_id, version_id.
+	 */
+	case DesignerChangeStarted = 'designer_change_started';
 }

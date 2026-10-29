@@ -140,18 +140,29 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 
 		$found = $this->service( CreatorRepository::class )->find( $creator->id );
 		self::assertNotNull( $found );
-		$counts = ( new DesignerCreatorCleanup( $this->wpdb, new DesignerFiles() ) )->remove( $found );
+		$taken  = array();
+		$counts = ( new DesignerCreatorCleanup(
+			$this->wpdb,
+			new DesignerFiles(),
+			static function ( int $id ) use ( &$taken ): bool {
+				$taken[] = $id;
+
+				return true;
+			}
+		) )->remove( $found );
 
 		self::assertSame(
 			array(
-				'tasks'    => 0,
-				'versions' => 1,
-				'products' => 1,
-				'assets'   => 1,
-				'files'    => 1,
+				'tasks'       => 0,
+				'versions'    => 1,
+				'products'    => 1,
+				'assets'      => 1,
+				'files'       => 1,
+				'unpublished' => 1,
 			),
 			$counts
 		);
+		self::assertSame( array( $shipped ), $taken, 'The product in the shop is taken out of it.' );
 		self::assertSame( array( (string) $shipped, (string) $theirs ), array_map( 'strval', array_column( $this->rows( Tables::DESIGNER_PRODUCTS ), 'id' ) ), 'A product in the shop stays for the order history; other creators are untouched.' );
 		self::assertCount( 2, $this->rows( Tables::DESIGNER_VERSIONS ) );
 		self::assertSame( array( null ), array_column( $this->rows( Tables::DESIGNER_ASSETS ), 'creator_id' ), 'The administrator\'s cliparts stay.' );

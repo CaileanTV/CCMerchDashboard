@@ -187,6 +187,11 @@ final class AuditLogFormatter {
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),
 			AuditAction::DesignerVersionWithdrawn => __( 'Creator withdrew a design from approval', 'merchboard' ),
+			AuditAction::DesignerVersionApproved => __( 'Design approved', 'merchboard' ),
+			AuditAction::DesignerVersionRejected => __( 'Design rejected', 'merchboard' ),
+			AuditAction::DesignerVersionApplied => __( 'Design put in the shop', 'merchboard' ),
+			AuditAction::DesignerApplyRetried => __( 'Design queued for the shop again', 'merchboard' ),
+			AuditAction::DesignerChangeStarted => __( 'Creator started a change of a designer product', 'merchboard' ),
 		};
 	}
 

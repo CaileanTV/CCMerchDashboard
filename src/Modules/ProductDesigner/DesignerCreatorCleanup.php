@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\ProductDesigner;
 
+use Closure;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Modules\Creators\Creator;
@@ -23,19 +24,21 @@ defined( 'ABSPATH' ) || exit;
  * Deleting a creator (ADR-076, ADR-080 "Migration/data implications"): the
  * creator's uploaded images and the designer products that never reached
  * the shop (no WooCommerce product) are deleted with their versions and
- * mockup tasks, and so are the files of both (step 30.9). Designer products that are in the shop stay with their
- * versions, so the order history keeps its print files; they are
- * unpublished when the apply pipeline exists (step 30.10). Idempotent.
+ * mockup tasks, and so are the files of both (step 30.9). Designer products
+ * that are in the shop stay with their versions, so the order history keeps
+ * its print files; they are taken out of the shop (a draft again, step
+ * 30.10) through the writer. Idempotent.
  */
 class DesignerCreatorCleanup implements CreatorDataCleaner {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param wpdb          $wpdb  Database.
-	 * @param DesignerFiles $files Files.
+	 * @param wpdb                    $wpdb      Database.
+	 * @param DesignerFiles           $files     Files.
+	 * @param Closure(int): bool|null $unpublish Takes a designer product (row id) out of the shop; whether it was in it.
 	 */
-	public function __construct( private wpdb $wpdb, private DesignerFiles $files ) {
+	public function __construct( private wpdb $wpdb, private DesignerFiles $files, private ?Closure $unpublish = null ) {
 	}
 
 	/**
@@ -91,7 +94,18 @@ class DesignerCreatorCleanup implements CreatorDataCleaner {
 			$this->files->delete( $name );
 		}
 
-		$counts['files'] = count( $names );
+		$counts['files']       = count( $names );
+		$counts['unpublished'] = 0;
+
+		$unpublish = $this->unpublish;
+
+		if ( null !== $unpublish ) {
+			$shop = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE creator_id = %d AND wc_product_id IS NOT NULL', $products, $creator->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+			foreach ( $shop as $id ) {
+				$counts['unpublished'] += $unpublish( (int) $id ) ? 1 : 0;
+			}
+		}
 
 		return $counts;
 	}

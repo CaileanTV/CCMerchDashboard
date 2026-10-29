@@ -99,6 +99,20 @@ final readonly class ProductRecord {
 	}
 
 	/**
+	 * Whether the link is the product designer's (ADR-080 pkt. 6): one valid
+	 * link and one origin entry `designer`. It counts as manual.
+	 */
+	public function is_designer_linked(): bool {
+		if ( null === $this->creator_id() || 1 !== count( $this->source_entries ) ) {
+			return false;
+		}
+
+		$entry = $this->source_entries[0];
+
+		return ProductCreatorLink::SOURCE_META_KEY === $entry['key'] && ProductLinkSource::Designer->value === $entry['value'];
+	}
+
+	/**
 	 * Whether the product holds a link the category reconciliation must not
 	 * touch: a valid manual link or an invalid link.
 	 */

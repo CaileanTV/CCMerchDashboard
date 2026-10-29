@@ -49,6 +49,13 @@ final class ScheduledJobs {
 	public const NOTIFICATION_HOOKS = array( 'merchboard_notification_send', 'merchboard_notification_balance_check' );
 
 	/**
+	 * Action Scheduler hook of the product designer's apply pipeline
+	 * (Modules\ProductDesigner\Designs\DesignerApply::HOOK; a test keeps them
+	 * equal, ADR-080). Cancelled on uninstall with the opt-in.
+	 */
+	public const DESIGNER_HOOKS = array( 'merchboard_designer_apply' );
+
+	/**
 	 * Cancels the pending backfill pages; never throws.
 	 */
 	public static function cancel_sales_backfill(): void {
@@ -72,7 +79,7 @@ final class ScheduledJobs {
 			return;
 		}
 
-		foreach ( array_merge( self::ALERT_HOOKS, self::NOTIFICATION_HOOKS ) as $hook ) {
+		foreach ( array_merge( self::ALERT_HOOKS, self::NOTIFICATION_HOOKS, self::DESIGNER_HOOKS ) as $hook ) {
 			try {
 				as_unschedule_all_actions( $hook );
 			} catch ( Throwable ) {

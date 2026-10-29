@@ -528,6 +528,63 @@ class WC_Product extends WC_Data {
 	public function set_status( $status ) {}
 
 	/**
+	 * Sets the description.
+	 *
+	 * @param string $description Description.
+	 * @return void
+	 */
+	public function set_description( $description ) {}
+
+	/**
+	 * Sets the product categories.
+	 *
+	 * @param array<int> $term_ids Term ids.
+	 * @return void
+	 */
+	public function set_category_ids( $term_ids ) {}
+
+	/**
+	 * Sets the product image.
+	 *
+	 * @param int|string $image_id Attachment id.
+	 * @return void
+	 */
+	public function set_image_id( $image_id = '' ) {}
+
+	/**
+	 * Sets the gallery images.
+	 *
+	 * @param array<int> $image_ids Attachment ids.
+	 * @return void
+	 */
+	public function set_gallery_image_ids( $image_ids ) {}
+
+	/**
+	 * Sets the attributes: WC_Product_Attribute objects (a product) or
+	 * values by attribute slug (a variation).
+	 *
+	 * @param array<int|string, WC_Product_Attribute|string> $raw_attributes Attributes.
+	 * @return void
+	 */
+	public function set_attributes( $raw_attributes ) {}
+
+	/**
+	 * The attributes (a variation: values by attribute slug).
+	 *
+	 * @param string $context Context.
+	 * @return array<int|string, mixed>
+	 */
+	public function get_attributes( $context = 'view' ) {}
+
+	/**
+	 * Sets the parent (a variation).
+	 *
+	 * @param int $parent_id Parent id.
+	 * @return void
+	 */
+	public function set_parent_id( $parent_id ) {}
+
+	/**
 	 * Saves the product through its data store.
 	 *
 	 * @return int Product id.
@@ -540,6 +597,60 @@ class WC_Product extends WC_Data {
 	 * @return array<int|string>
 	 */
 	public function get_children() {}
+}
+
+/**
+ * A product attribute (class-wc-product-attribute.php).
+ */
+class WC_Product_Attribute {
+
+	/**
+	 * Sets the id (0 for a local attribute).
+	 *
+	 * @param int $value Id.
+	 * @return void
+	 */
+	public function set_id( $value ) {}
+
+	/**
+	 * Sets the name.
+	 *
+	 * @param string $value Name.
+	 * @return void
+	 */
+	public function set_name( $value ) {}
+
+	/**
+	 * Sets the options.
+	 *
+	 * @param array<int|string> $value Options.
+	 * @return void
+	 */
+	public function set_options( $value ) {}
+
+	/**
+	 * Sets the position.
+	 *
+	 * @param int $value Position.
+	 * @return void
+	 */
+	public function set_position( $value ) {}
+
+	/**
+	 * Sets whether it is visible on the product page.
+	 *
+	 * @param bool $value Visible.
+	 * @return void
+	 */
+	public function set_visible( $value ) {}
+
+	/**
+	 * Sets whether it is used for variations.
+	 *
+	 * @param bool $value Used for variations.
+	 * @return void
+	 */
+	public function set_variation( $value ) {}
 }
 
 /**

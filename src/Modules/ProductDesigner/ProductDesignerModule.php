@@ -28,6 +28,8 @@ use MerchBoard\Modules\ProductDesigner\Admin\CampaignActions;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerReviewActions;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
@@ -37,20 +39,27 @@ use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerOrderFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsSection;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
+use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerCampaignSource;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
+use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -128,7 +137,58 @@ final class ProductDesignerModule implements Module {
 		// The approval queue and the designer's notifications (step 30.9).
 		$container->set( DesignsPage::class, static fn( Container $c ): DesignsPage => new DesignsPage( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( CreatorRepository::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSwitches::class ), $c->get( PricingProductStore::class )->decimals() ) );
 		$container->set( DesignerNotificationActions::class, static fn( Container $c ): DesignerNotificationActions => new DesignerNotificationActions( $c->get( NotificationSettings::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSender::class ), $c->get( Logger::class ) ) );
-		$container->set( DesignerCreatorCleanup::class, static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup( $c->get( wpdb::class ), $c->get( DesignerFiles::class ) ) );
+		// Approval and the apply pipeline into WooCommerce (step 30.10).
+		$container->set( DesignerMedia::class, static fn( Container $c ): DesignerMedia => new DesignerMedia( $c->get( DesignerFiles::class ) ) );
+		$container->set(
+			DesignerApply::class,
+			static fn( Container $c ): DesignerApply => new DesignerApply(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( CreatorRepository::class ),
+				$c->get( CreatorCategoryRepository::class ),
+				$c->get( WooCommerceDesignerWriter::class ),
+				$c->get( DesignerMedia::class ),
+				static fn( int $product, int $creator, array $context ): array => $c->get( ProductCreatorLink::class )->apply_designer_link( $product, $creator, $context ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( Logger::class ),
+				$c->get( PricingProductStore::class )->decimals()
+			)
+		);
+		$container->set(
+			DesignerReview::class,
+			static fn( Container $c ): DesignerReview => new DesignerReview(
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( JobQueue::class ),
+				$c->get( PricingProductStore::class )->decimals(),
+				static function ( int $version ) use ( $c ): void {
+					$c->get( DesignerApply::class )->run( $version );
+				}
+			)
+		);
+		$container->set( DesignerReviewActions::class, static fn( Container $c ): DesignerReviewActions => new DesignerReviewActions( $c->get( DesignerReview::class ), $c->get( Logger::class ) ) );
+		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
+		$container->set( DesignerOrderFiles::class, static fn( Container $c ): DesignerOrderFiles => new DesignerOrderFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerProductGuard::class ), $c->get( Logger::class ) ) );
+		$container->set(
+			DesignerCreatorCleanup::class,
+			static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup(
+				$c->get( wpdb::class ),
+				$c->get( DesignerFiles::class ),
+				static function ( int $design_product_id ) use ( $c ): bool {
+					$product = $c->get( DesignerProductGuard::class )->for_row( $design_product_id );
+
+					if ( null !== $product ) {
+						$c->get( WooCommerceDesignerWriter::class )->unpublish( $product );
+					}
+
+					return null !== $product;
+				}
+			)
+		);
 
 		// Deleting a creator (ADR-076): designer data that never reached the shop.
 		add_filter(
@@ -142,6 +202,13 @@ final class ProductDesignerModule implements Module {
 		( new DesignerSettingsSection() )->register();
 		DesignerNotifications::register();
 		( new DesignerDashboardSection() )->register();
+		$container->get( DesignerOrderFiles::class )->register();
+		add_action(
+			DesignerApply::HOOK,
+			static function ( mixed $version ) use ( $container ): void {
+				$container->get( DesignerApply::class )->run( $version );
+			}
+		);
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
@@ -165,6 +232,8 @@ final class ProductDesignerModule implements Module {
 				$container->get( BaseProductActions::class )->register();
 				$container->get( DesignerAssetDownload::class )->register();
 				$container->get( DesignerNotificationActions::class )->register();
+				$container->get( DesignerReviewActions::class )->register();
+				$container->get( DesignerVersionFiles::class )->register();
 			}
 		);
 	}

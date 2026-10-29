@@ -87,9 +87,9 @@ abstract class WC_Data {
 	/**
 	 * Constructor: reads the stored meta rows.
 	 *
-	 * @param int $id Object id.
+	 * @param int $id Object id (0: a new object, stored at save()).
 	 */
-	public function __construct( $id ) {
+	public function __construct( $id = 0 ) {
 		$this->id = $id;
 
 		foreach ( WcProductStorage::$meta[ $id ] ?? array() as $row ) {
@@ -147,6 +147,35 @@ abstract class WC_Data {
 				$meta->value = null;
 			}
 		}
+	}
+
+	/**
+	 * The first value of a key ('' without one).
+	 *
+	 * @param string $key     Key.
+	 * @param bool   $single  Single value.
+	 * @param string $context Context.
+	 * @return mixed
+	 */
+	public function get_meta( $key = '', $single = true, $context = 'view' ) {
+		foreach ( $this->get_meta_data() as $meta ) {
+			if ( $meta->key === $key ) {
+				return $meta->value;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Replaces a key's value.
+	 *
+	 * @param string $key   Key.
+	 * @param mixed  $value Value.
+	 * @return void
+	 */
+	public function update_meta_data( $key, $value ) {
+		$this->add_meta_data( $key, $value, true );
 	}
 
 	/**
@@ -263,7 +292,7 @@ class WC_Product extends WC_Data {
 	 * @return string
 	 */
 	public function get_regular_price( $context = 'view' ) {
-		return WcProductStorage::$products[ $this->id ]['regular_price'] ?? '';
+		return 0 === $this->id ? '' : ( WcProductStorage::$products[ $this->id ]['regular_price'] ?? '' );
 	}
 
 	/**
@@ -289,7 +318,7 @@ class WC_Product extends WC_Data {
 	/**
 	 * Unsaved property changes.
 	 *
-	 * @var array<string, string>
+	 * @var array<string, mixed>
 	 */
 	private $changes = array();
 
@@ -310,6 +339,108 @@ class WC_Product extends WC_Data {
 	 */
 	public function get_sale_price( $context = 'view' ) {
 		return WcProductStorage::$products[ $this->id ]['sale_price'] ?? '';
+	}
+
+	/**
+	 * Records a property change (the designer writer, step 30.10).
+	 *
+	 * @param string $property Property.
+	 * @param mixed  $value    Value.
+	 * @return void
+	 */
+	private function change( $property, $value ) {
+		WcProductStorage::$setters[] = array( $this->id, $property, $value );
+		$this->changes[ $property ]  = $value;
+	}
+
+	/**
+	 * Sets the name.
+	 *
+	 * @param string $name Name.
+	 * @return void
+	 */
+	public function set_name( $name ) {
+		$this->change( 'name', $name );
+	}
+
+	/**
+	 * Sets the description.
+	 *
+	 * @param string $description Description.
+	 * @return void
+	 */
+	public function set_description( $description ) {
+		$this->change( 'description', $description );
+	}
+
+	/**
+	 * Sets the categories.
+	 *
+	 * @param list<int> $ids Term ids.
+	 * @return void
+	 */
+	public function set_category_ids( $ids ) {
+		$this->change( 'categories', $ids );
+	}
+
+	/**
+	 * Sets the image.
+	 *
+	 * @param int $id Attachment id.
+	 * @return void
+	 */
+	public function set_image_id( $id = '' ) {
+		$this->change( 'image_id', $id );
+	}
+
+	/**
+	 * Sets the gallery.
+	 *
+	 * @param list<int> $ids Attachment ids.
+	 * @return void
+	 */
+	public function set_gallery_image_ids( $ids ) {
+		$this->change( 'gallery', $ids );
+	}
+
+	/**
+	 * Sets the attributes.
+	 *
+	 * @param array<int|string, mixed> $attributes Attributes.
+	 * @return void
+	 */
+	public function set_attributes( $attributes ) {
+		$this->change( 'attributes', $attributes );
+	}
+
+	/**
+	 * The attributes.
+	 *
+	 * @param string $context Context.
+	 * @return array<int|string, mixed>
+	 */
+	public function get_attributes( $context = 'view' ) {
+		return $this->changes['attributes'] ?? ( WcProductStorage::$products[ $this->id ]['attributes'] ?? array() );
+	}
+
+	/**
+	 * Sets the status.
+	 *
+	 * @param string $status Status.
+	 * @return void
+	 */
+	public function set_status( $status ) {
+		$this->change( 'status', $status );
+	}
+
+	/**
+	 * Sets the parent.
+	 *
+	 * @param int $id Parent id.
+	 * @return void
+	 */
+	public function set_parent_id( $id ) {
+		$this->change( 'parent_id', $id );
 	}
 
 	/**
@@ -364,7 +495,34 @@ class WC_Product extends WC_Data {
 			return 0;
 		}
 
+		if ( 0 === $this->id ) {
+			$this->id = array() === WcProductStorage::$products ? 1 : max( array_keys( WcProductStorage::$products ) ) + 1;
+
+			WcProductStorage::$products[ $this->id ] = array(
+				'type'       => $this instanceof WC_Product_Variation ? 'variation' : ( $this instanceof WC_Product_Variable ? 'variable' : 'simple' ),
+				'parent_id'  => 0,
+				'status'     => 'draft',
+				'name'       => '',
+				'sku'        => '',
+				'categories' => array(),
+			);
+
+			foreach ( WcProductStorage::$setters as $index => $setter ) {
+				if ( 0 === $setter[0] ) {
+					WcProductStorage::$setters[ $index ][0] = $this->id;
+				}
+			}
+		}
+
 		$product = WcProductStorage::$products[ $this->id ];
+
+		foreach ( array( 'name', 'description', 'categories', 'image_id', 'gallery', 'attributes', 'status', 'parent_id' ) as $property ) {
+			if ( array_key_exists( $property, $this->changes ) ) {
+				$product[ $property ] = $this->changes[ $property ];
+			}
+		}
+
+		WcProductStorage::$saved[] = $this->id;
 
 		if ( array_key_exists( 'regular_price', $this->changes ) ) {
 			$product['regular_price'] = $this->changes['regular_price'];
@@ -380,8 +538,36 @@ class WC_Product extends WC_Data {
 
 		WcProductStorage::$products[ $this->id ] = $product;
 		$this->changes                           = array();
+		// WooCommerce saves the meta data with the product.
+		$this->save_meta_data();
 
 		return $this->id;
+	}
+}
+
+/**
+ * A product attribute: its properties as set.
+ */
+class WC_Product_Attribute {
+
+	/**
+	 * Properties.
+	 *
+	 * @var array<string, mixed>
+	 */
+	public $data = array();
+
+	/**
+	 * Records any setter (set_id, set_name, set_options, …).
+	 *
+	 * @param string       $name      Method.
+	 * @param array<mixed> $arguments Arguments.
+	 * @return void
+	 */
+	public function __call( $name, $arguments ) {
+		if ( str_starts_with( $name, 'set_' ) ) {
+			$this->data[ substr( $name, 4 ) ] = $arguments[0] ?? null;
+		}
 	}
 }
 

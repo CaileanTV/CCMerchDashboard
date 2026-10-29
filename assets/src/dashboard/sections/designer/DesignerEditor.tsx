@@ -6,7 +6,9 @@
  * when the editor opens (fabric-stage.ts). "Send for approval" (step 30.9)
  * saves the draft, renders and sends its files (submission.ts) and submits;
  * a waiting version can be withdrawn and edited again. During "view as
- * creator" the administrator cannot send.
+ * creator" the administrator cannot send. A product in the shop shows its
+ * live version and "Make a change" (step 30.10); a rejected design shows
+ * the administrator's note above the editor.
  */
 import {
 	useCallback,
@@ -24,6 +26,7 @@ import {
 	deleteDesignerImage,
 	designerAssetUrl,
 	saveDesignerDraft,
+	startChange,
 	uploadDesignerImage,
 	withdrawDesign,
 } from '../../api/designer';
@@ -125,6 +128,10 @@ export function DesignerEditor( props: DesignerEditorProps ) {
 
 	if ( base !== undefined && draft === null && product.pending !== null ) {
 		return <Waiting { ...props } />;
+	}
+
+	if ( base !== undefined && draft === null && product.live !== null ) {
+		return <InShop { ...props } />;
 	}
 
 	if ( base === undefined || draft === null ) {
@@ -760,6 +767,28 @@ function Editor( props: EditorProps ) {
 				) }
 			</div>
 
+			{ product.rejection !== null &&
+			product.rejection.number < draft.number ? (
+				<Alert tone="warning">
+					{ sprintf(
+						/* translators: %s: the administrator's note. */ __(
+							'We could not approve your last design: %s Change it, and send it again.',
+							'merchboard'
+						),
+						product.rejection.note
+					) }
+				</Alert>
+			) : null }
+
+			{ product.live !== null ? (
+				<Alert tone="info">
+					{ __(
+						'You are changing a product in the shop. The shop keeps the current version until we approve your change.',
+						'merchboard'
+					) }
+				</Alert>
+			) : null }
+
 			{ impersonating ? (
 				<Alert tone="info">
 					{ __(
@@ -1285,6 +1314,67 @@ function Waiting( props: DesignerEditorProps ) {
 					isBusy={ busy }
 				>
 					{ __( 'Withdraw and edit', 'merchboard' ) }
+				</Button>
+			</div>
+		</>
+	);
+}
+
+/**
+ * A product in the shop: its live version and "Make a change".
+ *
+ * @param props Props.
+ */
+function InShop( props: DesignerEditorProps ) {
+	const { product, overview, locale, onBack, onProduct } = props;
+	const live = product.live!;
+	const currency =
+		overview.bases.find( ( base ) => base.id === product.baseId )
+			?.currency ?? '';
+	const [ busy, setBusy ] = useState( false );
+	const [ failed, setFailed ] = useState( false );
+
+	const change = async () => {
+		setBusy( true );
+		setFailed( false );
+		const result = await startChange( product.id );
+		setBusy( false );
+
+		if ( result.ok ) {
+			onProduct( result.data );
+		} else {
+			setFailed( true );
+		}
+	};
+
+	return (
+		<>
+			<Alert tone="success">
+				{ sprintf(
+					/* translators: 1: product title, 2: the customer's price. */ __(
+						'%1$s is in the shop (customer price incl. VAT: %2$s). A change is sent for approval like a new design; the shop keeps this version until we approve it.',
+						'merchboard'
+					),
+					live.title,
+					live.price === null
+						? '–'
+						: moneyText( live.price, currency, locale )
+				) }
+			</Alert>
+			{ failed ? (
+				<Alert tone="danger">
+					{ __(
+						'The change could not be started. Please try again.',
+						'merchboard'
+					) }
+				</Alert>
+			) : null }
+			<div className="merchboard-designer__actions">
+				<Button variant="secondary" onClick={ onBack }>
+					{ __( 'Back to my designs', 'merchboard' ) }
+				</Button>
+				<Button onClick={ () => void change() } isBusy={ busy }>
+					{ __( 'Make a change', 'merchboard' ) }
 				</Button>
 			</div>
 		</>

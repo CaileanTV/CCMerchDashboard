@@ -27,8 +27,11 @@ defined( 'ABSPATH' ) || exit;
  * choices are phase 29's.
  *
  * Step 30.9: a new product or a change waiting for approval (to the
- * administrator) and the creator's receipt. The data never hold files, only
- * the product's title, the version, the price and its currency.
+ * administrator) and the creator's receipt. Step 30.10: approved and in the
+ * shop, change approved, rejected with the note (to the creator) and "could
+ * not be put in the shop" (to the administrator). The data never hold files,
+ * only the product's title, the version, the price and its currency (and
+ * the note or the reason).
  */
 final class DesignerNotifications {
 
@@ -39,6 +42,14 @@ final class DesignerNotifications {
 	public const CHANGE_SUBMITTED = 'admin_designer_change_submitted';
 
 	public const RECEIPT = 'designer_submitted';
+
+	public const APPROVED = 'designer_approved';
+
+	public const CHANGE_APPROVED = 'designer_change_approved';
+
+	public const REJECTED = 'designer_rejected';
+
+	public const APPLY_FAILED = 'admin_designer_apply_failed';
 
 	/**
 	 * Adds the types to the catalog.
@@ -58,8 +69,12 @@ final class DesignerNotifications {
 	public static function all(): array {
 		return array(
 			self::receipt(),
+			self::approved( false ),
+			self::approved( true ),
+			self::rejected(),
 			self::submitted(),
 			self::change_submitted(),
+			self::apply_failed(),
 		);
 	}
 
@@ -111,6 +126,139 @@ final class DesignerNotifications {
 				__( 'Thank you for creating with us.', 'merchboard' )
 			)
 		);
+	}
+
+	/**
+	 * A version was approved and is in the shop (a new product or a change).
+	 *
+	 * @param bool $change Whether it changed a product in the shop.
+	 */
+	private static function approved( bool $change ): NotificationType {
+		$label   = $change ? static fn(): string => __( 'Designer product change approved', 'merchboard' ) : static fn(): string => __( 'Designer product approved', 'merchboard' );
+		$heading = $change ? __( 'Your change is in the shop', 'merchboard' ) : __( 'Your product is in the shop', 'merchboard' );
+
+		return new NotificationType(
+			$change ? self::CHANGE_APPROVED : self::APPROVED,
+			NotificationType::CREATOR,
+			self::GROUP,
+			$label,
+			$change
+				? static fn(): string => __( 'When an administrator approves a change of the creator\'s designer product and it is in the shop.', 'merchboard' )
+				: static fn(): string => __( 'When an administrator approves the creator\'s new designer product and it is in the shop.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'designer',
+			self::sample(),
+			static fn( NotificationData $d ): string => $change
+				/* translators: %s: product title. */
+				? sprintf( __( 'Your change of %s was approved and is in the shop.', 'merchboard' ), $d->text( 'title' ) )
+				/* translators: %s: product title. */
+				: sprintf( __( '%s was approved and is in the shop.', 'merchboard' ), $d->text( 'title' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				$change
+					/* translators: %s: product title. */
+					? sprintf( __( 'Your change of %s is in the shop', 'merchboard' ), $d->text( 'title' ) )
+					/* translators: %s: product title. */
+					: sprintf( __( '%s is in the shop', 'merchboard' ), $d->text( 'title' ) ),
+				$heading,
+				array( $change ? __( 'We approved your change. The product in the shop shows it now.', 'merchboard' ) : __( 'We approved your design, and the product is now for sale in the shop.', 'merchboard' ) ),
+				array(
+					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
+					array( __( 'Customer price incl. VAT', 'merchboard' ), $d->money( 'price' ) ),
+				),
+				null,
+				null,
+				__( 'Open the designer', 'merchboard' ),
+				'',
+				__( 'Thank you for creating with us.', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A version was rejected, with the administrator's note.
+	 */
+	private static function rejected(): NotificationType {
+		return new NotificationType(
+			self::REJECTED,
+			NotificationType::CREATOR,
+			self::GROUP,
+			static fn(): string => __( 'Design rejected', 'merchboard' ),
+			static fn(): string => __( 'When an administrator rejects a design the creator sent, with the note.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'designer',
+			array_merge( self::sample(), array( 'note' => 'Please use a picture with a higher resolution.' ) ),
+			/* translators: 1: product title, 2: the administrator's note. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s was not approved: %2$s', 'merchboard' ), $d->text( 'title' ), $d->text( 'note' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product title. */
+				sprintf( __( '%s was not approved', 'merchboard' ), $d->text( 'title' ) ),
+				__( 'Your design was not approved', 'merchboard' ),
+				array( __( 'We could not approve your design as it is. Our note is below. You can change the design in the designer and send it again.', 'merchboard' ) ),
+				array( array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ) ),
+				null,
+				array( __( 'Note', 'merchboard' ), $d->text( 'note' ) ),
+				__( 'Open the designer', 'merchboard' ),
+				'',
+				__( 'Thank you for creating with us.', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * An approved version could not be put in the shop.
+	 */
+	private static function apply_failed(): NotificationType {
+		return new NotificationType(
+			self::APPLY_FAILED,
+			NotificationType::ADMIN,
+			self::GROUP,
+			static fn(): string => __( 'Designer product could not be put in the shop', 'merchboard' ),
+			static fn(): string => __( 'When an approved designer product or change could not be put in the shop. It can be tried again under Designs.', 'merchboard' ),
+			true,
+			false,
+			false,
+			DesignsPage::SLUG,
+			array_merge( self::sample(), array( 'reason' => 'prices_excl_tax' ) ),
+			/* translators: 1: product title, 2: creator name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s by %2$s could not be put in the shop.', 'merchboard' ), $d->text( 'title' ), $d->text( 'creator' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product title. */
+				sprintf( __( '%s could not be put in the shop', 'merchboard' ), $d->text( 'title' ) ),
+				__( 'A designer product could not be put in the shop', 'merchboard' ),
+				array( __( 'An approved design could not be put in the shop. Nothing in the shop changed for it. Fix the cause and choose "Try again" under Designs.', 'merchboard' ) ),
+				array(
+					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
+					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
+					array( __( 'Reason', 'merchboard' ), self::reason( $d->text( 'reason' ) ) ),
+				),
+				null,
+				null,
+				__( 'Open Designs', 'merchboard' ),
+				'',
+				__( 'This message was sent by Merch Dashboard.', 'merchboard' ),
+				false
+			)
+		);
+	}
+
+	/**
+	 * Why an apply failed, in words.
+	 *
+	 * @param string $reason Code (a DesignerException reason or "error").
+	 */
+	public static function reason( string $reason ): string {
+		return match ( $reason ) {
+			DesignerException::PRICES_EXCL_TAX      => __( 'The shop enters prices excluding VAT (WooCommerce → Settings → Tax); designer prices include VAT.', 'merchboard' ),
+			DesignerException::BASE_UNKNOWN         => __( 'The base product no longer exists.', 'merchboard' ),
+			DesignerException::NOT_DESIGNER_PRODUCT => __( 'The product in the shop is no longer the designer product (changed or deleted in WooCommerce).', 'merchboard' ),
+			'creator'                               => __( 'The creator is no longer active.', 'merchboard' ),
+			'link'                                  => __( 'The product could not be linked to the creator.', 'merchboard' ),
+			default                                 => __( 'A technical error; the log has the details.', 'merchboard' ),
+		};
 	}
 
 	/**

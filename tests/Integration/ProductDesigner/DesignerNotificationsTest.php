@@ -90,7 +90,7 @@ final class DesignerNotificationsTest extends IntegrationTestCase {
 		add_filter( NotificationTypes::FILTER, $intruders, 20 );
 		$types     = new NotificationTypes();
 
-		self::assertSame( array( 'designer_submitted', 'admin_designer_submitted', 'admin_designer_change_submitted' ), array_keys( $types->in_groups( array( DesignerNotifications::GROUP ) ) ) );
+		self::assertSame( array( 'designer_submitted', 'designer_approved', 'designer_change_approved', 'designer_rejected', 'admin_designer_submitted', 'admin_designer_change_submitted', 'admin_designer_apply_failed' ), array_keys( $types->in_groups( array( DesignerNotifications::GROUP ) ) ) );
 		self::assertSame( 'sales', $types->get( 'sale_new' )?->group, 'A taken key keeps the catalog\'s type.' );
 		self::assertNull( $types->get( 'designer_elsewhere' ), 'A module type in a catalog group is ignored.' );
 		self::assertCount( 36, $types->in_groups( array_keys( NotificationTypes::groups() ) ), 'The Notifications page shows the catalog only.' );
@@ -102,7 +102,9 @@ final class DesignerNotificationsTest extends IntegrationTestCase {
 			$mail = $sender->compose( $type, $type->sample, NotificationType::ADMIN === $type->audience ? '' : 'Nova' );
 
 			self::assertStringContainsString( 'Stream tee', $mail['subject'] . $mail['text'], $type->key );
-			self::assertStringContainsString( number_format_i18n( 249, 2 ), $mail['html'], $type->key . ': the price' );
+			if ( ! in_array( $type->key, array( DesignerNotifications::REJECTED, DesignerNotifications::APPLY_FAILED ), true ) ) {
+				self::assertStringContainsString( number_format_i18n( 249, 2 ), $mail['html'], $type->key . ': the price' );
+			}
 			self::assertNotSame( '', $type->text( new NotificationData( $type->sample ) ), $type->key );
 			self::assertFalse( NotificationType::ADMIN === $type->audience && $type->dashboard, $type->key );
 		}
@@ -119,7 +121,7 @@ final class DesignerNotificationsTest extends IntegrationTestCase {
 			);
 		}
 
-		self::assertSame( 4, $settings->save( array(), array( DesignerNotifications::GROUP ) ), 'All designer switches off: the receipt\'s two and the administrator\'s e-mails.' );
+		self::assertSame( 11, $settings->save( array(), array( DesignerNotifications::GROUP ) ), 'All designer switches off: two for each of the four creator types, one for each of the three administrator types.' );
 		self::assertSame( 0, $settings->save( $catalog ), 'The Notifications page leaves the designer\'s choices alone.' );
 		self::assertFalse( $settings->enabled( $this->type( DesignerNotifications::RECEIPT ), NotificationSettings::EMAIL ) );
 		self::assertFalse( $settings->enabled( $this->type( DesignerNotifications::SUBMITTED ), NotificationSettings::EMAIL ) );
@@ -166,7 +168,7 @@ final class DesignerNotificationsTest extends IntegrationTestCase {
 		self::assertStringContainsString( 'Stream &lt;tee&gt;', $queue );
 		self::assertStringContainsString( 'Nova', $queue );
 		self::assertStringContainsString( '179.94', $queue );
-		self::assertStringContainsString( 'New product', $queue );
+		self::assertStringContainsString( 'A new product.', $queue );
 
 		$_GET['view'] = 'notifications';
 		$tab          = $this->render( $page );

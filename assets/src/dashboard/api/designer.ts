@@ -1,5 +1,5 @@
 /**
- * `/me/designer` (phase 30, steps 30.8–30.9, ADR-080): the base products,
+ * `/me/designer` (phase 30, steps 30.8–30.10, ADR-080): the base products,
  * files, fonts and designer products of the creator the server resolves, and
  * the submission of a draft with the files the browser rendered. Every
  * answer is validated; files are fetched with the session and shown as
@@ -93,6 +93,7 @@ export interface DesignerOverview {
 export type ProfitKind = 'percent' | 'fixed';
 
 export interface DesignerDraft {
+	readonly number: number;
 	readonly title: string;
 	readonly description: string;
 	readonly colors: readonly string[];
@@ -112,12 +113,28 @@ export interface DesignerPending {
 	readonly submittedAt: string;
 }
 
+/** The version in the shop. */
+export interface DesignerLive {
+	readonly number: number;
+	readonly title: string;
+	readonly price: string | null;
+}
+
+/** The administrator's rejection a draft continues. */
+export interface DesignerRejection {
+	readonly number: number;
+	readonly note: string;
+	readonly decidedAt: string;
+}
+
 export interface DesignerProduct {
 	readonly id: number;
 	readonly baseId: number;
 	readonly inShop: boolean;
 	readonly draft: DesignerDraft | null;
 	readonly pending: DesignerPending | null;
+	readonly live: DesignerLive | null;
+	readonly rejection: DesignerRejection | null;
 }
 
 const isInt = ( value: unknown, min = 0 ): value is number =>
@@ -374,8 +391,14 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 	}
 
 	const pending = parsePending( body.pending );
+	const live = parseLive( body.live );
+	const rejection = parseRejection( body.rejection );
 
-	if ( pending === undefined ) {
+	if (
+		pending === undefined ||
+		live === undefined ||
+		rejection === undefined
+	) {
 		return null;
 	}
 
@@ -386,6 +409,8 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 			inShop: body.in_shop,
 			draft: null,
 			pending,
+			live,
+			rejection,
 		};
 	}
 
@@ -403,6 +428,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 		colors === null ||
 		sizes === null ||
 		design === null ||
+		! isInt( draft.number, 1 ) ||
 		! isString( draft.title ) ||
 		! isString( draft.description ) ||
 		( draft.profit_kind !== 'percent' && draft.profit_kind !== 'fixed' ) ||
@@ -418,6 +444,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 		baseId: body.base_id,
 		inShop: body.in_shop,
 		draft: {
+			number: draft.number,
 			title: draft.title,
 			description: draft.description,
 			colors,
@@ -429,6 +456,58 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 			updatedAt: draft.updated_at,
 		},
 		pending,
+		live,
+		rejection,
+	};
+}
+
+/**
+ * The live version: null without one, undefined when invalid.
+ *
+ * @param value Response field (missing: none).
+ */
+function parseLive( value: unknown ): DesignerLive | null | undefined {
+	if ( value === null || value === undefined ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		! isInt( value.number, 1 ) ||
+		! isString( value.title ) ||
+		( value.price !== null && ! isString( value.price ) )
+	) {
+		return undefined;
+	}
+
+	return { number: value.number, title: value.title, price: value.price };
+}
+
+/**
+ * The rejection: null without one, undefined when invalid.
+ *
+ * @param value Response field (missing: none).
+ */
+function parseRejection(
+	value: unknown
+): DesignerRejection | null | undefined {
+	if ( value === null || value === undefined ) {
+		return null;
+	}
+
+	if (
+		! isRecord( value ) ||
+		! isInt( value.number, 1 ) ||
+		! isString( value.note ) ||
+		! isString( value.decided_at )
+	) {
+		return undefined;
+	}
+
+	return {
+		number: value.number,
+		note: value.note,
+		decidedAt: value.decided_at,
 	};
 }
 
@@ -643,6 +722,20 @@ export function withdrawDesign(
 ): Promise< ApiResult< DesignerProduct > > {
 	return request(
 		{ path: `${ PATH }/products/${ id }/withdraw`, method: 'POST' },
+		parseProduct
+	);
+}
+
+/**
+ * Starts a change of a product in the shop: a new draft of the live version.
+ *
+ * @param id Designer product.
+ */
+export function startChange(
+	id: number
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/change`, method: 'POST' },
 		parseProduct
 	);
 }

@@ -536,6 +536,67 @@ describe( 'DesignerSection', () => {
 		).toBe( false );
 	} );
 
+	it( 'shows a product in the shop, starts a change and shows a rejection note', async () => {
+		const draft = {
+			number: 3,
+			title: 'Tee',
+			description: '',
+			colors: [ 'black' ],
+			sizes: [ 'S' ],
+			design: { version: 1, sides: [] },
+			profit_kind: 'fixed',
+			profit_value: '0.0000',
+			price: '149.9500',
+			base_version: 2,
+			updated_at: '2026-10-29T10:00:00+00:00',
+		};
+		const live = { number: 1, title: 'Tee', price: '179.9400' };
+		mockApi( {
+			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),
+			'GET /merchboard/v1/me/designer/products/5': () =>
+				response( 200, {
+					id: 5,
+					base_id: 3,
+					in_shop: true,
+					draft: null,
+					live,
+				} ),
+			'POST /merchboard/v1/me/designer/products/5/change': () =>
+				response( 200, {
+					id: 5,
+					base_id: 3,
+					in_shop: true,
+					draft,
+					live,
+					rejection: {
+						number: 2,
+						note: 'Use a sharper logo.',
+						decided_at: '2026-10-29T11:00:00+00:00',
+					},
+				} ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+		click( button( rendered, 'Edit' ) );
+		await flush();
+
+		expect( rendered.container.textContent ).toContain(
+			'Tee is in the shop'
+		);
+		click( button( rendered, 'Make a change' ) );
+		await flush();
+
+		const text = rendered.container.textContent ?? '';
+		expect( text ).toContain( 'You are changing a product in the shop' );
+		expect( text ).toContain( 'Use a sharper logo.' );
+		expect( button( rendered, 'Send for approval' ) ).not.toBeNull();
+	} );
+
 	it( 'never offers sending while the administrator views as the creator', async () => {
 		mockApi( {
 			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),

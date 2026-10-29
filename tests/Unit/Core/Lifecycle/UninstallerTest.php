@@ -32,6 +32,7 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Modules\Notifications\NotificationPreferences;
 use MerchBoard\Modules\Notifications\NotificationSender;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\WooCommerce\Payouts\BalanceReadyNotices;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
@@ -468,7 +469,7 @@ final class UninstallerTest extends TestCase {
 
 		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
 		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
-		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK ), $hooks, 'Queued chat messages, webhook deliveries and notification e-mails are cancelled.' );
+		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerApply::HOOK ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails and designer applies are cancelled.' );
 	}
 
 	private function uninstaller(): Uninstaller {

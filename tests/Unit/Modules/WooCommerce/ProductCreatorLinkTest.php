@@ -676,6 +676,44 @@ final class ProductCreatorLinkTest extends TestCase {
 		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->apply_category_link( 10, $this->inactive, 'category_added' ) );
 	}
 
+	public function test_the_designer_link_is_system_work_with_its_own_grant_origin_and_audit(): void {
+		$this->editable           = array();
+		$purpose                  = null;
+		$guard                    = $this->guard;
+		$this->products->on_write = static function () use ( &$purpose, $guard ): void {
+			$active  = ( new \ReflectionProperty( ProtectedProductMeta::class, 'active' ) )->getValue( $guard );
+			$purpose = $active?->purpose;
+		};
+
+		self::assertSame( array( AuditAction::ProductCreatorLinked ), $this->link->apply_designer_link( 10, $this->alpha, array( 'design_product_id' => 3 ) ) );
+		self::assertSame( \MerchBoard\Core\Security\ProtectedMetaPurpose::DesignerLink, $purpose );
+		self::assertSame( array( 'designer' ), $this->products->written_sources );
+		$record = $this->products->find( 10 );
+		self::assertNotNull( $record );
+		self::assertTrue( $record->is_designer_linked() );
+		self::assertTrue( $record->has_manual_link(), 'The category reconciliation never changes it.' );
+		self::assertSame( array(), $this->product_checks, 'No capability check: system work.' );
+		self::assertSame( array(), $this->link->apply_designer_link( 10, $this->alpha ), 'Repeated: unchanged.' );
+
+		$audit = $this->product_audit();
+		self::assertCount( 1, $audit );
+		self::assertNull( $audit[0]['actor_user_id'] );
+		self::assertSame( 'designer', $audit[0]['context']['source'] );
+		self::assertSame( 3, $audit[0]['context']['design_product_id'] );
+	}
+
+	public function test_the_designer_link_replaces_a_category_link_but_never_another_creator_s_manual_link(): void {
+		$this->products->add_linked( 11, $this->beta, 'category' );
+		$this->products->add_linked( 12, $this->beta, 'admin' );
+
+		self::assertSame( array( AuditAction::ProductCreatorLinked ), $this->link->apply_designer_link( 11, $this->alpha ) );
+		self::assertSame( $this->alpha, $this->products->find( 11 )?->creator_id() );
+		$this->expect_rejection( ProductCreatorLinkException::ALREADY_LINKED, fn() => $this->link->apply_designer_link( 12, $this->alpha ) );
+		$this->expect_rejection( ProductCreatorLinkException::VARIATION, fn() => $this->link->apply_designer_link( 21, $this->alpha ) );
+		$this->expect_rejection( ProductCreatorLinkException::PRODUCT_NOT_FOUND, fn() => $this->link->apply_designer_link( 99, $this->alpha ) );
+		$this->expect_rejection( ProductCreatorLinkException::CREATOR_INACTIVE, fn() => $this->link->apply_designer_link( 10, $this->inactive ) );
+	}
+
 	/**
 	 * Runs an operation that must be rejected without any write.
 	 *

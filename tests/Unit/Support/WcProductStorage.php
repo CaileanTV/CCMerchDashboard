@@ -17,7 +17,7 @@ final class WcProductStorage {
 	/**
 	 * Products by id.
 	 *
-	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[], price?: string|float, regular_price?: string, sale_price?: string, stock_status?: string, image_id?: int|string, variation_prices?: array<string, array<int, string|float>>}>
+	 * @var array<int, array{type: string, parent_id: int, status: string, name: string, sku: string, categories: int[], price?: string|float, regular_price?: string, sale_price?: string, stock_status?: string, image_id?: int|string, description?: string, gallery?: array<int>, attributes?: array<int|string, mixed>, variation_prices?: array<string, array<int, string|float>>}>
 	 */
 	public static array $products = array();
 
@@ -80,9 +80,16 @@ final class WcProductStorage {
 	/**
 	 * Every price setter call: [product id, property, value].
 	 *
-	 * @var list<array{int, string, string}>
+	 * @var list<array{int, string, mixed}>
 	 */
 	public static array $setters = array();
+
+	/**
+	 * The id of every saved product, in order (the designer writer's tests).
+	 *
+	 * @var list<int>
+	 */
+	public static array $saved = array();
 
 	/**
 	 * When true, WC_Product::save() fails (returns 0).

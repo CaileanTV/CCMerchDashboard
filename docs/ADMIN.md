@@ -63,7 +63,9 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 
 Merch Dashboard → **Designs** (`DesignsPage`/`DesignerNotificationActions`, `merchboard_manage_designer`; kun med WooCommerce):
 
-- **Til godkendelse:** de ventende designs, ældste først (indsendt, creator, produkt og version, grundprodukt, nyt produkt eller ændring, kundens pris). Godkend og afvis kommer i 30.10.
+- **Til godkendelse:** de ventende designs, ældste først, hver med creator, produkt og version, grundprodukt, nyt produkt eller ændring, farver, størrelser, kundens pris, mockups (klik for fuld størrelse) og printfiler. **Godkend og læg i butikken** eller **Afvis** med en note til creatoren (trin 30.10, `DesignerReviewActions`).
+- **På vej i butikken:** godkendte designs, der endnu ikke er lagt i butikken; ved en fejl vises årsagen og **Prøv igen**.
+- **Produkt og ordre:** et designer-produkt har boksen "Produktdesigner" med den levende version og dens printfiler; en ordrelinje af et designer-produkt viser "Printfiler" for den solgte version (kun med `merchboard_manage_designer`).
 - **Notifikationer** (også `merchboard_manage_settings`): designerens notifikationer med til/fra, eksempel og testmail, som på siden Notifikationer. Siden Notifikationer viser og gemmer ikke designerens typer.
 
 ### Grundprodukter 🔄 (fase 30, trin 30.6, ADR-080 pkt. 2)

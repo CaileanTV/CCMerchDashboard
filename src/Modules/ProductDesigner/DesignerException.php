@@ -99,6 +99,10 @@ final class DesignerException extends RuntimeException {
 
 	public const NOT_PENDING = 'not_pending';
 
+	public const REVIEW_NOTE = 'review_note';
+
+	public const NOT_LIVE = 'not_live';
+
 	/**
 	 * Constructor.
 	 *

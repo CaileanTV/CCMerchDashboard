@@ -85,6 +85,21 @@ final class ProtectedMetaWrite {
 	 *
 	 * @param int $post_id Post id the meta belongs to.
 	 */
+	/**
+	 * The link of a designer product to its creator (ADR-080 pkt. 6), written
+	 * only by ProductCreatorLink::apply_designer_link().
+	 *
+	 * @param int $product_id Parent product id.
+	 */
+	public static function for_designer_link( int $product_id ): self {
+		return new self( ProtectedMetaPurpose::DesignerLink, $product_id );
+	}
+
+	/**
+	 * Whether the write covers a product.
+	 *
+	 * @param int $post_id Post id.
+	 */
 	public function covers( int $post_id ): bool {
 		return $post_id === $this->product_id;
 	}

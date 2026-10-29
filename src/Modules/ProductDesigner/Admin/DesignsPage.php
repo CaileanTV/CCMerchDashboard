@@ -17,7 +17,9 @@ use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
 use MerchBoard\Modules\Notifications\NotificationsException;
 use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
+use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
@@ -28,8 +30,12 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The designer's admin page (`merchboard_manage_designer`, ADR-080 pkt. 3):
  *
- * - "Waiting for approval": the designs creators submitted, oldest first
- *   (step 30.9 lists them; approving and rejecting follow in 30.10);
+ * - "Waiting for approval": the designs creators submitted, oldest first,
+ *   with their mockups and print files (DesignerVersionFiles), colours,
+ *   sizes and price; "Approve" and "Reject" with a note (step 30.10,
+ *   DesignerReviewActions);
+ * - "On the way to the shop": approved designs not applied yet, with the
+ *   step and reason of a failure and "Try again";
  * - "Notifications" (also `merchboard_manage_settings`): the designer's
  *   notification types with their switches, example and test e-mail
  *   (DesignerNotifications; phase 29's switches, its own form).
@@ -101,6 +107,14 @@ final class DesignsPage {
 	 */
 	public static function result_message( string $code ): ?array {
 		return match ( $code ) {
+			'approved'                             => array( __( 'The design is approved. It is being put in the shop; the creator gets a notification when it is there.', 'merchboard' ), 'success' ),
+			'rejected'                             => array( __( 'The design is rejected. The creator gets your note and can change it.', 'merchboard' ), 'success' ),
+			'retried'                              => array( __( 'The design is being put in the shop again.', 'merchboard' ), 'success' ),
+			DesignerException::DESIGN_STALE        => array( __( 'The base product changed after the design was sent. Reject it with a note so the creator sends it again.', 'merchboard' ), 'error' ),
+			DesignerException::DESIGN_PROFIT       => array( __( 'The price of the design could not be computed.', 'merchboard' ), 'error' ),
+			DesignerException::NOT_PENDING         => array( __( 'The design is no longer waiting (withdrawn or decided already).', 'merchboard' ), 'error' ),
+			DesignerException::REVIEW_NOTE         => array( __( 'Write a note of at most 2000 characters to the creator.', 'merchboard' ), 'error' ),
+			DesignerException::NOT_AUTHORIZED      => array( __( 'You are not allowed to manage the product designer.', 'merchboard' ), 'error' ),
 			'saved'                                => array( __( 'The notification settings are saved.', 'merchboard' ), 'success' ),
 			'test_sent'                            => array( __( 'The test e-mail was sent to you. Check your inbox (and the spam folder).', 'merchboard' ), 'success' ),
 			NotificationsException::NOT_SENT       => array( __( 'The test e-mail could not be sent. Check that the site can send e-mail; the log has the reason.', 'merchboard' ), 'error' ),
@@ -151,15 +165,14 @@ final class DesignsPage {
 	}
 
 	/**
-	 * The designs waiting for approval.
+	 * The designs waiting for approval and those on their way to the shop.
 	 */
 	private function render_queue(): void {
-		echo '<p>' . esc_html__( 'Designs that creators sent for approval, oldest first. Nothing is in the shop before it is approved. Approving and rejecting arrive with the next update of the product designer.', 'merchboard' ) . '</p>';
-
 		try {
-			$rows  = $this->products->pending_queue();
-			$names = array();
-			$bases = array();
+			$rows     = $this->products->pending_queue();
+			$applying = $this->products->applying();
+			$names    = array();
+			$bases    = array();
 
 			foreach ( $this->bases->all() as $base ) {
 				$bases[ (int) $base->id ] = $base;
@@ -170,35 +183,130 @@ final class DesignsPage {
 			return;
 		}
 
+		echo '<p>' . esc_html__( 'Designs that creators sent for approval, oldest first. Nothing is in the shop before you approve it; an approved design becomes a product (or changes one) with the mockups as product images. The print files stay private: download them here, on the product and on the order.', 'merchboard' ) . '</p>';
+
 		if ( array() === $rows ) {
 			echo '<p>' . esc_html__( 'No designs are waiting for approval.', 'merchboard' ) . '</p>';
+		}
 
+		foreach ( $rows as $row ) {
+			$this->render_pending( $row, $bases[ (int) $row['base_id'] ] ?? null, $this->creator_name( (int) $row['creator_id'], $names ) );
+		}
+
+		if ( array() === $applying ) {
 			return;
 		}
 
+		echo '<h2>' . esc_html__( 'On the way to the shop', 'merchboard' ) . '</h2>';
 		echo '<table class="widefat striped"><thead><tr>';
 
-		foreach ( array( __( 'Sent', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'Base product', 'merchboard' ), __( 'Kind', 'merchboard' ), __( 'Customer price incl. VAT', 'merchboard' ) ) as $head ) {
+		foreach ( array( __( 'Approved', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'Status', 'merchboard' ), '' ) as $head ) {
 			echo '<th scope="col">' . esc_html( $head ) . '</th>';
 		}
 
 		echo '</tr></thead><tbody>';
 
-		foreach ( $rows as $row ) {
-			$base = $bases[ (int) $row['base_id'] ] ?? null;
+		foreach ( $applying as $row ) {
+			$failed = DesignerProductRepository::APPLY_FAILED === $row['apply_state'];
 
 			echo '<tr>';
-			echo '<td>' . esc_html( get_date_from_gmt( (string) $row['submitted_at'], 'Y-m-d H:i' ) ) . '</td>';
+			echo '<td>' . esc_html( get_date_from_gmt( (string) $row['decided_at'], 'Y-m-d H:i' ) ) . '</td>';
 			echo '<td>' . esc_html( $this->creator_name( (int) $row['creator_id'], $names ) ) . '</td>';
 			/* translators: %d: version number. */
-			echo '<td><strong>' . esc_html( (string) $row['title'] ) . '</strong> ' . esc_html( sprintf( __( '(version %d)', 'merchboard' ), (int) $row['number'] ) ) . '</td>';
-			echo '<td>' . esc_html( null === $base ? '#' . (int) $row['base_id'] : $base->name ) . '</td>';
-			echo '<td>' . esc_html( null === $row['live_version_id'] ? __( 'New product', 'merchboard' ) : __( 'Change', 'merchboard' ) ) . '</td>';
-			echo '<td>' . esc_html( null === $row['quoted_price'] ? '' : $this->money( (string) $row['quoted_price'], null === $base ? '' : $base->currency ) ) . '</td>';
-			echo '</tr>';
+			echo '<td>' . esc_html( (string) $row['title'] ) . ' ' . esc_html( sprintf( __( '(version %d)', 'merchboard' ), (int) $row['number'] ) ) . '</td>';
+			echo '<td>' . esc_html( $failed ? DesignerNotifications::reason( (string) $row['apply_error'] ) : __( 'Being put in the shop…', 'merchboard' ) ) . '</td>';
+			echo '<td>';
+
+			if ( $failed ) {
+				$this->review_form( (int) $row['id'], 'retry', __( 'Try again', 'merchboard' ), 'secondary' );
+			}
+
+			echo '</td></tr>';
 		}
 
 		echo '</tbody></table>';
+	}
+
+	/**
+	 * One waiting design: its facts, files and the decision.
+	 *
+	 * @param array<string, mixed> $row     Version (pending_queue()).
+	 * @param BaseProduct|null     $base    Its base product.
+	 * @param string               $creator Creator name.
+	 */
+	private function render_pending( array $row, ?BaseProduct $base, string $creator ): void {
+		$id     = (int) $row['id'];
+		$slots  = DesignerVersionFiles::slots( is_string( $row['files'] ) ? $row['files'] : null );
+		$colors = json_decode( (string) $row['colors'], true );
+		$sizes  = json_decode( (string) $row['sizes'], true );
+		$names  = null === $base ? array() : array_column( $base->colors, 'name', 'key' );
+
+		echo '<div class="card" style="max-width:none;margin:16px 0;padding:12px 16px">';
+		/* translators: 1: product title, 2: version number. */
+		echo '<h3 style="margin-top:0">' . esc_html( sprintf( __( '%1$s (version %2$d)', 'merchboard' ), (string) $row['title'], (int) $row['number'] ) ) . '</h3>';
+		echo '<p>';
+		/* translators: 1: creator name, 2: date and time. */
+		echo esc_html( sprintf( __( 'By %1$s, sent %2$s.', 'merchboard' ), $creator, get_date_from_gmt( (string) $row['submitted_at'], 'Y-m-d H:i' ) ) ) . ' ';
+		echo esc_html( null === $row['live_version_id'] ? __( 'A new product.', 'merchboard' ) : __( 'A change of a product in the shop; the shop keeps the approved version until you approve this one.', 'merchboard' ) );
+		echo '<br>';
+		/* translators: %s: base product name. */
+		echo esc_html( sprintf( __( 'Base product: %s', 'merchboard' ), null === $base ? '#' . (int) $row['base_id'] : $base->name ) ) . ' · ';
+		/* translators: %s: colour names. */
+		echo esc_html( sprintf( __( 'Colours: %s', 'merchboard' ), implode( ', ', array_map( static fn( mixed $key ): string => (string) ( $names[ $key ] ?? $key ), is_array( $colors ) ? $colors : array() ) ) ) ) . ' · ';
+		/* translators: %s: sizes. */
+		echo esc_html( sprintf( __( 'Sizes: %s', 'merchboard' ), implode( ', ', is_array( $sizes ) ? array_map( 'strval', $sizes ) : array() ) ) ) . ' · ';
+		/* translators: %s: price. */
+		echo esc_html( sprintf( __( 'Customer price incl. VAT: %s', 'merchboard' ), null === $row['quoted_price'] ? '–' : $this->money( (string) $row['quoted_price'], null === $base ? '' : $base->currency ) ) );
+		echo '</p>';
+
+		if ( '' !== trim( (string) $row['description'] ) ) {
+			echo '<p class="description">' . esc_html( (string) $row['description'] ) . '</p>';
+		}
+
+		echo '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+
+		foreach ( $slots['mockups'] as $label => $slot ) {
+			echo '<figure style="margin:0;text-align:center"><a href="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '" target="_blank" rel="noopener"><img src="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '" alt="" style="width:160px;height:160px;object-fit:contain;border:1px solid #dcdcde;background:#fff"></a><figcaption>' . esc_html( $label ) . '</figcaption></figure>';
+		}
+
+		echo '</div><p><strong>' . esc_html__( 'Print files:', 'merchboard' ) . '</strong> ';
+		$links = array();
+
+		foreach ( $slots['print'] as $side => $slot ) {
+			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '">' . esc_html( $side ) . '</a>';
+		}
+
+		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+		echo '</p><div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">';
+		$this->review_form( $id, 'approve', __( 'Approve and put in the shop', 'merchboard' ), 'primary' );
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( DesignerReviewActions::ACTION ) . '">';
+		echo '<input type="hidden" name="do" value="reject">';
+		echo '<input type="hidden" name="version" value="' . esc_attr( (string) $id ) . '">';
+		wp_nonce_field( DesignerReviewActions::nonce_action( $id ) );
+		echo '<label for="merchboard-note-' . esc_attr( (string) $id ) . '" class="screen-reader-text">' . esc_html__( 'Note to the creator', 'merchboard' ) . '</label>';
+		echo '<textarea id="merchboard-note-' . esc_attr( (string) $id ) . '" name="note" rows="2" cols="50" maxlength="2000" required placeholder="' . esc_attr__( 'Note to the creator: why, and what to change', 'merchboard' ) . '"></textarea><br>';
+		submit_button( __( 'Reject', 'merchboard' ), 'secondary', 'submit', false );
+		echo '</form></div></div>';
+	}
+
+	/**
+	 * A one-button form of the review actions.
+	 *
+	 * @param int    $version Version.
+	 * @param string $action  `approve` or `retry`.
+	 * @param string $label   Button label.
+	 * @param string $type    Button type.
+	 */
+	private function review_form( int $version, string $action, string $label, string $type ): void {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( DesignerReviewActions::ACTION ) . '">';
+		echo '<input type="hidden" name="do" value="' . esc_attr( $action ) . '">';
+		echo '<input type="hidden" name="version" value="' . esc_attr( (string) $version ) . '">';
+		wp_nonce_field( DesignerReviewActions::nonce_action( $version ) );
+		submit_button( $label, $type, 'submit', false );
+		echo '</form>';
 	}
 
 	/**

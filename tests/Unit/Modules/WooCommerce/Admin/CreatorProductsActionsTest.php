@@ -401,7 +401,7 @@ final class CreatorProductsActionsTest extends TestCase {
 	}
 
 	public function test_the_admin_source_is_the_only_one_besides_backfill(): void {
-		self::assertSame( array( 'admin', 'category' ), array_map( static fn( ProductLinkSource $s ): string => $s->value, ProductLinkSource::cases() ) );
+		self::assertSame( array( 'admin', 'category', 'designer' ), array_map( static fn( ProductLinkSource $s ): string => $s->value, ProductLinkSource::cases() ) );
 	}
 
 	/**

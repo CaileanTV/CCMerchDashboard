@@ -39,4 +39,10 @@ enum ProtectedMetaPurpose: string {
 	 * created as a designer product (DesignerProductGuard).
 	 */
 	case Designer = 'designer';
+
+	/**
+	 * The product designer's link of a designer product to its creator
+	 * (ProductCreatorLink::apply_designer_link(), ADR-080 pkt. 6).
+	 */
+	case DesignerLink = 'designer_link';
 }

@@ -36,7 +36,7 @@ function statusLabel( status: string ): string {
 		case 'pending':
 			return __( 'Waiting for approval', 'merchboard' );
 		case 'approved':
-			return __( 'Approved', 'merchboard' );
+			return __( 'In the shop', 'merchboard' );
 		case 'rejected':
 			return __( 'Rejected', 'merchboard' );
 		default:

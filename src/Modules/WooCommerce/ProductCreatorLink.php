@@ -29,8 +29,9 @@ defined( 'ABSPATH' ) || exit;
  * relation, and its origin `_merchboard_creator_link_source` (ADR-030,
  * ADR-032, ADR-033). Two callers: the manual product links on the creator's
  * edit page in Merch Dashboard (link()/unlink()/keep_as_manual(), origin
- * `admin`) and the system category reconciliation (apply_category_link(),
- * origin `category`).
+ * `admin`), the system category reconciliation (apply_category_link(),
+ * origin `category`) and the product designer's apply pipeline
+ * (apply_designer_link(), origin `designer`, ADR-080 pkt. 6).
  * The WooCommerce product editor is not a caller.
  *
  * - The link lives on the parent product only. Variations are rejected;
@@ -345,6 +346,56 @@ final class ProductCreatorLink {
 	}
 
 	/**
+	 * Links a designer product to the creator who designed it (system work of
+	 * the product designer's apply pipeline, no current user). The caller has
+	 * proven the product a designer product (DesignerProductGuard). A
+	 * category link is replaced; a manual link to another creator is refused.
+	 * Unchanged when the product already holds the designer link to the
+	 * creator.
+	 *
+	 * @param int                  $product_id Parent product id.
+	 * @param int                  $creator_id Creator id (active).
+	 * @param array<string, mixed> $context    Extra audit context (design_product_id).
+	 * @return list<AuditAction> The changes made.
+	 * @throws ProductCreatorLinkException When the product or creator cannot be linked.
+	 * @throws DatabaseException When the change cannot be stored.
+	 */
+	public function apply_designer_link( int $product_id, int $creator_id, array $context = array() ): array {
+		$product  = $this->reconcilable_product( $product_id, false );
+		$previous = $product->creator_id();
+
+		if ( $previous === $creator_id && $product->is_designer_linked() ) {
+			return array();
+		}
+
+		if ( null !== $previous && $previous !== $creator_id && $product->has_manual_link() && ! $product->is_designer_linked() ) {
+			self::refuse_link( ProductCreatorLinkException::ALREADY_LINKED );
+		}
+
+		$creator = $this->active_creator( $creator_id );
+
+		return $this->write(
+			$product,
+			$creator->id,
+			ProductLinkSource::Designer,
+			ProtectedMetaWrite::for_designer_link( $product->id ),
+			function () use ( $product, $previous, $creator, $context ): array {
+				$this->audit->record_system(
+					AuditAction::ProductCreatorLinked,
+					$creator->id,
+					array(
+						'product_id'          => $product->id,
+						'previous_creator_id' => $previous,
+						'source'              => ProductLinkSource::Designer->value,
+					) + $context
+				);
+
+				return array( AuditAction::ProductCreatorLinked );
+			}
+		);
+	}
+
+	/**
 	 * Removes a product's link to a creator that is being deleted (phase 27,
 	 * step 27.3, ADR-076), manual or category-managed. Only while the link
 	 * points at that creator; anything else is left unchanged. Audited as
@@ -457,12 +508,14 @@ final class ProductCreatorLink {
 	/**
 	 * Loads a product the category reconciliation may write: an existing
 	 * parent product in a supported status without a manual link. No
-	 * capability check (system work, see apply_category_link()).
+	 * capability check (system work, see apply_category_link(); the designer's
+	 * link may replace a manual entry, apply_designer_link()).
 	 *
-	 * @param int $product_id Product id.
+	 * @param int  $product_id    Product id.
+	 * @param bool $refuse_manual Whether a manual link is refused.
 	 * @throws ProductCreatorLinkException When the product is unknown, a variation, not supported or manually linked.
 	 */
-	private function reconcilable_product( int $product_id ): ProductRecord {
+	private function reconcilable_product( int $product_id, bool $refuse_manual = true ): ProductRecord {
 		$product = $product_id > 0 ? $this->products->find( $product_id ) : null;
 
 		if ( null === $product ) {
@@ -477,11 +530,21 @@ final class ProductCreatorLink {
 			throw new ProductCreatorLinkException( ProductCreatorLinkException::PRODUCT_NOT_SUPPORTED );
 		}
 
-		if ( $product->has_manual_link() ) {
+		if ( $refuse_manual && $product->has_manual_link() ) {
 			throw new ProductCreatorLinkException( ProductCreatorLinkException::MANUAL_LINK );
 		}
 
 		return $product;
+	}
+
+	/**
+	 * Refuses a link.
+	 *
+	 * @param string $reason ProductCreatorLinkException constant.
+	 * @throws ProductCreatorLinkException Always.
+	 */
+	private static function refuse_link( string $reason ): never {
+		throw new ProductCreatorLinkException( $reason );
 	}
 
 	/**

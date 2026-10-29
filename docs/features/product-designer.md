@@ -48,6 +48,14 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - Designet **venter** derefter og kan ikke ændres. Creatoren kan **trække det tilbage**; så bliver det en kladde igen med samme indhold.
 - **Notifikationer (30.9):** kvittering til creatoren (mail og klokke) og "nyt designer-produkt"/"ændring af designer-produkt" til admin. Til/fra, eksempel og testmail: Merch Dashboard → Designs → Notifikationer.
 
+## Godkendelse og butikken (trin 30.10)
+- Admin godkender eller afviser under **Designs**. En afvisning kræver en note; creatoren får den (mail og klokke) og ser den over designeren, og designet er en kladde igen.
+- Et godkendt design lægges i butikken i baggrunden: et variabelt produkt med farve × størrelse, mockups som billeder, kategori (creatorens, ellers grundproduktets) og prisen fra godkendelsen. Første gang udgives det; creatoren får "godkendt og i butikken".
+- Går det galt (fx butikken bruger priser ekskl. moms), står årsagen under Designs med **Prøv igen**, og admin får en mail. Intet i butikken ændres halvt: næste forsøg fortsætter, hvor det stoppede.
+- **Ændringer:** et produkt i butikken har **Lav en ændring** i designeren. Ændringen sendes som et nyt design; butikken viser den godkendte version, til ændringen er godkendt. Udgåede farver/størrelser skjules (varianterne slettes aldrig).
+- **Printfiler:** på ordren under hver designer-linje (den solgte version) og i boksen "Produktdesigner" på produktet. Kun admin kan hente dem.
+- Pluginet skriver prisen, varianterne og billederne på designer-produkter; ret dem ikke i WooCommerce, de overskrives ved næste godkendelse.
+
 ## Admin functionality
 - **Designs (trin 30.9):** Merch Dashboard → Designs viser de ventende designs (creator, produkt, version, grundprodukt, nyt/ændring, kundens pris), ældste først. Godkend og afvis kommer i 30.10. Fanen Notifikationer kræver også `merchboard_manage_settings`.
 - **Grundprodukter:**

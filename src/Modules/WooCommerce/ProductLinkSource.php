@@ -29,4 +29,11 @@ enum ProductLinkSource: string {
 	 * from a creator ↔ product category mapping.
 	 */
 	case Category = 'category';
+
+	/**
+	 * A designer product (ADR-080 pkt. 6): linked by the product designer's
+	 * apply pipeline to the creator who designed it. The category
+	 * reconciliation treats it like a manual link and never changes it.
+	 */
+	case Designer = 'designer';
 }
