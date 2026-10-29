@@ -103,8 +103,9 @@ final class DesignerSettingsActions {
 		$store  = is_string( $input['gelato_store'] ?? null ) ? $input['gelato_store'] : '';
 		$drop   = '1' === ( is_scalar( $input['gelato_key_remove'] ?? null ) ? (string) $input['gelato_key_remove'] : '' );
 
+		// The keys first: a refused key changes nothing, not even the switches (review 30.15).
 		try {
-			$changed = $this->settings->save( $values );
+			$changed = array();
 
 			if ( null !== $this->token && '' !== $token ) {
 				$this->token->set( $token );
@@ -122,6 +123,8 @@ final class DesignerSettingsActions {
 				$this->gelato->clear();
 				$changed[] = 'gelato_key';
 			}
+
+			$changed = array_merge( $changed, $this->settings->save( $values ) );
 		} catch ( DesignerException $e ) {
 			return self::url( $e->reason() );
 		} catch ( DatabaseException $e ) {

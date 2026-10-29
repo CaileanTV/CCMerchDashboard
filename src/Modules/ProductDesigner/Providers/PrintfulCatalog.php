@@ -14,6 +14,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -215,7 +216,8 @@ class PrintfulCatalog {
 
 		$size = wp_getimagesize( $path );
 
-		if ( ! is_array( $size ) ) {
+		// The pixel size is checked before an image is decoded (review 30.15).
+		if ( ! is_array( $size ) || $size[0] > DesignerFiles::MAX_PIXELS || $size[1] > DesignerFiles::MAX_PIXELS ) {
 			self::fail( PrintfulException::INVALID );
 		}
 

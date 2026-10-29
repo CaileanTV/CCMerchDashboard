@@ -40,6 +40,7 @@ defined( 'ABSPATH' ) || exit;
  * Gelato's image fields are taken from its API reference and not yet
  * verified against a real answer.
  *
+ * The product's images are taken only once its status is `active`.
  * Meanwhile the version's `mockup_state` is `running`, and it cannot be
  * approved. `ready` when the images are stored; `failed` (the browser's
  * mockups stay, the administrator is told) on `publishing_error`, a
@@ -104,7 +105,10 @@ class GelatoMockups {
 
 			$this->tasks->create( $id, 'gelato', self::TASK_SIDE, '{}' );
 			$this->products->set_mockup_state( $id, PrintfulMockups::RUNNING );
-			$this->schedule( $id, 0 );
+
+			if ( ! $this->schedule( $id, 0 ) ) {
+				$this->failed( $id, 'queue' );
+			}
 		} catch ( Throwable $e ) {
 			$this->logger->error(
 				'The Gelato mockups of a design could not be started.',
@@ -132,6 +136,9 @@ class GelatoMockups {
 		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', self::LOCK . $id, 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
 
 		if ( ! is_numeric( $acquired ) || 1 !== (int) $acquired ) {
+			// Another run holds the version: look again a little later (review 30.15).
+			$this->schedule( $id, self::POLL_DELAY );
+
 			return;
 		}
 
@@ -170,8 +177,14 @@ class GelatoMockups {
 		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
 
-		if ( null === $version || null === $provider || null === $base || DesignerProductRepository::PENDING !== $version['status'] ) {
+		if ( null === $version || DesignerProductRepository::PENDING !== $version['status'] ) {
 			// Withdrawn or decided meanwhile: nothing more to do.
+			return;
+		}
+
+		if ( null === $provider || null === $base ) {
+			$this->failed( $id, 'error' );
+
 			return;
 		}
 
@@ -285,7 +298,8 @@ class GelatoMockups {
 		$status   = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
 		$map      = json_decode( (string) $task['result'], true );
 		$colors   = array_values( array_filter( is_array( $map['colors'] ?? null ) ? $map['colors'] : array(), 'is_string' ) );
-		$images   = 'publishing' === $status ? array() : $this->images( $answer, $colors );
+		// Only an active product has its images; any other status is waited for (review 30.15).
+		$images = 'active' === $status ? $this->images( $answer, $colors ) : array();
 
 		if ( 'publishing_error' === $status ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -358,9 +372,20 @@ class GelatoMockups {
 	 */
 	private function store( int $id, string $side, array $images ): void {
 		$stored = array();
+		$done   = false;
 
-		foreach ( $images as $color => $url ) {
-			$stored[ $color ] = $this->download( $url );
+		try {
+			foreach ( $images as $color => $url ) {
+				$stored[ $color ] = $this->download( $url );
+			}
+			$done = true;
+		} finally {
+			// Files stored before a failure are never referenced: delete them (review 30.15).
+			if ( ! $done ) {
+				foreach ( array_filter( array_column( $stored, 'file' ), 'is_string' ) as $name ) {
+					$this->files->delete( $name );
+				}
+			}
 		}
 
 		$replaced = array();
@@ -501,15 +526,19 @@ class GelatoMockups {
 	}
 
 	/**
-	 * Queues the next round.
+	 * Queues the next round; false when the queue refused it.
 	 *
 	 * @param int $id    Version.
 	 * @param int $delay Seconds.
 	 */
-	private function schedule( int $id, int $delay ): void {
-		if ( ! $this->queue->enqueue( self::HOOK, array( $id ), $delay ) ) {
-			$this->logger->warning( 'The Gelato mockups of a design could not be queued.', array( 'version_id' => $id ) );
+	private function schedule( int $id, int $delay ): bool {
+		if ( $this->queue->enqueue( self::HOOK, array( $id ), $delay ) ) {
+			return true;
 		}
+
+		$this->logger->warning( 'The Gelato mockups of a design could not be queued.', array( 'version_id' => $id ) );
+
+		return false;
 	}
 
 	/**

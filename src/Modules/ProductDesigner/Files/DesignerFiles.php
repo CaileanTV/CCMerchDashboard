@@ -80,8 +80,11 @@ class DesignerFiles {
 	 * Constructor.
 	 *
 	 * @param (Closure(string, string): bool)|null $move File move; defaults to move_uploaded_file().
+	 * @param bool                                 $own  Whether the files are our own downloads (a provider's
+	 *                                                   mockups, its templates): limited to MAX_BYTES, not to the
+	 *                                                   site's upload limit (review 30.15).
 	 */
-	public function __construct( ?Closure $move = null ) {
+	public function __construct( ?Closure $move = null, private bool $own = false ) {
 		$this->move = $move ?? static fn( string $from, string $to ): bool => move_uploaded_file( $from, $to );
 	}
 
@@ -126,7 +129,7 @@ class DesignerFiles {
 			self::refuse( DesignerException::FILE_MISSING );
 		}
 
-		if ( $size > self::max_bytes() ) {
+		if ( $size > ( $this->own ? self::MAX_BYTES : self::max_bytes() ) ) {
 			self::refuse( DesignerException::FILE_TOO_LARGE );
 		}
 

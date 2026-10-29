@@ -401,6 +401,7 @@ final class DesignerNotifications {
 			PrintfulException::INVALID              => __( 'Printful answered with something that cannot be used.', 'merchboard' ),
 			PrintfulException::FAILED              => __( 'Printful could not be reached or answered with an error.', 'merchboard' ),
 			'task'                                  => __( 'Printful could not make a mockup (or took too long).', 'merchboard' ),
+			'queue'                                 => __( 'The mockups could not be queued (Action Scheduler is not available).', 'merchboard' ),
 			GelatoException::NOT_CONFIGURED         => __( 'Gelato is switched off or has no API key or store id (Settings → Product designer).', 'merchboard' ),
 			GelatoException::UNAUTHORIZED           => __( 'Gelato refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ),
 			GelatoException::NOT_FOUND              => __( 'Gelato does not know the template or the product.', 'merchboard' ),

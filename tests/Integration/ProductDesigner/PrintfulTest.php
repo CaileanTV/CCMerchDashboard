@@ -306,6 +306,48 @@ final class PrintfulTest extends IntegrationTestCase {
 		self::assertContains( DesignerNotifications::MOCKUPS_FAILED, $this->notified );
 	}
 
+	public function test_mockups_never_hold_up_an_approval_for_good_and_leave_no_files_behind(): void {
+		$this->token->set( self::TOKEN );
+		[ , , $version ] = $this->submitted();
+		$review          = new DesignerReview( $this->products, $this->bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, static function (): void {} );
+		$files           = static fn(): int => count( (array) glob( DesignerFiles::directory() . '/*.{png,jpg,webp}', GLOB_BRACE ) );
+
+		// The white mockup cannot be downloaded: the black one already stored is deleted again.
+		$this->answers['https://cdn.example/white.png'] = self::answer( 404, array() );
+		$before  = $files();
+		$mockups = $this->mockups();
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		self::assertSame( 'failed', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( $before, $files(), 'No downloaded mockup is left behind.' );
+
+		// A job that died leaves the mockups running: after half an hour they no longer hold up the approval.
+		$this->products->set_mockup_state( $version, PrintfulMockups::RUNNING );
+
+		try {
+			$review->approve( $version );
+			self::fail( 'Not while the mockups are being made.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::MOCKUPS_PENDING, $e->reason() );
+		}
+
+		$this->wpdb->update( $this->table( Tables::DESIGNER_PROVIDER_TASKS ), array( 'updated_at' => gmdate( 'Y-m-d H:i:s', time() - DesignerReview::STALE_MOCKUPS - 5 ) ), array( 'version_id' => $version ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: the job stopped long ago.
+		$review->approve( $version );
+		self::assertSame( 'approved', $this->products->version( $version )['status'] ?? null );
+	}
+
+	public function test_a_queue_that_refuses_marks_the_mockups_failed(): void {
+		$this->token->set( self::TOKEN );
+		[ , , $version ]     = $this->submitted();
+		$this->queue->refuse = true;
+
+		$this->mockups()->submitted( $version );
+
+		self::assertSame( 'failed', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertContains( DesignerNotifications::MOCKUPS_FAILED, $this->notified );
+	}
+
 	public function test_nothing_is_sent_to_printful_while_it_is_switched_off(): void {
 		$this->token->set( self::TOKEN );
 		[ , , $version ] = $this->submitted();

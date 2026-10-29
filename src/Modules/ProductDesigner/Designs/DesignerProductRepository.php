@@ -666,6 +666,28 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * Whether a version's provider mockups stopped: none of its tasks was
+	 * touched for the given seconds (the job died or was never queued;
+	 * review 30.15).
+	 *
+	 * @param int $version_id Version.
+	 * @param int $seconds    Seconds.
+	 * @throws DatabaseException When the tasks cannot be read.
+	 */
+	public function mockups_stale( int $version_id, int $seconds ): bool {
+		$wpdb = $this->wpdb;
+		$last = $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(updated_at) FROM %i WHERE version_id = %d', $this->table( Tables::DESIGNER_PROVIDER_TASKS ), $version_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; read live.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the mockup tasks.' );
+		}
+
+		$since = is_string( $last ) ? strtotime( $last . ' UTC' ) : false;
+
+		return false === $since || time() - $since > $seconds;
+	}
+
+	/**
 	 * The provider's product made for a version's mockups (Gelato, step 30.13).
 	 *
 	 * @param int    $version_id Version.

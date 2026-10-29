@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-29T20:25:14+00:00\n"
+"PO-Revision-Date: 2026-10-29T20:35:06+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1290,7 +1290,7 @@ msgstr "Hændelse"
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:205
 #: src/Modules/ProductDesigner/DesignerNotifications.php:317
 #: src/Modules/ProductDesigner/DesignerNotifications.php:362
-#: src/Modules/ProductDesigner/DesignerNotifications.php:483
+#: src/Modules/ProductDesigner/DesignerNotifications.php:484
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:389
@@ -4491,7 +4491,7 @@ msgstr "Bankoverførsel"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:117
 #: src/Modules/ProductDesigner/DesignerNotifications.php:325
 #: src/Modules/ProductDesigner/DesignerNotifications.php:370
-#: src/Modules/ProductDesigner/DesignerNotifications.php:494
+#: src/Modules/ProductDesigner/DesignerNotifications.php:495
 msgid "This message was sent by Merch Dashboard."
 msgstr "Denne besked er sendt af Merch Dashboard."
 
@@ -4851,7 +4851,7 @@ msgstr "Din fortjeneste"
 #: src/Modules/ProductDesigner/DesignerNotifications.php:284
 #: src/Modules/ProductDesigner/DesignerNotifications.php:318
 #: src/Modules/ProductDesigner/DesignerNotifications.php:363
-#: src/Modules/ProductDesigner/DesignerNotifications.php:484
+#: src/Modules/ProductDesigner/DesignerNotifications.php:485
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
@@ -5812,7 +5812,7 @@ msgid "Gelato is switched off or has no API key or store id."
 msgstr "Gelato er slået fra eller mangler API-nøgle eller butiks-id."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:139
-#: src/Modules/ProductDesigner/DesignerNotifications.php:405
+#: src/Modules/ProductDesigner/DesignerNotifications.php:406
 msgid "Gelato refused the API key. Enter a new one under Settings → Product designer."
 msgstr "Gelato afviste API-nøglen. Indtast en ny under Indstillinger → Produktdesigner."
 
@@ -6546,8 +6546,8 @@ msgid "The design is being put in the shop again."
 msgstr "Designet lægges i butikken igen."
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:114
-msgid "Printful is still making the mockups of this design. Try again in a minute."
-msgstr "Printful laver stadig mockups af dette design. Prøv igen om et minut."
+msgid "Printful or Gelato is still making the mockups of this design. Try again in a minute."
+msgstr "Printful eller Gelato laver stadig mockups af dette design. Prøv igen om et minut."
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:115
 msgid "The base product changed after the design was sent. Reject it with a note so the creator sends it again."
@@ -6651,16 +6651,16 @@ msgid "Customer price incl. VAT: %s"
 msgstr "Kundens pris inkl. moms: %s"
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:271
-msgid "Printful is making the mockups; the creator's mockups are shown until then."
-msgstr "Printful laver mockups; creatorens mockups vises indtil da."
+msgid "Printful or Gelato is making the mockups; the creator's mockups are shown until then."
+msgstr "Printful eller Gelato laver mockups; indtil da vises creatorens mockups."
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:273
-msgid "Printful could not make the mockups; the creator's mockups are shown."
-msgstr "Printful kunne ikke lave mockups; creatorens mockups vises."
+msgid "Printful or Gelato could not make the mockups; the creator's mockups are shown."
+msgstr "Printful eller Gelato kunne ikke lave mockups; creatorens mockups vises."
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:275
-msgid "Mockups from Printful."
-msgstr "Mockups fra Printful."
+msgid "Mockups from Printful or Gelato."
+msgstr "Mockups fra Printful eller Gelato."
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:284
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:106
@@ -6724,7 +6724,7 @@ msgstr "Tak! Vi gennemgår dit design og giver besked, når det er godkendt. Ind
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:134
 #: src/Modules/ProductDesigner/DesignerNotifications.php:182
-#: src/Modules/ProductDesigner/DesignerNotifications.php:485
+#: src/Modules/ProductDesigner/DesignerNotifications.php:486
 msgid "Customer price incl. VAT"
 msgstr "Kundens pris inkl. moms"
 
@@ -6907,7 +6907,7 @@ msgstr "Et godkendt design kunne ikke lægges i butikken. Intet i butikken er æ
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:323
 #: src/Modules/ProductDesigner/DesignerNotifications.php:368
-#: src/Modules/ProductDesigner/DesignerNotifications.php:492
+#: src/Modules/ProductDesigner/DesignerNotifications.php:493
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:156
 msgid "Open Designs"
 msgstr "Åbn Designs"
@@ -6985,74 +6985,78 @@ msgid "Printful could not make a mockup (or took too long)."
 msgstr "Printful kunne ikke lave en mockup (eller var for længe om det)."
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:404
+msgid "The mockups could not be queued (Action Scheduler is not available)."
+msgstr "Mockups kunne ikke sættes i kø (Action Scheduler er ikke tilgængelig)."
+
+#: src/Modules/ProductDesigner/DesignerNotifications.php:405
 msgid "Gelato is switched off or has no API key or store id (Settings → Product designer)."
 msgstr "Gelato er slået fra eller mangler API-nøgle eller butiks-id (Indstillinger → Produktdesigner)."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:406
+#: src/Modules/ProductDesigner/DesignerNotifications.php:407
 msgid "Gelato does not know the template or the product."
 msgstr "Gelato kender ikke skabelonen eller produktet."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:407
+#: src/Modules/ProductDesigner/DesignerNotifications.php:408
 msgid "Gelato answered with something that cannot be used."
 msgstr "Gelato svarede med noget, der ikke kan bruges."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:408
+#: src/Modules/ProductDesigner/DesignerNotifications.php:409
 msgid "Gelato could not be reached or answered with an error."
 msgstr "Gelato kunne ikke nås eller svarede med en fejl."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:409
+#: src/Modules/ProductDesigner/DesignerNotifications.php:410
 msgid "Gelato could not make the product's images (or took too long)."
 msgstr "Gelato kunne ikke lave produktets billeder (eller var for længe om det)."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:410
+#: src/Modules/ProductDesigner/DesignerNotifications.php:411
 msgid "A technical error; the log has the details."
 msgstr "En teknisk fejl; loggen har detaljerne."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:420
+#: src/Modules/ProductDesigner/DesignerNotifications.php:421
 msgid "New designer product to approve"
 msgstr "Nyt designer-produkt til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:421
+#: src/Modules/ProductDesigner/DesignerNotifications.php:422
 msgid "When a creator sends a new designer product for approval."
 msgstr "Når en creator sender et nyt designer-produkt til godkendelse."
 
 #. translators: 1: creator name, 2: product title.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:423
+#: src/Modules/ProductDesigner/DesignerNotifications.php:424
 #, php-format
 msgid "%1$s sent the new product %2$s for approval."
 msgstr "%1$s har sendt det nye produkt %2$s til godkendelse."
 
 #. translators: %s: creator name.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:425
+#: src/Modules/ProductDesigner/DesignerNotifications.php:426
 #, php-format
 msgid "New designer product from %s to approve"
 msgstr "Nyt designer-produkt fra %s til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:426
+#: src/Modules/ProductDesigner/DesignerNotifications.php:427
 msgid "A creator designed a new product. It is not in the shop until you approve it."
 msgstr "En creator har designet et nyt produkt. Det kommer ikke i butikken, før du godkender det."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:436
+#: src/Modules/ProductDesigner/DesignerNotifications.php:437
 msgid "Designer product change to approve"
 msgstr "Ændring af designer-produkt til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:437
+#: src/Modules/ProductDesigner/DesignerNotifications.php:438
 msgid "When a creator sends a change of a designer product in the shop for approval. The shop keeps the approved version until you approve the change."
 msgstr "Når en creator sender en ændring af et designer-produkt i butikken til godkendelse. Butikken beholder den godkendte version, indtil du godkender ændringen."
 
 #. translators: 1: creator name, 2: product title.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:439
+#: src/Modules/ProductDesigner/DesignerNotifications.php:440
 #, php-format
 msgid "%1$s sent a change of %2$s for approval."
 msgstr "%1$s har sendt en ændring af %2$s til godkendelse."
 
 #. translators: %s: creator name.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:441
+#: src/Modules/ProductDesigner/DesignerNotifications.php:442
 #, php-format
 msgid "Designer product change from %s to approve"
 msgstr "Ændring af designer-produkt fra %s til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:442
+#: src/Modules/ProductDesigner/DesignerNotifications.php:443
 msgid "A creator changed a designer product in the shop. The shop keeps the approved version until you approve the change."
 msgstr "En creator har ændret et designer-produkt i butikken. Butikken beholder den godkendte version, indtil du godkender ændringen."
 

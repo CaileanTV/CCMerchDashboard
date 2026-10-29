@@ -388,6 +388,6 @@ final class ProductDesignerModule implements Module {
 	 * the private folder instead of being taken as uploads.
 	 */
 	private static function downloads(): DesignerFiles {
-		return new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Our own temporary download.
+		return new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Our own temporary download.
 	}
 }

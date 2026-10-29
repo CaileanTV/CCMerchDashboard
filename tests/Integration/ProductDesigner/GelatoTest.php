@@ -303,6 +303,31 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( array( 'gelato_task', 'Gelato' ), array( $failed[0][1]['reason'] ?? null, $failed[0][1]['provider'] ?? null ) );
 	}
 
+	public function test_images_are_taken_only_from_an_active_product(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$version = $this->submitted();
+		$this->answers[ self::API . '/stores/' . self::STORE . '/products/gp-1' ] = self::answer(
+			200,
+			array(
+				'id'         => 'gp-1',
+				'status'     => 'created',
+				'previewUrl' => 'https://cdn.example/gelato-black.png',
+			)
+		);
+		$before  = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'];
+		$mockups = $this->mockups();
+		$mockups->submitted( $version );
+		$this->queue->drain(
+			static function ( string $hook, array $args ) use ( $mockups ): void {
+				$mockups->run( $args[0] ?? 0 );
+			},
+			3
+		);
+
+		self::assertSame( 'running', $this->products->version( $version )['mockup_state'] ?? null, 'A created product is waited for.' );
+		self::assertSame( $before, SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'], 'Its preview is not taken.' );
+	}
+
 	public function test_nothing_is_sent_to_gelato_while_it_is_switched_off(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$version = $this->submitted();

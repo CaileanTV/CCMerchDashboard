@@ -56,6 +56,11 @@ class DesignerReview {
 	public const STALE = 600;
 
 	/**
+	 * Seconds after which a provider's mockups that never finished no longer hold up an approval.
+	 */
+	public const STALE_MOCKUPS = 1800;
+
+	/**
 	 * Versions to apply at the end of this request (no queue).
 	 *
 	 * @var list<int>
@@ -103,8 +108,9 @@ class DesignerReview {
 					self::refuse( DesignerException::BASE_RETIRED );
 				}
 
-				// Printful's mockups (step 30.12) are approved only once they are in.
-				if ( 'running' === ( $version['mockup_state'] ?? '' ) ) {
+				// A provider's mockups (steps 30.12–30.13) are approved only once they are in, unless their job
+				// stopped (no task touched for STALE_MOCKUPS seconds): then the creator's mockups are used (review 30.15).
+				if ( 'running' === ( $version['mockup_state'] ?? '' ) && ! $this->products->mockups_stale( $version_id, self::STALE_MOCKUPS ) ) {
 					self::refuse( DesignerException::MOCKUPS_PENDING );
 				}
 

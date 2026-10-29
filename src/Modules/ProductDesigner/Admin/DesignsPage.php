@@ -111,7 +111,7 @@ final class DesignsPage {
 			'approved'                             => array( __( 'The design is approved. It is being put in the shop; the creator gets a notification when it is there.', 'merchboard' ), 'success' ),
 			'rejected'                             => array( __( 'The design is rejected. The creator gets your note and can change it.', 'merchboard' ), 'success' ),
 			'retried'                              => array( __( 'The design is being put in the shop again.', 'merchboard' ), 'success' ),
-			DesignerException::MOCKUPS_PENDING     => array( __( 'Printful is still making the mockups of this design. Try again in a minute.', 'merchboard' ), 'error' ),
+			DesignerException::MOCKUPS_PENDING     => array( __( 'Printful or Gelato is still making the mockups of this design. Try again in a minute.', 'merchboard' ), 'error' ),
 			DesignerException::DESIGN_STALE        => array( __( 'The base product changed after the design was sent. Reject it with a note so the creator sends it again.', 'merchboard' ), 'error' ),
 			DesignerException::DESIGN_PROFIT       => array( __( 'The price of the design could not be computed.', 'merchboard' ), 'error' ),
 			DesignerException::NOT_PENDING         => array( __( 'The design is no longer waiting (withdrawn or decided already).', 'merchboard' ), 'error' ),
@@ -268,11 +268,11 @@ final class DesignsPage {
 		}
 
 		if ( 'running' === ( $row['mockup_state'] ?? '' ) ) {
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Printful is making the mockups; the creator\'s mockups are shown until then.', 'merchboard' ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Printful or Gelato is making the mockups; the creator\'s mockups are shown until then.', 'merchboard' ) . '</p></div>';
 		} elseif ( 'failed' === ( $row['mockup_state'] ?? '' ) ) {
-			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Printful could not make the mockups; the creator\'s mockups are shown.', 'merchboard' ) . '</p></div>';
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Printful or Gelato could not make the mockups; the creator\'s mockups are shown.', 'merchboard' ) . '</p></div>';
 		} elseif ( 'ready' === ( $row['mockup_state'] ?? '' ) ) {
-			echo '<p class="description">' . esc_html__( 'Mockups from Printful.', 'merchboard' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Mockups from Printful or Gelato.', 'merchboard' ) . '</p>';
 		}
 
 		echo '<div style="display:flex;flex-wrap:wrap;gap:8px">';

@@ -106,7 +106,10 @@ class PrintfulMockups {
 
 			if ( array() !== $this->tasks->for_version( $id ) ) {
 				$this->products->set_mockup_state( $id, self::RUNNING );
-				$this->schedule( $id, 0 );
+
+				if ( ! $this->schedule( $id, 0 ) ) {
+					$this->failed( $id, 'queue' );
+				}
 			}
 		} catch ( Throwable $e ) {
 			$this->logger->error(
@@ -135,6 +138,9 @@ class PrintfulMockups {
 		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', self::LOCK . $id, 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
 
 		if ( ! is_numeric( $acquired ) || 1 !== (int) $acquired ) {
+			// Another run holds the version: look again a little later (review 30.15).
+			$this->schedule( $id, self::POLL_DELAY );
+
 			return;
 		}
 
@@ -173,8 +179,14 @@ class PrintfulMockups {
 		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
 
-		if ( null === $version || null === $provider || null === $base || DesignerProductRepository::PENDING !== $version['status'] ) {
+		if ( null === $version || DesignerProductRepository::PENDING !== $version['status'] ) {
 			// Withdrawn or decided meanwhile: nothing more to do.
+			return;
+		}
+
+		if ( null === $provider || null === $base ) {
+			$this->failed( $id, 'error' );
+
 			return;
 		}
 
@@ -318,19 +330,30 @@ class PrintfulMockups {
 	 */
 	private function store( int $id, string $side, array $mockups, array $colors ): void {
 		$stored = array();
+		$done   = false;
 
-		foreach ( $mockups as $mockup ) {
-			if ( ! is_array( $mockup ) ) {
-				continue;
+		try {
+			foreach ( $mockups as $mockup ) {
+				if ( ! is_array( $mockup ) ) {
+					continue;
+				}
+
+				$url = is_string( $mockup['mockup_url'] ?? null ) ? $mockup['mockup_url'] : ( is_array( $mockup['extra'][0] ?? null ) && is_string( $mockup['extra'][0]['url'] ?? null ) ? $mockup['extra'][0]['url'] : '' );
+
+				foreach ( is_array( $mockup['variant_ids'] ?? null ) ? $mockup['variant_ids'] : array() as $variant ) {
+					$color = $colors[ (string) $variant ] ?? null;
+
+					if ( is_string( $color ) && '' !== $url && ! isset( $stored[ $color ] ) ) {
+						$stored[ $color ] = $this->download( $url );
+					}
+				}
 			}
-
-			$url = is_string( $mockup['mockup_url'] ?? null ) ? $mockup['mockup_url'] : ( is_array( $mockup['extra'][0] ?? null ) && is_string( $mockup['extra'][0]['url'] ?? null ) ? $mockup['extra'][0]['url'] : '' );
-
-			foreach ( is_array( $mockup['variant_ids'] ?? null ) ? $mockup['variant_ids'] : array() as $variant ) {
-				$color = $colors[ (string) $variant ] ?? null;
-
-				if ( is_string( $color ) && '' !== $url && ! isset( $stored[ $color ] ) ) {
-					$stored[ $color ] = $this->download( $url );
+			$done = true;
+		} finally {
+			// Files stored before a failure are never referenced: delete them (review 30.15).
+			if ( ! $done ) {
+				foreach ( array_filter( array_column( $stored, 'file' ), 'is_string' ) as $name ) {
+					$this->files->delete( $name );
 				}
 			}
 		}
@@ -460,15 +483,19 @@ class PrintfulMockups {
 	}
 
 	/**
-	 * Queues the next round.
+	 * Queues the next round; false when the queue refused it.
 	 *
 	 * @param int $id    Version.
 	 * @param int $delay Seconds.
 	 */
-	private function schedule( int $id, int $delay ): void {
-		if ( ! $this->queue->enqueue( self::HOOK, array( $id ), $delay ) ) {
-			$this->logger->warning( 'The Printful mockups of a design could not be queued.', array( 'version_id' => $id ) );
+	private function schedule( int $id, int $delay ): bool {
+		if ( $this->queue->enqueue( self::HOOK, array( $id ), $delay ) ) {
+			return true;
 		}
+
+		$this->logger->warning( 'The Printful mockups of a design could not be queued.', array( 'version_id' => $id ) );
+
+		return false;
 	}
 	/**
 	 * Fails with a reason.
