@@ -110,6 +110,15 @@ describe( 'menu groups', () => {
 		expect( resolvePage( 'profile', SECTIONS ).title ).toBe( 'Profile' );
 	} );
 
+	it( 'gives only the designer a page without a visible title', () => {
+		expect(
+			resolvePage( 'designer', [
+				{ id: 'designer', label: 'Product designer', path: 'designer' },
+			] ).hideTitle
+		).toBe( true );
+		expect( resolvePage( 'profile', SECTIONS ).hideTitle ).toBe( false );
+	} );
+
 	it( 'opens the group on its pages and toggles it on click', async () => {
 		mockApi( {
 			'GET /merchboard/v1/me': () => response( 200, ME ),

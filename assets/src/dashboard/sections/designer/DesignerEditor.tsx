@@ -786,68 +786,75 @@ function Editor( props: EditorProps ) {
 	return (
 		// The key handler serves the canvas (Delete, undo and redo); every control keeps its own keys.
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
-		<div className="merchboard-designer" onKeyDown={ onKeyDown }>
-			<div className="merchboard-designer__bar">
+		<div className="merchboard-product-designer" onKeyDown={ onKeyDown }>
+			<div className="merchboard-product-designer__bar">
 				<Button variant="ghost" size="sm" onClick={ onBack }>
 					{ __( '← My designs', 'merchboard' ) }
 				</Button>
-				<Button
-					variant="secondary"
-					size="sm"
-					onClick={ history.undo }
-					disabled={ ! history.canUndo }
-				>
-					{ __( 'Undo', 'merchboard' ) }
-				</Button>
-				<Button
-					variant="secondary"
-					size="sm"
-					onClick={ history.redo }
-					disabled={ ! history.canRedo }
-				>
-					{ __( 'Redo', 'merchboard' ) }
-				</Button>
-				<Labelled
-					className="merchboard-designer__zoom"
-					before
-					label={ <>{ __( 'Zoom', 'merchboard' ) }</> }
-				>
-					{ ( id ) => (
-						<select
-							id={ id }
-							className="merchboard-input"
-							value={ zoom }
-							onChange={ ( event ) =>
-								setZoom( Number( event.target.value ) )
-							}
-						>
-							{ ZOOMS.map( ( value ) => (
-								<option key={ value } value={ value }>
-									{ `${ Math.round( value * 100 ) } %` }
-								</option>
-							) ) }
-						</select>
-					) }
-				</Labelled>
-				<Button
-					onClick={ () => void save() }
-					isBusy={ saving }
-					disabled={ ! dirty && ! saving }
-				>
-					{ dirty
-						? __( 'Save draft', 'merchboard' )
-						: __( 'Saved', 'merchboard' ) }
-				</Button>
-				{ impersonating ? null : (
+				<strong className="merchboard-product-designer__bar-title">
+					{ title.trim() === '' ? base.name : title }
+				</strong>
+				<div className="merchboard-product-designer__bar-group">
 					<Button
 						variant="secondary"
-						onClick={ () => setConfirming( true ) }
-						isBusy={ sending }
-						disabled={ sending || saving || confirming }
+						size="sm"
+						onClick={ history.undo }
+						disabled={ ! history.canUndo }
 					>
-						{ __( 'Send for approval', 'merchboard' ) }
+						{ __( 'Undo', 'merchboard' ) }
 					</Button>
-				) }
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={ history.redo }
+						disabled={ ! history.canRedo }
+					>
+						{ __( 'Redo', 'merchboard' ) }
+					</Button>
+					<Labelled
+						className="merchboard-product-designer__zoom"
+						before
+						label={ <>{ __( 'Zoom', 'merchboard' ) }</> }
+					>
+						{ ( id ) => (
+							<select
+								id={ id }
+								className="merchboard-input"
+								value={ zoom }
+								onChange={ ( event ) =>
+									setZoom( Number( event.target.value ) )
+								}
+							>
+								{ ZOOMS.map( ( value ) => (
+									<option key={ value } value={ value }>
+										{ `${ Math.round( value * 100 ) } %` }
+									</option>
+								) ) }
+							</select>
+						) }
+					</Labelled>
+				</div>
+				<div className="merchboard-product-designer__bar-group">
+					<Button
+						variant="secondary"
+						onClick={ () => void save() }
+						isBusy={ saving }
+						disabled={ ! dirty && ! saving }
+					>
+						{ dirty
+							? __( 'Save draft', 'merchboard' )
+							: __( 'Saved', 'merchboard' ) }
+					</Button>
+					{ impersonating ? null : (
+						<Button
+							onClick={ () => setConfirming( true ) }
+							isBusy={ sending }
+							disabled={ sending || saving || confirming }
+						>
+							{ __( 'Send for approval', 'merchboard' ) }
+						</Button>
+					) }
+				</div>
 			</div>
 
 			{ product.rejection !== null &&
@@ -897,7 +904,8 @@ function Editor( props: EditorProps ) {
 									locale
 								)
 					) }{ ' ' }
-					<span className="merchboard-designer__actions">
+					{ reviewNote() }{ ' ' }
+					<span className="merchboard-product-designer__actions">
 						<Button size="sm" onClick={ () => void send() }>
 							{ __( 'Send', 'merchboard' ) }
 						</Button>
@@ -916,10 +924,10 @@ function Editor( props: EditorProps ) {
 				<Alert tone={ message.tone }>{ message.text }</Alert>
 			) }
 
-			<div className="merchboard-designer__body">
-				<div className="merchboard-designer__tools">
+			<div className="merchboard-product-designer__body">
+				<div className="merchboard-product-designer__tools">
 					<div
-						className="merchboard-designer__tabs"
+						className="merchboard-product-designer__tabs"
 						role="tablist"
 						aria-label={ __( 'Designer tools', 'merchboard' ) }
 					>
@@ -929,14 +937,17 @@ function Editor( props: EditorProps ) {
 								type="button"
 								role="tab"
 								aria-selected={ tab === entry.id }
-								className="merchboard-designer__tab"
+								className="merchboard-product-designer__tab"
 								onClick={ () => setTab( entry.id ) }
 							>
 								{ entry.label }
 							</button>
 						) ) }
 					</div>
-					<div className="merchboard-designer__panel" role="tabpanel">
+					<div
+						className="merchboard-product-designer__panel"
+						role="tabpanel"
+					>
 						{ tab === 'product' ? (
 							<ProductPanel
 								base={ base }
@@ -945,10 +956,6 @@ function Editor( props: EditorProps ) {
 								description={ description }
 								colors={ colors }
 								sizes={ sizes }
-								profitKind={ profitKind }
-								profitValue={ profitValue }
-								price={ price }
-								areas={ areas }
 								onTitle={ setTitle }
 								onDescription={ setDescription }
 								onColors={ ( next ) => {
@@ -962,16 +969,14 @@ function Editor( props: EditorProps ) {
 									}
 								} }
 								onSizes={ setSizes }
-								onProfitKind={ setProfitKind }
-								onProfitValue={ setProfitValue }
 							/>
 						) : null }
 						{ tab === 'text' ? (
-							<div className="merchboard-designer__stack">
+							<div className="merchboard-product-designer__stack">
 								<Button onClick={ addText }>
 									{ __( 'Add text', 'merchboard' ) }
 								</Button>
-								<p className="merchboard-designer__hint">
+								<p className="merchboard-product-designer__hint">
 									{ __(
 										'Select a text on the product to change its font, size and colour.',
 										'merchboard'
@@ -980,7 +985,7 @@ function Editor( props: EditorProps ) {
 							</div>
 						) : null }
 						{ tab === 'shapes' ? (
-							<div className="merchboard-designer__stack">
+							<div className="merchboard-product-designer__stack">
 								<Button
 									variant="secondary"
 									onClick={ () => addShape( 'rect' ) }
@@ -1010,7 +1015,7 @@ function Editor( props: EditorProps ) {
 							/>
 						) : null }
 						{ tab === 'uploads' ? (
-							<div className="merchboard-designer__stack">
+							<div className="merchboard-product-designer__stack">
 								<Labelled
 									className="merchboard-button merchboard-button--secondary merchboard-button--md"
 									before
@@ -1028,14 +1033,14 @@ function Editor( props: EditorProps ) {
 											id={ id }
 											type="file"
 											accept="image/png,image/jpeg,image/webp"
-											className="merchboard-designer__file"
+											className="merchboard-product-designer__file"
 											onChange={ ( event ) =>
 												void upload( event )
 											}
 										/>
 									) }
 								</Labelled>
-								<p className="merchboard-designer__hint">
+								<p className="merchboard-product-designer__hint">
 									{ __(
 										'PNG, JPG or WebP. Use PNG for a transparent background. Only images you have the rights to.',
 										'merchboard'
@@ -1076,31 +1081,29 @@ function Editor( props: EditorProps ) {
 					</div>
 				</div>
 
-				<div className="merchboard-designer__stage-column">
+				<div className="merchboard-product-designer__stage-column">
 					<div
-						className="merchboard-designer__sides"
+						className="merchboard-product-designer__sides"
 						role="group"
 						aria-label={ __( 'Sides', 'merchboard' ) }
 					>
-						{ base.views.map( ( candidate ) => (
-							<Button
-								key={ candidate.key }
-								size="sm"
-								variant={
-									candidate.key === view.key
-										? 'primary'
-										: 'secondary'
-								}
-								onClick={ () => {
-									setSide( candidate.key );
-									setSelected( null );
-								} }
-							>
-								{ candidate.name }
-							</Button>
-						) ) }
+						<span className="merchboard-product-designer__segment">
+							{ base.views.map( ( candidate ) => (
+								<button
+									key={ candidate.key }
+									type="button"
+									aria-pressed={ candidate.key === view.key }
+									onClick={ () => {
+										setSide( candidate.key );
+										setSelected( null );
+									} }
+								>
+									{ candidate.name }
+								</button>
+							) ) }
+						</span>
 						<span
-							className="merchboard-designer__swatches"
+							className="merchboard-product-designer__swatches"
 							role="group"
 							aria-label={ __( 'Preview colour', 'merchboard' ) }
 						>
@@ -1112,7 +1115,7 @@ function Editor( props: EditorProps ) {
 									<button
 										key={ color.key }
 										type="button"
-										className="merchboard-designer__swatch"
+										className="merchboard-product-designer__swatch"
 										style={ { background: color.hex } }
 										aria-pressed={
 											color.key === previewColor
@@ -1126,9 +1129,9 @@ function Editor( props: EditorProps ) {
 								) ) }
 						</span>
 					</div>
-					<div className="merchboard-designer__viewport">
+					<div className="merchboard-product-designer__viewport">
 						<div
-							className="merchboard-designer__stage"
+							className="merchboard-product-designer__stage"
 							style={ {
 								width: DISPLAY_WIDTH * zoom,
 								height: displayHeight * zoom,
@@ -1141,7 +1144,7 @@ function Editor( props: EditorProps ) {
 								colorKey={ previewColor }
 								part="under"
 							/>
-							<div className="merchboard-designer__canvas">
+							<div className="merchboard-product-designer__canvas">
 								<canvas
 									ref={ canvasElement }
 									aria-label={ sprintf(
@@ -1153,7 +1156,7 @@ function Editor( props: EditorProps ) {
 									) }
 								/>
 							</div>
-							<div className="merchboard-designer__over">
+							<div className="merchboard-product-designer__over">
 								<TemplateLayers
 									view={ view }
 									images={ images }
@@ -1162,7 +1165,7 @@ function Editor( props: EditorProps ) {
 								/>
 							</div>
 							<div
-								className="merchboard-designer__area"
+								className="merchboard-product-designer__area"
 								style={ {
 									left:
 										( view.area.x / view.width ) *
@@ -1192,42 +1195,13 @@ function Editor( props: EditorProps ) {
 							) }
 						</Alert>
 					) : null }
-					{ embroidery === null ? null : (
-						<ThreadPanel
-							threads={ embroidery.threads }
-							max={ embroidery.max }
-							plan={ plan }
-							onSwap={ swapThread }
-						/>
-					) }
-					{ selectedObject === null ? (
-						<p className="merchboard-designer__hint">
-							{ __(
-								'Drag, scale and rotate the elements on the product. The dashed frame is the print area.',
-								'merchboard'
-							) }
-						</p>
-					) : (
-						<Properties
-							object={ selectedObject }
-							fonts={ fonts }
-							threads={ embroidery?.threads ?? null }
-							plan={ plan }
-							onThread={ pickThread }
-							onChange={ change }
-							onRemove={ () => remove( selectedObject.id ) }
-							onMove={ ( direction ) =>
-								setObjects(
-									moveObject(
-										objects,
-										selectedObject.id,
-										direction
-									)
-								)
-							}
-						/>
-					) }
-					<p className="merchboard-designer__hint">
+					<p className="merchboard-product-designer__hint">
+						{ selectedObject === null
+							? `${ __(
+									'Drag, scale and rotate the elements on the product. The dashed frame is the print area.',
+									'merchboard'
+								) } `
+							: null }
 						{ sprintf(
 							/* translators: 1: print width in px, 2: print height in px, 3: resolution in dpi. */
 							__(
@@ -1243,8 +1217,243 @@ function Editor( props: EditorProps ) {
 							: ` ${ sprintf( /* translators: %s: price. */ __( 'Saved price: %s', 'merchboard' ), moneyText( saved.price, base.currency, locale ) ) }` }
 					</p>
 				</div>
+
+				<aside
+					className="merchboard-product-designer__inspector"
+					aria-label={ __( 'Design details', 'merchboard' ) }
+				>
+					{ selectedObject === null ? null : (
+						<section className="merchboard-product-designer__card">
+							<h3>{ __( 'Selected element', 'merchboard' ) }</h3>
+							<Properties
+								object={ selectedObject }
+								fonts={ fonts }
+								threads={ embroidery?.threads ?? null }
+								plan={ plan }
+								onThread={ pickThread }
+								onChange={ change }
+								onRemove={ () => remove( selectedObject.id ) }
+								onMove={ ( direction ) =>
+									setObjects(
+										moveObject(
+											objects,
+											selectedObject.id,
+											direction
+										)
+									)
+								}
+							/>
+						</section>
+					) }
+					{ embroidery === null ? null : (
+						<ThreadPanel
+							threads={ embroidery.threads }
+							max={ embroidery.max }
+							plan={ plan }
+							onSwap={ swapThread }
+						/>
+					) }
+					<PricePanel
+						base={ base }
+						locale={ locale }
+						decimals={ overview.priceDecimals }
+						profitKind={ profitKind }
+						profitValue={ profitValue }
+						price={ price }
+						areas={ areas }
+						onProfitKind={ setProfitKind }
+						onProfitValue={ setProfitValue }
+					/>
+					<NextSteps />
+				</aside>
 			</div>
 		</div>
+	);
+}
+
+/**
+ * What happens after a design is sent.
+ */
+function reviewNote(): string {
+	return __(
+		'The finished mockups are made automatically before we can approve your design. We then review it and answer you, also if it does not look right or something else is wrong.',
+		'merchboard'
+	);
+}
+
+/**
+ * The way from a design to the shop.
+ */
+function NextSteps() {
+	return (
+		<section className="merchboard-product-designer__card">
+			<h3>{ __( 'From design to shop', 'merchboard' ) }</h3>
+			<ol className="merchboard-product-designer__steps">
+				<li>
+					{ __(
+						'Design your product and set your profit.',
+						'merchboard'
+					) }
+				</li>
+				<li>
+					{ __(
+						'Send it for approval. The finished mockups are made automatically before we can approve your design.',
+						'merchboard'
+					) }
+				</li>
+				<li>
+					{ __(
+						'We review your design and answer you, also if it does not look right or something else is wrong.',
+						'merchboard'
+					) }
+				</li>
+			</ol>
+		</section>
+	);
+}
+
+/**
+ * The creator's profit with the customer's price.
+ *
+ * @param props               Props.
+ * @param props.base          The base product.
+ * @param props.locale        Locale.
+ * @param props.decimals      Store price decimals.
+ * @param props.profitKind    Amount or percent.
+ * @param props.profitValue   The profit as entered.
+ * @param props.price         The customer's price; null when the profit is invalid.
+ * @param props.areas         Used design areas; one is included in the base price.
+ * @param props.onProfitKind  Changes the kind.
+ * @param props.onProfitValue Changes the value.
+ */
+function PricePanel( props: {
+	readonly base: DesignerBase;
+	readonly locale: string;
+	readonly decimals: number;
+	readonly profitKind: ProfitKind;
+	readonly profitValue: string;
+	readonly price: number | null;
+	readonly areas: number;
+	readonly onProfitKind: ( value: ProfitKind ) => void;
+	readonly onProfitValue: ( value: string ) => void;
+} ) {
+	const { base, locale, price, decimals } = props;
+	const extra = Math.max( 0, props.areas - 1 );
+	const secured =
+		Number( base.basePrice ) + extra * Number( base.extraSidePrice );
+	const money = ( value: number | string ): string =>
+		moneyText(
+			typeof value === 'number' ? value.toFixed( decimals ) : value,
+			base.currency,
+			locale
+		);
+
+	return (
+		<section className="merchboard-product-designer__card">
+			<h3>{ __( 'Price and profit', 'merchboard' ) }</h3>
+			<span
+				className="merchboard-product-designer__segment"
+				role="group"
+				aria-label={ __( 'Your profit', 'merchboard' ) }
+			>
+				<button
+					type="button"
+					aria-pressed={ props.profitKind === 'fixed' }
+					onClick={ () => props.onProfitKind( 'fixed' ) }
+				>
+					{ sprintf(
+						/* translators: %s: currency code. */ __(
+							'Amount (%s)',
+							'merchboard'
+						),
+						base.currency
+					) }
+				</button>
+				<button
+					type="button"
+					aria-pressed={ props.profitKind === 'percent' }
+					onClick={ () => props.onProfitKind( 'percent' ) }
+				>
+					{ __( 'Percent', 'merchboard' ) }
+				</button>
+			</span>
+			<Labelled
+				className="merchboard-field"
+				before
+				label={
+					<>
+						<span className="merchboard-field__label">
+							{ __( 'Your profit', 'merchboard' ) }
+						</span>
+					</>
+				}
+			>
+				{ ( id ) => (
+					<input
+						id={ id }
+						className="merchboard-input"
+						inputMode="decimal"
+						value={ props.profitValue }
+						onChange={ ( event ) =>
+							props.onProfitValue( event.target.value )
+						}
+					/>
+				) }
+			</Labelled>
+			<dl className="merchboard-product-designer__summary">
+				<div>
+					<dt>{ __( 'Base price', 'merchboard' ) }</dt>
+					<dd>{ money( base.basePrice ) }</dd>
+				</div>
+				{ extra > 0 && Number( base.extraSidePrice ) > 0 ? (
+					<div>
+						<dt>
+							{ sprintf(
+								/* translators: 1: extra design areas, 2: price of one. */ __(
+									'Extra design areas: %1$d × %2$s',
+									'merchboard'
+								),
+								extra,
+								money( base.extraSidePrice )
+							) }
+						</dt>
+						<dd>
+							{ money( extra * Number( base.extraSidePrice ) ) }
+						</dd>
+					</div>
+				) : null }
+				<div>
+					<dt>{ __( 'Your profit', 'merchboard' ) }</dt>
+					<dd>{ price === null ? '–' : money( price - secured ) }</dd>
+				</div>
+				<div className="merchboard-product-designer__total">
+					<dt>{ __( 'Customer price incl. VAT', 'merchboard' ) }</dt>
+					<dd>{ price === null ? '–' : money( price ) }</dd>
+				</div>
+			</dl>
+			{ price === null ? (
+				<p className="merchboard-product-designer__hint">
+					{ __( 'Enter a profit of at least 0.', 'merchboard' ) }
+				</p>
+			) : null }
+			{ extra === 0 && Number( base.extraSidePrice ) > 0 ? (
+				<p className="merchboard-product-designer__hint">
+					{ sprintf(
+						/* translators: %s: price of one extra design area. */ __(
+							'One design area is included. Each extra area costs %s.',
+							'merchboard'
+						),
+						money( base.extraSidePrice )
+					) }
+				</p>
+			) : null }
+			<p className="merchboard-product-designer__hint">
+				{ __(
+					"The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared.",
+					'merchboard'
+				) }
+			</p>
+		</section>
 	);
 }
 
@@ -1262,12 +1471,12 @@ function ThreadSwatches( props: {
 	readonly onPick: ( thread: DesignerThread ) => void;
 } ) {
 	return (
-		<div className="merchboard-designer__threads">
+		<div className="merchboard-product-designer__threads">
 			{ props.threads.map( ( thread ) => (
 				<button
 					key={ thread.code }
 					type="button"
-					className="merchboard-designer__thread"
+					className="merchboard-product-designer__thread"
 					style={ { backgroundColor: thread.hex } }
 					title={ `${ thread.code } ${ thread.name }` }
 					aria-label={ `${ thread.code } ${ thread.name }` }
@@ -1298,7 +1507,7 @@ function ThreadPanel( props: {
 	const { plan } = props;
 
 	return (
-		<div className="merchboard-designer__panel">
+		<section className="merchboard-product-designer__card">
 			<h3>
 				{ sprintf(
 					/* translators: 1: threads in use, 2: the most threads allowed. */
@@ -1307,7 +1516,7 @@ function ThreadPanel( props: {
 					props.max
 				) }
 			</h3>
-			<p className="merchboard-designer__hint">
+			<p className="merchboard-product-designer__hint">
 				{ __(
 					'This side is embroidered: every colour becomes the nearest thread. Choose another thread below if you like.',
 					'merchboard'
@@ -1325,7 +1534,7 @@ function ThreadPanel( props: {
 				<details key={ row.found.code }>
 					<summary>
 						<span
-							className="merchboard-designer__thread"
+							className="merchboard-product-designer__thread"
 							style={ { backgroundColor: row.used.hex } }
 						/>{ ' ' }
 						{ `${ row.used.code } ${ row.used.name }` }
@@ -1354,7 +1563,7 @@ function ThreadPanel( props: {
 					) }
 				</details>
 			) ) }
-		</div>
+		</section>
 	);
 }
 
@@ -1505,7 +1714,8 @@ function Waiting( props: DesignerEditorProps ) {
 					pending.price === null
 						? '–'
 						: moneyText( pending.price, currency, locale )
-				) }
+				) }{ ' ' }
+				{ reviewNote() }
 			</Alert>
 			{ failed ? (
 				<Alert tone="danger">
@@ -1515,7 +1725,7 @@ function Waiting( props: DesignerEditorProps ) {
 					) }
 				</Alert>
 			) : null }
-			<div className="merchboard-designer__actions">
+			<div className="merchboard-product-designer__actions">
 				<Button variant="secondary" onClick={ onBack }>
 					{ __( 'Back to my designs', 'merchboard' ) }
 				</Button>
@@ -1580,7 +1790,7 @@ function InShop( props: DesignerEditorProps ) {
 					) }
 				</Alert>
 			) : null }
-			<div className="merchboard-designer__actions">
+			<div className="merchboard-product-designer__actions">
 				<Button variant="secondary" onClick={ onBack }>
 					{ __( 'Back to my designs', 'merchboard' ) }
 				</Button>
@@ -1599,26 +1809,19 @@ interface ProductPanelProps {
 	readonly description: string;
 	readonly colors: readonly string[];
 	readonly sizes: readonly string[];
-	readonly profitKind: ProfitKind;
-	readonly profitValue: string;
-	readonly price: number | null;
-	/** Used design areas; one is included in the base price. */
-	readonly areas: number;
 	readonly onTitle: ( value: string ) => void;
 	readonly onDescription: ( value: string ) => void;
 	readonly onColors: ( value: readonly string[] ) => void;
 	readonly onSizes: ( value: readonly string[] ) => void;
-	readonly onProfitKind: ( value: ProfitKind ) => void;
-	readonly onProfitValue: ( value: string ) => void;
 }
 
 /**
- * Title, colours, sizes and profit with the customer's price.
+ * Title, description, colours and sizes.
  *
  * @param props Props.
  */
 function ProductPanel( props: ProductPanelProps ) {
-	const { base, locale } = props;
+	const { base } = props;
 	const toggle = (
 		list: readonly string[],
 		value: string,
@@ -1629,7 +1832,7 @@ function ProductPanel( props: ProductPanelProps ) {
 		);
 
 	return (
-		<div className="merchboard-designer__stack">
+		<div className="merchboard-product-designer__stack">
 			<Labelled
 				className="merchboard-field"
 				before
@@ -1677,18 +1880,18 @@ function ProductPanel( props: ProductPanelProps ) {
 					/>
 				) }
 			</Labelled>
-			<fieldset className="merchboard-designer__options">
+			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
 					{ __( 'Colours', 'merchboard' ) }
 				</legend>
 				{ base.colors.map( ( color ) => (
 					<Labelled
 						key={ color.key }
-						className="merchboard-designer__option"
+						className="merchboard-product-designer__option"
 						label={
 							<>
 								<span
-									className="merchboard-designer__swatch merchboard-designer__swatch--small"
+									className="merchboard-product-designer__swatch merchboard-product-designer__swatch--small"
 									style={ { background: color.hex } }
 									aria-hidden="true"
 								/>
@@ -1717,14 +1920,14 @@ function ProductPanel( props: ProductPanelProps ) {
 					</Labelled>
 				) ) }
 			</fieldset>
-			<fieldset className="merchboard-designer__options">
+			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
 					{ __( 'Sizes', 'merchboard' ) }
 				</legend>
 				{ base.sizes.map( ( size ) => (
 					<Labelled
 						key={ size }
-						className="merchboard-designer__option"
+						className="merchboard-product-designer__option"
 						label={ <>{ size }</> }
 					>
 						{ ( id ) => (
@@ -1742,104 +1945,6 @@ function ProductPanel( props: ProductPanelProps ) {
 					</Labelled>
 				) ) }
 			</fieldset>
-			<fieldset className="merchboard-designer__options">
-				<legend className="merchboard-field__label">
-					{ __( 'Your profit', 'merchboard' ) }
-				</legend>
-				<select
-					className="merchboard-input"
-					value={ props.profitKind }
-					onChange={ ( event ) =>
-						props.onProfitKind(
-							event.target.value === 'percent'
-								? 'percent'
-								: 'fixed'
-						)
-					}
-				>
-					<option value="fixed">
-						{ sprintf(
-							/* translators: %s: currency code. */ __(
-								'Amount (%s)',
-								'merchboard'
-							),
-							base.currency
-						) }
-					</option>
-					<option value="percent">
-						{ __( 'Percent of the base price', 'merchboard' ) }
-					</option>
-				</select>
-				<input
-					className="merchboard-input"
-					inputMode="decimal"
-					value={ props.profitValue }
-					aria-label={ __( 'Profit', 'merchboard' ) }
-					onChange={ ( event ) =>
-						props.onProfitValue( event.target.value )
-					}
-				/>
-			</fieldset>
-			<p className="merchboard-designer__price">
-				{ sprintf(
-					/* translators: %s: base price. */ __(
-						'Base price: %s',
-						'merchboard'
-					),
-					moneyText( base.basePrice, base.currency, locale )
-				) }
-				{ Number( base.extraSidePrice ) > 0 && (
-					<>
-						<br />
-						{ props.areas > 1
-							? sprintf(
-									/* translators: 1: extra design areas, 2: price of one. */ __(
-										'Extra design areas: %1$d × %2$s',
-										'merchboard'
-									),
-									props.areas - 1,
-									moneyText(
-										base.extraSidePrice,
-										base.currency,
-										locale
-									)
-								)
-							: sprintf(
-									/* translators: %s: price of one extra design area. */ __(
-										'One design area is included. Each extra area costs %s.',
-										'merchboard'
-									),
-									moneyText(
-										base.extraSidePrice,
-										base.currency,
-										locale
-									)
-								) }
-					</>
-				) }
-				<br />
-				<strong>
-					{ props.price === null
-						? __( 'Enter a profit of at least 0.', 'merchboard' )
-						: sprintf(
-								/* translators: %s: the customer's price. */ __(
-									'Customer price incl. VAT: %s',
-									'merchboard'
-								),
-								moneyText(
-									props.price.toFixed( 4 ),
-									base.currency,
-									locale
-								)
-							) }
-				</strong>
-			</p>
-			<p className="merchboard-designer__hint">
-				{ __(
-					"The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared.",
-					'merchboard'
-				) }
-			</p>
 		</div>
 	);
 }
@@ -1862,11 +1967,13 @@ function AssetGrid( props: {
 	readonly onDelete?: ( asset: DesignerAsset ) => void;
 } ) {
 	if ( props.assets.length === 0 ) {
-		return <p className="merchboard-designer__hint">{ props.empty }</p>;
+		return (
+			<p className="merchboard-product-designer__hint">{ props.empty }</p>
+		);
 	}
 
 	return (
-		<ul className="merchboard-designer__grid">
+		<ul className="merchboard-product-designer__grid">
 			{ props.assets.map( ( asset ) => {
 				const url = props.images.get( asset.id );
 
@@ -1874,7 +1981,7 @@ function AssetGrid( props: {
 					<li key={ asset.id }>
 						<button
 							type="button"
-							className="merchboard-designer__thumb"
+							className="merchboard-product-designer__thumb"
 							onClick={ () => props.onPick( asset ) }
 							title={ asset.name }
 						>
@@ -1928,14 +2035,14 @@ function LayerList( props: {
 } ) {
 	if ( props.objects.length === 0 ) {
 		return (
-			<p className="merchboard-designer__hint">
+			<p className="merchboard-product-designer__hint">
 				{ __( 'This side has no elements yet.', 'merchboard' ) }
 			</p>
 		);
 	}
 
 	return (
-		<ol className="merchboard-designer__layers">
+		<ol className="merchboard-product-designer__layers">
 			{ [ ...props.objects ].reverse().map( ( object ) => (
 				<li
 					key={ object.id }
@@ -1945,7 +2052,7 @@ function LayerList( props: {
 				>
 					<button
 						type="button"
-						className="merchboard-designer__layer-name"
+						className="merchboard-product-designer__layer-name"
 						onClick={ () => props.onSelect( object.id ) }
 					>
 						{ layerName( object ) }
@@ -2066,7 +2173,7 @@ function Properties( props: {
 				);
 
 	return (
-		<div className="merchboard-designer__properties">
+		<div className="merchboard-product-designer__properties">
 			{ text === null ? null : (
 				<>
 					<textarea
@@ -2128,7 +2235,7 @@ function Properties( props: {
 						) }
 					</select>
 					<Labelled
-						className="merchboard-designer__option"
+						className="merchboard-product-designer__option"
 						label={ <>{ __( 'Italic', 'merchboard' ) }</> }
 					>
 						{ ( id ) => (
@@ -2166,7 +2273,7 @@ function Properties( props: {
 						</option>
 					</select>
 					<Labelled
-						className="merchboard-designer__option"
+						className="merchboard-product-designer__option"
 						before
 						label={ <>{ __( 'Colour', 'merchboard' ) }</> }
 					>
@@ -2198,7 +2305,7 @@ function Properties( props: {
 			{ shape === null ? null : (
 				<>
 					<Labelled
-						className="merchboard-designer__option"
+						className="merchboard-product-designer__option"
 						before
 						label={ <>{ __( 'Fill', 'merchboard' ) }</> }
 					>
@@ -2230,7 +2337,7 @@ function Properties( props: {
 						}
 					</Labelled>
 					<Labelled
-						className="merchboard-designer__option"
+						className="merchboard-product-designer__option"
 						label={ <>{ __( 'Outline', 'merchboard' ) }</> }
 					>
 						{ ( id ) => (
@@ -2255,7 +2362,7 @@ function Properties( props: {
 			) }
 			{ threads !== null ? null : (
 				<Labelled
-					className="merchboard-designer__option"
+					className="merchboard-product-designer__option"
 					before
 					label={ <>{ __( 'Opacity', 'merchboard' ) }</> }
 				>

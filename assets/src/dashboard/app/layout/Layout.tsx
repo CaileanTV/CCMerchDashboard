@@ -10,6 +10,8 @@ import { Navigation } from './Navigation';
 export interface LayoutProps {
 	/** Page title, rendered as the page's only h1. */
 	readonly title: string;
+	/** Whether only screen readers get the title. */
+	readonly hideTitle?: boolean;
 	/** The creator's display name from `GET /me`, once known. */
 	readonly creatorName?: string;
 	readonly children: ReactNode;
@@ -54,7 +56,12 @@ function Brand() {
  * App frame: skip link, top bar (logo and/or site name, creator name, notification bell, menu button below lg, log out),
  * sidebar (lg and up), off-canvas navigation (below lg) and the main region.
  */
-export function Layout( { title, creatorName, children }: LayoutProps ) {
+export function Layout( {
+	title,
+	hideTitle = false,
+	creatorName,
+	children,
+}: LayoutProps ) {
 	const config = useConfig();
 	const [ menuOpen, setMenuOpen ] = useState( false );
 	const menuButton = useRef< HTMLButtonElement >( null );
@@ -164,7 +171,15 @@ export function Layout( { title, creatorName, children }: LayoutProps ) {
 					className="merchboard-main"
 					tabIndex={ -1 }
 				>
-					<h1 className="merchboard-main__title">{ title }</h1>
+					<h1
+						className={
+							hideTitle
+								? 'merchboard-visually-hidden'
+								: 'merchboard-main__title'
+						}
+					>
+						{ title }
+					</h1>
 					{ children }
 				</main>
 			</div>

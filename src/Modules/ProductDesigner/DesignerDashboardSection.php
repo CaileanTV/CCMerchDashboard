@@ -41,7 +41,7 @@ final class DesignerDashboardSection {
 
 		$designer = array(
 			'id'         => 'designer',
-			'label'      => __( 'Designer', 'merchboard' ),
+			'label'      => __( 'Product designer', 'merchboard' ),
 			'path'       => 'designer',
 			'capability' => Capabilities::ACCESS_DASHBOARD,
 		);

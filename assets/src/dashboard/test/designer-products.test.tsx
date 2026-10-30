@@ -263,7 +263,7 @@ describe( 'Products section with the designer', () => {
 			)?.textContent
 		).toBe( 'Open the designer' );
 		expect(
-			container.querySelector( '.merchboard-designer__drafts' )
+			container.querySelector( '.merchboard-product-designer__drafts' )
 				?.textContent
 		).toBe( 'You have 2 drafts in the designer.' );
 	} );

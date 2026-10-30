@@ -404,6 +404,19 @@ describe( 'DesignerSection', () => {
 			title?.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 		} );
 
+		// The profit and what happens after sending are always in view.
+		expect( rendered.container.textContent ).toContain(
+			'Price and profit'
+		);
+		expect( rendered.container.textContent ).toContain(
+			'The finished mockups are made automatically before we can approve your design.'
+		);
+		expect(
+			rendered.container.querySelector(
+				'.merchboard-product-designer__summary'
+			)?.textContent
+		).toContain( 'Customer price incl. VAT' );
+
 		click(
 			Array.from( rendered.container.querySelectorAll( 'button' ) ).find(
 				( element ) => element.textContent === 'Save draft'

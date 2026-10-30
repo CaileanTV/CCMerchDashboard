@@ -170,7 +170,7 @@ export function DesignerProductsCard() {
 				<>
 					{ stateText( product, locale ) }
 					{ product.rejection === null ? null : (
-						<span className="merchboard-designer__note">
+						<span className="merchboard-product-designer__note">
 							{ sprintf(
 								/* translators: %s: the administrator's note. */
 								__( 'Note: %s', 'merchboard' ),
@@ -223,7 +223,7 @@ export function DesignerProductsCard() {
 				}
 			/>
 			{ drafts > 0 ? (
-				<p className="merchboard-designer__drafts">
+				<p className="merchboard-product-designer__drafts">
 					{ sprintf(
 						/* translators: %d: number of drafts. */
 						_n(

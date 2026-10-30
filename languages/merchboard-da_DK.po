@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-30T23:11:44+00:00\n"
+"PO-Revision-Date: 2026-10-30T23:29:35+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4850,7 +4850,7 @@ msgid "Your products were sold in order #%s. Here is what was bought:"
 msgstr "Dine produkter er solgt i ordre #%s. Her er, hvad der blev købt:"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:157
-#: build/dashboard.js:56
+#: build/dashboard.js:54
 msgid "Your profit"
 msgstr "Din fortjeneste"
 
@@ -5957,6 +5957,7 @@ msgid "No base products yet."
 msgstr "Ingen grundprodukter endnu."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:291
+#: build/dashboard.js:54
 msgid "Base price"
 msgstr "Grundpris"
 
@@ -6581,6 +6582,7 @@ msgstr "Merch Dashboard Produktdesigner"
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:83
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:149
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:84
+#: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:160
 msgid "Product designer"
 msgstr "Produktdesigner"
@@ -6898,9 +6900,7 @@ msgid "Sizes: %s"
 msgstr "Størrelser: %s"
 
 #. translators: %s: price.
-#. translators: %s: the customer's price.
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:233
-#: build/dashboard.js:56
 #, js-format,php-format
 msgid "Customer price incl. VAT: %s"
 msgstr "Kundens pris inkl. moms: %s"
@@ -6942,13 +6942,6 @@ msgstr "Vælg, hvilke af produktdesignerens notifikationer der sendes. De bruger
 msgid "To the creator"
 msgstr "Til creatoren"
 
-#: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
-#: build/alerts-global-admin.js:14
-#: build/alerts-presets-admin.js:14
-#: build/dashboard.js:41
-msgid "Designer"
-msgstr "Designer"
-
 #: src/Modules/ProductDesigner/DesignerNotifications.php:122
 msgid "Design sent for approval"
 msgstr "Design sendt til godkendelse"
@@ -6980,6 +6973,7 @@ msgstr "Tak! Vi gennemgår dit design og giver besked, når det er godkendt. Ind
 #: src/Modules/ProductDesigner/DesignerNotifications.php:138
 #: src/Modules/ProductDesigner/DesignerNotifications.php:186
 #: src/Modules/ProductDesigner/DesignerNotifications.php:539
+#: build/dashboard.js:54
 msgid "Customer price incl. VAT"
 msgstr "Kundens pris inkl. moms"
 
@@ -8961,7 +8955,6 @@ msgstr "Gemt moms"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: build/dashboard.js:56
 #: build/dashboard.js:57
 #: build/dashboard.js:58
 #: build/dashboard.js:81
@@ -12166,6 +12159,12 @@ msgstr "Produktbillede"
 #: build/alerts-global-admin.js:14
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
+msgid "Designer"
+msgstr "Designer"
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:41
 msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
 msgstr "Træk boksene for at placere dem, og træk i nederste højre hjørne for at ændre deres størrelse. Shift- eller Ctrl-klik (eller Shift+Enter) vælger flere bokse; træk i en af dem for at flytte dem sammen, eller justér dem nedenfor. Lærredet er din browser source på 1920 × 1080. Forhåndsvisningen bruger eksempelværdier."
 
@@ -13706,6 +13705,68 @@ msgstr "Printfil: %1$d × %2$d px ved %3$d dpi."
 msgid "Saved price: %s"
 msgstr "Gemt pris: %s"
 
+#: build/dashboard.js:54
+msgid "Design details"
+msgstr "Detaljer om designet"
+
+#: build/dashboard.js:54
+msgid "Selected element"
+msgstr "Valgt element"
+
+#: build/dashboard.js:54
+msgid "The finished mockups are made automatically before we can approve your design. We then review it and answer you, also if it does not look right or something else is wrong."
+msgstr "De færdige mockups oprettes automatisk, før vi kan godkende dit design. Derefter gennemgår vi det og giver dig svar, også hvis det ikke fremstår korrekt, eller der er andre fejl."
+
+#: build/dashboard.js:54
+msgid "From design to shop"
+msgstr "Fra design til butik"
+
+#: build/dashboard.js:54
+msgid "Design your product and set your profit."
+msgstr "Design dit produkt, og sæt din fortjeneste."
+
+#: build/dashboard.js:54
+msgid "Send it for approval. The finished mockups are made automatically before we can approve your design."
+msgstr "Send det til godkendelse. De færdige mockups oprettes automatisk, før vi kan godkende dit design."
+
+#: build/dashboard.js:54
+msgid "We review your design and answer you, also if it does not look right or something else is wrong."
+msgstr "Vi gennemgår dit design og giver dig svar, også hvis det ikke fremstår korrekt, eller der er andre fejl."
+
+#: build/dashboard.js:54
+msgid "Price and profit"
+msgstr "Pris og fortjeneste"
+
+#. translators: %s: currency code.
+#: build/dashboard.js:54
+#, js-format
+msgid "Amount (%s)"
+msgstr "Beløb (%s)"
+
+#: build/dashboard.js:54
+msgid "Percent"
+msgstr "Procent"
+
+#. translators: 1: extra design areas, 2: price of one.
+#: build/dashboard.js:54
+#, js-format
+msgid "Extra design areas: %1$d × %2$s"
+msgstr "Ekstra designområder: %1$d × %2$s"
+
+#: build/dashboard.js:54
+msgid "Enter a profit of at least 0."
+msgstr "Angiv en fortjeneste på mindst 0."
+
+#. translators: %s: price of one extra design area.
+#: build/dashboard.js:54
+#, js-format
+msgid "One design area is included. Each extra area costs %s."
+msgstr "Ét designområde er inkluderet. Hvert ekstra område koster %s."
+
+#: build/dashboard.js:54
+msgid "The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
+msgstr "Virksomheden beholder altid grundprisen og prisen for ekstra designområder; en rabat tages fra din fortjeneste, aldrig under 0. I virksomhedens egne kampagner deles rabatten."
+
 #. translators: 1: threads in use, 2: the most threads allowed.
 #: build/dashboard.js:55
 #, js-format
@@ -13801,42 +13862,6 @@ msgstr "Ændringen kunne ikke startes. Prøv igen."
 #: build/dashboard.js:56
 msgid "Make a change"
 msgstr "Lav en ændring"
-
-#. translators: %s: currency code.
-#: build/dashboard.js:56
-#, js-format
-msgid "Amount (%s)"
-msgstr "Beløb (%s)"
-
-#: build/dashboard.js:56
-msgid "Percent of the base price"
-msgstr "Procent af grundprisen"
-
-#. translators: %s: base price.
-#: build/dashboard.js:56
-#, js-format
-msgid "Base price: %s"
-msgstr "Grundpris: %s"
-
-#. translators: 1: extra design areas, 2: price of one.
-#: build/dashboard.js:56
-#, js-format
-msgid "Extra design areas: %1$d × %2$s"
-msgstr "Ekstra designområder: %1$d × %2$s"
-
-#. translators: %s: price of one extra design area.
-#: build/dashboard.js:56
-#, js-format
-msgid "One design area is included. Each extra area costs %s."
-msgstr "Ét designområde er inkluderet. Hvert ekstra område koster %s."
-
-#: build/dashboard.js:56
-msgid "Enter a profit of at least 0."
-msgstr "Angiv en fortjeneste på mindst 0."
-
-#: build/dashboard.js:56
-msgid "The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
-msgstr "Virksomheden beholder altid grundprisen og prisen for ekstra designområder; en rabat tages fra din fortjeneste, aldrig under 0. I virksomhedens egne kampagner deles rabatten."
 
 #: build/dashboard.js:56
 msgid "This side has no elements yet."

@@ -40,6 +40,7 @@ function CurrentPage() {
 	return (
 		<Layout
 			title={ page.title }
+			hideTitle={ page.hideTitle }
 			{ ...( state.status === 'success'
 				? { creatorName: state.data.displayName }
 				: {} ) }

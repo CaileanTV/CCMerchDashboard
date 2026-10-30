@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-30T23:11:39+00:00\n"
+"POT-Creation-Date: 2026-10-30T23:29:29+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -4850,7 +4850,7 @@ msgid "Your products were sold in order #%s. Here is what was bought:"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:157
-#: build/dashboard.js:56
+#: build/dashboard.js:54
 msgid "Your profit"
 msgstr ""
 
@@ -5957,6 +5957,7 @@ msgid "No base products yet."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:291
+#: build/dashboard.js:54
 msgid "Base price"
 msgstr ""
 
@@ -6581,6 +6582,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:83
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:149
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:84
+#: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:160
 msgid "Product designer"
 msgstr ""
@@ -6898,10 +6900,8 @@ msgid "Sizes: %s"
 msgstr ""
 
 #. translators: %s: price.
-#. translators: %s: the customer's price.
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:233
-#: build/dashboard.js:56
-#, php-format,js-format
+#, php-format
 msgid "Customer price incl. VAT: %s"
 msgstr ""
 
@@ -6942,13 +6942,6 @@ msgstr ""
 msgid "To the creator"
 msgstr ""
 
-#: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
-#: build/alerts-global-admin.js:14
-#: build/alerts-presets-admin.js:14
-#: build/dashboard.js:41
-msgid "Designer"
-msgstr ""
-
 #: src/Modules/ProductDesigner/DesignerNotifications.php:122
 msgid "Design sent for approval"
 msgstr ""
@@ -6980,6 +6973,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:138
 #: src/Modules/ProductDesigner/DesignerNotifications.php:186
 #: src/Modules/ProductDesigner/DesignerNotifications.php:539
+#: build/dashboard.js:54
 msgid "Customer price incl. VAT"
 msgstr ""
 
@@ -8961,7 +8955,6 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: build/dashboard.js:56
 #: build/dashboard.js:57
 #: build/dashboard.js:58
 #: build/dashboard.js:81
@@ -12166,6 +12159,12 @@ msgstr ""
 #: build/alerts-global-admin.js:14
 #: build/alerts-presets-admin.js:14
 #: build/dashboard.js:41
+msgid "Designer"
+msgstr ""
+
+#: build/alerts-global-admin.js:14
+#: build/alerts-presets-admin.js:14
+#: build/dashboard.js:41
 msgid "Drag the boxes to place them, and drag the lower right corner to resize them. Shift- or Ctrl-click (or Shift+Enter) selects several boxes; drag one of them to move them together, or align them below. The canvas is your 1920 × 1080 browser source. The preview uses sample values."
 msgstr ""
 
@@ -13706,6 +13705,68 @@ msgstr ""
 msgid "Saved price: %s"
 msgstr ""
 
+#: build/dashboard.js:54
+msgid "Design details"
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "Selected element"
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "The finished mockups are made automatically before we can approve your design. We then review it and answer you, also if it does not look right or something else is wrong."
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "From design to shop"
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "Design your product and set your profit."
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "Send it for approval. The finished mockups are made automatically before we can approve your design."
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "We review your design and answer you, also if it does not look right or something else is wrong."
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "Price and profit"
+msgstr ""
+
+#. translators: %s: currency code.
+#: build/dashboard.js:54
+#, js-format
+msgid "Amount (%s)"
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "Percent"
+msgstr ""
+
+#. translators: 1: extra design areas, 2: price of one.
+#: build/dashboard.js:54
+#, js-format
+msgid "Extra design areas: %1$d × %2$s"
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "Enter a profit of at least 0."
+msgstr ""
+
+#. translators: %s: price of one extra design area.
+#: build/dashboard.js:54
+#, js-format
+msgid "One design area is included. Each extra area costs %s."
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
+msgstr ""
+
 #. translators: 1: threads in use, 2: the most threads allowed.
 #: build/dashboard.js:55
 #, js-format
@@ -13800,42 +13861,6 @@ msgstr ""
 
 #: build/dashboard.js:56
 msgid "Make a change"
-msgstr ""
-
-#. translators: %s: currency code.
-#: build/dashboard.js:56
-#, js-format
-msgid "Amount (%s)"
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Percent of the base price"
-msgstr ""
-
-#. translators: %s: base price.
-#: build/dashboard.js:56
-#, js-format
-msgid "Base price: %s"
-msgstr ""
-
-#. translators: 1: extra design areas, 2: price of one.
-#: build/dashboard.js:56
-#, js-format
-msgid "Extra design areas: %1$d × %2$s"
-msgstr ""
-
-#. translators: %s: price of one extra design area.
-#: build/dashboard.js:56
-#, js-format
-msgid "One design area is included. Each extra area costs %s."
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Enter a profit of at least 0."
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
 msgstr ""
 
 #: build/dashboard.js:56

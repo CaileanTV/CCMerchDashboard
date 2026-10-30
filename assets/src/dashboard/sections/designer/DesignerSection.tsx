@@ -167,7 +167,7 @@ export function DesignerSection() {
 						) }
 					/>
 				) : (
-					<ul className="merchboard-designer__products">
+					<ul className="merchboard-product-designer__products">
 						{ overview.products.map( ( product ) => (
 							<li key={ product.id }>
 								<span>
@@ -175,7 +175,7 @@ export function DesignerSection() {
 									{ ' · ' }
 									{ statusLabel( product.status ) }
 								</span>
-								<span className="merchboard-designer__actions">
+								<span className="merchboard-product-designer__actions">
 									<Button
 										size="sm"
 										onClick={ () =>
@@ -221,7 +221,7 @@ export function DesignerSection() {
 						) }
 					/>
 				) : (
-					<ul className="merchboard-designer__bases">
+					<ul className="merchboard-product-designer__bases">
 						{ overview.bases.map( ( base ) => (
 							<li key={ base.id }>
 								<strong>{ base.name }</strong>

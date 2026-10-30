@@ -91,7 +91,7 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 
 		return url === undefined ? null : (
 			<img
-				className="merchboard-designer__layer"
+				className="merchboard-product-designer__layer"
 				src={ url }
 				alt=""
 				style={
@@ -106,7 +106,7 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 			{ layer( own ?? view.layers.background ) }
 			{ tinted === null || own !== undefined ? null : (
 				<img
-					className="merchboard-designer__layer"
+					className="merchboard-product-designer__layer"
 					src={ tinted }
 					alt=""
 				/>

@@ -20,6 +20,8 @@ import { Link } from './router';
 
 export interface Page {
 	readonly title: string;
+	/** Whether only screen readers get the title: the page fills itself. */
+	readonly hideTitle: boolean;
 	readonly content: ReactNode;
 }
 
@@ -67,6 +69,7 @@ export function resolvePage(
 							section.group.label,
 							section.label
 						),
+			hideTitle: section.id === 'designer',
 			content:
 				render === undefined ? (
 					<EmptyState
@@ -83,6 +86,7 @@ export function resolvePage(
 
 	return {
 		title: __( 'Page not found', 'merchboard' ),
+		hideTitle: false,
 		content: (
 			<EmptyState
 				title={ __( 'This page does not exist.', 'merchboard' ) }
