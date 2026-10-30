@@ -67,6 +67,8 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 
 **Ekstra designområder, fra 2026-10-30:** "Pris pr. ekstra designområde" sættes på grundproduktet, både på et eget og ved import fra et katalog (standard 0). "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele printområdet.
 
+**Broderi, fra 2026-10-31 (eksperimentel):** Settings → Produktdesigner har sektionen "Broderipakker" med trådfarver og maksimum pr. side. Grundprodukter og "Nyt grundprodukt" har "Broderipakke" pr. side. Uden pakke er siden print.
+
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 
 ### Designs 🔄 (fase 30, trin 30.9, ADR-080 pkt. 3)

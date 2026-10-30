@@ -84,8 +84,17 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Printfiler** kan hentes på designer-produktet og på ordren (den solgte version).
 - **Printful og Gelato:** API-nøgler (krypteret) og kill switch i Settings.
 
+## Broderi (2026-10-31, eksperimentel)
+- **Broderipakker:** under Indstillinger → Produktdesigner har hver pakke et navn, et maksimum pr. side og sine tråde (kode, navn, farve). Standardpakken "Gelato" har 15 tråde og højst 6. En ændring gælder fra næste gang et design gemmes. En pakke i brug kan ikke slettes.
+- **Valg af pakke:** en side vælger "Broderipakke" på grundproduktet eller ved katalogimport. Ved import fra Gelato er første pakke forudvalgt, når sidens navn indeholder "embroider". Uden pakke er siden print med frie farver. En ændret pakke på en side giver en ny version af grundproduktet, så kladder skal gemmes igen.
+- **I designeren:** hver farve bliver til nærmeste tråd, også i billeder og kliparts, og det ses med det samme. Har designet flere tråde end pakken tillader, beholdes dem, der fylder mest, og resten flyttes til den nærmeste af dem. Panelet "Trådfarver" viser trådene, og creatoren kan vælge en anden for hver. Farvevælgeren viser kun trådene, og gennemsigtighed er væk på siden.
+- **Designet og filen:** designet beholder sine egne farver og gemmer kun creatorens skift (`threads`). Printfil og mockups renderes i browseren med trådfarver alene, uden halv gennemsigtighed.
+- **Kontrol:** serveren tager en stikprøve af printfilen på en broderet side og afviser farver uden for pakken, flere tråde end maksimum og halv gennemsigtighed.
+- **Grænser:** et foto eller en gradient bliver til flade felter. Mindste tekststørrelse og tynde streger håndhæves ikke. Trådene gives ikke videre som data: ordrer produceres manuelt, og Gelato får dem via PNG'ens farver. Pakken "Gelato" passer ikke til Printfuls tråde.
+
 ## Afregning (ADR-080 pkt. 8)
 - Kundens pris er grundpris + fortjeneste.
+- Broderi ændrer ikke prisen (se "Broderi").
 - **Ekstra designområder (2026-10-30):** ét område er med i grundprisen. Hvert ekstra område, creatoren bruger, lægger grundproduktets "Pris pr. ekstra designområde" oveni (0 som standard). Beløbet tilfalder virksomheden og er sikret som grundprisen. Eksempel: grundpris 150, ekstra 50, to områder og 20 % giver sikret grundpris 200, fortjeneste 40 og kundepris 240. Et område tæller, når det har mindst ét synligt objekt, og prisen i designeren følger med. Et nyt beløb når produkterne i butikken som en ny grundpris.
 - **Uden for kampagner** får virksomheden altid grundprisen:
   - en rabat tages fra creatorens fortjeneste;
