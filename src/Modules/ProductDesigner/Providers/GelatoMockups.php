@@ -437,7 +437,7 @@ class GelatoMockups {
 	 */
 	private function download( string $url ): array {
 		$body = $this->api->download( $url );
-		$path = wp_tempnam( 'merchboard-mockup' );
+		$path = DesignerFiles::temporary_path( 'merchboard-mockup' );
 
 		if ( false === file_put_contents( $path, $body ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A temporary file of the download.
 			self::fail( GelatoException::INVALID );

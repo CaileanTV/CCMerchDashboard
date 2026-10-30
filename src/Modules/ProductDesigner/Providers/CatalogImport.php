@@ -368,6 +368,7 @@ class CatalogImport {
 				array(
 					'base_id'   => $id,
 					'exception' => $e::class,
+					'message'   => $e->getMessage(),
 				)
 			);
 			$this->fail( $id, 'error' );
@@ -836,7 +837,7 @@ class CatalogImport {
 	 * @throws DesignerException When it is refused.
 	 */
 	private function store( string $png ): string {
-		$path = wp_tempnam( 'merchboard-import' );
+		$path = DesignerFiles::temporary_path( 'merchboard-import' );
 
 		try {
 			if ( false === file_put_contents( $path, $png ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A temporary file of the import.

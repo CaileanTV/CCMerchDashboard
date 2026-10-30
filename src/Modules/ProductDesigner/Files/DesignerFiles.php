@@ -175,6 +175,20 @@ class DesignerFiles {
 	}
 
 	/**
+	 * A temporary file for a download. Background jobs run without
+	 * wp-admin's includes, where wp_tempnam() lives.
+	 *
+	 * @param string $prefix File name prefix.
+	 */
+	public static function temporary_path( string $prefix ): string {
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
+		return wp_tempnam( $prefix );
+	}
+
+	/**
 	 * Deletes a stored file (nothing when it is gone).
 	 *
 	 * @param string $name Stored name.
