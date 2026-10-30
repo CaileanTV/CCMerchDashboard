@@ -1679,6 +1679,11 @@ input:disabled + .merchboard-sounds__upload {
 }
 
 // Product designer (phase 30, step 30.8).
+.merchboard-product-designer__page {
+	display: grid;
+	gap: var(--merchboard-space-4);
+}
+
 // The editor takes the page's whole width.
 .merchboard-main:has(.merchboard-product-designer) {
 	max-width: none;
@@ -1768,12 +1773,12 @@ input:disabled + .merchboard-sounds__upload {
 
 .merchboard-product-designer__body {
 	display: grid;
-	grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr) minmax(18rem, 21rem);
+	grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr) minmax(18rem, 21rem);
 	gap: var(--merchboard-space-4);
 	align-items: start;
 
 	@media (max-width: 1360px) {
-		grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr);
+		grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
 	}
 
 	@media (max-width: 960px) {
@@ -1936,6 +1941,12 @@ input:disabled + .merchboard-sounds__upload {
 	gap: var(--merchboard-space-2);
 	align-items: center;
 	font-size: var(--merchboard-text-sm);
+
+	label {
+		display: inline-flex;
+		gap: var(--merchboard-space-1);
+		align-items: center;
+	}
 }
 
 .merchboard-product-designer__hint,
@@ -1979,8 +1990,8 @@ input:disabled + .merchboard-sounds__upload {
 .merchboard-product-designer__viewport {
 	display: grid;
 	max-width: 100%;
-	max-height: calc(100vh - 12rem);
-	padding: var(--merchboard-space-4);
+	max-height: calc(100vh - 8rem);
+	padding: var(--merchboard-space-3);
 	overflow: auto;
 	background: var(--merchboard-surface-muted);
 	border: 1px solid var(--merchboard-border);
@@ -1991,6 +2002,9 @@ input:disabled + .merchboard-sounds__upload {
 	position: relative;
 	margin-inline: auto;
 	overflow: hidden;
+
+	// As on the finished product image, also in the dark theme.
+	background: var(--merchboard-mockup-ground);
 	border-radius: var(--merchboard-radius-sm);
 	box-shadow: var(--merchboard-shadow);
 }

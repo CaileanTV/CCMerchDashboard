@@ -139,23 +139,25 @@ export function DesignerSection() {
 
 	if ( open !== null ) {
 		return (
-			<DesignerEditor
-				key={ open.id }
-				overview={ overview }
-				product={ open }
-				locale={ locale }
-				onBack={ () => {
-					setOpen( null );
-					load();
-				} }
-				onOverview={ setOverview }
-				onProduct={ setOpen }
-			/>
+			<div className="merchboard-product-designer__page">
+				<DesignerEditor
+					key={ open.id }
+					overview={ overview }
+					product={ open }
+					locale={ locale }
+					onBack={ () => {
+						setOpen( null );
+						load();
+					} }
+					onOverview={ setOverview }
+					onProduct={ setOpen }
+				/>
+			</div>
 		);
 	}
 
 	return (
-		<>
+		<div className="merchboard-product-designer__page">
 			{ notice === null ? null : <Alert tone="danger">{ notice }</Alert> }
 			<Card title={ __( 'My designs', 'merchboard' ) }>
 				{ overview.products.length === 0 ? (
@@ -253,6 +255,6 @@ export function DesignerSection() {
 					</ul>
 				) }
 			</Card>
-		</>
+		</div>
 	);
 }

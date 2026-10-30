@@ -70,8 +70,11 @@ import type { ThreadedSide, ThreadPlan } from './threads';
 
 type Tab = 'product' | 'text' | 'shapes' | 'cliparts' | 'uploads' | 'layers';
 
-/** Widest canvas at zoom 1 (CSS px). */
+/** The canvas at zoom 1 until the space for it is known (CSS px). */
 const DISPLAY_WIDTH = 560;
+
+/** The narrowest and widest canvas at zoom 1 (CSS px). */
+const DISPLAY_LIMITS = [ 280, 760 ] as const;
 
 const ZOOMS = [ 0.5, 0.75, 1, 1.5, 2, 3 ] as const;
 
@@ -227,6 +230,8 @@ function Editor( props: EditorProps ) {
 		price: draft.price,
 	} );
 	const [ stageError, setStageError ] = useState( false );
+	const [ displayWidth, setDisplayWidth ] = useState( DISPLAY_WIDTH );
+	const viewport = useRef< HTMLDivElement | null >( null );
 	const canvasElement = useRef< HTMLCanvasElement | null >( null );
 	const stage = useRef< FabricStage | null >( null );
 	const [ stageReady, setStageReady ] = useState( false );
@@ -251,7 +256,7 @@ function Editor( props: EditorProps ) {
 	const displayHeight =
 		view === undefined
 			? 0
-			: Math.round( ( DISPLAY_WIDTH * view.height ) / view.width );
+			: Math.round( ( displayWidth * view.height ) / view.width );
 	const allAssets = useMemo(
 		() => [ ...overview.uploads, ...overview.cliparts ],
 		[ overview ]
@@ -353,6 +358,36 @@ function Editor( props: EditorProps ) {
 		}
 	}, [ design, fonts ] );
 
+	// The product fills the space it has.
+	useEffect( () => {
+		const element = viewport.current;
+
+		if ( element === null || typeof ResizeObserver === 'undefined' ) {
+			return undefined;
+		}
+
+		const observer = new ResizeObserver( () => {
+			const style = getComputedStyle( element );
+			const free =
+				element.clientWidth -
+				parseFloat( style.paddingLeft ) -
+				parseFloat( style.paddingRight );
+
+			setDisplayWidth(
+				Math.round(
+					Math.min(
+						DISPLAY_LIMITS[ 1 ],
+						Math.max( DISPLAY_LIMITS[ 0 ], free )
+					)
+				)
+			);
+		} );
+
+		observer.observe( element );
+
+		return () => observer.disconnect();
+	}, [] );
+
 	// The canvas, loaded with Fabric only now.
 	useEffect( () => {
 		let current: FabricStage | null = null;
@@ -387,7 +422,7 @@ function Editor( props: EditorProps ) {
 	useEffect( () => {
 		if ( stage.current !== null && view !== undefined ) {
 			stage.current.setView( {
-				displayWidth: DISPLAY_WIDTH,
+				displayWidth,
 				displayHeight,
 				templateWidth: view.width,
 				area: view.area,
@@ -396,7 +431,7 @@ function Editor( props: EditorProps ) {
 				zoom,
 			} );
 		}
-	}, [ stageReady, view, zoom, displayHeight ] );
+	}, [ stageReady, view, zoom, displayWidth, displayHeight ] );
 
 	// An embroidered side is shown in its threads.
 	useEffect( () => {
@@ -1129,11 +1164,14 @@ function Editor( props: EditorProps ) {
 								) ) }
 						</span>
 					</div>
-					<div className="merchboard-product-designer__viewport">
+					<div
+						className="merchboard-product-designer__viewport"
+						ref={ viewport }
+					>
 						<div
 							className="merchboard-product-designer__stage"
 							style={ {
-								width: DISPLAY_WIDTH * zoom,
+								width: displayWidth * zoom,
 								height: displayHeight * zoom,
 							} }
 						>
@@ -1169,7 +1207,7 @@ function Editor( props: EditorProps ) {
 								style={ {
 									left:
 										( view.area.x / view.width ) *
-										DISPLAY_WIDTH *
+										displayWidth *
 										zoom,
 									top:
 										( view.area.y / view.height ) *
@@ -1177,7 +1215,7 @@ function Editor( props: EditorProps ) {
 										zoom,
 									width:
 										( view.area.width / view.width ) *
-										DISPLAY_WIDTH *
+										displayWidth *
 										zoom,
 									height:
 										( view.area.height / view.height ) *
