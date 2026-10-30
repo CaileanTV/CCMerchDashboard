@@ -291,7 +291,7 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( array( array( 'tv-b-s' ), array( 'tv-b-s' ), array( 'tv-w-s' ) ), array_map( static fn( array $body ): array => array_column( $body['variants'] ?? array(), 'templateVariantId' ), $creates ), 'The marker product first, then a product per colour: a product has one preview.' );
 		self::assertSame( array( self::ASSETS . 'marker-1.png', self::ASSETS . 'marker-2.png' ), array_column( $creates[0]['variants'][0]['imagePlaceholders'] ?? array(), 'fileUrl' ) );
 		self::assertSame( array( array( 'ImageFront', self::ASSETS . 'blank.png', 'slice' ), array( 'ImageBack', self::ASSETS . 'blank.png', 'slice' ) ), array_map( static fn( array $image ): array => array_values( $image ), $creates[1]['variants'][0]['imagePlaceholders'] ?? array() ) );
-		self::assertFalse( $creates[0]['isVisibleInTheOnlineStore'] ?? true );
+		self::assertTrue( $creates[0]['isVisibleInTheOnlineStore'] ?? false );
 	}
 
 	public function test_a_list_of_images_gives_each_side_its_own_photo(): void {

@@ -239,7 +239,8 @@ class GelatoCatalog implements CatalogRenderer {
 				'templateId'                => (string) ( $import['ref'] ?? '' ),
 				'title'                     => 'Merch Dashboard import (' . $kind . ')',
 				'description'               => '',
-				'isVisibleInTheOnlineStore' => false,
+				// The owner's test 2026-10-30: hidden products get no preview. The API store has no sales channel.
+				'isVisibleInTheOnlineStore' => true,
 				'variants'                  => array_map(
 					static fn( mixed $variant ): array => array(
 						'templateVariantId' => (string) $variant,
