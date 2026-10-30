@@ -46,7 +46,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - Designet gemmes, og browseren laver filerne: en printfil (transparent PNG) pr. side med mindst ét synligt element i sidens printstørrelse og et produktbillede (JPEG) pr. side og valgt farve. De sendes én ad gangen med fremdrift ("3 af 9 filer sendt").
 - Serveren tjekker mål og plads og at filerne hører til den gemte kladde. Har vi ændret grundproduktet i mellemtiden, skal designet åbnes og sendes igen.
 - Designet **venter** derefter og kan ikke ændres. Creatoren kan **trække det tilbage**; så bliver det en kladde igen med samme indhold.
-- **Notifikationer (30.9):** kvittering til creatoren (mail og klokke) og "nyt designer-produkt"/"ændring af designer-produkt" til admin. Til/fra, eksempel og testmail: Merch Dashboard → Designs → Notifikationer.
+- **Notifikationer (30.9):** kvittering til creatoren (mail og klokke) og "nyt designer-produkt"/"ændring af designer-produkt" til admin. Til/fra, eksempel og testmail: Merch Dashboard → Produktdesigner → Designs → Notifikationer.
 
 ## Godkendelse og butikken (trin 30.10)
 - Admin godkender eller afviser under **Designs**. En afvisning kræver en note; creatoren får den (mail og klokke) og ser den over designeren, og designet er en kladde igen.
@@ -62,14 +62,14 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Pensionér** (på grundproduktet, med afkrydsning): dets produkter tages ud af butikken (de bliver kladder og bevares til ordrehistorikken), ventende designs afvises med en note, og creatorne får besked. Det kan ikke fortrydes; brug "Tilbage til kladde", hvis du kun vil stoppe nye designs.
 
 ## Admin functionality
-- **Designs (trin 30.9):** Merch Dashboard → Designs viser de ventende designs (creator, produkt, version, grundprodukt, nyt/ændring, kundens pris), ældste først. Godkend og afvis kommer i 30.10. Fanen Notifikationer kræver også `merchboard_manage_settings`.
+- **Designs (trin 30.9):** Merch Dashboard → Produktdesigner → Designs viser de ventende designs (creator, produkt, version, grundprodukt, nyt/ændring, kundens pris), ældste først. Godkend og afvis kommer i 30.10. Fanen Notifikationer kræver også `merchboard_manage_settings`.
 - **Grundprodukter:**
   - kilde: egen, Printful eller Gelato;
   - farver, størrelser og grundpris inkl. moms;
   - sider med mockup-skabelon og printområde i mm og dpi.
   - Skabelonen kan importeres fra en PSD med lagene `mb_background`, `mb_color`, `mb_shading`, `mb_highlight` og `mb_print_area`. AI-filer eksporteres først til PSD.
 - **Kliparts og startdesigns**, som creatorne kan bruge.
-- **Implementeret (trin 30.6):** Merch Dashboard → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde.
+- **Implementeret (trin 30.6):** Merch Dashboard → Produktdesigner → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde.
 - **PSD-import (trin 30.7):** "Importér fra PSD" pr. side. Sådan laves PSD'en (projektejeren):
   1. Ét dokument pr. side i skabelonens størrelse (fx 2000 × 2000 px), 8 bit pr. kanal (Billede → Tilstand → 8 bit/kanal). AI-filer eksporteres først til PSD.
   2. Lagene navngives præcis: `mb_background` (fotoet uden produktets farve), `mb_color` (produktets form som maske; farves i hver produktfarve), `mb_shading` (folder og skygger, ganges på), `mb_highlight` (lys, lægges ovenpå). Mindst `mb_background` eller `mb_color` skal findes. Lagene må gerne ligge i grupper.
@@ -119,7 +119,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Sådan regnes det (trin 30.3):** fortjenesten og udbetalingen beregnes én gang, når salget registreres, og gemmes ved salgsrækken. Saldo, statistik og afregningsbilag bruger de gemte beløb. En refundering tager fortjenesten tilbage i forhold til den refunderede andel af det betalte, så en fuldt refunderet linje altid ender på 0 for creatoren (projektejerens valg 2026-10-29, review 30.15).
 - **Salg uden moms** (momsfritaget kunde, eksport): betalingen sammenlignes med grundpris og fortjeneste uden moms. Eksempel: grundpris 100 og fortjeneste 100 inkl. 25 % moms, solgt til 160 uden moms: creatoren får 80, virksomheden 80 (projektejerens valg 2026-10-29).
 - **Priser:** grundprisen afrundes aldrig ned, og kundens pris er altid grundpris + fortjeneste.
-- **Kampagner (trin 30.4):** admin opretter dem under Merch Dashboard → Kampagner. En ordrelinje er i en kampagne, når kampagnen kørte, da linjen blev købt, og ordren brugte en af kampagnens kuponkoder, eller kampagnen omfatter tilbudspriser, og linjen blev solgt under sin pris før kuponer. Afgørelsen tages én gang pr. ordrelinje: en senere refundering bruger samme kampagne, også hvis kampagnen er ændret. En creators egen rabatkode kan ikke være kampagnekode.
+- **Kampagner (trin 30.4):** admin opretter dem under Merch Dashboard → Produktdesigner → Kampagner. En ordrelinje er i en kampagne, når kampagnen kørte, da linjen blev købt, og ordren brugte en af kampagnens kuponkoder, eller kampagnen omfatter tilbudspriser, og linjen blev solgt under sin pris før kuponer. Afgørelsen tages én gang pr. ordrelinje: en senere refundering bruger samme kampagne, også hvis kampagnen er ændret. En creators egen rabatkode kan ikke være kampagnekode.
 
 ## Legacy-produkter berøres ikke (ADR-080 pkt. 7)
 - **Hvilke produkter pluginet skriver til:** kun produkter, som designeren selv har oprettet. Det skal kunne ses på tre måder:
@@ -134,7 +134,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
 ## Opsætning af Printful og Gelato (projektejeren)
-Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful fra trin 30.12, Gelato fra 30.13). De gemmes krypteret og vises aldrig igen. Vejledningen herunder står også på Settings-siden.
+Nøglerne indtastes i Merch Dashboard → Produktdesigner → Indstillinger (Printful fra trin 30.12, Gelato fra 30.13). De gemmes krypteret og vises aldrig igen. Vejledningen herunder står også på Settings-siden.
 
 **Printful** (ADR-081: kun katalog og mockups):
 1. **Butik:** opret en konto på printful.com og en butik af typen "Manual order platform / API". Den må ikke være koblet til en webshop, så intet publiceres eller sælges via Printful.
@@ -142,8 +142,8 @@ Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful
    - Med adgang til én butik skal vi ikke sende butiks-id. En konto-token kræver header'en `X-PF-Store-Id`.
    - **Scopes:** vi bruger kun kataloget (kræver intet scope) og mockup-generatoren (kræver en gyldig token). Vælg færrest muligt. Kræver portalen mindst ét scope, så vælg et skrivebeskyttet, fx `file_library/read`.
    - Vælg **ikke** `orders`, `sync_products` eller `webhooks`. Vi opretter aldrig ordrer eller produkter hos Printful.
-3. **Merch Dashboard:** indsæt token'en i Settings → Produktdesigner → "Printful API token", slå Printful til, og gem.
-4. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Grundprodukter → "Nyt grundprodukt" → "Fra Printfuls katalog" søger du på ord (fx "gildan tee") og/eller kategori og vælger produktet. Sæt flueben ved farver, størrelser og sider (forside og bagside er valgt på forhånd), angiv grundprisen inkl. moms, og vælg "Opret og importér".
+3. **Merch Dashboard:** indsæt token'en i Produktdesigner → Indstillinger → "Printful API token", slå Printful til, og gem.
+4. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Produktdesigner → Grundprodukter → "Nyt grundprodukt" → "Fra Printfuls katalog" søger du på ord (fx "gildan tee") og/eller kategori og vælger produktet. Sæt flueben ved farver, størrelser og sider (forside og bagside er valgt på forhånd), angiv grundprisen inkl. moms, og vælg "Opret og importér".
    - Kladden oprettes straks. I baggrunden (et par minutter) renderer Printful produktet uden design i hver valgt farve og én gang med en farvet markør pr. side. Vi tager ét rent foto pr. farve og side og måler printområdet der, hvor markøren lander. Designeren viser altid produktets eget foto i den valgte farve; Printfuls skabelongrafik bruges ikke længere.
    - Tjek hvert printområde, og aktivér så grundproduktet. Fejler importen, står årsagen, det afviste kald og Printfuls egen besked på grundproduktet sammen med "Prøv igen", og du får en notifikation. "Vis leverandørens svar" viser Printfuls svar om produktet (uden token) til fejlfinding.
    - Printful henter vores gennemsigtige fil og markørfiler fra `wp-content/plugins/merchboard/assets/designer/`. Sitet skal derfor kunne nås fra internettet.
@@ -160,8 +160,8 @@ Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful
    - tilføj et **billedfelt pr. side** (fx forside og bagside);
    - designet i skabelonen er ligegyldigt og vises aldrig: vi erstatter det altid med en tom fil og senere med creatorernes printfiler;
    - gem, og kopiér skabelonens **Template ID** fra dens adresse.
-4. **Merch Dashboard:** indsæt nøglen i Settings → Produktdesigner → "Gelato API key" og butiks-id'et i "Gelato store id", slå Gelato til, og gem.
-5. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Grundprodukter → "Nyt grundprodukt" → "Fra Gelatos katalog" vælger du produktets katalog (fx T-shirts), indtaster skabelonens Template ID og vælger "Hent". Sæt flueben ved farver, størrelser og sider, angiv grundprisen inkl. moms, og vælg "Opret og importér".
+4. **Merch Dashboard:** indsæt nøglen i Produktdesigner → Indstillinger → "Gelato API key" og butiks-id'et i "Gelato store id", slå Gelato til, og gem.
+5. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Produktdesigner → Grundprodukter → "Nyt grundprodukt" → "Fra Gelatos katalog" vælger du produktets katalog (fx T-shirts), indtaster skabelonens Template ID og vælger "Hent". Sæt flueben ved farver, størrelser og sider, angiv grundprisen inkl. moms, og vælg "Opret og importér".
    - Farver og størrelser tages fra katalogets attributter i hver variants `productUid` (ikke fra skabelonens egne navne), og varianterne genkendes på deres id. Omdøbning i skabelonen gør derfor intet.
    - I baggrunden opretter vi først et skjult produkt fra skabelonen med en farvet markør pr. side. Giver det et forhåndsbillede, opretter vi ét skjult produkt pr. farve med en tom fil i hvert billedfelt (et produkt hos Gelato har ét `previewUrl`). Printområdet måles på billedet, og farvekoderne måles på de rene fotos. Kun den side, forhåndsbilledet viser, får et foto; de andre udelades og nævnes på grundproduktet.
    - **Skabelonen skal (set på devpage 2026-10-30):** være et printet produkt med et navngivet billedlag pr. side og en rigtig mockup (t-shirt Gildan 5000 i DTG med mockup `new/flatlay/front` gav fotos i alle 13 farver på ca. 6 minutter). En broderet hue med et automatisk navngivet billedlag og kun `editor/front-embroidery` gav `active` uden billeder; importen stoppede så efter 10 minutter. Broderi skal virke (projektejerens krav 2026-10-30). Fem testprodukter på hue-skabelonen med forskellige filer og `fitMethod` gav heller ingen billeder, så filen er ikke årsagen. Da projektejeren valgte en standard-mockup i hue-skabelonen, gav Gelato fotos, og importen af den broderede hue blev færdig automatisk på stg 2026-10-30 (printområde 144 × 140 px, 38 × 37 mm). **Uden en valgt mockup laver Gelato ingen billeder, heller ikke for broderi.**
