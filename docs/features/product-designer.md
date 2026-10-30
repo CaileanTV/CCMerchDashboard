@@ -86,6 +86,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 
 ## Afregning (ADR-080 pkt. 8)
 - Kundens pris er grundpris + fortjeneste.
+- **Ekstra designområder (2026-10-30):** ét område er med i grundprisen. Hvert ekstra område, creatoren bruger, lægger grundproduktets "Pris pr. ekstra designområde" oveni (0 som standard). Beløbet tilfalder virksomheden og er sikret som grundprisen. Eksempel: grundpris 150, ekstra 50, to områder og 20 % giver sikret grundpris 200, fortjeneste 40 og kundepris 240. Et område tæller, når det har mindst ét synligt objekt, og prisen i designeren følger med. Et nyt beløb når produkterne i butikken som en ny grundpris.
 - **Uden for kampagner** får virksomheden altid grundprisen:
   - en rabat tages fra creatorens fortjeneste;
   - fortjenesten bliver aldrig negativ.

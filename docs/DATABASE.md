@@ -642,7 +642,7 @@ Indexes: `PRIMARY KEY (id)`, `UNIQUE KEY dedupe_key`, `KEY creator_dashboard (cr
 
 Rækker ældre end 180 dage beskæres ved hver ny notifikation (200 ad gangen). Sletning af en creator fjerner creatorens rækker. Administratorens valg ligger i option `merchboard_notifications` og creatorens fravalg i user meta `merchboard_notification_email_off`.
 
-### Produktdesigner 🔄 (schema-version 35–38, ADR-080–082)
+### Produktdesigner 🔄 (schema-version 35–39, ADR-080–082)
 
 Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. Beløb er `decimal(19,4)` inkl. moms, som i ledgeren. JSON-kolonner er `longtext`.
 
@@ -674,6 +674,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 **Printful (trin 30.12):** `merchboard_designer_bases.provider_ref` (Printful-produktets id) og `provider_template` (JSON: Printfuls placering pr. side-nøgle); `merchboard_designer_versions.mockup_state` (`none`, `running`, `ready`, `failed`); `merchboard_designer_provider_tasks` har én række pr. side (`queued` → `pending` → `done`/`failed`) med `task_key`, `attempts` og variant → farve i `result`. Option `merchboard_designer_printful_token` (krypteret, uden autoload; slettes ved afinstallation).
 
 **Gelato (trin 30.13):** på et Gelato-grundprodukt er `provider_ref` skabelonens id og `provider_template` JSON med Gelatos billedfelt pr. side-nøgle (højst 191 tegn). `merchboard_designer_versions.provider_ref` er id'et på det produkt, der blev oprettet i Gelato-butikken til versionens mockups. `merchboard_designer_provider_tasks` har én række pr. version (`provider` `gelato`, `side` `all`, `task_key` = Gelato-produktets id, farverne i `result`). Optionerne `merchboard_designer_gelato_key` (krypteret, uden autoload) og `merchboard_designer_gelato_store` (butiks-id, uden autoload) slettes ved afinstallation; produkterne hos Gelato bevares.
+
+**Ekstra designområder (migration 39, `AddDesignerExtraSidePrice`):** `merchboard_designer_bases.extra_side_price` (decimal inkl. moms, standard 0): prisen for hvert brugt område ud over det første. `merchboard_designer_products.shop_base_price` er herefter den sikrede grundpris inkl. ekstra områder.
 
 **Katalogimport (review 30.15, migration 38, `AddDesignerBaseImport`):** `merchboard_designer_bases.provider_template` bliver `longtext`; nye kolonner `import_state` (`varchar(10)`, `none`/`running`/`ready`/`failed`, standard `none`) og `import_data` (`longtext` JSON, NULL: importens fremdrift, dvs. renderinger, målinger, gemte fotos og ved fejl årsag, kald og leverandørens besked). For et grundprodukt fra katalogimporten er `provider_template` `{placements: {side: placering/billedfelt}, variants: {farvenøgle: {størrelse: variant}}, slots: {side: billedplads}}`; ældre rækker med kun placeringerne læses som før. Migrationen er idempotent. En side kan have lag `background:<farvenøgle>` (et foto pr. farve) i `views[].layers`.
 

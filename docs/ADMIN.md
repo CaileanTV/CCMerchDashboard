@@ -65,6 +65,8 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 
 **Katalogimport, fra review 30.15 (eksperimentel):** "Nyt grundprodukt" har kilderne "Eget grundprodukt", "Fra Printfuls katalog" (søg på ord og kategori, vælg produktet) og "Fra Gelatos katalog" (vælg katalog, indtast skabelon-id), når leverandøren er slået til. Derefter vælger admin farver, størrelser og sider og grundpris og vælger "Opret og importér". Kladden oprettes straks; listen viser "importerer…" eller "import fejlet". Grundproduktet viser importens tilstand, ved fejl årsagen, kaldet og leverandørens besked med "Prøv igen", og "Vis leverandørens svar" (uden nøgler). Mens importen kører, kan grundproduktet ikke aktiveres eller slettes. Hver side kan også have en **baggrund pr. farve** (upload pr. farve under siden). De gamle felter "Importér fra Printful/Gelato" er fjernet.
 
+**Ekstra designområder, fra 2026-10-30:** "Pris pr. ekstra designområde" sættes på grundproduktet, både på et eget og ved import fra et katalog (standard 0). "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele printområdet.
+
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 
 ### Designs 🔄 (fase 30, trin 30.9, ADR-080 pkt. 3)

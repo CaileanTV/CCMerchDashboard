@@ -542,7 +542,7 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 
 | Metode og sti | Svar |
 | --- | --- |
-| `GET /me/designer` | `bases` (aktive grundprodukter: `base_price`, `currency`, `colors`, `sizes`, `views` med `layers` (asset-id pr. lag), `area`, `print_width`/`print_height`, `dpi`), `cliparts`, `uploads` (creatorens), `fonts` (godkendte Google Fonts), `products` (creatorens designer-produkter med nyeste versions titel og status) og `limits` (`max_upload_bytes`, `max_uploads`, `max_objects`, `price_decimals`) |
+| `GET /me/designer` | `bases` (aktive grundprodukter: `base_price`, `extra_side_price`, `currency`, `colors`, `sizes`, `views` med `layers` (asset-id pr. lag), `area`, `print_width`/`print_height`, `dpi`), `cliparts`, `uploads` (creatorens), `fonts` (godkendte Google Fonts), `products` (creatorens designer-produkter med nyeste versions titel og status) og `limits` (`max_upload_bytes`, `max_uploads`, `max_objects`, `price_decimals`) |
 | `POST /me/designer/uploads` (multipart `file`) | 201 med asset (`id`, `name`, `width`, `height`, `mime`). PNG, JPG eller WebP, højst 25 MB og 8000 px; højst 200 filer og 1 GB pr. creator |
 | `DELETE /me/designer/uploads/{id}` | Tilstanden som `GET` (kun creatorens egne uploads) |
 | `GET /me/designer/assets/{id}` | Filen selv (`no-store`, `nosniff`): creatorens uploads, kliparts og skabelonlag (fra review 30.15 kun af et aktivt grundprodukt eller et, creatoren har et design på). Dashboardet viser den som `data:` |
