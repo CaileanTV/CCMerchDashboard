@@ -41,7 +41,8 @@ defined( 'ABSPATH' ) || exit;
  *    side. Polled until done (at most 40 times); the provider's own state
  *    is stored per render and shown live on the base product.
  * 2. **measure:** per photo of the first colour, ImageProbe compares the
- *    two renders; each side's print area is where its marker shows most.
+ *    two renders; each side's print area is where its marker shows most,
+ *    and its print size follows what the photo shows of the layer.
  * 3. **download:** the blank photo of each colour and side, as a PNG of the
  *    side's size (Gelato's colour codes are measured on them).
  * 4. **save:** the sides are stored through BaseProductService as the
@@ -733,7 +734,9 @@ class CatalogImport {
 				continue;
 			}
 
-			$area                  = ImageProbe::fit( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+			[ $width_mm, $height_mm ] = ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+
+			$area                  = ImageProbe::fit( $chosen['box'], $width_mm, $height_mm );
 			$slots[ $side['key'] ] = (string) $chosen['slot'];
 			$kept[ $side['key'] ]  = (string) $side['placement'];
 			$views[]               = array(
@@ -743,8 +746,8 @@ class CatalogImport {
 				'y'         => (string) $area['y'],
 				'width'     => (string) $area['width'],
 				'height'    => (string) $area['height'],
-				'width_mm'  => (string) $side['width_mm'],
-				'height_mm' => (string) $side['height_mm'],
+				'width_mm'  => (string) $width_mm,
+				'height_mm' => (string) $height_mm,
 				'dpi'       => (string) $side['dpi'],
 				'remove'    => false,
 				'clear'     => array(),

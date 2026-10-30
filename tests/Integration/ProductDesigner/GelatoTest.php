@@ -321,6 +321,18 @@ final class GelatoTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_the_print_area_is_what_the_photo_shows_even_when_the_layer_says_otherwise(): void {
+		$this->account->set( self::KEY, self::STORE );
+		// A 30 × 40 mm layer of which the photo shows a wide band.
+		$this->answers['https://cdn.example/marker-front.png'] = self::shirt( array( 35, 35, 35 ), array( array( 50, 80, 100, 30, array( 235, 15, 230 ) ) ) );
+
+		$view = $this->bases->find( $this->import() )->views[0] ?? self::fail( 'No side.' );
+
+		self::assertEqualsWithDelta( 100, $view->area['width'], 3, 'The whole width of the marker.' );
+		self::assertEqualsWithDelta( 30, $view->area['height'], 3 );
+		self::assertSame( array( 30, 9 ), array( $view->width_mm, $view->height_mm ), 'The width fills the marker: the height is what shows.' );
+	}
+
 	public function test_an_active_product_is_waited_for_until_it_has_a_preview(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$looks = 0;

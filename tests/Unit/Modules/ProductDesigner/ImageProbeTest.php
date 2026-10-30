@@ -79,6 +79,18 @@ final class ImageProbeTest extends TestCase {
 		self::assertSame( array( 'x' => 150, 'y' => 115, 'width' => 100, 'height' => 50 ), ImageProbe::fit( array( 'x' => 150, 'y' => 80, 'width' => 100, 'height' => 120 ), 200, 100 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
+	public function test_the_print_size_follows_what_the_photo_shows_of_the_layer(): void {
+		$box = static fn( int $width, int $height ): array => array( 'x' => 0, 'y' => 0, 'width' => $width, 'height' => $height ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( array( 132, 46 ), ImageProbe::print_size( $box( 484, 170 ), 132, 84 ), 'The beanie: the width fills the box, the layer is cut off in height.' );
+		self::assertSame( array( 40, 60 ), ImageProbe::print_size( $box( 200, 300 ), 80, 60 ), 'Cut off in width.' );
+		self::assertSame( array( 244, 244 ), ImageProbe::print_size( $box( 286, 280 ), 244, 244 ), 'Measuring noise changes nothing.' );
+
+		$area = ImageProbe::fit( $box( 484, 170 ), 132, 46 );
+
+		self::assertSame( array( 484, 169 ), array( $area['width'], $area['height'] ), 'The whole width of the box stays.' );
+	}
+
 	public function test_a_photo_becomes_a_png_of_the_side_s_size(): void {
 		[ $png, $width, $height ] = ImageProbe::png( $this->blank(), 200, 150 );
 

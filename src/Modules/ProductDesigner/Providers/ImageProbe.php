@@ -59,6 +59,11 @@ final class ImageProbe {
 	private const MAX_DISTANCE = 0.9;
 
 	/**
+	 * Largest share a box's proportions may differ from a layer's and still be the layer.
+	 */
+	private const MAX_SKEW = 0.05;
+
+	/**
 	 * The share of marker pixels ignored at each edge of the box.
 	 */
 	private const TRIM = 0.01;
@@ -223,6 +228,30 @@ final class ImageProbe {
 		}
 
 		return array( $bytes, imagesx( $im ), imagesy( $im ) );
+	}
+
+	/**
+	 * The print size of a measured box. A provider can show less of a layer
+	 * than its size says: a 132 × 84 mm layer on a beanie's cuff showed 484 ×
+	 * 170 px (2026-10-30), 132 × 46 mm. The side that fills the box sets the
+	 * scale, and what the photo shows is the print size. Within MAX_SKEW the
+	 * layer's size stands, so measuring noise changes nothing.
+	 *
+	 * @param array{x: int, y: int, width: int, height: int} $box       Box.
+	 * @param int                                            $width_mm  Layer width.
+	 * @param int                                            $height_mm Layer height.
+	 * @return array{0: int, 1: int} Print width and height in millimetres.
+	 */
+	public static function print_size( array $box, int $width_mm, int $height_mm ): array {
+		$across = $box['width'] / max( 1, $width_mm );
+		$down   = $box['height'] / max( 1, $height_mm );
+		$scale  = max( $across, $down );
+
+		if ( $scale <= 0 || abs( $across - $down ) / $scale <= self::MAX_SKEW ) {
+			return array( $width_mm, $height_mm );
+		}
+
+		return array( max( 1, (int) round( $box['width'] / $scale ) ), max( 1, (int) round( $box['height'] / $scale ) ) );
 	}
 
 	/**
