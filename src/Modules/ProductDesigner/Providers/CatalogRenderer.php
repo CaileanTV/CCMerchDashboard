@@ -40,10 +40,20 @@ interface CatalogRenderer {
 	public function choice( string $ref ): array;
 
 	/**
-	 * Starts a render: `blank` (every colour, transparent files) or
-	 * `marker` (the first colour, a marker colour per side).
+	 * The renders of an import: `marker` (the first colour with a marker
+	 * colour per side), and `blank` (every colour with transparent files) or
+	 * `blank:<colour key>` per colour for a provider that gives one image
+	 * per product.
 	 *
-	 * @param string               $kind   `blank` or `marker`.
+	 * @param array<string, mixed> $import Import data.
+	 * @return list<string>
+	 */
+	public function render_kinds( array $import ): array;
+
+	/**
+	 * Starts a render.
+	 *
+	 * @param string               $kind   One of render_kinds().
 	 * @param array<string, mixed> $import Import data.
 	 * @return string The render's key at the provider.
 	 */
@@ -51,11 +61,12 @@ interface CatalogRenderer {
 
 	/**
 	 * A render's state: `pending`, `failed` (with `error`) or `done` with
-	 * its image URLs by slot and colour key.
+	 * its image URLs by slot and colour key, and the provider's own state
+	 * in `note` for the administrator.
 	 *
 	 * @param string               $key    The render's key.
 	 * @param array<string, mixed> $import Import data.
-	 * @return array{status: string, error?: string, images?: array<int|string, array<string, string>>}
+	 * @return array{status: string, error?: string, note?: string, images?: array<int|string, array<string, string>>}
 	 */
 	public function check( string $key, array $import ): array;
 

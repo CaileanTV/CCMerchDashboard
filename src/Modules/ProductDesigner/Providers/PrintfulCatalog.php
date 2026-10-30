@@ -265,7 +265,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 *
 	 * @param string               $key    Task key.
 	 * @param array<string, mixed> $import Import data.
-	 * @return array{status: string, error?: string, images?: array<int|string, array<string, string>>}
+	 * @return array{status: string, error?: string, note?: string, images?: array<int|string, array<string, string>>}
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
 	public function check( string $key, array $import ): array {
@@ -279,8 +279,13 @@ class PrintfulCatalog implements CatalogRenderer {
 			);
 		}
 
+		$note = 'status=' . ( '' === $status ? '?' : sanitize_key( $status ) );
+
 		if ( 'completed' !== $status ) {
-			return array( 'status' => 'pending' );
+			return array(
+				'status' => 'pending',
+				'note'   => $note,
+			);
 		}
 
 		$colors = array();
@@ -306,7 +311,20 @@ class PrintfulCatalog implements CatalogRenderer {
 		return array(
 			'status' => 'done',
 			'images' => $images,
+			'note'   => $note,
 		);
+	}
+
+	/**
+	 * One blank render of every colour and one with the markers.
+	 *
+	 * @param array<string, mixed> $import Import data.
+	 * @return list<string>
+	 */
+	public function render_kinds( array $import ): array {
+		unset( $import );
+
+		return array( 'blank', 'marker' );
 	}
 
 	/**

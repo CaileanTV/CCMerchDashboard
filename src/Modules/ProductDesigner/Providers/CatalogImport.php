@@ -35,9 +35,11 @@ defined( 'ABSPATH' ) || exit;
  * and the Action Scheduler job `merchboard_designer_import` (a lock per base
  * product) fetches the photos in rounds:
  *
- * 1. **render:** the provider renders the product twice: every colour with
- *    the transparent file in each placement, and the first colour with a
- *    marker colour per side. Polled until done (at most 40 times).
+ * 1. **render:** the provider renders the product with the transparent file
+ *    in each placement (Printful every colour in one task, Gelato one
+ *    product per colour), and the first colour with a marker colour per
+ *    side. Polled until done (at most 40 times); the provider's own state
+ *    is stored per render and shown live on the base product.
  * 2. **measure:** per photo of the first colour, ImageProbe compares the
  *    two renders; each side's print area is where its marker shows most.
  * 3. **download:** the blank photo of each colour and side, as a PNG of the
@@ -66,7 +68,17 @@ class CatalogImport {
 
 	private const LOCK = 'merchboard_designer_import_';
 
-	private const MAX_POLLS = 40;
+	public const MAX_POLLS = 40;
+
+	/**
+	 * Renders started per round (a provider with one image per product has one per colour).
+	 */
+	private const RENDERS_PER_RUN = 5;
+
+	/**
+	 * Seconds before the next renders are started.
+	 */
+	private const NEXT_RENDERS_DELAY = 5;
 
 	/**
 	 * Most rounds of one import before it gives up.
@@ -455,23 +467,28 @@ class CatalogImport {
 	 */
 	private function render( int $id, CatalogRenderer $renderer, array &$data ): int {
 		$renders = is_array( $data['renders'] ?? null ) ? $data['renders'] : array();
-		$started = false;
+		$started = 0;
 
-		foreach ( array( 'blank', 'marker' ) as $kind ) {
+		foreach ( $renderer->render_kinds( $data ) as $kind ) {
 			if ( ! isset( $renders[ $kind ] ) ) {
+				if ( $started >= self::RENDERS_PER_RUN ) {
+					return self::NEXT_RENDERS_DELAY;
+				}
+
 				$renders[ $kind ] = array(
-					'key'    => $renderer->render( $kind, $data ),
-					'status' => 'pending',
-					'polls'  => 0,
+					'key'     => $renderer->render( $kind, $data ),
+					'status'  => 'pending',
+					'polls'   => 0,
+					'started' => time(),
 				);
 				$data['renders']  = $renders;
-				$started          = true;
+				++$started;
 				// Stored at once: a render is never started twice.
 				$this->persist( $id, $data );
 			}
 		}
 
-		if ( $started ) {
+		if ( $started > 0 ) {
 			return $renderer->poll_delay();
 		}
 
@@ -483,7 +500,9 @@ class CatalogImport {
 			$state = $renderer->check( (string) $render['key'], $data );
 			$polls = (int) ( $render['polls'] ?? 0 ) + 1;
 
-			$renders[ $kind ]['polls'] = $polls;
+			$renders[ $kind ]['polls']   = $polls;
+			$renders[ $kind ]['note']    = $state['note'] ?? '';
+			$renders[ $kind ]['checked'] = time();
 
 			if ( 'failed' === $state['status'] ) {
 				$data['renders'] = $renders;
@@ -493,9 +512,18 @@ class CatalogImport {
 			}
 
 			if ( 'done' === $state['status'] ) {
+				$group = 'marker' === $kind ? 'marker' : 'blank';
+
 				$renders[ $kind ]['status'] = 'done';
-				$data['images'][ $kind ]    = $state['images'] ?? array();
+
+				foreach ( $state['images'] ?? array() as $slot => $urls ) {
+					$data['images'][ $group ][ $slot ] = array_merge( $data['images'][ $group ][ $slot ] ?? array(), $urls );
+					$renders[ $kind ]['image']       ??= reset( $urls );
+				}
 			} elseif ( $polls >= self::MAX_POLLS ) {
+				$data['renders'] = $renders;
+				$data['detail']  = $kind . ': ' . ( $state['note'] ?? '' );
+				$this->current   = $data;
 				self::stop( DesignerException::IMPORT_TIMEOUT );
 			}
 		}
@@ -504,6 +532,11 @@ class CatalogImport {
 
 		if ( array( 'done' ) !== array_values( array_unique( array_column( $renders, 'status' ) ) ) ) {
 			return $renderer->poll_delay();
+		}
+
+		// A render can lead to more renders.
+		if ( array() !== array_diff( $renderer->render_kinds( $data ), array_keys( $renders ) ) ) {
+			return 0;
 		}
 
 		$data['phase'] = 'measure';
@@ -757,6 +790,7 @@ class CatalogImport {
 					'ref'      => $data['ref'] ?? '',
 					'renders'  => $data['renders'] ?? array(),
 					'slots'    => $slots,
+					'skipped'  => array_column( array_values( array_filter( $sides, static fn( mixed $side ): bool => is_array( $side ) && ! isset( $slots[ (string) ( $side['key'] ?? '' ) ] ) ) ), 'name' ),
 					'started'  => $data['started'] ?? 0,
 					'finished' => time(),
 				)
@@ -903,7 +937,8 @@ class CatalogImport {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private function persist( int $id, array $data ): void {
-		$this->current = $data;
+		$data['updated'] = time();
+		$this->current   = $data;
 		$this->bases->set_import( $id, self::RUNNING, self::json( $data ) );
 	}
 

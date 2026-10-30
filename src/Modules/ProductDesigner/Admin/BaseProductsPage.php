@@ -66,6 +66,16 @@ final class BaseProductsPage {
 	public const PRIORITY = 29;
 
 	/**
+	 * The admin-ajax action with an import's status.
+	 */
+	public const STATUS_ACTION = 'merchboard_base_import_status';
+
+	/**
+	 * Seconds without a round before a running import is shown as stuck.
+	 */
+	private const STALE_IMPORT = 300;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param BaseProductRepository   $bases    Base products.
@@ -94,6 +104,58 @@ final class BaseProductsPage {
 			Capabilities::MANAGE_DESIGNER,
 			self::SLUG,
 			array( $this, 'render' )
+		);
+	}
+
+	/**
+	 * WordPress entry point of the import's status (logged-in users only).
+	 */
+	public function handle_status(): void {
+		// The nonce is verified in import_status() before any input is used.
+		$result = $this->import_status( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in import_status().
+
+		if ( 200 === $result['status'] ) {
+			wp_send_json_success( $result['data'] );
+		}
+
+		wp_send_json_error( null, $result['status'] );
+	}
+
+	/**
+	 * An import's status as escaped HTML. Order of checks: capability → nonce.
+	 *
+	 * @param array<mixed> $input Unslashed request data (`base`, `nonce`).
+	 * @return array{status: int, data: array{state?: string, html?: string}}
+	 */
+	public function import_status( array $input ): array {
+		$nonce = is_scalar( $input['nonce'] ?? null ) ? (string) $input['nonce'] : '';
+
+		if ( ! current_user_can( Capabilities::MANAGE_DESIGNER ) || 1 !== wp_verify_nonce( $nonce, self::STATUS_ACTION ) ) {
+			return array(
+				'status' => 403,
+				'data'   => array(),
+			);
+		}
+
+		try {
+			$import = $this->bases->import( absint( is_scalar( $input['base'] ?? null ) ? $input['base'] : 0 ) );
+		} catch ( DatabaseException ) {
+			$import = null;
+		}
+
+		if ( null === $import ) {
+			return array(
+				'status' => 404,
+				'data'   => array(),
+			);
+		}
+
+		return array(
+			'status' => 200,
+			'data'   => array(
+				'state' => $import['state'],
+				'html'  => self::import_progress( $import['state'], $import['data'] ),
+			),
 		);
 	}
 
@@ -722,7 +784,8 @@ final class BaseProductsPage {
 
 		if ( CatalogImport::RUNNING === $state ) {
 			/* translators: %s: Printful or Gelato. */
-			echo '<div class="notice notice-info inline"><p>' . esc_html( sprintf( __( 'The photos and print areas are being imported from %s in the background. Reload the page to see when they are done; the base product cannot be activated meanwhile.', 'merchboard' ), $name ) ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html( sprintf( __( 'The photos and print areas are being imported from %s in the background. The status below updates by itself; the base product cannot be activated meanwhile.', 'merchboard' ), $name ) ) . '</p></div>';
+			$this->enqueue_import_status( (int) $base->id );
 		} elseif ( CatalogImport::FAILED === $state ) {
 			echo '<div class="notice notice-error inline"><p>' . esc_html( sprintf( /* translators: 1: Printful or Gelato, 2: reason. */ __( 'The import from %1$s failed: %2$s', 'merchboard' ), $name, DesignerNotifications::reason( is_string( $data['error'] ?? null ) ? $data['error'] : 'error' ) ) ) . '</p>';
 
@@ -737,8 +800,18 @@ final class BaseProductsPage {
 			echo '<p><button type="submit" class="button">' . esc_html__( 'Try again', 'merchboard' ) . '</button></p></form></div>';
 		} else {
 			/* translators: %s: Printful or Gelato. */
-			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ), $name ) ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ), $name ) ) . '</p>';
+
+			if ( is_array( $data['skipped'] ?? null ) && array() !== $data['skipped'] ) {
+				/* translators: 1: names of sides, 2: Printful or Gelato. */
+				echo '<p>' . esc_html( sprintf( __( 'Left out because %2$s\'s photos do not show them: %1$s.', 'merchboard' ), implode( ', ', array_filter( $data['skipped'], 'is_string' ) ), $name ) ) . '</p>';
+			}
+
+			echo '</div>';
 		}
+
+		// Everything is escaped in import_progress().
+		echo '<div id="merchboard-import-status">' . self::import_progress( $state, $data ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- import_progress() escapes.
 
 		// Read-only parameter; nothing is changed by this request.
 		$diagnose = isset( $_GET['diagnose'] ) && '1' === $_GET['diagnose']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
@@ -759,6 +832,104 @@ final class BaseProductsPage {
 		}
 
 		echo '<details open><summary>' . esc_html__( 'The provider\'s answer (no keys)', 'merchboard' ) . '</summary><pre style="max-height:30rem;overflow:auto;background:#f6f7f7;padding:1em">' . esc_html( (string) wp_json_encode( $answer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) . '</pre></details>';
+	}
+
+	/**
+	 * Loads the script that keeps the import's status up to date; the page
+	 * works without it (reload to see the status).
+	 *
+	 * @param int $id Base product.
+	 */
+	private function enqueue_import_status( int $id ): void {
+		if ( '' === $this->plugin_url ) {
+			return;
+		}
+
+		wp_enqueue_script( 'merchboard-import-status', $this->plugin_url . 'assets/js/designer-import-status.js', array(), defined( 'MERCHBOARD_VERSION' ) ? (string) constant( 'MERCHBOARD_VERSION' ) : false, true );
+		wp_add_inline_script(
+			'merchboard-import-status',
+			'window.merchboardImportStatus = ' . (string) wp_json_encode(
+				array(
+					'url'    => admin_url( 'admin-ajax.php' ),
+					'action' => self::STATUS_ACTION,
+					'nonce'  => wp_create_nonce( self::STATUS_ACTION ),
+					'base'   => $id,
+				)
+			) . ';',
+			'before'
+		);
+	}
+
+	/**
+	 * The import's progress: the steps and each render with the provider's
+	 * own state and picture. Everything is escaped.
+	 *
+	 * @param string               $state Import state.
+	 * @param array<string, mixed> $data  Import data.
+	 */
+	private static function import_progress( string $state, array $data ): string {
+		$phase   = is_string( $data['phase'] ?? null ) ? $data['phase'] : 'render';
+		$steps   = array(
+			'render'   => __( 'The provider renders the product', 'merchboard' ),
+			'measure'  => __( 'The print areas are measured', 'merchboard' ),
+			'download' => __( 'The photos are downloaded', 'merchboard' ),
+			'save'     => __( 'The sides are saved', 'merchboard' ),
+		);
+		$current = CatalogImport::RUNNING === $state ? array_search( $phase, array_keys( $steps ), true ) : false;
+		$html    = '<ol>';
+		$index   = 0;
+
+		foreach ( $steps as $label ) {
+			$html .= '<li>' . ( $index === $current ? '<strong>' . esc_html( $label ) . ' …</strong>' : esc_html( $label ) ) . '</li>';
+			++$index;
+		}
+
+		$html   .= '</ol>';
+		$renders = is_array( $data['renders'] ?? null ) ? $data['renders'] : array();
+
+		if ( array() !== $renders ) {
+			$html .= '<table class="widefat striped" style="max-width:50rem"><thead><tr><th>' . esc_html__( 'Render', 'merchboard' ) . '</th><th>' . esc_html__( 'Status', 'merchboard' ) . '</th><th>' . esc_html__( 'The provider says', 'merchboard' ) . '</th><th>' . esc_html__( 'Picture', 'merchboard' ) . '</th></tr></thead><tbody>';
+
+			foreach ( $renders as $kind => $render ) {
+				if ( is_array( $render ) ) {
+					$html .= self::import_render_row( (string) $kind, $render );
+				}
+			}
+
+			$html .= '</tbody></table>';
+		}
+
+		$updated = is_numeric( $data['updated'] ?? null ) ? time() - (int) $data['updated'] : 0;
+
+		if ( CatalogImport::RUNNING === $state && $updated > self::STALE_IMPORT ) {
+			/* translators: %d: minutes. */
+			$html .= '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( __( 'The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site.', 'merchboard' ), (int) floor( $updated / 60 ) ) ) . '</p></div>';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * One render of the import's progress.
+	 *
+	 * @param string       $kind   `marker`, `blank` or `blank:<colour key>`.
+	 * @param array<mixed> $render Render.
+	 */
+	private static function import_render_row( string $kind, array $render ): string {
+		$label = 'marker' === $kind ? __( 'Product with markers', 'merchboard' ) : __( 'Blank product', 'merchboard' );
+
+		if ( str_starts_with( $kind, 'blank:' ) ) {
+			$label .= ': ' . substr( $kind, 6 );
+		}
+
+		$done  = 'done' === ( $render['status'] ?? '' );
+		$polls = is_numeric( $render['polls'] ?? null ) ? (int) $render['polls'] : 0;
+		$image = is_string( $render['image'] ?? null ) && 'https' === wp_parse_url( $render['image'], PHP_URL_SCHEME ) ? $render['image'] : '';
+		$note  = is_string( $render['note'] ?? null ) ? $render['note'] : '';
+		/* translators: 1: looks so far, 2: most looks. */
+		$status = $done ? __( 'Ready', 'merchboard' ) : sprintf( __( 'Waiting (look %1$d of %2$d)', 'merchboard' ), $polls, CatalogImport::MAX_POLLS );
+
+		return '<tr><td>' . esc_html( $label ) . '</td><td>' . esc_html( $status ) . '</td><td><code>' . esc_html( $note ) . '</code></td><td>' . ( '' === $image ? '' : '<a href="' . esc_url( $image ) . '" target="_blank" rel="noopener noreferrer"><img src="' . esc_url( $image ) . '" alt="" style="width:64px;height:64px;object-fit:contain"></a>' ) . '</td></tr>';
 	}
 
 	/**

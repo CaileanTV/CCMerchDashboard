@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\ProductDesigner\Admin\BaseProductsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
@@ -246,34 +247,31 @@ final class GelatoTest extends IntegrationTestCase {
 		);
 	}
 
-	public function test_a_template_s_product_is_imported_with_a_photo_per_side_and_colour_and_measured_colours(): void {
+	public function test_a_template_s_product_is_imported_with_a_product_per_colour_and_measured_colours(): void {
 		$this->account->set( self::KEY, self::STORE );
-		$base = $this->bases->find( $this->import() );
+		$id   = $this->import();
+		$base = $this->bases->find( $id );
 
 		self::assertNotNull( $base );
 		self::assertSame( array( BaseProduct::DRAFT, 'gelato', 'Classic tee', 1499500 ), array( $base->status, $base->source, $base->name, $base->base_units ) );
 		self::assertSame( array( array( 'black', 'Black', '#232323' ), array( 'white', 'White', '#fafafa' ) ), array_map( static fn( array $color ): array => array( $color['key'], $color['name'], $color['hex'] ), $base->colors ), 'Gelato names no colour codes: they are measured on the blank photos.' );
 		self::assertSame( array( 'S', 'M' ), $base->sizes );
-		self::assertSame( array( 'front', 'back' ), array_map( static fn( $view ): string => $view->key, $base->views ) );
+		self::assertSame( array( 'front' ), array_map( static fn( $view ): string => $view->key, $base->views ), 'The one preview shows the front.' );
+		self::assertSame( array( 'Back' ), $this->bases->import( $id )['data']['skipped'] ?? null );
 
-		foreach ( array( array( 70, 50, 60, 80 ), array( 80, 60, 45, 60 ) ) as $index => $box ) {
-			$view = $base->views[ $index ];
-			self::assertSame( array( 200, 200, 30, 40, 300 ), array( $view->width, $view->height, $view->width_mm, $view->height_mm, $view->dpi ) );
-			self::assertSame( array( 'background', 'background:white' ), array_keys( $view->layers ) );
+		$view = $base->views[0];
+		self::assertSame( array( 200, 200, 30, 40, 300 ), array( $view->width, $view->height, $view->width_mm, $view->height_mm, $view->dpi ) );
+		self::assertSame( array( 'background', 'background:white' ), array_keys( $view->layers ) );
 
-			foreach ( $box as $field => $expected ) {
-				self::assertEqualsWithDelta( $expected, array_values( $view->area )[ $field ], 2, $view->key . ': where its marker showed.' );
-			}
+		foreach ( array( 70, 50, 60, 80 ) as $field => $expected ) {
+			self::assertEqualsWithDelta( $expected, array_values( $view->area )[ $field ], 2, 'Where the marker showed.' );
 		}
 
 		self::assertSame(
 			array(
 				'source'     => 'gelato',
 				'ref'        => 'tpl-1',
-				'placements' => array(
-					'front' => 'ImageFront',
-					'back'  => 'ImageBack',
-				),
+				'placements' => array( 'front' => 'ImageFront' ),
 				'variants'   => array(
 					'black' => array(
 						'S' => 'tv-b-s',
@@ -284,52 +282,32 @@ final class GelatoTest extends IntegrationTestCase {
 						'M' => 'tv-w-m',
 					),
 				),
-				'slots'      => array(
-					'front' => '0',
-					'back'  => '1',
-				),
+				'slots'      => array( 'front' => '0' ),
 			),
-			$this->bases->provider( (int) $base->id ),
-			'The front is each variant\'s first image, the back its second.'
+			$this->bases->provider( $id )
 		);
 
-		$creates = array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], 'products:create-from-template' ) ) );
-		self::assertCount( 2, $creates );
-		$blank  = json_decode( (string) ( $creates[0][2]['body'] ?? '' ), true );
-		$marker = json_decode( (string) ( $creates[1][2]['body'] ?? '' ), true );
-		self::assertSame( array( 'tv-b-s', 'tv-w-s' ), array_column( $blank['variants'] ?? array(), 'templateVariantId' ) );
-		self::assertSame( array( array( 'ImageFront', self::ASSETS . 'blank.png', 'slice' ), array( 'ImageBack', self::ASSETS . 'blank.png', 'slice' ) ), array_map( static fn( array $image ): array => array_values( $image ), $blank['variants'][0]['imagePlaceholders'] ?? array() ) );
-		self::assertSame( array( 'tv-b-s' ), array_column( $marker['variants'] ?? array(), 'templateVariantId' ) );
-		self::assertSame( array( self::ASSETS . 'marker-1.png', self::ASSETS . 'marker-2.png' ), array_column( $marker['variants'][0]['imagePlaceholders'] ?? array(), 'fileUrl' ) );
-		self::assertFalse( $marker['isVisibleInTheOnlineStore'] ?? true );
+		$creates = array_map( static fn( array $call ): array => (array) json_decode( (string) ( $call[2]['body'] ?? '' ), true ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], 'products:create-from-template' ) ) ) );
+		self::assertSame( array( array( 'tv-b-s' ), array( 'tv-b-s' ), array( 'tv-w-s' ) ), array_map( static fn( array $body ): array => array_column( $body['variants'] ?? array(), 'templateVariantId' ), $creates ), 'The marker product first, then a product per colour: a product has one preview.' );
+		self::assertSame( array( self::ASSETS . 'marker-1.png', self::ASSETS . 'marker-2.png' ), array_column( $creates[0]['variants'][0]['imagePlaceholders'] ?? array(), 'fileUrl' ) );
+		self::assertSame( array( array( 'ImageFront', self::ASSETS . 'blank.png', 'slice' ), array( 'ImageBack', self::ASSETS . 'blank.png', 'slice' ) ), array_map( static fn( array $image ): array => array_values( $image ), $creates[1]['variants'][0]['imagePlaceholders'] ?? array() ) );
+		self::assertFalse( $creates[0]['isVisibleInTheOnlineStore'] ?? true );
 	}
 
-	public function test_images_tied_to_no_variant_are_shared_per_colour_and_the_marker_product_has_only_the_first(): void {
+	public function test_a_list_of_images_gives_each_side_its_own_photo(): void {
 		$this->account->set( self::KEY, self::STORE );
-		$this->answers[ self::STORE_API . '/products/gp-blank' ]  = self::answer(
+		$images = static fn( string $id, array $urls ): array => self::answer(
 			200,
 			array(
-				'id'            => 'gp-blank',
+				'id'            => $id,
 				'status'        => 'active',
-				'productImages' => array(
-					array( 'fileUrl' => 'https://cdn.example/blank-b-front.png' ),
-					array( 'fileUrl' => 'https://cdn.example/blank-b-back.png' ),
-					array( 'fileUrl' => 'https://cdn.example/blank-w-front.png' ),
-					array( 'fileUrl' => 'https://cdn.example/blank-w-back.png' ),
-				),
+				'productImages' => array_map( static fn( string $url ): array => array( 'fileUrl' => $url ), $urls ),
 			)
 		);
-		$this->answers[ self::STORE_API . '/products/gp-marker' ] = self::answer(
-			200,
-			array(
-				'id'            => 'gp-marker',
-				'status'        => 'active',
-				'productImages' => array(
-					array( 'fileUrl' => 'https://cdn.example/marker-front.png' ),
-					array( 'fileUrl' => 'https://cdn.example/marker-back.png' ),
-				),
-			)
-		);
+
+		$this->answers[ self::STORE_API . '/products/gp-blank-black' ] = $images( 'gp-blank-black', array( 'https://cdn.example/blank-b-front.png', 'https://cdn.example/blank-b-back.png' ) );
+		$this->answers[ self::STORE_API . '/products/gp-blank-white' ] = $images( 'gp-blank-white', array( 'https://cdn.example/blank-w-front.png', 'https://cdn.example/blank-w-back.png' ) );
+		$this->answers[ self::STORE_API . '/products/gp-marker' ]      = $images( 'gp-marker', array( 'https://cdn.example/marker-front.png', 'https://cdn.example/marker-back.png' ) );
 
 		$id = $this->import();
 
@@ -341,10 +319,9 @@ final class GelatoTest extends IntegrationTestCase {
 			),
 			$this->bases->provider( $id )['slots'] ?? null
 		);
-		self::assertSame( '#fafafa', $this->bases->find( $id )->colors[1]['hex'] ?? null, 'The second half of the images is the white colour.' );
 	}
 
-	public function test_an_active_product_is_waited_for_until_it_has_images_and_then_its_preview_is_taken(): void {
+	public function test_an_active_product_is_waited_for_until_it_has_a_preview(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$looks = 0;
 		$this->answers[ self::STORE_API . '/products/gp-marker' ] = static function () use ( &$looks ): array {
@@ -355,75 +332,147 @@ final class GelatoTest extends IntegrationTestCase {
 				array(
 					'id'         => 'gp-marker',
 					'status'     => 'active',
-					'previewUrl' => 'https://cdn.example/marker-front.png',
+					'previewUrl' => $looks > 4 ? 'https://cdn.example/marker-front.png' : null,
 				)
 			);
 		};
-		$this->answers[ self::STORE_API . '/products/gp-blank' ]  = self::answer(
-			200,
-			array(
-				'id'         => 'gp-blank',
-				'status'     => 'active',
-				'previewUrl' => 'https://cdn.example/blank-b-front.png',
-			)
-		);
 
 		$id = $this->import();
 
-		self::assertGreaterThan( 3, $looks, 'Not taken at the first look.' );
+		self::assertGreaterThan( 4, $looks );
 		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null );
-		self::assertSame( array( 'front' ), array_map( static fn( $view ): string => $view->key, $this->bases->find( $id )->views ?? array() ), 'The preview shows the front; the back is left out.' );
+	}
+
+	public function test_an_active_product_without_a_preview_is_given_up_after_five_minutes(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->answers[ self::STORE_API . '/products/gp-marker' ] = self::answer(
+			200,
+			array(
+				'id'     => 'gp-marker',
+				'status' => 'active',
+			)
+		);
+
+		$import = $this->bases->import( $this->import() );
+
+		self::assertSame( array( 'failed', DesignerException::IMPORT_RENDER, 'marker: active without a preview; status=active, previewUrl=no, productImages=0' ), array( $import['state'] ?? null, $import['data']['error'] ?? null, $import['data']['detail'] ?? null ) );
+	}
+
+	public function test_no_colour_product_is_made_while_the_marker_product_has_no_preview(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->answers[ self::STORE_API . '/products/gp-marker' ] = self::answer(
+			200,
+			array(
+				'id'            => 'gp-marker',
+				'status'        => 'active',
+				'previewUrl'    => null,
+				'productImages' => array(),
+			)
+		);
+
+		$this->import();
+
+		self::assertCount( 1, array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] ), 'Every render stays in the store: none is made in vain.' );
+	}
+
+	public function test_a_product_that_never_goes_active_times_out_with_the_provider_s_state(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->answers[ self::STORE_API . '/products/gp-blank-white' ] = self::answer(
+			200,
+			array(
+				'id'     => 'gp-blank-white',
+				'status' => 'publishing',
+			)
+		);
+
+		$import = $this->bases->import( $this->import() );
+
+		self::assertSame( array( 'failed', DesignerException::IMPORT_TIMEOUT, 'blank:white: status=publishing, previewUrl=no, productImages=0' ), array( $import['state'] ?? null, $import['data']['error'] ?? null, $import['data']['detail'] ?? null ) );
 	}
 
 	public function test_a_failed_import_keeps_what_the_renders_gave_for_the_diagnosis(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$this->answers['https://cdn.example/marker-front.png'] = $this->answers['https://cdn.example/blank-b-front.png'];
-		$this->answers['https://cdn.example/marker-back.png']  = $this->answers['https://cdn.example/blank-b-back.png'];
 
 		$id     = $this->import();
 		$answer = $this->catalog()->diagnose( $id );
 
-		self::assertSame( array( '0', '1' ), array_map( 'strval', array_keys( $answer['import']['data']['measured'] ?? array() ) ), 'What was measured.' );
+		self::assertSame( array( 0 ), array_keys( $answer['import']['data']['measured'] ?? array() ), 'What was measured.' );
 		self::assertArrayHasKey( 'marker', $answer['import']['data']['images'] ?? array() );
-		self::assertSame( array( 'gp-blank', 'gp-marker' ), array( $answer['render blank']['id'] ?? null, $answer['render marker']['id'] ?? null ), 'Gelato\'s answers about both renders.' );
+		self::assertSame( array( 'gp-blank-black', 'gp-marker' ), array( $answer['render blank:black']['id'] ?? null, $answer['render marker']['id'] ?? null ), 'Gelato answers about the renders.' );
 		self::assertArrayHasKey( 'GET /v1/templates/tpl-1', $answer );
 		self::assertStringNotContainsString( self::KEY, (string) wp_json_encode( $answer ) );
 
-		$this->answers['https://cdn.example/marker-front.png'] = self::shirt( array( 35, 35, 35 ), array( array( 70, 50, 60, 80, array( 235, 15, 230 ) ) ) );
-		$catalog = $this->catalog();
-		$catalog->retry( $id );
+		$this->catalog()->retry( $id );
 
 		self::assertSame( array(), array_intersect_key( $this->bases->import( $id )['data'] ?? array(), array_flip( array( 'measured', 'images', 'renders', 'error' ) ) ), 'Try again starts over.' );
-	}
-
-	public function test_renders_without_photos_of_the_same_colour_fail_with_their_own_reason(): void {
-		$this->account->set( self::KEY, self::STORE );
-		$this->answers[ self::STORE_API . '/products/gp-blank' ] = self::product(
-			'gp-blank',
-			array(
-				array(
-					'id'                => 'pw',
-					'templateVariantId' => 'tv-w-s',
-				),
-			),
-			array( array( 'https://cdn.example/blank-w-front.png', 'pw' ) )
-		);
-
-		$id = $this->import();
-
-		self::assertSame( array( 'failed', DesignerException::IMPORT_NO_PHOTOS ), array( $this->bases->import( $id )['state'] ?? null, $this->bases->import( $id )['data']['error'] ?? null ), 'The marker shows black, the blank render only white.' );
 	}
 
 	public function test_an_import_without_a_visible_marker_fails_with_the_reason(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$this->answers['https://cdn.example/marker-front.png'] = $this->answers['https://cdn.example/blank-b-front.png'];
-		$this->answers['https://cdn.example/marker-back.png']  = $this->answers['https://cdn.example/blank-b-back.png'];
 
 		$id = $this->import();
 
 		self::assertSame( array( 'failed', DesignerException::IMPORT_NO_AREA ), array( $this->bases->import( $id )['state'] ?? null, $this->bases->import( $id )['data']['error'] ?? null ) );
 		self::assertSame( array( DesignerNotifications::IMPORT_FAILED ), array_column( $this->notified, 0 ) );
 		self::assertSame( array( 'Classic tee', DesignerException::IMPORT_NO_AREA, 'Gelato' ), array( $this->notified[0][1]['title'] ?? null, $this->notified[0][1]['reason'] ?? null, $this->notified[0][1]['provider'] ?? null ) );
+	}
+
+	public function test_the_status_shows_each_render_with_the_provider_s_state_to_the_administrator_only(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$catalog = $this->catalog();
+		$id      = $catalog->create(
+			'gelato',
+			'tpl-1',
+			array(
+				'colors'     => array( 'Black', 'White' ),
+				'sizes'      => array( 'S' ),
+				'sides'      => array( 'ImageFront' ),
+				'base_price' => '149,95',
+			)
+		);
+		$page    = new BaseProductsPage( $this->bases, new DesignerAssetRepository( $this->wpdb ), 2, 'DKK', '', '', false, true, $catalog, null, new GelatoCatalog( $this->api ) );
+		$nonce   = wp_create_nonce( BaseProductsPage::STATUS_ACTION );
+		$status  = static fn(): array => $page->import_status(
+			array(
+				'base'  => $id,
+				'nonce' => $nonce,
+			)
+		);
+
+		$this->drain_import( $catalog, 2 );
+		$running = $status();
+
+		self::assertSame( array( 200, 'running' ), array( $running['status'], $running['data']['state'] ?? null ) );
+		self::assertStringContainsString( '<strong>The provider renders the product', $running['data']['html'] ?? '' );
+		self::assertStringContainsString( 'Product with markers', $running['data']['html'] ?? '' );
+		self::assertStringContainsString( 'look 1 of 40', $running['data']['html'] ?? '' );
+		self::assertStringContainsString( 'status=active, previewUrl=yes, productImages=0', $running['data']['html'] ?? '' );
+
+		$this->drain_import( $catalog );
+		$ready = $status();
+
+		self::assertSame( 'ready', $ready['data']['state'] ?? null );
+		self::assertStringContainsString( '<img src="https://cdn.example/marker-front.png"', $ready['data']['html'] ?? '' );
+		self::assertStringContainsString( 'Blank product: black', $ready['data']['html'] ?? '' );
+		self::assertSame( 403, $page->import_status( array( 'base' => $id, 'nonce' => 'wrong' ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 404, $page->import_status( array( 'base' => 999, 'nonce' => $nonce ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$this->bases->set_import( $id, 'running', (string) wp_json_encode( array( 'updated' => time() - 660 ) ) );
+		self::assertStringContainsString( 'has not run for 11 minutes', $status()['data']['html'] ?? '' );
+
+		$subscriber = $this->create_user( 'gelato-subscriber' );
+		wp_set_current_user( $subscriber );
+		self::assertSame(
+			403,
+			$page->import_status(
+				array(
+					'base'  => $id,
+					'nonce' => wp_create_nonce( BaseProductsPage::STATUS_ACTION ),
+				)
+			)['status']
+		);
 	}
 
 	public function test_gelato_makes_the_mockups_of_a_submitted_design(): void {
@@ -460,12 +509,10 @@ final class GelatoTest extends IntegrationTestCase {
 		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null );
 		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
 		self::assertSame( array( 'black', 'white' ), array_keys( $files['mockups']['front'] ) );
-		self::assertSame( array( 300, 300 ), array( $files['mockups']['front']['white']['width'], $files['mockups']['front']['white']['height'] ), 'The image tied to the white variant.' );
+		self::assertSame( $before['white']['file'], $files['mockups']['front']['white']['file'], 'A product has one preview: the other colours keep the browser mockups.' );
 		self::assertSame( array( 320, 320 ), array( $files['mockups']['front']['black']['width'], $files['mockups']['front']['black']['height'] ), 'The black variant first image is the front.' );
 
-		foreach ( $before as $mockup ) {
-			self::assertNull( $this->files->path( $mockup['file'] ), 'The browser\'s mockups are deleted.' );
-		}
+		self::assertNull( $this->files->path( $before['black']['file'] ), 'The replaced mockup is deleted.' );
 
 		self::assertSame( array(), array_values( array_filter( $this->notified, static fn( array $n ): bool => DesignerNotifications::MOCKUPS_FAILED === $n[0] ) ) );
 
@@ -546,14 +593,24 @@ final class GelatoTest extends IntegrationTestCase {
 			)
 		);
 
+		$this->drain_import( $catalog );
+
+		return $id;
+	}
+
+	/**
+	 * Runs the queued import rounds.
+	 *
+	 * @param CatalogImport $catalog The import.
+	 * @param int           $limit   Most rounds.
+	 */
+	private function drain_import( CatalogImport $catalog, int $limit = 60 ): void {
 		$this->queue->drain(
 			static function ( string $hook, array $args ) use ( $catalog ): void {
 				$catalog->run( $args[0] ?? 0 );
 			},
-			50
+			$limit
 		);
-
-		return $id;
 	}
 
 	/**
@@ -734,10 +791,10 @@ final class GelatoTest extends IntegrationTestCase {
 					),
 				)
 			),
-			// The import's blank and marker products, and then the design's product.
+			// The import's products (one per colour and the marker one), and then the design's.
 			self::API . '/stores/' . self::STORE . '/products:create-from-template' => static function ( array $args ): array {
 				$title = (string) ( json_decode( (string) ( $args['body'] ?? '' ), true )['title'] ?? '' );
-				$id    = str_ends_with( $title, '(blank)' ) ? 'gp-blank' : ( str_ends_with( $title, '(marker)' ) ? 'gp-marker' : 'gp-1' );
+				$id    = 1 === preg_match( '/\(([a-z]+)(?::([a-z]+))?\)$/', $title, $match ) ? 'gp-' . $match[1] . ( isset( $match[2] ) ? '-' . $match[2] : '' ) : 'gp-1';
 
 				return self::answer(
 					200,
@@ -747,37 +804,16 @@ final class GelatoTest extends IntegrationTestCase {
 					)
 				);
 			},
-			self::API . '/stores/' . self::STORE . '/products/gp-blank' => $product(
-				'gp-blank',
-				array(
-					array(
-						'id'                => 'pb',
-						'templateVariantId' => 'tv-b-s',
-					),
-					array(
-						'id'                => 'pw',
-						'templateVariantId' => 'tv-w-s',
-					),
-				),
-				array( array( 'https://cdn.example/blank-b-front.png', 'pb' ), array( 'https://cdn.example/blank-b-back.png', 'pb' ), array( 'https://cdn.example/blank-w-front.png', 'pw' ), array( 'https://cdn.example/blank-w-back.png', 'pw' ) )
-			),
-			self::API . '/stores/' . self::STORE . '/products/gp-marker' => $product(
-				'gp-marker',
-				array(
-					array(
-						'id'                => 'mb',
-						'templateVariantId' => 'tv-b-s',
-					),
-				),
-				array( array( 'https://cdn.example/marker-front.png', 'mb' ), array( 'https://cdn.example/marker-back.png', 'mb' ) )
-			),
+			self::STORE_API . '/products/gp-blank-black' => self::product( 'gp-blank-black', 'https://cdn.example/blank-b-front.png' ),
+			self::STORE_API . '/products/gp-blank-white' => self::product( 'gp-blank-white', 'https://cdn.example/blank-w-front.png' ),
+			self::STORE_API . '/products/gp-marker'      => self::product( 'gp-marker', 'https://cdn.example/marker-front.png' ),
 			'https://cdn.example/blank-b-front.png'      => $shirt( $black ),
 			'https://cdn.example/blank-b-back.png'       => $shirt( $black, array( array( 90, 40, 10, 10, array( 200, 200, 200 ) ) ) ),
 			'https://cdn.example/blank-w-front.png'      => $shirt( array( 250, 250, 250 ) ),
 			'https://cdn.example/blank-w-back.png'       => $shirt( array( 250, 250, 250 ) ),
 			'https://cdn.example/marker-front.png'       => $shirt( $black, array( array( 70, 50, 60, 80, array( 235, 15, 230 ) ) ) ),
 			'https://cdn.example/marker-back.png'        => $shirt( $black, array( array( 90, 40, 10, 10, array( 200, 200, 200 ) ), array( 80, 60, 45, 60, array( 10, 225, 235 ) ) ) ),
-			self::API . '/stores/' . self::STORE . '/products/gp-1' => static function () use ( &$polls, $product ): array {
+			self::STORE_API . '/products/gp-1'           => static function () use ( &$polls, $product ): array {
 				++$polls;
 
 				return 1 === $polls
@@ -788,20 +824,7 @@ final class GelatoTest extends IntegrationTestCase {
 							'status' => 'publishing',
 						)
 					)
-					: $product(
-						'gp-1',
-						array(
-							array(
-								'id'                => 'pv-b',
-								'templateVariantId' => 'tv-b-s',
-							),
-							array(
-								'id'                => 'pv-w',
-								'templateVariantId' => 'tv-w-s',
-							),
-						),
-						array( array( 'https://cdn.example/gelato-black.png', 'pv-b' ), array( 'https://cdn.example/gelato-black-back.png', 'pv-b' ), array( 'https://cdn.example/gelato-white.png', 'pv-w' ) )
-					);
+					: $product( 'gp-1', 'https://cdn.example/gelato-black.png' );
 			},
 			'https://cdn.example/gelato-black.png'       => self::file( AlertImagesTest::png( 320, 320 ) ),
 			'https://cdn.example/gelato-black-back.png'  => self::file( AlertImagesTest::png( 310, 310 ) ),
@@ -810,26 +833,25 @@ final class GelatoTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * An active product of the store with its images.
+	 * An active product of the store as Gelato's reference shows it: one preview.
 	 *
-	 * @param string                            $id       Product.
-	 * @param list<array<string, string>>       $variants Variants.
-	 * @param list<array{0: string, 1: string}> $images   Image URL and its variant.
+	 * @param string $id      Product.
+	 * @param string $preview Preview URL.
 	 * @return array<string, mixed>
 	 */
-	private static function product( string $id, array $variants, array $images ): array {
+	private static function product( string $id, string $preview ): array {
 		return self::answer(
 			200,
 			array(
 				'id'            => $id,
 				'status'        => 'active',
-				'variants'      => $variants,
-				'productImages' => array_map(
-					static fn( array $image ): array => array(
-						'fileUrl'           => $image[0],
-						'productVariantIds' => array( $image[1] ),
+				'previewUrl'    => $preview,
+				'productImages' => array(),
+				'variants'      => array(
+					array(
+						'id'    => 'v-' . $id,
+						'title' => 'Variant',
 					),
-					$images
 				),
 			)
 		);

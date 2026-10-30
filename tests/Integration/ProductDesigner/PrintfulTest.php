@@ -340,6 +340,25 @@ final class PrintfulTest extends IntegrationTestCase {
 		$_GET = array();
 	}
 
+	public function test_renders_without_a_photo_of_the_same_placement_fail_with_their_own_reason(): void {
+		$this->token->set( self::TOKEN );
+		$this->answers['https://api.printful.com/mockup-generator/task?task_key=tk-marker'] = self::answer(
+			200,
+			array(
+				'result' => array(
+					'status'  => 'completed',
+					'mockups' => array(
+						array( 'placement' => 'back', 'variant_ids' => array( 101 ), 'mockup_url' => 'https://cdn.example/marker-black.png' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					),
+				),
+			)
+		);
+
+		$import = $this->bases->import( $this->import() );
+
+		self::assertSame( array( 'failed', DesignerException::IMPORT_NO_PHOTOS ), array( $import['state'] ?? null, $import['data']['error'] ?? null ) );
+	}
+
 	public function test_a_failed_render_fails_the_import_and_it_can_be_tried_again(): void {
 		$this->token->set( self::TOKEN );
 		$marker = $this->answers['https://api.printful.com/mockup-generator/task?task_key=tk-marker'];

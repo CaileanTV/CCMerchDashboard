@@ -23,11 +23,14 @@ defined( 'ABSPATH' ) || exit;
  * template variant's `productUid` (the catalog attributes `gco_` and `gsi_`;
  * the variant's own options, "Standard" or "One size" when it has none),
  * the sides from the first variant's image placeholders with their print
- * size in millimetres. The blank photos and print areas come from two
- * products made from the template (CatalogImport): every picked colour with
- * a transparent file in each placeholder, and the first colour with a
- * marker per placeholder. The products stay hidden in the API store
- * (Gelato has no call to delete them). The catalogs are cached for an hour.
+ * size in millimetres. A store product has one preview (`previewUrl`), of
+ * its first variant and one view, and no list of images: Gelato's reference
+ * has no `productImages`. The blank photos and print areas therefore come
+ * from one product per picked colour with a transparent file in each
+ * placeholder, and one of the first colour with a marker per placeholder
+ * (CatalogImport). Only a side the preview shows gets a photo. The products
+ * stay hidden in the API store (Gelato has no call to delete them). The
+ * catalogs are cached for an hour.
  */
 class GelatoCatalog implements CatalogRenderer {
 
@@ -61,9 +64,21 @@ class GelatoCatalog implements CatalogRenderer {
 	private const POLL_DELAY = 30;
 
 	/**
-	 * Looks at an active product before its preview alone is taken (two minutes).
+	 * Looks at an active product before its preview is taken: the mockups
+	 * are published in the background.
 	 */
-	private const PREVIEW_POLLS = 4;
+	private const PREVIEW_POLLS = 2;
+
+	/**
+	 * Looks at an active product without a preview before it is given up.
+	 */
+	private const ACTIVE_POLLS = 10;
+
+	/**
+	 * Seconds after which such a product is given up: the job can run far
+	 * less often than every POLL_DELAY seconds.
+	 */
+	private const ACTIVE_WAIT = 600;
 
 	/**
 	 * Constructor.
@@ -197,8 +212,8 @@ class GelatoCatalog implements CatalogRenderer {
 	 * @throws GelatoException When Gelato refuses or fails.
 	 */
 	public function render( string $kind, array $import ): string {
-		$colors   = is_array( $import['colors'] ?? null ) ? array_values( $import['colors'] ) : array();
-		$variants = 'marker' === $kind ? array_slice( $colors, 0, 1 ) : $colors;
+		$colors   = self::render_colors( $kind, $import );
+		$variants = array_values( $colors );
 		$images   = array();
 
 		foreach ( is_array( $import['sides'] ?? null ) ? array_values( $import['sides'] ) : array() as $index => $side ) {
@@ -249,7 +264,7 @@ class GelatoCatalog implements CatalogRenderer {
 	 *
 	 * @param string               $key    Product id.
 	 * @param array<string, mixed> $import Import data.
-	 * @return array{status: string, error?: string, images?: array<int|string, array<string, string>>}
+	 * @return array{status: string, error?: string, note?: string, images?: array<int|string, array<string, string>>}
 	 * @throws GelatoException When Gelato refuses or fails.
 	 */
 	public function check( string $key, array $import ): array {
@@ -263,42 +278,38 @@ class GelatoCatalog implements CatalogRenderer {
 			);
 		}
 
+		$note = sprintf( 'status=%s, previewUrl=%s, productImages=%d', '' === $status ? '?' : sanitize_key( $status ), is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ? 'yes' : 'no', is_array( $answer['productImages'] ?? null ) ? count( $answer['productImages'] ) : 0 );
+
 		if ( 'active' !== $status ) {
-			return array( 'status' => 'pending' );
+			return array(
+				'status' => 'pending',
+				'note'   => $note,
+			);
 		}
 
-		$colors = array();
-
-		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
-			$colors[ (string) $color ] = (string) $variant;
-		}
-
-		$render = null;
+		$render = array( '', 0, time() );
 
 		foreach ( is_array( $import['renders'] ?? null ) ? $import['renders'] : array() as $kind => $entry ) {
 			$entry_key = is_array( $entry ) ? ( $entry['key'] ?? null ) : null;
 
 			if ( $entry_key === $key ) {
-				$render = array( $kind, (int) ( $entry['polls'] ?? 0 ) );
+				$render = array( (string) $kind, (int) ( $entry['polls'] ?? 0 ), (int) ( $entry['started'] ?? time() ) );
 			}
 		}
 
-		// The marker product holds only the first colour.
-		if ( 'marker' === ( $render[0] ?? null ) ) {
-			$colors = array_slice( $colors, 0, 1, true );
-		}
-
-		// An active product can still lack its images: its preview alone is taken only after a while.
-		if ( ! is_array( $answer['productImages'] ?? null ) || array() === $answer['productImages'] ) {
-			if ( ( $render[1] ?? 0 ) < self::PREVIEW_POLLS ) {
-				return array( 'status' => 'pending' );
-			}
-		}
-
-		$lists = self::variant_images( $answer, $colors );
+		$lists = $render[1] < self::PREVIEW_POLLS ? array() : self::variant_images( $answer, self::render_colors( $render[0], $import ) );
 
 		if ( array() === $lists ) {
-			return array( 'status' => 'pending' );
+			// An active product without any preview for minutes will not get one.
+			return $render[1] < self::ACTIVE_POLLS && time() - $render[2] < self::ACTIVE_WAIT
+				? array(
+					'status' => 'pending',
+					'note'   => $note,
+				)
+				: array(
+					'status' => 'failed',
+					'error'  => 'active without a preview; ' . $note,
+				);
 		}
 
 		$images = array();
@@ -312,7 +323,52 @@ class GelatoCatalog implements CatalogRenderer {
 		return array(
 			'status' => 'done',
 			'images' => $images,
+			'note'   => $note,
 		);
+	}
+
+	/**
+	 * One render with the markers and, once it has given a preview, one per
+	 * colour: a product at Gelato has one preview, and every render stays in
+	 * the store for good, so none is made in vain.
+	 *
+	 * @param array<string, mixed> $import Import data.
+	 * @return list<string>
+	 */
+	public function render_kinds( array $import ): array {
+		$kinds = array( 'marker' );
+
+		if ( 'done' !== ( $import['renders']['marker']['status'] ?? null ) ) {
+			return $kinds;
+		}
+
+		foreach ( is_array( $import['colors'] ?? null ) ? array_keys( $import['colors'] ) : array() as $color ) {
+			$kinds[] = 'blank:' . $color;
+		}
+
+		return $kinds;
+	}
+
+	/**
+	 * The colour of a render with its template variant: `marker` the first
+	 * colour, `blank:<key>` that colour.
+	 *
+	 * @param string               $kind   Render.
+	 * @param array<string, mixed> $import Import data.
+	 * @return array<string, string>
+	 */
+	private static function render_colors( string $kind, array $import ): array {
+		$colors = array();
+
+		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
+			$colors[ (string) $color ] = (string) $variant;
+		}
+
+		if ( str_starts_with( $kind, 'blank:' ) ) {
+			return array_intersect_key( $colors, array( substr( $kind, 6 ) => true ) );
+		}
+
+		return array_slice( $colors, 0, 1, true );
 	}
 
 	/**

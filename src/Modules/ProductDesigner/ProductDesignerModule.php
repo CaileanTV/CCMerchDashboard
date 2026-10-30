@@ -324,6 +324,12 @@ final class ProductDesignerModule implements Module {
 				$container->get( CatalogImport::class )->run( $base );
 			}
 		);
+		add_action(
+			'wp_ajax_' . BaseProductsPage::STATUS_ACTION,
+			static function () use ( $container ): void {
+				$container->get( BaseProductsPage::class )->handle_status();
+			}
+		);
 		DesignerNotifications::register();
 		( new DesignerDashboardSection() )->register();
 		$container->get( DesignerOrderFiles::class )->register();
