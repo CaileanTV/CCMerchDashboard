@@ -43,6 +43,17 @@ export interface StageCallbacks {
 	readonly onSelect: ( id: string | null ) => void;
 }
 
+/**
+ * What is shown instead of the document's objects: the threads of an
+ * embroidered side. The document keeps its own colours, so what is read back
+ * from the canvas never holds these.
+ */
+export interface StagePaint {
+	/** Changes when `object` shows something else. */
+	readonly key: string;
+	readonly object: ( object: DesignObject ) => DesignObject;
+}
+
 type Tagged = FabricObject & { mbId?: string };
 
 /**
@@ -56,6 +67,8 @@ export class FabricStage {
 	private rendered = '';
 
 	private imagesKey = '';
+
+	private paintKey = '';
 
 	private generation = 0;
 
@@ -122,14 +135,17 @@ export class FabricStage {
 	 * @param objects  Objects, bottom first.
 	 * @param images   `data:` URL by asset id.
 	 * @param selected Selected object id.
+	 * @param threads  The threads of an embroidered side.
 	 */
 	public async render(
 		objects: readonly DesignObject[],
 		images: ReadonlyMap< number, string >,
-		selected: string | null
+		selected: string | null,
+		threads: StagePaint | null = null
 	): Promise< void > {
 		this.imagesKey = Array.from( images.keys() ).join( ',' );
-		const key = JSON.stringify( objects ) + '|' + this.imagesKey;
+		this.paintKey = threads?.key ?? '';
+		const key = this.keyOf( objects );
 
 		this.objects = objects;
 
@@ -142,7 +158,12 @@ export class FabricStage {
 		this.rendered = key;
 		const generation = ++this.generation;
 		const built = await Promise.all(
-			objects.map( ( object ) => build( object, images ) )
+			objects.map( ( object ) =>
+				build(
+					threads === null ? object : threads.object( object ),
+					images
+				)
+			)
 		);
 
 		if ( generation !== this.generation ) {
@@ -222,8 +243,17 @@ export class FabricStage {
 
 		this.objects = next;
 		// The canvas already shows this state: the next render() is a no-op.
-		this.rendered = JSON.stringify( next ) + '|' + this.imagesKey;
+		this.rendered = this.keyOf( next );
 		this.callbacks.onChange( next );
+	}
+
+	/**
+	 * What a render of these objects shows.
+	 *
+	 * @param objects Objects.
+	 */
+	private keyOf( objects: readonly DesignObject[] ): string {
+		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }`;
 	}
 }
 

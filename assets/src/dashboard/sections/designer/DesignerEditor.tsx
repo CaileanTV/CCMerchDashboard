@@ -35,6 +35,7 @@ import type {
 	DesignerBase,
 	DesignerOverview,
 	DesignerProduct,
+	DesignerThread,
 	ProfitKind,
 } from '../../api/designer';
 import { ConfigContext } from '../../app/config-context';
@@ -51,7 +52,9 @@ import {
 	quotePrice,
 	updateObject,
 	usedSides,
+	withKnownThreads,
 	withObjects,
+	withThread,
 } from './design-model';
 import type {
 	DesignDocument,
@@ -62,6 +65,8 @@ import type {
 import type { FabricStage } from './fabric-stage';
 import { submissionSize, submitWithFiles } from './submission';
 import { TemplateLayers } from './TemplateLayers';
+import { threadObject, threadSide } from './threads';
+import type { ThreadedSide, ThreadPlan } from './threads';
 
 type Tab = 'product' | 'text' | 'shapes' | 'cliparts' | 'uploads' | 'layers';
 
@@ -208,6 +213,9 @@ function Editor( props: EditorProps ) {
 	const [ images, setImages ] = useState< ReadonlyMap< number, string > >(
 		new Map()
 	);
+	const [ threaded, setThreaded ] = useState<
+		( ThreadedSide & { readonly side: string } ) | null
+	>( null );
 	const [ fontsReady, setFontsReady ] = useState( 0 );
 	const [ message, setMessage ] = useState< {
 		tone: 'success' | 'danger' | 'info';
@@ -231,6 +239,10 @@ function Editor( props: EditorProps ) {
 	const design = history.value;
 	sideRef.current = view?.key ?? side;
 	const objects = view === undefined ? [] : objectsOf( design, view.key );
+	const embroidery = view?.embroidery ?? null;
+	const swaps = view === undefined ? undefined : design.threads?.[ view.key ];
+	const plan =
+		threaded?.side === view?.key ? ( threaded?.plan ?? null ) : null;
 	const selectedObject =
 		objects.find( ( object ) => object.id === selected ) ?? null;
 	const hex =
@@ -386,11 +398,49 @@ function Editor( props: EditorProps ) {
 		}
 	}, [ stageReady, view, zoom, displayHeight ] );
 
+	// An embroidered side is shown in its threads.
 	useEffect( () => {
-		void stage.current?.render( objects, images, selected );
+		if ( view === undefined || embroidery === null ) {
+			setThreaded( null );
+
+			return undefined;
+		}
+
+		let cancelled = false;
+
+		void threadSide( objects, images, swaps ?? {}, embroidery ).then(
+			( result ) => {
+				if ( ! cancelled ) {
+					setThreaded( { ...result, side: view.key } );
+				}
+			}
+		);
+
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- objects and swaps are derived from design and side.
+	}, [ design, side, images, embroidery ] );
+
+	useEffect( () => {
+		if ( embroidery !== null && plan === null ) {
+			return;
+		}
+
+		void stage.current?.render(
+			objects,
+			plan === null || threaded === null ? images : threaded.images,
+			selected,
+			plan === null
+				? null
+				: {
+						key: plan.signature,
+						object: ( object ) => threadObject( object, plan ),
+					}
+		);
 		// Fonts arriving re-render the texts.
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- objects is derived from design and side.
-	}, [ stageReady, design, side, images, selected, fontsReady ] );
+	}, [ stageReady, design, side, images, threaded, selected, fontsReady ] );
 
 	const setObjects = ( next: readonly DesignObject[] ) => {
 		if ( view !== undefined ) {
@@ -429,6 +479,32 @@ function Editor( props: EditorProps ) {
 	const remove = ( id: string ) => {
 		setObjects( objects.filter( ( object ) => object.id !== id ) );
 		setSelected( null );
+	};
+
+	const swapThread = ( found: string, used: string | null ) => {
+		if ( view !== undefined ) {
+			history.set( ( present ) =>
+				withThread( present, view.key, found, used )
+			);
+		}
+	};
+
+	// A thread picked as the colour shows as that thread, even if it was swapped.
+	const pickThread = ( thread: DesignerThread ) => {
+		if ( selectedObject !== null && view !== undefined ) {
+			const next = updateObject( objects, selectedObject.id, {
+				fill: thread.hex,
+			} as Partial< DesignObject > );
+
+			history.set( ( present ) =>
+				withThread(
+					withObjects( present, view.key, next ),
+					view.key,
+					thread.code,
+					null
+				)
+			);
+		}
 	};
 
 	const addText = () => {
@@ -542,7 +618,7 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
-			design,
+			design: withKnownThreads( design, base.views ),
 		} );
 		setSaving( false );
 
@@ -1116,6 +1192,14 @@ function Editor( props: EditorProps ) {
 							) }
 						</Alert>
 					) : null }
+					{ embroidery === null ? null : (
+						<ThreadPanel
+							threads={ embroidery.threads }
+							max={ embroidery.max }
+							plan={ plan }
+							onSwap={ swapThread }
+						/>
+					) }
 					{ selectedObject === null ? (
 						<p className="merchboard-designer__hint">
 							{ __(
@@ -1127,6 +1211,9 @@ function Editor( props: EditorProps ) {
 						<Properties
 							object={ selectedObject }
 							fonts={ fonts }
+							threads={ embroidery?.threads ?? null }
+							plan={ plan }
+							onThread={ pickThread }
 							onChange={ change }
 							onRemove={ () => remove( selectedObject.id ) }
 							onMove={ ( direction ) =>
@@ -1157,6 +1244,116 @@ function Editor( props: EditorProps ) {
 					</p>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+/**
+ * The threads of a pack to pick from.
+ *
+ * @param props          Props.
+ * @param props.threads  The threads.
+ * @param props.selected The colour of the thread in use.
+ * @param props.onPick   Called with the picked thread.
+ */
+function ThreadSwatches( props: {
+	readonly threads: readonly DesignerThread[];
+	readonly selected: string | null;
+	readonly onPick: ( thread: DesignerThread ) => void;
+} ) {
+	return (
+		<div className="merchboard-designer__threads">
+			{ props.threads.map( ( thread ) => (
+				<button
+					key={ thread.code }
+					type="button"
+					className="merchboard-designer__thread"
+					style={ { backgroundColor: thread.hex } }
+					title={ `${ thread.code } ${ thread.name }` }
+					aria-label={ `${ thread.code } ${ thread.name }` }
+					aria-pressed={ props.selected === thread.hex }
+					onClick={ () => props.onPick( thread ) }
+				/>
+			) ) }
+		</div>
+	);
+}
+
+/**
+ * The threads of an embroidered side: what was found, and the choice of
+ * another thread for each.
+ *
+ * @param props         Props.
+ * @param props.threads The pack's threads.
+ * @param props.max     The most threads on the side.
+ * @param props.plan    The side's threads; null while they are worked out.
+ * @param props.onSwap  Called with the thread found and the one to use (null: back to the one found).
+ */
+function ThreadPanel( props: {
+	readonly threads: readonly DesignerThread[];
+	readonly max: number;
+	readonly plan: ThreadPlan | null;
+	readonly onSwap: ( found: string, used: string | null ) => void;
+} ) {
+	const { plan } = props;
+
+	return (
+		<div className="merchboard-designer__panel">
+			<h3>
+				{ sprintf(
+					/* translators: 1: threads in use, 2: the most threads allowed. */
+					__( 'Thread colours (%1$d of %2$d)', 'merchboard' ),
+					plan?.threads.length ?? 0,
+					props.max
+				) }
+			</h3>
+			<p className="merchboard-designer__hint">
+				{ __(
+					'This side is embroidered: every colour becomes the nearest thread. Choose another thread below if you like.',
+					'merchboard'
+				) }
+			</p>
+			{ ( plan?.merged ?? 0 ) > 0 ? (
+				<Alert tone="info">
+					{ __(
+						'Your design has more colours than the threads allow, so the smallest ones use the nearest thread.',
+						'merchboard'
+					) }
+				</Alert>
+			) : null }
+			{ plan?.rows.map( ( row ) => (
+				<details key={ row.found.code }>
+					<summary>
+						<span
+							className="merchboard-designer__thread"
+							style={ { backgroundColor: row.used.hex } }
+						/>{ ' ' }
+						{ `${ row.used.code } ${ row.used.name }` }
+					</summary>
+					<ThreadSwatches
+						threads={ props.threads }
+						selected={ row.used.hex }
+						onPick={ ( thread ) =>
+							props.onSwap( row.found.code, thread.code )
+						}
+					/>
+					{ row.used.code === row.found.code ? null : (
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={ () =>
+								props.onSwap( row.found.code, null )
+							}
+						>
+							{ sprintf(
+								/* translators: %s: the thread found. */
+								__( 'Back to %s', 'merchboard' ),
+								row.found.name
+							) }
+						</Button>
+					) }
+				</details>
+			) ) }
 		</div>
 	);
 }
@@ -1249,6 +1446,11 @@ function submitError( reason: string ): string {
 		case 'file_too_large':
 			return __(
 				'An image of your design is too large to send. Please contact us.',
+				'merchboard'
+			);
+		case 'print_threads':
+			return __(
+				'The thread colours of this product have changed. Reload the page and send your design again.',
 				'merchboard'
 			);
 		case 'render':
@@ -1831,6 +2033,9 @@ function layerName( object: DesignObject ): string {
  * @param props          Props.
  * @param props.object   The object.
  * @param props.fonts    Approved fonts.
+ * @param props.threads  The pack's threads on an embroidered side, otherwise null.
+ * @param props.plan     The side's threads.
+ * @param props.onThread Called with the thread picked as the colour.
  * @param props.onChange Changes it.
  * @param props.onRemove Removes it.
  * @param props.onMove   Moves it.
@@ -1838,11 +2043,14 @@ function layerName( object: DesignObject ): string {
 function Properties( props: {
 	readonly object: DesignObject;
 	readonly fonts: DesignerOverview[ 'fonts' ];
+	readonly threads: readonly DesignerThread[] | null;
+	readonly plan: ThreadPlan | null;
+	readonly onThread: ( thread: DesignerThread ) => void;
 	readonly onChange: ( change: Partial< DesignObject > ) => void;
 	readonly onRemove: () => void;
 	readonly onMove: ( direction: 1 | -1 ) => void;
 } ) {
-	const { object, onChange } = props;
+	const { object, onChange, threads } = props;
 	const text = object.type === 'text' ? ( object as TextObject ) : null;
 	const shape =
 		object.type === 'rect' ||
@@ -1962,18 +2170,28 @@ function Properties( props: {
 						before
 						label={ <>{ __( 'Colour', 'merchboard' ) }</> }
 					>
-						{ ( id ) => (
-							<input
-								id={ id }
-								type="color"
-								value={ text.fill }
-								onChange={ ( event ) =>
-									onChange( {
-										fill: event.target.value,
-									} as Partial< TextObject > )
-								}
-							/>
-						) }
+						{ ( id ) =>
+							threads === null ? (
+								<input
+									id={ id }
+									type="color"
+									value={ text.fill }
+									onChange={ ( event ) =>
+										onChange( {
+											fill: event.target.value,
+										} as Partial< TextObject > )
+									}
+								/>
+							) : (
+								<ThreadSwatches
+									threads={ threads }
+									selected={
+										props.plan?.colorOf( text.fill ) ?? null
+									}
+									onPick={ props.onThread }
+								/>
+							)
+						}
 					</Labelled>
 				</>
 			) }
@@ -1984,18 +2202,32 @@ function Properties( props: {
 						before
 						label={ <>{ __( 'Fill', 'merchboard' ) }</> }
 					>
-						{ ( id ) => (
-							<input
-								id={ id }
-								type="color"
-								value={ shape.fill ?? '#000000' }
-								onChange={ ( event ) =>
-									onChange( {
-										fill: event.target.value,
-									} as Partial< DesignObject > )
-								}
-							/>
-						) }
+						{ ( id ) =>
+							threads === null ? (
+								<input
+									id={ id }
+									type="color"
+									value={ shape.fill ?? '#000000' }
+									onChange={ ( event ) =>
+										onChange( {
+											fill: event.target.value,
+										} as Partial< DesignObject > )
+									}
+								/>
+							) : (
+								<ThreadSwatches
+									threads={ threads }
+									selected={
+										shape.fill === null
+											? null
+											: ( props.plan?.colorOf(
+													shape.fill
+												) ?? null )
+									}
+									onPick={ props.onThread }
+								/>
+							)
+						}
 					</Labelled>
 					<Labelled
 						className="merchboard-designer__option"
@@ -2021,27 +2253,29 @@ function Properties( props: {
 					</Labelled>
 				</>
 			) }
-			<Labelled
-				className="merchboard-designer__option"
-				before
-				label={ <>{ __( 'Opacity', 'merchboard' ) }</> }
-			>
-				{ ( id ) => (
-					<input
-						id={ id }
-						type="range"
-						min={ 0.1 }
-						max={ 1 }
-						step={ 0.05 }
-						value={ object.opacity }
-						onChange={ ( event ) =>
-							onChange( {
-								opacity: Number( event.target.value ),
-							} )
-						}
-					/>
-				) }
-			</Labelled>
+			{ threads !== null ? null : (
+				<Labelled
+					className="merchboard-designer__option"
+					before
+					label={ <>{ __( 'Opacity', 'merchboard' ) }</> }
+				>
+					{ ( id ) => (
+						<input
+							id={ id }
+							type="range"
+							min={ 0.1 }
+							max={ 1 }
+							step={ 0.05 }
+							value={ object.opacity }
+							onChange={ ( event ) =>
+								onChange( {
+									opacity: Number( event.target.value ),
+								} )
+							}
+						/>
+					) }
+				</Labelled>
+			) }
 			<Button
 				variant="secondary"
 				size="sm"

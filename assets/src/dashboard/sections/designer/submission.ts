@@ -15,6 +15,7 @@ import type {
 import { objectsOf, usedSides } from './design-model';
 import type { DesignDocument } from './design-model';
 import { composeMockup, pngOf } from './mockup';
+import { threadCanvas, threadSide } from './threads';
 
 export interface SubmissionInput {
 	readonly product: number;
@@ -105,12 +106,26 @@ export async function submitWithFiles(
 			layers[ kind ] = url;
 		}
 
+		const threaded =
+			view.embroidery === null
+				? null
+				: await threadSide(
+						objects,
+						images,
+						input.design.threads?.[ key ] ?? {},
+						view.embroidery
+					);
 		const print = await renderPrintFile(
-			objects,
-			images,
+			threaded?.objects ?? objects,
+			threaded?.images ?? images,
 			view.printWidth,
 			view.printHeight
 		);
+
+		if ( threaded !== null ) {
+			threadCanvas( print, threaded.plan );
+		}
+
 		const png = await pngOf( print );
 
 		if ( png === null ) {

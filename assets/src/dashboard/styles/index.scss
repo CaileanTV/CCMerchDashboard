@@ -1725,6 +1725,29 @@ input:disabled + .merchboard-sounds__upload {
 	}
 }
 
+.merchboard-designer__threads {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-1);
+	padding-block: var(--merchboard-space-2);
+}
+
+.merchboard-designer__thread {
+	display: inline-block;
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	vertical-align: middle;
+	cursor: pointer;
+	border: 1px solid var(--merchboard-border-strong);
+	border-radius: 50%;
+
+	&[aria-pressed="true"] {
+		outline: 2px solid var(--merchboard-primary);
+		outline-offset: 1px;
+	}
+}
+
 .merchboard-designer__panel {
 	padding: var(--merchboard-space-3);
 }

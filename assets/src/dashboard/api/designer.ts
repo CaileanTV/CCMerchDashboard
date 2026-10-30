@@ -29,6 +29,18 @@ export interface DesignerColor {
 	readonly hex: string;
 }
 
+export interface DesignerThread {
+	readonly code: string;
+	readonly name: string;
+	readonly hex: string;
+}
+
+/** The embroidery pack of a side: its threads and the most it may use. */
+export interface DesignerEmbroidery {
+	readonly max: number;
+	readonly threads: readonly DesignerThread[];
+}
+
 export interface DesignerView {
 	readonly key: string;
 	readonly name: string;
@@ -50,6 +62,8 @@ export interface DesignerView {
 	readonly printWidth: number;
 	readonly printHeight: number;
 	readonly dpi: number;
+	/** Null when the side is printed. */
+	readonly embroidery: DesignerEmbroidery | null;
 }
 
 export interface DesignerBase {
@@ -238,6 +252,32 @@ export function parseAsset( value: unknown ): DesignerAsset | null {
 }
 
 /**
+ * The embroidery pack of a side; null when it is printed or invalid.
+ *
+ * @param value Value.
+ */
+function parseEmbroidery( value: unknown ): DesignerEmbroidery | null {
+	if (
+		! isRecord( value ) ||
+		! isInt( value.max, 1 ) ||
+		! Array.isArray( value.threads )
+	) {
+		return null;
+	}
+
+	const threads = value.threads.flatMap( ( thread: unknown ) =>
+		isRecord( thread ) &&
+		isString( thread.code ) &&
+		isString( thread.name ) &&
+		isString( thread.hex )
+			? [ { code: thread.code, name: thread.name, hex: thread.hex } ]
+			: []
+	);
+
+	return threads.length === 0 ? null : { max: value.max, threads };
+}
+
+/**
  * A side.
  *
  * @param value Value.
@@ -306,6 +346,7 @@ function parseView( value: unknown ): DesignerView | null {
 		printWidth: value.print_width,
 		printHeight: value.print_height,
 		dpi: value.dpi,
+		embroidery: parseEmbroidery( value.embroidery ),
 	};
 }
 

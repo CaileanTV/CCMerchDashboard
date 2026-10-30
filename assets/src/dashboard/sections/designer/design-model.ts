@@ -63,6 +63,13 @@ export type DesignObject = TextObject | ImageObject | ShapeObject;
 export interface DesignDocument {
 	readonly version: number;
 	readonly sides: Readonly< Record< string, readonly DesignObject[] > >;
+	/**
+	 * The creator's choice of threads on embroidered sides: by side, the
+	 * thread to use instead of the one found.
+	 */
+	readonly threads?: Readonly<
+		Record< string, Readonly< Record< string, string > > >
+	>;
 }
 
 export const EMPTY_DESIGN: DesignDocument = {
@@ -244,7 +251,39 @@ export function parseDesign( value: unknown ): DesignDocument | null {
 		sides[ key ] = parsed;
 	}
 
-	return { version: DESIGN_VERSION, sides };
+	const threads = parseThreads( value.threads );
+
+	return {
+		version: DESIGN_VERSION,
+		sides,
+		...( threads === undefined ? {} : { threads } ),
+	};
+}
+
+/**
+ * The creator's choice of threads from the server.
+ *
+ * @param value Value.
+ */
+function parseThreads( value: unknown ): DesignDocument[ 'threads' ] {
+	if ( ! isRecord( value ) ) {
+		return undefined;
+	}
+
+	const threads: Record< string, Record< string, string > > = {};
+
+	for ( const [ side, swaps ] of Object.entries( value ) ) {
+		if ( isRecord( swaps ) ) {
+			threads[ side ] = Object.fromEntries(
+				Object.entries( swaps ).filter(
+					( entry ): entry is [ string, string ] =>
+						typeof entry[ 1 ] === 'string'
+				)
+			);
+		}
+	}
+
+	return threads;
 }
 
 let counter = 0;
@@ -425,7 +464,82 @@ export function withObjects(
 		sides[ side ] = objects;
 	}
 
-	return { version: DESIGN_VERSION, sides };
+	return { ...design, version: DESIGN_VERSION, sides };
+}
+
+/**
+ * The design with a thread swapped; null goes back to the thread found.
+ *
+ * @param design Design.
+ * @param side   Side key.
+ * @param found  The thread found.
+ * @param used   The thread to use instead, or null.
+ */
+export function withThread(
+	design: DesignDocument,
+	side: string,
+	found: string,
+	used: string | null
+): DesignDocument {
+	const swaps: Record< string, string > = {
+		...( design.threads?.[ side ] ?? {} ),
+	};
+
+	if ( used === null || used === found ) {
+		delete swaps[ found ];
+	} else {
+		swaps[ found ] = used;
+	}
+
+	const threads: Record< string, Readonly< Record< string, string > > > = {
+		...( design.threads ?? {} ),
+		[ side ]: swaps,
+	};
+
+	if ( Object.keys( swaps ).length === 0 ) {
+		delete threads[ side ];
+	}
+
+	const { threads: _old, ...rest } = design;
+
+	return Object.keys( threads ).length === 0 ? rest : { ...rest, threads };
+}
+
+/**
+ * The design as it is saved: a choice of threads only counts on a side that
+ * is embroidered and for threads its pack still has.
+ *
+ * @param design Design.
+ * @param views  The base product's sides.
+ */
+export function withKnownThreads(
+	design: DesignDocument,
+	views: readonly {
+		readonly key: string;
+		readonly embroidery: {
+			readonly threads: readonly { readonly code: string }[];
+		} | null;
+	}[]
+): DesignDocument {
+	const { threads: choice, ...rest } = design;
+	const threads: Record< string, Record< string, string > > = {};
+
+	for ( const [ side, swaps ] of Object.entries( choice ?? {} ) ) {
+		const codes =
+			views
+				.find( ( view ) => view.key === side )
+				?.embroidery?.threads.map( ( thread ) => thread.code ) ?? [];
+		const known = Object.entries( swaps ).filter(
+			( [ found, used ] ) =>
+				codes.includes( found ) && codes.includes( used )
+		);
+
+		if ( known.length > 0 ) {
+			threads[ side ] = Object.fromEntries( known );
+		}
+	}
+
+	return Object.keys( threads ).length === 0 ? rest : { ...rest, threads };
 }
 
 /**
