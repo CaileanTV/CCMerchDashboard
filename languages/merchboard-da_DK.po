@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-30T18:27:47+00:00\n"
+"PO-Revision-Date: 2026-10-30T18:50:46+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -6211,8 +6211,8 @@ msgid "Another catalog"
 msgstr "Et andet katalog"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:682
-msgid "Gelato renders products only from a template. Make one template in the Gelato dashboard of the product from this catalog you want, with the colours and sizes creators may choose, one named image layer per side and a real mockup. Use a printed product: an embroidered one gave no photos. Any design in it is never shown: we replace it with an empty file and later with the creators' print files. The template id is in the template's address at Gelato."
-msgstr "Gelato renderer kun produkter ud fra en skabelon. Lav én skabelon i Gelatos dashboard af det produkt fra dette katalog, du vil bruge, med de farver og størrelser, creators må vælge, ét navngivet billedlag pr. side og en rigtig mockup. Brug et printet produkt: et broderet gav ingen fotos. Et eventuelt design i den vises aldrig: vi erstatter det med en tom fil og senere med creatorernes printfiler. Skabelonens id står i dens adresse hos Gelato."
+msgid "Gelato renders products only from a template. Make one template in the Gelato dashboard of the product from this catalog you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators' print files. The template id is in the template's address at Gelato."
+msgstr "Gelato renderer kun produkter ud fra en skabelon. Lav én skabelon i Gelatos dashboard af det produkt fra dette katalog, du vil bruge, med de farver og størrelser, creators må vælge, ét navngivet billedlag pr. side og mindst én mockup: Gelato laver fotoene ud fra skabelonens mockups. Et eventuelt design i den vises aldrig: vi erstatter det med en tom fil og senere med creatorernes printfiler. Skabelonens id står i dens adresse hos Gelato."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:684
 msgid "Gelato template id"
