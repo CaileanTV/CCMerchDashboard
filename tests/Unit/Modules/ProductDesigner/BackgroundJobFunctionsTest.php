@@ -9,7 +9,6 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\ProductDesigner;
 
-use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversNothing;
 
@@ -26,6 +25,6 @@ final class BackgroundJobFunctionsTest extends TestCase {
 			}
 		}
 
-		self::assertSame( array( basename( ( new \ReflectionClass( DesignerFiles::class ) )->getFileName() ?: '' ) ), $calls, 'wp_tempnam() lives in wp-admin: DesignerFiles::temporary_path() loads it.' );
+		self::assertSame( array( 'DesignerFiles.php' ), $calls, 'wp_tempnam() lives in wp-admin: DesignerFiles::temporary_path() loads it.' );
 	}
 }
