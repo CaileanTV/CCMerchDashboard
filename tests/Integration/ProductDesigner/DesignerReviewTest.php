@@ -665,6 +665,59 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( 1919400, $this->writer->contents[1][1]->price_units, 'A design approved before is put in the shop at the new base price.' );
 	}
 
+	public function test_a_second_design_area_costs_the_extra_price_which_is_secured_and_follows_a_new_price(): void {
+		$table = $this->table( Tables::DESIGNER_BASES );
+		$views = (array) json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT views FROM %i WHERE id = %d', $table, $this->base ) ), true );
+		$back  = array_merge(
+			(array) $views[0],
+			array(
+				'key'  => 'back',
+				'name' => 'Back',
+			)
+		);
+
+		$this->wpdb->update(
+			$table,
+			array(
+				'views'            => (string) wp_json_encode( array( $views[0], $back ) ),
+				'extra_side_price' => '50.0000',
+			),
+			array( 'id' => $this->base )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: a second side without new uploads.
+
+		$one = $this->submitted();
+		$two = $this->drafts->create( $this->creator, $this->base );
+		$this->save( $two, '20', array( 'front', 'back' ) );
+		self::assertSame( '239.9400', $this->products->draft( $two )['quoted_price'] ?? null, '(149.95 + 50) + 20 %.' );
+
+		$this->send_files( $two, array( 'front', 'back' ) );
+		$this->submissions->submit( $this->creator, $two );
+		$this->review->approve( $this->pending_id( $one ) );
+		$this->drain();
+		$this->review->approve( $this->pending_id( $two ) );
+		$this->drain();
+
+		$shop   = (int) ( $this->products->product( $two )['wc_product_id'] ?? 0 );
+		$prices = new DesignerPrices( $this->wpdb, new PostMetaPricingProductStore() );
+		$price  = $prices->price( $shop ) ?? self::fail( 'No price.' );
+
+		self::assertSame( array( 1799400, 2399400 ), array( $this->writer->contents[0][1]->price_units, $this->writer->contents[1][1]->price_units ), 'One area costs nothing extra.' );
+		self::assertSame( array( '239.9400', '199.9500' ), array( $this->products->product( $two )['shop_price'] ?? null, $this->products->product( $two )['shop_base_price'] ?? null ) );
+		self::assertSame( array( 1999500, 399900 ), array( $price->base_units, $price->profit_units ), 'The extra price is secured for the company.' );
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'extra_side_price' => '60' ) ), array( $this->base_views()[0], array_merge( $this->base_views()[0], array( 'key' => 'back', 'name' => 'Back' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				if ( DesignerRepricing::HOOK === $hook ) {
+					$this->repricing->run( ...$args );
+				}
+			}
+		);
+
+		self::assertSame( array( array( $shop, 2519400 ) ), $this->writer->prices, 'A new extra price reaches only the product that uses it: (149.95 + 60) + 20 %.' );
+		self::assertSame( '209.9500', $this->products->product( $two )['shop_base_price'] ?? null );
+	}
+
 	public function test_a_retired_base_product_takes_its_products_out_of_the_shop(): void {
 		$product = $this->submitted();
 		$this->review->approve( $this->pending_id( $product ) );
@@ -867,10 +920,29 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	/**
 	 * Saves the draft.
 	 *
-	 * @param int    $product Designer product.
-	 * @param string $profit  Percent.
+	 * @phpstan-param list<string> $sides
+	 *
+	 * @param int      $product Designer product.
+	 * @param string   $profit  Percent.
+	 * @param string[] $sides   Sides with a rectangle.
 	 */
-	private function save( int $product, string $profit ): void {
+	private function save( int $product, string $profit, array $sides = array( 'front' ) ): void {
+		$rectangle = array(
+			'type'        => 'rect',
+			'id'          => 'r1',
+			'x'           => 50,
+			'y'           => 50,
+			'width'       => 40,
+			'height'      => 40,
+			'angle'       => 0,
+			'scaleX'      => 1,
+			'scaleY'      => 1,
+			'opacity'     => 1,
+			'fill'        => '#00ff00',
+			'strokeWidth' => 0,
+			'radius'      => 0,
+		);
+
 		$this->drafts->save(
 			$this->creator,
 			$product,
@@ -883,25 +955,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 				'profit_value' => $profit,
 				'design'       => array(
 					'version' => 1,
-					'sides'   => array(
-						'front' => array(
-							array(
-								'type'        => 'rect',
-								'id'          => 'r1',
-								'x'           => 50,
-								'y'           => 50,
-								'width'       => 40,
-								'height'      => 40,
-								'angle'       => 0,
-								'scaleX'      => 1,
-								'scaleY'      => 1,
-								'opacity'     => 1,
-								'fill'        => '#00ff00',
-								'strokeWidth' => 0,
-								'radius'      => 0,
-							),
-						),
-					),
+					'sides'   => array_fill_keys( $sides, array( $rectangle ) ),
 				),
 			),
 			new DesignValidator( static fn(): bool => false, array() )
@@ -911,13 +965,18 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	/**
 	 * Sends the files of the draft.
 	 *
-	 * @param int $product Designer product.
+	 * @phpstan-param list<string> $sides
+	 *
+	 * @param int      $product Designer product.
+	 * @param string[] $sides   Used sides.
 	 */
-	private function send_files( int $product ): void {
-		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+	private function send_files( int $product, array $sides = array( 'front' ) ): void {
+		foreach ( $sides as $side ) {
+			$this->submissions->attach( $this->creator, $product, 'print:' . $side, AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
 
-		foreach ( array( 'black', 'sand' ) as $color ) {
-			$this->submissions->attach( $this->creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'mockup.png' ) );
+			foreach ( array( 'black', 'sand' ) as $color ) {
+				$this->submissions->attach( $this->creator, $product, 'mockup:' . $side . ':' . $color, AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'mockup.png' ) );
+			}
 		}
 	}
 

@@ -12,6 +12,8 @@ namespace MerchBoard\Modules\ProductDesigner;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerPrice;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
@@ -100,6 +102,21 @@ final class DesignerPrices implements DesignerPriceSource {
 		} catch ( InvalidArgumentException | OverflowException ) {
 			throw new DatabaseException( 'The designer product cannot be priced.', array( 'product_id' => $product_id ) );
 		}
+	}
+
+	/**
+	 * What the company keeps of a design: the base price, which includes one
+	 * design area, and the price of every further used area (the owner's
+	 * choice 2026-10-30). A profit in percent is taken of this amount.
+	 *
+	 * @param BaseProduct         $base   Base product.
+	 * @param array<mixed>|string $design The design, or its JSON.
+	 */
+	public static function secured_base( BaseProduct $base, array|string $design ): int {
+		$decoded = is_string( $design ) ? json_decode( $design, true ) : $design;
+		$used    = is_array( $decoded ) ? count( SubmissionFiles::used_sides( $decoded ) ) : 0;
+
+		return $base->base_units + max( 0, $used - 1 ) * $base->extra_side_units;
 	}
 
 	/**

@@ -194,7 +194,7 @@ class DesignerRepricing {
 		}
 
 		try {
-			$price = DesignerPrices::compute( (int) $product['creator_id'], SalesAmount::format( $base->base_units ), (string) $live['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $live['profit_value'] ) ), $base->currency, $this->decimals );
+			$price = DesignerPrices::compute( (int) $product['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $live['design'] ) ), (string) $live['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $live['profit_value'] ) ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}

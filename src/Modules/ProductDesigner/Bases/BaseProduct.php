@@ -20,7 +20,9 @@ defined( 'ABSPATH' ) || exit;
  * `version` grows with every change of a template or print area (from step
  * 30.11 not with a new price; the designer products follow a new price).
  * Creators design only on an `active` base product; a `retired` one is
- * out of the shop for good.
+ * out of the shop for good. One design area is included in the base price;
+ * every further used area adds `extra_side_units` to what the company keeps
+ * (the owner's choice 2026-10-30, DesignerPrices::secured_base()).
  */
 final readonly class BaseProduct {
 
@@ -60,6 +62,7 @@ final readonly class BaseProduct {
 	 * @param string[]   $sizes       Sizes.
 	 * @param BaseView[] $views       Sides.
 	 * @param int        $version     Version.
+	 * @param int        $extra_side_units Price incl. VAT of each used side after the first.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -74,9 +77,10 @@ final readonly class BaseProduct {
 		public array $colors,
 		public array $sizes,
 		public array $views,
-		public int $version = 1
+		public int $version = 1,
+		public int $extra_side_units = 0
 	) {
-		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 ) {
+		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );
 		}
 

@@ -334,7 +334,7 @@ class DesignerSubmissions {
 	 */
 	private function price( BaseProduct $base, array $draft ): string {
 		try {
-			$price = DesignerPrices::compute( 1, SalesAmount::format( $base->base_units ), (string) $draft['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $draft['profit_value'] ) ), $base->currency, $this->decimals );
+			$price = DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, (string) $draft['design'] ) ), (string) $draft['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $draft['profit_value'] ) ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}

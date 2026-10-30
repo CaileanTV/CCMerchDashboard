@@ -153,7 +153,7 @@ final class PayoutsTest extends IntegrationTestCase {
 	}
 
 	public function test_the_schema_has_the_payout_tables_and_the_start_column(): void {
-		self::assertSame( 38, (int) get_option( 'merchboard_db_version' ), 'Version 9 created them; version 10 added the gift card columns; version 11 the settlement documents; version 12 the gift card assessment tables; version 13 the operation registry; version 14 the recalculations; version 15 their exports; version 16 the VAT status history; version 17 the creator discount codes; version 18 the alert events; version 19 the alert overlays; version 20 the chatbot tables; version 21 their platforms; version 22 wider channel columns; version 23 the order log indexes; version 24 the alert amounts; version 25 the news.' );
+		self::assertSame( 39, (int) get_option( 'merchboard_db_version' ), 'Version 9 created them; version 10 added the gift card columns; version 11 the settlement documents; version 12 the gift card assessment tables; version 13 the operation registry; version 14 the recalculations; version 15 their exports; version 16 the VAT status history; version 17 the creator discount codes; version 18 the alert events; version 19 the alert overlays; version 20 the chatbot tables; version 21 their platforms; version 22 wider channel columns; version 23 the order log indexes; version 24 the alert amounts; version 25 the news.' );
 		self::assertSame( 0, $this->count_rows( Tables::PAYOUTS ) );
 		self::assertSame( 0, $this->count_rows( Tables::PAYOUT_SECRETS ) );
 		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT payout_start_at FROM %i WHERE id = %d', $this->table( Tables::CREATORS ), $this->creator ) ), 'NULL = the whole history.' );

@@ -49,6 +49,8 @@ final class DesignerException extends RuntimeException {
 
 	public const BASE_PRICE = 'base_price';
 
+	public const BASE_EXTRA = 'base_extra';
+
 	public const BASE_CATEGORY = 'base_category';
 
 	public const BASE_COLORS = 'base_colors';

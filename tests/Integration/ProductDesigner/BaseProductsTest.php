@@ -251,6 +251,34 @@ final class BaseProductsTest extends IntegrationTestCase {
 		}
 	}
 
+	public function test_the_price_of_extra_design_areas_is_kept_and_refused_strictly(): void {
+		$id = $this->service->save( null, array_merge( self::fields(), array( 'extra_side_price' => '49,95' ) ), array() );
+
+		self::assertSame( 499500, $this->bases->find( $id )->extra_side_units ?? null );
+
+		$this->service->save( $id, self::fields(), array() );
+		self::assertSame( 499500, $this->bases->find( $id )->extra_side_units ?? null, 'Left out: kept.' );
+
+		$this->service->save( $id, array_merge( self::fields(), array( 'extra_side_price' => '' ) ), array() );
+		self::assertSame( 0, $this->bases->find( $id )->extra_side_units ?? null, 'Empty is 0, which is allowed.' );
+
+		$this->service->save( $id, array_merge( self::fields(), array( 'extra_side_price' => '25' ) ), array() );
+
+		foreach ( array( '-1', '1.999', 'abc' ) as $invalid ) {
+			try {
+				$this->service->save( $id, array_merge( self::fields(), array( 'extra_side_price' => $invalid ) ), array() );
+				self::fail( 'Refused: ' . $invalid );
+			} catch ( DesignerException $e ) {
+				self::assertSame( DesignerException::BASE_EXTRA, $e->reason() );
+			}
+		}
+
+		self::assertSame( 250000, $this->bases->find( $id )->extra_side_units ?? null );
+
+		$this->service->retire( $id );
+		self::assertSame( 250000, $this->bases->find( $id )->extra_side_units ?? null, 'A change of status keeps it.' );
+	}
+
 	public function test_cliparts_and_the_administrator_s_file_endpoint(): void {
 		$library = new ClipartLibrary( $this->assets, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
 		$id      = $library->add( 'Star', AlertImagesTest::upload( AlertImagesTest::png( 64, 64 ), 'star.png' ) );

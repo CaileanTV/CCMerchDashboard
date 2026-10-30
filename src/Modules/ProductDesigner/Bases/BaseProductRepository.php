@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price';
 
 	/**
 	 * Constructor.
@@ -93,7 +93,7 @@ class BaseProductRepository {
 					'updated_by' => $user > 0 ? $user : null,
 				)
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%d' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%d' )
 		);
 
 		if ( 1 !== $done || '' !== $this->wpdb->last_error ) {
@@ -122,7 +122,7 @@ class BaseProductRepository {
 				)
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%d' ),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d' ),
 			array( '%d' )
 		);
 
@@ -324,17 +324,18 @@ class BaseProductRepository {
 		}
 
 		return array(
-			'status'      => $base->status,
-			'source'      => $base->source,
-			'name'        => $base->name,
-			'description' => $base->description,
-			'base_price'  => SalesAmount::format( $base->base_units ),
-			'currency'    => $base->currency,
-			'category_id' => $base->category_id,
-			'colors'      => $colors,
-			'sizes'       => $sizes,
-			'views'       => $views,
-			'version'     => $base->version,
+			'status'           => $base->status,
+			'source'           => $base->source,
+			'name'             => $base->name,
+			'description'      => $base->description,
+			'base_price'       => SalesAmount::format( $base->base_units ),
+			'currency'         => $base->currency,
+			'category_id'      => $base->category_id,
+			'colors'           => $colors,
+			'sizes'            => $sizes,
+			'views'            => $views,
+			'version'          => $base->version,
+			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 		);
 	}
 
@@ -375,7 +376,8 @@ class BaseProductRepository {
 				),
 				array_values( array_map( static fn( mixed $size ): string => is_string( $size ) ? $size : '', $sizes ) ),
 				array_values( array_map( BaseView::from_array( ... ), $views ) ),
-				is_numeric( $row['version'] ?? null ) ? (int) $row['version'] : 0
+				is_numeric( $row['version'] ?? null ) ? (int) $row['version'] : 0,
+				SalesAmount::parse( (string) ( $row['extra_side_price'] ?? '0' ) )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

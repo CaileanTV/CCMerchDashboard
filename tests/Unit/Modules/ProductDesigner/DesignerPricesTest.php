@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\ProductDesigner;
 
 use InvalidArgumentException;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Tests\Unit\TestCase;
@@ -58,6 +59,23 @@ final class DesignerPricesTest extends TestCase {
 		self::assertGreaterThanOrEqual( SalesAmount::parse( $base ), $price->base_units );
 		self::assertSame( 7, $price->creator_id );
 		self::assertSame( 'DKK', $price->currency );
+	}
+
+	public function test_one_design_area_is_included_and_each_further_used_one_is_secured(): void {
+		$base   = new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Tee', '', 1500000, 'DKK', null, array(), array(), array(), 1, 500000 );
+		$object = array( 'id' => 'a' );
+		$design = static fn( array $sides ): array => array( 'version' => 1, 'sides' => $sides ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, $design( array() ) ), 'No used area yet.' );
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, $design( array( 'front' => array( $object ) ) ) ) );
+		self::assertSame( 2000000, DesignerPrices::secured_base( $base, $design( array( 'front' => array( $object ), 'back' => array( $object ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 2500000, DesignerPrices::secured_base( $base, (string) json_encode( $design( array( 'front' => array( $object ), 'back' => array( $object ), 'sleeve' => array( $object ) ) ) ) ), 'Also from the stored JSON.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound, WordPress.WP.AlternativeFunctions.json_encode_json_encode
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, $design( array( 'front' => array( $object ), 'back' => array( array( 'id' => 'b', 'hidden' => true ) ), 'neck' => array() ) ) ), 'A hidden or empty area is not used.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, 'no json' ) );
+
+		$price = DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, $design( array( 'front' => array( $object ), 'back' => array( $object ) ) ) ) ), 'percent', '20', 'DKK', 2 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( array( 2000000, 400000, 2400000 ), array( $price->base_units, $price->profit_units, $price->price_units() ), 'The owner\'s example: 150 + 50, 20 % gives 40 and 240.' );
 	}
 
 	public function test_invalid_settings_are_refused(): void {

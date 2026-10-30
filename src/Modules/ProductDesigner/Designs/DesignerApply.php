@@ -227,7 +227,7 @@ class DesignerApply {
 
 		$now = $this->bases->find( $base->id ?? 0 );
 
-		if ( null !== $now && $now->base_units !== $base->base_units && null !== $this->reprice ) {
+		if ( null !== $now && ( $now->base_units !== $base->base_units || $now->extra_side_units !== $base->extra_side_units ) && null !== $this->reprice ) {
 			( $this->reprice )( $product_id );
 		}
 	}
@@ -380,7 +380,7 @@ class DesignerApply {
 	 */
 	private function price( array $version, BaseProduct $base ): DesignerPrice {
 		try {
-			return DesignerPrices::compute( (int) $version['creator_id'], SalesAmount::format( $base->base_units ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals );
+			return DesignerPrices::compute( (int) $version['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
