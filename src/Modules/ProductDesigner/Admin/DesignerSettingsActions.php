@@ -17,7 +17,6 @@ use MerchBoard\Modules\ProductDesigner\DesignerSettings;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
-use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -57,12 +56,13 @@ final class DesignerSettingsActions {
 	}
 
 	/**
-	 * URL of the settings screen with an outcome code, at the section.
+	 * URL of a tab with an outcome code.
 	 *
 	 * @param string $result Outcome code.
+	 * @param string $tab    The tab.
 	 */
-	public static function url( string $result ): string {
-		return add_query_arg( array( self::RESULT_ARG => $result ), SettingsPage::url( '', DesignerSettingsSection::TAB ) ) . '#merchboard-designer';
+	public static function url( string $result, string $tab = DesignerMenu::SETTINGS ): string {
+		return DesignerMenu::url( $tab, array( self::RESULT_ARG => $result ) );
 	}
 
 	/**
@@ -100,7 +100,7 @@ final class DesignerSettingsActions {
 		}
 
 		if ( null === $this->packs ) {
-			return self::url( 'error' );
+			return self::url( 'error', DesignerMenu::PACKS );
 		}
 
 		$rows = array();
@@ -120,16 +120,16 @@ final class DesignerSettingsActions {
 			if ( 'delete' === $text( 'do' ) ) {
 				$this->packs->delete( $text( 'pack_id' ) );
 
-				return self::url( 'pack_deleted' );
+				return self::url( 'pack_deleted', DesignerMenu::PACKS );
 			}
 
-			return self::url( $this->packs->save( $text( 'pack_id' ), $text( 'pack_name' ), $text( 'pack_max' ), $rows ) ? 'saved' : 'no_changes' );
+			return self::url( $this->packs->save( $text( 'pack_id' ), $text( 'pack_name' ), $text( 'pack_max' ), $rows ) ? 'saved' : 'no_changes', DesignerMenu::PACKS );
 		} catch ( DesignerException $e ) {
-			return self::url( $e->reason() );
+			return self::url( $e->reason(), DesignerMenu::PACKS );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Saving an embroidery pack failed.', $e->context() );
 
-			return self::url( 'error' );
+			return self::url( 'error', DesignerMenu::PACKS );
 		}
 	}
 

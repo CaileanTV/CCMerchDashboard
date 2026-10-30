@@ -30,6 +30,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerReviewActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerMenu;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
@@ -160,6 +161,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		$container->set( DesignerSettingsSection::class, static fn( Container $c ): DesignerSettingsSection => new DesignerSettingsSection( $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ) ) );
+		$container->set( DesignerMenu::class, static fn( Container $c ): DesignerMenu => new DesignerMenu( $c->get( DesignsPage::class ), $c->get( BaseProductsPage::class ), $c->get( CampaignsPage::class ), $c->get( DesignerSettingsSection::class ) ) );
 		$container->set( ThreadPacks::class, static fn( Container $c ): ThreadPacks => new ThreadPacks( $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ThreadPacks::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
@@ -299,7 +302,6 @@ final class ProductDesignerModule implements Module {
 			40
 		);
 
-		( new DesignerSettingsSection( $container->get( PrintfulToken::class ), $container->get( GelatoAccount::class ) ) )->register();
 		add_action(
 			'merchboard_designer_submitted',
 			static function ( mixed $version ) use ( $container ): void {
@@ -378,9 +380,7 @@ final class ProductDesignerModule implements Module {
 		add_action(
 			'admin_menu',
 			static function () use ( $container ): void {
-				$container->get( DesignsPage::class )->add_menu();
-				$container->get( BaseProductsPage::class )->add_menu();
-				$container->get( CampaignsPage::class )->add_menu();
+				$container->get( DesignerMenu::class )->add_menu();
 			},
 			CampaignsPage::PRIORITY
 		);

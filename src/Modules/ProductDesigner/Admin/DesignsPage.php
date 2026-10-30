@@ -11,7 +11,6 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
-use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
 use MerchBoard\Modules\Notifications\NotificationsException;
@@ -43,8 +42,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class DesignsPage {
 
-	public const SLUG = 'merchboard-designs';
-
 	public const RESULT_ARG = 'merchboard_designs_result';
 
 	/**
@@ -65,20 +62,6 @@ final class DesignsPage {
 		private NotificationSwitches $switches,
 		private int $decimals
 	) {
-	}
-
-	/**
-	 * Adds the submenu page.
-	 */
-	public function add_menu(): void {
-		add_submenu_page(
-			AdminMenu::PARENT_SLUG,
-			__( 'Merch Dashboard Designs', 'merchboard' ),
-			__( 'Designs', 'merchboard' ),
-			Capabilities::MANAGE_DESIGNER,
-			self::SLUG,
-			array( $this, 'render' )
-		);
 	}
 
 	/**
@@ -142,17 +125,6 @@ final class DesignsPage {
 		$notice        = self::result_message( $code );
 		$notifications = 'notifications' === $view && current_user_can( Capabilities::MANAGE_SETTINGS );
 
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Designs', 'merchboard' ) . '</h1>';
-		echo '<nav class="nav-tab-wrapper">';
-		printf( '<a class="nav-tab%1$s" href="%2$s">%3$s</a>', $notifications ? '' : ' nav-tab-active', esc_url( self::url() ), esc_html__( 'Waiting for approval', 'merchboard' ) );
-
-		if ( current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
-			printf( '<a class="nav-tab%1$s" href="%2$s">%3$s</a>', $notifications ? ' nav-tab-active' : '', esc_url( self::notifications_url() ), esc_html__( 'Notifications', 'merchboard' ) );
-		}
-
-		echo '</nav>';
-
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
 		}
@@ -162,8 +134,6 @@ final class DesignsPage {
 		} else {
 			$this->render_queue();
 		}
-
-		echo '</div>';
 	}
 
 	/**
@@ -391,12 +361,10 @@ final class DesignsPage {
 	 * @param string                $result Outcome code.
 	 */
 	private static function page_url( array $args, string $result ): string {
-		$args['page'] = self::SLUG;
-
 		if ( '' !== $result ) {
 			$args[ self::RESULT_ARG ] = $result;
 		}
 
-		return add_query_arg( $args, admin_url( 'admin.php' ) );
+		return DesignerMenu::url( isset( $args['view'] ) ? DesignerMenu::NOTIFICATIONS : DesignerMenu::DESIGNS, $args );
 	}
 }

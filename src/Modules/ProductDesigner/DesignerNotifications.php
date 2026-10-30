@@ -14,8 +14,7 @@ use MerchBoard\Modules\Notifications\EmailMessage;
 use MerchBoard\Modules\Notifications\NotificationData;
 use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
-use MerchBoard\Modules\ProductDesigner\Admin\BaseProductsPage;
-use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerMenu;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 
@@ -309,7 +308,7 @@ final class DesignerNotifications {
 			true,
 			false,
 			false,
-			DesignsPage::SLUG,
+			DesignerMenu::LINK_DESIGNS,
 			array_merge( self::sample(), array( 'reason' => 'prices_excl_tax' ) ),
 			/* translators: 1: product title, 2: creator name. */
 			static fn( NotificationData $d ): string => sprintf( __( '%1$s by %2$s could not be put in the shop.', 'merchboard' ), $d->text( 'title' ), $d->text( 'creator' ) ),
@@ -346,7 +345,7 @@ final class DesignerNotifications {
 			true,
 			false,
 			false,
-			DesignsPage::SLUG,
+			DesignerMenu::LINK_DESIGNS,
 			array_merge(
 				self::sample(),
 				array(
@@ -391,7 +390,7 @@ final class DesignerNotifications {
 			true,
 			false,
 			false,
-			BaseProductsPage::SLUG,
+			DesignerMenu::LINK_BASES,
 			array(
 				'title'    => 'Stream tee',
 				'reason'   => DesignerException::IMPORT_TIMEOUT,
@@ -525,7 +524,7 @@ final class DesignerNotifications {
 			true,
 			false,
 			false,
-			DesignsPage::SLUG,
+			DesignerMenu::LINK_DESIGNS,
 			self::sample(),
 			$text,
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(

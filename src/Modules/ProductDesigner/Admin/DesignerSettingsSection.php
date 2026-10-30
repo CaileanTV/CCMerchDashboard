@@ -1,6 +1,6 @@
 <?php
 /**
- * "Product designer" section on the settings screen.
+ * The settings and embroidery packs of the product designer.
  *
  * @package MerchBoard
  */
@@ -15,28 +15,19 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
-use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The kill switches of the product designer (ADR-080), Printful (ADR-081)
- * and Gelato (ADR-082) on "Merch Dashboard → Settings", rendered via
- * `merchboard_settings_sections` for users with `merchboard_manage_designer`.
- * All are off by default. Read-only rendering with its own form, nonce and
+ * and Gelato (ADR-082), and the embroidery packs, as tabs of the designer's
+ * page (DesignerMenu) for users with `merchboard_manage_designer`. All
+ * switches are off by default. Read-only rendering with its own form, nonce and
  * notices; every change goes through DesignerSettingsActions. Everything is
  * escaped at output.
  */
 final class DesignerSettingsSection {
 
-	/**
-	 * The settings tab of the section.
-	 */
-	public const TAB = 'designer';
-
-	/**
-	 * Registers the section on the settings screen.
-	 */
 	/**
 	 * Constructor.
 	 *
@@ -44,14 +35,6 @@ final class DesignerSettingsSection {
 	 * @param GelatoAccount|null $gelato The Gelato key and store (step 30.13).
 	 */
 	public function __construct( private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null ) {
-	}
-
-	/**
-	 * Hooks the section into the Settings page.
-	 */
-	public function register(): void {
-		SettingsPage::add_tab( self::TAB, static fn(): string => __( 'Product designer', 'merchboard' ) );
-		add_action( 'merchboard_settings_sections', array( $this, 'render' ) );
 	}
 
 	/**
@@ -76,22 +59,26 @@ final class DesignerSettingsSection {
 	}
 
 	/**
-	 * Renders the section.
-	 *
-	 * @param mixed $tab The open settings tab (only its own renders).
+	 * The notice of the last change.
 	 */
-	public function render( mixed $tab = self::TAB ): void {
-		if ( self::TAB !== $tab ) {
-			return;
-		}
+	private static function render_notice(): void {
+		// Read-only outcome code; nothing is changed by this request.
+		$code   = isset( $_GET[ DesignerSettingsActions::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ DesignerSettingsActions::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$notice = self::result_message( $code );
 
+		if ( null !== $notice ) {
+			printf( '<div class="notice notice-%1$s inline"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+	}
+
+	/**
+	 * Renders the settings.
+	 */
+	public function render(): void {
 		if ( ! current_user_can( Capabilities::MANAGE_DESIGNER ) ) {
 			return;
 		}
 
-		// Read-only outcome code; nothing is changed by this request.
-		$code   = isset( $_GET[ DesignerSettingsActions::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ DesignerSettingsActions::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$notice = self::result_message( $code );
 		$fields = array(
 			Settings::DESIGNER_ENABLED => array(
 				__( 'Product designer', 'merchboard' ),
@@ -113,11 +100,7 @@ final class DesignerSettingsSection {
 			),
 		);
 
-		echo '<h2 id="merchboard-designer">' . esc_html__( 'Product designer', 'merchboard' ) . '</h2>';
-
-		if ( null !== $notice ) {
-			printf( '<div class="notice notice-%1$s inline"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
-		}
+		self::render_notice();
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( DesignerSettingsActions::SAVE_ACTION ) . '">';
@@ -149,7 +132,7 @@ final class DesignerSettingsSection {
 				__( 'Create an account at printful.com and a store of the type "Manual order platform / API" that is not connected to a web shop, so nothing is published or sold through Printful.', 'merchboard' ),
 				__( 'In Printful\'s Developer Portal (developers.printful.com), create a private token with access to that one store and as few scopes as possible. Do not choose orders, sync products or webhooks: Merch Dashboard never creates orders or products at Printful.', 'merchboard' ),
 				__( 'Paste the token above, switch Printful on and save.', 'merchboard' ),
-				__( 'Import catalog products under Merch Dashboard → Base products ("Import from Printful"), check them, set the base price and activate them.', 'merchboard' ),
+				__( 'Import catalog products under Merch Dashboard → Product designer → Base products ("Import from Printful"), check them, set the base price and activate them.', 'merchboard' ),
 				__( 'Printful fetches print files from a short-lived link on this site, so mockups from Printful only work on a site Printful can reach (not on a local test site).', 'merchboard' ),
 			) as $step
 		) {
@@ -162,14 +145,18 @@ final class DesignerSettingsSection {
 		echo '</tbody></table>';
 		submit_button( __( 'Save product designer settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
-		$this->render_packs();
 	}
 
 	/**
 	 * The embroidery packs: one form per pack and one for a new pack.
 	 */
-	private function render_packs(): void {
-		echo '<h2 id="merchboard-thread-packs">' . esc_html__( 'Embroidery packs', 'merchboard' ) . '</h2>';
+	public function render_packs(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_DESIGNER ) ) {
+			return;
+		}
+
+		self::render_notice();
+
 		echo '<p class="description">' . esc_html__( 'A pack holds the thread colours creators may use and the most of them on one embroidered side. Choose a pack on each embroidered side of a base product. A change counts from the next time a design is saved; products in the shop and sent designs do not change.', 'merchboard' ) . '</p>';
 
 		foreach ( ThreadPacks::all() as $pack ) {
@@ -240,7 +227,7 @@ final class DesignerSettingsSection {
 				__( 'Create an account at gelato.com and a store that is only used through the API and is not connected to a web shop or sales channel, so nothing is published or sold through Gelato. Products made for mockups stay in that store.', 'merchboard' ),
 				__( 'Create an API key in Gelato\'s dashboard (Developer → API keys) and copy the store id from the store\'s address.', 'merchboard' ),
 				__( 'Paste the key and the store id above, switch Gelato on and save.', 'merchboard' ),
-				__( 'In Gelato\'s dashboard, make a template per product: the product, the colours and sizes creators may choose, and one image placeholder per side. Import it under Merch Dashboard → Base products ("Import from Gelato") with its template id, check it, set the base price and activate it.', 'merchboard' ),
+				__( 'In Gelato\'s dashboard, make a template per product: the product, the colours and sizes creators may choose, and one image placeholder per side. Import it under Merch Dashboard → Product designer → Base products ("Import from Gelato") with its template id, check it, set the base price and activate it.', 'merchboard' ),
 				__( 'Gelato fetches print files from a short-lived link on this site, so mockups from Gelato only work on a site Gelato can reach (not on a local test site).', 'merchboard' ),
 			) as $step
 		) {

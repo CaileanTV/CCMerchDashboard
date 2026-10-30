@@ -140,7 +140,7 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 		);
 
 		self::assertStringContainsString( DesignerSettingsActions::RESULT_ARG . '=saved', $url );
-		self::assertStringEndsWith( '#merchboard-designer', $url );
+		self::assertStringContainsString( 'tab=settings', $url );
 		self::assertTrue( Settings::printful_enabled() );
 
 		ob_start();

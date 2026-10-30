@@ -24,9 +24,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Recalculations             ✅ ADR-063 (WooCommerce): genberegning af afregnede payouts uden 20 %-fradraget (nye genberegninger spærret siden ADR-064); forhåndsvisning, godkendelse eller afvisning, udførelse og afslutning som særskilte trin; kræver merchboard_manage_payouts
 ├── Alerts                     ✅ fase 25, trin 25.5 (WooCommerce, ADR-065/067): fanen "Fonts" (Google Fonts API-nøgle, katalog og godkendte fonte); trin 25.6.3: fanen "Sounds" (lydbibliotek); trin 25.6.10: fanen "Images" (billedbibliotek til tekstfyld); trin 25.8: fanen "Chatbot" (Twitch, fra 25.8.2 også Kick, fra 25.8.4 også YouTube); trin 25.8.5: fanen "YouTube-vilkår" (privatlivspolitik og vilkår); trin 25.9.3: fanen "Ordrelog" (første fane og standard); trin 25.9.4: fanen "Globalt overlay"; trin 25.9.5: fanen "Standard-overlays"; trin 25.9.6: fanen "Creator-siden"; trin 25.10.1: fanen "Import"; trin 25.12.1: fanen "API" (alert-API til creators' egne bots, ADR-073); kræver merchboard_manage_alerts
 ├── Nyheder (News)             ✅ fase 25, trin 25.11 (ADR-072): beskeder til creators ("Hvad er nyt"): skriv, forhåndsvis, udgiv, ret, træk tilbage; set/lukket pr. creator; kræver merchboard_manage_creators
-├── Designs                    🔄 fase 30, trin 30.9 (WooCommerce, ADR-080 pkt. 3): designs, der venter på godkendelse, og fanen "Notifikationer" (designerens notifikationer; kræver også merchboard_manage_settings); kræver merchboard_manage_designer
-├── Grundprodukter (Base products) 🔄 fase 30, trin 30.6 (WooCommerce, ADR-080 pkt. 2): grundprodukter med grundpris, farver, størrelser og sider (skabelonlag og printområde) samt fanen "Kliparts"; kræver merchboard_manage_designer
-├── Kampagner (Campaigns)      🔄 fase 30, trin 30.4 (WooCommerce, ADR-080 pkt. 9): virksomhedens egne kampagner for designer-produkter (navn, periode, kuponkoder, tilbudspriser); kræver merchboard_manage_designer
+├── Produktdesigner            🔄 fase 30 (WooCommerce, ADR-080): ét menupunkt med fanerne Designs, Grundprodukter, Kliparts, Kampagner, Broderipakker, Notifikationer (kræver også merchboard_manage_settings) og Indstillinger; kræver merchboard_manage_designer. Menupunktet er der også, når designeren er slået fra
 ├── (Import fra Product Vendors: fase 26, fjernet i trin 27.1 efter kørslen i produktion; se [features/vendor-import.md](features/vendor-import.md))
 └── Audit log                  ✅ fase 11: read-only, filtrér på hændelse, creator og periode; kræver merchboard_view_logs (tekniske logs: WooCommerce → Status → Logs)
 ```
@@ -59,15 +57,15 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 - Et forslag uden kategori kan ikke godkendes (kun navnet); et forslag, creatoren har trukket tilbage eller erstattet, giver en neutral besked.
 - **Creatorens side** har afsnittet "Category proposals" med antal ventende og link til køen.
 
-**Printful, fra trin 30.12:** Settings → Produktdesigner har feltet "Printful API token" (krypteret, kan fjernes) og opsætningsvejledningen. Designs viser, om mockups kommer fra Printful, stadig laves eller fejlede.
+**Printful, fra trin 30.12:** Produktdesigner → Indstillinger har feltet "Printful API token" (krypteret, kan fjernes) og opsætningsvejledningen. Designs viser, om mockups kommer fra Printful, stadig laves eller fejlede.
 
-**Gelato, fra trin 30.13:** Settings → Produktdesigner har felterne "Gelato API key" (krypteret, kan fjernes) og "Gelato store id" og opsætningsvejledningen. Designs viser mockup-tilstanden som for Printful.
+**Gelato, fra trin 30.13:** Produktdesigner → Indstillinger har felterne "Gelato API key" (krypteret, kan fjernes) og "Gelato store id" og opsætningsvejledningen. Designs viser mockup-tilstanden som for Printful.
 
 **Katalogimport, fra review 30.15 (eksperimentel):** "Nyt grundprodukt" har kilderne "Eget grundprodukt", "Fra Printfuls katalog" (søg på ord og kategori, vælg produktet) og "Fra Gelatos katalog" (vælg katalog, indtast skabelon-id), når leverandøren er slået til. Derefter vælger admin farver, størrelser og sider og grundpris og vælger "Opret og importér". Kladden oprettes straks; listen viser "importerer…" eller "import fejlet". Grundproduktet viser importens tilstand, ved fejl årsagen, kaldet og leverandørens besked med "Prøv igen", og "Vis leverandørens svar" (uden nøgler). Mens importen kører, kan grundproduktet ikke aktiveres eller slettes. Hver side kan også have en **baggrund pr. farve** (upload pr. farve under siden). De gamle felter "Importér fra Printful/Gelato" er fjernet.
 
 **Ekstra designområder, fra 2026-10-30:** "Pris pr. ekstra designområde" sættes på grundproduktet, både på et eget og ved import fra et katalog (standard 0). "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele printområdet.
 
-**Broderi, fra 2026-10-31 (eksperimentel):** Settings → Produktdesigner har sektionen "Broderipakker" med trådfarver og maksimum pr. side. Grundprodukter og "Nyt grundprodukt" har "Broderipakke" pr. side. Uden pakke er siden print.
+**Broderi, fra 2026-10-31 (eksperimentel):** Produktdesigner → Broderipakker har trådfarver og maksimum pr. side. Grundprodukter og "Nyt grundprodukt" har "Broderipakke" pr. side. Uden pakke er siden print.
 
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 
@@ -170,7 +168,6 @@ Ligger pluginets tabeller på en storage engine uden transaktioner (fx MyISAM), 
 - **Generelt:** creator-dashboardets adresse, logo, virksomhedsoplysninger og "Data on uninstall";
 - **Salg og udbetalinger** (`sales`): salgsledger og udbetalinger;
 - **Alerts** (`alerts`): alerts, brugernavn i checkout og grænser for lydfiler;
-- **Produktdesigner** (`designer`): designeren, Printful og Gelato.
 
 Et modul tilføjer sin fane med `SettingsPage::add_tab()` (filteret `merchboard_settings_tabs`). Handlingen `merchboard_settings_sections` får den åbne fane, og en sektion vises kun på sin egen fane. Efter gem kommer man tilbage til samme fane (`SettingsPage::url( $notice, $tab )`). En fane, man ikke har adgang til, viser intet; en ukendt fane åbner Generelt.
 

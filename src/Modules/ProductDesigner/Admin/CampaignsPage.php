@@ -13,7 +13,6 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
-use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\ProductDesigner\Campaigns\Campaign;
 use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
@@ -32,8 +31,6 @@ final class CampaignsPage {
 	/**
 	 * The page slug.
 	 */
-	public const SLUG = 'merchboard-campaigns';
-
 	/**
 	 * Query argument: outcome code after a redirect.
 	 */
@@ -55,20 +52,6 @@ final class CampaignsPage {
 	 * @param CampaignRepository $campaigns Campaigns.
 	 */
 	public function __construct( private CampaignRepository $campaigns ) {
-	}
-
-	/**
-	 * Adds the submenu page.
-	 */
-	public function add_menu(): void {
-		add_submenu_page(
-			AdminMenu::PARENT_SLUG,
-			__( 'Merch Dashboard Campaigns', 'merchboard' ),
-			__( 'Campaigns', 'merchboard' ),
-			Capabilities::MANAGE_DESIGNER,
-			self::SLUG,
-			array( $this, 'render' )
-		);
 	}
 
 	/**
@@ -129,17 +112,12 @@ final class CampaignsPage {
 		$code   = isset( $_GET[ self::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$notice = self::result_message( $code );
 
-		echo '<div class="wrap">';
-		echo '<h1 class="wp-heading-inline">' . esc_html__( 'Campaigns', 'merchboard' ) . '</h1>';
-
-		if ( 'new' !== $view && 0 === $id ) {
-			echo ' <a class="page-title-action" href="' . esc_url( self::edit_url() ) . '">' . esc_html__( 'New campaign', 'merchboard' ) . '</a>';
-		}
-
-		echo '<hr class="wp-header-end">';
-
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( 'new' !== $view && 0 === $id ) {
+			echo '<p><a class="button" href="' . esc_url( self::edit_url() ) . '">' . esc_html__( 'New campaign', 'merchboard' ) . '</a></p>';
 		}
 
 		try {
@@ -159,8 +137,6 @@ final class CampaignsPage {
 		} catch ( DatabaseException ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'The campaigns could not be read. Please try again later.', 'merchboard' ) . '</p></div>';
 		}
-
-		echo '</div>';
 	}
 
 	/**
@@ -269,12 +245,10 @@ final class CampaignsPage {
 	 * @param string                    $result Outcome code.
 	 */
 	private static function page_url( array $args, string $result ): string {
-		$args['page'] = self::SLUG;
-
 		if ( '' !== $result ) {
 			$args[ self::RESULT_ARG ] = $result;
 		}
 
-		return add_query_arg( $args, admin_url( 'admin.php' ) );
+		return DesignerMenu::url( DesignerMenu::CAMPAIGNS, $args );
 	}
 }

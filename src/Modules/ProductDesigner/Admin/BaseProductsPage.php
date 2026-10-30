@@ -12,7 +12,6 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
-use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
@@ -54,8 +53,6 @@ final class BaseProductsPage {
 	/**
 	 * The page slug.
 	 */
-	public const SLUG = 'merchboard-base-products';
-
 	/**
 	 * Query argument: outcome code after a redirect.
 	 */
@@ -92,20 +89,6 @@ final class BaseProductsPage {
 	 * @param GelatoCatalog|null      $gelato         Gelato's catalogs and templates.
 	 */
 	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false, private ?CatalogImport $catalog = null, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null ) {
-	}
-
-	/**
-	 * Adds the submenu page.
-	 */
-	public function add_menu(): void {
-		add_submenu_page(
-			AdminMenu::PARENT_SLUG,
-			__( 'Merch Dashboard Base products', 'merchboard' ),
-			__( 'Base products', 'merchboard' ),
-			Capabilities::MANAGE_DESIGNER,
-			self::SLUG,
-			array( $this, 'render' )
-		);
 	}
 
 	/**
@@ -260,21 +243,12 @@ final class BaseProductsPage {
 		$code   = isset( $_GET[ self::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$notice = self::result_message( $code );
 
-		echo '<div class="wrap">';
-		echo '<h1 class="wp-heading-inline">' . esc_html__( 'Base products', 'merchboard' ) . '</h1>';
-
-		if ( '' === $view && 0 === $id ) {
-			echo ' <a class="page-title-action" href="' . esc_url( self::edit_url() ) . '">' . esc_html__( 'New base product', 'merchboard' ) . '</a>';
-		}
-
-		echo '<hr class="wp-header-end">';
-		echo '<nav class="nav-tab-wrapper">';
-		printf( '<a class="nav-tab%1$s" href="%2$s">%3$s</a>', 'cliparts' !== $view ? ' nav-tab-active' : '', esc_url( self::url() ), esc_html__( 'Base products', 'merchboard' ) );
-		printf( '<a class="nav-tab%1$s" href="%2$s">%3$s</a>', 'cliparts' === $view ? ' nav-tab-active' : '', esc_url( self::cliparts_url() ), esc_html__( 'Cliparts', 'merchboard' ) );
-		echo '</nav>';
-
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		if ( '' === $view && 0 === $id ) {
+			echo '<p><a class="button" href="' . esc_url( self::edit_url() ) . '">' . esc_html__( 'New base product', 'merchboard' ) . '</a></p>';
 		}
 
 		try {
@@ -296,8 +270,6 @@ final class BaseProductsPage {
 		} catch ( DatabaseException ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'The product designer\'s data could not be read. Please try again later.', 'merchboard' ) . '</p></div>';
 		}
-
-		echo '</div>';
 	}
 
 	/**
@@ -619,7 +591,7 @@ final class BaseProductsPage {
 			return;
 		}
 
-		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintfulCatalog::SOURCE ) . '">';
+		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintfulCatalog::SOURCE ) . '">';
 		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> ';
 		echo '<label>' . esc_html__( 'Category', 'merchboard' ) . ' <select name="category"><option value="0">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
 
@@ -708,14 +680,14 @@ final class BaseProductsPage {
 			/* translators: %s: Gelato catalog title. */
 			echo '<p><strong>' . esc_html( sprintf( __( 'Catalog: %s', 'merchboard' ), $title ) ) . '</strong> · <a href="' . esc_url( self::new_url( array( 'source' => GelatoCatalog::SOURCE ) ) ) . '">' . esc_html__( 'Another catalog', 'merchboard' ) . '</a></p>';
 			echo '<p>' . esc_html__( 'Gelato renders products only from a template. Make one template in the Gelato dashboard of the product from this catalog you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators\' print files. The template id is in the template\'s address at Gelato.', 'merchboard' ) . '</p>';
-			echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '"><input type="hidden" name="catalog" value="' . esc_attr( $catalog ) . '">';
+			echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '"><input type="hidden" name="catalog" value="' . esc_attr( $catalog ) . '">';
 			echo '<p><label>' . esc_html__( 'Gelato template id', 'merchboard' ) . ' <input type="text" name="template" required class="regular-text" pattern="[A-Za-z0-9-]{1,100}" autocomplete="off"></label> <button type="submit" class="button">' . esc_html__( 'Fetch', 'merchboard' ) . '</button></p></form>';
 
 			return;
 		}
 
 		echo '<p>' . esc_html__( 'Pick the catalog of the product at Gelato, for example t-shirts or mugs.', 'merchboard' ) . '</p>';
-		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '">';
+		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '">';
 		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
 
 		if ( array() === $catalogs ) {
@@ -1140,12 +1112,10 @@ final class BaseProductsPage {
 	 * @param string                    $result Outcome code.
 	 */
 	private static function page_url( array $args, string $result ): string {
-		$args['page'] = self::SLUG;
-
 		if ( '' !== $result ) {
 			$args[ self::RESULT_ARG ] = $result;
 		}
 
-		return add_query_arg( $args, admin_url( 'admin.php' ) );
+		return DesignerMenu::url( 'cliparts' === ( $args['view'] ?? '' ) ? DesignerMenu::CLIPARTS : DesignerMenu::BASES, $args );
 	}
 }
