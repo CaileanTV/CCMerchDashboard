@@ -50,6 +50,7 @@ import {
 	objectsOf,
 	quotePrice,
 	updateObject,
+	usedSides,
 	withObjects,
 } from './design-model';
 import type {
@@ -244,11 +245,14 @@ function Editor( props: EditorProps ) {
 		[ overview ]
 	);
 	const fonts = overview.fonts;
+	const areas = usedSides( design ).length;
 	const price = quotePrice(
 		base.basePrice,
 		profitKind,
 		profitValue,
-		overview.priceDecimals
+		overview.priceDecimals,
+		base.extraSidePrice,
+		areas
 	);
 	const dirty =
 		design !== saved.design ||
@@ -868,6 +872,7 @@ function Editor( props: EditorProps ) {
 								profitKind={ profitKind }
 								profitValue={ profitValue }
 								price={ price }
+								areas={ areas }
 								onTitle={ setTitle }
 								onDescription={ setDescription }
 								onColors={ ( next ) => {
@@ -1395,6 +1400,8 @@ interface ProductPanelProps {
 	readonly profitKind: ProfitKind;
 	readonly profitValue: string;
 	readonly price: number | null;
+	/** Used design areas; one is included in the base price. */
+	readonly areas: number;
 	readonly onTitle: ( value: string ) => void;
 	readonly onDescription: ( value: string ) => void;
 	readonly onColors: ( value: readonly string[] ) => void;
@@ -1579,6 +1586,35 @@ function ProductPanel( props: ProductPanelProps ) {
 					),
 					moneyText( base.basePrice, base.currency, locale )
 				) }
+				{ Number( base.extraSidePrice ) > 0 && (
+					<>
+						<br />
+						{ props.areas > 1
+							? sprintf(
+									/* translators: 1: extra design areas, 2: price of one. */ __(
+										'Extra design areas: %1$d × %2$s',
+										'merchboard'
+									),
+									props.areas - 1,
+									moneyText(
+										base.extraSidePrice,
+										base.currency,
+										locale
+									)
+								)
+							: sprintf(
+									/* translators: %s: price of one extra design area. */ __(
+										'One design area is included. Each extra area costs %s.',
+										'merchboard'
+									),
+									moneyText(
+										base.extraSidePrice,
+										base.currency,
+										locale
+									)
+								) }
+					</>
+				) }
 				<br />
 				<strong>
 					{ props.price === null
@@ -1598,7 +1634,7 @@ function ProductPanel( props: ProductPanelProps ) {
 			</p>
 			<p className="merchboard-designer__hint">
 				{ __(
-					"The company always keeps the base price; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared.",
+					"The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared.",
 					'merchboard'
 				) }
 			</p>

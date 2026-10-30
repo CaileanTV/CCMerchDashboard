@@ -57,6 +57,8 @@ export interface DesignerBase {
 	readonly name: string;
 	readonly description: string;
 	readonly basePrice: string;
+	/** What each used side after the first adds to the base price. */
+	readonly extraSidePrice: string;
 	readonly currency: string;
 	readonly colors: readonly DesignerColor[];
 	readonly sizes: readonly string[];
@@ -320,6 +322,8 @@ function parseBase( value: unknown ): DesignerBase | null {
 		! isString( value.description ) ||
 		! isString( value.base_price ) ||
 		! DECIMAL.test( value.base_price ) ||
+		! isString( value.extra_side_price ) ||
+		! DECIMAL.test( value.extra_side_price ) ||
 		! isString( value.currency )
 	) {
 		return null;
@@ -344,6 +348,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				name: value.name,
 				description: value.description,
 				basePrice: value.base_price,
+				extraSidePrice: value.extra_side_price,
 				currency: value.currency,
 				colors,
 				sizes,

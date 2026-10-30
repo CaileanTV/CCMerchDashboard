@@ -71,6 +71,7 @@ const OVERVIEW = {
 			name: 'Organic tee',
 			description: '',
 			base_price: '149.9500',
+			extra_side_price: '0.0000',
 			currency: 'DKK',
 			colors: [ { key: 'black', name: 'Black', hex: '#111111' } ],
 			sizes: [ 'S', 'M' ],
@@ -310,6 +311,18 @@ describe( 'the design model', () => {
 		expect( quotePrice( '149.9500', 'percent', '20', 2 ) ).toBe( 179.94 );
 		expect( quotePrice( '150.0000', 'fixed', '49,995', 2 ) ).toBe( 200 );
 		expect( quotePrice( '149.1000', 'fixed', '50', 0 ) ).toBe( 200 );
+		expect(
+			quotePrice( '150.0000', 'percent', '20', 2, '50.0000', 2 )
+		).toBe( 240 );
+		expect( quotePrice( '150.0000', 'fixed', '10', 2, '50.0000', 3 ) ).toBe(
+			260
+		);
+		expect( quotePrice( '150.0000', 'fixed', '10', 2, '50.0000', 1 ) ).toBe(
+			160
+		);
+		expect( quotePrice( '150.0000', 'fixed', '10', 2, '50.0000', 0 ) ).toBe(
+			160
+		);
 		expect( quotePrice( '150.0000', 'fixed', '-1', 2 ) ).toBeNull();
 		expect( quotePrice( '150.0000', 'fixed', '', 2 ) ).toBeNull();
 	} );

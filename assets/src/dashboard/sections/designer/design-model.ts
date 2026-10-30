@@ -481,15 +481,20 @@ export function moveObject(
  * @param kind      `percent` of the base price or `fixed` amount.
  * @param value     Percent or amount as entered (comma or point).
  * @param decimals  Store price decimals.
+ * @param extra     Price of each used side after the first (decimal string).
+ * @param sides     Used sides; one is included in the base price.
  */
 export function quotePrice(
 	basePrice: string,
 	kind: 'percent' | 'fixed',
 	value: string,
-	decimals: number
+	decimals: number,
+	extra = '0',
+	sides = 1
 ): number | null {
 	const parsed = Number( value.trim().replace( ',', '.' ) );
-	const base = Number( basePrice );
+	const base =
+		Number( basePrice ) + Number( extra ) * Math.max( 0, sides - 1 );
 
 	if (
 		value.trim() === '' ||
