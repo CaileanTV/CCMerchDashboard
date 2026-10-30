@@ -27,6 +27,8 @@ defined( 'ABSPATH' ) || exit;
  * - The print area is the rectangle of the template (px) where the design
  *   is shown, and the physical print size in whole millimetres at `dpi`.
  *   The print file of the side is width_mm × height_mm at that dpi.
+ * - A side with a `thread_pack` is embroidered: its design keeps to that
+ *   pack's threads (ThreadPacks). Without one it is printed.
  */
 final readonly class BaseView {
 
@@ -92,15 +94,16 @@ final readonly class BaseView {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                                         $key       Stable key (a-z, 0-9, -), unique per base product.
-	 * @param string                                         $name      Name shown to creators.
-	 * @param int                                            $width     Template width in px.
-	 * @param int                                            $height    Template height in px.
-	 * @param array<string, int>                             $layers    Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
-	 * @param array{x: int, y: int, width: int, height: int} $area Print area in template px.
-	 * @param int                                            $width_mm  Print width in mm.
-	 * @param int                                            $height_mm Print height in mm.
-	 * @param int                                            $dpi       Print resolution.
+	 * @param string                                         $key         Stable key (a-z, 0-9, -), unique per base product.
+	 * @param string                                         $name        Name shown to creators.
+	 * @param int                                            $width       Template width in px.
+	 * @param int                                            $height      Template height in px.
+	 * @param array<string, int>                             $layers      Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
+	 * @param array{x: int, y: int, width: int, height: int} $area        Print area in template px.
+	 * @param int                                            $width_mm    Print width in mm.
+	 * @param int                                            $height_mm   Print height in mm.
+	 * @param int                                            $dpi         Print resolution.
+	 * @param string                                         $thread_pack The embroidery pack; empty when the side is printed.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -112,7 +115,8 @@ final readonly class BaseView {
 		public array $area,
 		public int $width_mm,
 		public int $height_mm,
-		public int $dpi
+		public int $dpi,
+		public string $thread_pack = ''
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -139,6 +143,10 @@ final readonly class BaseView {
 		if ( $width_mm < 1 || $height_mm < 1 || $width_mm > self::MAX_MM || $height_mm > self::MAX_MM || $dpi < self::MIN_DPI || $dpi > self::MAX_DPI ) {
 			throw new InvalidArgumentException( 'Invalid print size.' );
 		}
+
+		if ( '' !== $thread_pack && 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $thread_pack ) ) {
+			throw new InvalidArgumentException( 'Invalid embroidery pack.' );
+		}
 	}
 
 	/**
@@ -156,7 +164,7 @@ final readonly class BaseView {
 	 * @return array<string, mixed>
 	 */
 	public function to_array(): array {
-		return array(
+		$side = array(
 			'key'       => $this->key,
 			'name'      => $this->name,
 			'width'     => $this->width,
@@ -167,6 +175,8 @@ final readonly class BaseView {
 			'height_mm' => $this->height_mm,
 			'dpi'       => $this->dpi,
 		);
+
+		return '' === $this->thread_pack ? $side : array_merge( $side, array( 'thread_pack' => $this->thread_pack ) );
 	}
 
 	/**
@@ -201,7 +211,8 @@ final readonly class BaseView {
 			),
 			$int( $data['width_mm'] ?? null ),
 			$int( $data['height_mm'] ?? null ),
-			$int( $data['dpi'] ?? null )
+			$int( $data['dpi'] ?? null ),
+			is_string( $data['thread_pack'] ?? null ) ? $data['thread_pack'] : ''
 		);
 	}
 }

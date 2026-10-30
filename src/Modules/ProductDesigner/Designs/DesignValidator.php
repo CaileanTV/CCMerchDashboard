@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Designs;
 use Closure;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -68,7 +69,7 @@ final class DesignValidator {
 	 *
 	 * @param mixed       $design Decoded design.
 	 * @param BaseProduct $base   The base product it is designed on.
-	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>}
+	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, threads?: array<string, array<string, string>>}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
 	public function validate( mixed $design, BaseProduct $base ): array {
@@ -91,10 +92,54 @@ final class DesignValidator {
 			'version' => self::VERSION,
 			'sides'   => $sides,
 		);
-		$json       = wp_json_encode( $normalized );
+		$threads    = $this->threads( $design['threads'] ?? array(), $base );
+
+		if ( array() !== $threads ) {
+			$normalized['threads'] = $threads;
+		}
+
+		$json = wp_json_encode( $normalized );
 
 		if ( false === $json || strlen( $json ) > self::MAX_BYTES ) {
 			self::refuse();
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * The creator's choice of threads: by embroidered side, the thread found
+	 * for a colour and the thread to use instead.
+	 *
+	 * @param mixed       $threads Input.
+	 * @param BaseProduct $base    The base product.
+	 * @return array<string, array<string, string>>
+	 * @throws DesignerException When a side or thread is refused.
+	 */
+	private function threads( mixed $threads, BaseProduct $base ): array {
+		if ( ! is_array( $threads ) ) {
+			self::refuse();
+		}
+
+		$normalized = array();
+
+		foreach ( $threads as $key => $swaps ) {
+			$found = array_values( array_filter( $base->views, static fn( $view ): bool => (string) $key === $view->key ) );
+			$pack  = '' === ( $found[0]->thread_pack ?? '' ) ? null : ThreadPacks::find( $found[0]->thread_pack );
+
+			if ( null === $pack || ! is_array( $swaps ) ) {
+				self::refuse();
+			}
+
+			$codes = array_column( $pack['threads'], 'code' );
+
+			foreach ( $swaps as $from => $to ) {
+				if ( ! is_string( $to ) || ! in_array( (string) $from, $codes, true ) || ! in_array( $to, $codes, true ) ) {
+					self::refuse();
+				}
+
+				$normalized[ (string) $key ][ (string) $from ] = $to;
+			}
 		}
 
 		return $normalized;

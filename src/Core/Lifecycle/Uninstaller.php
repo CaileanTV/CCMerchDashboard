@@ -16,6 +16,7 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -249,6 +250,7 @@ final class Uninstaller {
 		delete_option( AlertApiSwitch::OPTION );
 		delete_option( NotificationSettings::OPTION );
 		delete_option( PrintfulToken::OPTION );
+		delete_option( ThreadPacks::OPTION );
 		delete_option( GelatoAccount::KEY_OPTION );
 		delete_option( GelatoAccount::STORE_OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );

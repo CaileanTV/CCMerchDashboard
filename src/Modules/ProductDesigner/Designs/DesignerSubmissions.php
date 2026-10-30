@@ -22,6 +22,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
 
@@ -72,6 +73,20 @@ class DesignerSubmissions {
 	}
 
 	/**
+	 * Whether a print file keeps to the side's embroidery pack. A printed
+	 * side has none and is not looked at.
+	 *
+	 * @param BaseView $view The side.
+	 * @param string   $name The stored file.
+	 */
+	private function keeps_to_pack( BaseView $view, string $name ): bool {
+		$pack = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
+		$path = null === $pack ? null : $this->files->path( $name );
+
+		return null === $pack || null === $path || ThreadPacks::check( $path, $pack );
+	}
+
+	/**
 	 * Stores one file of the draft's submission.
 	 *
 	 * @param Creator              $creator The creator.
@@ -94,6 +109,11 @@ class DesignerSubmissions {
 		if ( $size[0] !== $file['width'] || $size[1] !== $file['height'] ) {
 			$this->files->delete( $file['file'] );
 			self::refuse( DesignerException::SUBMISSION_FILE );
+		}
+
+		if ( SubmissionFiles::PRINT === $parts[0] && ! $this->keeps_to_pack( $view, $file['file'] ) ) {
+			$this->files->delete( $file['file'] );
+			self::refuse( DesignerException::PRINT_THREADS );
 		}
 
 		$kept = false;

@@ -14,6 +14,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
@@ -66,6 +67,9 @@ final class DesignerSettingsSection {
 			DesignerException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			DesignerException::PRINTFUL_TOKEN => array( __( 'The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _).', 'merchboard' ), 'error' ),
 			DesignerException::GELATO_ACCOUNT => array( __( 'The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store\'s address (a UUID).', 'merchboard' ), 'error' ),
+			DesignerException::THREAD_PACK    => array( __( 'The embroidery pack was not saved: it needs a name and at least one thread, each thread a unique code, a name and a colour, and a limit between 1 and the number of threads.', 'merchboard' ), 'error' ),
+			DesignerException::THREAD_PACK_IN_USE => array( __( 'A base product uses this embroidery pack, so it cannot be deleted.', 'merchboard' ), 'error' ),
+			'pack_deleted'                    => array( __( 'The embroidery pack was deleted.', 'merchboard' ), 'success' ),
 			'error'                           => array( __( 'A technical error occurred. The product designer settings were not changed.', 'merchboard' ), 'error' ),
 			default                           => null,
 		};
@@ -158,6 +162,57 @@ final class DesignerSettingsSection {
 		echo '</tbody></table>';
 		submit_button( __( 'Save product designer settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
+		$this->render_packs();
+	}
+
+	/**
+	 * The embroidery packs: one form per pack and one for a new pack.
+	 */
+	private function render_packs(): void {
+		echo '<h2 id="merchboard-thread-packs">' . esc_html__( 'Embroidery packs', 'merchboard' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'A pack holds the thread colours creators may use and the most of them on one embroidered side. Choose a pack on each embroidered side of a base product. A change counts from the next time a design is saved; products in the shop and sent designs do not change.', 'merchboard' ) . '</p>';
+
+		foreach ( ThreadPacks::all() as $pack ) {
+			$this->render_pack( $pack );
+		}
+
+		$this->render_pack( null );
+	}
+
+	/**
+	 * The form of a pack.
+	 *
+	 * @param array{id: string, name: string, max: int, threads: list<array{code: string, name: string, hex: string}>}|null $pack The pack; null for a new one.
+	 */
+	private function render_pack( ?array $pack ): void {
+		$threads = array_merge( $pack['threads'] ?? array(), array_fill( 0, null === $pack ? 6 : 3, array( 'code' => '', 'name' => '', 'hex' => '#000000' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		/* translators: 1: pack name, 2: number of threads. */
+		$title = null === $pack ? __( 'New embroidery pack', 'merchboard' ) : sprintf( __( '%1$s (%2$d threads)', 'merchboard' ), $pack['name'], count( $pack['threads'] ) );
+
+		echo '<details class="card" style="max-width:none;margin-bottom:1em"><summary><strong>' . esc_html( $title ) . '</strong></summary>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( DesignerSettingsActions::PACK_ACTION ) . '"><input type="hidden" name="pack_id" value="' . esc_attr( $pack['id'] ?? '' ) . '">';
+		wp_nonce_field( DesignerSettingsActions::PACK_ACTION );
+		echo '<p><label>' . esc_html__( 'Name', 'merchboard' ) . ' <input type="text" name="pack_name" maxlength="60" value="' . esc_attr( $pack['name'] ?? '' ) . '"></label> ';
+		echo '<label>' . esc_html__( 'Most threads on one side', 'merchboard' ) . ' <input type="number" name="pack_max" min="1" max="' . esc_attr( (string) ThreadPacks::MAX_THREADS ) . '" step="1" style="width:5rem" value="' . esc_attr( (string) ( $pack['max'] ?? 6 ) ) . '"></label></p>';
+		echo '<table class="widefat striped" style="max-width:40rem"><thead><tr><th>' . esc_html__( 'Code', 'merchboard' ) . '</th><th>' . esc_html__( 'Name', 'merchboard' ) . '</th><th>' . esc_html__( 'Colour', 'merchboard' ) . '</th><th>' . esc_html__( 'Remove', 'merchboard' ) . '</th></tr></thead><tbody>';
+
+		foreach ( $threads as $index => $thread ) {
+			$field = static fn( string $name ): string => 'threads[' . $index . '][' . $name . ']';
+
+			echo '<tr><td><input type="text" maxlength="16" style="width:6rem" name="' . esc_attr( $field( 'code' ) ) . '" value="' . esc_attr( $thread['code'] ) . '"></td>';
+			echo '<td><input type="text" maxlength="40" name="' . esc_attr( $field( 'name' ) ) . '" value="' . esc_attr( $thread['name'] ) . '"></td>';
+			echo '<td><input type="color" name="' . esc_attr( $field( 'hex' ) ) . '" value="' . esc_attr( $thread['hex'] ) . '"></td>';
+			echo '<td>' . ( '' === $thread['code'] ? '' : '<input type="checkbox" name="' . esc_attr( $field( 'remove' ) ) . '" value="1">' ) . '</td></tr>';
+		}
+
+		echo '</tbody></table><p><button type="submit" class="button button-secondary">' . esc_html__( 'Save embroidery pack', 'merchboard' ) . '</button>';
+
+		if ( null !== $pack ) {
+			echo ' <button type="submit" name="do" value="delete" class="button-link button-link-delete">' . esc_html__( 'Delete embroidery pack', 'merchboard' ) . '</button>';
+		}
+
+		echo '</p></form></details>';
 	}
 
 	/**

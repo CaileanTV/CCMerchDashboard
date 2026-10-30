@@ -160,7 +160,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
-		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ) ) );
+		$container->set( ThreadPacks::class, static fn( Container $c ): ThreadPacks => new ThreadPacks( $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( BaseProductRepository::class ) ) );
+		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ThreadPacks::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
 		$container->set( CampaignRepository::class, static fn( Container $c ): CampaignRepository => new CampaignRepository( $c->get( wpdb::class ) ) );
 		$container->set( CampaignService::class, static fn( Container $c ): CampaignService => new CampaignService( $c->get( CampaignRepository::class ), $c->get( CreatorCodeRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );

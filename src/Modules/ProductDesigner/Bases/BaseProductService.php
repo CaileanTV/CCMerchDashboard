@@ -18,6 +18,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
@@ -375,7 +376,7 @@ class BaseProductService {
 	 * @param list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored   Files stored so far (for clean-up).
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array() ): array {
@@ -436,6 +437,13 @@ class BaseProductService {
 
 			[ $width, $height ] = $this->template_size( $old, $layers, $new );
 
+			// A field left out keeps its value.
+			$pack = is_string( $input['thread_pack'] ?? null ) ? $input['thread_pack'] : ( $old->thread_pack ?? '' );
+
+			if ( '' !== $pack && null === ThreadPacks::find( $pack ) ) {
+				self::reject( DesignerException::THREAD_PACK );
+			}
+
 			$plans[] = array(
 				'key'    => $key,
 				'name'   => $name,
@@ -444,6 +452,7 @@ class BaseProductService {
 				'layers' => $layers,
 				'new'    => $new,
 				'input'  => $input,
+				'pack'   => $pack,
 			);
 		}
 
@@ -487,8 +496,8 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>} $plan   Plan.
-	 * @param array<string, int>                                                                                                                            $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                          $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {
@@ -523,7 +532,8 @@ class BaseProductService {
 				),
 				$number( 'width_mm' ),
 				$number( 'height_mm' ),
-				$number( 'dpi' )
+				$number( 'dpi' ),
+				$plan['pack']
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );

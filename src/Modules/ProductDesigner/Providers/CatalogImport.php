@@ -20,6 +20,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use Throwable;
@@ -156,8 +157,9 @@ class CatalogImport {
 
 	/**
 	 * Creates a draft base product from a catalog product and starts its
-	 * import. Picked: `colors` (names), `sizes`, `sides` (placements) and
-	 * `base_price` and `extra_side_price`.
+	 * import. Picked: `colors` (names), `sizes`, `sides` (placements),
+	 * `packs` (embroidery pack by placement), `base_price` and
+	 * `extra_side_price`.
 	 *
 	 * @param string               $source `printful` or `gelato`.
 	 * @param string               $ref    The provider's product (Printful) or template (Gelato).
@@ -194,12 +196,20 @@ class CatalogImport {
 		}
 
 		$sides = array();
+		$packs = is_array( $picked['packs'] ?? null ) ? $picked['packs'] : array();
 
 		foreach ( $choice['sides'] as $side ) {
-			$key = substr( sanitize_title( $side['name'] ), 0, 32 );
+			$key  = substr( sanitize_title( $side['name'] ), 0, 32 );
+			$pack = $packs[ $side['placement'] ] ?? '';
 
 			if ( '' !== $key && ! isset( $sides[ $key ] ) && in_array( $side['placement'], $list( 'sides' ), true ) && count( $sides ) < count( ImageProbe::MARKERS ) ) {
-				$sides[ $key ] = array_merge( array( 'key' => $key ), $side );
+				$sides[ $key ] = array_merge(
+					array(
+						'key'         => $key,
+						'thread_pack' => is_string( $pack ) && null !== ThreadPacks::find( $pack ) ? $pack : '',
+					),
+					$side
+				);
 			}
 		}
 
@@ -740,18 +750,19 @@ class CatalogImport {
 			$slots[ $side['key'] ] = (string) $chosen['slot'];
 			$kept[ $side['key'] ]  = (string) $side['placement'];
 			$views[]               = array(
-				'key'       => '',
-				'name'      => (string) $side['name'],
-				'x'         => (string) $area['x'],
-				'y'         => (string) $area['y'],
-				'width'     => (string) $area['width'],
-				'height'    => (string) $area['height'],
-				'width_mm'  => (string) $width_mm,
-				'height_mm' => (string) $height_mm,
-				'dpi'       => (string) $side['dpi'],
-				'remove'    => false,
-				'clear'     => array(),
-				'uploads'   => $uploads,
+				'key'         => '',
+				'name'        => (string) $side['name'],
+				'x'           => (string) $area['x'],
+				'y'           => (string) $area['y'],
+				'width'       => (string) $area['width'],
+				'height'      => (string) $area['height'],
+				'width_mm'    => (string) $width_mm,
+				'height_mm'   => (string) $height_mm,
+				'dpi'         => (string) $side['dpi'],
+				'thread_pack' => (string) ( $side['thread_pack'] ?? '' ),
+				'remove'      => false,
+				'clear'       => array(),
+				'uploads'     => $uploads,
 			);
 		}
 

@@ -31,6 +31,7 @@ use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
@@ -404,6 +405,76 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( array( 400, 'design_stale' ), $this->refusal( $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) ) ) );
 		self::assertSame( array( 400, 'design_stale' ), $this->refusal( $this->call( 'POST', '/merchboard/v1/me/designer/products/' . $product . '/submit' ) ) );
 		self::assertSame( array(), $this->stored_files() );
+	}
+
+	public function test_an_embroidered_side_keeps_to_its_pack(): void {
+		$views                   = json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT views FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), $this->base ) ), true );
+		$views[0]['thread_pack'] = ThreadPacks::DEFAULT_ID;
+		$this->execute( 'UPDATE %i SET views = %s WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), (string) wp_json_encode( $views ), $this->base );
+
+		wp_set_current_user( $this->user );
+
+		$overview = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) );
+		$pack     = $overview['bases'][0]['views'][0]['embroidery'];
+
+		self::assertSame( array( 6, 15 ), array( $pack['max'], count( $pack['threads'] ) ) );
+
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+		$body    = $this->draft( array( self::text() ) );
+
+		$body['design']['threads'] = array( 'front' => array( '1838' => '1624' ) );
+		$saved                     = $this->data( $this->call( 'PUT', $route, $body ) );
+
+		self::assertSame( array( 'front' => array( '1838' => '1624' ) ), $saved['draft']['design']['threads'], 'The choice of threads is kept.' );
+		self::assertSame( '#ff0000', $saved['draft']['design']['sides']['front'][0]['fill'], 'The design keeps its own colours.' );
+
+		foreach ( array( array( 'front' => array( '1838' => '9999' ) ), array( 'front' => array( '9999' => '1838' ) ), array( 'back' => array( '1838' => '1624' ) ), 'front' ) as $threads ) {
+			$body['design']['threads'] = $threads;
+			self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', $route, $body ) ) );
+		}
+
+		self::assertSame( array( 400, 'print_threads' ), $this->refusal( $this->attach( $product, 'print:front', self::print_file( array( 1, 2, 3 ) ) ) ), 'Not threads.' );
+		self::assertSame( array(), $this->stored_files(), 'A refused file is not kept.' );
+		self::assertSame( 200, $this->attach( $product, 'print:front', self::print_file( array( 0xCB, 0x33, 0x3B ) ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 400, 400 ) )->get_status(), 'Mockups are photos.' );
+	}
+
+	public function test_a_printed_side_has_no_threads_and_any_colours(): void {
+		wp_set_current_user( $this->user );
+
+		$overview = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) );
+
+		self::assertNull( $overview['bases'][0]['views'][0]['embroidery'] );
+
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+		$body    = $this->draft( array( self::text() ) );
+
+		$body['design']['threads'] = array( 'front' => array( '1838' => '1624' ) );
+		self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', $route, $body ) ) );
+
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::text() ) ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'print:front', self::print_file( array( 1, 2, 3 ) ) )->get_status() );
+	}
+
+	/**
+	 * A transparent print file with a solid block.
+	 *
+	 * @param array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>} $color The block's colour.
+	 * @return string PNG bytes of the front's print size.
+	 */
+	private static function print_file( array $color ): string {
+		$image = imagecreatetruecolor( 118, 157 );
+
+		imagealphablending( $image, false );
+		imagesavealpha( $image, true );
+		imagefill( $image, 0, 0, (int) imagecolorallocatealpha( $image, 0, 0, 0, 127 ) );
+		imagefilledrectangle( $image, 10, 10, 40, 40, (int) imagecolorallocatealpha( $image, $color[0], $color[1], $color[2], 0 ) );
+		ob_start();
+		imagepng( $image );
+
+		return (string) ob_get_clean();
 	}
 
 	/**

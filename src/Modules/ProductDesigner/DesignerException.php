@@ -140,6 +140,15 @@ final class DesignerException extends RuntimeException {
 	/** The import could not be queued. */
 	public const IMPORT_QUEUE = 'import_queue';
 
+	/** An embroidery pack is unknown or its values are refused. */
+	public const THREAD_PACK = 'thread_pack';
+
+	/** An embroidery pack is used by a base product. */
+	public const THREAD_PACK_IN_USE = 'thread_pack_in_use';
+
+	/** A print file does not keep to its side's embroidery pack. */
+	public const PRINT_THREADS = 'print_threads';
+
 	/**
 	 * Constructor.
 	 *

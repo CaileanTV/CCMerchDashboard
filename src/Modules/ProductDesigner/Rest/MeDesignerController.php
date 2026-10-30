@@ -28,6 +28,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use WP_Error;
 use WP_REST_Request;
@@ -678,6 +679,8 @@ final class MeDesignerController extends RestController {
 				static function ( BaseView $view ): array {
 					[ $print_width, $print_height ] = $view->print_pixels();
 
+					$pack = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
+
 					return array(
 						'key'          => $view->key,
 						'name'         => $view->name,
@@ -688,6 +691,10 @@ final class MeDesignerController extends RestController {
 						'print_width'  => $print_width,
 						'print_height' => $print_height,
 						'dpi'          => $view->dpi,
+						'embroidery'   => null === $pack ? null : array(
+							'max'     => $pack['max'],
+							'threads' => $pack['threads'],
+						),
 					);
 				},
 				$base->views

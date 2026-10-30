@@ -118,6 +118,7 @@ final class BaseProductActions {
 								'colors'           => is_array( $input['colors'] ?? null ) ? $input['colors'] : array(),
 								'sizes'            => is_array( $input['sizes'] ?? null ) ? $input['sizes'] : array(),
 								'sides'            => is_array( $input['sides'] ?? null ) ? $input['sides'] : array(),
+								'packs'            => is_array( $input['packs'] ?? null ) ? $input['packs'] : array(),
 								'base_price'       => $text( 'base_price' ),
 								'extra_side_price' => $text( 'extra_side_price' ),
 							)
@@ -229,6 +230,10 @@ final class BaseProductActions {
 				'clear'     => array_values( array_filter( is_array( $view['clear'] ?? null ) ? $view['clear'] : array(), static fn( mixed $layer ): bool => is_string( $layer ) && BaseView::valid_layer( $layer ) ) ),
 				'uploads'   => $uploads,
 			);
+
+			if ( array_key_exists( 'thread_pack', $view ) ) {
+				$views[ array_key_last( $views ) ]['thread_pack'] = sanitize_key( $value( 'thread_pack' ) );
+			}
 		}
 
 		return $views;

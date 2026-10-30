@@ -26,6 +26,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 
 defined( 'ABSPATH' ) || exit;
@@ -232,6 +233,7 @@ final class BaseProductsPage {
 			DesignerException::BASE_INCOMPLETE      => array( __( 'An active base product needs at least one colour, one size and one side.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_UNKNOWN         => array( __( 'The base product no longer exists.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_IN_USE          => array( __( 'The base product has designs and cannot be deleted.', 'merchboard' ), 'error' ),
+			DesignerException::THREAD_PACK          => array( __( 'The embroidery pack does not exist.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_NAME         => array( __( 'Enter a name of at most 100 characters for the clipart.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_UNKNOWN      => array( __( 'The clipart no longer exists.', 'merchboard' ), 'error' ),
 			DesignerException::FILE_MISSING         => array( __( 'The file could not be uploaded. Please try again.', 'merchboard' ), 'error' ),
@@ -479,10 +481,33 @@ final class BaseProductsPage {
 			[ $width, $height ] = $view->print_pixels();
 			/* translators: 1: width in px, 2: height in px. */
 			echo ' <span class="description">' . esc_html( sprintf( __( 'Print file: %1$d × %2$d px', 'merchboard' ), $width, $height ) ) . '</span>';
+		}
+
+		echo '</p><p><label>' . esc_html__( 'Embroidery pack', 'merchboard' ) . ' ' . self::pack_select( $field( 'thread_pack' ), $view->thread_pack ?? '' ) . '</label> '; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pack_select() escapes.
+		echo '<span class="description">' . esc_html__( 'On an embroidered side, the design keeps to the threads of the pack.', 'merchboard' ) . '</span>';
+
+		if ( null !== $view ) {
 			echo '</p><p><label><input type="checkbox" name="' . esc_attr( $field( 'remove' ) ) . '" value="1"> ' . esc_html__( 'Remove this side', 'merchboard' ) . '</label>';
 		}
 
 		echo '</p></fieldset>';
+	}
+
+	/**
+	 * The choice of a side's embroidery pack.
+	 *
+	 * @param string $name    Field name.
+	 * @param string $current The chosen pack.
+	 * @return string Escaped HTML.
+	 */
+	private static function pack_select( string $name, string $current ): string {
+		$html = '<select name="' . esc_attr( $name ) . '"><option value="">' . esc_html__( 'No embroidery', 'merchboard' ) . '</option>';
+
+		foreach ( ThreadPacks::all() as $pack ) {
+			$html .= '<option value="' . esc_attr( $pack['id'] ) . '"' . selected( $current, $pack['id'], false ) . '>' . esc_html( $pack['name'] ) . '</option>';
+		}
+
+		return $html . '</select>';
 	}
 
 	/**
@@ -756,8 +781,11 @@ final class BaseProductsPage {
 
 		foreach ( $choice['sides'] as $side ) {
 			/* translators: 1: side name, 2: width in mm, 3: height in mm. */
-			$label = sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $side['name'], $side['width_mm'], $side['height_mm'] );
-			echo '<label style="display:block;margin-bottom:.4em"><input type="checkbox" name="sides[]" value="' . esc_attr( $side['placement'] ) . '"' . checked( in_array( $side['placement'], $defaults, true ), true, false ) . '> ' . esc_html( $label ) . '</label>';
+			$label    = sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $side['name'], $side['width_mm'], $side['height_mm'] );
+			$stitched = GelatoCatalog::SOURCE === $source && 1 === preg_match( '/embroider/i', $side['name'] . ' ' . $side['placement'] );
+			$first    = ThreadPacks::all()[0]['id'];
+			echo '<p style="margin:0 0 .4em"><label><input type="checkbox" name="sides[]" value="' . esc_attr( $side['placement'] ) . '"' . checked( in_array( $side['placement'], $defaults, true ), true, false ) . '> ' . esc_html( $label ) . '</label> ';
+			echo '<label>' . esc_html__( 'Embroidery pack', 'merchboard' ) . ' ' . self::pack_select( 'packs[' . $side['placement'] . ']', $stitched ? $first : '' ) . '</label></p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pack_select() escapes.
 		}
 
 		echo '<p class="description">' . esc_html__( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) . '</p></td></tr>';

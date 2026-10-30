@@ -333,6 +333,29 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( array( 30, 9 ), array( $view->width_mm, $view->height_mm ), 'The width fills the marker: the height is what shows.' );
 	}
 
+	public function test_an_import_gives_a_side_the_chosen_embroidery_pack(): void {
+		$this->account->set( self::KEY, self::STORE );
+
+		foreach ( array( 'gelato' => 'gelato', 'unknown' => '' ) as $picked => $expected ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$catalog = $this->catalog();
+			$id      = $catalog->create(
+				'gelato',
+				'tpl-1',
+				array(
+					'colors'     => array( 'Black', 'White' ),
+					'sizes'      => array( 'S', 'M' ),
+					'sides'      => array( 'ImageFront', 'ImageBack' ),
+					'packs'      => array( 'ImageFront' => $picked ),
+					'base_price' => '149,95',
+				)
+			);
+
+			$this->drain_import( $catalog );
+
+			self::assertSame( array( $expected ), array_map( static fn( $view ): string => $view->thread_pack, $this->bases->find( $id )->views ?? array() ) );
+		}
+	}
+
 	public function test_an_active_product_is_waited_for_until_it_has_a_preview(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$looks = 0;

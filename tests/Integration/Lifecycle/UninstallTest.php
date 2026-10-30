@@ -37,6 +37,7 @@ use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\Settings\SettingsService;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupBps;
@@ -134,6 +135,7 @@ final class UninstallTest extends IntegrationTestCase {
 		update_option( KickAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( YouTubeAccount::OPTION, array( 'client_id' => 'abc' ), false );
 		update_option( YouTubeLegal::OPTION, array( 'version' => 1 ), false );
+		update_option( ThreadPacks::OPTION, array( array( 'id' => 'own' ) ), false );
 		( new GlobalOverlayStore() )->create();
 		( new OverlayPresetStore() )->add( 'Neon' );
 		$audit_before = $this->rows( Tables::AUDIT_LOG );
@@ -192,6 +194,7 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertTrue( get_role( 'merchboard_test_custom' )?->has_cap( 'merchboard_test_foreign_cap' ) ?? false, 'Custom role keeps its own capabilities.' );
 		self::assertNotNull( get_role( 'editor' ) );
 
+		self::assertFalse( get_option( ThreadPacks::OPTION ), 'The embroidery packs are deleted.' );
 		self::assertSame( 'kept', get_option( 'merchboard_test_unrelated' ) );
 		self::assertSame( 'publish', get_post_status( $this->post_id ) );
 		self::assertSame( 'meta', get_post_meta( $this->post_id, '_merchboard_test_meta', true ) );
