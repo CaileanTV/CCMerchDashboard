@@ -23,12 +23,13 @@ defined( 'ABSPATH' ) || exit;
  * template variant's `productUid` (the catalog attributes `gco_` and `gsi_`;
  * the variant's own options, "Standard" or "One size" when it has none),
  * the sides from the first variant's image placeholders with their print
- * size in millimetres. A store product has one preview (`previewUrl`), of
- * its first variant and one view, and no list of images: Gelato's reference
- * has no `productImages`. The blank photos and print areas therefore come
- * from one product per picked colour with a transparent file in each
- * placeholder, and one of the first colour with a marker per placeholder
- * (CatalogImport). Only a side the preview shows gets a photo. The products
+ * size in millimetres. A store product has a `previewUrl` and
+ * `productImages` (`fileUrl`, `productVariantIds`, seen in real answers
+ * 2026-10-30): one image per mockup scene of the template, none for an
+ * embroidered test product. The blank photos and print areas come from one
+ * product per picked colour with a transparent file in each placeholder,
+ * and one of the first colour with a marker per placeholder (CatalogImport).
+ * Only a side an image shows gets a photo. The products
  * stay hidden in the API store (Gelato has no call to delete them). The
  * catalogs are cached for an hour.
  */
@@ -417,8 +418,8 @@ class GelatoCatalog implements CatalogRenderer {
 	 * `templateVariantId`, else its `productUid` colour). Are none tied,
 	 * untied images are shared equally between the colours in the order sent
 	 * (all to the first when they do not divide), and without any image the
-	 * first colour takes the product's `previewUrl`. Which of these Gelato
-	 * really does is not verified against a real answer (review 30.15).
+	 * first colour takes the product's `previewUrl`. Real answers tie the
+	 * images to variants (2026-10-30); store variants have no `templateVariantId`.
 	 *
 	 * @param array<string, mixed>  $answer Product answer.
 	 * @param array<string, string> $colors Template variant by colour key.

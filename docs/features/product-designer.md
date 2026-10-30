@@ -154,9 +154,10 @@ Nøglerne indtastes i Merch Dashboard → Settings → Produktdesigner (Printful
 5. **Grundprodukter (fra review 30.15):** under Merch Dashboard → Grundprodukter → "Nyt grundprodukt" → "Fra Gelatos katalog" vælger du produktets katalog (fx T-shirts), indtaster skabelonens Template ID og vælger "Hent". Sæt flueben ved farver, størrelser og sider, angiv grundprisen inkl. moms, og vælg "Opret og importér".
    - Farver og størrelser tages fra katalogets attributter i hver variants `productUid` (ikke fra skabelonens egne navne), og varianterne genkendes på deres id. Omdøbning i skabelonen gør derfor intet.
    - I baggrunden opretter vi først et skjult produkt fra skabelonen med en farvet markør pr. side. Giver det et forhåndsbillede, opretter vi ét skjult produkt pr. farve med en tom fil i hvert billedfelt (et produkt hos Gelato har ét `previewUrl`). Printområdet måles på billedet, og farvekoderne måles på de rene fotos. Kun den side, forhåndsbilledet viser, får et foto; de andre udelades og nævnes på grundproduktet.
-   - **Status lige nu (2026-10-30):** på devpage forblev `previewUrl` `null` på vores skjulte produkter, selv om de stod som `active`. Importen stopper derfor efter 10 minutter uden at oprette farveprodukterne. Årsagen er ikke fundet. Synlige produkter ændrede intet. Testen er lavet med en broderet hue; næste test er en printet t-shirt.
+   - **Skabelonen skal (set på devpage 2026-10-30):** være et printet produkt med et navngivet billedlag pr. side og en rigtig mockup (t-shirt Gildan 5000 i DTG med mockup `new/flatlay/front` gav fotos i alle 13 farver på ca. 6 minutter). En broderet hue med et automatisk navngivet billedlag og kun `editor/front-embroidery` gav `active` uden billeder; importen stoppede så efter 10 minutter. Om det skyldes broderiet eller mockuppen, er ikke afklaret.
+   - Hver mockup-scene giver ét billede. Hver import laver ét produkt pr. farve plus markør-produktet (14 ved 13 farver), og de bliver i Gelato-butikken.
    - Tjek printområder og farvekoder, og aktivér så grundproduktet. Fejl, "Prøv igen" og "Vis leverandørens svar" virker som for Printful.
-6. **Mockups:** hver indsendelse opretter et produkt i Gelato-butikken med én variant pr. valgt farve og printfilerne i billedfelterne. Da et produkt kun har ét forhåndsbillede, bliver det mockup for den første farve på den importerede side; de andre beholder creatorens mockups. Imens kan designet ikke godkendes. Fejler det, bruges creatorens mockups, og du får en mail. Produkterne bliver liggende i Gelato-butikken.
+6. **Mockups:** hver indsendelse opretter et produkt i Gelato-butikken med én variant pr. valgt farve og printfilerne i billedfelterne. Billederne er koblet til varianterne, så hver farve kan få sit eget mockup på den importerede side. Det er ikke afprøvet endnu; en farve uden billede beholder creatorens mockup. Imens kan designet ikke godkendes. Fejler det, bruges creatorens mockups, og du får en mail. Produkterne bliver liggende i Gelato-butikken.
 
 **Begge:** runtime-test kræver, at sitet kan nås fra internettet (devpage), fordi Printful og Gelato henter printfilen via en URL. Local kan ikke nås udefra.
 
@@ -189,7 +190,7 @@ Planen (ADR-080–082):
 - Kopper vises fladt (ingen perspektiv eller kurve).
 - Printful kan kun testes med en offentlig URL (devpage).
 - Gelato-mockups kræver en skabelon i Gelatos dashboard pr. grundprodukt, og designs samler sig som produkter i Gelato-butikken.
-- Katalogimporten er eksperimentel: Printful er ikke verificeret mod det rigtige API. Gelatos svar er set på devpage 2026-10-30 og giver indtil videre intet forhåndsbillede på skjulte produkter. Den kræver GD på serveren og et site, leverandørerne kan nå. En side, hvis markør ikke kan ses på fotoene, udelades.
+- Katalogimporten er eksperimentel: Printful er ikke verificeret mod det rigtige API. Gelato-importen er afprøvet på devpage 2026-10-30 med en printet t-shirt; mockups fra Gelato efter indsendelse er ikke afprøvet med den. Størrelser er fælles for alle farver, også når leverandøren ikke har en størrelse i en farve. Den kræver GD på serveren og et site, leverandørerne kan nå. En side, hvis markør ikke kan ses på fotoene, udelades.
 - Importens status opdateres af sig selv på grundproduktet. Baggrundsjobbet følger WP-Cron og kan køre langt sjældnere end hvert 30. sekund.
 - Ordrer produceres manuelt.
 
