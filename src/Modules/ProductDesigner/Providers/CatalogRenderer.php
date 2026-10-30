@@ -60,6 +60,15 @@ interface CatalogRenderer {
 	public function check( string $key, array $import ): array;
 
 	/**
+	 * The provider's answer about a render, for the administrator's
+	 * diagnosis (no credentials).
+	 *
+	 * @param string $key The render's key.
+	 * @return array<string, mixed>
+	 */
+	public function render_answer( string $key ): array;
+
+	/**
 	 * A file the provider returned.
 	 *
 	 * @param string $url URL from the provider's answer.

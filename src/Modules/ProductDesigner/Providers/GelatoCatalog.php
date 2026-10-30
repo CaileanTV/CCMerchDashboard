@@ -61,6 +61,11 @@ class GelatoCatalog implements CatalogRenderer {
 	private const POLL_DELAY = 30;
 
 	/**
+	 * Looks at an active product before its preview alone is taken (two minutes).
+	 */
+	private const PREVIEW_POLLS = 4;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param GelatoApi $api Gelato.
@@ -268,9 +273,37 @@ class GelatoCatalog implements CatalogRenderer {
 			$colors[ (string) $color ] = (string) $variant;
 		}
 
+		$render = null;
+
+		foreach ( is_array( $import['renders'] ?? null ) ? $import['renders'] : array() as $kind => $entry ) {
+			$entry_key = is_array( $entry ) ? ( $entry['key'] ?? null ) : null;
+
+			if ( $entry_key === $key ) {
+				$render = array( $kind, (int) ( $entry['polls'] ?? 0 ) );
+			}
+		}
+
+		// The marker product holds only the first colour.
+		if ( 'marker' === ( $render[0] ?? null ) ) {
+			$colors = array_slice( $colors, 0, 1, true );
+		}
+
+		// An active product can still lack its images: its preview alone is taken only after a while.
+		if ( ! is_array( $answer['productImages'] ?? null ) || array() === $answer['productImages'] ) {
+			if ( ( $render[1] ?? 0 ) < self::PREVIEW_POLLS ) {
+				return array( 'status' => 'pending' );
+			}
+		}
+
+		$lists = self::variant_images( $answer, $colors );
+
+		if ( array() === $lists ) {
+			return array( 'status' => 'pending' );
+		}
+
 		$images = array();
 
-		foreach ( self::variant_images( $answer, $colors ) as $color => $urls ) {
+		foreach ( $lists as $color => $urls ) {
 			foreach ( $urls as $slot => $url ) {
 				$images[ (string) $slot ][ $color ] = $url;
 			}
@@ -280,6 +313,17 @@ class GelatoCatalog implements CatalogRenderer {
 			'status' => 'done',
 			'images' => $images,
 		);
+	}
+
+	/**
+	 * Gelato's answer about a render's product.
+	 *
+	 * @param string $key Product id.
+	 * @return array<string, mixed>
+	 * @throws GelatoException When Gelato refuses or fails.
+	 */
+	public function render_answer( string $key ): array {
+		return $this->api->product( $key );
 	}
 
 	/**
@@ -313,8 +357,11 @@ class GelatoCatalog implements CatalogRenderer {
 	/**
 	 * A product's images per colour key, in Gelato's order: the images tied
 	 * to a variant (`productVariantIds`) for its colour (the variant's
-	 * `templateVariantId`, else its `productUid` colour), and images tied to
-	 * no variant for the only colour of a one-colour product.
+	 * `templateVariantId`, else its `productUid` colour). Are none tied,
+	 * untied images are shared equally between the colours in the order sent
+	 * (all to the first when they do not divide), and without any image the
+	 * first colour takes the product's `previewUrl`. Which of these Gelato
+	 * really does is not verified against a real answer (review 30.15).
 	 *
 	 * @param array<string, mixed>  $answer Product answer.
 	 * @param array<string, string> $colors Template variant by colour key.
@@ -338,7 +385,7 @@ class GelatoCatalog implements CatalogRenderer {
 			}
 		}
 
-		$only = 1 === count( $colors ) ? (string) array_key_first( $colors ) : null;
+		$untied = array();
 
 		foreach ( is_array( $answer['productImages'] ?? null ) ? $answer['productImages'] : array() as $image ) {
 			$url  = is_array( $image ) && is_string( $image['fileUrl'] ?? null ) ? $image['fileUrl'] : '';
@@ -348,8 +395,8 @@ class GelatoCatalog implements CatalogRenderer {
 				continue;
 			}
 
-			if ( array() === $tied && null !== $only ) {
-				$images[ $only ][] = $url;
+			if ( array() === $tied ) {
+				$untied[] = $url;
 			}
 
 			foreach ( $tied as $variant ) {
@@ -361,8 +408,19 @@ class GelatoCatalog implements CatalogRenderer {
 			}
 		}
 
-		if ( null !== $only && ! isset( $images[ $only ] ) && is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ) {
-			$images[ $only ][] = $answer['previewUrl'];
+		$keys = array_map( 'strval', array_keys( $colors ) );
+
+		if ( array() === $images && array() !== $untied && array() !== $keys ) {
+			// Images tied to no variant: an equal share per colour in the order sent, else all to the first colour.
+			$share = max( 1, 0 === count( $untied ) % count( $keys ) ? intdiv( count( $untied ), count( $keys ) ) : count( $untied ) );
+
+			foreach ( array_chunk( $untied, $share ) as $index => $urls ) {
+				$images[ $keys[ $index ] ] = $urls;
+			}
+		}
+
+		if ( array() === $images && isset( $keys[0] ) && is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ) {
+			$images[ $keys[0] ][] = $answer['previewUrl'];
 		}
 
 		return $images;

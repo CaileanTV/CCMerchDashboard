@@ -343,6 +343,17 @@ class PrintfulCatalog implements CatalogRenderer {
 	}
 
 	/**
+	 * Printful's answer about a render's task.
+	 *
+	 * @param string $key Task key.
+	 * @return array<string, mixed>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function render_answer( string $key ): array {
+		return $this->api->task( $key );
+	}
+
+	/**
 	 * The catalog's products that are not discontinued (cached).
 	 *
 	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int}>

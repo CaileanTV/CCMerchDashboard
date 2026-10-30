@@ -126,6 +126,9 @@ final class DesignerException extends RuntimeException {
 	/** No side's marker was found in the renders. */
 	public const IMPORT_NO_AREA = 'import_no_area';
 
+	/** The renders gave no pair of photos to compare. */
+	public const IMPORT_NO_PHOTOS = 'import_no_photos';
+
 	/** A render could not be read as an image. */
 	public const IMPORT_IMAGE = 'import_image';
 

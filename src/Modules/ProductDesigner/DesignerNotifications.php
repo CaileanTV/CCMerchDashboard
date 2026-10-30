@@ -457,6 +457,7 @@ final class DesignerNotifications {
 			DesignerException::IMPORT_RENDER        => __( 'The provider could not render the product; its own message is shown on the base product.', 'merchboard' ),
 			DesignerException::IMPORT_TIMEOUT       => __( 'The provider took too long to render the product.', 'merchboard' ),
 			DesignerException::IMPORT_NO_AREA       => __( 'The print areas could not be found on the provider\'s photos.', 'merchboard' ),
+			DesignerException::IMPORT_NO_PHOTOS     => __( 'The provider gave no photos of the same side to compare. "Show the provider\'s answer" shows what it sent.', 'merchboard' ),
 			DesignerException::IMPORT_IMAGE         => __( 'A photo from the provider could not be read.', 'merchboard' ),
 			DesignerException::IMPORT_GD            => __( 'The server cannot measure images (the PHP extension GD is missing).', 'merchboard' ),
 			DesignerException::IMPORT_QUEUE         => __( 'The import could not be queued (Action Scheduler is not available).', 'merchboard' ),

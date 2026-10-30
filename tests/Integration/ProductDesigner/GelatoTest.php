@@ -65,6 +65,8 @@ final class GelatoTest extends IntegrationTestCase {
 
 	private const ASSETS = 'https://shop.example/wp-content/plugins/merchboard/assets/designer/';
 
+	private const STORE_API = self::API . '/stores/' . self::STORE;
+
 	/**
 	 * Calls made: [method, url, args].
 	 *
@@ -302,6 +304,116 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertFalse( $marker['isVisibleInTheOnlineStore'] ?? true );
 	}
 
+	public function test_images_tied_to_no_variant_are_shared_per_colour_and_the_marker_product_has_only_the_first(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->answers[ self::STORE_API . '/products/gp-blank' ]  = self::answer(
+			200,
+			array(
+				'id'            => 'gp-blank',
+				'status'        => 'active',
+				'productImages' => array(
+					array( 'fileUrl' => 'https://cdn.example/blank-b-front.png' ),
+					array( 'fileUrl' => 'https://cdn.example/blank-b-back.png' ),
+					array( 'fileUrl' => 'https://cdn.example/blank-w-front.png' ),
+					array( 'fileUrl' => 'https://cdn.example/blank-w-back.png' ),
+				),
+			)
+		);
+		$this->answers[ self::STORE_API . '/products/gp-marker' ] = self::answer(
+			200,
+			array(
+				'id'            => 'gp-marker',
+				'status'        => 'active',
+				'productImages' => array(
+					array( 'fileUrl' => 'https://cdn.example/marker-front.png' ),
+					array( 'fileUrl' => 'https://cdn.example/marker-back.png' ),
+				),
+			)
+		);
+
+		$id = $this->import();
+
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null );
+		self::assertSame(
+			array(
+				'front' => '0',
+				'back'  => '1',
+			),
+			$this->bases->provider( $id )['slots'] ?? null
+		);
+		self::assertSame( '#fafafa', $this->bases->find( $id )->colors[1]['hex'] ?? null, 'The second half of the images is the white colour.' );
+	}
+
+	public function test_an_active_product_is_waited_for_until_it_has_images_and_then_its_preview_is_taken(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$looks = 0;
+		$this->answers[ self::STORE_API . '/products/gp-marker' ] = static function () use ( &$looks ): array {
+			++$looks;
+
+			return self::answer(
+				200,
+				array(
+					'id'         => 'gp-marker',
+					'status'     => 'active',
+					'previewUrl' => 'https://cdn.example/marker-front.png',
+				)
+			);
+		};
+		$this->answers[ self::STORE_API . '/products/gp-blank' ]  = self::answer(
+			200,
+			array(
+				'id'         => 'gp-blank',
+				'status'     => 'active',
+				'previewUrl' => 'https://cdn.example/blank-b-front.png',
+			)
+		);
+
+		$id = $this->import();
+
+		self::assertGreaterThan( 3, $looks, 'Not taken at the first look.' );
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null );
+		self::assertSame( array( 'front' ), array_map( static fn( $view ): string => $view->key, $this->bases->find( $id )->views ?? array() ), 'The preview shows the front; the back is left out.' );
+	}
+
+	public function test_a_failed_import_keeps_what_the_renders_gave_for_the_diagnosis(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->answers['https://cdn.example/marker-front.png'] = $this->answers['https://cdn.example/blank-b-front.png'];
+		$this->answers['https://cdn.example/marker-back.png']  = $this->answers['https://cdn.example/blank-b-back.png'];
+
+		$id     = $this->import();
+		$answer = $this->catalog()->diagnose( $id );
+
+		self::assertSame( array( '0', '1' ), array_map( 'strval', array_keys( $answer['import']['data']['measured'] ?? array() ) ), 'What was measured.' );
+		self::assertArrayHasKey( 'marker', $answer['import']['data']['images'] ?? array() );
+		self::assertSame( array( 'gp-blank', 'gp-marker' ), array( $answer['render blank']['id'] ?? null, $answer['render marker']['id'] ?? null ), 'Gelato\'s answers about both renders.' );
+		self::assertArrayHasKey( 'GET /v1/templates/tpl-1', $answer );
+		self::assertStringNotContainsString( self::KEY, (string) wp_json_encode( $answer ) );
+
+		$this->answers['https://cdn.example/marker-front.png'] = self::shirt( array( 35, 35, 35 ), array( array( 70, 50, 60, 80, array( 235, 15, 230 ) ) ) );
+		$catalog = $this->catalog();
+		$catalog->retry( $id );
+
+		self::assertSame( array(), array_intersect_key( $this->bases->import( $id )['data'] ?? array(), array_flip( array( 'measured', 'images', 'renders', 'error' ) ) ), 'Try again starts over.' );
+	}
+
+	public function test_renders_without_photos_of_the_same_colour_fail_with_their_own_reason(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->answers[ self::STORE_API . '/products/gp-blank' ] = self::product(
+			'gp-blank',
+			array(
+				array(
+					'id'                => 'pw',
+					'templateVariantId' => 'tv-w-s',
+				),
+			),
+			array( array( 'https://cdn.example/blank-w-front.png', 'pw' ) )
+		);
+
+		$id = $this->import();
+
+		self::assertSame( array( 'failed', DesignerException::IMPORT_NO_PHOTOS ), array( $this->bases->import( $id )['state'] ?? null, $this->bases->import( $id )['data']['error'] ?? null ), 'The marker shows black, the blank render only white.' );
+	}
+
 	public function test_an_import_without_a_visible_marker_fails_with_the_reason(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$this->answers['https://cdn.example/marker-front.png'] = $this->answers['https://cdn.example/blank-b-front.png'];
@@ -422,7 +534,7 @@ final class GelatoTest extends IntegrationTestCase {
 	 * 149,95 and runs its import.
 	 */
 	private function import(): int {
-		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, self::ASSETS, null, new GelatoCatalog( $this->api ) );
+		$catalog = $this->catalog();
 		$id      = $catalog->create(
 			'gelato',
 			'tpl-1',
@@ -442,6 +554,13 @@ final class GelatoTest extends IntegrationTestCase {
 		);
 
 		return $id;
+	}
+
+	/**
+	 * The catalog import.
+	 */
+	private function catalog(): CatalogImport {
+		return new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, self::ASSETS, null, new GelatoCatalog( $this->api ) );
 	}
 
 	/**

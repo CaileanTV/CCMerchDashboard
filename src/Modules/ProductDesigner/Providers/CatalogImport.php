@@ -295,14 +295,21 @@ class CatalogImport {
 			return $answer;
 		}
 
+		$renders = $answer['import']['data']['renders'] ?? array();
+
+		// Each answer on its own: one refused call must not hide the others.
+		foreach ( is_array( $renders ) ? $renders : array() as $kind => $render ) {
+			try {
+				$answer[ 'render ' . $kind ] = is_array( $render ) ? $renderer->render_answer( (string) ( $render['key'] ?? '' ) ) : array();
+			} catch ( PrintfulException | GelatoException $e ) {
+				$answer[ 'render ' . $kind ] = self::refusal( $e );
+			}
+		}
+
 		try {
 			return array_merge( $answer, $renderer->diagnose( $provider['ref'] ) );
 		} catch ( PrintfulException | GelatoException $e ) {
-			$answer['error'] = array(
-				'reason' => $e->reason(),
-				'call'   => $e->call,
-				'detail' => $e->detail,
-			);
+			$answer['error'] = self::refusal( $e );
 
 			return $answer;
 		}
@@ -543,6 +550,10 @@ class CatalogImport {
 			++$done;
 		}
 
+		if ( array() === $measured ) {
+			self::stop( DesignerException::IMPORT_NO_PHOTOS );
+		}
+
 		$data['measured'] = $measured;
 		$chosen           = array();
 
@@ -577,6 +588,8 @@ class CatalogImport {
 		}
 
 		if ( array() === $chosen ) {
+			// What was measured stays for the diagnosis.
+			$this->current = $data;
 			self::stop( DesignerException::IMPORT_NO_AREA );
 		}
 
@@ -838,7 +851,8 @@ class CatalogImport {
 				}
 			}
 
-			unset( $data['files'], $data['images'], $data['measured'], $data['chosen'], $data['hex'] );
+			// The renders' images and measurements stay for the diagnosis; "Try again" starts without them.
+			unset( $data['files'], $data['chosen'], $data['hex'] );
 
 			$data['error']  = $reason;
 			$data['call']   = $call;
@@ -923,6 +937,20 @@ class CatalogImport {
 		}
 
 		return $json;
+	}
+
+	/**
+	 * A provider's refusal for the diagnosis.
+	 *
+	 * @param PrintfulException|GelatoException $e Refusal.
+	 * @return array{reason: string, call: string, detail: string}
+	 */
+	private static function refusal( PrintfulException|GelatoException $e ): array {
+		return array(
+			'reason' => $e->reason(),
+			'call'   => $e->call,
+			'detail' => $e->detail,
+		);
 	}
 
 	/**

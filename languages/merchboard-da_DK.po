@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-29T23:21:22+00:00\n"
+"PO-Revision-Date: 2026-10-30T15:22:10+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1290,7 +1290,7 @@ msgstr "Hændelse"
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:205
 #: src/Modules/ProductDesigner/DesignerNotifications.php:322
 #: src/Modules/ProductDesigner/DesignerNotifications.php:367
-#: src/Modules/ProductDesigner/DesignerNotifications.php:537
+#: src/Modules/ProductDesigner/DesignerNotifications.php:538
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:201
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:389
@@ -4498,7 +4498,7 @@ msgstr "Bankoverførsel"
 #: src/Modules/ProductDesigner/DesignerNotifications.php:330
 #: src/Modules/ProductDesigner/DesignerNotifications.php:375
 #: src/Modules/ProductDesigner/DesignerNotifications.php:416
-#: src/Modules/ProductDesigner/DesignerNotifications.php:548
+#: src/Modules/ProductDesigner/DesignerNotifications.php:549
 msgid "This message was sent by Merch Dashboard."
 msgstr "Denne besked er sendt af Merch Dashboard."
 
@@ -4858,7 +4858,7 @@ msgstr "Din fortjeneste"
 #: src/Modules/ProductDesigner/DesignerNotifications.php:289
 #: src/Modules/ProductDesigner/DesignerNotifications.php:323
 #: src/Modules/ProductDesigner/DesignerNotifications.php:368
-#: src/Modules/ProductDesigner/DesignerNotifications.php:538
+#: src/Modules/ProductDesigner/DesignerNotifications.php:539
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
@@ -6829,7 +6829,7 @@ msgstr "Tak! Vi gennemgår dit design og giver besked, når det er godkendt. Ind
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:139
 #: src/Modules/ProductDesigner/DesignerNotifications.php:187
-#: src/Modules/ProductDesigner/DesignerNotifications.php:539
+#: src/Modules/ProductDesigner/DesignerNotifications.php:540
 msgid "Customer price incl. VAT"
 msgstr "Kundens pris inkl. moms"
 
@@ -7012,7 +7012,7 @@ msgstr "Et godkendt design kunne ikke lægges i butikken. Intet i butikken er æ
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:328
 #: src/Modules/ProductDesigner/DesignerNotifications.php:373
-#: src/Modules/ProductDesigner/DesignerNotifications.php:546
+#: src/Modules/ProductDesigner/DesignerNotifications.php:547
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:188
 msgid "Open Designs"
 msgstr "Åbn Designs"
@@ -7164,70 +7164,74 @@ msgid "The print areas could not be found on the provider's photos."
 msgstr "Printområderne kunne ikke findes på leverandørens fotos."
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:460
+msgid "The provider gave no photos of the same side to compare. \"Show the provider's answer\" shows what it sent."
+msgstr "Leverandøren gav ingen fotos af samme side at sammenligne. \"Vis leverandørens svar\" viser, hvad den sendte."
+
+#: src/Modules/ProductDesigner/DesignerNotifications.php:461
 msgid "A photo from the provider could not be read."
 msgstr "Et foto fra leverandøren kunne ikke læses."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:461
+#: src/Modules/ProductDesigner/DesignerNotifications.php:462
 msgid "The server cannot measure images (the PHP extension GD is missing)."
 msgstr "Serveren kan ikke måle billeder (PHP-udvidelsen GD mangler)."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:462
+#: src/Modules/ProductDesigner/DesignerNotifications.php:463
 msgid "The import could not be queued (Action Scheduler is not available)."
 msgstr "Importen kunne ikke sættes i kø (Action Scheduler er ikke tilgængelig)."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:463
+#: src/Modules/ProductDesigner/DesignerNotifications.php:464
 msgid "The administrator who started it may no longer manage the product designer."
 msgstr "Administratoren, der startede den, må ikke længere administrere produktdesigneren."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:464
+#: src/Modules/ProductDesigner/DesignerNotifications.php:465
 msgid "A technical error; the log has the details."
 msgstr "En teknisk fejl; loggen har detaljerne."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:474
+#: src/Modules/ProductDesigner/DesignerNotifications.php:475
 msgid "New designer product to approve"
 msgstr "Nyt designer-produkt til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:475
+#: src/Modules/ProductDesigner/DesignerNotifications.php:476
 msgid "When a creator sends a new designer product for approval."
 msgstr "Når en creator sender et nyt designer-produkt til godkendelse."
 
 #. translators: 1: creator name, 2: product title.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:477
+#: src/Modules/ProductDesigner/DesignerNotifications.php:478
 #, php-format
 msgid "%1$s sent the new product %2$s for approval."
 msgstr "%1$s har sendt det nye produkt %2$s til godkendelse."
 
 #. translators: %s: creator name.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:479
+#: src/Modules/ProductDesigner/DesignerNotifications.php:480
 #, php-format
 msgid "New designer product from %s to approve"
 msgstr "Nyt designer-produkt fra %s til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:480
+#: src/Modules/ProductDesigner/DesignerNotifications.php:481
 msgid "A creator designed a new product. It is not in the shop until you approve it."
 msgstr "En creator har designet et nyt produkt. Det kommer ikke i butikken, før du godkender det."
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:490
+#: src/Modules/ProductDesigner/DesignerNotifications.php:491
 msgid "Designer product change to approve"
 msgstr "Ændring af designer-produkt til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:491
+#: src/Modules/ProductDesigner/DesignerNotifications.php:492
 msgid "When a creator sends a change of a designer product in the shop for approval. The shop keeps the approved version until you approve the change."
 msgstr "Når en creator sender en ændring af et designer-produkt i butikken til godkendelse. Butikken beholder den godkendte version, indtil du godkender ændringen."
 
 #. translators: 1: creator name, 2: product title.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:493
+#: src/Modules/ProductDesigner/DesignerNotifications.php:494
 #, php-format
 msgid "%1$s sent a change of %2$s for approval."
 msgstr "%1$s har sendt en ændring af %2$s til godkendelse."
 
 #. translators: %s: creator name.
-#: src/Modules/ProductDesigner/DesignerNotifications.php:495
+#: src/Modules/ProductDesigner/DesignerNotifications.php:496
 #, php-format
 msgid "Designer product change from %s to approve"
 msgstr "Ændring af designer-produkt fra %s til godkendelse"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:496
+#: src/Modules/ProductDesigner/DesignerNotifications.php:497
 msgid "A creator changed a designer product in the shop. The shop keeps the approved version until you approve the change."
 msgstr "En creator har ændret et designer-produkt i butikken. Butikken beholder den godkendte version, indtil du godkender ændringen."
 
