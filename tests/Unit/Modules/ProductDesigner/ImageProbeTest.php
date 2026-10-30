@@ -91,6 +91,26 @@ final class ImageProbeTest extends TestCase {
 		self::assertSame( array( 484, 169 ), array( $area['width'], $area['height'] ), 'The whole width of the box stays.' );
 	}
 
+	public function test_a_transparent_background_stays_transparent(): void {
+		$photo = imagecreatetruecolor( 20, 20 );
+
+		self::assertNotFalse( $photo );
+		imagealphablending( $photo, false );
+		imagesavealpha( $photo, true );
+		imagefill( $photo, 0, 0, (int) imagecolorallocatealpha( $photo, 0, 0, 0, 127 ) );
+		imagefilledrectangle( $photo, 5, 5, 14, 14, (int) imagecolorallocatealpha( $photo, 200, 40, 40, 0 ) );
+		ob_start();
+		imagepng( $photo );
+		$bytes = (string) ob_get_clean();
+
+		foreach ( array( ImageProbe::png( $bytes ), ImageProbe::png( $bytes, 40, 40 ) ) as [ $png ] ) {
+			$image = imagecreatefromstring( $png );
+
+			self::assertNotFalse( $image );
+			self::assertSame( 127, ( (int) imagecolorat( $image, 1, 1 ) >> 24 ) & 0x7F, 'The corner stays transparent.' );
+		}
+	}
+
 	public function test_a_photo_becomes_a_png_of_the_side_s_size(): void {
 		[ $png, $width, $height ] = ImageProbe::png( $this->blank(), 200, 150 );
 

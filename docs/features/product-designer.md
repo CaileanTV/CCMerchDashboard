@@ -84,6 +84,13 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Printfiler** kan hentes på designer-produktet og på ordren (den solgte version).
 - **Printful og Gelato:** API-nøgler (krypteret) og kill switch i Settings.
 
+## Designeren i creator-dashboardet (2026-10-31)
+- Siden hedder Produktdesigner i menuen og har ingen synlig overskrift.
+- Editoren fylder hele bredden: en topbjælke med gem og send, værktøjer til venstre, produktet i midten og til højre valgt element, trådfarver, pris og fortjeneste og vejen fra design til butik. Canvasset følger den plads, det har, og ligger på hvid baggrund som det færdige produktbillede.
+- Fortjenesten sættes i boksen "Pris og fortjeneste", der altid er synlig og viser grundpris, ekstra områder, fortjeneste og kundens pris.
+- Creatoren får at vide, at de færdige mockups oprettes automatisk, før vi kan godkende designet, og at vi giver svar, også hvis det ikke fremstår korrekt, eller der er andre fejl.
+- Produktdesigneren har egne CSS-klasser (`merchboard-product-designer`). Den delte tidligere rodklasse med OBS-overlaydesigneren og blev klippet til en mørk 16:9-boks.
+
 ## Broderi (2026-10-31, eksperimentel)
 - **Broderipakker:** under Produktdesigner → Broderipakker har hver pakke et navn, et maksimum pr. side og sine tråde (kode, navn, farve). Standardpakken "Gelato" har 15 tråde og højst 6. En ændring gælder fra næste gang et design gemmes. En pakke i brug kan ikke slettes.
 - **Valg af pakke:** en side vælger "Broderipakke" på grundproduktet eller ved katalogimport. Ved import fra Gelato er første pakke forudvalgt, når sidens navn indeholder "embroider". Uden pakke er siden print med frie farver. En ændret pakke på en side giver en ny version af grundproduktet, så kladder skal gemmes igen.

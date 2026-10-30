@@ -219,6 +219,9 @@ final class ImageProbe {
 			$im = $scaled;
 		}
 
+		// A provider's photo can have a transparent background; without this it turns black.
+		imagesavealpha( $im, true );
+
 		ob_start();
 		$written = imagepng( $im );
 		$bytes   = (string) ob_get_clean();
