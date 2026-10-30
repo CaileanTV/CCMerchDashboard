@@ -91,7 +91,7 @@ final class BaseProductActions {
 				case 'save':
 					$fields = array();
 
-					foreach ( array( 'name', 'description', 'base_price', 'category_id', 'colors', 'sizes' ) as $key ) {
+					foreach ( array( 'name', 'description', 'base_price', 'extra_side_price', 'category_id', 'colors', 'sizes' ) as $key ) {
 						$fields[ $key ] = $text( $key );
 					}
 
@@ -115,10 +115,11 @@ final class BaseProductActions {
 							sanitize_key( $text( 'source' ) ),
 							trim( $text( 'ref' ) ),
 							array(
-								'colors'     => is_array( $input['colors'] ?? null ) ? $input['colors'] : array(),
-								'sizes'      => is_array( $input['sizes'] ?? null ) ? $input['sizes'] : array(),
-								'sides'      => is_array( $input['sides'] ?? null ) ? $input['sides'] : array(),
-								'base_price' => $text( 'base_price' ),
+								'colors'           => is_array( $input['colors'] ?? null ) ? $input['colors'] : array(),
+								'sizes'            => is_array( $input['sizes'] ?? null ) ? $input['sizes'] : array(),
+								'sides'            => is_array( $input['sides'] ?? null ) ? $input['sides'] : array(),
+								'base_price'       => $text( 'base_price' ),
+								'extra_side_price' => $text( 'extra_side_price' ),
 							)
 						),
 						'importing'

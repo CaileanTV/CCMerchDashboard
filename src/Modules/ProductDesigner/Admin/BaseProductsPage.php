@@ -223,6 +223,7 @@ final class BaseProductsPage {
 			'clipart_deleted'                       => array( __( 'The clipart was deleted.', 'merchboard' ), 'success' ),
 			DesignerException::BASE_NAME            => array( __( 'Enter a name of at most 191 characters.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_PRICE           => array( __( 'Enter a base price above 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
+			DesignerException::BASE_EXTRA           => array( __( 'Enter a price for extra design areas of at least 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_CATEGORY        => array( __( 'The category is not a product category.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_COLORS          => array( __( 'Enter one colour per line: a name and a colour code such as #1a2b3c. Names must differ.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_SIZES           => array( __( 'Sizes must differ and have at most 20 characters.', 'merchboard' ), 'error' ),
@@ -321,7 +322,7 @@ final class BaseProductsPage {
 				esc_url( self::edit_url( (int) $base->id ) ),
 				esc_html( $base->name ),
 				esc_html( self::status( $base->status ) . self::import_label( $this->bases->import( (int) $base->id )['state'] ?? CatalogImport::NONE ) ),
-				esc_html( $this->money( $base->base_units ) . ' ' . $base->currency ),
+				esc_html( $this->money( $base->base_units ) . ' ' . $base->currency . ( $base->extra_side_units > 0 ? ' + ' . $this->money( $base->extra_side_units ) : '' ) ),
 				esc_html( (string) count( $base->colors ) ),
 				esc_html( implode( ', ', $base->sizes ) ),
 				esc_html( implode( ', ', array_map( static fn( BaseView $view ): string => $view->name, $base->views ) ) ),
@@ -368,7 +369,9 @@ final class BaseProductsPage {
 		echo '<tr><th scope="row"><label for="merchboard-base-name">' . esc_html__( 'Name', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-base-name" name="name" class="regular-text" maxlength="191" required value="' . esc_attr( $base->name ?? '' ) . '"></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-description">' . esc_html__( 'Description', 'merchboard' ) . '</label></th><td><textarea id="merchboard-base-description" name="description" rows="4" class="large-text">' . esc_textarea( $base->description ?? '' ) . '</textarea></td></tr>';
 		/* translators: %s: currency code, e.g. "DKK". */
-		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required value="' . esc_attr( null === $base ? '' : $this->money( $base->base_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps per unit outside its own campaigns. Creators add their profit on top.', 'merchboard' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required value="' . esc_attr( null === $base ? '' : $this->money( $base->base_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps per unit outside its own campaigns, with one design area included. Creators add their profit on top.', 'merchboard' ) . '</p></td></tr>';
+		/* translators: %s: currency code, e.g. "DKK". */
+		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="' . esc_attr( null === $base ? '0' : $this->money( $base->extra_side_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-category">' . esc_html__( 'Default category', 'merchboard' ) . '</label></th><td>' . $this->category_select( $base->category_id ?? null ) . '<p class="description">' . esc_html__( 'Used for a creator without their own product category.', 'merchboard' ) . '</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- category_select() escapes.
 		echo '<tr><th scope="row"><label for="merchboard-base-colors">' . esc_html__( 'Colours', 'merchboard' ) . '</label></th><td><textarea id="merchboard-base-colors" name="colors" rows="5" class="large-text code">' . esc_textarea( $colors ) . '</textarea><p class="description">' . esc_html__( 'One per line: a name and a colour code, e.g. "Black #111111".', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-sizes">' . esc_html__( 'Sizes', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-base-sizes" name="sizes" class="regular-text" value="' . esc_attr( implode( ', ', $base->sizes ?? array() ) ) . '"><p class="description">' . esc_html__( 'Separated by commas, e.g. "S, M, L, XL".', 'merchboard' ) . '</p></td></tr>';
@@ -758,8 +761,23 @@ final class BaseProductsPage {
 		}
 
 		echo '<p class="description">' . esc_html__( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) . '</p></td></tr>';
+
+		if ( GelatoCatalog::SOURCE === $source ) {
+			$layers = array_map(
+				/* translators: 1: side name, 2: width in mm, 3: height in mm. */
+				static fn( array $side ): string => sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $side['name'], $side['width_mm'], $side['height_mm'] ),
+				$choice['sides']
+			);
+
+			/* translators: %s: the template's image layers with their sizes. */
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html( sprintf( __( 'Image layers in the template: %s', 'merchboard' ), implode( ', ', $layers ) ) ) . '</strong></p>';
+			echo '<p>' . esc_html__( 'Check in Gelato that each image layer fills the whole print area. Creators can only design on this size, and we cannot check it ourselves, because Gelato does not tell us the largest area. If you change the template, make a new import.', 'merchboard' ) . '</p></div>';
+		}
+
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required></td></tr>';
+		/* translators: %s: currency code, e.g. "DKK". */
+		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="0"><p class="description">' . esc_html__( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) . '</p></td></tr>';
 		echo '</tbody></table>';
 		echo '<p>' . esc_html__( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) . '</p>';
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create and import', 'merchboard' ) . '</button></p></form>';

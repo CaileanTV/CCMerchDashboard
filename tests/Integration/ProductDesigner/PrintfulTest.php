@@ -256,6 +256,7 @@ final class PrintfulTest extends IntegrationTestCase {
 		self::assertSame( array( array( 'black', 'Black', '#111111' ), array( 'white', 'White', '#ffffff' ) ), array_map( static fn( array $color ): array => array( $color['key'], $color['name'], $color['hex'] ), $base->colors ) );
 		self::assertSame( array( 'S', 'M' ), $base->sizes );
 		self::assertSame( 'ready', $this->bases->import( (int) $base->id )['state'] ?? null );
+		self::assertSame( 250000, $base->extra_side_units, 'The price of extra areas survives the import.' );
 
 		$view = $base->views[0];
 		self::assertCount( 1, $base->views );
@@ -533,10 +534,11 @@ final class PrintfulTest extends IntegrationTestCase {
 			'printful',
 			'71',
 			array(
-				'colors'     => array( 'Black', 'White' ),
-				'sizes'      => array( 'S', 'M' ),
-				'sides'      => array( 'front' ),
-				'base_price' => '149,95',
+				'colors'           => array( 'Black', 'White' ),
+				'sizes'            => array( 'S', 'M' ),
+				'sides'            => array( 'front' ),
+				'base_price'       => '149,95',
+				'extra_side_price' => '25',
 			)
 		);
 

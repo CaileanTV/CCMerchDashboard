@@ -156,7 +156,7 @@ class CatalogImport {
 	/**
 	 * Creates a draft base product from a catalog product and starts its
 	 * import. Picked: `colors` (names), `sizes`, `sides` (placements) and
-	 * `base_price`.
+	 * `base_price` and `extra_side_price`.
 	 *
 	 * @param string               $source `printful` or `gelato`.
 	 * @param string               $ref    The provider's product (Printful) or template (Gelato).
@@ -209,12 +209,13 @@ class CatalogImport {
 		$id   = $this->service->save(
 			null,
 			array(
-				'name'        => $choice['name'],
-				'description' => $choice['description'],
-				'base_price'  => is_string( $picked['base_price'] ?? null ) ? $picked['base_price'] : '',
-				'category_id' => '0',
-				'colors'      => implode( "\n", $colors ),
-				'sizes'       => implode( ', ', $sizes ),
+				'name'             => $choice['name'],
+				'description'      => $choice['description'],
+				'base_price'       => is_string( $picked['base_price'] ?? null ) ? $picked['base_price'] : '',
+				'extra_side_price' => is_string( $picked['extra_side_price'] ?? null ) ? $picked['extra_side_price'] : '',
+				'category_id'      => '0',
+				'colors'           => implode( "\n", $colors ),
+				'sizes'            => implode( ', ', $sizes ),
 			),
 			array()
 		);
@@ -766,12 +767,13 @@ class CatalogImport {
 			$this->service->save(
 				$id,
 				array(
-					'name'        => $base->name,
-					'description' => $base->description,
-					'base_price'  => PricingMath::price_string( $base->base_units, $this->decimals ),
-					'category_id' => (string) ( $base->category_id ?? 0 ),
-					'colors'      => implode( "\n", $colors ),
-					'sizes'       => implode( ', ', $base->sizes ),
+					'name'             => $base->name,
+					'description'      => $base->description,
+					'base_price'       => PricingMath::price_string( $base->base_units, $this->decimals ),
+					'extra_side_price' => PricingMath::price_string( $base->extra_side_units, $this->decimals ),
+					'category_id'      => (string) ( $base->category_id ?? 0 ),
+					'colors'           => implode( "\n", $colors ),
+					'sizes'            => implode( ', ', $base->sizes ),
 				),
 				$views
 			);

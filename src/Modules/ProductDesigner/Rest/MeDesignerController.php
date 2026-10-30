@@ -665,15 +665,16 @@ final class MeDesignerController extends RestController {
 	 */
 	private static function base_data( BaseProduct $base ): array {
 		return array(
-			'id'          => (int) $base->id,
-			'name'        => $base->name,
-			'description' => $base->description,
-			'base_price'  => SalesAmount::format( $base->base_units ),
-			'currency'    => $base->currency,
-			'colors'      => $base->colors,
-			'sizes'       => $base->sizes,
-			'version'     => $base->version,
-			'views'       => array_map(
+			'id'               => (int) $base->id,
+			'name'             => $base->name,
+			'description'      => $base->description,
+			'base_price'       => SalesAmount::format( $base->base_units ),
+			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
+			'currency'         => $base->currency,
+			'colors'           => $base->colors,
+			'sizes'            => $base->sizes,
+			'version'          => $base->version,
+			'views'            => array_map(
 				static function ( BaseView $view ): array {
 					[ $print_width, $print_height ] = $view->print_pixels();
 
