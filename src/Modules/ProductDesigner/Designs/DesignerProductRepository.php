@@ -74,7 +74,7 @@ class DesignerProductRepository {
 
 	public const APPLY_DONE = 'done';
 
-	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, created_at, updated_at';
+	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, shop_base_prices, created_at, updated_at';
 
 	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
 
@@ -804,18 +804,20 @@ class DesignerProductRepository {
 	/**
 	 * Stores the price the shop has now and the base price behind it.
 	 *
-	 * @param int    $product_id Designer product.
-	 * @param string $price      Customer's price (decimal).
-	 * @param string $base_price Base price (decimal).
+	 * @param int         $product_id Designer product.
+	 * @param string      $price      Customer's price (decimal).
+	 * @param string      $base_price Base price (decimal).
+	 * @param string|null $bases      JSON: the base price by size, or null with one price for all.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function set_shop_price( int $product_id, string $price, string $base_price ): void {
+	public function set_shop_price( int $product_id, string $price, string $base_price, ?string $bases = null ): void {
 		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 			$this->table( Tables::DESIGNER_PRODUCTS ),
 			array(
-				'shop_price'      => $price,
-				'shop_base_price' => $base_price,
-				'updated_at'      => gmdate( 'Y-m-d H:i:s' ),
+				'shop_price'       => $price,
+				'shop_base_price'  => $base_price,
+				'shop_base_prices' => $bases,
+				'updated_at'       => gmdate( 'Y-m-d H:i:s' ),
 			),
 			array( 'id' => $product_id )
 		);

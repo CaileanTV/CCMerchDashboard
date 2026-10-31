@@ -38,6 +38,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $prices = array();
 
 	/**
+	 * The prices by size of each set_prices().
+	 *
+	 * @var list<array<string, int>>
+	 */
+	public array $size_prices = array();
+
+	/**
 	 * Published products.
 	 *
 	 * @var list<int>
@@ -121,12 +128,14 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	/**
 	 * Records a price.
 	 *
-	 * @param GuardedProduct $product     Proof.
-	 * @param int            $price_units Price in units.
-	 * @param int            $decimals    Decimals.
+	 * @param GuardedProduct     $product     Proof.
+	 * @param int                $price_units Price in units.
+	 * @param int                $decimals    Decimals.
+	 * @param array<string, int> $size_prices Price by size.
 	 */
-	public function set_prices( GuardedProduct $product, int $price_units, int $decimals ): void {
-		$this->prices[] = array( $product->wc_product_id, $price_units );
+	public function set_prices( GuardedProduct $product, int $price_units, int $decimals, array $size_prices = array() ): void {
+		$this->prices[]      = array( $product->wc_product_id, $price_units );
+		$this->size_prices[] = $size_prices;
 	}
 
 	/**

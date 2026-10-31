@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Shop;
 use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use WC_Product_Attribute;
 use WC_Product_Simple;
@@ -89,14 +90,15 @@ class WooCommerceDesignerWriter {
 	 * Sets the price of a designer product: on the product when it is simple,
 	 * otherwise on every variation.
 	 *
-	 * @param GuardedProduct $product     The guard's proof.
-	 * @param int            $price_units Price per unit incl. VAT in 1/10 000 units (base + profit).
-	 * @param int            $decimals    Store price decimals.
+	 * @param GuardedProduct     $product     The guard's proof.
+	 * @param int                $price_units Price per unit incl. VAT in 1/10 000 units (base + profit).
+	 * @param int                $decimals    Store price decimals.
+	 * @param array<string, int> $size_prices Price by size; empty with one price for all.
 	 * @throws DesignerException When the store enters prices excluding VAT, or the product is neither simple nor variable.
 	 * @throws DatabaseException When it cannot be saved.
 	 * @throws InvalidArgumentException When the price cannot be written with the store precision.
 	 */
-	public function set_prices( GuardedProduct $product, int $price_units, int $decimals ): void {
+	public function set_prices( GuardedProduct $product, int $price_units, int $decimals, array $size_prices = array() ): void {
 		if ( wc_tax_enabled() && ! wc_prices_include_tax() ) {
 			self::refuse( DesignerException::PRICES_EXCL_TAX );
 		}
@@ -115,6 +117,12 @@ class WooCommerceDesignerWriter {
 
 		if ( ! $parent instanceof WC_Product_Variable ) {
 			self::refuse( DesignerException::NOT_DESIGNER_PRODUCT );
+		}
+
+		if ( array() !== $size_prices ) {
+			$this->set_size_prices( $parent, $size_prices, $decimals );
+
+			return;
 		}
 
 		foreach ( $parent->get_children() as $child_id ) {
@@ -228,8 +236,14 @@ class WooCommerceDesignerWriter {
 				$variation->set_status( 'publish' );
 				$variation->set_image_id( $content->color_images[ $color_key ] ?? 0 );
 
-				if ( $variation->get_regular_price( 'edit' ) !== $price ) {
-					$variation->set_regular_price( $price );
+				$own = isset( $content->size_prices[ $size ] ) ? PricingMath::price_string( $content->size_prices[ $size ], $content->decimals ) : $price;
+
+				if ( $variation->get_regular_price( 'edit' ) !== $own ) {
+					$variation->set_regular_price( $own );
+				}
+
+				if ( array() !== $content->size_prices ) {
+					$variation->update_meta_data( DesignerPrices::SIZE_META, $size );
 				}
 
 				self::save( $variation );
@@ -245,6 +259,38 @@ class WooCommerceDesignerWriter {
 		}
 
 		WC_Product_Variable::sync( $product->wc_product_id );
+	}
+
+	/**
+	 * Sets each variation's price from its size.
+	 *
+	 * @param WC_Product_Variable $product     The product.
+	 * @param array<string, int>  $size_prices Price by size.
+	 * @param int                 $decimals    Store price decimals.
+	 * @throws DatabaseException When a variation cannot be saved.
+	 * @throws InvalidArgumentException When a price cannot be written with the store precision.
+	 */
+	private function set_size_prices( WC_Product_Variable $product, array $size_prices, int $decimals ): void {
+		$size_slug = sanitize_title( self::attribute_names( $product )[1] );
+
+		foreach ( $product->get_children() as $child_id ) {
+			$variation = wc_get_product( (int) $child_id );
+
+			if ( ! $variation instanceof WC_Product_Variation ) {
+				continue;
+			}
+
+			$size  = (string) ( $variation->get_attributes( 'edit' )[ $size_slug ] ?? '' );
+			$units = $size_prices[ $size ] ?? ( 1 === count( $size_prices ) ? reset( $size_prices ) : null );
+
+			if ( null !== $units ) {
+				$variation->set_regular_price( PricingMath::price_string( $units, $decimals ) );
+				$variation->update_meta_data( DesignerPrices::SIZE_META, '' === $size ? (string) array_key_first( $size_prices ) : $size );
+				self::save( $variation );
+			}
+		}
+
+		WC_Product_Variable::sync( $product->get_id() );
 	}
 
 	/**

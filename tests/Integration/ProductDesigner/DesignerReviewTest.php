@@ -23,6 +23,7 @@ use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
@@ -655,6 +656,93 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( '', (string) ob_get_clean() );
 	}
 
+	public function test_each_size_has_its_own_price_from_the_shop_to_the_settlement(): void {
+		$prices = new DesignerPrices( $this->wpdb, new PostMetaPricingProductStore() );
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'size_prices' => (string) wp_json_encode( array( 'M' => '199,95' ) ) ) ), $this->base_views() );
+
+		$product = $this->submitted();
+
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( array( 'S' => 1799400, 'M' => 2399400 ), $content->size_prices, '20 % of each size\'s price.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 1799400, $content->price_units, 'The base product\'s own price.' );
+
+		$row   = $this->products->product( $product );
+		$shop  = (int) ( $row['wc_product_id'] ?? 0 );
+		$small = self::post_with_size( 'S' );
+		$big   = self::post_with_size( 'M' );
+
+		self::assertSame( array( 'S' => '149.9500', 'M' => '199.9500' ), json_decode( (string) ( $row['shop_base_prices'] ?? '' ), true ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$price = $prices->price( $shop, $big ) ?? self::fail( 'No price.' );
+
+		self::assertSame( array( 1999500, 399900 ), array( $price->base_units, $price->profit_units ), 'A line is settled at its size.' );
+		self::assertSame( 1499500, ( $prices->price( $shop, $small ) ?? self::fail( 'No price.' ) )->base_units );
+		self::assertSame( 1999500, ( $prices->price( $shop ) ?? self::fail( 'No price.' ) )->base_units, 'An unknown size never gives the company less.' );
+
+		// A new price of a size waits for the shop, and then the settlement follows.
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'size_prices' => (string) wp_json_encode( array( 'M' => '219,95' ) ) ) ), $this->base_views() );
+		self::assertSame( 1999500, ( $prices->price( $shop, $big ) ?? self::fail( 'No price.' ) )->base_units, 'As the customer saw it.' );
+
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				$this->repricing->run( ...$args );
+			}
+		);
+
+		self::assertSame( array( 'S' => 1799400, 'M' => 2639400 ), end( $this->writer->size_prices ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 2199500, ( $prices->price( $shop, $big ) ?? self::fail( 'No price.' ) )->base_units );
+
+		// Without the tick there is one price again.
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'size_prices' => '[]' ) ), $this->base_views() );
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				$this->repricing->run( ...$args );
+			}
+		);
+
+		self::assertSame( array(), end( $this->writer->size_prices ) );
+		self::assertNull( $this->products->product( $product )['shop_base_prices'] ?? null );
+		self::assertSame( 1499500, ( $prices->price( $shop, $big ) ?? self::fail( 'No price.' ) )->base_units );
+	}
+
+	public function test_a_fixed_profit_is_the_same_for_every_size(): void {
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '100' ), array( 'size_prices' => (string) wp_json_encode( array( 'M' => '150' ) ) ) ), $this->base_views() );
+
+		$bases  = $this->bases_row();
+		$prices = DesignerPrices::size_prices( $bases, 1, '{"sides":{"front":[{"id":"a"}]}}', '["S","M"]', 'fixed', '25', 2 );
+
+		self::assertSame( array( 1000000, 1500000 ), array_values( array_map( static fn( $price ): int => $price->base_units, $prices ) ) );
+		self::assertSame( array( 250000, 250000 ), array_values( array_map( static fn( $price ): int => $price->profit_units, $prices ) ) );
+	}
+
+	public function test_a_design_with_one_size_has_that_size_s_price(): void {
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '100' ), array( 'size_prices' => (string) wp_json_encode( array( 'M' => '150' ) ) ) ), $this->base_views() );
+
+		$base = $this->bases_row();
+
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, '{}', '["M"]' ) );
+		self::assertSame( 1000000, DesignerPrices::secured_base( $base, '{}', '["S"]' ) );
+		self::assertSame( 1000000, DesignerPrices::secured_base( $base, '{}', '["S","M"]' ) );
+	}
+
+	public function test_a_size_price_of_a_size_it_does_not_have_is_left_out_and_a_bad_one_refused(): void {
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '100' ), array( 'size_prices' => (string) wp_json_encode( array( 'XXL' => '150', 'M' => '' ) ) ) ), $this->base_views() ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( array(), $this->bases_row()->size_prices );
+
+		try {
+			$this->bases->save( $this->base, array_merge( $this->base_fields( '100' ), array( 'size_prices' => (string) wp_json_encode( array( 'M' => 'gratis' ) ) ) ), $this->base_views() );
+			self::fail( 'A price must be a price.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_PRICE, $e->reason() );
+		}
+	}
+
 	public function test_a_new_base_price_reaches_the_shop_and_the_settlement_follows_the_shop(): void {
 		$product = $this->submitted();
 		$this->review->approve( $this->pending_id( $product ) );
@@ -1167,6 +1255,31 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			'colors'      => "Black #111111\nSand #d8c8a8",
 			'sizes'       => 'S, M',
 		);
+	}
+
+	/**
+	 * The base product as stored.
+	 */
+	private function bases_row(): BaseProduct {
+		return ( new BaseProductRepository( $this->wpdb ) )->find( $this->base ) ?? self::fail( 'No base product.' );
+	}
+
+	/**
+	 * A post that stands for a variation of a size.
+	 *
+	 * @param string $size Size.
+	 */
+	private static function post_with_size( string $size ): int {
+		$post = wp_insert_post(
+			array(
+				'post_title'  => 'Variation',
+				'post_status' => 'draft',
+			)
+		);
+
+		update_post_meta( $post, DesignerPrices::SIZE_META, $size );
+
+		return $post;
 	}
 
 	/**

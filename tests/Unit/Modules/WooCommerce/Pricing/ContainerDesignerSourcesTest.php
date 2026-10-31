@@ -40,9 +40,10 @@ final class ContainerDesignerSourcesTest extends TestCase {
 				/**
 				 * Price.
 				 *
-				 * @param int $product_id Product.
+				 * @param int $product_id   Product.
+				 * @param int $variation_id Variation.
 				 */
-				public function price( int $product_id ): ?DesignerPrice {
+				public function price( int $product_id, int $variation_id = 0 ): ?DesignerPrice {
 					return 20 === $product_id ? new DesignerPrice( 7, 1500000, 500000, 'DKK' ) : null;
 				}
 			}

@@ -36,11 +36,12 @@ final class ContainerDesignerSources implements DesignerPriceSource, DesignerCam
 	/**
 	 * The designer price of a parent product.
 	 *
-	 * @param int $product_id Parent product.
+	 * @param int $product_id   Parent product.
+	 * @param int $variation_id Variation; 0 when there is none.
 	 * @phpstan-impure Depends on what is registered when it is called.
 	 */
-	public function price( int $product_id ): ?DesignerPrice {
-		return $this->container->has( DesignerPriceSource::class ) ? $this->container->get( DesignerPriceSource::class )->price( $product_id ) : null;
+	public function price( int $product_id, int $variation_id = 0 ): ?DesignerPrice {
+		return $this->container->has( DesignerPriceSource::class ) ? $this->container->get( DesignerPriceSource::class )->price( $product_id, $variation_id ) : null;
 	}
 
 	/**

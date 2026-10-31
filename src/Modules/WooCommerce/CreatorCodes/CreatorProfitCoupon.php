@@ -143,7 +143,7 @@ final class CreatorProfitCoupon {
 			return 0.0;
 		}
 
-		return $this->unit_discount( (int) $coupon->get_id(), (string) $coupon->get_code( 'edit' ), self::parent_id( $product ), (float) $discounting_amount, self::order_time( $item ) );
+		return $this->unit_discount( (int) $coupon->get_id(), (string) $coupon->get_code( 'edit' ), self::parent_id( $product ), (float) $discounting_amount, self::order_time( $item ), (int) $product->get_parent_id() > 0 ? (int) $product->get_id() : 0 );
 	}
 
 	/**
@@ -202,12 +202,13 @@ final class CreatorProfitCoupon {
 	 * @param int                    $product_id Parent product.
 	 * @param float                  $unit_price The unit price WooCommerce discounts.
 	 * @param DateTimeImmutable|null $order_time The order's creation (UTC); null in a cart.
+	 * @param int                    $variation_id Variation; 0 when there is none.
 	 */
-	public function unit_discount( int $coupon_id, string $code, int $product_id, float $unit_price, ?DateTimeImmutable $order_time = null ): float {
+	public function unit_discount( int $coupon_id, string $code, int $product_id, float $unit_price, ?DateTimeImmutable $order_time = null, int $variation_id = 0 ): float {
 		$creator_id = $this->creator_of( $coupon_id, $code, $order_time );
 
 		try {
-			return null === $creator_id ? 0.0 : $this->discounts->per_unit( $product_id, $creator_id, $unit_price ) ?? 0.0;
+			return null === $creator_id ? 0.0 : $this->discounts->per_unit( $product_id, $creator_id, $unit_price, $variation_id ) ?? 0.0;
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'The creator code could not be checked; the discount does not apply.', $e->context() );
 

@@ -4,6 +4,14 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { drawnArea, isInside, movedArea } from '../area-picker';
+import { sizesOf } from '../base-products-admin';
+
+describe( 'the sizes with a price', () => {
+	it( 'are the sizes of the field, each once', () => {
+		expect( sizesOf( 'S, M\nL,, M ' ) ).toEqual( [ 'S', 'M', 'L' ] );
+		expect( sizesOf( '  ' ) ).toEqual( [] );
+	} );
+} );
 
 describe( 'the print area on the template', () => {
 	it( 'is the box of a drag, whichever way it goes', () => {

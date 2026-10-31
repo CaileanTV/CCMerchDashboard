@@ -141,7 +141,7 @@ final class DesignerSettlementTest extends IntegrationTestCase {
 		self::assertSame( array( 'decimal(19,4)', 'YES' ), $columns['designer_payout'] );
 		// MySQL 8 reports integer types without a display width.
 		self::assertSame( array( 'bigint unsigned', 'YES' ), array( str_replace( 'bigint(20)', 'bigint', $columns['campaign_id'][0] ), $columns['campaign_id'][1] ) );
-		self::assertSame( 41, (int) get_option( 'merchboard_db_version' ) );
+		self::assertSame( 42, (int) get_option( 'merchboard_db_version' ) );
 	}
 
 	/**
@@ -353,9 +353,10 @@ final class DesignerSettlementTest extends IntegrationTestCase {
 			/**
 			 * The price of a product.
 			 *
-			 * @param int $product_id Product.
+			 * @param int $product_id   Product.
+			 * @param int $variation_id Variation.
 			 */
-			public function price( int $product_id ): ?DesignerPrice {
+			public function price( int $product_id, int $variation_id = 0 ): ?DesignerPrice {
 				return $this->test->designer_price( $product_id );
 			}
 		};

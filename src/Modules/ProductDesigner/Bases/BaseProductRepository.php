@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices';
 
 	/**
 	 * Constructor.
@@ -93,7 +93,7 @@ class BaseProductRepository {
 					'updated_by' => $user > 0 ? $user : null,
 				)
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%d' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%d' )
 		);
 
 		if ( 1 !== $done || '' !== $this->wpdb->last_error ) {
@@ -122,7 +122,7 @@ class BaseProductRepository {
 				)
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' ),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d' ),
 			array( '%d' )
 		);
 
@@ -409,7 +409,25 @@ class BaseProductRepository {
 			'version'          => $base->version,
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 			'creator_note'     => $base->note,
+			'size_prices'      => array() === $base->size_prices ? null : (string) wp_json_encode( array_map( array( SalesAmount::class, 'format' ), $base->size_prices ) ),
 		);
+	}
+
+	/**
+	 * The prices per size of a row in units.
+	 *
+	 * @param mixed $json Stored JSON or null.
+	 * @return array<string, int>
+	 */
+	private static function size_prices( mixed $json ): array {
+		$decoded = is_string( $json ) ? json_decode( $json, true ) : null;
+		$units   = array();
+
+		foreach ( is_array( $decoded ) ? $decoded : array() as $size => $price ) {
+			$units[ (string) $size ] = SalesAmount::parse( (string) $price );
+		}
+
+		return $units;
 	}
 
 	/**
@@ -451,7 +469,8 @@ class BaseProductRepository {
 				array_values( array_map( BaseView::from_array( ... ), $views ) ),
 				is_numeric( $row['version'] ?? null ) ? (int) $row['version'] : 0,
 				SalesAmount::parse( (string) ( $row['extra_side_price'] ?? '0' ) ),
-				(string) ( $row['creator_note'] ?? '' )
+				(string) ( $row['creator_note'] ?? '' ),
+				self::size_prices( $row['size_prices'] ?? null )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

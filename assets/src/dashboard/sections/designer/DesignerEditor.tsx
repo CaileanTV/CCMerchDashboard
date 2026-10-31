@@ -1439,6 +1439,7 @@ function Editor( props: EditorProps ) {
 						profitValue={ profitValue }
 						price={ price }
 						areas={ areas }
+						sizes={ sizes }
 						onProfitKind={ setProfitKind }
 						onProfitValue={ setProfitValue }
 					/>
@@ -1501,6 +1502,7 @@ function NextSteps() {
  * @param props.profitValue   The profit as entered.
  * @param props.price         The customer's price; null when the profit is invalid.
  * @param props.areas         Used design areas; one is included in the base price.
+ * @param props.sizes         The chosen sizes.
  * @param props.onProfitKind  Changes the kind.
  * @param props.onProfitValue Changes the value.
  */
@@ -1512,6 +1514,7 @@ function PricePanel( props: {
 	readonly profitValue: string;
 	readonly price: number | null;
 	readonly areas: number;
+	readonly sizes: readonly string[];
 	readonly onProfitKind: ( value: ProfitKind ) => void;
 	readonly onProfitValue: ( value: string ) => void;
 } ) {
@@ -1608,6 +1611,35 @@ function PricePanel( props: {
 					<dt>{ __( 'Customer price incl. VAT', 'merchboard' ) }</dt>
 					<dd>{ price === null ? '–' : money( price ) }</dd>
 				</div>
+				{ Object.keys( base.sizePrices ).length === 0
+					? null
+					: props.sizes.map( ( size ) => {
+							const own = quotePrice(
+								base.sizePrices[ size ] ?? base.basePrice,
+								props.profitKind,
+								props.profitValue,
+								decimals,
+								base.extraSidePrice,
+								props.areas
+							);
+
+							return (
+								<div key={ size }>
+									<dt>
+										{ sprintf(
+											/* translators: %s: size. */ __(
+												'Customer price, %s',
+												'merchboard'
+											),
+											size
+										) }
+									</dt>
+									<dd>
+										{ own === null ? '–' : money( own ) }
+									</dd>
+								</div>
+							);
+						} ) }
 			</dl>
 			{ price === null ? (
 				<p className="merchboard-product-designer__hint">

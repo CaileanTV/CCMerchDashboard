@@ -214,7 +214,7 @@ class DesignerApply {
 		$step = $this->step( $id, 'live' );
 		$this->current_base( $version );
 		$this->require_creator( $creator_id );
-		$this->go_live( $version, $product, $price );
+		$this->go_live( $version, $product, $price, DesignerPrices::size_bases( $this->size_prices( $version, $base ) ) );
 
 		// A first approval is published only now, with the price used for the settlement stored (review 30.15).
 		if ( null === $version['live_version_id'] ) {
@@ -288,8 +288,25 @@ class DesignerApply {
 			$price,
 			$this->decimals,
 			// Published separately after `live` (review 30.15).
-			false
+			false,
+			array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $this->size_prices( $version, $base ) )
 		);
+	}
+
+	/**
+	 * The prices per size of a version; empty with one price for all.
+	 *
+	 * @param array<string, mixed> $version Version.
+	 * @param BaseProduct          $base    Base product.
+	 * @return array<string, DesignerPrice>
+	 * @throws DesignerException When it cannot be priced.
+	 */
+	private function size_prices( array $version, BaseProduct $base ): array {
+		try {
+			return DesignerPrices::size_prices( $base, (int) $version['creator_id'], (string) $version['design'], (string) $version['sizes'], (string) $version['profit_kind'], (string) $version['profit_value'], $this->decimals );
+		} catch ( InvalidArgumentException | OverflowException ) {
+			self::refuse( DesignerException::DESIGN_PROFIT );
+		}
 	}
 
 	/**
@@ -298,15 +315,16 @@ class DesignerApply {
 	 * @param array<string, mixed> $version Version.
 	 * @param GuardedProduct       $product The product in the shop.
 	 * @param DesignerPrice        $price   The price written to the shop.
+	 * @param string|null          $bases   The base price by size, or null.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function go_live( array $version, GuardedProduct $product, DesignerPrice $price ): void {
+	private function go_live( array $version, GuardedProduct $product, DesignerPrice $price, ?string $bases ): void {
 		$id = (int) $version['id'];
 
 		$this->transaction->run(
-			function () use ( $version, $id, $product, $price ): void {
+			function () use ( $version, $id, $product, $price, $bases ): void {
 				$this->products->go_live( (int) $version['design_product_id'], $id, (int) $version['number'] );
-				$this->products->set_shop_price( (int) $version['design_product_id'], SalesAmount::format( $price->price_units() ), SalesAmount::format( $price->base_units ) );
+				$this->products->set_shop_price( (int) $version['design_product_id'], SalesAmount::format( $price->price_units() ), SalesAmount::format( $price->base_units ), $bases );
 				$this->audit->record_system(
 					AuditAction::DesignerVersionApplied,
 					(int) $version['creator_id'],
@@ -384,7 +402,7 @@ class DesignerApply {
 	 */
 	private function price( array $version, BaseProduct $base ): DesignerPrice {
 		try {
-			return DesignerPrices::compute( (int) $version['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals );
+			return DesignerPrices::compute( (int) $version['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'], (string) $version['sizes'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}

@@ -50,20 +50,21 @@ final readonly class BaseProduct {
 	 * @phpstan-param list<string> $sizes
 	 * @phpstan-param list<BaseView> $views
 	 *
-	 * @param int|null   $id          Id; null before insert.
-	 * @param string     $status      DRAFT, ACTIVE or RETIRED.
-	 * @param string     $source      One of SOURCES.
-	 * @param string     $name        Name.
-	 * @param string     $description Description (plain text).
-	 * @param int        $base_units  Base price incl. VAT in 1/10 000 units.
-	 * @param string     $currency    ISO 4217 code.
-	 * @param int|null   $category_id Default `product_cat` term.
-	 * @param array[]    $colors      Colours (key, name, #rrggbb).
-	 * @param string[]   $sizes       Sizes.
-	 * @param BaseView[] $views       Sides.
-	 * @param int        $version     Version.
-	 * @param int        $extra_side_units Price incl. VAT of each used side after the first.
-	 * @param string     $note             What creators read in the designer; may be empty.
+	 * @param int|null           $id          Id; null before insert.
+	 * @param string             $status      DRAFT, ACTIVE or RETIRED.
+	 * @param string             $source      One of SOURCES.
+	 * @param string             $name        Name.
+	 * @param string             $description Description (plain text).
+	 * @param int                $base_units  Base price incl. VAT in 1/10 000 units.
+	 * @param string             $currency    ISO 4217 code.
+	 * @param int|null           $category_id Default `product_cat` term.
+	 * @param array[]            $colors      Colours (key, name, #rrggbb).
+	 * @param string[]           $sizes       Sizes.
+	 * @param BaseView[]         $views       Sides.
+	 * @param int                $version     Version.
+	 * @param int                $extra_side_units Price incl. VAT of each used side after the first.
+	 * @param string             $note             What creators read in the designer; may be empty.
+	 * @param array<string, int> $size_prices The price of a size that has its own; empty with one price for all.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -80,7 +81,8 @@ final readonly class BaseProduct {
 		public array $views,
 		public int $version = 1,
 		public int $extra_side_units = 0,
-		public string $note = ''
+		public string $note = '',
+		public array $size_prices = array()
 	) {
 		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );
@@ -88,6 +90,12 @@ final readonly class BaseProduct {
 
 		if ( '' === $name || mb_strlen( $name ) > 191 || $base_units < 1 || 1 !== preg_match( '/^[A-Z]{3}$/', $currency ) || ( null !== $category_id && $category_id < 1 ) ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );
+		}
+
+		foreach ( $size_prices as $size => $units ) {
+			if ( ! in_array( (string) $size, $sizes, true ) || $units < 1 ) {
+				throw new InvalidArgumentException( 'Invalid price of a size.' );
+			}
 		}
 
 		if ( count( $colors ) > self::MAX_COLORS || count( $sizes ) > self::MAX_SIZES || count( $views ) > self::MAX_VIEWS ) {
@@ -134,5 +142,14 @@ final readonly class BaseProduct {
 		}
 
 		return $ids;
+	}
+
+	/**
+	 * The base price of a size; without one, the base product's.
+	 *
+	 * @param string|null $size The size.
+	 */
+	public function price_of( ?string $size ): int {
+		return null === $size ? $this->base_units : ( $this->size_prices[ $size ] ?? $this->base_units );
 	}
 }

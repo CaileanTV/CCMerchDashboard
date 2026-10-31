@@ -78,7 +78,7 @@ final class SalesLinePricingRecorder {
 			}
 
 			// A designer product (ADR-080 pkt. 8): base price, profit and list price; never the share model.
-			$designer = $this->designer?->price( $product_id );
+			$designer = $this->designer?->price( $product_id, $variation_id );
 
 			if ( null !== $designer ) {
 				if ( $designer->currency !== $order_currency ) {

@@ -73,10 +73,11 @@ final class CreatorProfitDiscount {
 	 * @param int   $product_id Parent product.
 	 * @param int   $creator_id Creator.
 	 * @param float $unit_price The unit price WooCommerce discounts.
+	 * @param int   $variation_id Variation, whose size can have its own price; 0 when there is none.
 	 * @throws DatabaseException When the pricing data cannot be read.
 	 */
-	public function per_unit( int $product_id, int $creator_id, float $unit_price ): ?float {
-		$designer = $this->designer?->price( $product_id );
+	public function per_unit( int $product_id, int $creator_id, float $unit_price, int $variation_id = 0 ): ?float {
+		$designer = $this->designer?->price( $product_id, $variation_id );
 
 		if ( null !== $designer ) {
 			if ( $creator_id !== $designer->creator_id ) {

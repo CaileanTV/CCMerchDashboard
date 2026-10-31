@@ -257,6 +257,74 @@ function attach( input: HTMLInputElement ): void {
 }
 
 /**
+ * The sizes of the sizes field.
+ *
+ * @param text The field's text.
+ */
+export function sizesOf( text: string ): string[] {
+	return [
+		...new Set(
+			text
+				.split( /[,\n]/ )
+				.map( ( size ) => size.trim() )
+				.filter( ( size ) => size !== '' )
+		),
+	];
+}
+
+/**
+ * Shows a price field per size while the tick is on. A size keeps what was
+ * typed for it when the list of sizes changes.
+ *
+ * @param holder The fields' place (`data-prices`: the stored prices).
+ * @param tick   The tick.
+ * @param sizes  The sizes field.
+ */
+function attachSizePrices(
+	holder: HTMLElement,
+	tick: HTMLInputElement,
+	sizes: HTMLInputElement
+): void {
+	const prices = new Map< string, string >(
+		Object.entries(
+			JSON.parse( holder.dataset.prices ?? '{}' ) as Record<
+				string,
+				string
+			>
+		)
+	);
+	const draw = (): void => {
+		holder.replaceChildren();
+		holder.hidden = ! tick.checked;
+
+		if ( ! tick.checked ) {
+			return;
+		}
+
+		for ( const size of sizesOf( sizes.value ) ) {
+			const row = document.createElement( 'p' );
+			const label = document.createElement( 'label' );
+			const input = document.createElement( 'input' );
+
+			input.type = 'text';
+			input.inputMode = 'decimal';
+			input.name = `size_prices[${ size }]`;
+			input.value = prices.get( size ) ?? '';
+			input.addEventListener( 'input', () =>
+				prices.set( size, input.value )
+			);
+			label.append( `${ size } `, input );
+			row.append( label );
+			holder.append( row );
+		}
+	};
+
+	tick.addEventListener( 'change', draw );
+	sizes.addEventListener( 'input', draw );
+	draw();
+}
+
+/**
  * Wires one mockup PSD field.
  *
  * @param input The field (`data-merchboard-scene` = the side's index).
@@ -351,6 +419,18 @@ document
 document
 	.querySelectorAll< HTMLInputElement >( 'input[data-merchboard-scene]' )
 	.forEach( attachScene );
+
+const sizePrices = document.getElementById( 'merchboard-base-size-prices' );
+const sizeTick = document.getElementById( 'merchboard-base-size-priced' );
+const sizeField = document.getElementById( 'merchboard-base-sizes' );
+
+if (
+	sizePrices !== null &&
+	sizeTick instanceof HTMLInputElement &&
+	sizeField instanceof HTMLInputElement
+) {
+	attachSizePrices( sizePrices, sizeTick, sizeField );
+}
 
 document
 	.querySelectorAll< HTMLElement >( '[data-merchboard-area]' )

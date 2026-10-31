@@ -96,6 +96,8 @@ final class BaseProductActions {
 						$fields[ $key ] = $text( $key );
 					}
 
+					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) && is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array() );
+
 					return BaseProductsPage::edit_url( $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) ), 'saved' );
 				case 'activate':
 				case 'deactivate':

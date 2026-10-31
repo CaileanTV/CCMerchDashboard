@@ -349,9 +349,10 @@ final class DesignerCampaignsTest extends IntegrationTestCase {
 			/**
 			 * The price of a product.
 			 *
-			 * @param int $product_id Product.
+			 * @param int $product_id   Product.
+			 * @param int $variation_id Variation.
 			 */
-			public function price( int $product_id ): ?DesignerPrice {
+			public function price( int $product_id, int $variation_id = 0 ): ?DesignerPrice {
 				return $this->test->designer_price( $product_id );
 			}
 		};

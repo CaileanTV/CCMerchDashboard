@@ -87,7 +87,9 @@ class BaseProductService {
 	 * `category_id`, `colors` (one per line: name and #rrggbb), `sizes`
 	 * (separated by commas or new lines), `extra_side_price` (the price of
 	 * each used side after the first; empty is 0, left out keeps it), `note`
-	 * (what creators read in the designer; left out keeps it). Each side: `key` (empty for a new
+	 * (what creators read in the designer; left out keeps it), `size_prices`
+	 * (JSON, the base price of a size that has its own; left out keeps them).
+	 * Each side: `key` (empty for a new
 	 * one), `name`, `x`, `y`, `width`, `height` (print area in template px),
 	 * `width_mm`, `height_mm`, `dpi`, `remove` (bool), `uploads` (upload
 	 * arrays by layer) and `clear` (layers to remove).
@@ -114,6 +116,7 @@ class BaseProductService {
 		$colors   = self::colors( $fields['colors'] ?? '' );
 		$sizes    = self::sizes( $fields['sizes'] ?? '' );
 		$extra    = isset( $fields['extra_side_price'] ) ? $this->extra_price( $fields['extra_side_price'] ) : ( $existing->extra_side_units ?? 0 );
+		$by_size  = isset( $fields['size_prices'] ) ? $this->size_prices( $fields['size_prices'], $sizes ) : array_intersect_key( $existing->size_prices ?? array(), array_flip( $sizes ) );
 
 		if ( '' === $name || mb_strlen( $name ) > 191 ) {
 			self::reject( DesignerException::BASE_NAME );
@@ -125,7 +128,7 @@ class BaseProductService {
 			$plans = $this->plan_views( $existing, $views, $stored, array_column( $colors, 'key' ) );
 
 			$saved = $this->transaction->run(
-				function () use ( $id, $existing, $name, $fields, $price, $extra, $category, $colors, $sizes, $plans ): array {
+				function () use ( $id, $existing, $name, $fields, $price, $extra, $by_size, $category, $colors, $sizes, $plans ): array {
 					$sides = array();
 
 					foreach ( $plans as $plan ) {
@@ -138,7 +141,7 @@ class BaseProductService {
 						$sides[] = $this->view( $plan, $layers );
 					}
 
-					$base = $this->base( $existing, $name, $fields, $price, $category, $colors, $sizes, $sides, $extra );
+					$base = $this->base( $existing, $name, $fields, $price, $category, $colors, $sizes, $sides, $extra, $by_size );
 
 					if ( null === $existing ) {
 						$new_id = $this->bases->insert( $base );
@@ -181,7 +184,7 @@ class BaseProductService {
 
 		$this->forget_layers( $saved[1] );
 
-		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra ) ) {
+		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra || $existing->size_prices !== $by_size ) ) {
 			do_action( 'merchboard_designer_base_price_changed', $saved[0] );
 		}
 
@@ -624,9 +627,10 @@ class BaseProductService {
 	 * @param string[]              $sizes    Sizes.
 	 * @param BaseView[]            $views    Sides.
 	 * @param int                   $extra    Price of each used side after the first.
+	 * @param array<string, int>    $size_prices The price of a size that has its own.
 	 * @throws DesignerException When the base product is invalid (an active one must stay complete).
 	 */
-	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views, int $extra ): BaseProduct {
+	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views, int $extra, array $size_prices = array() ): BaseProduct {
 		$version = $existing->version ?? 1;
 
 		// A changed template, or a colour or size that is renamed or removed (the owner's choice
@@ -650,7 +654,8 @@ class BaseProductService {
 				$views,
 				$version,
 				$extra,
-				mb_substr( sanitize_textarea_field( $fields['note'] ?? $existing->note ?? '' ), 0, 1000 )
+				mb_substr( sanitize_textarea_field( $fields['note'] ?? $existing->note ?? '' ), 0, 1000 ),
+				$size_prices
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( BaseProduct::ACTIVE === ( $existing->status ?? '' ) ? DesignerException::BASE_INCOMPLETE : DesignerException::BASE_VIEW );
@@ -666,10 +671,33 @@ class BaseProductService {
 	 */
 	private function with_status( BaseProduct $base, string $status ): BaseProduct {
 		try {
-			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note );
+			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
 		}
+	}
+
+	/**
+	 * The prices per size in units: a size left empty has none of its own.
+	 *
+	 * @phpstan-param list<string> $sizes
+	 *
+	 * @param string   $json  JSON: the price as entered by size.
+	 * @param string[] $sizes The base product's sizes.
+	 * @return array<string, int>
+	 * @throws DesignerException When a price is invalid.
+	 */
+	private function size_prices( string $json, array $sizes ): array {
+		$entered = json_decode( $json, true );
+		$units   = array();
+
+		foreach ( is_array( $entered ) ? $entered : array() as $size => $text ) {
+			if ( is_scalar( $text ) && '' !== trim( (string) $text ) && in_array( (string) $size, $sizes, true ) ) {
+				$units[ (string) $size ] = $this->price( (string) $text );
+			}
+		}
+
+		return $units;
 	}
 
 	/**
@@ -794,6 +822,7 @@ class BaseProductService {
 			'name'             => array( $before->name, $after->name ),
 			'description'      => array( $before->description, $after->description ),
 			'note'             => array( $before->note, $after->note ),
+			'size_prices'      => array( $before->size_prices, $after->size_prices ),
 			'base_price'       => array( $before->base_units, $after->base_units ),
 			'extra_side_price' => array( $before->extra_side_units, $after->extra_side_units ),
 			'category_id'      => array( $before->category_id, $after->category_id ),

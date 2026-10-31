@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\ProductDesigner;
 
 use Brain\Monkey\Functions;
+use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerContent;
 use MerchBoard\Modules\ProductDesigner\Shop\GuardedProduct;
@@ -20,6 +21,7 @@ use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use WC_Product;
 
 #[CoversClass( WooCommerceDesignerWriter::class )]
 #[RunTestsInSeparateProcesses]
@@ -139,6 +141,44 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 
 		self::assertSame( 'variable', WcProductStorage::$products[10]['type'] );
 		self::assertSame( array( 'publish', 'private' ), array( WcProductStorage::$products[11]['status'], WcProductStorage::$products[12]['status'] ) );
+	}
+
+	public function test_each_size_gets_its_price_and_a_variation_knows_its_size(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Tee', '', 'publish' );
+		WcProductStorage::add( 11, array(), 'variation', 10 );
+		WcProductStorage::set( 11, array( 'attributes' => array( 'colour' => 'Black', 'size' => 'S' ), 'regular_price' => '200.00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		WcProductStorage::add( 12, array(), 'variation', 10 );
+		WcProductStorage::set( 12, array( 'attributes' => array( 'colour' => 'Black', 'size' => 'M' ), 'regular_price' => '200.00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->attribute_stubs();
+
+		$this->writer()->set_prices( new GuardedProduct( 3, 10, 7 ), 2000000, 2, array( 'S' => 1800000, 'M' => 2400000 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( '180.00', self::variation( 11 )->get_regular_price( 'edit' ) );
+		self::assertSame( '240.00', self::variation( 12 )->get_regular_price( 'edit' ) );
+		self::assertSame( 'M', self::variation( 12 )->get_meta( DesignerPrices::SIZE_META, true, 'edit' ) );
+		self::assertSame( array( 10 ), WcProductStorage::$synced );
+	}
+
+	public function test_a_new_version_writes_each_size_s_price(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Tee', '', 'publish' );
+		$this->attribute_stubs();
+
+		$content = self::content( false, array( 'black' ), array( 'S', 'M' ) );
+
+		$this->writer()->set_content(
+			new GuardedProduct( 3, 10, 7 ),
+			new DesignerContent( $content->name, $content->description, $content->category_ids, $content->colors, $content->sizes, $content->images, $content->color_images, $content->price_units, $content->decimals, $content->publish, array( 'S' => 1800000, 'M' => 2400000 ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		);
+
+		$prices = array();
+
+		foreach ( WcProductStorage::$products as $id => $row ) {
+			if ( 'variation' === $row['type'] ) {
+				$prices[] = array( $row['attributes']['size'] ?? null, $row['regular_price'] ?? null, self::variation( $id )->get_meta( DesignerPrices::SIZE_META, true, 'edit' ) );
+			}
+		}
+
+		self::assertSame( array( array( 'S', '180.00', 'S' ), array( 'M', '240.00', 'M' ) ), $prices );
 	}
 
 	public function test_a_draft_created_earlier_is_claimed_again_instead_of_a_second_product(): void {
@@ -322,6 +362,19 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 		Functions\when( 'sanitize_title' )->alias( static fn( string $title ): string => strtolower( $title ) );
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
 		Functions\when( '__' )->returnArg();
+	}
+
+	/**
+	 * A stored variation.
+	 *
+	 * @param int $id Id.
+	 */
+	private static function variation( int $id ): WC_Product {
+		$product = wc_get_product( $id );
+
+		self::assertInstanceOf( WC_Product::class, $product );
+
+		return $product;
 	}
 
 	/**

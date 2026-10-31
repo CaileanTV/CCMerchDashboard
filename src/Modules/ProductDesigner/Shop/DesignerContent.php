@@ -38,6 +38,7 @@ final readonly class DesignerContent {
 	 * @param int                                     $price_units  Customer's price incl. VAT in units (SalesAmount).
 	 * @param int                                     $decimals     Store price decimals.
 	 * @param bool                                    $publish      Whether to publish the product (its first approval).
+	 * @param array<string, int>                      $size_prices  Customer's price by size; empty with one price for all.
 	 */
 	public function __construct(
 		public string $name,
@@ -49,7 +50,8 @@ final readonly class DesignerContent {
 		public array $color_images,
 		public int $price_units,
 		public int $decimals,
-		public bool $publish
+		public bool $publish,
+		public array $size_prices = array()
 	) {
 	}
 }

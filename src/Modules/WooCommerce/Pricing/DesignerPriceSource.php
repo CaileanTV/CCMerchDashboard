@@ -24,8 +24,9 @@ interface DesignerPriceSource {
 	 * The designer price of a parent product, or null when it is not a live
 	 * designer product.
 	 *
-	 * @param int $product_id Parent product.
+	 * @param int $product_id   Parent product.
+	 * @param int $variation_id Variation, whose size can have its own price; 0 when there is none.
 	 * @throws DatabaseException When the designer's data cannot be read.
 	 */
-	public function price( int $product_id ): ?DesignerPrice;
+	public function price( int $product_id, int $variation_id = 0 ): ?DesignerPrice;
 }

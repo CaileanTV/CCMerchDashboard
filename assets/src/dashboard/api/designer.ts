@@ -81,6 +81,8 @@ export interface DesignerBase {
 	readonly description: string;
 	/** What the administrator tells creators about this product. */
 	readonly note: string;
+	/** The base price of a size that has its own. */
+	readonly sizePrices: Readonly< Record< string, string > >;
 	readonly basePrice: string;
 	/** What each used side after the first adds to the base price. */
 	readonly extraSidePrice: string;
@@ -442,6 +444,9 @@ function parseBase( value: unknown ): DesignerBase | null {
 				name: value.name,
 				description: value.description,
 				note: isString( value.note ) ? value.note : '',
+				sizePrices: isRecord( value.size_prices )
+					? ( value.size_prices as Record< string, string > )
+					: {},
 				basePrice: value.base_price,
 				extraSidePrice: value.extra_side_price,
 				currency: value.currency,

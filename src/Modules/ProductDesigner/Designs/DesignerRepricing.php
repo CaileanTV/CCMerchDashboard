@@ -21,6 +21,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
+use MerchBoard\Modules\WooCommerce\Pricing\DesignerPrice;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
@@ -194,7 +195,13 @@ class DesignerRepricing {
 		}
 
 		try {
-			$price = DesignerPrices::compute( (int) $product['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $live['design'] ) ), (string) $live['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $live['profit_value'] ) ), $base->currency, $this->decimals );
+			$price = DesignerPrices::compute( (int) $product['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $live['design'], (string) $live['sizes'] ) ), (string) $live['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $live['profit_value'] ) ), $base->currency, $this->decimals );
+		} catch ( InvalidArgumentException | OverflowException ) {
+			self::refuse( DesignerException::DESIGN_PROFIT );
+		}
+
+		try {
+			$by_size = DesignerPrices::size_prices( $base, (int) $product['creator_id'], (string) $live['design'], (string) $live['sizes'], (string) $live['profit_kind'], (string) $live['profit_value'], $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
@@ -202,13 +209,14 @@ class DesignerRepricing {
 		$units    = $price->price_units();
 		$previous = null === $product['shop_price'] ? null : SalesAmount::parse( (string) $product['shop_price'] );
 		$stored   = null === $product['shop_base_price'] ? null : SalesAmount::parse( (string) $product['shop_base_price'] );
+		$bases    = DesignerPrices::size_bases( $by_size );
 
-		if ( $previous === $units && $stored === $price->base_units ) {
+		if ( $previous === $units && $stored === $price->base_units && $bases === $product['shop_base_prices'] ) {
 			return;
 		}
 
-		$this->writer->set_prices( $proof, $units, $this->decimals );
-		$this->products->set_shop_price( $id, SalesAmount::format( $units ), SalesAmount::format( $price->base_units ) );
+		$this->writer->set_prices( $proof, $units, $this->decimals, array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $by_size ) );
+		$this->products->set_shop_price( $id, SalesAmount::format( $units ), SalesAmount::format( $price->base_units ), $bases );
 
 		if ( $previous === $units ) {
 			return;

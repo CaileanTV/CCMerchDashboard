@@ -937,6 +937,7 @@ final class MeDesignerController extends RestController {
 			'name'             => $base->name,
 			'description'      => $base->description,
 			'note'             => $base->note,
+			'size_prices'      => (object) array_map( array( SalesAmount::class, 'format' ), $base->size_prices ),
 			'base_price'       => SalesAmount::format( $base->base_units ),
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 			'currency'         => $base->currency,
