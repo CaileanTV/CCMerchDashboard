@@ -481,23 +481,15 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( 200, $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 400, 400 ) )->get_status(), 'Mockups are photos.' );
 	}
 
-	public function test_the_creator_s_order_of_the_photos_is_kept_and_checked(): void {
+	public function test_a_creator_cannot_set_the_order_of_the_photos(): void {
 		wp_set_current_user( $this->user );
 
 		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
 		$body    = $this->draft( array( self::text() ) );
 
-		$body['design']['photos'] = array( 15711, 15710, 15711 );
+		$body['design']['photos'] = array( 15711, 15710 );
 
-		$saved = $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body );
-
-		self::assertSame( array( 15711, 15710 ), $saved->get_data()['draft']['design']['photos'], 'Each once, in the creator\'s order.' );
-
-		foreach ( array( 'nope', array( 'x' ), array( 0 ), range( 1, 9 ) ) as $photos ) {
-			$body['design']['photos'] = $photos;
-
-			self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body ) ), (string) wp_json_encode( $photos ) );
-		}
+		self::assertArrayNotHasKey( 'photos', $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body )->get_data()['draft']['design'] );
 	}
 
 	public function test_a_printed_side_has_no_threads_and_any_colours(): void {

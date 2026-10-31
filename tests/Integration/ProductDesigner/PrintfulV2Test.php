@@ -12,7 +12,6 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Integration\ProductDesigner;
 
 use MerchBoard\Core\Audit\AuditTrail;
-use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
@@ -381,13 +380,28 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertSame( array( '_photo-15711' ), array_keys( $files['mockups'] ), 'Printful\'s answer also held 15710.' );
 	}
 
-	public function test_the_photos_stand_in_the_creator_s_order(): void {
+	public function test_the_administrator_sets_the_order_of_the_photos(): void {
+		$id = $this->import_flat();
+
+		$this->base_service()->move_photo( $id, '15711', -1 );
+
+		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider.' );
+
+		self::assertSame( array( '15711', '15710' ), $provider['photos'] );
+		self::assertTrue( $provider['flat'], 'The rest of the template stays.' );
+		self::assertSame( array( 'front-print' => 'default', 'back-print' => 'back' ), $provider['placements'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$this->base_service()->move_photo( $id, '15711', -1 );
+		$this->base_service()->move_photo( $id, '999', 1 );
+
+		self::assertSame( array( '15711', '15710' ), $this->bases->provider( $id )['photos'] ?? null, 'Neither past the top, nor a photo it does not have.' );
+	}
+
+	public function test_a_design_gets_the_order_of_its_base_product(): void {
 		[ $version ] = $this->submit_flat();
-		$design      = json_decode( (string) ( $this->products->version( $version )['design'] ?? '' ), true );
+		$base        = (int) ( $this->products->version( $version )['base_id'] ?? 0 );
 
-		$design['photos'] = array( 15711, 15710 );
-
-		$this->wpdb->update( $this->wpdb->prefix . Tables::DESIGNER_VERSIONS, array( 'design' => (string) wp_json_encode( $design ) ), array( 'id' => $version ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test setup.
+		$this->bases->set_photos( $base, array( '15711', '15710' ) );
 
 		$mockups = $this->mockups();
 
@@ -396,7 +410,29 @@ final class PrintfulV2Test extends IntegrationTestCase {
 
 		$files = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) );
 
-		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_keys( $files['mockups'] ), 'The shop follows this order.' );
+		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_keys( $files['mockups'] ) );
+	}
+
+	public function test_the_preview_shows_the_order_of_the_base_product(): void {
+		[ $version ] = $this->draft_flat();
+
+		$this->bases->set_photos( (int) ( $this->products->version( $version )['base_id'] ?? 0 ), array( '15711', '15710' ) );
+
+		$mockups = $this->mockups();
+
+		$mockups->start_preview( $version );
+
+		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_column( $mockups->preview( $version )['images'], 'side' ) );
+
+		delete_transient( PrintfulMockups::PREVIEW . $version );
+	}
+
+	public function test_a_style_has_a_name_for_the_administrator(): void {
+		$catalog = new PrintfulCatalog( $this->api );
+
+		self::assertSame( 'Men\'s / Back', $catalog->style_names( 257 )['15711'] ?? null );
+
+		delete_transient( PrintfulCatalog::STYLE_NAMES . 257 );
 	}
 
 	public function test_a_flat_product_from_before_the_choice_keeps_its_styles(): void {

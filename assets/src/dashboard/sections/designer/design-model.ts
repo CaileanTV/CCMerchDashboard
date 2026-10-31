@@ -70,8 +70,6 @@ export interface DesignDocument {
 	readonly threads?: Readonly<
 		Record< string, Readonly< Record< string, string > > >
 	>;
-	/** The creator's order of the product's photos, first the main image. */
-	readonly photos?: readonly number[];
 }
 
 export const EMPTY_DESIGN: DesignDocument = {
@@ -254,31 +252,12 @@ export function parseDesign( value: unknown ): DesignDocument | null {
 	}
 
 	const threads = parseThreads( value.threads );
-	const photos = Array.isArray( value.photos )
-		? value.photos.filter( Number.isInteger )
-		: [];
 
 	return {
 		version: DESIGN_VERSION,
 		sides,
 		...( threads === undefined ? {} : { threads } ),
-		...( photos.length === 0 ? {} : { photos } ),
 	};
-}
-
-/**
- * The design with the order of its photos.
- *
- * @param design Design.
- * @param photos The photos, first the main image.
- */
-export function withPhotos(
-	design: DesignDocument,
-	photos: readonly number[]
-): DesignDocument {
-	const { photos: _old, ...rest } = design;
-
-	return photos.length === 0 ? rest : { ...rest, photos };
 }
 
 /**

@@ -104,6 +104,11 @@ class PrintfulCatalog implements CatalogRenderer {
 	private const POLL_DELAY = 15;
 
 	/**
+	 * A product's names of its mockup styles (transient prefix).
+	 */
+	public const STYLE_NAMES = 'merchboard_printful_styles_';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PrintfulApi $api Printful.
@@ -919,6 +924,36 @@ class PrintfulCatalog implements CatalogRenderer {
 		}
 
 		return $styles;
+	}
+
+	/**
+	 * The names of a product's mockup styles, by id: the base product keeps
+	 * only their ids.
+	 *
+	 * @param int $id Printful product.
+	 * @return array<string>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function style_names( int $id ): array {
+		$names = get_transient( self::STYLE_NAMES . $id );
+
+		if ( is_array( $names ) ) {
+			return $names;
+		}
+
+		$names = array();
+
+		foreach ( $this->api->mockup_styles( $id, self::REGION ) as $row ) {
+			foreach ( is_array( $row ) && is_array( $row['mockup_styles'] ?? null ) ? $row['mockup_styles'] : array() as $style ) {
+				if ( is_array( $style ) && is_numeric( $style['id'] ?? null ) ) {
+					$names[ (string) $style['id'] ] = sanitize_text_field( (string) ( $style['category_name'] ?? '' ) . ' / ' . (string) ( $style['view_name'] ?? '' ) );
+				}
+			}
+		}
+
+		set_transient( self::STYLE_NAMES . $id, $names, DAY_IN_SECONDS );
+
+		return $names;
 	}
 
 	/**

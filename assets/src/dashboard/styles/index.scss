@@ -1883,22 +1883,8 @@ input:disabled + .merchboard-sounds__upload {
 	}
 
 	figcaption {
-		display: flex;
-		gap: var(--merchboard-space-2);
-		align-items: center;
-		justify-content: space-between;
 		margin-top: 0.25rem;
 		font-size: 0.85rem;
-	}
-}
-
-.merchboard-product-designer__move {
-	display: inline-flex;
-	gap: var(--merchboard-space-1);
-
-	// The arrows go along the row of photos.
-	.merchboard-product-designer__icon-button {
-		transform: rotate(-90deg);
 	}
 }
 

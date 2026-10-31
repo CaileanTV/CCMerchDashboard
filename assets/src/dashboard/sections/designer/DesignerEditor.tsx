@@ -57,7 +57,6 @@ import {
 	usedSides,
 	withKnownThreads,
 	withObjects,
-	withPhotos,
 	withThread,
 } from './design-model';
 import type {
@@ -216,9 +215,6 @@ function Editor( props: EditorProps ) {
 	const history = useHistory< DesignDocument >( props.design );
 	const [ title, setTitle ] = useState( draft.postfix );
 	const [ colors, setColors ] = useState< readonly string[] >( draft.colors );
-	const [ photos, setPhotos ] = useState< readonly number[] >(
-		props.design.photos ?? []
-	);
 	const [ sizes, setSizes ] = useState< readonly string[] >( draft.sizes );
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
 		draft.profitKind
@@ -248,7 +244,6 @@ function Editor( props: EditorProps ) {
 	const [ discarding, setDiscarding ] = useState( false );
 	const [ saved, setSaved ] = useState( {
 		design: props.design,
-		photos,
 		price: draft.price,
 	} );
 	const [ stageError, setStageError ] = useState( false );
@@ -296,7 +291,6 @@ function Editor( props: EditorProps ) {
 	);
 	const dirty =
 		design !== saved.design ||
-		photos.join() !== saved.photos.join() ||
 		title !== draft.postfix ||
 		colors.join() !== draft.colors.join() ||
 		sizes.join() !== draft.sizes.join() ||
@@ -696,10 +690,7 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
-			design: withPhotos(
-				withKnownThreads( design, base.views ),
-				photos
-			),
+			design: withKnownThreads( design, base.views ),
 		} );
 		setSaving( false );
 
@@ -712,7 +703,7 @@ function Editor( props: EditorProps ) {
 			return null;
 		}
 
-		setSaved( { design, photos, price: result.data.draft?.price ?? null } );
+		setSaved( { design, price: result.data.draft?.price ?? null } );
 
 		return result.data;
 	};
@@ -1061,15 +1052,7 @@ function Editor( props: EditorProps ) {
 					product={ product.id }
 					views={ base.views }
 					prepare={ showFinished }
-					order={ photos }
-					onOrder={ setPhotos }
-					onClose={ () => {
-						setFinished( false );
-
-						if ( photos.join() !== saved.photos.join() ) {
-							void save();
-						}
-					} }
+					onClose={ () => setFinished( false ) }
 				/>
 			) : null }
 

@@ -128,6 +128,12 @@ final class BaseProductActions {
 						),
 						'importing'
 					);
+				case 'photo_move':
+					$move = $text( 'move' );
+
+					$this->bases->move_photo( $id, explode( ':', $move )[0], str_ends_with( $move, ':down' ) ? 1 : -1 );
+
+					return BaseProductsPage::edit_url( $id, 'photo_moved' );
 				case 'import_retry':
 					$this->catalog?->retry( $id );
 

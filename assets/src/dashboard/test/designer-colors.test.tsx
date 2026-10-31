@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { shifted } from '../sections/designer/design-model';
 import { ProductPanel } from '../sections/designer/DesignerEditor';
 import type { DesignerBase } from '../api/designer';
 
@@ -67,6 +68,16 @@ function click( selector: string ): void {
 describe( 'the colours of a design', () => {
 	afterEach( () => {
 		document.body.replaceChildren();
+	} );
+
+	it( 'moves an item within its list', () => {
+		expect( shifted( [ 'a', 'b', 'c' ], 2, -1 ) ).toEqual( [
+			'a',
+			'c',
+			'b',
+		] );
+		expect( shifted( [ 'a', 'b' ], 0, -1 ) ).toEqual( [ 'a', 'b' ] );
+		expect( shifted( [ 'a', 'b' ], 1, 1 ) ).toEqual( [ 'a', 'b' ] );
 	} );
 
 	it( 'lists the chosen colours in the creator’s order', async () => {

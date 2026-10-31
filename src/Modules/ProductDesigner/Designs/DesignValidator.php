@@ -12,7 +12,6 @@ namespace MerchBoard\Modules\ProductDesigner\Designs;
 use Closure;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
-use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 
 defined( 'ABSPATH' ) || exit;
@@ -70,7 +69,7 @@ final class DesignValidator {
 	 *
 	 * @param mixed       $design Decoded design.
 	 * @param BaseProduct $base   The base product it is designed on.
-	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, threads?: array<string, array<string, string>>, photos?: list<int>}
+	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, threads?: array<string, array<string, string>>}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
 	public function validate( mixed $design, BaseProduct $base ): array {
@@ -97,12 +96,6 @@ final class DesignValidator {
 
 		if ( array() !== $threads ) {
 			$normalized['threads'] = $threads;
-		}
-
-		$photos = self::photos( $design['photos'] ?? array() );
-
-		if ( array() !== $photos ) {
-			$normalized['photos'] = $photos;
 		}
 
 		$json = wp_json_encode( $normalized );
@@ -150,28 +143,6 @@ final class DesignValidator {
 		}
 
 		return $normalized;
-	}
-
-	/**
-	 * The creator's order of the base product's chosen photos: mockup styles,
-	 * first the product's main image. An id it does not have is never used.
-	 *
-	 * @param mixed $photos Input.
-	 * @return list<int>
-	 * @throws DesignerException When it is not a short list of ids.
-	 */
-	private static function photos( mixed $photos ): array {
-		if ( ! is_array( $photos ) || ! array_is_list( $photos ) || count( $photos ) > CatalogImport::MAX_PHOTOS ) {
-			self::refuse();
-		}
-
-		foreach ( $photos as $photo ) {
-			if ( ! is_int( $photo ) || $photo < 1 ) {
-				self::refuse();
-			}
-		}
-
-		return array_values( array_unique( $photos ) );
 	}
 
 	/**

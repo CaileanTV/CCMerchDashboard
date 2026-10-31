@@ -186,6 +186,7 @@ final class BaseProductsPage {
 
 		return match ( $code ) {
 			'saved'                                 => array( __( 'The base product was saved. A new base price reaches the designer products in the shop in the background.', 'merchboard' ), 'success' ),
+			'photo_moved'                           => array( __( 'The order of the mockups was saved. It is used for designs sent from now on.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
 			'deleted'                               => array( __( 'The base product was deleted.', 'merchboard' ), 'success' ),
@@ -343,6 +344,7 @@ final class BaseProductsPage {
 
 		if ( null !== $base ) {
 			$this->render_import( $base );
+			$this->render_photo_order( $base );
 		}
 
 		if ( $designs > 0 ) {
@@ -898,6 +900,49 @@ final class BaseProductsPage {
 
 		/* translators: %d: the most photos of a design. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'The photos Printful makes of each design sent for approval. They become the product\'s images in the shop, in place of the mockups the creator\'s browser made, and each is made per colour. At most %d: more are left out.', 'merchboard' ), CatalogImport::MAX_PHOTOS ) ) . '</p></td></tr>';
+	}
+
+	/**
+	 * The order of the photos Printful makes of a design: only the
+	 * administrator sets it, and it can be changed at any time.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @throws DatabaseException When its photos cannot be read.
+	 */
+	private function render_photo_order( BaseProduct $base ): void {
+		$provider = $this->bases->provider( (int) $base->id );
+		$photos   = $provider['photos'] ?? array();
+
+		if ( 2 > count( $photos ) ) {
+			return;
+		}
+
+		try {
+			$names = null === $this->printful ? array() : $this->printful->style_names( (int) ( $provider['ref'] ?? 0 ) );
+		} catch ( PrintfulException ) {
+			$names = array();
+		}
+
+		echo '<h2>' . esc_html__( 'Order of the mockups', 'merchboard' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'The order of the photos in the shop. The first is the main image. Designs already sent keep theirs.', 'merchboard' ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="photo_move">';
+		echo '<input type="hidden" name="base_id" value="' . esc_attr( (string) $base->id ) . '">';
+		wp_nonce_field( BaseProductActions::ACTION );
+		echo '<ol>';
+
+		foreach ( $photos as $index => $photo ) {
+			/* translators: %s: the photo's id. */
+			$name = $names[ $photo ] ?? sprintf( __( 'Mockup %s', 'merchboard' ), $photo );
+
+			echo '<li>' . esc_html( $name ) . ' ';
+			/* translators: %s: the photo's name. */
+			echo '<button type="submit" class="button button-small" name="move" value="' . esc_attr( $photo . ':up' ) . '" aria-label="' . esc_attr( sprintf( __( 'Move %s up', 'merchboard' ), $name ) ) . '"' . disabled( 0 === $index, true, false ) . '>↑</button> ';
+			/* translators: %s: the photo's name. */
+			echo '<button type="submit" class="button button-small" name="move" value="' . esc_attr( $photo . ':down' ) . '" aria-label="' . esc_attr( sprintf( __( 'Move %s down', 'merchboard' ), $name ) ) . '"' . disabled( count( $photos ) - 1 === $index, true, false ) . '>↓</button></li>';
+		}
+
+		echo '</ol></form>';
 	}
 
 	/**

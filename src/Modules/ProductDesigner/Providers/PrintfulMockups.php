@@ -45,7 +45,8 @@ defined( 'ABSPATH' ) || exit;
  * product, not to a side, and v2 names every photo after the first placement,
  * so its `style_id` says which it is. A chosen photo is stored under its own
  * key (SubmissionFiles::PHOTO), and a colour that has one shows only the
- * chosen photos: the browser's mockups of that colour go.
+ * chosen photos: the browser's mockups of that colour go. The photos stand
+ * in the base product's order, which only the administrator sets.
  *
  * Meanwhile the version's `mockup_state` is `running`, and it cannot be
  * approved. `ready` when every side is done; `failed` (the browser's
@@ -229,7 +230,7 @@ class PrintfulMockups {
 
 		$images = array();
 
-		foreach ( self::mockup_urls( self::TASK_SIDE, is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ) as $side => $colors ) {
+		foreach ( self::in_order( self::mockup_urls( self::TASK_SIDE, is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ), is_array( $map['photos'] ?? null ) ? $map['photos'] : array() ) as $side => $colors ) {
 			foreach ( $colors as $color => $url ) {
 				$bytes = $this->api->download( $url );
 				$info  = getimagesizefromstring( $bytes );
@@ -567,7 +568,7 @@ class PrintfulMockups {
 			return;
 		}
 
-		$this->store( $id, self::mockup_urls( (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ) );
+		$this->store( $id, self::mockup_urls( (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ), is_array( $map['photos'] ?? null ) ? $map['photos'] : array() );
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
@@ -650,13 +651,14 @@ class PrintfulMockups {
 	/**
 	 * Downloads the mockups and puts them in place of the browser's.
 	 *
-	 * @param int                                  $id   Version.
-	 * @param array<string, array<string, string>> $urls URL by side and colour.
+	 * @param int                                  $id     Version.
+	 * @param array<string, array<string, string>> $urls   URL by side and colour.
+	 * @param array<mixed>                         $photos The base product's photos in their order.
 	 * @throws PrintfulException When a mockup cannot be downloaded.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a mockup is not a valid image.
 	 */
-	private function store( int $id, array $urls ): void {
+	private function store( int $id, array $urls, array $photos ): void {
 		$stored = array();
 		$names  = array();
 		$done   = false;
@@ -701,7 +703,7 @@ class PrintfulMockups {
 			}
 		}
 
-		$files['mockups'] = self::in_creator_order( array_filter( $files['mockups'] ), $version );
+		$files['mockups'] = self::in_order( array_filter( $files['mockups'] ), $photos );
 
 		if ( ! $this->products->set_pending_files( $id, (string) wp_json_encode( $files ) ) ) {
 			$replaced = $names;
@@ -713,21 +715,22 @@ class PrintfulMockups {
 	}
 
 	/**
-	 * The mockups with the creator's order of the chosen photos first: the
-	 * shop shows them in this order.
+	 * The mockups with the chosen photos first, in the base product's order:
+	 * the shop shows them in this order.
 	 *
-	 * @param array<string, array<string, array<string, mixed>>> $mockups Mockups by side and colour.
-	 * @param array<string, mixed>|null                          $version Version.
-	 * @return array<string, array<string, array<string, mixed>>>
+	 * @template T
+	 *
+	 * @param array<string, T> $mockups Mockups by side.
+	 * @param array<mixed>     $photos  Mockup styles, first the main image.
+	 * @return array<string, T>
 	 */
-	private static function in_creator_order( array $mockups, ?array $version ): array {
-		$design = json_decode( (string) ( $version['design'] ?? '' ), true );
-		$first  = array();
+	private static function in_order( array $mockups, array $photos ): array {
+		$first = array();
 
-		foreach ( is_array( $design ) && is_array( $design['photos'] ?? null ) ? $design['photos'] : array() as $photo ) {
-			$key = SubmissionFiles::PHOTO . ( is_int( $photo ) ? $photo : 0 );
+		foreach ( $photos as $photo ) {
+			$key = SubmissionFiles::PHOTO . ( is_scalar( $photo ) ? (string) $photo : '' );
 
-			if ( isset( $mockups[ $key ] ) ) {
+			if ( isset( $mockups[ $key ] ) && ! isset( $first[ $key ] ) ) {
 				$first[ $key ] = $mockups[ $key ];
 			}
 		}

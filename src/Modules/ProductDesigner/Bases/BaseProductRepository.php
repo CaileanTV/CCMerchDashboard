@@ -156,9 +156,10 @@ class BaseProductRepository {
 	 *                         colour key and size) and `slots` (the image of
 	 *                         each side among a variant's images); before the
 	 *                         catalog import (review 30.15) only the placements.
-	 *                         A flat product adds `flat`, `styles` (the mockup
-	 *                         style by side key), `techniques` (by side key) and
-	 *                         `options` (the provider's product options).
+	 *                         It adds `photos` (the mockup styles chosen, in
+	 *                         their default order); a flat product adds `flat`,
+	 *                         `techniques` (by side key) and `options` (the
+	 *                         provider's product options).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function set_provider( int $id, string $source, string $ref, string $template ): void {
@@ -228,6 +229,34 @@ class BaseProductRepository {
 			'techniques' => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
 			'options'    => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
 		);
+	}
+
+	/**
+	 * Stores the order of a base product's photos.
+	 *
+	 * @phpstan-param list<string> $photos
+	 *
+	 * @param int      $id     Id.
+	 * @param string[] $photos Mockup styles, first the main image.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function set_photos( int $id, array $photos ): void {
+		$wpdb     = $this->wpdb;
+		$template = $wpdb->get_var( $wpdb->prepare( 'SELECT provider_template FROM %i WHERE id = %d', $this->table(), $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+		$decoded  = json_decode( (string) $template, true );
+
+		if ( '' !== $wpdb->last_error || ! is_array( $decoded ) ) {
+			throw new DatabaseException( 'Could not read the photos of the base product.' );
+		}
+
+		unset( $decoded['styles'] );
+		$decoded['photos'] = $photos;
+
+		$done = $wpdb->update( $this->table(), array( 'provider_template' => (string) wp_json_encode( $decoded ) ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( false === $done ) {
+			throw new DatabaseException( 'Could not store the photos of the base product.' );
+		}
 	}
 
 	/**

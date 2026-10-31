@@ -230,6 +230,46 @@ class BaseProductService {
 	}
 
 	/**
+	 * Moves one of a base product's photos in their order, which only the
+	 * administrator sets. Designs already sent keep theirs.
+	 *
+	 * @param int    $id    Base product.
+	 * @param string $photo The photo (mockup style).
+	 * @param int    $step  -1 for earlier, 1 for later.
+	 * @throws DesignerException When the user may not or it is unknown.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function move_photo( int $id, string $photo, int $step ): void {
+		self::authorize();
+
+		$base   = $this->existing( $id );
+		$photos = $this->bases->provider( $id )['photos'] ?? array();
+		$index  = array_search( $photo, $photos, true );
+
+		if ( false === $index || ! isset( $photos[ $index + $step ] ) ) {
+			return;
+		}
+
+		[ $photos[ $index ], $photos[ $index + $step ] ] = array( $photos[ $index + $step ], $photos[ $index ] );
+
+		$this->transaction->run(
+			function () use ( $id, $base, $photos ): void {
+				$this->bases->set_photos( $id, array_values( $photos ) );
+				$this->audit->record(
+					AuditAction::DesignerBaseChanged,
+					null,
+					array(
+						'base_id'        => $id,
+						'base_name'      => $base->name,
+						'version'        => $base->version,
+						'changed_fields' => array( 'photos' ),
+					)
+				);
+			}
+		);
+	}
+
+	/**
 	 * Retires a base product for good: no new designs, its products are
 	 * taken out of the shop and its waiting designs rejected (after the
 	 * commit, `merchboard_designer_base_retired`).
