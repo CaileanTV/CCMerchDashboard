@@ -699,6 +699,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Notis (migration 41, `AddDesignerBaseNote`, schema-version 41):** `merchboard_designer_bases.creator_note` (`varchar(1000)`, tom som standard) er teksten, creators ser i designeren.
 
+**Pris pr. størrelse (migration 42, `AddDesignerSizePrices`, schema-version 42):** `merchboard_designer_bases.size_prices` (JSON, pris pr. størrelse, der har sin egen, ellers `NULL`) og `merchboard_designer_products.shop_base_prices` (JSON, grundprisen bag hver størrelse i butikken, ellers `NULL`). Variationer får metafeltet `_merchboard_designer_size`. Eksisterende rækker er uændrede.
+
 **Prodigi (ADR-084, ingen migration):** `provider_ref` er katalogproduktets id, `variants` holder SKU pr. farve og størrelse, og opgavens `result` holder fase, filer, det gemte produkt og mockups, så de kan slettes igen. Optionen `merchboard_designer_prodigi_key` er krypteret og uden autoload.
 
 **Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard).

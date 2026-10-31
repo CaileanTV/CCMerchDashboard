@@ -570,6 +570,8 @@ En side i `GET /me/designer` har `scene` (mockup fra PSD, ellers `null`), og lag
 
 Grundprodukter i `GET /me/designer` har `note` (tekst til creators, kan være tom).
 
+Grundprodukter i `GET /me/designer` har også `size_prices` (grundpris pr. størrelse, tomt objekt med én pris for alle).
+
 Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, på en flad side JPEG, `no-store`, `nosniff`) til Printfuls mockup-generator, Gelatos skabelonprodukter (fra trin 30.13) og Prodigi (ADR-084), når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
 
 ## Test-krav

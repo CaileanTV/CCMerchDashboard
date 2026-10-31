@@ -74,6 +74,8 @@ Sæt flueben i "Lad creators se denne mockup", hvis creators skal kunne se mocku
 
 **Printområde:** tegn det med musen på billedet under siden, eller skriv tallene. **Notis i designeren:** skriv en tekst på grundproduktet, som creators ser, mens de designer det.
 
+**Pris pr. størrelse:** sæt fluebenet under Grundpris, og udfyld prisen for de størrelser, der skal koste noget andet. Tomme felter bruger grundprisen. Uden flueben er prisen fast på tværs af varianter.
+
 **Printful v2, all-over og Prodigi, fra 2026-10-31 (eksperimentel):** søgningen i Printfuls katalog viser kun produkter, der sælges i Europa og kan sendes til Danmark. Svarer v2 ikke, vises hele listen med en bemærkning, og et valgt produkt tjekkes stadig. Et all-over-produkt viser sine flade dele, og alle er valgt på forhånd, for en del uden flueben bliver hvid på produktet. Skifter printmålet med størrelsen, vælger admin én gruppe størrelser pr. grundprodukt. "Fra Prodigis katalog" vises, når Prodigi er slået til og har en nøgle under Indstillinger; kun produkter produceret i EU vises, og farverne skal rettes bagefter, fordi Prodigi ikke oplyser farvekoder.
 
 **Ekstra designområder, fra 2026-10-30:** "Pris pr. ekstra designområde" sættes på grundproduktet, både på et eget og ved import fra et katalog (standard 0). "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele printområdet.

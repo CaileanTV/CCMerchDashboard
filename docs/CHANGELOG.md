@@ -15,6 +15,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Mockup-PSD (eksperimentel):** en side kan få en PSD med smart objects, og designet bøjes så automatisk rundt om fx en kop i mockuppen.
 - **Printområde med musen:** admin kan tegne printområdet direkte på skabelonen.
 - **Notis i designeren (schema-version 41):** en tekst pr. grundprodukt, som creators ser, mens de designer.
+- **Pris pr. størrelse (schema-version 42):** et flueben på grundproduktet giver forskellig grundpris pr. størrelse, fra butikkens varianter til afregningen af hver ordrelinje.
 - **Tekster på syemønstre:** all-over-mønstre viser Printfuls tekster ("Safe Print Area", "Folding line"), og en dansk forklaring står under designfladen.
 - **Prodigi (ADR-084, ikke afprøvet mod Prodigi):** ny kilde med katalog og mockups bag sin egen afbryder, der er slået fra. Kun produkter produceret i EU tilbydes, og der sendes aldrig ordrer.
 - **Produktdesigner (fase 30, ADR-080–082), fundament:** tabellerne til grundprodukter, designer-produkter, versioner, filer, leverandør-tasks og kampagner (schema-version 35), rettigheden `merchboard_manage_designer` og kill switches for produktdesigneren, Printful og Gelato under Settings (alle fra som standard). Designeren kommer i de følgende trin.
