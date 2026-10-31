@@ -210,8 +210,7 @@ function Editor( props: EditorProps ) {
 	const [ sending, setSending ] = useState( false );
 	const draft = product.draft!;
 	const history = useHistory< DesignDocument >( props.design );
-	const [ title, setTitle ] = useState( draft.title );
-	const [ description, setDescription ] = useState( draft.description );
+	const [ title, setTitle ] = useState( draft.postfix );
 	const [ colors, setColors ] = useState< readonly string[] >( draft.colors );
 	const [ sizes, setSizes ] = useState< readonly string[] >( draft.sizes );
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
@@ -258,6 +257,7 @@ function Editor( props: EditorProps ) {
 		base.views[ 0 ];
 	const design = history.value;
 	sideRef.current = view?.key ?? side;
+	const fullName = `${ overview.creator } ${ base.name } ${ title }`.trim();
 	const objects = view === undefined ? [] : objectsOf( design, view.key );
 	const embroidery = view?.embroidery ?? null;
 	const swaps = view === undefined ? undefined : design.threads?.[ view.key ];
@@ -288,8 +288,7 @@ function Editor( props: EditorProps ) {
 	);
 	const dirty =
 		design !== saved.design ||
-		title !== draft.title ||
-		description !== draft.description ||
+		title !== draft.postfix ||
 		colors.join() !== draft.colors.join() ||
 		sizes.join() !== draft.sizes.join() ||
 		profitKind !== draft.profitKind ||
@@ -683,7 +682,7 @@ function Editor( props: EditorProps ) {
 		setMessage( null );
 		const result = await saveDesignerDraft( product.id, {
 			title,
-			description,
+			description: draft.description,
 			colors,
 			sizes,
 			profitKind,
@@ -861,7 +860,7 @@ function Editor( props: EditorProps ) {
 					{ __( '← My designs', 'merchboard' ) }
 				</Button>
 				<strong className="merchboard-product-designer__bar-title">
-					{ title.trim() === '' ? base.name : title }
+					{ fullName }
 				</strong>
 				<div className="merchboard-product-designer__bar-group">
 					<Button
@@ -917,7 +916,7 @@ function Editor( props: EditorProps ) {
 					{ impersonating ? null : (
 						<Button
 							variant="ghost"
-							onClick={ () => onDelete( title ) }
+							onClick={ () => onDelete( fullName ) }
 						>
 							{ __( 'Delete product', 'merchboard' ) }
 						</Button>
@@ -1040,12 +1039,11 @@ function Editor( props: EditorProps ) {
 								<ProductPanel
 									base={ base }
 									locale={ locale }
+									creator={ overview.creator }
 									title={ title }
-									description={ description }
 									colors={ colors }
 									sizes={ sizes }
 									onTitle={ setTitle }
-									onDescription={ setDescription }
 									onColors={ ( next ) => {
 										setColors( next );
 
@@ -1711,6 +1709,11 @@ function saveError( reason: string | undefined ): string {
 				'Choose at least one colour and one size.',
 				'merchboard'
 			);
+		case 'design_name_taken':
+			return __(
+				'A product with this name already exists. Add something to the name to tell them apart.',
+				'merchboard'
+			);
 		case 'design_invalid':
 			return __(
 				'The design contains something that cannot be used (an unknown font, a removed image or too many elements).',
@@ -1946,18 +1949,20 @@ function InShop( props: DesignerEditorProps ) {
 interface ProductPanelProps {
 	readonly base: DesignerBase;
 	readonly locale: string;
+	/** The creator's name. */
+	readonly creator: string;
+	/** The creator's addition to the name. */
 	readonly title: string;
-	readonly description: string;
 	readonly colors: readonly string[];
 	readonly sizes: readonly string[];
 	readonly onTitle: ( value: string ) => void;
-	readonly onDescription: ( value: string ) => void;
+
 	readonly onColors: ( value: readonly string[] ) => void;
 	readonly onSizes: ( value: readonly string[] ) => void;
 }
 
 /**
- * Title, description, colours and sizes.
+ * The name, colours and sizes.
  *
  * @param props Props.
  */
@@ -1974,13 +1979,19 @@ function ProductPanel( props: ProductPanelProps ) {
 
 	return (
 		<div className="merchboard-product-designer__stack">
+			<div className="merchboard-field">
+				<span className="merchboard-field__label">
+					{ __( 'Product name', 'merchboard' ) }
+				</span>
+				<strong>{ `${ props.creator } ${ base.name }`.trim() }</strong>
+			</div>
 			<Labelled
 				className="merchboard-field"
 				before
 				label={
 					<>
 						<span className="merchboard-field__label">
-							{ __( 'Title', 'merchboard' ) }
+							{ __( 'Add to the name', 'merchboard' ) }
 						</span>
 					</>
 				}
@@ -1990,37 +2001,19 @@ function ProductPanel( props: ProductPanelProps ) {
 						id={ id }
 						className="merchboard-input"
 						value={ props.title }
-						maxLength={ 120 }
+						maxLength={ 60 }
 						onChange={ ( event ) =>
 							props.onTitle( event.target.value )
 						}
 					/>
 				) }
 			</Labelled>
-			<Labelled
-				className="merchboard-field"
-				before
-				label={
-					<>
-						<span className="merchboard-field__label">
-							{ __( 'Description', 'merchboard' ) }
-						</span>
-					</>
-				}
-			>
-				{ ( id ) => (
-					<textarea
-						id={ id }
-						className="merchboard-input merchboard-input--textarea"
-						rows={ 3 }
-						maxLength={ 2000 }
-						value={ props.description }
-						onChange={ ( event ) =>
-							props.onDescription( event.target.value )
-						}
-					/>
+			<p className="merchboard-product-designer__hint">
+				{ __(
+					'The name starts with your name and the product. If you make more than one of the same product, add a word to tell them apart.',
+					'merchboard'
 				) }
-			</Labelled>
+			</p>
 			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
 					{ __( 'Colours', 'merchboard' ) }

@@ -248,6 +248,22 @@ class WooCommerceDesignerWriter {
 	}
 
 	/**
+	 * Renames a designer product.
+	 *
+	 * @param GuardedProduct $product The guard's proof.
+	 * @param string         $name    Its name.
+	 * @throws DatabaseException When it cannot be saved.
+	 */
+	public function set_name( GuardedProduct $product, string $name ): void {
+		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( ( $parent instanceof WC_Product_Variable || $parent instanceof WC_Product_Simple ) && $parent->get_name( 'edit' ) !== $name ) {
+			$parent->set_name( $name );
+			self::save( $parent );
+		}
+	}
+
+	/**
 	 * Puts a designer product in the shop (published).
 	 *
 	 * @param GuardedProduct $product The guard's proof.

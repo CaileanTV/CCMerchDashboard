@@ -84,8 +84,8 @@ class DesignerDrafts {
 					(int) $base->id,
 					$this->fields(
 						$base,
-						$base->name,
-						'',
+						DesignerNames::prefix( $creator->display_name, $base->name ),
+						$base->description,
 						array( $base->colors[0]['key'] ?? '' ),
 						$base->sizes,
 						'fixed',
@@ -115,7 +115,7 @@ class DesignerDrafts {
 	 *
 	 * @param Creator              $creator   The creator.
 	 * @param int                  $product   Designer product.
-	 * @param array<string, mixed> $input     `title`, `description`, `colors`, `sizes`, `profit_kind`, `profit_value` (decimal string), `design`.
+	 * @param array<string, mixed> $input     `title` (the creator's addition to the name), `colors`, `sizes`, `profit_kind`, `profit_value` (decimal string), `design`.
 	 * @param DesignValidator      $validator The design check for this creator.
 	 * @throws DesignerException When the product or its draft is unknown, or a value is refused.
 	 * @throws DatabaseException When it cannot be stored.
@@ -124,10 +124,17 @@ class DesignerDrafts {
 		$row   = $this->products->find( $creator->id, $product ) ?? self::refuse( DesignerException::DESIGN_UNKNOWN );
 		$draft = $this->products->draft( $product ) ?? self::refuse( DesignerException::DESIGN_NOT_DRAFT );
 		$base  = $this->bases->find( (int) $row['base_id'] ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
-		$title = trim( sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : '' ) );
+		$title = DesignerNames::full(
+			DesignerNames::prefix( $creator->display_name, $base->name ),
+			sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : '' )
+		);
 
-		if ( '' === $title || mb_strlen( $title ) > 120 ) {
+		if ( mb_strlen( $title ) > 120 ) {
 			self::refuse( DesignerException::DESIGN_TITLE );
+		}
+
+		if ( $this->products->name_taken( $title, $product ) ) {
+			self::refuse( DesignerException::DESIGN_NAME_TAKEN );
 		}
 
 		$kind  = $input['profit_kind'] ?? null;
@@ -140,7 +147,7 @@ class DesignerDrafts {
 		$fields = $this->fields(
 			$base,
 			$title,
-			sanitize_textarea_field( is_string( $input['description'] ?? null ) ? mb_substr( $input['description'], 0, 2000 ) : '' ),
+			$base->description,
 			self::subset( $input['colors'] ?? null, array_column( $base->colors, 'key' ) ),
 			self::subset( $input['sizes'] ?? null, $base->sizes ),
 			$kind,

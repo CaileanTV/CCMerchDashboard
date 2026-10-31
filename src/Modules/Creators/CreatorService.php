@@ -163,6 +163,17 @@ final class CreatorService {
 			}
 		);
 
+		if ( $rename ) {
+			/**
+			 * A creator got a new name.
+			 *
+			 * @param int    $creator_id The creator.
+			 * @param string $old        The old name.
+			 * @param string $new        The new name.
+			 */
+			do_action( 'merchboard_creator_renamed', $current->id, $current->display_name, $display_name );
+		}
+
 		if ( $relink && null !== $current->user_id ) {
 			$this->users->revoke_creator_role( $current->user_id );
 		}

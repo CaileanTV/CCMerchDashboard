@@ -91,6 +91,15 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - Creatoren får at vide, at de færdige mockups oprettes automatisk, før vi kan godkende designet, og at vi giver svar, også hvis det ikke fremstår korrekt, eller der er andre fejl.
 - Produktdesigneren har egne CSS-klasser (`merchboard-product-designer`). Den delte tidligere rodklasse med OBS-overlaydesigneren og blev klippet til en mørk 16:9-boks.
 
+## Creatorens produkter (2026-10-31, eksperimentel)
+- **Navn:** "Creator Grundprodukt Tilføjelse". Creatoren skriver kun tilføjelsen. Navnet følger creatorens navn, også i butikken, og to produkter kan ikke hedde det samme.
+- **Beskrivelse:** kommer fra grundproduktet og kan ikke ændres af creatoren.
+- **Annullér ændring:** en ændring af et produkt i butikken kan annulleres. Listen viser "I butikken · ændring i gang".
+- **Sæt i kladde:** tager et godkendt produkt ud af butikken, og det kan sættes tilbage uden ny godkendelse.
+- **Slet:** kræver afkrydsning og ordet SLET. Designet flyttes til "Slettede designs", hvor billedet kan ses. Også afviste designs og designs på udgåede grundprodukter kan slettes.
+- **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
+- **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
+
 ## Broderi (2026-10-31, eksperimentel)
 - **Broderipakker:** under Produktdesigner → Broderipakker har hver pakke et navn, et maksimum pr. side og sine tråde (kode, navn, farve). Standardpakken "Gelato" har 15 tråde og højst 6. En ændring gælder fra næste gang et design gemmes. En pakke i brug kan ikke slettes.
 - **Valg af pakke:** en side vælger "Broderipakke" på grundproduktet eller ved katalogimport. Ved import fra Gelato er første pakke forudvalgt, når sidens navn indeholder "embroider". Uden pakke er siden print med frie farver. En ændret pakke på en side giver en ny version af grundproduktet, så kladder skal gemmes igen.

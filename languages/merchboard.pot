@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T00:55:47+00:00\n"
+"POT-Creation-Date: 2026-10-31T01:11:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -593,6 +593,7 @@ msgid "Creator proposed a change of their category"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:175
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:33
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:542
 msgid "Category proposal approved"
 msgstr ""
@@ -2112,7 +2113,7 @@ msgid "Image"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:397
-#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:316
+#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:332
 msgid "Size"
 msgstr ""
 
@@ -4110,9 +4111,9 @@ msgstr ""
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:257
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:415
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:771
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:258
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:416
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:773
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:140
 msgid "Not found."
 msgstr ""
@@ -4137,6 +4138,7 @@ msgstr ""
 #: src/Modules/News/Admin/NewsAdminPage.php:66
 #: src/Modules/News/Admin/NewsAdminPage.php:180
 #: src/Modules/News/NewsDashboardSection.php:43
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
 #: src/Modules/Notifications/NotificationTypes.php:99
 msgid "News"
 msgstr ""
@@ -4207,7 +4209,6 @@ msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:268
-#: build/dashboard.js:58
 msgid "Title"
 msgstr ""
 
@@ -4832,6 +4833,144 @@ msgstr ""
 msgid "A creator cancelled a payout request. It is no longer waiting for you."
 msgstr ""
 
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:29
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:118
+msgid "New sale"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:29
+msgid "When one of your products is sold."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:30
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:181
+msgid "Sale refunded or cancelled"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:30
+msgid "When an order with your products is refunded, cancelled or changed."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:31
+msgid "Money ready for payout"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:31
+msgid "Once a day, when you have more profit you can have paid out."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:32
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:309
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:323
+msgid "Payout request cancelled"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:32
+msgid "When you cancel a payout request."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:33
+msgid "When we approve a change you proposed for your category."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:34
+msgid "Category proposal not approved"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:34
+msgid "When we cannot approve a change you proposed, with the reason."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:883
+msgid "New product in your shop"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
+msgid "When a product is added to your shop."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:36
+msgid "We looked at your dashboard"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:36
+msgid "When our team opens your dashboard to help you."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
+msgid "When we have news for you."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+msgid "Your chatbot lost access"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+msgid "When a platform stops your chatbot from reaching your channel. You get one e-mail until it is connected again."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
+msgid "Your webhook was paused"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
+msgid "When one of your webhooks is paused because 10 deliveries in a row failed."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1038
+msgid "New YouTube terms"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
+msgid "When the terms of the YouTube chatbot change and you need to accept them again."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+#: src/Modules/ProductDesigner/DesignerNotifications.php:122
+msgid "Design sent for approval"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+msgid "A receipt when you send a new product or a change for approval."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+#: src/Modules/ProductDesigner/DesignerNotifications.php:156
+msgid "Your product is in the shop"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+msgid "When we have approved your new product and it is in the shop."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
+#: src/Modules/ProductDesigner/DesignerNotifications.php:156
+msgid "Your change is in the shop"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
+msgid "When we have approved a change of your product and it is in the shop."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
+msgid "Design not approved"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
+msgid "When we cannot approve your design, with the reason."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
+msgid "New price on your product"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
+msgid "When the base price changes, so the price in the shop changes too. Your profit stays the same."
+msgstr ""
+
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:108
 #: src/Modules/ProductDesigner/DesignerNotifications.php:144
 #: src/Modules/ProductDesigner/DesignerNotifications.php:192
@@ -4839,10 +4978,6 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:261
 #: src/Modules/ProductDesigner/DesignerNotifications.php:293
 msgid "Thank you for creating with us."
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:118
-msgid "New sale"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:119
@@ -4923,10 +5058,6 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:167
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:205
 msgid "See your sales"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:181
-msgid "Sale refunded or cancelled"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:182
@@ -5026,11 +5157,6 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:837
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:869
 msgid "See your payouts"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:309
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:323
-msgid "Payout request cancelled"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:310
@@ -5513,10 +5639,6 @@ msgstr ""
 msgid "If something is wrong, please contact us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:883
-msgid "New product in your shop"
-msgstr ""
-
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:884
 msgid "When a product is linked to the creator."
 msgstr ""
@@ -5638,10 +5760,6 @@ msgstr ""
 msgid "Your webhook \"%s\" was paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
-msgid "Your webhook was paused"
-msgstr ""
-
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr ""
@@ -5652,10 +5770,6 @@ msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1024
 msgid "See your webhooks"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1038
-msgid "New YouTube terms"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1039
@@ -6039,7 +6153,6 @@ msgid "Creators have designs on this base product. A new base price or template 
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:344
-#: build/dashboard.js:58
 #: build/dashboard.js:86
 msgid "Description"
 msgstr ""
@@ -6770,7 +6883,7 @@ msgid "Code"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:185
-#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:316
+#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:332
 #: build/dashboard.js:58
 msgid "Colour"
 msgstr ""
@@ -6970,10 +7083,6 @@ msgstr ""
 msgid "To the creator"
 msgstr ""
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:122
-msgid "Design sent for approval"
-msgstr ""
-
 #: src/Modules/ProductDesigner/DesignerNotifications.php:123
 msgid "When the creator sends a new product or a change from the designer for approval (a receipt)."
 msgstr ""
@@ -7020,14 +7129,6 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:155
 msgid "Designer product approved"
-msgstr ""
-
-#: src/Modules/ProductDesigner/DesignerNotifications.php:156
-msgid "Your change is in the shop"
-msgstr ""
-
-#: src/Modules/ProductDesigner/DesignerNotifications.php:156
-msgid "Your product is in the shop"
 msgstr ""
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:164
@@ -7411,11 +7512,11 @@ msgstr ""
 msgid "We no longer offer this base product, so the design cannot be approved. You are welcome to design on another product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:891
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:896
 msgid "The product designer is not available."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:910
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:915
 msgid "The product designer refused the change."
 msgstr ""
 
@@ -13937,6 +14038,10 @@ msgid "Choose at least one colour and one size."
 msgstr ""
 
 #: build/dashboard.js:58
+msgid "A product with this name already exists. Add something to the name to tell them apart."
+msgstr ""
+
+#: build/dashboard.js:58
 msgid "The design contains something that cannot be used (an unknown font, a removed image or too many elements)."
 msgstr ""
 
@@ -14012,6 +14117,18 @@ msgstr ""
 
 #: build/dashboard.js:58
 msgid "Set as draft"
+msgstr ""
+
+#: build/dashboard.js:58
+msgid "Product name"
+msgstr ""
+
+#: build/dashboard.js:58
+msgid "Add to the name"
+msgstr ""
+
+#: build/dashboard.js:58
+msgid "The name starts with your name and the product. If you make more than one of the same product, add a word to tell them apart."
 msgstr ""
 
 #: build/dashboard.js:58

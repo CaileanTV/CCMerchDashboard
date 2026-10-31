@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Creators\Creator;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
@@ -51,6 +52,7 @@ class DesignerShop {
 	 * @param AuditTrail                $audit       Audit trail.
 	 * @param Transaction               $transaction Transaction.
 	 * @param DesignerFiles             $files       Files.
+	 * @param BaseProductRepository     $bases       Base products.
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -59,7 +61,8 @@ class DesignerShop {
 		private WooCommerceDesignerWriter $writer,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private DesignerFiles $files
+		private DesignerFiles $files,
+		private BaseProductRepository $bases
 	) {
 	}
 
@@ -195,6 +198,35 @@ class DesignerShop {
 				$this->audit->record( AuditAction::DesignerProductPurged, $creator->id, array( 'design_product_id' => $product ) );
 			}
 		);
+	}
+
+	/**
+	 * Carries a creator's new name to their products, in the shop too.
+	 *
+	 * @param int    $creator_id The creator.
+	 * @param string $before        Their old name.
+	 * @param string $after        Their new name.
+	 * @throws DesignerException When a product cannot be written.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function creator_renamed( int $creator_id, string $before, string $after ): void {
+		foreach ( $this->products->for_creator( $creator_id ) as $row ) {
+			$id   = (int) $row['id'];
+			$base = $this->bases->find( (int) $row['base_id'] );
+
+			if ( null === $base ) {
+				continue;
+			}
+
+			$this->products->rename( $id, DesignerNames::prefix( $before, $base->name ), DesignerNames::prefix( $after, $base->name ) );
+
+			$live  = DesignerProductRepository::LIVE === $row['status'] ? $this->products->live( $id ) : null;
+			$proof = null === $live ? null : $this->guard->for_row( $id );
+
+			if ( null !== $proof ) {
+				$this->writer->set_name( $proof, (string) ( $live['title'] ?? '' ) );
+			}
+		}
 	}
 
 	/**

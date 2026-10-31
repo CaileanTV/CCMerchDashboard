@@ -16,6 +16,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\Creator;
+use MerchBoard\Modules\Notifications\Catalog\CreatorEmailTexts;
 use Throwable;
 use WP_Error;
 use WP_REST_Request;
@@ -253,11 +254,12 @@ final class MeNotificationsController extends RestController {
 		$items = array();
 
 		foreach ( $this->choosable() as $type ) {
+			$texts   = CreatorEmailTexts::of( $type->key );
 			$items[] = array(
 				'key'         => $type->key,
 				'group'       => $type->group,
-				'label'       => $type->label(),
-				'description' => $type->description(),
+				'label'       => $texts[0] ?? $type->label(),
+				'description' => $texts[1] ?? $type->description(),
 				'enabled'     => ! in_array( $type->key, $off, true ),
 			);
 		}

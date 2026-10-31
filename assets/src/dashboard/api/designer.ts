@@ -117,6 +117,8 @@ export interface DesignerDeleted {
 }
 
 export interface DesignerOverview {
+	/** The creator's name, the fixed start of their products' names. */
+	readonly creator: string;
 	readonly bases: readonly DesignerBase[];
 	readonly cliparts: readonly DesignerAsset[];
 	readonly uploads: readonly DesignerAsset[];
@@ -131,6 +133,8 @@ export interface DesignerOverview {
 export type ProfitKind = 'percent' | 'fixed';
 
 export interface DesignerDraft {
+	/** The creator's addition to the product's name. */
+	readonly postfix: string;
 	readonly number: number;
 	readonly title: string;
 	readonly description: string;
@@ -488,6 +492,7 @@ export function parseOverview( body: unknown ): DesignerOverview | null {
 		limits.price_decimals > 4
 		? null
 		: {
+				creator: isString( body.creator ) ? body.creator : '',
 				bases,
 				cliparts,
 				uploads,
@@ -572,6 +577,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 		state: shopState( body.state ),
 		draft: {
 			number: draft.number,
+			postfix: isString( draft.postfix ) ? draft.postfix : draft.title,
 			title: draft.title,
 			description: draft.description,
 			colors,

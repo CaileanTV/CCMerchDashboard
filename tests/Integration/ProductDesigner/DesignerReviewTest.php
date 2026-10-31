@@ -32,11 +32,11 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
-use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -115,6 +115,13 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	private array $hooks = array();
 
 	private int $base;
+
+	/**
+	 * The addition to each product's name: no two names are the same.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $postfixes = array();
 
 	/**
 	 * Notifications fired.
@@ -267,12 +274,12 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		[ $shop, $content ] = $this->writer->contents[0];
 		self::assertSame( (int) $row['wc_product_id'], $shop );
-		self::assertSame( array( 'Stream tee', false, 1799400, array( 'S', 'M' ), array( 'black', 'sand' ) ), array( $content->name, $content->publish, $content->price_units, $content->sizes, array_column( $content->colors, 'key' ) ) );
+		self::assertSame( array( 'Nova Organic tee Stream tee', false, 1799400, array( 'S', 'M' ), array( 'black', 'sand' ) ), array( $content->name, $content->publish, $content->price_units, $content->sizes, array_column( $content->colors, 'key' ) ) );
 		self::assertSame( array( (int) $row['wc_product_id'] ), $this->writer->published, 'Published only after the settlement price is stored (review 30.15).' );
 		self::assertCount( 2, $content->images, 'A product image per colour.' );
 		self::assertSame( array( 'black', 'sand' ), array_keys( $content->color_images ) );
 		self::assertSame( 'attachment', get_post_type( $content->images[0] ) );
-		self::assertSame( 'Stream tee', get_post_meta( $content->images[0], '_wp_attachment_image_alt', true ) );
+		self::assertSame( 'Nova Organic tee Stream tee', get_post_meta( $content->images[0], '_wp_attachment_image_alt', true ) );
 
 		self::assertSame( array( DesignerNotifications::APPROVED ), $this->types( 'designer_approved', 'designer_change_approved', 'admin_designer_apply_failed' ) );
 		self::assertSame( array( 'designer_version_approved', 'designer_version_applied' ), $this->audit( 'designer_version_approved', 'designer_version_applied' ) );
@@ -622,7 +629,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			)
 		);
 		self::assertSame( array( 200, 'image/png' ), array( $ok['status'], $ok['headers']['Content-Type'] ?? null ) );
-		self::assertStringStartsWith( 'attachment; filename="stream-tee-v1-front.png"', $ok['headers']['Content-Disposition'] ?? '' );
+		self::assertStringStartsWith( 'attachment; filename="nova-organic-tee-stream-tee-v1-front.png"', $ok['headers']['Content-Disposition'] ?? '' );
 		self::assertSame( 403, $download->response( array( 'version' => (string) $version, 'slot' => $slot, '_wpnonce' => 'x' ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		wp_set_current_user( $this->create_user( 'shop-visitor' ) );
@@ -803,6 +810,56 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$refused = $this->controller()->products();
 		self::assertInstanceOf( WP_Error::class, $refused, 'Only a creator gets an answer.' );
 		self::assertSame( 403, rest_convert_error_to_response( $refused )->get_status() );
+	}
+
+	public function test_a_product_is_named_after_its_creator_and_base_and_no_two_names_are_the_same(): void {
+		$first  = $this->drafts->create( $this->creator, $this->base );
+		$second = $this->drafts->create( $this->creator, $this->base );
+		$input  = array(
+			'title'        => 'Winter',
+			'description'  => 'Mine.',
+			'colors'       => array( 'black' ),
+			'sizes'        => array( 'S' ),
+			'profit_kind'  => 'fixed',
+			'profit_value' => '10',
+			'design'       => array(
+				'version' => 1,
+				'sides'   => array(),
+			),
+		);
+		$valid  = new DesignValidator( static fn(): bool => false, array() );
+
+		$this->drafts->save( $this->creator, $first, $input, $valid );
+
+		$draft = $this->products->draft( $first );
+
+		self::assertSame( 'Nova Organic tee Winter', $draft['title'] ?? null );
+		self::assertSame( $this->bases_repository()->find( $this->base )->description ?? null, $draft['description'] ?? null, 'The creator cannot write the description.' );
+
+		try {
+			$this->drafts->save( $this->creator, $second, $input, $valid );
+			self::fail( 'Two products with one name.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_NAME_TAKEN, $e->reason() );
+		}
+
+		$this->drafts->save( $this->creator, $second, array_merge( $input, array( 'title' => 'Summer' ) ), $valid );
+		$this->drafts->save( $this->creator, $first, array_merge( $input, array( 'profit_value' => '11' ) ), $valid );
+		self::assertSame( 'Nova Organic tee Summer', $this->products->draft( $second )['title'] ?? null, 'A product can keep its own name.' );
+
+		$this->shop()->remove( $this->creator, $first );
+		$this->drafts->save( $this->creator, $second, $input, $valid );
+		self::assertSame( 'Nova Organic tee Winter', $this->products->draft( $second )['title'] ?? null, 'A deleted design frees its name.' );
+	}
+
+	public function test_a_creator_s_new_name_reaches_their_products(): void {
+		$product = $this->live_product();
+		$shop    = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+
+		$this->shop()->creator_renamed( $this->creator->id, 'Nova', 'Stella' );
+
+		self::assertSame( 'Stella Organic tee Stream tee', $this->products->live( $product )['title'] ?? null );
+		self::assertSame( array( array( $shop, 'Stella Organic tee Stream tee' ) ), $this->writer->names );
 	}
 
 	public function test_a_change_can_be_discarded_and_the_shop_keeps_its_version(): void {
@@ -989,6 +1046,13 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	}
 
 	/**
+	 * The base products.
+	 */
+	private function bases_repository(): BaseProductRepository {
+		return new BaseProductRepository( $this->wpdb );
+	}
+
+	/**
 	 * The creator with the designer switched on.
 	 */
 	private function as_creator(): void {
@@ -1012,7 +1076,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	 * The creator's decisions.
 	 */
 	private function shop(): DesignerShop {
-		return new DesignerShop( $this->products, $this->drafts, $this->guard, $this->writer, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files );
+		return new DesignerShop( $this->products, $this->drafts, $this->guard, $this->writer, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files, new BaseProductRepository( $this->wpdb ) );
 	}
 
 	/**
@@ -1156,8 +1220,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			$this->creator,
 			$product,
 			array(
-				'title'        => 'Stream tee',
-				'description'  => 'Soft.',
+				'title'        => $this->postfixes[ $product ] ??= 'Stream tee' . ( array() === $this->postfixes ? '' : ' ' . count( $this->postfixes ) ),
 				'colors'       => array( 'black', 'sand' ),
 				'sizes'        => array( 'S', 'M' ),
 				'profit_kind'  => 'percent',

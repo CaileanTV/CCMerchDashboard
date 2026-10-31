@@ -22,6 +22,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerNames;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
@@ -640,6 +641,7 @@ final class MeDesignerController extends RestController {
 		$bases = array_values( array_filter( $this->bases->all(), static fn( BaseProduct $base ): bool => BaseProduct::ACTIVE === $base->status ) );
 
 		return array(
+			'creator'  => $creator->display_name,
 			'bases'    => array_map( self::base_data( ... ), $bases ),
 			'cliparts' => array_map( self::asset_data( ... ), $this->assets->shared( DesignerAssetRepository::CLIPART ) ),
 			'uploads'  => array_map( self::asset_data( ... ), $this->assets->owned( $creator->id, CreatorUploads::UPLOAD ) ),
@@ -771,6 +773,8 @@ final class MeDesignerController extends RestController {
 			return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
 		}
 
+		$base_name = (string) ( $this->bases->find( (int) $product['base_id'] )->name ?? '' );
+
 		$json = static function ( mixed $value ): mixed {
 			$decoded = is_string( $value ) ? json_decode( $value, true ) : null;
 
@@ -786,6 +790,7 @@ final class MeDesignerController extends RestController {
 				'draft'     => null === $draft ? null : array(
 					'number'       => (int) $draft['number'],
 					'title'        => (string) $draft['title'],
+					'postfix'      => DesignerNames::postfix( (string) $draft['title'], DesignerNames::prefix( $creator->display_name, $base_name ), $base_name ),
 					'description'  => (string) $draft['description'],
 					'colors'       => $json( $draft['colors'] ),
 					'sizes'        => $json( $draft['sizes'] ),

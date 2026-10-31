@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T00:55:52+00:00\n"
+"PO-Revision-Date: 2026-10-31T01:11:54+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -593,6 +593,7 @@ msgid "Creator proposed a change of their category"
 msgstr "Creator foreslog en ændring af sin kategori"
 
 #: src/Modules/Admin/AuditLogFormatter.php:175
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:33
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:542
 msgid "Category proposal approved"
 msgstr "Kategoriforslag godkendt"
@@ -2112,7 +2113,7 @@ msgid "Image"
 msgstr "Billede"
 
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:397
-#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:316
+#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:332
 msgid "Size"
 msgstr "Størrelse"
 
@@ -4110,9 +4111,9 @@ msgstr "Profil"
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:257
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:415
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:771
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:258
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:416
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:773
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:140
 msgid "Not found."
 msgstr "Ikke fundet."
@@ -4137,6 +4138,7 @@ msgstr "Merch Dashboard Nyheder"
 #: src/Modules/News/Admin/NewsAdminPage.php:66
 #: src/Modules/News/Admin/NewsAdminPage.php:180
 #: src/Modules/News/NewsDashboardSection.php:43
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
 #: src/Modules/Notifications/NotificationTypes.php:99
 msgid "News"
 msgstr "Nyheder"
@@ -4207,7 +4209,6 @@ msgstr "Ingen beskeder endnu."
 
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:268
-#: build/dashboard.js:58
 msgid "Title"
 msgstr "Titel"
 
@@ -4832,6 +4833,144 @@ msgstr "En udbetalingsanmodning er annulleret"
 msgid "A creator cancelled a payout request. It is no longer waiting for you."
 msgstr "En creator har annulleret en udbetalingsanmodning. Den venter ikke længere på dig."
 
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:29
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:118
+msgid "New sale"
+msgstr "Nyt salg"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:29
+msgid "When one of your products is sold."
+msgstr "Når et af dine produkter bliver solgt."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:30
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:181
+msgid "Sale refunded or cancelled"
+msgstr "Salg refunderet eller annulleret"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:30
+msgid "When an order with your products is refunded, cancelled or changed."
+msgstr "Når en ordre med dine produkter bliver refunderet, annulleret eller ændret."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:31
+msgid "Money ready for payout"
+msgstr "Penge klar til udbetaling"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:31
+msgid "Once a day, when you have more profit you can have paid out."
+msgstr "Én gang om dagen, når du har mere fortjeneste, du kan få udbetalt."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:32
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:309
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:323
+msgid "Payout request cancelled"
+msgstr "Udbetalingsanmodning annulleret"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:32
+msgid "When you cancel a payout request."
+msgstr "Når du annullerer en anmodning om udbetaling."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:33
+msgid "When we approve a change you proposed for your category."
+msgstr "Når vi godkender en ændring, du har foreslået til din kategori."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:34
+msgid "Category proposal not approved"
+msgstr "Forslag til kategori ikke godkendt"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:34
+msgid "When we cannot approve a change you proposed, with the reason."
+msgstr "Når vi ikke kan godkende en ændring, du har foreslået, med begrundelsen."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:883
+msgid "New product in your shop"
+msgstr "Nyt produkt i din butik"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
+msgid "When a product is added to your shop."
+msgstr "Når et produkt bliver tilføjet til din butik."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:36
+msgid "We looked at your dashboard"
+msgstr "Vi har kigget på dit dashboard"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:36
+msgid "When our team opens your dashboard to help you."
+msgstr "Når vores team åbner dit dashboard for at hjælpe dig."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
+msgid "When we have news for you."
+msgstr "Når vi har nyheder til dig."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+msgid "Your chatbot lost access"
+msgstr "Din chatbot har mistet adgangen"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+msgid "When a platform stops your chatbot from reaching your channel. You get one e-mail until it is connected again."
+msgstr "Når en platform forhindrer din chatbot i at nå din kanal. Du får én mail, indtil den er forbundet igen."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
+msgid "Your webhook was paused"
+msgstr "Din webhook er sat på pause"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
+msgid "When one of your webhooks is paused because 10 deliveries in a row failed."
+msgstr "Når en af dine webhooks sættes på pause, fordi 10 leveringer i træk fejlede."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1038
+msgid "New YouTube terms"
+msgstr "Nye YouTube-vilkår"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
+msgid "When the terms of the YouTube chatbot change and you need to accept them again."
+msgstr "Når vilkårene for YouTube-chatbotten ændres, og du skal acceptere dem igen."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+#: src/Modules/ProductDesigner/DesignerNotifications.php:122
+msgid "Design sent for approval"
+msgstr "Design sendt til godkendelse"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+msgid "A receipt when you send a new product or a change for approval."
+msgstr "En kvittering, når du sender et nyt produkt eller en ændring til godkendelse."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+#: src/Modules/ProductDesigner/DesignerNotifications.php:156
+msgid "Your product is in the shop"
+msgstr "Dit produkt er i butikken"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+msgid "When we have approved your new product and it is in the shop."
+msgstr "Når vi har godkendt dit nye produkt, og det er i butikken."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
+#: src/Modules/ProductDesigner/DesignerNotifications.php:156
+msgid "Your change is in the shop"
+msgstr "Din ændring er i butikken"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
+msgid "When we have approved a change of your product and it is in the shop."
+msgstr "Når vi har godkendt en ændring af dit produkt, og den er i butikken."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
+msgid "Design not approved"
+msgstr "Design ikke godkendt"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
+msgid "When we cannot approve your design, with the reason."
+msgstr "Når vi ikke kan godkende dit design, med begrundelsen."
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
+msgid "New price on your product"
+msgstr "Ny pris på dit produkt"
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
+msgid "When the base price changes, so the price in the shop changes too. Your profit stays the same."
+msgstr "Når grundprisen ændres, så prisen i butikken også ændres. Din fortjeneste er den samme."
+
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:108
 #: src/Modules/ProductDesigner/DesignerNotifications.php:144
 #: src/Modules/ProductDesigner/DesignerNotifications.php:192
@@ -4840,10 +4979,6 @@ msgstr "En creator har annulleret en udbetalingsanmodning. Den venter ikke læng
 #: src/Modules/ProductDesigner/DesignerNotifications.php:293
 msgid "Thank you for creating with us."
 msgstr "Tak, fordi du skaber med os."
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:118
-msgid "New sale"
-msgstr "Nyt salg"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:119
 msgid "When an order with the creator's products is paid; one per order."
@@ -4924,10 +5059,6 @@ msgstr "Pris"
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:205
 msgid "See your sales"
 msgstr "Se dit salg"
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:181
-msgid "Sale refunded or cancelled"
-msgstr "Salg refunderet eller annulleret"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:182
 msgid "When an order with the creator's products is refunded, cancelled or changed after the sale."
@@ -5027,11 +5158,6 @@ msgstr "Tak. Vi behandler din anmodning og giver besked, når pengene er på vej
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:869
 msgid "See your payouts"
 msgstr "Se dine udbetalinger"
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:309
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:323
-msgid "Payout request cancelled"
-msgstr "Udbetalingsanmodning annulleret"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:310
 msgid "When the creator cancels a payout request."
@@ -5513,10 +5639,6 @@ msgstr "Oplysningerne på dine afregningsbilag (navn, adresse og registreringsnu
 msgid "If something is wrong, please contact us."
 msgstr "Hvis noget er forkert, så kontakt os venligst."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:883
-msgid "New product in your shop"
-msgstr "Nyt produkt i din butik"
-
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:884
 msgid "When a product is linked to the creator."
 msgstr "Når et produkt kobles til creatoren."
@@ -5638,10 +5760,6 @@ msgstr "Din webhook \"%s\" er sat på pause efter 10 fejlede leveringer."
 msgid "Your webhook \"%s\" was paused"
 msgstr "Din webhook \"%s\" er sat på pause"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
-msgid "Your webhook was paused"
-msgstr "Din webhook er sat på pause"
-
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr "De seneste 10 leveringer til din webhook fejlede, så vi har sat den på pause. Tjek modtageren, og genoptag derefter webhooken under Alerts."
@@ -5653,10 +5771,6 @@ msgstr "Webhook"
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1024
 msgid "See your webhooks"
 msgstr "Se dine webhooks"
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1038
-msgid "New YouTube terms"
-msgstr "Nye YouTube-vilkår"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1039
 msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
@@ -6039,7 +6153,6 @@ msgid "Creators have designs on this base product. A new base price or template 
 msgstr "Creators har designs på dette grundprodukt. En ny grundpris eller skabelon hæver versionen; designer-produkterne genprisses i et senere trin, og allerede registrerede salg beholder deres beløb."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:344
-#: build/dashboard.js:58
 #: build/dashboard.js:86
 msgid "Description"
 msgstr "Beskrivelse"
@@ -6770,7 +6883,7 @@ msgid "Code"
 msgstr "Kode"
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:185
-#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:316
+#: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:332
 #: build/dashboard.js:58
 msgid "Colour"
 msgstr "Farve"
@@ -6970,10 +7083,6 @@ msgstr "Vælg, hvilke af produktdesignerens notifikationer der sendes. De bruger
 msgid "To the creator"
 msgstr "Til creatoren"
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:122
-msgid "Design sent for approval"
-msgstr "Design sendt til godkendelse"
-
 #: src/Modules/ProductDesigner/DesignerNotifications.php:123
 msgid "When the creator sends a new product or a change from the designer for approval (a receipt)."
 msgstr "Når creatoren sender et nyt produkt eller en ændring fra designeren til godkendelse (en kvittering)."
@@ -7021,14 +7130,6 @@ msgstr "Ændring af designer-produkt godkendt"
 #: src/Modules/ProductDesigner/DesignerNotifications.php:155
 msgid "Designer product approved"
 msgstr "Designer-produkt godkendt"
-
-#: src/Modules/ProductDesigner/DesignerNotifications.php:156
-msgid "Your change is in the shop"
-msgstr "Din ændring er i butikken"
-
-#: src/Modules/ProductDesigner/DesignerNotifications.php:156
-msgid "Your product is in the shop"
-msgstr "Dit produkt er i butikken"
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:164
 msgid "When an administrator approves a change of the creator's designer product and it is in the shop."
@@ -7411,11 +7512,11 @@ msgstr "En creator har ændret et designer-produkt i butikken. Butikken beholder
 msgid "We no longer offer this base product, so the design cannot be approved. You are welcome to design on another product."
 msgstr "Vi tilbyder ikke længere dette grundprodukt, så designet kan ikke godkendes. Du er velkommen til at designe på et andet produkt."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:891
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:896
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:910
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:915
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -13937,6 +14038,10 @@ msgid "Choose at least one colour and one size."
 msgstr "Vælg mindst én farve og én størrelse."
 
 #: build/dashboard.js:58
+msgid "A product with this name already exists. Add something to the name to tell them apart."
+msgstr "Der findes allerede et produkt med dette navn. Tilføj noget til navnet, så de kan skelnes fra hinanden."
+
+#: build/dashboard.js:58
 msgid "The design contains something that cannot be used (an unknown font, a removed image or too many elements)."
 msgstr "Designet indeholder noget, der ikke kan bruges (en ukendt skrifttype, et fjernet billede eller for mange elementer)."
 
@@ -14013,6 +14118,18 @@ msgstr "Sæt i butikken"
 #: build/dashboard.js:58
 msgid "Set as draft"
 msgstr "Sæt i kladde"
+
+#: build/dashboard.js:58
+msgid "Product name"
+msgstr "Produktnavn"
+
+#: build/dashboard.js:58
+msgid "Add to the name"
+msgstr "Tilføj til navnet"
+
+#: build/dashboard.js:58
+msgid "The name starts with your name and the product. If you make more than one of the same product, add a word to tell them apart."
+msgstr "Navnet starter med dit navn og produktet. Laver du flere af samme produkt, så tilføj et ord, der skiller dem ad."
 
 #: build/dashboard.js:58
 msgid "Weight"

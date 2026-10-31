@@ -141,7 +141,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 			new CreatorUploads( $assets, $files ),
 			new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ),
 			$this->service( Logger::class ),
-			new DesignerShop( $products, $drafts, $guard, new RecordingDesignerWriter( $guard, new ProductPosts( $this->wpdb ) ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $files )
+			new DesignerShop( $products, $drafts, $guard, new RecordingDesignerWriter( $guard, new ProductPosts( $this->wpdb ) ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $files, $bases )
 		);
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();
@@ -195,12 +195,12 @@ final class DesignerApiTest extends IntegrationTestCase {
 		$created = $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) );
 		self::assertSame( 201, $created->get_status() );
 		$product = (int) $created->get_data()['id'];
-		self::assertSame( array( 'Organic tee', array( 'black' ), array( 'S', 'M', 'L' ), '149.9500' ), array( $created->get_data()['draft']['title'], $created->get_data()['draft']['colors'], $created->get_data()['draft']['sizes'], $created->get_data()['draft']['price'] ) );
+		self::assertSame( array( 'Designer A Organic tee', array( 'black' ), array( 'S', 'M', 'L' ), '149.9500' ), array( $created->get_data()['draft']['title'], $created->get_data()['draft']['colors'], $created->get_data()['draft']['sizes'], $created->get_data()['draft']['price'] ) );
 
 		$saved = $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $this->draft( array( self::text(), self::image( $own ), self::image( $this->clipart ), self::rect() ) ) );
 		self::assertSame( 200, $saved->get_status(), (string) wp_json_encode( $saved->get_data() ) );
 		$draft = $saved->get_data()['draft'];
-		self::assertSame( array( 'Stream tee', array( 'black', 'sand' ), array( 'M', 'L' ), 'percent', '20.0000', '179.9400' ), array( $draft['title'], $draft['colors'], $draft['sizes'], $draft['profit_kind'], $draft['profit_value'], $draft['price'] ) );
+		self::assertSame( array( 'Designer A Organic tee Stream tee', array( 'black', 'sand' ), array( 'M', 'L' ), 'percent', '20.0000', '179.9400' ), array( $draft['title'], $draft['colors'], $draft['sizes'], $draft['profit_kind'], $draft['profit_value'], $draft['price'] ) );
 		self::assertSame( array( 'text', 'image', 'image', 'rect' ), array_column( $draft['design']['sides']['front'], 'type' ) );
 		self::assertArrayNotHasKey( 'evil', $draft['design']['sides']['front'][0], 'Unknown keys are dropped.' );
 		self::assertSame( '#ff0000', $draft['design']['sides']['front'][0]['fill'] );
@@ -209,7 +209,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( 'image/png', $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $this->clipart )->get_headers()['Content-Type'] );
 
 		$listed = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) );
-		self::assertSame( array( array( $product, 'Stream tee', 'draft' ) ), array_map( static fn( array $row ): array => array( $row['id'], $row['title'], $row['status'] ), $listed['products'] ) );
+		self::assertSame( array( array( $product, 'Designer A Organic tee Stream tee', 'draft' ) ), array_map( static fn( array $row ): array => array( $row['id'], $row['title'], $row['status'] ), $listed['products'] ) );
 	}
 
 	public function test_only_a_valid_design_with_the_creator_s_own_files_is_stored(): void {
@@ -239,7 +239,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 				),
 				$this->draft( array( array_merge( self::text(), array( 'size' => 99999 ) ) ) ),
 			),
-			'design_title'   => array( array_merge( $this->draft( array() ), array( 'title' => ' ' ) ) ),
+			'design_title'   => array( array_merge( $this->draft( array() ), array( 'title' => str_repeat( 'x', 120 ) ) ) ),
 			'design_profit'  => array( array_merge( $this->draft( array() ), array( 'profit_value' => '-1' ) ), array_merge( $this->draft( array() ), array( 'profit_kind' => 'share' ) ) ),
 			'design_options' => array( array_merge( $this->draft( array() ), array( 'colors' => array( 'green' ) ) ) ),
 		);
@@ -387,18 +387,18 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		$submitted = $this->data( $this->call( 'POST', $route . '/submit' ) );
 		self::assertNull( $submitted['draft'] );
-		self::assertSame( array( 1, 'Stream tee', '179.9400' ), array( $submitted['pending']['number'], $submitted['pending']['title'], $submitted['pending']['price'] ) );
+		self::assertSame( array( 1, 'Designer A Organic tee Stream tee', '179.9400' ), array( $submitted['pending']['number'], $submitted['pending']['title'], $submitted['pending']['price'] ) );
 		self::assertSame( array( 'pending' ), array_column( $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) )['products'], 'status' ) );
 		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ) );
 		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'PUT', $route, $this->draft( array( self::text() ) ) ) ), 'A waiting design cannot be changed.' );
 
 		$queue = ( new DesignerProductRepository( $this->wpdb ) )->pending_queue();
-		self::assertSame( array( array( $product, 'Stream tee', '179.9400', null ) ), array_map( static fn( array $row ): array => array( (int) $row['design_product_id'], $row['title'], $row['quoted_price'], $row['live_version_id'] ), $queue ) );
+		self::assertSame( array( array( $product, 'Designer A Organic tee Stream tee', '179.9400', null ) ), array_map( static fn( array $row ): array => array( (int) $row['design_product_id'], $row['title'], $row['quoted_price'], $row['live_version_id'] ), $queue ) );
 
 		self::assertSame(
 			array(
-				array( 'admin_designer_submitted', 'Stream tee', '179.9400', 'DKK' ),
-				array( 'designer_submitted', 'Stream tee', '179.9400', 'DKK' ),
+				array( 'admin_designer_submitted', 'Designer A Organic tee Stream tee', '179.9400', 'DKK' ),
+				array( 'designer_submitted', 'Designer A Organic tee Stream tee', '179.9400', 'DKK' ),
 			),
 			array_map( static fn( array $call ): array => array( $call[0], $call[2]['title'], $call[2]['price'], $call[2]['currency'] ), $notified ),
 			'The administrator and the creator are notified once.'
@@ -406,7 +406,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		$withdrawn = $this->data( $this->call( 'POST', $route . '/withdraw' ) );
 		self::assertNull( $withdrawn['pending'] );
-		self::assertSame( array( 2, 'Stream tee' ), array( $withdrawn['draft']['number'], $withdrawn['draft']['title'] ) );
+		self::assertSame( array( 2, 'Designer A Organic tee Stream tee' ), array( $withdrawn['draft']['number'], $withdrawn['draft']['title'] ) );
 		self::assertSame( array( 400, 'not_pending' ), $this->refusal( $this->call( 'POST', $route . '/withdraw' ) ) );
 		self::assertSame( array( 'withdrawn', 'draft' ), $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT status FROM %i ORDER BY number', $this->table( Tables::DESIGNER_VERSIONS ) ) ) );
 

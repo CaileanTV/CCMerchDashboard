@@ -67,6 +67,8 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 
 **Broderi, fra 2026-10-31 (eksperimentel):** Produktdesigner → Broderipakker har trådfarver og maksimum pr. side. Grundprodukter og "Nyt grundprodukt" har "Broderipakke" pr. side. Uden pakke er siden print.
 
+**Fonte, fra 2026-10-31:** Settings → Fonte har Google Fonts-nøgle, katalog og godkendte fonte, fælles for alerts og designeren. Fanen er væk fra Alerts.
+
 **Grundprodukter, fra trin 30.11:** en ny grundpris genpriser designer-produkterne i butikken i baggrunden. Et grundprodukt med designs kan **pensioneres** (afkrydsning + knap, kan ikke fortrydes): dets produkter tages ud af butikken, ventende designs afvises, og creatorne får besked. Et pensioneret grundprodukt kan ikke ændres eller aktiveres igen.
 
 ### Designs 🔄 (fase 30, trin 30.9, ADR-080 pkt. 3)

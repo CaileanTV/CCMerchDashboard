@@ -388,7 +388,7 @@ describe( 'DesignerSection', () => {
 		await flush();
 
 		const title = rendered.container.querySelector< HTMLInputElement >(
-			'input[maxlength="120"]'
+			'input[maxlength="60"]'
 		);
 		expect( title?.value ).toBe( 'Organic tee' );
 		expect( rendered.container.textContent ).toContain(

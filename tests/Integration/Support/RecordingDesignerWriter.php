@@ -52,6 +52,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $unpublished = array();
 
 	/**
+	 * Names written: [WooCommerce product, name].
+	 *
+	 * @var list<array{0: int, 1: string}>
+	 */
+	public array $names = array();
+
+	/**
 	 * Drafts created (not found again).
 	 *
 	 * @var list<int>
@@ -120,6 +127,16 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function set_prices( GuardedProduct $product, int $price_units, int $decimals ): void {
 		$this->prices[] = array( $product->wc_product_id, $price_units );
+	}
+
+	/**
+	 * Records the name.
+	 *
+	 * @param GuardedProduct $product Proof.
+	 * @param string         $name    Name.
+	 */
+	public function set_name( GuardedProduct $product, string $name ): void {
+		$this->names[] = array( $product->wc_product_id, $name );
 	}
 
 	/**

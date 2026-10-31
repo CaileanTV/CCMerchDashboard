@@ -140,6 +140,9 @@ final class DesignerException extends RuntimeException {
 	/** The import could not be queued. */
 	public const IMPORT_QUEUE = 'import_queue';
 
+	/** Another product has the same name. */
+	public const DESIGN_NAME_TAKEN = 'design_name_taken';
+
 	/** A design is on its way to the shop and cannot be deleted now. */
 	public const DESIGN_APPLYING = 'design_applying';
 

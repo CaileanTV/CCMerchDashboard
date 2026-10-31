@@ -164,6 +164,7 @@ final class ProductDesignerModule implements Module {
 		);
 		$container->set( DesignerSettingsSection::class, static fn( Container $c ): DesignerSettingsSection => new DesignerSettingsSection( $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ) ) );
 		$container->set( DesignerMenu::class, static fn( Container $c ): DesignerMenu => new DesignerMenu( $c->get( DesignsPage::class ), $c->get( BaseProductsPage::class ), $c->get( CampaignsPage::class ), $c->get( DesignerSettingsSection::class ) ) );
+		$container->set( DesignerShop::class, static fn( Container $c ): DesignerShop => new DesignerShop( $c->get( DesignerProductRepository::class ), $c->get( DesignerDrafts::class ), $c->get( DesignerProductGuard::class ), $c->get( WooCommerceDesignerWriter::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( DesignerFiles::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set( ThreadPacks::class, static fn( Container $c ): ThreadPacks => new ThreadPacks( $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ThreadPacks::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
@@ -202,7 +203,7 @@ final class ProductDesignerModule implements Module {
 				$c->get( CreatorUploads::class ),
 				$c->get( AlertFonts::class ),
 				$c->get( Logger::class ),
-				new DesignerShop( $c->get( DesignerProductRepository::class ), $c->get( DesignerDrafts::class ), $c->get( DesignerProductGuard::class ), $c->get( WooCommerceDesignerWriter::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( DesignerFiles::class ) )
+				$c->get( DesignerShop::class )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).
@@ -371,6 +372,14 @@ final class ProductDesignerModule implements Module {
 			static function ( mixed $base ) use ( $container ): void {
 				$container->get( DesignerRetirement::class )->base_retired( $base );
 			}
+		);
+		add_action(
+			'merchboard_creator_renamed',
+			static function ( mixed $id, mixed $before, mixed $after ) use ( $container ): void {
+				$container->get( DesignerShop::class )->creator_renamed( (int) $id, (string) $before, (string) $after );
+			},
+			10,
+			3
 		);
 		add_action(
 			'rest_api_init',

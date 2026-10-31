@@ -601,6 +601,72 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * Whether another product in the shop or the designer has this name.
+	 *
+	 * @param string $name       The name.
+	 * @param int    $product_id The designer product it is for.
+	 * @throws DatabaseException When it cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function name_taken( string $name, int $product_id ): bool {
+		$wpdb     = $this->wpdb;
+		$designer = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i v JOIN %i p ON p.id = v.design_product_id
+				WHERE v.title = %s AND p.id <> %d AND p.status NOT IN ( %s, %s, %s ) AND v.status IN ( %s, %s, %s )',
+				$this->table( Tables::DESIGNER_VERSIONS ),
+				$this->table( Tables::DESIGNER_PRODUCTS ),
+				$name,
+				$product_id,
+				self::RETIRED,
+				self::DELETED,
+				self::PURGED,
+				self::DRAFT,
+				self::PENDING,
+				self::APPROVED
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables; a live check.
+		$own      = $wpdb->get_var( $wpdb->prepare( 'SELECT wc_product_id FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_PRODUCTS ), $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a live check.
+		$shop     = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE post_type = %s AND post_status = %s AND post_title = %s AND ID <> %d', $wpdb->posts, 'product', 'publish', $name, (int) $own ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A live check of the shop.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the product names.' );
+		}
+
+		return (int) $designer > 0 || (int) $shop > 0;
+	}
+
+	/**
+	 * Moves a creator's new name into the names of a product's current
+	 * versions.
+	 *
+	 * @param int    $product_id Designer product.
+	 * @param string $before        The old fixed part of the name.
+	 * @param string $after        The new one.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function rename( int $product_id, string $before, string $after ): void {
+		$wpdb    = $this->wpdb;
+		$sql     = $wpdb->prepare(
+			'UPDATE %i SET title = LEFT( CONCAT( %s, SUBSTRING( title, %d ) ), 191 ) WHERE design_product_id = %d AND status IN ( %s, %s, %s ) AND ( title = %s OR title LIKE %s )',
+			$this->table( Tables::DESIGNER_VERSIONS ),
+			$after,
+			mb_strlen( $before ) + 1,
+			$product_id,
+			self::DRAFT,
+			self::PENDING,
+			self::APPROVED,
+			$before,
+			$wpdb->esc_like( $before . ' ' ) . '%'
+		);
+		$updated = null === $sql ? false : $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- The designer's own table; prepared above.
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not rename the designer product.' );
+		}
+	}
+
+	/**
 	 * Whether a version of a product is on its way to the shop.
 	 *
 	 * @param int $product_id Designer product.
