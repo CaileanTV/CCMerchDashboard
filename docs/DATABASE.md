@@ -693,6 +693,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Syninger (2026-10-31, ingen migration):** `provider_template` får `stitches` (de syningsfarver, grundproduktet tilbyder), og `options` holder den første som standard. `design.stitch` er creatorens valg og gemmes kun på et grundprodukt med `stitches`.
 
+**Mockup-PSD (2026-10-31, ingen migration):** en side i `views` kan have laget `scene` (ét PNG-billede med lagene omkring designet) og feltet `scene` med `width`, `height` og `steps`. Et trin er enten `image` (udsnit af billedet med placering, blanding og styrke) eller `design` (`end`, smart objectets størrelse, `quad`, `mesh` og valgfri `mask`). Versionens mockups har scenens størrelse.
+
 **Prodigi (ADR-084, ingen migration):** `provider_ref` er katalogproduktets id, `variants` holder SKU pr. farve og størrelse, og opgavens `result` holder fase, filer, det gemte produkt og mockups, så de kan slettes igen. Optionen `merchboard_designer_prodigi_key` er krypteret og uden autoload.
 
 **Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard).
