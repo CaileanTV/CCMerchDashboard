@@ -64,11 +64,12 @@ import type {
 } from './design-model';
 import type { FabricStage } from './fabric-stage';
 import { submissionSize, submitWithFiles } from './submission';
+import { LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
 
-type Tab = 'product' | 'text' | 'shapes' | 'cliparts' | 'uploads' | 'layers';
+type Tab = 'product' | 'text' | 'shapes' | 'cliparts' | 'uploads';
 
 /** The canvas at zoom 1 until the space for it is known (CSS px). */
 const DISPLAY_WIDTH = 560;
@@ -815,7 +816,6 @@ function Editor( props: EditorProps ) {
 		{ id: 'shapes', label: __( 'Shapes', 'merchboard' ) },
 		{ id: 'cliparts', label: __( 'Cliparts', 'merchboard' ) },
 		{ id: 'uploads', label: __( 'Upload', 'merchboard' ) },
-		{ id: 'layers', label: __( 'Layers', 'merchboard' ) },
 	];
 
 	return (
@@ -960,160 +960,159 @@ function Editor( props: EditorProps ) {
 			) }
 
 			<div className="merchboard-product-designer__body">
-				<div className="merchboard-product-designer__tools">
-					<div
-						className="merchboard-product-designer__tabs"
-						role="tablist"
-						aria-label={ __( 'Designer tools', 'merchboard' ) }
-					>
-						{ tabs.map( ( entry ) => (
-							<button
-								key={ entry.id }
-								type="button"
-								role="tab"
-								aria-selected={ tab === entry.id }
-								className="merchboard-product-designer__tab"
-								onClick={ () => setTab( entry.id ) }
-							>
-								{ entry.label }
-							</button>
-						) ) }
-					</div>
-					<div
-						className="merchboard-product-designer__panel"
-						role="tabpanel"
-					>
-						{ tab === 'product' ? (
-							<ProductPanel
-								base={ base }
-								locale={ locale }
-								title={ title }
-								description={ description }
-								colors={ colors }
-								sizes={ sizes }
-								onTitle={ setTitle }
-								onDescription={ setDescription }
-								onColors={ ( next ) => {
-									setColors( next );
+				<div className="merchboard-product-designer__left">
+					<div className="merchboard-product-designer__tools">
+						<div
+							className="merchboard-product-designer__tabs"
+							role="tablist"
+							aria-label={ __( 'Designer tools', 'merchboard' ) }
+						>
+							{ tabs.map( ( entry ) => (
+								<button
+									key={ entry.id }
+									type="button"
+									role="tab"
+									aria-selected={ tab === entry.id }
+									className="merchboard-product-designer__tab"
+									onClick={ () => setTab( entry.id ) }
+								>
+									{ entry.label }
+								</button>
+							) ) }
+						</div>
+						<div
+							className="merchboard-product-designer__panel"
+							role="tabpanel"
+						>
+							{ tab === 'product' ? (
+								<ProductPanel
+									base={ base }
+									locale={ locale }
+									title={ title }
+									description={ description }
+									colors={ colors }
+									sizes={ sizes }
+									onTitle={ setTitle }
+									onDescription={ setDescription }
+									onColors={ ( next ) => {
+										setColors( next );
 
-									if (
-										! next.includes( previewColor ) &&
-										next[ 0 ] !== undefined
-									) {
-										setPreviewColor( next[ 0 ] );
-									}
-								} }
-								onSizes={ setSizes }
-							/>
-						) : null }
-						{ tab === 'text' ? (
-							<div className="merchboard-product-designer__stack">
-								<Button onClick={ addText }>
-									{ __( 'Add text', 'merchboard' ) }
-								</Button>
-								<p className="merchboard-product-designer__hint">
-									{ __(
-										'Select a text on the product to change its font, size and colour.',
-										'merchboard'
-									) }
-								</p>
-							</div>
-						) : null }
-						{ tab === 'shapes' ? (
-							<div className="merchboard-product-designer__stack">
-								<Button
-									variant="secondary"
-									onClick={ () => addShape( 'rect' ) }
-								>
-									{ __( 'Rectangle', 'merchboard' ) }
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={ () => addShape( 'ellipse' ) }
-								>
-									{ __( 'Circle', 'merchboard' ) }
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={ () => addShape( 'triangle' ) }
-								>
-									{ __( 'Triangle', 'merchboard' ) }
-								</Button>
-							</div>
-						) : null }
-						{ tab === 'cliparts' ? (
-							<AssetGrid
-								assets={ overview.cliparts }
-								images={ images }
-								empty={ __( 'No cliparts yet.', 'merchboard' ) }
-								onPick={ addImage }
-							/>
-						) : null }
-						{ tab === 'uploads' ? (
-							<div className="merchboard-product-designer__stack">
-								<Labelled
-									className="merchboard-button merchboard-button--secondary merchboard-button--md"
-									before
-									label={
-										<>
-											{ __(
-												'Upload an image',
-												'merchboard'
-											) }
-										</>
-									}
-								>
-									{ ( id ) => (
-										<input
-											id={ id }
-											type="file"
-											accept="image/png,image/jpeg,image/webp"
-											className="merchboard-product-designer__file"
-											onChange={ ( event ) =>
-												void upload( event )
-											}
-										/>
-									) }
-								</Labelled>
-								<p className="merchboard-product-designer__hint">
-									{ __(
-										'PNG, JPG or WebP. Use PNG for a transparent background. Only images you have the rights to.',
-										'merchboard'
-									) }
-								</p>
+										if (
+											! next.includes( previewColor ) &&
+											next[ 0 ] !== undefined
+										) {
+											setPreviewColor( next[ 0 ] );
+										}
+									} }
+									onSizes={ setSizes }
+								/>
+							) : null }
+							{ tab === 'text' ? (
+								<div className="merchboard-product-designer__stack">
+									<Button onClick={ addText }>
+										{ __( 'Add text', 'merchboard' ) }
+									</Button>
+									<p className="merchboard-product-designer__hint">
+										{ __(
+											'Select a text on the product to change its font, size and colour.',
+											'merchboard'
+										) }
+									</p>
+								</div>
+							) : null }
+							{ tab === 'shapes' ? (
+								<div className="merchboard-product-designer__stack">
+									<Button
+										variant="secondary"
+										onClick={ () => addShape( 'rect' ) }
+									>
+										{ __( 'Rectangle', 'merchboard' ) }
+									</Button>
+									<Button
+										variant="secondary"
+										onClick={ () => addShape( 'ellipse' ) }
+									>
+										{ __( 'Circle', 'merchboard' ) }
+									</Button>
+									<Button
+										variant="secondary"
+										onClick={ () => addShape( 'triangle' ) }
+									>
+										{ __( 'Triangle', 'merchboard' ) }
+									</Button>
+								</div>
+							) : null }
+							{ tab === 'cliparts' ? (
 								<AssetGrid
-									assets={ overview.uploads }
+									assets={ overview.cliparts }
 									images={ images }
 									empty={ __(
-										'No uploads yet.',
+										'No cliparts yet.',
 										'merchboard'
 									) }
 									onPick={ addImage }
-									onDelete={ ( asset ) =>
-										void deleteUpload( asset )
-									}
 								/>
-							</div>
-						) : null }
-						{ tab === 'layers' ? (
-							<LayerList
-								objects={ objects }
-								selected={ selected }
-								onSelect={ setSelected }
-								onChange={ ( id, next ) =>
-									setObjects(
-										updateObject( objects, id, next )
-									)
-								}
-								onMove={ ( id, direction ) =>
-									setObjects(
-										moveObject( objects, id, direction )
-									)
-								}
-								onRemove={ remove }
-							/>
-						) : null }
+							) : null }
+							{ tab === 'uploads' ? (
+								<div className="merchboard-product-designer__stack">
+									<Labelled
+										className="merchboard-button merchboard-button--secondary merchboard-button--md"
+										before
+										label={
+											<>
+												{ __(
+													'Upload an image',
+													'merchboard'
+												) }
+											</>
+										}
+									>
+										{ ( id ) => (
+											<input
+												id={ id }
+												type="file"
+												accept="image/png,image/jpeg,image/webp"
+												className="merchboard-product-designer__file"
+												onChange={ ( event ) =>
+													void upload( event )
+												}
+											/>
+										) }
+									</Labelled>
+									<p className="merchboard-product-designer__hint">
+										{ __(
+											'PNG, JPG or WebP. Use PNG for a transparent background. Only images you have the rights to.',
+											'merchboard'
+										) }
+									</p>
+									<AssetGrid
+										assets={ overview.uploads }
+										images={ images }
+										empty={ __(
+											'No uploads yet.',
+											'merchboard'
+										) }
+										onPick={ addImage }
+										onDelete={ ( asset ) =>
+											void deleteUpload( asset )
+										}
+									/>
+								</div>
+							) : null }
+						</div>
 					</div>
+					<LayerList
+						objects={ objects }
+						selected={ selected }
+						onSelect={ setSelected }
+						onChange={ ( id, fields ) =>
+							setObjects( updateObject( objects, id, fields ) )
+						}
+						onMove={ ( id, direction ) =>
+							setObjects( moveObject( objects, id, direction ) )
+						}
+						onRemove={ remove }
+					/>
 				</div>
 
 				<div className="merchboard-product-designer__stage-column">
@@ -1487,7 +1486,7 @@ function PricePanel( props: {
 			) : null }
 			<p className="merchboard-product-designer__hint">
 				{ __(
-					"The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared.",
+					'The company always keeps the base price and the price of extra design areas. Your profit is incl. VAT; the VAT on it is deducted if you are not VAT registered.',
 					'merchboard'
 				) }
 			</p>
@@ -1557,6 +1556,12 @@ function ThreadPanel( props: {
 			<p className="merchboard-product-designer__hint">
 				{ __(
 					'This side is embroidered: every colour becomes the nearest thread. Choose another thread below if you like.',
+					'merchboard'
+				) }
+			</p>
+			<p className="merchboard-product-designer__hint">
+				{ __(
+					'Designs with a lot of fine detail are rejected, as they often cannot be embroidered correctly.',
 					'merchboard'
 				) }
 			</p>
@@ -2050,126 +2055,6 @@ function AssetGrid( props: {
 			} ) }
 		</ul>
 	);
-}
-
-/**
- * The layers of a side, front first.
- *
- * @param props          Props.
- * @param props.objects  Objects, bottom first.
- * @param props.selected Selected id.
- * @param props.onSelect Selects.
- * @param props.onChange Changes an object.
- * @param props.onMove   Moves an object.
- * @param props.onRemove Removes an object.
- */
-function LayerList( props: {
-	readonly objects: readonly DesignObject[];
-	readonly selected: string | null;
-	readonly onSelect: ( id: string ) => void;
-	readonly onChange: ( id: string, change: Partial< DesignObject > ) => void;
-	readonly onMove: ( id: string, direction: 1 | -1 ) => void;
-	readonly onRemove: ( id: string ) => void;
-} ) {
-	if ( props.objects.length === 0 ) {
-		return (
-			<p className="merchboard-product-designer__hint">
-				{ __( 'This side has no elements yet.', 'merchboard' ) }
-			</p>
-		);
-	}
-
-	return (
-		<ol className="merchboard-product-designer__layers">
-			{ [ ...props.objects ].reverse().map( ( object ) => (
-				<li
-					key={ object.id }
-					className={
-						object.id === props.selected ? 'is-selected' : undefined
-					}
-				>
-					<button
-						type="button"
-						className="merchboard-product-designer__layer-name"
-						onClick={ () => props.onSelect( object.id ) }
-					>
-						{ layerName( object ) }
-					</button>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={ () => props.onMove( object.id, 1 ) }
-						aria-label={ __( 'Forward', 'merchboard' ) }
-					>
-						↑
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={ () => props.onMove( object.id, -1 ) }
-						aria-label={ __( 'Backward', 'merchboard' ) }
-					>
-						↓
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						aria-pressed={ object.hidden }
-						onClick={ () =>
-							props.onChange( object.id, {
-								hidden: ! object.hidden,
-							} )
-						}
-					>
-						{ object.hidden
-							? __( 'Show', 'merchboard' )
-							: __( 'Hide', 'merchboard' ) }
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						aria-pressed={ object.locked }
-						onClick={ () =>
-							props.onChange( object.id, {
-								locked: ! object.locked,
-							} )
-						}
-					>
-						{ object.locked
-							? __( 'Unlock', 'merchboard' )
-							: __( 'Lock', 'merchboard' ) }
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={ () => props.onRemove( object.id ) }
-					>
-						{ __( 'Delete', 'merchboard' ) }
-					</Button>
-				</li>
-			) ) }
-		</ol>
-	);
-}
-
-/**
- * An object's name in the layer list.
- *
- * @param object The object.
- */
-function layerName( object: DesignObject ): string {
-	switch ( object.type ) {
-		case 'text':
-			return object.text.slice( 0, 30 );
-		case 'image':
-			return __( 'Image', 'merchboard' );
-		case 'rect':
-			return __( 'Rectangle', 'merchboard' );
-		case 'ellipse':
-			return __( 'Circle', 'merchboard' );
-		default:
-			return __( 'Triangle', 'merchboard' );
-	}
 }
 
 /**

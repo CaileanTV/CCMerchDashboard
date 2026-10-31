@@ -2076,20 +2076,29 @@ input:disabled + .merchboard-sounds__upload {
 	opacity: 0;
 }
 
+.merchboard-product-designer__left {
+	display: grid;
+	gap: var(--merchboard-space-4);
+	min-width: 0;
+}
+
 .merchboard-product-designer__layers {
 	display: grid;
-	gap: var(--merchboard-space-1);
+	gap: 2px;
 	padding: 0;
 	margin: 0;
 	list-style: none;
 
 	li {
 		display: flex;
-		flex-wrap: wrap;
-		gap: var(--merchboard-space-1);
+		gap: 2px;
 		align-items: center;
-		padding: var(--merchboard-space-1);
-		border-radius: 6px;
+		padding: 2px var(--merchboard-space-1);
+		border-radius: var(--merchboard-radius-sm);
+
+		&:hover {
+			background: var(--merchboard-surface-muted);
+		}
 
 		&.is-selected {
 			background: var(--merchboard-selected-bg);
@@ -2098,17 +2107,72 @@ input:disabled + .merchboard-sounds__upload {
 }
 
 .merchboard-product-designer__layer-name {
-	flex: 1 1 8rem;
-	overflow: hidden;
-	padding: 0;
-	border: 0;
-	background: none;
-	color: var(--merchboard-text);
+	display: inline-flex;
+	flex: 1 1 auto;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	min-width: 0;
+	padding: var(--merchboard-space-1);
 	font: inherit;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text);
 	text-align: left;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	cursor: pointer;
+	background: none;
+	border: 0;
+
+	span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&.is-hidden {
+		color: var(--merchboard-text-muted);
+		text-decoration: line-through;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus);
+	}
+}
+
+.merchboard-product-designer__icon {
+	flex: none;
+	width: 1rem;
+	height: 1rem;
+}
+
+.merchboard-product-designer__icon-button {
+	display: inline-grid;
+	flex: none;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	padding: 0;
+	color: var(--merchboard-text-muted);
+	cursor: pointer;
+	background: none;
+	border: 0;
+	border-radius: var(--merchboard-radius-sm);
+
+	&:hover:not(:disabled) {
+		color: var(--merchboard-text);
+		background: var(--merchboard-surface);
+	}
+
+	&[aria-pressed="true"] {
+		color: var(--merchboard-primary);
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.35;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus);
+	}
 }
 
 .merchboard-product-designer__properties {

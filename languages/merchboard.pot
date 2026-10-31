@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-30T23:29:29+00:00\n"
+"POT-Creation-Date: 2026-10-31T00:21:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -2087,7 +2087,7 @@ msgstr ""
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
-#: build/dashboard.js:56
+#: build/dashboard.js:53
 msgid "Image"
 msgstr ""
 
@@ -4014,6 +4014,7 @@ msgstr ""
 #: build/dashboard.js:39
 #: build/dashboard.js:45
 #: build/dashboard.js:51
+#: build/dashboard.js:53
 #: build/dashboard.js:56
 msgid "Delete"
 msgstr ""
@@ -13531,6 +13532,53 @@ msgid "Sends a test purchase, marked \"test\", to each switched-on webhook at on
 msgstr ""
 
 #: build/dashboard.js:53
+msgid "Rectangle"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Circle"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Triangle"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Layers"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "This side has no elements yet."
+msgstr ""
+
+#: build/dashboard.js:53
+#: build/dashboard.js:56
+msgid "Forward"
+msgstr ""
+
+#: build/dashboard.js:53
+#: build/dashboard.js:56
+msgid "Backward"
+msgstr ""
+
+#: build/dashboard.js:53
+#: build/dashboard.js:87
+msgid "Show"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Hide"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Unlock"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Lock"
+msgstr ""
+
+#: build/dashboard.js:53
 msgid "The base product of this design is no longer available."
 msgstr ""
 
@@ -13565,10 +13613,6 @@ msgstr ""
 
 #: build/dashboard.js:53
 msgid "Upload"
-msgstr ""
-
-#: build/dashboard.js:53
-msgid "Layers"
 msgstr ""
 
 #: build/dashboard.js:53
@@ -13634,21 +13678,6 @@ msgstr ""
 
 #: build/dashboard.js:53
 msgid "Select a text on the product to change its font, size and colour."
-msgstr ""
-
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-msgid "Rectangle"
-msgstr ""
-
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-msgid "Circle"
-msgstr ""
-
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-msgid "Triangle"
 msgstr ""
 
 #: build/dashboard.js:53
@@ -13764,7 +13793,7 @@ msgid "One design area is included. Each extra area costs %s."
 msgstr ""
 
 #: build/dashboard.js:54
-msgid "The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
+msgid "The company always keeps the base price and the price of extra design areas. Your profit is incl. VAT; the VAT on it is deducted if you are not VAT registered."
 msgstr ""
 
 #. translators: 1: threads in use, 2: the most threads allowed.
@@ -13775,6 +13804,10 @@ msgstr ""
 
 #: build/dashboard.js:55
 msgid "This side is embroidered: every colour becomes the nearest thread. Choose another thread below if you like."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Designs with a lot of fine detail are rejected, as they often cannot be embroidered correctly."
 msgstr ""
 
 #: build/dashboard.js:55
@@ -13861,35 +13894,6 @@ msgstr ""
 
 #: build/dashboard.js:56
 msgid "Make a change"
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "This side has no elements yet."
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Forward"
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Backward"
-msgstr ""
-
-#: build/dashboard.js:56
-#: build/dashboard.js:87
-msgid "Show"
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Hide"
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Unlock"
-msgstr ""
-
-#: build/dashboard.js:56
-msgid "Lock"
 msgstr ""
 
 #: build/dashboard.js:56

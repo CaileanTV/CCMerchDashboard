@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-30T23:29:35+00:00\n"
+"PO-Revision-Date: 2026-10-31T00:21:49+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -2087,7 +2087,7 @@ msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne billeder og de f�
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
-#: build/dashboard.js:56
+#: build/dashboard.js:53
 msgid "Image"
 msgstr "Billede"
 
@@ -4014,6 +4014,7 @@ msgstr "Deaktivér"
 #: build/dashboard.js:39
 #: build/dashboard.js:45
 #: build/dashboard.js:51
+#: build/dashboard.js:53
 #: build/dashboard.js:56
 msgid "Delete"
 msgstr "Slet"
@@ -13531,6 +13532,53 @@ msgid "Sends a test purchase, marked \"test\", to each switched-on webhook at on
 msgstr "Sender med det samme et testkøb, markeret \"test\", til hver webhook, der er slået til, og viser svaret fra hver. Tests tæller aldrig med i en pause."
 
 #: build/dashboard.js:53
+msgid "Rectangle"
+msgstr "Rektangel"
+
+#: build/dashboard.js:53
+msgid "Circle"
+msgstr "Cirkel"
+
+#: build/dashboard.js:53
+msgid "Triangle"
+msgstr "Trekant"
+
+#: build/dashboard.js:53
+msgid "Layers"
+msgstr "Lag"
+
+#: build/dashboard.js:53
+msgid "This side has no elements yet."
+msgstr "Denne side har ingen elementer endnu."
+
+#: build/dashboard.js:53
+#: build/dashboard.js:56
+msgid "Forward"
+msgstr "Frem"
+
+#: build/dashboard.js:53
+#: build/dashboard.js:56
+msgid "Backward"
+msgstr "Tilbage"
+
+#: build/dashboard.js:53
+#: build/dashboard.js:87
+msgid "Show"
+msgstr "Vis"
+
+#: build/dashboard.js:53
+msgid "Hide"
+msgstr "Skjul"
+
+#: build/dashboard.js:53
+msgid "Unlock"
+msgstr "Lås op"
+
+#: build/dashboard.js:53
+msgid "Lock"
+msgstr "Lås"
+
+#: build/dashboard.js:53
 msgid "The base product of this design is no longer available."
 msgstr "Grundproduktet til dette design er ikke længere tilgængeligt."
 
@@ -13566,10 +13614,6 @@ msgstr "Former"
 #: build/dashboard.js:53
 msgid "Upload"
 msgstr "Upload"
-
-#: build/dashboard.js:53
-msgid "Layers"
-msgstr "Lag"
 
 #: build/dashboard.js:53
 msgid "← My designs"
@@ -13635,21 +13679,6 @@ msgstr "Tilføj tekst"
 #: build/dashboard.js:53
 msgid "Select a text on the product to change its font, size and colour."
 msgstr "Vælg en tekst på produktet for at ændre skrifttype, størrelse og farve."
-
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-msgid "Rectangle"
-msgstr "Rektangel"
-
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-msgid "Circle"
-msgstr "Cirkel"
-
-#: build/dashboard.js:53
-#: build/dashboard.js:56
-msgid "Triangle"
-msgstr "Trekant"
 
 #: build/dashboard.js:53
 msgid "Upload an image"
@@ -13764,8 +13793,8 @@ msgid "One design area is included. Each extra area costs %s."
 msgstr "Ét designområde er inkluderet. Hvert ekstra område koster %s."
 
 #: build/dashboard.js:54
-msgid "The company always keeps the base price and the price of extra design areas; a discount comes off your profit, never below 0. In the company's own campaigns the discount is shared."
-msgstr "Virksomheden beholder altid grundprisen og prisen for ekstra designområder; en rabat tages fra din fortjeneste, aldrig under 0. I virksomhedens egne kampagner deles rabatten."
+msgid "The company always keeps the base price and the price of extra design areas. Your profit is incl. VAT; the VAT on it is deducted if you are not VAT registered."
+msgstr "Virksomheden beholder altid grundprisen og prisen for ekstra designområder. Din fortjeneste er inkl. moms; momsen af den trækkes fra, hvis du ikke er momsregistreret."
 
 #. translators: 1: threads in use, 2: the most threads allowed.
 #: build/dashboard.js:55
@@ -13776,6 +13805,10 @@ msgstr "Trådfarver (%1$d af %2$d)"
 #: build/dashboard.js:55
 msgid "This side is embroidered: every colour becomes the nearest thread. Choose another thread below if you like."
 msgstr "Denne side broderes: hver farve bliver til den nærmeste tråd. Vælg en anden tråd herunder, hvis du vil."
+
+#: build/dashboard.js:55
+msgid "Designs with a lot of fine detail are rejected, as they often cannot be embroidered correctly."
+msgstr "Designs med stor detaljegrad bliver afvist, da de ofte ikke kan broderes korrekt."
 
 #: build/dashboard.js:55
 msgid "Your design has more colours than the threads allow, so the smallest ones use the nearest thread."
@@ -13862,35 +13895,6 @@ msgstr "Ændringen kunne ikke startes. Prøv igen."
 #: build/dashboard.js:56
 msgid "Make a change"
 msgstr "Lav en ændring"
-
-#: build/dashboard.js:56
-msgid "This side has no elements yet."
-msgstr "Denne side har ingen elementer endnu."
-
-#: build/dashboard.js:56
-msgid "Forward"
-msgstr "Frem"
-
-#: build/dashboard.js:56
-msgid "Backward"
-msgstr "Tilbage"
-
-#: build/dashboard.js:56
-#: build/dashboard.js:87
-msgid "Show"
-msgstr "Vis"
-
-#: build/dashboard.js:56
-msgid "Hide"
-msgstr "Skjul"
-
-#: build/dashboard.js:56
-msgid "Unlock"
-msgstr "Lås op"
-
-#: build/dashboard.js:56
-msgid "Lock"
-msgstr "Lås"
 
 #: build/dashboard.js:56
 msgid "Weight"
