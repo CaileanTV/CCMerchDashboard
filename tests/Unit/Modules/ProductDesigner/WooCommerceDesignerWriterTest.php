@@ -70,11 +70,75 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 		self::assertSame( array(), WcProductStorage::$setters );
 	}
 
-	public function test_a_product_that_is_not_variable_is_refused(): void {
-		WcProductStorage::add( 10, array(), 'simple', 0, 'Tee' );
+	public function test_a_variation_itself_is_refused(): void {
+		WcProductStorage::add( 10, array(), 'variation', 0, 'Tee' );
 
 		$this->expectException( DesignerException::class );
 		$this->writer()->set_prices( new GuardedProduct( 3, 10, 7 ), 2000000, 2 );
+	}
+
+	public function test_a_simple_product_gets_its_price_on_itself(): void {
+		WcProductStorage::add( 10, array(), 'simple', 0, 'Tee' );
+
+		$this->writer()->set_prices( new GuardedProduct( 3, 10, 7 ), 2000000, 2 );
+
+		self::assertSame( '200.00', WcProductStorage::$products[10]['regular_price'] ?? null );
+		self::assertSame( array(), WcProductStorage::$synced );
+	}
+
+	public function test_one_colour_and_one_size_make_a_simple_product(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, array( 'black' ), array( 'One size' ) ) );
+
+		$product = WcProductStorage::$products[10];
+
+		self::assertSame( array( 'simple', '249.00', 'publish' ), array( $product['type'], $product['regular_price'] ?? null, $product['status'] ) );
+		self::assertSame( array( false, false ), array_map( self::variation_flag( ... ), $product['attributes'] ?? array() ) );
+		self::assertSame( array( 10 ), array_keys( WcProductStorage::$products ), 'No variations.' );
+	}
+
+	public function test_a_choice_with_one_value_is_no_variation(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, array( 'black', 'sand' ), array( 'One size' ) ) );
+
+		$product = WcProductStorage::$products[10];
+
+		self::assertSame( array( true, false ), array_map( self::variation_flag( ... ), $product['attributes'] ?? array() ), 'Only the colours are chosen.' );
+
+		$variations = array_values( array_filter( WcProductStorage::$products, static fn( array $row ): bool => 'variation' === $row['type'] ) );
+
+		self::assertSame(
+			array( array( 'colour' => 'Black' ), array( 'colour' => 'Sand' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			array_column( $variations, 'attributes' )
+		);
+	}
+
+	public function test_a_simple_product_with_more_values_becomes_variable_on_the_same_id(): void {
+		WcProductStorage::add( 10, array(), 'simple', 0, 'Tee', '', 'publish' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( false ) );
+
+		self::assertSame( array( 'variable', 'publish' ), array( WcProductStorage::$products[10]['type'], WcProductStorage::$products[10]['status'] ) );
+		self::assertCount( 4, array_filter( WcProductStorage::$products, static fn( array $row ): bool => 'variation' === $row['type'] ) );
+	}
+
+	public function test_a_variable_product_stays_variable_and_its_extra_variations_are_hidden(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Tee', '', 'publish' );
+		WcProductStorage::add( 11, array(), 'variation', 10 );
+		WcProductStorage::set( 11, array( 'attributes' => array( 'colour' => 'Black', 'size' => 'S' ), 'regular_price' => '200.00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		WcProductStorage::add( 12, array(), 'variation', 10 );
+		WcProductStorage::set( 12, array( 'attributes' => array( 'colour' => 'Black', 'size' => 'M' ), 'regular_price' => '200.00' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( false, array( 'black' ), array( 'S' ) ) );
+
+		self::assertSame( 'variable', WcProductStorage::$products[10]['type'] );
+		self::assertSame( array( 'publish', 'private' ), array( WcProductStorage::$products[11]['status'], WcProductStorage::$products[12]['status'] ) );
 	}
 
 	public function test_a_draft_created_earlier_is_claimed_again_instead_of_a_second_product(): void {
@@ -204,24 +268,31 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 	/**
 	 * The content of an approved version.
 	 *
-	 * @param bool $publish Whether it is the first approval.
+	 * @phpstan-param list<string> $colors
+	 * @phpstan-param list<string> $sizes
+	 *
+	 * @param bool               $publish Whether it is the first approval.
+	 * @param array<int, string> $colors  Colour keys.
+	 * @param array<int, string> $sizes   Sizes.
 	 */
-	private static function content( bool $publish ): DesignerContent {
+	private static function content( bool $publish, array $colors = array( 'black', 'sand' ), array $sizes = array( 'S', 'M' ) ): DesignerContent {
+		$names = array(
+			'black' => 'Black',
+			'sand'  => 'Sand',
+		);
+
 		return new DesignerContent(
 			'Stream tee',
 			'Soft.',
 			array( 42 ),
-			array(
-				array(
-					'key'  => 'black',
-					'name' => 'Black',
+			array_map(
+				static fn( string $key ): array => array(
+					'key'  => $key,
+					'name' => $names[ $key ],
 				),
-				array(
-					'key'  => 'sand',
-					'name' => 'Sand',
-				),
+				$colors
 			),
-			array( 'S', 'M' ),
+			$sizes,
 			array( 501, 502, 503 ),
 			array(
 				'black' => 501,
@@ -231,6 +302,26 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 			2,
 			$publish
 		);
+	}
+
+	/**
+	 * Whether an attribute is a choice in the shop.
+	 *
+	 * @param mixed $attribute The fixture's attribute.
+	 */
+	private static function variation_flag( mixed $attribute ): mixed {
+		$data = is_object( $attribute ) && property_exists( $attribute, 'data' ) ? $attribute->data : array();
+
+		return is_array( $data ) ? ( $data['variation'] ?? null ) : null;
+	}
+
+	/**
+	 * The functions the attributes need.
+	 */
+	private function attribute_stubs(): void {
+		Functions\when( 'sanitize_title' )->alias( static fn( string $title ): string => strtolower( $title ) );
+		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+		Functions\when( '__' )->returnArg();
 	}
 
 	/**

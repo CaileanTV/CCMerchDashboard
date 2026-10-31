@@ -516,6 +516,11 @@ class WC_Product extends WC_Data {
 
 		$product = WcProductStorage::$products[ $this->id ];
 
+		// As WooCommerce does: the class saved is the product's type.
+		if ( $this instanceof WC_Product_Simple || $this instanceof WC_Product_Variable ) {
+			$product['type'] = $this instanceof WC_Product_Simple ? 'simple' : 'variable';
+		}
+
 		foreach ( array( 'name', 'description', 'categories', 'image_id', 'gallery', 'attributes', 'status', 'parent_id' ) as $property ) {
 			if ( array_key_exists( $property, $this->changes ) ) {
 				$product[ $property ] = $this->changes[ $property ];
@@ -610,6 +615,12 @@ class WC_Product_Variable extends WC_Product {
  * A variation.
  */
 class WC_Product_Variation extends WC_Product {
+}
+
+/**
+ * A simple product.
+ */
+class WC_Product_Simple extends WC_Product {
 }
 
 /**
@@ -736,6 +747,7 @@ function wc_get_product( $the_product = false ) {
 	return match ( WcProductStorage::$products[ $id ]['type'] ) {
 		'variable'  => new WC_Product_Variable( $id ),
 		'variation' => new WC_Product_Variation( $id ),
+		'simple'    => new WC_Product_Simple( $id ),
 		default     => new WC_Product( $id ),
 	};
 }

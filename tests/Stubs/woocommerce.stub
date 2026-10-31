@@ -706,6 +706,9 @@ class WC_Product_Variable extends WC_Product {
 	public static function sync( $product, $save = true ) {}
 }
 
+class WC_Product_Simple extends WC_Product {
+}
+
 /**
  * Product variation (class-wc-product-variation.php).
  */

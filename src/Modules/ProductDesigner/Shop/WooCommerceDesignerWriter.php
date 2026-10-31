@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use WC_Product_Attribute;
+use WC_Product_Simple;
 use WC_Product_Variable;
 use WC_Product_Variation;
 
@@ -85,12 +86,14 @@ class WooCommerceDesignerWriter {
 	}
 
 	/**
-	 * Sets the price of every variation of a designer product.
+	 * Sets the price of a designer product: on the product when it is simple,
+	 * otherwise on every variation.
 	 *
 	 * @param GuardedProduct $product     The guard's proof.
 	 * @param int            $price_units Price per unit incl. VAT in 1/10 000 units (base + profit).
 	 * @param int            $decimals    Store price decimals.
-	 * @throws DesignerException When the store enters prices excluding VAT, or the product is not a variable product.
+	 * @throws DesignerException When the store enters prices excluding VAT, or the product is neither simple nor variable.
+	 * @throws DatabaseException When it cannot be saved.
 	 * @throws InvalidArgumentException When the price cannot be written with the store precision.
 	 */
 	public function set_prices( GuardedProduct $product, int $price_units, int $decimals ): void {
@@ -100,6 +103,15 @@ class WooCommerceDesignerWriter {
 
 		$price  = PricingMath::price_string( $price_units, $decimals );
 		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( $parent instanceof WC_Product_Simple ) {
+			if ( $parent->get_regular_price( 'edit' ) !== $price ) {
+				$parent->set_regular_price( $price );
+				self::save( $parent );
+			}
+
+			return;
+		}
 
 		if ( ! $parent instanceof WC_Product_Variable ) {
 			self::refuse( DesignerException::NOT_DESIGNER_PRODUCT );
@@ -118,11 +130,15 @@ class WooCommerceDesignerWriter {
 	}
 
 	/**
-	 * Writes an approved version to the designer product.
+	 * Writes an approved version to the designer product. One colour and one
+	 * size make a simple product. Otherwise it is variable, and a choice with
+	 * one value is shown on the product but is no variation (the owner's
+	 * choice, 2026-10-31). A simple product that gets more values becomes
+	 * variable. A variable product stays so: orders point at its variations.
 	 *
 	 * @param GuardedProduct  $product The guard's proof.
 	 * @param DesignerContent $content The version's content.
-	 * @throws DesignerException When the store enters prices excluding VAT or the product is not variable.
+	 * @throws DesignerException When the store enters prices excluding VAT or the product is neither simple nor variable.
 	 * @throws DatabaseException When a product cannot be saved.
 	 */
 	public function set_content( GuardedProduct $product, DesignerContent $content ): void {
@@ -130,64 +146,87 @@ class WooCommerceDesignerWriter {
 			self::refuse( DesignerException::PRICES_EXCL_TAX );
 		}
 
-		$parent = wc_get_product( $product->wc_product_id );
-
-		if ( ! $parent instanceof WC_Product_Variable ) {
-			self::refuse( DesignerException::NOT_DESIGNER_PRODUCT );
-		}
+		$color_names = array_column( $content->colors, 'name', 'key' );
+		$single      = 1 === count( $color_names ) && 1 === count( $content->sizes );
+		$parent      = self::of_type( wc_get_product( $product->wc_product_id ), $single );
 
 		[ $color_name, $size_name ] = self::attribute_names( $parent );
-		$color_slug                 = sanitize_title( $color_name );
-		$size_slug                  = sanitize_title( $size_name );
-		$color_names                = array_column( $content->colors, 'name', 'key' );
 
 		$parent->set_name( $content->name );
 		$parent->set_description( $content->description );
 		$parent->set_category_ids( $content->category_ids );
 		$parent->set_image_id( $content->images[0] ?? 0 );
 		$parent->set_gallery_image_ids( array_slice( $content->images, 1 ) );
-		$parent->set_attributes(
-			array(
-				self::attribute( $color_name, array_values( $color_names ), 0 ),
-				self::attribute( $size_name, $content->sizes, 1 ),
-			)
-		);
 
 		if ( $content->publish ) {
 			$parent->set_status( 'publish' );
 		}
 
+		$price = PricingMath::price_string( $content->price_units, $content->decimals );
+
+		if ( $parent instanceof WC_Product_Simple ) {
+			$parent->set_attributes(
+				array(
+					self::attribute( $color_name, array_values( $color_names ), 0, false ),
+					self::attribute( $size_name, $content->sizes, 1, false ),
+				)
+			);
+
+			if ( $parent->get_regular_price( 'edit' ) !== $price ) {
+				$parent->set_regular_price( $price );
+			}
+
+			self::save( $parent );
+
+			return;
+		}
+
+		// A variable product that has come down to one of each keeps its variation.
+		$vary_color = $single || count( $color_names ) > 1;
+		$vary_size  = $single || count( $content->sizes ) > 1;
+		$color_slug = sanitize_title( $color_name );
+		$size_slug  = sanitize_title( $size_name );
+
+		$parent->set_attributes(
+			array(
+				self::attribute( $color_name, array_values( $color_names ), 0, $vary_color ),
+				self::attribute( $size_name, $content->sizes, 1, $vary_size ),
+			)
+		);
 		self::save( $parent );
 
-		$price    = PricingMath::price_string( $content->price_units, $content->decimals );
+		$key      = static fn( string $color, string $size ): string => ( $vary_color ? $color : '' ) . "\0" . ( $vary_size ? $size : '' );
 		$existing = array();
+		$retired  = array();
 
 		foreach ( $parent->get_children() as $child_id ) {
 			$variation = wc_get_product( (int) $child_id );
 
 			if ( $variation instanceof WC_Product_Variation && $variation->get_parent_id( 'edit' ) === $product->wc_product_id ) {
 				$attributes = $variation->get_attributes( 'edit' );
-				$existing[ (string) ( $attributes[ $color_slug ] ?? '' ) . "\0" . (string) ( $attributes[ $size_slug ] ?? '' ) ] = $variation;
+				$found      = $key( (string) ( $attributes[ $color_slug ] ?? '' ), (string) ( $attributes[ $size_slug ] ?? '' ) );
+
+				if ( isset( $existing[ $found ] ) ) {
+					$retired[] = $variation;
+				} else {
+					$existing[ $found ] = $variation;
+				}
 			}
 		}
 
-		foreach ( $color_names as $key => $name ) {
+		foreach ( $color_names as $color_key => $name ) {
 			foreach ( $content->sizes as $size ) {
-				$variation = $existing[ $name . "\0" . $size ] ?? new WC_Product_Variation();
-				unset( $existing[ $name . "\0" . $size ] );
+				$found     = $key( $name, $size );
+				$variation = $existing[ $found ] ?? new WC_Product_Variation();
+				unset( $existing[ $found ] );
 
 				if ( 0 === $variation->get_id() ) {
 					$variation->set_parent_id( $product->wc_product_id );
-					$variation->set_attributes(
-						array(
-							$color_slug => $name,
-							$size_slug  => $size,
-						)
-					);
 				}
 
+				$variation->set_attributes( array_merge( $vary_color ? array( $color_slug => $name ) : array(), $vary_size ? array( $size_slug => $size ) : array() ) );
 				$variation->set_status( 'publish' );
-				$variation->set_image_id( $content->color_images[ $key ] ?? 0 );
+				$variation->set_image_id( $content->color_images[ $color_key ] ?? 0 );
 
 				if ( $variation->get_regular_price( 'edit' ) !== $price ) {
 					$variation->set_regular_price( $price );
@@ -198,7 +237,7 @@ class WooCommerceDesignerWriter {
 		}
 
 		// No longer offered: hidden, never deleted (orders point at them).
-		foreach ( $existing as $variation ) {
+		foreach ( array_merge( array_values( $existing ), $retired ) as $variation ) {
 			if ( 'private' !== $variation->get_status( 'edit' ) ) {
 				$variation->set_status( 'private' );
 				self::save( $variation );
@@ -217,7 +256,7 @@ class WooCommerceDesignerWriter {
 	public function publish( GuardedProduct $product ): void {
 		$parent = wc_get_product( $product->wc_product_id );
 
-		if ( $parent instanceof WC_Product_Variable && 'publish' !== $parent->get_status( 'edit' ) ) {
+		if ( ( $parent instanceof WC_Product_Variable || $parent instanceof WC_Product_Simple ) && 'publish' !== $parent->get_status( 'edit' ) ) {
 			$parent->set_status( 'publish' );
 			self::save( $parent );
 		}
@@ -232,20 +271,42 @@ class WooCommerceDesignerWriter {
 	public function unpublish( GuardedProduct $product ): void {
 		$parent = wc_get_product( $product->wc_product_id );
 
-		if ( $parent instanceof WC_Product_Variable && 'draft' !== $parent->get_status( 'edit' ) ) {
+		if ( ( $parent instanceof WC_Product_Variable || $parent instanceof WC_Product_Simple ) && 'draft' !== $parent->get_status( 'edit' ) ) {
 			$parent->set_status( 'draft' );
 			self::save( $parent );
 		}
 	}
 
 	/**
+	 * The product in the type its content needs. A variable product without
+	 * variations is still the draft of a first approval. Saving makes
+	 * WooCommerce store the new type on the same id.
+	 *
+	 * @param mixed $product The product as WooCommerce read it.
+	 * @param bool  $single  Whether the content has one colour and one size.
+	 * @return WC_Product_Simple|WC_Product_Variable
+	 * @throws DesignerException When it is neither simple nor variable.
+	 */
+	private static function of_type( mixed $product, bool $single ): WC_Product_Simple|WC_Product_Variable {
+		if ( $product instanceof WC_Product_Simple ) {
+			return $single ? $product : new WC_Product_Variable( $product->get_id() );
+		}
+
+		if ( ! $product instanceof WC_Product_Variable ) {
+			self::refuse( DesignerException::NOT_DESIGNER_PRODUCT );
+		}
+
+		return $single && array() === $product->get_children() ? new WC_Product_Simple( $product->get_id() ) : $product;
+	}
+
+	/**
 	 * The names of the colour and size attributes: chosen at the first
 	 * write, in the site's language, and kept on the product after that.
 	 *
-	 * @param WC_Product_Variable $variable The product.
+	 * @param WC_Product_Simple|WC_Product_Variable $variable The product.
 	 * @return array{0: string, 1: string}
 	 */
-	private static function attribute_names( WC_Product_Variable $variable ): array {
+	private static function attribute_names( WC_Product_Simple|WC_Product_Variable $variable ): array {
 		$stored = json_decode( (string) $variable->get_meta( self::ATTRIBUTES_META, true, 'edit' ), true );
 
 		if ( is_array( $stored ) && 2 === count( $stored ) && is_string( $stored[0] ?? null ) && is_string( $stored[1] ?? null ) && '' !== $stored[0] && '' !== $stored[1] ) {
@@ -259,22 +320,23 @@ class WooCommerceDesignerWriter {
 	}
 
 	/**
-	 * A local attribute used for variations.
+	 * A local attribute.
 	 *
 	 * @phpstan-param list<string> $options
 	 *
-	 * @param string   $name     Name.
-	 * @param string[] $options  Values.
-	 * @param int      $position Position.
+	 * @param string   $name      Name.
+	 * @param string[] $options   Values.
+	 * @param int      $position  Position.
+	 * @param bool     $variation Whether it is a choice in the shop.
 	 */
-	private static function attribute( string $name, array $options, int $position ): WC_Product_Attribute {
+	private static function attribute( string $name, array $options, int $position, bool $variation ): WC_Product_Attribute {
 		$attribute = new WC_Product_Attribute();
 		$attribute->set_id( 0 );
 		$attribute->set_name( $name );
 		$attribute->set_options( $options );
 		$attribute->set_position( $position );
 		$attribute->set_visible( true );
-		$attribute->set_variation( true );
+		$attribute->set_variation( $variation );
 
 		return $attribute;
 	}
@@ -282,10 +344,10 @@ class WooCommerceDesignerWriter {
 	/**
 	 * Saves a product or variation.
 	 *
-	 * @param WC_Product_Variable|WC_Product_Variation $product Product.
+	 * @param WC_Product_Simple|WC_Product_Variable|WC_Product_Variation $product Product.
 	 * @throws DatabaseException When it is not saved.
 	 */
-	private static function save( WC_Product_Variable|WC_Product_Variation $product ): void {
+	private static function save( WC_Product_Simple|WC_Product_Variable|WC_Product_Variation $product ): void {
 		if ( (int) $product->save() < 1 ) {
 			throw new DatabaseException( 'Could not save the designer product.' );
 		}
