@@ -180,6 +180,8 @@ class PrintfulMockups {
 			self::fail( PrintfulException::INVALID );
 		}
 
+		$provider['options'] = self::with_stitch( $provider, $version );
+
 		$product  = (int) $provider['ref'];
 		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'] ), 0, 1, true );
 		$sides    = $this->task_sides( $id, self::TASK_SIDE, $version, $base, $provider );
@@ -349,7 +351,7 @@ class PrintfulMockups {
 	/**
 	 * Creates the task of a side at Printful.
 	 *
-	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>, photos: list<string>, techniques: array<string, string>, options: array<mixed>} $provider
+	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>} $provider
 	 *
 	 * @param int                  $id       Version.
 	 * @param int                  $product  Printful product.
@@ -360,6 +362,8 @@ class PrintfulMockups {
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
 	private function create( int $id, int $product, array $version, BaseProduct $base, array $provider, array $task ): void {
+		$provider['options'] = self::with_stitch( $provider, $version );
+
 		$variants = $this->variants( $product, $version, $base, $provider['variants'] );
 		$sides    = $this->task_sides( $id, (string) $task['side'], $version, $base, $provider );
 
@@ -397,6 +401,30 @@ class PrintfulMockups {
 				),
 			)
 		);
+	}
+
+	/**
+	 * The product options with the stitch colour the creator chose.
+	 *
+	 * @phpstan-param array{stitches: list<string>, options: array<mixed>} $provider
+	 *
+	 * @param array                $provider The base product's provider data.
+	 * @param array<string, mixed> $version  Version.
+	 * @return array<mixed>
+	 */
+	private static function with_stitch( array $provider, array $version ): array {
+		$stitch  = SubmissionFiles::stitch( $version );
+		$options = $provider['options'];
+
+		if ( in_array( $stitch, $provider['stitches'], true ) ) {
+			foreach ( $options as $index => $option ) {
+				if ( is_array( $option ) && 'stitch_color' === ( $option['name'] ?? null ) ) {
+					$options[ $index ]['value'] = $stitch;
+				}
+			}
+		}
+
+		return $options;
 	}
 
 	/**

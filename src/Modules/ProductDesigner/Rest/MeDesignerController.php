@@ -933,6 +933,7 @@ final class MeDesignerController extends RestController {
 		return array(
 			'id'               => (int) $base->id,
 			'preview'          => null !== $this->mockups && $this->mockups->can_preview( $base ),
+			'stitches'         => $this->bases->provider( (int) $base->id )['stitches'] ?? array(),
 			'name'             => $base->name,
 			'description'      => $base->description,
 			'base_price'       => SalesAmount::format( $base->base_units ),

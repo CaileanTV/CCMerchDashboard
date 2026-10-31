@@ -215,6 +215,9 @@ function Editor( props: EditorProps ) {
 	const history = useHistory< DesignDocument >( props.design );
 	const [ title, setTitle ] = useState( draft.postfix );
 	const [ colors, setColors ] = useState< readonly string[] >( draft.colors );
+	const [ stitch, setStitch ] = useState(
+		props.design.stitch ?? base.stitches[ 0 ] ?? ''
+	);
 	const [ sizes, setSizes ] = useState< readonly string[] >( draft.sizes );
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
 		draft.profitKind
@@ -244,6 +247,7 @@ function Editor( props: EditorProps ) {
 	const [ discarding, setDiscarding ] = useState( false );
 	const [ saved, setSaved ] = useState( {
 		design: props.design,
+		stitch,
 		price: draft.price,
 	} );
 	const [ stageError, setStageError ] = useState( false );
@@ -291,6 +295,7 @@ function Editor( props: EditorProps ) {
 	);
 	const dirty =
 		design !== saved.design ||
+		stitch !== saved.stitch ||
 		title !== draft.postfix ||
 		colors.join() !== draft.colors.join() ||
 		sizes.join() !== draft.sizes.join() ||
@@ -690,7 +695,10 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
-			design: withKnownThreads( design, base.views ),
+			design: {
+				...withKnownThreads( design, base.views ),
+				...( stitch === '' ? {} : { stitch } ),
+			},
 		} );
 		setSaving( false );
 
@@ -703,7 +711,7 @@ function Editor( props: EditorProps ) {
 			return null;
 		}
 
-		setSaved( { design, price: result.data.draft?.price ?? null } );
+		setSaved( { design, stitch, price: result.data.draft?.price ?? null } );
 
 		return result.data;
 	};
@@ -1101,6 +1109,8 @@ function Editor( props: EditorProps ) {
 										}
 									} }
 									onSizes={ setSizes }
+									stitch={ stitch }
+									onStitch={ setStitch }
 								/>
 							) : null }
 							{ tab === 'text' ? (
@@ -2013,6 +2023,27 @@ interface ProductPanelProps {
 
 	readonly onColors: ( value: readonly string[] ) => void;
 	readonly onSizes: ( value: readonly string[] ) => void;
+	/** The chosen stitch colour. */
+	readonly stitch: string;
+	readonly onStitch: ( value: string ) => void;
+}
+
+/**
+ * The name of a stitch colour.
+ *
+ * @param stitch The stitch colour.
+ */
+function stitchName( stitch: string ): string {
+	switch ( stitch ) {
+		case 'white':
+			return __( 'White', 'merchboard' );
+		case 'black':
+			return __( 'Black', 'merchboard' );
+		case 'clear':
+			return __( 'Clear', 'merchboard' );
+		default:
+			return stitch;
+	}
 }
 
 /**
@@ -2109,6 +2140,30 @@ export function ProductPanel( props: ProductPanelProps ) {
 					</Labelled>
 				) ) }
 			</fieldset>
+			{ base.stitches.length > 1 ? (
+				<fieldset className="merchboard-product-designer__options">
+					<legend className="merchboard-field__label">
+						{ __( 'Stitching', 'merchboard' ) }
+					</legend>
+					{ base.stitches.map( ( stitch ) => (
+						<Labelled
+							key={ stitch }
+							className="merchboard-product-designer__option"
+							label={ <>{ stitchName( stitch ) }</> }
+						>
+							{ ( id ) => (
+								<input
+									id={ id }
+									type="radio"
+									name="merchboard-stitch"
+									checked={ props.stitch === stitch }
+									onChange={ () => props.onStitch( stitch ) }
+								/>
+							) }
+						</Labelled>
+					) ) }
+				</fieldset>
+			) : null }
 			{ chosen.length > 1 ? (
 				<div className="merchboard-product-designer__order">
 					<span className="merchboard-field__label">

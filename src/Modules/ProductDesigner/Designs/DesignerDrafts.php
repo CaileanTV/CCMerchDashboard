@@ -152,7 +152,7 @@ class DesignerDrafts {
 			self::subset( $input['sizes'] ?? null, $base->sizes ),
 			$kind,
 			$value,
-			$validator->validate( $input['design'] ?? null, $base )
+			$validator->validate( $input['design'] ?? null, $base, $this->bases->provider( (int) $row['base_id'] )['stitches'] ?? array() )
 		);
 
 		$this->products->save_draft( (int) $draft['id'], $fields );

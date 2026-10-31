@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T17:57:32+00:00\n"
+"PO-Revision-Date: 2026-10-31T18:19:19+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -3726,7 +3726,7 @@ msgid "Note to the creator (optional)"
 msgstr "Note til creatoren (valgfri)"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:285
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:272
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:278
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
@@ -4414,7 +4414,7 @@ msgid "To the creator: %s"
 msgstr "Til creatoren: %s"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:183
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:322
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:328
 msgid "Save notification settings"
 msgstr "Gem notifikationsindstillinger"
 
@@ -6022,7 +6022,7 @@ msgid "Account and prices"
 msgstr "Konto og priser"
 
 #: src/Modules/Notifications/NotificationTypes.php:101
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:320
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:326
 msgid "To the administrator"
 msgstr "Til administratoren"
 
@@ -7333,47 +7333,54 @@ msgstr "Farver: %s"
 msgid "Sizes: %s"
 msgstr "Størrelser: %s"
 
+#. translators: %s: stitch colour.
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:235
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:221
+#, php-format
+msgid "Stitching: %s"
+msgstr "Syninger: %s"
+
 #. translators: %s: price.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:233
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:239
 #, js-format,php-format
 msgid "Customer price incl. VAT: %s"
 msgstr "Kundens pris inkl. moms: %s"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:241
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:247
 msgid "Printful or Gelato is making the mockups; the creator's mockups are shown until then."
 msgstr "Printful eller Gelato laver mockups; indtil da vises creatorens mockups."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:243
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:249
 msgid "Printful or Gelato could not make the mockups; the creator's mockups are shown."
 msgstr "Printful eller Gelato kunne ikke lave mockups; creatorens mockups vises."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:245
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:251
 msgid "Mockups from Printful or Gelato."
 msgstr "Mockups fra Printful eller Gelato."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:254
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:260
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:138
 msgid "Print files:"
 msgstr "Printfiler:"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:263
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:269
 msgid "Approve and put in the shop"
 msgstr "Godkend og læg i butikken"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:270
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:276
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:179
 msgid "Note to the creator"
 msgstr "Note til creatoren"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:271
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:277
 msgid "Note to the creator: why, and what to change"
 msgstr "Note til creatoren: hvorfor, og hvad der skal ændres"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:309
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:315
 msgid "Choose which of the product designer's notifications are sent. They use the same e-mail template, bell and log as the other notifications (Merch Dashboard → Notifications)."
 msgstr "Vælg, hvilke af produktdesignerens notifikationer der sendes. De bruger samme mailskabelon, klokke og log som de øvrige notifikationer (Merch Dashboard → Notifikationer)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:319
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:325
 msgid "To the creator"
 msgstr "Til creatoren"
 
@@ -7826,11 +7833,26 @@ msgstr "En creator har ændret et designer-produkt i butikken. Butikken beholder
 msgid "We no longer offer this base product, so the design cannot be approved. You are welcome to design on another product."
 msgstr "Vi tilbyder ikke længere dette grundprodukt, så designet kan ikke godkendes. Du er velkommen til at designe på et andet produkt."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:999
+#: src/Modules/ProductDesigner/Providers/PrintfulCatalog.php:1037
+#: build/dashboard.js:58
+msgid "White"
+msgstr "Hvid"
+
+#: src/Modules/ProductDesigner/Providers/PrintfulCatalog.php:1038
+#: build/dashboard.js:58
+msgid "Black"
+msgstr "Sort"
+
+#: src/Modules/ProductDesigner/Providers/PrintfulCatalog.php:1039
+#: build/dashboard.js:58
+msgid "Clear"
+msgstr "Klar"
+
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1000
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1018
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1019
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -14558,6 +14580,10 @@ msgstr "Tilføj til navnet"
 #: build/dashboard.js:58
 msgid "The name starts with your name and the product. If you make more than one of the same product, add a word to tell them apart."
 msgstr "Navnet starter med dit navn og produktet. Laver du flere af samme produkt, så tilføj et ord, der skiller dem ad."
+
+#: build/dashboard.js:58
+msgid "Stitching"
+msgstr "Syninger"
 
 #: build/dashboard.js:58
 msgid "Order of the colours"

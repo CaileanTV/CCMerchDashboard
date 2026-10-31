@@ -287,6 +287,7 @@ class CatalogImport {
 					'slots'      => array(),
 					'flat'       => $flat,
 					'photos'     => $photos,
+					'stitches'   => $choice['stitches'] ?? array(),
 					'techniques' => array_column( $sides, 'technique', 'key' ),
 					'options'    => $choice['options'] ?? array(),
 				)
@@ -938,6 +939,7 @@ class CatalogImport {
 					'slots'      => $slots,
 					'flat'       => $provider['flat'] ?? false,
 					'photos'     => $provider['photos'] ?? array(),
+					'stitches'   => $provider['stitches'] ?? array(),
 					'techniques' => $provider['techniques'] ?? array(),
 					'options'    => $provider['options'] ?? array(),
 				)

@@ -216,7 +216,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 *
 	 * @param string $ref   Printful product id.
 	 * @param int    $group The group of sizes with the same print sizes.
-	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat?: bool, groups?: list<string>, group?: int, options?: list<array{name: string, value: string}>, photos?: list<array{id: int, category: string, view: string, default: bool}>}
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat?: bool, groups?: list<string>, group?: int, options?: list<array{name: string, value: string}>, stitches?: list<string>, photos?: list<array{id: int, category: string, view: string, default: bool}>}
 	 * @throws PrintfulException When Printful refuses or fails, or the product cannot be a base product.
 	 */
 	public function choice( string $ref, int $group = 0 ): array {
@@ -242,7 +242,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 *
 	 * @param int $id    Printful product.
 	 * @param int $group The group of sizes.
-	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat: bool, groups: list<string>, group: int, options: list<array{name: string, value: string}>, photos: list<array{id: int, category: string, view: string, default: bool}>}
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat: bool, groups: list<string>, group: int, options: list<array{name: string, value: string}>, stitches: list<string>, photos: list<array{id: int, category: string, view: string, default: bool}>}
 	 * @throws PrintfulException When Printful refuses or fails, or the product cannot be a base product.
 	 */
 	private function choice_v2( int $id, int $group ): array {
@@ -282,6 +282,8 @@ class PrintfulCatalog implements CatalogRenderer {
 			self::fail( PrintfulException::INVALID );
 		}
 
+		$stitches = $flat ? self::stitches( $product ) : array();
+
 		return array(
 			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $product['name'] ?? 'Product ' . $id ) ) ), 0, 191 ),
 			'description' => self::description( (string) ( $product['description'] ?? '' ) ),
@@ -293,7 +295,14 @@ class PrintfulCatalog implements CatalogRenderer {
 			'flat'        => $flat,
 			'groups'      => 1 < count( $groups ) ? array_map( static fn( array $rows ): string => implode( ', ', self::variant_map( $rows )[1] ), $groups ) : array(),
 			'group'       => $group,
-			'options'     => $flat ? self::stitch_option( $product ) : array(),
+			'options'     => array_map(
+				static fn( string $stitch ): array => array(
+					'name'  => 'stitch_color',
+					'value' => $stitch,
+				),
+				array_slice( $stitches, 0, 1 )
+			),
+			'stitches'    => $stitches,
 			'photos'      => self::photos( $styles, $sides, (int) $first['id'], $flat ),
 		);
 	}
@@ -999,25 +1008,37 @@ class PrintfulCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * The stitch colour a cut-and-sew product needs: Printful refuses a task
-	 * without it (a real answer, 2026-10-31).
+	 * The stitch colours of a cut-and-sew product: Printful refuses a task
+	 * without one (a real answer, 2026-10-31), and not every product has
+	 * white (12 of 142 offer black and clear).
 	 *
 	 * @param array<mixed> $product v2 product.
-	 * @return list<array{name: string, value: string}>
+	 * @return list<string>
 	 */
-	private static function stitch_option( array $product ): array {
+	private static function stitches( array $product ): array {
 		foreach ( is_array( $product['product_options'] ?? null ) ? $product['product_options'] : array() as $option ) {
 			if ( is_array( $option ) && 'stitch_color' === ( $option['name'] ?? null ) ) {
-				return array(
-					array(
-						'name'  => 'stitch_color',
-						'value' => 'white',
-					),
-				);
+				$values = is_array( $option['values'] ?? null ) ? array_keys( $option['values'] ) : array();
+
+				return array() === $values ? array( 'white' ) : array_map( 'strval', $values );
 			}
 		}
 
 		return array();
+	}
+
+	/**
+	 * The name of a stitch colour for the administrator.
+	 *
+	 * @param string $stitch Stitch colour.
+	 */
+	public static function stitch_name( string $stitch ): string {
+		return match ( $stitch ) {
+			'white' => __( 'White', 'merchboard' ),
+			'black' => __( 'Black', 'merchboard' ),
+			'clear' => __( 'Clear', 'merchboard' ),
+			default => $stitch,
+		};
 	}
 
 	/**

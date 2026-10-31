@@ -22,6 +22,8 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 
@@ -229,6 +231,12 @@ final class DesignsPage {
 		echo esc_html( sprintf( __( 'Colours: %s', 'merchboard' ), implode( ', ', array_map( static fn( mixed $key ): string => (string) ( $names[ $key ] ?? $key ), is_array( $colors ) ? $colors : array() ) ) ) ) . ' · ';
 		/* translators: %s: sizes. */
 		echo esc_html( sprintf( __( 'Sizes: %s', 'merchboard' ), implode( ', ', is_array( $sizes ) ? array_map( 'strval', $sizes ) : array() ) ) ) . ' · ';
+
+		if ( '' !== SubmissionFiles::stitch( $row ) ) {
+			/* translators: %s: stitch colour. */
+			echo esc_html( sprintf( __( 'Stitching: %s', 'merchboard' ), PrintfulCatalog::stitch_name( SubmissionFiles::stitch( $row ) ) ) ) . ' · ';
+		}
+
 		/* translators: %s: price. */
 		echo esc_html( sprintf( __( 'Customer price incl. VAT: %s', 'merchboard' ), null === $row['quoted_price'] ? '–' : $this->money( (string) $row['quoted_price'], null === $base ? '' : $base->currency ) ) );
 		echo '</p>';

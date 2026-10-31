@@ -12,6 +12,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Integration\ProductDesigner;
 
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
@@ -20,6 +21,7 @@ use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
+use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
@@ -378,6 +380,61 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		$files = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) );
 
 		self::assertSame( array( '_photo-15711' ), array_keys( $files['mockups'] ), 'Printful\'s answer also held 15710.' );
+	}
+
+	public function test_the_creator_chooses_the_stitching_of_an_all_over_product(): void {
+		[ $version ] = $this->draft_flat();
+		$base        = (int) ( $this->products->version( $version )['base_id'] ?? 0 );
+		$found       = $this->bases->find( $base ) ?? self::fail( 'No base.' );
+		$stitches    = $this->bases->provider( $base )['stitches'] ?? array();
+		$validator   = new DesignValidator( static fn(): bool => false, array() );
+		$design      = array(
+			'version' => 1,
+			'sides'   => array(),
+		);
+
+		self::assertSame( array( 'white', 'black' ), $stitches );
+		self::assertSame( 'white', $validator->validate( $design, $found, $stitches )['stitch'] ?? null, 'The first without a choice.' );
+		self::assertSame( 'black', $validator->validate( array_merge( $design, array( 'stitch' => 'black' ) ), $found, $stitches )['stitch'] ?? null );
+		self::assertArrayNotHasKey( 'stitch', $validator->validate( array_merge( $design, array( 'stitch' => 'black' ) ), $found ), 'Not on a product without a choice.' );
+
+		try {
+			$validator->validate( array_merge( $design, array( 'stitch' => 'red' ) ), $found, $stitches );
+			self::fail( 'A colour the product does not have.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_INVALID, $e->reason() );
+		}
+
+		$stored           = json_decode( (string) ( $this->products->version( $version )['design'] ?? '' ), true );
+		$stored['stitch'] = 'black';
+
+		$this->wpdb->update( $this->wpdb->prefix . Tables::DESIGNER_VERSIONS, array( 'design' => (string) wp_json_encode( $stored ) ), array( 'id' => $version ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test setup.
+
+		$mockups = $this->mockups();
+
+		$mockups->start_preview( $version );
+
+		$body = json_decode( (string) ( $this->calls_starting( 'POST' )[0][2]['body'] ?? '' ), true );
+
+		self::assertSame( array( array( 'name' => 'stitch_color', 'value' => 'black' ) ), $body['products'][0]['product_options'] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		delete_transient( PrintfulMockups::PREVIEW . $version );
+	}
+
+	public function test_a_product_without_white_stitching_starts_on_what_it_has(): void {
+		$path    = self::API . '/v2/catalog-products/257?' . self::REGION;
+		$product = json_decode( (string) ( $this->answers[ $path ]['body'] ?? '' ), true );
+
+		$product['data']['product_options'][0]['values'] = array(
+			'black' => 'Black',
+			'clear' => 'Clear',
+		);
+		$this->answers[ $path ]                          = self::answer( $product );
+
+		$choice = ( new PrintfulCatalog( $this->api ) )->choice( '257' );
+
+		self::assertSame( array( 'black', 'clear' ), $choice['stitches'] ?? null );
+		self::assertSame( array( array( 'name' => 'stitch_color', 'value' => 'black' ) ), $choice['options'] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
 	public function test_the_administrator_sets_the_order_of_the_photos(): void {

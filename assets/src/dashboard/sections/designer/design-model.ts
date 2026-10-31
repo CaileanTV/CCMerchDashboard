@@ -70,6 +70,8 @@ export interface DesignDocument {
 	readonly threads?: Readonly<
 		Record< string, Readonly< Record< string, string > > >
 	>;
+	/** The stitch colour of a product with a choice of stitching. */
+	readonly stitch?: string;
 }
 
 export const EMPTY_DESIGN: DesignDocument = {
@@ -257,6 +259,7 @@ export function parseDesign( value: unknown ): DesignDocument | null {
 		version: DESIGN_VERSION,
 		sides,
 		...( threads === undefined ? {} : { threads } ),
+		...( typeof value.stitch === 'string' ? { stitch: value.stitch } : {} ),
 	};
 }
 

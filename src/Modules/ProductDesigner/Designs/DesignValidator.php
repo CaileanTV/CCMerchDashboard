@@ -67,12 +67,15 @@ final class DesignValidator {
 	/**
 	 * The normalized design, or a refusal.
 	 *
-	 * @param mixed       $design Decoded design.
-	 * @param BaseProduct $base   The base product it is designed on.
-	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, threads?: array<string, array<string, string>>}
+	 * @phpstan-param list<string> $stitches
+	 *
+	 * @param mixed       $design   Decoded design.
+	 * @param BaseProduct $base     The base product it is designed on.
+	 * @param string[]    $stitches The stitch colours the base product has; the first without a choice.
+	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, threads?: array<string, array<string, string>>, stitch?: string}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
-	public function validate( mixed $design, BaseProduct $base ): array {
+	public function validate( mixed $design, BaseProduct $base, array $stitches = array() ): array {
 		if ( ! is_array( $design ) || self::VERSION !== ( $design['version'] ?? null ) || ! is_array( $design['sides'] ?? null ) ) {
 			self::refuse();
 		}
@@ -96,6 +99,14 @@ final class DesignValidator {
 
 		if ( array() !== $threads ) {
 			$normalized['threads'] = $threads;
+		}
+
+		if ( array() !== $stitches ) {
+			$normalized['stitch'] = $design['stitch'] ?? $stitches[0];
+
+			if ( ! in_array( $normalized['stitch'], $stitches, true ) ) {
+				self::refuse();
+			}
 		}
 
 		$json = wp_json_encode( $normalized );

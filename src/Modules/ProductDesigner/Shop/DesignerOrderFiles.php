@@ -15,6 +15,8 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use Throwable;
 use WP_Post;
 
@@ -215,5 +217,10 @@ class DesignerOrderFiles {
 		}
 
 		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+
+		if ( '' !== SubmissionFiles::stitch( $row ?? array() ) ) {
+			/* translators: %s: stitch colour. */
+			echo '<br>' . esc_html( sprintf( __( 'Stitching: %s', 'merchboard' ), PrintfulCatalog::stitch_name( SubmissionFiles::stitch( $row ?? array() ) ) ) );
+		}
 	}
 }

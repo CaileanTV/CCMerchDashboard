@@ -73,6 +73,8 @@ export interface DesignerBase {
 	readonly name: string;
 	/** Whether the finished product can be shown before a design is sent. */
 	readonly preview: boolean;
+	/** The stitch colours the creator can choose; empty without a choice. */
+	readonly stitches: readonly string[];
 	readonly description: string;
 	readonly basePrice: string;
 	/** What each used side after the first adds to the base price. */
@@ -418,6 +420,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				extraSidePrice: value.extra_side_price,
 				currency: value.currency,
 				preview: value.preview === true,
+				stitches: strings( value.stitches ) ?? [],
 				colors,
 				sizes,
 				views,

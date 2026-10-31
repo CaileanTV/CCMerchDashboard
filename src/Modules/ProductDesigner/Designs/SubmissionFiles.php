@@ -53,6 +53,17 @@ final class SubmissionFiles {
 	}
 
 	/**
+	 * The stitch colour the creator chose, or ''.
+	 *
+	 * @param array<string, mixed> $version Version row.
+	 */
+	public static function stitch( array $version ): string {
+		$design = json_decode( (string) ( $version['design'] ?? '' ), true );
+
+		return is_array( $design ) && is_string( $design['stitch'] ?? null ) ? $design['stitch'] : '';
+	}
+
+	/**
 	 * A slot's parts, or null when it is not a slot.
 	 *
 	 * @param string $slot Slot.

@@ -17,6 +17,7 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 const BASE = {
 	name: 'Tee',
 	sizes: [ 'M' ],
+	stitches: [ 'white', 'black' ],
 	colors: [
 		{ key: 'black', name: 'Black', hex: '#111111' },
 		{ key: 'sand', name: 'Sand', hex: '#d8c8a8' },
@@ -29,10 +30,14 @@ const BASE = {
  *
  * @param colors   The chosen colours.
  * @param onColors Called with the new colours.
+ * @param base     The base product.
+ * @param onStitch Called with the new stitch colour.
  */
 async function show(
 	colors: readonly string[],
-	onColors: ( value: readonly string[] ) => void
+	onColors: ( value: readonly string[] ) => void,
+	base: DesignerBase = BASE,
+	onStitch: ( value: string ) => void = jest.fn()
 ): Promise< void > {
 	const container = document.createElement( 'div' );
 
@@ -41,7 +46,7 @@ async function show(
 	await act( async () => {
 		createRoot( container ).render(
 			<ProductPanel
-				base={ BASE }
+				base={ base }
 				locale="da-DK"
 				creator="Nova"
 				title=""
@@ -50,6 +55,8 @@ async function show(
 				onTitle={ jest.fn() }
 				onColors={ onColors }
 				onSizes={ jest.fn() }
+				stitch="white"
+				onStitch={ onStitch }
 			/>
 		);
 		await Promise.resolve();
@@ -120,6 +127,35 @@ describe( 'the colours of a design', () => {
 			'sand',
 			'red',
 		] );
+	} );
+
+	it( 'offers the stitching of an all-over product', async () => {
+		const onStitch = jest.fn();
+
+		await show( [ 'black' ], jest.fn(), BASE, onStitch );
+
+		const radios = document.querySelectorAll< HTMLInputElement >(
+			'input[type="radio"]'
+		);
+
+		expect( radios ).toHaveLength( 2 );
+		expect( radios[ 0 ]?.checked ).toBe( true );
+
+		await act( async () => {
+			radios[ 1 ]?.click();
+			await Promise.resolve();
+		} );
+
+		expect( onStitch ).toHaveBeenCalledWith( 'black' );
+	} );
+
+	it( 'offers no stitching without a choice', async () => {
+		await show( [ 'black' ], jest.fn(), {
+			...BASE,
+			stitches: [ 'black' ],
+		} );
+
+		expect( document.querySelector( 'input[type="radio"]' ) ).toBeNull();
 	} );
 
 	it( 'has no order with one colour', async () => {
