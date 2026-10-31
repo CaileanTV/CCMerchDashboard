@@ -144,6 +144,12 @@ final class Settings {
 	public const GELATO_ENABLED = 'gelato_enabled';
 
 	/**
+	 * Whether Prodigi is used for base products and mockups (ADR-084). Off by
+	 * default; enabled only by exactly boolean true.
+	 */
+	public const PRODIGI_ENABLED = 'prodigi_enabled';
+
+	/**
 	 * Whether customers get an optional "username" field in the checkout
 	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
 	 * are on; enabled only by exactly boolean true.
@@ -241,7 +247,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -263,6 +269,7 @@ final class Settings {
 			self::DESIGNER_ENABLED          => false,
 			self::PRINTFUL_ENABLED          => false,
 			self::GELATO_ENABLED            => false,
+			self::PRODIGI_ENABLED           => false,
 		);
 	}
 
@@ -273,7 +280,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -307,6 +314,7 @@ final class Settings {
 			self::DESIGNER_ENABLED          => true === ( $values[ self::DESIGNER_ENABLED ] ?? false ),
 			self::PRINTFUL_ENABLED          => true === ( $values[ self::PRINTFUL_ENABLED ] ?? false ),
 			self::GELATO_ENABLED            => true === ( $values[ self::GELATO_ENABLED ] ?? false ),
+			self::PRODIGI_ENABLED           => true === ( $values[ self::PRODIGI_ENABLED ] ?? false ),
 		);
 	}
 
@@ -430,7 +438,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -567,6 +575,13 @@ final class Settings {
 	 */
 	public static function gelato_enabled(): bool {
 		return self::all()[ self::GELATO_ENABLED ];
+	}
+
+	/**
+	 * Whether Prodigi is switched on (ADR-084).
+	 */
+	public static function prodigi_enabled(): bool {
+		return self::all()[ self::PRODIGI_ENABLED ];
 	}
 
 	/**

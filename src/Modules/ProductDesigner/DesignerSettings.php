@@ -19,8 +19,8 @@ use MerchBoard\Core\Settings\Settings;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The kill switches of the product designer (ADR-080), Printful (ADR-081)
- * and Gelato (ADR-082). All are off by default. Only users with
+ * The kill switches of the product designer (ADR-080), Printful (ADR-081),
+ * Gelato (ADR-082) and Prodigi (ADR-084). All are off by default. Only users with
  * `merchboard_manage_designer` change them, and every changed switch is
  * audited (`settings_updated`) in the same transaction as the option.
  */
@@ -29,7 +29,7 @@ class DesignerSettings {
 	/**
 	 * The switches, in the order shown.
 	 */
-	public const SWITCHES = array( Settings::DESIGNER_ENABLED, Settings::PRINTFUL_ENABLED, Settings::GELATO_ENABLED );
+	public const SWITCHES = array( Settings::DESIGNER_ENABLED, Settings::PRINTFUL_ENABLED, Settings::GELATO_ENABLED, Settings::PRODIGI_ENABLED );
 
 	/**
 	 * Constructor.

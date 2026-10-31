@@ -138,6 +138,7 @@ class CatalogImport {
 	 * @param string                $assets_url URL of `assets/designer/` with a trailing slash.
 	 * @param PrintfulCatalog|null  $printful   Printful.
 	 * @param GelatoCatalog|null    $gelato     Gelato.
+	 * @param ProdigiCatalog|null   $prodigi    Prodigi.
 	 */
 	public function __construct(
 		private wpdb $wpdb,
@@ -149,7 +150,8 @@ class CatalogImport {
 		private int $decimals,
 		private string $assets_url,
 		private ?PrintfulCatalog $printful = null,
-		private ?GelatoCatalog $gelato = null
+		private ?GelatoCatalog $gelato = null,
+		private ?ProdigiCatalog $prodigi = null
 	) {
 	}
 
@@ -162,6 +164,7 @@ class CatalogImport {
 		return match ( $source ) {
 			PrintfulCatalog::SOURCE => $this->printful,
 			GelatoCatalog::SOURCE   => $this->gelato,
+			ProdigiCatalog::SOURCE  => $this->prodigi,
 			default                 => null,
 		};
 	}
@@ -179,6 +182,7 @@ class CatalogImport {
 	 * @throws DesignerException When the user may not, nothing was ticked or a value is refused.
 	 * @throws PrintfulException When Printful refuses or fails.
 	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws ProdigiException When Prodigi refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function create( string $source, string $ref, array $picked ): int {
@@ -353,14 +357,14 @@ class CatalogImport {
 		foreach ( is_array( $renders ) ? $renders : array() as $kind => $render ) {
 			try {
 				$answer[ 'render ' . $kind ] = is_array( $render ) ? $renderer->render_answer( (string) ( $render['key'] ?? '' ) ) : array();
-			} catch ( PrintfulException | GelatoException $e ) {
+			} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
 				$answer[ 'render ' . $kind ] = self::refusal( $e );
 			}
 		}
 
 		try {
 			return array_merge( $answer, $renderer->diagnose( $provider['ref'] ) );
-		} catch ( PrintfulException | GelatoException $e ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
 			$answer['error'] = self::refusal( $e );
 
 			return $answer;
@@ -392,8 +396,8 @@ class CatalogImport {
 
 		try {
 			$this->step( $id );
-		} catch ( PrintfulException | GelatoException $e ) {
-			if ( PrintfulException::RATE_LIMITED === $e->reason() || GelatoException::RATE_LIMITED === $e->reason() ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
+			if ( in_array( $e->reason(), array( PrintfulException::RATE_LIMITED, GelatoException::RATE_LIMITED, ProdigiException::RATE_LIMITED ), true ) ) {
 				$this->schedule( $id, $e->retry_after );
 			} else {
 				$this->fail( $id, $e->reason(), $e->call, $e->detail );
@@ -450,6 +454,7 @@ class CatalogImport {
 	 * @param int $id Base product.
 	 * @throws PrintfulException When Printful refuses or fails.
 	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws ProdigiException When Prodigi refuses or fails.
 	 * @throws DesignerException When the import cannot go on.
 	 * @throws DatabaseException When the designer's data cannot be read or stored.
 	 * @throws InvalidArgumentException When a photo cannot be read.
@@ -1101,7 +1106,7 @@ class CatalogImport {
 			array(
 				'title'    => $base->name ?? '',
 				'reason'   => $reason,
-				'provider' => GelatoCatalog::SOURCE === ( $data['source'] ?? '' ) ? 'Gelato' : 'Printful',
+				'provider' => self::provider_name( (string) ( $data['source'] ?? '' ) ),
 			),
 			'designer_import:' . $id . ':' . (int) ( $data['started'] ?? 0 )
 		);
@@ -1155,15 +1160,28 @@ class CatalogImport {
 	/**
 	 * A provider's refusal for the diagnosis.
 	 *
-	 * @param PrintfulException|GelatoException $e Refusal.
+	 * @param PrintfulException|GelatoException|ProdigiException $e Refusal.
 	 * @return array{reason: string, call: string, detail: string}
 	 */
-	private static function refusal( PrintfulException|GelatoException $e ): array {
+	private static function refusal( PrintfulException|GelatoException|ProdigiException $e ): array {
 		return array(
 			'reason' => $e->reason(),
 			'call'   => $e->call,
 			'detail' => $e->detail,
 		);
+	}
+
+	/**
+	 * The name of a source for the administrator.
+	 *
+	 * @param string $source Source.
+	 */
+	public static function provider_name( string $source ): string {
+		return match ( $source ) {
+			GelatoCatalog::SOURCE  => 'Gelato',
+			ProdigiCatalog::SOURCE => 'Prodigi',
+			default                => 'Printful',
+		};
 	}
 
 	/**
@@ -1190,13 +1208,18 @@ class CatalogImport {
 	/**
 	 * Stops because the provider is switched off or has no credentials.
 	 *
-	 * @param string $source `printful` or `gelato`.
+	 * @param string $source `printful`, `gelato` or `prodigi`.
 	 * @throws GelatoException For Gelato.
+	 * @throws ProdigiException For Prodigi.
 	 * @throws PrintfulException For Printful.
 	 */
 	private static function unavailable( string $source ): never {
 		if ( GelatoCatalog::SOURCE === $source ) {
 			throw new GelatoException( GelatoException::NOT_CONFIGURED );
+		}
+
+		if ( ProdigiCatalog::SOURCE === $source ) {
+			throw new ProdigiException( ProdigiException::NOT_CONFIGURED );
 		}
 
 		throw new PrintfulException( PrintfulException::NOT_CONFIGURED );

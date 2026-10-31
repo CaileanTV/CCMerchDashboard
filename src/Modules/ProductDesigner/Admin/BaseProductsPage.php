@@ -23,6 +23,8 @@ use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogRenderer;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
@@ -87,8 +89,10 @@ final class BaseProductsPage {
 	 * @param CatalogImport|null      $catalog        The catalog import (review 30.15).
 	 * @param PrintfulCatalog|null    $printful       Printful's catalog.
 	 * @param GelatoCatalog|null      $gelato         Gelato's catalogs and templates.
+	 * @param ProdigiCatalog|null     $prodigi        Prodigi's catalogue.
+	 * @param bool                    $prodigi_ready  Whether a Prodigi key is stored.
 	 */
-	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false, private ?CatalogImport $catalog = null, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null ) {
+	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false, private ?CatalogImport $catalog = null, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null, private ?ProdigiCatalog $prodigi = null, private bool $prodigi_ready = false ) {
 	}
 
 	/**
@@ -203,6 +207,13 @@ final class BaseProductsPage {
 			GelatoException::RATE_LIMITED           => array( __( 'Gelato asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
 			GelatoException::INVALID                => array( __( 'The Gelato template has no usable variants or image placeholders.', 'merchboard' ), 'error' ),
 			GelatoException::FAILED                 => array( __( 'Gelato could not be reached. Please try again later.', 'merchboard' ), 'error' ),
+			ProdigiException::NOT_CONFIGURED        => array( __( 'Prodigi is switched off or has no API key.', 'merchboard' ), 'error' ),
+			ProdigiException::UNAUTHORIZED          => array( __( 'Prodigi refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
+			ProdigiException::NOT_FOUND             => array( __( 'Prodigi does not know that product.', 'merchboard' ), 'error' ),
+			ProdigiException::RATE_LIMITED          => array( __( 'Prodigi asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
+			ProdigiException::INVALID               => array( __( 'The Prodigi product has no SKUs or print areas that can be used.', 'merchboard' ), 'error' ),
+			ProdigiException::FAILED                => array( __( 'Prodigi could not be reached. Please try again later.', 'merchboard' ), 'error' ),
+			ProdigiException::NOT_IN_EU             => array( __( 'This product is not made in the EU, so it cannot be offered.', 'merchboard' ), 'error' ),
 			'retired'                               => array( __( 'The base product is retired. Its products are being taken out of the shop, and the creators are told.', 'merchboard' ), 'success' ),
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
@@ -540,6 +551,10 @@ final class BaseProductsPage {
 			$sources[ GelatoCatalog::SOURCE ] = __( 'From a Gelato template', 'merchboard' );
 		}
 
+		if ( Settings::prodigi_enabled() && null !== $this->prodigi ) {
+			$sources[ ProdigiCatalog::SOURCE ] = __( 'From Prodigi\'s catalogue', 'merchboard' );
+		}
+
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← All base products', 'merchboard' ) . '</a></p>';
 
 		if ( count( $sources ) > 1 ) {
@@ -556,6 +571,8 @@ final class BaseProductsPage {
 			$this->render_printful_catalog( $this->printful );
 		} elseif ( GelatoCatalog::SOURCE === $source && null !== $this->gelato && isset( $sources[ $source ] ) ) {
 			$this->render_gelato_template( $this->gelato );
+		} elseif ( ProdigiCatalog::SOURCE === $source && null !== $this->prodigi && isset( $sources[ $source ] ) ) {
+			$this->render_prodigi_catalog( $this->prodigi );
 		} else {
 			$this->render_form( null );
 		}
@@ -649,6 +666,82 @@ final class BaseProductsPage {
 	}
 
 	/**
+	 * Prodigi's catalogue: search by words or category, then pick a product.
+	 * Only products made in the EU are listed.
+	 *
+	 * @param ProdigiCatalog $prodigi Prodigi's catalogue.
+	 */
+	private function render_prodigi_catalog( ProdigiCatalog $prodigi ): void {
+		if ( ! $this->prodigi_ready ) {
+			echo '<p>' . esc_html__( 'Enter the Prodigi API key under Settings → Product designer first.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		// Read-only parameters; nothing is changed by this request.
+		$query    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$category = isset( $_GET['category'] ) ? sanitize_text_field( wp_unslash( $_GET['category'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$pick     = isset( $_GET['pick'] ) ? sanitize_text_field( wp_unslash( $_GET['pick'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$group    = isset( $_GET['group'] ) ? absint( $_GET['group'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+
+		if ( '' !== $pick ) {
+			$this->render_pick( $prodigi, ProdigiCatalog::SOURCE, $pick, $group );
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'Search Prodigi\'s catalogue and pick the product. Only products made in the EU are listed. Creators design on a white sheet in the shape of the print area, and Prodigi makes the mockups when a design is sent for approval.', 'merchboard' ) . '</p>';
+
+		try {
+			$categories = $prodigi->categories();
+		} catch ( ProdigiException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( ProdigiCatalog::SOURCE ) . '">';
+		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> ';
+		echo '<label>' . esc_html__( 'Category', 'merchboard' ) . ' <select name="category"><option value="">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
+
+		foreach ( $categories as $entry ) {
+			echo '<option value="' . esc_attr( $entry['id'] ) . '"' . selected( $category, $entry['id'], false ) . '>' . esc_html( $entry['name'] ) . '</option>';
+		}
+
+		echo '</select></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
+
+		if ( '' === $query && '' === $category ) {
+			return;
+		}
+
+		try {
+			$products = $prodigi->search( $query, $category );
+		} catch ( ProdigiException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		if ( array() === $products ) {
+			echo '<p>' . esc_html__( 'No products found.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<ul>';
+
+		foreach ( $products as $product ) {
+			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => ProdigiCatalog::SOURCE, 'pick' => $product['id'] ) ) ) . '">' . esc_html( $product['title'] ) . '</a></li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+
+		echo '</ul>';
+
+		if ( count( $products ) >= ProdigiCatalog::MAX_RESULTS ) {
+			echo '<p class="description">' . esc_html__( 'Only the first results are shown. Add words to narrow the search.', 'merchboard' ) . '</p>';
+		}
+	}
+
+	/**
 	 * A Gelato template by its id: Gelato has no call that lists templates or
 	 * shows its products, and only a template can be rendered.
 	 *
@@ -687,7 +780,7 @@ final class BaseProductsPage {
 	private function render_pick( CatalogRenderer $renderer, string $source, string $ref, int $group = 0 ): void {
 		try {
 			$choice = $renderer->choice( $ref, $group );
-		} catch ( PrintfulException | GelatoException $e ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
 			$this->provider_error( $e->reason(), $e->call, $e->detail );
 
 			return;
@@ -767,7 +860,7 @@ final class BaseProductsPage {
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="0"><p class="description">' . esc_html( $flat ? __( 'What the company keeps for each part after the first. An all-over design usually covers every part: 0 means they cost nothing extra.', 'merchboard' ) : __( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) ) . '</p></td></tr>';
 		echo '</tbody></table>';
-		echo '<p>' . esc_html( $flat ? __( 'The base product is created as a draft at once. Its sewing patterns are fetched in the background. Creators design on the flat parts; Printful sews their designs into mockups when they are sent for approval.', 'merchboard' ) : __( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) ) . '</p>';
+		echo '<p>' . esc_html( $flat ? __( 'The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval.', 'merchboard' ) : __( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) ) . '</p>';
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create and import', 'merchboard' ) . '</button></p></form>';
 	}
 
@@ -782,7 +875,7 @@ final class BaseProductsPage {
 		$import = $this->bases->import( (int) $base->id );
 		$state  = $import['state'] ?? CatalogImport::NONE;
 		$data   = $import['data'] ?? array();
-		$name   = GelatoCatalog::SOURCE === ( $data['source'] ?? $base->source ) ? 'Gelato' : 'Printful';
+		$name   = CatalogImport::provider_name( (string) ( $data['source'] ?? $base->source ) );
 
 		if ( CatalogImport::NONE === $state ) {
 			return;

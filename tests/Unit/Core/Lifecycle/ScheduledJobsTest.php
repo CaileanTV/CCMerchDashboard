@@ -18,6 +18,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
 use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Modules\WooCommerce\Sales\SalesBackfillScheduler;
@@ -35,7 +36,7 @@ final class ScheduledJobsTest extends TestCase {
 
 	public function test_core_names_the_same_hook_as_the_module(): void {
 		self::assertSame( SalesBackfillScheduler::HOOK, ScheduledJobs::SALES_BACKFILL_HOOK );
-		self::assertSame( array( DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, CatalogImport::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
+		self::assertSame( array( DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, CatalogImport::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
 	}
 
 	public function test_only_the_backfill_hook_is_cancelled(): void {

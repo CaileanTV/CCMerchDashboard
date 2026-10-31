@@ -13,6 +13,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 
@@ -31,10 +32,11 @@ final class DesignerSettingsSection {
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintfulToken|null $token  The Printful token (step 30.12).
-	 * @param GelatoAccount|null $gelato The Gelato key and store (step 30.13).
+	 * @param PrintfulToken|null  $token  The Printful token (step 30.12).
+	 * @param GelatoAccount|null  $gelato The Gelato key and store (step 30.13).
+	 * @param ProdigiAccount|null $prodigi The Prodigi key (ADR-084).
 	 */
-	public function __construct( private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null ) {
+	public function __construct( private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null, private ?ProdigiAccount $prodigi = null ) {
 	}
 
 	/**
@@ -50,6 +52,7 @@ final class DesignerSettingsSection {
 			DesignerException::NOT_AUTHORIZED => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			DesignerException::PRINTFUL_TOKEN => array( __( 'The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _).', 'merchboard' ), 'error' ),
 			DesignerException::GELATO_ACCOUNT => array( __( 'The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store\'s address (a UUID).', 'merchboard' ), 'error' ),
+			DesignerException::PRODIGI_KEY    => array( __( 'The Prodigi key was not saved: use the v5 API key as Prodigi shows it, starting with live_ or sandbox_.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK    => array( __( 'The embroidery pack was not saved: it needs a name and at least one thread, each thread a unique code, a name and a colour, and a limit between 1 and the number of threads.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK_IN_USE => array( __( 'A base product uses this embroidery pack, so it cannot be deleted.', 'merchboard' ), 'error' ),
 			'pack_deleted'                    => array( __( 'The embroidery pack was deleted.', 'merchboard' ), 'success' ),
@@ -98,6 +101,12 @@ final class DesignerSettingsSection {
 				__( 'Off by default. Only the catalog and mockups from your Gelato templates are used; orders are not sent to Gelato.', 'merchboard' ),
 				Settings::gelato_enabled(),
 			),
+			Settings::PRODIGI_ENABLED  => array(
+				__( 'Prodigi', 'merchboard' ),
+				__( 'Use Prodigi for base products and mockups', 'merchboard' ),
+				__( 'Off by default. Only the catalogue and mockups are used, and only products made in the EU are offered; orders are not sent to Prodigi.', 'merchboard' ),
+				Settings::prodigi_enabled(),
+			),
 		);
 
 		self::render_notice();
@@ -142,6 +151,7 @@ final class DesignerSettingsSection {
 		echo '</ol></details>';
 		echo '</td></tr>';
 		$this->render_gelato();
+		$this->render_prodigi();
 		echo '</tbody></table>';
 		submit_button( __( 'Save product designer settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
@@ -200,6 +210,39 @@ final class DesignerSettingsSection {
 		}
 
 		echo '</p></form></details>';
+	}
+
+	/**
+	 * The Prodigi API key with the setup guide (ADR-084).
+	 */
+	private function render_prodigi(): void {
+		$stored = null !== $this->prodigi && $this->prodigi->configured();
+
+		echo '<tr><th scope="row"><label for="merchboard-prodigi-key">' . esc_html__( 'Prodigi API key', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="password" id="merchboard-prodigi-key" name="prodigi_key" value="" class="regular-text" autocomplete="off"> ';
+		echo '<span>' . esc_html( $stored ? __( 'A key is stored.', 'merchboard' ) : __( 'No key yet.', 'merchboard' ) ) . '</span>';
+
+		if ( $stored ) {
+			echo '<br><label><input type="checkbox" name="prodigi_key_remove" value="1"> ' . esc_html__( 'Remove the stored key', 'merchboard' ) . '</label>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'A v5 API key from Prodigi\'s dashboard. It is stored encrypted and never shown again; leave the field empty to keep the stored one.', 'merchboard' ) . '</p>';
+		echo '<details style="margin-top:8px"><summary>' . esc_html__( 'How to set up Prodigi', 'merchboard' ) . '</summary><ol>';
+
+		foreach (
+			array(
+				__( 'Create an account at prodigi.com and a v5 API key under API settings in its dashboard. A key starts with live_ or sandbox_.', 'merchboard' ),
+				__( 'Paste the key above, switch Prodigi on and save.', 'merchboard' ),
+				__( 'Import a product under Merch Dashboard → Product designer → Base products. Prodigi\'s catalogue has no photos or colour codes: creators design on a white sheet, and you correct the colours on the base product.', 'merchboard' ),
+				__( 'Prodigi fetches print files from a short-lived link on this site, so mockups from Prodigi only work on a site Prodigi can reach (not on a local test site).', 'merchboard' ),
+				__( 'This connection has not been tried against Prodigi yet. Test it on the staging site first.', 'merchboard' ),
+			) as $step
+		) {
+			echo '<li>' . esc_html( $step ) . '</li>';
+		}
+
+		echo '</ol></details>';
+		echo '</td></tr>';
 	}
 
 	/**

@@ -16,6 +16,7 @@ use MerchBoard\Modules\Notifications\NotificationType;
 use MerchBoard\Modules\Notifications\NotificationTypes;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerMenu;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 
 defined( 'ABSPATH' ) || exit;
@@ -424,7 +425,7 @@ final class DesignerNotifications {
 	 * @param NotificationData $d Data.
 	 */
 	private static function provider( NotificationData $d ): string {
-		return 'Gelato' === $d->text( 'provider' ) ? 'Gelato' : 'Printful';
+		return in_array( $d->text( 'provider' ), array( 'Gelato', 'Prodigi' ), true ) ? $d->text( 'provider' ) : 'Printful';
 	}
 
 	/**
@@ -454,6 +455,12 @@ final class DesignerNotifications {
 			GelatoException::INVALID                => __( 'Gelato answered with something that cannot be used.', 'merchboard' ),
 			GelatoException::FAILED                 => __( 'Gelato could not be reached or answered with an error.', 'merchboard' ),
 			'gelato_task'                           => __( 'Gelato could not make the product\'s images (or took too long).', 'merchboard' ),
+			ProdigiException::NOT_CONFIGURED        => __( 'Prodigi is switched off or has no API key (Settings → Product designer).', 'merchboard' ),
+			ProdigiException::UNAUTHORIZED          => __( 'Prodigi refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ),
+			ProdigiException::NOT_FOUND             => __( 'Prodigi does not know the product.', 'merchboard' ),
+			ProdigiException::INVALID               => __( 'Prodigi answered with something that cannot be used.', 'merchboard' ),
+			ProdigiException::FAILED                => __( 'Prodigi could not be reached or answered with an error.', 'merchboard' ),
+			'prodigi_task'                          => __( 'Prodigi could not make the mockups (or took too long).', 'merchboard' ),
 			DesignerException::IMPORT_RENDER        => __( 'The provider could not render the product; its own message is shown on the base product.', 'merchboard' ),
 			DesignerException::IMPORT_TIMEOUT       => __( 'The provider took too long to render the product.', 'merchboard' ),
 			DesignerException::IMPORT_NO_AREA       => __( 'The print areas could not be found on the provider\'s photos.', 'merchboard' ),

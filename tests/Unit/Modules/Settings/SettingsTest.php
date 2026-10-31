@@ -143,6 +143,7 @@ final class SettingsTest extends TestCase {
 				Settings::DESIGNER_ENABLED          => false,
 				Settings::PRINTFUL_ENABLED          => false,
 				Settings::GELATO_ENABLED            => false,
+				Settings::PRODIGI_ENABLED           => false,
 			),
 			Settings::all()
 		);

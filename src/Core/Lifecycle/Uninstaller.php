@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Core\Logging\Logger;
@@ -253,6 +254,7 @@ final class Uninstaller {
 		delete_option( ThreadPacks::OPTION );
 		delete_option( GelatoAccount::KEY_OPTION );
 		delete_option( GelatoAccount::STORE_OPTION );
+		delete_option( ProdigiAccount::KEY_OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

@@ -17,6 +17,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 
@@ -157,7 +158,7 @@ final class BaseProductActions {
 				default:
 					return BaseProductsPage::url( 'error' );
 			}
-		} catch ( PrintfulException | GelatoException $e ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
 			return BaseProductsPage::url( $e->reason() );
 		} catch ( DesignerException $e ) {
 			if ( 'catalog_create' === $do ) {
