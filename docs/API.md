@@ -562,6 +562,8 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 
 `POST` og `GET /me/designer/products/{id}/preview` (2026-10-31): starter og læser billeder af kladden. Svar: `status` (`none`, `pending`, `failed`, `done`) og `images` med `side` (sidens nøgle, eller `_photo-<stil>` for et valgt foto, der ikke hører til en side), `color` og `url` (`data:`). Afvisninger: `preview_unavailable`, `preview_busy`, `preview_failed`, `submission_files`.
 
+`PUT /me/designer/products/{id}` (2026-10-31): `colors` gemmes i den sendte rækkefølge, og `design.photos` er en valgfri liste af foto-id'er i creatorens rækkefølge (højst 8, ellers `design_invalid`).
+
 Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, på en flad side JPEG, `no-store`, `nosniff`) til Printfuls mockup-generator, Gelatos skabelonprodukter (fra trin 30.13) og Prodigi (ADR-084), når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
 
 ## Test-krav

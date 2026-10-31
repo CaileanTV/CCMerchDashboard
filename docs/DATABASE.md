@@ -689,6 +689,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Flade sider (2026-10-31, ingen migration):** `views[].flat` er `true` på en flad del af et all-over-produkt. `provider_template` får `flat`, `photos` (de mockup-stile, admin har valgt; et grundprodukt med `styles` pr. side læses som samme stile), `techniques` (pr. side) og `options` (leverandørens produktvalg, fx `stitch_color`). Opgaver gemmer `api` (1 eller 2) i `result`, og en flad version eller et grundprodukt med `photos` har én opgave med siden `all`. Valgte fotos ligger i versionens `files.mockups` under nøglen `_photo-<stil>` i stedet for en side, og en farve med valgte fotos beholder ikke browserens mockups.
 
+**Creatorens rækkefølge (2026-10-31, ingen migration):** `merchboard_designer_versions.colors` holder nu creatorens rækkefølge i stedet for grundproduktets. `design.photos` er en valgfri liste af mockup-stile i creatorens rækkefølge, højst 8. Et id, grundproduktet ikke har, bruges aldrig.
+
 **Prodigi (ADR-084, ingen migration):** `provider_ref` er katalogproduktets id, `variants` holder SKU pr. farve og størrelse, og opgavens `result` holder fase, filer, det gemte produkt og mockups, så de kan slettes igen. Optionen `merchboard_designer_prodigi_key` er krypteret og uden autoload.
 
 **Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard).
