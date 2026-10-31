@@ -691,6 +691,8 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Creatorens rækkefølge (2026-10-31, ingen migration):** `merchboard_designer_versions.colors` holder nu creatorens rækkefølge i stedet for grundproduktets. Rækkefølgen af `photos` i `provider_template` er admins og styrer billederne i butikken.
 
+**Syninger (2026-10-31, ingen migration):** `provider_template` får `stitches` (de syningsfarver, grundproduktet tilbyder), og `options` holder den første som standard. `design.stitch` er creatorens valg og gemmes kun på et grundprodukt med `stitches`.
+
 **Prodigi (ADR-084, ingen migration):** `provider_ref` er katalogproduktets id, `variants` holder SKU pr. farve og størrelse, og opgavens `result` holder fase, filer, det gemte produkt og mockups, så de kan slettes igen. Optionen `merchboard_designer_prodigi_key` er krypteret og uden autoload.
 
 **Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard).
