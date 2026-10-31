@@ -486,6 +486,38 @@ final class CreatorCodesTest extends IntegrationTestCase {
 		self::assertSame( array( 501, 502, 503 ), $this->issuer->retired );
 	}
 
+	public function test_a_creator_who_never_had_a_code_gets_the_first_one(): void {
+		$notified = did_action( 'merchboard_notify' );
+
+		wp_set_current_user( $this->user );
+		$this->expect_refusal( CreatorCodeException::NOT_AUTHORIZED, fn() => $this->code_service()->issue( $this->other, CreatorCodeService::SOURCE_FIRST ), 'Never another creator\'s code.' );
+
+		$this->next = array( 'nova10' );
+		self::assertSame( 'code_registered', $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_FIRST ) );
+
+		self::assertSame( 'nova10', $this->codes->active_for_creator( $this->creator )?->code );
+		self::assertSame( $this->user, $this->codes->active_for_creator( $this->creator )?->created_by );
+		self::assertSame( 'creator', $this->audit( AuditAction::CreatorCodeRegistered )[0]['source'] );
+		self::assertSame( $notified, did_action( 'merchboard_notify' ), 'The code is already on the creator\'s screen.' );
+
+		$this->next = array( 'nova11' );
+		$this->expect_refusal( CreatorCodeException::CODE_ENDED, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_FIRST ), 'A second request never replaces it.' );
+		self::assertSame( 'nova10', $this->codes->active_for_creator( $this->creator )?->code );
+	}
+
+	public function test_a_code_an_administrator_ended_is_not_brought_back(): void {
+		$this->register( $this->creator, 'nova10' );
+		$this->code_service()->end( $this->creator );
+
+		wp_set_current_user( $this->user );
+		$this->next = array( 'nova11' );
+		$this->expect_refusal( CreatorCodeException::CODE_ENDED, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_FIRST ) );
+		$this->expect_refusal( CreatorCodeException::NO_ACTIVE_CODE, fn() => $this->code_service()->issue( $this->creator, CreatorCodeService::SOURCE_CREATOR ) );
+
+		self::assertNull( $this->codes->active_for_creator( $this->creator ) );
+		self::assertSame( array(), $this->issuer->discarded, 'Refused before a coupon exists.' );
+	}
+
 	public function test_an_administrator_viewing_as_the_creator_may_reset_the_code(): void {
 		$this->register( $this->creator, 'nova10' );
 		update_user_meta(

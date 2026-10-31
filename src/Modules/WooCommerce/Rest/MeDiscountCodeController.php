@@ -1,6 +1,7 @@
 <?php
 /**
- * Creator-scope REST routes: /me/discount-code and /me/discount-code/reset.
+ * Creator-scope REST routes: /me/discount-code (read and first code) and
+ * /me/discount-code/reset.
  *
  * @package MerchBoard
  */
@@ -27,6 +28,10 @@ defined( 'ABSPATH' ) || exit;
  * The dashboard asks for it only when the creator chooses to show it, so the
  * code is not part of any other response or of the page.
  *
+ * `POST /merchboard/v1/me/discount-code`: the creator's active code, or a
+ * first one when the creator has never had a code. A code an administrator
+ * ended stays ended: 400 with `data.reason` `code_ended`.
+ *
  * `POST /merchboard/v1/me/discount-code/reset` (ADR-078): replaces the
  * creator's code with a new one at once (the old one stops working) and
  * answers `{ "code": "<new code>" }`. Only with an active code, at most
@@ -50,7 +55,7 @@ final class MeDiscountCodeController extends RestController {
 	 * @param CreatorContext          $context Creator access policy.
 	 * @param CreatorCodeRepository   $codes   Registrations.
 	 * @param Logger                  $logger  Technical log.
-	 * @param CreatorCodeService|null $service Issues new codes (null: no reset route).
+	 * @param CreatorCodeService|null $service Issues new codes (null: reading only).
 	 */
 	public function __construct( private CreatorContext $context, private CreatorCodeRepository $codes, Logger $logger, private ?CreatorCodeService $service = null ) {
 		parent::__construct( $logger );
@@ -60,19 +65,25 @@ final class MeDiscountCodeController extends RestController {
 	 * Registers the route.
 	 */
 	public function register_routes(): void {
-		register_rest_route(
-			self::NAMESPACE,
-			self::ROUTE,
+		$routes = array(
 			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_code' ),
-					'permission_callback' => array( $this, 'permission' ),
-					'args'                => array(),
-				),
-				'schema' => array( $this, 'schema' ),
-			)
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_code' ),
+				'permission_callback' => array( $this, 'permission' ),
+				'args'                => array(),
+			),
 		);
+
+		if ( null !== $this->service ) {
+			$routes[] = array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'first_code' ),
+				'permission_callback' => array( $this, 'permission' ),
+				'args'                => array(),
+			);
+		}
+
+		register_rest_route( self::NAMESPACE, self::ROUTE, $routes + array( 'schema' => array( $this, 'schema' ) ) );
 
 		if ( null !== $this->service ) {
 			register_rest_route(
@@ -114,11 +125,42 @@ final class MeDiscountCodeController extends RestController {
 					return $creator;
 				}
 
-				$active   = $this->codes->active_for_creator( $creator->id );
-				$response = new WP_REST_Response( array( 'code' => null === $active ? null : $active->code ) );
-				$response->header( 'Cache-Control', 'no-store' );
+				return $this->code_response( $creator->id );
+			}
+		);
+	}
 
-				return $response;
+	/**
+	 * `POST /me/discount-code`: the active code, or the creator's first one.
+	 */
+	public function first_code(): WP_REST_Response|WP_Error {
+		return $this->run(
+			self::ROUTE,
+			function (): WP_REST_Response|WP_Error {
+				$creator = $this->require_creator( $this->context );
+
+				if ( $creator instanceof WP_Error ) {
+					return $creator;
+				}
+
+				if ( null === $this->service ) {
+					return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
+				}
+
+				if ( null !== $this->codes->active_for_creator( $creator->id ) ) {
+					return $this->code_response( $creator->id );
+				}
+
+				try {
+					$this->service->issue( $creator->id, CreatorCodeService::SOURCE_FIRST );
+				} catch ( CreatorCodeException $e ) {
+					// A parallel request may just have created it.
+					if ( null === $this->codes->active_for_creator( $creator->id ) ) {
+						return self::refused( $e );
+					}
+				}
+
+				return $this->code_response( $creator->id );
 			}
 		);
 	}
@@ -143,18 +185,36 @@ final class MeDiscountCodeController extends RestController {
 				try {
 					$this->service->issue( $creator->id, CreatorCodeService::SOURCE_CREATOR );
 				} catch ( CreatorCodeException $e ) {
-					return CreatorCodeException::NOT_AUTHORIZED === $e->reason()
-						? self::error( 'merchboard_forbidden', __( 'You do not have access to this resource.', 'merchboard' ), 403 )
-						: self::error( 'merchboard_code_refused', __( 'The discount code was not reset.', 'merchboard' ), 400, array( 'reason' => $e->reason() ) );
+					return self::refused( $e );
 				}
 
-				$active   = $this->codes->active_for_creator( $creator->id );
-				$response = new WP_REST_Response( array( 'code' => null === $active ? null : $active->code ) );
-				$response->header( 'Cache-Control', 'no-store' );
-
-				return $response;
+				return $this->code_response( $creator->id );
 			}
 		);
+	}
+
+	/**
+	 * The creator's active code; never cached by the browser.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private function code_response( int $creator_id ): WP_REST_Response {
+		$active   = $this->codes->active_for_creator( $creator_id );
+		$response = new WP_REST_Response( array( 'code' => null === $active ? null : $active->code ) );
+		$response->header( 'Cache-Control', 'no-store' );
+
+		return $response;
+	}
+
+	/**
+	 * A refused request.
+	 *
+	 * @param CreatorCodeException $e The refusal.
+	 */
+	private static function refused( CreatorCodeException $e ): WP_Error {
+		return CreatorCodeException::NOT_AUTHORIZED === $e->reason()
+			? self::error( 'merchboard_forbidden', __( 'You do not have access to this resource.', 'merchboard' ), 403 )
+			: self::error( 'merchboard_code_refused', __( 'The discount code was not reset.', 'merchboard' ), 400, array( 'reason' => $e->reason() ) );
 	}
 
 	/**

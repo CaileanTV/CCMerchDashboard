@@ -114,7 +114,7 @@ Se [API.md](../API.md).
 - Salg: `SalesSynchronizer` (kun live-synkronisering, aldrig backfill) via `SalesNotices`: `sale_new` én pr. ordre, cyklus og creator; `sale_reversed` for refunderings-, tilbageførsels- og rettelsesrækker. Linjer udelukket af creatorens egen kode giver ingen rækker og derfor ingen notifikation.
 - Udbetalinger: `PayoutRequests` (anmodning, annullering), `PayoutDecisions` (gennemført med bilagsnummer, afvist med begrundelse) og `PayoutGiftCards` (gavekort, aldrig koden) via `PayoutNotice`; `SettlementDocuments::correct`; `PayoutRecalculations` (pr. udført regulering).
 - Kategoriforslag: `CategoryProposals::approve`/`reject` (feltets nøgle; navnet oversættes ved visning).
-- Rabatkode: `CreatorCodeService::issue` (første kode eller nulstilling) og `end`; aldrig koden.
+- Rabatkode: `CreatorCodeService::issue` (administratorens første kode eller nulstilling) og `end`; aldrig koden. En første kode, creatoren selv får i dashboardet, giver ingen notifikation, for den står allerede på skærmen.
 - Konto: `CreatorService` (velkomst, når en bruger tilknyttes; én gang pr. creator og bruger), statusskift, `CreatorPricingSettings` (fortjeneste som standard eller pr. produkt, nuværende momsstatus), `PayoutSettings::set_billing_details` (aldrig værdierne), `ProductCreatorLink::link` (manuel kobling) og `Impersonation::start` (aldrig hvem).
 - Nyheder: `NewsService::publish` → `merchboard_news_published`.
 - Alerts (29.6): `ChatSender` (botten afvist; én gang pr. forbindelse, til creatoren forbinder igen), `WebhookDispatcher` (sat på pause), `YouTubeLegal` → action `merchboard_youtube_terms_renewed` (hver creator med YouTube-kanal, én gang pr. version), `AlertApiKeys` (ny nøgle med navn; administratorens tilbagekaldelse; aldrig nøglen).

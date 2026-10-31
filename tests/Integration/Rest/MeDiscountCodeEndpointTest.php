@@ -1,6 +1,6 @@
 <?php
 /**
- * GET /me/discount-code and POST /me/discount-code/reset (ADR-068, ADR-078).
+ * /me/discount-code and POST /me/discount-code/reset (ADR-068, ADR-078).
  *
  * @package MerchBoard
  */
@@ -42,6 +42,8 @@ final class MeDiscountCodeEndpointTest extends IntegrationTestCase {
 
 	private FakeCouponIssuer $issuer;
 
+	private CreatorCodeService $code_service;
+
 	/**
 	 * Codes the generator returns, in order.
 	 *
@@ -73,6 +75,7 @@ final class MeDiscountCodeEndpointTest extends IntegrationTestCase {
 			fn(): string => (string) array_shift( $this->next )
 		);
 		$service->issue( $this->nova, CreatorCodeService::SOURCE_ADMIN );
+		$this->code_service = $service;
 
 		$controller     = new MeDiscountCodeController( $this->service( CreatorContext::class ), $codes, $this->service( Logger::class ), $service );
 		$this->register = static function () use ( $controller ): void {
@@ -110,12 +113,42 @@ final class MeDiscountCodeEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( 'merchboard_code_refused', 'reset_limit' ), array( $refused->get_data()['code'] ?? null, $refused->get_data()['data']['reason'] ?? null ) );
 	}
 
+	public function test_a_creator_without_a_code_gets_the_first_one(): void {
+		$user = $this->create_user( 'sol' );
+		$this->service( CreatorService::class )->create( 'Sol', CreatorStatus::Active, $user );
+		wp_set_current_user( $user );
+
+		self::assertSame( array( 'code' => null ), $this->call( 'GET', '' )->get_data(), 'Reading creates nothing.' );
+		self::assertSame( 'no_active_code', $this->call( 'POST', '/reset' )->get_data()['data']['reason'] ?? null );
+
+		$first = $this->call( 'POST', '' );
+		self::assertSame( 200, $first->get_status() );
+		self::assertSame( array( 'code' => 'nova-bbbb' ), $first->get_data() );
+		self::assertSame( 'no-store', $first->get_headers()['Cache-Control'] ?? null );
+
+		self::assertSame( array( 'code' => 'nova-bbbb' ), $this->call( 'POST', '' )->get_data(), 'Asking again changes nothing.' );
+		self::assertSame( array(), $this->issuer->retired );
+	}
+
+	public function test_a_creator_whose_code_was_ended_gets_no_new_one(): void {
+		$this->code_service->end( $this->nova );
+		wp_set_current_user( $this->nova_user );
+
+		$refused = $this->call( 'POST', '' );
+
+		self::assertSame( 400, $refused->get_status() );
+		self::assertSame( array( 'merchboard_code_refused', 'code_ended' ), array( $refused->get_data()['code'] ?? null, $refused->get_data()['data']['reason'] ?? null ) );
+		self::assertSame( array( 'code' => null ), $this->call( 'GET', '' )->get_data() );
+	}
+
 	public function test_without_creator_access_nothing_is_reset(): void {
 		wp_set_current_user( $this->create_user( 'fan' ) );
 		self::assertSame( 403, $this->call( 'POST', '/reset' )->get_status() );
+		self::assertSame( 403, $this->call( 'POST', '' )->get_status() );
 
 		wp_set_current_user( 0 );
 		self::assertSame( 401, $this->call( 'POST', '/reset' )->get_status() );
+		self::assertSame( 401, $this->call( 'POST', '' )->get_status() );
 		self::assertSame( array(), $this->issuer->retired );
 	}
 

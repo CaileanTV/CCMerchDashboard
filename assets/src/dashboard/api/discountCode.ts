@@ -62,6 +62,18 @@ export function parseResetDiscountCode(
 }
 
 /**
+ * `POST /me/discount-code`: the creator's active code, or a first one when the
+ * creator has never had a code. A code an administrator ended stays ended
+ * (`invalid_request` with the `reason` `code_ended`).
+ */
+export function createDiscountCode(): Promise< ApiResult< { code: string } > > {
+	return request(
+		{ path: '/merchboard/v1/me/discount-code', method: 'POST' },
+		parseResetDiscountCode
+	);
+}
+
+/**
  * `POST /me/discount-code/reset` (ADR-078): replaces the creator's code with
  * a new one; the old one stops working at once. A refusal comes back as an
  * `invalid_request` error with its `reason` (e.g. `reset_limit`).

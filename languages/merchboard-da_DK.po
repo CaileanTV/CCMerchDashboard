@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T07:31:30+00:00\n"
+"PO-Revision-Date: 2026-10-31T07:39:10+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -42,7 +42,7 @@ msgstr "Du skal være logget ind."
 #: src/Core/Http/RestController.php:79
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:282
 #: src/Modules/Dashboard/Rest/MeController.php:516
-#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:216
 msgid "You do not have access to this resource."
 msgstr "Du har ikke adgang til denne ressource."
 
@@ -4114,7 +4114,8 @@ msgstr "Profil"
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:258
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:416
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:773
-#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:140
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
 msgid "Not found."
 msgstr "Ikke fundet."
 
@@ -11017,7 +11018,7 @@ msgstr "Side %1$d af %2$d"
 msgid "The creator of a product can only be changed in Merch Dashboard."
 msgstr "Et produkts creator kan kun ændres i Merch Dashboard."
 
-#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:148
+#: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:217
 msgid "The discount code was not reset."
 msgstr "Rabatkoden blev ikke nulstillet."
 
@@ -14775,8 +14776,8 @@ msgid "Your discount code has already been replaced 3 times in the last 24 hours
 msgstr "Din rabatkode er allerede skiftet 3 gange inden for de seneste 24 timer. Prøv igen senere."
 
 #: build/dashboard.js:83
-msgid "You have no discount code to reset. Your first discount code is created by us."
-msgstr "Du har ingen rabatkode at nulstille. Din første rabatkode opretter vi."
+msgid "Your discount code has been ended. Contact us if you need a new one."
+msgstr "Din rabatkode er afsluttet. Kontakt os, hvis du har brug for en ny."
 
 #: build/dashboard.js:83
 msgid "Your discount code is being changed right now. Try again in a moment."
@@ -14795,10 +14796,6 @@ msgid "With your own discount code you can buy your own merchandise without payi
 msgstr "Med din egen rabatkode kan du købe dit eget merchandise uden at betale for din fortjeneste. Ordrer købt med din egen rabatkode tæller ikke med i dit salg og din fortjeneste."
 
 #: build/dashboard.js:83
-msgid "You have no discount code yet."
-msgstr "Du har endnu ingen rabatkode."
-
-#: build/dashboard.js:83
 msgid "Code:"
 msgstr "Kode:"
 
@@ -14809,6 +14806,14 @@ msgstr "Din nye rabatkode er klar. Den gamle kode virker ikke længere."
 #: build/dashboard.js:83
 msgid "Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen."
 msgstr "Din nye rabatkode er klar. Den gamle kode virker ikke længere. Vis den nye kode, når ingen andre kan se din skærm."
+
+#: build/dashboard.js:83
+msgid "Your discount code is ready."
+msgstr "Din rabatkode er klar."
+
+#: build/dashboard.js:83
+msgid "Your discount code is ready. Show the code when no one else can see your screen."
+msgstr "Din rabatkode er klar. Vis koden, når ingen andre kan se din skærm."
 
 #: build/dashboard.js:83
 msgid "Hide discount code"

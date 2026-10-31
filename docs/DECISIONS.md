@@ -4278,6 +4278,8 @@ ADR-007, ADR-023, ADR-033, ADR-075, ADR-076.
 ## Status
 Accepteret af projektejeren 2026-10-26 (plan for trin 28.5 godkendt). Backend og admin implementeret i trin 28.5.1, creatorens nulstilling (`POST /me/discount-code/reset` og dashboardet) i trin 28.5.2; testet automatisk, ikke runtime-verificeret.
 
+**Statusnote 2026-10-31 (projektejerens valg, ændrer pkt. 4):** Admin behøver ikke længere oprette den første kode. Har creatoren aldrig haft en registrering, opretter systemet koden, når creatoren trykker "Vis rabatkode" eller "Nulstil" (`POST /me/discount-code`, `CreatorCodeService::SOURCE_FIRST`). Koden oprettes først ved det tryk, så der ikke ligger ubrugte kuponer i WooCommerce, og `GET` skriver aldrig. En kode, admin har afsluttet, kommer ikke tilbage (`code_ended`), for ellers kunne creatoren omgå afslutningen. Oprettelsen auditeres med `source` `creator` og sender ingen notifikation, for koden står allerede på creatorens skærm. Det gælder også under "Se som creator".
+
 **Statusnote 2026-10-26 (trin 28.6, review og runtime-test på Local med WooCommerce 11.2.1):**
 
 Runtime-verificeret:

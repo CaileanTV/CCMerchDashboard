@@ -36,6 +36,9 @@ defined( 'ABSPATH' ) || exit;
  *   the creator resets their own code (only when they have one), also while
  *   an administrator views as the creator (ADR-075), at most RESETS_PER_DAY
  *   times a day.
+ * - A creator who has never had a code gets their first one on request
+ *   (owner's choice 2026-10-31). A code an administrator ended is never
+ *   brought back that way.
  * - K5: a code that is a gift card code is never issued; when the gift card
  *   check cannot be done, nothing is issued. The coupon is not restricted to
  *   an e-mail address, so every order with the code is excluded, whoever
@@ -56,6 +59,7 @@ final class CreatorCodeService {
 
 	public const SOURCE_ADMIN   = 'admin';
 	public const SOURCE_CREATOR = 'creator';
+	public const SOURCE_FIRST   = 'first';
 
 	/**
 	 * Codes a creator may issue (reset) within a day.
@@ -115,22 +119,18 @@ final class CreatorCodeService {
 	 * old code (if any) ends and its coupon goes to the trash.
 	 *
 	 * @param int    $creator_id Creator.
-	 * @param string $source     SOURCE_ADMIN (an administrator on the creator's page) or SOURCE_CREATOR (a reset in the dashboard).
+	 * @param string $source     SOURCE_ADMIN (an administrator on the creator's page), SOURCE_CREATOR (a reset in the dashboard) or SOURCE_FIRST (the creator's first code, from the dashboard).
 	 * @return string `code_registered`, or `code_changed` when an earlier code was ended.
 	 * @throws CreatorCodeException When it is refused (nothing is kept).
 	 * @throws DatabaseException When it cannot be stored (nothing is kept).
 	 */
 	public function issue( int $creator_id, string $source ): string {
-		$creator = $this->creator( $creator_id );
+		$creator    = $this->creator( $creator_id );
+		$by_creator = self::SOURCE_CREATOR === $source || self::SOURCE_FIRST === $source;
 
-		if ( self::SOURCE_CREATOR === $source ) {
+		if ( $by_creator ) {
 			self::authorize_creator( $creator );
-
-			if ( null === $this->codes->active_for_creator( $creator->id ) ) {
-				self::refuse( CreatorCodeException::NO_ACTIVE_CODE );
-			}
-
-			$this->assert_below_limit( $creator->id );
+			$this->assert_creator_may_issue( $creator->id, $source, $this->codes->active_for_creator( $creator->id ) );
 		} else {
 			self::authorize();
 		}
@@ -145,16 +145,12 @@ final class CreatorCodeService {
 				$creator->id,
 				$code,
 				fn(): string => $this->transaction->run(
-					function () use ( $creator, $code, $coupon, $source ): string {
+					function () use ( $creator, $code, $coupon, $source, $by_creator ): string {
 						$current = $this->codes->active_for_creator( $creator->id, true );
 
-						// Again under the locks: an admin may have ended the code, or a parallel reset used the limit.
-						if ( self::SOURCE_CREATOR === $source ) {
-							if ( null === $current ) {
-								self::refuse( CreatorCodeException::NO_ACTIVE_CODE );
-							}
-
-							$this->assert_below_limit( $creator->id );
+						// Again under the locks: an admin may have ended the code, or a parallel request used the limit.
+						if ( $by_creator ) {
+							$this->assert_creator_may_issue( $creator->id, $source, $current );
 						}
 
 						if ( null !== $this->codes->active_for_code( $code, true ) ) {
@@ -183,7 +179,7 @@ final class CreatorCodeService {
 								'coupon_id'                => $coupon->id,
 								'previous_creator_code_id' => null === $current ? null : $current->id,
 								'validation'               => 'passed',
-								'source'                   => self::SOURCE_CREATOR === $source ? self::SOURCE_CREATOR : self::SOURCE_ADMIN,
+								'source'                   => $by_creator ? self::SOURCE_CREATOR : self::SOURCE_ADMIN,
 							)
 						);
 
@@ -198,8 +194,10 @@ final class CreatorCodeService {
 			}
 		}
 
-		// Never the code: the creator reads it in the dashboard.
-		do_action( 'merchboard_notify', 'code_registered' === $result ? 'code_issued' : 'code_reset', $creator->id, array(), '' );
+		// Never the code: the creator reads it in the dashboard, and a first code is already on their screen.
+		if ( self::SOURCE_FIRST !== $source ) {
+			do_action( 'merchboard_notify', 'code_registered' === $result ? 'code_issued' : 'code_reset', $creator->id, array(), '' );
+		}
 
 		// A reset from the dashboard (the creator or "View as creator") is told to the administrator.
 		if ( self::SOURCE_CREATOR === $source ) {
@@ -260,6 +258,32 @@ final class CreatorCodeService {
 		}
 
 		self::refuse( CreatorCodeException::CODE_TAKEN );
+	}
+
+	/**
+	 * A creator gets a first code only without any earlier registration, and
+	 * resets only an active code, within the limit.
+	 *
+	 * @param int              $creator_id Creator.
+	 * @param string           $source     SOURCE_CREATOR or SOURCE_FIRST.
+	 * @param CreatorCode|null $current    The creator's active registration.
+	 * @throws CreatorCodeException When it is refused.
+	 * @throws DatabaseException When the registrations cannot be read.
+	 */
+	private function assert_creator_may_issue( int $creator_id, string $source, ?CreatorCode $current ): void {
+		if ( self::SOURCE_FIRST === $source ) {
+			if ( array() !== $this->codes->for_creator( $creator_id, 1 ) ) {
+				self::refuse( CreatorCodeException::CODE_ENDED );
+			}
+
+			return;
+		}
+
+		if ( null === $current ) {
+			self::refuse( CreatorCodeException::NO_ACTIVE_CODE );
+		}
+
+		$this->assert_below_limit( $creator_id );
 	}
 
 	/**

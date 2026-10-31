@@ -99,6 +99,8 @@ final class CreatorCodeRepository {
 	/**
 	 * The creator's active registration, or null.
 	 *
+	 * @phpstan-impure
+	 *
 	 * @param int  $creator_id Creator.
 	 * @param bool $lock       Read FOR UPDATE (inside a transaction).
 	 * @throws DatabaseException When the read fails.

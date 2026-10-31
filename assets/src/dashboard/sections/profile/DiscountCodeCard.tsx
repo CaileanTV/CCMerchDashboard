@@ -1,7 +1,11 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
-import { getDiscountCode, resetDiscountCode } from '../../api/discountCode';
+import {
+	createDiscountCode,
+	getDiscountCode,
+	resetDiscountCode,
+} from '../../api/discountCode';
 import type { ApiError } from '../../api/client';
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Button } from '../../components/Button';
@@ -18,6 +22,7 @@ type Reset =
 	| { readonly status: 'confirming' }
 	| { readonly status: 'busy' }
 	| { readonly status: 'done' }
+	| { readonly status: 'created' }
 	| { readonly status: 'refused'; readonly reason: string }
 	| { readonly status: 'error'; readonly error: ApiError };
 
@@ -33,9 +38,9 @@ function refusal( reason: string ): string {
 				'Your discount code has already been replaced 3 times in the last 24 hours. Try again later.',
 				'merchboard'
 			);
-		case 'no_active_code':
+		case 'code_ended':
 			return __(
-				'You have no discount code to reset. Your first discount code is created by us.',
+				'Your discount code has been ended. Contact us if you need a new one.',
 				'merchboard'
 			);
 		case 'busy':
@@ -61,6 +66,9 @@ function refusal( reason: string ): string {
  * code: the old one stops working at once. It works while the code is
  * hidden, so a code shown by mistake can be replaced without showing the new
  * one; the new code is shown only when the code was already shown.
+ *
+ * A creator who has never had a code gets their first one from either button.
+ * A code an administrator ended stays ended.
  */
 export function DiscountCodeCard() {
 	const [ state, setState ] = useState< State >( { status: 'hidden' } );
@@ -70,21 +78,38 @@ export function DiscountCodeCard() {
 		setState( { status: 'loading' } );
 		const result = await getDiscountCode();
 
-		setState(
-			result.ok
-				? { status: 'shown', code: result.data.code }
-				: { status: 'error', error: result.error }
-		);
+		if ( ! result.ok ) {
+			setState( { status: 'error', error: result.error } );
+			return;
+		}
+
+		if ( result.data.code !== null ) {
+			setState( { status: 'shown', code: result.data.code } );
+			return;
+		}
+
+		const first = await createDiscountCode();
+
+		if ( first.ok ) {
+			setState( { status: 'shown', code: first.data.code } );
+		} else if ( first.error.reason === 'code_ended' ) {
+			setState( { status: 'shown', code: null } );
+		} else {
+			setState( { status: 'error', error: first.error } );
+		}
 	};
 
 	const hide = () => setState( { status: 'hidden' } );
 
 	const replace = async () => {
 		setReset( { status: 'busy' } );
-		const result = await resetDiscountCode();
+		const replaced = await resetDiscountCode();
+		const first =
+			! replaced.ok && replaced.error.reason === 'no_active_code';
+		const result = first ? await createDiscountCode() : replaced;
 
 		if ( result.ok ) {
-			setReset( { status: 'done' } );
+			setReset( { status: first ? 'created' : 'done' } );
 			setState( ( current ) =>
 				current.status === 'shown'
 					? { status: 'shown', code: result.data.code }
@@ -117,9 +142,7 @@ export function DiscountCodeCard() {
 
 			{ state.status === 'shown' &&
 				( state.code === null ? (
-					<p>
-						{ __( 'You have no discount code yet.', 'merchboard' ) }
-					</p>
+					<p>{ refusal( 'code_ended' ) }</p>
 				) : (
 					<p className="merchboard-discount-code">
 						<span className="merchboard-discount-code__label">
@@ -138,6 +161,17 @@ export function DiscountCodeCard() {
 							)
 						: __(
 								'Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen.',
+								'merchboard'
+							) }
+				</p>
+			) }
+
+			{ reset.status === 'created' && (
+				<p role="status">
+					{ state.status === 'shown'
+						? __( 'Your discount code is ready.', 'merchboard' )
+						: __(
+								'Your discount code is ready. Show the code when no one else can see your screen.',
 								'merchboard'
 							) }
 				</p>

@@ -29,6 +29,7 @@ final class CreatorCodeException extends DomainException {
 	public const CODE_TAKEN           = 'code_taken';
 	public const UNCHANGED            = 'code_unchanged';
 	public const NO_ACTIVE_CODE       = 'no_active_code';
+	public const CODE_ENDED           = 'code_ended';
 	public const BUSY                 = 'busy';
 	public const COUPON_NOT_CREATED   = 'coupon_not_created';
 	public const COUPON_NOT_RETIRED   = 'coupon_not_retired';

@@ -13,7 +13,20 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 } ) );
 
 const PATH = 'GET /merchboard/v1/me/discount-code';
+const CREATE = 'POST /merchboard/v1/me/discount-code';
 const RESET = 'POST /merchboard/v1/me/discount-code/reset';
+
+/**
+ * A refusal from the server.
+ *
+ * @param reason Reason code.
+ */
+const refused = ( reason: string ) =>
+	response( 400, {
+		code: 'merchboard_code_refused',
+		message: 'Server <b>detail</b>',
+		data: { status: 400, reason },
+	} );
 
 describe( 'response validation', () => {
 	it( 'accepts a code and null', () => {
@@ -91,8 +104,31 @@ describe( 'DiscountCodeCard', () => {
 		expect( button( 'Show discount code' ) ).not.toBeNull();
 	} );
 
-	it( 'says so when the creator has no code', async () => {
-		mockApi( { [ PATH ]: () => response( 200, { code: null } ) } );
+	it( 'creates and shows the first code when the creator has none', async () => {
+		const requests = mockApi( {
+			[ PATH ]: () => response( 200, { code: null } ),
+			[ CREATE ]: () => response( 200, { code: 'nova-7k3qxp' } ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DiscountCodeCard />
+			</ConfigContext.Provider>
+		);
+		click( button( 'Show discount code' ) );
+		await flush();
+
+		expect( requests ).toHaveLength( 2 );
+		expect( rendered.container.querySelector( 'code' )?.textContent ).toBe(
+			'nova-7k3qxp'
+		);
+	} );
+
+	it( 'says so when an administrator ended the code', async () => {
+		mockApi( {
+			[ PATH ]: () => response( 200, { code: null } ),
+			[ CREATE ]: () => refused( 'code_ended' ),
+		} );
 
 		rendered = render(
 			<ConfigContext.Provider value={ CONFIG }>
@@ -103,9 +139,28 @@ describe( 'DiscountCodeCard', () => {
 		await flush();
 
 		expect( rendered.container.textContent ).toContain(
-			'You have no discount code yet.'
+			'Your discount code has been ended.'
 		);
 		expect( rendered.container.querySelector( 'code' ) ).toBeNull();
+	} );
+
+	it( 'shows the standard error when the first code cannot be created', async () => {
+		mockApi( {
+			[ PATH ]: () => response( 200, { code: null } ),
+			[ CREATE ]: () => refused( 'coupon_not_created' ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DiscountCodeCard />
+			</ConfigContext.Provider>
+		);
+		click( button( 'Show discount code' ) );
+		await flush();
+
+		expect( button( 'Show discount code' ) ).toBeNull();
+		expect( rendered.container.querySelector( 'code' ) ).toBeNull();
+		expect( rendered.container.textContent ).not.toContain( 'detail' );
 	} );
 
 	it( 'shows the standard error with a retry and never the server message', async () => {
@@ -197,22 +252,51 @@ describe( 'DiscountCodeCard', () => {
 		);
 	} );
 
+	it( 'gives a creator without a code the first one instead of a reset', async () => {
+		const requests = mockApi( {
+			[ RESET ]: () => refused( 'no_active_code' ),
+			[ CREATE ]: () => response( 200, { code: 'nova-7k3qxp' } ),
+		} );
+
+		rendered = card();
+		click( button( 'Reset and generate a new discount code' ) );
+		click( button( 'Reset discount code' ) );
+		await flush();
+
+		expect( requests ).toHaveLength( 2 );
+		expect( rendered.container.textContent ).not.toContain( 'nova-7k3qxp' );
+		expect(
+			rendered.container.querySelector( '[role="status"]' )?.textContent
+		).toContain( 'Your discount code is ready.' );
+		expect(
+			rendered.container.querySelector( '[role="status"]' )?.textContent
+		).not.toContain( 'old code' );
+	} );
+
+	it( 'does not bring back a code an administrator ended', async () => {
+		mockApi( {
+			[ RESET ]: () => refused( 'no_active_code' ),
+			[ CREATE ]: () => refused( 'code_ended' ),
+		} );
+
+		rendered = card();
+		click( button( 'Reset and generate a new discount code' ) );
+		click( button( 'Reset discount code' ) );
+		await flush();
+
+		expect(
+			rendered.container.querySelector( '[role="alert"]' )?.textContent
+		).toContain( 'Your discount code has been ended.' );
+	} );
+
 	it.each( [
 		[ 'reset_limit', '3 times in the last 24 hours' ],
-		[ 'no_active_code', 'You have no discount code to reset.' ],
 		[ 'busy', 'Try again in a moment.' ],
 		[ 'coupon_not_created', 'Nothing was changed; try again later.' ],
 	] )(
 		'explains the refusal %s with a fixed text',
 		async ( reason, text ) => {
-			mockApi( {
-				[ RESET ]: () =>
-					response( 400, {
-						code: 'merchboard_code_refused',
-						message: 'Server <b>detail</b>',
-						data: { status: 400, reason },
-					} ),
-			} );
+			mockApi( { [ RESET ]: () => refused( reason ) } );
 
 			rendered = card();
 			click( button( 'Reset and generate a new discount code' ) );
