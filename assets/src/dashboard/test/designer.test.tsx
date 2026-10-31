@@ -125,6 +125,20 @@ describe( 'the designer API', () => {
 		} );
 		expect( overview?.bases[ 0 ]?.views[ 0 ]?.printWidth ).toBe( 3543 );
 		expect( overview?.bases[ 0 ]?.views[ 0 ]?.backgrounds ).toEqual( {} );
+		expect( overview?.bases[ 0 ]?.views[ 0 ]?.flat ).toBe( false );
+		expect(
+			parseOverview( {
+				...OVERVIEW,
+				bases: [
+					{
+						...OVERVIEW.bases[ 0 ],
+						views: [
+							{ ...OVERVIEW.bases[ 0 ]?.views[ 0 ], flat: true },
+						],
+					},
+				],
+			} )?.bases[ 0 ]?.views[ 0 ]?.flat
+		).toBe( true );
 		expect(
 			parseOverview( {
 				...OVERVIEW,

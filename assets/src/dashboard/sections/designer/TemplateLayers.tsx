@@ -2,8 +2,10 @@
  * The mockup template around the design (phase 30, step 30.8): the
  * background and the colour mask, tinted in the chosen product colour, under
  * the design; the shading (multiplied) and the highlight (screened) over it,
- * so the design follows the folds. Only `data:` images (the dashboard's
- * CSP); the layers above never take the pointer.
+ * so the design follows the folds. A flat side's shading is its sewing
+ * pattern, drawn normally: its veil covers what falls outside the part. Only
+ * `data:` images (the dashboard's CSP); the layers above never take the
+ * pointer.
  */
 import { useEffect, useState } from '@wordpress/element';
 
@@ -114,7 +116,7 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 		</>
 	) : (
 		<>
-			{ layer( view.layers.shading, 'multiply' ) }
+			{ layer( view.layers.shading, view.flat ? undefined : 'multiply' ) }
 			{ layer( view.layers.highlight, 'screen' ) }
 		</>
 	);

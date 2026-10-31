@@ -13,9 +13,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * What a submission needs (ADR-080 pkt. 5, step 30.9): the creator's
- * browser renders one transparent print PNG per used side, in the side's
- * print size, and one mockup per used side and chosen colour, in the
- * template's size. A side is used when it has at least one visible object.
+ * browser renders one transparent print PNG per used side (a JPEG on white on
+ * a flat side), in the side's print size, and one mockup per used side and
+ * chosen colour, in the template's size. A side is used when it has at least one visible object.
  *
  * The files are stored with the draft (`merchboard_designer_versions.files`):
  * `{ stamp, print: { side: file }, mockups: { side: { colour: file } } }`,

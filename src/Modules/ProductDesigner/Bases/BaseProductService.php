@@ -376,7 +376,7 @@ class BaseProductService {
 	 * @param list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored   Files stored so far (for clean-up).
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, flat: bool}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array() ): array {
@@ -453,6 +453,8 @@ class BaseProductService {
 				'new'    => $new,
 				'input'  => $input,
 				'pack'   => $pack,
+				// A flat side stays flat; only an import makes one.
+				'flat'   => true === ( $input['flat'] ?? false ) || true === $old?->flat,
 			);
 		}
 
@@ -496,8 +498,8 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string} $plan   Plan.
-	 * @param array<string, int>                                                                                                                                          $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, flat: bool} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                                      $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {
@@ -533,7 +535,8 @@ class BaseProductService {
 				$number( 'width_mm' ),
 				$number( 'height_mm' ),
 				$number( 'dpi' ),
-				$plan['pack']
+				$plan['pack'],
+				$plan['flat']
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );

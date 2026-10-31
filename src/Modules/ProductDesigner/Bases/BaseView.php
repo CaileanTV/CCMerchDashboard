@@ -29,6 +29,10 @@ defined( 'ABSPATH' ) || exit;
  *   The print file of the side is width_mm × height_mm at that dpi.
  * - A side with a `thread_pack` is embroidered: its design keeps to that
  *   pack's threads (ThreadPacks). Without one it is printed.
+ * - A `flat` side is a flat part of an all-over product (ADR-081): the
+ *   template is the sewing pattern, drawn normally over the design (its veil
+ *   outside the part must cover it), and the print file is a JPEG on white.
+ *   Only the provider's mockups show the product sewn.
  */
 final readonly class BaseView {
 
@@ -104,6 +108,7 @@ final readonly class BaseView {
 	 * @param int                                            $height_mm   Print height in mm.
 	 * @param int                                            $dpi         Print resolution.
 	 * @param string                                         $thread_pack The embroidery pack; empty when the side is printed.
+	 * @param bool                                           $flat        Whether the side is a flat part of an all-over product.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -116,7 +121,8 @@ final readonly class BaseView {
 		public int $width_mm,
 		public int $height_mm,
 		public int $dpi,
-		public string $thread_pack = ''
+		public string $thread_pack = '',
+		public bool $flat = false
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -176,7 +182,15 @@ final readonly class BaseView {
 			'dpi'       => $this->dpi,
 		);
 
-		return '' === $this->thread_pack ? $side : array_merge( $side, array( 'thread_pack' => $this->thread_pack ) );
+		if ( '' !== $this->thread_pack ) {
+			$side['thread_pack'] = $this->thread_pack;
+		}
+
+		if ( $this->flat ) {
+			$side['flat'] = true;
+		}
+
+		return $side;
 	}
 
 	/**
@@ -212,7 +226,8 @@ final readonly class BaseView {
 			$int( $data['width_mm'] ?? null ),
 			$int( $data['height_mm'] ?? null ),
 			$int( $data['dpi'] ?? null ),
-			is_string( $data['thread_pack'] ?? null ) ? $data['thread_pack'] : ''
+			is_string( $data['thread_pack'] ?? null ) ? $data['thread_pack'] : '',
+			true === ( $data['flat'] ?? false )
 		);
 	}
 }

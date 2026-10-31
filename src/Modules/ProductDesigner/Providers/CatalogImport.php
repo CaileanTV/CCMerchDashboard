@@ -51,6 +51,12 @@ defined( 'ABSPATH' ) || exit;
  *    background, the others as the colours' own backgrounds), the provider's
  *    placement and photo per side are stored, and the state is `ready`.
  *
+ * A flat product (Printful's all-over products) has no photos: the round
+ * `flat` fetches each side's sewing pattern and makes a white background
+ * of its size, and the sides are stored with the print area the provider
+ * names. Nothing is rendered: the provider sews the creator's design into
+ * mockups after the submission.
+ *
  * A failure (the provider refuses, a render fails or takes too long, no
  * marker is found) sets `failed` with the reason, deletes the photos
  * downloaded so far and tells the administrator; "Try again" starts over.
@@ -108,6 +114,11 @@ class CatalogImport {
 	private const MIN_SHARE = 0.002;
 
 	/**
+	 * The width of a flat side without a pattern.
+	 */
+	private const FLAT_WIDTH = 1000;
+
+	/**
 	 * The import data of the current round (for a failure inside it).
 	 *
 	 * @var array<string, mixed>|null
@@ -158,8 +169,8 @@ class CatalogImport {
 	/**
 	 * Creates a draft base product from a catalog product and starts its
 	 * import. Picked: `colors` (names), `sizes`, `sides` (placements),
-	 * `packs` (embroidery pack by placement), `base_price` and
-	 * `extra_side_price`.
+	 * `packs` (embroidery pack by placement), `base_price`,
+	 * `extra_side_price` and `group` (the sizes with the same print sizes).
 	 *
 	 * @param string               $source `printful` or `gelato`.
 	 * @param string               $ref    The provider's product (Printful) or template (Gelato).
@@ -179,7 +190,8 @@ class CatalogImport {
 			self::unavailable( $source );
 		}
 
-		$choice = $renderer->choice( $ref );
+		$choice = $renderer->choice( $ref, is_numeric( $picked['group'] ?? null ) ? (int) $picked['group'] : 0 );
+		$flat   = true === ( $choice['flat'] ?? false );
 		$list   = static fn( string $key ): array => array_map( 'strval', array_filter( is_array( $picked[ $key ] ?? null ) ? $picked[ $key ] : array(), 'is_scalar' ) );
 		$sizes  = array_values( array_intersect( $choice['sizes'], $list( 'sizes' ) ) );
 		$colors = array();
@@ -248,7 +260,22 @@ class CatalogImport {
 
 		unset( $data[''], $map[''] );
 
-		$this->bases->set_provider( $id, $source, $ref, self::json( array( 'placements' => array_column( $sides, 'placement', 'key' ), 'variants' => $map, 'slots' => array() ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->bases->set_provider(
+			$id,
+			$source,
+			$ref,
+			self::json(
+				array(
+					'placements' => array_column( $sides, 'placement', 'key' ),
+					'variants'   => $map,
+					'slots'      => array(),
+					'flat'       => $flat,
+					'styles'     => array_map( 'strval', array_column( $sides, 'style', 'key' ) ),
+					'techniques' => array_column( $sides, 'technique', 'key' ),
+					'options'    => $choice['options'] ?? array(),
+				)
+			)
+		);
 		$this->start(
 			$id,
 			array(
@@ -257,6 +284,7 @@ class CatalogImport {
 				'sides'       => array_values( $sides ),
 				'colors'      => $data,
 				'measure_hex' => GelatoCatalog::SOURCE === $source,
+				'flat'        => $flat,
 			)
 		);
 
@@ -283,7 +311,7 @@ class CatalogImport {
 			return;
 		}
 
-		$this->start( $id, array_intersect_key( $import['data'], array_flip( array( 'source', 'ref', 'sides', 'colors', 'measure_hex' ) ) ) );
+		$this->start( $id, array_intersect_key( $import['data'], array_flip( array( 'source', 'ref', 'sides', 'colors', 'measure_hex', 'flat' ) ) ) );
 	}
 
 	/**
@@ -404,7 +432,7 @@ class CatalogImport {
 				'user'    => get_current_user_id(),
 				'blank'   => $this->assets_url . 'blank.png',
 				'markers' => array_map( fn( int $n ): string => $this->assets_url . 'marker-' . $n . '.png', range( 1, count( ImageProbe::MARKERS ) ) ),
-				'phase'   => 'render',
+				'phase'   => true === ( $data['flat'] ?? false ) ? 'flat' : 'render',
 				'started' => time(),
 			)
 		);
@@ -457,6 +485,7 @@ class CatalogImport {
 		}
 
 		$delay = match ( $data['phase'] ?? 'render' ) {
+			'flat'     => $this->flatten( $id, $renderer, $data ),
 			'measure'  => $this->measure( $renderer, $data ),
 			'download' => $this->collect( $id, $renderer, $data ),
 			default    => $this->render( $id, $renderer, $data ),
@@ -464,6 +493,52 @@ class CatalogImport {
 
 		$this->persist( $id, $data );
 		$this->schedule( $id, $delay );
+	}
+
+	/**
+	 * Fetches the sewing pattern of each side and makes its white background.
+	 * A side without a pattern (a provider that has none) is a white sheet
+	 * in the shape of its print area.
+	 *
+	 * @param int                  $id       Base product.
+	 * @param CatalogRenderer      $renderer Provider.
+	 * @param array<string, mixed> $data     Import data.
+	 * @return int Seconds to the next round.
+	 * @throws PrintfulException When Printful refuses or fails.
+	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws DesignerException When a pattern is refused.
+	 * @throws DatabaseException When it cannot be stored.
+	 * @throws InvalidArgumentException When a pattern cannot be read.
+	 */
+	private function flatten( int $id, CatalogRenderer $renderer, array &$data ): int {
+		foreach ( is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array() as $side ) {
+			$key = is_array( $side ) ? (string) ( $side['key'] ?? '' ) : '';
+
+			if ( '' === $key || isset( $data['files'][ $key ] ) ) {
+				continue;
+			}
+
+			$url    = is_string( $side['template'] ?? null ) ? $side['template'] : '';
+			$width  = self::FLAT_WIDTH;
+			$height = (int) max( 1, round( self::FLAT_WIDTH * (int) ( $side['height_mm'] ?? 1 ) / max( 1, (int) ( $side['width_mm'] ?? 1 ) ) ) );
+			$files  = array();
+
+			if ( '' !== $url ) {
+				[ $png, $width, $height ] = ImageProbe::png( $renderer->download( $url ) );
+
+				$files['shading'] = $this->store( $png );
+			}
+
+			$files['background']   = $this->store( ImageProbe::blank( $width, $height ) );
+			$data['files'][ $key ] = $files;
+			$data['sizes'][ $key ] = array( $width, $height );
+			// Stored at once: a failure later deletes the files.
+			$this->persist( $id, $data );
+		}
+
+		$data['phase'] = 'save';
+
+		return 0;
 	}
 
 	/**
@@ -736,6 +811,17 @@ class CatalogImport {
 		$slots = array();
 		$kept  = array();
 
+		if ( true === ( $data['flat'] ?? false ) ) {
+			foreach ( $sides as $side ) {
+				$view = is_array( $side ) ? $this->flat_view( $side, $data ) : null;
+
+				if ( null !== $view ) {
+					$views[]                       = $view;
+					$kept[ (string) $side['key'] ] = (string) $side['placement'];
+				}
+			}
+		}
+
 		foreach ( is_array( $data['chosen'] ?? null ) ? $data['chosen'] : array() as $index => $chosen ) {
 			$side    = $sides[ $index ] ?? null;
 			$uploads = $this->uploads( $base, is_array( $side ) ? ( $data['files'][ $side['key'] ] ?? array() ) : array() );
@@ -797,7 +883,22 @@ class CatalogImport {
 
 		$provider = $this->bases->provider( $id );
 
-		$this->bases->set_provider( $id, (string) ( $data['source'] ?? '' ), (string) ( $data['ref'] ?? '' ), self::json( array( 'placements' => $kept, 'variants' => $provider['variants'] ?? array(), 'slots' => $slots ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->bases->set_provider(
+			$id,
+			(string) ( $data['source'] ?? '' ),
+			(string) ( $data['ref'] ?? '' ),
+			self::json(
+				array(
+					'placements' => $kept,
+					'variants'   => $provider['variants'] ?? array(),
+					'slots'      => $slots,
+					'flat'       => $provider['flat'] ?? false,
+					'styles'     => $provider['styles'] ?? array(),
+					'techniques' => $provider['techniques'] ?? array(),
+					'options'    => $provider['options'] ?? array(),
+				)
+			)
+		);
 		$this->bases->set_import(
 			$id,
 			self::READY,
@@ -812,6 +913,66 @@ class CatalogImport {
 					'finished' => time(),
 				)
 			)
+		);
+	}
+
+	/**
+	 * A flat side as the service takes it, or null when its files are missing.
+	 * The print area keeps the print file's shape; without a pattern it is
+	 * the whole sheet.
+	 *
+	 * @param array<mixed>         $side Side.
+	 * @param array<string, mixed> $data Import data.
+	 * @return array<string, mixed>|null
+	 */
+	private function flat_view( array $side, array $data ): ?array {
+		$key     = (string) ( $side['key'] ?? '' );
+		$size    = is_array( $data['sizes'][ $key ] ?? null ) ? array_values( $data['sizes'][ $key ] ) : array( 0, 0 );
+		$uploads = array();
+
+		foreach ( is_array( $data['files'][ $key ] ?? null ) ? $data['files'][ $key ] : array() as $layer => $name ) {
+			$path = is_string( $name ) && '' !== $name ? $this->files->path( $name ) : null;
+
+			if ( null !== $path ) {
+				$uploads[ (string) $layer ] = array(
+					'name'     => 'background.png',
+					'type'     => 'image/png',
+					'tmp_name' => $path,
+					'error'    => UPLOAD_ERR_OK,
+					'size'     => (int) filesize( $path ),
+				);
+			}
+		}
+
+		if ( ! isset( $uploads['background'] ) || (int) $size[0] < 1 ) {
+			return null;
+		}
+
+		$scale = (int) $size[0] / max( 1, (int) ( $side['template_width'] ?? $size[0] ) );
+		$area  = is_array( $side['area'] ?? null ) ? $side['area'] : array();
+		$box   = array(
+			'x'      => (int) round( (int) ( $area['x'] ?? 0 ) * $scale ),
+			'y'      => (int) round( (int) ( $area['y'] ?? 0 ) * $scale ),
+			'width'  => (int) max( 1, round( (int) ( $area['width'] ?? $size[0] ) * $scale ) ),
+			'height' => (int) max( 1, round( (int) ( $area['height'] ?? $size[1] ) * $scale ) ),
+		);
+		$box   = ImageProbe::fit( $box, (int) $side['width_mm'], (int) $side['height_mm'] );
+
+		return array(
+			'key'         => '',
+			'name'        => (string) $side['name'],
+			'x'           => (string) $box['x'],
+			'y'           => (string) $box['y'],
+			'width'       => (string) $box['width'],
+			'height'      => (string) $box['height'],
+			'width_mm'    => (string) $side['width_mm'],
+			'height_mm'   => (string) $side['height_mm'],
+			'dpi'         => (string) $side['dpi'],
+			'thread_pack' => '',
+			'flat'        => true,
+			'remove'      => false,
+			'clear'       => array(),
+			'uploads'     => $uploads,
 		);
 	}
 

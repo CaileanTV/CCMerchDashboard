@@ -64,6 +64,8 @@ export interface DesignerView {
 	readonly dpi: number;
 	/** Null when the side is printed. */
 	readonly embroidery: DesignerEmbroidery | null;
+	/** A flat part of an all-over product: designed on its sewing pattern. */
+	readonly flat: boolean;
 }
 
 export interface DesignerBase {
@@ -368,6 +370,7 @@ function parseView( value: unknown ): DesignerView | null {
 		printHeight: value.print_height,
 		dpi: value.dpi,
 		embroidery: parseEmbroidery( value.embroidery ),
+		flat: value.flat === true,
 	};
 }
 

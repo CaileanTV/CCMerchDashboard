@@ -161,7 +161,7 @@ final class DesignerVersionFiles {
 		$disposition = 'inline';
 
 		if ( SubmissionFiles::PRINT === $parts[0] ) {
-			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . '.png' );
+			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . ( 'image/jpeg' === $file['mime'] ? '.jpg' : '.png' ) );
 			$disposition = 'attachment; filename="' . $name . '"';
 		}
 

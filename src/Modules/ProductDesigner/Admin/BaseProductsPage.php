@@ -194,6 +194,9 @@ final class BaseProductsPage {
 			PrintfulException::RATE_LIMITED         => array( __( 'Printful asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
 			PrintfulException::INVALID              => array( __( 'The Printful product has no variants or print files that can be used.', 'merchboard' ), 'error' ),
 			PrintfulException::FAILED               => array( __( 'Printful could not be reached. Please try again later.', 'merchboard' ), 'error' ),
+			PrintfulException::NOT_IN_EU            => array( __( 'No variant of this product is in stock in Europe, so it cannot be offered.', 'merchboard' ), 'error' ),
+			PrintfulException::UNSUPPORTED          => array( __( 'Knitted products cannot be designed yet.', 'merchboard' ), 'error' ),
+			PrintfulException::V2_REQUIRED          => array( __( 'An all-over product can only be imported through Printful\'s newest API, which failed. Please try again later.', 'merchboard' ), 'error' ),
 			GelatoException::NOT_CONFIGURED         => array( __( 'Gelato is switched off or has no API key or store id.', 'merchboard' ), 'error' ),
 			GelatoException::UNAUTHORIZED           => array( __( 'Gelato refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
 			GelatoException::NOT_FOUND              => array( __( 'Gelato does not know that template id.', 'merchboard' ), 'error' ),
@@ -574,14 +577,15 @@ final class BaseProductsPage {
 		$query    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$pick     = isset( $_GET['pick'] ) ? absint( $_GET['pick'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$group    = isset( $_GET['group'] ) ? absint( $_GET['group'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 
 		if ( $pick > 0 ) {
-			$this->render_pick( $printful, PrintfulCatalog::SOURCE, (string) $pick );
+			$this->render_pick( $printful, PrintfulCatalog::SOURCE, (string) $pick, $group );
 
 			return;
 		}
 
-		echo '<p>' . esc_html__( 'Search Printful\'s catalog and pick the product. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Search Printful\'s catalog and pick the product. Only products sold in Europe that can be sent to Denmark are listed. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them. All-over products are designed on their flat sewing pattern instead.', 'merchboard' ) . '</p>';
 
 		try {
 			$categories = $printful->categories();
@@ -607,10 +611,15 @@ final class BaseProductsPage {
 
 		try {
 			$products = $printful->search( $query, $category );
+			$limited  = $printful->limited_to_eu();
 		} catch ( PrintfulException $e ) {
 			$this->provider_error( $e->reason(), $e->call, $e->detail );
 
 			return;
+		}
+
+		if ( ! $limited ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Printful\'s newest API does not answer right now, so the list is not limited to Europe. A product you pick is still checked.', 'merchboard' ) . '</p></div>';
 		}
 
 		if ( array() === $products ) {
@@ -673,18 +682,21 @@ final class BaseProductsPage {
 	 * @param CatalogRenderer $renderer The provider.
 	 * @param string          $source   `printful` or `gelato`.
 	 * @param string          $ref      The provider's product or template.
+	 * @param int             $group    The group of sizes with the same print sizes.
 	 */
-	private function render_pick( CatalogRenderer $renderer, string $source, string $ref ): void {
+	private function render_pick( CatalogRenderer $renderer, string $source, string $ref, int $group = 0 ): void {
 		try {
-			$choice = $renderer->choice( $ref );
+			$choice = $renderer->choice( $ref, $group );
 		} catch ( PrintfulException | GelatoException $e ) {
 			$this->provider_error( $e->reason(), $e->call, $e->detail );
 
 			return;
 		}
 
+		$flat = true === ( $choice['flat'] ?? false );
+
 		$defaults = array_values( array_intersect( array( 'front', 'back' ), array_column( $choice['sides'], 'placement' ) ) );
-		$defaults = PrintfulCatalog::SOURCE === $source ? $defaults : array_column( $choice['sides'], 'placement' );
+		$defaults = PrintfulCatalog::SOURCE === $source && true !== ( $choice['flat'] ?? false ) ? $defaults : array_column( $choice['sides'], 'placement' );
 		$defaults = array() === $defaults ? array_slice( array_column( $choice['sides'], 'placement' ), 0, 1 ) : $defaults;
 
 		echo '<h2>' . esc_html( $choice['name'] ) . '</h2>';
@@ -693,9 +705,19 @@ final class BaseProductsPage {
 			echo '<img src="' . esc_url( $choice['image'] ) . '" alt="" style="max-width:12rem;max-height:12rem;object-fit:contain">';
 		}
 
+		if ( array() !== ( $choice['groups'] ?? array() ) ) {
+			$links = array();
+
+			foreach ( $choice['groups'] as $index => $label ) {
+				$links[] = ( $choice['group'] ?? 0 ) === $index ? '<strong>' . esc_html( $label ) . '</strong>' : '<a href="' . esc_url( self::new_url( array( 'source' => $source, 'pick' => $ref, 'group' => $index ) ) ) . '">' . esc_html( $label ) . '</a>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			}
+
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'The print size depends on the size. A base product holds one print size: make one base product per size you want to offer.', 'merchboard' ) . '</p><p>' . implode( ' | ', $links ) . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+		}
+
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="catalog_create">';
-		echo '<input type="hidden" name="source" value="' . esc_attr( $source ) . '"><input type="hidden" name="ref" value="' . esc_attr( $ref ) . '">';
+		echo '<input type="hidden" name="source" value="' . esc_attr( $source ) . '"><input type="hidden" name="ref" value="' . esc_attr( $ref ) . '"><input type="hidden" name="group" value="' . esc_attr( (string) ( $choice['group'] ?? 0 ) ) . '">';
 		wp_nonce_field( BaseProductActions::ACTION );
 		echo '<table class="form-table" role="presentation"><tbody>';
 		echo '<tr><th scope="row">' . esc_html__( 'Colours', 'merchboard' ) . '</th><td>';
@@ -718,10 +740,15 @@ final class BaseProductsPage {
 			$stitched = GelatoCatalog::SOURCE === $source && 1 === preg_match( '/embroider/i', $side['name'] . ' ' . $side['placement'] );
 			$first    = ThreadPacks::all()[0]['id'];
 			echo '<p style="margin:0 0 .4em"><label><input type="checkbox" name="sides[]" value="' . esc_attr( $side['placement'] ) . '"' . checked( in_array( $side['placement'], $defaults, true ), true, false ) . '> ' . esc_html( $label ) . '</label> ';
-			echo '<label>' . esc_html__( 'Embroidery pack', 'merchboard' ) . ' ' . self::pack_select( 'packs[' . $side['placement'] . ']', $stitched ? $first : '' ) . '</label></p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pack_select() escapes.
+
+			if ( ! $flat ) {
+				echo '<label>' . esc_html__( 'Embroidery pack', 'merchboard' ) . ' ' . self::pack_select( 'packs[' . $side['placement'] . ']', $stitched ? $first : '' ) . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pack_select() escapes.
+			}
+
+			echo '</p>';
 		}
 
-		echo '<p class="description">' . esc_html__( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) . '</p></td></tr>';
+		echo '<p class="description">' . esc_html( $flat ? __( 'Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product.', 'merchboard' ) : __( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) ) . '</p></td></tr>';
 
 		if ( GelatoCatalog::SOURCE === $source ) {
 			$layers = array_map(
@@ -738,9 +765,9 @@ final class BaseProductsPage {
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required></td></tr>';
 		/* translators: %s: currency code, e.g. "DKK". */
-		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="0"><p class="description">' . esc_html__( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="0"><p class="description">' . esc_html( $flat ? __( 'What the company keeps for each part after the first. An all-over design usually covers every part: 0 means they cost nothing extra.', 'merchboard' ) : __( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) ) . '</p></td></tr>';
 		echo '</tbody></table>';
-		echo '<p>' . esc_html__( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html( $flat ? __( 'The base product is created as a draft at once. Its sewing patterns are fetched in the background. Creators design on the flat parts; Printful sews their designs into mockups when they are sent for approval.', 'merchboard' ) : __( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) ) . '</p>';
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create and import', 'merchboard' ) . '</button></p></form>';
 	}
 

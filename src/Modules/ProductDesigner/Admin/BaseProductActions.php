@@ -121,6 +121,7 @@ final class BaseProductActions {
 								'packs'            => is_array( $input['packs'] ?? null ) ? $input['packs'] : array(),
 								'base_price'       => $text( 'base_price' ),
 								'extra_side_price' => $text( 'extra_side_price' ),
+								'group'            => absint( $text( 'group' ) ),
 							)
 						),
 						'importing'

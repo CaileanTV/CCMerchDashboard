@@ -10,6 +10,9 @@ import type { DesignerView, LayerKind } from '../../api/designer';
 /** JPEG quality of a mockup. */
 const QUALITY = 0.92;
 
+/** JPEG quality of a flat side's print file. */
+const FLAT_QUALITY = 0.95;
+
 /**
  * An image of a `data:` URL, or null.
  *
@@ -111,7 +114,10 @@ export async function composeMockup(
 	);
 
 	if ( images.shading !== undefined ) {
-		context.globalCompositeOperation = 'multiply';
+		// A flat side's sewing pattern lies on top as it is.
+		context.globalCompositeOperation = view.flat
+			? 'source-over'
+			: 'multiply';
 		context.drawImage( images.shading, 0, 0, view.width, view.height );
 	}
 
@@ -134,4 +140,28 @@ export async function composeMockup(
  */
 export function pngOf( canvas: HTMLCanvasElement ): Promise< Blob | null > {
 	return new Promise( ( resolve ) => canvas.toBlob( resolve, 'image/png' ) );
+}
+
+/**
+ * A flat side's print file: a JPEG on white. An all-over print has no
+ * transparency, and a PNG of a photo this large passes the file limit.
+ *
+ * @param canvas The print file.
+ */
+export function flatJpegOf(
+	canvas: HTMLCanvasElement
+): Promise< Blob | null > {
+	const target = surface( canvas.width, canvas.height );
+
+	if ( target === null ) {
+		return Promise.resolve( null );
+	}
+
+	target.context.fillStyle = '#ffffff';
+	target.context.fillRect( 0, 0, canvas.width, canvas.height );
+	target.context.drawImage( canvas, 0, 0 );
+
+	return new Promise( ( resolve ) =>
+		target.canvas.toBlob( resolve, 'image/jpeg', FLAT_QUALITY )
+	);
 }

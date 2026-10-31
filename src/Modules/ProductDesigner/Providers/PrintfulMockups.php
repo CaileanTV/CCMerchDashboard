@@ -34,6 +34,16 @@ defined( 'ABSPATH' ) || exit;
  * most 40 times), downloads the mockups (validated like uploads) and puts
  * them in place of the mockups the creator's browser rendered.
  *
+ * Tasks go to v2 (the owner's choice 2026-10-31); a call that fails, other
+ * than 429, goes to v1, and the task remembers which. v2 refuses a file whose
+ * shape differs from its position by more than 2 %: the print file has the
+ * side's own shape, so it fits.
+ *
+ * A flat product (all-over print) gets one task with every used side, and
+ * only then does a photo show the whole product. Each side has its mockup
+ * style; v2 names every photo after the first placement, so its `style_id`
+ * says which side it shows. A side without a style keeps the browser's image.
+ *
  * Meanwhile the version's `mockup_state` is `running`, and it cannot be
  * approved. `ready` when every side is done; `failed` (the browser's
  * mockups stay, the administrator is told) when a task failed, timed out or
@@ -54,6 +64,11 @@ class PrintfulMockups {
 	private const POLL_DELAY = 15;
 
 	private const MAX_POLLS = 40;
+
+	/**
+	 * The side of a flat version's one task (it holds every used side).
+	 */
+	public const TASK_SIDE = 'all';
 
 	/**
 	 * Constructor.
@@ -98,9 +113,15 @@ class PrintfulMockups {
 
 			$sides = array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] );
 
-			foreach ( $sides as $side ) {
-				if ( isset( $provider['placements'][ $side ] ) ) {
-					$this->tasks->create( $id, 'printful', (string) $side, '{}' );
+			if ( $provider['flat'] ) {
+				if ( array() !== array_intersect( array_map( 'strval', $sides ), array_keys( $provider['placements'] ) ) ) {
+					$this->tasks->create( $id, 'printful', self::TASK_SIDE, '{}' );
+				}
+			} else {
+				foreach ( $sides as $side ) {
+					if ( isset( $provider['placements'][ $side ] ) ) {
+						$this->tasks->create( $id, 'printful', (string) $side, '{}' );
+					}
 				}
 			}
 
@@ -220,7 +241,7 @@ class PrintfulMockups {
 	/**
 	 * Creates the task of a side at Printful.
 	 *
-	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>} $provider
+	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>, flat: bool, styles: array<string, string>, techniques: array<string, string>, options: array<mixed>} $provider
 	 *
 	 * @param int                  $id       Version.
 	 * @param int                  $product  Printful product.
@@ -229,52 +250,28 @@ class PrintfulMockups {
 	 * @param array                $provider The base product's provider data.
 	 * @param array<string, mixed> $task     Task row.
 	 * @throws PrintfulException When Printful refuses or fails.
-	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private function create( int $id, int $product, array $version, BaseProduct $base, array $provider, array $task ): void {
-		$side       = (string) $task['side'];
-		$placements = $provider['placements'];
-		$variants   = $this->variants( $product, $version, $base, $provider['variants'] );
-		$view       = null;
+		$variants = $this->variants( $product, $version, $base, $provider['variants'] );
+		$sides    = $this->task_sides( $id, (string) $task['side'], $version, $base, $provider );
 
-		foreach ( $base->views as $candidate ) {
-			if ( $candidate->key === $side ) {
-				$view = $candidate;
-			}
-		}
-
-		if ( array() === $variants || null === $view || ! isset( $placements[ $side ] ) ) {
+		if ( array() === $variants || array() === $sides ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'error' => 'no_variant' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 			return;
 		}
 
-		[ $width, $height ] = $view->print_pixels();
-		$answer             = $this->api->create_task(
-			$product,
-			array(
-				'variant_ids' => array_map( 'intval', array_keys( $variants ) ),
-				'format'      => 'jpg',
-				'files'       => array(
-					array(
-						'placement' => $placements[ $side ],
-						'image_url' => SignedPrintFiles::url( $id, $side ),
-						'position'  => array(
-							'area_width'  => $width,
-							'area_height' => $height,
-							'width'       => $width,
-							'height'      => $height,
-							'top'         => 0,
-							'left'        => 0,
-						),
-					),
-				),
-			)
-		);
-		$key                = is_string( $answer['task_key'] ?? null ) ? $answer['task_key'] : '';
+		$api = 2;
 
-		if ( '' === $key ) {
-			self::fail( PrintfulException::INVALID );
+		try {
+			$key = $this->api->create_mockup_task( self::task_v2( $product, array_keys( $variants ), $sides, $provider ) );
+		} catch ( PrintfulException $e ) {
+			if ( PrintfulException::RATE_LIMITED === $e->reason() ) {
+				throw $e;
+			}
+
+			$api = 1;
+			$key = $this->create_v1( $product, array_keys( $variants ), $sides, $provider );
 		}
 
 		$this->tasks->update(
@@ -282,9 +279,162 @@ class PrintfulMockups {
 			array(
 				'status'   => ProviderTaskRepository::PENDING,
 				'task_key' => $key,
-				'result'   => (string) wp_json_encode( array( 'variants' => $variants ) ),
+				'result'   => (string) wp_json_encode(
+					array(
+						'api'        => $api,
+						'variants'   => $variants,
+						'flat'       => $provider['flat'],
+						'styles'     => array_intersect_key( $provider['styles'], array_flip( array_column( $sides, 'key' ) ) ),
+						'placements' => array_column( $sides, 'placement', 'key' ),
+					)
+				),
 			)
 		);
+	}
+
+	/**
+	 * The sides of a task with their print files: every used side of a flat
+	 * version, else the task's one.
+	 *
+	 * @phpstan-param array{placements: array<string, string>, flat: bool, techniques: array<string, string>} $provider
+	 *
+	 * @param int                  $id       Version.
+	 * @param string               $side     The task's side.
+	 * @param array<string, mixed> $version  Version.
+	 * @param BaseProduct          $base     Base product.
+	 * @param array                $provider The base product's provider data.
+	 * @return list<array{key: string, placement: string, technique: string, url: string, width: int, height: int, width_mm: int, height_mm: int}>
+	 */
+	private function task_sides( int $id, string $side, array $version, BaseProduct $base, array $provider ): array {
+		$used  = array_map( 'strval', array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] ) );
+		$sides = array();
+
+		foreach ( $base->views as $view ) {
+			$wanted = $provider['flat'] ? in_array( $view->key, $used, true ) : $view->key === $side;
+
+			if ( ! $wanted || ! isset( $provider['placements'][ $view->key ] ) ) {
+				continue;
+			}
+
+			[ $width, $height ] = $view->print_pixels();
+
+			$sides[] = array(
+				'key'       => $view->key,
+				'placement' => $provider['placements'][ $view->key ],
+				'technique' => $provider['techniques'][ $view->key ] ?? 'dtg',
+				'url'       => SignedPrintFiles::url( $id, $view->key ),
+				'width'     => $width,
+				'height'    => $height,
+				'width_mm'  => $view->width_mm,
+				'height_mm' => $view->height_mm,
+			);
+		}
+
+		return $sides;
+	}
+
+	/**
+	 * The body of a v2 task. A layer's position is in inches.
+	 *
+	 * @phpstan-param array{flat: bool, styles: array<string, string>, options: array<mixed>} $provider
+	 *
+	 * @param int                                                                                                         $product  Printful product.
+	 * @param int[]                                                                                                       $variants Variants.
+	 * @param array<array{key: string, placement: string, technique: string, url: string, width_mm: int, height_mm: int}> $sides    Sides.
+	 * @param array                                                                                                       $provider The base product's provider data.
+	 * @return array<string, mixed>
+	 */
+	private static function task_v2( int $product, array $variants, array $sides, array $provider ): array {
+		$task = array(
+			'source'              => 'catalog',
+			'catalog_product_id'  => $product,
+			'catalog_variant_ids' => array_values( array_map( 'intval', $variants ) ),
+			'placements'          => array_map(
+				static fn( array $side ): array => array(
+					'placement' => $side['placement'],
+					'technique' => $side['technique'],
+					'layers'    => array(
+						array(
+							'type'     => 'file',
+							'url'      => $side['url'],
+							'position' => array(
+								'width'  => round( $side['width_mm'] / 25.4, 3 ),
+								'height' => round( $side['height_mm'] / 25.4, 3 ),
+								'top'    => 0,
+								'left'   => 0,
+							),
+						),
+					),
+				),
+				$sides
+			),
+		);
+
+		if ( $provider['flat'] ) {
+			$styles = array_values( array_unique( array_filter( array_map( 'intval', array_intersect_key( $provider['styles'], array_flip( array_column( $sides, 'key' ) ) ) ) ) ) );
+
+			if ( array() !== $styles ) {
+				$task['mockup_style_ids'] = $styles;
+			}
+
+			if ( array() !== $provider['options'] ) {
+				$task['product_options'] = $provider['options'];
+			}
+		}
+
+		return array(
+			'format'   => 'jpg',
+			'products' => array( $task ),
+		);
+	}
+
+	/**
+	 * Creates a task through v1, the fallback.
+	 *
+	 * @phpstan-param array{options: array<mixed>} $provider
+	 *
+	 * @param int                                                                   $product  Printful product.
+	 * @param int[]                                                                 $variants Variants.
+	 * @param array<array{placement: string, url: string, width: int, height: int}> $sides    Sides.
+	 * @param array                                                                 $provider The base product's provider data.
+	 * @return string The task key.
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	private function create_v1( int $product, array $variants, array $sides, array $provider ): string {
+		$body = array(
+			'variant_ids' => array_values( array_map( 'intval', $variants ) ),
+			'format'      => 'jpg',
+			'files'       => array_map(
+				static fn( array $side ): array => array(
+					'placement' => $side['placement'],
+					'image_url' => $side['url'],
+					'position'  => array(
+						'area_width'  => $side['width'],
+						'area_height' => $side['height'],
+						'width'       => $side['width'],
+						'height'      => $side['height'],
+						'top'         => 0,
+						'left'        => 0,
+					),
+				),
+				$sides
+			),
+		);
+
+		foreach ( $provider['options'] as $option ) {
+			if ( is_array( $option ) && is_string( $option['name'] ?? null ) ) {
+				$body['product_options'][ $option['name'] ] = $option['value'] ?? '';
+			}
+		}
+
+		$answer = $this->api->create_task( $product, $body );
+		$key    = is_string( $answer['task_key'] ?? null ) ? $answer['task_key'] : '';
+
+		if ( '' === $key ) {
+			self::fail( PrintfulException::INVALID );
+		}
+
+		return $key;
 	}
 
 	/**
@@ -298,7 +448,9 @@ class PrintfulMockups {
 	 */
 	private function poll( int $id, array $task ): void {
 		$attempts = (int) $task['attempts'] + 1;
-		$answer   = $this->api->task( (string) $task['task_key'] );
+		$map      = json_decode( (string) $task['result'], true );
+		$map      = is_array( $map ) ? $map : array();
+		$answer   = 2 === ( $map['api'] ?? 1 ) ? self::answer_v2( $this->api->mockup_task( (string) $task['task_key'] ) ) : $this->api->task( (string) $task['task_key'] );
 		$status   = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
 
 		if ( 'failed' === $status || ( is_string( $answer['error'] ?? null ) && '' !== $answer['error'] ) ) {
@@ -313,49 +465,107 @@ class PrintfulMockups {
 			return;
 		}
 
-		$map    = json_decode( (string) $task['result'], true );
-		$colors = is_array( $map['variants'] ?? null ) ? $map['variants'] : array();
-
-		$this->store( $id, (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $colors );
+		$this->store( $id, self::mockup_urls( (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ) );
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
 	/**
-	 * Downloads the mockups of a side and puts them in place of the browser's.
+	 * A v2 task in v1's shape: one mockup per photo with its variant.
 	 *
-	 * @param int                  $id      Version.
-	 * @param string               $side    Side.
+	 * @param array<mixed> $task v2 task.
+	 * @return array<string, mixed>
+	 */
+	private static function answer_v2( array $task ): array {
+		$mockups = array();
+
+		foreach ( is_array( $task['catalog_variant_mockups'] ?? null ) ? $task['catalog_variant_mockups'] : array() as $row ) {
+			foreach ( is_array( $row ) && is_array( $row['mockups'] ?? null ) ? $row['mockups'] : array() as $mockup ) {
+				if ( is_array( $mockup ) ) {
+					$mockup['variant_ids'] = array( $row['catalog_variant_id'] ?? 0 );
+					$mockups[]             = $mockup;
+				}
+			}
+		}
+
+		$reason = is_array( $task['failure_reasons'] ?? null ) && is_array( $task['failure_reasons'][0] ?? null ) ? ( $task['failure_reasons'][0]['detail'] ?? 'failed' ) : '';
+
+		return array(
+			'status'  => $task['status'] ?? '',
+			'error'   => is_string( $reason ) ? mb_substr( $reason, 0, 300 ) : 'failed',
+			'mockups' => $mockups,
+		);
+	}
+
+	/**
+	 * The URL of the first photo of each side and colour. A flat task's
+	 * photo belongs to the sides of its style, or in v1 to its placement;
+	 * any other task has one side.
+	 *
+	 * @param string               $side    The task's side.
 	 * @param array<mixed>         $mockups Printful's mockups.
-	 * @param array<string, mixed> $colors  Colour key by variant id.
+	 * @param array<string, mixed> $map     What the task stored.
+	 * @return array<string, array<string, string>>
+	 */
+	private static function mockup_urls( string $side, array $mockups, array $map ): array {
+		$colors     = is_array( $map['variants'] ?? null ) ? $map['variants'] : array();
+		$styles     = is_array( $map['styles'] ?? null ) ? $map['styles'] : array();
+		$placements = is_array( $map['placements'] ?? null ) ? $map['placements'] : array();
+		$flat       = true === ( $map['flat'] ?? false );
+		$urls       = array();
+
+		foreach ( $mockups as $mockup ) {
+			if ( ! is_array( $mockup ) ) {
+				continue;
+			}
+
+			$url = is_string( $mockup['mockup_url'] ?? null ) ? $mockup['mockup_url'] : ( is_array( $mockup['extra'][0] ?? null ) && is_string( $mockup['extra'][0]['url'] ?? null ) ? $mockup['extra'][0]['url'] : '' );
+
+			if ( ! $flat ) {
+				$sides = array( $side );
+			} elseif ( isset( $mockup['style_id'] ) ) {
+				$sides = array_keys( $styles, (string) $mockup['style_id'], true );
+			} else {
+				$sides = array_keys( $placements, (string) ( $mockup['placement'] ?? '' ), true );
+			}
+
+			foreach ( is_array( $mockup['variant_ids'] ?? null ) ? $mockup['variant_ids'] : array() as $variant ) {
+				$color = $colors[ (string) $variant ] ?? null;
+
+				foreach ( '' !== $url && is_string( $color ) ? $sides : array() as $key ) {
+					$urls[ (string) $key ][ $color ] ??= $url;
+				}
+			}
+		}
+
+		return $urls;
+	}
+
+	/**
+	 * Downloads the mockups and puts them in place of the browser's.
+	 *
+	 * @param int                                  $id   Version.
+	 * @param array<string, array<string, string>> $urls URL by side and colour.
 	 * @throws PrintfulException When a mockup cannot be downloaded.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a mockup is not a valid image.
 	 */
-	private function store( int $id, string $side, array $mockups, array $colors ): void {
+	private function store( int $id, array $urls ): void {
 		$stored = array();
+		$names  = array();
 		$done   = false;
 
 		try {
-			foreach ( $mockups as $mockup ) {
-				if ( ! is_array( $mockup ) ) {
-					continue;
-				}
-
-				$url = is_string( $mockup['mockup_url'] ?? null ) ? $mockup['mockup_url'] : ( is_array( $mockup['extra'][0] ?? null ) && is_string( $mockup['extra'][0]['url'] ?? null ) ? $mockup['extra'][0]['url'] : '' );
-
-				foreach ( is_array( $mockup['variant_ids'] ?? null ) ? $mockup['variant_ids'] : array() as $variant ) {
-					$color = $colors[ (string) $variant ] ?? null;
-
-					if ( is_string( $color ) && '' !== $url && ! isset( $stored[ $color ] ) ) {
-						$stored[ $color ] = $this->download( $url );
-					}
+			foreach ( $urls as $side => $colors ) {
+				foreach ( $colors as $color => $url ) {
+					$stored[ $side ][ $color ] = $this->download( $url );
+					$names[]                   = $stored[ $side ][ $color ]['file'] ?? null;
 				}
 			}
 			$done = true;
 		} finally {
 			// Files stored before a failure are never referenced: delete them (review 30.15).
 			if ( ! $done ) {
-				foreach ( array_filter( array_column( $stored, 'file' ), 'is_string' ) as $name ) {
+				foreach ( array_filter( $names, 'is_string' ) as $name ) {
 					$this->files->delete( $name );
 				}
 			}
@@ -365,13 +575,15 @@ class PrintfulMockups {
 		$version  = $this->products->version( $id );
 		$files    = SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
 
-		foreach ( $stored as $color => $file ) {
-			$replaced[]                          = $files['mockups'][ $side ][ $color ]['file'] ?? null;
-			$files['mockups'][ $side ][ $color ] = $file;
+		foreach ( $stored as $side => $colors ) {
+			foreach ( $colors as $color => $file ) {
+				$replaced[]                          = $files['mockups'][ $side ][ $color ]['file'] ?? null;
+				$files['mockups'][ $side ][ $color ] = $file;
+			}
 		}
 
 		if ( ! $this->products->set_pending_files( $id, (string) wp_json_encode( $files ) ) ) {
-			$replaced = array_column( $stored, 'file' );
+			$replaced = $names;
 		}
 
 		foreach ( array_filter( $replaced, 'is_string' ) as $name ) {

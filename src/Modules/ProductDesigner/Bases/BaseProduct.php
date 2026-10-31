@@ -32,7 +32,7 @@ final readonly class BaseProduct {
 
 	public const RETIRED = 'retired';
 
-	public const SOURCES = array( 'own', 'printful', 'gelato' );
+	public const SOURCES = array( 'own', 'printful', 'gelato', 'prodigi' );
 
 	/**
 	 * Most colours, sizes and sides.

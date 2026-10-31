@@ -25,8 +25,8 @@ defined( 'ABSPATH' ) || exit;
  * answers without a login only with a valid HMAC (own key domain, derived
  * from the site's auth salt) that has not expired (at most one hour), and
  * only the print file of a pending or approved version. The answer is the
- * PNG itself with `no-store` and `nosniff`; anything else is 404 without
- * telling why.
+ * image itself (a PNG, a JPEG on a flat side) with `no-store` and
+ * `nosniff`; anything else is 404 without telling why.
  */
 class SignedPrintFiles {
 
@@ -135,7 +135,7 @@ class SignedPrintFiles {
 		$response = new WP_REST_Response( $body, 200 );
 		$response->set_headers(
 			array(
-				'Content-Type'           => 'image/png',
+				'Content-Type'           => 'image/jpeg' === ( $file['mime'] ?? '' ) ? 'image/jpeg' : 'image/png',
 				'Cache-Control'          => 'private, no-store',
 				'X-Content-Type-Options' => 'nosniff',
 			)
@@ -153,7 +153,7 @@ class SignedPrintFiles {
 	public function send( mixed $served, mixed $result ): bool {
 		$served = (bool) $served;
 
-		if ( $served || ! $result instanceof WP_REST_Response || 200 !== $result->get_status() || self::MATCHED !== $result->get_matched_route() || 'image/png' !== ( $result->get_headers()['Content-Type'] ?? null ) ) {
+		if ( $served || ! $result instanceof WP_REST_Response || 200 !== $result->get_status() || self::MATCHED !== $result->get_matched_route() || ! in_array( $result->get_headers()['Content-Type'] ?? null, array( 'image/png', 'image/jpeg' ), true ) ) {
 			return $served;
 		}
 
@@ -163,7 +163,7 @@ class SignedPrintFiles {
 			return $served;
 		}
 
-		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A print file the server stored, sent as PNG with nosniff.
+		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A print file the server stored, sent as an image with nosniff.
 
 		return true;
 	}

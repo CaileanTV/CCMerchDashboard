@@ -284,6 +284,10 @@ final class PrintfulTest extends IntegrationTestCase {
 					),
 				),
 				'slots'      => array( 'front-print' => 'front' ),
+				'flat'       => false,
+				'styles'     => array(),
+				'techniques' => array(),
+				'options'    => array(),
 			),
 			$this->bases->provider( (int) $base->id )
 		);

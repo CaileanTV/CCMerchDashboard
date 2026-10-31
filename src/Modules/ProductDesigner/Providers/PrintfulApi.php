@@ -24,10 +24,17 @@ defined( 'ABSPATH' ) || exit;
  * - `GET /products/{id}`;
  * - `GET /mockup-generator/printfiles/{id}`;
  * - `POST /mockup-generator/create-task/{id}` and `GET /mockup-generator/task?task_key=…`;
+ * - v2 (ADR-081, the owner's choice 2026-10-31, in beta, v1 is the fallback):
+ *   `GET /v2/catalog-products` and `/v2/catalog-categories`, and per product
+ *   `/v2/catalog-products/{id}`, `/catalog-variants`, `/availability`,
+ *   `/mockup-styles` and `/mockup-templates`, `POST /v2/mockup-tasks` and
+ *   `GET /v2/mockup-tasks?id=…`;
  * - a download of a file Printful returned (https, any host Printful names).
  *
- * The layout templates (`/mockup-generator/templates/{id}`) are no longer
- * read: their images are guide graphics, not product photos (review 30.15).
+ * The v1 layout templates (`/mockup-generator/templates/{id}`) are not read:
+ * their images are guide graphics, not product photos (review 30.15). v2's
+ * `mockup-templates` are read only for all-over products, whose sewing
+ * pattern is what the creator designs on.
  * Every call uses `wp_safe_remote_*` (no private addresses) with a 15 s
  * timeout and no redirects; the HTTP function can be replaced in tests.
  * A 429 throws RATE_LIMITED with `Retry-After`; other statuses and
@@ -40,6 +47,16 @@ class PrintfulApi {
 	public const BASE = 'https://api.printful.com';
 
 	private const TIMEOUT = 15;
+
+	/**
+	 * Rows of a v2 page (Printful's largest).
+	 */
+	private const PAGE = 100;
+
+	/**
+	 * Most rows read of one v2 list (a t-shirt has 2 158 mockup templates).
+	 */
+	private const MAX_ROWS = 5000;
 
 	/**
 	 * The HTTP call: (method, url, args) → WordPress response or WP_Error.
@@ -140,6 +157,137 @@ class PrintfulApi {
 	}
 
 	/**
+	 * The v2 catalog (`id`, `name`, `type`, `brand`, `model`, `image`,
+	 * `main_category_id`, `is_discontinued`, `techniques`).
+	 *
+	 * @param string $region  Selling region.
+	 * @param string $country Destination country.
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	public function catalog_products( string $region, string $country ): array {
+		return $this->paged( '/v2/catalog-products?selling_region_name=' . rawurlencode( $region ) . '&destination_country=' . rawurlencode( $country ) );
+	}
+
+	/**
+	 * The v2 catalog's categories (`id`, `parent_id`, `title`).
+	 *
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	public function catalog_categories(): array {
+		return $this->paged( '/v2/catalog-categories' );
+	}
+
+	/**
+	 * A v2 catalog product in a selling region (`name`, `description`,
+	 * `image`, `techniques`, `placements`, `product_options`).
+	 *
+	 * @param int    $id     Printful product.
+	 * @param string $region Selling region.
+	 * @return array<mixed>
+	 * @throws PrintfulException When the call fails.
+	 */
+	public function catalog_product( int $id, string $region ): array {
+		$answer = $this->call_v2( 'GET', '/v2/catalog-products/' . $id . '?selling_region_name=' . rawurlencode( $region ) );
+
+		if ( ! is_array( $answer['data'] ?? null ) ) {
+			throw new PrintfulException( PrintfulException::FAILED, 0, 'GET /v2/catalog-products/' . $id );
+		}
+
+		return $answer['data'];
+	}
+
+	/**
+	 * A product's variants (`id`, `size`, `color`, `color_code`,
+	 * `placement_dimensions` in inches).
+	 *
+	 * @param int $id Printful product.
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	public function catalog_variants( int $id ): array {
+		return $this->paged( '/v2/catalog-products/' . $id . '/catalog-variants' );
+	}
+
+	/**
+	 * A product's stock in a selling region (`catalog_variant_id`,
+	 * `techniques` with `selling_regions` and their `availability`).
+	 *
+	 * @param int    $id     Printful product.
+	 * @param string $region Selling region.
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	public function availability( int $id, string $region ): array {
+		return $this->paged( '/v2/catalog-products/' . $id . '/availability?selling_region_name=' . rawurlencode( $region ) );
+	}
+
+	/**
+	 * A product's placements with their print size and mockup styles.
+	 *
+	 * @param int    $id     Printful product.
+	 * @param string $region Selling region.
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	public function mockup_styles( int $id, string $region ): array {
+		return $this->paged( '/v2/catalog-products/' . $id . '/mockup-styles?selling_region_name=' . rawurlencode( $region ) );
+	}
+
+	/**
+	 * A product's templates with their print area in template pixels.
+	 *
+	 * @param int    $id     Printful product.
+	 * @param string $region Selling region.
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	public function mockup_templates( int $id, string $region ): array {
+		return $this->paged( '/v2/catalog-products/' . $id . '/mockup-templates?selling_region_name=' . rawurlencode( $region ) );
+	}
+
+	/**
+	 * Creates a v2 mockup task. The file's shape must match the layer's
+	 * position within 2 %; a cut-and-sew product needs its `stitch_color`.
+	 *
+	 * @param array<string, mixed> $body `format` and `products`.
+	 * @return string The task's id.
+	 * @throws PrintfulException When the call fails.
+	 */
+	public function create_mockup_task( array $body ): string {
+		$answer = $this->call_v2( 'POST', '/v2/mockup-tasks', $body );
+		$id     = is_array( $answer['data'] ?? null ) && is_array( $answer['data'][0] ?? null ) ? ( $answer['data'][0]['id'] ?? null ) : null;
+
+		if ( ! is_numeric( $id ) ) {
+			throw new PrintfulException( PrintfulException::INVALID, 0, 'POST /v2/mockup-tasks' );
+		}
+
+		return (string) (int) $id;
+	}
+
+	/**
+	 * A v2 mockup task (`status`, `catalog_variant_mockups`, `failure_reasons`).
+	 *
+	 * @param string $id Task id.
+	 * @return array<mixed>
+	 * @throws PrintfulException When the call fails.
+	 */
+	public function mockup_task( string $id ): array {
+		if ( 1 !== preg_match( '/^[0-9]{1,20}$/', $id ) ) {
+			throw new PrintfulException( PrintfulException::INVALID );
+		}
+
+		$answer = $this->call_v2( 'GET', '/v2/mockup-tasks?id=' . $id );
+
+		if ( ! is_array( $answer['data'] ?? null ) || ! is_array( $answer['data'][0] ?? null ) ) {
+			throw new PrintfulException( PrintfulException::NOT_FOUND, 0, 'GET /v2/mockup-tasks' );
+		}
+
+		return $answer['data'][0];
+	}
+
+	/**
 	 * A file Printful returned (a mockup): https only, at most
 	 * the designer's file size.
 	 *
@@ -187,6 +335,69 @@ class PrintfulApi {
 	 * @throws PrintfulException When the call fails.
 	 */
 	private function call( string $method, string $path, ?array $body = null ): array {
+		[ $status, $decoded, $call, $detail ] = $this->send( $method, $path, $body );
+
+		if ( 200 !== $status || ! is_array( $decoded ) || ! is_array( $decoded['result'] ?? null ) ) {
+			throw new PrintfulException( PrintfulException::FAILED, 0, $call, $detail );
+		}
+
+		return $decoded['result'];
+	}
+
+	/**
+	 * Calls v2 and returns its whole answer (`data`, `paging`).
+	 *
+	 * @param string                    $method Method.
+	 * @param string                    $path   Path (one of the approved endpoints).
+	 * @param array<string, mixed>|null $body   JSON body.
+	 * @return array<mixed>
+	 * @throws PrintfulException When the call fails.
+	 */
+	private function call_v2( string $method, string $path, ?array $body = null ): array {
+		[ $status, $decoded, $call, $detail ] = $this->send( $method, $path, $body );
+
+		if ( $status < 200 || $status > 299 || ! is_array( $decoded ) ) {
+			throw new PrintfulException( PrintfulException::FAILED, 0, $call, $detail );
+		}
+
+		return $decoded;
+	}
+
+	/**
+	 * Every row of a v2 list, page by page.
+	 *
+	 * @param string $path Path, with or without a query.
+	 * @return list<mixed>
+	 * @throws PrintfulException When a call fails.
+	 */
+	private function paged( string $path ): array {
+		$join = str_contains( $path, '?' ) ? '&' : '?';
+		$rows = array();
+
+		for ( $offset = 0; $offset < self::MAX_ROWS; $offset += self::PAGE ) {
+			$answer = $this->call_v2( 'GET', $path . $join . 'limit=' . self::PAGE . '&offset=' . $offset );
+			$page   = is_array( $answer['data'] ?? null ) ? array_values( $answer['data'] ) : array();
+			$total  = is_array( $answer['paging'] ?? null ) && is_numeric( $answer['paging']['total'] ?? null ) ? (int) $answer['paging']['total'] : 0;
+			$rows   = array_merge( $rows, $page );
+
+			if ( array() === $page || count( $rows ) >= $total ) {
+				break;
+			}
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * One call: throws on what both API versions treat alike.
+	 *
+	 * @param string                    $method Method.
+	 * @param string                    $path   Path (one of the approved endpoints).
+	 * @param array<string, mixed>|null $body   JSON body.
+	 * @return array{0: int, 1: mixed, 2: string, 3: string} Status, decoded answer, the call and Printful's message.
+	 * @throws PrintfulException When the call fails.
+	 */
+	private function send( string $method, string $path, ?array $body = null ): array {
 		$this->require_available();
 
 		$args = array(
@@ -228,11 +439,7 @@ class PrintfulApi {
 			throw new PrintfulException( PrintfulException::NOT_FOUND, 0, $call, $detail );
 		}
 
-		if ( 200 !== $status || ! is_array( $decoded ) || ! is_array( $decoded['result'] ?? null ) ) {
-			throw new PrintfulException( PrintfulException::FAILED, 0, $call, $detail );
-		}
-
-		return $decoded['result'];
+		return array( $status, $decoded, $call, $detail );
 	}
 
 	/**

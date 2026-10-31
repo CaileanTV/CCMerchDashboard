@@ -103,7 +103,7 @@ class DesignerSubmissions {
 		$base  = $this->current_base( (int) $row['base_id'], $draft );
 		$view  = $this->used_view( $base, $draft, $parts );
 		$size  = SubmissionFiles::PRINT === $parts[0] ? $view->print_pixels() : array( $view->width, $view->height );
-		$file  = $this->files->store( $upload, SubmissionFiles::PRINT === $parts[0] );
+		$file  = $this->files->store( $upload, SubmissionFiles::PRINT === $parts[0] && ! $view->flat );
 		$stamp = SubmissionFiles::stamp( $draft );
 
 		if ( $size[0] !== $file['width'] || $size[1] !== $file['height'] ) {

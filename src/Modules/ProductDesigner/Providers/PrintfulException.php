@@ -37,6 +37,15 @@ final class PrintfulException extends RuntimeException {
 	/** A download or answer that is not what we accept. */
 	public const INVALID = 'printful_invalid';
 
+	/** No variant of the product is in stock in Europe. */
+	public const NOT_IN_EU = 'printful_not_in_eu';
+
+	/** The product's technique cannot be designed yet (knitwear). */
+	public const UNSUPPORTED = 'printful_unsupported';
+
+	/** An all-over product can only be imported through v2, which failed. */
+	public const V2_REQUIRED = 'printful_v2_required';
+
 	/**
 	 * Constructor.
 	 *

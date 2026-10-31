@@ -111,6 +111,17 @@ final class ImageProbeTest extends TestCase {
 		}
 	}
 
+	public function test_a_flat_side_lies_on_a_white_sheet(): void {
+		$image = imagecreatefromstring( ImageProbe::blank( 30, 20 ) );
+
+		self::assertNotFalse( $image );
+		self::assertSame( array( 30, 20 ), array( imagesx( $image ), imagesy( $image ) ) );
+		self::assertSame( 0xFFFFFF, imagecolorat( $image, 29, 19 ) );
+
+		$this->expectException( InvalidArgumentException::class );
+		ImageProbe::blank( 0, 20 );
+	}
+
 	public function test_a_photo_becomes_a_png_of_the_side_s_size(): void {
 		[ $png, $width, $height ] = ImageProbe::png( $this->blank(), 200, 150 );
 

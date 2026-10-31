@@ -94,11 +94,14 @@ class GelatoCatalog implements CatalogRenderer {
 	 * What the administrator can pick from a template: the colours and
 	 * sizes of its variants and the image placeholders of the first one.
 	 *
-	 * @param string $ref Template id.
+	 * @param string $ref   Template id.
+	 * @param int    $group Not used: a template has one print size per side.
 	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>, variants: array<string, array<string, string>>}
 	 * @throws GelatoException When Gelato refuses or fails, or the template cannot be a base product.
 	 */
-	public function choice( string $ref ): array {
+	public function choice( string $ref, int $group = 0 ): array {
+		unset( $group );
+
 		$template = $this->api->template( trim( $ref ) );
 		$variants = self::variants( $template );
 		$colors   = array();
@@ -136,7 +139,7 @@ class GelatoCatalog implements CatalogRenderer {
 
 		return array(
 			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $template['title'] ?? $template['templateName'] ?? 'Gelato ' . $ref ) ) ), 0, 191 ),
-			'description' => mb_substr( wp_strip_all_tags( (string) ( $template['description'] ?? '' ) ), 0, 2000 ),
+			'description' => PrintfulCatalog::description( (string) ( $template['description'] ?? '' ) ),
 			'image'       => is_string( $template['previewUrl'] ?? null ) ? $template['previewUrl'] : '',
 			'colors'      => array_values( $colors ),
 			'sizes'       => $sizes,

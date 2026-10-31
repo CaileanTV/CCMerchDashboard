@@ -276,6 +276,10 @@ final class GelatoTest extends IntegrationTestCase {
 					),
 				),
 				'slots'      => array( 'front' => '0' ),
+				'flat'       => false,
+				'styles'     => array(),
+				'techniques' => array(),
+				'options'    => array(),
 			),
 			$this->bases->provider( $id )
 		);

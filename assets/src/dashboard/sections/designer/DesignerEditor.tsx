@@ -1289,6 +1289,12 @@ function Editor( props: EditorProps ) {
 									'merchboard'
 								) } `
 							: null }
+						{ view.flat
+							? `${ __(
+									'This is the flat part before it is sewn. Fill it to the edges: what falls outside the lines is cut away. The photos of the finished product are made when you send the design for approval.',
+									'merchboard'
+								) } `
+							: null }
 						{ sprintf(
 							/* translators: 1: print width in px, 2: print height in px, 3: resolution in dpi. */
 							__(

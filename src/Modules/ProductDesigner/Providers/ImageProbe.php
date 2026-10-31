@@ -234,6 +234,35 @@ final class ImageProbe {
 	}
 
 	/**
+	 * A white PNG: what a flat side lies on.
+	 *
+	 * @param int $width  Width.
+	 * @param int $height Height.
+	 * @return string PNG bytes.
+	 * @throws InvalidArgumentException When it cannot be made.
+	 */
+	public static function blank( int $width, int $height ): string {
+		$im = $width > 0 && $height > 0 ? imagecreatetruecolor( $width, $height ) : false;
+
+		if ( false === $im ) {
+			throw new InvalidArgumentException( 'The image cannot be made.' );
+		}
+
+		$white = imagecolorallocate( $im, 255, 255, 255 );
+
+		imagefilledrectangle( $im, 0, 0, $width, $height, false === $white ? 0 : $white );
+		ob_start();
+		$written = imagepng( $im );
+		$bytes   = (string) ob_get_clean();
+
+		if ( ! $written || '' === $bytes ) {
+			throw new InvalidArgumentException( 'The image cannot be written.' );
+		}
+
+		return $bytes;
+	}
+
+	/**
 	 * The print size of a measured box. A provider can show less of a layer
 	 * than its size says: a 132 × 84 mm layer on a beanie's cuff showed 484 ×
 	 * 170 px (2026-10-30), 132 × 46 mm. The side that fills the box sets the

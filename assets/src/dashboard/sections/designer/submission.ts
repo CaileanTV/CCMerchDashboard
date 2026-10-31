@@ -1,7 +1,8 @@
 /**
  * Sends a saved draft for approval (phase 30, step 30.9, ADR-080 pkt. 5):
- * the browser renders one transparent PNG print file per used side in the
- * side's print size and one JPEG mockup per used side and chosen colour in
+ * the browser renders one transparent PNG print file per used side (a JPEG
+ * on white on a flat side) in the side's print size and one JPEG mockup per
+ * used side and chosen colour in
  * the template's size, sends them one by one (each request stays small) and
  * then submits. The server checks the exact sizes and that the files belong
  * to the saved draft.
@@ -14,7 +15,7 @@ import type {
 } from '../../api/designer';
 import { objectsOf, usedSides } from './design-model';
 import type { DesignDocument } from './design-model';
-import { composeMockup, pngOf } from './mockup';
+import { composeMockup, flatJpegOf, pngOf } from './mockup';
 import { threadCanvas, threadSide } from './threads';
 
 export interface SubmissionInput {
@@ -126,17 +127,17 @@ export async function submitWithFiles(
 			threadCanvas( print, threaded.plan );
 		}
 
-		const png = await pngOf( print );
+		const file = await ( view.flat ? flatJpegOf( print ) : pngOf( print ) );
 
-		if ( png === null ) {
+		if ( file === null ) {
 			return { ok: false, reason: 'render' };
 		}
 
 		const sent = await uploadSubmissionFile(
 			input.product,
 			`print:${ key }`,
-			png,
-			`print-${ key }.png`
+			file,
+			`print-${ key }.${ view.flat ? 'jpg' : 'png' }`
 		);
 
 		if ( ! sent.ok ) {

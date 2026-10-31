@@ -445,6 +445,7 @@ final class DesignerNotifications {
 			PrintfulException::NOT_FOUND            => __( 'Printful does not know the product.', 'merchboard' ),
 			PrintfulException::INVALID              => __( 'Printful answered with something that cannot be used.', 'merchboard' ),
 			PrintfulException::FAILED              => __( 'Printful could not be reached or answered with an error.', 'merchboard' ),
+			PrintfulException::V2_REQUIRED         => __( 'An all-over product can only be imported through Printful\'s newest API, which failed. Please try again later.', 'merchboard' ),
 			'task'                                  => __( 'Printful could not make a mockup (or took too long).', 'merchboard' ),
 			'queue'                                 => __( 'The mockups could not be queued (Action Scheduler is not available).', 'merchboard' ),
 			GelatoException::NOT_CONFIGURED         => __( 'Gelato is switched off or has no API key or store id (Settings → Product designer).', 'merchboard' ),

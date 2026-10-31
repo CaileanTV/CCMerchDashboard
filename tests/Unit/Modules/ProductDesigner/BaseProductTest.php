@@ -26,6 +26,14 @@ final class BaseProductTest extends TestCase {
 		self::assertEquals( $view, BaseView::from_array( json_decode( (string) wp_json_encode( $view->to_array() ), true ) ) );
 	}
 
+	public function test_a_flat_side_stays_flat_and_a_printed_side_does_not_store_it(): void {
+		$flat = new BaseView( 'front', 'Front', 1000, 1000, array( 'background' => 1, 'shading' => 2 ), array( 'x' => 0, 'y' => 0, 'width' => 1000, 'height' => 1000 ), 300, 300, 150, '', true ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertTrue( BaseView::from_array( json_decode( (string) wp_json_encode( $flat->to_array() ), true ) )->flat );
+		self::assertArrayNotHasKey( 'flat', self::view()->to_array() );
+		self::assertFalse( BaseView::from_array( self::view()->to_array() )->flat, 'A side stored before flat sides.' );
+	}
+
 	public function test_invalid_sides_are_refused(): void {
 		$invalid = array(
 			'no background or mask' => static fn() => self::view( layers: array( 'shading' => 3 ) ),

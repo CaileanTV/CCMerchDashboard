@@ -156,6 +156,9 @@ class BaseProductRepository {
 	 *                         colour key and size) and `slots` (the image of
 	 *                         each side among a variant's images); before the
 	 *                         catalog import (review 30.15) only the placements.
+	 *                         A flat product adds `flat`, `styles` (the mockup
+	 *                         style by side key), `techniques` (by side key) and
+	 *                         `options` (the provider's product options).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function set_provider( int $id, string $source, string $ref, string $template ): void {
@@ -178,10 +181,10 @@ class BaseProductRepository {
 	 * The provider data of a base product: source, product or template, the
 	 * provider's placement by side key, its variant by colour key and size,
 	 * and the image of each side (empty for one imported before review
-	 * 30.15); null for an own base product.
+	 * 30.15), and what a flat product adds; null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, styles: array<string, string>, techniques: array<string, string>, options: array<mixed>}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -216,6 +219,10 @@ class BaseProductRepository {
 			'placements' => self::strings( $current ? $decoded['placements'] : $decoded ),
 			'variants'   => $variants,
 			'slots'      => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
+			'flat'       => $current && true === ( $decoded['flat'] ?? false ),
+			'styles'     => self::strings( $current && is_array( $decoded['styles'] ?? null ) ? $decoded['styles'] : array() ),
+			'techniques' => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
+			'options'    => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
 		);
 	}
 
