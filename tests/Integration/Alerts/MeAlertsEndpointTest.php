@@ -226,9 +226,19 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 'Roboto', $saved['overlay']['settings']['font_family'] );
 		self::assertTrue( $saved['overlay']['font_approved'] );
 
-		delete_option( AlertFonts::APPROVED_OPTION );
+		update_option(
+			AlertFonts::APPROVED_OPTION,
+			array(
+				array(
+					'family'   => 'Oswald',
+					'category' => 'sans-serif',
+					'weights'  => array( 400 ),
+				),
+			),
+			false
+		);
 		$after = $this->data( $this->call( 'GET', self::ROUTE ) );
-		self::assertSame( array(), $after['fonts'] );
+		self::assertSame( array( 'Oswald' ), array_column( $after['fonts'], 'family' ) );
 		self::assertSame( 'Roboto', $after['overlay']['settings']['font_family'], 'The choice is kept for when the font comes back.' );
 		self::assertFalse( $after['overlay']['font_approved'] );
 

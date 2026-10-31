@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
+use MerchBoard\Modules\Alerts\Admin\FontsSettingsSection;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
@@ -170,10 +171,11 @@ final class AlertFontsTest extends IntegrationTestCase {
 		$fonts->set_key( self::KEY );
 		$fonts->sync();
 
-		self::assertTrue( $fonts->approve( 'Roboto' ) );
-		self::assertFalse( $fonts->approve( 'Roboto' ), 'Already approved.' );
+		self::assertCount( count( AlertFonts::STANDARD_FONTS ), $fonts->approved(), 'The standard fonts are ready.' );
+		self::assertFalse( $fonts->approve( 'Roboto' ), 'A standard font is approved already.' );
 		self::assertTrue( $fonts->approve( 'Lobster' ) );
-		self::assertSame( array( 'Lobster', 'Roboto' ), array_keys( $fonts->approved() ) );
+		self::assertFalse( $fonts->approve( 'Lobster' ), 'Already approved.' );
+		self::assertCount( count( AlertFonts::STANDARD_FONTS ) + 1, $fonts->approved(), 'A new font comes on top of them.' );
 		self::assertSame( array( 400, 700 ), $fonts->find( 'Roboto' )?->weights );
 		self::assertSame( 'off', $this->autoload( AlertFonts::APPROVED_OPTION ) );
 
@@ -189,8 +191,8 @@ final class AlertFontsTest extends IntegrationTestCase {
 		self::assertNull( $fonts->find( 'Roboto' ) );
 
 		$audit = array_slice( $this->rows( Tables::AUDIT_LOG ), 2 );
-		self::assertSame( array( 'alert_font_approved', 'alert_font_approved', 'alert_font_removed' ), array_column( $audit, 'action' ) );
-		self::assertSame( array( 'family' => 'Roboto' ), json_decode( (string) $audit[2]['context'], true ) );
+		self::assertSame( array( 'alert_font_approved', 'alert_font_removed' ), array_column( $audit, 'action' ) );
+		self::assertSame( array( 'family' => 'Roboto' ), json_decode( (string) $audit[1]['context'], true ) );
 	}
 
 	public function test_a_failed_option_write_rolls_back_the_audit_record(): void {
@@ -201,14 +203,14 @@ final class AlertFontsTest extends IntegrationTestCase {
 		add_filter( 'pre_update_option_' . AlertFonts::APPROVED_OPTION, static fn( mixed $value, mixed $old ): mixed => $old, 10, 2 );
 
 		try {
-			$fonts->approve( 'Roboto' );
+			$fonts->approve( 'Lobster' );
 			self::fail( 'Expected DatabaseException.' );
 		} catch ( DatabaseException $e ) {
 			self::assertSame( 'Could not save the approved fonts.', $e->getMessage() );
 		}
 
 		self::assertSame( $before, $this->count_rows( Tables::AUDIT_LOG ) );
-		self::assertSame( array(), $fonts->approved() );
+		self::assertNull( $fonts->find( 'Lobster' ) );
 	}
 
 	public function test_users_without_the_capability_change_nothing(): void {
@@ -258,8 +260,8 @@ final class AlertFontsTest extends IntegrationTestCase {
 
 		$approve = array(
 			'action'   => AlertsAdminActions::APPROVE_ACTION,
-			'family'   => 'Roboto',
-			'_wpnonce' => wp_create_nonce( AlertsAdminActions::nonce_action( AlertsAdminActions::APPROVE_ACTION, 'Roboto' ) ),
+			'family'   => 'Lobster',
+			'_wpnonce' => wp_create_nonce( AlertsAdminActions::nonce_action( AlertsAdminActions::APPROVE_ACTION, 'Lobster' ) ),
 		);
 		self::assertStringContainsString( AlertsAdminActions::RESULT_ARG . '=approved', $actions->process( $approve ) );
 		self::assertStringContainsString( AlertsAdminActions::RESULT_ARG . '=no_changes', $actions->process( $approve ) );
@@ -275,7 +277,7 @@ final class AlertFontsTest extends IntegrationTestCase {
 
 		$this->expectException( RuntimeException::class );
 		$this->expectExceptionMessage( 'The link you followed has expired.' );
-		$actions->process( array_merge( $approve, array( 'family' => 'Lobster' ) ) );
+		$actions->process( array_merge( $approve, array( 'family' => 'Roboto' ) ) );
 	}
 
 	public function test_the_page_never_shows_the_key_and_lists_the_library(): void {
@@ -286,7 +288,7 @@ final class AlertFontsTest extends IntegrationTestCase {
 		$fonts->approve( 'Roboto' );
 
 		ob_start();
-		( new AlertsAdminPage( $fonts ) )->render();
+		( new FontsSettingsSection( $fonts ) )->render();
 		$html = (string) ob_get_clean();
 
 		self::assertStringNotContainsString( self::KEY, $html );

@@ -13,8 +13,6 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
-use MerchBoard\Modules\Alerts\Fonts\AlertFont;
-use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Fonts\AlertFontsException;
 use MerchBoard\Modules\Alerts\Images\AlertImage;
 use MerchBoard\Modules\Alerts\Images\AlertImageException;
@@ -29,8 +27,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * "Merch Dashboard → Alerts" (ADR-065 pkt. 7), for `merchboard_manage_alerts`.
- * Phase 25 step 5 adds the tab "Fonts" (ADR-067): the Google Fonts API key,
- * the catalogue and the approved fonts. Step 6.3 adds the tab "Sounds": the
+ * Fonts are managed under Settings (FontsSettingsSection). Step 6.3 adds the tab "Sounds": the
  * sound library creators can choose from; step 6.10 the tab "Images": the
  * images creators can fill their alert text with; step 8 the tab "Chatbot"
  * (ChatbotAdminTab). Step 9 adds the order log, the global overlay, the
@@ -47,14 +44,8 @@ final class AlertsAdminPage {
 	public const PRIORITY = 27;
 
 	/**
-	 * Catalogue rows shown per search.
-	 */
-	public const SEARCH_LIMIT = 50;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param AlertFonts             $fonts   Font library.
 	 * @param AlertSoundLibrary|null $library Sound library; null for none.
 	 * @param AlertImageLibrary|null $images  Image library; null for none.
 	 * @param ChatbotAdminTab|null   $chatbot The chatbot tab; null for none.
@@ -65,7 +56,7 @@ final class AlertsAdminPage {
 	 * @param CreatorPageTab|null    $creator_page The setup of the creator's page (step 25.9.6); null for none.
 	 * @param AlertApiTab|null       $api    The alert API (step 25.12.1); null for none.
 	 */
-	public function __construct( private AlertFonts $fonts, private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null, private ?AlertApiTab $api = null ) {
+	public function __construct( private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null, private ?AlertApiTab $api = null ) {
 	}
 
 	/**
@@ -89,6 +80,10 @@ final class AlertsAdminPage {
 	 * @param string $result Outcome code ('' for none).
 	 */
 	public static function url( string $tab = 'fonts', string $result = '' ): string {
+		if ( 'fonts' === $tab ) {
+			return FontsSettingsSection::url( $result );
+		}
+
 		$args = array(
 			'page' => self::SLUG,
 			'tab'  => $tab,
@@ -157,9 +152,8 @@ final class AlertsAdminPage {
 		}
 
 		// Read-only parameters; nothing is changed by this request.
-		$code   = isset( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$search = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- A search of the view.
-		$tab    = match ( isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$code = isset( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ AlertsAdminActions::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$tab  = match ( isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 			'sounds' => null === $this->library ? 'fonts' : 'sounds',
 			'images' => null === $this->images ? 'fonts' : 'images',
 			'chatbot' => null === $this->chatbot ? 'fonts' : 'chatbot',
@@ -192,8 +186,6 @@ final class AlertsAdminPage {
 		if ( null !== $this->creator_page ) {
 			echo '<a class="nav-tab' . ( CreatorPageTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( CreatorPageTab::TAB ) ) . '"' . ( CreatorPageTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Creator page', 'merchboard' ) . '</a>';
 		}
-
-		echo '<a class="nav-tab' . ( 'fonts' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url() ) . '"' . ( 'fonts' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Fonts', 'merchboard' ) . '</a>';
 
 		if ( null !== $this->library ) {
 			echo '<a class="nav-tab' . ( 'sounds' === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( 'sounds' ) ) . '"' . ( 'sounds' === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Sounds', 'merchboard' ) . '</a>';
@@ -301,11 +293,7 @@ final class AlertsAdminPage {
 			return;
 		}
 
-		echo '<p>' . esc_html__( 'Creators can use the approved fonts in their alert overlay. The fonts are loaded from Google\'s servers in the creator dashboard and in the browser source, which sends the viewer\'s IP address to Google (ADR-067).', 'merchboard' ) . '</p>';
-
-		$this->render_key();
-		$this->render_approved();
-		$this->render_catalog( $search );
+		echo '<p>' . esc_html__( 'Fonts are managed under Settings, shared by the alert overlays and the product designer.', 'merchboard' ) . ' <a href="' . esc_url( FontsSettingsSection::url() ) . '">' . esc_html__( 'Open the fonts', 'merchboard' ) . '</a></p>';
 		echo '</div>';
 	}
 
@@ -456,122 +444,6 @@ final class AlertsAdminPage {
 		echo '<label for="' . esc_attr( $field ) . '" class="screen-reader-text">' . esc_html__( 'Name', 'merchboard' ) . '</label>';
 		echo '<input type="text" id="' . esc_attr( $field ) . '" name="name" value="' . esc_attr( $sound->name ) . '" maxlength="' . esc_attr( (string) AlertSoundLibrary::NAME_MAX ) . '"> ';
 		submit_button( __( 'Rename', 'merchboard' ), 'small', 'submit', false );
-		echo '</form>';
-	}
-
-	/**
-	 * The API key form.
-	 */
-	private function render_key(): void {
-		echo '<h2>' . esc_html__( 'Google Fonts API key', 'merchboard' ) . '</h2>';
-		echo '<p>' . esc_html( $this->fonts->has_key() ? __( 'A key is saved. It is never shown again.', 'merchboard' ) : __( 'No key is saved. The key is only needed to fetch the catalogue.', 'merchboard' ) ) . '</p>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::KEY_ACTION ) . '">';
-		wp_nonce_field( AlertsAdminActions::KEY_ACTION );
-		echo '<label for="merchboard-alert-fonts-key" class="screen-reader-text">' . esc_html__( 'API key', 'merchboard' ) . '</label>';
-		echo '<input type="password" id="merchboard-alert-fonts-key" name="key" class="regular-text" autocomplete="off" spellcheck="false"> ';
-		submit_button( __( 'Save key', 'merchboard' ), 'secondary', 'submit', false );
-
-		if ( $this->fonts->has_key() ) {
-			echo ' <button type="submit" name="remove" value="1" class="button-link button-link-delete">' . esc_html__( 'Remove key', 'merchboard' ) . '</button>';
-		}
-
-		echo '</form>';
-	}
-
-	/**
-	 * The approved fonts.
-	 */
-	private function render_approved(): void {
-		$approved = $this->fonts->approved();
-
-		echo '<h2>' . esc_html__( 'Approved fonts', 'merchboard' ) . '</h2>';
-
-		if ( array() === $approved ) {
-			echo '<p>' . esc_html__( 'No fonts are approved. Creators can only use the default font.', 'merchboard' ) . '</p>';
-			return;
-		}
-
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Font', 'merchboard' ) . '</th><th>' . esc_html__( 'Category', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
-
-		foreach ( $approved as $font ) {
-			echo '<tr><td>' . esc_html( $font->family ) . '</td><td>' . esc_html( $font->category ) . '</td><td>';
-			$this->font_button( AlertsAdminActions::REMOVE_ACTION, $font, __( 'Remove', 'merchboard' ) );
-			echo '</td></tr>';
-		}
-
-		echo '</tbody></table>';
-	}
-
-	/**
-	 * The catalogue with search.
-	 *
-	 * @param string $search Search text.
-	 */
-	private function render_catalog( string $search ): void {
-		echo '<h2>' . esc_html__( 'Google Fonts catalogue', 'merchboard' ) . '</h2>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsAdminActions::SYNC_ACTION ) . '">';
-		wp_nonce_field( AlertsAdminActions::SYNC_ACTION );
-		submit_button( $this->fonts->has_catalog() ? __( 'Fetch the catalogue again', 'merchboard' ) : __( 'Fetch the catalogue', 'merchboard' ), 'secondary', 'submit', false );
-		echo '</form>';
-
-		if ( ! $this->fonts->has_catalog() ) {
-			return;
-		}
-
-		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="search-form">';
-		echo '<input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '"><input type="hidden" name="tab" value="fonts">';
-		echo '<p><label for="merchboard-alert-fonts-search">' . esc_html__( 'Search fonts', 'merchboard' ) . '</label> ';
-		echo '<input type="search" id="merchboard-alert-fonts-search" name="q" value="' . esc_attr( $search ) . '"> ';
-		submit_button( __( 'Search', 'merchboard' ), 'secondary', '', false );
-		echo '</p></form>';
-
-		$approved = $this->fonts->approved();
-		$fonts    = $this->fonts->catalog( $search, self::SEARCH_LIMIT );
-
-		if ( array() === $fonts ) {
-			echo '<p>' . esc_html__( 'No fonts match the search.', 'merchboard' ) . '</p>';
-			return;
-		}
-
-		echo '<p class="description">' . esc_html(
-			sprintf(
-				/* translators: %d: number of fonts. */
-				__( 'At most %d fonts, the most popular first.', 'merchboard' ),
-				self::SEARCH_LIMIT
-			)
-		) . '</p>';
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Font', 'merchboard' ) . '</th><th>' . esc_html__( 'Category', 'merchboard' ) . '</th><th><span class="screen-reader-text">' . esc_html__( 'Actions', 'merchboard' ) . '</span></th></tr></thead><tbody>';
-
-		foreach ( $fonts as $font ) {
-			echo '<tr><td>' . esc_html( $font->family ) . '</td><td>' . esc_html( $font->category ) . '</td><td>';
-
-			if ( isset( $approved[ $font->family ] ) ) {
-				echo esc_html__( 'Approved', 'merchboard' );
-			} else {
-				$this->font_button( AlertsAdminActions::APPROVE_ACTION, $font, __( 'Approve', 'merchboard' ) );
-			}
-
-			echo '</td></tr>';
-		}
-
-		echo '</tbody></table>';
-	}
-
-	/**
-	 * A one-button form for a font.
-	 *
-	 * @param string    $action Admin-post action.
-	 * @param AlertFont $font   Font.
-	 * @param string    $label  Button label.
-	 */
-	private function font_button( string $action, AlertFont $font, string $label ): void {
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( $action ) . '">';
-		echo '<input type="hidden" name="family" value="' . esc_attr( $font->family ) . '">';
-		wp_nonce_field( AlertsAdminActions::nonce_action( $action, $font->family ) );
-		submit_button( $label, 'small', 'submit', false );
 		echo '</form>';
 	}
 }

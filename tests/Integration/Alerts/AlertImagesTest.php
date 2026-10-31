@@ -381,7 +381,7 @@ final class AlertImagesTest extends IntegrationTestCase {
 
 		$_GET['tab'] = 'images';
 		ob_start();
-		( new AlertsAdminPage( $fonts, null, $library ) )->render();
+		( new AlertsAdminPage( null, $library ) )->render();
 		$html = (string) ob_get_clean();
 		unset( $_GET['tab'] );
 

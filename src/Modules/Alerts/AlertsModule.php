@@ -35,6 +35,7 @@ use MerchBoard\Modules\Alerts\Webhooks\WebhookPayloads;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsActions;
 use MerchBoard\Modules\Alerts\Admin\AlertsSettingsSection;
+use MerchBoard\Modules\Alerts\Admin\FontsSettingsSection;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminActions;
 use MerchBoard\Modules\Alerts\Admin\ChatbotAdminTab;
 use MerchBoard\Modules\Alerts\Admin\CompanyDetailsSection;
@@ -187,7 +188,7 @@ final class AlertsModule implements Module {
 
 		// Font library (phase 25, step 5; ADR-067).
 		$container->set( AlertFonts::class, static fn( Container $c ): AlertFonts => new AlertFonts( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertFonts::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new AlertApiTab( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeyRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertWebhookRepository::class ), $c->get( AlertApiAccess::class ) ) ) );
+		$container->set( AlertsAdminPage::class, static fn( Container $c ): AlertsAdminPage => new AlertsAdminPage( $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ), $c->get( ChatbotAdminTab::class ), $c->get( YouTubeLegalTab::class ), new OrderLogTab( $c->get( AlertEventRepository::class ), $c->get( ChatMessageRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertsAvailability::class ) ), $c->get( GlobalOverlayTab::class ), new OverlayPresetsTab( $c->get( AdminBundle::class ) ), new CreatorPageTab( $c->get( AdminBundle::class ) ), new AlertApiTab( $c->get( AlertApiSwitch::class ), $c->get( AlertApiKeyRepository::class ), $c->get( CreatorRepository::class ), $c->get( AlertWebhookRepository::class ), $c->get( AlertApiAccess::class ) ) ) );
 		$container->set( AlertsAdminActions::class, static fn( Container $c ): AlertsAdminActions => new AlertsAdminActions( $c->get( AlertFonts::class ), $c->get( Logger::class ), $c->get( AlertSoundLibrary::class ), $c->get( AlertImageLibrary::class ) ) );
 
 		// Overlay page and feed (phase 25, step 3).
@@ -689,6 +690,7 @@ final class AlertsModule implements Module {
 				$container->get( AlertApiActions::class )->register();
 				$container->get( ChatbotAdminActions::class )->register();
 				$container->get( AlertsSettingsSection::class )->register();
+				( new FontsSettingsSection( $container->get( AlertFonts::class ) ) )->register();
 				( new CompanyDetailsSection() )->register();
 				$container->get( CreatorSoundLimitsActions::class )->register();
 				$container->get( CreatorSoundLimitsSection::class )->register();

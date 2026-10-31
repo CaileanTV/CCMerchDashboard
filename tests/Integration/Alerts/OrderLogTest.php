@@ -142,14 +142,14 @@ final class OrderLogTest extends IntegrationTestCase {
 
 	public function test_the_order_log_is_the_alerts_pages_first_and_default_tab(): void {
 		$this->alert( $this->nova, 102, 1021, '2026-10-22 06:00:00', 'Cap', 'nova_fan' );
-		$page = new AlertsAdminPage( new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ), null, null, null, null, $this->tab() );
+		$page = new AlertsAdminPage( null, null, null, null, $this->tab() );
 
 		ob_start();
 		$page->render();
 		$html = (string) ob_get_clean();
 
 		self::assertStringContainsString( 'nav-tab-active" href="' . esc_url( AlertsAdminPage::url( OrderLogTab::TAB ) ) . '" aria-current="page">Order log', $html );
-		self::assertLessThan( strpos( $html, '>Fonts<' ), strpos( $html, '>Order log<' ), 'The first tab.' );
+		self::assertStringNotContainsString( '>Fonts<', $html, 'Fonts are under Settings.' );
 		self::assertStringContainsString( 'Orders with alerts', $html );
 		self::assertStringContainsString( 'Off. No alerts are recorded.', $html, 'The alerts card.' );
 

@@ -51,6 +51,52 @@ final class AlertFonts {
 	public const MAX_APPROVED = 100;
 
 	/**
+	 * The fonts that are ready without an API key: Google's stylesheets need none.
+	 */
+	public const STANDARD_FONTS = array(
+		array(
+			'family'   => 'Bebas Neue',
+			'category' => 'display',
+			'weights'  => array( 400 ),
+		),
+		array(
+			'family'   => 'Lato',
+			'category' => 'sans-serif',
+			'weights'  => array( 400, 700 ),
+		),
+		array(
+			'family'   => 'Montserrat',
+			'category' => 'sans-serif',
+			'weights'  => array( 400, 700 ),
+		),
+		array(
+			'family'   => 'Open Sans',
+			'category' => 'sans-serif',
+			'weights'  => array( 400, 700 ),
+		),
+		array(
+			'family'   => 'Oswald',
+			'category' => 'sans-serif',
+			'weights'  => array( 400, 700 ),
+		),
+		array(
+			'family'   => 'Pacifico',
+			'category' => 'handwriting',
+			'weights'  => array( 400 ),
+		),
+		array(
+			'family'   => 'Playfair Display',
+			'category' => 'serif',
+			'weights'  => array( 400, 700 ),
+		),
+		array(
+			'family'   => 'Roboto',
+			'category' => 'sans-serif',
+			'weights'  => array( 400, 700 ),
+		),
+	);
+
+	/**
 	 * Sends a GET request; returns wp_remote_get()'s result.
 	 *
 	 * @var Closure(string, array<string, mixed>): mixed
@@ -187,7 +233,8 @@ final class AlertFonts {
 	}
 
 	/**
-	 * The approved fonts, by family name.
+	 * The approved fonts, by family name: the standard fonts until an
+	 * administrator has made a list of their own, which starts from them.
 	 *
 	 * @return array<string, AlertFont>
 	 */
@@ -195,7 +242,7 @@ final class AlertFonts {
 		$stored = get_option( self::APPROVED_OPTION, array() );
 		$fonts  = array();
 
-		foreach ( is_array( $stored ) ? $stored : array() as $data ) {
+		foreach ( is_array( $stored ) && array() !== $stored ? $stored : self::STANDARD_FONTS as $data ) {
 			$font = AlertFont::from_array( $data );
 
 			if ( null !== $font ) {

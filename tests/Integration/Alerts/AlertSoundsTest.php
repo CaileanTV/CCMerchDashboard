@@ -629,7 +629,7 @@ final class AlertSoundsTest extends IntegrationTestCase {
 
 		$_GET['tab'] = 'sounds';
 		ob_start();
-		( new AlertsAdminPage( new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ), $library ) )->render();
+		( new AlertsAdminPage( $library ) )->render();
 		$html = (string) ob_get_clean();
 		unset( $_GET['tab'] );
 
