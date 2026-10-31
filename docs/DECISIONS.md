@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080).
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren).
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -4730,6 +4730,16 @@ Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Printful 2026-10-28,
 - **Import** (`CatalogImport` + `PrintfulCatalog`): admin søger (ord og kategori, listen caches 1 time) og vælger produktet, farver, størrelser og placeringer. Kladden oprettes straks. Jobbet `merchboard_designer_import` laver to tasks i mockup-generatoren med vores statiske filer (`assets/designer/blank.png` og `marker-<n>.png`): alle farver tomme og første farve med en markør pr. placering. `ImageProbe` (GD) måler printområdet som afgrænsningsboksen for markørens farvetone, og hvert farves rene foto bliver sidens baggrund pr. farve. Variant pr. farve og størrelse gemmes og bruges til mockups.
 - **Fejl:** `import_state` `failed` med årsag, kald og besked, "Prøv igen" og admin-notifikationen `admin_designer_import_failed`. "Vis leverandørens svar" viser `GET /products/{id}` og printfiles uden token.
 
+**Statusnote 2026-10-31 (eksperimentel, afprøvet mod Printful fra Local; se rapporten for hvad der ikke er):** projektejeren har godkendt, at v2 (beta) bruges med v1 som reserve, at importen starter med EU, og at all-over-produkter designes fladt:
+- **Nye kald, kun læsning:** `GET /v2/catalog-products`, `/v2/catalog-categories` og pr. produkt `/v2/catalog-products/{id}`, `/catalog-variants`, `/availability`, `/mockup-styles`, `/mockup-templates`. **Mockups:** `POST /v2/mockup-tasks` og `GET /v2/mockup-tasks`. Ingen ordrer, og v1-kaldene består.
+- **EU:** listen bruger `selling_region_name=europe` og `destination_country=DK` (329 af 574 produkter 2026-10-31), og der tilbydes kun varianter "in stock" i Europa. Et produkt uden sådan en variant afvises. "Europe" er Printfuls salgsregion; dokumentationen lover ikke produktion i EU.
+- **Reserve:** fejler et v2-kald af andre grunde end 429, bruges v1. Listen er så ufiltreret, admin får besked, og resultatet caches kun 5 minutter. Kun v1 giver `availability_status` pr. variant. `availability_regions` og `origin_country` kan ikke bruges: Gildan 18000 siger kun USA, selvom 118 varianter findes i EU, og `origin_country` er det rå produkts oprindelse.
+- **Grundproduktets markør-kørsler bliver på v1.** v2 afviser en fil, hvis form afviger mere end 2 % fra positionen (rigtigt svar), og markøren skal fylde hele printområdet. Designs bruger v2, for printfilen har sidens form.
+- **Flade sider (all-over, teknik `cut-sew` og `sublimation`):** der er intet foto at måle på, så creatoren designer på syemønsteret fra `mockup-templates` (rollen `template`). `BaseView.flat` (JSON, ingen skema-ændring) tegner mønsteret med normal blanding, fordi det har et slør uden for delen. Printfilen er JPEG på hvid, fordi en PNG af et foto på 4200 × 5400 px kan ramme grænsen på 26 MB. `stitch_color` er påkrævet (rigtigt svar) og sættes til hvid.
+- **Én mockup-opgave med alle brugte dele,** så produktet vises samlet. Hver side knyttes ved import til en mockup-stil (Front, Back, Left, Right), og sæsonstile (fx Halloween) fravælges. v2 navngiver alle fotos efter første placering, så billederne fordeles efter `style_id`. En side uden stil beholder browserens flade billede.
+- **Printmål, der følger størrelsen** (fx puder): admin vælger én gruppe størrelser pr. grundprodukt. To områder på samme placering (mulepose): `simple` bruges.
+- **Fravalgt indtil videre:** `knitwear`, fordi garnfarver kræver sin egen løsning. All-over-import kræver v2 og fejler tydeligt, hvis v2 er nede; mockups af eksisterende all-over-produkter kan falde tilbage til v1.
+
 ## Context
 Admin vil kunne tilbyde produkter fra Printfuls katalog. Designet laves i vores designer (ADR-080), og de færdige mockups kommer fra Printfuls mockup-generator. Ordrer produceres fortsat manuelt.
 
@@ -4898,3 +4908,45 @@ Schema-version 40: tabellen `merchboard_product_removal_requests`. Tabellen slet
 - Fanen "Removal requests" er en ny manuel opgave for admin.
 - En lukket sag betyder, at admin har behandlet den, ikke at produktet er væk. Findes produktet stadig, får admin en advarsel, men sagen lukkes.
 - En sag kan blive stående, hvis admin sletter produktet uden at lukke den. Køen viser, at produktet ikke længere findes.
+
+# ADR-084: Prodigi som produktkatalog og mockups
+
+## Date
+2026-10-31
+
+## Status
+Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at den bygges ind i produktdesigneren, mens den faktiske opsætning (konto, nøgle, rigtige kald) venter. **Eksperimentel: skrevet ud fra Prodigis OpenAPI-fil og testet med falsk HTTP. Intet kald er kørt mod Prodigi.**
+
+## Context
+Printful og Gelato dækker ikke alt, projektejeren vil tilbyde, og Prodigi har egen produktion i EU. Prodigis v4-dokumentation viser hverken katalogliste eller mockups, men v5-specifikationen (`https://www.prodigi.com/print-api/reference/v5/openapi.yml`) har begge dele. Grænsen er 1.000 kald i timen pr. nøgle.
+
+## Decision
+1. **Kun katalog og mockups.** Tilladte kald på `https://api.prodigi.com/v5`: `GET /catalogue/search`, `/catalogue/products`, `/catalogue/categories`, `/catalogue/products/{id}`, `/catalogue/products/{id}/variants`; `POST /assets:ingest`, `GET` og `DELETE /assets/{id}`; `POST` og `DELETE /products`, `GET /products/{id}/variants`, `POST /products/{id}/assets`; `POST /assets/{id}/mockups:fromProduct` og `GET /assets/{id}/mockups/{mockupId}`, samt download af filer, Prodigi selv returnerer.
+2. **Ingen ordrer.** `orders`, `quotes`, `sales-channels`, `billing`, `merchant` og `webhooks` bruges ikke. Produktion er fortsat manuel, og automatisk produktion kræver en ny ADR.
+3. **Kun EU-produktion.** Kun produkter og SKU'er med `EU` i `manufacturingRegions` tilbydes. Listen har intet regionsfilter, så hvert hit slås op (højst 48 pr. søgning, cachet 1 time).
+4. **Flade grundprodukter.** Kataloget har hverken fotos eller farvekoder, så en base får et hvidt ark pr. printflade. Farver starter hvide, og admin retter dem bagefter. Printmål, der følger størrelsen, deles i grupper som hos Printful.
+5. **Mockups efter indsendelse:** printfilen sendes som signeret URL, et gemt produkt oprettes med en variant pr. farve, filen bindes til printfladen, og der laves én mockup pr. side og farve. Det gemte produkt og filerne slettes igen, også efter en fejl, for sandkassen deler dem med live-kontoen.
+6. **Kill switch og nøgle:** `prodigi_enabled` er slået fra som standard. Nøglen krypteres med sodium i nøgledomænet `designer-prodigi`, ligger uden autoload og auditeres kun som "sat" eller "fjernet".
+
+## Alternatives considered
+- **`sales-channels` og WooCommerce-listings:** fravalgt; det går uden om designeren, godkendelsen og afregningen.
+- **v4:** fravalgt; ingen katalogliste og ingen mockups.
+
+## Reason
+Samme model som Printful og Gelato, med mindst muligt nyt: alt ligger bag én afbryder og aktiverer intet, før projektejeren sætter en nøgle.
+
+## Security
+- Printfiler forlader kun det private lager via kortlivede signerede URL'er (ADR-081 pkt. 4).
+- Nøglen vises aldrig igen og logges ikke. Fejl viser kaldet og Prodigis egen besked som ren tekst.
+- Indkommende svar valideres, og billeder gemmes som uploads. Ingen kald, mens afbryderen er slået fra.
+
+## Migration/data implications
+Ingen skema-ændring: `source` er `varchar(10)`, og værdien `prodigi` er ny. Optionen `merchboard_designer_prodigi_key` slettes ved opt-in-afinstallation.
+
+## Consequences
+- Svarenes form er ikke bekræftet. Ved første rigtige nøgle skal importen og mockups afprøves, og afvigelser rettes.
+- Uvist: hvilke tøjprodukter der understøtter mockups, om de koster penge, og hvilke scener der findes.
+- Prodigi leverer ingen farvekoder, så admin skal rette farverne på hver base.
+
+## Related
+ADR-016, ADR-080, ADR-081, ADR-082
