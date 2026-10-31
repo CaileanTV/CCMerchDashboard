@@ -34,6 +34,9 @@ export type SubmissionResult =
 	| { readonly ok: true; readonly product: DesignerProduct }
 	| { readonly ok: false; readonly reason: string };
 
+export type UploadResult =
+	{ readonly ok: true } | { readonly ok: false; readonly reason: string };
+
 /**
  * The number of files a design sends.
  *
@@ -57,6 +60,29 @@ export async function submitWithFiles(
 	input: SubmissionInput,
 	progress: ( done: number, total: number ) => void
 ): Promise< SubmissionResult > {
+	const uploaded = await uploadFiles( input, progress );
+
+	if ( ! uploaded.ok ) {
+		return uploaded;
+	}
+
+	const submitted = await submitDesign( input.product );
+
+	return submitted.ok
+		? { ok: true, product: submitted.data }
+		: { ok: false, reason: submitted.error.reason ?? 'submit' };
+}
+
+/**
+ * Renders and sends the files of the draft, for a submission or a preview.
+ *
+ * @param input    The draft.
+ * @param progress Called after each file with the files sent and their total.
+ */
+export async function uploadFiles(
+	input: SubmissionInput,
+	progress: ( done: number, total: number ) => void
+): Promise< UploadResult > {
 	const sides = usedSides( input.design );
 
 	if ( sides.length === 0 ) {
@@ -189,9 +215,5 @@ export async function submitWithFiles(
 		}
 	}
 
-	const submitted = await submitDesign( input.product );
-
-	return submitted.ok
-		? { ok: true, product: submitted.data }
-		: { ok: false, reason: submitted.error.reason ?? 'submit' };
+	return { ok: true };
 }

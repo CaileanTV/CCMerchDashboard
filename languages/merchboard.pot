@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T13:33:19+00:00\n"
+"POT-Creation-Date: 2026-10-31T14:01:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -4144,9 +4144,9 @@ msgstr ""
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:258
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:416
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:773
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:267
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:425
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:874
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:183
@@ -7782,11 +7782,11 @@ msgstr ""
 msgid "We no longer offer this base product, so the design cannot be approved. You are welcome to design on another product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:897
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:999
 msgid "The product designer is not available."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:916
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1018
 msgid "The product designer refused the change."
 msgstr ""
 
@@ -9890,6 +9890,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:415
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:418
 #: build/dashboard.js:2
+#: build/dashboard.js:55
 #: build/dashboard.js:73
 msgid "Close"
 msgstr ""
@@ -14080,6 +14081,30 @@ msgid "Delete %s for good"
 msgstr ""
 
 #: build/dashboard.js:55
+msgid "Add something to your product first."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Printful makes a limited number of photos a minute. Please try again in a minute."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "The photos could not be made. You can still send your design, and we will look at it."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Your finished product"
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Printful is sewing your design together. It usually takes less than a minute…"
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "These are Printful's photos of your saved design in its first colour. Check sizes and placement before you send it. A part without a design is white."
+msgstr ""
+
+#: build/dashboard.js:55
 msgid "Rectangle"
 msgstr ""
 
@@ -14145,12 +14170,6 @@ msgstr ""
 msgid "A side can have at most %d elements."
 msgstr ""
 
-#. translators: 1: files sent, 2: all files.
-#: build/dashboard.js:55
-#, js-format
-msgid "Preparing your design for approval: %1$d of %2$d files sent…"
-msgstr ""
-
 #: build/dashboard.js:55
 msgid "The base product has no sides yet."
 msgstr ""
@@ -14192,6 +14211,10 @@ msgid "Saved"
 msgstr ""
 
 #: build/dashboard.js:55
+msgid "See the finished product"
+msgstr ""
+
+#: build/dashboard.js:55
 #: build/dashboard.js:86
 msgid "Send for approval"
 msgstr ""
@@ -14214,6 +14237,12 @@ msgstr ""
 #: build/dashboard.js:55
 #, js-format
 msgid "Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval; until then it cannot be changed, but you can withdraw it. Customer price incl. VAT: %2$s."
+msgstr ""
+
+#. translators: 1: files sent, 2: all files.
+#: build/dashboard.js:55
+#, js-format
+msgid "Preparing your design for approval: %1$d of %2$d files sent…"
 msgstr ""
 
 #: build/dashboard.js:55
@@ -14279,7 +14308,7 @@ msgid "Drag, scale and rotate the elements on the product. The dashed frame is t
 msgstr ""
 
 #: build/dashboard.js:55
-msgid "This is the flat part before it is sewn. Fill it to the edges: what falls outside the lines is cut away. The photos of the finished product are made when you send the design for approval."
+msgid "This is the flat part before it is sewn. Fill it to the edges, for what falls outside the solid line is cut away. The labels are Printful's: keep text and logos inside \"Safe Print Area\" (the dashed line), \"Folding line\" is where the part is folded, \"Collar\" is the collar, and \"Placement on product\" shows where the part sits. See how it looks with \"See the finished product\"."
 msgstr ""
 
 #. translators: 1: print width in px, 2: print height in px, 3: resolution in dpi.

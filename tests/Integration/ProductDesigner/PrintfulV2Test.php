@@ -15,6 +15,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
@@ -405,6 +406,84 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertSame( 'image/jpeg', $response->get_headers()['Content-Type'] ?? null );
 	}
 
+	public function test_a_pattern_with_printful_s_labels_is_used_when_it_has_the_same_shape(): void {
+		$this->answers[ self::API . '/mockup-generator/templates/257' ] = self::answer(
+			array(
+				'result' => array(
+					'variant_mapping' => array(
+						array(
+							'variant_id' => 501,
+							'templates'  => array(
+								array( 'placement' => 'default', 'template_id' => 1 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+								array( 'placement' => 'back', 'template_id' => 2 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+							),
+						),
+					),
+					'templates'       => array(
+						array( 'template_id' => 1, 'image_url' => 'https://cdn.example/labelled.png', 'template_width' => 3000, 'template_height' => 3000, 'print_area_width' => 2000, 'print_area_height' => 3000, 'print_area_left' => 500, 'print_area_top' => 0 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						array( 'template_id' => 2, 'image_url' => 'https://cdn.example/wrong.png', 'template_width' => 3000, 'template_height' => 3000, 'print_area_width' => 3000, 'print_area_height' => 1000, 'print_area_left' => 0, 'print_area_top' => 0 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+					),
+				),
+			)
+		);
+
+		$sides = ( new PrintfulCatalog( $this->api ) )->choice( '257' )['sides'];
+
+		self::assertSame( 'https://cdn.example/labelled.png', $sides[0]['template'] ?? null );
+		self::assertSame( 500, $sides[0]['area']['x'] ?? null );
+		self::assertSame( 'https://cdn.example/back-part.png', $sides[1]['template'] ?? null, 'Another shape keeps the plain pattern.' );
+	}
+
+	public function test_the_finished_product_is_shown_before_the_design_is_sent(): void {
+		[ $version, $product, $creator ] = $this->draft_flat();
+		$mockups                         = $this->mockups();
+		$before                          = $this->products->version( $version )['status'] ?? null;
+
+		self::assertTrue( $mockups->can_preview( $this->bases->find( (int) ( $this->products->version( $version )['base_id'] ?? 0 ) ) ?? self::fail( 'No base.' ) ) );
+		self::assertSame( 'none', $mockups->preview( $version )['status'] );
+
+		$mockups->start_preview( $version );
+
+		$body = json_decode( (string) ( $this->calls_starting( 'POST' )[0][2]['body'] ?? '' ), true );
+
+		self::assertCount( 2, $body['products'][0]['placements'] ?? array(), 'Every used part.' );
+		self::assertSame( array( 501 ), $body['products'][0]['catalog_variant_ids'] ?? null, 'One colour.' );
+
+		$state = $mockups->preview( $version );
+
+		self::assertSame( 'done', $state['status'] );
+		self::assertSame( array( 'front-print', 'back-print' ), array_column( $state['images'], 'side' ) );
+		self::assertStringStartsWith( 'data:image/png;base64,', $state['images'][0]['url'] ?? '' );
+		self::assertSame( $before, $this->products->version( $version )['status'] ?? null, 'Nothing was sent.' );
+		self::assertNull( $this->products->pending( $product ) );
+
+		delete_transient( PrintfulMockups::PREVIEW . $version );
+		unset( $creator );
+	}
+
+	public function test_a_draft_s_print_file_is_served_only_with_a_valid_signature(): void {
+		[ $version ] = $this->draft_flat();
+		$files       = new SignedPrintFiles( $this->products, $this->files );
+
+		parse_str( (string) wp_parse_url( SignedPrintFiles::url( $version, 'front-print' ), PHP_URL_QUERY ), $query );
+
+		$request = new WP_REST_Request( 'GET', '/merchboard/v1/designer-print/' . $version . '/front-print' );
+
+		$request->set_url_params(
+			array(
+				'version' => (string) $version,
+				'side'    => 'front-print',
+			)
+		);
+		$request->set_query_params( $query );
+
+		self::assertSame( 200, $files->serve( $request )->get_status() );
+
+		$request->set_query_params( array_merge( $query, array( 'signature' => str_repeat( '0', 64 ) ) ) );
+
+		self::assertSame( 404, $files->serve( $request )->get_status() );
+	}
+
 	public function test_gelato_descriptions_keep_their_words_apart(): void {
 		self::assertSame( 'General To maintain', PrintfulCatalog::description( '<h3>General</h3><p>To maintain</p>' ) );
 		self::assertSame( GelatoCatalog::STANDARD_COLOR, array_column( ( new PrintfulCatalog( $this->api ) )->choice( '84' )['colors'], 'name' )[0] ?? null, 'A variant without a colour.' );
@@ -490,6 +569,23 @@ final class PrintfulV2Test extends IntegrationTestCase {
 	 * @return array{0: int} The version.
 	 */
 	private function submit_flat(): array {
+		[ $version, $product, $creator ] = $this->draft_flat();
+
+		$submissions = new DesignerSubmissions( $this->products, $this->bases, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 );
+
+		$submissions->submit( $creator, $product );
+
+		self::assertSame( $version, (int) ( $this->products->pending( $product )['id'] ?? 0 ) );
+
+		return array( $version );
+	}
+
+	/**
+	 * The same design as a draft with its files.
+	 *
+	 * @return array{0: int, 1: int, 2: Creator} Draft version, designer product and creator.
+	 */
+	private function draft_flat(): array {
 		$base = $this->import_flat();
 
 		$this->base_service()->set_active( $base, true );
@@ -545,9 +641,7 @@ final class PrintfulV2Test extends IntegrationTestCase {
 			$submissions->attach( $creator, $product, 'mockup:' . $view->key . ':standard', AlertImagesTest::upload( AlertImagesTest::png( 40, 40 ), 'mockup.png' ) );
 		}
 
-		$submissions->submit( $creator, $product );
-
-		return array( (int) ( $this->products->pending( $product )['id'] ?? 0 ) );
+		return array( (int) ( $this->products->draft( $product )['id'] ?? 0 ), $product, $creator );
 	}
 
 	/**

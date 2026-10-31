@@ -31,10 +31,11 @@ defined( 'ABSPATH' ) || exit;
  *   `GET /v2/mockup-tasks?id=…`;
  * - a download of a file Printful returned (https, any host Printful names).
  *
- * The v1 layout templates (`/mockup-generator/templates/{id}`) are not read:
- * their images are guide graphics, not product photos (review 30.15). v2's
- * `mockup-templates` are read only for all-over products, whose sewing
- * pattern is what the creator designs on.
+ * The layout templates are read only for all-over products, whose sewing
+ * pattern is what the creator designs on: `GET /mockup-generator/templates/{id}`
+ * has the pattern with Printful's own labels ("Safe Print Area"), v2's
+ * `mockup-templates` the same pattern without them. Their text is part of the
+ * image and in English in every language (real answers 2026-10-31).
  * Every call uses `wp_safe_remote_*` (no private addresses) with a 15 s
  * timeout and no redirects; the HTTP function can be replaced in tests.
  * A 429 throws RATE_LIMITED with `Retry-After`; other statuses and
@@ -127,6 +128,17 @@ class PrintfulApi {
 	 */
 	public function printfiles( int $id ): array {
 		return $this->call( 'GET', '/mockup-generator/printfiles/' . $id );
+	}
+
+	/**
+	 * The layout templates of a catalog product (`variant_mapping`, `templates`).
+	 *
+	 * @param int $id Printful product.
+	 * @return array<string, mixed>
+	 * @throws PrintfulException When the call fails.
+	 */
+	public function templates( int $id ): array {
+		return $this->call( 'GET', '/mockup-generator/templates/' . $id );
 	}
 
 	/**

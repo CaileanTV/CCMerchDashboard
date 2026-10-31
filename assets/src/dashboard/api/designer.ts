@@ -71,6 +71,8 @@ export interface DesignerView {
 export interface DesignerBase {
 	readonly id: number;
 	readonly name: string;
+	/** Whether the finished product can be shown before a design is sent. */
+	readonly preview: boolean;
 	readonly description: string;
 	readonly basePrice: string;
 	/** What each used side after the first adds to the base price. */
@@ -415,6 +417,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				basePrice: value.base_price,
 				extraSidePrice: value.extra_side_price,
 				currency: value.currency,
+				preview: value.preview === true,
 				colors,
 				sizes,
 				views,
@@ -928,6 +931,70 @@ export function deleteDesignerProduct(
  * @param file The rendered image.
  * @param name File name (its extension matches the type).
  */
+/** The state of a draft's finished-product photos. */
+export interface DesignerPreview {
+	readonly status: 'none' | 'pending' | 'failed' | 'done';
+	readonly images: readonly {
+		readonly side: string;
+		readonly color: string;
+		readonly url: string;
+	}[];
+}
+
+/**
+ * A preview's answer.
+ *
+ * @param body Body.
+ */
+export function parsePreview( body: unknown ): DesignerPreview | null {
+	if ( ! isRecord( body ) || ! Array.isArray( body.images ) ) {
+		return null;
+	}
+
+	const { status } = body;
+	const images = body.images.filter(
+		( image ): image is DesignerPreview[ 'images' ][ number ] =>
+			isRecord( image ) &&
+			isString( image.side ) &&
+			isString( image.color ) &&
+			isString( image.url ) &&
+			image.url.startsWith( 'data:image/' )
+	);
+
+	return status === 'none' ||
+		status === 'pending' ||
+		status === 'failed' ||
+		status === 'done'
+		? { status, images }
+		: null;
+}
+
+/**
+ * Starts the finished product's photos of the saved draft.
+ *
+ * @param id Designer product.
+ */
+export function startPreview( id: number ): Promise< ApiResult< true > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/preview`, method: 'POST' },
+		() => true
+	);
+}
+
+/**
+ * The state of the finished product's photos.
+ *
+ * @param id Designer product.
+ */
+export function fetchPreview(
+	id: number
+): Promise< ApiResult< DesignerPreview > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/preview` },
+		parsePreview
+	);
+}
+
 export function uploadSubmissionFile(
 	id: number,
 	slot: string,

@@ -256,7 +256,7 @@ class PrintfulCatalog implements CatalogRenderer {
 		$sides  = self::sides_v2( $first, $this->api->mockup_styles( $id, self::REGION ), $technique, $flat );
 
 		if ( $flat ) {
-			$sides = self::with_templates( $sides, $this->api->mockup_templates( $id, self::REGION ), (int) $first['id'] );
+			$sides = $this->with_labels( $id, self::with_templates( $sides, $this->api->mockup_templates( $id, self::REGION ), (int) $first['id'] ), (int) $first['id'] );
 		}
 
 		[ $colors, $sizes, $variants ] = self::variant_map( $groups[ $group ] );
@@ -952,6 +952,71 @@ class PrintfulCatalog implements CatalogRenderer {
 		}
 
 		return $kept;
+	}
+
+	/**
+	 * The sides with Printful's labelled pattern where v1 has one of the same
+	 * shape: it says where the safe print area and the folds are. Without it
+	 * the plain pattern stands, so a 429 waits but nothing else stops the import.
+	 *
+	 * @phpstan-param list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique: string, style: int, template: string, template_width: int, template_height: int, area: array{x: int, y: int, width: int, height: int}}> $sides
+	 * @phpstan-return list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique: string, style: int, template: string, template_width: int, template_height: int, area: array{x: int, y: int, width: int, height: int}}>
+	 *
+	 * @param int                         $id      Printful product.
+	 * @param array<array<string, mixed>> $sides   Sides with their template.
+	 * @param int                         $variant Variant.
+	 * @return array<array<string, mixed>>
+	 * @throws PrintfulException When Printful asks us to wait.
+	 */
+	private function with_labels( int $id, array $sides, int $variant ): array {
+		try {
+			$answer = $this->api->templates( $id );
+		} catch ( PrintfulException $e ) {
+			if ( PrintfulException::RATE_LIMITED === $e->reason() ) {
+				throw $e;
+			}
+
+			return $sides;
+		}
+
+		$ids = array();
+
+		foreach ( is_array( $answer['variant_mapping'] ?? null ) ? $answer['variant_mapping'] : array() as $mapping ) {
+			if ( is_array( $mapping ) && (int) ( $mapping['variant_id'] ?? 0 ) === $variant && is_array( $mapping['templates'] ?? null ) ) {
+				$ids = array_column( array_filter( $mapping['templates'], 'is_array' ), 'template_id', 'placement' );
+			}
+		}
+
+		$rows = array_column( array_filter( is_array( $answer['templates'] ?? null ) ? $answer['templates'] : array(), 'is_array' ), null, 'template_id' );
+
+		foreach ( $sides as $index => $side ) {
+			$row    = $rows[ $ids[ $side['placement'] ] ?? 0 ] ?? null;
+			$width  = is_array( $row ) ? (int) ( $row['print_area_width'] ?? 0 ) : 0;
+			$height = is_array( $row ) ? (int) ( $row['print_area_height'] ?? 0 ) : 0;
+			$url    = is_array( $row ) && is_string( $row['image_url'] ?? null ) ? $row['image_url'] : '';
+
+			// Another shape would put the print somewhere else than the pattern says.
+			if ( 'https' !== wp_parse_url( $url, PHP_URL_SCHEME ) || $width < 1 || $height < 1 || abs( $width / $height - $side['area']['width'] / max( 1, $side['area']['height'] ) ) > 0.02 ) {
+				continue;
+			}
+
+			$sides[ $index ] = array_merge(
+				$side,
+				array(
+					'template'        => $url,
+					'template_width'  => (int) ( $row['template_width'] ?? 0 ),
+					'template_height' => (int) ( $row['template_height'] ?? 0 ),
+					'area'            => array(
+						'x'      => (int) ( $row['print_area_left'] ?? 0 ),
+						'y'      => (int) ( $row['print_area_top'] ?? 0 ),
+						'width'  => $width,
+						'height' => $height,
+					),
+				)
+			);
+		}
+
+		return $sides;
 	}
 
 	/**

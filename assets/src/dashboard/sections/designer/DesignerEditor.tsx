@@ -65,7 +65,8 @@ import type {
 	TextObject,
 } from './design-model';
 import type { FabricStage } from './fabric-stage';
-import { submissionSize, submitWithFiles } from './submission';
+import { FinishedProduct } from './FinishedProduct';
+import { submissionSize, submitWithFiles, uploadFiles } from './submission';
 import { LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
@@ -206,6 +207,7 @@ function Editor( props: EditorProps ) {
 		onDelete,
 	} = props;
 	const impersonating = useContext( ConfigContext )?.impersonating === true;
+	const [ finished, setFinished ] = useState( false );
 	const [ confirming, setConfirming ] = useState( false );
 	const [ sending, setSending ] = useState( false );
 	const draft = product.draft!;
@@ -798,6 +800,29 @@ function Editor( props: EditorProps ) {
 		onProduct( result.product );
 	};
 
+	const showFinished = async (): Promise< string | null > => {
+		const stored = await persist();
+		const storedDraft = stored?.draft ?? null;
+
+		if ( storedDraft === null ) {
+			return 'save';
+		}
+
+		const uploaded = await uploadFiles(
+			{
+				product: product.id,
+				base,
+				design: storedDraft.design,
+				colors: storedDraft.colors,
+				image: imageOf,
+				fonts: () => fontsOf( storedDraft.design ),
+			},
+			() => undefined
+		);
+
+		return uploaded.ok ? null : uploaded.reason;
+	};
+
 	const onKeyDown = ( event: KeyboardEvent< HTMLDivElement > ) => {
 		const target = event.target as HTMLElement;
 
@@ -931,6 +956,17 @@ function Editor( props: EditorProps ) {
 							? __( 'Save draft', 'merchboard' )
 							: __( 'Saved', 'merchboard' ) }
 					</Button>
+					{ impersonating || ! base.preview ? null : (
+						<Button
+							variant="ghost"
+							onClick={ () => setFinished( true ) }
+							disabled={
+								sending || saving || confirming || finished
+							}
+						>
+							{ __( 'See the finished product', 'merchboard' ) }
+						</Button>
+					) }
 					{ impersonating ? null : (
 						<Button
 							onClick={ () => setConfirming( true ) }
@@ -1009,6 +1045,15 @@ function Editor( props: EditorProps ) {
 			{ message === null ? null : (
 				<Alert tone={ message.tone }>{ message.text }</Alert>
 			) }
+
+			{ finished ? (
+				<FinishedProduct
+					product={ product.id }
+					views={ base.views }
+					prepare={ showFinished }
+					onClose={ () => setFinished( false ) }
+				/>
+			) : null }
 
 			<div className="merchboard-product-designer__body">
 				<div className="merchboard-product-designer__left">
@@ -1291,7 +1336,7 @@ function Editor( props: EditorProps ) {
 							: null }
 						{ view.flat
 							? `${ __(
-									'This is the flat part before it is sewn. Fill it to the edges: what falls outside the lines is cut away. The photos of the finished product are made when you send the design for approval.',
+									'This is the flat part before it is sewn. Fill it to the edges, for what falls outside the solid line is cut away. The labels are Printful\'s: keep text and logos inside "Safe Print Area" (the dashed line), "Folding line" is where the part is folded, "Collar" is the collar, and "Placement on product" shows where the part sits. See how it looks with "See the finished product".',
 									'merchboard'
 								) } `
 							: null }

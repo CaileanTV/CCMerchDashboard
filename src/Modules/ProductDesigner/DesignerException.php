@@ -113,6 +113,12 @@ final class DesignerException extends RuntimeException {
 
 	public const PRODIGI_KEY = 'prodigi_key';
 
+	public const PREVIEW_UNAVAILABLE = 'preview_unavailable';
+
+	public const PREVIEW_BUSY = 'preview_busy';
+
+	public const PREVIEW_FAILED = 'preview_failed';
+
 	public const MOCKUPS_PENDING = 'mockups_pending';
 
 	/** The catalog import (review 30.15): no colour, size or side was ticked. */

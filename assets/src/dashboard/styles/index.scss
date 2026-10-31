@@ -1845,6 +1845,25 @@ input:disabled + .merchboard-sounds__upload {
 	border-top: 1px solid var(--merchboard-border);
 }
 
+.merchboard-product-designer__finished {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 0.75rem;
+	margin: 0;
+
+	img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: 8px;
+	}
+
+	figcaption {
+		margin-top: 0.25rem;
+		font-size: 0.85rem;
+	}
+}
+
 .merchboard-product-designer__steps {
 	display: grid;
 	gap: var(--merchboard-space-2);

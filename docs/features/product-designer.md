@@ -157,6 +157,9 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Printmål, der skifter med størrelsen** (puder): ét grundprodukt pr. gruppe af størrelser.
 - **v1 som reserve:** bruges, når v2 fejler, ikke ved 429. En all-over-import kræver v2. Importens egne markør-kørsler bliver på v1, for v2 afviser en fil, hvis form afviger mere end 2 % fra printområdet.
 - **Strik** (`knitwear`) tilbydes ikke endnu.
+- **Tekster på mønsteret:** kommer fra Printfuls ældre skabeloner (`GET /mockup-generator/templates/{id}`) og er en del af billedet. De er på engelsk på alle sprog, og Printfuls API har ikke dansk (`da_DK` giver 400), så en dansk forklaring står under designfladen. Mønstre hentet før 2026-10-31 har ingen tekster og kræver en ny import.
+- **Se det færdige produkt:** på Printful-produkter sender creatoren kladdens filer og får Printfuls rigtige billeder i første farve, før designet sendes til godkendelse. Der gemmes intet hos Printful, og kladden ændres ikke. Printfuls grænse er 2 opgaver i minuttet for en butik uden ordrer. Knappen vises ikke under "Se som creator", fordi filer ikke kan sendes dér.
+- **3D:** Printfuls 3D-visning er ikke en del af API'et. Den indlejrede designer (EDM) kræver en aftale med Printful og beskriver ingen 3D-visning, og den ville erstatte vores designer.
 
 ## Prodigi (ADR-084, ikke afprøvet mod Prodigi)
 - **Status:** koden ligger bag afbryderen "Prodigi", der er slået fra. Der er ingen konto og ingen nøgle endnu.

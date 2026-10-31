@@ -225,7 +225,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( CreatorUploads::class ),
 				$c->get( AlertFonts::class ),
 				$c->get( Logger::class ),
-				$c->get( DesignerShop::class )
+				$c->get( DesignerShop::class ),
+				$c->get( PrintfulMockups::class )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).

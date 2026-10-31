@@ -71,6 +71,11 @@ class PrintfulMockups {
 	public const TASK_SIDE = 'all';
 
 	/**
+	 * A draft's preview task (transient prefix).
+	 */
+	public const PREVIEW = 'merchboard_designer_preview_';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb                      $wpdb     Database (the named lock).
@@ -141,6 +146,109 @@ class PrintfulMockups {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Whether a base product's designs can be previewed: Printful only, for
+	 * a task leaves nothing behind there (Gelato keeps a product per render).
+	 *
+	 * @param BaseProduct $base Base product.
+	 */
+	public function can_preview( BaseProduct $base ): bool {
+		return 'printful' === $base->source && $this->api->available();
+	}
+
+	/**
+	 * Starts a task of a draft's used sides in its first colour, so the
+	 * creator sees the finished product before sending the design. Only v2:
+	 * a preview may fail, and the creator can still send the design.
+	 *
+	 * @param int $id Draft version.
+	 * @throws PrintfulException When Printful refuses or fails.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function start_preview( int $id ): void {
+		$version  = $this->products->version( $id );
+		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
+
+		if ( null === $version || null === $provider || null === $base ) {
+			self::fail( PrintfulException::INVALID );
+		}
+
+		// Every used side in one task, as for a flat version.
+		$provider['flat'] = true;
+
+		$product  = (int) $provider['ref'];
+		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'] ), 0, 1, true );
+		$sides    = $this->task_sides( $id, self::TASK_SIDE, $version, $base, $provider );
+
+		if ( array() === $variants || array() === $sides ) {
+			self::fail( PrintfulException::INVALID );
+		}
+
+		set_transient(
+			self::PREVIEW . $id,
+			array(
+				'key'        => $this->api->create_mockup_task( self::task_v2( $product, array_keys( $variants ), $sides, $provider ) ),
+				'variants'   => $variants,
+				'flat'       => true,
+				'styles'     => array_intersect_key( $provider['styles'], array_flip( array_column( $sides, 'key' ) ) ),
+				'placements' => array_column( $sides, 'placement', 'key' ),
+			),
+			HOUR_IN_SECONDS
+		);
+	}
+
+	/**
+	 * A preview's state and, when it is done, its images as data URLs: the
+	 * dashboard's CSP takes no other host.
+	 *
+	 * @param int $id Draft version.
+	 * @return array{status: string, images: list<array{side: string, color: string, url: string}>}
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function preview( int $id ): array {
+		$map = get_transient( self::PREVIEW . $id );
+
+		if ( ! is_array( $map ) || ! is_string( $map['key'] ?? null ) ) {
+			return array(
+				'status' => 'none',
+				'images' => array(),
+			);
+		}
+
+		$answer = self::answer_v2( $this->api->mockup_task( $map['key'] ) );
+		$status = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
+
+		if ( 'completed' !== $status ) {
+			return array(
+				'status' => 'failed' === $status ? 'failed' : 'pending',
+				'images' => array(),
+			);
+		}
+
+		$images = array();
+
+		foreach ( self::mockup_urls( self::TASK_SIDE, is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ) as $side => $colors ) {
+			foreach ( $colors as $color => $url ) {
+				$bytes = $this->api->download( $url );
+				$info  = getimagesizefromstring( $bytes );
+
+				if ( is_array( $info ) && in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ) {
+					$images[] = array(
+						'side'  => $side,
+						'color' => $color,
+						'url'   => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+					);
+				}
+			}
+		}
+
+		return array(
+			'status' => 'done',
+			'images' => $images,
+		);
 	}
 
 	/**
@@ -522,7 +630,7 @@ class PrintfulMockups {
 
 			if ( ! $flat ) {
 				$sides = array( $side );
-			} elseif ( isset( $mockup['style_id'] ) ) {
+			} elseif ( isset( $mockup['style_id'] ) && array() !== $styles ) {
 				$sides = array_keys( $styles, (string) $mockup['style_id'], true );
 			} else {
 				$sides = array_keys( $placements, (string) ( $mockup['placement'] ?? '' ), true );

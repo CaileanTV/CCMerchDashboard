@@ -27,9 +27,12 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use WP_Error;
@@ -86,6 +89,7 @@ final class MeDesignerController extends RestController {
 	 * @param AlertFonts                $fonts       Approved fonts.
 	 * @param Logger                    $logger      Technical log.
 	 * @param DesignerShop              $shop        The creator's decisions about the shop.
+	 * @param PrintfulMockups|null      $mockups     Printful's mockups (the preview).
 	 */
 	public function __construct(
 		private CreatorContext $context,
@@ -98,7 +102,8 @@ final class MeDesignerController extends RestController {
 		private CreatorUploads $uploads,
 		private AlertFonts $fonts,
 		Logger $logger,
-		private DesignerShop $shop
+		private DesignerShop $shop,
+		private ?PrintfulMockups $mockups = null
 	) {
 		parent::__construct( $logger );
 	}
@@ -134,6 +139,10 @@ final class MeDesignerController extends RestController {
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/submit'   => array(
 				WP_REST_Server::CREATABLE => 'submit_product',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/preview'  => array(
+				WP_REST_Server::READABLE  => 'read_preview',
+				WP_REST_Server::CREATABLE => 'start_preview',
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/withdraw' => array(
 				WP_REST_Server::CREATABLE => 'withdraw_product',
@@ -517,6 +526,98 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
+	 * `POST /me/designer/products/{id}/preview`: starts the finished
+	 * product's photos of the draft, whose files are sent first.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function start_preview( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/preview',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				try {
+					$draft = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
+
+					if ( ! SubmissionFiles::complete( $draft ) ) {
+						throw new DesignerException( DesignerException::SUBMISSION_FILES );
+					}
+
+					$this->mockups?->start_preview( (int) $draft['id'] );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				} catch ( PrintfulException $e ) {
+					return self::refused( new DesignerException( PrintfulException::RATE_LIMITED === $e->reason() ? DesignerException::PREVIEW_BUSY : DesignerException::PREVIEW_FAILED ) );
+				}
+
+				return new WP_REST_Response( array( 'status' => 'pending' ), 200 );
+			}
+		);
+	}
+
+	/**
+	 * `GET /me/designer/products/{id}/preview`: the preview's state and images.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function read_preview( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/preview',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				try {
+					$draft = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
+					$state = null === $this->mockups ? array() : $this->mockups->preview( (int) $draft['id'] );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				} catch ( PrintfulException $e ) {
+					if ( PrintfulException::RATE_LIMITED === $e->reason() ) {
+						return new WP_REST_Response(
+							array(
+								'status' => 'pending',
+								'images' => array(),
+							),
+							200
+						);
+					}
+
+					return self::refused( new DesignerException( DesignerException::PREVIEW_FAILED ) );
+				}
+
+				return new WP_REST_Response( $state, 200 );
+			}
+		);
+	}
+
+	/**
+	 * The creator's draft of a product that can be previewed.
+	 *
+	 * @param Creator $creator The creator.
+	 * @param int     $id      Designer product.
+	 * @return array<string, mixed>
+	 * @throws DesignerException When there is none or it cannot be previewed.
+	 */
+	private function preview_draft( Creator $creator, int $id ): array {
+		$row   = $this->products->find( $creator->id, $id );
+		$draft = null === $row ? null : $this->products->draft( $id );
+		$base  = null === $row ? null : $this->bases->find( (int) $row['base_id'] );
+
+		if ( null === $row ) {
+			throw new DesignerException( DesignerException::DESIGN_UNKNOWN );
+		}
+
+		if ( null === $draft ) {
+			throw new DesignerException( DesignerException::DESIGN_NOT_DRAFT );
+		}
+
+		if ( null === $base || null === $this->mockups || ! $this->mockups->can_preview( $base ) ) {
+			throw new DesignerException( DesignerException::PREVIEW_UNAVAILABLE );
+		}
+
+		return $draft;
+	}
+
+	/**
 	 * `POST /me/designer/products/{id}/submit`.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -642,7 +743,7 @@ final class MeDesignerController extends RestController {
 
 		return array(
 			'creator'  => $creator->display_name,
-			'bases'    => array_map( self::base_data( ... ), $bases ),
+			'bases'    => array_map( $this->base_data( ... ), $bases ),
 			'cliparts' => array_map( self::asset_data( ... ), $this->assets->shared( DesignerAssetRepository::CLIPART ) ),
 			'uploads'  => array_map( self::asset_data( ... ), $this->assets->owned( $creator->id, CreatorUploads::UPLOAD ) ),
 			'fonts'    => array_values( array_map( static fn( AlertFont $font ): array => $font->to_array(), $this->fonts->approved() ) ),
@@ -828,9 +929,10 @@ final class MeDesignerController extends RestController {
 	 * @param BaseProduct $base Base product.
 	 * @return array<string, mixed>
 	 */
-	private static function base_data( BaseProduct $base ): array {
+	private function base_data( BaseProduct $base ): array {
 		return array(
 			'id'               => (int) $base->id,
+			'preview'          => null !== $this->mockups && $this->mockups->can_preview( $base ),
 			'name'             => $base->name,
 			'description'      => $base->description,
 			'base_price'       => SalesAmount::format( $base->base_units ),

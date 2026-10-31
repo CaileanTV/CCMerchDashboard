@@ -24,7 +24,8 @@ defined( 'ABSPATH' ) || exit;
  * public URL. `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…`
  * answers without a login only with a valid HMAC (own key domain, derived
  * from the site's auth salt) that has not expired (at most one hour), and
- * only the print file of a pending or approved version. The answer is the
+ * only the print file of a draft (the creator's preview), pending or
+ * approved version. The answer is the
  * image itself (a PNG, a JPEG on a flat side) with `no-store` and
  * `nosniff`; anything else is 404 without telling why.
  */
@@ -120,7 +121,7 @@ class SignedPrintFiles {
 			return $missing;
 		}
 
-		if ( null === $row || ! in_array( $row['status'], array( DesignerProductRepository::PENDING, DesignerProductRepository::APPROVED ), true ) ) {
+		if ( null === $row || ! in_array( $row['status'], array( DesignerProductRepository::DRAFT, DesignerProductRepository::PENDING, DesignerProductRepository::APPROVED ), true ) ) {
 			return $missing;
 		}
 

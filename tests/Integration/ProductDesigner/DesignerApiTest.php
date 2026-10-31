@@ -427,6 +427,16 @@ final class DesignerApiTest extends IntegrationTestCase {
 		remove_action( 'merchboard_notify', $listener, 1 );
 	}
 
+	public function test_only_a_printful_base_product_has_a_finished_product_preview(): void {
+		wp_set_current_user( $this->user );
+
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+
+		self::assertSame( array( 400, 'preview_unavailable' ), $this->refusal( $this->call( 'POST', '/merchboard/v1/me/designer/products/' . $product . '/preview' ) ) );
+		self::assertSame( array( 400, 'preview_unavailable' ), $this->refusal( $this->call( 'GET', '/merchboard/v1/me/designer/products/' . $product . '/preview' ) ) );
+		self::assertFalse( $this->call( 'GET', '/merchboard/v1/me/designer' )->get_data()['bases'][0]['preview'] );
+	}
+
 	public function test_a_draft_on_a_changed_base_product_must_be_saved_again(): void {
 		wp_set_current_user( $this->user );
 		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];

@@ -119,6 +119,11 @@ class CatalogImport {
 	private const FLAT_WIDTH = 1000;
 
 	/**
+	 * The widest pattern kept.
+	 */
+	private const FLAT_MAX = 1500;
+
+	/**
 	 * The import data of the current round (for a failure inside it).
 	 *
 	 * @var array<string, mixed>|null
@@ -529,7 +534,14 @@ class CatalogImport {
 			$files  = array();
 
 			if ( '' !== $url ) {
-				[ $png, $width, $height ] = ImageProbe::png( $renderer->download( $url ) );
+				$bytes = $renderer->download( $url );
+
+				// The labelled patterns are up to 3000 px: the editor needs far less.
+				$info   = getimagesizefromstring( $bytes );
+				$scale  = is_array( $info ) && $info[0] > self::FLAT_MAX ? self::FLAT_MAX / $info[0] : 1;
+				$scaled = is_array( $info ) && $scale < 1 ? array( self::FLAT_MAX, (int) round( $info[1] * $scale ) ) : array( null, null );
+
+				[ $png, $width, $height ] = ImageProbe::png( $bytes, $scaled[0], $scaled[1] );
 
 				$files['shading'] = $this->store( $png );
 			}
