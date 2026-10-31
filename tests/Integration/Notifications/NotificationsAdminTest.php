@@ -14,6 +14,7 @@ use MerchBoard\Modules\Notifications\Admin\NotificationsAdminActions;
 use MerchBoard\Modules\Notifications\Admin\NotificationsAdminPage;
 use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Modules\Notifications\NotificationTypes;
+use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\WooCommerce\CreatorPricingAdminTest;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -46,7 +47,8 @@ final class NotificationsAdminTest extends IntegrationTestCase {
 		$html  = $this->render();
 		$types = $this->service( NotificationTypes::class );
 
-		foreach ( $types->all() as $type ) {
+		// A module's own types are on its own page (a booted designer adds them).
+		foreach ( $types->in_groups( array_keys( NotificationTypes::groups() ) ) as $type ) {
 			self::assertStringContainsString( esc_html( $type->label() ), $html, $type->key );
 			self::assertStringContainsString( 'name="notifications[' . $type->key . '][email]"', $html, $type->key );
 			self::assertSame( $type->has_dashboard() ? 1 : 0, substr_count( $html, 'name="notifications[' . $type->key . '][dashboard]"' ), $type->key );
@@ -55,6 +57,22 @@ final class NotificationsAdminTest extends IntegrationTestCase {
 
 		self::assertStringContainsString( (string) get_option( 'admin_email' ), $html, 'Who gets the administrator\'s e-mails.' );
 		self::assertStringContainsString( 'No notification e-mails yet.', $html );
+	}
+
+	public function test_a_module_s_own_types_stay_on_its_own_page(): void {
+		$added = static fn( mixed $types ): array => array_merge( is_array( $types ) ? $types : array(), DesignerNotifications::all() );
+
+		add_filter( NotificationTypes::FILTER, $added );
+
+		try {
+			// A new catalog: the shared one keeps the types of its first use, whichever test that was.
+			$types = new NotificationTypes();
+
+			self::assertNotNull( $types->get( DesignerNotifications::SUBMITTED ), 'The designer is booted.' );
+			self::assertNotContains( DesignerNotifications::SUBMITTED, array_column( $types->in_groups( array_keys( NotificationTypes::groups() ) ), 'key' ), 'The page shows these groups.' );
+		} finally {
+			remove_filter( NotificationTypes::FILTER, $added );
+		}
 	}
 
 	public function test_saving_turns_a_notification_off(): void {
