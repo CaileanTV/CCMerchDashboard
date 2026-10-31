@@ -14,6 +14,8 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
+use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
@@ -45,8 +47,9 @@ class DesignerOrderFiles {
 	 * @param DesignerProductRepository $products Designer products.
 	 * @param DesignerProductGuard      $guard    The legacy guard.
 	 * @param Logger                    $logger   Technical log.
+	 * @param BaseProductRepository     $bases    Base products (the sides of a size).
 	 */
-	public function __construct( private DesignerProductRepository $products, private DesignerProductGuard $guard, private Logger $logger ) {
+	public function __construct( private DesignerProductRepository $products, private DesignerProductGuard $guard, private Logger $logger, private BaseProductRepository $bases ) {
 	}
 
 	/**
@@ -137,8 +140,11 @@ class DesignerOrderFiles {
 			return;
 		}
 
+		$variation = method_exists( $item, 'get_variation_id' ) ? (int) $item->get_variation_id() : 0;
+		$size      = $variation > 0 ? get_post_meta( $variation, DesignerPrices::SIZE_META, true ) : '';
+
 		echo '<p class="merchboard-designer-files"><strong>' . esc_html__( 'Print files:', 'merchboard' ) . '</strong> ';
-		$this->print_links( $version );
+		$this->print_links( $version, is_string( $size ) && '' !== $size ? $size : null );
 		echo '</p>';
 	}
 
@@ -191,18 +197,45 @@ class DesignerOrderFiles {
 	}
 
 	/**
+	 * The print files a size is made from. With sides per size, a cup of one
+	 * size must never be printed with the file of another. All of them when
+	 * the size or its sides cannot be told.
+	 *
+	 * @param array<string, string>     $slots Slot by side.
+	 * @param array<string, mixed>|null $row   Version.
+	 * @param string|null               $size  Size of the order line.
+	 * @return array<string, string>
+	 */
+	private function of_size( array $slots, ?array $row, ?string $size ): array {
+		try {
+			$base = null === $size || null === $row ? null : $this->bases->find( (int) $row['base_id'] );
+		} catch ( DatabaseException ) {
+			$base = null;
+		}
+
+		if ( null === $base || null === $size || ! $base->sized() ) {
+			return $slots;
+		}
+
+		$own = array_intersect_key( $slots, array_flip( $base->sides_of( $size ) ) );
+
+		return array() === $own ? $slots : $own;
+	}
+
+	/**
 	 * A download link per print file of a version.
 	 *
-	 * @param int $version Version.
+	 * @param int         $version Version.
+	 * @param string|null $size    Only the files of this size; null for all.
 	 */
-	private function print_links( int $version ): void {
+	private function print_links( int $version, ?string $size = null ): void {
 		try {
 			$row = $this->products->version( $version );
 		} catch ( DatabaseException ) {
 			$row = null;
 		}
 
-		$slots = DesignerVersionFiles::slots( is_string( $row['files'] ?? null ) ? $row['files'] : null )['print'];
+		$slots = $this->of_size( DesignerVersionFiles::slots( is_string( $row['files'] ?? null ) ? $row['files'] : null )['print'], $row, $size );
 
 		if ( array() === $slots ) {
 			echo esc_html__( 'none stored', 'merchboard' );

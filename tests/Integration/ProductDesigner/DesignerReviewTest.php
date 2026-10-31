@@ -545,7 +545,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->review->approve( $version );
 		$this->drain();
 		$shop  = (int) ( $this->products->find( $this->creator->id, $product )['wc_product_id'] ?? 0 );
-		$files = new DesignerOrderFiles( $this->products, $this->guard, new RecordingLogger() );
+		$files = new DesignerOrderFiles( $this->products, $this->guard, new RecordingLogger(), $this->bases_repository() );
 		$line  = new class( $shop ) {
 			/**
 			 * Meta.
@@ -728,6 +728,104 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( 1500000, DesignerPrices::secured_base( $base, '{}', '["M"]' ) );
 		self::assertSame( 1000000, DesignerPrices::secured_base( $base, '{}', '["S"]' ) );
 		self::assertSame( 1000000, DesignerPrices::secured_base( $base, '{}', '["S","M"]' ) );
+	}
+
+	public function test_each_size_has_its_own_side_from_the_design_to_the_order_line(): void {
+		$this->two_sized_sides();
+
+		self::assertSame( array( array( 'S' ), array( 'M' ) ), array_map( static fn( $view ): array => $view->sizes, $this->bases_row()->views ) );
+
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $product, '20', array( 'front' ) );
+		$this->send_files( $product );
+
+		try {
+			$this->submissions->submit( $this->creator, $product );
+			self::fail( 'M has no design.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_SIZES, $e->reason() );
+		}
+
+		$this->save( $product, '20', array( 'front', 'large' ) );
+		$this->send_files( $product, array( 'front', 'large' ) );
+		$this->submissions->submit( $this->creator, $product );
+
+		$version = $this->pending_id( $product );
+
+		self::assertSame( '179.9400', $this->products->version( $version )['quoted_price'] ?? null, 'Two sides, one area on each size: no extra area.' );
+
+		$this->review->approve( $version );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( array( 'S', 'M' ), array_keys( $content->size_images ) );
+		self::assertNotSame( $content->size_images['S']['black'], $content->size_images['M']['black'], 'A variation shows its own size.' );
+		self::assertContains( $content->size_images['M']['sand'], $content->images );
+
+		self::assertSame( array( '>front<' ), $this->order_links( $version, 'S' ) );
+		self::assertSame( array( '>large<' ), $this->order_links( $version, 'M' ) );
+		self::assertSame( array( '>front<', '>large<' ), $this->order_links( $version, 'unknown' ), 'A size it cannot place shows all.' );
+	}
+
+	public function test_a_design_on_a_size_that_is_not_sold_is_refused(): void {
+		$this->two_sized_sides();
+
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->drafts->save(
+			$this->creator,
+			$product,
+			array(
+				'title'        => 'Cup',
+				'colors'       => array( 'black', 'sand' ),
+				'sizes'        => array( 'S' ),
+				'profit_kind'  => 'percent',
+				'profit_value' => '20',
+				'design'       => array(
+					'version' => 1,
+					'sides'   => array(
+						'front' => array( self::rectangle() ),
+						'large' => array( self::rectangle() ),
+					),
+				),
+			),
+			new DesignValidator( static fn(): bool => false, array() )
+		);
+		$this->send_files( $product, array( 'front', 'large' ) );
+
+		try {
+			$this->submissions->submit( $this->creator, $product );
+			self::fail( 'A design on M, which is not sold.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_SIZES, $e->reason() );
+		}
+	}
+
+	public function test_a_side_keeps_to_sizes_the_base_product_has(): void {
+		$view             = $this->base_views();
+		$view[0]['sizes'] = array( 'XXL' );
+
+		try {
+			$this->bases->save( $this->base, $this->base_fields( '149,95' ), $view );
+			self::fail( 'A size the base product does not have.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_VIEW, $e->reason() );
+		}
+
+		$view[0]['sizes'] = array( 'S' );
+		$this->bases->save( $this->base, $this->base_fields( '149,95' ), $view );
+
+		$this->bases->save( $this->base, $this->base_fields( '149,95' ), $this->base_views() );
+		self::assertSame( array( 'S' ), $this->bases_row()->views[0]->sizes, 'Left out, the side keeps its sizes.' );
+
+		try {
+			$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'sizes' => 'M' ) ), $this->base_views() );
+			self::fail( 'The side\'s only size is gone: it must not turn into a side of every size.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_VIEW, $e->reason() );
+		}
 	}
 
 	public function test_a_size_price_of_a_size_it_does_not_have_is_left_out_and_a_bad_one_refused(): void {
@@ -1280,6 +1378,94 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		update_post_meta( $post, DesignerPrices::SIZE_META, $size );
 
 		return $post;
+	}
+
+	/**
+	 * Gives the base product a side for S and a new one for M.
+	 */
+	private function two_sized_sides(): void {
+		$views             = $this->base_views();
+		$views[0]['sizes'] = array( 'S' );
+		$views[1]          = array_merge(
+			$views[0],
+			array(
+				'key'     => '',
+				'name'    => 'Large',
+				'uploads' => array( 'color' => AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'color.png' ) ),
+				'sizes'   => array( 'M' ),
+			)
+		);
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'extra_side_price' => '50' ) ), $views );
+	}
+
+	/**
+	 * A small rectangle of a design.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function rectangle(): array {
+		return array(
+			'type'        => 'rect',
+			'id'          => 'r1',
+			'x'           => 50,
+			'y'           => 50,
+			'width'       => 40,
+			'height'      => 40,
+			'angle'       => 0,
+			'scaleX'      => 1,
+			'scaleY'      => 1,
+			'opacity'     => 1,
+			'fill'        => '#00ff00',
+			'strokeWidth' => 0,
+			'radius'      => 0,
+		);
+	}
+
+	/**
+	 * The print file links of an order line of a size.
+	 *
+	 * @param int    $version Version.
+	 * @param string $size    Size of the line's variation.
+	 * @return list<string>
+	 */
+	private function order_links( int $version, string $size ): array {
+		$files = new DesignerOrderFiles( $this->products, $this->guard, new RecordingLogger(), $this->bases_repository() );
+		$line  = new class( $version, self::post_with_size( $size ) ) {
+			/**
+			 * Constructor.
+			 *
+			 * @param int $version   Version.
+			 * @param int $variation Variation.
+			 */
+			public function __construct( private int $version, private int $variation ) {
+			}
+
+			/**
+			 * Reads meta.
+			 *
+			 * @param string $key    Key.
+			 * @param bool   $single Single.
+			 */
+			public function get_meta( string $key, bool $single = true ): mixed {
+				return DesignerOrderFiles::ITEM_META === $key ? $this->version : '';
+			}
+
+			/**
+			 * The variation.
+			 */
+			public function get_variation_id(): int {
+				return $this->variation;
+			}
+		};
+
+		ob_start();
+		$files->render_item( 1, $line );
+		$html = (string) ob_get_clean();
+
+		preg_match_all( '/>(?:front|large)</', $html, $links );
+
+		return $links[0];
 	}
 
 	/**

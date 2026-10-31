@@ -301,7 +301,7 @@ final class ProductDesignerModule implements Module {
 		);
 		$container->set( DesignerReviewActions::class, static fn( Container $c ): DesignerReviewActions => new DesignerReviewActions( $c->get( DesignerReview::class ), $c->get( Logger::class ) ) );
 		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
-		$container->set( DesignerOrderFiles::class, static fn( Container $c ): DesignerOrderFiles => new DesignerOrderFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerProductGuard::class ), $c->get( Logger::class ) ) );
+		$container->set( DesignerOrderFiles::class, static fn( Container $c ): DesignerOrderFiles => new DesignerOrderFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerProductGuard::class ), $c->get( Logger::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set(
 			DesignerCreatorCleanup::class,
 			static fn( Container $c ): DesignerCreatorCleanup => new DesignerCreatorCleanup(

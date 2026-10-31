@@ -377,10 +377,10 @@ final class BaseProductsPage {
 		$index = 0;
 
 		foreach ( $base->views ?? array() as $view ) {
-			$this->render_view( $index++, $view, $psd, $base->colors ?? array() );
+			$this->render_view( $index++, $view, $psd, $base->colors ?? array(), 'own' === ( $base->source ?? 'own' ) );
 		}
 
-		$this->render_view( $index, null, $psd, $base->colors ?? array() );
+		$this->render_view( $index, null, $psd, $base->colors ?? array(), 'own' === ( $base->source ?? 'own' ) );
 
 		echo '<p><button type="submit" class="button button-primary">' . esc_html( null === $base ? __( 'Create base product', 'merchboard' ) : __( 'Save base product', 'merchboard' ) ) . '</button></p>';
 		echo '</form>';
@@ -399,8 +399,9 @@ final class BaseProductsPage {
 	 * @param BaseView|null $view   The side.
 	 * @param bool          $psd    Whether the PSD import is loaded.
 	 * @param array[]       $colors The base product's colours (a background per colour).
+	 * @param bool          $own    Whether the base product is an own one (sides per size).
 	 */
-	private function render_view( int $index, ?BaseView $view, bool $psd, array $colors = array() ): void {
+	private function render_view( int $index, ?BaseView $view, bool $psd, array $colors = array(), bool $own = false ): void {
 		$field = static fn( string $name ): string => 'views[' . $index . '][' . $name . ']';
 		$value = static fn( ?int $number ): string => null === $number ? '' : (string) $number;
 
@@ -493,6 +494,10 @@ final class BaseProductsPage {
 
 		echo '</p><p><label>' . esc_html__( 'Embroidery pack', 'merchboard' ) . ' ' . self::pack_select( $field( 'thread_pack' ), $view->thread_pack ?? '' ) . '</label> '; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pack_select() escapes.
 		echo '<span class="description">' . esc_html__( 'On an embroidered side, the design keeps to the threads of the pack.', 'merchboard' ) . '</span>';
+
+		if ( $psd && $own ) {
+			echo '</p><div data-merchboard-side-sizes="' . esc_attr( 'views[' . $index . ']' ) . '" data-chosen="' . esc_attr( (string) wp_json_encode( $view->sizes ?? array() ) ) . '"></div><p>';
+		}
 
 		if ( null !== $view ) {
 			echo '</p><p><label><input type="checkbox" name="' . esc_attr( $field( 'remove' ) ) . '" value="1"> ' . esc_html__( 'Remove this side', 'merchboard' ) . '</label>';

@@ -198,6 +198,12 @@ class DesignerSubmissions {
 					self::refuse( DesignerException::DESIGN_EMPTY );
 				}
 
+				$sizes = json_decode( (string) $draft['sizes'], true );
+
+				if ( ! $base->covers( SubmissionFiles::used_sides( is_array( $design ) ? $design : array() ), is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array() ) ) {
+					self::refuse( DesignerException::DESIGN_SIZES );
+				}
+
 				if ( ! SubmissionFiles::complete( $draft ) ) {
 					self::refuse( DesignerException::SUBMISSION_FILES );
 				}

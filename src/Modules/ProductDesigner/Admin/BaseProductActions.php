@@ -247,6 +247,11 @@ final class BaseProductActions {
 			if ( array_key_exists( 'thread_pack', $view ) ) {
 				$views[ array_key_last( $views ) ]['thread_pack'] = sanitize_key( $value( 'thread_pack' ) );
 			}
+
+			// Sent by the form's script: without it the side keeps its sizes.
+			if ( '1' === $value( 'sized' ) ) {
+				$views[ array_key_last( $views ) ]['sizes'] = array_values( array_filter( is_array( $view['sizes'] ?? null ) ? $view['sizes'] : array(), 'is_string' ) );
+			}
 		}
 
 		return $views;

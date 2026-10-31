@@ -54,7 +54,7 @@ import {
 	objectsOf,
 	quotePrice,
 	updateObject,
-	usedSides,
+	usedAreas,
 	withKnownThreads,
 	withObjects,
 	withThread,
@@ -290,7 +290,7 @@ function Editor( props: EditorProps ) {
 		[ overview ]
 	);
 	const fonts = overview.fonts;
-	const areas = usedSides( design ).length;
+	const areas = usedAreas( base.views, design, sizes );
 	const price = quotePrice(
 		base.basePrice,
 		profitKind,
@@ -789,6 +789,7 @@ function Editor( props: EditorProps ) {
 				base,
 				design: storedDraft.design,
 				colors: storedDraft.colors,
+				sizes: storedDraft.sizes,
 				image: imageOf,
 				fonts: () => fontsOf( storedDraft.design ),
 			},
@@ -833,6 +834,7 @@ function Editor( props: EditorProps ) {
 				base,
 				design: storedDraft.design,
 				colors: storedDraft.colors,
+				sizes: storedDraft.sizes,
 				image: imageOf,
 				fonts: () => fontsOf( storedDraft.design ),
 			},
@@ -849,6 +851,7 @@ function Editor( props: EditorProps ) {
 			base,
 			design,
 			colors,
+			sizes,
 			image: imageOf,
 			fonts: () => fontsOf( design ),
 		} );
@@ -1441,6 +1444,9 @@ function Editor( props: EditorProps ) {
 						profitValue={ profitValue }
 						price={ price }
 						areas={ areas }
+						sizeAreas={ ( size ) =>
+							usedAreas( base.views, design, [ size ] )
+						}
 						sizes={ sizes }
 						onProfitKind={ setProfitKind }
 						onProfitValue={ setProfitValue }
@@ -1504,6 +1510,7 @@ function NextSteps() {
  * @param props.profitValue   The profit as entered.
  * @param props.price         The customer's price; null when the profit is invalid.
  * @param props.areas         Used design areas; one is included in the base price.
+ * @param props.sizeAreas     The used design areas of a size.
  * @param props.sizes         The chosen sizes.
  * @param props.onProfitKind  Changes the kind.
  * @param props.onProfitValue Changes the value.
@@ -1516,6 +1523,7 @@ function PricePanel( props: {
 	readonly profitValue: string;
 	readonly price: number | null;
 	readonly areas: number;
+	readonly sizeAreas: ( size: string ) => number;
 	readonly sizes: readonly string[];
 	readonly onProfitKind: ( value: ProfitKind ) => void;
 	readonly onProfitValue: ( value: string ) => void;
@@ -1622,7 +1630,7 @@ function PricePanel( props: {
 								props.profitValue,
 								decimals,
 								base.extraSidePrice,
-								props.areas
+								props.sizeAreas( size )
 							);
 
 							return (
@@ -1862,6 +1870,11 @@ function submitError( reason: string ): string {
 		case 'design_empty':
 			return __(
 				'Add something to your product before you send it.',
+				'merchboard'
+			);
+		case 'design_sizes':
+			return __(
+				'Each size you offer needs its own design. Add a design to it, or remove the design from a size you do not offer.',
 				'merchboard'
 			);
 		case 'design_stale':

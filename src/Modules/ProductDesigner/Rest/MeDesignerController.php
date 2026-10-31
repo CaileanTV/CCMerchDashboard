@@ -961,6 +961,7 @@ final class MeDesignerController extends RestController {
 						'print_height' => $print_height,
 						'dpi'          => $view->dpi,
 						'flat'         => $view->flat,
+						'sizes'        => $view->sizes,
 						'scene'        => $view->scene,
 						'embroidery'   => null === $pack ? null : array(
 							'max'      => $pack['max'],

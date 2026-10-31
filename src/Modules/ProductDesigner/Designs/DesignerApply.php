@@ -268,6 +268,21 @@ class DesignerApply {
 			}
 		}
 
+		// With sides per size, a variation shows the image of its own size.
+		$size_images = array();
+
+		foreach ( $base->sized() && is_array( $sizes ) ? array_filter( $sizes, 'is_string' ) : array() as $size ) {
+			foreach ( $colors as $color ) {
+				foreach ( $base->sides_of( $size ) as $side ) {
+					$attachment = $media[ SubmissionFiles::MOCKUP . ':' . $side . ':' . $color['key'] ] ?? null;
+
+					if ( null !== $attachment ) {
+						$size_images[ $size ][ $color['key'] ] ??= $attachment;
+					}
+				}
+			}
+		}
+
 		$category = array_map( static fn( $category ): int => $category->term_id, $this->categories->for_creator( $creator_id ) );
 		$category = array() !== $category ? array( min( $category ) ) : ( null === $base->category_id ? array() : array( $base->category_id ) );
 
@@ -289,7 +304,8 @@ class DesignerApply {
 			$this->decimals,
 			// Published separately after `live` (review 30.15).
 			false,
-			array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $this->size_prices( $version, $base ) )
+			array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $this->size_prices( $version, $base ) ),
+			$size_images
 		);
 	}
 

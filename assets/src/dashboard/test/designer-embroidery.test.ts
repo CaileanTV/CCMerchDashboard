@@ -11,6 +11,7 @@ import {
 } from '../sections/designer/embroidery';
 import type { Pixels } from '../sections/designer/scene';
 import { hasStitches, submissionSize } from '../sections/designer/submission';
+import { coversSizes, usedAreas } from '../sections/designer/design-model';
 import type { DesignDocument } from '../sections/designer/design-model';
 
 jest.mock( '../sections/designer/stitch-surface', () => ( {
@@ -144,6 +145,65 @@ describe( 'stitched', () => {
 	it( 'makes room for the thread around the print', () => {
 		expect( stitchMargin( 3.7 ) ).toBeLessThan( stitchMargin( 12 ) );
 		expect( stitchMargin( 12 ) ).toBeGreaterThan( 8 );
+	} );
+} );
+
+describe( 'sides per size', () => {
+	const views = [
+		{ key: 'small', sizes: [ '33 cl' ] },
+		{ key: 'large', sizes: [ '44 cl' ] },
+	];
+	const design = ( ...sides: string[] ) =>
+		( {
+			version: 1,
+			sides: Object.fromEntries(
+				sides.map( ( side ) => [ side, [ { id: side } ] ] )
+			),
+		} ) as unknown as DesignDocument;
+
+	it( 'counts the areas of one size, not of the other sizes', () => {
+		expect(
+			usedAreas( views, design( 'small', 'large' ), [ '33 cl', '44 cl' ] )
+		).toBe( 1 );
+		expect( usedAreas( views, design( 'small' ), [ '44 cl' ] ) ).toBe( 0 );
+	} );
+
+	it( 'counts every used side without sides per size', () => {
+		const open = [
+			{ key: 'small', sizes: [] },
+			{ key: 'large', sizes: [] },
+		];
+
+		expect( usedAreas( open, design( 'small', 'large' ), [] ) ).toBe( 2 );
+		expect( coversSizes( open, design( 'small' ), [ '44 cl' ] ) ).toBe(
+			true
+		);
+	} );
+
+	it( 'wants a design on each chosen size and none on the others', () => {
+		const both = [ '33 cl', '44 cl' ];
+
+		expect( coversSizes( views, design( 'small', 'large' ), both ) ).toBe(
+			true
+		);
+		expect( coversSizes( views, design( 'small' ), both ) ).toBe( false );
+		expect(
+			coversSizes( views, design( 'small', 'large' ), [ '33 cl' ] )
+		).toBe( false );
+		expect( coversSizes( views, design( 'small' ), [ '33 cl' ] ) ).toBe(
+			true
+		);
+	} );
+
+	it( 'lets a side without sizes count for every size', () => {
+		const shared = [ ...views, { key: 'all', sizes: [] } ];
+
+		expect( coversSizes( shared, design( 'all' ), [ '33 cl' ] ) ).toBe(
+			true
+		);
+		expect(
+			usedAreas( shared, design( 'small', 'all' ), [ '33 cl' ] )
+		).toBe( 2 );
 	} );
 } );
 

@@ -155,6 +155,71 @@ final readonly class BaseProduct {
 	}
 
 	/**
+	 * Whether a side belongs to only some of the sizes.
+	 */
+	public function sized(): bool {
+		return array() !== array_filter( $this->views, static fn( BaseView $view ): bool => array() !== $view->sizes );
+	}
+
+	/**
+	 * The sides of a size, in the base product's order.
+	 *
+	 * @param string $size The size.
+	 * @return list<string>
+	 */
+	public function sides_of( string $size ): array {
+		return array_values( array_map( static fn( BaseView $view ): string => $view->key, array_filter( $this->views, static fn( BaseView $view ): bool => $view->on_size( $size ) ) ) );
+	}
+
+	/**
+	 * How many used design areas one product has: with sides per size, those
+	 * of the size with the most, so the company never gets less than it set.
+	 *
+	 * @param string[]      $used  The used sides.
+	 * @param string[]|null $sizes The chosen sizes; null for all of them.
+	 */
+	public function areas( array $used, ?array $sizes = null ): int {
+		if ( ! $this->sized() ) {
+			return count( $used );
+		}
+
+		$most = 0;
+
+		foreach ( $sizes ?? $this->sizes as $size ) {
+			$most = max( $most, count( array_intersect( $used, $this->sides_of( $size ) ) ) );
+		}
+
+		return $most;
+	}
+
+	/**
+	 * Whether a design fits the chosen sizes: with sides per size each chosen
+	 * size has a design, and no design lies on a size that is not chosen.
+	 *
+	 * @param string[] $used  The used sides.
+	 * @param string[] $sizes The chosen sizes.
+	 */
+	public function covers( array $used, array $sizes ): bool {
+		if ( ! $this->sized() ) {
+			return true;
+		}
+
+		$sold = array();
+
+		foreach ( $sizes as $size ) {
+			$own = array_intersect( $used, $this->sides_of( $size ) );
+
+			if ( array() === $own ) {
+				return false;
+			}
+
+			$sold = array_merge( $sold, $own );
+		}
+
+		return array() === array_diff( $used, $sold );
+	}
+
+	/**
 	 * Whether the browser's images of a side show stitches and stay the
 	 * product's images (ADR-085). Printful stitches its own mockups.
 	 *

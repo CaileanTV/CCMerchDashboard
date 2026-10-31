@@ -38,6 +38,9 @@ defined( 'ABSPATH' ) || exit;
  *   says how the creator's browser draws them and warps the print file. The
  *   mockup then has the scene's size, not the template's. With `preview` in
  *   the scene the creator can also see it while designing.
+ * - A side with `sizes` belongs to those sizes only: each has its own template
+ *   and print area, and the creator designs each for itself (the owner's
+ *   choice 2026-10-31, cups of two sizes). Without any it is on every size.
  */
 final readonly class BaseView {
 
@@ -132,6 +135,7 @@ final readonly class BaseView {
 	 * @param string                                         $thread_pack The embroidery pack; empty when the side is printed.
 	 * @param bool                                           $flat        Whether the side is a flat part of an all-over product.
 	 * @param array<string, mixed>|null                      $scene       The side's PSD scene; it comes with the layer `scene`.
+	 * @param string[]                                       $sizes       The sizes the side belongs to; empty for every size.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -146,7 +150,8 @@ final readonly class BaseView {
 		public int $dpi,
 		public string $thread_pack = '',
 		public bool $flat = false,
-		public ?array $scene = null
+		public ?array $scene = null,
+		public array $sizes = array()
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -181,6 +186,19 @@ final readonly class BaseView {
 		if ( '' !== $thread_pack && 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $thread_pack ) ) {
 			throw new InvalidArgumentException( 'Invalid embroidery pack.' );
 		}
+
+		if ( in_array( '', $sizes, true ) ) {
+			throw new InvalidArgumentException( 'Invalid sizes of a side.' );
+		}
+	}
+
+	/**
+	 * Whether the side belongs to a size.
+	 *
+	 * @param string $size The size.
+	 */
+	public function on_size( string $size ): bool {
+		return array() === $this->sizes || in_array( $size, $this->sizes, true );
 	}
 
 	/**
@@ -288,6 +306,10 @@ final readonly class BaseView {
 			$side['scene'] = $this->scene;
 		}
 
+		if ( array() !== $this->sizes ) {
+			$side['sizes'] = $this->sizes;
+		}
+
 		return $side;
 	}
 
@@ -326,7 +348,8 @@ final readonly class BaseView {
 			$int( $data['dpi'] ?? null ),
 			is_string( $data['thread_pack'] ?? null ) ? $data['thread_pack'] : '',
 			true === ( $data['flat'] ?? false ),
-			is_array( $data['scene'] ?? null ) ? $data['scene'] : null
+			is_array( $data['scene'] ?? null ) ? $data['scene'] : null,
+			is_array( $data['sizes'] ?? null ) ? array_values( array_filter( $data['sizes'], 'is_string' ) ) : array()
 		);
 	}
 }

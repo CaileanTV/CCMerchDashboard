@@ -100,6 +100,14 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
+## Sider pr. størrelse (2026-10-31, eksperimentel)
+- **Formål:** to størrelser af samme produkt kan have hver sin opsætning, fx kopper på 33 cl og 44 cl med hver sin PNG, PSD og printområde. Projektejeren valgte 2026-10-31, at creatoren designer hver størrelse for sig.
+- **Opsætning:** på et eget grundprodukt krydser admin størrelser af på en side under "Kun til disse størrelser". Ingen krydser betyder alle størrelser. Listen følger størrelsesfeltet, så det virker under oprettelsen. Leverandørprodukter har det ikke, fordi leverandøren laver alle sider på alle størrelser. En ændring giver en ny version af grundproduktet.
+- **I designeren:** hver side er sin egen fane. Hver valgt størrelse skal have et design, og et design på en størrelse, der ikke er valgt, skal fjernes, ellers afvises indsendelsen med `design_sizes`.
+- **Pris:** kun områder på samme størrelse tæller som ekstra områder. Med én fælles pris gælder størrelsen med flest områder.
+- **Butik:** alle størrelsers billeder ligger i galleriet, og en variant viser billedet af sin egen størrelse.
+- **Ordre:** en ordrelinje viser kun printfilerne til den solgte størrelse. Kan størrelsen ikke findes, vises alle.
+
 ## Broderi (2026-10-31, eksperimentel)
 - **Broderipakker:** under Produktdesigner → Broderipakker har hver pakke et navn, et maksimum pr. side og sine tråde (kode, navn, farve). Standardpakken "Gelato" har 15 tråde og højst 6. En ændring gælder fra næste gang et design gemmes. En pakke i brug kan ikke slettes.
 - **Valg af pakke:** en side vælger "Broderipakke" på grundproduktet eller ved katalogimport. Ved import fra Gelato er første pakke forudvalgt, når sidens navn indeholder "embroider". Uden pakke er siden print med frie farver. En ændret pakke på en side giver en ny version af grundproduktet, så kladder skal gemmes igen.

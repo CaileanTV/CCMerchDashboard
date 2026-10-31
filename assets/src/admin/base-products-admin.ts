@@ -325,6 +325,63 @@ function attachSizePrices(
 }
 
 /**
+ * The choice of the sizes a side belongs to, from the sizes field, so it works
+ * while a base product is made. A size keeps its tick when the list changes.
+ *
+ * @param holder The place (`data-merchboard-side-sizes`: the side's field
+ *               name; `data-chosen`: its stored sizes).
+ * @param sizes  The sizes field.
+ */
+function attachSideSizes( holder: HTMLElement, sizes: HTMLInputElement ): void {
+	const name = holder.dataset.merchboardSideSizes ?? '';
+	const chosen = new Set< string >(
+		JSON.parse( holder.dataset.chosen ?? '[]' ) as string[]
+	);
+	const draw = (): void => {
+		const offered = sizesOf( sizes.value );
+
+		holder.replaceChildren();
+		holder.hidden = offered.length < 2;
+
+		const sent = document.createElement( 'input' );
+
+		sent.type = 'hidden';
+		sent.name = `${ name }[sized]`;
+		sent.value = '1';
+
+		const title = document.createElement( 'p' );
+
+		title.textContent = __(
+			'Only for these sizes (none ticked: every size):',
+			'merchboard'
+		);
+		holder.append( sent, title );
+
+		for ( const size of offered ) {
+			const label = document.createElement( 'label' );
+			const box = document.createElement( 'input' );
+
+			box.type = 'checkbox';
+			box.name = `${ name }[sizes][]`;
+			box.value = size;
+			box.checked = chosen.has( size );
+			box.addEventListener( 'change', () => {
+				if ( box.checked ) {
+					chosen.add( size );
+				} else {
+					chosen.delete( size );
+				}
+			} );
+			label.append( box, ` ${ size } ` );
+			holder.append( label );
+		}
+	};
+
+	sizes.addEventListener( 'input', draw );
+	draw();
+}
+
+/**
  * Wires one mockup PSD field.
  *
  * @param input The field (`data-merchboard-scene` = the side's index).
@@ -430,6 +487,12 @@ if (
 	sizeField instanceof HTMLInputElement
 ) {
 	attachSizePrices( sizePrices, sizeTick, sizeField );
+}
+
+if ( sizeField instanceof HTMLInputElement ) {
+	document
+		.querySelectorAll< HTMLElement >( '[data-merchboard-side-sizes]' )
+		.forEach( ( holder ) => attachSideSizes( holder, sizeField ) );
 }
 
 document

@@ -234,7 +234,7 @@ class WooCommerceDesignerWriter {
 
 				$variation->set_attributes( array_merge( $vary_color ? array( $color_slug => $name ) : array(), $vary_size ? array( $size_slug => $size ) : array() ) );
 				$variation->set_status( 'publish' );
-				$variation->set_image_id( $content->color_images[ $color_key ] ?? 0 );
+				$variation->set_image_id( $content->size_images[ $size ][ $color_key ] ?? $content->color_images[ $color_key ] ?? 0 );
 
 				$own = isset( $content->size_prices[ $size ] ) ? PricingMath::price_string( $content->size_prices[ $size ], $content->decimals ) : $price;
 
@@ -242,7 +242,8 @@ class WooCommerceDesignerWriter {
 					$variation->set_regular_price( $own );
 				}
 
-				if ( array() !== $content->size_prices ) {
+				// An order line finds its price and its print file by this size.
+				if ( array() !== $content->size_prices || array() !== $content->size_images ) {
 					$variation->update_meta_data( DesignerPrices::SIZE_META, $size );
 				}
 

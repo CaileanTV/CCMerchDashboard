@@ -16,7 +16,7 @@ import type {
 	DesignerView,
 	LayerKind,
 } from '../../api/designer';
-import { objectsOf, usedSides } from './design-model';
+import { coversSizes, objectsOf, usedSides } from './design-model';
 import type { DesignDocument } from './design-model';
 import {
 	closeBox,
@@ -33,6 +33,8 @@ export interface SubmissionInput {
 	/** The saved design and colours (the draft the files belong to). */
 	readonly design: DesignDocument;
 	readonly colors: readonly string[];
+	/** The saved sizes. */
+	readonly sizes: readonly string[];
 	/** A file as a `data:` URL (template layers and images), or null. */
 	readonly image: ( id: number ) => Promise< string | null >;
 	/** Resolves when the design's fonts are ready to draw. */
@@ -356,6 +358,10 @@ export async function uploadFiles(
 
 	if ( sides.length === 0 ) {
 		return { ok: false, reason: 'design_empty' };
+	}
+
+	if ( ! coversSizes( input.base.views, input.design, input.sizes ) ) {
+		return { ok: false, reason: 'design_sizes' };
 	}
 
 	let done = 0;

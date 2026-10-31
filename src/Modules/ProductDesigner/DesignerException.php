@@ -91,6 +91,9 @@ final class DesignerException extends RuntimeException {
 
 	public const DESIGN_EMPTY = 'design_empty';
 
+	/** With sides per size: a chosen size has no design, or a design lies on a size that is not chosen. */
+	public const DESIGN_SIZES = 'design_sizes';
+
 	public const DESIGN_STALE = 'design_stale';
 
 	public const SUBMISSION_FILE = 'submission_file';

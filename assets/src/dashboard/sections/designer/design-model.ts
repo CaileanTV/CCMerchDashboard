@@ -448,6 +448,12 @@ export function newImage(
 	};
 }
 
+/** What the sides per size need of a side. */
+export interface SizedSide {
+	readonly key: string;
+	readonly sizes: readonly string[];
+}
+
 /**
  * The sides that show something (at least one visible object), in the
  * document's order: the sides a submission renders (the server's
@@ -461,6 +467,80 @@ export function usedSides( design: DesignDocument ): string[] {
 			objects.some( ( object ) => ! object.hidden )
 		)
 		.map( ( [ side ] ) => side );
+}
+
+/**
+ * The used sides of a size. A side without sizes is on every size.
+ *
+ * @param views  The sides of the base product.
+ * @param design The document.
+ * @param size   The size.
+ */
+function usedOnSize(
+	views: readonly SizedSide[],
+	design: DesignDocument,
+	size: string
+): string[] {
+	const used = usedSides( design );
+
+	return views
+		.filter(
+			( view ) =>
+				used.includes( view.key ) &&
+				( view.sizes.length === 0 || view.sizes.includes( size ) )
+		)
+		.map( ( view ) => view.key );
+}
+
+/**
+ * How many used design areas one product has: with sides per size, those of
+ * the size with the most (the server's `BaseProduct::areas()`).
+ *
+ * @param views  The sides of the base product.
+ * @param design The document.
+ * @param sizes  The chosen sizes.
+ */
+export function usedAreas(
+	views: readonly SizedSide[],
+	design: DesignDocument,
+	sizes: readonly string[]
+): number {
+	if ( views.every( ( view ) => view.sizes.length === 0 ) ) {
+		return usedSides( design ).length;
+	}
+
+	return Math.max(
+		0,
+		...sizes.map( ( size ) => usedOnSize( views, design, size ).length )
+	);
+}
+
+/**
+ * Whether a design fits the chosen sizes: with sides per size each chosen size
+ * has a design, and no design lies on a size that is not chosen (the server's
+ * `BaseProduct::covers()`).
+ *
+ * @param views  The sides of the base product.
+ * @param design The document.
+ * @param sizes  The chosen sizes.
+ */
+export function coversSizes(
+	views: readonly SizedSide[],
+	design: DesignDocument,
+	sizes: readonly string[]
+): boolean {
+	if ( views.every( ( view ) => view.sizes.length === 0 ) ) {
+		return true;
+	}
+
+	const sold = sizes.map( ( size ) => usedOnSize( views, design, size ) );
+
+	return (
+		sold.every( ( sides ) => sides.length > 0 ) &&
+		usedSides( design ).every( ( side ) =>
+			sold.some( ( sides ) => sides.includes( side ) )
+		)
+	);
 }
 
 /**

@@ -71,6 +71,8 @@ export interface DesignerView {
 	readonly embroidery: DesignerEmbroidery | null;
 	/** A flat part of an all-over product: designed on its sewing pattern. */
 	readonly flat: boolean;
+	/** The sizes the side belongs to; empty for every size. */
+	readonly sizes: readonly string[];
 }
 
 export interface DesignerBase {
@@ -406,6 +408,9 @@ function parseView( value: unknown ): DesignerView | null {
 		dpi: value.dpi,
 		embroidery: parseEmbroidery( value.embroidery ),
 		flat: value.flat === true,
+		sizes: Array.isArray( value.sizes )
+			? value.sizes.filter( isString )
+			: [],
 	};
 }
 
