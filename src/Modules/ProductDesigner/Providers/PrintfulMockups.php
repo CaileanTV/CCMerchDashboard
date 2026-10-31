@@ -163,6 +163,35 @@ class PrintfulMockups {
 	}
 
 	/**
+	 * The stitch colours a creator can choose. A flat base product imported
+	 * before the choice existed gets them from Printful the first time;
+	 * failing that, there is no choice yet.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @return list<string>
+	 * @throws DatabaseException When they cannot be read or stored.
+	 */
+	public function stitches( BaseProduct $base ): array {
+		$provider = $this->bases->provider( (int) $base->id );
+
+		if ( null === $provider || array() !== $provider['stitches'] || ! $provider['flat'] || 'printful' !== $provider['source'] || array() === $provider['options'] || ! $this->api->available() ) {
+			return $provider['stitches'] ?? array();
+		}
+
+		try {
+			$stitches = PrintfulCatalog::stitches( $this->api->catalog_product( (int) $provider['ref'], PrintfulCatalog::REGION ) );
+		} catch ( PrintfulException ) {
+			return array();
+		}
+
+		if ( array() !== $stitches ) {
+			$this->bases->set_stitches( (int) $base->id, $stitches );
+		}
+
+		return $stitches;
+	}
+
+	/**
 	 * Starts a task of a draft's used sides in its first colour, so the
 	 * creator sees the finished product before sending the design. Only v2:
 	 * a preview may fail, and the creator can still send the design.

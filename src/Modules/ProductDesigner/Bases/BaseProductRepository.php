@@ -243,21 +243,51 @@ class BaseProductRepository {
 	 * @throws DatabaseException When it cannot be read or stored.
 	 */
 	public function set_photos( int $id, array $photos ): void {
+		$this->set_template_field( $id, 'photos', $photos );
+	}
+
+	/**
+	 * Stores the stitch colours of a base product.
+	 *
+	 * @phpstan-param list<string> $stitches
+	 *
+	 * @param int      $id       Id.
+	 * @param string[] $stitches Stitch colours, the default first.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function set_stitches( int $id, array $stitches ): void {
+		$this->set_template_field( $id, 'stitches', $stitches );
+	}
+
+	/**
+	 * Changes one field of a base product's provider data.
+	 *
+	 * @phpstan-param list<string> $value
+	 *
+	 * @param int      $id    Id.
+	 * @param string   $field Field.
+	 * @param string[] $value Value.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	private function set_template_field( int $id, string $field, array $value ): void {
 		$wpdb     = $this->wpdb;
 		$template = $wpdb->get_var( $wpdb->prepare( 'SELECT provider_template FROM %i WHERE id = %d', $this->table(), $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 		$decoded  = json_decode( (string) $template, true );
 
 		if ( '' !== $wpdb->last_error || ! is_array( $decoded ) ) {
-			throw new DatabaseException( 'Could not read the photos of the base product.' );
+			throw new DatabaseException( 'Could not read the provider of the base product.' );
 		}
 
-		unset( $decoded['styles'] );
-		$decoded['photos'] = $photos;
+		if ( 'photos' === $field ) {
+			unset( $decoded['styles'] );
+		}
+
+		$decoded[ $field ] = $value;
 
 		$done = $wpdb->update( $this->table(), array( 'provider_template' => (string) wp_json_encode( $decoded ) ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 
 		if ( false === $done ) {
-			throw new DatabaseException( 'Could not store the photos of the base product.' );
+			throw new DatabaseException( 'Could not store the provider of the base product.' );
 		}
 	}
 

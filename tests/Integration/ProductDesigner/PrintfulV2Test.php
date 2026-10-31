@@ -421,6 +421,30 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		delete_transient( PrintfulMockups::PREVIEW . $version );
 	}
 
+	public function test_an_older_all_over_product_gets_its_stitching_the_first_time(): void {
+		$id       = $this->import_flat();
+		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider.' );
+		$base     = $this->bases->find( $id ) ?? self::fail( 'No base.' );
+
+		$this->bases->set_stitches( $id, array() );
+
+		$mockups = $this->mockups();
+		$before  = count( $this->calls );
+
+		self::assertSame( array( 'white', 'black' ), $mockups->stitches( $base ) );
+
+		$stored = $this->bases->provider( $id ) ?? self::fail( 'No provider.' );
+
+		self::assertSame( array( 'white', 'black' ), $stored['stitches'], 'Kept.' );
+		self::assertSame( $provider['options'], $stored['options'], 'The rest stays.' );
+
+		$after = count( $this->calls );
+
+		self::assertSame( array( 'white', 'black' ), $mockups->stitches( $base ) );
+		self::assertCount( $after, $this->calls, 'Printful is asked once.' );
+		self::assertGreaterThan( $before, $after );
+	}
+
 	public function test_a_product_without_white_stitching_starts_on_what_it_has(): void {
 		$path    = self::API . '/v2/catalog-products/257?' . self::REGION;
 		$product = json_decode( (string) ( $this->answers[ $path ]['body'] ?? '' ), true );

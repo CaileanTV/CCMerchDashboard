@@ -1015,7 +1015,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 * @param array<mixed> $product v2 product.
 	 * @return list<string>
 	 */
-	private static function stitches( array $product ): array {
+	public static function stitches( array $product ): array {
 		foreach ( is_array( $product['product_options'] ?? null ) ? $product['product_options'] : array() as $option ) {
 			if ( is_array( $option ) && 'stitch_color' === ( $option['name'] ?? null ) ) {
 				$values = is_array( $option['values'] ?? null ) ? array_keys( $option['values'] ) : array();
