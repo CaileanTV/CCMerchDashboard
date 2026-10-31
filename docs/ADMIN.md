@@ -70,6 +70,10 @@ Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.ph
 
 **Mockup-PSD (eksperimentel):** til produkter som kopper. Upload design-PNG'en som baggrund på siden, angiv printområdet og printmålet, og vælg PSD'en under "Mockup-PSD". Smart objects skal være synlige og have "design" i navnet, fx "Højre design" og "Venstre design". Læs teksten efter importen: den nævner lag med effekter, masker eller justeringer, som ikke kommer med. Gem derefter. Laver du både 33 cl og 44 cl, er det hvert sit grundprodukt.
 
+Sæt flueben i "Lad creators se denne mockup", hvis creators skal kunne se mockuppen, mens de designer.
+
+**Printområde:** tegn det med musen på billedet under siden, eller skriv tallene. **Notis i designeren:** skriv en tekst på grundproduktet, som creators ser, mens de designer det.
+
 **Printful v2, all-over og Prodigi, fra 2026-10-31 (eksperimentel):** søgningen i Printfuls katalog viser kun produkter, der sælges i Europa og kan sendes til Danmark. Svarer v2 ikke, vises hele listen med en bemærkning, og et valgt produkt tjekkes stadig. Et all-over-produkt viser sine flade dele, og alle er valgt på forhånd, for en del uden flueben bliver hvid på produktet. Skifter printmålet med størrelsen, vælger admin én gruppe størrelser pr. grundprodukt. "Fra Prodigis katalog" vises, når Prodigi er slået til og har en nøgle under Indstillinger; kun produkter produceret i EU vises, og farverne skal rettes bagefter, fordi Prodigi ikke oplyser farvekoder.
 
 **Ekstra designområder, fra 2026-10-30:** "Pris pr. ekstra designområde" sættes på grundproduktet, både på et eget og ved import fra et katalog (standard 0). "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele printområdet.

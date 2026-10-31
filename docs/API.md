@@ -568,6 +568,8 @@ Grundprodukter i `GET /me/designer` har `stitches` (syningsfarver, tom uden valg
 
 En side i `GET /me/designer` har `scene` (mockup fra PSD, ellers `null`), og laget `scene` er dens billede. Mockups til sådan en side skal have scenens størrelse og ikke skabelonens.
 
+Grundprodukter i `GET /me/designer` har `note` (tekst til creators, kan være tom).
+
 Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, på en flad side JPEG, `no-store`, `nosniff`) til Printfuls mockup-generator, Gelatos skabelonprodukter (fra trin 30.13) og Prodigi (ADR-084), når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
 
 ## Test-krav
