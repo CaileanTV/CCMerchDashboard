@@ -13,6 +13,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
@@ -25,16 +26,21 @@ use MerchBoard\Modules\ProductDesigner\DesignerDashboardSection;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\ProductPosts;
+use MerchBoard\Tests\Integration\Support\RecordingDesignerWriter;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
+use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -122,17 +128,20 @@ final class DesignerApiTest extends IntegrationTestCase {
 		$this->service( CreatorService::class )->create( 'Designer A', CreatorStatus::Active, $this->user );
 		$this->service( CreatorService::class )->create( 'Designer B', CreatorStatus::Active, $this->other );
 
+		$drafts         = new DesignerDrafts( $products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $files );
+		$guard          = new DesignerProductGuard( $this->wpdb, $this->service( ProtectedProductMeta::class ), new RecordingLogger() );
 		$controller     = new MeDesignerController(
 			$this->service( CreatorContext::class ),
 			$bases,
 			$products,
-			new DesignerDrafts( $products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $files ),
+			$drafts,
 			new DesignerSubmissions( $products, $bases, $files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 ),
 			$assets,
 			$files,
 			new CreatorUploads( $assets, $files ),
 			new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ),
-			$this->service( Logger::class )
+			$this->service( Logger::class ),
+			new DesignerShop( $products, $drafts, $guard, new RecordingDesignerWriter( $guard, new ProductPosts( $this->wpdb ) ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $files )
 		);
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();
@@ -261,12 +270,23 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		wp_set_current_user( $this->user );
 		self::assertSame( array(), $this->data( $this->call( 'DELETE', '/merchboard/v1/me/designer/uploads/' . $own ) )['uploads'] );
-		self::assertSame( array(), $this->data( $this->call( 'DELETE', '/merchboard/v1/me/designer/products/' . $product ) )['products'] );
+		$deleted = $this->data( $this->call( 'DELETE', '/merchboard/v1/me/designer/products/' . $product ) );
+
+		self::assertSame( array(), $deleted['products'] );
+		self::assertSame( array( $product ), array_column( $deleted['deleted'], 'id' ), 'It moves to the deleted designs.' );
+		self::assertNull( $deleted['deleted'][0]['preview'], 'Never sent: there is no picture.' );
+		self::assertSame( 404, $this->call( 'GET', '/merchboard/v1/me/designer/deleted/' . $product . '/preview' )->get_status() );
+
+		wp_set_current_user( $this->other );
+		self::assertSame( 404, $this->call( 'DELETE', '/merchboard/v1/me/designer/deleted/' . $product )->get_status() );
+		wp_set_current_user( $this->user );
+
+		self::assertSame( array(), $this->data( $this->call( 'DELETE', '/merchboard/v1/me/designer/deleted/' . $product ) )['deleted'] );
 		self::assertSame( 0, $this->count_rows( Tables::DESIGNER_PRODUCTS ) );
 		self::assertSame( 0, $this->count_rows( Tables::DESIGNER_VERSIONS ) );
 
 		$audit = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT action FROM %i WHERE action LIKE %s ORDER BY id', $this->table( Tables::AUDIT_LOG ), 'designer_product_%' ) );
-		self::assertSame( array( 'designer_product_created', 'designer_product_deleted' ), $audit );
+		self::assertSame( array( 'designer_product_created', 'designer_product_removed', 'designer_product_deleted' ), $audit );
 
 		wp_set_current_user( $this->create_user( 'not-a-creator' ) );
 		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/me/designer' )->get_status() );
@@ -291,6 +311,17 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		wp_set_current_user( $this->user );
 		self::assertSame( array(), $this->data( $this->call( 'DELETE', $route ) )['products'], 'Rejected and never approved: it can be deleted.' );
+
+		$preview = $this->call( 'GET', '/merchboard/v1/me/designer/deleted/' . $product . '/preview' );
+
+		self::assertSame( 200, $preview->get_status(), 'It can be seen again.' );
+		self::assertSame( 'image/png', $preview->get_headers()['Content-Type'] );
+
+		wp_set_current_user( $this->other );
+		self::assertSame( 404, $this->call( 'GET', '/merchboard/v1/me/designer/deleted/' . $product . '/preview' )->get_status(), 'Only by its creator.' );
+		wp_set_current_user( $this->user );
+
+		$this->call( 'DELETE', '/merchboard/v1/me/designer/deleted/' . $product );
 		self::assertSame( 0, $this->count_rows( Tables::DESIGNER_VERSIONS ) );
 		self::assertSame( array(), $this->stored_files(), 'Its files are deleted too.' );
 	}
@@ -360,7 +391,6 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( array( 'pending' ), array_column( $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) )['products'], 'status' ) );
 		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ) );
 		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'PUT', $route, $this->draft( array( self::text() ) ) ) ), 'A waiting design cannot be changed.' );
-		self::assertSame( array( 400, 'design_not_draft' ), $this->refusal( $this->call( 'DELETE', $route ) ), 'Nor deleted.' );
 
 		$queue = ( new DesignerProductRepository( $this->wpdb ) )->pending_queue();
 		self::assertSame( array( array( $product, 'Stream tee', '179.9400', null ) ), array_map( static fn( array $row ): array => array( (int) $row['design_product_id'], $row['title'], $row['quoted_price'], $row['live_version_id'] ), $queue ) );
@@ -391,6 +421,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::rect() ) ) )->get_status() );
 		self::assertSame( array( 400, 'submission_files' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ) );
 		self::assertSame( array(), $this->data( $this->call( 'DELETE', $route ) )['products'], 'Never approved: it can be deleted.' );
+		self::assertSame( array(), $this->data( $this->call( 'DELETE', '/merchboard/v1/me/designer/deleted/' . $product ) )['deleted'] );
 		self::assertSame( array(), $this->stored_files() );
 
 		remove_action( 'merchboard_notify', $listener, 1 );

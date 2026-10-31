@@ -11,8 +11,13 @@ import {
 	deleteDesignerProduct,
 	getDesigner,
 	getDesignerProduct,
+	purgeDesign,
 } from '../../api/designer';
-import type { DesignerOverview, DesignerProduct } from '../../api/designer';
+import type {
+	DesignerOverview,
+	DesignerProduct,
+	DesignerProductSummary,
+} from '../../api/designer';
 import type { ApiError } from '../../api/client';
 import { useConfig } from '../../app/config-context';
 import { ApiErrorState } from '../../components/ApiErrorState';
@@ -22,25 +27,32 @@ import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Skeleton } from '../../components/Skeleton';
 import { moneyText } from '../sales/format';
+import { ConfirmDelete } from './ConfirmDelete';
+import { DeletedDesigns } from './DeletedDesigns';
 import { DesignerEditor } from './DesignerEditor';
 
 /**
- * A status in words.
+ * A design's state in words. A change of a product in the shop does not make
+ * it a draft.
  *
- * @param status Version status.
+ * @param product The design.
  */
-function statusLabel( status: string ): string {
-	switch ( status ) {
-		case 'draft':
-			return __( 'Draft', 'merchboard' );
-		case 'pending':
+function statusLabel( product: DesignerProductSummary ): string {
+	switch ( product.state ) {
+		case 'in_shop':
+			return product.change
+				? __( 'In the shop · change in progress', 'merchboard' )
+				: __( 'In the shop', 'merchboard' );
+		case 'hidden':
+			return __( 'Not in the shop', 'merchboard' );
+		case 'waiting':
 			return __( 'Waiting for approval', 'merchboard' );
-		case 'approved':
-			return __( 'In the shop', 'merchboard' );
 		case 'rejected':
 			return __( 'Rejected', 'merchboard' );
+		case 'retired':
+			return __( 'Taken out of the shop', 'merchboard' );
 		default:
-			return status;
+			return __( 'Draft', 'merchboard' );
 	}
 }
 
@@ -56,6 +68,12 @@ export function DesignerSection() {
 	const [ open, setOpen ] = useState< DesignerProduct | null >( null );
 	const [ busy, setBusy ] = useState< number | null >( null );
 	const [ notice, setNotice ] = useState< string | null >( null );
+	const [ deleting, setDeleting ] = useState< {
+		readonly id: number;
+		readonly title: string;
+		readonly inShop: boolean;
+		readonly permanent?: boolean;
+	} | null >( null );
 
 	const load = useCallback( ( signal?: AbortSignal ) => {
 		setError( null );
@@ -115,17 +133,35 @@ export function DesignerSection() {
 		}
 	};
 
-	const remove = async ( id: number ) => {
-		setBusy( id );
-		const result = await deleteDesignerProduct( id );
-		setBusy( null );
+	const remove = async (
+		id: number,
+		permanent: boolean
+	): Promise< boolean > => {
+		const result = await ( permanent
+			? purgeDesign( id )
+			: deleteDesignerProduct( id ) );
 
 		if ( result.ok ) {
 			setOverview( result.data );
-		} else {
-			setNotice( __( 'Only a draft can be deleted.', 'merchboard' ) );
+			setDeleting( null );
+			setOpen( null );
 		}
+
+		return result.ok;
 	};
+
+	const confirm =
+		deleting === null ? null : (
+			<ConfirmDelete
+				title={ deleting.title }
+				inShop={ deleting.inShop }
+				permanent={ deleting.permanent === true }
+				onConfirm={ () =>
+					remove( deleting.id, deleting.permanent === true )
+				}
+				onClose={ () => setDeleting( null ) }
+			/>
+		);
 
 	if ( error !== null ) {
 		return <ApiErrorState error={ error } onRetry={ () => load() } />;
@@ -151,7 +187,15 @@ export function DesignerSection() {
 					} }
 					onOverview={ setOverview }
 					onProduct={ setOpen }
+					onDelete={ ( title ) =>
+						setDeleting( {
+							id: open.id,
+							title,
+							inShop: open.inShop,
+						} )
+					}
 				/>
+				{ confirm }
 			</div>
 		);
 	}
@@ -175,7 +219,7 @@ export function DesignerSection() {
 								<span>
 									<strong>{ product.title }</strong>
 									{ ' · ' }
-									{ statusLabel( product.status ) }
+									{ statusLabel( product ) }
 								</span>
 								<span className="merchboard-product-designer__actions">
 									<Button
@@ -189,25 +233,30 @@ export function DesignerSection() {
 											? __( 'Edit', 'merchboard' )
 											: __( 'Open', 'merchboard' ) }
 									</Button>
-									{ product.status === 'draft' &&
-									! product.inShop ? (
-										<Button
-											size="sm"
-											variant="ghost"
-											onClick={ () =>
-												void remove( product.id )
-											}
-											aria-label={ sprintf(
-												/* translators: %s: design title. */ __(
-													'Delete %s',
-													'merchboard'
-												),
-												product.title
-											) }
-										>
-											{ __( 'Delete', 'merchboard' ) }
-										</Button>
-									) : null }
+									<Button
+										size="sm"
+										variant="ghost"
+										onClick={ () =>
+											setDeleting( {
+												id: product.id,
+												title: product.title,
+												inShop: product.inShop,
+											} )
+										}
+										aria-label={ sprintf(
+											/* translators: %s: design title. */ __(
+												'Delete %s',
+												'merchboard'
+											),
+											product.title
+										) }
+										title={ __(
+											'Delete product',
+											'merchboard'
+										) }
+									>
+										✕
+									</Button>
 								</span>
 							</li>
 						) ) }
@@ -255,6 +304,18 @@ export function DesignerSection() {
 					</ul>
 				) }
 			</Card>
+			<DeletedDesigns
+				designs={ overview.deleted }
+				onPurge={ ( design ) =>
+					setDeleting( {
+						id: design.id,
+						title: design.title,
+						inShop: design.inShop,
+						permanent: true,
+					} )
+				}
+			/>
+			{ confirm }
 		</div>
 	);
 }

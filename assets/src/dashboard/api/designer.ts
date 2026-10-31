@@ -97,8 +97,23 @@ export interface DesignerProductSummary {
 	readonly baseId: number;
 	readonly title: string;
 	readonly status: string;
+	readonly state: DesignerShopState;
+	/** Whether a change of a product in the shop is being made. */
+	readonly change: boolean;
 	readonly inShop: boolean;
 	readonly updatedAt: string;
+}
+
+/** A design in the creator's deleted designs. */
+export interface DesignerDeleted {
+	readonly id: number;
+	readonly title: string;
+	/** The base product's name. */
+	readonly base: string;
+	/** The type of its picture; null without one. */
+	readonly preview: string | null;
+	/** Whether it has been in the shop. */
+	readonly inShop: boolean;
 }
 
 export interface DesignerOverview {
@@ -107,6 +122,7 @@ export interface DesignerOverview {
 	readonly uploads: readonly DesignerAsset[];
 	readonly fonts: readonly DesignerFont[];
 	readonly products: readonly DesignerProductSummary[];
+	deleted: readonly DesignerDeleted[];
 	readonly maxUploadBytes: number;
 	readonly maxObjects: number;
 	readonly priceDecimals: number;
@@ -151,7 +167,7 @@ export interface DesignerRejection {
 
 /** A designer product's state in the section Products (step 30.14). */
 export type DesignerShopState =
-	'in_shop' | 'waiting' | 'rejected' | 'retired' | 'draft';
+	'in_shop' | 'hidden' | 'waiting' | 'rejected' | 'retired' | 'draft';
 
 /** A designer product as the section Products shows it. */
 export interface DesignerShopProduct {
@@ -175,6 +191,7 @@ export interface DesignerShopProduct {
 export interface DesignerProduct {
 	readonly id: number;
 	readonly baseId: number;
+	readonly state: DesignerShopState;
 	readonly inShop: boolean;
 	readonly draft: DesignerDraft | null;
 	readonly pending: DesignerPending | null;
@@ -434,8 +451,26 @@ export function parseOverview( body: unknown ): DesignerOverview | null {
 					baseId: entry.base_id,
 					title: entry.title,
 					status: entry.status,
+					state: shopState( entry.state ),
+					change: entry.change === true,
 					inShop: entry.in_shop,
 					updatedAt: entry.updated_at,
+				}
+			: null
+	);
+	const deleted = list( body.deleted ?? [], ( entry ) =>
+		isRecord( entry ) &&
+		isInt( entry.id, 1 ) &&
+		isString( entry.title ) &&
+		isString( entry.base ) &&
+		( entry.preview === null || isString( entry.preview ) ) &&
+		typeof entry.in_shop === 'boolean'
+			? {
+					id: entry.id,
+					title: entry.title,
+					base: entry.base,
+					preview: entry.preview,
+					inShop: entry.in_shop,
 				}
 			: null
 	);
@@ -446,6 +481,7 @@ export function parseOverview( body: unknown ): DesignerOverview | null {
 		uploads === null ||
 		fonts === null ||
 		products === null ||
+		deleted === null ||
 		! isInt( limits.max_upload_bytes, 1 ) ||
 		! isInt( limits.max_objects, 1 ) ||
 		! isInt( limits.price_decimals ) ||
@@ -457,6 +493,7 @@ export function parseOverview( body: unknown ): DesignerOverview | null {
 				uploads,
 				fonts,
 				products,
+				deleted,
 				maxUploadBytes: limits.max_upload_bytes,
 				maxObjects: limits.max_objects,
 				priceDecimals: limits.price_decimals,
@@ -495,6 +532,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 			id: body.id,
 			baseId: body.base_id,
 			inShop: body.in_shop,
+			state: shopState( body.state ),
 			draft: null,
 			pending,
 			live,
@@ -531,6 +569,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 		id: body.id,
 		baseId: body.base_id,
 		inShop: body.in_shop,
+		state: shopState( body.state ),
 		draft: {
 			number: draft.number,
 			title: draft.title,
@@ -692,6 +731,7 @@ export function createDesignerProduct(
 
 const SHOP_STATES: readonly DesignerShopState[] = [
 	'in_shop',
+	'hidden',
 	'waiting',
 	'rejected',
 	'retired',
@@ -924,6 +964,40 @@ export function withdrawDesign(
 }
 
 /**
+ * Drops the change of a product in the shop.
+ *
+ * @param id Designer product.
+ */
+export function discardChange(
+	id: number
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/discard`, method: 'POST' },
+		parseProduct
+	);
+}
+
+/**
+ * Takes a product out of the shop or puts it back.
+ *
+ * @param id        Designer product.
+ * @param published Whether it is to be in the shop.
+ */
+export function setShopPublished(
+	id: number,
+	published: boolean
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{
+			path: `${ PATH }/products/${ id }/shop`,
+			method: 'POST',
+			data: { published },
+		},
+		parseProduct
+	);
+}
+
+/**
  * Starts a change of a product in the shop: a new draft of the live version.
  *
  * @param id Designer product.
@@ -947,16 +1021,60 @@ const IMAGE_DATA_URL = /^data:image\/(png|jpeg|webp);base64,/;
  * @param asset.mime Its type.
  * @param signal     Abort signal.
  */
-export async function designerAssetUrl(
+export function designerAssetUrl(
 	asset: { readonly id: number; readonly mime: string },
+	signal?: AbortSignal
+): Promise< string | null > {
+	return fileUrl( `${ PATH }/assets/${ asset.id }`, asset.mime, signal );
+}
+
+/**
+ * A deleted design's picture as a `data:` URL, or null.
+ *
+ * @param id     Designer product.
+ * @param type   The picture's type.
+ * @param signal Abort signal.
+ */
+export function deletedDesignUrl(
+	id: number,
+	type: string,
+	signal?: AbortSignal
+): Promise< string | null > {
+	return fileUrl( `${ PATH }/deleted/${ id }/preview`, type, signal );
+}
+
+/**
+ * Deletes a deleted design for good.
+ *
+ * @param id Designer product.
+ */
+export function purgeDesign(
+	id: number
+): Promise< ApiResult< DesignerOverview > > {
+	return request(
+		{ path: `${ PATH }/deleted/${ id }`, method: 'DELETE' },
+		parseOverview
+	);
+}
+
+/**
+ * A file as a `data:` URL, or null.
+ *
+ * @param path   Path.
+ * @param mime   Its type.
+ * @param signal Abort signal.
+ */
+async function fileUrl(
+	path: string,
+	mime: string,
 	signal?: AbortSignal
 ): Promise< string | null > {
 	const result = await requestFile(
 		{
-			path: `${ PATH }/assets/${ asset.id }`,
+			path,
 			...( signal === undefined ? {} : { signal } ),
 		},
-		asset.mime
+		mime
 	);
 
 	if ( ! result.ok ) {
@@ -975,4 +1093,15 @@ export async function designerAssetUrl(
 		reader.onerror = () => resolve( null );
 		reader.readAsDataURL( result.data );
 	} );
+}
+
+/**
+ * A product's state; a draft when it is not known.
+ *
+ * @param value Value.
+ */
+function shopState( value: unknown ): DesignerShopState {
+	return SHOP_STATES.includes( value as DesignerShopState )
+		? ( value as DesignerShopState )
+		: 'draft';
 }

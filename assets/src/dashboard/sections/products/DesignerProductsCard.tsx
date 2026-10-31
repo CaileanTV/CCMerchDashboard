@@ -8,16 +8,21 @@
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { getDesignerShopProducts } from '../../api/designer';
+import {
+	deleteDesignerProduct,
+	getDesignerShopProducts,
+} from '../../api/designer';
 import type { DesignerShopProduct } from '../../api/designer';
 import type { ApiError } from '../../api/client';
 import { useConfig } from '../../app/config-context';
 import { Link } from '../../app/router';
 import { ApiErrorState } from '../../components/ApiErrorState';
+import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
+import { ConfirmDelete } from '../designer/ConfirmDelete';
 import { dayText, moneyText } from '../sales/format';
 
 /**
@@ -49,6 +54,8 @@ function stateText( product: DesignerShopProduct, locale: string ): string {
 			return product.rejection === null
 				? __( 'In the shop', 'merchboard' )
 				: __( 'In the shop · your change was rejected', 'merchboard' );
+		case 'hidden':
+			return __( 'Not in the shop', 'merchboard' );
 		case 'waiting':
 			return sprintf(
 				/* translators: %s: date the product was sent. */
@@ -102,6 +109,9 @@ export function DesignerProductsCard() {
 		null
 	);
 	const [ error, setError ] = useState< ApiError | null >( null );
+	const [ deleting, setDeleting ] = useState< DesignerShopProduct | null >(
+		null
+	);
 
 	const load = useCallback(
 		( signal?: AbortSignal ) => {
@@ -187,6 +197,28 @@ export function DesignerProductsCard() {
 			render: ( product ) => priceText( product, locale ),
 			align: 'end',
 		},
+		{
+			key: 'delete',
+			header: __( 'Delete', 'merchboard' ),
+			render: ( product ) => (
+				<Button
+					size="sm"
+					variant="ghost"
+					onClick={ () => setDeleting( product ) }
+					aria-label={ sprintf(
+						/* translators: %s: design title. */ __(
+							'Delete %s',
+							'merchboard'
+						),
+						product.title
+					) }
+					title={ __( 'Delete product', 'merchboard' ) }
+				>
+					✕
+				</Button>
+			),
+			align: 'end',
+		},
 	];
 
 	return (
@@ -236,6 +268,29 @@ export function DesignerProductsCard() {
 					) }
 				</p>
 			) : null }
+			{ deleting === null ? null : (
+				<ConfirmDelete
+					title={ deleting.title }
+					inShop={
+						deleting.state !== 'draft' &&
+						deleting.state !== 'waiting' &&
+						deleting.state !== 'rejected'
+					}
+					onConfirm={ async () => {
+						const result = await deleteDesignerProduct(
+							deleting.id
+						);
+
+						if ( result.ok ) {
+							setDeleting( null );
+							load();
+						}
+
+						return result.ok;
+					} }
+					onClose={ () => setDeleting( null ) }
+				/>
+			) }
 		</Card>
 	);
 }

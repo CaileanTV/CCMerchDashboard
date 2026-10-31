@@ -152,7 +152,7 @@ class DesignerDrafts {
 	}
 
 	/**
-	 * Deletes a designer product that never left the draft.
+	 * Deletes a designer product that never reached the shop, for good.
 	 *
 	 * @param Creator $creator The creator.
 	 * @param int     $product Designer product.
@@ -160,7 +160,9 @@ class DesignerDrafts {
 	 * @throws DatabaseException When it cannot be deleted.
 	 */
 	public function delete( Creator $creator, int $product ): void {
-		if ( null === $this->products->find( $creator->id, $product ) ) {
+		$row = $this->products->product( $product );
+
+		if ( null === $row || $creator->id !== (int) $row['creator_id'] ) {
 			self::refuse( DesignerException::DESIGN_UNKNOWN );
 		}
 

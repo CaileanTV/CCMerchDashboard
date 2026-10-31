@@ -25,7 +25,9 @@ import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 import {
 	deleteDesignerImage,
 	designerAssetUrl,
+	discardChange,
 	saveDesignerDraft,
+	setShopPublished,
 	startChange,
 	uploadDesignerImage,
 	withdrawDesign,
@@ -87,6 +89,8 @@ export interface DesignerEditorProps {
 	readonly onOverview: ( overview: DesignerOverview ) => void;
 	/** The product after a submission or withdrawal. */
 	readonly onProduct: ( product: DesignerProduct ) => void;
+	/** Asks whether the product with this title is to be deleted. */
+	readonly onDelete: ( title: string ) => void;
 }
 
 /**
@@ -175,6 +179,7 @@ export function DesignerEditor( props: DesignerEditorProps ) {
 			onBack={ onBack }
 			onOverview={ onOverview }
 			onProduct={ props.onProduct }
+			onDelete={ props.onDelete }
 		/>
 	);
 }
@@ -190,8 +195,16 @@ interface EditorProps extends DesignerEditorProps {
  * @param props Props.
  */
 function Editor( props: EditorProps ) {
-	const { overview, product, base, locale, onBack, onOverview, onProduct } =
-		props;
+	const {
+		overview,
+		product,
+		base,
+		locale,
+		onBack,
+		onOverview,
+		onProduct,
+		onDelete,
+	} = props;
 	const impersonating = useContext( ConfigContext )?.impersonating === true;
 	const [ confirming, setConfirming ] = useState( false );
 	const [ sending, setSending ] = useState( false );
@@ -226,6 +239,7 @@ function Editor( props: EditorProps ) {
 		text: string;
 	} | null >( null );
 	const [ saving, setSaving ] = useState( false );
+	const [ discarding, setDiscarding ] = useState( false );
 	const [ saved, setSaved ] = useState( {
 		design: props.design,
 		price: draft.price,
@@ -643,6 +657,26 @@ function Editor( props: EditorProps ) {
 		}
 	};
 
+	/** Drops the change of a product in the shop. */
+	const discard = async () => {
+		setDiscarding( true );
+		setMessage( null );
+		const result = await discardChange( product.id );
+		setDiscarding( false );
+
+		if ( result.ok ) {
+			onProduct( result.data );
+		} else {
+			setMessage( {
+				tone: 'danger',
+				text: __(
+					'The change could not be cancelled. Please try again.',
+					'merchboard'
+				),
+			} );
+		}
+	};
+
 	/** Saves the draft; the saved product, or null after a message. */
 	const persist = async (): Promise< DesignerProduct | null > => {
 		setSaving( true );
@@ -870,6 +904,24 @@ function Editor( props: EditorProps ) {
 					</Labelled>
 				</div>
 				<div className="merchboard-product-designer__bar-group">
+					{ product.live === null ? null : (
+						<Button
+							variant="ghost"
+							onClick={ () => void discard() }
+							isBusy={ discarding }
+							disabled={ impersonating }
+						>
+							{ __( 'Cancel the change', 'merchboard' ) }
+						</Button>
+					) }
+					{ impersonating ? null : (
+						<Button
+							variant="ghost"
+							onClick={ () => onDelete( title ) }
+						>
+							{ __( 'Delete product', 'merchboard' ) }
+						</Button>
+					) }
 					<Button
 						variant="secondary"
 						onClick={ () => void save() }
@@ -1724,7 +1776,7 @@ function submitError( reason: string ): string {
  * @param props Props.
  */
 function Waiting( props: DesignerEditorProps ) {
-	const { product, overview, locale, onBack, onProduct } = props;
+	const { product, overview, locale, onBack, onProduct, onDelete } = props;
 	const pending = product.pending!;
 	const currency =
 		overview.bases.find( ( base ) => base.id === product.baseId )
@@ -1779,6 +1831,12 @@ function Waiting( props: DesignerEditorProps ) {
 				>
 					{ __( 'Withdraw and edit', 'merchboard' ) }
 				</Button>
+				<Button
+					variant="ghost"
+					onClick={ () => onDelete( pending.title ) }
+				>
+					{ __( 'Delete product', 'merchboard' ) }
+				</Button>
 			</div>
 		</>
 	);
@@ -1790,13 +1848,31 @@ function Waiting( props: DesignerEditorProps ) {
  * @param props Props.
  */
 function InShop( props: DesignerEditorProps ) {
-	const { product, overview, locale, onBack, onProduct } = props;
+	const { product, overview, locale, onBack, onProduct, onDelete } = props;
 	const live = product.live!;
+	const hidden = product.state === 'hidden';
+	const shownPrice = ( currency: string ): string =>
+		live.price === null ? '–' : moneyText( live.price, currency, locale );
 	const currency =
 		overview.bases.find( ( base ) => base.id === product.baseId )
 			?.currency ?? '';
 	const [ busy, setBusy ] = useState( false );
+	const shown = shownPrice( currency );
+	const [ moving, setMoving ] = useState( false );
 	const [ failed, setFailed ] = useState( false );
+
+	const move = async () => {
+		setMoving( true );
+		setFailed( false );
+		const result = await setShopPublished( product.id, hidden );
+		setMoving( false );
+
+		if ( result.ok ) {
+			onProduct( result.data );
+		} else {
+			setFailed( true );
+		}
+	};
 
 	const change = async () => {
 		setBusy( true );
@@ -1813,22 +1889,29 @@ function InShop( props: DesignerEditorProps ) {
 
 	return (
 		<>
-			<Alert tone="success">
-				{ sprintf(
-					/* translators: 1: product title, 2: the customer's price. */ __(
-						'%1$s is in the shop (customer price incl. VAT: %2$s). A change is sent for approval like a new design; the shop keeps this version until we approve it.',
-						'merchboard'
-					),
-					live.title,
-					live.price === null
-						? '–'
-						: moneyText( live.price, currency, locale )
-				) }
+			<Alert tone={ hidden ? 'info' : 'success' }>
+				{ hidden
+					? sprintf(
+							/* translators: 1: product title, 2: the customer's price. */ __(
+								'%1$s is not in the shop now (customer price incl. VAT: %2$s). You can put it back without a new approval.',
+								'merchboard'
+							),
+							live.title,
+							shown
+						)
+					: sprintf(
+							/* translators: 1: product title, 2: the customer's price. */ __(
+								'%1$s is in the shop (customer price incl. VAT: %2$s). A change is sent for approval like a new design; the shop keeps this version until we approve it.',
+								'merchboard'
+							),
+							live.title,
+							shown
+						) }
 			</Alert>
 			{ failed ? (
 				<Alert tone="danger">
 					{ __(
-						'The change could not be started. Please try again.',
+						'That did not work. Please try again.',
 						'merchboard'
 					) }
 				</Alert>
@@ -1839,6 +1922,21 @@ function InShop( props: DesignerEditorProps ) {
 				</Button>
 				<Button onClick={ () => void change() } isBusy={ busy }>
 					{ __( 'Make a change', 'merchboard' ) }
+				</Button>
+				<Button
+					variant="secondary"
+					onClick={ () => void move() }
+					isBusy={ moving }
+				>
+					{ hidden
+						? __( 'Put in the shop', 'merchboard' )
+						: __( 'Set as draft', 'merchboard' ) }
+				</Button>
+				<Button
+					variant="ghost"
+					onClick={ () => onDelete( live.title ) }
+				>
+					{ __( 'Delete product', 'merchboard' ) }
 				</Button>
 			</div>
 		</>

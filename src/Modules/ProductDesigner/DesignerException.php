@@ -140,6 +140,9 @@ final class DesignerException extends RuntimeException {
 	/** The import could not be queued. */
 	public const IMPORT_QUEUE = 'import_queue';
 
+	/** A design is on its way to the shop and cannot be deleted now. */
+	public const DESIGN_APPLYING = 'design_applying';
+
 	/** An embroidery pack is unknown or its values are refused. */
 	public const THREAD_PACK = 'thread_pack';
 

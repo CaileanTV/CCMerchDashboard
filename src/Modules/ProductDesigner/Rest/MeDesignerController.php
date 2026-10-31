@@ -23,6 +23,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
@@ -73,16 +74,17 @@ final class MeDesignerController extends RestController {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorContext            $context  The current creator.
-	 * @param BaseProductRepository     $bases    Base products.
-	 * @param DesignerProductRepository $products Designer products.
+	 * @param CreatorContext            $context     The current creator.
+	 * @param BaseProductRepository     $bases       Base products.
+	 * @param DesignerProductRepository $products    Designer products.
 	 * @param DesignerDrafts            $drafts      Drafts.
 	 * @param DesignerSubmissions       $submissions Submissions.
-	 * @param DesignerAssetRepository   $assets   File records.
-	 * @param DesignerFiles             $files    Files.
-	 * @param CreatorUploads            $uploads  The creator's uploads.
-	 * @param AlertFonts                $fonts    Approved fonts.
-	 * @param Logger                    $logger   Technical log.
+	 * @param DesignerAssetRepository   $assets      File records.
+	 * @param DesignerFiles             $files       Files.
+	 * @param CreatorUploads            $uploads     The creator's uploads.
+	 * @param AlertFonts                $fonts       Approved fonts.
+	 * @param Logger                    $logger      Technical log.
+	 * @param DesignerShop              $shop        The creator's decisions about the shop.
 	 */
 	public function __construct(
 		private CreatorContext $context,
@@ -94,7 +96,8 @@ final class MeDesignerController extends RestController {
 		private DesignerFiles $files,
 		private CreatorUploads $uploads,
 		private AlertFonts $fonts,
-		Logger $logger
+		Logger $logger,
+		private DesignerShop $shop
 	) {
 		parent::__construct( $logger );
 	}
@@ -136,6 +139,18 @@ final class MeDesignerController extends RestController {
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/change'   => array(
 				WP_REST_Server::CREATABLE => 'change_product',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/discard'  => array(
+				WP_REST_Server::CREATABLE => 'discard_change',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/shop'     => array(
+				WP_REST_Server::CREATABLE => 'set_shop',
+			),
+			'/deleted/(?P<id>[1-9][0-9]{0,18})'           => array(
+				WP_REST_Server::DELETABLE => 'purge_design',
+			),
+			'/deleted/(?P<id>[1-9][0-9]{0,18})/preview'   => array(
+				WP_REST_Server::READABLE => 'deleted_preview',
 			),
 		);
 
@@ -349,12 +364,128 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/products/{id}',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				try {
-					$this->drafts->delete( $creator, (int) $request->get_param( 'id' ) );
+					$this->shop->remove( $creator, (int) $request->get_param( 'id' ) );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
 				}
 
 				return new WP_REST_Response( $this->describe( $creator ), 200 );
+			}
+		);
+	}
+
+	/**
+	 * `DELETE /me/designer/deleted/{id}`: deletes a deleted design for good.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function purge_design( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/deleted/{id}',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				try {
+					$this->shop->purge( $creator, (int) $request->get_param( 'id' ) );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return new WP_REST_Response( $this->describe( $creator ), 200 );
+			}
+		);
+	}
+
+	/**
+	 * `GET /me/designer/deleted/{id}/preview`: the image of a deleted design.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function deleted_preview( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/deleted/{id}/preview',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id   = (int) $request->get_param( 'id' );
+				$own  = in_array( $id, array_map( static fn( array $row ): int => (int) $row['id'], $this->products->deleted_for_creator( $creator->id ) ), true );
+				$name = $own ? $this->products->preview_file( $id ) : null;
+				$path = null === $name ? null : $this->files->path( $name );
+				$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A private file of the plugin's own directory.
+
+				if ( null === $name || false === $body ) {
+					return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
+				}
+
+				$response = new WP_REST_Response( $body, 200 );
+				$response->set_headers(
+					array(
+						'Content-Type'           => self::image_type( $name ),
+						'Content-Disposition'    => 'inline',
+						'Cache-Control'          => 'private, no-store',
+						'X-Content-Type-Options' => 'nosniff',
+					)
+				);
+
+				return $response;
+			}
+		);
+	}
+
+	/**
+	 * The type of a stored image.
+	 *
+	 * @param string|null $name File name.
+	 */
+	private static function image_type( ?string $name ): ?string {
+		return match ( null === $name ? null : pathinfo( $name, PATHINFO_EXTENSION ) ) {
+			null   => null,
+			'png'  => 'image/png',
+			'webp' => 'image/webp',
+			default => 'image/jpeg',
+		};
+	}
+
+	/**
+	 * `POST /me/designer/products/{id}/discard`: drops the change of a product in the shop.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function discard_change( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/discard',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id = (int) $request->get_param( 'id' );
+
+				try {
+					$this->shop->discard( $creator, $id );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
+			}
+		);
+	}
+
+	/**
+	 * `POST /me/designer/products/{id}/shop`: takes a product out of the shop or puts it back.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function set_shop( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/shop',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id = (int) $request->get_param( 'id' );
+
+				try {
+					$this->shop->set_published( $creator, $id, true === $request->get_param( 'published' ) );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
 			}
 		);
 	}
@@ -514,15 +645,28 @@ final class MeDesignerController extends RestController {
 			'uploads'  => array_map( self::asset_data( ... ), $this->assets->owned( $creator->id, CreatorUploads::UPLOAD ) ),
 			'fonts'    => array_values( array_map( static fn( AlertFont $font ): array => $font->to_array(), $this->fonts->approved() ) ),
 			'products' => array_map(
-				static fn( array $row ): array => array(
+				fn( array $row ): array => array(
 					'id'         => (int) $row['id'],
 					'base_id'    => (int) $row['base_id'],
 					'title'      => (string) $row['title'],
 					'status'     => (string) $row['version_status'],
+					'state'      => $this->state( $row ),
+					'change'     => null !== $this->products->live( (int) $row['id'] ) && DesignerProductRepository::DRAFT === $row['version_status'],
 					'in_shop'    => null !== $row['wc_product_id'],
 					'updated_at' => mysql_to_rfc3339( (string) $row['updated_at'] ),
 				),
 				$this->products->for_creator( $creator->id )
+			),
+			'deleted'  => array_map(
+				fn( array $row ): array => array(
+					'id'         => (int) $row['id'],
+					'title'      => (string) $row['title'],
+					'base'       => (string) ( $this->bases->find( (int) $row['base_id'] )->name ?? '' ),
+					'preview'    => self::image_type( $this->products->preview_file( (int) $row['id'] ) ),
+					'in_shop'    => null !== $row['wc_product_id'],
+					'deleted_at' => mysql_to_rfc3339( (string) $row['updated_at'] ),
+				),
+				$this->products->deleted_for_creator( $creator->id )
 			),
 			'limits'   => array(
 				'max_upload_bytes' => DesignerFiles::max_bytes(),
@@ -534,11 +678,31 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
-	 * The creator's designer products with their state, newest first: `retired`
-	 * (taken out of the shop with its base product), `in_shop` (a live
-	 * version), `waiting` (a new product waiting for approval), `rejected`
-	 * (the last decision was a rejection) or `draft`. A product in the shop
-	 * can have a change waiting or rejected next to it.
+	 * A product's state: `retired` (taken out of the shop with its base
+	 * product), `in_shop` (a live version in the shop), `hidden` (a live
+	 * version the creator took out of the shop), `waiting` (a new product
+	 * waiting for approval), `rejected` (the last decision was a rejection) or
+	 * `draft`. A change next to a live version does not change it.
+	 *
+	 * @param array<string, mixed> $row The product: `id`, `status`, `wc_product_id`.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	private function state( array $row ): string {
+		$id    = (int) $row['id'];
+		$wc_id = is_numeric( $row['wc_product_id'] ?? null ) ? (int) $row['wc_product_id'] : 0;
+
+		return match ( true ) {
+			DesignerProductRepository::RETIRED === $row['status'] => 'retired',
+			null !== $this->products->live( $id ) => $wc_id > 0 && 'publish' === get_post_status( $wc_id ) ? 'in_shop' : 'hidden',
+			null !== $this->products->pending( $id ) => 'waiting',
+			null !== $this->products->last_rejection( $id ) => 'rejected',
+			default => 'draft',
+		};
+	}
+
+	/**
+	 * The creator's designer products with their state, newest first. A
+	 * product in the shop can have a change waiting or rejected next to it.
 	 *
 	 * @param Creator $creator The creator.
 	 * @return list<array<string, mixed>>
@@ -554,20 +718,14 @@ final class MeDesignerController extends RestController {
 		}
 
 		foreach ( $this->products->for_creator( $creator->id ) as $row ) {
-			$id      = (int) $row['id'];
-			$product = $this->products->find( $creator->id, $id );
-			$live    = $this->products->live( $id );
-			$pending = $this->products->pending( $id );
-			$refusal = $this->products->last_rejection( $id );
-			$wc_id   = is_numeric( $product['wc_product_id'] ?? null ) ? (int) $product['wc_product_id'] : 0;
-			$retired = DesignerProductRepository::RETIRED === ( $product['status'] ?? null );
-			$state   = match ( true ) {
-				$retired          => 'retired',
-				null !== $live    => 'in_shop',
-				null !== $pending => 'waiting',
-				null !== $refusal => 'rejected',
-				default           => 'draft',
-			};
+			$id       = (int) $row['id'];
+			$product  = $this->products->find( $creator->id, $id );
+			$live     = $this->products->live( $id );
+			$pending  = $this->products->pending( $id );
+			$refusal  = $this->products->last_rejection( $id );
+			$wc_id    = is_numeric( $product['wc_product_id'] ?? null ) ? (int) $product['wc_product_id'] : 0;
+			$retired  = DesignerProductRepository::RETIRED === ( $product['status'] ?? null );
+			$state    = $this->state( $row );
 			$url      = 'in_shop' === $state && $wc_id > 0 && 'publish' === get_post_status( $wc_id ) ? get_permalink( $wc_id ) : false;
 			$states[] = array(
 				'id'        => $id,
@@ -624,6 +782,7 @@ final class MeDesignerController extends RestController {
 				'id'        => (int) $product['id'],
 				'base_id'   => (int) $product['base_id'],
 				'in_shop'   => null !== $product['wc_product_id'],
+				'state'     => $this->state( $product ),
 				'draft'     => null === $draft ? null : array(
 					'number'       => (int) $draft['number'],
 					'title'        => (string) $draft['title'],

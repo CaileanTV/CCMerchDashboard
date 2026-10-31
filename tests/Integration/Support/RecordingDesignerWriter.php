@@ -18,7 +18,7 @@ use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
 /**
  * The integration database has no WooCommerce. The draft is a real
  * `product` post claimed through the real legacy guard (marker and token);
- * the content and unpublishing are recorded. set_content() can be made to
+ * the content is recorded, and publishing sets the post's status. set_content() can be made to
  * fail a number of times, to test an interrupted apply.
  */
 final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
@@ -129,6 +129,12 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function publish( GuardedProduct $product ): void {
 		$this->published[] = $product->wc_product_id;
+		wp_update_post(
+			array(
+				'ID'          => $product->wc_product_id,
+				'post_status' => 'publish',
+			)
+		);
 	}
 
 	/**
@@ -138,5 +144,11 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function unpublish( GuardedProduct $product ): void {
 		$this->unpublished[] = $product->wc_product_id;
+		wp_update_post(
+			array(
+				'ID'          => $product->wc_product_id,
+				'post_status' => 'draft',
+			)
+		);
 	}
 }

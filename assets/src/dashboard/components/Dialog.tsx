@@ -12,6 +12,8 @@ export interface DialogProps {
 	readonly onClose: () => void;
 	/** Text of the close button. */
 	readonly closeLabel?: string;
+	/** Buttons beside the close button. */
+	readonly actions?: ReactNode;
 	readonly children: ReactNode;
 }
 
@@ -25,12 +27,14 @@ export interface DialogProps {
  * @param props.title      Heading.
  * @param props.onClose    Close handler.
  * @param props.closeLabel Close button text.
+ * @param props.actions    Further buttons.
  * @param props.children   Content.
  */
 export function Dialog( {
 	title,
 	onClose,
 	closeLabel = __( 'Close', 'merchboard' ),
+	actions,
 	children,
 }: DialogProps ) {
 	const headingId = useId();
@@ -114,9 +118,12 @@ export function Dialog( {
 				</h2>
 				<div className="merchboard-dialog__content">{ children }</div>
 				<div className="merchboard-dialog__actions">
+					{ actions }
 					<button
 						type="button"
-						className="merchboard-button merchboard-button--primary merchboard-button--md"
+						className={ `merchboard-button merchboard-button--${
+							actions === undefined ? 'primary' : 'secondary'
+						} merchboard-button--md` }
 						onClick={ onClose }
 					>
 						{ closeLabel }

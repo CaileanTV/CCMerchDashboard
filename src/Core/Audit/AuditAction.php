@@ -721,6 +721,32 @@ enum AuditAction: string {
 	case DesignerChangeStarted = 'designer_change_started';
 
 	/**
+	 * A creator discarded the change of a product in the shop.
+	 */
+	case DesignerChangeDiscarded = 'designer_change_discarded';
+
+	/**
+	 * A creator put a product back in the shop.
+	 */
+	case DesignerProductPublished = 'designer_product_published';
+
+	/**
+	 * A creator took a product out of the shop.
+	 */
+	case DesignerProductHidden = 'designer_product_hidden';
+
+	/**
+	 * A creator moved a product to the deleted designs.
+	 */
+	case DesignerProductRemoved = 'designer_product_removed';
+
+	/**
+	 * A creator deleted a design for good that has been in the shop: it is
+	 * gone for them, and its versions stay for the orders.
+	 */
+	case DesignerProductPurged = 'designer_product_purged';
+
+	/**
 	 * An administrator retired a base product; its products leave the shop (ADR-080 pkt. 10). Context: base_id, base_name.
 	 */
 	case DesignerBaseRetired = 'designer_base_retired';

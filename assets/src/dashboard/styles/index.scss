@@ -2076,6 +2076,40 @@ input:disabled + .merchboard-sounds__upload {
 	opacity: 0;
 }
 
+.merchboard-product-designer__deleted {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: var(--merchboard-space-3);
+	padding: 0;
+	margin: 0;
+	list-style: none;
+
+	li {
+		display: grid;
+		gap: var(--merchboard-space-1);
+		justify-items: start;
+		min-width: 0;
+	}
+}
+
+.merchboard-product-designer__preview {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	aspect-ratio: 1;
+	overflow: hidden;
+	text-align: center;
+	background: var(--merchboard-mockup-ground);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+}
+
 .merchboard-product-designer__left {
 	display: grid;
 	gap: var(--merchboard-space-4);

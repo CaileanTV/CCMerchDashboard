@@ -52,6 +52,18 @@ class DesignerProductRepository {
 	public const RETIRED = 'retired';
 
 	/**
+	 * In the creator's deleted designs: out of the shop and of their lists,
+	 * until they delete it for good.
+	 */
+	public const DELETED = 'deleted';
+
+	/**
+	 * Deleted for good after being in the shop: gone for the creator, and
+	 * kept for the orders that point at it.
+	 */
+	public const PURGED = 'purged';
+
+	/**
 	 * `apply_state` of an approved version: waiting for, being applied, failed, done.
 	 */
 	public const APPLY_QUEUED = 'queued';
@@ -141,7 +153,7 @@ class DesignerProductRepository {
 	 */
 	public function find( int $creator_id, int $product_id ): ?array {
 		$wpdb = $this->wpdb;
-		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT ' . self::PRODUCT_COLUMNS . ' FROM %i WHERE id = %d AND creator_id = %d', $this->table( Tables::DESIGNER_PRODUCTS ), $product_id, $creator_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant columns; the designer's own table.
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT ' . self::PRODUCT_COLUMNS . ' FROM %i WHERE id = %d AND creator_id = %d AND status NOT IN ( %s, %s )', $this->table( Tables::DESIGNER_PRODUCTS ), $product_id, $creator_id, self::DELETED, self::PURGED ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant columns; the designer's own table.
 
 		if ( '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the designer product.' );
@@ -164,12 +176,14 @@ class DesignerProductRepository {
 				'SELECT p.id, p.base_id, p.status, p.wc_product_id, v.id AS version_id, v.number, v.status AS version_status, v.title, v.updated_at
 				FROM %i p
 				JOIN %i v ON v.design_product_id = p.id AND v.number = ( SELECT MAX( number ) FROM %i WHERE design_product_id = p.id )
-				WHERE p.creator_id = %d
+				WHERE p.creator_id = %d AND p.status NOT IN ( %s, %s )
 				ORDER BY v.updated_at DESC, p.id DESC',
 				$this->table( Tables::DESIGNER_PRODUCTS ),
 				$this->table( Tables::DESIGNER_VERSIONS ),
 				$this->table( Tables::DESIGNER_VERSIONS ),
-				$creator_id
+				$creator_id,
+				self::DELETED,
+				self::PURGED
 			),
 			ARRAY_A
 		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables; the creator's list.
@@ -577,13 +591,130 @@ class DesignerProductRepository {
 		$wpdb = $this->wpdb;
 		$ids  = $live_only
 			? $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE base_id = %d AND wc_product_id IS NOT NULL AND status = %s ORDER BY id', $this->table( Tables::DESIGNER_PRODUCTS ), $base_id, self::LIVE ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
-			: $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE base_id = %d AND wc_product_id IS NOT NULL ORDER BY id', $this->table( Tables::DESIGNER_PRODUCTS ), $base_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			: $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE base_id = %d AND wc_product_id IS NOT NULL AND status NOT IN ( %s, %s ) ORDER BY id', $this->table( Tables::DESIGNER_PRODUCTS ), $base_id, self::DELETED, self::PURGED ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 
 		if ( '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not read the designer products of the base product.' );
 		}
 
 		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * Whether a version of a product is on its way to the shop.
+	 *
+	 * @param int $product_id Designer product.
+	 * @throws DatabaseException When it cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function applying_version( int $product_id ): bool {
+		$wpdb  = $this->wpdb;
+		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE design_product_id = %d AND apply_state IN ( %s, %s )', $this->table( Tables::DESIGNER_VERSIONS ), $product_id, self::APPLY_QUEUED, self::APPLY_RUNNING ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a live check.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the versions of the design.' );
+		}
+
+		return (int) $count > 0;
+	}
+
+	/**
+	 * Deletes a draft version.
+	 *
+	 * @param int $version_id Version; it must be a draft.
+	 * @throws DatabaseException When it cannot be deleted.
+	 */
+	public function delete_draft_version( int $version_id ): void {
+		$deleted = $this->wpdb->delete(
+			$this->table( Tables::DESIGNER_VERSIONS ),
+			array(
+				'id'     => $version_id,
+				'status' => self::DRAFT,
+			),
+			array( '%d', '%s' )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( 1 !== $deleted ) {
+			throw new DatabaseException( 'Could not delete the draft.' );
+		}
+	}
+
+	/**
+	 * A creator's deleted designs with their newest version, newest first.
+	 *
+	 * @param int $creator_id Owner.
+	 * @return list<array<string, mixed>>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function deleted_for_creator( int $creator_id ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT p.id, p.base_id, p.wc_product_id, p.updated_at, v.title
+				FROM %i p
+				JOIN %i v ON v.design_product_id = p.id AND v.number = ( SELECT MAX( number ) FROM %i WHERE design_product_id = p.id )
+				WHERE p.creator_id = %d AND p.status = %s
+				ORDER BY p.updated_at DESC, p.id DESC',
+				$this->table( Tables::DESIGNER_PRODUCTS ),
+				$this->table( Tables::DESIGNER_VERSIONS ),
+				$this->table( Tables::DESIGNER_VERSIONS ),
+				$creator_id,
+				self::DELETED
+			),
+			ARRAY_A
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables; the creator's list.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the deleted designs.' );
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * The image that shows a design best: a mockup of its newest version
+	 * with files, or its print file.
+	 *
+	 * @param int $product_id Designer product.
+	 * @return string|null File name.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function preview_file( int $product_id ): ?string {
+		$wpdb = $this->wpdb;
+		$json = $wpdb->get_var( $wpdb->prepare( 'SELECT files FROM %i WHERE design_product_id = %d AND files IS NOT NULL ORDER BY number DESC LIMIT 1', $this->table( Tables::DESIGNER_VERSIONS ), $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a single file name.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the files of the design.' );
+		}
+
+		$names = SubmissionFiles::names( is_string( $json ) ? $json : null );
+		$shots = array_values( array_filter( $names, static fn( string $name ): bool => ! str_ends_with( $name, '.png' ) ) );
+
+		return $shots[0] ?? $names[0] ?? null;
+	}
+
+	/**
+	 * Marks a product as deleted or purged by its creator.
+	 *
+	 * @param int    $product_id Designer product.
+	 * @param string $status     DELETED or PURGED.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function mark_removed( int $product_id, string $status ): void {
+		$updated = $this->wpdb->update(
+			$this->table( Tables::DESIGNER_PRODUCTS ),
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql', true ),
+			),
+			array( 'id' => $product_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not delete the designer product.' );
+		}
 	}
 
 	/**

@@ -40,6 +40,7 @@ use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
@@ -200,7 +201,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( DesignerFiles::class ),
 				$c->get( CreatorUploads::class ),
 				$c->get( AlertFonts::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				new DesignerShop( $c->get( DesignerProductRepository::class ), $c->get( DesignerDrafts::class ), $c->get( DesignerProductGuard::class ), $c->get( WooCommerceDesignerWriter::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( DesignerFiles::class ) )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).

@@ -31,6 +31,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
@@ -785,11 +786,8 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			array_map( static fn( array $state ): array => array( $state['state'], $state['price'], $state['pending']['price'] ?? null, $state['rejection']['note'] ?? null, $state['draft'] ), array_column( $states, null, 'id' ) )
 		);
 		self::assertSame( array( 'DKK' ), array_values( array_unique( array_column( $states, 'currency' ) ) ) );
-		self::assertNull( array_column( $states, 'url', 'id' )[ $live ], 'A product that is not published has no link.' );
 
 		$shop = (int) ( $this->products->product( $live )['wc_product_id'] ?? 0 );
-		$this->wpdb->update( $this->wpdb->posts, array( 'post_status' => 'publish' ), array( 'ID' => $shop ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: the shop publishes the product.
-		clean_post_cache( $shop );
 		$link = get_permalink( $shop );
 		self::assertSame( is_string( $link ) ? $link : null, array_column( $this->states(), 'url', 'id' )[ $live ] );
 
@@ -805,6 +803,216 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$refused = $this->controller()->products();
 		self::assertInstanceOf( WP_Error::class, $refused, 'Only a creator gets an answer.' );
 		self::assertSame( 403, rest_convert_error_to_response( $refused )->get_status() );
+	}
+
+	public function test_a_change_can_be_discarded_and_the_shop_keeps_its_version(): void {
+		$product = $this->live_product();
+		$live    = $this->products->live( $product );
+
+		try {
+			$this->shop()->discard( $this->creator, $product );
+			self::fail( 'There is no change.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_NOT_DRAFT, $e->reason() );
+		}
+
+		$this->submissions->change( $this->creator, $product );
+		$this->save( $product, '30' );
+		$this->as_creator();
+
+		$states = array_column( $this->states(), null, 'id' );
+		self::assertSame( array( 'in_shop', true ), array( $states[ $product ]['state'], $states[ $product ]['draft'] ), 'A change is not a draft of the product.' );
+
+		$this->shop()->discard( $this->creator, $product );
+
+		self::assertNull( $this->products->draft( $product ) );
+		self::assertSame( $live['id'] ?? null, $this->products->live( $product )['id'] ?? null );
+		self::assertContains( 'designer_change_discarded', $this->audit( 'designer_change_discarded' ) );
+
+		$this->submissions->change( $this->creator, $product );
+		self::assertNotNull( $this->products->draft( $product ), 'A new change can start.' );
+
+		$draft = $this->drafts->create( $this->creator, $this->base );
+
+		try {
+			$this->shop()->discard( $this->creator, $draft );
+			self::fail( 'Only a product in the shop has a change.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_LIVE, $e->reason() );
+		}
+	}
+
+	public function test_a_creator_takes_a_product_out_of_the_shop_and_puts_it_back(): void {
+		$product = $this->live_product();
+		$this->as_creator();
+
+		$state = fn(): string => (string) array_column( $this->states(), 'state', 'id' )[ $product ];
+
+		self::assertSame( 'in_shop', $state() );
+
+		$this->shop()->set_published( $this->creator, $product, false );
+		self::assertSame( 'hidden', $state() );
+		self::assertNull( array_column( $this->states(), 'url', 'id' )[ $product ], 'Out of the shop: no link.' );
+
+		$this->shop()->set_published( $this->creator, $product, true );
+		self::assertSame( 'in_shop', $state() );
+		self::assertSame( array( 'designer_product_hidden', 'designer_product_published' ), $this->audit( 'designer_product_hidden', 'designer_product_published' ) );
+
+		$waiting = $this->submitted();
+
+		try {
+			$this->shop()->set_published( $this->creator, $waiting, true );
+			self::fail( 'Never approved: it cannot be published by its creator.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_LIVE, $e->reason() );
+		}
+
+		wp_set_current_user( 1 );
+		$this->bases->retire( $this->base );
+		$this->drain_retirement();
+
+		try {
+			$this->shop()->set_published( $this->creator, $product, true );
+			self::fail( 'A retired product stays out.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_LIVE, $e->reason() );
+		}
+	}
+
+	public function test_a_product_from_the_shop_moves_to_the_deleted_designs_and_keeps_what_orders_need(): void {
+		$product = $this->live_product();
+		$version = (int) ( $this->products->live( $product )['id'] ?? 0 );
+		$files   = $this->products->version( $version )['files'] ?? null;
+		$this->submissions->change( $this->creator, $product );
+		$this->save( $product, '30' );
+		$this->send_files( $product );
+		$this->submissions->submit( $this->creator, $product );
+		$shop = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+
+		$this->shop()->remove( $this->creator, $product );
+
+		self::assertSame( array( $shop ), $this->writer->unpublished );
+		self::assertSame( 'deleted', $this->products->product( $product )['status'] ?? null );
+		self::assertNull( $this->products->find( $this->creator->id, $product ), 'Gone from the lists.' );
+		self::assertNull( $this->products->pending( $product ), 'The waiting change is withdrawn.' );
+		self::assertNull( $this->products->draft( $product ) );
+		self::assertSame( $files, $this->products->version( $version )['files'] ?? null, 'Orders keep the print files.' );
+		self::assertSame( array(), $this->products->in_shop_of_base( $this->base, false ), 'A retired base product leaves it alone.' );
+		self::assertSame( array( $product ), array_map( 'intval', array_column( $this->products->deleted_for_creator( $this->creator->id ), 'id' ) ) );
+		self::assertNotNull( $this->products->preview_file( $product ), 'It can be seen again.' );
+
+		$this->as_creator();
+		self::assertNotContains( $product, array_column( $this->states(), 'id' ) );
+
+		$this->shop()->purge( $this->creator, $product );
+
+		self::assertSame( 'purged', $this->products->product( $product )['status'] ?? null );
+		self::assertSame( array(), $this->products->deleted_for_creator( $this->creator->id ) );
+		self::assertSame( $files, $this->products->version( $version )['files'] ?? null, 'Sold versions stay.' );
+		self::assertNotSame( array(), $this->audit( 'designer_product_removed', 'designer_product_purged' ) );
+
+		try {
+			$this->shop()->purge( $this->creator, $product );
+			self::fail( 'Purged already.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_UNKNOWN, $e->reason() );
+		}
+	}
+
+	public function test_a_design_that_never_reached_the_shop_is_seen_again_and_then_gone_for_good(): void {
+		$product = $this->submitted();
+		$files   = $this->products->files_of( $product );
+
+		self::assertNotSame( array(), $files );
+
+		try {
+			$this->shop()->purge( $this->creator, $product );
+			self::fail( 'Only a deleted design can be purged.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_UNKNOWN, $e->reason() );
+		}
+
+		$this->shop()->remove( $this->creator, $product );
+
+		self::assertSame( array(), $this->writer->unpublished );
+		self::assertNotNull( $this->products->preview_file( $product ) );
+
+		$this->shop()->purge( $this->creator, $product );
+
+		self::assertNull( $this->products->product( $product ) );
+
+		foreach ( $files as $name ) {
+			self::assertNull( $this->files->path( $name ) );
+		}
+	}
+
+	public function test_a_rejected_design_and_one_on_a_retired_base_can_be_deleted(): void {
+		$rejected = $this->submitted();
+		$this->review->reject( $this->pending_id( $rejected ), 'Too small.' );
+		$live = $this->live_product();
+
+		wp_set_current_user( 1 );
+		$this->bases->retire( $this->base );
+		$this->drain_retirement();
+
+		$this->shop()->remove( $this->creator, $rejected );
+		$this->shop()->remove( $this->creator, $live );
+
+		self::assertEqualsCanonicalizing( array( $rejected, $live ), array_map( 'intval', array_column( $this->products->deleted_for_creator( $this->creator->id ), 'id' ) ) );
+	}
+
+	public function test_another_creator_cannot_touch_a_deleted_design(): void {
+		$product = $this->submitted();
+		$this->shop()->remove( $this->creator, $product );
+		$other = $this->service( CreatorService::class )->create( 'Other', CreatorStatus::Active, null );
+
+		try {
+			$this->shop()->purge( $other, $product );
+			self::fail( 'Not theirs.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_UNKNOWN, $e->reason() );
+		}
+
+		self::assertSame( array(), $this->products->deleted_for_creator( $other->id ) );
+	}
+
+	public function test_a_design_on_its_way_to_the_shop_cannot_be_deleted(): void {
+		$product = $this->submitted();
+		$this->review->approve( $this->pending_id( $product ) );
+
+		try {
+			$this->shop()->remove( $this->creator, $product );
+			self::fail( 'The approval is being carried out.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_APPLYING, $e->reason() );
+		}
+	}
+
+	/**
+	 * The creator with the designer switched on.
+	 */
+	private function as_creator(): void {
+		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => true ) ) );
+		wp_set_current_user( (int) $this->creator->user_id );
+	}
+
+	/**
+	 * A product approved and in the shop.
+	 */
+	private function live_product(): int {
+		$product = $this->submitted();
+
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		return $product;
+	}
+
+	/**
+	 * The creator's decisions.
+	 */
+	private function shop(): DesignerShop {
+		return new DesignerShop( $this->products, $this->drafts, $this->guard, $this->writer, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files );
 	}
 
 	/**
@@ -839,7 +1047,8 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			$this->files,
 			new CreatorUploads( $assets, $this->files ),
 			new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ),
-			$this->service( Logger::class )
+			$this->service( Logger::class ),
+			$this->shop()
 		);
 	}
 

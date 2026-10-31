@@ -244,14 +244,16 @@ describe( 'Products section with the designer', () => {
 				`${ money( '179.95' ) } (after approval ${ money(
 					'199.95'
 				) })`,
+				'✕',
 			],
 			[
 				'Hoodie',
 				`Waiting for approval (sent ${ day( '2026-10-28' ) })`,
 				money( '349' ),
+				'✕',
 			],
-			[ 'Cap', 'RejectedNote: The logo is too small.', '–' ],
-			[ 'Mug', 'Taken out of the shop', '–' ],
+			[ 'Cap', 'RejectedNote: The logo is too small.', '–', '✕' ],
+			[ 'Mug', 'Taken out of the shop', '–', '✕' ],
 		] );
 		expect(
 			container.querySelector( 'a[href$="/product/stream-tee/"]' )
