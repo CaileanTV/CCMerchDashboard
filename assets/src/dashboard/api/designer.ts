@@ -40,6 +40,8 @@ export interface DesignerThread {
 export interface DesignerEmbroidery {
 	readonly max: number;
 	readonly threads: readonly DesignerThread[];
+	/** The browser's images show stitches and stay the product's images. */
+	readonly stitched: boolean;
 }
 
 export interface DesignerView {
@@ -308,7 +310,9 @@ function parseEmbroidery( value: unknown ): DesignerEmbroidery | null {
 			: []
 	);
 
-	return threads.length === 0 ? null : { max: value.max, threads };
+	return threads.length === 0
+		? null
+		: { max: value.max, threads, stitched: value.stitched === true };
 }
 
 /**

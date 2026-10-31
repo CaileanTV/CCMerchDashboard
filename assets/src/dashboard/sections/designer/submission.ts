@@ -5,7 +5,8 @@
  * used side and chosen colour in
  * the template's size, sends them one by one (each request stays small) and
  * then submits. The server checks the exact sizes and that the files belong
- * to the saved draft.
+ * to the saved draft. An embroidered side sends a close-up per colour too
+ * (ADR-085).
  */
 import { submitDesign, uploadSubmissionFile } from '../../api/designer';
 import type {
@@ -17,7 +18,13 @@ import type {
 } from '../../api/designer';
 import { objectsOf, usedSides } from './design-model';
 import type { DesignDocument } from './design-model';
-import { composeMockup, composeScene, flatJpegOf, pngOf } from './mockup';
+import {
+	closeBox,
+	composeMockup,
+	composeScene,
+	flatJpegOf,
+	pngOf,
+} from './mockup';
 import { threadCanvas, threadSide } from './threads';
 
 export interface SubmissionInput {
@@ -44,12 +51,98 @@ export type UploadResult =
  *
  * @param design The design.
  * @param colors The chosen colours.
+ * @param views  The sides of the base product.
  */
 export function submissionSize(
 	design: DesignDocument,
-	colors: readonly string[]
+	colors: readonly string[],
+	views: readonly DesignerView[]
 ): number {
-	return usedSides( design ).length * ( 1 + colors.length );
+	const sides = usedSides( design );
+	const closeUps = views.filter(
+		( view ) => sides.includes( view.key ) && hasStitches( view )
+	).length;
+
+	return sides.length * ( 1 + colors.length ) + closeUps * colors.length;
+}
+
+/**
+ * Whether a side's images show stitches. A PSD scene draws its own product.
+ *
+ * @param view The side.
+ */
+export function hasStitches( view: DesignerView ): boolean {
+	return view.embroidery?.stitched === true && view.scene === null;
+}
+
+/**
+ * The key a side's close-ups are stored under, among the mockups.
+ *
+ * @param side The side.
+ */
+function closeKey( side: string ): string {
+	return `_close-${ side }`;
+}
+
+/**
+ * The template layers of a side, or null when one cannot be read.
+ *
+ * @param input The draft.
+ * @param view  The side.
+ */
+async function layersOf(
+	input: SubmissionInput,
+	view: DesignerView
+): Promise< Partial< Record< LayerKind, string > > | null > {
+	const layers: Partial< Record< LayerKind, string > > = {};
+
+	for ( const [ kind, id ] of Object.entries( view.layers ) as [
+		LayerKind,
+		number,
+	][] ) {
+		const url = await input.image( id );
+
+		if ( url === null ) {
+			return null;
+		}
+
+		layers[ kind ] = url;
+	}
+
+	return layers;
+}
+
+/**
+ * A side's layers in a colour: its own background replaces the background
+ * and the tinted mask. Null when that background cannot be read.
+ *
+ * @param input    The draft.
+ * @param view     The side.
+ * @param layers   The side's layers.
+ * @param colorKey The colour.
+ */
+async function colorLayersOf(
+	input: SubmissionInput,
+	view: DesignerView,
+	layers: Partial< Record< LayerKind, string > >,
+	colorKey: string
+): Promise< Partial< Record< LayerKind, string > > | null > {
+	const own = view.backgrounds[ colorKey ];
+	const ownUrl = own === undefined ? null : await input.image( own );
+
+	if ( own !== undefined && ownUrl === null ) {
+		return null;
+	}
+
+	if ( ownUrl === null ) {
+		return layers;
+	}
+
+	const colorLayers = { ...layers, background: ownUrl };
+
+	delete colorLayers.color;
+
+	return colorLayers;
 }
 
 /**
@@ -141,8 +234,63 @@ function dataUrl( file: Blob ): Promise< string | null > {
 }
 
 /**
+ * The images of a stitched side in a colour, as `data:` URLs: the product,
+ * and the design close up. Null when one cannot be drawn.
+ *
+ * @param input    The design as it stands.
+ * @param view     The side.
+ * @param print    Its print file.
+ * @param colorKey The colour.
+ */
+async function stitchedImages(
+	input: SubmissionInput,
+	view: DesignerView,
+	print: HTMLCanvasElement,
+	colorKey: string
+): Promise< DesignerPreview[ 'images' ] | null > {
+	const color = input.base.colors.find(
+		( candidate ) => candidate.key === colorKey
+	);
+	const layers = await layersOf( input, view );
+	const own =
+		layers === null
+			? null
+			: await colorLayersOf( input, view, layers, colorKey );
+
+	if ( color === undefined || own === null ) {
+		return null;
+	}
+
+	const whole = await composeMockup( view, own, color.hex, print );
+	const box = closeBox( view, print );
+	const close =
+		box === null
+			? null
+			: await composeMockup( view, own, color.hex, print, box );
+	const url = whole === null ? null : await dataUrl( whole );
+	const closeUrl = close === null ? null : await dataUrl( close );
+
+	if ( url === null ) {
+		return null;
+	}
+
+	return [
+		{ side: view.key, color: colorKey, url },
+		...( closeUrl === null
+			? []
+			: [
+					{
+						side: closeKey( view.key ),
+						color: colorKey,
+						url: closeUrl,
+					},
+				] ),
+	];
+}
+
+/**
  * The mockups a creator can see while designing: drawn here from the side's
- * PSD scene, so nothing is sent. Null when one cannot be drawn.
+ * PSD scene or its stitches, so nothing is sent. Null when one cannot be drawn.
  *
  * @param input The design as it stands.
  */
@@ -155,6 +303,23 @@ export async function sceneImages(
 	await input.fonts();
 
 	for ( const view of input.base.views ) {
+		const first = input.colors[ 0 ];
+
+		if ( sides.includes( view.key ) && hasStitches( view ) ) {
+			const print = await printOf( input, view );
+			const images =
+				print === null || first === undefined
+					? null
+					: await stitchedImages( input, view, print, first );
+
+			if ( images === null ) {
+				return null;
+			}
+
+			shown.push( ...images );
+			continue;
+		}
+
 		if ( view.scene?.preview !== true || ! sides.includes( view.key ) ) {
 			continue;
 		}
@@ -212,21 +377,17 @@ export async function uploadFiles(
 			return { ok: false, reason: 'render' };
 		}
 
-		const layers: Partial< Record< LayerKind, string > > = {};
+		const layers = await layersOf( input, view );
 
-		for ( const [ kind, id ] of Object.entries( view.layers ) as [
-			LayerKind,
-			number,
-		][] ) {
-			const url = await input.image( id );
-
-			if ( url === null ) {
-				return { ok: false, reason: 'render' };
-			}
-
-			layers[ kind ] = url;
+		if ( layers === null ) {
+			return { ok: false, reason: 'render' };
 		}
 
+		const total = submissionSize(
+			input.design,
+			input.colors,
+			input.base.views
+		);
 		const file = await ( view.flat ? flatJpegOf( print ) : pngOf( print ) );
 
 		if ( file === null ) {
@@ -244,7 +405,7 @@ export async function uploadFiles(
 			return { ok: false, reason: sent.error.reason ?? 'upload' };
 		}
 
-		progress( ++done, submissionSize( input.design, input.colors ) );
+		progress( ++done, total );
 
 		// A PSD scene draws the product as it is: the same mockup for each colour.
 		const sceneUrl =
@@ -262,20 +423,15 @@ export async function uploadFiles(
 			const color = input.base.colors.find(
 				( candidate ) => candidate.key === colorKey
 			);
-			// The colour's own background replaces the background and the tinted mask.
-			const own = view.backgrounds[ colorKey ];
-			const ownUrl = own === undefined ? null : await input.image( own );
-			const colorLayers: Partial< Record< LayerKind, string > > =
-				ownUrl === null ? layers : { ...layers, background: ownUrl };
-
-			if ( ownUrl !== null ) {
-				delete colorLayers.color;
-			}
-
+			const colorLayers = await colorLayersOf(
+				input,
+				view,
+				layers,
+				colorKey
+			);
 			const mockup =
 				sceneMockup ??
-				( color === undefined ||
-				( own !== undefined && ownUrl === null )
+				( color === undefined || colorLayers === null
 					? null
 					: await composeMockup(
 							view,
@@ -299,7 +455,42 @@ export async function uploadFiles(
 				return { ok: false, reason: result.error.reason ?? 'upload' };
 			}
 
-			progress( ++done, submissionSize( input.design, input.colors ) );
+			progress( ++done, total );
+
+			if ( ! hasStitches( view ) ) {
+				continue;
+			}
+
+			// Nothing on the print shows no close-up; the design is still sent.
+			const box = closeBox( view, print );
+			const close =
+				box === null || color === undefined || colorLayers === null
+					? null
+					: await composeMockup(
+							view,
+							colorLayers,
+							color.hex,
+							print,
+							box
+						);
+
+			if ( close !== null ) {
+				const closeResult = await uploadSubmissionFile(
+					input.product,
+					`mockup:${ closeKey( key ) }:${ colorKey }`,
+					close,
+					`close-${ key }.jpg`
+				);
+
+				if ( ! closeResult.ok ) {
+					return {
+						ok: false,
+						reason: closeResult.error.reason ?? 'upload',
+					};
+				}
+			}
+
+			progress( ++done, total );
 		}
 	}
 

@@ -16,6 +16,8 @@ defined( 'ABSPATH' ) || exit;
  * browser renders one transparent print PNG per used side (a JPEG on white on
  * a flat side), in the side's print size, and one mockup per used side and
  * chosen colour, in the template's size. A side is used when it has at least one visible object.
+ * An embroidered side the browser stitches also has a close-up per colour
+ * (ADR-085), which is not required.
  *
  * The files are stored with the draft (`merchboard_designer_versions.files`):
  * `{ stamp, print: { side: file }, mockups: { side: { colour: file } } }`,
@@ -38,10 +40,22 @@ final class SubmissionFiles {
 	public const PHOTO = '_photo-';
 
 	/**
-	 * A slot: `print:<side>` or `mockup:<side>:<colour>` (keys as BaseView
-	 * and the colours' sanitize_title() keys make them, or a chosen photo).
+	 * What starts the key of a side's close-ups, stored among the mockups.
+	 * No side key can start like this.
 	 */
-	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}):([a-z0-9%_-]{1,32}))$/';
+	public const CLOSE = '_close-';
+
+	/**
+	 * Width and height of a close-up.
+	 */
+	public const CLOSE_SIZE = 1200;
+
+	/**
+	 * A slot: `print:<side>` or `mockup:<side>:<colour>` (keys as BaseView
+	 * and the colours' sanitize_title() keys make them, a chosen photo or a
+	 * side's close-up).
+	 */
+	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_close-[a-z0-9][a-z0-9-]{0,31}):([a-z0-9%_-]{1,32}))$/';
 
 	/**
 	 * The stamp of a version's content (its stored columns).
@@ -75,6 +89,24 @@ final class SubmissionFiles {
 		}
 
 		return '' !== $match[1] ? array( self::PRINT, $match[1], null ) : array( self::MOCKUP, $match[2], $match[3] );
+	}
+
+	/**
+	 * Whether a key among the mockups is a side's close-ups.
+	 *
+	 * @param string $key Key.
+	 */
+	public static function is_close( string $key ): bool {
+		return str_starts_with( $key, self::CLOSE );
+	}
+
+	/**
+	 * The side a key among the mockups belongs to.
+	 *
+	 * @param string $key Key.
+	 */
+	public static function side_of( string $key ): string {
+		return self::is_close( $key ) ? substr( $key, strlen( self::CLOSE ) ) : $key;
 	}
 
 	/**
@@ -159,8 +191,9 @@ final class SubmissionFiles {
 		$colors = json_decode( (string) ( $version['colors'] ?? '' ), true );
 		$sides  = self::used_sides( is_array( $design ) ? $design : array() );
 		$colors = is_array( $colors ) ? array_values( array_map( 'strval', $colors ) ) : array();
-		// A chosen photo left from a withdrawn version is no file the browser sends.
-		$mockups = array_filter( $files['mockups'], static fn( int|string $side ): bool => ! str_starts_with( (string) $side, self::PHOTO ), ARRAY_FILTER_USE_KEY );
+		// A chosen photo left from a withdrawn version is no file the browser
+		// sends, and a design without a close-up is complete.
+		$mockups = array_filter( $files['mockups'], static fn( int|string $side ): bool => ! str_starts_with( (string) $side, self::PHOTO ) && ! self::is_close( (string) $side ), ARRAY_FILTER_USE_KEY );
 
 		if ( self::stamp( $version ) !== $files['stamp'] || array() === $sides || array() === $colors ) {
 			return false;

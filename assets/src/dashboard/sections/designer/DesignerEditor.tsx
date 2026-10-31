@@ -68,6 +68,7 @@ import type {
 import type { FabricStage } from './fabric-stage';
 import { FinishedProduct } from './FinishedProduct';
 import {
+	hasStitches,
 	sceneImages,
 	submissionSize,
 	submitWithFiles,
@@ -299,7 +300,8 @@ function Editor( props: EditorProps ) {
 		areas
 	);
 	const scenePreview = base.views.some(
-		( candidate ) => candidate.scene?.preview === true
+		( candidate ) =>
+			candidate.scene?.preview === true || hasStitches( candidate )
 	);
 	const dirty =
 		design !== saved.design ||
@@ -840,7 +842,7 @@ function Editor( props: EditorProps ) {
 		return uploaded.ok ? null : uploaded.reason;
 	};
 
-	/** A PSD mockup of the design as it stands: nothing is saved or sent. */
+	/** Mockups of the design as it stands: nothing is saved or sent. */
 	const showScenes = () =>
 		sceneImages( {
 			product: product.id,
@@ -1046,7 +1048,7 @@ function Editor( props: EditorProps ) {
 							'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval; until then it cannot be changed, but you can withdraw it. Customer price incl. VAT: %2$s.',
 							'merchboard'
 						),
-						submissionSize( design, colors ),
+						submissionSize( design, colors, base.views ),
 						price === null
 							? '–'
 							: moneyText(

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\ProductDesigner\Bases;
 
 use InvalidArgumentException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -151,5 +152,15 @@ final readonly class BaseProduct {
 	 */
 	public function price_of( ?string $size ): int {
 		return null === $size ? $this->base_units : ( $this->size_prices[ $size ] ?? $this->base_units );
+	}
+
+	/**
+	 * Whether the browser's images of a side show stitches and stay the
+	 * product's images (ADR-085). Printful stitches its own mockups.
+	 *
+	 * @param BaseView $view The side.
+	 */
+	public function stitched( BaseView $view ): bool {
+		return '' !== $view->thread_pack && PrintfulCatalog::SOURCE !== $this->source;
 	}
 }

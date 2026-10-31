@@ -945,7 +945,7 @@ final class MeDesignerController extends RestController {
 			'sizes'            => $base->sizes,
 			'version'          => $base->version,
 			'views'            => array_map(
-				static function ( BaseView $view ): array {
+				static function ( BaseView $view ) use ( $base ): array {
 					[ $print_width, $print_height ] = $view->print_pixels();
 
 					$pack = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
@@ -963,8 +963,9 @@ final class MeDesignerController extends RestController {
 						'flat'         => $view->flat,
 						'scene'        => $view->scene,
 						'embroidery'   => null === $pack ? null : array(
-							'max'     => $pack['max'],
-							'threads' => $pack['threads'],
+							'max'      => $pack['max'],
+							'threads'  => $pack['threads'],
+							'stitched' => $base->stitched( $view ),
 						),
 					);
 				},

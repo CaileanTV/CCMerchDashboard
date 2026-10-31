@@ -49,6 +49,9 @@ defined( 'ABSPATH' ) || exit;
  * mockups stay, the administrator is told) on `publishing_error`, a
  * timeout or when Gelato refuses. A 429 waits for `Retry-After`. The
  * product stays in the store (Gelato has no call to delete it). Never throws.
+ *
+ * Gelato's images of an embroidered side are flat, so the browser's stitched
+ * images stay (ADR-085): a design with only such sides makes no product.
  */
 class GelatoMockups {
 
@@ -101,8 +104,9 @@ class GelatoMockups {
 		try {
 			$version  = $id > 0 && $this->api->available() ? $this->products->version( $id ) : null;
 			$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+			$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
 
-			if ( null === $version || null === $provider || 'gelato' !== $provider['source'] || array() === self::sides( $version, $provider['placements'] ) ) {
+			if ( null === $version || null === $provider || null === $base || 'gelato' !== $provider['source'] || array() === self::photographed( self::sides( $version, $provider['placements'] ), $base ) ) {
 				return;
 			}
 
@@ -199,7 +203,7 @@ class GelatoMockups {
 			if ( ProviderTaskRepository::QUEUED === $task['status'] ) {
 				$this->create( $id, $provider['ref'], $provider['placements'], $version, $base, $task, $provider['variants'] );
 			} elseif ( ProviderTaskRepository::PENDING === $task['status'] ) {
-				$this->poll( $id, $provider['placements'], $version, $task, $provider['slots'] );
+				$this->poll( $id, $provider['placements'], $version, $base, $task, $provider['slots'] );
 			}
 
 			$status = '';
@@ -296,13 +300,14 @@ class GelatoMockups {
 	 * @param int                   $id           Version.
 	 * @param array<string, string> $placeholders Placeholder by side.
 	 * @param array<string, mixed>  $version      Version.
+	 * @param BaseProduct           $base         Base product.
 	 * @param array<string, mixed>  $task         Task row.
 	 * @param array<string, string> $slots        The image of each side among a variant's images (the catalog import).
 	 * @throws GelatoException When Gelato refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a mockup is not a valid image.
 	 */
-	private function poll( int $id, array $placeholders, array $version, array $task, array $slots = array() ): void {
+	private function poll( int $id, array $placeholders, array $version, BaseProduct $base, array $task, array $slots = array() ): void {
 		$attempts = (int) $task['attempts'] + 1;
 		$answer   = $this->api->product( (string) $task['task_key'] );
 		$status   = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
@@ -315,7 +320,7 @@ class GelatoMockups {
 		}
 
 		// Only an active product has its images; any other status is waited for (review 30.15).
-		$images = 'active' === $status ? $this->images( $answer, $variants, self::sides( $version, $placeholders ), $slots ) : array();
+		$images = 'active' === $status ? $this->images( $answer, $variants, self::photographed( self::sides( $version, $placeholders ), $base ), $slots ) : array();
 
 		if ( 'publishing_error' === $status ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -526,6 +531,27 @@ class GelatoMockups {
 		$used = SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'];
 
 		return array_values( array_filter( array_map( 'strval', array_keys( $placeholders ) ), static fn( string $side ): bool => isset( $used[ $side ] ) ) );
+	}
+
+	/**
+	 * The sides Gelato's images are used for: those the browser does not stitch.
+	 *
+	 * @phpstan-param list<string> $sides
+	 *
+	 * @param string[]    $sides Sides.
+	 * @param BaseProduct $base  Base product.
+	 * @return list<string>
+	 */
+	private static function photographed( array $sides, BaseProduct $base ): array {
+		$stitched = array();
+
+		foreach ( $base->views as $view ) {
+			if ( $base->stitched( $view ) ) {
+				$stitched[] = $view->key;
+			}
+		}
+
+		return array_values( array_diff( $sides, $stitched ) );
 	}
 
 	/**

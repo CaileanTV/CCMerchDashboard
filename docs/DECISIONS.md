@@ -4960,3 +4960,42 @@ Ingen skema-ændring: `source` er `varchar(10)`, og værdien `prodigi` er ny. Op
 
 ## Related
 ADR-016, ADR-080, ADR-081, ADR-082
+
+# ADR-085: Broderi vises med en prøve af rigtig stingoverflade
+
+## Date
+2026-10-31
+
+## Status
+Accepteret af projektejeren 2026-10-31. Eksperimentel: ikke afprøvet i en browser eller med en rigtig indsendelse.
+
+## Context
+Gelatos API giver kun flade billeder af broderi (scenen `editor/front-embroidery`). Det syede billede kommer først, når skabelonen åbnes i Gelatos dashboard, og vi har ikke fundet et dokumenteret kald, der starter det. Et fladt billede ser ikke ud som det færdige produkt, og projektejeren vil have billedet så realistisk som muligt.
+
+Syv forsøg på at tegne stingene med formler blev afvist eller lignede denim og mursten, også da tallene passede. Det, der virkede, var at fylde designet med en rigtig stingoverflade.
+
+## Decision
+- En broderet side tegnes i browseren: printfilens tråde fyldes med en sømløs prøve af stingoverflade (`stitch-surface.ts`) og får afrundet højde, lys oppefra og en takket kant (`embroidery.ts`). Mål regnes i millimeter, så samme tegning gælder for produktbilledet og nærbilledet.
+- Prøven er lavet af stingene i et af Gelatos billeder. **Projektejeren har oplyst 2026-10-31, at det er afklaret med Gelato, at vi må bruge deres stingbilleder.** Afklaringen er ikke vedlagt her og er kun set som projektejerens besked.
+- Hver farve får et nærbillede på 1200 × 1200 px som sit næstførste billede (nøglen `_close-<side>` blandt mockups). Det er ikke påkrævet for at sende et design.
+- `BaseProduct::stitched()` afgør det: en side med broderipakke, undtagen Printful, der laver sine egne billeder. Creatoren ser kun `embroidery.stitched`, aldrig leverandøren.
+- Gelatos billeder erstatter ikke længere en syet side. Har et design kun syede sider, oprettes der intet produkt hos Gelato, så der ikke hober sig produkter op i butikken dér.
+- "Se det færdige produkt" tegner billederne i browseren uden at sende noget.
+
+## Reason
+Browseren tegner allerede mockups, så der kommer ingen ny tjeneste til. Tegningen er ens hver gang, så samme design giver samme billede.
+
+## Security
+Prøven er en statisk fil i pluginet. Ingen nye kald eller rettigheder. Størrelsen på et nærbillede kontrolleres på serveren, og en printet side kan ikke sende et. Leverandørens navn nås ikke fra dashboardet.
+
+## Migration/data implications
+Ingen. Nærbilleder ligger blandt versionens mockups i `files`. Ældre versioner har ingen og beholder deres billeder.
+
+## Consequences
+- Satin er ikke med: prøven viser kun tatami, også på smalle bogstaver. Gelato bruger ifølge deres beskrivelse satin til bogstaver og fine detaljer og tatami til større flader, så det færdige produkt kan se anderledes ud end billedet.
+- Tråden følger ikke produktets form: stingene ligger fladt på fotoet.
+- Fotos fra importer før 2026-10-31 har sort baggrund og skal importeres igen.
+- Billedet er en tegning og ikke et fotografi af det færdige produkt.
+
+## Related
+ADR-080, ADR-082, ADR-084

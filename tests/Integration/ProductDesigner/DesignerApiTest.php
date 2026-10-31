@@ -365,6 +365,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 			array( 'print:back', AlertImagesTest::png( 118, 157 ) ),
 			array( 'mockup:front:green', AlertImagesTest::png( 400, 400 ) ),
 			array( 'mockup:front:black', AlertImagesTest::png( 118, 157 ) ),
+			array( 'mockup:_close-front:black', AlertImagesTest::png( 1200, 1200 ) ),
 			array( 'cover', AlertImagesTest::png( 400, 400 ) ),
 		);
 

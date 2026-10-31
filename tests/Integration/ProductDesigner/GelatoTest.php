@@ -596,6 +596,34 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( $before, SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'], 'Its preview is not taken.' );
 	}
 
+	public function test_a_design_with_only_stitched_sides_keeps_the_browser_s_images_and_makes_no_product(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$version = $this->submitted( array( 'ImageFront' => 'gelato' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$before  = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'];
+		$calls   = count( $this->calls );
+
+		self::assertSame( array( 'front', '_close-front' ), array_keys( $before ) );
+		self::assertSame( array( 'black', 'white' ), array_keys( $before['_close-front'] ) );
+
+		$this->mockups()->submitted( $version );
+
+		self::assertSame( 'none', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( array(), $this->queue->pending );
+		self::assertCount( $calls, $this->calls, 'Nothing is left in the store at Gelato.' );
+		self::assertSame( $before, SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'] );
+	}
+
+	public function test_a_close_up_has_its_exact_size(): void {
+		$this->account->set( self::KEY, self::STORE );
+
+		try {
+			$this->submitted( array( 'ImageFront' => 'gelato' ), 1000 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			self::fail( 'A close-up of another size.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::SUBMISSION_FILE, $e->reason() );
+		}
+	}
+
 	public function test_nothing_is_sent_to_gelato_while_it_is_switched_off(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$version = $this->submitted();
@@ -612,8 +640,10 @@ final class GelatoTest extends IntegrationTestCase {
 	/**
 	 * Picks template tpl-1 (black and white, S and M, front and back) at
 	 * 149,95 and runs its import.
+	 *
+	 * @param array<string, string> $packs Embroidery pack by side.
 	 */
-	private function import(): int {
+	private function import( array $packs = array() ): int {
 		$catalog = $this->catalog();
 		$id      = $catalog->create(
 			'gelato',
@@ -622,6 +652,7 @@ final class GelatoTest extends IntegrationTestCase {
 				'colors'     => array( 'Black', 'White' ),
 				'sizes'      => array( 'S', 'M' ),
 				'sides'      => array( 'ImageFront', 'ImageBack' ),
+				'packs'      => $packs,
 				'base_price' => '149,95',
 			)
 		);
@@ -663,10 +694,12 @@ final class GelatoTest extends IntegrationTestCase {
 	/**
 	 * An active Gelato base product with a submitted design (black and white).
 	 *
+	 * @param array<string, string> $packs Embroidery pack by side; such a design sends close-ups.
+	 * @param int                   $close Width and height of the close-ups.
 	 * @return int The pending version.
 	 */
-	private function submitted(): int {
-		$base = $this->import();
+	private function submitted( array $packs = array(), int $close = SubmissionFiles::CLOSE_SIZE ): int {
+		$base = $this->import( $packs );
 		$this->base_service()->set_active( $base, true );
 
 		$user        = $this->create_user( 'gelato-creator' );
@@ -715,6 +748,10 @@ final class GelatoTest extends IntegrationTestCase {
 
 		foreach ( array( 'black', 'white' ) as $color ) {
 			$submissions->attach( $creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( AlertImagesTest::png( 200, 200 ), 'mockup.png' ) );
+
+			if ( array() !== $packs ) {
+				$submissions->attach( $creator, $product, 'mockup:_close-front:' . $color, AlertImagesTest::upload( AlertImagesTest::png( $close, $close ), 'close.png' ) );
+			}
 		}
 
 		$submissions->submit( $creator, $product );

@@ -101,8 +101,15 @@ class DesignerSubmissions {
 		$parts = SubmissionFiles::slot( $slot ) ?? self::refuse( DesignerException::SUBMISSION_FILE );
 		$draft = $this->products->draft( $product ) ?? self::refuse( DesignerException::DESIGN_NOT_DRAFT );
 		$base  = $this->current_base( (int) $row['base_id'], $draft );
-		$view  = $this->used_view( $base, $draft, $parts );
+		$close = SubmissionFiles::is_close( $parts[1] );
+		$view  = $this->used_view( $base, $draft, array( $parts[0], SubmissionFiles::side_of( $parts[1] ), $parts[2] ) );
+
+		if ( $close && ! $base->stitched( $view ) ) {
+			self::refuse( DesignerException::SUBMISSION_FILE );
+		}
+
 		$size  = SubmissionFiles::PRINT === $parts[0] ? $view->print_pixels() : $view->mockup_size();
+		$size  = $close ? array( SubmissionFiles::CLOSE_SIZE, SubmissionFiles::CLOSE_SIZE ) : $size;
 		$file  = $this->files->store( $upload, SubmissionFiles::PRINT === $parts[0] && ! $view->flat );
 		$stamp = SubmissionFiles::stamp( $draft );
 

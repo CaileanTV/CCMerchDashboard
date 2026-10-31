@@ -21,8 +21,11 @@ final class SubmissionFilesTest extends TestCase {
 		self::assertSame( array( 'mockup', 'back-2', 'sand_light' ), SubmissionFiles::slot( 'mockup:back-2:sand_light' ) );
 		self::assertSame( array( 'mockup', 'front', 'gr%c3%b8n' ), SubmissionFiles::slot( 'mockup:front:gr%c3%b8n' ), 'A colour key as sanitize_title() makes it.' );
 		self::assertSame( array( 'mockup', '_photo-15710', 'black' ), SubmissionFiles::slot( 'mockup:_photo-15710:black' ), 'A photo the administrator chose.' );
+		self::assertSame( array( 'mockup', '_close-front', 'black' ), SubmissionFiles::slot( 'mockup:_close-front:black' ), 'A side\'s close-up.' );
+		self::assertSame( array( true, 'front' ), array( SubmissionFiles::is_close( '_close-front' ), SubmissionFiles::side_of( '_close-front' ) ) );
+		self::assertSame( array( false, 'front' ), array( SubmissionFiles::is_close( 'front' ), SubmissionFiles::side_of( 'front' ) ) );
 
-		foreach ( array( '', 'print', 'print:', 'print:Front', 'print:front:black', 'print:_photo-1', 'mockup:_photo-x:black', 'mockup:front', 'mockup:front:', 'cover:front', 'print:../x', 'mockup:front:black/../' ) as $slot ) {
+		foreach ( array( '', 'print', 'print:', 'print:Front', 'print:front:black', 'print:_photo-1', 'print:_close-front', 'mockup:_close-:black', 'mockup:_photo-x:black', 'mockup:front', 'mockup:front:', 'cover:front', 'print:../x', 'mockup:front:black/../' ) as $slot ) {
 			self::assertNull( SubmissionFiles::slot( $slot ), $slot );
 		}
 	}
@@ -69,6 +72,11 @@ final class SubmissionFilesTest extends TestCase {
 
 		$photo['mockups']['_photo-15710'] = $photo['mockups']['front'];
 		self::assertTrue( SubmissionFiles::complete( array( 'files' => (string) wp_json_encode( $photo ) ) + $version ), 'A chosen photo from a withdrawn version is no file of a side.' );
+
+		$close = self::files( SubmissionFiles::stamp( $version ), array( 'front' ), array( 'black', 'sand' ) );
+
+		$close['mockups'][ SubmissionFiles::CLOSE . 'front' ] = array( 'black' => $close['mockups']['front']['black'] );
+		self::assertTrue( SubmissionFiles::complete( array( 'files' => (string) wp_json_encode( $close ) ) + $version ), 'A close-up is no side of its own, and it is not required for every colour.' );
 
 		$broken          = $version;
 		$broken['files'] = '{"stamp":"x","print":{"front":{"file":1}}}';

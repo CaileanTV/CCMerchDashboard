@@ -80,7 +80,7 @@ Sæt flueben i "Lad creators se denne mockup", hvis creators skal kunne se mocku
 
 **Ekstra designområder, fra 2026-10-30:** "Pris pr. ekstra designområde" sættes på grundproduktet, både på et eget og ved import fra et katalog (standard 0). "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele printområdet.
 
-**Broderi, fra 2026-10-31 (eksperimentel):** Produktdesigner → Broderipakker har trådfarver og maksimum pr. side. Grundprodukter og "Nyt grundprodukt" har "Broderipakke" pr. side. Uden pakke er siden print.
+**Broderi, fra 2026-10-31 (eksperimentel):** Produktdesigner → Broderipakker har trådfarver og maksimum pr. side. Grundprodukter og "Nyt grundprodukt" har "Broderipakke" pr. side. Uden pakke er siden print. Under Designs står nærbilleder som `_close-<side>:<farve>` (ADR-085).
 
 **Fonte, fra 2026-10-31:** Settings → Fonte har Google Fonts-nøgle, katalog og godkendte fonte, fælles for alerts og designeren. Fanen er væk fra Alerts.
 

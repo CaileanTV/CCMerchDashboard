@@ -27,7 +27,7 @@ const threads: DesignerThread[] = [
 	{ code: '1624', name: 'Yellow', hex: '#ffcd01' },
 ];
 
-const pack: DesignerEmbroidery = { max: 2, threads };
+const pack: DesignerEmbroidery = { max: 2, threads, stitched: false };
 
 const shape = (
 	id: string,
