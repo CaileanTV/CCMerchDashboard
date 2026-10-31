@@ -93,7 +93,7 @@ function Icon( props: { readonly name: keyof typeof ICONS } ) {
  * @param props.disabled Whether it cannot be used.
  * @param props.onClick  Called on a click.
  */
-function IconButton( props: {
+export function IconButton( props: {
 	readonly icon: keyof typeof ICONS;
 	readonly label: string;
 	readonly pressed?: boolean;

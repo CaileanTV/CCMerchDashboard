@@ -49,6 +49,7 @@ import {
 	moveObject,
 	newImage,
 	newShape,
+	shifted,
 	newText,
 	objectsOf,
 	quotePrice,
@@ -56,6 +57,7 @@ import {
 	usedSides,
 	withKnownThreads,
 	withObjects,
+	withPhotos,
 	withThread,
 } from './design-model';
 import type {
@@ -67,7 +69,7 @@ import type {
 import type { FabricStage } from './fabric-stage';
 import { FinishedProduct } from './FinishedProduct';
 import { submissionSize, submitWithFiles, uploadFiles } from './submission';
-import { LayerList } from './LayerList';
+import { IconButton, LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
@@ -214,6 +216,9 @@ function Editor( props: EditorProps ) {
 	const history = useHistory< DesignDocument >( props.design );
 	const [ title, setTitle ] = useState( draft.postfix );
 	const [ colors, setColors ] = useState< readonly string[] >( draft.colors );
+	const [ photos, setPhotos ] = useState< readonly number[] >(
+		props.design.photos ?? []
+	);
 	const [ sizes, setSizes ] = useState< readonly string[] >( draft.sizes );
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
 		draft.profitKind
@@ -243,6 +248,7 @@ function Editor( props: EditorProps ) {
 	const [ discarding, setDiscarding ] = useState( false );
 	const [ saved, setSaved ] = useState( {
 		design: props.design,
+		photos,
 		price: draft.price,
 	} );
 	const [ stageError, setStageError ] = useState( false );
@@ -290,6 +296,7 @@ function Editor( props: EditorProps ) {
 	);
 	const dirty =
 		design !== saved.design ||
+		photos.join() !== saved.photos.join() ||
 		title !== draft.postfix ||
 		colors.join() !== draft.colors.join() ||
 		sizes.join() !== draft.sizes.join() ||
@@ -689,7 +696,10 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
-			design: withKnownThreads( design, base.views ),
+			design: withPhotos(
+				withKnownThreads( design, base.views ),
+				photos
+			),
 		} );
 		setSaving( false );
 
@@ -702,7 +712,7 @@ function Editor( props: EditorProps ) {
 			return null;
 		}
 
-		setSaved( { design, price: result.data.draft?.price ?? null } );
+		setSaved( { design, photos, price: result.data.draft?.price ?? null } );
 
 		return result.data;
 	};
@@ -1051,7 +1061,15 @@ function Editor( props: EditorProps ) {
 					product={ product.id }
 					views={ base.views }
 					prepare={ showFinished }
-					onClose={ () => setFinished( false ) }
+					order={ photos }
+					onOrder={ setPhotos }
+					onClose={ () => {
+						setFinished( false );
+
+						if ( photos.join() !== saved.photos.join() ) {
+							void save();
+						}
+					} }
 				/>
 			) : null }
 
@@ -1236,9 +1254,11 @@ function Editor( props: EditorProps ) {
 							role="group"
 							aria-label={ __( 'Preview colour', 'merchboard' ) }
 						>
-							{ base.colors
-								.filter( ( color ) =>
-									colors.includes( color.key )
+							{ colors
+								.flatMap( ( key ) =>
+									base.colors.filter(
+										( color ) => color.key === key
+									)
 								)
 								.map( ( color ) => (
 									<button
@@ -2017,8 +2037,11 @@ interface ProductPanelProps {
  *
  * @param props Props.
  */
-function ProductPanel( props: ProductPanelProps ) {
+export function ProductPanel( props: ProductPanelProps ) {
 	const { base } = props;
+	const chosen = props.colors.flatMap( ( key ) =>
+		base.colors.filter( ( color ) => color.key === key )
+	);
 	const toggle = (
 		list: readonly string[],
 		value: string,
@@ -2091,13 +2114,11 @@ function ProductPanel( props: ProductPanelProps ) {
 								checked={ props.colors.includes( color.key ) }
 								onChange={ () =>
 									props.onColors(
-										toggle(
-											props.colors,
-											color.key,
-											base.colors.map(
-												( item ) => item.key
-											)
-										)
+										props.colors.includes( color.key )
+											? props.colors.filter(
+													( key ) => key !== color.key
+												)
+											: [ ...props.colors, color.key ]
 									)
 								}
 							/>
@@ -2105,6 +2126,75 @@ function ProductPanel( props: ProductPanelProps ) {
 					</Labelled>
 				) ) }
 			</fieldset>
+			{ chosen.length > 1 ? (
+				<div className="merchboard-product-designer__order">
+					<span className="merchboard-field__label">
+						{ __( 'Order of the colours', 'merchboard' ) }
+					</span>
+					<p className="merchboard-product-designer__hint">
+						{ __(
+							'The shop shows the colours in this order. The first is the one customers see first.',
+							'merchboard'
+						) }
+					</p>
+					<ol>
+						{ chosen.map( ( color, index ) => (
+							<li key={ color.key }>
+								<span
+									className="merchboard-product-designer__swatch merchboard-product-designer__swatch--small"
+									style={ { background: color.hex } }
+									aria-hidden="true"
+								/>
+								<span>{ color.name }</span>
+								<IconButton
+									icon="up"
+									label={ sprintf(
+										/* translators: %s: colour name. */ __(
+											'Move %s up',
+											'merchboard'
+										),
+										color.name
+									) }
+									disabled={ index === 0 }
+									onClick={ () =>
+										props.onColors(
+											shifted(
+												chosen.map(
+													( item ) => item.key
+												),
+												index,
+												-1
+											)
+										)
+									}
+								/>
+								<IconButton
+									icon="down"
+									label={ sprintf(
+										/* translators: %s: colour name. */ __(
+											'Move %s down',
+											'merchboard'
+										),
+										color.name
+									) }
+									disabled={ index === chosen.length - 1 }
+									onClick={ () =>
+										props.onColors(
+											shifted(
+												chosen.map(
+													( item ) => item.key
+												),
+												index,
+												1
+											)
+										)
+									}
+								/>
+							</li>
+						) ) }
+					</ol>
+				</div>
+			) : null }
 			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
 					{ __( 'Sizes', 'merchboard' ) }

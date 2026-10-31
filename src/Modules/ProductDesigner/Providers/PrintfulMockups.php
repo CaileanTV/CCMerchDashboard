@@ -701,7 +701,7 @@ class PrintfulMockups {
 			}
 		}
 
-		$files['mockups'] = array_filter( $files['mockups'] );
+		$files['mockups'] = self::in_creator_order( array_filter( $files['mockups'] ), $version );
 
 		if ( ! $this->products->set_pending_files( $id, (string) wp_json_encode( $files ) ) ) {
 			$replaced = $names;
@@ -710,6 +710,29 @@ class PrintfulMockups {
 		foreach ( array_filter( $replaced, 'is_string' ) as $name ) {
 			$this->files->delete( $name );
 		}
+	}
+
+	/**
+	 * The mockups with the creator's order of the chosen photos first: the
+	 * shop shows them in this order.
+	 *
+	 * @param array<string, array<string, array<string, mixed>>> $mockups Mockups by side and colour.
+	 * @param array<string, mixed>|null                          $version Version.
+	 * @return array<string, array<string, array<string, mixed>>>
+	 */
+	private static function in_creator_order( array $mockups, ?array $version ): array {
+		$design = json_decode( (string) ( $version['design'] ?? '' ), true );
+		$first  = array();
+
+		foreach ( is_array( $design ) && is_array( $design['photos'] ?? null ) ? $design['photos'] : array() as $photo ) {
+			$key = SubmissionFiles::PHOTO . ( is_int( $photo ) ? $photo : 0 );
+
+			if ( isset( $mockups[ $key ] ) ) {
+				$first[ $key ] = $mockups[ $key ];
+			}
+		}
+
+		return $first + $mockups;
 	}
 
 	/**

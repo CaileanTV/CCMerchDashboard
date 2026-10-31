@@ -12,6 +12,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Integration\ProductDesigner;
 
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
@@ -378,6 +379,24 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		$files = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) );
 
 		self::assertSame( array( '_photo-15711' ), array_keys( $files['mockups'] ), 'Printful\'s answer also held 15710.' );
+	}
+
+	public function test_the_photos_stand_in_the_creator_s_order(): void {
+		[ $version ] = $this->submit_flat();
+		$design      = json_decode( (string) ( $this->products->version( $version )['design'] ?? '' ), true );
+
+		$design['photos'] = array( 15711, 15710 );
+
+		$this->wpdb->update( $this->wpdb->prefix . Tables::DESIGNER_VERSIONS, array( 'design' => (string) wp_json_encode( $design ) ), array( 'id' => $version ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test setup.
+
+		$mockups = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		$files = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) );
+
+		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_keys( $files['mockups'] ), 'The shop follows this order.' );
 	}
 
 	public function test_a_flat_product_from_before_the_choice_keeps_its_styles(): void {

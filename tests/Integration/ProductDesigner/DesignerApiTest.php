@@ -200,7 +200,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 		$saved = $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $this->draft( array( self::text(), self::image( $own ), self::image( $this->clipart ), self::rect() ) ) );
 		self::assertSame( 200, $saved->get_status(), (string) wp_json_encode( $saved->get_data() ) );
 		$draft = $saved->get_data()['draft'];
-		self::assertSame( array( 'Designer A Organic tee Stream tee', array( 'black', 'sand' ), array( 'M', 'L' ), 'percent', '20.0000', '179.9400' ), array( $draft['title'], $draft['colors'], $draft['sizes'], $draft['profit_kind'], $draft['profit_value'], $draft['price'] ) );
+		self::assertSame( array( 'Designer A Organic tee Stream tee', array( 'sand', 'black' ), array( 'M', 'L' ), 'percent', '20.0000', '179.9400' ), array( $draft['title'], $draft['colors'], $draft['sizes'], $draft['profit_kind'], $draft['profit_value'], $draft['price'] ) );
 		self::assertSame( array( 'text', 'image', 'image', 'rect' ), array_column( $draft['design']['sides']['front'], 'type' ) );
 		self::assertArrayNotHasKey( 'evil', $draft['design']['sides']['front'][0], 'Unknown keys are dropped.' );
 		self::assertSame( '#ff0000', $draft['design']['sides']['front'][0]['fill'] );
@@ -479,6 +479,25 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->stored_files(), 'A refused file is not kept.' );
 		self::assertSame( 200, $this->attach( $product, 'print:front', self::print_file( array( 0xCB, 0x33, 0x3B ) ) )->get_status() );
 		self::assertSame( 200, $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 400, 400 ) )->get_status(), 'Mockups are photos.' );
+	}
+
+	public function test_the_creator_s_order_of_the_photos_is_kept_and_checked(): void {
+		wp_set_current_user( $this->user );
+
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$body    = $this->draft( array( self::text() ) );
+
+		$body['design']['photos'] = array( 15711, 15710, 15711 );
+
+		$saved = $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body );
+
+		self::assertSame( array( 15711, 15710 ), $saved->get_data()['draft']['design']['photos'], 'Each once, in the creator\'s order.' );
+
+		foreach ( array( 'nope', array( 'x' ), array( 0 ), range( 1, 9 ) ) as $photos ) {
+			$body['design']['photos'] = $photos;
+
+			self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body ) ), (string) wp_json_encode( $photos ) );
+		}
 	}
 
 	public function test_a_printed_side_has_no_threads_and_any_colours(): void {

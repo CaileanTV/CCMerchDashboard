@@ -288,6 +288,22 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->writer->contents, 'A done version is never applied again.' );
 	}
 
+	public function test_the_shop_shows_the_colours_in_the_creator_s_order(): void {
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $product, '20', array( 'front' ), array( 'sand', 'black' ) );
+		$this->send_files( $product );
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( array( 'sand', 'black' ), array_column( $content->colors, 'key' ), 'Not the base product\'s order.' );
+		self::assertSame( array( 'sand', 'black' ), array_keys( $content->color_images ) );
+		self::assertSame( $content->color_images['sand'], $content->images[0], 'The first colour gives the main image.' );
+	}
+
 	public function test_an_interrupted_apply_continues_where_it_stopped(): void {
 		$product                    = $this->submitted();
 		$version                    = $this->pending_id( $product );
@@ -1194,12 +1210,14 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	 * Saves the draft.
 	 *
 	 * @phpstan-param list<string> $sides
+	 * @phpstan-param list<string> $colors
 	 *
 	 * @param int      $product Designer product.
 	 * @param string   $profit  Percent.
 	 * @param string[] $sides   Sides with a rectangle.
+	 * @param string[] $colors  Colours, in the creator's order.
 	 */
-	private function save( int $product, string $profit, array $sides = array( 'front' ) ): void {
+	private function save( int $product, string $profit, array $sides = array( 'front' ), array $colors = array( 'black', 'sand' ) ): void {
 		$rectangle = array(
 			'type'        => 'rect',
 			'id'          => 'r1',
@@ -1221,7 +1239,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			$product,
 			array(
 				'title'        => $this->postfixes[ $product ] ??= 'Stream tee' . ( array() === $this->postfixes ? '' : ' ' . count( $this->postfixes ) ),
-				'colors'       => array( 'black', 'sand' ),
+				'colors'       => $colors,
 				'sizes'        => array( 'S', 'M' ),
 				'profit_kind'  => 'percent',
 				'profit_value' => $profit,

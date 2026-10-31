@@ -148,7 +148,7 @@ class DesignerDrafts {
 			$base,
 			$title,
 			$base->description,
-			self::subset( $input['colors'] ?? null, array_column( $base->colors, 'key' ) ),
+			self::in_chosen_order( $input['colors'] ?? null, array_column( $base->colors, 'key' ) ),
 			self::subset( $input['sizes'] ?? null, $base->sizes ),
 			$kind,
 			$value,
@@ -289,6 +289,21 @@ class DesignerDrafts {
 		$chosen = array_filter( is_array( $chosen ) ? $chosen : array(), 'is_string' );
 
 		return array_values( array_intersect( $offered, $chosen ) );
+	}
+
+	/**
+	 * The chosen values that the base product offers, in the creator's order.
+	 *
+	 * @phpstan-param list<string> $offered
+	 *
+	 * @param mixed    $chosen  Chosen values.
+	 * @param string[] $offered Offered values.
+	 * @return list<string>
+	 */
+	private static function in_chosen_order( mixed $chosen, array $offered ): array {
+		$chosen = array_filter( is_array( $chosen ) ? $chosen : array(), 'is_string' );
+
+		return array_values( array_unique( array_intersect( $chosen, $offered ) ) );
 	}
 
 	/**

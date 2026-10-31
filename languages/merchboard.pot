@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T16:25:41+00:00\n"
+"POT-Creation-Date: 2026-10-31T17:38:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -14091,30 +14091,6 @@ msgid "Delete %s for good"
 msgstr ""
 
 #: build/dashboard.js:55
-msgid "Add something to your product first."
-msgstr ""
-
-#: build/dashboard.js:55
-msgid "We can only make a limited number of photos a minute. Please try again in a minute."
-msgstr ""
-
-#: build/dashboard.js:55
-msgid "The photos could not be made. You can still send your design, and we will look at it."
-msgstr ""
-
-#: build/dashboard.js:55
-msgid "Your finished product"
-msgstr ""
-
-#: build/dashboard.js:55
-msgid "We are making photos of your finished product. It usually takes less than a minute…"
-msgstr ""
-
-#: build/dashboard.js:55
-msgid "These are photos of your saved design in its first colour. Check sizes and placement before you send it. A part without a design is white."
-msgstr ""
-
-#: build/dashboard.js:55
 msgid "Rectangle"
 msgstr ""
 
@@ -14162,6 +14138,52 @@ msgid "Lock"
 msgstr ""
 
 #: build/dashboard.js:55
+msgid "Add something to your product first."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "We can only make a limited number of photos a minute. Please try again in a minute."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "The photos could not be made. You can still send your design, and we will look at it."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Main image"
+msgstr ""
+
+#. translators: %d: the photo's place.
+#: build/dashboard.js:55
+#, js-format
+msgid "Photo %d"
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Your finished product"
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "We are making photos of your finished product. It usually takes less than a minute…"
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "These are photos of your saved design in its first colour. Check sizes and placement before you send it. A part without a design is white."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Use the arrows to choose the order of the photos in the shop. The first is the main image of your product."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Earlier"
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Later"
+msgstr ""
+
+#: build/dashboard.js:55
 msgid "The base product of this design is no longer available."
 msgstr ""
 
@@ -14178,6 +14200,10 @@ msgstr ""
 #: build/dashboard.js:55
 #, js-format
 msgid "A side can have at most %d elements."
+msgstr ""
+
+#: build/dashboard.js:55
+msgid "Your design is saved."
 msgstr ""
 
 #: build/dashboard.js:55
@@ -14206,10 +14232,6 @@ msgstr ""
 
 #: build/dashboard.js:55
 msgid "Cancel the change"
-msgstr ""
-
-#: build/dashboard.js:55
-msgid "Your design is saved."
 msgstr ""
 
 #: build/dashboard.js:55
@@ -14523,6 +14545,26 @@ msgstr ""
 
 #: build/dashboard.js:58
 msgid "The name starts with your name and the product. If you make more than one of the same product, add a word to tell them apart."
+msgstr ""
+
+#: build/dashboard.js:58
+msgid "Order of the colours"
+msgstr ""
+
+#: build/dashboard.js:58
+msgid "The shop shows the colours in this order. The first is the one customers see first."
+msgstr ""
+
+#. translators: %s: colour name.
+#: build/dashboard.js:58
+#, js-format
+msgid "Move %s up"
+msgstr ""
+
+#. translators: %s: colour name.
+#: build/dashboard.js:58
+#, js-format
+msgid "Move %s down"
 msgstr ""
 
 #: build/dashboard.js:58

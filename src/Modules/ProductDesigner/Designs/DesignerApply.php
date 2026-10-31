@@ -247,7 +247,11 @@ class DesignerApply {
 		$chosen = json_decode( (string) $version['colors'], true );
 		$sizes  = json_decode( (string) $version['sizes'], true );
 		$chosen = is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : array();
-		$colors = array_values( array_filter( $base->colors, static fn( array $color ): bool => in_array( $color['key'], $chosen, true ) ) );
+		// In the creator's order: the first colour is the product's first image.
+		$colors = array_values( array_intersect_key( array_column( $base->colors, null, 'key' ), array_flip( $chosen ) ) );
+
+		usort( $colors, static fn( array $a, array $b ): int => array_search( $a['key'], $chosen, true ) <=> array_search( $b['key'], $chosen, true ) );
+
 		$sides  = array_keys( $files['mockups'] );
 		$images = array();
 		$first  = array();

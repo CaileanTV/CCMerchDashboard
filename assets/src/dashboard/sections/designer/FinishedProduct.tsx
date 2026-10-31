@@ -4,12 +4,14 @@
  * sent first, then the photos are polled. Who makes them is never named here.
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { fetchPreview, startPreview } from '../../api/designer';
 import type { DesignerPreview, DesignerView } from '../../api/designer';
 import { Alert } from '../../components/Alert';
 import { Dialog } from '../../components/Dialog';
+import { shifted } from './design-model';
+import { IconButton } from './LayerList';
 
 /** Milliseconds between two looks at the photos. */
 const POLL_MS = 3000;
@@ -17,12 +19,48 @@ const POLL_MS = 3000;
 /** Looks before giving up. */
 const MAX_POLLS = 40;
 
+/** What starts the side of a photo the administrator chose. */
+const PHOTO = '_photo-';
+
 export interface FinishedProductProps {
 	readonly product: number;
 	readonly views: readonly DesignerView[];
 	/** Saves the draft and sends its files; a reason when it fails. */
 	readonly prepare: () => Promise< string | null >;
+	/** The creator's order of the photos, first the main image. */
+	readonly order: readonly number[];
+	readonly onOrder: ( order: readonly number[] ) => void;
 	readonly onClose: () => void;
+}
+
+/**
+ * The photo's id, or null for an image of a side.
+ *
+ * @param side The image's side.
+ */
+function photoOf( side: string ): number | null {
+	return side.startsWith( PHOTO )
+		? Number( side.slice( PHOTO.length ) )
+		: null;
+}
+
+/**
+ * The images in the creator's order; the rest keep theirs after them.
+ *
+ * @param images The images.
+ * @param order  The creator's order.
+ */
+function arranged(
+	images: DesignerPreview[ 'images' ],
+	order: readonly number[]
+): DesignerPreview[ 'images' ] {
+	const place = ( side: string ) => {
+		const index = order.indexOf( photoOf( side ) ?? -1 );
+
+		return index === -1 ? order.length : index;
+	};
+
+	return [ ...images ].sort( ( a, b ) => place( a.side ) - place( b.side ) );
 }
 
 /**
@@ -53,7 +91,7 @@ function failure( reason: string | undefined ): string {
  * @param props Props.
  */
 export function FinishedProduct( props: FinishedProductProps ) {
-	const { product, views, prepare, onClose } = props;
+	const { product, views, prepare, order, onOrder, onClose } = props;
 	const [ images, setImages ] = useState< DesignerPreview[ 'images' ] >( [] );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ busy, setBusy ] = useState( true );
@@ -102,7 +140,7 @@ export function FinishedProduct( props: FinishedProductProps ) {
 
 				if ( state.data.status === 'done' ) {
 					if ( current ) {
-						setImages( state.data.images );
+						setImages( arranged( state.data.images, order ) );
 						setBusy( false );
 					}
 
@@ -131,6 +169,27 @@ export function FinishedProduct( props: FinishedProductProps ) {
 	// A photo the administrator chose belongs to the product, not to a side.
 	const name = ( side: string ) =>
 		views.find( ( view ) => view.key === side )?.name ?? null;
+
+	const ordered = images.filter(
+		( image ) => photoOf( image.side ) !== null
+	);
+	const move = ( index: number, step: -1 | 1 ) => {
+		const next = shifted( images, index, step );
+
+		setImages( [ ...next ] );
+		onOrder( next.flatMap( ( image ) => photoOf( image.side ) ?? [] ) );
+	};
+	const caption = ( side: string, index: number ) =>
+		name( side ) ??
+		( index === 0
+			? __( 'Main image', 'merchboard' )
+			: sprintf(
+					/* translators: %d: the photo's place. */ __(
+						'Photo %d',
+						'merchboard'
+					),
+					index + 1
+				) );
 
 	return (
 		<Dialog
@@ -162,24 +221,54 @@ export function FinishedProduct( props: FinishedProductProps ) {
 							'merchboard'
 						) }
 					</p>
+					{ ordered.length > 1 ? (
+						<p>
+							{ __(
+								'Use the arrows to choose the order of the photos in the shop. The first is the main image of your product.',
+								'merchboard'
+							) }
+						</p>
+					) : null }
 					<div className="merchboard-product-designer__finished">
-						{ images.map( ( image ) => (
+						{ images.map( ( image, index ) => (
 							<figure key={ `${ image.side }-${ image.color }` }>
 								<img
 									src={ image.url }
-									alt={
-										name( image.side ) ??
-										__(
-											'Your finished product',
-											'merchboard'
-										)
-									}
+									alt={ caption( image.side, index ) }
 								/>
-								{ name( image.side ) === null ? null : (
-									<figcaption>
-										{ name( image.side ) }
-									</figcaption>
-								) }
+								<figcaption>
+									<span>
+										{ caption( image.side, index ) }
+									</span>
+									{ ordered.length > 1 ? (
+										<span className="merchboard-product-designer__move">
+											<IconButton
+												icon="up"
+												label={ __(
+													'Earlier',
+													'merchboard'
+												) }
+												disabled={ index === 0 }
+												onClick={ () =>
+													move( index, -1 )
+												}
+											/>
+											<IconButton
+												icon="down"
+												label={ __(
+													'Later',
+													'merchboard'
+												) }
+												disabled={
+													index === images.length - 1
+												}
+												onClick={ () =>
+													move( index, 1 )
+												}
+											/>
+										</span>
+									) : null }
+								</figcaption>
 							</figure>
 						) ) }
 					</div>
