@@ -6,6 +6,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Printful v2 og EU (ADR-081):** kataloget viser kun produkter, der sælges i Europa og kan sendes til Danmark, og kun varianter på lager i Europa tilbydes. Fejler v2 (undtagen 429), bruges v1 som reserve, og admin får besked. Mockups af designs går via v2.
+- **All-over-produkter (ADR-081):** produkter i teknikkerne `cut-sew` og `sublimation` designes på det flade syemønster, og Printful syr designet sammen til mockups efter indsendelse. Alle brugte dele går i samme mockup-opgave. Printfilen er en JPEG på hvid. Skifter printmålet med størrelsen, laves ét grundprodukt pr. gruppe af størrelser.
+- **Prodigi (ADR-084, ikke afprøvet mod Prodigi):** ny kilde med katalog og mockups bag sin egen afbryder, der er slået fra. Kun produkter produceret i EU tilbydes, og der sendes aldrig ordrer.
 - **Produktdesigner (fase 30, ADR-080–082), fundament:** tabellerne til grundprodukter, designer-produkter, versioner, filer, leverandør-tasks og kampagner (schema-version 35), rettigheden `merchboard_manage_designer` og kill switches for produktdesigneren, Printful og Gelato under Settings (alle fra som standard). Designeren kommer i de følgende trin.
 - **Produktdesigner, afregning (ADR-080 pkt. 8):** et designer-produkt afregnes med sikret grundpris. Virksomheden får altid grundprisen, en rabat tages fra creatorens fortjeneste (aldrig under 0), og creatorens egen rabatkode giver højst fortjenesten i rabat. Fortjeneste og udbetaling gemmes pr. salgsrække (schema-version 36). Legacy-produkter afregnes uændret.
 - **Produktdesigner, kampagner (ADR-080 pkt. 9):** ny admin-side Merch Dashboard → Kampagner. I virksomhedens egne kampagner (kuponkoder og/eller tilbudspriser i en periode) deles rabatten på designer-produkter forholdsmæssigt med creatoren; uden for kampagner får virksomheden fortsat grundprisen. En creators egen rabatkode kan ikke være kampagnekode.
@@ -36,6 +39,8 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Produktdesigner, ekstra designområder (eksperimentel, schema-version 39):** ét designområde er med i grundprisen, og hvert ekstra område koster et fast beløb oveni, som sættes på grundproduktet. Beløbet tilfalder virksomheden, og designeren viser det i prisen. "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele området.
 
 ### Changed
+
+- **Beskrivelser fra leverandører:** en HTML-tag efterlader nu et mellemrum, så ord ikke klistres sammen (fx "GeneralTo").
 
 - **Produktdesigner:** "Importér fra Printful" (produkt-id) og "Importér fra Gelato" (skabelon-id med skabelonens forhåndsvisning som baggrund) er erstattet af katalogvalget. Printfuls layout-skabeloner bruges ikke længere.
 

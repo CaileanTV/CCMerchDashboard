@@ -647,7 +647,7 @@ Rækker ældre end 180 dage beskæres ved hver ny notifikation (200 ad gangen). 
 Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. Beløb er `decimal(19,4)` inkl. moms, som i ledgeren. JSON-kolonner er `longtext`.
 
 - **`merchboard_designer_bases`** (grundprodukter):
-  - kolonner: `status` (`draft`/`active`/`retired`), `source` (`own`/`printful`/`gelato`), `provider_ref` (leverandørens produkt), `provider_template` (Gelato-skabelon), `name`, `description`, `base_price`, `currency`, `category_id` (standardkategori);
+  - kolonner: `status` (`draft`/`active`/`retired`), `source` (`own`/`printful`/`gelato`/`prodigi`), `provider_ref` (leverandørens produkt), `provider_template` (Gelato-skabelon), `name`, `description`, `base_price`, `currency`, `category_id` (standardkategori);
   - JSON: `colors`, `sizes` og `views` (mockup-skabelon pr. side);
   - `version`, som øges ved hver ændring af pris eller skabelon.
   - JSON fra trin 30.6: `colors` = `[{key, name, hex}]` (`hex` som `#rrggbb`), `sizes` = `["S", …]`, `views` = `[{key, name, width, height, layers: {background|color|shading|highlight: asset_id}, area: {x, y, width, height}, width_mm, height_mm, dpi}]`. Skabelonen er `width` × `height` px, og alle lag har den størrelse. `area` er printområdet i skabelonens px; printfilen er `width_mm` × `height_mm` ved `dpi`.
@@ -687,7 +687,11 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Afregning (migration 36, `AddSalesDesignerAmounts`, trin 30.3):** et designer-salgs snapshot i `merchboard_sales_line_pricing` har status `designer`, kilden `designer`, grundpris, fortjeneste og listepris pr. stk. inkl. moms (`base_unit`, `profit_unit` og `price_unit` fra ADR-047 genbruges) og den effektive andel. Rækkens fortjeneste og udbetaling gemmes i `merchboard_sales_tax` (se ovenfor), og SQL-summerne læser dem.
 
-**Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled` og `gelato_enabled` (alle fra som standard).
+**Flade sider (2026-10-31, ingen migration):** `views[].flat` er `true` på en flad del af et all-over-produkt. `provider_template` får `flat`, `styles` (mockup-stil pr. side), `techniques` (pr. side) og `options` (leverandørens produktvalg, fx `stitch_color`). Opgaver gemmer `api` (1 eller 2) i `result`, og en flad version har én opgave med siden `all`.
+
+**Prodigi (ADR-084, ingen migration):** `provider_ref` er katalogproduktets id, `variants` holder SKU pr. farve og størrelse, og opgavens `result` holder fase, filer, det gemte produkt og mockups, så de kan slettes igen. Optionen `merchboard_designer_prodigi_key` er krypteret og uden autoload.
+
+**Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard).
 
 ### Sletteanmodninger ✅ (schema-version 40, ADR-083)
 

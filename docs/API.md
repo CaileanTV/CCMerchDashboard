@@ -560,7 +560,7 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 
 ## `/designer-print/{version}/{side}` 🔄 (fase 30, trin 30.12–30.13, ADR-081, ADR-082)
 
-Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, `no-store`, `nosniff`) til Printfuls mockup-generator og Gelatos skabelonprodukter (fra trin 30.13), når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
+Offentlig (ingen login): `GET /merchboard/v1/designer-print/{version}/{side}?expires=…&signature=…` giver printfilen (PNG, på en flad side JPEG, `no-store`, `nosniff`) til Printfuls mockup-generator, Gelatos skabelonprodukter (fra trin 30.13) og Prodigi (ADR-084), når HMAC-signaturen er gyldig og ikke udløbet (højst 1 time), og versionen venter eller er godkendt. Ellers 404 uden begrundelse.
 
 ## Test-krav
 

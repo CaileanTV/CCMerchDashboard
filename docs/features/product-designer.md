@@ -149,6 +149,21 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Implementeret (trin 30.5):** markøren `_merchboard_designer_token`, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtesten `LegacyGuardArchitectureTest`.
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
+## All-over-produkter og Printful v2 (2026-10-31, eksperimentel)
+- **EU først:** kataloget filtrerer på Europa og levering til Danmark, og kun varianter på lager i Europa tilbydes. Regionen "Europe" er Printfuls salgsregion og er ikke et løfte om produktion i EU. Afsenderlandet kan kun ses pr. forsendelse.
+- **Fladt design:** et all-over-produkt har intet foto at måle på. Creatoren designer på syemønsteret, én side pr. del, og skal fylde delen ud til kanten. Mønsteret ligger over designet med et slør uden for delen, som hos Printful.
+- **Mockups:** når designet sendes til godkendelse, får Printful alle brugte dele i én opgave og syr dem sammen. Hver side får billedet fra sin mockup-stil (Front, Back, Left, Right). En del uden design bliver hvid.
+- **Printfil:** JPEG på hvid baggrund. 4200 × 5400 px er for meget til en PNG af et foto.
+- **Printmål, der skifter med størrelsen** (puder): ét grundprodukt pr. gruppe af størrelser.
+- **v1 som reserve:** bruges, når v2 fejler, ikke ved 429. En all-over-import kræver v2. Importens egne markør-kørsler bliver på v1, for v2 afviser en fil, hvis form afviger mere end 2 % fra printområdet.
+- **Strik** (`knitwear`) tilbydes ikke endnu.
+
+## Prodigi (ADR-084, ikke afprøvet mod Prodigi)
+- **Status:** koden ligger bag afbryderen "Prodigi", der er slået fra. Der er ingen konto og ingen nøgle endnu.
+- **Grundprodukter:** kun produkter produceret i EU. Kataloget har hverken fotos eller farvekoder, så creatoren designer på et hvidt ark, og admin retter farverne.
+- **Mockups:** efter indsendelse sendes printfilen til Prodigi, et gemt produkt oprettes, og mockups hentes. Det gemte slettes igen.
+- **Ved første nøgle skal det afprøves:** svarenes form, om tøj understøtter mockups, om mockups koster penge, og hvilke scener der findes.
+
 ## Opsætning af Printful og Gelato (projektejeren)
 Nøglerne indtastes i Merch Dashboard → Produktdesigner → Indstillinger (Printful fra trin 30.12, Gelato fra 30.13). De gemmes krypteret og vises aldrig igen. Vejledningen herunder står også på Settings-siden.
 
@@ -220,6 +235,8 @@ Planen (ADR-080–082):
 - Katalogimporten er eksperimentel: Printful er ikke verificeret mod det rigtige API. Gelato-importen er afprøvet på devpage 2026-10-30 med en printet t-shirt; mockups fra Gelato efter indsendelse er ikke afprøvet med den. Størrelser er fælles for alle farver, også når leverandøren ikke har en størrelse i en farve. Den kræver GD på serveren og et site, leverandørerne kan nå. En side, hvis markør ikke kan ses på fotoene, udelades.
 - Importens status opdateres af sig selv på grundproduktet. Baggrundsjobbet følger WP-Cron og kan køre langt sjældnere end hvert 30. sekund.
 - Ordrer produceres manuelt.
+- En browser skal tegne op til 7200 × 6225 px på leggings. Det er ikke testet med et stort foto.
+- Prodigi er ikke afprøvet mod det rigtige API.
 
 ## Future improvements
 - Perspektiv/kurve-warp til kopper.
