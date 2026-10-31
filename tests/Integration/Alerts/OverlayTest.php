@@ -280,7 +280,17 @@ final class OverlayTest extends IntegrationTestCase {
 			self::assertStringContainsString( "href='https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&#038;display=swap'", $html );
 			self::assertStringContainsString( '--merchboard-font-family:"Open Sans", sans-serif;', $html );
 
-			delete_option( AlertFonts::APPROVED_OPTION );
+			update_option(
+				AlertFonts::APPROVED_OPTION,
+				array(
+					array(
+						'family'   => 'Oswald',
+						'category' => 'sans-serif',
+						'weights'  => array( 400 ),
+					),
+				),
+				false
+			);
 			$html = (string) $this->page( $fonts )->render( $id, 'nonce123' );
 			self::assertStringNotContainsString( 'fonts.googleapis.com', $html, 'A removed font is never loaded.' );
 			self::assertStringContainsString( '--merchboard-font-family:inherit;', $html );

@@ -535,7 +535,7 @@ final class GelatoTest extends IntegrationTestCase {
 		$create  = end( $creates );
 		self::assertNotFalse( $create, 'The design product after the import products.' );
 		$body = json_decode( (string) ( $create[2]['body'] ?? '' ), true );
-		self::assertSame( array( 'tpl-1', 'Stream tee', false ), array( $body['templateId'] ?? null, $body['title'] ?? null, $body['isVisibleInTheOnlineStore'] ?? null ) );
+		self::assertSame( array( 'tpl-1', 'Nova Classic tee Stream tee', false ), array( $body['templateId'] ?? null, $body['title'] ?? null, $body['isVisibleInTheOnlineStore'] ?? null ) );
 		self::assertSame( array( 'tv-b-s', 'tv-w-s' ), array_column( $body['variants'] ?? array(), 'templateVariantId' ), 'A template variant per chosen colour, the first chosen size.' );
 		self::assertSame( 'ImageFront', $body['variants'][0]['imagePlaceholders'][0]['name'] ?? null );
 		self::assertStringContainsString( '/merchboard/v1/designer-print/' . $version . '/front', urldecode( (string) ( $body['variants'][0]['imagePlaceholders'][0]['fileUrl'] ?? '' ) ) );
